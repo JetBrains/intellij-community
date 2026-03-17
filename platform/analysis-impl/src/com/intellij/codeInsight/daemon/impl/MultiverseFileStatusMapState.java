@@ -103,6 +103,15 @@ final class MultiverseFileStatusMapState implements FileStatusMapState {
   }
 
   @Override
+  public void markDefensivelyForAllPasses(@NotNull Project project) {
+    for (Map<CodeInsightContext, FileStatus> map : myDocumentToStatusMap.values()) {
+      for (FileStatus status : map.values()) {
+        status.markDefensivelyForAllPasses(project);
+      }
+    }
+  }
+
+  @Override
   public String toString() {
     return myDocumentToStatusMap.toString();
   }

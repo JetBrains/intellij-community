@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,4 +32,6 @@ sealed interface FileStatusMapState permits ClassicFileStatusMapState, Multivers
 
   boolean allDirtyScopesAreNullFor(@NotNull Document document);
   boolean allDirtyScopesAreNull();
+
+  void markDefensivelyForAllPasses(@NotNull Project project);
 }

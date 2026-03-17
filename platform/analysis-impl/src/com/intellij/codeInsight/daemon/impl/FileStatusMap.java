@@ -258,9 +258,7 @@ public final class FileStatusMap implements Disposable {
     // mark the whole file dirty in case no subsequent PSI events will come, but file requires re-highlighting nevertheless
     // e.g., in the case of quick typing/backspacing char
     synchronized (myFileStatusMapState) {
-      for (FileStatus status : myFileStatusMapState.getFileStatuses(document)) {
-        status.markDefensivelyMarkedForAllPasses(myProject);
-      }
+      myFileStatusMapState.markDefensivelyForAllPasses(myProject);
     }
   }
 
@@ -372,11 +370,11 @@ public final class FileStatusMap implements Disposable {
     synchronized(myFileStatusMapState) {
       FileStatus status = myFileStatusMapState.getOrCreateStatus(document, CodeInsightContexts.anyContext());
       TextRange scope = new TextRange(event.getOffset(), Math.min(event.getOffset() + event.getNewLength(), document.getTextLength()));
-      for (int passId : status.getAllKnownPassIds(myProject)) {
+      for (int passId : FileStatus.getAllKnownPassIds(myProject)) {
         status.combineScopesWith(scope, document);
         if (LOG.isDebugEnabled() && passId == Pass.LOCAL_INSPECTIONS) {
           RangeMarker newScope = status.getDirtyScope(passId);
-          LOG.debug("FileStatusMap.addDocumentCompositeDirtyRange(" + event + ") = " + (newScope == null ? null : newScope == WholeFileDirtyMarker.INSTANCE ? "whole file" : newScope.getTextRange()));
+          LOG.debug("FileStatusMap.addDocumentCompositeDirtyRange(" + event + ":"+document+") = " + (newScope == null ? null : newScope == WholeFileDirtyMarker.INSTANCE ? "whole file" : newScope.getTextRange()));
         }
       }
     }

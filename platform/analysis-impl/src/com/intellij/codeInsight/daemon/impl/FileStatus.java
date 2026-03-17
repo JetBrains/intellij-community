@@ -77,7 +77,7 @@ final class FileStatus {
       this.defensivelyMarked.remove(passId);
     }
   }
-  void markDefensivelyMarkedForAllPasses(@NotNull Project project) {
+  void markDefensivelyForAllPasses(@NotNull Project project) {
     for (int passId : getAllKnownPassIds(project)) {
       setDefensivelyMarked(true, passId);
     }
