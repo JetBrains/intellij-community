@@ -117,6 +117,8 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.ui.EditorNotifications;
+import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TestTimeOut;
@@ -1965,11 +1967,21 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Class 'A2222' is never used", info.getDescription());
 
     Document document1111 = getFile().getParent().findFile("A1111.java").getFileDocument();
+    PsiFile psiFile1111 = PsiDocumentManager.getInstance(getProject()).getPsiFile(document1111);// avoid "cached psiFile is null, cancel all passes"
+    Editor editor1111 = ((TextEditor)FileEditorManager.getInstance(getProject())
+      .getEditors(FileDocumentManager.getInstance().getFile(document1111))[0]).getEditor();
+    Editor editor2222 = getEditor();
+    setActiveEditors(editor2222, editor1111);
+
+    HighlightInfo info = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(editor2222.getDocument(), HighlightSeverity.WARNING));
+    assertEquals("Class 'A2222' is never used", info.getDescription());
+
     // uncomment (inside code block) the reference to A2222
     WriteCommandAction.writeCommandAction(myProject).run(()->document1111.deleteString(document1111.getText().indexOf("//"), document1111.getText().indexOf("//")+2));
 
     // now A2222 is no longer unused
-    assertEmpty(waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.WARNING));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(editor2222.getDocument(), HighlightSeverity.WARNING));
+    Reference.reachabilityFence(psiFile1111);
   }
 
   // test the other type of PSI change: child remove/child add
@@ -2546,6 +2558,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     GCWatcher tracking = GCWatcher.tracking(myFile);
     myFile = null;
     IntentionsUI.getInstance(myProject).invalidate(); // clear com.intellij.codeInsight.intention.impl.CachedIntentions.myProject
+    EditorNotificationsImpl editorNotifications = (EditorNotificationsImpl)EditorNotifications.getInstance(getProject());
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    editorNotifications.completeAsyncTasks(); // EditorNotificationsImpl might retain psiFile in its update queue
     tracking.ensureCollectedWithinTimeout(30_000);
 
     myFile = PsiDocumentManager.getInstance(myProject).getPsiFile(getEditor().getDocument());
