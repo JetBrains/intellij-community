@@ -53,7 +53,7 @@ class RunScratchAction : ScratchAction(
                         executor.execute()
                     }
                 } catch (ex: Throwable) {
-                    if (ex is ControlFlowException) throw ex
+                    if (ex is ControlFlowException) return
                     executor.errorOccurs(KotlinJvmBundle.message("exception.occurs.during.run.scratch.action"), ex, true)
                 }
             }
