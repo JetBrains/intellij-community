@@ -10,7 +10,6 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiArrayInitializerExpression;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.PsiDeconstructionList;
 import com.intellij.psi.PsiDeconstructionPattern;
@@ -52,8 +51,7 @@ public final class RedundantExplicitVariableTypeInspection extends AbstractBaseJ
       public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
         PsiTypeElement typeElement = variable.getTypeElement();
         if (!typeElement.isInferredType()) {
-          PsiElement parent = variable.getParent();
-          if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
+          if (variable.getParent() instanceof PsiDeclarationStatement statement && statement.getDeclaredElements().length > 1) {
             return;
           }
           PsiExpression initializer = variable.getInitializer();
@@ -96,9 +94,7 @@ public final class RedundantExplicitVariableTypeInspection extends AbstractBaseJ
         }
       }
 
-      private void doCheck(PsiVariable variable,
-                           PsiVariable copyVariable,
-                           PsiTypeElement element2Highlight) {
+      private void doCheck(PsiVariable variable, PsiVariable copyVariable, PsiTypeElement element2Highlight) {
         ArrayList<PsiAnnotation> typeUseAnnotations = new ArrayList<>();
         AnnotationTargetUtil.collectStrictlyTypeUseAnnotations(copyVariable.getModifierList(), typeUseAnnotations);
         if (!typeUseAnnotations.isEmpty()) return;
@@ -107,17 +103,16 @@ public final class RedundantExplicitVariableTypeInspection extends AbstractBaseJ
         if (typeElementCopy != null) {
           IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar(typeElementCopy, variable);
           if (variable.getType().equals(getNormalizedType(copyVariable))) {
-            holder.registerProblem(element2Highlight,
-                                   InspectionGadgetsBundle.message("inspection.redundant.explicit.variable.type.description"),
-                                   new ReplaceWithVarFix());
+            holder.problem(element2Highlight, InspectionGadgetsBundle.message("inspection.redundant.explicit.variable.type.description"))
+              .fix(new ReplaceWithVarFix())
+              .register();
           }
         }
        }
 
       private static PsiType getNormalizedType(PsiVariable copyVariable) {
         PsiType type = copyVariable.getType();
-        PsiClass refClass = PsiUtil.resolveClassInType(type);
-        if (refClass instanceof PsiAnonymousClass anonymousClass) {
+        if (PsiUtil.resolveClassInType(type) instanceof PsiAnonymousClass anonymousClass) {
           type = anonymousClass.getBaseClassType();
         }
         return type;
