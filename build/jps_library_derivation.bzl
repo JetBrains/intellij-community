@@ -11,7 +11,7 @@ Mirrors the jar target generation logic in:
 
 load("@xml.bzl//:xml.bzl", "xml")
 
-def maven_url_to_jar_target(url, repo):
+def maven_url_to_jar_target(url, repo, kotlin_dev_snapshot_version):
     """Convert a $MAVEN_REPOSITORY$ jar URL to a Bazel jar target label.
 
     Mirrors makeJarTarget() in JpsModuleToBazel.kt:277-281:
@@ -23,9 +23,14 @@ def maven_url_to_jar_target(url, repo):
     We extract groupId and filename from the standard Maven repo URL layout:
       $MAVEN_REPOSITORY$/<group_path>/<artifact>/<version>/<filename>
 
+    Snapshot libraries (-SNAPSHOT.jar or matching kotlin_dev_snapshot_version) are
+    redirected to repo//snapshots: instead of the normal repo//: path.
+    See dependency.kt:115-123 (isSnapshotVersion, isKotlinDevVersionAsSnapshotOutsideOfTree).
+
     Args:
         url: full URL containing $MAVEN_REPOSITORY$
         repo: repository label (e.g., "@lib" or "@ultimate_lib")
+        kotlin_dev_snapshot_version: if set, Kotlin dev version to treat as snapshot
 
     Returns:
         Bazel label like "@lib//:org.tukaani/xz-1.10.jar"
@@ -48,6 +53,16 @@ def maven_url_to_jar_target(url, repo):
     filename = parts[-1]
     group_dirs = parts[:-3]
     group_id = ".".join(group_dirs)
+
+    # Snapshot libraries are redirected to @lib//snapshots: or @ultimate_lib//snapshots:
+    # Mirrors dependency.kt:115-123 and :129-162:
+    #   isSnapshotVersion: filename ends with -SNAPSHOT.jar (files from $MAVEN_REPOSITORY$ are
+    #     always outside project tree, so isSnapshotOutsideOfTree is satisfied),
+    #     or the Maven version ends with -SNAPSHOT (which also means -SNAPSHOT.jar filename)
+    #   isKotlinDevVersionAsSnapshotOutsideOfTree: filename ends with -<version>.jar
+    if filename.endswith("-SNAPSHOT.jar") or \
+       (kotlin_dev_snapshot_version and filename.endswith("-%s.jar" % kotlin_dev_snapshot_version)):
+        return repo + "//snapshots:" + filename
 
     return repo + "//:" + group_id + "/" + filename
 
@@ -325,6 +340,11 @@ def derive_library_targets(ctx, project_root, library_xmls, iml_data_list,
     """
     targets = {}  # dict used as set
 
+    # Cooperative Kotlin development mode: when set, Maven libraries with filenames
+    # ending in -<version>.jar are treated as snapshots and redirected to repo//snapshots:.
+    # Mirrors dependency.kt:120-123 (isKotlinDevVersionAsSnapshotOutsideOfTree).
+    kotlin_dev_snapshot_version = ctx.getenv("JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT")
+
     # Repo for project-level Maven libraries:
     # In community-only mode, all project libs use @lib.
     # In ultimate mode, we'd need to know which module first references each library
@@ -366,7 +386,7 @@ def derive_library_targets(ctx, project_root, library_xmls, iml_data_list,
             repo = "@ultimate_lib"
 
         for url in parsed.maven_urls:
-            target = maven_url_to_jar_target(url, repo)
+            target = maven_url_to_jar_target(url, repo, kotlin_dev_snapshot_version)
             targets[target] = True
 
         for url in parsed.local_urls:
@@ -395,7 +415,7 @@ def derive_library_targets(ctx, project_root, library_xmls, iml_data_list,
         for module_lib in iml_data.parsed_iml.module_libraries:
             for url in module_lib.jar_urls:
                 if "$MAVEN_REPOSITORY$" in url:
-                    target = maven_url_to_jar_target(url, module_repo)
+                    target = maven_url_to_jar_target(url, module_repo, kotlin_dev_snapshot_version)
                     targets[target] = True
                 elif "$PROJECT_DIR$" in url:
                     rel_path = _extract_project_relative_path(url)
