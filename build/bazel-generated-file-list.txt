@@ -259,7 +259,6 @@ fleet/test-runtime
 fleet/util/codepoints
 fleet/util/codepoints/test
 fleet/util/core
-fleet/util/datetime
 fleet/util/logging/api
 fleet/util/logging/slf4j
 fleet/util/modules
