@@ -5,6 +5,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultCallableShortenStrategyForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.name.ClassId
@@ -32,7 +33,9 @@ object AddRemainingWhenBranchesUtils {
                 if (it.callableId?.classId == elementContext.enumToStarImport) {
                     ShortenStrategy.SHORTEN_AND_STAR_IMPORT
                 } else {
-                    ShortenStrategy.DO_NOT_SHORTEN
+                    val defaultCallableShorteningStrategy = ShortenStrategy.defaultCallableShortenStrategyForIde(whenExpression)
+
+                    defaultCallableShorteningStrategy(it)
                 }
             }
         )

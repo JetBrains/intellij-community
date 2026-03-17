@@ -2334,6 +2334,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("alreadyImportedClasses.kt")
+        public void testAlreadyImportedClasses() throws Exception {
+            runTest("testData/intentions/addWhenRemainingBranches/alreadyImportedClasses.kt");
+        }
+
+        @TestMetadata("alreadyImportedEnums.kt")
+        public void testAlreadyImportedEnums() throws Exception {
+            runTest("testData/intentions/addWhenRemainingBranches/alreadyImportedEnums.kt");
+        }
+
         @TestMetadata("emptyWhen.kt")
         public void testEmptyWhen() throws Exception {
             runTest("testData/intentions/addWhenRemainingBranches/emptyWhen.kt");
