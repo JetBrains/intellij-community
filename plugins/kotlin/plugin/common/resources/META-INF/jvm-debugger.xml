@@ -32,6 +32,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <debugger.creationStackTraceProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider"/>
     <debugger.dumpItemsProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutinesDumpAsyncProvider"/>
+    <threadDumpItemFactory implementation="org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineThreadDumpItemFactory"/>
     <registryKey key="debugger.kotlin.show.coroutines.in.threadDumpPanel" defaultValue="true"
                  description="Merge coroutine dump with thread dump in ThreadDumpPanel"/>
 

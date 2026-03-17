@@ -3,15 +3,17 @@ package com.intellij.unscramble
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import kotlin.io.path.Path
 
+@TestApplication
 @TestDataPath($$"$CONTENT_ROOT/testData/threadDump")
 internal class IntelliJThreadDumpImportTest {
   @Test
