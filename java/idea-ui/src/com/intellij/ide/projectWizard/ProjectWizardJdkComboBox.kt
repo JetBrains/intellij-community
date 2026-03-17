@@ -542,7 +542,7 @@ private fun selectAndAddJdk(combo: ProjectWizardJdkComboBox) {
   else {
     Path.of(System.getProperty("user.home"))
   }
-  SdkConfigurationUtil.selectSdkHome(JavaSdk.getInstance(), null, path) { path: String ->
+  SdkConfigurationUtil.selectSdkHome(JavaSdk.getInstance(), null, path, null) { path: String ->
     val version = JavaSdk.getInstance().getVersionString(path)
     val comboItem = DetectedJdk(version ?: "", path, containsSymbolicLink(path))
     combo.addItem(comboItem)
