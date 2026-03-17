@@ -353,6 +353,10 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       fun textList(name: String): List<String> = (metadata[name] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
       fun textSet(name: String): Set<String> = (metadata[name] as? List<*>)?.filterIsInstance<String>()?.toCollection(LinkedHashSet())
                                                ?: emptySet()
+      fun <T> typedValue(name: String, typeReference: TypeReference<T>, defaultValue: T): T {
+        val value = metadata[name] ?: return defaultValue
+        return runCatching { objectMapper.convertValue(value, typeReference) }.getOrDefault(defaultValue)
+      }
 
       return IntellijUpdateMetadata(
         id = text("id"),
@@ -371,6 +375,9 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         productCode = textOrNull("productCode"),
         url = textOrNull("url") ?: textOrNull("sourceCodeUrl"),
         size = (metadata["size"] as? Number)?.toInt() ?: 0,
+        content = typedValue("content", object : TypeReference<List<PluginContentModule>>() {}, emptyList()),
+        modules = typedValue("modules", object : TypeReference<List<PluginModule>>() {}, emptyList()),
+        mainModuleDependencies = typedValue("mainModuleDependencies", object : TypeReference<List<ModuleDependency>>() {}, emptyList()),
         pluginAliases = textList("pluginAliases"),
       )
     }
