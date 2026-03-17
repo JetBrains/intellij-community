@@ -284,6 +284,8 @@
                  description="Lombok augment works in dumb mode"/>
     <registryKey key="lombok.incomplete.mode.enabled" defaultValue="true" restartRequired="true"
                  description="Lombok supports incomplete mode"/>
+    <registryKey key="lombok.slow.jar.detection.enabled" defaultValue="false" restartRequired="true"
+                 description="Enable slow detection of Lombok JARs attached directly from disk"/>
   </extensions>
 
   <projectListeners>
