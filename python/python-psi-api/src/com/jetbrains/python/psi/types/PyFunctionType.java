@@ -28,7 +28,7 @@ public interface PyFunctionType extends PyCallableType {
   @Override
   default int getImplicitOffset() {
     return getCallable().asMethod() != null
-           ? (!PyNames.NEW.equals(getName()) && getModifier() == PyAstFunction.Modifier.STATICMETHOD ? 0 : 1)
+           ? (PyNames.NEW.equals(getCallable().getName()) || getModifier() == PyAstFunction.Modifier.STATICMETHOD ? 0 : 1)
            : 0;
   }
 
