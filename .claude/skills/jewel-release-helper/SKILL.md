@@ -1,11 +1,7 @@
 ---
 name: jewel-release-helper
 description: >-
-  Assist with preparing a Jewel release. Covers version bumps, API version
-  code generation, running checks (Gradle, detekt, Metalava), extracting and
-  writing release notes, cherry-picking to release branches, comparing
-  branches for missing commits, validating Maven artifacts, and tagging.
-  Use when the user is preparing a new Jewel version release.
+  Assist with preparing a Jewel release. Covers version bumps, API version code generation, running checks (Gradle, detekt, Metalava), extracting and writing release notes, cherry-picking to release branches, comparing branches for missing commits, validating Maven artifacts, and tagging. Use when the user is preparing a new Jewel version release.
 allowed-tools:
   - Bash
   - Read
@@ -16,319 +12,125 @@ allowed-tools:
 
 # Jewel Release Helper
 
-This skill is an **interactive checklist**. Work through one step at a time.
-After completing each step, show a progress summary and ask the user to
-confirm before moving to the next. Never skip ahead.
+This skill is an **interactive checklist** designed to automate the high-level tasks of a Jewel release. Work through one step at a time.
+After completing each step, show a progress summary and ask the user to confirm before moving to the next. Never skip ahead.
 
-Only someone at JetBrains with monorepo access can complete the full
-release, but this skill helps with every step possible in the community
+Only someone at JetBrains with monorepo access can complete the full release, but this skill helps with every step possible in the community
 repository.
 
-**Important:** Do NOT add `Co-Authored-By` trailers or any AI attribution
-to commits, tags, or release notes.
+Check the [`platform/jewel/docs/releasing-guide.md`](../../../platform/jewel/docs/releasing-guide.md) file for comprehensive release process
+documentation. This skill is meant to guide the user through that process and automate the grunt work, rather than repeating every nuance of
+the documentation. If this skill's steps differ from the docs', use the docs' — that's the canonical source.
+
+**Important:** Do NOT add `Co-Authored-By` trailers or any AI attribution to commits, tags, or release notes.
 
 ---
 
 ## How to use this checklist
 
-- Present each step as `[ ] Step name` when pending, `[x] Step name` when
-  done.
-- At each step: explain what will happen, run the commands, report the
-  result, and ask for confirmation before marking complete.
-- If a step fails, stop and help fix it. Do not proceed to the next step.
-- If a step requires manual action (e.g., IDE smoke testing), ask the user
-  to confirm they've done it.
-- After each step, print the full checklist with current status so the
-  user can see progress at a glance.
+- Present each step as `[ ] Step name` when pending, `[x] Step name` when done.
+- At each step: explain what will happen, run the commands, report the result, and ask for confirmation before marking complete.
+- If a step requires manual action (e.g., IDE smoke testing), ask the user to confirm they've done it.
+- Keep output concise. Guide the user through the process.
 
 ---
 
-## The checklist
+## 0. Pre-flight checks
 
-### Step 0: Pre-flight checks
-
-Run these automatically and report results:
-
-- [ ] Confirm working directory is `intellij-community` with `platform/jewel`
-- [ ] Confirm current branch is `master`
-- [ ] Confirm working tree is clean (`git status --porcelain`)
-- [ ] Read current version from `platform/jewel/gradle.properties`
-  (`jewel.release.version`)
+- [ ] Confirm working directory is `intellij-community` and branch is `master` (you want to avoid worktrees in this case)
+- [ ] Confirm working tree is clean and branch is up to date with the remote
+- [ ] Read current Jewel version from `platform/jewel/gradle.properties` (`jewel.release.version`)
 - [ ] Read previous release version/date from `platform/jewel/RELEASE NOTES.md`
-  (format: `## v<major>.<minor> (<yyyy-mm-dd>)`)
 
-Then ask the user:
+Ask the user:
+
 - What is the **new version** to release?
 - What are the **target release branches** (e.g., `253`, `261`)?
 - What is the **YouTrack issue** for the release prep (e.g., `JEWEL-1250`)?
-- What is the **YouTrack issue** for the release notes (if separate)?
-
-Store these answers — they're used throughout the remaining steps.
 
 **Wait for user confirmation before proceeding.**
 
 ---
 
-### Step 1: Bump version on master
+## 1. Bump version & prepare `master`
 
-- [ ] **1a.** Update `jewel.release.version` in `platform/jewel/gradle.properties`
-  to the new version
-- [ ] **1b.** Ask if the IJP target version in
-  `platform/jewel/gradle/libs.versions.toml` needs updating; if so, update it
-- [ ] **1c.** Run the version updater script:
-  ```bash
-  cd platform/jewel && ./scripts/jewel-version-updater.main.kts
-  ```
-  This regenerates `JewelApiVersion.kt` with the new version string.
-- [ ] **1d.** Ask the user how they run ktfmt, then format the generated file
-
-Report what changed. **Wait for user confirmation.**
-
----
-
-### Step 2: Run Gradle checks on master
-
-- [ ] Run checks:
-  ```bash
-  cd platform/jewel && ./gradlew check detekt detektMain detektTest --continue --no-daemon
-  ```
-- [ ] Report pass/fail for each task
-
-If anything fails, stop and help fix it. **Wait for user confirmation.**
-
----
-
-### Step 3: Metalava validation
-
-- [ ] **3a.** Clear Metalava baselines: in all files matching
-  `platform/jewel/metalava/*-baseline*-current.txt`, remove all content
-  except the first line (the baseline version header)
-- [ ] **3b.** Validate against the previous release:
-  ```bash
-  cd platform/jewel && ./scripts/metalava-signatures.main.kts validate --release <previous-release>
-  ```
-  - If real breaking changes: stop and help fix
-  - If "fake" issues (hidden APIs, IJP deprecation removals): offer to
-    update baselines with `--update-baselines`
-  - **Warn:** every baseline addition must be verified to not cause
-    real breakages
-- [ ] **3c.** Generate new signatures for the new release:
-  ```bash
-  cd platform/jewel && ./scripts/metalava-signatures.main.kts update --release <new-release>
-  ```
-
-Report results. **Wait for user confirmation.**
-
----
-
-### Step 4: Write release notes
-
-- [ ] **4a.** Extract draft notes:
-  ```bash
-  cd platform/jewel && ./scripts/extract-release-notes.main.kts --since <previous-release-date>
-  ```
-  (The script can auto-detect the date from `RELEASE NOTES.md` if omitted.)
-- [ ] **4b.** Read `platform/jewel/new_release_notes.md` and present to user
-- [ ] **4c.** Draft the final release notes entry for `RELEASE NOTES.md`:
-  - Version header: `## v<version> (<today's date>)`
-  - IJP/CMP version table
-  - Sections: `⚠️ Important Changes`, `New features`, `Bug fixes`,
-    `Deprecated API` (remove empty ones)
-  - Entry format: ` * **JEWEL-xxx** Description ([#PR](url))`
-  - Cross-reference with actual commits for completeness
-- [ ] **4d.** Show the complete drafted notes to the user for review
-- [ ] **4e.** Once approved, write to `RELEASE NOTES.md`
+- [ ] **1a. Bump version**: Update `jewel.release.version` in `gradle.properties` and ask if `libs.versions.toml` needs IJP target updates.
+- [ ] **1b. Run updater**: `cd platform/jewel && ./scripts/jewel-version-updater.main.kts` (then format `JewelApiVersion.kt`).
+- [ ] **1c. Gradle checks**: `cd platform/jewel && ./gradlew check detekt detektMain detektTest --continue --no-daemon`
+- [ ] **1d. Bazel checks**: Run Bazel compilation and tests for Jewel (`./tests.cmd -Dintellij.build.test.patterns=org.jetbrains.jewel.*` or
+  `./bazel.cmd build //platform/jewel/...`).
+- [ ] **1e. Metalava**:
+  1. Clear baselines (`metalava/*-baseline*-current.txt`) except the first line.
+  2. Validate: `cd platform/jewel && ./scripts/metalava-signatures.main.kts validate --release <previous-release>` (help fix/update if
+     needed).
+  3. Update: `./scripts/metalava-signatures.main.kts update --release <new-release>`.
 
 **Wait for user confirmation.**
 
 ---
 
-### Step 5: Commit master changes
+## 2. Release notes & commit
 
-- [ ] Stage all changes and show `git diff --cached --stat`
-- [ ] Ask user to review the diff
-- [ ] Commit with message:
-  ```
-  [JEWEL-xxx] Prepare Jewel <version> release
-  ```
-  (Use the YouTrack issue from Step 0)
-- [ ] If release notes are a separate commit:
-  ```
-  [JEWEL-yyy] Write Jewel v<version> release notes
-  ```
-- [ ] Remind user to get this merged to master via the normal PR process
-  (suggest using the `jewel-pr-preparer` skill)
+- [ ] **2a. Extract draft**: `cd platform/jewel && ./scripts/extract-release-notes.main.kts --since <previous-release-date>`
+- [ ] **2b. Finalize**: Read `new_release_notes.md`, draft the final entry matching the `RELEASE NOTES.md` style, get user approval, and
+  append it. Tidy up the new release notes writing style as needed. Put yourself in the shoes of a dev using Jewel to decide what you care
+  about and what you don't. Do a sanity pass to make sure nothing is missing.
+- [ ] **2c. Commit**: Stage changes and commit with `[JEWEL-xxx] Prepare Jewel <version> release`.
+- [ ] **2d. Merge**: Remind user to merge this commit to `master` (suggest using `jewel-pr-preparer`).
 
-**Wait for user to confirm the commit(s) are merged to master before
-proceeding.**
+**Wait for user to confirm the commit is merged to master before proceeding.**
 
 ---
 
-### Step 6: Cherry-pick to release branches
+## 3. Cherry-pick to release branches
 
-Repeat the following sub-checklist for **each target release branch**
-(ask the user which branch to do first):
+Repeat for **each target release branch** (ask user which branch to do first):
 
-- [ ] **6a.** Checkout and pull:
-  ```bash
-  git checkout <branch> && git pull
-  ```
-- [ ] **6b.** Cherry-pick the release commit(s):
-  ```bash
-  git cherry-pick <commit-hash>
-  ```
-- [ ] **6c.** Update Kotlin version in
-  `platform/jewel/gradle/libs.versions.toml` to match the IJP's Kotlin
-  for this branch (ask the user for the correct version)
-- [ ] **6d.** Update any other branch-specific dependencies (CMP version,
-  IJP target — ask the user)
-- [ ] **6e.** Regenerate themes:
-  ```bash
-  cd platform/jewel && ./gradlew generateThemes --rerun-tasks
-  ```
-- [ ] **6f.** Run Gradle checks:
-  ```bash
-  cd platform/jewel && ./gradlew check detekt detektMain detektTest --continue --no-daemon
-  ```
-- [ ] **6g.** Run API dump check:
-  ```bash
-  cd platform/jewel && ./scripts/check-api-dumps.main.kts
-  ```
-- [ ] **6h.** Validate Metalava signatures:
-  ```bash
-  cd platform/jewel && ./scripts/metalava-signatures.main.kts validate --release <new-release>
-  ```
-- [ ] **6i.** Ask user to smoke test:
-  - Jewel standalone sample (components, Markdown rendering)
-  - Jewel IDE samples (toolwindow, component showcase)
-- [ ] **6j.** Verify local publishing (see Step 8)
+- [ ] **3a. Checkout & Cherry-pick**: `git checkout <branch> && git pull` then `git cherry-pick <commit-hash>`.
+- [ ] **3b. Branch specifics**: Ask user for the correct Kotlin/CMP/IJP versions for this branch and update `libs.versions.toml`
+  accordingly, if needed.
+- [ ] **3c. Regenerate & Validate**:
+  - `./gradlew generateThemes --rerun-tasks`
+  - `./gradlew check detekt detektMain detektTest --continue --no-daemon`
+  - Run Bazel compilation and tests for Jewel (`./tests.cmd` or `./bazel.cmd build //platform/jewel/...`)
+  - `./scripts/check-api-dumps.main.kts`
+  - `./scripts/metalava-signatures.main.kts validate --release <new-release>`
+- [ ] **3d. Smoke test**: Ask user to manually verify Jewel standalone/IDE samples.
 
-**Wait for user confirmation before moving to next branch or step.**
+**Wait for user confirmation before moving to the next branch.**
+
+Note: this is the last step that someone without access to the internal JetBrains monorepo can help with. The following steps must be
+performed by a JetBrains FTE. Confirm with the user if they are.
 
 ---
 
-### Step 7: Compare branches for missing commits
+## 4. Final validations & MRs
 
-- [ ] For each release branch, run:
-  ```bash
-  cd platform/jewel && ./scripts/compare-branches.main.kts master <branch> --jewel-only
-  ```
-- [ ] Report any commits on master missing from the release branch
-- [ ] If there are missing commits, ask the user if they should be
-  cherry-picked
+- [ ] **4a. Compare branches**: `./scripts/compare-branches.main.kts master <branch> --jewel-only` (check for missing commits).
+- [ ] **4b. Maven artifacts (optional)**: `./scripts/validate-maven-artifacts.main.kts <branch1> <branch2>` (ask user first; requires clean
+  tree).
+- [ ] **4c. Open MRs**: Remind user to open Space merge requests for the cherry-pick branches and get them merged.
 
-**Wait for user confirmation.**
+**Wait for user to confirm MRs are merged.**
 
 ---
 
-### Step 8: Validate Maven artifacts (optional)
+## 5. Post-merge: publish and tag
 
-Ask the user if they want to run this step (recommended but time-consuming).
-
-- [ ] Run:
-  ```bash
-  cd platform/jewel && ./scripts/validate-maven-artifacts.main.kts <branch1> <branch2>
-  ```
-  **Note:** This checks out branches and builds — requires a clean tree.
-  It patches `JewelMavenArtifactsBuildTarget.kt` temporarily for
-  community repo builds and reverts afterward.
-- [ ] Report any discrepancies in artifact presence or POM dependencies
-
-Useful flags: `--verbose`, `--force-pull`, `--no-build` + `--artifacts-dir`
-
-**Wait for user confirmation.**
-
----
-
-### Step 9: Open merge requests (manual)
-
-This is internal-only. Remind the user:
-
-- [ ] Open a merge request on Space (JetBrains Code) for each release
-  branch with the cherry-picked changes
-- [ ] Ping Jakub Senohrabek, Nebojsa Vuksic, or Sasha (Alexander Kuznetsov) if needed for review/merge
-
-**Wait for user to confirm MRs are open.**
-
----
-
-### Step 10: Post-merge — publish and tag
-
-Once MRs are approved and merged:
-
-- [ ] **10a.** Remind user to trigger the TeamCity publish job (internal)
-- [ ] **10b.** Tag the release commits. Format:
-  `JEWEL-<version>-<major-ijp-version>`
-
-  Example for Jewel 0.34.0:
-  ```bash
-  git tag JEWEL-0.34.0-253 <commit-on-253>
-  git tag JEWEL-0.34.0-261 <commit-on-261>
-  ```
-  Ask for exact commit hashes. **Confirm before tagging.**
-- [ ] **10c.** Push tags:
-  ```bash
-  git push origin --tags
-  ```
-  **Confirm before pushing.**
-
----
-
-## Release complete! 🎉
-
-Print the final checklist showing all steps marked `[x]` and summarize:
-- Version released
-- Branches updated
-- Tags created
-- Any follow-up items
+- [ ] **5a. Publish**: Remind user to trigger the TeamCity publish job.
+- [ ] **5b. Tag**: Ask for exact commit hashes and tag the release commits: `git tag JEWEL-<version>-<major-ijp-version> <hash>`.
+- [ ] **5c. Push**: `git push origin --tags`.
 
 ---
 
 ## Quick reference: available scripts
 
-| Script | Purpose |
-|---|---|
-| `scripts/jewel-version-updater.main.kts` | Regenerate `JewelApiVersion.kt` from `gradle.properties` |
-| `scripts/extract-release-notes.main.kts` | Extract release notes from merged PRs since a date |
-| `scripts/metalava-signatures.main.kts validate` | Validate API signatures against a previous release |
-| `scripts/metalava-signatures.main.kts update` | Generate new API signature dumps for a release |
-| `scripts/compare-branches.main.kts` | Compare Jewel commits between two branches |
-| `scripts/validate-maven-artifacts.main.kts` | Build and compare Maven artifacts across branches |
-| `scripts/check-api-dumps.main.kts` | Run `ApiCheckTest` to verify IJP API dumps |
-| `scripts/annotate-api-dump-changes.main.kts` | Annotate breaking API changes in PRs (CI use) |
-
-## Quick reference: release branch patterns
-
-Cherry-picked commits on release branches (e.g., `253`, `261`) have the
-same `[JEWEL-xxx]` subject as master, sometimes with a
-`(cherry picked from commit <hash>)` trailer and always a
-`GitOrigin-RevId` trailer added by the mirror bot.
-
-The `compare-branches.main.kts` script normalizes these cherry-pick
-prefixes when comparing, so identical changes are correctly matched.
-
-## Quick reference: release notes format
-
-```markdown
-## v<major>.<minor> (<yyyy-mm-dd>)
-
-| Min supported IJP versions | Compose Multiplatform version |
-|----------------------------|-------------------------------|
-| <versions>                 | <CMP version>                 |
-
-### ⚠️ Important Changes
-
- * **JEWEL-xxx** Description ([#PR](url))
-
-### New features
-
- * **JEWEL-xxx** Description ([#PR](url))
-
-### Bug fixes
-
- * **JEWEL-xxx** Description ([#PR](url))
-
-### Deprecated API
-
- * **JEWEL-xxx** Description ([#PR](url))
-```
+| Script                                          | Purpose                                                  |
+|-------------------------------------------------|----------------------------------------------------------|
+| `scripts/jewel-version-updater.main.kts`        | Regenerate `JewelApiVersion.kt` from `gradle.properties` |
+| `scripts/extract-release-notes.main.kts`        | Extract release notes from merged PRs since a date       |
+| `scripts/metalava-signatures.main.kts validate` | Validate API signatures against a previous release       |
+| `scripts/metalava-signatures.main.kts update`   | Generate new API signature dumps for a release           |
+| `scripts/compare-branches.main.kts`             | Compare Jewel commits between two branches               |
+| `scripts/validate-maven-artifacts.main.kts`     | Build and compare Maven artifacts across branches        |
+| `scripts/check-api-dumps.main.kts`              | Run `ApiCheckTest` to verify IJP API dumps               |
