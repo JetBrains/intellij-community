@@ -1,0 +1,11 @@
+package test
+
+import test.MyEnum.FOO
+
+enum class MyEnum {
+    FOO
+}
+
+fun usage() {
+    MyEnum.FOO
+}

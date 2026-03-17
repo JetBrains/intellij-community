@@ -326,6 +326,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
                 KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
             }
 
+            @TestMetadata("AlreadyImportedEnum.kt")
+            public void testAlreadyImportedEnum() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/quailfiers/AlreadyImportedEnum.kt");
+            }
+
             @TestMetadata("AlreadyImportedNestedType.kt")
             public void testAlreadyImportedNestedType() throws Exception {
                 runTest("../../idea/tests/testData/shortenRefsFir/quailfiers/AlreadyImportedNestedType.kt");
