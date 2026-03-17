@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.PyWithItem
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -96,7 +97,7 @@ private class PyMockPatchObjectAttrReference(
 ) : PsiPolyVariantReferenceBase<PyStringLiteralExpression>(element, rangeInElement) {
 
   override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> {
-    val targetClass = resolveTargetClass() ?: return emptyArray()
+    val targetClass = resolveTarget() ?: return emptyArray()
     val attrName = element.stringValue
     val member = findMember(targetClass, attrName) ?: return emptyArray()
     return arrayOf(PsiElementResolveResult(member))
@@ -105,19 +106,25 @@ private class PyMockPatchObjectAttrReference(
   override fun isSoft(): Boolean = createAllowed
 
   override fun getVariants(): Array<Any> {
-    val targetClass = resolveTargetClass() ?: return emptyArray()
+    val targetClass = resolveTarget() ?: return emptyArray()
     return getMemberVariantsOf(targetClass).toTypedArray()
   }
 
-  private fun resolveTargetClass(): PsiElement? {
+  private fun resolveTarget(): PsiElement? {
     val args = callExpr.argumentList?.arguments ?: return null
     val targetExpr = args.firstOrNull() ?: return null
+
+    // Try type-based resolution first (works for classes)
     val context = TypeEvalContext.codeAnalysis(element.project, element.containingFile)
     val type = context.getType(targetExpr)
     if (type is PyClassType) {
       return type.pyClass
     }
-    return null
+
+    // Fall back to PSI resolution (works for modules and other references)
+    return PyUtil.multiResolveTopPriority(
+      targetExpr, PyResolveContext.defaultContext(context),
+    ).firstOrNull()
   }
 
   private fun findMember(target: PsiElement, name: String): PsiElement? {

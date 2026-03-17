@@ -336,6 +336,23 @@ class PyMockTest : PyTestCase() {
     )
   }
 
+  fun testPatchObjectModuleTarget() {
+    myFixture.configureByFile("test_patch_object/test.py")
+    val file = myFixture.file as PyFile
+    val testClass = file.findTopLevelClass("TestPatchObject")!!
+    val method = testClass.findMethodByName("test_patch_object_module_target", false, null)!!
+    val decorator = method.decoratorList!!.decorators.first()
+    val args = decorator.argumentList!!.arguments
+    val strArg = args[1] as PyStringLiteralExpression
+
+    val refs = strArg.references
+    assertTrue("Attribute reference should exist for module target", refs.isNotEmpty())
+    val resolved = refs.last().resolve()
+    assertNotNull("top_level_function should resolve on module target", resolved)
+    assertInstanceOf(resolved, PyFunction::class.java)
+    assertEquals("top_level_function", (resolved as PyFunction).name)
+  }
+
   // --- Argument Count Inspection ---
 
   fun testPatchArgumentCountInspection() {

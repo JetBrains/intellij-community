@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch
 
+import example_module
 from example_module import MyClass
 
 
@@ -29,3 +30,7 @@ class TestPatchObject(unittest.TestCase):
     def test_with_patch_object(self):
         with patch.object(MyClass, "my_method") as mock_method:
             pass
+
+    @patch.object(example_module, "top_level_function")
+    def test_patch_object_module_target(self, mock_func):
+        pass
