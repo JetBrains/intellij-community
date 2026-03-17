@@ -8,7 +8,6 @@ import com.intellij.codeInsight.editorActions.TypedHandler.TypedDelegateFunc;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.collectors.fus.TypingEventsLogger;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -163,19 +162,9 @@ final class TypedDelegateImpl {
     @NotNull Editor editor,
     @NotNull PsiFile file
   ) {
-    boolean lockFreeTyping = EditorLockFreeTyping.isEnabled();
     boolean warned = false;
     for (TypedHandlerDelegate delegate : TypedHandlerDelegate.EP_NAME.getExtensionList()) {
-      TypedHandlerDelegate.Result result;
-      try {
-        result = action.call(delegate, charTyped, project, editor, file);
-      } catch (RuntimeException t) {
-        if (lockFreeTyping) {
-          result = TypedHandlerDelegate.Result.DEFAULT;
-        } else {
-          throw t;
-        }
-      }
+      TypedHandlerDelegate.Result result = action.call(delegate, charTyped, project, editor, file);
       if (editor instanceof EditorWindow editorWindow && !editorWindow.isValid() && !warned) {
         LOG.warn(
           new IllegalStateException(
