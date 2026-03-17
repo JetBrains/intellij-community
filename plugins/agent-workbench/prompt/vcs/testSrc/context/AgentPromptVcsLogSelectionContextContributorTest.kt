@@ -187,12 +187,12 @@ class AgentPromptVcsLogSelectionContextContributorTest {
 
   private class TestVcsLogCommitSelection(
     selectedCommits: List<CommitId>,
+    override val cachedMetadata: List<VcsCommitMetadata> = emptyList(),
+    override val cachedFullDetails: List<VcsFullCommitDetails> = emptyList(),
   ) : VcsLogCommitSelection {
     override val rows: IntArray = IntArray(selectedCommits.size) { index -> index }
     override val ids: List<VcsLogCommitStorageIndex> = rows.toList()
     override val commits: List<CommitId> = selectedCommits
-    override val cachedMetadata: List<VcsCommitMetadata> = emptyList()
-    override val cachedFullDetails: List<VcsFullCommitDetails> = emptyList()
 
     override fun requestFullDetails(consumer: Consumer<in List<VcsFullCommitDetails>>) {
       consumer.accept(emptyList())

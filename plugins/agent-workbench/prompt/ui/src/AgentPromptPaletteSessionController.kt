@@ -7,6 +7,8 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INITIAL_TEXT_DATA_KEY
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextResolverService
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteExtensionContext
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionCandidate
@@ -63,7 +65,11 @@ internal class AgentPromptPaletteSessionController(
       resolveContextProjectBasePath = { submitControllerRef.resolveContextProjectBasePath() },
       showError = ::showError,
       onContextChanged = ::handleContextChanged,
-      onExtensionTabRemoved = { taskKey -> draftControllerRef.removeTaskDraft(taskKey) },
+      onExtensionTabRemoved = { taskKeyPrefix ->
+        draftState.taskPromptStates.keys.removeAll { key ->
+          AgentPromptExtensionDraftDecisions.matchesTaskKey(taskKeyPrefix, key)
+        }
+      },
       setTargetMode = ::setTargetMode,
     )
 
@@ -113,6 +119,7 @@ internal class AgentPromptPaletteSessionController(
 
     val draft = draftController.restoreDraft()
     draftController.restoreTaskDrafts(draft)
+    refreshExtensionTaskDraftsFromContext()
 
     if (invocationData.attributes[com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY] == true) {
       contextController.selectAutoSelectExtensionTab()
@@ -277,7 +284,59 @@ internal class AgentPromptPaletteSessionController(
     if (panel == null) return null
     val mode = panel.getClientProperty("targetMode") as? PromptTargetMode
     if (mode != null) return mode.name
-    return contextState.activeExtensionTabs.firstOrNull { it.tabPanel === panel }?.taskKey
+    return contextState.activeExtensionTabs.firstOrNull { it.tabPanel === panel }?.let(::resolveExtensionTaskKey)
+  }
+
+  private fun currentContextItems(): List<AgentPromptContextItem> {
+    return contextController.buildVisibleContextEntries().map(ContextEntry::item)
+  }
+
+  private fun resolveExtensionTaskKey(
+    entry: AgentPromptPaletteExtensionTab,
+    contextItems: List<AgentPromptContextItem> = currentContextItems(),
+  ): String {
+    return AgentPromptPaletteExtensionContext.withContextItems(project, contextItems) {
+      AgentPromptExtensionDraftDecisions.taskKey(entry.taskKeyPrefix, entry.extension.getInitialPrompt(project)?.kind)
+    }
+  }
+
+  private fun refreshExtensionTaskDraftsFromContext() {
+    val contextItems = currentContextItems()
+    for (entry in contextState.activeExtensionTabs) {
+      val taskKey = resolveExtensionTaskKey(entry, contextItems)
+      val updatedState = AgentPromptPaletteExtensionContext.withContextItems(project, contextItems) {
+        val initialPrompt = entry.extension.getInitialPrompt(project)
+        val currentState = draftState.taskPromptStates[taskKey]
+        if (currentState == null) {
+          initialPrompt
+            ?.let { restoredTaskPromptDraftState(it.content) }
+        }
+        else {
+          synchronizeExtensionDraftState(currentState, initialPrompt?.kind) { prompt ->
+            entry.extension.synchronizePrompt(project, prompt)
+          }
+        }
+      }
+
+      if (updatedState == null) {
+        draftState.taskPromptStates.remove(taskKey)
+      }
+      else {
+        draftState.taskPromptStates[taskKey] = updatedState
+      }
+
+      if (contextState.activeExtensionTab === entry) {
+        draftState.activeTaskKey = taskKey
+      }
+    }
+
+    if (contextState.activeExtensionTab != null) {
+      val taskKey = draftState.activeTaskKey ?: return
+      val updatedText = draftState.taskPromptStates[taskKey]?.liveText.orEmpty()
+      if (promptArea.text != updatedText) {
+        draftController.setPromptAreaTextProgrammatically(updatedText)
+      }
+    }
   }
 
   private fun currentTargetMode(): PromptTargetMode {
@@ -331,6 +390,7 @@ internal class AgentPromptPaletteSessionController(
   }
 
   private fun handleContextChanged(message: @Nls String) {
+    refreshExtensionTaskDraftsFromContext()
     updateTargetModeUi()
     updateSendAvailability()
     showInfo(message)
@@ -339,6 +399,7 @@ internal class AgentPromptPaletteSessionController(
   private fun handleWorkingProjectPathSelected() {
     contextController.refreshContextEntries()
     contextController.resolveExtensionTabs()
+    refreshExtensionTaskDraftsFromContext()
     updateTargetModeUi()
     if (currentTargetMode() == PromptTargetMode.EXISTING_TASK) {
       existingTaskController.clearSelection()

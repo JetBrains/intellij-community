@@ -91,7 +91,7 @@ internal data class ManualContextAvailability(
 internal data class AgentPromptPaletteExtensionTab(
   @JvmField val extension: AgentPromptPaletteExtension,
   @JvmField val tabPanel: JPanel,
-  @JvmField val taskKey: String,
+  @JvmField val taskKeyPrefix: String,
 )
 
 internal class AgentPromptPaletteContextState {

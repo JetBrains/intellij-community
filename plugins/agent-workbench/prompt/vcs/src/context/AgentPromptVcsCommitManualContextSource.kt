@@ -13,6 +13,8 @@ import com.intellij.agent.workbench.prompt.core.array
 import com.intellij.agent.workbench.prompt.core.objOrNull
 import com.intellij.agent.workbench.prompt.core.string
 import com.intellij.agent.workbench.prompt.vcs.AgentPromptVcsBundle
+import com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsIssueUrls.buildVcsCommitPayloadEntry
+import com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsIssueUrls.resolveIssueUrls
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -40,6 +42,7 @@ internal data class CommitPickerEntry(
   @JvmField val subject: @NlsSafe String,
   @JvmField val rootPath: String?,
   @JvmField val rootName: @NlsSafe String?,
+  @JvmField val issueUrls: List<String> = emptyList(),
 ) {
   val filterText: String
     get() = buildString {
@@ -149,6 +152,7 @@ internal class AgentPromptVcsCommitManualContextSource(
         subject = metadata?.subject?.trim()?.takeIf { it.isNotEmpty() } ?: commitId.hash.asString(),
         rootPath = commitId.root.path,
         rootName = commitId.root.name,
+        issueUrls = metadata?.subject?.let { subject -> resolveIssueUrls(request.sourceProject, subject) }.orEmpty(),
       )
     }
   }
@@ -215,15 +219,7 @@ internal fun buildManualVcsContextItem(selection: List<CommitPickerEntry>): Agen
   val included = normalizedSelection.take(MAX_INCLUDED_SELECTION_COMMITS)
   val fullContent = normalizedSelection.joinToString(separator = "\n") { it.hash }
   val content = included.joinToString(separator = "\n") { it.hash }
-  val payloadEntries = included.map { commit ->
-    val fields = linkedMapOf<String, AgentPromptPayloadValue>(
-      "hash" to AgentPromptPayload.str(commit.hash),
-    )
-    commit.rootPath?.let { rootPath ->
-      fields["rootPath"] = AgentPromptPayload.str(rootPath)
-    }
-    AgentPromptPayloadValue.Obj(fields)
-  }
+  val payloadEntries = included.map { commit -> buildVcsCommitPayloadEntry(commit.hash, commit.rootPath, commit.issueUrls) }
   return AgentPromptContextItem(
     rendererId = AgentPromptContextRendererIds.VCS_COMMITS,
     title = AgentPromptVcsBundle.message("context.vcs.manual.title"),

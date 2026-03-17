@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.prompt.core.array
 import com.intellij.agent.workbench.prompt.core.number
 import com.intellij.agent.workbench.prompt.core.objOrNull
 import com.intellij.agent.workbench.prompt.vcs.AgentPromptVcsBundle
+import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
@@ -70,6 +71,25 @@ class AgentPromptVcsCommitManualContextSourceTest {
   }
 
   @Test
+  fun buildManualVcsContextItemIncludesIssueUrlsInPayload() {
+    val item = buildManualVcsContextItem(
+      listOf(
+        commitEntry(
+          hash = "abc12345",
+          rootPath = "/repo",
+          issueUrls = listOf("https://youtrack.jetbrains.com/issue/IJPL-123456"),
+        )
+      )
+    )
+
+    val entry = item.payload.objOrNull()?.array("entries")?.single()?.objOrNull()
+    val issueUrls = entry?.array("issueUrls")
+      ?.mapNotNull { value -> (value as? AgentPromptPayloadValue.Str)?.value }
+
+    assertThat(issueUrls).containsExactly("https://youtrack.jetbrains.com/issue/IJPL-123456")
+  }
+
+  @Test
   fun normalizeManualVcsSelectionDeduplicatesAndTrimsHashes() {
     val normalized = normalizeManualVcsSelection(
       listOf(
@@ -114,13 +134,14 @@ class AgentPromptVcsCommitManualContextSourceTest {
     assertThat(errorMessage).isEqualTo(AgentPromptVcsBundle.message("manual.context.vcs.error.unavailable"))
   }
 
-  private fun commitEntry(hash: String, rootPath: String?): CommitPickerEntry {
+  private fun commitEntry(hash: String, rootPath: String?, issueUrls: List<String> = emptyList()): CommitPickerEntry {
     return CommitPickerEntry(
       commitIndex = 1,
       hash = hash,
       subject = "Fix issue",
       rootPath = rootPath,
       rootName = rootPath?.substringAfterLast('/'),
+      issueUrls = issueUrls,
     )
   }
 

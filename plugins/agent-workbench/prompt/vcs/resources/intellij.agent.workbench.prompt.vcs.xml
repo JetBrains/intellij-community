@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.agent.workbench.prompt.core"/>
     <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.log"/>
     <module name="intellij.platform.vcs.log.impl"/>
   </dependencies>
