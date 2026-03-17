@@ -38,7 +38,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-datetime-jvm",
     "//fleet/util/core",
   ]
 )

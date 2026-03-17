@@ -69,9 +69,6 @@ kotlin {
     implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.core.jvm930800474.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.org.jetbrains.kotlinx.kotlinx.datetime.jvm1686009755.get().let { "${it.group}:kotlinx-datetime:${it.version}" }) {
-      isTransitive = false
-    }
     implementation(project(":fleet.reporting.api"))
     implementation(project(":fleet.reporting.shared"))
     implementation(project(":fleet.multiplatform.shims"))
