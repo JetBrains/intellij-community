@@ -47,6 +47,7 @@ import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
 import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.classic.ClassicTerminalTabCloseListener;
+import org.jetbrains.plugins.terminal.classic.ClassicTerminalTitleUpdatingKt;
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 import org.jetbrains.plugins.terminal.util.TerminalCoroutineKt;
@@ -459,11 +460,11 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   private void configureTabName(Content content, TerminalTitle title) {
-    content.setDisplayName(TerminalTitleKt.buildSettingsAwareTitle(title, false));
+    content.setDisplayName(TerminalTitleUtils.buildSettingsAwareTitle(title, false));
 
     // Listen for TerminalTitle changes and update the content display name
     CoroutineScope scope = TerminalCoroutineKt.terminalProjectScopeBoundToDisposable(myProject, content, "tab name updating");
-    TerminalTitleUtils.updateTabNameOnTitleChange(title, content, scope);
+    ClassicTerminalTitleUpdatingKt.updateTabNameOnTitleChange(title, content, scope);
   }
 
   public void register(@NotNull TerminalContainer terminalContainer) {

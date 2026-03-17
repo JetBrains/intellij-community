@@ -18,8 +18,8 @@ import com.jediterm.terminal.ui.TerminalWidgetListener;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.classic.ClassicTerminalTitleUpdatingKt;
 import org.jetbrains.plugins.terminal.util.TerminalCoroutineKt;
-import org.jetbrains.plugins.terminal.util.TerminalTitleUtils;
 
 import javax.swing.JComponent;
 import java.beans.PropertyChangeListener;
@@ -49,7 +49,7 @@ public final class ClassicTerminalSessionEditor extends UserDataHolderBase imple
     }
 
     CoroutineScope scope = TerminalCoroutineKt.terminalProjectScopeBoundToDisposable(project, this, "file name updating");
-    TerminalTitleUtils.updateFileNameOnTitleChange(
+    ClassicTerminalTitleUpdatingKt.updateFileNameOnTitleChange(
       terminalFile.getTerminalWidget().getTerminalTitle(),
       terminalFile,
       myProject,
