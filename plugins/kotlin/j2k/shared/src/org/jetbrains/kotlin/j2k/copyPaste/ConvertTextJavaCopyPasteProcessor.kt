@@ -246,6 +246,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
         val dummyContainingClassHeader = if (javaContext == JavaContext.TOP_LEVEL) {
             ""
         } else {
+            // TODO(KTIJ-38052): drop light classes
             val lightClass = target.getParentOfType<KtClass>(strict = false)?.toLightClass()
             val className = lightClass?.name ?: "Dummy"
             val extendsClause = lightClass?.getExtendsClause() ?: ""
