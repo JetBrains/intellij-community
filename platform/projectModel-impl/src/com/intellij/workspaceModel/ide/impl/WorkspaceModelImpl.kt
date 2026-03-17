@@ -60,6 +60,9 @@ import kotlin.system.measureTimeMillis
 private val EP_NAME: ExtensionPointName<BridgeInitializer> = ExtensionPointName("com.intellij.workspace.bridgeInitializer")
 
 @ApiStatus.Internal
+var logSilentUpdates: Boolean = true
+
+@ApiStatus.Internal
 open class WorkspaceModelImpl : WorkspaceModelInternal {
   private val project: Project
   private val coroutineScope: CoroutineScope
@@ -337,7 +340,9 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       updatesCounter.incrementAndGet()
     }
 
-    log.info("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description")
+    if (logSilentUpdates) {
+      log.info("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description")
+    }
   }
 
   /**
