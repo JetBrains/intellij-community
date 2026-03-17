@@ -9,5 +9,6 @@ enum class ProgressStatus {
   STOPPED_ERROR,
   NOT_STARTED,
   QUEUED,
-  CANCELLED
+  CANCELLED,
+  SKIPPED
 }
