@@ -58,7 +58,6 @@ import com.intellij.platform.diagnostic.telemetry.TracerLevel
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.application
 import com.intellij.util.asDisposable
-import io.ktor.server.application.Application
 import io.ktor.util.toMap
 import io.modelcontextprotocol.kotlin.sdk.server.RegisteredTool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
@@ -229,7 +228,7 @@ internal class McpSessionHandler(
    * Creates and configures a new session with the given transport.
    * Sets up onClose handler, onInitialized handler and launches the tool updates collector.
    */
-  suspend fun createAndInitializeSession(transport: Transport, app: Application): ServerSession {
+  suspend fun createAndInitializeSession(transport: Transport): ServerSession = coroutineScope {
     val session = mcpServer.createSession(transport)
     sessionAwaiter.complete(session)
 
@@ -237,7 +236,7 @@ internal class McpSessionHandler(
       sessionScope.cancel()
     }
 
-    app.launch {
+    launch {
       logger.trace { "Subscribing to MCP tools updates for session ${session.sessionId}" }
       mcpTools.collectLatest { updatedTools ->
         processToolsUpdate(updatedTools)
@@ -265,7 +264,7 @@ internal class McpSessionHandler(
           sessionRoots.set(null)
         }
         session.setNotificationHandler<RootsListChangedNotification>(Method.Defined.NotificationsRootsListChanged) {
-          app.async {
+          async {
             val roots = session.roots()
             logger.trace {
               "Received roots list changed notification for session ${session.sessionId}: $roots roots"
@@ -273,7 +272,7 @@ internal class McpSessionHandler(
             sessionRoots.set(roots)
           }
         }
-        app.launch {
+        launch {
           val roots = session.roots()
           logger.trace {
             "Initialized roots for session ${session.sessionId}: $roots roots"
@@ -297,7 +296,7 @@ internal class McpSessionHandler(
       span.end()
     }
 
-    return session
+    return@coroutineScope session
   }
 
   private fun mcpToolToRegisteredTool(mcpTool: McpTool): RegisteredTool {
