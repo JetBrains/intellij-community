@@ -350,6 +350,9 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.statistics.config")
     embeddedModule("intellij.platform.ide.impl")
 
+    // depends on intellij.platform.ide.impl
+    module("intellij.platform.backend.workspace.impl")
+
     // Additional dependencies specific to lang.impl and ide.impl
     embeddedModule("intellij.platform.ide.concurrency")
     embeddedModule("intellij.platform.builtInServer")

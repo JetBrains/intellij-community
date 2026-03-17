@@ -1,0 +1,64 @@
+### auto-generated section `build intellij.platform.backend.workspace.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "workspace.impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "workspace.impl",
+  module_name = "intellij.platform.backend.workspace.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":workspace.impl_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:opentelemetry",
+    "@lib//:jetbrains-annotations",
+    "//platform/eel-provider",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/workspace/jps",
+    "//platform/workspace/storage",
+    "//platform/backend/workspace",
+    "//platform/backend/observation",
+    "//platform/util",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry-impl",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+
+jvm_library(
+  name = "workspace.impl_test_lib",
+  module_name = "intellij.platform.backend.workspace.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":workspace.impl",
+    "//platform/eel-provider:eel-provider_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/backend/observation:observation_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/diagnostic/telemetry-impl:telemetry-impl_test_lib",
+    "//platform/backend:backend_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.backend.workspace.impl` end
+
+### auto-generated section `iml intellij.platform.backend.workspace.impl` start
+exports_files([
+  "intellij.platform.backend.workspace.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.backend.workspace.impl` end

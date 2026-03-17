@@ -528,6 +528,7 @@ platform/analysis-impl
 platform/backend
 platform/backend/observation
 platform/backend/workspace
+platform/backend/workspace.impl
 platform/bookmarks
 platform/bookmarks/backend
 platform/bookmarks/frontend

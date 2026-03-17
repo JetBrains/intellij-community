@@ -1,0 +1,24 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+  </dependencies>
+  <!-- endregion -->
+
+
+  <extensions defaultExtensionNs="com.intellij">
+
+    <projectPreInit
+      id="initialProjectSynchronizer"
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.InitialProjectSynchronizer"
+      order="before workspaceFileIndexInitializer"/>
+
+    <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer"/>
+
+  </extensions>
+</idea-plugin>
