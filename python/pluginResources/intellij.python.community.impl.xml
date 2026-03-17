@@ -289,6 +289,10 @@
                      bundle="messages.PyPsiBundle" key="INSP.NAME.pytest.unpassed.fixture" groupKey="INSP.GROUP.python"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.testing.pyTestFixtures.PyTestUnpassedFixtureInspection"/>
+    <localInspection language="Python" shortName="PyMockPatchArgumentCountInspection" suppressId="PyMockPatchArgumentCount"
+                     bundle="messages.PyPsiBundle" key="INSP.NAME.mock-patch-argument-count" groupKey="INSP.GROUP.python"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.testing.pyMock.PyMockPatchArgumentCountInspection"/>
     <localInspection shortName="PyPackageRequirementsInspection" suppressId="PyPackageRequirements" bundle="messages.PyPsiBundle"
                      key="INSP.NAME.requirements" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsInspection"/>
@@ -417,6 +421,8 @@
     <psi.referenceContributor implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureReferenceContributor"
                               language="Python"/>
     <psi.referenceContributor implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedContributor"
+                              language="Python"/>
+    <psi.referenceContributor implementation="com.jetbrains.python.testing.pyMock.PyMockReferenceContributor"
                               language="Python"/>
 
     <applicationConfigurable groupId="tools"
@@ -888,8 +894,10 @@
     <!--pytest fixture -->
     <inspectionExtension implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureInspectionExtension"/>
     <inspectionExtension implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspectionExtension"/>
+    <inspectionExtension implementation="com.jetbrains.python.testing.pyMock.PyMockInspectionExtension"/>
     <typeProvider implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.testing.pyTestFixtures.PyTextFixtureTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.testing.pyMock.PyMockTypeProvider"/>
 
     <!-- typing -->
     <visitorFilter language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiVisitorFilter"/>
