@@ -19,6 +19,7 @@ import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.O
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ON
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 
@@ -67,17 +68,11 @@ private fun listenForPyprojectToml(project: Project, settings: PyProjectModelSet
   })
 
   project.service<PyProjectScopeService>().scope.launch {
-    dumbModeExited.collect {
-      if (!settings.showConfigurationNotification) {
-        Disposer.dispose(disposable)
-        return@collect
-      }
-
-      if (hasPyprojectToml(project)) {
-        Disposer.dispose(disposable)
-        showNotification(project, settings)
-      }
-    }
+    // Suspend until pyproject.toml appears in the index (checked after each dumb mode exit).
+    // The result is unused — we only care about the side effects of waiting.
+    dumbModeExited.first { hasPyprojectToml(project) }
+    Disposer.dispose(disposable)
+    showNotification(project, settings)
   }
 }
 
