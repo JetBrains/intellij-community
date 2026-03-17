@@ -68,10 +68,6 @@ public final class IncrementalCacheUpdateEvent {
 
   private static int getIncrementalUpdateStartOffset(@NotNull EditorImpl editor, int eventStartOffset) {
     VisualLineInfo info = getVisualLineInfo(editor, eventStartOffset, false);
-    // I am not sure why this exists.
-    // It means that if an affected visual line starts with a soft-wrap,
-    // we need to start recalculation from the previous visual line.
-    // todo: what if it is a custom wrap? be safe, go before it
     if (info.startsWithSoftWrap) {
       info = getVisualLineInfo(editor, info.startOffset, true);
     }
@@ -79,9 +75,6 @@ public final class IncrementalCacheUpdateEvent {
   }
 
 
-  // normally one would use coordinate transformations for such purposes,
-  // but since this is needed while recalculating the data needed for that (soft-wraps),
-  // it is not possible. need to bootstrap.
   private static VisualLineInfo getVisualLineInfo(@NotNull EditorImpl editor, int offset, boolean beforeSoftWrap) {
     Document document = editor.getElfDocument();
     int textLength = document.getTextLength();
@@ -95,7 +88,7 @@ public final class IncrementalCacheUpdateEvent {
     int wrapIndex = softWrapModel.getSoftWrapIndex(offset);
 
     int prevSoftWrapIndex = wrapIndex < 0 ?
-                            // if not: the one closest to offset backwards
+                            // if not found: the one closest to offset backwards
                             -wrapIndex - 2 :
                             // if soft-wrap at startOffset: beforeSoftWrap decides if to consider this one or the previous one, tie-braker
                             wrapIndex - (beforeSoftWrap ? 1 : 0);
