@@ -40,6 +40,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.usageView.UsageInfo;
@@ -49,6 +50,7 @@ import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.memory.InnerClassReferenceVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -283,6 +285,9 @@ public final class ConvertToRecordFix implements LocalQuickFix {
         // At most one constructor can be canonical; others must be DELEGATING or CUSTOM.
         return false;
       }
+      if (hasConflictingNonTrivialInitializers()) {
+        return false;
+      }
       if (possibleCanonicalConstructorCount == 0 && myMethodsToConstructorCandidates.size() == 1) {
         // A heuristic to reduce noisy-ness:
         // If there's no constructor that could become a record canonical constructor after conversion, then
@@ -443,6 +448,76 @@ public final class ConvertToRecordFix implements LocalQuickFix {
       };
       psiMethod.accept(visitor);
       return visitor.existsSuperMethodCalls;
+    }
+
+    /// When two constructors both have a non-trivial field initializer for the same field
+    /// (e.g. `this.age = age / 2` or `this.id = counter++`),
+    /// the transformation would be applied twice after conversion (once in the delegating call args, once in the canonical constructor body).
+    /// See IDEA-387106 for more details.
+    ///
+    /// Compares the canonical constructor (if any) against all the CUSTOM constructors,
+    /// or all pairs of CUSTOM constructors when no canonical constructor exists.
+    private boolean hasConflictingNonTrivialInitializers() {
+      RecordConstructorCandidate canonicalCandidate = null;
+      for (RecordConstructorCandidate candidate : myMethodsToConstructorCandidates.values()) {
+        if (candidate != null && candidate.kind() == RecordConstructorCandidate.Kind.CANONICAL) {
+          canonicalCandidate = candidate;
+          break;
+        }
+      }
+
+      List<RecordConstructorCandidate> customCandidates = new ArrayList<>();
+      for (RecordConstructorCandidate candidate : myMethodsToConstructorCandidates.values()) {
+        if (candidate != null && candidate.kind() == RecordConstructorCandidate.Kind.CUSTOM) {
+          customCandidates.add(candidate);
+        }
+      }
+
+      if (canonicalCandidate != null) {
+        // Compare canonical with each CUSTOM
+        for (RecordConstructorCandidate custom : customCandidates) {
+          if (hasConflictingNonTrivialInitializerPair(canonicalCandidate, custom)) return true;
+        }
+      }
+      else {
+        // No canonical constructor — compare all pairs of CUSTOM constructors,
+        // since one of them will become canonical after conversion
+        for (int i = 0; i < customCandidates.size(); i++) {
+          for (int j = i + 1; j < customCandidates.size(); j++) {
+            if (hasConflictingNonTrivialInitializerPair(customCandidates.get(i), customCandidates.get(j))) return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    private static boolean hasConflictingNonTrivialInitializerPair(RecordConstructorCandidate a, RecordConstructorCandidate b) {
+      for (String fieldName : a.fieldNamesToInitializers().keySet()) {
+        PsiExpression initA = a.fieldNamesToInitializers().get(fieldName);
+        PsiExpression initB = b.fieldNamesToInitializers().get(fieldName);
+        if (initA != null && !isTrivialFieldInitializer(initA)
+            && initB != null && !isTrivialFieldInitializer(initB)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /// A field initializer is trivial if it's just a direct reference to a constructor parameter,
+    /// optionally wrapped in parentheses.
+    /// For example `this.x = x` and `this.x = (x)` are trivial, but `this.age = age / 2` is not.
+    private static boolean isTrivialFieldInitializer(PsiExpression expr) {
+      PsiExpression unwrapped = PsiUtil.skipParenthesizedExprDown(expr);
+      if (unwrapped == null) return false;
+      if (unwrapped instanceof PsiReferenceExpression refExpr && refExpr.resolve() instanceof PsiParameter) return true;
+      return !SideEffectChecker.mayHaveSideEffects(unwrapped) && !referencesAnyParameter(expr);
+    }
+
+    private static boolean referencesAnyParameter(PsiExpression expr) {
+      return PsiTreeUtil.collectElementsOfType(expr, PsiReferenceExpression.class)
+        .stream()
+        .map(PsiReferenceExpression::resolve)
+        .anyMatch(resolved -> resolved instanceof PsiParameter);
     }
 
     private @Nullable FieldAccessorCandidate tryCreateFieldAccessorCandidate(@NotNull PsiMethod psiMethod) {
