@@ -53,7 +53,16 @@ class IjentWslNioPath(
 
   override fun resolve(other: Path): IjentWslNioPath = presentablePath.resolve(other.toOriginalPath()).toIjentWslPath()
 
-  override fun relativize(other: Path): IjentWslNioPath = presentablePath.relativize(other.toOriginalPath()).toIjentWslPath()
+  override fun relativize(other: Path): IjentWslNioPath {
+    if (isAbsolute != other.isAbsolute) {
+      throw IllegalArgumentException(
+        "Tried to relativize a relative and an absolute path: `$this` and `$other`." +
+        " Check for possible confusion." +
+        " Maybe some code up the call stack tried to use a path from the Linux machine as a WSL path for Windows."
+      )
+    }
+    return presentablePath.relativize(other.toOriginalPath()).toIjentWslPath()
+  }
 
   override fun toUri(): URI = presentablePath.toUri()
 
