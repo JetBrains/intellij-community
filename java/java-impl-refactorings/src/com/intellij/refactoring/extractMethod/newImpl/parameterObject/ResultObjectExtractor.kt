@@ -10,6 +10,7 @@ import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
@@ -32,6 +33,7 @@ import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtil
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createGreedyRangeMarker
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.showExtractErrorHint
 import com.intellij.refactoring.extractMethod.newImpl.inplace.TemplateField
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 private data class IntroduceObjectResult(
   val introducedClass: PsiClass,
@@ -43,23 +45,15 @@ private data class IntroduceObjectResult(
  * Creates a class or record to wrap multiple variables inside a single instance.
  * Used as a first step before extracting a method from a code fragment with multiple results.
  */
-internal object ResultObjectExtractor {
+object ResultObjectExtractor {
   suspend fun run(editor: Editor, variables: List<PsiVariable>, scope: List<PsiElement>){
-    require(variables.isNotEmpty())
-    require(scope.isNotEmpty())
-
-    val affectedReferences = readAction { ParameterObjectUtils.findAffectedReferences(variables, scope) }
+    val affectedReferences = readAction { findAffectedReferences(variables, scope) }
     if (affectedReferences == null) {
 
       showExtractErrorHint(editor, JavaRefactoringBundle.message("extract.method.error.many.outputs"), variables.map { it.textRange })
       return
     }
-    val shouldInsertRecord = readAction { PsiUtil.isAvailable(JavaFeature.RECORDS, variables.first()) }
-    val objectBuilder = if (shouldInsertRecord) {
-      readAction { RecordResultObjectBuilder.create(variables) }
-    } else {
-      readAction { ClassResultObjectBuilder.create(variables) }
-    }
+    val objectBuilder = readAction { createBuilder(variables) }
     val file = readAction { scope.first().containingFile }
     val project = file.project
     val extractRange = readAction {
@@ -81,11 +75,9 @@ internal object ResultObjectExtractor {
           .onSuccess { invokeLater { MethodExtractor ().doExtract(file, extractRange.textRange) } }
           .disposeWithTemplate(disposable)
           .createTemplate(file, createTemplateFields(editor, introducedClass, declaration, introducedVariableReferences))
-        val objectType = if (shouldInsertRecord) {
-          JavaRefactoringBundle.message("extract.method.error.wrap.many.outputs.record")
-        }
-        else {
-          JavaRefactoringBundle.message("extract.method.error.wrap.many.outputs.class")
+        val objectType = when (objectBuilder) {
+          is ClassResultObjectBuilder -> JavaRefactoringBundle.message("extract.method.error.wrap.many.outputs.class")
+          is RecordResultObjectBuilder -> JavaRefactoringBundle.message("extract.method.error.wrap.many.outputs.record")
         }
         val message = JavaRefactoringBundle.message("extract.method.error.wrap.many.outputs", objectType)
         HintManager.getInstance().showInformationHint(editor, message)
@@ -95,6 +87,37 @@ internal object ResultObjectExtractor {
         throw e
       }
     }
+  }
+
+  private fun createBuilder(variables: List<PsiVariable>): ResultObjectBuilder {
+    val shouldInsertRecord = PsiUtil.isAvailable(JavaFeature.RECORDS, variables.first())
+    val objectBuilder = if (shouldInsertRecord) {
+      RecordResultObjectBuilder.create(variables)
+    }
+    else {
+      ClassResultObjectBuilder.create(variables)
+    }
+    return objectBuilder
+  }
+
+  private fun findAffectedReferences(
+    variables: List<PsiVariable>,
+    scope: List<PsiElement>,
+  ): List<PsiReferenceExpression>? {
+    require(variables.isNotEmpty())
+    require(scope.isNotEmpty())
+
+    return ParameterObjectUtils.findAffectedReferences(variables, scope)
+  }
+
+  @RequiresReadLock
+  fun extractNonInteractively(variables: List<PsiVariable>, scope: List<PsiElement>): TextRange? {
+    val affectedReferences = findAffectedReferences(variables, scope) ?: return null
+    val builder = createBuilder(variables)
+    val file = scope.first().containingFile
+    val extractRange = createGreedyRangeMarker(file.viewProvider.document, scope.first().textRange.union(scope.last().textRange))
+    introduceObjectForVariables(builder, variables, affectedReferences, scope.last())
+    return extractRange.textRange
   }
 
   private fun createPreview(editor: Editor, introducedClass: PsiClass, declaration: PsiVariable, replacedReferences: List<PsiExpression>): EditorCodePreview {
