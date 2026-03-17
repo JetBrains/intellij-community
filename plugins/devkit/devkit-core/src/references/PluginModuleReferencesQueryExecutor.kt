@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references
 
 import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.Processor
 import com.intellij.util.xml.DomUtil
@@ -24,7 +25,7 @@ internal class PluginModuleReferencesQueryExecutor : QueryExecutorBase<PsiRefere
   }
 
   private fun getModuleName(elementToSearch: XmlTag): String? {
-    val containingFile = elementToSearch.containingFile ?: return null
+    val containingFile = elementToSearch.containingFile as? XmlFile ?: return null
     if (!DescriptorUtil.isPluginModuleFile(containingFile)) return null
     return containingFile.containingFile.name.removeSuffix(".xml")
   }
