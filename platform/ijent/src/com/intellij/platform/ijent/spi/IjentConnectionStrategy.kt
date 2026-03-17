@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
+import com.intellij.platform.ijent.tcp.MutualTlsCertificates
 import com.intellij.platform.ijent.tcp.TcpDeployInfo
 
 /**
@@ -17,7 +18,10 @@ interface IjentConnectionStrategy {
     }
   }
 
-  data class Tcp(val connectionInfo: TcpDeployInfo.FixedPort) : IjentConnectionStrategy {
+  data class Tcp(
+    val connectionInfo: TcpDeployInfo.FixedPort,
+    val tlsData: MutualTlsCertificates? = null,
+  ) : IjentConnectionStrategy {
     override suspend fun canUseVirtualSockets(): Boolean {
       return false
     }
