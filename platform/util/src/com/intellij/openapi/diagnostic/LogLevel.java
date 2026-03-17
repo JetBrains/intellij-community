@@ -22,11 +22,11 @@ public enum LogLevel {
   }
 
   @ApiStatus.Internal
-  public Level getLevel() {
+  public @NotNull Level getLevel() {
     return myLevel;
   }
 
-  public String getLevelName() {
+  public @NotNull String getLevelName() {
     return myLevel.getName();
   }
 
