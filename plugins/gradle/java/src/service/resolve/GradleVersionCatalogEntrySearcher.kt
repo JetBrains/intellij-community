@@ -15,7 +15,7 @@ interface GradleVersionCatalogEntrySearcher {
    */
   fun findEntryElement(versionCatalog: PsiFile, entryPath: String): PsiElement?
 
-  fun findEntriesMatching(versionCatalog: PsiFile, entrySearchString: String): List<VersionCatalogEntry>
+  fun getEntriesFromSections(versionCatalog: PsiFile, sectionsFilter: Set<VersionCatalogSection>): List<VersionCatalogEntry>
 }
 
 interface VersionCatalogEntry {
@@ -24,8 +24,18 @@ interface VersionCatalogEntry {
    * For example: `junit.jupiter` (if it's a library entry), `plugins.foo.bar`, `versions.foo`, `bundles.bar`
    */
   val pathForBuildScript: String
+  val section: VersionCatalogSection
 }
 
+enum class VersionCatalogSection {
+  LIBRARIES, PLUGINS, BUNDLES, VERSIONS;
+
+  companion object {
+    fun fromStringOrNull(string: String): VersionCatalogSection? = runCatching {
+      valueOf(string.uppercase())
+    }.getOrNull()
+  }
+}
 
 fun findVersionCatalogEntryElement(versionCatalog: PsiFile, entryPath: String): PsiElement? {
   for (extension in EP_NAME.extensionList) {
@@ -35,14 +45,14 @@ fun findVersionCatalogEntryElement(versionCatalog: PsiFile, entryPath: String): 
   return null
 }
 
-fun findVersionCatalogEntriesMatching(versionCatalog: PsiFile, entryPath: String): List<VersionCatalogEntry> {
+fun findVersionCatalogEntriesFromSections(versionCatalog: PsiFile, sections: Set<VersionCatalogSection>): List<VersionCatalogEntry> {
   val result = mutableListOf<VersionCatalogEntry>()
   for (extension in EP_NAME.extensionList) {
-    val elements = extension.findEntriesMatching(versionCatalog, entryPath)
+    val elements = extension.getEntriesFromSections(versionCatalog, sections)
     result.addAll(elements)
   }
   return result
 }
 
-private val EP_NAME : ExtensionPointName<GradleVersionCatalogEntrySearcher> =
+private val EP_NAME: ExtensionPointName<GradleVersionCatalogEntrySearcher> =
   ExtensionPointName.Companion.create("org.jetbrains.plugins.gradle.versionCatalogEntrySearcher")

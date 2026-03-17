@@ -27,6 +27,7 @@ internal class KotlinGradlePluginsCompletionTest : AbstractKotlinGradleCompletio
     @BaseGradleVersionSource
     @TestMetadata("versionCatalogs/aliasArgumentCatalogNames")
     fun `test catalog name completion`(gradleVersion: GradleVersion) =
+        // TODO adjust sorting
         verifyVersionCatalogCompletion(gradleVersion)
 
     @ParameterizedTest
@@ -39,6 +40,30 @@ internal class KotlinGradlePluginsCompletionTest : AbstractKotlinGradleCompletio
     @BaseGradleVersionSource
     @TestMetadata("versionCatalogs/aliasArgumentPluginsFromCustomCatalog")
     fun `test plugin entry completion for a custom catalog`(gradleVersion: GradleVersion) =
+        verifyVersionCatalogCompletion(gradleVersion)
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("versionCatalogs/aliasArgumentPluginsWhenSectionNotSpecified")
+    fun `test plugin entry completion when plugins section is not specified`(gradleVersion: GradleVersion) =
+        verifyVersionCatalogCompletion(gradleVersion)
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("versionCatalogs/aliasArgumentPluginsWhenCatalogNameNotSpecified")
+    fun `test plugin entry completion from multiple catalogs when a catalog name is not specified`(gradleVersion: GradleVersion) =
+        verifyVersionCatalogCompletion(gradleVersion)
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("versionCatalogs/librariesVersionsBundlesAreNotCompletedWhenSectionIsNotSpecified")
+    fun `test libraries, versions and bundles are not completed when the section is not specified`(gradleVersion: GradleVersion) =
+        verifyVersionCatalogCompletion(gradleVersion)
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("versionCatalogs/versionsAreCompletedWhenSectionIsSpecified")
+    fun `test versions are completed when the section is specified`(gradleVersion: GradleVersion) =
         verifyVersionCatalogCompletion(gradleVersion)
 
     private fun verifyVersionCatalogCompletion(gradleVersion: GradleVersion) {

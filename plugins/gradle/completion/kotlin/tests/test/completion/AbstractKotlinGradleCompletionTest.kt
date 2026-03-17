@@ -23,7 +23,6 @@ import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import java.io.File
 import java.util.regex.Pattern
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 private const val NO_EXPECTED_SUGGESTIONS_DIRECTIVE = "NO-EXPECTED-SUGGESTIONS"
@@ -200,12 +199,11 @@ abstract class AbstractKotlinGradleCompletionTest : AbstractGradleCodeInsightTes
      */
     private fun checkIfHasUnexpected(suggestions: List<String>) {
         val unexpectedSuggestions = mainTestDataFile.directives.listValues(UNEXPECTED_SUGGESTIONS_DIRECTIVE) ?: return
-        unexpectedSuggestions.forEach {
-            assertFalse(
-                suggestions.contains(it),
-                "Actual suggestions list contains unexpected suggestion: $it"
-            )
-        }
+        val unexpectedActual = suggestions.filter { it in unexpectedSuggestions }
+        assertTrue(
+            unexpectedActual.isEmpty(),
+            "Actual suggestions list contains unexpected suggestion(s): $unexpectedActual"
+        )
     }
 
     private fun maybeExecuteCompletion() {

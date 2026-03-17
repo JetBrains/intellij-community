@@ -16,12 +16,18 @@
 package org.jetbrains.plugins.gradle.toml
 
 import com.intellij.gradle.java.toml.service.GradleTomlVersionCatalogEntrySearcher
+import com.intellij.gradle.java.toml.service.TomlCatalogEntry
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogSection
+import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogSection.BUNDLES
+import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogSection.LIBRARIES
+import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogSection.PLUGINS
+import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogSection.VERSIONS
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.toml.lang.TomlLanguage
@@ -217,154 +223,71 @@ class GradleTomlVersionCatalogEntrySearcherTest {
   }
 
   @Nested
-  @DisplayName("Tests for findEntriesMatching(...) method")
-  inner class FindEntriesMatchingTests {
+  @DisplayName("Tests for getEntriesFromSections(...) method")
+  inner class GetEntriesFromSectionsTests {
     private fun test(
-      searchString: String,
-      versionCatalogText: String,
-      expectedEntries: List<String>,
+      sectionsFilter: Set<VersionCatalogSection>,
+      expectedEntries: List<TomlCatalogEntry>,
     ) = runReadAction {
-      val tomPsiFile = PsiFileFactory.getInstance(project)
+      val versionCatalogText = """
+        [plugins]
+        my-plugin-simple = { id = "my.plugin.id1", version.ref = "my-plugin-version" }
+        my-plugin_various-delimiters = "my.plugin.id2:2.0"
+        my-plugin-Uppercase-Letter = "my.plugin.id3:3.0"
+        
+        [versions]
+        my-version-simple = "1.0.0"
+        my-version_various-delimiters = "1.0.0"
+        my-version_Uppercase-Letter = "1.0.0"
+        
+        [libraries]
+        my-lib-simple = { module = "com.example:lib1", version.ref = "my-lib" }
+        my-lib_various-delimiters = "com.example:lib2:1.0"
+        my-lib-Uppercase-Letter = "com.example:lib3:1.0"
+        
+        [bundles]
+        my-bundle-simple = ["my-bundle-lib1", "my-bundle-lib2"]
+        my-bundle_various-delimiters = ["my-bundle-lib1"]
+        my-bundle-Uppercase-Letter = ["my-bundle-lib2"]
+        """.trimIndent()
+      val tomlPsiFile = PsiFileFactory.getInstance(project)
         .createFileFromText(TomlLanguage, versionCatalogText) as TomlFile
-      val entries = entrySearcher.findEntriesMatching(tomPsiFile, searchString)
-      assertEqualsUnordered(expectedEntries, entries.map { it.pathForBuildScript }) {
-        "The list of version catalog entries for search '$searchString' should match the expected"
+      val entries = entrySearcher.getEntriesFromSections(tomlPsiFile, sectionsFilter)
+      assertEqualsUnordered(expectedEntries, entries) {
+        "The list of version catalog entries for search '$sectionsFilter' should match the expected"
       }
     }
 
     @Test
-    fun `test findEntriesMatching for a library entry`() = test(
-      searchString = "my.li",
-      versionCatalogText = """
-        [versions]
-        my-lib = "1.0"
-        
-        [libraries]
-        my-lib-simple = { module = "com.example:lib1", version.ref = "my-lib" }
-        my-lib_various-delimeters = "com.example:lib2:1.0"
-        my-lib-Uppercase-Letter = "com.example:lib3:1.0"
-        
-        my-another-lib = "com.example:lib4:1.0"
-        """.trimIndent(),
+    fun `test getEntriesFromSections for libraries and bundles`() = test(
+      sectionsFilter = setOf(LIBRARIES, BUNDLES),
       expectedEntries = listOf(
-        "my.lib.simple",
-        "my.lib.various.delimeters",
-        "my.lib.uppercase.letter",
+        TomlCatalogEntry("my.lib.simple", LIBRARIES),
+        TomlCatalogEntry("my.lib.various.delimiters", LIBRARIES),
+        TomlCatalogEntry("my.lib.uppercase.letter", LIBRARIES),
+        TomlCatalogEntry("bundles.my.bundle.simple", BUNDLES),
+        TomlCatalogEntry("bundles.my.bundle.various.delimiters", BUNDLES),
+        TomlCatalogEntry("bundles.my.bundle.uppercase.letter", BUNDLES),
       )
     )
 
     @Test
-    fun `test findEntriesMatching for a library entry when the section is not TomlTable`() = test(
-      searchString = "my.li",
-      versionCatalogText = """
-        libraries = { my-lib-inline-table = "com.example:lib1:1.0" }
-        libraries.my-lib-section-is-key-part = "com.example:lib2:1.0"
-        """.trimIndent(),
+    fun `test getEntriesFromSections for versions`() = test(
+      sectionsFilter = setOf(VERSIONS),
       expectedEntries = listOf(
-        "my.lib.inline.table",
-        "my.lib.section.is.key.part"
+        TomlCatalogEntry("versions.my.version.simple", VERSIONS),
+        TomlCatalogEntry("versions.my.version.various.delimiters", VERSIONS),
+        TomlCatalogEntry("versions.my.version.uppercase.letter", VERSIONS),
       )
     )
 
     @Test
-    fun `test findEntriesMatching for a version entry`() = test(
-      searchString = "versions.my.li",
-      versionCatalogText = """
-        [versions]
-        my-lib-simple = "1.0.0"
-        my-lib_various-delimeters = "1.0.0"
-        my-lib_Uppercase-Letter = "1.0.0"
-        my-another-lib = "1.0.0"
-        """.trimIndent(),
+    fun `test getEntriesFromSections for plugins`() = test(
+      sectionsFilter = setOf(PLUGINS),
       expectedEntries = listOf(
-        "versions.my.lib.simple",
-        "versions.my.lib.various.delimeters",
-        "versions.my.lib.uppercase.letter",
-      )
-    )
-
-    @Test
-    fun `test findEntriesMatching for a version entry when the section is not TomlTable`() = test(
-      searchString = "versions.my.li",
-      versionCatalogText = """
-        versions = { my-lib-inline-table = "1.0.0" } 
-        versions.my-lib-section-is-key-part = "2.0.0"
-        versions.another = "3.0.0"
-        """.trimIndent(),
-
-      expectedEntries = listOf(
-        "versions.my.lib.inline.table",
-        "versions.my.lib.section.is.key.part"
-      )
-    )
-
-    @Test
-    fun `test findEntriesMatching for a plugin entry`() = test(
-      searchString = "plugins.my.plu",
-      versionCatalogText = """
-        [versions]
-        my-plugin-version = "1.0"
-        [plugins]
-        my-plugin-simple = { id = "my.plugin.id1", version.ref = "my-plugin-version" }
-        my-plugin_various-delimeters = "my.plugin.id2:2.0"
-        my-plugin-Uppercase-Letter = "my.plugin.id3:3.0"
-        
-        my-another-plugin = "1.0.0"
-        """.trimIndent(),
-      expectedEntries = listOf(
-        "plugins.my.plugin.simple",
-        "plugins.my.plugin.various.delimeters",
-        "plugins.my.plugin.uppercase.letter",
-      )
-    )
-
-    @Test
-    fun `test findEntriesMatching for a plugin entry when the section is not TomlTable`() = test(
-      searchString = "plugins.my.plu",
-      versionCatalogText = """
-        plugins = { my-plugin-inline-table = "my.plugin.id1:1.0" } 
-        plugins.my-plugin-section-is-key-part = "my.plugin.id2:2.0"
-        plugins.another = "my.plugin.id3:3.0"
-        """.trimIndent(),
-      expectedEntries = listOf(
-        "plugins.my.plugin.inline.table",
-        "plugins.my.plugin.section.is.key.part"
-      )
-    )
-
-    @Test
-    fun `test findEntriesMatching for a bundle entry`() = test(
-      searchString = "bundles.my.bun",
-      versionCatalogText = """
-        [libraries]
-        my-bundle-lib1 = "com.example:lib1:1.0""
-        my-bundle-lib2 = "com.example:lib1:1.0""
-        
-        [bundles]
-        my-bundle-simple = ["my-bundle-lib1", "my-bundle-lib2"]
-        my-bundle_various-delimeters = ["my-bundle-lib1"]
-        my-bundle-Uppercase-Letter = ["my-bundle-lib2"]
-        
-        my-another-bundle = ["another-lib"]
-        """.trimIndent(),
-      expectedEntries = listOf(
-        "bundles.my.bundle.simple",
-        "bundles.my.bundle.various.delimeters",
-        "bundles.my.bundle.uppercase.letter",
-      )
-    )
-
-    @Test
-    fun `test findEntriesMatching for a bundle entry when the section is not TomlTable`() = test(
-      searchString = "bundles.my.bun",
-      versionCatalogText = """
-        bundles = { my-bundle-inline-table = ["lib1"] } 
-        bundles.my-bundle-section-is-key-part = ["lib2"]
-        bundles.another = ["lib3"]
-        """.trimIndent(),
-      expectedEntries = listOf(
-        "bundles.my.bundle.inline.table",
-        "bundles.my.bundle.section.is.key.part"
+        TomlCatalogEntry("plugins.my.plugin.simple", PLUGINS),
+        TomlCatalogEntry("plugins.my.plugin.various.delimiters", PLUGINS),
+        TomlCatalogEntry("plugins.my.plugin.uppercase.letter", PLUGINS),
       )
     )
   }

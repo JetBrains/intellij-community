@@ -1,0 +1,13 @@
+// "NO-EXPECTED-SUGGESTIONS"
+// "UNEXPECTED-SUGGESTION": versions.my-version, plugins.my.plugin
+// FILE: build.gradle.kts
+dependencies {
+    implementation(libs.my<caret>)
+}
+
+// FILE: gradle/libs.versions.toml
+[versions]
+my-version = "1.0.0"
+
+[plugins]
+my-plugin = "my.plugin:1.0.0"

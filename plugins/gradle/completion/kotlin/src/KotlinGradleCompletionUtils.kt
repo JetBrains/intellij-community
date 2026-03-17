@@ -37,6 +37,7 @@ internal fun readLinesFromFile(path: String): List<String> {
     }
 }
 
+internal const val PLUGINS = "plugins"
 internal const val DEPENDENCIES = "dependencies"
 
 internal val BUILD_GRADLE_KTS_FILE_PATTERN = psiFile().withName(KOTLIN_DSL_SCRIPT_NAME)

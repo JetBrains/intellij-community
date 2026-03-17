@@ -57,6 +57,7 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     @BaseGradleVersionSource
     @TestMetadata("versionCatalogs/scopeArgumentCatalogNames")
     fun `test catalog name completion in a scope argument`(gradleVersion: GradleVersion) =
+        // TODO adjust sorting
         verifyVersionCatalogCompletion(gradleVersion)
 
     @ParameterizedTest
@@ -75,6 +76,30 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     @BaseGradleVersionSource
     @TestMetadata("versionCatalogs/scopeArgumentBundles")
     fun `test bundle entry completion in a scope argument`(gradleVersion: GradleVersion) =
+        verifyVersionCatalogCompletion(gradleVersion)
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("versionCatalogs/scopeArgumentBundlesWhenSectionNotSpecified")
+    fun `test bundle entry completion when section is not specified`(gradleVersion: GradleVersion) =
+        verifyVersionCatalogCompletion(gradleVersion)
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("versionCatalogs/scopeArgumentWhenCatalogNameNotSpecified")
+    fun `test libraries and bundles from multiple catalogs completion when a catalog name is not specified`(gradleVersion: GradleVersion) =
+        verifyVersionCatalogCompletion(gradleVersion)
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("versionCatalogs/pluginsAndVersionsAreNotCompletedWhenNoSection")
+    fun `test plugins and versions are not completed in when the section is not specified`(gradleVersion: GradleVersion) =
+        verifyVersionCatalogCompletion(gradleVersion)
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("versionCatalogs/versionsAreCompletedWhenSectionIsSpecified")
+    fun `test versions are completed in when the section is specified`(gradleVersion: GradleVersion) =
         verifyVersionCatalogCompletion(gradleVersion)
 
     @ParameterizedTest

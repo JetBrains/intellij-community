@@ -1,14 +1,14 @@
-// "EXPECTED-SUGGESTION": libs, libs.plugins.my.plugin.aaa, customLibs, customLibs.plugins.my.plugin.bbb
-// "SUGGESTION-INDEX-TO-APPLY": 2
+// "EXPECTED-SUGGESTION": customLibs.plugins.my.plugin.bbb, libs.plugins.my.plugin.aaa
+// "SUGGESTION-INDEX-TO-APPLY": 0
 // "COMPLETION-RESULT-PATH": build.gradle.after.kts
 // FILE: build.gradle.kts
 plugins {
-    alias(lib<caret>)
+    alias(my<caret>.plug)
 }
 
 // FILE: build.gradle.after.kts
 plugins {
-    alias(customLibs<caret>)
+    alias(customLibs.plugins.my.plugin.bbb<caret>)
 }
 
 // FILE: gradle/libs.versions.toml

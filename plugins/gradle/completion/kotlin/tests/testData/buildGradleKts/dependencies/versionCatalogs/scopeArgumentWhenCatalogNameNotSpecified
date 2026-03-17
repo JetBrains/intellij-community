@@ -1,23 +1,27 @@
-// "EXPECTED-SUGGESTION": libs, libs.my.library.aaa, customLibs, customLibs.my.library.bbb
-// "SUGGESTION-INDEX-TO-APPLY": 2
+// "EXPECTED-SUGGESTION": customLibs.bundles.my.bundle.bbb, customLibs.my.library.bbb, libs.bundles.my.bundle.aaa, libs.my.library.aaa
+// "SUGGESTION-INDEX-TO-APPLY": 1
 // "COMPLETION-RESULT-PATH": build.gradle.after.kts
 // FILE: build.gradle.kts
 dependencies {
-    implementation(lib<caret>)
+    implementation(my<caret>)
 }
 
 // FILE: build.gradle.after.kts
 dependencies {
-    implementation(customLibs<caret>)
+    implementation(customLibs.my.library.bbb<caret>)
 }
 
 // FILE: gradle/libs.versions.toml
 [libraries]
 my-library-aaa = "com.example:my-library-aaa:1.0.0"
+[bundles]
+my-bundle-aaa = ["my-library-aaa"]
 
 // FILE: customPath/customLibs.toml
 [libraries]
 my-library-bbb = "com.example:my-library-bbb:1.0.0"
+[bundles]
+my-bundle-bbb = ["my-library-bbb"]
 
 // FILE: settings.gradle.kts
 dependencyResolutionManagement {
@@ -27,4 +31,3 @@ dependencyResolutionManagement {
         }
     }
 }
-
