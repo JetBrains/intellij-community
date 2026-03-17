@@ -2,6 +2,7 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.usages.UsageView
 import com.intellij.usages.UsageViewManager
@@ -27,6 +28,8 @@ class FindUsagesInToolWindowWaitCommand(text: String, line: Int) : PerformanceCo
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
+    AdvancedSettings.setInt("ide.find.result.count.warning.limit", Integer.MAX_VALUE)
+
     val project = context.project
 
     val tracer = PerformanceTestSpan.getTracer(isWarmupMode)
