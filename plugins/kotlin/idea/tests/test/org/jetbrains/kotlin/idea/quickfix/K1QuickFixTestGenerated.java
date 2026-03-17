@@ -16533,6 +16533,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/runBlockingInSuspendFunction/explicitThisLaunch.kt");
         }
 
+        @TestMetadata("explicitThisLaunchWithNullableTypeArgument.kt")
+        public void testExplicitThisLaunchWithNullableTypeArgument() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/explicitThisLaunchWithNullableTypeArgument.kt");
+        }
+
         @TestMetadata("implicitReceiverCoroutineContext.kt")
         public void testImplicitReceiverCoroutineContext() throws Exception {
             runTest("testData/quickfix/runBlockingInSuspendFunction/implicitReceiverCoroutineContext.kt");
@@ -16541,6 +16546,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("implicitReceiverLaunch.kt")
         public void testImplicitReceiverLaunch() throws Exception {
             runTest("testData/quickfix/runBlockingInSuspendFunction/implicitReceiverLaunch.kt");
+        }
+
+        @TestMetadata("implicitThisLaunchWithTypeArgument.kt")
+        public void testImplicitThisLaunchWithTypeArgument() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/implicitThisLaunchWithTypeArgument.kt");
         }
 
         @TestMetadata("inNonSuspendLambda.kt")
