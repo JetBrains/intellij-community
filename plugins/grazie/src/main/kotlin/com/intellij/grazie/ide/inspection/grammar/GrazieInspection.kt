@@ -14,9 +14,12 @@ import com.intellij.grazie.text.ProblemFilter
 import com.intellij.grazie.text.ProofreadingService.Companion.registerProblems
 import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.text.TextContent.TextDomain
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.text.TextProblem
+import com.intellij.grazie.text.TextProblemAggregator
 import com.intellij.grazie.text.TreeRuleChecker
+import com.intellij.grazie.utils.EXTRACTOR_SOURCE
 import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.HighlightingUtil.isInspectionEnabled
 import com.intellij.grazie.utils.isGrammar
@@ -36,6 +39,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.spellchecker.inspections.SpellCheckingInspection.SpellCheckingScope
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy.getSpellcheckingStrategy
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.EnumSet
 
@@ -74,35 +78,33 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
     return object : PsiElementVisitor() {
       override fun visitWhiteSpace(space: PsiWhiteSpace) {}
 
-      override fun visitElement(element: PsiElement) {
-        if (areChecksDisabled(element)) return
+      override fun visitFile(psiFile: PsiFile) {
+        if (psiFile != file) return
+        if (areChecksDisabled(psiFile)) return
 
-        val texts = TextExtractor.findUniqueTextsAt(element, TextContent.TextDomain.ALL)
+        val texts = HighlightingUtil.getAllFileTexts(file.viewProvider)
           .filter { ProblemFilter.allIgnoringFilters(it).findAny().isEmpty }
-        if (skipCheckingTooLargeTexts(texts)) return
+        if (texts.sumOf { it.length } > MAX_TEXT_LENGTH_IN_FILE) return
 
-        sortByPriority(texts, session.priorityRange)
-          .map { CheckerRunner(it) }
-          .map { it to it.run(filterCheckers(checkers, element, scopes), checkedDomains) }
-          .forEach { (runner, problems) ->
-            runner.text.registerProblems(problems)
-            problems.forEach { problem ->
-              runner.toProblemDescriptors(problem, holder.isOnTheFly)
-                .forEach(holder::registerProblem)
-            }
-          }
+        getAllProblems(texts)
+          .flatMap { (text, problems) -> TextProblemAggregator.aggregate(text.toString(), problems) }
+          .also { problems -> psiFile.registerProblems(problems) }
+          .forEach { reportProblem(it, holder) }
+      }
 
-        if (element == file && !isDisabled(session, grammarInspections)) {
-          checkTextLevel(file, holder)
+      private fun getAllProblems(texts: List<TextContent>): Map<TextContent, List<TextProblem>> {
+        val textsWithProblems = mutableMapOf<TextContent, MutableList<TextProblem>>()
+        texts.forEach { text ->
+          val element = text.getUserData(EXTRACTOR_SOURCE) ?: throw IllegalArgumentException("Grazie Inspection requires text's root element")
+          val textProblems = CheckerRunner(text).run(filterCheckers(checkers, element, scopes), checkedDomains)
+          textsWithProblems.computeIfAbsent(text) { ArrayList() }.addAll(textProblems)
         }
+        TreeRuleChecker.checkTextLevelProblems(file).forEach { problem ->
+          textsWithProblems.computeIfAbsent(problem.text) { ArrayList() }.add(problem)
+        }
+        return textsWithProblems
       }
     }
-  }
-
-  private fun checkTextLevel(file: PsiFile, holder: ProblemsHolder) {
-    val problems = TreeRuleChecker.checkTextLevelProblems(file)
-    file.registerProblems(problems)
-    problems.forEach { reportProblem(it, holder) }
   }
 
   private fun reportProblem(problem: TextProblem, holder: ProblemsHolder) {
@@ -158,6 +160,9 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
       }
     }
 
+    /**
+     * This method should be used if [texts] are extracted from some [PsiElement]
+     */
     @JvmStatic
     fun skipCheckingTooLargeTexts(texts: Collection<TextContent>): Boolean {
       val checkedDomains = checkedDomains()
@@ -177,6 +182,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
       }
     }
 
+
     @JvmStatic
     fun ignoreGrammarChecking(file: PsiFile): Boolean = hasSpellChecking && isSpellCheckingDisabled(file)
 
@@ -184,17 +190,17 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
     private fun isSpellCheckingDisabled(file: PsiFile) = SpellCheckingEditorCustomization.isSpellCheckingDisabled(file)
 
     @JvmStatic
-    fun checkedDomains(): Set<TextContent.TextDomain> {
+    fun checkedDomains(): Set<TextDomain> {
       val config = GrazieConfig.get()
-      val result = EnumSet.of(TextContent.TextDomain.PLAIN_TEXT)
+      val result = EnumSet.of(TextDomain.PLAIN_TEXT)
       if (config.checkingContext.isCheckInStringLiteralsEnabled) {
-        result.add(TextContent.TextDomain.LITERALS)
+        result.add(TextDomain.LITERALS)
       }
       if (config.checkingContext.isCheckInCommentsEnabled) {
-        result.add(TextContent.TextDomain.COMMENTS)
+        result.add(TextDomain.COMMENTS)
       }
       if (config.checkingContext.isCheckInDocumentationEnabled) {
-        result.add(TextContent.TextDomain.DOCUMENTATION)
+        result.add(TextDomain.DOCUMENTATION)
       }
       return result
     }
@@ -215,6 +221,9 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
     }
 
     @JvmStatic
+    @Suppress("unused")
+    @Deprecated("Scheduled for removal")
+    @ApiStatus.ScheduledForRemoval
     fun sortByPriority(texts: List<TextContent>, priorityRange: TextRange): List<TextContent> {
       return texts.sortedBy { text ->
         val textRangeInFile = text.textRangeToFile(TextRange(0, text.length))

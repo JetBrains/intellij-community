@@ -17,8 +17,7 @@ import java.util.concurrent.ConcurrentHashMap
 @ApiStatus.Experimental
 class ProofreadingService {
   companion object {
-    private val rangesKey = Key<Ranges>("grazie.text.problem.ranges.in.files")
-    private val textLevelRangesKey = Key<Ranges>("grazie.text.level.problem.ranges.in.files")
+    private val key = Key<Ranges>("grazie.text.level.problem.ranges.in.files")
 
     /**
      * Returns all proofreading problems covering the specified range in the file.
@@ -55,38 +54,26 @@ class ProofreadingService {
      * @return `true` if cache covers the range, `false` otherwise
      */
     @JvmStatic
-    fun covers(file: PsiFile, ranges: List<TextRange>): Boolean =
-      getRangesCache(file, rangesKey, getConfigStamp(file)).covers(ranges) ||
-      getRangesCache(file, textLevelRangesKey, getProjectConfigStamp(file)).covers(ranges)
-
-    @JvmStatic
-    @ApiStatus.Internal
-    internal fun TextContent.registerProblems(problems: List<TextProblem>) {
-      val problemsWithSuggestions = problems.filter { it.hasSuggestions() }
-      if (problemsWithSuggestions.isEmpty()) return
-      val file = this.containingFile
-      getRangesCache(file, rangesKey, getConfigStamp(file))
-        .ranges.addAll(computeRanges(problemsWithSuggestions))
-    }
+    fun covers(file: PsiFile, ranges: List<TextRange>): Boolean = file.getRangesCache().covers(ranges)
 
     @JvmStatic
     @ApiStatus.Internal
     internal fun PsiFile.registerProblems(problems: List<TextProblem>) {
       val problemsWithSuggestions = problems.filter { it.hasSuggestions() }
       if (problemsWithSuggestions.isEmpty()) return
-      getRangesCache(this, textLevelRangesKey, getProjectConfigStamp(this))
-        .ranges.addAll(computeRanges(problemsWithSuggestions))
+      this.getRangesCache().ranges.addAll(computeRanges(problemsWithSuggestions))
     }
 
     private fun computeRanges(problems: List<TextProblem>): List<TextRange> =
       problems.flatMap { getProblemTextRanges(it) }
 
-    private fun getRangesCache(file: PsiFile, key: Key<Ranges>, stamp: Long): Ranges {
-      val cache = file.getUserData(key)
+    private fun PsiFile.getRangesCache(): Ranges {
+      val cache = this.getUserData(key)
+      val stamp = getStamp(this)
       if (cache != null && cache.configStamp == stamp) {
         return cache
       } else {
-        return ConcurrencyUtil.computeIfAbsent(file, key) { Ranges(stamp, ConcurrentHashMap.newKeySet()) }
+        return ConcurrencyUtil.computeIfAbsent(this, key) { Ranges(stamp, ConcurrentHashMap.newKeySet()) }
       }
     }
 
@@ -94,10 +81,11 @@ class ProofreadingService {
     private fun TextProblem.hasSuggestions(): Boolean =
       this is TypoProblem && !this.isCloud || this.suggestions.isNotEmpty() || this.customFixes.isNotEmpty()
 
-    private fun getProjectConfigStamp(file: PsiFile): Long =
-      PsiModificationTracker.getInstance(file.project).modificationCount + file.modificationStamp
-    private fun getConfigStamp(file: PsiFile): Long =
-      service<GrazieConfig>().modificationCount + DictionaryModificationTracker.getInstance(file.project).modificationCount + file.modificationStamp
+    private fun getStamp(file: PsiFile): Long =
+      service<GrazieConfig>().modificationCount +
+      DictionaryModificationTracker.getInstance(file.project).modificationCount +
+      file.modificationStamp +
+      PsiModificationTracker.getInstance(file.project).modificationCount
 
     private fun getProblemTextRanges(problem: TextProblem) = problem.highlightRanges.map { problem.text.textRangeToFile(it) }
     private fun TextProblem.intersects(range: TextRange) = getProblemTextRanges(this)

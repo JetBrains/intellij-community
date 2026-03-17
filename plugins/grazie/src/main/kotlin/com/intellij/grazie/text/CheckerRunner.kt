@@ -77,7 +77,8 @@ class CheckerRunner(val text: TextContent) {
     if (text.isBlank() || allCheckers.isEmpty()) return emptyList()
     val checkers = if (text.domain in checkedDomains && seemsNatural(text)) allCheckers else allCheckers.filterNot { it.isGrammar() }
     val languageDetectionRequired = checkers.any { it.isGrammar() } || checkers.any { it.isSpelling() } && seemsCloudConnected()
-    return filter(doRun(checkers, text.toProofreadingContext(languageDetectionRequired)))
+    return doRun(checkers, text.toProofreadingContext(languageDetectionRequired))
+      .filterNot { shouldBeIgnored(it) }
   }
 
   @Suppress("unused")
@@ -133,9 +134,6 @@ class CheckerRunner(val text: TextContent) {
       deferred.awaitAll().flatten()
     }
   }
-
-  private fun filter(problems: Collection<TextProblem>): List<TextProblem> =
-    TextProblemAggregator.aggregate(text.toString(), problems.filterNot { shouldBeIgnored(it) })
 
   private fun shouldBeIgnored(problem: TextProblem): Boolean =
     isSuppressed(problem) ||

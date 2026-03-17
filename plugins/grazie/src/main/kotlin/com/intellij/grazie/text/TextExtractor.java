@@ -49,6 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
+import static com.intellij.grazie.utils.GrazieUtilsKt.EXTRACTOR_SOURCE;
 import static com.intellij.util.containers.ContainerUtil.createConcurrentWeakKeyWeakValueMap;
 
 /**
@@ -338,7 +339,9 @@ public abstract class TextExtractor {
     for (PsiFile root : vp.getAllFiles()) {
       for (PsiElement element : SyntaxTraverser.psiTraverser(root)) {
         if (element instanceof PsiWhiteSpace) continue;
-        allContents.addAll(findTextsAt(element, domains));
+        List<TextContent> texts = findTextsAt(element, domains);
+        texts.forEach(text -> text.putUserData(EXTRACTOR_SOURCE, element));
+        allContents.addAll(texts);
       }
     }
     return allContents;

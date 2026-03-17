@@ -138,14 +138,14 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
   }
 
   /**
-   * Controls whether to use text-level spellchecking provided by {@link com.intellij.grazie.spellcheck.GrazieTextLevelSpellCheckingExtension}.
+   * Controls whether to use text-level spellchecking provided by {@link com.intellij.grazie.spellcheck.SpellingTextChecker}.
    */
   public boolean useTextLevelSpellchecking() {
     return false;
   }
 
   /**
-   * Controls whether to use text-level spellchecking provided by {@link com.intellij.grazie.spellcheck.GrazieTextLevelSpellCheckingExtension}.
+   * Controls whether to use text-level spellchecking provided by {@link com.intellij.grazie.spellcheck.SpellingTextChecker}.
    */
   public boolean useTextLevelSpellchecking(PsiElement element) {
     return useTextLevelSpellchecking();

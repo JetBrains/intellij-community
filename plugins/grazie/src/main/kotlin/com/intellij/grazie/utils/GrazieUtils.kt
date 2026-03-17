@@ -30,11 +30,16 @@ import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContentImpl
 import com.intellij.grazie.utils.HighlightingUtil.findInstalledLang
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiElement
 import com.intellij.util.containers.CollectionFactory.createConcurrentSoftValueMap
 import java.util.concurrent.ConcurrentHashMap
 import ai.grazie.text.TextRange as GrazieTextRange
+
+@JvmField
+internal val EXTRACTOR_SOURCE: Key<PsiElement> = Key("TextContent extractor source element")
 
 private val affectedGlobalRules = createConcurrentSoftValueMap<Language, Set<String>>()
 private val associatedGrazieRules = ConcurrentHashMap<Language, Map<String, Rule>>()
