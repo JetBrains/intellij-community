@@ -6,7 +6,7 @@ VM options to run tests locally
 -Dkombo.compiler.tests.mode=true
 ```
 
-Add the options to the run configuration created from launching compiler tests.
+Add the options to the run configuration created from launching compiler tests. Set '\$PROJECT_DIR\$' as a working directory.
 If there is no run gutter in a Kotlin test file you wish to run, try searching for a Java test in the same library instead.
 Then replace the qualified name of the test with the desired one.
 
