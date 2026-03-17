@@ -138,13 +138,16 @@ fun toDumpItems(threadStates: List<ThreadState>): List<MergeableDumpItem> =
 
 @ApiStatus.Internal
 fun toDumpItems(threadStates: List<ThreadState>, threadContainerDescriptors: List<JavaThreadContainerDesc>): List<MergeableDumpItem> {
-  val threadDumpItems = threadStates.map(::JavaThreadDumpItem)
+  val threadDumpItems = threadStates.map { ThreadDumpItemFactory.createDumpItem(it) }
 
   val statesToItems = threadStates.zip(threadDumpItems).toMap()
 
   for ((threadState, dumpItem) in statesToItems) {
     val awaitingItems = threadState.awaitingThreads.mapNotNull { statesToItems[it] }.toSet()
-    dumpItem.setAwaitingItems(awaitingItems)
+    // TODO: JavaThreadDumpItem should be created in ThreadDumpItemFactory as well
+    if (dumpItem is JavaThreadDumpItem) {
+      dumpItem.setAwaitingItems(awaitingItems)
+    }
   }
 
   val threadContainerDumpItems = threadContainerDescriptors.map {
@@ -163,7 +166,7 @@ fun toDumpItems(threadStates: List<ThreadState>, threadContainerDescriptors: Lis
 @ApiStatus.Internal
 data class JavaThreadContainerDesc(val name: String, val containerId: Long, val parentId: Long?)
 
-private class JavaThreadDumpItem(private val threadState: ThreadState) : MergeableDumpItem {
+internal class JavaThreadDumpItem(private val threadState: ThreadState) : MergeableDumpItem {
   override val name: String = threadState.name
 
   override val isContainer: Boolean

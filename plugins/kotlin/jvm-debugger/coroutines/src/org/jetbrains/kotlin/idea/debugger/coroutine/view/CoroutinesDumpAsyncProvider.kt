@@ -24,6 +24,8 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesPr
 import java.util.Objects
 import javax.swing.Icon
 
+private const val COROUTINE_MARKER = "[Coroutine]"
+
 /**
  * Provides the dump of coroutines in the Debug mode.
  * Coroutine dump items are represented as [CoroutineDumpItem] instances.
@@ -58,34 +60,29 @@ class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
     }
 }
 
-private class CoroutineDumpItem(private val info: CoroutineInfoData) : MergeableDumpItem {
+@ApiStatus.Internal
+class CoroutineDumpItem internal constructor(
+    override val name: String,
+    override val treeId: Long?,
+    override val parentTreeId: Long?,
+    private val coroutineState: State,
+    private val coroutineContext: String?,
+    override val stackTrace: String,
+) : MergeableDumpItem {
 
-    override val name: String = info.name + ":" + info.id
+    constructor(info: CoroutineInfoData) : this(
+        name = buildCoroutineName(info.name, info.id),
+        treeId = info.jobId,
+        parentTreeId = info.parentJobId,
+        coroutineState = info.state,
+        coroutineContext = buildCoroutineContext(info),
+        stackTrace = buildCoroutineStackTrace(info),
+    )
 
-    override val treeId: Long? get() = info.jobId
-
-    override val parentTreeId: Long? get() = info.parentJobId
-
-    override val stateDesc: String = " (${info.state.name.lowercase()})"
+    override val stateDesc: String = " (${coroutineState.name.lowercase()})"
 
     override val iconToolTip: String
         get() = KotlinDebuggerCoroutinesBundle.message("dump.item.coroutine.tooltip")
-
-    private val dispatcher = info.dispatcher
-
-    private val lastObservedStackTrace: String = info.lastObservedStackTrace.joinToString(prefix = "\t", separator = "\n\t") {
-        ThreadDumpAction.renderLocation(it)
-    }
-
-    override val stackTrace: String =
-        buildString {
-            appendLine(info.coroutineDescriptor)
-            appendLine(lastObservedStackTrace)
-            if (info.asyncStackTrace.isNotEmpty()) {
-                appendLine("\t--------- Async Stack Trace ---------")
-                appendLine(info.asyncStackTrace.joinToString(prefix = "\t", separator = "\n\t") { ThreadDumpAction.renderLocation(it) })
-            }
-        }
 
     override val interestLevel: Int = when {
         stackTrace.isEmpty() -> -10
@@ -100,14 +97,14 @@ private class CoroutineDumpItem(private val info: CoroutineInfoData) : Mergeable
 
     override val icon: Icon =
         IconsCache.getIconWithVirtualOverlay(
-            when (info.state) {
+            when (coroutineState) {
                 State.SUSPENDED -> AllIcons.Debugger.ThreadFrozen
                 State.RUNNING -> AllIcons.Debugger.ThreadRunning
                 State.CREATED, State.UNKNOWN -> AllIcons.Debugger.ThreadGroup
             }
         )
 
-    override val attributes: SimpleTextAttributes = when (info.state) {
+    override val attributes: SimpleTextAttributes = when (coroutineState) {
         State.SUSPENDED -> DumpItem.SLEEPING_ATTRIBUTES
         State.RUNNING -> DumpItem.RUNNING_ATTRIBUTES
         State.CREATED, State.UNKNOWN -> DumpItem.UNINTERESTING_ATTRIBUTES
@@ -130,7 +127,7 @@ private class CoroutineDumpItem(private val info: CoroutineInfoData) : Mergeable
             if (other !is CoroutinesMergeableToken) return false
             val otherItem = other.item
             if (stateDesc != otherItem.stateDesc) return false
-            if (dispatcher != otherItem.dispatcher) return false
+            if (coroutineContext != otherItem.coroutineContext) return false
             if (this.comparableStackTrace != other.comparableStackTrace) return false
             return true
         }
@@ -138,11 +135,65 @@ private class CoroutineDumpItem(private val info: CoroutineInfoData) : Mergeable
         override fun hashCode(): Int {
             return Objects.hash(
                 stateDesc,
-                dispatcher,
+                coroutineContext,
                 comparableStackTrace
             )
         }
     }
+}
+
+private fun buildCoroutineStackTrace(info: CoroutineInfoData): String {
+    val coroutineName = buildSerializedCoroutineName(info.name, info.id, info.jobId)
+    val coroutineContext = buildCoroutineContext(info)
+    val header = buildString {
+        append("\"$coroutineName\"")
+        // additional information for the old ThreadDumpParsers
+        append(" virtual tid=0x0 nid=NA ")
+        append(info.state.name.lowercase())
+        append(' ')
+        // Marker for the CoroutineThreadDumpItemFactory
+        append(COROUTINE_MARKER)
+        coroutineContext?.let {
+            append(' ')
+            append(it)
+        }
+    }
+    val lastObservedStackTrace = info.lastObservedStackTrace.joinToString(separator = "\n\t") {
+        ThreadDumpAction.renderLocation(it)
+    }
+    val asyncStackTrace = if (info.asyncStackTrace.isEmpty()) null else info.asyncStackTrace.joinToString(separator = "\n\t") {
+        ThreadDumpAction.renderLocation(it)
+    }
+    return buildString {
+        appendLine(header)
+        if (lastObservedStackTrace.isNotEmpty()) {
+            append('\t')
+            appendLine(lastObservedStackTrace)
+        }
+        if (asyncStackTrace != null) {
+            appendLine("\t--------- Async Stack Trace ---------")
+            append('\t')
+            append(asyncStackTrace)
+        }
+    }
+}
+
+/**
+ * Builds additional info to the coroutine header like "[dispatcher=Dispatchers.Default, job=Job1]"
+ */
+private fun buildCoroutineContext(info: CoroutineInfoData): String? {
+    val parts = buildList {
+        info.dispatcher?.let { add("dispatcher=$it") }
+        info.job?.let { add("job=$it") }
+    }
+    return parts.takeIf { it.isNotEmpty() }?.joinToString(prefix = "[", separator = ", ", postfix = "]")
+}
+
+private fun buildCoroutineName(name: String, id: Long?): String = "$name:$id"
+
+private fun buildSerializedCoroutineName(name: String, id: Long?, treeId: Long?): String {
+    val visibleName = buildCoroutineName(name, id)
+    return if (treeId == null) visibleName else "$visibleName@$treeId"
 }
 
 private object CoroutineRootDumpItem : MergeableDumpItem {

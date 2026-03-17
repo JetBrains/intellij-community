@@ -4,13 +4,15 @@ package com.intellij.unscramble
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.SimpleTextAttributes
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import javax.swing.Icon
 import kotlin.io.path.Path
 
+@TestApplication
 @TestDataPath($$"$CONTENT_ROOT/testData/threadDump")
 internal class IntelliJThreadDumpExportTest {
   @Test

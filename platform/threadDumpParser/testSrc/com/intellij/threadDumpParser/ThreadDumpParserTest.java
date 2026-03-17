@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -808,6 +809,40 @@ public class ThreadDumpParserTest {
     assertEquals("{unnamed}@957", threads.get(3).getName());
     assertNull(threads.get(3).getUniqueId());
     assertTrue(threads.get(3).isVirtual());
+  }
+
+  @Test
+  public void testOurDebuggerExportFormatWithCoroutines() {
+    String text = """
+      "main@1" prio=5 tid=0x1 nid=NA runnable
+        java.lang.Thread.State: RUNNABLE
+        at Main.main(Main.java:1)
+
+      "scope:1@300" virtual tid=0x0 nid=NA suspended [Coroutine] [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}]
+        at example.Parent.one(Parent.kt:1)
+
+      "scope:2@301" virtual tid=0x0 nid=NA running [Coroutine]
+        at example.Child.two(Child.kt:2)
+      """;
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(3, threads.size());
+
+    ThreadState main = ContainerUtil.find(threads, thread -> "main@1".equals(thread.getName()));
+    assertNotNull(main);
+    assertEquals("RUNNABLE", main.getJavaThreadState());
+    assertFalse(main.isVirtual());
+
+    ThreadState suspendedCoroutine = ContainerUtil.find(threads, thread -> "scope:1@300".equals(thread.getName()));
+    assertNotNull(suspendedCoroutine);
+    assertNull(suspendedCoroutine.getJavaThreadState());
+    assertEquals("suspended", suspendedCoroutine.getState());
+    assertTrue(suspendedCoroutine.isVirtual());
+
+    ThreadState runningCoroutine = ContainerUtil.find(threads, thread -> "scope:2@301".equals(thread.getName()));
+    assertNotNull(runningCoroutine);
+    assertNull(runningCoroutine.getJavaThreadState());
+    assertEquals("running", runningCoroutine.getState());
+    assertTrue(runningCoroutine.isVirtual());
   }
 
   @Test
