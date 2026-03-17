@@ -70,7 +70,7 @@
   <dependencies>
     <module name="intellij.properties.backend"/>
     <module name="intellij.java.backend"/>
-    <module name="intellij.repository.search.common"/>
+    <plugin id="org.jetbrains.idea.reposearch"/>
     <module name="intellij.java.aetherDependencyResolver"/>
   </dependencies>
 
