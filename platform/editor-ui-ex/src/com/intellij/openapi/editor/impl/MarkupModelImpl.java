@@ -12,8 +12,8 @@ import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.impl.elf.ElfTheManager;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
-import com.intellij.openapi.editor.impl.uiDocument.UiDocumentManager;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -349,9 +349,9 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   private static @NotNull DocumentEx getLockFreeDocumentIfEnabled(@NotNull DocumentEx realDocument) {
     if (EditorLockFreeTyping.isEnabled()) {
-      DocumentImpl uiDocument = UiDocumentManager.getInstance().getUiDocument(realDocument);
-      if (uiDocument != null) {
-        return uiDocument;
+      DocumentImpl elfDocument = ElfTheManager.getInstance().getElfDocument(realDocument);
+      if (elfDocument != null) {
+        return elfDocument;
       }
     }
     return realDocument;

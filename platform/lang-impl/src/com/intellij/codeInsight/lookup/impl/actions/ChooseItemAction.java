@@ -17,7 +17,6 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateCustomAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -92,11 +91,6 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
 
     final PsiFile file = lookup.getPsiFile();
     if (file == null) return false;
-
-    if (!EditorLockFreeTyping.isPsiInteractionAllowed()) {
-      // TODO: rework for lock-free typing, commitDocument requires WIL/WL on EDT
-      return false;
-    }
 
     final Editor editor = lookup.getEditor();
     final int offset = editor.getCaretModel().getOffset();

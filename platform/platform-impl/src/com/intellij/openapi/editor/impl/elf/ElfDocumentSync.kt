@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.impl.uiDocument
+package com.intellij.openapi.editor.impl.elf
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.backgroundWriteAction
@@ -21,12 +21,12 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 
 
-internal class UiDocumentSync(
+internal class ElfDocumentSync(
   private val coroutineScope: CoroutineScope,
 ) : PrioritizedDocumentListener {
 
-  private val uiToRealSync = UiToRealSync()
-  private val realToUiSync = RealToUiSync()
+  private val elfToRealSync = ElfToRealSync()
+  private val realToElfSync = RealToElfSync()
 
   override fun getPriority(): Int {
     return Int.MIN_VALUE + 1
@@ -35,28 +35,28 @@ internal class UiDocumentSync(
   override fun documentChanged(event: DocumentEvent) {
     ThreadingAssertions.assertEventDispatchThread()
     val document = event.document
-    val manager = UiDocumentManager.getInstance()
-    if (manager.isUiDocument(document)) {
-      if (!realToUiSync.isInProgress(document.modificationStamp)) {
-        uiToRealSync.documentChanged(event)
+    val elf = ElfTheManager.getInstance()
+    if (elf.isElfDocument(document)) {
+      if (!realToElfSync.isInProgress(document.modificationStamp)) {
+        elfToRealSync.documentChanged(event)
       }
-    } else if (manager.isRealDocument(document)) {
-      if (!uiToRealSync.isInProgress(document.modificationStamp)) {
-        realToUiSync.documentChanged(event)
+    } else if (elf.isRealDocument(document)) {
+      if (!elfToRealSync.isInProgress(document.modificationStamp)) {
+        realToElfSync.documentChanged(event)
       }
     } else {
       error("Unknown document ${document}")
     }
   }
 
-  private fun getUiDocument(document: Document): DocumentImpl? {
-    val manager = UiDocumentManager.getInstance()
-    return manager.getUiDocument(document)
+  private fun getElfDocument(document: Document): DocumentImpl {
+    val elf = ElfTheManager.getInstance()
+    return elf.getElfDocument(document)!!
   }
 
-  private fun getRealDocument(document: Document): DocumentImpl? {
-    val manager = UiDocumentManager.getInstance()
-    return manager.getRealDocument(document)
+  private fun getRealDocument(document: Document): DocumentImpl {
+    val elf = ElfTheManager.getInstance()
+    return elf.getRealDocument(document)!!
   }
 
   private fun isMoveEvent(event: DocumentEvent): Boolean {
@@ -68,7 +68,7 @@ internal class UiDocumentSync(
     if (sourceDocument.offset + sourceDocument.oldLength > targetDocument.textLength) {
       error(
         "Text length mismatch: event expects length ${sourceDocument.offset + sourceDocument.oldLength} " +
-        "but UI document has ${targetDocument.textLength}"
+        "but ELF document has ${targetDocument.textLength}"
       )
     }
   }
@@ -77,20 +77,20 @@ internal class UiDocumentSync(
     return ApplicationManager.getApplication().isWriteAccessAllowed()
   }
 
-  private inner class UiToRealSync : Sync() {
+  private inner class ElfToRealSync : Sync() {
     override fun documentChanged(event: DocumentEvent) {
-      val uiDocument = event.document as DocumentImpl
-      val realDocument = getRealDocument(uiDocument)!!
+      val elfDocument = event.document as DocumentImpl
+      val realDocument = getRealDocument(elfDocument)
       if (isWriteAccess()) {
         changeDocument(
           sourceEvent = event,
-          sourceDocument = uiDocument,
+          sourceDocument = elfDocument,
           targetDocument = realDocument,
         )
       } else {
         changeDocumentAsync(
           sourceEvent = event,
-          sourceDocument = uiDocument,
+          sourceDocument = elfDocument,
           targetDocument = realDocument,
           commandProject = CommandProcessor.getInstance().currentCommandProject,
           commandGroupId = CommandProcessor.getInstance().currentCommandGroupId,
@@ -100,15 +100,15 @@ internal class UiDocumentSync(
     }
   }
 
-  private inner class RealToUiSync : Sync() {
+  private inner class RealToElfSync : Sync() {
     override fun documentChanged(event: DocumentEvent) {
       val realDocument = event.document as DocumentImpl
-      val uiDocument = getUiDocument(realDocument)!!
-      assertDocumentAreSynced(event, uiDocument)
+      val elfDocument = getElfDocument(realDocument)
+      assertDocumentAreSynced(event, elfDocument)
       changeDocument(
         sourceEvent = event,
         sourceDocument = realDocument,
-        targetDocument = uiDocument,
+        targetDocument = elfDocument,
       )
     }
   }
@@ -152,7 +152,7 @@ internal class UiDocumentSync(
         }
       }
       invokeLaterWithWriteAction {
-        UiDocumentManager.getInstance().executeCommand(
+        ElfTheManager.getInstance().executeElfCommand(
           commandProject,
           commandName,
           commandGroupId,
@@ -205,8 +205,8 @@ internal class UiDocumentSync(
   }
 
   companion object {
-    internal val DISPATCHER by lazy {
-      AppExecutorUtil.createBoundedApplicationPoolExecutor("UI_DOC_DISPATCHER", 1).asCoroutineDispatcher()
+    private val DISPATCHER by lazy {
+      AppExecutorUtil.createBoundedApplicationPoolExecutor("ELF_DOC_DISPATCHER", 1).asCoroutineDispatcher()
     }
   }
 }

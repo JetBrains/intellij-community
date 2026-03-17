@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.multiverse
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EditorLockFreeTyping
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -126,7 +127,9 @@ class CodeInsightContextManagerImpl(
 
     // FIXME: the assert had never worked due to IJPL-221633, but when it is enabled some tests fail
     // ThreadingAssertions.softAssertBackgroundThread()
-    ThreadingAssertions.softAssertReadAccess()
+    if (!EditorLockFreeTyping.isInElfScope(file)) {
+      ThreadingAssertions.softAssertReadAccess()
+    }
 
     log.trace { "requested preferred context of file ${file.path}" }
 

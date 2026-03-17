@@ -15,6 +15,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
@@ -478,10 +479,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   @ApiStatus.Internal
   @Override
   public boolean isEventSystemEnabled(@NotNull Document document) {
-    return ReadAction.computeBlocking(() -> {
-      List<FileViewProvider> viewProviders = getCachedViewProviders(document);
-      return CodeInsightContextUtil.isEventSystemEnabled(viewProviders);
-    });
+    if (EditorLockFreeTyping.isInElfScope(document)) {
+      return isEventSystemEnabled0(document);
+    }
+    return ReadAction.computeBlocking(() -> isEventSystemEnabled0(document));
+  }
+
+  private boolean isEventSystemEnabled0(@NotNull Document document) {
+    List<FileViewProvider> viewProviders = getCachedViewProviders(document);
+    return CodeInsightContextUtil.isEventSystemEnabled(viewProviders);
   }
 
   @ApiStatus.Internal
@@ -632,6 +638,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
       myUncommittedDocumentTraces.remove(document);
       runAfterCommitActions(document);
       return true; // the project must be closing or file deleted
+    }
+
+    if (EditorLockFreeTyping.isInElfScope(document)) {
+      doCommit(document, psiFile);
+      return true;
     }
 
     if (ApplicationManager.getApplication().isDispatchThread()) {

@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.editor.impl.ad.isRhizomeAdRebornEnabled
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl
-import com.intellij.openapi.editor.impl.uiDocument.UiDocumentManager
 import com.intellij.openapi.editor.impl.view.EditorPainter
 import com.intellij.openapi.editor.impl.zombie.Necropolis
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -129,7 +128,6 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
 
   override fun createDocument(text: CharSequence, acceptsSlashR: Boolean, allowUpdatesWithoutWriteAction: Boolean): Document {
     val document = DocumentImpl(text, acceptsSlashR, allowUpdatesWithoutWriteAction)
-    UiDocumentManager.getInstance().bindUiDocument(document)
     editorEventMulticaster.registerDocument(document)
     return document
   }

@@ -5,11 +5,11 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.NontrivialBraceMatcher;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -165,7 +165,7 @@ final class TypedParenImpl {
         DefaultRawTypedHandler handler = ((TypedActionImpl)TypedAction.getInstance()).getDefaultRawTypedHandler();
         handler.beginUndoablePostProcessing();
         int finalLBraceOffset = lBraceOffset;
-        ApplicationManager.getApplication().runWriteAction(() -> {
+        EditorThreading.write(() -> {
           TypingActionsExtension extension = TypingActionsExtension.findForContext(project, editor);
           try {
             RangeMarker marker = document.createRangeMarker(offset, offset + 1);

@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -46,8 +47,9 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   @Override
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false) // assert for real file
   public final @Nullable Document getDocument(@NotNull VirtualFile file) {
+    EditorLockFreeTyping.assertReadAccess(file);
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document != null) {
       return document;

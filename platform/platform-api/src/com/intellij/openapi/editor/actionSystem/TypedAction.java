@@ -46,8 +46,8 @@ public abstract class TypedAction {
   public void beforeActionPerformed(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
     assertLocalEditorSupport(editor);
     if (rawHandler instanceof TypedActionHandlerEx rawHandlerEx) {
-      EditorLockFreeTyping.withUiPsiScope(
-        editor.getDocument(),
+      EditorLockFreeTyping.withElfScope(
+        editor.getUiDocument(),
         () -> rawHandlerEx.beforeExecute(editor, c, context, plan)
       );
     }
@@ -56,8 +56,8 @@ public abstract class TypedAction {
   public final void actionPerformed(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
     assertLocalEditorSupport(editor);
     try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-      EditorLockFreeTyping.withUiPsiScope(
-        editor.getDocument(),
+      EditorLockFreeTyping.withElfScope(
+        editor.getUiDocument(),
         () -> rawHandler.execute(editor, charTyped, dataContext)
       );
     }

@@ -5,6 +5,7 @@ import com.intellij.core.CoreBundle;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -59,8 +60,9 @@ public abstract class FileDocumentManager implements SavingRequestor {
 
   @Internal
   @ApiStatus.Experimental
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false) // assert for real file
   public @Nullable Document getDocument(@NotNull VirtualFile file, @NotNull Project preferredProject) {
+    EditorLockFreeTyping.assertReadAccess(file);
     try (AccessToken ignored = ProjectLocator.withPreferredProject(file, preferredProject)) {
       return getDocument(file);
     }

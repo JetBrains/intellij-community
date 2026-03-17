@@ -2058,6 +2058,9 @@
     <applicationService serviceInterface="com.intellij.configurationStore.defaults.DefaultSettingsService" open="true"
                         serviceImplementation="com.intellij.configurationStore.defaults.DefaultSettingsServiceImpl" />
 
+    <applicationService serviceInterface="com.intellij.openapi.editor.impl.elf.ElfTheManager"
+                        serviceImplementation="com.intellij.openapi.editor.impl.elf.ElfTheManagerImpl" />
+
     <!-- Remove all this stuff when the notification is no longer needed -->
     <typedHandler implementation="com.intellij.ide.ui.WaylandUserActivityTracker" />
     <editorFactoryMouseListener implementation="com.intellij.ide.ui.WaylandUserActivityTracker" />
@@ -2143,6 +2146,9 @@
               activeInTestMode="false" activeInHeadlessMode="false"/>
 
     <listener class="com.intellij.openapi.editor.impl.ad.document.AdDocumentManagerImpl$AdFileDocumentBindingListener"
+              topic="com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener" />
+
+    <listener class="com.intellij.openapi.editor.impl.elf.ElfBindingEntryPoint"
               topic="com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener" />
 
     <listener class="com.intellij.openapi.editor.impl.ad.markup.AdDocumentMarkupManagerImpl$AdDocumentMarkupListener"

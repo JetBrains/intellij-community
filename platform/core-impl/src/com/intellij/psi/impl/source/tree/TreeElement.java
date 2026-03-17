@@ -1,13 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.AbstractFileViewProvider;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -18,6 +21,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.ReparseableASTNode;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.ReadOnlyLightVirtualFile;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NonNls;
@@ -432,10 +436,35 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     PsiElement psi = fileElement == null ? null : fileElement.getCachedPsi();
     if (psi == null) return;
     FileViewProvider provider = psi instanceof PsiFile ? ((PsiFile)psi).getViewProvider() : null;
-    boolean ok = provider != null && provider.getVirtualFile() instanceof ReadOnlyLightVirtualFile;
-    if (!ok) {
+    if (provider == null) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
+      return;
     }
+    VirtualFile virtualFile = provider.getVirtualFile();
+    if (virtualFile instanceof ReadOnlyLightVirtualFile) {
+      return;
+    }
+    if (isInElfScope(virtualFile)) return;
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+  }
+
+  private static boolean isInElfScope(VirtualFile virtualFile) {
+    if (EditorLockFreeTyping.isEnabled()) {
+      if (EditorLockFreeTyping.isInElfScope(virtualFile)) {
+        return true;
+      }
+      if (virtualFile instanceof LightVirtualFile) {
+        VirtualFile originalFile = ((LightVirtualFile)virtualFile).getOriginalFile();
+        if (EditorLockFreeTyping.isInElfScope(originalFile)) {
+          return true;
+        }
+        if (virtualFile.getUserData(AbstractFileViewProvider.FREE_THREADED) == Boolean.TRUE) {
+          // TODO: made in desperation, should be reworked
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }
 
