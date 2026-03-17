@@ -225,7 +225,9 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
   public void testWholeFileInspectionRestartedOnAllElements() {
     MyTrackingInspection tool = registerInspection(new MyWholeInspection());
 
-    configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
+    @Language("JAVA")
+    String text = "class X { void f() { <caret> } }";
+    configureByText(JavaFileType.INSTANCE, text);
     List<HighlightInfo> infos =
       myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
     assertEmpty(infos);
@@ -249,7 +251,9 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
   public void testWholeFileInspectionRestartedEvenIfThereWasAModificationInsideCodeBlockInOtherFile() throws Exception {
     MyTrackingInspection tool = registerInspection(new MyWholeInspection());
 
-    PsiFile psiFile = configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
+    @Language("JAVA")
+    String text = "class X { void f() { <caret> } }";
+    PsiFile psiFile = configureByText(JavaFileType.INSTANCE, text);
     PsiFile otherPsiFile = createFile(myModule, psiFile.getContainingDirectory().getVirtualFile(), "otherFile.txt", "xxx");
     myDaemonCodeAnalyzer.restart(getTestName(false));
     List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
@@ -278,7 +282,9 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
   public void testInspectionIsRestartedOnPsiCacheDrop() {
     MyTrackingInspection tool = registerInspection(new MyTrackingInspection(){});
 
-    configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
+    @Language("JAVA")
+    String text = "class X { void f() { <caret> } }";
+    configureByText(JavaFileType.INSTANCE, text);
     myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myEditor.getDocument());
     tool.visited.clear();
 
@@ -885,14 +891,12 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
       """;
     configureByText(JavaFileType.INSTANCE, text);
 
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
-    List<HighlightInfo> infos =
-      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+    assertEmpty(filter(infos, HighlightSeverity.ERROR));
     HighlightInfo error = ContainerUtil.find(infos, e->e.getDescription().contains("always 'false'"));
     assertNotNull(infos.toString(), error);
     type("d");
-    List<HighlightInfo> infos2 =
-      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos2 = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
     HighlightInfo error2 = ContainerUtil.find(infos2, e->e.getDescription().contains("always 'false'"));
     assertNotNull(infos2.toString(), error2);
   }
