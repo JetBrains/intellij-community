@@ -55,16 +55,10 @@ public class ReplaceVarWithExplicitTypeFix extends PsiUpdateModCommandAction<Psi
 
   private static boolean isAvailable(@NotNull PsiTypeElement startElement) {
     PsiElement parent = startElement.getParent();
-    if (parent instanceof PsiParameter psiParameter) {
-      PsiElement declarationScope = psiParameter.getDeclarationScope();
-      if (declarationScope instanceof PsiLambdaExpression lambda) {
-        return ContainerUtil.and(lambda.getParameterList().getParameters(),
-                                 parameter -> VariableTypeCanBeExplicitInspection.getTypeElementToExpand(parameter) != null);
-      }
+    if (parent instanceof PsiParameter p && p.getDeclarationScope() instanceof PsiLambdaExpression lambda) {
+      return ContainerUtil.and(lambda.getParameterList().getParameters(),
+                               parameter -> VariableTypeCanBeExplicitInspection.getTypeElementToExpand(parameter) != null);
     }
-    if (parent instanceof PsiVariable variable) {
-      return VariableTypeCanBeExplicitInspection.getTypeElementToExpand(variable) != null;
-    }
-    return false;
+    return parent instanceof PsiVariable variable && VariableTypeCanBeExplicitInspection.getTypeElementToExpand(variable) != null;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
@@ -8,7 +8,6 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -43,8 +42,7 @@ public final class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaL
 
       @Override
       public void visitVariable(@NotNull PsiVariable variable) {
-        if (variable instanceof PsiParameter && 
-            ((PsiParameter)variable).getDeclarationScope() instanceof PsiLambdaExpression) {
+        if (variable instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiLambdaExpression) {
           return;
         }
         PsiTypeElement typeElement = getTypeElementToExpand(variable);
@@ -63,12 +61,8 @@ public final class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaL
 
   public static PsiTypeElement getTypeElementToExpand(PsiVariable variable) {
     PsiTypeElement typeElement = variable.getTypeElement();
-    if (typeElement != null && typeElement.isInferredType()) {
-      PsiType type = variable.getType();
-      if (PsiTypesUtil.isDenotableType(type, variable)) {
-        return typeElement;
-      }
-    }
-    return null;
+    return typeElement != null && typeElement.isInferredType() && PsiTypesUtil.isDenotableType(variable.getType(), variable)
+           ? typeElement
+           : null;
   }
 }
