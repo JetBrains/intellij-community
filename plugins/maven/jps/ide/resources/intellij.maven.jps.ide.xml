@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.compiler"/>
+    <module name="intellij.maven"/>
     <module name="intellij.maven.jps"/>
     <module name="intellij.platform.jps.build"/>
   </dependencies>
