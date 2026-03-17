@@ -424,6 +424,8 @@
                               language="Python"/>
     <psi.referenceContributor implementation="com.jetbrains.python.testing.pyMock.PyMockReferenceContributor"
                               language="Python"/>
+    <psi.referenceContributor implementation="com.jetbrains.python.testing.pyMonkeypatch.PyMonkeypatchReferenceContributor"
+                              language="Python"/>
 
     <applicationConfigurable groupId="tools"
                              instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
