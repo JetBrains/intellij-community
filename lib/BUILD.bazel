@@ -924,6 +924,21 @@ jvm_import(
 )
 
 copy_file(
+  name = "com.squareup.okio/okio-jvm-3.9.0.jar_copy",
+  src = "@com_squareup_okio-okio-jvm-3_9_0_http//file",
+  out = "com.squareup.okio/okio-jvm-3.9.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "codeowners-ownership-okio",
+  jar = "@com_squareup_okio-okio-jvm-3_9_0_http//file",
+  source_jar = "@com_squareup_okio-okio-jvm-3_9_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "org.junit.jupiter/junit-jupiter-engine-5.12.2.jar_copy",
   src = "@org_junit_jupiter-junit-jupiter-engine-5_12_2_http//file",
   out = "org.junit.jupiter/junit-jupiter-engine-5.12.2.jar",
@@ -17796,14 +17811,6 @@ copy_file(
   name = "com.squareup.okhttp3/okhttp-5.0.0-alpha.14.jar_copy",
   src = "@com_squareup_okhttp3-okhttp-5_0_0-alpha_14_http//file",
   out = "com.squareup.okhttp3/okhttp-5.0.0-alpha.14.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.squareup.okio/okio-jvm-3.9.0.jar_copy",
-  src = "@com_squareup_okio-okio-jvm-3_9_0_http//file",
-  out = "com.squareup.okio/okio-jvm-3.9.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )

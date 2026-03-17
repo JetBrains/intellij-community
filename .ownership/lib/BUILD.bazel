@@ -34,6 +34,7 @@ jvm_library(
     "@lib//:kaml",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
+    "@lib//:codeowners-ownership-okio",
     "@lib//:jetbrains-intellij-deps-eclipse-jgit",
     "@lib//:slf4j-api",
     "@lib//:tc_service_messages",
