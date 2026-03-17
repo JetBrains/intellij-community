@@ -8,10 +8,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.terminal.TerminalTitle
-import com.intellij.terminal.TerminalTitleListener
+import com.intellij.platform.project.projectId
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.content.Content
+import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -22,8 +22,11 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi
 import org.jetbrains.plugins.terminal.buildSettingsAwareTitle
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.TITLE_UPDATE_DELAY
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.TitleData
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.stateFlow
 import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandFinishedEvent
@@ -34,7 +37,6 @@ internal fun TerminalView.getTitleText(): @NlsSafe String {
   return title.buildSettingsAwareTitle(isCommandRunning)
 }
 
-@Suppress("HardCodedStringLiteral")
 @OptIn(FlowPreview::class)
 internal fun updateTabNameOnTitleChange(
   terminalView: TerminalView,
@@ -42,11 +44,10 @@ internal fun updateTabNameOnTitleChange(
   coroutineScope: CoroutineScope,
 ) {
   coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
-    terminalView.titleChangesFlow()
-      .distinctUntilChanged()
+    terminalView.titleStateFlow()
       .debounce(TITLE_UPDATE_DELAY)
       .collect {
-        content.displayName = it
+        content.displayName = it.text
       }
   }
 }
@@ -59,43 +60,63 @@ internal fun updateFileNameOnTitleChange(
   coroutineScope: CoroutineScope,
 ) {
   coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
-    terminalView.titleChangesFlow()
-      .distinctUntilChanged()
+    terminalView.titleStateFlow()
       .debounce(TITLE_UPDATE_DELAY)
       .collect {
-        file.rename(null, it)
+        file.rename(null, it.text)
         FileEditorManager.getInstance(project).updateFilePresentation(file)
       }
   }
 }
 
-private fun TerminalView.titleChangesFlow(): Flow<String> {
+@OptIn(FlowPreview::class)
+internal fun updateBackendTabNameOnTitleChange(
+  terminalView: TerminalView,
+  backendTabId: Int,
+  project: Project,
+  scope: CoroutineScope,
+) {
+  scope.launch {
+    terminalView.titleStateFlow()
+      .debounce(TITLE_UPDATE_DELAY)
+      .collect {
+        // Save either user-defined or default tab name, ignore the application title.
+        // Because when the tab is restored, the saved application title won't relate to the new terminal session context.
+        val tabName = it.userDefinedName ?: it.defaultName ?: return@collect
+        durable {
+          TerminalTabsManagerApi.getInstance().renameTerminalTab(
+            projectId = project.projectId(),
+            tabId = backendTabId,
+            newName = tabName,
+            isUserDefinedName = it.userDefinedName != null
+          )
+        }
+      }
+  }
+}
+
+private fun TerminalView.titleStateFlow(): Flow<TitleData> {
   val terminalView = this
 
-  val titleStateFlow: Flow<String> = channelFlow {
-    val disposable = Disposer.newDisposable()
-    terminalView.title.addTitleListener(object : TerminalTitleListener {
-      override fun onTitleChanged(terminalTitle: TerminalTitle) {
-        trySend(terminalView.getTitleText())
-      }
-    }, disposable)
+  val titleStateFlow: Flow<TitleData> = title.stateFlow { terminalView.getTitleText() }
 
-    send(terminalView.getTitleText())
-    awaitClose { Disposer.dispose(disposable) }
-  }
-
-  val titleOnCommandFinishFlow: Flow<String> = channelFlow {
+  val titleOnCommandFinishFlow: Flow<TitleData> = channelFlow {
     val shellIntegration = terminalView.shellIntegrationDeferred.await()
 
     val disposable = Disposer.newDisposable()
     shellIntegration.addCommandExecutionListener(disposable, object : TerminalCommandExecutionListener {
       override fun commandFinished(event: TerminalCommandFinishedEvent) {
-        trySend(terminalView.getTitleText())
+        val data = TitleData(
+          text = terminalView.getTitleText(),
+          defaultName = terminalView.title.defaultTitle,
+          userDefinedName = terminalView.title.userDefinedTitle,
+        )
+        trySend(data)
       }
     })
 
     awaitClose { Disposer.dispose(disposable) }
   }
 
-  return merge(titleStateFlow, titleOnCommandFinishFlow)
+  return merge(titleStateFlow, titleOnCommandFinishFlow).distinctUntilChanged()
 }
