@@ -18,6 +18,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//platform/statistics",
     "//platform/util/concurrency",
+    "@lib//:kotlin-stdlib",
   ]
 )
 
