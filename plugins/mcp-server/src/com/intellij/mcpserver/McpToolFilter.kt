@@ -1,7 +1,5 @@
 package com.intellij.mcpserver
 
-import com.intellij.util.PatternUtil
-
 /**
  * Filter for selecting which MCP tools should be exposed in a server session.
  *
@@ -52,35 +50,13 @@ sealed interface McpToolFilter {
    * - Then allows all tools under `com.intellij.mcpserver.toolsets.general`
    * - Then disallows the specific tool `get_file_text_by_path` from any package
    *
-   * @property maskList comma-separated list of mask patterns with +/- prefixes
+   * @param maskList comma-separated list of mask patterns with +/- prefixes
    */
-  class MaskBased(private val maskList: String) : McpToolFilter {
-    private enum class Action { ALLOW, DISALLOW }
-
-    private data class MaskEntry(val pattern: java.util.regex.Pattern, val action: Action)
-
-    private val masks: List<MaskEntry> = maskList
-      .split(",")
-      .map { it.trim() }
-      .filter { it.isNotEmpty() }
-      .map { mask ->
-        val (pattern, action) = when {
-          mask.startsWith("-") -> mask.substring(1) to Action.DISALLOW
-          mask.startsWith("+") -> mask.substring(1) to Action.ALLOW
-          else -> mask to Action.ALLOW
-        }
-        MaskEntry(PatternUtil.fromMask(pattern), action)
-      }
+  class MaskBased(maskList: String) : McpToolFilter {
+    private val maskList: MaskList = MaskList(maskList)
 
     override fun shouldInclude(toolName: String): Boolean {
-      // Default is to include if no masks match
-      var result = true
-      for (entry in masks) {
-        if (entry.pattern.matcher(toolName).matches()) {
-          result = entry.action == Action.ALLOW
-        }
-      }
-      return result
+      return maskList.matches(toolName)
     }
 
     companion object {

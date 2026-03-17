@@ -58,4 +58,6 @@ interface McpToolset {
   }
 
   fun isEnabled(): Boolean = true
+  
+  fun isExperimental(): Boolean = false
 }

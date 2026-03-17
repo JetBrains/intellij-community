@@ -3,26 +3,29 @@ package com.intellij.mcpserver.settings
 
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpTool
-import com.intellij.mcpserver.McpToolCategory
+import com.intellij.mcpserver.McpToolFilterProvider.McpToolState
 import com.intellij.mcpserver.McpToolsMarkdownExporter
 import com.intellij.mcpserver.impl.DisallowListBasedMcpToolFilterProvider
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.settings.ui.CategoryNode
+import com.intellij.mcpserver.settings.ui.McpToolNode
+import com.intellij.mcpserver.settings.ui.McpToolStateColumnInfo
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.util.NlsSafe
-import kotlin.io.path.writeText
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.CheckboxTree
-import com.intellij.ui.CheckboxTreeTable
-import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.rows
+import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeColumnInfo
+import com.intellij.ui.treeStructure.treetable.TreeTable
+import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer
+import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.NonNls
@@ -31,22 +34,26 @@ import java.awt.Dimension
 import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.JTree
+import javax.swing.table.TableCellEditor
+import javax.swing.table.TableCellRenderer
 import javax.swing.tree.DefaultMutableTreeNode
+import kotlin.io.path.writeText
 
 /**
- * Configurable for managing the MCP tool disallow list.
- * Displays available tools in a tree structure (grouped by category) with checkboxes
- * to allow/disallow individual tools.
+ * Configurable for managing the MCP tool states.
+ * Displays available tools in a tree structure (grouped by category) with state selection
+ * to control tool availability (On/Off/On Demand).
  */
 class McpToolFilterConfigurable : SearchableConfigurable {
   private var mainPanel: JPanel? = null
-  private var treeTable: CheckboxTreeTable? = null
+  private var treeTable: TreeTable? = null
   private var treeTableScrollPane: javax.swing.JScrollPane? = null
-  private val toolNodes = mutableMapOf<String, CheckedTreeNode>()
-  private var initialDisallowedTools: Set<String> = emptySet()
+  private val toolNodes = mutableMapOf<String, McpToolNode>()
+  private var initialToolStates: Map<String, McpToolState> = emptyMap()
   private var toolsFilterTextArea: JBTextArea? = null
   private var initialToolsFilter: @NlsSafe String = ""
+  private var showExperimentalCheckbox: javax.swing.JCheckBox? = null
+  private var initialShowExperimental: Boolean = false
 
   override fun getDisplayName(): String = McpServerBundle.message("configurable.mcp.tool.filter")
 
@@ -57,18 +64,35 @@ class McpToolFilterConfigurable : SearchableConfigurable {
 
     // Get tools filtered by all providers except DisallowListBasedMcpToolFilterProvider
     val tools = McpServerService.getInstance().getMcpToolsFiltered(
-      excludeProviders = setOf(DisallowListBasedMcpToolFilterProvider::class.java)
+      useFiltersFromEP = false,
+      excludeProviders = emptySet() //setOf(DisallowListBasedMcpToolFilterProvider::class.java)
     )
 
     val settings = McpToolDisallowListSettings.getInstance()
-    initialDisallowedTools = settings.disallowedToolNames
+    initialToolStates = settings.toolStates
+    
+    val filterSettings = McpToolFilterSettings.getInstance()
+    initialShowExperimental = filterSettings.showExperimental
 
-    val treeTableComponent = createTreeTable(tools, initialDisallowedTools)
+    val treeTableComponent = createTreeTable(tools, initialToolStates, initialShowExperimental)
     val scrollPane = ScrollPaneFactory.createScrollPane(treeTableComponent)
-    scrollPane.preferredSize = Dimension(600, 400)
+    scrollPane.preferredSize = Dimension(800, 400)
 
     panel.add(scrollPane, BorderLayout.CENTER)
     treeTableScrollPane = scrollPane
+
+    // Add top panel with "Show experimental tools" checkbox
+    val topPanel = panel {
+      row {
+        val checkbox = checkBox(McpServerBundle.message("configurable.mcp.tool.filter.show.experimental"))
+          .selected(initialShowExperimental)
+          .onChanged { 
+            refreshTreeTable()
+          }
+        showExperimentalCheckbox = checkbox.component
+      }
+    }
+    panel.add(topPanel, BorderLayout.NORTH)
 
     // Add advanced filter UI if registry key is enabled
     if (Registry.`is`("mcp.server.show.advanced.filter.options.ui", false)) {
@@ -116,44 +140,62 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     virtualFile.toNioPath().writeText(markdown)
   }
 
-  private fun createTreeTable(tools: List<McpTool>, disallowedToolNames: Set<String>): CheckboxTreeTable {
-    val root = CheckedTreeNode("Root")
+  private fun createTreeTable(tools: List<McpTool>, toolStates: Map<String, McpToolState>, showExperimental: Boolean = false): TreeTable {
+    val root = DefaultMutableTreeNode("Root")
     toolNodes.clear()
 
     val toolsByCategory = tools
       .groupBy { it.descriptor.category }
       .toSortedMap(compareBy(String.CASE_INSENSITIVE_ORDER) { it.shortName })
       .mapValues { (_, categoryTools) -> categoryTools.sortedBy { it.descriptor.name.lowercase() } }
+      .filterKeys { category -> showExperimental || !category.isExperimental }
 
     for ((category, categoryTools) in toolsByCategory) {
-      val categoryNode = CheckedTreeNode(CategoryNode(category))
+      val categoryNode = DefaultMutableTreeNode(CategoryNode(category.shortName))
       root.add(categoryNode)
-
-      var allToolsAllowed = true
 
       for (tool in categoryTools) {
         val toolName = tool.descriptor.name
-        // Checked means "allowed" (not in disallow list)
-        val isAllowed = toolName !in disallowedToolNames
-        val toolNode = CheckedTreeNode(ToolNode(tool))
-        toolNode.isChecked = isAllowed
-        toolNodes[toolName] = toolNode
-        categoryNode.add(toolNode)
-
-        if (!isAllowed) allToolsAllowed = false
+        val state = toolStates.getOrDefault(toolName, McpToolState.ON_DEMAND)
+        val mcpToolNode = McpToolNode(
+          toolName = toolName,
+          toolDescription = tool.descriptor.description.trimIndent(),
+          state = state
+        )
+        toolNodes[toolName] = mcpToolNode
+        categoryNode.add(DefaultMutableTreeNode(mcpToolNode))
       }
-
-      // Set category checkbox state based on its children
-      categoryNode.isChecked = allToolsAllowed
     }
 
-    val renderer = DisallowListTreeCellRenderer()
-    val columns = arrayOf<ColumnInfo<*, *>>(
+    @Suppress("UNCHECKED_CAST")
+    val columns = arrayOf(
       TreeColumnInfo(McpServerBundle.message("dialog.mcp.tools.column.name")),
-      ToolDescriptionColumnInfo()
-    )
+      ToolDescriptionColumnInfo(),
+      McpToolStateColumnInfo()
+    ) as Array<ColumnInfo<Any, Any>>
 
-    val table = CheckboxTreeTable(root, renderer, columns)
+    val model = ListTreeTableModelOnColumns(root, columns)
+    val table = object : TreeTable(model) {
+      override fun createTableRenderer(treeTableModel: TreeTableModel): TreeTableCellRenderer {
+        val renderer = super.createTableRenderer(treeTableModel)
+        renderer.setRootVisible(false)
+        renderer.setShowsRootHandles(true)
+        return renderer
+      }
+      
+      override fun getCellRenderer(row: Int, column: Int): TableCellRenderer {
+        val treePath = tree.getPathForRow(row) ?: return super.getCellRenderer(row, column)
+        val node = treePath.lastPathComponent
+        return columns[column].getRenderer(node) ?: super.getCellRenderer(row, column)
+      }
+      
+      override fun getCellEditor(row: Int, column: Int): TableCellEditor {
+        val treePath = tree.getPathForRow(row) ?: return super.getCellEditor(row, column)
+        val node = treePath.lastPathComponent
+        return columns[column].getEditor(node) ?: super.getCellEditor(row, column)
+      }
+    }
+    
     table.setRootVisible(false)
     TreeUtil.expandAll(table.tree)
 
@@ -161,8 +203,10 @@ class McpToolFilterConfigurable : SearchableConfigurable {
   }
 
   override fun isModified(): Boolean {
-    val currentDisallowed = getCurrentDisallowedTools()
-    val disallowListModified = currentDisallowed != initialDisallowedTools
+    val currentStates = getCurrentToolStates()
+    val statesModified = currentStates != initialToolStates
+    
+    val showExperimentalModified = (showExperimentalCheckbox?.isSelected ?: false) != initialShowExperimental
     
     val filterModified = if (Registry.`is`("mcp.server.show.advanced.filter.options.ui", false)) {
       toolsFilterTextArea?.text != initialToolsFilter
@@ -170,13 +214,18 @@ class McpToolFilterConfigurable : SearchableConfigurable {
       false
     }
     
-    return disallowListModified || filterModified
+    return statesModified || filterModified || showExperimentalModified
   }
 
   override fun apply() {
-    val disallowedTools = getCurrentDisallowedTools()
-    McpToolDisallowListSettings.getInstance().disallowedToolNames = disallowedTools
-    initialDisallowedTools = disallowedTools
+    val toolStates = getCurrentToolStates()
+    McpToolDisallowListSettings.getInstance().toolStates = toolStates
+    initialToolStates = toolStates
+    
+    val newShowExperimental = showExperimentalCheckbox?.isSelected ?: false
+    val showExperimentalChanged = newShowExperimental != initialShowExperimental
+    McpToolFilterSettings.getInstance().showExperimental = newShowExperimental
+    initialShowExperimental = newShowExperimental
     
     val filterChanged = if (Registry.`is`("mcp.server.show.advanced.filter.options.ui", false)) {
       val newFilter = toolsFilterTextArea?.text ?: ""
@@ -188,43 +237,28 @@ class McpToolFilterConfigurable : SearchableConfigurable {
       false
     }
     
-    // Refresh tree if filter was changed, as it affects displayed tools
-    if (filterChanged) {
+    // Refresh tree if filter or show experimental was changed, as it affects displayed tools
+    if (filterChanged || showExperimentalChanged) {
       refreshTreeTable()
     }
   }
 
   override fun reset() {
     val settings = McpToolDisallowListSettings.getInstance()
-    initialDisallowedTools = settings.disallowedToolNames
+    initialToolStates = settings.toolStates
 
     for ((toolName, node) in toolNodes) {
-      // Checked means "allowed" (not in disallow list)
-      node.isChecked = toolName !in initialDisallowedTools
-    }
-
-    // Update category nodes
-    treeTable?.tree?.model?.root?.let { root ->
-      if (root is DefaultMutableTreeNode) {
-        for (i in 0 until root.childCount) {
-          val categoryNode = root.getChildAt(i) as? CheckedTreeNode ?: continue
-          var allChecked = true
-          for (j in 0 until categoryNode.childCount) {
-            val toolNode = categoryNode.getChildAt(j) as? CheckedTreeNode ?: continue
-            if (!toolNode.isChecked) {
-              allChecked = false
-              break
-            }
-          }
-          categoryNode.isChecked = allChecked
-        }
-      }
+      val state = initialToolStates.getOrDefault(toolName, McpToolState.ON_DEMAND)
+      node.state = state
     }
 
     treeTable?.repaint()
     
+    val filterSettings = McpToolFilterSettings.getInstance()
+    initialShowExperimental = filterSettings.showExperimental
+    showExperimentalCheckbox?.isSelected = initialShowExperimental
+    
     if (Registry.`is`("mcp.server.show.advanced.filter.options.ui", false)) {
-      val filterSettings = McpToolFilterSettings.getInstance()
       initialToolsFilter = filterSettings.toolsFilter
       toolsFilterTextArea?.text = initialToolsFilter
     }
@@ -236,6 +270,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     treeTableScrollPane = null
     toolNodes.clear()
     toolsFilterTextArea = null
+    showExperimentalCheckbox = null
   }
 
   private fun refreshTreeTable() {
@@ -247,15 +282,17 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     )
     
     val settings = McpToolDisallowListSettings.getInstance()
-    initialDisallowedTools = settings.disallowedToolNames
+    initialToolStates = settings.toolStates
+    
+    val currentShowExperimental = showExperimentalCheckbox?.isSelected ?: false
     
     // Remove old tree table scroll pane
     treeTableScrollPane?.let { panel.remove(it) }
     
     // Create new tree table with updated tools
-    val newTreeTable = createTreeTable(tools, initialDisallowedTools)
+    val newTreeTable = createTreeTable(tools, initialToolStates, currentShowExperimental)
     val scrollPane = ScrollPaneFactory.createScrollPane(newTreeTable)
-    scrollPane.preferredSize = Dimension(600, 400)
+    scrollPane.preferredSize = Dimension(800, 400)
     
     panel.add(scrollPane, BorderLayout.CENTER)
     treeTable = newTreeTable
@@ -265,41 +302,12 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     panel.repaint()
   }
 
-  private fun getCurrentDisallowedTools(): Set<String> {
-    val disallowed = mutableSetOf<String>()
+  private fun getCurrentToolStates(): Map<String, McpToolState> {
+    val states = mutableMapOf<String, McpToolState>()
     for ((toolName, node) in toolNodes) {
-      // If not checked, it's disallowed
-      if (!node.isChecked) {
-        disallowed.add(toolName)
-      }
+      states[toolName] = node.state
     }
-    return disallowed
-  }
-
-  private class CategoryNode(val category: McpToolCategory)
-
-  private class ToolNode(val tool: McpTool)
-
-  private class DisallowListTreeCellRenderer : CheckboxTree.CheckboxTreeCellRenderer() {
-    override fun customizeRenderer(
-      tree: JTree,
-      value: Any,
-      selected: Boolean,
-      expanded: Boolean,
-      leaf: Boolean,
-      row: Int,
-      hasFocus: Boolean
-    ) {
-      val node = value as? DefaultMutableTreeNode ?: return
-      when (val userObject = node.userObject) {
-        is CategoryNode -> {
-          textRenderer.append(userObject.category.shortName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-        }
-        is ToolNode -> {
-          textRenderer.append(userObject.tool.descriptor.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-        }
-      }
-    }
+    return states
   }
 
   private class ToolDescriptionColumnInfo : ColumnInfo<DefaultMutableTreeNode, String>(
@@ -308,7 +316,7 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     override fun valueOf(node: DefaultMutableTreeNode): String {
       return when (val userObject = node.userObject) {
         is CategoryNode -> ""
-        is ToolNode -> userObject.tool.descriptor.description.trimIndent()
+        is McpToolNode -> userObject.toolDescription
         else -> ""
       }
     }

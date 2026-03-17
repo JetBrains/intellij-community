@@ -322,6 +322,31 @@ open class McpServerService(val cs: CoroutineScope) {
     clientInfo: Implementation? = null,
     sessionOptions: McpSessionOptions? = null,
   ): List<McpTool> {
+    val allTools = getAllMcpTools()
+    if (!useFiltersFromEP) {
+      return allTools.filter { filter.shouldInclude(it.descriptor.fullyQualifiedName) }
+    }
+    val filterProviders = McpToolFilterProvider.EP.extensionList
+      .filter { provider -> excludeProviders.none { it.isInstance(provider) } }
+    val filters = filterProviders.flatMap { it.getFilters(clientInfo, sessionOptions) }
+    
+    // Start with all tools in ON_DEMAND state
+    var context = McpToolFilterProvider.McpToolFilterContext(allTools)
+    
+    // Apply filter providers (can move ON_DEMAND → ON/OFF, or ON → OFF)
+    for (filterItem in filters) {
+      context = filterItem.modify(context).apply(context)
+    }
+    
+    // Apply the filter parameter ONLY to ON_DEMAND tools
+    // Tools that pass the filter are included, tools already in ON state are also included
+    val includedOnDemandTools = context.onDemandTools.filter { filter.shouldInclude(it.descriptor.fullyQualifiedName) }
+    
+    // Return tools that are either ON or ON_DEMAND and pass the filter
+    return (context.onTools + includedOnDemandTools).toList()
+  }
+
+  private fun getAllMcpTools(): List<McpTool> {
     val allTools = McpToolsProvider.EP.extensionList.flatMap {
       try {
         it.getTools()
@@ -330,22 +355,8 @@ open class McpServerService(val cs: CoroutineScope) {
         logger.error("Cannot load tools for $it", e)
         emptyList()
       }
-    }
-    val filteredByName = allTools.filter { filter.shouldInclude(it.descriptor.fullyQualifiedName) }
-    if (!useFiltersFromEP) {
-      return filteredByName
-    }
-    val filterProviders = McpToolFilterProvider.EP.extensionList
-      .filter { provider -> excludeProviders.none { it.isInstance(provider) } }
-    val filters = filterProviders.flatMap { it.getFilters(clientInfo, sessionOptions) }
-    var context = McpToolFilterProvider.McpToolFilterContext(
-      disallowedTools = emptySet(),
-      allowedTools = filteredByName.toSet()
-    )
-    for (filterItem in filters) {
-      context = filterItem.modify(context).apply(context)
-    }
-    return context.allowedTools.toList()
+      }
+    return allTools
   }
 
 }

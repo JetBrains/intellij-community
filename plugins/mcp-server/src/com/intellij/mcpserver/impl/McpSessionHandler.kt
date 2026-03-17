@@ -118,7 +118,11 @@ internal class McpSessionHandler(
 ) {
   private val sessionScope = parentScope.childScope("SessionMcpToolsManager")
   private val clientInfo = MutableStateFlow<Implementation?>(null)
-  val mcpTools = MutableStateFlow(mcpServerService.getMcpTools(clientInfo = null, sessionOptions = sessionOptions, useFiltersFromEP = useFiltersFromEP))
+  val mcpTools = MutableStateFlow(mcpServerService.getMcpTools(
+    filter = sessionOptions.toolFilter,
+    clientInfo = null,
+    sessionOptions = sessionOptions,
+    useFiltersFromEP = useFiltersFromEP))
 
   private val filterProvidersScope = AtomicReference<CoroutineScope?>(null)
   private var previousTools: List<McpTool>? = null
@@ -181,7 +185,11 @@ internal class McpSessionHandler(
       "Emitting MCP tools update: reason=$reason, clientName=${currentClientInfo?.name}, " +
       "localAgentId=${sessionOptions.localAgentId}"
     }
-    mcpTools.tryEmit(mcpServerService.getMcpTools(clientInfo = currentClientInfo, sessionOptions = sessionOptions, useFiltersFromEP = useFiltersFromEP))
+    mcpTools.tryEmit(mcpServerService.getMcpTools(
+      filter = sessionOptions.toolFilter,
+      clientInfo = currentClientInfo,
+      sessionOptions = sessionOptions,
+      useFiltersFromEP = useFiltersFromEP))
   }
 
   private fun subscribeToFilterProviders(clientInfoValue: Implementation?, sessionOptionsValue: McpServerService.McpSessionOptions?) {
@@ -201,11 +209,8 @@ internal class McpSessionHandler(
    * This method extracts the logic from collectLatest handler.
    */
   private fun processToolsUpdate(updatedTools: List<McpTool>) {
-    // Apply session-specific filter
-    val filteredTools = updatedTools.filter { sessionOptions.toolFilter.shouldInclude(it.descriptor.fullyQualifiedName) }
-
     val previousToolNames = previousTools?.map { it.descriptor.name }?.toSet() ?: emptySet()
-    val newToolNames = filteredTools.map { it.descriptor.name }.toSet()
+    val newToolNames = updatedTools.map { it.descriptor.name }.toSet()
 
     // Find tools to remove (in previous but not in new)
     val toolsToRemove = previousToolNames - newToolNames
@@ -216,13 +221,13 @@ internal class McpSessionHandler(
 
     // Find tools to add (in new but not in previous)
     val toolNamesToAdd = newToolNames - previousToolNames
-    val toolsToAdd = filteredTools.filter { it.descriptor.name in toolNamesToAdd }
+    val toolsToAdd = updatedTools.filter { it.descriptor.name in toolNamesToAdd }
     if (toolsToAdd.isNotEmpty()) {
       logger.trace { "Adding tools to MCP server: ${toolsToAdd.map { it.descriptor.name }}" }
       mcpServer.addTools(toolsToAdd.map { mcpToolToRegisteredTool(it) })
     }
 
-    previousTools = filteredTools
+    previousTools = updatedTools
   }
 
   /**

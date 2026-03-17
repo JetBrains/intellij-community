@@ -1,7 +1,7 @@
 package com.intellij.mcpserver.impl
 
 import com.intellij.mcpserver.McpToolFilterProvider
-import com.intellij.mcpserver.McpToolFilterProvider.DisallowMcpTools
+import com.intellij.mcpserver.McpToolFilterProvider.TurnOffMcpTools
 import com.intellij.mcpserver.McpToolFilterProvider.McpToolFilter
 import com.intellij.mcpserver.McpToolFilterProvider.McpToolFilterContext
 import com.intellij.mcpserver.McpToolFilterProvider.McpToolFilterModification
@@ -57,8 +57,7 @@ internal class IndividualRegistryKeyMcpToolFilterProvider : McpToolFilterProvide
 
   private class IndividualToolFilter(private val disabledToolNames: Set<String>) : McpToolFilter {
     override fun modify(context: McpToolFilterContext): McpToolFilterModification {
-      val toolsToDisallow = context.allowedTools.filter { it.descriptor.name in disabledToolNames }.toSet()
-      return DisallowMcpTools(toolsToDisallow)
+      return TurnOffMcpTools { it.descriptor.name in disabledToolNames }
     }
   }
 }

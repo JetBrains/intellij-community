@@ -100,7 +100,8 @@ inline fun <reified T : McpToolset> T.asToolsByInterface(json: Json = McpServerJ
 fun <T : McpToolset> KClass<out T>.asTools(json: Json = McpServerJson, thisRef: T? = null): List<ReflectionCallableMcpTool> {
     val category = McpToolCategory(
         shortName = this.simpleName ?: "Unknown",
-        fullyQualifiedName = this.qualifiedName ?: "Unknown"
+        fullyQualifiedName = this.qualifiedName ?: "Unknown",
+        isExperimental = thisRef?.isExperimental() ?: false
     )
     return this.functions.filter { m ->
         m.getPreferredToolAnnotation() != null
