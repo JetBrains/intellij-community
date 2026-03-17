@@ -356,7 +356,7 @@ open class McpServerService(val cs: CoroutineScope) {
     return (context.onTools + includedOnDemandTools).toList()
   }
 
-  private fun getAllMcpTools(): List<McpTool> {
+  internal fun getAllMcpTools(): List<McpTool> {
     val allTools = McpToolsProvider.EP.extensionList.flatMap {
       try {
         it.getTools()
