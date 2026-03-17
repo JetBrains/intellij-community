@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types
 
 import com.intellij.openapi.components.service
@@ -393,7 +393,6 @@ sealed class TypeEvalContext(
     }
   }
 
-  @ApiStatus.Internal
   companion object {
     private fun <T> getConcurrentMapForCaching(): ConcurrentMap<T & Any, PyType> {
       // In the current implementation, this value is only used to initialize the map and is basically ignored
