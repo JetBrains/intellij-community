@@ -3,7 +3,6 @@ package com.jetbrains.python.venv.sdk.configuration
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.common.tools.ToolId
@@ -14,7 +13,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
@@ -24,11 +23,11 @@ import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtensio
 import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
 import com.jetbrains.python.sdk.configuration.findEnvOrNull
 import com.jetbrains.python.sdk.configuration.prepareSdkCreator
+import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.impl.resolvePythonHome
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.pyvenvContains
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
@@ -77,14 +76,12 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
     } ?: return PyResult.failure(MessageError(PyBundle.message("sdk.cannot.find.venv.for.module")))
 
     val sdk = withContext(Dispatchers.IO) {
-      SdkConfigurationUtil.setupSdk(
-        PythonSdkUtil.getAllSdks().toTypedArray(),
-        pythonBinary,
-        PythonSdkType.getInstance(),
+      createSdk(
+        PathHolder.Eel(pythonBinary.toNioPath()),
+        suggestAssociatedSdkName(pythonBinary.path, module.baseDir?.path),
         PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance())),
-        suggestAssociatedSdkName(pythonBinary.path, module.baseDir?.path)
       )
-    }
+    }.getOr { return it }
 
     sdk.persist()
     sdk.setAssociationToModule(module)

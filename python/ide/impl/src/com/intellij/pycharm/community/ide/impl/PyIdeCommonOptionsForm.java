@@ -194,12 +194,12 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   public void updateSdkList(boolean preserveSelection, PyConfigurableInterpreterList myInterpreterList) {
-    myPythonSdks = myInterpreterList.getAllPythonSdks(myProject, null, false);
+    myPythonSdks = new ArrayList<>(PythonSdkUtil.getAllSdks());
     Sdk selection = preserveSelection ? (Sdk)content.interpreterComboBox.getSelectedItem() : null;
     if (!myPythonSdks.contains(selection)) {
       selection = null;
     }
-    myPythonSdks.add(0, null);
+    myPythonSdks.addFirst(null);
     content.interpreterComboBox.setModel(new CollectionComboBoxModel(myPythonSdks, selection));
   }
 

@@ -46,14 +46,12 @@ import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isVirtualEnv
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
@@ -62,7 +60,6 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.createDetectedSdk
-import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -265,7 +262,7 @@ suspend fun createSdk(
 @Internal
 suspend fun <P : PathHolder> createSdk(
   pythonBinaryPath: P,
-  suggestedSdkName: String,
+  suggestedSdkName: String?,
   sdkAdditionalData: PythonSdkAdditionalData? = null,
 ): PyResult<Sdk> {
   val sdkType = PythonSdkType.getInstance()
@@ -369,21 +366,6 @@ fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
   return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeDir, PythonSdkType.getInstance(), null, null)
 }
 
-@Internal
-suspend fun PyDetectedSdk.setupSdk(
-  module: Module,
-  existingSdks: List<Sdk>,
-  doAssociate: Boolean,
-) {
-  val newSdk = setupAssociated(existingSdks, module.baseDir?.path, doAssociate).getOr {
-    ShowingMessageErrorSync.emit(it.error, module.project)
-    return
-  }
-  withContext(Dispatchers.EDT) {
-    SdkConfigurationUtil.addSdk(newSdk)
-  }
-  setReadyToUseSdk(module.project, module, newSdk)
-}
 
 @Internal
 suspend fun PyDetectedSdk.setupAssociated(
