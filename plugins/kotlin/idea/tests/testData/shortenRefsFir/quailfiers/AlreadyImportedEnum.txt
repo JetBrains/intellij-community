@@ -1,1 +1,1 @@
-MyEnum
+FOO

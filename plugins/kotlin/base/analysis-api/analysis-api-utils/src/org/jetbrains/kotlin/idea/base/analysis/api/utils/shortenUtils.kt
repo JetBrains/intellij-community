@@ -333,7 +333,7 @@ fun ShortenStrategy.Companion.defaultCallableShortenStrategyForIde(context: KtEl
 
     return { callableSymbol ->
         when (callableSymbol) {
-            is KaEnumEntrySymbol -> ShortenStrategy.DO_NOT_SHORTEN
+            is KaEnumEntrySymbol -> ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED
 
             is KaConstructorSymbol -> {
                 val isNestedClassConstructor = callableSymbol.containingClassId?.isNestedClass == true

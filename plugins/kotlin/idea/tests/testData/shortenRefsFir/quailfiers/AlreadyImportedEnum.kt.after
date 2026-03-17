@@ -7,5 +7,5 @@ enum class MyEnum {
 }
 
 fun usage() {
-    MyEnum.FOO
+    FOO
 }
