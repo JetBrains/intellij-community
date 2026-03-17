@@ -1,5 +1,6 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
+import com.intellij.ide.GeneralSettings
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
@@ -12,6 +13,7 @@ import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.keymap.impl.keymapComparator
 import com.intellij.openapi.keymap.impl.ui.KeymapSchemeManager
+import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.openapi.project.Project
 
 internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
@@ -104,5 +106,24 @@ internal abstract class WelcomeScreenRightTabComboBoxModel<T> {
 
     private val laf: LafManager
       get() = LafManager.getInstance()
+  }
+
+  class StartupSwitchModel : WelcomeScreenRightTabComboBoxModel<Boolean>() {
+    val settings = GeneralSettings.getInstance()
+
+    override val items: List<Boolean> = listOf(false, true)
+
+    override var currentItem: Boolean
+      get() = settings.isReopenLastProject
+      set(value) {
+        settings.isReopenLastProject = value
+      }
+
+    override fun Boolean.toName(): String {
+      return if (this)
+        NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.startup.switch.reopen")
+      else
+        NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.startup.switch.welcome")
+    }
   }
 }

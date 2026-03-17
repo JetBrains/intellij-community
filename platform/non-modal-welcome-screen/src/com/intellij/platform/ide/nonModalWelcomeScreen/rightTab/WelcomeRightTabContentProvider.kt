@@ -30,6 +30,8 @@ interface WelcomeRightTabContentProvider {
   val secondaryTitle: Supplier<@Nls String>
 
   val isDisableOptionVisible: Boolean
+  val isStartupSwitchPanelOptionVisible: Boolean
+    get() = false
 
   val buttonsPerRow: Int
     get() = 3

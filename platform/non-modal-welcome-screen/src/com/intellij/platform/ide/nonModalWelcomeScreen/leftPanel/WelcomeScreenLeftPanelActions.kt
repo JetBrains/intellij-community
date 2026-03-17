@@ -3,6 +3,7 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel
 import com.intellij.ide.IdeView
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -21,13 +22,14 @@ import javax.swing.JComponent
 internal class WelcomeScreenLeftPanelActions(val project: Project) {
   fun createButtonsComponent(): JComponent {
     val actionManager = ActionManager.getInstance()
-
-    // TODO: register group in xml
-    val group = DefaultActionGroup()
-    actionManager.getAction("WelcomeScreen.OpenDirectoryProject")?.let { group.add(it) }
-    actionManager.getAction("NonModalWelcomeScreen.LeftTabActions.New.Action")?.let { group.add(it) }
-    actionManager.getAction("ProjectFromVersionControl")?.let { group.add(it) }
-    actionManager.getAction("NonModalWelcomeScreen.RemoteDevelopmentActions")?.let { group.add(it) }
+    var group = (actionManager.getAction("NonModalWelcomeScreen.LeftTabActions") as? ActionGroup)
+    if (group == null) {
+      group = DefaultActionGroup()
+      actionManager.getAction("WelcomeScreen.OpenDirectoryProject")?.let { group.add(it) }
+      actionManager.getAction("NonModalWelcomeScreen.LeftTabActions.New.Action")?.let { group.add(it) }
+      actionManager.getAction("ProjectFromVersionControl")?.let { group.add(it) }
+      actionManager.getAction("NonModalWelcomeScreen.RemoteDevelopmentActions")?.let { group.add(it) }
+    }
 
     val toolbar = createToolWindowWelcomeScreenVerticalToolbar(group)
 
