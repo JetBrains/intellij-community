@@ -37,7 +37,6 @@ jvm_library(
     "//platform/refactoring",
     "//libraries/guava",
     "//platform/statistics",
-    "@lib//:spellchecker-java-string-similarity",
     "//platform/core-ui",
     "//libraries/lucene.common",
     "//platform/vcs-api:vcs",

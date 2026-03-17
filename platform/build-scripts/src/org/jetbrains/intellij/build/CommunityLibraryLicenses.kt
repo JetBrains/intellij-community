@@ -604,10 +604,6 @@ object CommunityLibraryLicenses {
     LibraryLicense("Java Server Pages (JSP) for Visual Studio Code", version = "0.0.3", attachedTo = "intellij.textmate", url = "https://github.com/pthorsson/vscode-jsp")
       .mit("https://github.com/pthorsson/vscode-jsp/blob/master/LICENSE"),
 
-    LibraryLicense("Java String Similarity", libraryName = "java-string-similarity", url = "https://github.com/tdebatty/java-string-similarity")
-      .mit("https://github.com/tdebatty/java-string-similarity/blob/master/LICENSE.md")
-      .suppliedByPersons("Thibault Debatty"),
-
     LibraryLicense("JavaBeans Activation Framework", libraryName = "javax.activation", url = "https://github.com/javaee/activation")
       .cddl11("https://github.com/javaee/activation/blob/master/LICENSE.txt")
       .suppliedByPersons("Bill Shannon"),

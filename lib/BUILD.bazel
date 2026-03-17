@@ -20225,21 +20225,6 @@ jvm_import(
 )
 
 copy_file(
-  name = "info.debatty/java-string-similarity-2.0.0.jar_copy",
-  src = "@info_debatty-java-string-similarity-2_0_0_http//file",
-  out = "info.debatty/java-string-similarity-2.0.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "spellchecker-java-string-similarity",
-  jar = "@info_debatty-java-string-similarity-2_0_0_http//file",
-  source_jar = "@info_debatty-java-string-similarity-2_0_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "org.xerial/sqlite-jdbc-3.50.3.0.jar_copy",
   src = "@org_xerial-sqlite-jdbc-3_50_3_0_http//file",
   out = "org.xerial/sqlite-jdbc-3.50.3.0.jar",
