@@ -14,8 +14,8 @@ import com.sampullara.cli.Args
  */
 class AssertModuleJdkVersionCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
-    const val NAME = "assertModuleJdkVersionCommand"
-    const val PREFIX = "$CMD_PREFIX$NAME"
+    const val NAME: String = "assertModuleJdkVersionCommand"
+    const val PREFIX: String = "$CMD_PREFIX$NAME"
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
