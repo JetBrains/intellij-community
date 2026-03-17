@@ -3,8 +3,8 @@ package fleet.preferences
 
 import fleet.util.multiplatform.Actual
 import js.core.JsPrimitives.toKotlinString
-import kotlinx.browser.window
-import org.w3c.dom.Window
+import web.window.window
+import web.window.Window
 import web.url.URL
 
 private val urlParameters by lazy {
