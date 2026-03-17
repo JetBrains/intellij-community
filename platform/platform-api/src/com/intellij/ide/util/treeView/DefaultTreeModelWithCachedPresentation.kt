@@ -37,6 +37,30 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
       }
     }
 
+  @ApiStatus.Internal
+  override fun applyAlreadyLoadedNodesTo(cachedPresentation: CachedTreePresentation) {
+    LOG.debug("Applying the already loaded nodes to the cached presentation before using it")
+    val root = this.root ?: return
+    if (root.isCached) return
+    LOG.trace { "Marking the root as loaded: $root" }
+    cachedPresentation.rootLoaded(root)
+    applyAlreadyLoadedChildren(cachedPresentation, root)
+  }
+
+  private fun applyAlreadyLoadedChildren(cachedPresentation: CachedTreePresentation, parent: DefaultMutableTreeNode) {
+    val children = parent.children().toList().filterIsInstance<DefaultMutableTreeNode>()
+    if (children.any { it.isCached }) return // children not loaded yet, `any` or `all` doesn't matter, they're removed all at once
+    // Important: the model can be huge, the cached presentation usually isn't.
+    // Therefore, we must not traverse the entire model to save time.
+    // We only inform the presentation of the real children that correspond to some cached nodes.
+    if (cachedPresentation.getChildren(parent) == null) return
+    LOG.trace { "Marking the children as loaded, the parent is $parent, the children is $children" }
+    cachedPresentation.childrenLoaded(parent, children)
+    for (child in children) {
+      applyAlreadyLoadedChildren(cachedPresentation, child)
+    }
+  }
+
   fun promiseRealNodes(): Promise<List<TreePath>> {
     return cachedPresentationApplier?.promise ?: resolvedPromise(emptyList())
   }
@@ -170,7 +194,6 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
         ++cachedNodeCount // count the root
       }
       else {
-        cachedPresentation.rootLoaded(realRoot)
         applyCachedChildPresentations(realRoot)
         // Notify that the tree has changed only if it in fact DID change (any cached presentations were applied).
         if (cachedNodeCount > 0) {
@@ -192,7 +215,6 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
       }
       else if (realChildCount == cachedChildren.size) {
         val realChildren = (0 until realChildCount).map { delegate.getChild(parent, it) as DefaultMutableTreeNode }
-        cachedPresentation.childrenLoaded(parent, realChildren)
         for (realChild in realChildren) {
           applyCachedChildPresentations(realChild)
         }
@@ -240,5 +262,8 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
     }
   }
 }
+
+private val DefaultMutableTreeNode.isCached: Boolean
+  get() = userObject is CachedTreePresentationNode
 
 private val LOG = logger<DefaultTreeModelWithCachedPresentation>()

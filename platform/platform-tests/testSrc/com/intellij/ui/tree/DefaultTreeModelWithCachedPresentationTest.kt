@@ -366,6 +366,9 @@ internal class DefaultTreeModelWithCachedPresentationTest {
     // This checks that the listeners are working as expected:
     assertThat(dump(mirrorModel)).`as`("initial mirror").isEqualTo(initialState)
     val cp = parse(cachedPresentation)?.toCachedPresentation()?.createTree()
+    if (cp != null) {
+      cps.applyAlreadyLoadedNodesTo(cp)
+    }
     cps.cachedPresentation = cp
     var loadedNodeCount: Int? = null
     sut.promiseRealNodes().onProcessed { paths ->

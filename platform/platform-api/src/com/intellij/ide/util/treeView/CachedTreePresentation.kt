@@ -20,7 +20,7 @@ import javax.swing.tree.TreePath
 interface CachedTreePresentationSupport {
   var cachedPresentation: CachedTreePresentation?
 
-  fun applyAlreadyLoadedNodes(cachedPresentation: CachedTreePresentation) { }
+  fun applyAlreadyLoadedNodesTo(cachedPresentation: CachedTreePresentation) { }
 }
 
 @Internal

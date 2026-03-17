@@ -1525,7 +1525,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       cachedPresentation = presentation == null ? null : new CachedPresentationImpl(presentation);
       var model = getModel();
       if (model instanceof CachedTreePresentationSupport cps && presentation != null) {
-        cps.applyAlreadyLoadedNodes(presentation);
+        cps.applyAlreadyLoadedNodesTo(presentation);
       }
       if (cachedPresentation != null) {
         var rootPath = getRootPath();
