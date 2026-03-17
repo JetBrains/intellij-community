@@ -40,8 +40,6 @@ public interface ModCommandService {
    */
   @NotNull LocalQuickFix wrapToQuickFix(@NotNull ModCommandAction action);
 
-  @NotNull LocalQuickFix wrapToQuickFix(@NotNull ModCommandAction action, boolean availableInBatchMode);
-
   /**
    * @param fix {@link LocalQuickFix}
    * @return a {@link ModCommandAction} which is wrapped inside the supplied quick-fix; null if the supplied quick-fix

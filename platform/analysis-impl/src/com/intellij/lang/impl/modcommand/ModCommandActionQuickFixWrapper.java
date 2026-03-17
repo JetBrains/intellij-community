@@ -15,20 +15,14 @@ import org.jetbrains.annotations.NotNull;
 /// Wraps [ModCommandAction] so old APIs can consume it as [LocalQuickFix].
 final class ModCommandActionQuickFixWrapper extends ModCommandQuickFix implements ReportingClassSubstitutor {
   private final ModCommandAction myAction;
-  private final boolean myAvailableInBatchMode;
 
   ModCommandActionQuickFixWrapper(@NotNull ModCommandAction action) {
-    this(action, true);
-  }
-
-  ModCommandActionQuickFixWrapper(@NotNull ModCommandAction action, boolean availableInBatchMode) {
     myAction = action;
-    myAvailableInBatchMode = availableInBatchMode;
   }
 
   @Override
   public boolean availableInBatchMode() {
-    return myAvailableInBatchMode;
+    return myAction.availableInBatchMode();
   }
 
   ModCommandAction getAction() {

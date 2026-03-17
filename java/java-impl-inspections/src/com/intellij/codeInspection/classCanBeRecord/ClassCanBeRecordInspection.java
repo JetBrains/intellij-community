@@ -83,7 +83,7 @@ public final class ClassCanBeRecordInspection extends BaseInspection implements 
     if (suggestQuickFix) {
       fixes.add(new ConvertToRecordFix(suggestAccessorsRenaming, myIgnoredAnnotations));
       String message = JavaBundle.message("class.can.be.record.record.highlight.when.semantics.change.fix.name");
-      fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(this, "noHighlightingFixAvailable", message, true), false));
+      fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(this, "noHighlightingFixAvailable", message, true)));
       if (infos[1] instanceof PsiClass psiClass) {
         PsiAnnotation[] annotations = psiClass.getAnnotations();
         // rare corner case: we don't want to make a quick-fix list too wide

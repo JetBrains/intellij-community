@@ -87,6 +87,15 @@ public interface ModCommandAction extends CommonIntentionAction, PossiblyDumbAwa
     return ModCommandService.getInstance().wrap(this);
   }
 
+  /**
+   * @return true if this action should be available when running inspections in the batch mode.
+   * Actions that modify inspection options rather than code should return false.
+   * @see com.intellij.codeInspection.LocalQuickFix#availableInBatchMode()
+   */
+  default boolean availableInBatchMode() {
+    return true;
+  }
+
   @Override
   default @NotNull ModCommandAction asModCommandAction() {
     return this;

@@ -552,7 +552,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                     AnnotationTargetUtil.findAnnotationTarget(annotationClass, PsiAnnotation.TargetType.TYPE_USE) != null) {
                   fixes.add(LocalQuickFix.from(new AddTypeAnnotationFix(typeArgument, annotationToAdd, manager.getNullables())));
                 }
-                fixes.add(LocalQuickFix.from(createAnnotateAsNullMarkedFix(typeArgument, manager.getNullables()), false));
+                fixes.add(LocalQuickFix.from(createAnnotateAsNullMarkedFix(typeArgument, manager.getNullables())));
                 ProblemHighlightType level =
                   nullability == TypeNullability.UNKNOWN && !REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE ?
                   ProblemHighlightType.INFORMATION :

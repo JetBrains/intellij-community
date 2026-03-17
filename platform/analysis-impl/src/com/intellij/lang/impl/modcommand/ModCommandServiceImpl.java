@@ -63,11 +63,6 @@ public final class ModCommandServiceImpl implements ModCommandService {
   }
 
   @Override
-  public @NotNull LocalQuickFix wrapToQuickFix(@NotNull ModCommandAction action, boolean availableInBatchMode) {
-    return new ModCommandActionQuickFixWrapper(action, availableInBatchMode);
-  }
-
-  @Override
   public @Nullable ModCommandAction unwrap(@NotNull LocalQuickFix fix) {
     if (fix instanceof ModCommandActionQuickFixWrapper wrapper) {
       return wrapper.getAction();

@@ -89,6 +89,11 @@ public final class AnnotateAsNullMarkedFix implements ModCommandAction {
   }
 
   @Override
+  public boolean availableInBatchMode() {
+    return false;
+  }
+
+  @Override
   public ModCommand perform(ActionContext context) {
     return ModCommand.chooseAction(JavaAnalysisBundle.message("inspection.i18n.quickfix.annotate.choose.container"), actions);
   }

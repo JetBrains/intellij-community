@@ -2,6 +2,9 @@
 package com.siyeh.ig.fixes.migration;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
@@ -37,6 +40,28 @@ public class ForCanBeForeachFixTest extends IGQuickFixesTestCase {
   public void testArrayUnboxing() { doTest(); }
   public void testListUnboxing() { doTest(); }
   public void testIteratorUnboxing() { doTest(); }
+
+  /// Regression test for IDEA-386737.
+  public void testUpdateInspectionOptionFixHasNoFixAll() {
+    ForCanBeForeachInspection inspection = new ForCanBeForeachInspection();
+    myFixture.enableInspections(inspection);
+    myFixture.configureByText("Test.java", """
+      import java.util.List;
+
+      class Test {
+        void foo(List<String> list) {
+          <caret>for (int i = 0; i < list.size(); i++) {
+            System.out.println(list.get(i));
+          }
+        }
+      }
+      """);
+
+    IntentionAction optionFix = myFixture.findSingleIntention(
+      InspectionGadgetsBundle.message("for.can.be.foreach.fix.no.indexed"));
+    IntentionAction fixAll = IntentionManager.getInstance().createFixAllIntention(new LocalInspectionToolWrapper(inspection), optionFix);
+    assertNull(fixAll);
+  }
 
   @Override
   public void setUp() throws Exception {
