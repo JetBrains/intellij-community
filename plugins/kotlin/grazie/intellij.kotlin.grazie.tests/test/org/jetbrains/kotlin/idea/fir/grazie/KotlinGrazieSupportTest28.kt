@@ -72,4 +72,13 @@ class KotlinGrazieSupportTest28 : GrazieTestBase(), ExpectedPluginModeProvider {
             }
         """)
     }
+
+    fun `test escape sequences in string literals`() {
+        myFixture.configureByText("a.kt", """
+            val value1 = ""${'"'}
+                wrong object class\nexpected 1\nactual: 2
+            ""${'"'}.trimIndent()""".trimIndent()
+        )
+        myFixture.checkHighlighting()
+    }
 }

@@ -59,6 +59,18 @@ class JavaSupportTest : GrazieTestBase() {
     myFixture.checkResultByFile("ide/language/java/AccidentalMerge_after.java")
   }
 
+  fun `test escape sequences in string literals`() {
+    myFixture.configureByText("a.java", """
+      class Scratch {
+          public static void main(String[] args) {
+              var value1 = ""${'"'}
+                      wrong object class\nexpected 1\nactual: 2""${'"'};
+          }
+      }
+    """.trimIndent())
+    myFixture.checkHighlighting()
+  }
+
   @PerformanceUnitTest
   fun `test long comment performance`() {
     Benchmark.newBenchmark("highlighting") {
