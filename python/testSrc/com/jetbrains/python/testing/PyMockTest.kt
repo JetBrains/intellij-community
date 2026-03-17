@@ -33,6 +33,26 @@ class PyMockTest : PyTestCase() {
     myFixture.copyDirectoryToProject("", "")
   }
 
+  // --- Completion ---
+
+  fun testCompletionFirstSegment() {
+    myFixture.configureByFile("test_patch_completion/test_complete_first_segment.py")
+    myFixture.completeBasic()
+    val variants = myFixture.lookupElementStrings
+    assertNotNull("Completion should provide variants", variants)
+    assertTrue("Should suggest example_module", variants!!.contains("example_module"))
+  }
+
+  fun testCompletionSecondSegment() {
+    myFixture.configureByFile("test_patch_completion/test_complete_second_segment.py")
+    myFixture.completeBasic()
+    val variants = myFixture.lookupElementStrings
+    assertNotNull("Completion should provide variants", variants)
+    assertTrue("Should suggest MyClass", variants!!.contains("MyClass"))
+    assertTrue("Should suggest top_level_function", variants.contains("top_level_function"))
+    assertTrue("Should suggest TOP_LEVEL_VAR", variants.contains("TOP_LEVEL_VAR"))
+  }
+
   // --- Navigation ---
 
   fun testNavigationToClass() {

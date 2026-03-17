@@ -28,6 +28,25 @@ class PyMonkeypatchTest : PyTestCase() {
     myFixture.copyDirectoryToProject("", "")
   }
 
+  // --- Completion ---
+
+  fun testCompletionFirstSegment() {
+    myFixture.configureByFile("test_completion_first_segment.py")
+    myFixture.completeBasic()
+    val variants = myFixture.lookupElementStrings
+    assertNotNull("Completion should provide variants", variants)
+    assertTrue("Should suggest example_module", variants!!.contains("example_module"))
+  }
+
+  fun testCompletionSecondSegment() {
+    myFixture.configureByFile("test_completion_second_segment.py")
+    myFixture.completeBasic()
+    val variants = myFixture.lookupElementStrings
+    assertNotNull("Completion should provide variants", variants)
+    assertTrue("Should suggest MyClass", variants!!.contains("MyClass"))
+    assertTrue("Should suggest top_level_function", variants.contains("top_level_function"))
+  }
+
   // --- Dotted string form: monkeypatch.setattr("module.Class.attr", value) ---
 
   fun testDottedNavigationToClass() {

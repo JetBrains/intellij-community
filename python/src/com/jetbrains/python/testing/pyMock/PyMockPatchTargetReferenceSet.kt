@@ -1,10 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.pyMock
 
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ElementManipulators
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementResolveResult
+import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiPolyVariantReferenceBase
 import com.intellij.psi.PsiReference
 import com.intellij.psi.ResolveResult
@@ -17,6 +21,8 @@ import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
 import com.jetbrains.python.psi.resolve.fromFoothold
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.resolve.resolveTopLevelMember
+import com.jetbrains.python.psi.types.PyModuleType
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
  * Splits the dotted target string of a `@patch("module.Class.attr")` decorator into
@@ -29,17 +35,19 @@ class PyMockPatchTargetReferenceSet(
   fun createReferences(): Array<PsiReference> {
     val valueRange = ElementManipulators.getValueTextRange(element)
     val content = element.stringValue
-    if (content.isEmpty()) return emptyArray()
+
+    // Empty string: provide a single reference for top-level module completion
+    if (content.isEmpty()) {
+      return arrayOf(PyMockSegmentReference(element, valueRange, listOf(""), 0, createAllowed))
+    }
 
     val segments = content.split(".")
     val refs = mutableListOf<PsiReference>()
     var currentOffset = valueRange.startOffset
 
     for ((index, segment) in segments.withIndex()) {
-      if (segment.isNotEmpty()) {
-        val range = TextRange(currentOffset, currentOffset + segment.length)
-        refs.add(PyMockSegmentReference(element, range, segments, index, createAllowed))
-      }
+      val range = TextRange(currentOffset, currentOffset + segment.length)
+      refs.add(PyMockSegmentReference(element, range, segments, index, createAllowed))
       currentOffset += segment.length + 1  // +1 for the '.' separator
     }
 
@@ -64,10 +72,27 @@ private class PyMockSegmentReference(
   override fun isSoft(): Boolean = createAllowed
 
   override fun getVariants(): Array<Any> {
-    if (segmentIndex == 0) return emptyArray()
+    if (segmentIndex == 0) {
+      return getTopLevelModuleVariants()
+    }
     val context = fromFoothold(element).copyWithMembers()
     val parent = resolveSegmentAt(segments, segmentIndex - 1, context) ?: return emptyArray()
-    return getMemberVariants(parent).toTypedArray()
+    return getMemberVariants(parent, element).toTypedArray()
+  }
+
+  /**
+   * Provides completion for the first segment — lists top-level packages/modules
+   * from source roots visible to the current file.
+   */
+  private fun getTopLevelModuleVariants(): Array<Any> {
+    val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return emptyArray()
+    val psiManager = PsiManager.getInstance(element.project)
+    val result = mutableListOf<Any>()
+    for (root in ModuleRootManager.getInstance(module).sourceRoots) {
+      val dir = psiManager.findDirectory(root) ?: continue
+      result.addAll(PyModuleType.getSubModuleVariants(dir, element, null))
+    }
+    return result.toTypedArray()
   }
 }
 
@@ -100,7 +125,7 @@ internal fun resolveSegmentAt(
 }
 
 /**
- * Looks up [name] as an attribute/method of [element], supporting PyFile and PyClass.
+ * Looks up [name] as an attribute/method of [element], supporting PyFile, PyClass, and PsiDirectory (packages).
  */
 private fun resolveMemberIn(element: PsiElement, name: String): PsiElement? {
   val target = PyUtil.turnDirIntoInit(element) ?: element
@@ -115,10 +140,31 @@ private fun resolveMemberIn(element: PsiElement, name: String): PsiElement? {
   }
 }
 
-private fun getMemberVariants(element: PsiElement): List<PsiElement> {
+/**
+ * Returns completion variants for members of [element].
+ * Handles PyFile (module members), PyClass (methods/attributes), and PsiDirectory (sub-modules).
+ */
+private fun getMemberVariants(element: PsiElement, location: PsiElement): List<Any> {
+  // For packages (directories), list sub-modules and __init__.py members
+  if (element is PsiDirectory) {
+    val result = mutableListOf<Any>()
+    result.addAll(PyModuleType.getSubModuleVariants(element, location, null))
+    val initFile = PyUtil.turnDirIntoInit(element) as? PyFile
+    if (initFile != null) {
+      val moduleType = PyModuleType(initFile)
+      val context = TypeEvalContext.codeCompletion(initFile.project, initFile)
+      result.addAll(moduleType.getCompletionVariantsAsLookupElements(location, com.intellij.util.ProcessingContext(), true, true, context))
+    }
+    return result
+  }
+
   val target = PyUtil.turnDirIntoInit(element) ?: element
   return when (target) {
-    is PyFile -> target.topLevelClasses + target.topLevelFunctions + (target.topLevelAttributes ?: emptyList<PsiElement>())
+    is PyFile -> {
+      val moduleType = PyModuleType(target)
+      val context = TypeEvalContext.codeCompletion(target.project, target)
+      moduleType.getCompletionVariantsAsLookupElements(location, com.intellij.util.ProcessingContext(), true, true, context)
+    }
     is PyClass -> target.getMethods().toList()
     else -> emptyList()
   }

@@ -46,7 +46,7 @@ class PyMonkeypatchSetAttrReferenceProvider : PsiReferenceProvider() {
     val positionalArgs = args.filter { it !is PyKeywordArgument }
 
     // Form 1: monkeypatch.setattr("dotted.path", value) — string is the first positional arg
-    if (positionalArgs.firstOrNull() == str && str.stringValue.contains(".")) {
+    if (positionalArgs.firstOrNull() == str) {
       return PyMockPatchTargetReferenceSet(str, false).createReferences()
     }
 
