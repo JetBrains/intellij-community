@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.ide.actions.OpenFileAction
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.application.runReadAction
@@ -267,14 +268,20 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
         modulesAndJvmTargets: Map<ModuleName, TargetJvm> = emptyMap()
     ): () -> ConfigurationResultBuilder
 
-    private fun configurableModulesWithKotlinFiles(project: Project): List<ModuleSourceRootGroup> {
+    private fun configurableModules(project: Project): List<ModuleSourceRootGroup> {
         val projectScope = project.projectScope()
         val projectFileIndex = ProjectFileIndex.getInstance(project)
-        val kotlinFiles = runReadAction { FileTypeIndex.getFiles(KotlinFileType.INSTANCE, projectScope) }
-        val modules = kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
+        val kotlinFiles = runReadAction {
+            FileTypeIndex.getFiles(KotlinFileType.INSTANCE, projectScope)
+        }
+        val javaFiles = runReadAction {
+            FileTypeIndex.getFiles(JavaFileType.INSTANCE, projectScope)
+        }
+        val files = kotlinFiles + javaFiles
+        val modules = files.mapNotNullTo(mutableSetOf()) { file: VirtualFile ->
             runReadAction {
-                if (projectFileIndex.isInSourceContent(ktFile)) {
-                    projectFileIndex.getModuleForFile(ktFile)
+                if (projectFileIndex.isInSourceContent(file)) {
+                    projectFileIndex.getModuleForFile(file)
                 } else null
             }
         }
@@ -285,7 +292,7 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
     private fun effectiveModules(project: Project, modules: Collection<Module>): Collection<Module>? {
         val rootModule = runReadAction { getRootModule(project) } ?: return null
         return if (modules.contains(rootModule)) {
-            val moduleSourceRootGroups = configurableModulesWithKotlinFiles(project)
+            val moduleSourceRootGroups = configurableModules(project)
             val rootGroup = moduleSourceRootGroups.firstOrNull { it.baseModule == rootModule }
             modules.filter { it != rootModule } + (rootGroup?.sourceRootModules ?: emptyList())
         } else {
