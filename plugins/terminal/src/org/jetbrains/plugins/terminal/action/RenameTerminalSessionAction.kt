@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
-import org.jetbrains.plugins.terminal.buildSettingsAwareFullTitle
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareFullTitle
 
 @Deprecated("Please avoid referencing the action class directly, get it by action ID instead: ActionManager.getInstance().getAction(\"Terminal.RenameSession\"")
 class RenameTerminalSessionAction : ToolWindowTabRenameActionBase(

@@ -19,8 +19,8 @@ import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
-import org.jetbrains.plugins.terminal.buildSettingsAwareTitle
 import org.jetbrains.plugins.terminal.ui.TerminalContainer
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareTitle
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl
 
 internal class MoveTerminalSessionToEditorAction : ToolWindowContextMenuActionBase(), DumbAware {

@@ -1,37 +1,59 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.util
 
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UI
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.TerminalTitleListener
-import com.intellij.ui.content.Content
 import com.intellij.util.text.UniqueNameGenerator
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.buildSettingsAwareTitle
+import org.jetbrains.plugins.terminal.settings.TerminalApplicationTitleShowingMode
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-@ApiStatus.Internal
 object TerminalTitleUtils {
+  /**
+   * Builds a title string taking into account the "Show Application Title" Terminal setting.
+   *
+   * @param isCommandRunning used for determining whether to show an application title when a command is running.
+   * Taken into account only if "Show application title in tab name: when command is running" option is enabled
+   * ([TerminalOptionsProvider.applicationTitleShowingMode]).
+   */
+  @JvmStatic
+  @ApiStatus.Experimental
+  fun TerminalTitle.buildSettingsAwareTitle(isCommandRunning: Boolean = false): @Nls String {
+    return buildTitle(ignoreAppTitle = !shouldShowAppTitle(isCommandRunning))
+  }
+
+  /**
+   * Builds a title string taking into account the "Show Application Title" Terminal setting.
+   *
+   * @param isCommandRunning used for determining whether to show an application title when a command is running.
+   * Taken into account only if "Show application title in tab name: when command is running" option is enabled
+   * ([TerminalOptionsProvider.applicationTitleShowingMode]).
+   */
+  @JvmStatic
+  @ApiStatus.Experimental
+  fun TerminalTitle.buildSettingsAwareFullTitle(isCommandRunning: Boolean = false): @Nls String {
+    return buildFullTitle(ignoreAppTitle = !shouldShowAppTitle(isCommandRunning))
+  }
+
+  private fun shouldShowAppTitle(isCommandRunning: Boolean): Boolean {
+    val options = TerminalOptionsProvider.instance
+    return options.showApplicationTitle
+           && (options.applicationTitleShowingMode == TerminalApplicationTitleShowingMode.WHEN_COMMAND_RUNNING && isCommandRunning
+               || options.applicationTitleShowingMode == TerminalApplicationTitleShowingMode.ALWAYS)
+  }
+
+  @ApiStatus.Internal
   @JvmStatic
   fun createDefaultTabName(
     toolWindow: ToolWindow,
@@ -48,36 +70,7 @@ object TerminalTitleUtils {
     )
   }
 
-  @JvmStatic
-  @OptIn(FlowPreview::class)
-  fun updateTabNameOnTitleChange(title: TerminalTitle, content: Content, scope: CoroutineScope) {
-    scope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
-      title.stateFlow { it.buildSettingsAwareTitle() }
-        .debounce(TITLE_UPDATE_DELAY)
-        .collect {
-          content.displayName = it.text
-        }
-    }
-  }
-
-  @JvmStatic
-  @OptIn(FlowPreview::class)
-  fun updateFileNameOnTitleChange(
-    title: TerminalTitle,
-    file: VirtualFile,
-    project: Project,
-    scope: CoroutineScope,
-  ) {
-    scope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
-      title.stateFlow { it.buildSettingsAwareTitle() }
-        .debounce(TITLE_UPDATE_DELAY)
-        .collect {
-          file.rename(null, it.text)
-          FileEditorManager.getInstance(project).updateFilePresentation(file)
-        }
-    }
-  }
-
+  @ApiStatus.Internal
   fun TerminalTitle.stateFlow(buildTitle: (TerminalTitle) -> String): Flow<TitleData> {
     fun titleData(title: TerminalTitle): TitleData {
       return TitleData(buildTitle(title), title.defaultTitle, title.userDefinedTitle)
@@ -99,8 +92,10 @@ object TerminalTitleUtils {
     return flow.distinctUntilChanged()
   }
 
+  @ApiStatus.Internal
   val TITLE_UPDATE_DELAY: Duration = 300.milliseconds
 
+  @ApiStatus.Internal
   data class TitleData(
     @param:NlsSafe val text: String,
     val defaultName: String?,

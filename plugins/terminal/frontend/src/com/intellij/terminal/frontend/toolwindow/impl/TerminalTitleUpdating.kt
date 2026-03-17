@@ -23,9 +23,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi
-import org.jetbrains.plugins.terminal.buildSettingsAwareTitle
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.TITLE_UPDATE_DELAY
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.TitleData
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareTitle
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.stateFlow
 import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
