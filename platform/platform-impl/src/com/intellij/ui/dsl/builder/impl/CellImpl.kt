@@ -80,8 +80,13 @@ internal class CellImpl<T : JComponent>(
 
   private var applyIfEnabled = false
 
-  private var visible = viewComponent.isVisible
-  private var enabled = viewComponent.isEnabled
+  private var visible =
+    viewComponent.getClientProperty(DslComponentPropertyInternal.CELL_LABEL) == true // Labels are managed by the related component
+    || viewComponent.isVisible
+
+  private var enabled =
+    viewComponent.getClientProperty(DslComponentPropertyInternal.CELL_LABEL) == true // Labels are managed by the related component
+    || viewComponent.isEnabled
 
   private val cellValidation = CellValidationImpl(dialogPanelConfig, component, component.interactiveComponent)
   private var lastAutoCalculatedAccessibleDescription: @NlsSafe String? = null
