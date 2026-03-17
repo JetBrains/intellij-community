@@ -540,6 +540,14 @@ private fun computeJpsDeps(
   graph.query {
     val mod = contentModule(moduleName) ?: return JpsDeps(moduleDeps, pluginDeps, filteredEmbeddedModuleDeps)
     val isPluginOnlySource = hasPluginSource(mod.id) && !hasNonPluginSource(mod.id)
+    val sourceOwnerPluginIds = if (isPluginOnlySource) {
+      HashSet<Int>().also { owners ->
+        mod.owningPlugins(includeTestScope) { pluginNode -> owners.add(pluginNode.id) }
+      }
+    }
+    else {
+      emptySet()
+    }
     val embeddedCheckProductNames = if (isPluginOnlySource) {
       embeddedCheckProductsForPluginOnlyContentModule(mod.id, allRealProductNames)
     }
@@ -574,7 +582,16 @@ private fun computeJpsDeps(
             }
             // skip globally embedded modules for plugin-only source modules
             val depModuleId = contentModule(c.moduleName)
-            if (depModuleId != null && isPluginOnlySource && shouldSkipEmbeddedPluginDependency(depModuleId, embeddedCheckProductNames)) {
+            var sharesOwnerPlugin = false
+            if (depModuleId != null && sourceOwnerPluginIds.isNotEmpty()) {
+              depModuleId.owningPlugins(includeTestScope) { pluginNode ->
+                if (pluginNode.id in sourceOwnerPluginIds) {
+                  sharesOwnerPlugin = true
+                }
+              }
+            }
+            if (depModuleId != null && isPluginOnlySource && !sharesOwnerPlugin &&
+                shouldSkipEmbeddedPluginDependency(depModuleId, embeddedCheckProductNames)) {
               filteredEmbeddedModuleDeps.add(c.moduleName)
               debug("missingDeps") {
                 "embeddedSkip source=${moduleName.value} dep=${c.moduleName.value} includeTestScope=$includeTestScope"

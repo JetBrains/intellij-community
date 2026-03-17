@@ -652,7 +652,10 @@ class ContentModuleDependencyGeneratorTest {
           product("TestProduct") {
             bundlesPlugin("intellij.my.plugin")
             moduleSet("essential") {
-              module("intellij.platform.core", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
+              module(
+                "intellij.platform.core",
+                com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+              )
             }
           }
         }
@@ -667,6 +670,103 @@ class ContentModuleDependencyGeneratorTest {
           assertThat(contentModuleDiff.expectedContent)
             .describedAs("Content module in plugin should skip globally embedded dependency")
             .doesNotContain("<module name=\"intellij.platform.core\"/>")
+        }
+      }
+    }
+
+    @Test
+    fun `content module in plugin keeps same-plugin dependency to embedded sibling`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val setup = pluginTestSetup(tempDir) {
+          contentModule("intellij.sh.core") {
+            descriptor = """<idea-plugin package="com.intellij.sh.core"/>"""
+          }
+
+          contentModule("intellij.sh.markdown") {
+            descriptor = """<idea-plugin package="com.intellij.sh.markdown"/>"""
+            jpsDependency("intellij.sh.core")
+          }
+
+          plugin("intellij.sh.plugin") {
+            content("intellij.sh.core", ModuleLoadingRuleValue.EMBEDDED)
+            content("intellij.sh.markdown")
+          }
+
+          product("TestProduct") {
+            bundlesPlugin("intellij.sh.plugin")
+          }
+        }
+
+        val result = setup.generateDependencies(listOf("intellij.sh.plugin"))
+        val contentResult = result.files
+          .flatMap { it.contentModuleResults }
+          .single { it.contentModuleName == ContentModuleName("intellij.sh.markdown") }
+
+        assertThat(contentResult.writtenDependencies)
+          .describedAs("Same-plugin sibling deps must stay explicit even when the target is embedded")
+          .contains(ContentModuleName("intellij.sh.core"))
+
+        val diffs = setup.strategy.getDiffs()
+        val contentModuleDiff = diffs.find { it.path.toString().contains("intellij.sh.markdown.xml") }
+
+        if (contentModuleDiff != null) {
+          assertThat(contentModuleDiff.expectedContent)
+            .describedAs("Generated XML should retain same-plugin embedded sibling dependency")
+            .contains("""<module name="intellij.sh.core"/>""")
+        }
+      }
+    }
+
+    @Test
+    fun `suppression config overrides same-plugin dependency to embedded sibling`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val setup = pluginTestSetup(tempDir) {
+          contentModule("intellij.sh.core") {
+            descriptor = """<idea-plugin package="com.intellij.sh.core"/>"""
+          }
+
+          contentModule("intellij.sh.markdown") {
+            descriptor = """<idea-plugin package="com.intellij.sh.markdown"/>"""
+            jpsDependency("intellij.sh.core")
+          }
+
+          plugin("intellij.sh.plugin") {
+            content("intellij.sh.core", ModuleLoadingRuleValue.EMBEDDED)
+            content("intellij.sh.markdown")
+          }
+
+          product("TestProduct") {
+            bundlesPlugin("intellij.sh.plugin")
+          }
+        }
+
+        val suppressionConfig = SuppressionConfig(
+          contentModules = mapOf(
+            ContentModuleName("intellij.sh.markdown") to org.jetbrains.intellij.build.productLayout.config.ContentModuleSuppression(
+              suppressModules = setOf(ContentModuleName("intellij.sh.core")),
+            ),
+          ),
+        )
+
+        val result = setup.generateDependencies(
+          listOf("intellij.sh.plugin"),
+          suppressionConfig = suppressionConfig,
+        )
+        val contentResult = result.files
+          .flatMap { it.contentModuleResults }
+          .single { it.contentModuleName == ContentModuleName("intellij.sh.markdown") }
+
+        assertThat(contentResult.writtenDependencies)
+          .describedAs("Suppressed same-plugin embedded sibling dependency should not be written")
+          .doesNotContain(ContentModuleName("intellij.sh.core"))
+
+        val diffs = setup.strategy.getDiffs()
+        val contentModuleDiff = diffs.find { it.path.toString().contains("intellij.sh.markdown.xml") }
+
+        if (contentModuleDiff != null) {
+          assertThat(contentModuleDiff.expectedContent)
+            .describedAs("Suppressed same-plugin embedded sibling dependency should be removed from generated XML")
+            .doesNotContain("""<module name="intellij.sh.core"/>""")
         }
       }
     }
@@ -691,7 +791,10 @@ class ContentModuleDependencyGeneratorTest {
           product("TestProduct") {
             bundlesPlugin("intellij.my.plugin")
             moduleSet("essential") {
-              module("intellij.platform.core", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
+              module(
+                "intellij.platform.core",
+                com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+              )
             }
           }
         }
@@ -721,7 +824,10 @@ class ContentModuleDependencyGeneratorTest {
           }
 
           plugin("intellij.core.plugin") {
-            content("intellij.platform.core", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
+            content(
+              "intellij.platform.core",
+              com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+            )
           }
 
           plugin("intellij.my.plugin") {
@@ -732,7 +838,10 @@ class ContentModuleDependencyGeneratorTest {
             bundlesPlugin("intellij.my.plugin")
             bundlesPlugin("intellij.core.plugin")
             moduleSet("essential") {
-              module("intellij.platform.core", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
+              module(
+                "intellij.platform.core",
+                com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+              )
             }
           }
         }
@@ -768,7 +877,10 @@ class ContentModuleDependencyGeneratorTest {
           product("TestProduct") {
             bundlesPlugin("intellij.shared.plugin")
             moduleSet("essential") {
-              module("intellij.platform.core", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
+              module(
+                "intellij.platform.core",
+                com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+              )
             }
             moduleSet("shared.set") {
               module("intellij.shared.module")
@@ -811,7 +923,10 @@ class ContentModuleDependencyGeneratorTest {
           product("JetBrainsClient") {
             bundlesPlugin("intellij.my.plugin")
             moduleSet("client.set") {
-              module("intellij.platform.frontend.split", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
+              module(
+                "intellij.platform.frontend.split",
+                com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+              )
             }
           }
         }
@@ -851,7 +966,10 @@ class ContentModuleDependencyGeneratorTest {
           product("JetBrainsClient") {
             bundlesPlugin("intellij.my.plugin")
             moduleSet("client.set") {
-              module("intellij.platform.frontend.split", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
+              module(
+                "intellij.platform.frontend.split",
+                com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+              )
             }
           }
         }
@@ -881,7 +999,10 @@ class ContentModuleDependencyGeneratorTest {
           }
 
           plugin("intellij.platform.owner") {
-            content("intellij.platform.ide.impl", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
+            content(
+              "intellij.platform.ide.impl",
+              com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+            )
           }
 
           plugin("intellij.my.plugin") {
@@ -929,7 +1050,10 @@ class ContentModuleDependencyGeneratorTest {
           // Plugin intentionally remains non-bundled.
           product("TestProduct") {
             moduleSet("essential") {
-              module("intellij.platform.core", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
+              module(
+                "intellij.platform.core",
+                com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+              )
             }
           }
         }
@@ -1015,7 +1139,10 @@ class ContentModuleDependencyGeneratorTest {
             bundlesPlugin("intellij.my.plugin")
             moduleSet("optional.set") {
               // REQUIRED loading, not EMBEDDED
-              module("intellij.platform.optional", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.REQUIRED)
+              module(
+                "intellij.platform.optional",
+                com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.REQUIRED
+              )
             }
           }
         }
