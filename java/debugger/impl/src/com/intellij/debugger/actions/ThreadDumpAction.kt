@@ -39,6 +39,7 @@ import com.jetbrains.jdi.ThreadReferenceImpl
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.BooleanType
 import com.sun.jdi.BooleanValue
+import com.sun.jdi.ClassNotLoadedException
 import com.sun.jdi.ClassType
 import com.sun.jdi.Field
 import com.sun.jdi.IncompatibleThreadStateException
@@ -262,7 +263,16 @@ private inline fun <reified T : Type> findThreadFieldImpl(fieldNames: List<Strin
   val wellNamedFields = fieldNames.mapNotNull { DebuggerUtils.findField(typeToSearch, it) }
   if (wellNamedFields.isEmpty()) return null
 
-  val wellTypedFields = wellNamedFields.filter { it.type() is T }
+  val wellTypedFields = try {
+     wellNamedFields.filter { it.type() is T }
+  } catch (_: ClassNotLoadedException) {
+    logger<ThreadDumpAction>().info(
+      "$typeToSearch has the fields ${wellNamedFields.map { it.name() }} whose type is not yet loaded, skipping. " +
+      "VM: ${typeToSearch.virtualMachine().let { "${it.name()}, ${it.version()}" }}"
+    )
+    return null
+  }
+
   if (wellTypedFields.isEmpty()) {
     val vm = typeToSearch.virtualMachine()
     logger<ThreadDumpAction>().error(
@@ -341,7 +351,7 @@ private fun buildThreadStates(
   val daemonField = findThreadField<BooleanType>(listOf("daemon", "isDaemon"), jlThreadType, fieldHolderType)
   val priorityField = findThreadField<IntegerType>("priority", jlThreadType, fieldHolderType)
   val tidField = findThreadField<LongType>("tid", jlThreadType, fieldHolderType)
-  val containerField = findThreadField<ClassType>("container", jlThreadType, null)
+  val containerField = findThreadField<ClassType>("container", jlThreadType, null, optional = true)
 
   fun getFieldValue(field: Field?, threadReference: ThreadReference, fieldHolder: ObjectReference?): Value? {
     if (field == null) return null
