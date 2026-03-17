@@ -16470,6 +16470,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                     runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/literalPropertyWithGetter.kt");
                 }
 
+                @TestMetadata("literalPropertyWithGetter2.kt")
+                public void testLiteralPropertyWithGetter2() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/literalPropertyWithGetter2.kt");
+                }
+
                 @TestMetadata("literalPropertyWithGetter_2_2.kt")
                 public void testLiteralPropertyWithGetter_2_2() throws Exception {
                     runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/literalPropertyWithGetter_2_2.kt");

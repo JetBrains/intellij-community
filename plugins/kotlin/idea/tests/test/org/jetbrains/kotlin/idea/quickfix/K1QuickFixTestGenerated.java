@@ -20346,6 +20346,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/literalPropertyWithGetter.kt");
                 }
 
+                @TestMetadata("literalPropertyWithGetter2.kt")
+                public void testLiteralPropertyWithGetter2() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/literalPropertyWithGetter2.kt");
+                }
+
                 @TestMetadata("literalPropertyWithGetter_2_2.kt")
                 public void testLiteralPropertyWithGetter_2_2() throws Exception {
                     runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/literalPropertyWithGetter_2_2.kt");
