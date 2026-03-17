@@ -31,10 +31,10 @@ def main():
     args.gradle_jdk_args = [
         # Unfortunately, the Kotlin compiler build requires several different JDKs.
         # We provide the JDKs from prebuilts to avoid network issues in CI (e.g. b/482057769).
-        '-Dorg.gradle.java.installations.auto-download=false',
-        '-Dorg.gradle.java.installations.auto-detect=false',
-        '-Dorg.gradle.java.home=' + str(compute_java_home(workspace, 'jbrjdk-next')),
-        '-Dorg.gradle.java.installations.paths=' + ','.join([
+        '-Porg.gradle.java.installations.auto-download=false',
+        '-Porg.gradle.java.installations.auto-detect=false',
+        '-Porg.gradle.java.home=' + str(compute_java_home(workspace, 'jbrjdk-next')),
+        '-Porg.gradle.java.installations.paths=' + ','.join([
             str(compute_java_home(workspace, 'jbrjdk-next')),
             str(compute_java_home(workspace, 'jdk17')),
             str(compute_java_home(workspace, 'jdk11')),
