@@ -319,13 +319,20 @@ private inline fun <reified T : Type> findThreadField(fieldNames: List<String>, 
   return null
 }
 
+private data class JavaVirtualThreadDesc(
+  val thread: ThreadReference,
+  val stackTrace: String,
+  val threadId: Long,
+  val carrierId: Long?
+)
+
 private inline fun <reified T : Type> findThreadField(fieldName: String, jlThreadType: ReferenceType?, fieldHolderType: ReferenceType?, optional: Boolean = false): Field? =
   findThreadField<T>(listOf(fieldName), jlThreadType, fieldHolderType, optional)
 
 private fun buildThreadStates(
   vmProxy: VirtualMachineProxyImpl,
   platformThreads: List<ThreadReference>,
-  virtualThreads: List<Triple<ThreadReference, String, Long>>,
+  virtualThreads: List<JavaVirtualThreadDesc>,
   threadContainerRefs: List<ObjectReference>,
   rootThreadContainer: ObjectReference?
 ): List<ThreadState> {
@@ -363,7 +370,7 @@ private fun buildThreadStates(
     }
   }
 
-  fun processOne(threadReference: ThreadReference, virtualThreadInfo: Pair<String, Long>?) {
+  fun processOne(threadReference: ThreadReference, virtualThreadInfo: JavaVirtualThreadDesc?) {
     ProgressManager.checkCanceled()
 
     val threadName: String
@@ -373,10 +380,11 @@ private fun buildThreadStates(
     val isVirtual: Boolean
     val isDaemon: Boolean
     val tid: Long?
+    val carrierId: Long?
     val prio: Int?
     val rawStackTrace: String
     if (virtualThreadInfo != null) {
-      val lines = virtualThreadInfo.first.lineSequence()
+      val lines = virtualThreadInfo.stackTrace.lineSequence()
       val (nameRaw, javaThreadState, threadContainerIdx) = lines.take(3).toList()
       rawStackTrace = lines.drop(3).joinToString("\n")
 
@@ -387,8 +395,8 @@ private fun buildThreadStates(
       javaThreadStateString = javaThreadState
       threadContainerId = containerIdOrNullIfRoot(threadContainerRefs[threadContainerIdx.toInt()], rootThreadContainer)
 
-      tid = virtualThreadInfo.second
-
+      tid = virtualThreadInfo.threadId
+      carrierId = virtualThreadInfo.carrierId
       isVirtual = true
       isDaemon = false
       prio = null
@@ -411,6 +419,7 @@ private fun buildThreadStates(
       tid = getFieldValue(tidField, threadReference, holderObj)?.let { (it as LongValue).longValue() }
       val container = getFieldValue(containerField, threadReference, null)?.let { it as? ObjectReference }
       threadContainerId = containerIdOrNullIfRoot(container, rootThreadContainer)
+      carrierId = null
     }
     val threadState = ThreadState(threadName, stateString)
     threadState.javaThreadState = javaThreadStateString
@@ -431,12 +440,18 @@ private fun buildThreadStates(
       buffer.append(" prio=").append(prio)
     }
     if (tid != null) {
-      buffer.append(" tid=0x").append(JLong.toHexString(tid))
+      buffer.append(" tid=${tid.toThreadIdString()}")
       buffer.append(" nid=NA")
     }
     if (isVirtual) {
       buffer.append(" virtual")
       threadState.isVirtual = true
+
+      if (carrierId != null) {
+        buffer.append(" carrierId=${carrierId.toThreadIdString()}")
+      } else {
+        buffer.append(" unmounted")
+      }
     }
 
     buffer.append(" ").append(threadState.state)
@@ -526,8 +541,8 @@ private fun buildThreadStates(
   if (virtualThreads.isNotEmpty()) {
     require(threadContainerRefs.isNotEmpty()) { "The list of thread container references was not provided for virtual threads." }
   }
-  virtualThreads.forEach { (vthread, stackTrace, tid) ->
-    processOne(vthread, stackTrace to tid)
+  virtualThreads.forEach {
+    processOne(it.thread, it)
   }
 
   for ((waiting, awaited) in waitingMap) {
@@ -550,6 +565,8 @@ private fun buildThreadStates(
   ThreadDumpParser.sortThreads(result)
   return result
 }
+
+private fun Long.toThreadIdString(): String = "0x" + JLong.toHexString(this)
 
 private fun getRootThreadContainer(vm: VirtualMachineProxyImpl): ObjectReference? {
   val type = vm.classesByName("jdk.internal.vm.ThreadContainers").firstOrNull() as? ClassType
@@ -644,17 +661,19 @@ internal class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
 
       val packedThreadsAndStackTraces = ((evaluated as ArrayReference).values[0] as ArrayReference).values
       val threadIds = (evaluated.values[1] as ArrayReference).values
-      val threadContainerNames = (evaluated.values[2] as ArrayReference).values.map { (it as StringReference).value() }
-      val threadContainerRefs = (evaluated.values[3] as ArrayReference).values.map { it as ObjectReference }
-      val threadContainerOwners = (evaluated.values[4] as ArrayReference).values.map { it as? ObjectReference }
-      val parentContainerOrdinals = (evaluated.values[5] as ArrayReference).values.map { (it as IntegerValue).intValue() }
+      val carrierIds = (evaluated.values[2] as ArrayReference).values
+      val threadContainerNames = (evaluated.values[3] as ArrayReference).values.map { (it as StringReference).value() }
+      val threadContainerRefs = (evaluated.values[4] as ArrayReference).values.map { it as ObjectReference }
+      val threadContainerOwners = (evaluated.values[5] as ArrayReference).values.map { it as? ObjectReference }
+      val parentContainerOrdinals = (evaluated.values[6] as ArrayReference).values.map { (it as IntegerValue).intValue() }
 
+      require(threadIds.size == carrierIds.size) { "The number of thread IDs should be equal the number of carrier thread IDs." }
       require(threadContainerNames.size == threadContainerRefs.size) { "The number of thread container names should be equal the number of thread container references." }
       require(threadContainerNames.size == threadContainerOwners.size) { "The number of thread container names should be equal the number of thread container owners." }
       require(threadContainerNames.size == parentContainerOrdinals.size) { "The number of thread container names should be equal the number of corresponding parent container ordinals." }
 
       val rootContainer = getRootThreadContainer(vm)
-      val threadStates = buildVirtualThreadStates(packedThreadsAndStackTraces, threadIds, threadContainerRefs, rootContainer)
+      val threadStates = buildVirtualThreadStates(packedThreadsAndStackTraces, threadIds, carrierIds, threadContainerRefs, rootContainer)
 
       val threadContainerDescriptors = threadContainerNames.indices.map { i ->
         val parentOrdinal = parentContainerOrdinals[i]
@@ -667,7 +686,7 @@ internal class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
       return toDumpItems(threadStates, threadContainerDescriptors)
     }
 
-    private fun buildVirtualThreadStates(packedThreadsAndStackTraces: List<Value?>, threadIds: List<Value?>, threadContainerRefs: List<ObjectReference>, rootContainer: ObjectReference?): List<ThreadState> {
+    private fun buildVirtualThreadStates(packedThreadsAndStackTraces: List<Value?>, threadIds: List<Value?>, carrierIds: List<Value?>, threadContainerRefs: List<ObjectReference>, rootContainer: ObjectReference?): List<ThreadState> {
       ProgressManager.checkCanceled()
       val virtualThreads = buildList {
         var tidIdx = 0
@@ -679,8 +698,9 @@ internal class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
             if (thread == null) {
               break
             }
-            val threadId = (threadIds[tidIdx++] as LongValue).value()
-            add(Triple(thread as ThreadReference, stackTrace, threadId))
+            val threadId = (threadIds[tidIdx] as LongValue).value()
+            val carrierId = (carrierIds[tidIdx++] as LongValue).value().let { if (it == -1L) null else it }
+            add(JavaVirtualThreadDesc(thread as ThreadReference, stackTrace, threadId, carrierId))
           }
         }
       }
