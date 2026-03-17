@@ -238,7 +238,7 @@ public abstract class PythonTestLegacyConfigurationProducer<T extends AbstractPy
   }
 
   protected static boolean isPythonModule(@NotNull Module module) {
-    return PyModuleService.getInstance().isPythonModule(module);
+    return PyModuleService.getInstance(module.getProject()).isPythonModule(module);
   }
 
   protected List<PyStatement> getTestCaseClassesFromFile(final @NotNull PyFile pyFile) {

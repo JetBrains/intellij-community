@@ -23,7 +23,6 @@ import com.jetbrains.python.inspections.PyAsyncFileInspectionRunner
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.sdk.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 import javax.swing.JComponent
@@ -47,9 +46,7 @@ class PyInterpreterNotificationProvider : EditorNotificationProvider, DumbAware 
     if (psiFile !is PyFile && nonPythonRelevantCheck == null) return null
 
     val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
-    if (!PyModuleService.getInstance().isPythonModule(module)) return null
-
-    PythonSdkUtil.findPythonSdk(module)?.let { return null }
+    if (!PyModuleService.getInstance(project).isPythonModule(module)) return null
     if (nonPythonRelevantCheck != null && !nonPythonRelevantCheck(module)) return null
 
     val interpreterFixes = asyncFileInspectionRunner.runInspection(module)?.takeIf { it.isNotEmpty() } ?: return null

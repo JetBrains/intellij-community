@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.impl;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -46,7 +47,6 @@ import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
-import com.jetbrains.python.module.PyModuleService;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
@@ -419,7 +419,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
 
     private Boolean visitFileToPush(@NotNull VirtualFile file, PushedFilePropertiesUpdater propertiesUpdater) {
       return ReadAction.compute(() -> {
-        if (!file.isValid() || PyModuleService.getInstance().isFileIgnored(file)) {
+        if (!file.isValid() || FileTypeManager.getInstance().isFileIgnored(file)) {
           return false;
         }
         if (file.isDirectory()) {

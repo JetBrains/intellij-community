@@ -33,7 +33,7 @@ public abstract class PyActiveSdkModuleConfigurable extends ModuleAwareProjectCo
     // All python modules do have it.
     // But some IDEs might not want to see Python SDK configs for their modules even when they have `baseDir`.
     // Those might disable the registry key.
-    return PyModuleService.getInstance().isPythonModule(module) ||
+    return PyModuleService.getInstance(myProject).isPythonModule(module) ||
            (Registry.is("python.show.modules.with.base.dir") && BasePySdkExtKt.getBaseDir(module) != null);
   }
 

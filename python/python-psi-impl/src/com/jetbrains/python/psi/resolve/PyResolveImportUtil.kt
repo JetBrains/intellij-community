@@ -328,7 +328,7 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
 private fun isAcceptRootAsTopLevelPackage(context: PyQualifiedNameResolveContext): Boolean {
   context.module?.let { it ->
     val ref = Ref.create(false)
-    PyModuleService.getInstance().forAllFacets(it) {
+    PyModuleService.getInstance(it.project).forAllFacets(it) {
       if (it is PythonPathContributingFacet && it.acceptRootAsTopLevelPackage()) {
         ref.set(true)
       }
