@@ -134,6 +134,11 @@
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
 
+  <applicationListeners>
+    <listener class="com.jetbrains.python.sdk.PySdkTransferredRootsListener"
+              topic="com.jetbrains.python.sdk.PySdkListener"/>
+  </applicationListeners>
+
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="use.python.for.local.conda"
                  defaultValue="true"

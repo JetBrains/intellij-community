@@ -160,22 +160,6 @@ internal class AddInterpreterOnTargetAction(
   }
 }
 
-@ApiStatus.Internal
-fun switchToSdk(module: Module, sdk: Sdk, currentSdk: Sdk?) {
-  val project = module.project
-  (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
-
-  removeTransferredRootsFromModulesWithInheritedSdk(project, currentSdk)
-  project.pythonSdk = sdk
-  transferRootsToModulesWithInheritedSdk(project, sdk)
-
-  removeTransferredRoots(module, currentSdk)
-  module.pythonSdk = sdk
-  transferRoots(module, sdk)
-
-  module.excludeInnerVirtualEnv(sdk)
-}
-
 @Service
 private class LogCollectorService(val coroutineScope: CoroutineScope)
 
