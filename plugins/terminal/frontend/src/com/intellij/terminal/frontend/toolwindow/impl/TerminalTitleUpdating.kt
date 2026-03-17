@@ -6,6 +6,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.TerminalTitleListener
@@ -27,6 +28,11 @@ import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandFinishedEvent
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
+
+internal fun TerminalView.getTitleText(): @NlsSafe String {
+  val isCommandRunning = shellIntegrationDeferred.getNow()?.outputStatus?.value == TerminalOutputStatus.ExecutingCommand
+  return title.buildSettingsAwareTitle(isCommandRunning)
+}
 
 @Suppress("HardCodedStringLiteral")
 @OptIn(FlowPreview::class)
@@ -70,11 +76,11 @@ private fun TerminalView.titleChangesFlow(): Flow<String> {
     val disposable = Disposer.newDisposable()
     terminalView.title.addTitleListener(object : TerminalTitleListener {
       override fun onTitleChanged(terminalTitle: TerminalTitle) {
-        trySend(calculateTitleText(terminalView))
+        trySend(terminalView.getTitleText())
       }
     }, disposable)
 
-    send(calculateTitleText(terminalView))
+    send(terminalView.getTitleText())
     awaitClose { Disposer.dispose(disposable) }
   }
 
@@ -84,7 +90,7 @@ private fun TerminalView.titleChangesFlow(): Flow<String> {
     val disposable = Disposer.newDisposable()
     shellIntegration.addCommandExecutionListener(disposable, object : TerminalCommandExecutionListener {
       override fun commandFinished(event: TerminalCommandFinishedEvent) {
-        trySend(calculateTitleText(terminalView))
+        trySend(terminalView.getTitleText())
       }
     })
 
@@ -92,15 +98,4 @@ private fun TerminalView.titleChangesFlow(): Flow<String> {
   }
 
   return merge(titleStateFlow, titleOnCommandFinishFlow)
-}
-
-private fun calculateTitleText(terminalView: TerminalView): String {
-  val shellIntegration = terminalView.shellIntegrationDeferred.getNow()
-  val title = terminalView.title
-  return if (shellIntegration?.outputStatus?.value == TerminalOutputStatus.ExecutingCommand) {
-    title.buildTitle(false)
-  }
-  else {
-    title.buildSettingsAwareTitle()
-  }
 }
