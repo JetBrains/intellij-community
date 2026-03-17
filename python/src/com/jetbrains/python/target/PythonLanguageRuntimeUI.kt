@@ -32,6 +32,7 @@ import com.jetbrains.python.sdk.add.v2.PythonAddCustomInterpreter
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.sdk.add.v2.PythonLocalAddInterpreterModel
 import com.jetbrains.python.sdk.configurePythonSdk
+import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CompletableDeferred
@@ -116,12 +117,14 @@ class PythonLanguageRuntimeUI(
 
     val sdk = runWithModalProgressBlocking(project, message("python.sdk.progress.setting.up.environment")) {
       withContext(TraceContext(message("trace.context.add.remote.python.sdk.dialog", targetSupplier.get().getTargetType().displayName))) {
-        sdkManager.getOrCreateSdkWithModal(ModuleOrProject.ModuleAndProject(module)).onFailure {
-          errorSink.emit(it)
-        }.successOrNull?.also {
-          configurePythonSdk(project, module, it)
-          project.pySdkService.persistSdk(it)
-          PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(it, false)
+        pythonSdkConfigurationMutex.withLock {
+          sdkManager.getOrCreateSdkWithModal(ModuleOrProject.ModuleAndProject(module)).onFailure {
+            errorSink.emit(it)
+          }.successOrNull?.also {
+            configurePythonSdk(project, module, it)
+            project.pySdkService.persistSdk(it)
+            PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(it, false)
+          }
         }
       }
     }
