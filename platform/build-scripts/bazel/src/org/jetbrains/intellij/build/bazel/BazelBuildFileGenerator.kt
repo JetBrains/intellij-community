@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.MultiMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -187,8 +186,8 @@ internal class BazelBuildFileGenerator(
     val targetName: String
   )
 
-  val mavenLibraries: Object2ObjectOpenHashMap<LibraryKey, MavenLibrary> = Object2ObjectOpenHashMap()
-  val localLibraries: Object2ObjectOpenHashMap<LibraryKey, LocalLibrary> = Object2ObjectOpenHashMap()
+  val mavenLibraries: LinkedHashMap<LibraryKey, MavenLibrary> = LinkedHashMap()
+  val localLibraries: LinkedHashMap<LibraryKey, LocalLibrary> = LinkedHashMap()
 
   val allLibraries: Collection<Library>
     get() = mavenLibraries.values + localLibraries.values

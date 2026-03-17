@@ -71,7 +71,6 @@ kt_jvm_library(
         "@j2b_maven//:com_jetbrains_intellij_platform_util_base_multiplatform",
         "@j2b_maven//:com_jetbrains_intellij_platform_util_jdom",
         "@j2b_maven//:com_jetbrains_intellij_platform_build_scripts_downloader",
-        "@j2b_maven//:org_jetbrains_intellij_deps_fastutil_intellij_deps_fastutil",
         "@j2b_maven//:org_jetbrains_kotlin_kotlin_jps_plugin",
         "@j2b_maven//:org_jetbrains_kotlin_kotlin_reflect",
         "@j2b_maven//:org_jetbrains_kotlinx_kotlinx_serialization_json_jvm",
