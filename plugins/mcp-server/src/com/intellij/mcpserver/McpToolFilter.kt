@@ -64,10 +64,13 @@ sealed interface McpToolFilter {
        * Creates a MaskBased filter from a mask list string.
        *
        * @param maskList comma-separated list of mask patterns with +/- prefixes
-       * @return a new MaskBased filter, or AllowAll if the mask list is empty
+       * @return a new MaskBased filter that denies all if maskList is empty, or AllowAll if null/blank
        */
       fun fromMaskList(maskList: String?): McpToolFilter {
-        return if (maskList == null || maskList.isBlank()) AllowAll else MaskBased(maskList)
+        if (maskList.isNullOrBlank()) {
+          return AllowList(emptySet()) // Empty mask = deny all
+        }
+        return MaskBased(maskList)
       }
     }
   }

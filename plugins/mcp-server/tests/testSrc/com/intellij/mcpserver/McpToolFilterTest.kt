@@ -127,18 +127,19 @@ class McpToolFilterTest {
   }
 
   @Test
-  fun `MaskBased fromMaskList returns AllowAll for empty string`() {
+  fun `MaskBased fromMaskList returns deny-all filter for empty string`() {
     val filter = McpToolFilter.MaskBased.fromMaskList("")
 
-    assertTrue(filter is McpToolFilter.AllowAll)
-    assertTrue(filter.shouldInclude("any_tool"))
+    assertTrue(filter is McpToolFilter.AllowList)
+    assertFalse(filter.shouldInclude("any_tool"))
   }
 
   @Test
-  fun `MaskBased fromMaskList returns AllowAll for blank string`() {
+  fun `MaskBased fromMaskList returns deny-all filter for blank string`() {
     val filter = McpToolFilter.MaskBased.fromMaskList("   ")
 
-    assertTrue(filter is McpToolFilter.AllowAll)
+    assertTrue(filter is McpToolFilter.AllowList)
+    assertFalse(filter.shouldInclude("any_tool"))
   }
 
   @Test

@@ -311,6 +311,16 @@ open class McpServerService(val cs: CoroutineScope) {
   }
 
   /**
+   * Checks if there are any active MCP tools available after applying the filter.
+   * 
+   * @param filter The filter to apply to the tools
+   * @return true if at least one MCP tool is available after filtering, false otherwise
+   */
+  fun hasActiveMcpTools(filter: McpToolFilter): Boolean {
+    return getMcpTools(filter = filter).isNotEmpty()
+  }
+
+  /**
    * Returns MCP tools filtered by all filter providers except those specified in [excludeProviders].
    * This is useful for UI that needs to show tools filtered by some providers but not others
    * (e.g., showing tools for disallow list configuration without applying the disallow-list filter itself).
