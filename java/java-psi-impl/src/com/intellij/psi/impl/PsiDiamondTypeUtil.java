@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -148,13 +148,23 @@ public final class PsiDiamondTypeUtil {
 
   public static PsiExpression expandTopLevelDiamondsInside(PsiExpression expr) {
     if (expr instanceof PsiNewExpression) {
-      final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)expr).getClassReference();
+      PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)expr).getClassReference();
+      if (classReference == null) {
+        classReference = ((PsiNewExpression)expr).getClassOrAnonymousClassReference();
+      }
       if (classReference != null) {
         final PsiReferenceParameterList parameterList = classReference.getParameterList();
         if (parameterList != null) {
           final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
           if (typeParameterElements.length == 1 && typeParameterElements[0].getType() instanceof PsiDiamondType) {
-            return  (PsiExpression)replaceDiamondWithExplicitTypes(parameterList).getParent();
+            PsiElement parent = replaceDiamondWithExplicitTypes(parameterList).getParent();
+            if (parent instanceof PsiExpression) {
+              return (PsiExpression)parent;
+            }
+            PsiElement grandParent = parent.getParent();
+            if (grandParent instanceof PsiExpression) {
+              return (PsiExpression)grandParent;
+            }
           }
         }
       }
