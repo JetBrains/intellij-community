@@ -231,7 +231,7 @@ internal fun listWithAttributesUsingEel(
     visitDirectory(eelPath, filter) { file: EelPath, attributes: EelFileInfo, eelFsApi: EelFileSystemApi ->
       try {
         //val attributes = amendAttributes(file, fromNio(file, attributes))
-        childrenWithAttributes[file.fileName] = toVfs(eelPath, attributes, eelFsApi)
+        childrenWithAttributes[file.fileName] = toVfs(file, attributes, eelFsApi)
       }
       catch (e: Exception) {
         LOG.debug(e)
