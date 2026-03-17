@@ -54,8 +54,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diagnostic.LogLevel;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -119,6 +117,8 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.ui.EditorNotifications;
+import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.TimeoutUtil;
@@ -1936,16 +1936,17 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     PsiFile psiFile1111 = PsiDocumentManager.getInstance(getProject()).getPsiFile(document1111);// avoid "cached psiFile is null, cancel all passes"
     Editor editor1111 = ((TextEditor)FileEditorManager.getInstance(getProject())
       .getEditors(FileDocumentManager.getInstance().getFile(document1111))[0]).getEditor();
-    setActiveEditors(getEditor(), editor1111);
+    Editor editor2222 = getEditor();
+    setActiveEditors(editor2222, editor1111);
 
-    HighlightInfo info = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING));
+    HighlightInfo info = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(editor2222.getDocument(), HighlightSeverity.WARNING));
     assertEquals("Class 'A2222' is never used", info.getDescription());
 
     // uncomment (inside code block) the reference to A2222
     WriteCommandAction.writeCommandAction(myProject).run(()->document1111.deleteString(document1111.getText().indexOf("//"), document1111.getText().indexOf("//")+2));
 
     // now A2222 is no longer unused
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(editor2222.getDocument(), HighlightSeverity.WARNING));
     Reference.reachabilityFence(psiFile1111);
   }
 
@@ -2553,18 +2554,21 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     GCWatcher tracking = GCWatcher.tracking(myFile);
     myFile = null;
     IntentionsUI.getInstance(myProject).invalidate(); // clear com.intellij.codeInsight.intention.impl.CachedIntentions.myProject
+    EditorNotificationsImpl editorNotifications = (EditorNotificationsImpl)EditorNotifications.getInstance(getProject());
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    editorNotifications.completeAsyncTasks(); // EditorNotificationsImpl might retain psiFile in its update queue
     tracking.ensureCollectedWithinTimeout(30_000);
 
     myFile = PsiDocumentManager.getInstance(myProject).getPsiFile(getEditor().getDocument());
     myDaemonCodeAnalyzer.restart(getTestName(false));
-    myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR); // highlighting may be canceled due to PSI elements eviction
     String h2 = renderHighlighters(getSortedHighlights());
 
     assertEquals(h1, h2);
   }
 
-  private static @NotNull String renderHighlighters(List<RangeHighlighter> highlighters) {
-    return StringUtil.join(highlighters, h->h.getTextRange()+":"+h.getTextAttributes(EditorColorsUtil.getGlobalOrDefaultColorScheme()), "\n");
+  private static @NotNull String renderHighlighters(List<? extends RangeHighlighter> highlighters) {
+    return StringUtil.join(highlighters, h->h.getTextRange()+":"+h.getLayer()+":"+h.getTextAttributes(EditorColorsUtil.getGlobalOrDefaultColorScheme()), "\n");
   }
 
   private List<RangeHighlighter> getSortedHighlights() {
@@ -2574,20 +2578,5 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       HighlightInfo h2 = HighlightInfo.fromRangeHighlighter(o2);
       return h1 == null || h2 == null ? Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(o1, o2) : HighlightInfoUpdaterImpl.BY_OFFSETS_AND_HASH_ERRORS_FIRST.compare(h1, h2);
     });
-  }
-  public static void enableDaemonLoggerTraceLevel() {
-    Logger.getInstance("#com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil").setLevel(LogLevel.TRACE);
-    Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl").setLevel(LogLevel.TRACE);
-    Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator").setLevel(LogLevel.TRACE);
-    Logger.getInstance("#com.intellij.codeInsight.daemon.impl.FileStatusMap").setLevel(LogLevel.TRACE);
-    Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass").setLevel(LogLevel.TRACE);
-    Logger.getInstance("#com.intellij.codeInsight.daemon.impl.HighlightInfoUpdaterImpl").setLevel(LogLevel.TRACE);
-    Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PassExecutorService").setLevel(LogLevel.TRACE);
-    Logger.getInstance("#com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil").setLevel(LogLevel.TRACE);
-    Logger.getInstance("#com.intellij.openapi.editor.impl.RangeHighlighterImpl").setLevel(LogLevel.TRACE);
-    Logger.getInstance("#com.intellij.openapi.editor.impl.IntervalTreeImpl").setLevel(LogLevel.TRACE);
-    // clear internal buffer
-    //TestLoggerFactory.onFixturesInitializationStarted(true);
-    //TestLoggerFactory.onTestStarted();
   }
 }
