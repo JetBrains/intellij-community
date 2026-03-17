@@ -19,7 +19,7 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
-import com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer
+import com.intellij.workspaceModel.ide.impl.jps.serialization.ProjectSynchronizerUtil
 import com.intellij.workspaceModel.ide.impl.jps.serialization.LoadedProjectData
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
 import kotlinx.coroutines.runBlocking
@@ -114,7 +114,7 @@ class JpsProjectLoadingListenerTest {
     Disposer.register(disposableRule.disposable, Disposable {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     })
-    DelayedProjectSynchronizer.Util.backgroundPostStartupProjectLoading(project)
+    ProjectSynchronizerUtil.backgroundPostStartupProjectLoading(project)
     return project
   }
 

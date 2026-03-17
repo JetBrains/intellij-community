@@ -60,7 +60,7 @@ import java.nio.file.Files
 import java.util.stream.Collectors
 import kotlin.io.path.readText
 
-class DelayedProjectSynchronizerTest {
+class ProjectSynchronizerUtilTest {
   @Rule
   @JvmField
   val projectModel = ProjectModelRule()
@@ -246,7 +246,7 @@ class DelayedProjectSynchronizerTest {
     Disposer.register(disposableRule.disposable, Disposable {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     })
-    DelayedProjectSynchronizer.Util.backgroundPostStartupProjectLoading(project)
+    ProjectSynchronizerUtil.backgroundPostStartupProjectLoading(project)
     return project
   }
 
