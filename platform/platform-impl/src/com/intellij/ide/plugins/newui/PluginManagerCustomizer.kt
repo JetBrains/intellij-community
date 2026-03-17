@@ -58,6 +58,8 @@ interface PluginManagerCustomizer {
 
   fun onPluginDeleted(pluginModel: PluginUiModel, pluginSource: PluginSource)
 
+  suspend fun isPluginCompletelyUninstalled(pluginModel: PluginUiModel): Boolean = true
+
   @Nls
   fun getAdditionalTitleText(pluginModel: PluginUiModel): String?
 
