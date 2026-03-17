@@ -62,7 +62,6 @@ abstract class TypeEvalContext protected constructor() {
 
   protected object KeyImpl : Key()
 
-  @ApiStatus.Internal
   companion object {
     protected val logger: Logger = logger<TypeEvalContext>()
 
