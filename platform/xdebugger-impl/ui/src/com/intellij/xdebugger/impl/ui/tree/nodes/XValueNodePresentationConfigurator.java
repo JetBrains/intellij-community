@@ -55,6 +55,10 @@ public final class XValueNodePresentationConfigurator {
     @Override
     public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
     }
+
+    @Override
+    public void setInlayIcon(@Nullable Icon icon) {
+    }
   }
 
   public static void setPresentation(@Nullable Icon icon, @NotNull XValuePresentation presentation, boolean hasChildren,

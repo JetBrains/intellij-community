@@ -74,6 +74,7 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.pinned.items.PinToTopMemberValue;
 import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopupUtil;
 import com.sun.jdi.AbsentInformationException;
@@ -240,7 +241,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                             : DebuggerTreeRenderer.getValueIcon(myValueDescriptor, myParent != null ? myParent.getDescriptor() : null);
 
             Icon inlayIcon = myValueDescriptor.getInlayIcon();
-            if (inlayIcon != null && node instanceof XValueNodeImpl xValueNode) {
+            if (node instanceof XValueNodeEx xValueNode) {
               xValueNode.setInlayIcon(inlayIcon);
             }
             XValuePresentation presentation = createPresentation(myValueDescriptor);

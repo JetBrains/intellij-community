@@ -5,6 +5,7 @@ import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueNode
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.Icon
 
 // TODO: split into separate interfaces may be?
 @ApiStatus.Internal
@@ -18,6 +19,8 @@ interface XValueNodeEx : XValueNode {
    * Removes attached by [setFullValueEvaluator] [com.intellij.xdebugger.frame.XFullValueEvaluator]
    */
   fun clearFullValueEvaluator()
+
+  fun setInlayIcon(icon: Icon?)
 
   /**
    * Adds a hyperlink to be shown for this node, aside from the full value evaluator.
