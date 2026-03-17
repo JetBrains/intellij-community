@@ -17,7 +17,7 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 class KotlinJvmRunTaskData(
     val targetName: String,
     val taskName: String,
-    val isComposeJvm: Boolean,
+    val isComposeGradlePluginConfigured: Boolean,
 ) {
     companion object {
         private const val KOTLIN_KMP_JVM_RUN_CLASS_NAME = "org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmRun"
@@ -36,10 +36,10 @@ class KotlinJvmRunTaskData(
             val mainModuleDataNode = module.getModuleDataNode() ?: return null
 
             val kotlinGradlePluginType = KotlinGradlePluginType.getPluginType(mainModuleDataNode) ?: return null
-            val usesCmpGradlePlugin = usesCmpGradlePlugin(mainModuleDataNode)
+            val usesComposeGradlePlugin = usesComposeGradlePlugin(mainModuleDataNode)
             val usesKmpPlugin = kotlinGradlePluginType == KotlinGradlePluginType.Multiplatform
             val runClassName = when {
-                usesCmpGradlePlugin -> JAVA_EXEC_RUN_CLASS_NAME
+                usesComposeGradlePlugin -> JAVA_EXEC_RUN_CLASS_NAME
                 usesKmpPlugin -> KOTLIN_KMP_JVM_RUN_CLASS_NAME
                 else -> return null
             }
@@ -50,7 +50,7 @@ class KotlinJvmRunTaskData(
                 .ifEmpty { return null }
 
             return when {
-                usesCmpGradlePlugin -> getCmpPluginRunTask(allKotlinJvmRunTasks)
+                usesComposeGradlePlugin -> getCmpPluginRunTask(allKotlinJvmRunTasks)
                 usesKmpPlugin -> getKmpPluginRunTask(module, mainModuleDataNode, allKotlinJvmRunTasks)
                 else -> null
             }
@@ -100,7 +100,7 @@ class KotlinJvmRunTaskData(
                     .filter { target -> taskNameWithoutLocation.equals("${target.data.externalName}Run", ignoreCase = true) }
                     .firstOrNull { target -> target.data.moduleIds.any { targetModuleId -> targetModuleId in sourceSetModuleIds } }
                     ?: return@firstNotNullOfOrNull null
-                KotlinJvmRunTaskData(target.data.externalName, taskName, isComposeJvm = false)
+                KotlinJvmRunTaskData(target.data.externalName, taskName, isComposeGradlePluginConfigured = false)
             }
         }
 
@@ -109,7 +109,7 @@ class KotlinJvmRunTaskData(
                 val taskName = runTask.data.name.let { if (it.startsWith(':')) it else ":$it" }
                 val taskNameWithoutLocation = taskName.substringAfterLast(':')
                 if (taskNameWithoutLocation != "run") return@firstNotNullOfOrNull null
-                return KotlinJvmRunTaskData("jvm", taskName, isComposeJvm = true)
+                return KotlinJvmRunTaskData("jvm", taskName, isComposeGradlePluginConfigured = true)
             }
 
     }

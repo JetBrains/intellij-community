@@ -58,7 +58,7 @@ class KotlinMultiplatformJvmRunConfigurationProducer : LazyRunConfigurationProdu
         val isDifferentMainFunction = function.containingKtFile.javaFileFacadeFqName.asString() != configuration.mainFunctionClassFqn
         if (isDifferentMainFunction) return false
 
-        if (!runTask.isComposeJvm &&
+        if (!runTask.isComposeGradlePluginConfigured &&
             mainClassScriptParameter(function) !in configuration.settings.scriptParameters) return false
 
         return true

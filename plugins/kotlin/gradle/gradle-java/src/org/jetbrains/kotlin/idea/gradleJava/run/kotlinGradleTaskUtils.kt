@@ -194,9 +194,9 @@ fun configureKmpJvmRunConfigurationFromMainFunction(
     configuration.isDebugAllEnabled = false
     configuration.isDebugServerProcess = false
 
-    configuration.isComposeJvm = runTask.isComposeJvm
+    configuration.isComposeGradlePluginConfigured = runTask.isComposeGradlePluginConfigured
     val scriptParameterList = when {
-        runTask.isComposeJvm -> {
+        runTask.isComposeGradlePluginConfigured -> {
             val mainFunctionClassFqn = ReadAction.compute<String, Throwable> { function.containingKtFile.javaFileFacadeFqName.asString() }
             configuration.mainFunctionClassFqn = mainFunctionClassFqn
             listOf(quietParameter)
@@ -220,7 +220,7 @@ private const val quietParameter: String = "--quiet"
 fun getGradleExtensions(moduleDataNode: DataNode<*>): List<GradleExtension>? =
     ExternalSystemApiUtil.find(moduleDataNode, GradleExtensionsDataService.KEY)?.data?.extensions
 
-fun usesCmpGradlePlugin(mainModuleDataNode: DataNode<out ModuleData>): Boolean =
+fun usesComposeGradlePlugin(mainModuleDataNode: DataNode<out ModuleData>): Boolean =
     getGradleExtensions(mainModuleDataNode)?.any {
         it.name == "compose" && it.typeFqn == "org.jetbrains.compose.ComposeExtension"
     } == true
