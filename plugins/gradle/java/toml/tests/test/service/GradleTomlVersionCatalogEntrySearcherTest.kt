@@ -1,19 +1,5 @@
-/*
- * Copyright (C) 2023 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.jetbrains.plugins.gradle.toml
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.java.toml.tests.service
 
 import com.intellij.gradle.java.toml.service.GradleTomlVersionCatalogEntrySearcher
 import com.intellij.gradle.java.toml.service.TomlCatalogEntry
@@ -28,8 +14,12 @@ import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogSection.BUNDLE
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogSection.LIBRARIES
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogSection.PLUGINS
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogSection.VERSIONS
-import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.assertNull
 import org.toml.lang.TomlLanguage
 import org.toml.lang.psi.TomlFile
 

@@ -1045,6 +1045,7 @@ plugins/gradle/java/performance
 plugins/gradle/java/plugin
 plugins/gradle/java/properties
 plugins/gradle/java/toml
+plugins/gradle/java/toml/tests
 plugins/gradle/jps-plugin
 plugins/gradle/native
 plugins/gradle/native/tooling
