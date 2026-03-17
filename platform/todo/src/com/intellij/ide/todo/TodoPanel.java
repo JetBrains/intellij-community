@@ -13,6 +13,7 @@ import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
+import com.intellij.ide.todo.nodes.TodoRemoteItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -33,6 +34,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -41,6 +43,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.TodoItem;
@@ -383,6 +386,31 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     myContent.setDisplayName(tabName);
   }
 
+  private @Nullable VirtualFile getVirtualFile(NodeDescriptor<?> selection) {
+    if (selection instanceof TodoRemoteItemNode) {
+      var value = ((TodoRemoteItemNode)selection).getValue();
+      return value != null ? value.getFile() : null;
+    }
+    return PsiUtilCore.getVirtualFile(TodoTreeBuilder.getFileForNodeDescriptor(selection));
+  }
+
+  protected @Nullable Navigatable getNavigatable(Project project, NodeDescriptor<?> selection) {
+    if (selection instanceof TodoRemoteItemNode) {
+      var value = ((TodoRemoteItemNode)selection).getValue();
+      return value != null ? new OpenFileDescriptor(project, value.getFile(), value.getNavigationOffset()) : null;
+    }
+    Object element = selection.getElement();
+    if (!(element instanceof TodoFileNode || element instanceof TodoItemNode)) { // allow user to use F4 only on files an TODOs
+      return null;
+    }
+    TodoItemNode pointer = myTodoTreeBuilder.getFirstPointerForElement(element);
+    SmartTodoItemPointer value = pointer == null ? null : pointer.getValue();
+    return value == null ? null : PsiNavigationSupport.getInstance().createNavigatable(
+      myProject,
+      value.getTodoItem().getFile().getVirtualFile(),
+      value.getRangeMarker().getStartOffset());
+  }
+
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     super.uiDataSnapshot(sink);
@@ -392,8 +420,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     NodeDescriptor<?> selection = ObjectUtils.tryCast(TreeUtil.getLastUserObject(myTree.getSelectionPath()), NodeDescriptor.class);
     if (selection == null) return;
     sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> {
-      PsiFile file = TodoTreeBuilder.getFileForNodeDescriptor(selection);
-      return PsiUtilCore.getVirtualFile(file);
+      return getVirtualFile(selection);
     });
     sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
       PsiElement selectedElement = TodoTreeHelper.getInstance(myProject).getSelectedElement(selection);
@@ -401,20 +428,11 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       return TodoTreeBuilder.getFileForNodeDescriptor(selection);
     });
     sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
-      VirtualFile file = PsiUtilCore.getVirtualFile(TodoTreeBuilder.getFileForNodeDescriptor(selection));
+      VirtualFile file = getVirtualFile(selection);
       return file == null ? null : new VirtualFile[]{file};
     });
     sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
-      Object element = selection.getElement();
-      if (!(element instanceof TodoFileNode || element instanceof TodoItemNode)) { // allow user to use F4 only on files an TODOs
-        return null;
-      }
-      TodoItemNode pointer = myTodoTreeBuilder.getFirstPointerForElement(element);
-      SmartTodoItemPointer value = pointer == null ? null : pointer.getValue();
-      return value == null ? null : PsiNavigationSupport.getInstance().createNavigatable(
-        myProject,
-        value.getTodoItem().getFile().getVirtualFile(),
-        value.getRangeMarker().getStartOffset());
+      return getNavigatable(myProject, selection);
     });
   }
 

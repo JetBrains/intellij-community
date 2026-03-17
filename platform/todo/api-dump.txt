@@ -38,6 +38,7 @@ a:com.intellij.ide.todo.TodoPanel
 - pa:createTreeBuilder(javax.swing.JTree,com.intellij.openapi.project.Project):com.intellij.ide.todo.TodoTreeBuilder
 - dispose():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- p:getNavigatable(com.intellij.openapi.project.Project,com.intellij.ide.util.treeView.NodeDescriptor):com.intellij.pom.Navigatable
 - getNextOccurenceActionName():java.lang.String
 - getPreviousOccurenceActionName():java.lang.String
 - p:getSelectedFile():com.intellij.psi.PsiFile
