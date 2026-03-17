@@ -81,8 +81,8 @@ open class ModuleImpl(
   override fun rename(newName: String, notifyStorage: Boolean) {
     name = newName
     if (notifyStorage) {
-      ((this as ComponentStoreOwner).componentStore.storageManager as RenameableStateStorageManager)
-        .rename(newName + ModuleFileType.DOT_DEFAULT_EXTENSION)
+      ((this as ComponentStoreOwner).componentStore.storageManager as? RenameableStateStorageManager)
+        ?.rename(newName + ModuleFileType.DOT_DEFAULT_EXTENSION)
     }
   }
 
