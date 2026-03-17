@@ -2,6 +2,7 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKeyExtractor
+import com.intellij.notebooks.visualization.settings.NotebookSettings
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -10,7 +11,9 @@ import com.intellij.openapi.observable.properties.AtomicProperty
 
 class EditorCellOutputs(private val cell: EditorCell) {
   private val editor: EditorEx = cell.editor
-  val scrollingEnabled: AtomicBooleanProperty = AtomicBooleanProperty(true)
+  val scrollingEnabled: AtomicBooleanProperty = AtomicBooleanProperty(
+    NotebookSettings.getInstance().outputScrollingEnabledByDefault
+  )
   val outputs: AtomicProperty<List<EditorCellOutput>> = AtomicProperty(getOutputs())
 
   fun updateOutputs() {
