@@ -78,6 +78,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.SwingUtilities;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -668,5 +669,28 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       ViewsGeneralSettings.getInstance().USE_DFA_ASSIST = dfa;
       ViewsGeneralSettings.getInstance().USE_DFA_ASSIST_GRAY_OUT = dfaGray;
     });
+  }
+
+  public PauseMonitor createPauseMonitor() {
+    var pauses = new LinkedBlockingQueue<SuspendContextImpl>();
+    onEveryBreakpoint(suspendContext -> pauses.add(suspendContext));
+    return new PauseMonitor(pauses);
+  }
+
+  public static class PauseMonitor {
+    private final LinkedBlockingQueue<SuspendContextImpl> myPauses;
+
+    private PauseMonitor(LinkedBlockingQueue<SuspendContextImpl> pauses) {
+      myPauses = pauses;
+    }
+
+    public SuspendContextImpl waitForPause() {
+      try {
+        return myPauses.poll(1, TimeUnit.MINUTES);
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 }

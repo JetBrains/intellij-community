@@ -115,24 +115,10 @@ fun test(x: X1) {
 }
 
 fun main() {
-    //Breakpoint!
-    println()
-    test(X10())
-    test(X20())
-    test(X30())
-    test(X40())
-    test(X50())
-    test(X60())
-    test(X70())
-    test(X80())
-    test(X90())
-    test(X100())
-    test(X100())
+    repeat(10) {
+        test(X100())
+    }
 }
 
-// RESUME: 13
+// RESUME: 10
 // PRINT_FRAME
-
-// IGNORE_K1
-// IGNORE_K2
-/*IDEA-380225*/

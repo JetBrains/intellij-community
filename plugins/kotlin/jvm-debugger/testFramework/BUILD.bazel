@@ -104,6 +104,10 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/evaluation:evaluation_test_lib",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
+    "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
+    "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ],
   runtime_deps = [
     ":testFramework",

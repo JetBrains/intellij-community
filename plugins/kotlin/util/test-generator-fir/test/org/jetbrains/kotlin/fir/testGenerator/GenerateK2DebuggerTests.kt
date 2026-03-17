@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeConti
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeCoroutineDumpTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeFileRankingTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinEvaluateExpressionTest
-import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinSteppingPacketsNumberTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinSteppingTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinVariablePrintingTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeSuspendStackTraceTest
@@ -88,10 +87,6 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
             testClass(it) {
                 model("highlighting", isRecursive = false, pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
             }
-        }
-
-        testClass<AbstractK2IdeK2CodeKotlinSteppingPacketsNumberTest> {
-            model("stepping/packets", isRecursive = false, pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
         }
 
         testClass<AbstractK2SmartStepIntoTest> {
