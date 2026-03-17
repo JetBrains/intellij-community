@@ -4,14 +4,13 @@ package com.intellij.codeInspection;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiTemplateExpression;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -21,9 +20,14 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
 import java.util.StringJoiner;
 
 public final class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.TEXT_BLOCKS);
+  }
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -34,13 +38,16 @@ public final class TextBlockBackwardMigrationInspection extends AbstractBaseJava
             expression.getParent() instanceof PsiTemplateExpression) {
           return;
         }
-        holder.registerProblem(expression, JavaBundle.message("inspection.text.block.backward.migration.message"),
-                               new ReplaceWithRegularStringLiteralFix());
+        holder.problem(expression, JavaBundle.message("inspection.text.block.backward.migration.message"))
+          .fix(new ReplaceWithRegularStringLiteralFix(expression)).register();
       }
     };
   }
 
-  private static class ReplaceWithRegularStringLiteralFix extends PsiUpdateModCommandQuickFix {
+  static class ReplaceWithRegularStringLiteralFix extends PsiUpdateModCommandAction<PsiLiteralExpression> {
+    protected ReplaceWithRegularStringLiteralFix(@NotNull PsiLiteralExpression element) {
+      super(element);
+    }
 
     @Override
     public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
@@ -48,19 +55,16 @@ public final class TextBlockBackwardMigrationInspection extends AbstractBaseJava
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      if (!(element instanceof PsiLiteralExpression literalExpression) || !literalExpression.isTextBlock()) return;
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiLiteralExpression literalExpression, @NotNull ModPsiUpdater updater) {
+      if (!literalExpression.isTextBlock()) return;
       String text = PsiLiteralUtil.getTextBlockText(literalExpression);
       if (text == null) return;
       String replacement = convertToConcatenation(text);
-      PsiFile file = element.getContainingFile();
-      if (file == null) return;
-      CodeStyleSettings tempSettings = CodeStyle.getSettings(file);
+      CodeStyleSettings tempSettings = CodeStyle.getSettings(literalExpression.getContainingFile());
       tempSettings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_BINARY_OPERATION = true;
       CodeStyleManager manager = CodeStyleManager.getInstance(literalExpression.getProject());
-      CodeStyle.runWithLocalSettings(project, tempSettings, () -> {
-        PsiElement result = new CommentTracker().replaceAndRestoreComments(literalExpression, replacement);
-        manager.reformat(result);
+      CodeStyle.runWithLocalSettings(context.project(), tempSettings, () -> {
+        manager.reformat(new CommentTracker().replaceAndRestoreComments(literalExpression, replacement));
       });
     }
 
