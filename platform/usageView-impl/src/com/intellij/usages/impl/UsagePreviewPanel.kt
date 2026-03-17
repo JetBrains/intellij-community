@@ -644,8 +644,10 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
 
     val PREVIEW_EDITOR_FLAG = Key.create<UsagePreviewPanel>("PREVIEW_EDITOR_FLAG")
 
+    @Internal
+    @RequiresReadLock
     @Contract("null -> !null")
-    private fun cannotPreviewMessage(infos: List<UsageInfo>?, severalFilesSelected: Boolean): @NlsContexts.StatusText String? {
+    open fun cannotPreviewMessage(infos: List<UsageInfo>?, severalFilesSelected: Boolean): @NlsContexts.StatusText String? {
       if (infos == null) {
         return UsageViewBundle.message("usage.preview.isnt.available")
       }

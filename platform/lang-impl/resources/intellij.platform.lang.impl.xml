@@ -66,6 +66,9 @@
     <extensionPoint qualifiedName="com.intellij.scratchLanguageFilter"
                     interface="com.intellij.ide.scratch.ScratchFileTypeFilter"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.usageInfoFilter"
+                    interface="com.intellij.find.impl.UsageInfoAdapterFilter"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
