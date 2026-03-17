@@ -54,20 +54,20 @@ public final class PsiDiamondTypeUtil {
   private PsiDiamondTypeUtil() {
   }
 
-  public static boolean canCollapseToDiamond(final PsiNewExpression expression,
-                                             final PsiNewExpression context,
-                                             final @Nullable PsiType expectedType) {
+  public static boolean canCollapseToDiamond(PsiNewExpression expression,
+                                             PsiNewExpression context,
+                                             @Nullable PsiType expectedType) {
     return canCollapseToDiamond(expression, context, expectedType, false);
   }
 
-  public static boolean canChangeContextForDiamond(final PsiNewExpression expression, final PsiType expectedType) {
+  public static boolean canChangeContextForDiamond(PsiNewExpression expression, PsiType expectedType) {
     final PsiNewExpression copy = (PsiNewExpression)expression.copy();
     return canCollapseToDiamond(copy, copy, expectedType, true);
   }
 
-  private static boolean canCollapseToDiamond(final PsiNewExpression expression,
-                                              final PsiNewExpression context,
-                                              final @Nullable PsiType expectedType,
+  private static boolean canCollapseToDiamond(PsiNewExpression expression,
+                                              PsiNewExpression context,
+                                              @Nullable PsiType expectedType,
                                               boolean skipDiamonds) {
     if (PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, context)) {
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
@@ -81,7 +81,7 @@ public final class PsiDiamondTypeUtil {
             if (inferenceResult.getErrorMessage() == null) {
               PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
               if (anonymousClass != null &&
-                  ContainerUtil.exists(anonymousClass.getMethods(), 
+                  ContainerUtil.exists(anonymousClass.getMethods(),
                                        method -> !method.hasModifierProperty(PsiModifier.PRIVATE) && method.findSuperMethods().length == 0)) {
                 return false;
               }
