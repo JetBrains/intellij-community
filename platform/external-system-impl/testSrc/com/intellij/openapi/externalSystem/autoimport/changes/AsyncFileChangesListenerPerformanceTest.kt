@@ -6,8 +6,6 @@ import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.junit5.StressTestApplication
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
-import com.intellij.util.asDisposable
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
@@ -17,9 +15,7 @@ class AsyncFileChangesListenerPerformanceTest {
 
   @ParameterizedTest
   @CsvSource("10000")
-  fun `many single events after many batch events`(
-    eventCount: Int,
-  ): Unit = runBlocking {
+  fun `many single events after many batch events`(eventCount: Int) {
 
     lateinit var listener: AsyncFileChangesListener
 
@@ -27,7 +23,6 @@ class AsyncFileChangesListenerPerformanceTest {
       listener = AsyncFileChangesListener(
         filesProvider = AsyncSupplier.blocking { emptySet() },
         changesListener = object : FilesChangesListener {},
-        parentDisposable = asDisposable(),
       )
     }
 

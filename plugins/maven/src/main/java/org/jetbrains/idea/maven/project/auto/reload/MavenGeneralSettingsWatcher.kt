@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.project.auto.reload
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Companion.isAsyncChangesProcessing
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFileChangesListener.Companion.subscribeOnVirtualFilesChanges
@@ -52,10 +52,11 @@ class MavenGeneralSettingsWatcher(
 
   fun subscribeOnSettingsFileChanges(parentDisposable: Disposable) {
     val filesProvider = BackgroundAsyncSupplier(
-      manager.project,
+      project = manager.project,
       supplier = AsyncSupplier.blocking(::collectSettingsFiles),
-      shouldKeepTasksAsynchronous = { AutoImportProjectTracker.isAsyncChangesProcessing },
+      shouldKeepTasksAsynchronous = ::isAsyncChangesProcessing,
       backgroundExecutor = backgroundExecutor,
+      parentDisposable = parentDisposable,
     )
     subscribeOnVirtualFilesChanges(false, filesProvider, object : FilesChangesListener {
       override fun onFileChange(stamp: Stamp, path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {

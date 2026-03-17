@@ -15,16 +15,17 @@ class BackgroundAsyncSupplier<R>(
   private val supplier: AsyncSupplier<R>,
   private val shouldKeepTasksAsynchronous: () -> Boolean,
   private val backgroundExecutor: Executor,
+  private val parentDisposable: Disposable,
 ) : AsyncSupplier<R> {
-  override fun supply(parentDisposable: Disposable, consumer: (R) -> Unit) {
+  override fun supply(consumer: (R) -> Unit) {
     project.trackActivityBlocking(ExternalSystemActivityKey) {
       if (shouldKeepTasksAsynchronous()) {
         BackgroundTaskUtil.execute(backgroundExecutor, parentDisposable) {
-          supplier.supply(parentDisposable, consumer)
+          supplier.supply(consumer)
         }
       }
       else {
-        supplier.supply(parentDisposable, consumer)
+        supplier.supply(consumer)
       }
     }
   }

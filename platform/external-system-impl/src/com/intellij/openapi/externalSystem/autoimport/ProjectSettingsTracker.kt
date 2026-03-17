@@ -169,7 +169,7 @@ class ProjectSettingsTracker(
     if (isInvalidateCache || isRefreshVfs) {
       settingsAsyncSupplier.invalidate()
     }
-    settingsAsyncSupplier.supply(parentDisposable) { settingsPaths ->
+    settingsAsyncSupplier.supply { settingsPaths ->
       if (isRefreshVfs) {
         val settingsFiles = settingsPaths.mapNotNull { Path.of(it) }
         if (settingsFiles.isNotEmpty()) {
@@ -364,14 +364,15 @@ class ProjectSettingsTracker(
     }
 
     private val supplier = BackgroundAsyncSupplier(
-      project,
+      project = project,
       supplier = AsyncSupplier.blocking(::getOrCollectSettingsFiles),
       shouldKeepTasksAsynchronous = ::isAsyncChangesProcessing,
       backgroundExecutor = backgroundExecutor,
+      parentDisposable = parentDisposable,
     )
 
-    override fun supply(parentDisposable: Disposable, consumer: (Set<String>) -> Unit) {
-      supplier.supply(parentDisposable) {
+    override fun supply(consumer: (Set<String>) -> Unit) {
+      supplier.supply {
         consumer(it + settingsFilesStatus.get().oldCRC.keys)
       }
     }

@@ -1,15 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport.changes
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
 import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.util.asDisposable
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -17,9 +14,9 @@ import org.junit.jupiter.api.Test
 class AsyncFileChangesListenerTest {
 
   @Test
-  fun `reports matching file change`(): Unit = runBlocking {
+  fun `reports matching file change`() {
     val recording = RecordingListener()
-    val listener = AsyncFileChangesListener(AsyncSupplier.blocking { setOf("/a.txt") }, recording, asDisposable())
+    val listener = AsyncFileChangesListener(AsyncSupplier.blocking { setOf("/a.txt") }, recording)
 
     listener.init()
     listener.onFileChange("/a.txt", 1L, EXTERNAL)
@@ -31,9 +28,9 @@ class AsyncFileChangesListenerTest {
   }
 
   @Test
-  fun `no callback when no files changed`(): Unit = runBlocking {
+  fun `no callback when no files changed`() {
     val recording = RecordingListener()
-    val listener = AsyncFileChangesListener(AsyncSupplier.blocking { setOf("/a.txt") }, recording, asDisposable())
+    val listener = AsyncFileChangesListener(AsyncSupplier.blocking { setOf("/a.txt") }, recording)
 
     listener.init()
     listener.apply()
@@ -44,9 +41,9 @@ class AsyncFileChangesListenerTest {
   }
 
   @Test
-  fun `no callback when changed file is not watched`(): Unit = runBlocking {
+  fun `no callback when changed file is not watched`() {
     val recording = RecordingListener()
-    val listener = AsyncFileChangesListener(AsyncSupplier.blocking { emptySet() }, recording, asDisposable())
+    val listener = AsyncFileChangesListener(AsyncSupplier.blocking { emptySet() }, recording)
 
     listener.init()
     listener.onFileChange("/a.txt", 1L, EXTERNAL)
@@ -58,9 +55,9 @@ class AsyncFileChangesListenerTest {
   }
 
   @Test
-  fun `init discards changes accumulated in previous cycle`(): Unit = runBlocking {
+  fun `init discards changes accumulated in previous cycle`() {
     val recording = RecordingListener()
-    val listener = AsyncFileChangesListener(AsyncSupplier.blocking { setOf("/a.txt", "/b.txt") }, recording, asDisposable())
+    val listener = AsyncFileChangesListener(AsyncSupplier.blocking { setOf("/a.txt", "/b.txt") }, recording)
 
     // Cycle 1 — change /a.txt, never apply (abandoned)
     listener.init()
@@ -75,9 +72,9 @@ class AsyncFileChangesListenerTest {
   }
 
   @Test
-  fun `last change for the same path wins within a cycle`(): Unit = runBlocking {
+  fun `last change for the same path wins within a cycle`() {
     val recording = RecordingListener()
-    val listener = AsyncFileChangesListener(AsyncSupplier.blocking { setOf("/a.txt") }, recording, asDisposable())
+    val listener = AsyncFileChangesListener(AsyncSupplier.blocking { setOf("/a.txt") }, recording)
 
     listener.init()
     listener.onFileChange("/a.txt", 1L, EXTERNAL)
@@ -88,10 +85,10 @@ class AsyncFileChangesListenerTest {
   }
 
   @Test
-  fun `delayed supplier sees snapshot from its own apply call`(): Unit = runBlocking {
+  fun `delayed supplier sees snapshot from its own apply call`() {
     val supplier = DeferredSupplier(setOf("/a.txt", "/b.txt"))
     val recording = RecordingListener()
-    val listener = AsyncFileChangesListener(supplier, recording, asDisposable())
+    val listener = AsyncFileChangesListener(supplier, recording)
 
     // Cycle 1: change /a.txt, apply — supplier queued but not yet fired
     listener.init()
@@ -160,7 +157,7 @@ class AsyncFileChangesListenerTest {
     private val pending = ArrayDeque<(R) -> Unit>()
     val pendingCount get() = pending.size
 
-    override fun supply(parentDisposable: Disposable, consumer: (R) -> Unit) {
+    override fun supply(consumer: (R) -> Unit) {
       pending.addLast(consumer)
     }
 

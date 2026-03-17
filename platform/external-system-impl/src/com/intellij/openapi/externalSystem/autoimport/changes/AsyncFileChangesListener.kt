@@ -20,7 +20,6 @@ import org.jetbrains.annotations.ApiStatus
 class AsyncFileChangesListener(
   private val filesProvider: AsyncSupplier<Set<String>>,
   private val changesListener: FilesChangesListener,
-  private val parentDisposable: Disposable,
 ) {
 
   private var updatedFiles: HashMap<String, ModificationData> = HashMap()
@@ -36,7 +35,7 @@ class AsyncFileChangesListener(
   fun apply() {
     val stamp = Stamp.nextStamp()
     val updatedFilesSnapshot = updatedFiles
-    filesProvider.supply(parentDisposable) { filesToWatch ->
+    filesProvider.supply { filesToWatch ->
       val index = filesToWatch.toPrefixTreeSet(CanonicalPathPrefixTree)
       val updatedWatchedFiles = updatedFilesSnapshot.flatMap { (path, modificationData) ->
         index.getDescendants(path)
@@ -76,7 +75,7 @@ class AsyncFileChangesListener(
       listener: FilesChangesListener,
       parentDisposable: Disposable
     ) {
-      val fileListener = AsyncFileChangesListener(filesProvider, listener, parentDisposable)
+      val fileListener = AsyncFileChangesListener(filesProvider, listener)
       val virtualFileListener = AsyncVirtualFilesChangesListener(isIgnoreInternalChanges, fileListener)
       installAsyncVirtualFileListener(virtualFileListener, parentDisposable)
     }
@@ -88,7 +87,7 @@ class AsyncFileChangesListener(
       listener: FilesChangesListener,
       parentDisposable: Disposable
     ) {
-      val fileListener = AsyncFileChangesListener(filesProvider, listener, parentDisposable)
+      val fileListener = AsyncFileChangesListener(filesProvider, listener)
       val documentListener = AsyncDocumentChangesListener(isIgnoreExternalChanges, fileListener)
       EditorFactory.getInstance().eventMulticaster.addDocumentListener(documentListener, parentDisposable)
     }
