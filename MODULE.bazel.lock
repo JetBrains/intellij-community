@@ -346,7 +346,7 @@
     },
     "//build:jps_dynamic_deps_community.bzl%jps_dynamic_deps_community_extension": {
       "general": {
-        "bzlTransitiveDigest": "na5dI3bQpI9ye1/HsEJ4gMFBa5ZWdWK0q5xdE585uSo=",
+        "bzlTransitiveDigest": "8cK6oCqmhZ5CcaND+crwgod/nFwZnW2NKoA+fAM5udg=",
         "usagesDigest": "OSsQY2hkpxdAkgfVzTh+Q1KLtzAuQDVI0/8sRki7FfU=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
