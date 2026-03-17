@@ -459,7 +459,7 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   private void configureTabName(Content content, TerminalTitle title) {
-    content.setDisplayName(TerminalTitleKt.buildSettingsAwareTitle(title));
+    content.setDisplayName(TerminalTitleKt.buildSettingsAwareTitle(title, false));
 
     // Listen for TerminalTitle changes and update the content display name
     CoroutineScope scope = TerminalCoroutineKt.terminalProjectScopeBoundToDisposable(myProject, content, "tab name updating");
