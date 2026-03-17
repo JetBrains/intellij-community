@@ -15,10 +15,10 @@
 
     <projectPreInit
       id="initialProjectSynchronizer"
-      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.InitialProjectSynchronizer"
+      implementation="com.intellij.platform.backend.workspace.impl.InitialProjectSynchronizer"
       order="before workspaceFileIndexInitializer"/>
 
-    <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer"/>
+    <backgroundPostStartupActivity implementation="com.intellij.platform.backend.workspace.impl.DelayedProjectSynchronizer"/>
 
   </extensions>
 </idea-plugin>

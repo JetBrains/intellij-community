@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.ide.impl.jps.serialization
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.backend.workspace.impl
 
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
@@ -10,6 +10,7 @@ import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import com.intellij.workspaceModel.ide.impl.jps.serialization.ProjectSynchronizerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
