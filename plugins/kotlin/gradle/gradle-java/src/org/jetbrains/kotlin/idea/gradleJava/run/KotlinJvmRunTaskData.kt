@@ -33,7 +33,7 @@ class KotlinJvmRunTaskData(
          * is omitted in order to keep it simple.
          */
         fun findSuitableKotlinJvmRunTask(module: Module): KotlinJvmRunTaskData? {
-            val mainModuleDataNode = module.getModuleDataNode() ?: return null
+            val mainModuleDataNode = module.findMainModuleCachedData() ?: return null
 
             val kotlinGradlePluginType = KotlinGradlePluginType.getPluginType(mainModuleDataNode) ?: return null
             val usesComposeGradlePlugin = usesComposeGradlePlugin(mainModuleDataNode)

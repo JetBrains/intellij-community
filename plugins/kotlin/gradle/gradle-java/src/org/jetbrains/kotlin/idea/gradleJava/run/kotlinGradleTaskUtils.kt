@@ -225,7 +225,7 @@ fun usesComposeGradlePlugin(mainModuleDataNode: DataNode<out ModuleData>): Boole
         it.name == "compose" && it.typeFqn == "org.jetbrains.compose.ComposeExtension"
     } == true
 
-fun Module.getModuleDataNode(): DataNode<out ModuleData>? = CachedModuleDataFinder.findMainModuleData(this)
+fun Module.findMainModuleCachedData(): DataNode<out ModuleData>? = CachedModuleDataFinder.findMainModuleData(this)
 
 enum class KotlinGradlePluginType {
     Jvm,
