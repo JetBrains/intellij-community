@@ -200,7 +200,8 @@ public class XValueHint extends AbstractValueHint {
       var linkComponent = new SimpleColoredComponent();
       if (link != null) {
         appendAdditionalHyperlink(link, linkComponent);
-      } else {
+      }
+      else {
         appendEvaluatorLink(evaluator, linkComponent);
       }
       LinkMouseListenerBase.installSingleTagOn(linkComponent);
@@ -257,7 +258,7 @@ public class XValueHint extends AbstractValueHint {
       result.computePresentation(new XValueNodePresentationConfigurator.ConfigurableXValueNodeExImpl() {
         private XFullValueEvaluator myFullValueEvaluator;
         private boolean myShown = false;
-        private SimpleColoredComponent mySimpleColoredComponent;
+        private @Nullable ExpandableHint myExpandableHint;
         private @Nullable HintPresentation myHintPresentation;
         private @Nullable XDebuggerTreeNodeHyperlink myLink;
 
@@ -278,7 +279,7 @@ public class XValueHint extends AbstractValueHint {
 
           if (!hasChildren) {
             // show simple popup if there are no children
-            mySimpleColoredComponent = null;
+            myExpandableHint = null;
             showTooltipPopup(createHintComponent(presentation.icon(), presentation.text(),
                                                  presentation.valuePresentation(), presentation.evaluator(), presentation.link()));
           }
@@ -310,15 +311,19 @@ public class XValueHint extends AbstractValueHint {
               return;
             }
 
-            mySimpleColoredComponent = createExpandableHintComponent(presentation.icon(), presentation.text(),
-                                                                     getShowPopupRunnable(result, presentation.evaluator()),
-                                                                     presentation.evaluator(), presentation.valuePresentation(), presentation.link());
-            if (mySimpleColoredComponent instanceof SimpleColoredComponentWithProgress componentWithProgress) {
-              // TODO: it seems like that we are skipping "Collecting data..." this way, assuming that it will be the first presentation
-              //   But this is not a correct way, UI should send "Collecting data..." presentation instead of the backend
-              componentWithProgress.startLoading();
-            }
-            showTooltipPopup(mySimpleColoredComponent);
+            myExpandableHint = new ExpandableHint(
+              createExpandableHintComponent(
+                presentation.icon(),
+                presentation.text(),
+                getShowPopupRunnable(result, presentation.evaluator()),
+                null,
+                presentation.valuePresentation(),
+                null
+              ),
+              presentation
+            );
+            myExpandableHint.startLoadingIfNeeded();
+            showTooltipPopup(myExpandableHint.getComponent());
           }
           myShown = true;
         }
@@ -362,19 +367,10 @@ public class XValueHint extends AbstractValueHint {
          * If the hint component's preferred size changes as a result of the update, the popup is resized accordingly.
          */
         private boolean updateShownExpandableHint(@NotNull HintPresentation presentation) {
-          if (mySimpleColoredComponent == null) {
+          if (myExpandableHint == null) {
             return false;
           }
-          if (mySimpleColoredComponent instanceof SimpleColoredComponentWithProgress componentWithProgress) {
-            componentWithProgress.stopLoading();
-          }
-          Icon previousIcon = mySimpleColoredComponent.getIcon();
-          var previousPreferredWidth = mySimpleColoredComponent.getPreferredSize().width;
-
-          mySimpleColoredComponent.clear();
-          fillSimpleColoredComponent(mySimpleColoredComponent, previousIcon, presentation.text(), presentation.evaluator(), presentation.link());
-
-          var delta = mySimpleColoredComponent.getPreferredSize().width - previousPreferredWidth;
+          var delta = myExpandableHint.updatePresentation(presentation);
           if (delta > 0) {
             resizePopup(delta, 0);
           }
@@ -441,5 +437,75 @@ public class XValueHint extends AbstractValueHint {
                                   @NotNull XValuePresentation valuePresentation,
                                   @Nullable XFullValueEvaluator evaluator,
                                   @Nullable XDebuggerTreeNodeHyperlink link) {
+  }
+
+  private final class ExpandableHint {
+    private final @NotNull BorderLayoutPanel myComponent;
+    private final @NotNull SimpleColoredComponent myTextComponent;
+    private @Nullable SimpleColoredComponent myLinkComponent;
+
+    private ExpandableHint(@NotNull SimpleColoredComponent textComponent,
+                           @NotNull HintPresentation presentation) {
+      myTextComponent = textComponent;
+      myComponent = installInformationProperties(new BorderLayoutPanel());
+      myComponent.add(textComponent);
+      setLinkComponent(presentation.evaluator(), presentation.link());
+    }
+
+    public @NotNull JComponent getComponent() {
+      return myComponent;
+    }
+
+    public void startLoadingIfNeeded() {
+      if (myTextComponent instanceof SimpleColoredComponentWithProgress componentWithProgress) {
+        // TODO: it seems like that we are skipping "Collecting data..." this way, assuming that it will be the first presentation
+        //   But this is not a correct way, UI should send "Collecting data..." presentation instead of the backend
+        componentWithProgress.startLoading();
+      }
+    }
+
+    public int updatePresentation(@NotNull HintPresentation presentation) {
+      if (myTextComponent instanceof SimpleColoredComponentWithProgress componentWithProgress) {
+        componentWithProgress.stopLoading();
+      }
+      int previousPreferredWidth = myComponent.getPreferredSize().width;
+      updateTextComponent(myTextComponent.getIcon(), presentation.text());
+      setLinkComponent(presentation.evaluator(), presentation.link());
+      return myComponent.getPreferredSize().width - previousPreferredWidth;
+    }
+
+    private void updateTextComponent(@Nullable Icon icon, @NotNull SimpleColoredText text) {
+      myTextComponent.clear();
+      fillSimpleColoredComponent(myTextComponent, icon, text, null, null);
+    }
+
+    private void setLinkComponent(@Nullable XFullValueEvaluator evaluator,
+                                  @Nullable XDebuggerTreeNodeHyperlink link) {
+      if (myLinkComponent != null) {
+        myComponent.remove(myLinkComponent);
+      }
+      myLinkComponent = createLinkComponent(evaluator, link);
+      if (myLinkComponent != null) {
+        myComponent.addToRight(myLinkComponent);
+      }
+      myComponent.revalidate();
+      myComponent.repaint();
+    }
+
+    private @Nullable SimpleColoredComponent createLinkComponent(@Nullable XFullValueEvaluator evaluator,
+                                                                 @Nullable XDebuggerTreeNodeHyperlink link) {
+      if (evaluator == null && link == null) {
+        return null;
+      }
+      var linkComponent = new SimpleColoredComponent();
+      if (link != null) {
+        appendAdditionalHyperlink(link, linkComponent);
+      }
+      else {
+        appendEvaluatorLink(evaluator, linkComponent);
+      }
+      LinkMouseListenerBase.installSingleTagOn(linkComponent);
+      return linkComponent;
+    }
   }
 }
