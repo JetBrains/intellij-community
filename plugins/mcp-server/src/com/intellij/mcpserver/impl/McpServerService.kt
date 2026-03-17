@@ -338,14 +338,12 @@ open class McpServerService(val cs: CoroutineScope) {
     }
     val filterProviders = McpToolFilterProvider.EP.extensionList
       .filter { provider -> excludeProviders.none { it.isInstance(provider) } }
-    val filters = filterProviders.flatMap { it.getFilters(clientInfo, sessionOptions) }
-    
     // Start with all tools in ON_DEMAND state
-    var context = McpToolFilterProvider.McpToolFilterContext(allTools)
+    val context = McpToolFilterProvider.McpToolFilterContext(allTools)
     
     // Apply filter providers (can move ON_DEMAND → ON/OFF, or ON → OFF)
-    for (filterItem in filters) {
-      context = filterItem.modify(context).apply(context)
+    for (filterProvider in filterProviders) {
+      filterProvider.applyFilters(context, clientInfo, sessionOptions)
     }
     
     // Apply the filter parameter ONLY to ON_DEMAND tools
