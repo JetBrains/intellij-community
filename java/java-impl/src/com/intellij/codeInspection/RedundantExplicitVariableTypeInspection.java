@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -9,6 +9,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayInitializerExpression;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.PsiDeconstructionList;
@@ -56,7 +57,7 @@ public final class RedundantExplicitVariableTypeInspection extends AbstractBaseJ
             return;
           }
           PsiExpression initializer = variable.getInitializer();
-          if (initializer instanceof PsiFunctionalExpression) {
+          if (initializer instanceof PsiFunctionalExpression || initializer instanceof PsiArrayInitializerExpression) {
             return;
           }
           doCheck(variable, (PsiLocalVariable)variable.copy(), typeElement);
