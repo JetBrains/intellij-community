@@ -442,6 +442,10 @@ public final class JavaParserUtil {
     return createSyntaxBuilder(chameleon, languageLevelFunction, psiAsLexer, null);
   }
 
+  /**
+   * @deprecated used only temporarily for drool, will be deleted
+   */
+  @Deprecated
   public static @NotNull PsiSyntaxBuilderWithLanguageLevel createSyntaxBuilder(@NotNull ASTNode chameleon,
                                                                                @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
                                                                                @NotNull Function<PsiFile, TokenList> psiAsLexer,
