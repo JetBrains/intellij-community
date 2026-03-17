@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Returns the Python SDK configured for this module, or `null` if none is set.
@@ -28,7 +29,9 @@ suspend fun Module.findPythonSdk(): Sdk? {
  * Prefer the suspended [findPythonSdk] extension in coroutine contexts.
  */
 var Module.pythonSdk: Sdk?
+  @ApiStatus.Obsolete
   get() = PythonSdkUtil.findPythonSdk(this)
+  @ApiStatus.Internal
   set(newSdk) {
     val prevSdk = pythonSdk
     thisLogger.info("Setting PythonSDK $newSdk to module $this")
@@ -38,6 +41,5 @@ var Module.pythonSdk: Sdk?
     }
     ApplicationManager.getApplication().messageBus.syncPublisher(PySdkListener.TOPIC).moduleSdkUpdated(this, prevSdk, newSdk)
   }
-
 
 private val thisLogger = fileLogger()

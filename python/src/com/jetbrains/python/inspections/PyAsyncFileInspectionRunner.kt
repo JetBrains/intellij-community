@@ -8,23 +8,29 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.application.ApplicationManager
+import com.jetbrains.python.PythonPluginDisposable
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.psi.PsiFile
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.components.ActionLink
-import com.jetbrains.python.inspections.interpreter.InterpreterFix
 import com.jetbrains.python.inspections.interpreter.BusyGuardExecutor
+import com.jetbrains.python.inspections.interpreter.InterpreterFix
+import com.jetbrains.python.orLogException
+import com.jetbrains.python.sdk.PySdkListener
+import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -44,11 +50,30 @@ class PyAsyncFileInspectionRunner(
   cacheTtl: Duration = 20.seconds,
   private val cacheLoader: suspend (Module) -> InspectionRunnerResult,
 ) {
+  init {
+    // Invalidate cached inspection results when a module's SDK changes, so the notification
+    // panel re-evaluates immediately instead of waiting for the cache TTL to expire.
+    // PythonPluginDisposable is used as parent so the connection is cleaned up on plugin unload.
+    ApplicationManager.getApplication().messageBus.connect(PythonPluginDisposable.getInstance()).subscribe(PySdkListener.TOPIC, object : PySdkListener {
+      override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) {
+        cache.invalidate(module)
+      }
+    })
+  }
+
   private val cache: LoadingCache<Module, Deferred<InspectionRunnerResult>> = Caffeine.newBuilder()
     .refreshAfterWrite(cacheTtl.toJavaDuration())
     .weakKeys()
+    .evictionListener<Module, Deferred<InspectionRunnerResult>> { _, value, _ -> value?.cancel() }
     .build(object : CacheLoader<Module, Deferred<InspectionRunnerResult>> {
-      override fun load(key: Module): Deferred<InspectionRunnerResult> = startComputation(key)
+      override fun load(key: Module): Deferred<InspectionRunnerResult> {
+        // Eagerly remove the cache entry when the module is disposed to break strong reference
+        // chains from cache values (e.g., CreateSdkInfo.sdkCreator capturing Module) that would
+        // otherwise prevent GC of disposed projects.
+        @Suppress("IncorrectParentDisposable")
+        Disposer.register(key) { cache.invalidate(key) }
+        return startComputation(key)
+      }
 
       /**
        * On refresh, the old (completed) [Deferred] is served to callers while the new one is loading.
@@ -135,9 +160,7 @@ private class CacheEvictingFix(
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class InterpreterFixExecutor(private val project: Project, internal val scope: CoroutineScope) : BusyGuardExecutor {
-  private val semaphore = OverflowSemaphore(permits = 1, overflow = BufferOverflow.DROP_LATEST)
-  private val _isBusy = MutableStateFlow(false)
-  override val isBusy: StateFlow<Boolean> = _isBusy
+  override val isBusy: StateFlow<Boolean> = pythonSdkConfigurationMutex.isLocked
 
   init {
     scope.launch {
@@ -147,19 +170,7 @@ class InterpreterFixExecutor(private val project: Project, internal val scope: C
 
   override fun execute(action: suspend () -> Unit) {
     scope.launch {
-      semaphore.withPermit {
-        _isBusy.value = true
-        try {
-          action()
-        }
-        finally {
-          _isBusy.value = false
-        }
-      }
-    }.invokeOnCompletion { cause ->
-      if (cause != null && _isBusy.value) {
-        LOG.warn("Interpreter fix submission discarded: another fix is already in progress")
-      }
+      pythonSdkConfigurationMutex.tryWithLock { action() }.orLogException(LOG)
     }
   }
 

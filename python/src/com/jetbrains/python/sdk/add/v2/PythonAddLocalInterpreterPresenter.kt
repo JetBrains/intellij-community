@@ -10,6 +10,8 @@ import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
+import com.jetbrains.python.sdk.moduleIfExists
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Deferred
@@ -51,7 +53,6 @@ class PythonAddLocalInterpreterPresenter(
         return
       }
       is Result.Success -> {
-        moduleOrProject.project.pySdkService.persistSdk(r.result)
         val isPreviouslyConfigured = addEnvironment.createStatisticsInfo(PythonInterpreterCreationTargets.LOCAL_MACHINE).previouslyConfigured
         PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(r.result, isPreviouslyConfigured)
         _sdkShared.emit(r.result)
