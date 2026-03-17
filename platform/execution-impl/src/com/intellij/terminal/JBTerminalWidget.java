@@ -26,10 +26,7 @@ import com.intellij.util.ui.RegionPainter;
 import com.jediterm.core.compatibility.Point;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.*;
-import com.jediterm.terminal.model.SelectionUtil;
-import com.jediterm.terminal.model.StyleState;
-import com.jediterm.terminal.model.TerminalSelection;
-import com.jediterm.terminal.model.TerminalTextBuffer;
+import com.jediterm.terminal.model.*;
 import com.jediterm.terminal.ui.*;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import kotlin.Pair;
@@ -70,6 +67,9 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
     myProject = project;
     myHyperlinkFilter = new JediTermHyperlinkFilterAdapter(project, console, this);
     addAsyncHyperlinkFilter(myHyperlinkFilter);
+    if (getTerminal() instanceof JediTerminal jediTerminal) {
+      jediTerminal.setUrlHyperlinkFilter(new Osc8UrlHyperlinkFilter(project, this));
+    }
     Disposer.register(parent, this);
     Disposer.register(this, myBridge);
     setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {

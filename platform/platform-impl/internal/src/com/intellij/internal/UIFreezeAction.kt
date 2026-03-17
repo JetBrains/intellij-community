@@ -3,6 +3,7 @@ package com.intellij.internal
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.bindIntText
@@ -25,6 +26,7 @@ internal class UIFreezeAction : DumbAwareAction("UI Freeze") {
     }
 
     if (dialog("Set Freeze Duration", ui).showAndGet()) {
+      logger<UIFreezeAction>().info("Freeze UI for $seconds seconds")
       Thread.sleep(seconds * 1_000L)
     }
   }

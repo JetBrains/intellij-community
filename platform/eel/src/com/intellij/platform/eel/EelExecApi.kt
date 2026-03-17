@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
@@ -105,6 +105,11 @@ sealed interface EelExecApi {
     val exe: String
   }
 
+  @Suppress("FunctionName")
+  @ApiStatus.Internal
+  @ApiStatus.Obsolete
+  fun `_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`(): Boolean = false
+
   /**
    * Use [environmentVariables] instead.
    *
@@ -115,6 +120,11 @@ sealed interface EelExecApi {
   @ApiStatus.Experimental
   @ApiStatus.Obsolete
   suspend fun fetchLoginShellEnvVariables(): Map<String, String> {
+    if (`_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`()) {
+      @Suppress("checkedExceptions")
+      return environmentVariables().eelIt().await()
+    }
+
     return when (this) {
       is EelExecPosixApi -> {
         if (this is LocalEelExecApi) {

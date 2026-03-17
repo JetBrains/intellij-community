@@ -93,9 +93,9 @@ internal class IdeaFreezeReporter : PerformanceListener {
       dumpTask?.stop()
 
       reset()
-      val watcher = PerformanceWatcher.getInstance()
-      val maxDumpDuration = watcher.maxDumpDuration
-      if (maxDumpDuration == 0) {
+
+      val maxDumpDuration = Registry.get("freeze.reporter.maxDumpDuration.ms").asInteger()
+      if (maxDumpDuration <= 0) {
         return
       }
 
@@ -108,8 +108,8 @@ internal class IdeaFreezeReporter : PerformanceListener {
           }
         }
 
-        override suspend fun stopDumpingThreads() {
-          super.stopDumpingThreads()
+        override suspend fun stopAndWait() {
+          super.stopAndWait()
           if (stopped.compareAndSet(false, true)) {
             EP_NAME.forEachExtensionSafe { it.stop(reportDir) }
           }

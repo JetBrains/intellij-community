@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractKotlinModuleModificationEventTest : AbstractKotlinModificationEventTest() {
+    protected abstract val expectedEventKind: KotlinModificationEventKind
+
     override fun setUp() {
         super.setUp()
 
@@ -27,7 +29,7 @@ abstract class AbstractKotlinModuleModificationEventTest : AbstractKotlinModific
         label: String,
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModuleModificationEventTracker =
-        createModuleTracker(module, label, additionalAllowedEventKinds)
+        createModuleTracker(module, label, expectedEventKind, additionalAllowedEventKinds)
 
     protected fun createTracker(
         module: Module,

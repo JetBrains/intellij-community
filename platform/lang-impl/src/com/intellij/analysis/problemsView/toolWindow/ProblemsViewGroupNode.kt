@@ -2,12 +2,17 @@
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.Problem
+import com.intellij.analysis.problemsView.toolWindow.ProblemsViewHighlightingChildrenBuilder.toProblemNodes
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
 
-internal class ProblemsViewGroupNode(val parent: FileNode, val group: String, val problems: Collection<Problem>) : Node(parent) {
+internal class ProblemsViewGroupNode(
+  val parent: FileNode,
+  val group: String,
+  val problems: Collection<Problem>,
+) : Node(parent) {
 
   override fun getLeafState(): LeafState = LeafState.NEVER
 
@@ -15,9 +20,11 @@ internal class ProblemsViewGroupNode(val parent: FileNode, val group: String, va
 
   override fun update(project: Project, presentation: PresentationData) = presentation.addText(name, REGULAR_ATTRIBUTES)
 
-  override fun getChildren(): List<ProblemNode> = problems.map { ProblemNode(this, parent.file, it) }
+  override fun getChildren(): List<ProblemNode> =
+    problems.toProblemNodes(this, parent.file)
 
-  override fun hashCode(): Int = group.hashCode()
+  override fun hashCode(): Int =
+    group.hashCode()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

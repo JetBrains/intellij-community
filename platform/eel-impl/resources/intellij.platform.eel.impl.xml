@@ -12,6 +12,14 @@
       key="ijent.incremental.walking.transfer"
       restartRequired="false"
       defaultValue="false"/>
+
+    <advancedSetting
+      id="container.environments.env.var.shell.mode"
+      enumClass="com.intellij.platform.eel.impl.settings.EnvVarShellMode"
+      default="LOGIN_INTERACTIVE"
+      bundle="messages.EelImplBundle"
+      groupKey="advanced.settings.container.environments"
+    />
   </extensions>
   <extensionPoints>
     <extensionPoint name="multiRoutingFileSystemBackend" interface="com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend"

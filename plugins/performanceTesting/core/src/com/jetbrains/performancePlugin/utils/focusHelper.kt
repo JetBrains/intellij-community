@@ -33,13 +33,11 @@ suspend fun findTypingTarget(project: Project): TypingTarget? = withContext<Typi
 
     takeScreenshotOfAllWindows("no-focus-in-editor")
 
-    if (focusOwner == null) {
-      val activeEditors = editorTracker.activeEditors
-      activeEditors.firstOrNull()?.let {
-        it.contentComponent.requestFocusInWindow()
-        logger<FocusHelper>().warn(message)
-        return@withContext null
-      }
+    val activeEditors = editorTracker.activeEditors
+    activeEditors.firstOrNull()?.let {
+      it.contentComponent.requestFocusInWindow()
+      logger<FocusHelper>().warn(message)
+      return@withContext null
     }
     throw IllegalStateException(message)
   }

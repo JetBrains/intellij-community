@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.jvm.Throws
 
 
 /**
@@ -257,6 +259,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
 
   companion object {
     @RequiresBackgroundThread
+    @Throws(AlreadyDisposedException::class)
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
       val pythonPackageManagerService = project.service<PythonPackageManagerService>()
       return runBlockingMaybeCancellable {

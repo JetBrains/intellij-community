@@ -5,7 +5,8 @@ import com.intellij.openapi.extensions.PluginDescriptor
 
 internal val pluginsExplicitlyAllowedToExportOT = setOf(
   "org.jetbrains.toolbox-enterprise-client",
-  "com.intellij.ml.llm"
+  "com.intellij.ml.llm",
+  "com.jetbrains.otp.diagnostic"
 )
 
 internal fun PluginDescriptor.isAllowedToExportOT(): Boolean {

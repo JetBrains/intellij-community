@@ -2,7 +2,6 @@
 package com.intellij.grazie.spellcheck
 
 import ai.grazie.detector.heuristics.rule.RuleFilter
-import ai.grazie.nlp.langs.Language
 import ai.grazie.utils.toLinkedSet
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieDynamic.dynamicFolder
@@ -68,21 +67,24 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
   }
 
   data class SpellerTool(val tool: JLanguageTool, val lang: Lang, val speller: SpellingCheckRule) {
-    fun check(word: String): Boolean? = synchronized(speller) {
+    fun check(word: String): Boolean? {
       if (word.isBlank()) return true
-
-      computeWithClassLoader<Boolean, Throwable>(GraziePlugin.classLoader) {
-        if (speller.match(tool.getRawAnalyzedSentence(word)).isEmpty()) {
-          if (!speller.isMisspelled(word)) true
-          else {
-            // if the speller does not return matches, but the word is still misspelled (not in the dictionary),
-            // then this word was ignored by the rule (e.g. alien word), and we cannot be sure about its correctness
-            // let's try adding a small change to a word to see if it's alien
-            val mutated = word + word.last() + word.last()
-            if (speller.match(tool.getRawAnalyzedSentence(mutated)).isEmpty()) null else true
+      return synchronized(speller) {
+        computeWithClassLoader<Boolean, Throwable>(GraziePlugin.classLoader) {
+          val sentence = tool.getRawAnalyzedSentence(word)
+          if (sentence.nonWhitespaceTokenCount <= 2) return@computeWithClassLoader !speller.isMisspelled(word)
+          if (speller.match(sentence).isEmpty()) {
+            if (!speller.isMisspelled(word)) true
+            else {
+              // if the speller does not return matches, but the word is still misspelled (not in the dictionary),
+              // then this word was ignored by the rule (e.g. alien word), and we cannot be sure about its correctness
+              // let's try adding a small change to a word to see if it's alien
+              val mutated = word + word.last() + word.last()
+              if (speller.match(tool.getRawAnalyzedSentence(mutated)).isEmpty()) null else true
+            }
           }
+          else false
         }
-        else false
       }
     }
 

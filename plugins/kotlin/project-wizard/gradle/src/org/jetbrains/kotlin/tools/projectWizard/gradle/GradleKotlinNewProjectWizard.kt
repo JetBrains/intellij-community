@@ -375,9 +375,9 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         private fun setupMultiModuleProjectAssets(project: Project, gradleVersion: GradleVersion) {
             assert(context.isCreatingNewProject)
             val librariesVersionStore = KotlinLibrariesCompatibilityStore.getInstance()
-            val datetimeVersion = librariesVersionStore.getLatestVersion(KOTLINX_GROUP, DATETIME_ARTIFACT_ID) ?: ""
-            val coroutinesVersion = librariesVersionStore.getLatestVersion(KOTLINX_GROUP, COROUTINES_ARTIFACT_ID) ?: ""
-            val serializationJsonVersion = librariesVersionStore.getLatestVersion(KOTLINX_GROUP, SERIALIZATION_JSON_ARTIFACT_ID) ?: ""
+            val datetimeVersion = getLatestVersionByHighestKotlinVersion(librariesVersionStore, DATETIME_ARTIFACT_ID)
+            val coroutinesVersion = getLatestVersionByHighestKotlinVersion(librariesVersionStore, COROUTINES_ARTIFACT_ID)
+            val serializationJsonVersion = getLatestVersionByHighestKotlinVersion(librariesVersionStore, SERIALIZATION_JSON_ARTIFACT_ID)
 
             val gradleToPluginsCompatibilityStore = GradleToPluginsCompatibilityStore.getInstance()
             val foojayVersion =
@@ -430,6 +430,14 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                 addTemplateAsset("utils/$SRC_MAIN_KOTLIN_PATH/Utilities.kt", "KotlinSampleUtilsUtilities", templateParameters)
                 addTemplateAsset("utils/$SRC_TEST_KOTLIN_PATH/UtilitiesTest.kt", "KotlinSampleUtilsUtilitiesTest", templateParameters)
             }
+        }
+
+        private fun getLatestVersionByHighestKotlinVersion(
+            kotlinLibrariesCompatibilityStore: KotlinLibrariesCompatibilityStore,
+            artifactId: String
+        ): String {
+            return kotlinLibrariesCompatibilityStore.getLatestVersion(KOTLINX_GROUP, artifactId)
+                ?: "".also { LOG.error("Unable to get $artifactId version") }
         }
     }
 }

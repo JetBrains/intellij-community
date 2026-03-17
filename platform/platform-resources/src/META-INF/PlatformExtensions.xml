@@ -1553,6 +1553,9 @@ Android Studio: b/285867050 -->
     <codeInsight.codeVisionProvider implementation="com.intellij.refactoring.rename.RenameCodeVisionProvider"/>
     <config.codeVisionGroupSettingProvider implementation="com.intellij.refactoring.rename.RenameCodeVisionSettingProvider"/>
 
+    <statistics.validation.customValidationRule implementation="com.intellij.ide.ColorValidationRule"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.ide.ProjectWindowCustomizerUsagesCollector"/>
+
     <applicationService serviceImplementation="com.intellij.internal.DebugAttachDetector" headlessImplementation="" preload="true"/>
 
     <projectService serviceInterface="com.intellij.ui.EditorNotifications" serviceImplementation="com.intellij.ui.EditorNotificationsImpl"
@@ -1804,12 +1807,6 @@ Android Studio: b/285867050 -->
     <projectService serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
                     serviceImplementation="com.intellij.internal.performanceTests.DummyProjectInitializationDiagnosticService"/>
 
-    <!-- multiverse -->
-    <registryKey key="intellij.platform.shared.source.support"
-                 defaultValue="true"
-                 description="Enables shared source support"
-                 restartRequired="true"
-    />
     <multiverseEnabler implementation="com.intellij.codeInsight.multiverse.RegistryFlagMultiverseEnabler"/>
     <multiverse.codeInsightContextProvider implementation="com.intellij.multiverse.ProjectModelEntityContextProvider"/>
 
