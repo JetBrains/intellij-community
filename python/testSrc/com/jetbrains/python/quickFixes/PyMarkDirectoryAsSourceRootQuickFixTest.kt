@@ -6,6 +6,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.jetbrains.python.PyQuickFixTestCase
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
@@ -17,6 +18,9 @@ class PyMarkDirectoryAsSourceRootQuickFixTest: PyQuickFixTestCase() {
   override fun setUp() {
     super.setUp()
     myFixture.copyDirectoryToProject("", "")
+    // cleanupSourceRoots in tearDown modifies source roots, triggering async reindexing
+    // that may not complete before the next test's checkHighlighting runs.
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.project)
     Registry.get("python.source.root.suggest.quickfix.auto.apply").setValue(true)
     Registry.get("python.source.root.suggest.quickfix").setValue(true)
   }
