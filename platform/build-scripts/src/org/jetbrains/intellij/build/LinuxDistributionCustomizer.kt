@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
@@ -6,6 +6,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
+import org.jetbrains.intellij.build.impl.support.bundleRepairUtility
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import java.nio.file.Path
 
@@ -299,6 +300,6 @@ open class LinuxDistributionCustomizer {
    * Override this method to copy additional files to the Linux distribution of the product.
    */
   open suspend fun copyAdditionalFiles(targetDir: Path, arch: JvmArchitecture, context: BuildContext) {
-    RepairUtilityBuilder.bundle(OsFamily.LINUX, arch, targetDir, context)
+    bundleRepairUtility(os = OsFamily.LINUX, arch = arch, distributionDir = targetDir, context = context)
   }
 }

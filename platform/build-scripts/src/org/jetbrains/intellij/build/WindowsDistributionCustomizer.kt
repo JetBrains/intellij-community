@@ -1,7 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
+import org.jetbrains.intellij.build.impl.support.bundleRepairUtility
 import java.nio.file.Path
 
 /**
@@ -337,7 +337,7 @@ abstract class WindowsDistributionCustomizer {
    * Override this method to copy additional files to the Windows distribution of the product.
    */
   open suspend fun copyAdditionalFiles(targetDir: Path, arch: JvmArchitecture, context: BuildContext) {
-    RepairUtilityBuilder.bundle(OsFamily.WINDOWS, arch, targetDir, context)
+    bundleRepairUtility(os = OsFamily.WINDOWS, arch = arch, distributionDir = targetDir, context = context)
   }
 
   /**

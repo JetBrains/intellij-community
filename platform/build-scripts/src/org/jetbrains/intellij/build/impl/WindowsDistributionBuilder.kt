@@ -37,7 +37,7 @@ import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
 import org.jetbrains.intellij.build.impl.productInfo.writeProductInfoJson
 import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import org.jetbrains.intellij.build.impl.stdioMcpRunner.generateStdioMcpRunnerLaunchData
-import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
+import org.jetbrains.intellij.build.impl.support.generateInstallationIntegrityManifest
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFile
@@ -490,7 +490,7 @@ internal class WindowsDistributionBuilder(
           }
       }
       if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
-        RepairUtilityBuilder.generateManifest(unpackedDistribution = tempExe, os = OsFamily.WINDOWS, arch = arch, context = context)
+        generateInstallationIntegrityManifest(unpackedDistribution = tempExe, os = OsFamily.WINDOWS, arch = arch, context = context)
       }
     }
     finally {
@@ -499,48 +499,49 @@ internal class WindowsDistributionBuilder(
       }
     }
   }
-
-  private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path {
-    val vmOptionsFile = distBinDir.resolve("${context.productProperties.baseFileName}64.exe.vmoptions")
-    val vmOptions = generateVmOptions(context)
-    writeVmOptions(file = vmOptionsFile, vmOptions = vmOptions, separator = "\r\n")
-    return vmOptionsFile
-  }
-
-  private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture, withRuntime: Boolean, context: BuildContext): Path {
-    val json = generateProductInfoJson(
-      relativePathToBin = "bin",
-      builtinModules = context.builtinModule,
-      launch = listOf(
-        ProductInfoLaunchData.create(
-          os = OsFamily.WINDOWS.osName,
-          arch = arch.dirName,
-          launcherPath = "bin/${context.productProperties.baseFileName}64.exe",
-          javaExecutablePath = if (withRuntime) "jbr/bin/java.exe" else null,
-          vmOptionsFilePath = "bin/${context.productProperties.baseFileName}64.exe.vmoptions",
-          bootClassPathJarNames = context.bootClassPathJarNames,
-          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
-          mainClass = context.ideMainClassName,
-          customCommands = when {
-            context.options.isLanguageServer -> listOf(
-              generateLspServerLaunchData(context)
-            )
-            else -> listOfNotNull(
-              generateEmbeddedFrontendLaunchData(arch, OsFamily.WINDOWS, context) {
-                "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
-              },
-              generateQodanaLaunchData(context, arch, OsFamily.WINDOWS),
-              generateStdioMcpRunnerLaunchData(context, OsFamily.WINDOWS)
-            )
-          },
-        )
-      ),
-      context
-    )
-    val file = targetDir.resolve(PRODUCT_INFO_FILE_NAME)
-    writeProductInfoJson(file, json, context)
-    return file
-  }
-
-  private fun toDosLineEndings(x: String): String = x.replace("\r", "").replace("\n", "\r\n")
 }
+
+private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path {
+  val vmOptionsFile = distBinDir.resolve("${context.productProperties.baseFileName}64.exe.vmoptions")
+  val vmOptions = generateVmOptions(context)
+  writeVmOptions(file = vmOptionsFile, vmOptions = vmOptions, separator = "\r\n")
+  return vmOptionsFile
+}
+
+
+private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture, withRuntime: Boolean, context: BuildContext): Path {
+  val json = generateProductInfoJson(
+    relativePathToBin = "bin",
+    builtinModules = context.builtinModule,
+    launch = listOf(
+      ProductInfoLaunchData.create(
+        os = OsFamily.WINDOWS.osName,
+        arch = arch.dirName,
+        launcherPath = "bin/${context.productProperties.baseFileName}64.exe",
+        javaExecutablePath = if (withRuntime) "jbr/bin/java.exe" else null,
+        vmOptionsFilePath = "bin/${context.productProperties.baseFileName}64.exe.vmoptions",
+        bootClassPathJarNames = context.bootClassPathJarNames,
+        additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
+        mainClass = context.ideMainClassName,
+        customCommands = when {
+          context.options.isLanguageServer -> listOf(
+            generateLspServerLaunchData(context)
+          )
+          else -> listOfNotNull(
+            generateEmbeddedFrontendLaunchData(arch, OsFamily.WINDOWS, context) {
+              "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
+            },
+            generateQodanaLaunchData(context, arch, OsFamily.WINDOWS),
+            generateStdioMcpRunnerLaunchData(context, OsFamily.WINDOWS)
+          )
+        },
+      )
+    ),
+    context
+  )
+  val file = targetDir.resolve(PRODUCT_INFO_FILE_NAME)
+  writeProductInfoJson(file, json, context)
+  return file
+}
+
+private fun toDosLineEndings(x: String): String = x.replace("\r", "").replace("\n", "\r\n")

@@ -20,7 +20,7 @@ internal class RepairUtilityBinaryCacheTest {
     runBlocking(Dispatchers.Default) {
       val invocationCount = AtomicInteger()
       val context = buildContext()
-      val cache = RepairUtilityBuilder.BuildContextSingleFlightCache("repair utility test") {
+      val cache = BuildContextSingleFlightCache("repair utility test") {
         invocationCount.incrementAndGet()
         delay(20.milliseconds)
         42
@@ -42,7 +42,7 @@ internal class RepairUtilityBinaryCacheTest {
     runBlocking(Dispatchers.Default) {
       val invocationCount = AtomicInteger()
       val context = buildContext()
-      val cache = RepairUtilityBuilder.BuildContextSingleFlightCache("repair utility test") {
+      val cache = BuildContextSingleFlightCache("repair utility test") {
         invocationCount.incrementAndGet()
       }
 
@@ -61,7 +61,7 @@ internal class RepairUtilityBinaryCacheTest {
       val invocationCount = AtomicInteger()
       val firstContext = buildContext()
       val secondContext = buildContext()
-      val cache = RepairUtilityBuilder.BuildContextSingleFlightCache("repair utility test") {
+      val cache = BuildContextSingleFlightCache("repair utility test") {
         invocationCount.incrementAndGet()
       }
 
@@ -80,7 +80,7 @@ internal class RepairUtilityBinaryCacheTest {
   fun `failures are cached per context`() {
     val invocationCount = AtomicInteger()
     val context = buildContext()
-    val cache = RepairUtilityBuilder.BuildContextSingleFlightCache("repair utility test") {
+    val cache = BuildContextSingleFlightCache("repair utility test") {
       invocationCount.incrementAndGet()
       error("boom")
     }
@@ -101,8 +101,8 @@ internal class RepairUtilityBinaryCacheTest {
   @Test
   fun `recursive await fails fast`() {
     val context = buildContext()
-    lateinit var cache: RepairUtilityBuilder.BuildContextSingleFlightCache<Int>
-    cache = RepairUtilityBuilder.BuildContextSingleFlightCache("repair utility test") {
+    lateinit var cache: BuildContextSingleFlightCache<Int>
+    cache = BuildContextSingleFlightCache("repair utility test") {
       cache.getOrLoad(it)
     }
 
