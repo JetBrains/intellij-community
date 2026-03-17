@@ -450,7 +450,7 @@ internal class JpsModuleToBazel {
             .distinct()
             .sorted()
             .toList(),
-          projectLibraries = libs.asSequence().mapNotNull {
+          projectLibraries = libs.asSequence().distinctBy { it.target.jpsName }.mapNotNull {  // community project libraries are listed first, don't overwrite them with ultimate ones
             if (it.target.moduleLibraryModuleName != null) return@mapNotNull null
             return@mapNotNull it.target.jpsName to makeLibraryDescription(it)
           }.toMap(TreeMap())
