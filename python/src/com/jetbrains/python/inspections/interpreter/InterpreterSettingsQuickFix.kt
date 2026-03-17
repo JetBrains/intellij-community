@@ -18,37 +18,34 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.use
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.psi.PsiFile
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.pyproject.model.api.ModuleCreateInfo
+import com.intellij.python.pyproject.model.api.autoConfigureSdkIfNeeded
 import com.intellij.python.pyproject.model.api.getModuleInfo
-import com.intellij.psi.PsiFile
+import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.DropDownLink
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
-import com.jetbrains.python.Result
 import com.jetbrains.python.inspections.InspectionRunnerResult
-import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.ui.components.ActionLink
-import com.intellij.ui.components.DropDownLink
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.collectAddInterpreterActions
-import com.intellij.openapi.util.use
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration
-import com.jetbrains.python.sdk.configuration.createSdk
-import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.switchToSdk
-import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
-import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 /**
  * Executor that accepts at most one concurrent task.
@@ -76,6 +73,12 @@ interface BusyGuardExecutor {
  * and rendered inside [PyInterpreterNotificationProvider].
  * Long-running work (SDK creation, tool installation) must be submitted through the supplied [BusyGuardExecutor]
  * so that all notification panels share the same busy state.
+ *
+ * **WARNING:** Implementations must NOT hold strong references to [Module] or [Project] in their fields.
+ * Instances are cached by [PyAsyncFileInspectionRunner] with the Module as a weak key.
+ * A strong reference from the fix back to the Module prevents the weak key from being collected,
+ * causing a project leak after the project is closed. Use the [module] and [project] parameters
+ * passed to [createActionLink] instead.
  */
 @ApiStatus.Internal
 interface InterpreterFix {
@@ -128,7 +131,7 @@ internal fun createInterpreterCacheLoader(): suspend (Module) -> InspectionRunne
   val moduleCreateInfo = module.getModuleInfo()
   val fixes = buildList {
     getSuitableSdkFix(module, moduleCreateInfo)?.let { add(it) }
-    add(ConfigureInterpreterFix())
+    moduleCreateInfo?.let { add(ConfigureInterpreterFix()) }
   }
   val shouldCache = when (moduleCreateInfo) {
     is ModuleCreateInfo.SameAs -> false
@@ -150,19 +153,14 @@ internal class ConfigureInterpreterFix : InterpreterFix {
   override fun createActionLink(module: Module, project: Project, psiFile: PsiFile, executor: BusyGuardExecutor): ActionLink {
     return DropDownLink(PyBundle.message("python.sdk.custom.environment")) {
       val context = DataManager.getInstance().getDataContext(it)
-      createAddInterpreterPopup(module, context, executor)
+      createAddInterpreterPopup(module, context)
     }
   }
 
   companion object {
-    fun createAddInterpreterPopup(module: Module, context: DataContext, executor: BusyGuardExecutor): JBPopup {
-      val currentSdk = module.pythonSdk
+    fun createAddInterpreterPopup(module: Module, context: DataContext): JBPopup {
       val group = DefaultActionGroup()
-      group.addAll(collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(module)) { sdk ->
-        executor.execute {
-          withContext(Dispatchers.IO) { switchToSdk(module, sdk, currentSdk) }
-        }
-      })
+      group.addAll(collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(module)) { })
       ActionManager.getInstance().getAction("Python.NewInterpreter.Extra")?.let {
         group.add(it)
       }
@@ -177,15 +175,18 @@ internal class ConfigureInterpreterFix : InterpreterFix {
   }
 }
 
-private class UseProvidedInterpreterFix(private val myModule: Module, private val myCreateSdkInfo: CreateSdkInfoWithTool) : InterpreterFix {
+private class UseProvidedInterpreterFix(
+  private val myCreateSdkInfo: CreateSdkInfoWithTool,
+  private val modulePath: Path?,
+) : InterpreterFix {
   override fun createActionLink(module: Module, project: Project, psiFile: PsiFile, executor: BusyGuardExecutor): ActionLink {
     return ActionLink(myCreateSdkInfo.createSdkInfo.intentionName) {
       executor.execute {
-        val lifetime = PyProjectSdkConfiguration.suppressTipAndInspectionsFor(myModule, myCreateSdkInfo.toolId.id)
+        val lifetime = PyProjectSdkConfiguration.suppressTipAndInspectionsFor(module, myCreateSdkInfo.toolId.id)
         withBackgroundProgress(project, myCreateSdkInfo.createSdkInfo.intentionName, false) {
-          lifetime.use { PyProjectSdkConfiguration.setSdkUsingCreateSdkInfo(myModule, myCreateSdkInfo) }
+          lifetime.use { PyProjectSdkConfiguration.setSdkUsingCreateSdkInfo(module, myCreateSdkInfo) }
         }
-        RefreshQueue.getInstance().refresh(recursive = false, files = ModuleRootManager.getInstance(myModule).contentRoots.toList())
+        RefreshQueue.getInstance().refresh(recursive = false, files = ModuleRootManager.getInstance(module).contentRoots.toList())
       }
     }
   }
@@ -208,59 +209,27 @@ private class SuggestToolInstallationFix(
   }
 }
 
-private suspend fun Module.getQuickFixBySdkSuggestion(i: ModuleCreateInfo?): FindQuickFixResult = when (i) {
-  is ModuleCreateInfo.CreateSdkInfoWrapper -> {
-    when (val createSdkInfo = i.createSdkInfo) {
-      is CreateSdkInfo.ExistingEnv -> {
-        logger.trace { "$this: Files already exist, just create sn SDK" }
-        when (val creationResult = createSdkInfo.createSdk(module = this)) {
-          is Result.Failure -> {
-            logger.warn("Can't create SDK for $this : ${creationResult.error}")
-            FindQuickFixResult.NoSuggestion
-          }
-          is Result.Success -> {
-            val sdk = creationResult.result
-            logger.trace { "$this: sdk $sdk created" }
-            pythonSdk = sdk // SDK can't be null
-            project.pySdkService.persistSdk(sdk)
-            sdk.setAssociationToModule(this)
-            FindQuickFixResult.SdkAppliedAutomatically(sdk)
-          }
+private suspend fun Module.getQuickFixBySdkSuggestion(i: ModuleCreateInfo?): FindQuickFixResult {
+  // Try auto-configure (waits for SDK table, handles ExistingEnv and SameAs)
+  autoConfigureSdkIfNeeded()?.orLogException(logger)?.let { return FindQuickFixResult.SdkAppliedAutomatically(it) }
+
+  // No existing env — show user fix for WillCreateEnv / WillInstallTool
+  return when (i) {
+    is ModuleCreateInfo.CreateSdkInfoWrapper -> {
+      when (val createSdkInfo = i.createSdkInfo) {
+        is CreateSdkInfo.ExistingEnv -> FindQuickFixResult.NoSuggestion // already handled by autoConfigureSdkIfNeeded
+        is CreateSdkInfo.WillCreateEnv -> {
+          logger.trace { "$this: Ask user as it is a heavy operation" }
+          FindQuickFixResult.ShowUserFix(UseProvidedInterpreterFix(CreateSdkInfoWithTool(createSdkInfo, i.toolId), i.moduleDir))
+        }
+        is CreateSdkInfo.WillInstallTool -> {
+          logger.trace { "$this: Tool installation will be suggested to the user" }
+          FindQuickFixResult.ShowUserFix(SuggestToolInstallationFix(this, createSdkInfo, i.toolId))
         }
       }
-      is CreateSdkInfo.WillCreateEnv -> {
-        logger.trace { "$this: Ask user as it is a heavy operation" }
-        val tool = CreateSdkInfoWithTool(createSdkInfo, i.toolId)
-        FindQuickFixResult.ShowUserFix(UseProvidedInterpreterFix(this, tool))
-      }
-      is CreateSdkInfo.WillInstallTool -> {
-        logger.trace { "$this: Tool installation will be suggested to the user" }
-        FindQuickFixResult.ShowUserFix(SuggestToolInstallationFix(this, createSdkInfo, i.toolId))
-      }
     }
+    is ModuleCreateInfo.SameAs, null -> FindQuickFixResult.NoSuggestion // SameAs already handled by autoConfigureSdkIfNeeded
   }
-  is ModuleCreateInfo.SameAs -> {
-    logger.trace { "$this: Same as parent" }
-    i.parentModule.pythonSdk?.let { parentModuleSdk ->
-      logger.trace { "$this: Parent has SDK $parentModuleSdk" }
-      pythonSdk = parentModuleSdk
-      FindQuickFixResult.SdkAppliedAutomatically(parentModuleSdk)
-    } ?:
-    // Try to find SDK for parent otherwise
-    when (val parentResult = i.parentModule.getQuickFixBySdkSuggestion(i.parentModule.getModuleInfo())) {
-      is FindQuickFixResult.SdkAppliedAutomatically -> {
-        val parentModuleSdk = parentResult.sdk
-        logger.trace { "$this: Parent has SDK $parentModuleSdk" }
-        pythonSdk = parentModuleSdk
-        FindQuickFixResult.SdkAppliedAutomatically(parentModuleSdk)
-      }
-      FindQuickFixResult.NoSuggestion, is FindQuickFixResult.ShowUserFix -> {
-        logger.trace { "$this: Parent SDK can't be created ($parentResult), so is ours" }
-        parentResult
-      }
-    }
-  }
-  null -> FindQuickFixResult.NoSuggestion
 }
 
 private sealed interface FindQuickFixResult {
