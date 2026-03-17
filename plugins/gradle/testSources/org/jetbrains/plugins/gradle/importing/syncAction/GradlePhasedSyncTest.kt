@@ -648,16 +648,18 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         useBuildSrc = false, // buildSrc modules are triggering issue IDEA-383593, and are not essential to this test
       )
 
+      val includedProjectName = if (isGradleAtLeast("6.0")) "includedProject" else "includedProjectName"
+
       val modulesToSetSdks = listOf(
-        "project.module",
-        "includedProject.module"
+        "rootProjectName.module",
+        "$includedProjectName.module"
       )
 
       val modulesToAddLibraries = listOf(
-        "project.main", "project.test",
-        "project.module.main", "project.module.test",
-        "includedProject.main", "includedProject.test",
-        "includedProject.module.main", "includedProject.module.test"
+        "rootProjectName.main", "rootProjectName.test",
+        "rootProjectName.module.main", "rootProjectName.module.test",
+        "$includedProjectName.main", "$includedProjectName.test",
+        "$includedProjectName.module.main", "$includedProjectName.module.test"
       )
 
       val (libraryDependency, libraryData) = prepareFakeLibrary()
