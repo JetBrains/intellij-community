@@ -96,7 +96,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
   private long myDocumentStamp = Long.MIN_VALUE;
 
-  private final SoftWrapParsingListener mySoftWrapChangeListener = new SoftWrapParsingListener() {
+  private final SoftWrapParsingListener mySoftWrapParsingListener = new SoftWrapParsingListener() {
     @Override
     public void onRegionReparseEnd(@NotNull IncrementalCacheUpdateEvent event) {
       onSoftWrapRecalculationEnd(event);
@@ -114,13 +114,13 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
     myScrollingModel = view.getScrollingModel();
     myDocument.addDocumentListener(this, this);
     myFoldingModel.addListener(this, this);
-    mySoftWrapModel.getApplianceManager().addListener(mySoftWrapChangeListener);
+    mySoftWrapModel.addSoftWrapParsingListener(mySoftWrapParsingListener);
     myInlayModel.addListener(this, this);
   }
 
   @Override
   public void dispose() {
-    mySoftWrapModel.getApplianceManager().removeListener(mySoftWrapChangeListener);
+    mySoftWrapModel.removeSoftWrapParsingListener(mySoftWrapParsingListener);
     invalidateCachedBlockInlayWidth();
   }
 

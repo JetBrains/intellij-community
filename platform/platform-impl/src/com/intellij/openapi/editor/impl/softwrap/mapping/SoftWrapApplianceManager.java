@@ -20,9 +20,9 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapEngine;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapChangeNotifier;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapNotifier;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import com.intellij.openapi.project.Project;
@@ -70,14 +70,12 @@ public final class SoftWrapApplianceManager implements Dumpable {
     CUSTOM
   }
 
-  private final List<SoftWrapParsingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-
   private final SoftWrapsStorage myStorage;
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
   private SoftWrapPainter myPainter;
   private final CachingSoftWrapDataMapper myDataMapper;
-  private final @NotNull SoftWrapChangeNotifier mySoftWrapChangeNotifier;
+  private final @NotNull SoftWrapNotifier mySoftWrapNotifier;
 
   /**
    * Visual area width change causes soft wraps addition/removal, so, we want to update {@code 'y'} coordinate
@@ -107,14 +105,14 @@ public final class SoftWrapApplianceManager implements Dumpable {
                                   @NotNull EditorImpl editor,
                                   @NotNull SoftWrapPainter painter,
                                   @NotNull CachingSoftWrapDataMapper dataMapper,
-                                  @NotNull SoftWrapChangeNotifier softWrapChangeNotifier)
+                                  @NotNull SoftWrapNotifier softWrapNotifier)
   {
     myStorage = storage;
     myEditor = editor;
     myDocument = editor.getElfDocument();
     myPainter = painter;
     myDataMapper = dataMapper;
-    mySoftWrapChangeNotifier = softWrapChangeNotifier;
+    mySoftWrapNotifier = softWrapNotifier;
     myWidthProvider = new DefaultVisibleAreaWidthProvider();
     myEditor.getScrollingModel().addVisibleAreaListener(e -> EditorThreading.run(() -> {
       updateAvailableArea();
@@ -135,9 +133,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
   @ApiStatus.Internal
   public void reset() {
     myIsDirty = true;
-    for (SoftWrapParsingListener listener : myListeners) {
-      listener.reset();
-    }
+    mySoftWrapNotifier.notifyReset();
   }
 
   private void recalculate(IncrementalCacheUpdateEvent e) {
@@ -175,7 +171,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
         lastRecalculatedOffset[0] = event.getActualEndOffset();
       }
     };
-    myListeners.add(listener);
+    mySoftWrapNotifier.addSoftWrapParsingListener(listener);
     try {
       for (Segment range : ranges) {
         int lastOffset = lastRecalculatedOffset[0];
@@ -186,7 +182,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
       }
     }
     finally {
-      myListeners.remove(listener);
+      mySoftWrapNotifier.removeSoftWrapParsingListener(listener);
     }
 
     onRecalculationEnd();
@@ -196,7 +192,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
   public void recalculateAll() {
     reset();
     myStorage.removeAll();
-    mySoftWrapChangeNotifier.notifySoftWrapsChanged();
+    mySoftWrapNotifier.notifySoftWrapsChanged();
     myVisibleAreaWidth = myAvailableWidth;
     myCustomIndentUsedLastTime = myEditor.getSettings().isUseCustomSoftWrapIndent();
     myCustomIndentValueUsedLastTime = myEditor.getSettings().getCustomSoftWrapIndent();
@@ -226,9 +222,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
 
   private void onRecalculationEnd() {
     updateLastTopLeftCornerOffset();
-    for (SoftWrapParsingListener listener : myListeners) {
-      listener.onAllDirtyRegionsReparsed();
-    }
+    mySoftWrapNotifier.notifyAllDirtyRegionsReparsed();
   }
 
   private void recalculateSoftWraps(@NotNull IncrementalCacheUpdateEvent event) {
@@ -239,7 +233,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     myInProgress = true;
     try {
       myEventBeingProcessed = event;
-      notifyRegionReparseStart(event);
+      mySoftWrapNotifier.notifyRegionReparseStart(event);
       int endOffsetUpperEstimate = SoftWrapHelper.getEndOffsetUpperEstimate(myEditor, myDocument, event);
       if (myVisibleAreaWidth == QUICK_DUMMY_WRAPPING) {
         doRecalculateSoftWrapsRoughly(event);
@@ -254,7 +248,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
       if (event.getActualEndOffset() > endOffsetUpperEstimate) {
         LOG.error("Unexpected error at soft wrap recalculation", new Attachment("softWrapModel.txt", myEditor.getSoftWrapModel().toString()));
       }
-      notifyRegionReparseEnd(event);
+      mySoftWrapNotifier.notifyRegionReparseEnd(event);
       myEventBeingProcessed = null;
     }
     finally {
@@ -367,7 +361,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     // Drop information about processed lines.
     reset();
     myStorage.removeAll();
-    mySoftWrapChangeNotifier.notifySoftWrapsChanged();
+    mySoftWrapNotifier.notifySoftWrapsChanged();
     myVisibleAreaWidth = currentVisibleAreaWidth;
     final boolean result = recalculateSoftWraps();
     if (!result) {
@@ -407,41 +401,6 @@ public final class SoftWrapApplianceManager implements Dumpable {
 
   private IndentType getIndentToUse() {
     return myEditor.getSettings().isUseCustomSoftWrapIndent() ? IndentType.CUSTOM : IndentType.NONE;
-  }
-
-  /**
-   * Registers given listener within the current manager.
-   *
-   * @param listener    listener to register
-   * @return            {@code true} if this collection changed as a result of the call; {@code false} otherwise
-   */
-  @ApiStatus.Internal
-  public boolean addListener(@NotNull SoftWrapParsingListener listener) {
-    return myListeners.add(listener);
-  }
-
-  @ApiStatus.Internal
-  public boolean removeListener(@NotNull SoftWrapParsingListener listener) {
-    return myListeners.remove(listener);
-  }
-
-
-  private void notifyRegionReparseStart(IncrementalCacheUpdateEvent event) {
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < myListeners.size(); i++) {
-      // Avoid unnecessary Iterator object construction as this method is expected to be called frequently.
-      SoftWrapParsingListener listener = myListeners.get(i);
-      listener.onRegionReparseStart(event);
-    }
-  }
-
-  private void notifyRegionReparseEnd(IncrementalCacheUpdateEvent event) {
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < myListeners.size(); i++) {
-      // Avoid unnecessary Iterator object construction as this method is expected to be called frequently.
-      SoftWrapParsingListener listener = myListeners.get(i);
-      listener.onRegionReparseEnd(event);
-    }
   }
 
   @ApiStatus.Internal

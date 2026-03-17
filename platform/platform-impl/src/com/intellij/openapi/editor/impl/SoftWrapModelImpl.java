@@ -29,8 +29,8 @@ import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.CompositeSoftWrapPainter;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapChangeNotifier;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapNotifier;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
@@ -47,7 +47,6 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,12 +72,12 @@ import java.util.List;
 //@ApiStatus.Internal
 public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener,
-             PropertyChangeListener, Dumpable, Disposable, SoftWrapChangeNotifier
+             PropertyChangeListener, Dumpable, Disposable
 {
 
   private static final Logger LOG = Logger.getInstance(SoftWrapModelImpl.class);
 
-  private final List<SoftWrapChangeListener> mySoftWrapListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final SoftWrapNotifier mySoftWrapNotifier;
 
   /**
    * There is a possible case that particular activity performs batch fold regions operations (addition, removal etc.).
@@ -134,16 +133,15 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     this.editor = editor;
     document = editor.getElfDocument();
     storage = new SoftWrapsStorage();
+    mySoftWrapNotifier = new SoftWrapNotifier();
     myPainter = new CompositeSoftWrapPainter(editor);
-    myDataMapper = new CachingSoftWrapDataMapper(editor, storage, this);
-    applianceManager = new SoftWrapApplianceManager(storage, editor, myPainter, myDataMapper, this);
+    myDataMapper = new CachingSoftWrapDataMapper(editor, storage, mySoftWrapNotifier);
+    applianceManager = new SoftWrapApplianceManager(storage, editor, myPainter, myDataMapper, mySoftWrapNotifier);
 
-    applianceManager.addListener(new SoftWrapParsingListener() {
+    mySoftWrapNotifier.addSoftWrapParsingListener(new SoftWrapParsingListener() {
       @Override
       public void onAllDirtyRegionsReparsed() {
-        for (SoftWrapChangeListener listener : mySoftWrapListeners) {
-          listener.recalculationEnds();
-        }
+        mySoftWrapNotifier.notifySoftWrapRecalculationEnds();
       }
     });
 
@@ -156,7 +154,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
     editor.addPropertyChangeListener(this, this);
 
-    applianceManager.addListener(myDataMapper);
+    mySoftWrapNotifier.addSoftWrapParsingListener(myDataMapper);
     this.editor.getInlayModel().addListener(this, this);
   }
 
@@ -242,7 +240,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
       applianceManager.reset();
       deferredFoldRegions.clear();
       storage.removeAll();
-      notifySoftWrapsChanged();
+      mySoftWrapNotifier.notifySoftWrapsChanged();
       editor.myView.reinitSettings();
       if (editor.myAdView != null) editor.myView.reinitSettings();
       if (AsyncEditorLoader.isEditorLoaded(editor)) {
@@ -400,7 +398,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
     if (myDirty) {
       storage.removeAll();
-      notifySoftWrapsChanged();
+      mySoftWrapNotifier.notifySoftWrapsChanged();
       applianceManager.reset();
       deferredFoldRegions.clear();
       myDirty = false;
@@ -479,7 +477,17 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public boolean addSoftWrapChangeListener(@NotNull SoftWrapChangeListener listener) {
-    return mySoftWrapListeners.add(listener);
+    return mySoftWrapNotifier.addSoftWrapChangeListener(listener);
+  }
+
+  @ApiStatus.Internal
+  public boolean addSoftWrapParsingListener(@NotNull SoftWrapParsingListener listener) {
+    return mySoftWrapNotifier.addSoftWrapParsingListener(listener);
+  }
+
+  @ApiStatus.Internal
+  public boolean removeSoftWrapParsingListener(@NotNull SoftWrapParsingListener listener) {
+    return mySoftWrapNotifier.removeSoftWrapParsingListener(listener);
   }
 
   @Override
@@ -625,7 +633,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   @Override
   public void release() {
     storage.removeAll();
-    notifySoftWrapsChanged();
+    mySoftWrapNotifier.notifySoftWrapsChanged();
     deferredFoldRegions.clear();
   }
 
@@ -637,7 +645,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myDirty = false;
     applianceManager.reset();
     storage.removeAll();
-    notifySoftWrapsChanged();
+    mySoftWrapNotifier.notifySoftWrapsChanged();
     deferredFoldRegions.clear();
     applianceManager.recalculateIfNecessary();
   }
@@ -695,22 +703,6 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
       LOG.assertTrue(!DocumentUtil.isInsideCharacterPair(document, softWrapOffset),
                      "Soft wrap inside a surrogate pair or inside a line break");
       lastSoftWrapOffset = softWrapOffset;
-    }
-  }
-
-  @ApiStatus.Internal
-  @Override
-  public void notifySoftWrapsChanged() {
-    for (SoftWrapChangeListener listener : mySoftWrapListeners) {
-      listener.softWrapsChanged();
-    }
-  }
-
-  @ApiStatus.Internal
-  @Override
-  public void notifySoftWrapRecalculationEnds() {
-    for (SoftWrapChangeListener listener : mySoftWrapListeners) {
-      listener.recalculationEnds();
     }
   }
 }
