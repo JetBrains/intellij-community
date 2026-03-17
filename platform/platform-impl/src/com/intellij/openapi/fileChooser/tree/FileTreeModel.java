@@ -1,13 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.tree;
 
-import com.intellij.execution.wsl.WSLDistribution;
-import com.intellij.execution.wsl.WSLUtil;
-import com.intellij.execution.wsl.WslDistributionManager;
-import com.intellij.execution.wsl.WslIjentAvailabilityService;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
@@ -330,45 +325,12 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     }
 
     private @NotNull List<VirtualFile> getSystemRoots() {
-      if (WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) {
-        final Predicate<Path> rootsFilter = descriptor.getUserData(SYSTEM_ROOTS_FILTER);
-        Iterable<Path> systemRoots = FileSystems.getDefault().getRootDirectories();
-        final var visibleRoots = rootsFilter != null
-                                 ? StreamSupport.stream(systemRoots.spliterator(), false).filter(rootsFilter).toList()
-                                 : systemRoots;
-        return toVirtualFiles(visibleRoots);
-      }
-      else {
-        return getSystemsRootLegacy();
-      }
-    }
-
-    private @NotNull List<VirtualFile> getSystemsRootLegacy() {
-      List<WSLDistribution> distributions = List.of();
-      if (WSLUtil.isSystemCompatible() && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser")) {
-        WslDistributionManager distributionManager = WslDistributionManager.getInstance();
-        List<WSLDistribution> lastDistributions = ContainerUtil.notNullize(distributionManager.getLastInstalledDistributions());
-        distributions = lastDistributions;
-        LOG.debug("WSL distributions: ", distributions);
-        distributionManager.getInstalledDistributionsFuture().thenAccept(newDistributions -> {
-          // called on a background thread without read action
-          if (newDistributions.equals(lastDistributions)) {
-            LOG.debug("WSL distributions are up-to-date");
-            return;
-          }
-          LOG.debug("New WSL distributions: ", newDistributions);
-          model.invoker.invokeLater(() -> {
-            // invokeLater to ensure model.roots are calculated
-            setRoots(getLocalAndWslRoots(newDistributions));
-          });
-        });
-      }
-      return getLocalAndWslRoots(distributions);
-    }
-
-    private static @NotNull List<VirtualFile> getLocalAndWslRoots(@NotNull List<? extends WSLDistribution> distributions) {
-      return toVirtualFiles(ContainerUtil.concat(ContainerUtil.newArrayList(FileSystems.getDefault().getRootDirectories()),
-                                                 ContainerUtil.map(distributions, WSLDistribution::getUNCRootPath)));
+      final Predicate<Path> rootsFilter = descriptor.getUserData(SYSTEM_ROOTS_FILTER);
+      Iterable<Path> systemRoots = FileSystems.getDefault().getRootDirectories();
+      final var visibleRoots = rootsFilter != null
+                               ? StreamSupport.stream(systemRoots.spliterator(), false).filter(rootsFilter).toList()
+                               : systemRoots;
+      return toVirtualFiles(visibleRoots);
     }
 
     private void setRoots(@NotNull List<VirtualFile> newRootFiles) {
