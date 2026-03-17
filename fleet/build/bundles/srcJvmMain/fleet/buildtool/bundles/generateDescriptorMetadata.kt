@@ -186,8 +186,8 @@ private fun moduleIsRelevantToFleetRuntime(jar: Path): Boolean {
 }
 
 private fun defaultMetadata(pluginName: PluginName) = mapOf(
-  "readableName" to pluginName.name,
-  "description" to "No description was specified by the owner of this plugin.",
-  "vendorName" to "JetBrains",
-  "vendor" to "JetBrains s.r.o.",
+  KnownMeta.ReadableName to pluginName.name,
+  KnownMeta.Description to "No description was specified by the owner of this plugin.",
+  KnownMeta.VendorId to "JetBrains",
+  KnownMeta.VendorPublicName to "JetBrains s.r.o.",
 )

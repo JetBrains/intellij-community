@@ -82,6 +82,16 @@ sealed class Platform(val os: OS) : JavaSerializable {
     fun List<Platform>.findPlatform(os: OS, arch: Arch) = singleOrNull { p ->
       p.os == os && p.arch == arch
     } ?: error("unsupported platform $os $arch (or more than one supported platform is matching this triple)")
+
+    fun fromString(platform: String): Platform = when (platform.lowercase()) {
+      "linux_x64" -> Linux.LinuxX64
+      "linux_aarch64" -> Linux.LinuxAarch64
+      "macos_x64" -> MacOs.MacOsX64
+      "macos_aarch64" -> MacOs.MacOsAarch64
+      "windows_x64" -> Windows.WindowsX64
+      "windows_aarch64" -> Windows.WindowsAarch64
+      else -> error("Unsupported platform: $platform")
+    }
   }
 }
 

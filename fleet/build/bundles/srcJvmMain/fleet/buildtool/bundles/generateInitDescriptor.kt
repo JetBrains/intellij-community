@@ -55,8 +55,6 @@ suspend fun generateInitDescriptor(
         ModuleFinder.of(it).findAll().single().descriptor().name() + ".jar"
       }
 
-      println("Module: $outputImmutableJars ; dockClassPath: $alreadyIncludedJarNames")
-
       val uniqueJarsClassPath = runtimeClasspath.mapNotNull {
         val uniqueJarName = ModuleFinder.of(it).findAll().single().descriptor().name() + ".jar"
         if (uniqueJarName in alreadyIncludedJarNames) return@mapNotNull null

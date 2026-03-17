@@ -1,6 +1,5 @@
 package fleet.buildtool.bundles
 
-import fleet.buildtool.fs.zip
 import fleet.buildtool.sign.FleetSigner
 import fleet.buildtool.sign.jetSignJsonContentType
 import fleet.buildtool.scrambling.JarScrambler
@@ -16,10 +15,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import org.slf4j.Logger
-import java.io.InputStream
-import java.lang.module.ModuleFinder
 import java.nio.file.Path
-import java.util.zip.ZipFile
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.joinToString
@@ -29,7 +25,6 @@ import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.deleteRecursively
-import kotlin.io.path.inputStream
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
@@ -84,7 +79,6 @@ suspend fun generatePluginDescriptor(
   val temporaryDir = createTempDirectory("resolvedConfigurationCache")
 
   logger.info("[fleet-dependencies] Resolving Marketplace and project plugins dependencies for requirements map...")
-  logger.warn("[fleet-dependencies] Descriptors: $projectPluginsPluginDescriptors ; $projectPluginResolvedPluginConfigurations")
   val resolvedDependencies = resolvePluginsDependencies(
     // we cannot use the resolved configuration built by [GenerateResolvedPluginsConfigurationTask] as it includes that plugin itself, it has a different purpose all together, see [GenerateResolvedPluginsConfigurationTask]'s description
     cacheDirectory = temporaryDir,
