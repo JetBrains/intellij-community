@@ -6,15 +6,14 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.pyproject.model.api.ModuleCreateInfo
 import com.intellij.python.pyproject.model.api.SuggestedSdk
+import com.intellij.python.pyproject.model.api.autoConfigureSdkIfNeeded
 import com.intellij.python.pyproject.model.api.getModuleInfo
 import com.intellij.python.pyproject.model.api.suggestSdk
-import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
 import com.intellij.python.sdkConfigurator.backend.impl.ModulesSdkConfigurator.Companion.create
 import com.intellij.python.sdkConfigurator.backend.impl.ModulesSdkConfigurator.Companion.popModulesSDKConfigurator
 import com.intellij.python.sdkConfigurator.common.impl.ModuleDTO
@@ -22,12 +21,14 @@ import com.intellij.python.sdkConfigurator.common.impl.ModuleName
 import com.jetbrains.python.PathShortener
 import com.jetbrains.python.Result
 import com.jetbrains.python.module.PyModuleService
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.createSdk
-import com.jetbrains.python.sdk.configuration.getSdkCreator
+import com.jetbrains.python.sdk.findPythonSdk
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToPath
 import kotlinx.collections.immutable.toPersistentList
@@ -112,7 +113,7 @@ internal class ModulesSdkConfigurator private constructor(
       withBackgroundProgress(project, PySdkConfiguratorBundle.message("intellij.python.sdk.looking")) {
         val tools = PyProjectSdkConfigurationExtension.createMap()
         val now = System.currentTimeMillis()
-        val resultDef = project.modules.filter { PythonSdkUtil.findPythonSdk(it) == null }.map { module ->
+        val resultDef = project.modules.filter { it.findPythonSdk() != null }.map { module ->
           async {
             val moduleInfo = module.getModuleInfo(tools) ?: return@async null
             Pair(module, moduleInfo)
@@ -137,7 +138,7 @@ internal class ModulesSdkConfigurator private constructor(
    * Errors are logged.
    *
    */
-  suspend fun configureSdks(modulesOnly: Set<ModuleName>) {
+  suspend fun configureSdks(modulesOnly: Set<ModuleName>) = pythonSdkConfigurationMutex.withLock {
     withContext(Dispatchers.Default) {
       val modulesMap = project.modules.associateBy { it.name }
       val modulesWithSameSdk = mutableMapOf<Module, Module>()
@@ -190,81 +191,28 @@ internal class ModulesSdkConfigurator private constructor(
  */
 @ApiStatus.Internal // Opened for tests only: we can't put tests here because configurators are in communuty.impl
 suspend fun configureSdkAutomatically(project: Project): Unit = withContext(Dispatchers.Default) {
-  val moduleService = PyModuleService.getInstance()
-  val modules = project.modules.filter { moduleService.isPythonModule(it) }
+  val moduleService = PyModuleService.getInstance(project)
+  val pythonModules = project.modules.filter { moduleService.isPythonModule(it) }
 
-  when (modules.size) {
+  when (pythonModules.size) {
     0 -> return@withContext
-    1 -> { // Single-module project, associate first module only
-      val module = modules.first()
-      if (PythonSdkUtil.findPythonSdk(module) != null) return@withContext // Already has SDK
-      configureSdkForModuleAutomatically(module, createEnvIfNeeded = false)
-    }
-    else -> { // Multi-module project, only associate workspace members
-      val modulesToSdk = modules.filter { PythonSdkUtil.findPythonSdk(it) == null }.associateWith { it.suggestSdk() }
-      for ((module, sdkSuggestion) in modulesToSdk) {
+    1 -> pythonModules.first().autoConfigureSdkIfNeeded()?.orLogException(logger)
+    else -> pythonSdkConfigurationMutex.withLock {
+      for (module in pythonModules) {
+        if (module.findPythonSdk() != null) continue
+        val sdkSuggestion = module.suggestSdk()
         when (sdkSuggestion) {
+          is SuggestedSdk.SameAs -> {
+            val parentSdk = PythonSdkUtil.findPythonSdk(sdkSuggestion.parentModule) ?: continue
+            module.pythonSdk = parentSdk
+          }
           is SuggestedSdk.PyProjectIndependent, null -> {
             logger.trace { "${module.name} skipped in multimodule project autoconfig" }
           }
-          is SuggestedSdk.SameAs -> {
-            setModuleSdkAsParent(parentModule = sdkSuggestion.parentModule, module = module)
-          }
         }
       }
     }
   }
-}
-
-private suspend fun configureSdkForModuleAutomatically(module: Module, createEnvIfNeeded: Boolean) {
-  when (val moduleInfo = module.getModuleInfo()) {
-    is ModuleCreateInfo.CreateSdkInfoWrapper -> {
-      when (val info = moduleInfo.createSdkInfo) {
-        is CreateSdkInfo.ExistingEnv -> {
-          info.createAndSetToModule(module) { sdk ->
-            PyProjectTomlCollector.sdkCreatedAutomatically(moduleInfo.moduleDir, moduleInfo.toolId)
-          }
-        }
-        is CreateSdkInfo.WillCreateEnv -> {
-          if (createEnvIfNeeded) {
-            info.createAndSetToModule(module)
-          }
-          else {
-            logger.trace { "${module.name} can't be configured automatically: no venv for ${moduleInfo.toolId}" }
-          }
-        }
-        is CreateSdkInfo.WillInstallTool -> logger.trace { "${module.name} can't be configured automatically: no tool installed - ${moduleInfo.toolId}" }
-      }
-    }
-    is ModuleCreateInfo.SameAs -> {
-      val parentModule = moduleInfo.parentModule
-      setModuleSdkAsParent(parentModule = parentModule, module = module)
-    }
-    null -> Unit
-  }
-}
-
-private suspend fun CreateSdkInfo.createAndSetToModule(module: Module, onCreated: (Sdk) -> Unit = {}) {
-  when (val r = getSdkCreator(module).createSdk()) {
-    is Result.Failure -> {
-      logger.trace { "Failed to create sdk for ${module.name} : ${r.error}" }
-    }
-    is Result.Success -> {
-      val sdk = r.result
-      module.pythonSdk = sdk
-      logger.trace { "SDK creation result for  ${module.name} : $sdk" }
-      onCreated(sdk)
-    }
-  }
-}
-
-private fun setModuleSdkAsParent(
-  parentModule: Module,
-  module: Module,
-) {
-  val parentSdk = PythonSdkUtil.findPythonSdk(parentModule) ?: return
-  logger.trace { "${module.name} seeds the same sdk as ${parentModule} : ${parentSdk}" }
-  module.pythonSdk = parentSdk
 }
 
 
