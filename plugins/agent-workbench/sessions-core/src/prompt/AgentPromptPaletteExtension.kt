@@ -3,7 +3,13 @@ package com.intellij.agent.workbench.sessions.core.prompt
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.Nls
+
+data class AgentPromptPaletteInitialPrompt(
+  val kind: String? = null,
+  val content: String = "",
+)
 
 /**
  * Extension point that allows contributing custom tabs to the prompt palette popup.
@@ -23,9 +29,25 @@ interface AgentPromptPaletteExtension {
   fun getTabTitle(): @Nls String
 
   /**
-   * Returns initial text to pre-fill in the prompt area when the tab is selected, or `null` to leave it empty.
+   * Returns initial prompt to pre-fill in the prompt area when the tab is selected, or `null` to leave it empty.
    */
-  fun getInitialPromptText(project: Project): @Nls String?
+  fun getInitialPrompt(project: Project): AgentPromptPaletteInitialPrompt?
+
+  /**
+   * Classifies the provided draft text for persistence.
+   *
+   * Implementations may return a different kind than [getInitialPrompt] when the user's edits move the draft
+   * between logical prompt templates.
+   */
+  fun classifyPromptDraftKind(project: Project, promptText: String): String? = getInitialPrompt(project)?.kind
+
+  /**
+   * Synchronizes the current draft prompt with the latest context for this extension.
+   *
+   * Implementations should preserve user-authored text whenever possible and only update
+   * context-derived fragments that are owned by the extension.
+   */
+  fun synchronizePrompt(project: Project, currentPrompt: AgentPromptPaletteInitialPrompt): AgentPromptPaletteInitialPrompt = currentPrompt
 
   /**
    * Returns the action ID to invoke on submit instead of the normal launch flow,
@@ -45,4 +67,23 @@ object AgentPromptPaletteExtensions {
     ExtensionPointName("com.intellij.agent.workbench.promptPaletteExtension")
 
   fun allExtensions(): List<AgentPromptPaletteExtension> = EP_NAME.extensionList
+}
+
+object AgentPromptPaletteExtensionContext {
+  private val CONTEXT_ITEMS_KEY: Key<List<AgentPromptContextItem>> = Key.create("agent.workbench.prompt.palette.contextItems")
+
+  fun <T> withContextItems(project: Project, contextItems: List<AgentPromptContextItem>, action: () -> T): T {
+    val previousItems = project.getUserData(CONTEXT_ITEMS_KEY)
+    project.putUserData(CONTEXT_ITEMS_KEY, contextItems)
+    return try {
+      action()
+    }
+    finally {
+      project.putUserData(CONTEXT_ITEMS_KEY, previousItems)
+    }
+  }
+
+  fun getContextItems(project: Project): List<AgentPromptContextItem> {
+    return project.getUserData(CONTEXT_ITEMS_KEY).orEmpty()
+  }
 }
