@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.junit.AssumptionViolatedException;
 import org.junit.ComparisonFailure;
 import org.junit.rules.RuleChain;
@@ -30,15 +31,13 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.io.RandomAccessFile;
-import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -66,7 +65,9 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final char FAILED_TEST_DEBUG_OUTPUT_MARKER = '\u2003';
   private static final int MAX_BUFFER_LENGTH = Math.max(1024, Integer.getInteger("idea.single.test.log.max.length", 10_000_000));
 
-  private final StringBuilder myBuffer = new StringBuilder(); // guarded by myBuffer
+  // store log contents here, as a list of (timestamp, message) records, to optimize for append speed
+  private final Deque<Record> myBuffer = new ArrayDeque<>(8192); // guarded by myBuffer
+  private int length; // total length of myBuffer in characters, approx
   private long myTestStartedMillis;
   private boolean myInitialized;
 
@@ -207,48 +208,33 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  private void buffer(@NotNull LogLevel level, @NotNull String category, @Nullable String message, @Nullable Throwable t) {
-    synchronized (myBuffer) {
-      formatTimeStampLevelAndSource(level, category);
-      myBuffer.append(" - ");
-      if (message != null) {
-        myBuffer.append(message);
-      }
-      myBuffer.append(System.lineSeparator());
-      if (t != null) {
-        var writer = new StringWriter(4096);
-        t.printStackTrace(new PrintWriter(writer));
-        myBuffer.append(writer.getBuffer());
-        myBuffer.append(System.lineSeparator());
-      }
-      if (myBuffer.length() > MAX_BUFFER_LENGTH) {
-        myBuffer.delete(0, myBuffer.length() - MAX_BUFFER_LENGTH + MAX_BUFFER_LENGTH / 4);
-      }
+  private record Record(long timeStamp, @NotNull LogLevel level, @NotNull String category, @Nullable String message, @Nullable Throwable t) {
+    private int estimateSize() {
+      return 12 + 1 + 6 + 1 + 30 + 3 + // header
+             (message==null?0:message.length()) +
+             (t == null ? 0 : 4096) +
+             System.lineSeparator().length();
+    }
+
+    @Override
+    public @NotNull String toString() {
+      var source = category().substring(Math.max(category().length() - 30, 0));
+      String format = String.format("%1$tH:%1$tM:%1$tS,%1$tL %2$-6s %3$30s - ", timeStamp(), level().getLevelName(), source);
+      String message = message() == null ? "" : message() + System.lineSeparator();
+      String throwable = t() == null ? "" : ExceptionUtil.getThrowableText(t()) + System.lineSeparator();
+      return format + message + throwable;
     }
   }
-
-  private long cachedTime;
-  private String cachedFormattedTime;
-  private static final DateTimeFormatter TIME_STAMP_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss,SSS");
-  // faster version of `String.format("%1$tH:%1$tM:%1$tS,%1$tL %2$-6s %3$30s", System.currentTimeMillis(), level.getLevelName(), source);`
-  // uses pre-parsed time format string and caches the formatted timestamp, because it doesn't change very often,
-  // uses allocation-free padLeft/padRight to avoid reparsing format string for appending category and level
-  private void formatTimeStampLevelAndSource(@NotNull LogLevel level, @NotNull String category) {
-    long currentTime = System.currentTimeMillis();
-    String formattedTime;
-    if (currentTime == cachedTime) {
-      formattedTime = cachedFormattedTime;
+  private void buffer(@NotNull LogLevel level, @NotNull String category, @Nullable String message, @Nullable Throwable t) {
+    synchronized (myBuffer) {
+      Record logRecord = new Record(System.currentTimeMillis(), level, category, message, t);
+      myBuffer.add(logRecord);
+      length += logRecord.estimateSize();
+      while (length >= MAX_BUFFER_LENGTH && !myBuffer.isEmpty()) {
+        Record record = myBuffer.removeFirst();
+        length = Math.max(0, length - record.estimateSize());
+      }
     }
-    else {
-      formattedTime = TIME_STAMP_FORMAT.format(LocalTime.now());
-      cachedFormattedTime = formattedTime;
-      cachedTime = currentTime;
-    }
-    myBuffer.append(formattedTime);
-    myBuffer.append(' ');
-    StringUtil.padRight(myBuffer, level.getLevelName(), 6, 6);
-    myBuffer.append(' ');
-    StringUtil.padLeft(myBuffer, category, 30, 30);
   }
 
   /// Report full contents, not limited to 20 characters of ComparisonFailure#MAX\_CONTEXT\_LENGTH
@@ -305,7 +291,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     if (factory != null) {
       // clear buffer from tests which failed to report their termination properly
       synchronized (factory.myBuffer) {
-        factory.myBuffer.setLength(0);
+        factory.clear();
       }
       var publisher = factory.myDebugArtifactPublisher.getAndSet(null);
       if (publisher != null) {
@@ -343,8 +329,8 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  private @NotNull CharSequence myBufferStaticFixtureInit = "";
-  private @NotNull CharSequence myBufferFixtureInit = "";
+  private @NotNull CharSequence myBufferStaticFixtureInit = ""; // guarded by myBuffer
+  private @NotNull CharSequence myBufferFixtureInit = ""; // guarded by myBuffer
   public static <T extends Throwable> void fixtureInitialization(boolean isStatic, @NotNull ThrowableRunnable<T> runnable) throws T {
     try {
       runnable.run();
@@ -354,19 +340,32 @@ public final class TestLoggerFactory implements Logger.Factory {
       if (factory != null) {
         synchronized (factory.myBuffer) {
           if (isStatic) {
-            factory.myBuffer.append("---Static Fixtures Initialization End---");
-            factory.myBuffer.append(System.lineSeparator());
-            factory.myBufferStaticFixtureInit = factory.myBuffer.toString();
+            factory.buffer(LogLevel.TRACE, "","---Static Fixtures Initialization End---", null);
+            factory.myBufferStaticFixtureInit = factory.toBuffer();
           }
           else {
-            factory.myBuffer.append("---Instance Fixtures Initialization End---");
-            factory.myBuffer.append(System.lineSeparator());
-            factory.myBufferFixtureInit = factory.myBuffer.toString();
+            factory.buffer(LogLevel.TRACE, "","---Instance Fixtures Initialization End---", null);
+            factory.myBufferFixtureInit = factory.toBuffer();
           }
-          factory.myBuffer.setLength(0);
+          factory.clear();
         }
       }
     }
+  }
+
+  private void clear() {
+    myBuffer.clear();
+    length = 0;
+  }
+
+  @Internal
+  @VisibleForTesting
+  public @NotNull String toBuffer() {
+    StringBuilder result = new StringBuilder(length);
+    for (Record record : myBuffer) {
+      result.append(record);
+    }
+    return result.toString();
   }
 
   public static void onFixturesDisposeStart(boolean isStatic) {
@@ -412,8 +411,8 @@ public final class TestLoggerFactory implements Logger.Factory {
     String buffer;
     synchronized (myBuffer) {
       buffer = success || myBuffer.isEmpty() && myBufferStaticFixtureInit.isEmpty() && myBufferFixtureInit.isEmpty() ? null :
-               myBufferStaticFixtureInit + "\n" + myBufferFixtureInit + "\n" + myBuffer;
-      myBuffer.setLength(0);
+               myBufferStaticFixtureInit + "\n" + myBufferFixtureInit + "\n" + toBuffer();
+      clear();
     }
 
     if (buffer != null) {
