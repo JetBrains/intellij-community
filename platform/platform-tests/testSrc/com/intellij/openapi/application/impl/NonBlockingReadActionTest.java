@@ -40,6 +40,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.IntStreamEx;
+import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -50,6 +51,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -672,6 +674,38 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     });
     while (!promise.get().isDone()) {
       UIUtil.dispatchAllInvocationEvents(); // NBRA invokeLaters when sensed there's pending write action
+    }
+  }
+
+  public void testSyncrhonousNbraCanBeCanceledByExpireWith() {
+    Disposable d = Disposer.newDisposable();
+    CompletableFuture<?> readActionCanStart = new CompletableFuture<>();
+    CompletableFuture<?> writeActionCanFinish = new CompletableFuture<>();
+    Future<?> f = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      readActionCanStart.join();
+      try {
+        ReadAction.nonBlocking(() -> { }).expireWith(d).executeSynchronously();
+      } catch (Throwable e) {
+        writeActionCanFinish.complete(null);
+        throw e;
+      }
+      Assertions.fail("Read action should not complete successfully");
+    });
+    WriteAction.run(() -> {
+      readActionCanStart.complete(null);
+      try {
+        Thread.sleep(10);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+      Disposer.dispose(d);
+      writeActionCanFinish.join();
+    });
+    try {
+      f.get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
     }
   }
 }
