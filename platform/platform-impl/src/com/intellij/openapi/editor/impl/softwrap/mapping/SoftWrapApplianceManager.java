@@ -458,6 +458,12 @@ public final class SoftWrapApplianceManager implements Dumpable {
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
+  public SoftWrapPainter getSoftWrapPainter() {
+    return myPainter;
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public void setSoftWrapPainter(SoftWrapPainter painter) {
     myPainter = painter;
     recalculateAll();
