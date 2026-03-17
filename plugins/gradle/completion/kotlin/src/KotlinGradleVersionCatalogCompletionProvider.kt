@@ -79,6 +79,7 @@ private fun addLookupForCatalogEntries(
         LookupElementBuilder.create(toReplaceInput)
             .withIcon(GradleIcons.GradleFile)
             .withTypeText("Entry in `$catalogName` version catalog")
+            .withInsertHandler(GradleVersionCatalogExpressionInsertHandler)
     }
     result.addAllElements(lookup)
 }

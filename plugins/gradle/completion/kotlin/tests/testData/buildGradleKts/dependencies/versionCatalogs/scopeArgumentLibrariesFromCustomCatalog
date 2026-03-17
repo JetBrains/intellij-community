@@ -3,7 +3,7 @@
 // "COMPLETION-RESULT-PATH": build.gradle.after.kts
 // FILE: build.gradle.kts
 dependencies {
-    implementation(customLibs.m<caret>)
+    implementation(customLibs.m<caret>y.lib)
 }
 
 // FILE: build.gradle.after.kts

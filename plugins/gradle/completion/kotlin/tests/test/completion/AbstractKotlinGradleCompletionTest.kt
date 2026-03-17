@@ -215,7 +215,7 @@ abstract class AbstractKotlinGradleCompletionTest : AbstractGradleCodeInsightTes
         val elementToApply = codeInsightFixture.lookupElements?.getOrNull(suggestionIndex)
             ?: error("There is no suggestion with index $suggestionIndex")
         codeInsightFixture.lookup.currentItem = elementToApply
-        codeInsightFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR)
+        codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
     }
 
     private fun maybeCheckResult() {
