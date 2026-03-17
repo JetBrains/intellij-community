@@ -119,7 +119,20 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testAbsentModelVersion410ForMaven4() = runBlocking {
+  fun testAbsentModelVersionAndXmlnsInMaven4() = runBlocking {
+    assumeMaven4()
+    fixture.saveText(projectPom,
+                     """
+                         <<error descr="'modelVersion' child tag should be defined">project</error>>
+                           <artifactId>foo</artifactId>
+                         </project>
+                         """.trimIndent())
+    fixture.enableInspections(listOf(MavenModelVersionMissedInspection::class.java))
+    checkHighlighting()
+  }
+
+  @Test
+  fun testAbsentModelVersion410InMaven4() = runBlocking {
     assumeMaven4()
     fixture.saveText(projectPom,
                      """
@@ -132,7 +145,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testAbsentModelVersion400ForMaven4() = runBlocking {
+  fun testAbsentModelVersion400InMaven4() = runBlocking {
     assumeMaven4()
     fixture.saveText(projectPom,
                      """

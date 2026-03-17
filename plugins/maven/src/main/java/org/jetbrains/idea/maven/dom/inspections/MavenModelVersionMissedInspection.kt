@@ -27,14 +27,23 @@ class MavenModelVersionMissedInspection : BasicDomElementsInspection<MavenDomPro
   ) {
     val projectModel = domFileElement.getRootElement()
     if (projectModel.modelVersion.exists()) return
-    if (isAtLeastMaven4(domFileElement.file.virtualFile, domFileElement.file.project)) return
-    holder.createProblem(projectModel,
-                         HighlightSeverity.ERROR,
-                         MavenDomBundle.message("inspection.missed.model.version"),
-                         AddModelVersionQuickFix(),
-                         UpdateXmlsTo410()
-
-
-    )
+    if (isAtLeastMaven4(domFileElement.file.virtualFile, domFileElement.file.project)) {
+      if (projectModel.effectiveModelVersion != null) return
+      holder.createProblem(
+        projectModel,
+        HighlightSeverity.ERROR,
+        MavenDomBundle.message("inspection.missed.model.version"),
+        AddModelVersionQuickFix(),
+        UpdateXmlsTo410(),
+      )
+    }
+    else {
+      holder.createProblem(
+        projectModel,
+        HighlightSeverity.ERROR,
+        MavenDomBundle.message("inspection.missed.model.version"),
+        AddModelVersionQuickFix(),
+      )
+    }
   }
 }
