@@ -125,21 +125,8 @@ internal fun resolveSegmentAt(
   return null
 }
 
-/**
- * Looks up [name] as an attribute/method of [element], supporting PyFile, PyClass, and PsiDirectory (packages).
- */
-private fun resolveMemberIn(element: PsiElement, name: String): PsiElement? {
-  val target = PyUtil.turnDirIntoInit(element) ?: element
-  return when (target) {
-    is PyFile -> target.findTopLevelAttribute(name)
-                 ?: target.findTopLevelFunction(name)
-                 ?: target.findTopLevelClass(name)
-    is PyClass -> target.findMethodByName(name, false, null)
-                  ?: target.findInstanceAttribute(name, false)
-                  ?: target.findClassAttribute(name, false, null)
-    else -> null
-  }
-}
+private fun resolveMemberIn(element: PsiElement, name: String): PsiElement? =
+  findMemberByName(element, name)
 
 /**
  * Returns completion variants for members of [element].

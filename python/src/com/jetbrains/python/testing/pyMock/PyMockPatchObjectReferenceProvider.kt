@@ -12,14 +12,12 @@ import com.intellij.psi.ResolveResult
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyCallExpression
-import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyDecorator
-import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.PyWithItem
+import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -127,25 +125,9 @@ private class PyMockPatchObjectAttrReference(
     ).firstOrNull()
   }
 
-  private fun findMember(target: PsiElement, name: String): PsiElement? {
-    val resolved = PyUtil.turnDirIntoInit(target) ?: target
-    return when (resolved) {
-      is PyClass -> resolved.findMethodByName(name, false, null)
-                    ?: resolved.findInstanceAttribute(name, false)
-                    ?: resolved.findClassAttribute(name, false, null)
-      is PyFile -> resolved.findTopLevelAttribute(name)
-                   ?: resolved.findTopLevelFunction(name)
-                   ?: resolved.findTopLevelClass(name)
-      else -> null
-    }
-  }
+  private fun findMember(target: PsiElement, name: String): PsiElement? =
+    findMemberByName(target, name)
 
-  private fun getMemberVariantsOf(target: PsiElement): List<PsiElement> {
-    val resolved = PyUtil.turnDirIntoInit(target) ?: target
-    return when (resolved) {
-      is PyClass -> resolved.getMethods().toList() + (resolved.classAttributes + resolved.instanceAttributes).filterNotNull()
-      is PyFile -> resolved.topLevelClasses + resolved.topLevelFunctions + resolved.topLevelAttributes.orEmpty()
-      else -> emptyList()
-    }
-  }
+  private fun getMemberVariantsOf(target: PsiElement): List<PsiElement> =
+    collectMemberVariants(target)
 }

@@ -12,8 +12,6 @@ import com.intellij.psi.ResolveResult
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyCallExpression
-import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyUtil
@@ -21,6 +19,8 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.testing.pyMock.PyMockPatchTargetReferenceSet
+import com.jetbrains.python.testing.pyMock.collectMemberVariants
+import com.jetbrains.python.testing.pyMock.findMemberByName
 
 /**
  * Provides references for string arguments in `monkeypatch.setattr` and `monkeypatch.delattr`.
@@ -113,25 +113,9 @@ private class PyMonkeypatchAttrReference(
     ).firstOrNull()
   }
 
-  private fun findMember(target: PsiElement, name: String): PsiElement? {
-    val resolved = PyUtil.turnDirIntoInit(target) ?: target
-    return when (resolved) {
-      is PyClass -> resolved.findMethodByName(name, false, null)
-                    ?: resolved.findInstanceAttribute(name, false)
-                    ?: resolved.findClassAttribute(name, false, null)
-      is PyFile -> resolved.findTopLevelAttribute(name)
-                   ?: resolved.findTopLevelFunction(name)
-                   ?: resolved.findTopLevelClass(name)
-      else -> null
-    }
-  }
+  private fun findMember(target: PsiElement, name: String): PsiElement? =
+    findMemberByName(target, name)
 
-  private fun getMemberVariants(target: PsiElement): List<PsiElement> {
-    val resolved = PyUtil.turnDirIntoInit(target) ?: target
-    return when (resolved) {
-      is PyClass -> resolved.getMethods().toList() + (resolved.classAttributes + resolved.instanceAttributes).filterNotNull()
-      is PyFile -> resolved.topLevelClasses + resolved.topLevelFunctions + resolved.topLevelAttributes.orEmpty()
-      else -> emptyList()
-    }
-  }
+  private fun getMemberVariants(target: PsiElement): List<PsiElement> =
+    collectMemberVariants(target)
 }
