@@ -228,8 +228,15 @@
   <technology name="kotlinx-datetime" root="kotlinx.datetime"/>
   <technology name="kotlinx-html" root="kotlinx.html"/>
   <technology name="kotlinx-io" root="kotlinx.io"/>
-  <technology name="kotlinx-jupyter-ktor-client" root="org.jetbrains.kotlinx.jupyter.ktor.client"/>
+  <technology name="kotlinx-jupyter-database" root="org.jetbrains.kotlinx.jupyter.database"/>
+  <technology name="kotlinx-jupyter-intellij-platform" root="org.jetbrains.kotlinx.jupyter.intellij"/>
   <technology name="kotlinx-jupyter-json-generation" root="org.jetbrains.kotlinx.jupyter.json"/>
+  <technology name="kotlinx-jupyter-json2kt" root="org.jetbrains.kotlinx.jupyter.json2kt"/>
+  <technology name="kotlinx-jupyter-ktor-client" root="org.jetbrains.kotlinx.jupyter.ktor.client"/>
+  <technology name="kotlinx-jupyter-notebook-parser" root="org.jetbrains.jupyter.parser"/>
+  <technology name="kotlinx-jupyter-notekit" root="org.jetbrains.kotlinx.jupyter.notebook"/>
+  <technology name="kotlinx-jupyter-serialization" root="org.jetbrains.kotlinx.jupyter.serialization"/>
+  <technology name="kotlinx-jupyter-widgets" root="org.jetbrains.kotlinx.jupyter.widget"/>
   <technology name="kotlin-logging" root="io.github.oshai.kotlinlogging"/>
   <technology name="kotlinx-serialization" root="kotlinx.serialization"/>
   <technology name="ktlint" root="com.pinterest.ktlint"/>
