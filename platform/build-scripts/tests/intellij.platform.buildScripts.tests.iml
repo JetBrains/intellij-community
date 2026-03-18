@@ -42,5 +42,7 @@
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.testsBootstrap" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5Launcher" level="project" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.tasks.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.productDsl.tests" scope="TEST" />
   </component>
 </module>
