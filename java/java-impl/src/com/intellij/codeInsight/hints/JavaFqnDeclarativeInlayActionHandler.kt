@@ -7,10 +7,13 @@ import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -20,7 +23,10 @@ public class JavaFqnDeclarativeInlayActionHandler(private val cs: CoroutineScope
   override fun handleClick(e: EditorMouseEvent, payload: InlayActionPayload) {
     val project = e.editor.project ?: return
     cs.launch {
-      val aClass = readAction { findNavigationElement(project, payload) } ?: return@launch
+      val aClass = readAction {
+        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(e.editor.document) ?: return@readAction null
+        findNavigationElement(project, psiFile, payload)
+      } ?: return@launch
       withContext(Dispatchers.EDT) {
         aClass.navigate(true)
       }
@@ -35,9 +41,10 @@ public class JavaFqnDeclarativeInlayActionHandler(private val cs: CoroutineScope
 /**
  * Finds class to navigate to by [InlayActionPayload]
  */
-public fun findNavigationElement(project: Project, payload: InlayActionPayload): PsiClass? {
+public fun findNavigationElement(project: Project, file: PsiFile, payload: InlayActionPayload): PsiClass? {
   if (payload !is StringInlayActionPayload) return null
-  val fqn = payload.text
-  val facade = JavaPsiFacade.getInstance(project)
-  return facade.findClass(fqn, GlobalSearchScope.allScope(project))
+  val index = ProjectFileIndex.getInstance(project)
+  val scope = ModuleUtilCore.findModuleForPsiElement(file)
+    ?.getModuleWithDependenciesAndLibrariesScope(index.isInTestSourceContent(file.virtualFile)) ?: return null
+  return JavaPsiFacade.getInstance(project).findClass(payload.text, scope)
 }
