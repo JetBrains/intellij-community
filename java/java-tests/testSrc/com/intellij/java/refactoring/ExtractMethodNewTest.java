@@ -612,7 +612,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTestWithJava17();
   }
 
-  private void doChainedConstructorTest(final boolean replaceAllDuplicates) throws Exception {
+  private void doChainedConstructorTest(boolean replaceAllDuplicates) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     boolean success = performExtractMethod(true, replaceAllDuplicates, getEditor(), getFile(), getProject(), true);
     assertTrue(success);
@@ -746,7 +746,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     try {
       doTest();
       fail("Should fail inside switch");
-    } catch (PrepareFailedException e){
+    } catch (PrepareFailedException ignore) {
     }
   }
 
@@ -766,7 +766,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     try {
       doTest();
       fail("Should not extract different returns");
-    } catch (PrepareFailedException e) {
+    } catch (PrepareFailedException ignore) {
     }
   }
 
@@ -774,7 +774,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     try {
       doTest();
       fail("Should not extract internal references");
-    } catch (PrepareFailedException e) {
+    } catch (PrepareFailedException ignore) {
     }
   }
 
@@ -782,7 +782,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     try {
       doTest();
       fail("Should not extract semantically different references");
-    } catch (PrepareFailedException e) {
+    } catch (PrepareFailedException ignore) {
     }
   }
 
@@ -790,7 +790,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     try {
       doTest();
       fail("Should not extract nullable variable if primitive type delcared outside");
-    } catch (PrepareFailedException e) {
+    } catch (PrepareFailedException ignore) {
     }
   }
 
@@ -802,7 +802,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     try {
       doTest();
       fail("Should fail if expression is linked to the scope");
-    } catch (PrepareFailedException e){
+    } catch (PrepareFailedException ignore) {
     }
   }
 
@@ -810,7 +810,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     try {
       doTest();
       fail("Should fail if expression contains mutable object");
-    } catch (PrepareFailedException e){
+    } catch (PrepareFailedException ignore) {
     }
   }
 
@@ -1189,9 +1189,8 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     try {
       doTest();
       fail("Should not work for single lambda parameter");
-    } catch (PrepareFailedException e){
-
     }
+    catch (PrepareFailedException ignore) {}
   }
 
   public void testExtractUnresolvedLambdaExpression() throws Exception {
@@ -1816,7 +1815,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  private void doPrepareErrorTest(final String expectedMessage) throws Exception {
+  private void doPrepareErrorTest(String expectedMessage) throws Exception {
     String expectedError = null;
     try {
       doErrorTest();
@@ -1840,8 +1839,8 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     try {
       doErrorTest();
       succeed = true;
-    } catch (PrepareFailedException e) {
     }
+    catch (PrepareFailedException ignore) {}
     assertEquals(shouldSucceed, succeed);
   }
 
@@ -1885,7 +1884,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
                                               @NotNull Editor editor,
                                               @NotNull PsiFile file,
                                               @NotNull Project project,
-                                              final boolean extractChainedConstructor) throws PrepareFailedException, IncorrectOperationException {
+                                              boolean extractChainedConstructor) throws PrepareFailedException, IncorrectOperationException {
     return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor,
                                 ArrayUtilRt.EMPTY_INT_ARRAY);
   }
@@ -1895,7 +1894,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
                                               @NotNull Editor editor,
                                               @NotNull PsiFile file,
                                               @NotNull Project project,
-                                              final boolean extractChainedConstructor,
+                                              boolean extractChainedConstructor,
                                               int @NotNull ... disabledParams) throws PrepareFailedException, IncorrectOperationException {
     return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor, null, false, null, disabledParams);
   }
@@ -1905,7 +1904,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
                                               @NotNull Editor editor,
                                               @NotNull PsiFile file,
                                               @NotNull Project project,
-                                              final boolean extractChainedConstructor,
+                                              boolean extractChainedConstructor,
                                               PsiType returnType,
                                               boolean makeStatic,
                                               String newNameOfFirstParam,
@@ -1919,7 +1918,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
                                               @NotNull Editor editor,
                                               @NotNull PsiFile file,
                                               @NotNull Project project,
-                                              final boolean extractChainedConstructor,
+                                              boolean extractChainedConstructor,
                                               PsiType returnType,
                                               boolean makeStatic,
                                               String newNameOfFirstParam,
@@ -1981,7 +1980,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
       final Boolean hasDuplicates = processor.hasDuplicates();
       if (hasDuplicates == null || hasDuplicates.booleanValue()) {
         final List<Match> duplicates = processor.getDuplicates();
-        for (final Match match : duplicates) {
+        for (Match match : duplicates) {
           if (!match.getMatchStart().isValid() || !match.getMatchEnd().isValid()) continue;
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           ApplicationManager.getApplication().runWriteAction(() -> {

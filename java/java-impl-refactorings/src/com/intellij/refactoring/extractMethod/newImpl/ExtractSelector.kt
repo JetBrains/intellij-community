@@ -10,7 +10,6 @@ import com.intellij.psi.PsiBreakStatement
 import com.intellij.psi.PsiCodeBlock
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiContinueStatement
-import com.intellij.psi.PsiDeclarationStatement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiExpressionStatement
@@ -18,7 +17,6 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiIfStatement
 import com.intellij.psi.PsiLambdaParameterType
-import com.intellij.psi.PsiLocalVariable
 import com.intellij.psi.PsiParenthesizedExpression
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.PsiReturnStatement
@@ -43,9 +41,7 @@ class ExtractSelector {
     val statements = CodeInsightUtil.findStatementsInRange(file, range.startOffset, range.endOffset)
     if (statements.isNotEmpty()) return statements.toList()
 
-    val subExpression = IntroduceVariableUtil.getSelectedExpression(file.project, file,
-                                                                    range.startOffset,
-                                                                    range.endOffset)
+    val subExpression = IntroduceVariableUtil.getSelectedExpression(file.project, file, range.startOffset, range.endOffset)
     if (subExpression != null && IntroduceVariableUtil.getErrorMessage(subExpression) == null) {
       val originalType = CommonJavaRefactoringUtil.getTypeByExpressionWithExpectedType(subExpression)
       if (originalType != null) {
@@ -57,8 +53,7 @@ class ExtractSelector {
   }
 
   fun suggestElementsToExtract(file: PsiFile, range: TextRange): List<PsiElement> {
-    val selectedElements = findElementsInRange(file, range)
-    return alignElements(selectedElements)
+    return alignElements(findElementsInRange(file, range))
   }
 
   private fun alignElements(elements: List<PsiElement>): List<PsiElement> {
@@ -84,12 +79,11 @@ class ExtractSelector {
   private fun alignExpressionStatement(statement: PsiExpressionStatement): PsiElement {
     val switchRule = statement.parent as? PsiSwitchLabeledRuleStatement
     val switchExpression = PsiTreeUtil.getParentOfType(switchRule, PsiSwitchExpression::class.java)
-    if (switchExpression != null) return statement.expression
-    return statement
+    return if (switchExpression != null) statement.expression else statement
   }
 
-  private fun isControlFlowStatement(statement: PsiStatement?): Boolean {
-    return statement is PsiBreakStatement || statement is PsiContinueStatement || statement is PsiReturnStatement || statement is PsiYieldStatement
+  private fun isControlFlowStatement(st: PsiStatement?): Boolean {
+    return st is PsiBreakStatement || st is PsiContinueStatement || st is PsiReturnStatement || st is PsiYieldStatement
   }
 
   private fun alignIfStatement(ifStatement: PsiIfStatement): PsiElement {
@@ -108,9 +102,6 @@ class ExtractSelector {
       isInsideAnnotation(expression) -> null
       expression is PsiReturnStatement -> alignExpression(expression.returnValue)
       expression is PsiParenthesizedExpression -> expression.takeIf { expression.expression != null }
-      //is PsiAssignmentExpression -> alignExpression(expression.rExpression)
-      //expression.parent is PsiParenthesizedExpression -> alignExpression(expression.parent as PsiExpression)
-      // PsiUtil.skipParenthesizedExprDown((PsiExpression)elements[0]);
       else -> expression
     }
   }
@@ -147,15 +138,6 @@ class ExtractSelector {
       listOf(codeBlock.parent)
     } else {
       codeBlock.children.dropWhile { it !== codeBlock.firstBodyElement }.dropLastWhile { it !== codeBlock.lastBodyElement }
-    }
-  }
-
-  private fun alignStatement(statement: PsiStatement): PsiElement? {
-    return when (statement) {
-      is PsiExpressionStatement -> alignExpression(statement.expression)
-      is PsiDeclarationStatement -> statement.declaredElements.mapNotNull { (it as? PsiLocalVariable)?.initializer }.singleOrNull()
-                                    ?: statement
-      else -> statement
     }
   }
 }
