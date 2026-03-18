@@ -288,7 +288,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   private static void openViaExplorerCall(String dir, @Nullable String toSelect) {
-    spawn(toSelect != null ? "explorer /select,\"" + toSelect + '"' : "explorer /root,\"" + dir + '"');
+    spawn("explorer", toSelect != null ? "/select,\"" + toSelect + '"' : "/root,\"" + dir + '"');
   }
 
   private interface Shell32Ex extends StdCallLibrary {
@@ -304,7 +304,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
 
     ProcessIOExecutorService.INSTANCE.execute(() -> {
       try {
-        var process = OS.CURRENT == OS.Windows ? Runtime.getRuntime().exec(command[0]) : new ProcessBuilder(command).start();
+        var process = new ProcessBuilder(command).start();
         new CapturingProcessHandler.Silent(process, null, command[0])
           .runProcess(10000, false)
           .checkSuccess(LOG);
@@ -330,15 +330,14 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
               .filter(Files::exists)
               .findFirst();
             if (desktopFile.isPresent()) {
-              var lines = Files.readAllLines(desktopFile.get());
-              fmApp = lines.stream()
-                .filter(line -> line.startsWith("Exec="))
-                .map(line -> getExecCommand(line.substring(5)))
-                .findFirst().orElse(null);
-              fmName = lines.stream()
-                .filter(line -> line.startsWith("Name="))
-                .map(line -> line.substring(5))
-                .findFirst().orElse(null);
+              for (var line : Files.readAllLines(desktopFile.get())) {
+                if (line.startsWith("Exec=")) {
+                  fmApp = getExecCommand(line.substring(5));
+                }
+                else if (line.startsWith("Name=")) {
+                  fmName = line.substring(5);
+                }
+              }
             }
           }
         }
