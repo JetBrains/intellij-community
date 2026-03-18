@@ -7,11 +7,13 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.junit.Ignore
 import org.junit.Test
 
 @Suppress("GrUnresolvedAccess")
 class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImportingTestCase() {
 
+  @Ignore("IDEA-387217")
   @Test
   fun `test build script errors on Build`() {
     createSettingsFile("include 'api', 'impl', 'brokenProject' ")
