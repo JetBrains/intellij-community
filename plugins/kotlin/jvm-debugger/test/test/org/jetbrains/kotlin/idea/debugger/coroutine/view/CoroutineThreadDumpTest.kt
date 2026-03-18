@@ -3,12 +3,11 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestDataPath
-import com.intellij.testFramework.disableInspections
 import com.intellij.unscramble.CompoundDumpItem
 import com.intellij.unscramble.dumpItems
 import com.intellij.unscramble.parseIntelliJThreadDump
-import org.jetbrains.kotlin.idea.debugger.test.DEBUGGER_TESTDATA_PATH_BASE
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
+import org.jetbrains.kotlin.idea.debugger.test.DEBUGGER_TESTDATA_PATH_BASE
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,7 +17,7 @@ import kotlin.io.path.Path
 
 @RunWith(JUnit4::class)
 @TestDataPath($$"$CONTENT_ROOT/testData/threadDump")
-class CoroutineThreadDumpItemFactoryTest : KotlinLightCodeInsightFixtureTestCase() {
+class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
 
     @Test
