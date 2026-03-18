@@ -4,32 +4,31 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.hints.declarative.InlayActionHandler
 import com.intellij.codeInsight.hints.declarative.InlayActionPayload
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
-import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.concurrency.AppExecutorUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-public class JavaFqnDeclarativeInlayActionHandler : InlayActionHandler {
-  public companion object {
-    public const val HANDLER_NAME: String = "java.fqn.class"
-  }
-
-  override fun handleClick(editor: Editor, payload: InlayActionPayload) {
-    val project = editor.project ?: return
-    AppExecutorUtil.getAppExecutorService().submit {
-      runReadAction {
-        val aClass = findNavigationElement(project, payload)
-        if (aClass != null) {
-          invokeLater(null) {
-            aClass.navigate(true)
-          }
-        }
+public class JavaFqnDeclarativeInlayActionHandler(private val cs: CoroutineScope) : InlayActionHandler {
+  override fun handleClick(e: EditorMouseEvent, payload: InlayActionPayload) {
+    val project = e.editor.project ?: return
+    cs.launch {
+      val aClass = readAction { findNavigationElement(project, payload) } ?: return@launch
+      withContext(Dispatchers.EDT) {
+        aClass.navigate(true)
       }
     }
+  }
+
+  public companion object {
+    public const val HANDLER_NAME: String = "java.fqn.class"
   }
 }
 
