@@ -16,9 +16,6 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/serialization/core",
-    "//libraries/kotlinx/serialization/json",
-    "//libraries/kotlinx/coroutines/slf4j",
     "//platform/util",
     "//platform/extensions",
     "//platform/eel",
@@ -33,9 +30,6 @@ jvm_library(
   runtime_deps = [
     ":completion",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//libraries/kotlinx/serialization/json:json_test_lib",
-    "//libraries/kotlinx/coroutines/slf4j:slf4j_test_lib",
     "//platform/util:util_test_lib",
     "//platform/extensions:extensions_test_lib",
     "//platform/eel:eel_test_lib",
