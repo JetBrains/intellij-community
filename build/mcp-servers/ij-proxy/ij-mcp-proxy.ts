@@ -6,6 +6,8 @@ import {Server} from '@modelcontextprotocol/sdk/server/index.js'
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
+  InitializeRequestSchema,
+  LATEST_PROTOCOL_VERSION,
   ListToolsRequestSchema,
   ResultSchema,
   ToolListChangedNotificationSchema
@@ -181,6 +183,22 @@ function warn(message: string): void {
   logProgress(message)
 }
 
+function buildInstructions(): string | undefined {
+  const ides: string[] = []
+  if (ideaUpstream) {
+    const name = ideaUpstream.client.getServerVersion()?.name ?? 'IntelliJ IDEA'
+    const version = ideaUpstream.ideVersion
+    ides.push(version ? `${name} ${version}` : name)
+  }
+  if (riderUpstream) {
+    const name = riderUpstream.client.getServerVersion()?.name ?? 'JetBrains Rider'
+    const version = riderUpstream.ideVersion
+    ides.push(version ? `${name} ${version}` : name)
+  }
+  if (ides.length === 0) return undefined
+  return `Connected IDEs: ${ides.join(', ')}.`
+}
+
 void clearLogFile()
 
 if (projectPathResolution.warning) {
@@ -327,17 +345,28 @@ async function performDiscovery(): Promise<void> {
 
 // --- Proxy server ---
 
-const proxyServer = new Server(
-  {name: 'ij-mcp-proxy', version: '1.0.0'},
-  {
-    capabilities: {
-      tools: {listChanged: true},
-      resources: {subscribe: true, listChanged: true},
-      prompts: {listChanged: true},
-      logging: {}
-    }
+const serverInfo = {name: 'ij-mcp-proxy', version: '1.0.0'}
+const serverCapabilities = {
+  tools: {listChanged: true},
+  resources: {subscribe: true, listChanged: true},
+  prompts: {listChanged: true},
+  logging: {}
+}
+
+const proxyServer = new Server(serverInfo, {capabilities: serverCapabilities})
+
+proxyServer.setRequestHandler(InitializeRequestSchema, async () => {
+  // Discover IDEs eagerly — no IDE means no reason to run
+  await performDiscovery()
+
+  const instructions = buildInstructions()
+  return {
+    protocolVersion: LATEST_PROTOCOL_VERSION,
+    capabilities: serverCapabilities,
+    serverInfo: serverInfo,
+    ...(instructions && {instructions})
   }
-)
+})
 
 proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
   await ensureDiscovered()

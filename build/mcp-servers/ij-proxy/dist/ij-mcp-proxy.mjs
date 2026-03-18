@@ -24827,6 +24827,20 @@ function note(message) {
 function warn(message) {
   logToFile(message), logProgress(message);
 }
+function buildInstructions() {
+  let ides = [];
+  if (ideaUpstream) {
+    let name = ideaUpstream.client.getServerVersion()?.name ?? "IntelliJ IDEA", version2 = ideaUpstream.ideVersion;
+    ides.push(version2 ? `${name} ${version2}` : name);
+  }
+  if (riderUpstream) {
+    let name = riderUpstream.client.getServerVersion()?.name ?? "JetBrains Rider", version2 = riderUpstream.ideVersion;
+    ides.push(version2 ? `${name} ${version2}` : name);
+  }
+  if (ides.length === 0)
+    return;
+  return `Connected IDEs: ${ides.join(", ")}.`;
+}
 clearLogFile();
 if (projectPathResolution.warning)
   warn(projectPathResolution.warning);
@@ -24931,13 +24945,21 @@ async function performDiscovery() {
     discoveryPromise = null;
   }
 }
-var proxyServer = new Server({ name: "ij-mcp-proxy", version: "1.0.0" }, {
-  capabilities: {
-    tools: { listChanged: !0 },
-    resources: { subscribe: !0, listChanged: !0 },
-    prompts: { listChanged: !0 },
-    logging: {}
-  }
+var serverInfo = { name: "ij-mcp-proxy", version: "1.0.0" }, serverCapabilities = {
+  tools: { listChanged: !0 },
+  resources: { subscribe: !0, listChanged: !0 },
+  prompts: { listChanged: !0 },
+  logging: {}
+}, proxyServer = new Server(serverInfo, { capabilities: serverCapabilities });
+proxyServer.setRequestHandler(InitializeRequestSchema, async () => {
+  await performDiscovery();
+  let instructions = buildInstructions();
+  return {
+    protocolVersion: LATEST_PROTOCOL_VERSION,
+    capabilities: serverCapabilities,
+    serverInfo,
+    ...instructions && { instructions }
+  };
 });
 proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
   await ensureDiscovered();
