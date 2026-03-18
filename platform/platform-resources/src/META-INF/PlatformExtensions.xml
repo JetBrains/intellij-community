@@ -1036,6 +1036,8 @@
       implementationClass="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.internal.statistic.eventLog.LogSystemCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.help.impl.HelpUsageCollector"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileNamePatternCustomValidationRule"/>
     <statistics.validation.customValidationRule
