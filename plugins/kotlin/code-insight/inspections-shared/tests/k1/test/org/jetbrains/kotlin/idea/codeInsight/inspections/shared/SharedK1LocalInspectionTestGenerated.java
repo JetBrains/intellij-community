@@ -5346,110 +5346,138 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/replaceAssociateFunction/associateWith")
-        public static class AssociateWith extends AbstractSharedK1LocalInspectionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+        public abstract static class AssociateWith extends AbstractSharedK1LocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/multipackage")
+            public static class Multipackage extends AbstractSharedK1LocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("explicitImport.kt")
+                public void testExplicitImport() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/multipackage/explicitImport.kt");
+                }
+
+                @TestMetadata("noExplicitImport.kt")
+                public void testNoExplicitImport() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/multipackage/noExplicitImport.kt");
+                }
             }
 
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspectionsLocal/replaceAssociateFunction/associateWith")
+            public static class Uncategorized extends AbstractSharedK1LocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
 
-            @TestMetadata("array.kt")
-            public void testArray() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/array.kt");
-            }
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("basic.kt")
-            public void testBasic() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/basic.kt");
-            }
+                @TestMetadata("array.kt")
+                public void testArray() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/array.kt");
+                }
 
-            @TestMetadata("basic2.kt")
-            public void testBasic2() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/basic2.kt");
-            }
+                @TestMetadata("basic.kt")
+                public void testBasic() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/basic.kt");
+                }
 
-            @TestMetadata("basic3.kt")
-            public void testBasic3() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/basic3.kt");
-            }
+                @TestMetadata("basic2.kt")
+                public void testBasic2() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/basic2.kt");
+                }
 
-            @TestMetadata("basic4.kt")
-            public void testBasic4() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/basic4.kt");
-            }
+                @TestMetadata("basic3.kt")
+                public void testBasic3() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/basic3.kt");
+                }
 
-            @TestMetadata("basic5.kt")
-            public void testBasic5() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/basic5.kt");
-            }
+                @TestMetadata("basic4.kt")
+                public void testBasic4() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/basic4.kt");
+                }
 
-            @TestMetadata("intArray.kt")
-            public void testIntArray() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/intArray.kt");
-            }
+                @TestMetadata("basic5.kt")
+                public void testBasic5() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/basic5.kt");
+                }
 
-            @TestMetadata("labeledReturn.kt")
-            public void testLabeledReturn() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/labeledReturn.kt");
-            }
+                @TestMetadata("intArray.kt")
+                public void testIntArray() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/intArray.kt");
+                }
 
-            @TestMetadata("multiLine.kt")
-            public void testMultiLine() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/multiLine.kt");
-            }
+                @TestMetadata("labeledReturn.kt")
+                public void testLabeledReturn() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/labeledReturn.kt");
+                }
 
-            @TestMetadata("nestedWithTypeInference.kt")
-            public void testNestedWithTypeInference() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference.kt");
-            }
+                @TestMetadata("multiLine.kt")
+                public void testMultiLine() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/multiLine.kt");
+                }
 
-            @TestMetadata("nestedWithTypeInference2.kt")
-            public void testNestedWithTypeInference2() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference2.kt");
-            }
+                @TestMetadata("nestedWithTypeInference.kt")
+                public void testNestedWithTypeInference() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference.kt");
+                }
 
-            @TestMetadata("nestedWithTypeInference3.kt")
-            public void testNestedWithTypeInference3() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference3.kt");
-            }
+                @TestMetadata("nestedWithTypeInference2.kt")
+                public void testNestedWithTypeInference2() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference2.kt");
+                }
 
-            @TestMetadata("nestedWithTypeInference4.kt")
-            public void testNestedWithTypeInference4() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference4.kt");
-            }
+                @TestMetadata("nestedWithTypeInference3.kt")
+                public void testNestedWithTypeInference3() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference3.kt");
+                }
 
-            @TestMetadata("nestedWithTypeInference5.kt")
-            public void testNestedWithTypeInference5() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference5.kt");
-            }
+                @TestMetadata("nestedWithTypeInference4.kt")
+                public void testNestedWithTypeInference4() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference4.kt");
+                }
 
-            @TestMetadata("nestedWithTypeInference6.kt")
-            public void testNestedWithTypeInference6() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference6.kt");
-            }
+                @TestMetadata("nestedWithTypeInference5.kt")
+                public void testNestedWithTypeInference5() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference5.kt");
+                }
 
-            @TestMetadata("nestedWithTypeInferencePackage.kt")
-            public void testNestedWithTypeInferencePackage() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInferencePackage.kt");
-            }
+                @TestMetadata("nestedWithTypeInference6.kt")
+                public void testNestedWithTypeInference6() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference6.kt");
+                }
 
-            @TestMetadata("notPair.kt")
-            public void testNotPair() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/notPair.kt");
-            }
+                @TestMetadata("nestedWithTypeInferencePackage.kt")
+                public void testNestedWithTypeInferencePackage() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInferencePackage.kt");
+                }
 
-            @TestMetadata("sequence.kt")
-            public void testSequence() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/sequence.kt");
-            }
+                @TestMetadata("notPair.kt")
+                public void testNotPair() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/notPair.kt");
+                }
 
-            @TestMetadata("set.kt")
-            public void testSet() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/set.kt");
+                @TestMetadata("sequence.kt")
+                public void testSequence() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/sequence.kt");
+                }
+
+                @TestMetadata("set.kt")
+                public void testSet() throws Exception {
+                    runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/set.kt");
+                }
             }
         }
 

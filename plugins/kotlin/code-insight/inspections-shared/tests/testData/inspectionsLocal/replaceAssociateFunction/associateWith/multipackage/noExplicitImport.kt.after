@@ -2,17 +2,18 @@
 // FIX: Replace with 'associateWith'
 // WITH_STDLIB
 // IGNORE_K1
-package somepackage.subpackage
+package somepackage.subpackage2
 
 sealed class A {
     class B : A() {
         fun toC() = C()
     }
-    class C : A()
-}
 
-fun transform(
-    src: List<A.B>
-): Map<A, A.C> {
-    return src.associateWith { (it as A.B).toC() }
+    class C : A()
+
+    fun transform(
+        src: List<B>
+    ): Map<A, C> {
+        return src.associateWith { (it as B).toC() }
+    }
 }
