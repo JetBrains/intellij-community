@@ -3612,7 +3612,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = -134684736)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -1659784075)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.CustomModuleEntitySource", metadataHash = -768510244)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.GlobalStorageEntitySource", metadataHash = -1096189621)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.GlobalStorageEntitySource", metadataHash = 1706165233)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource", metadataHash = -1975614804)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.JpsFileEntitySource", metadataHash = -132164193)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.JpsProjectFileEntitySource", metadataHash = 1697597780)
