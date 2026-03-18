@@ -442,7 +442,8 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   }
 
   @ApiStatus.Internal
-  public static <T extends XDebugProcess & PyDebugProcessWithConsole> void createConsoleCommunication(final @NotNull Project project,
+  @Nullable
+  public static <T extends XDebugProcess & PyDebugProcessWithConsole> PythonDebugConsoleCommunication<T> createConsoleCommunication(final @NotNull Project project,
                                                                                                       final @NotNull ExecutionResult result,
                                                                                                       @NotNull T debugProcess,
                                                                                                       @NotNull XDebugSession session) {
@@ -450,8 +451,9 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     if (console instanceof PythonDebugLanguageConsoleView) {
       ProcessHandler processHandler = result.getProcessHandler();
 
-      initDebugConsole(project, debugProcess, (PythonDebugLanguageConsoleView)console, processHandler, session);
+      return initDebugConsole(project, debugProcess, (PythonDebugLanguageConsoleView)console, processHandler, session);
     }
+    return null;
   }
 
   /**
