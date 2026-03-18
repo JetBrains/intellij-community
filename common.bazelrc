@@ -19,7 +19,10 @@ common --incompatible_autoload_externally=
 # IJI-2767 Bazel: move bazel output root to a standard location
 startup:macos --output_user_root=~/Library/Caches/JetBrains/MonorepoBazel
 startup:linux --output_user_root=~/.cache/JetBrains/MonorepoBazel
-startup:windows --output_user_root=~/AppData/Local/JetBrains/MonorepoBazel
+# MRI-4120: On Windows, we use a short `output_user_root` to mitigate long path issues
+# When using a custom disk drive setup (different disk label, etc.), configure `startup:windows --output_user_root=<YOUR PATH HERE>` in `%USERPROFILE%\.bazelrc`
+# See https://bazel.build/run/bazelrc for more details
+startup:windows --output_user_root=C:/ProgramData/_bazel
 
 # Use low-latency ZGC to prevent overflow when watching local filesystem for changes on Windows
 #
