@@ -1,254 +1,269 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.impl.smartPointers;
+package com.intellij.psi.impl.smartPointers
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.impl.FrozenDocument;
-import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.Segment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Processor;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.VisibleForTesting;
-
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.impl.FrozenDocument
+import com.intellij.openapi.util.LowMemoryWatcher
+import com.intellij.openapi.util.Segment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.util.CommonProcessors
+import com.intellij.util.Processor
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
+import java.lang.ref.ReferenceQueue
+import java.lang.ref.WeakReference
+import java.util.Arrays
 
 /**
  * Tracks smart pointers for a single file.
  */
 @ApiStatus.Internal
-public final class SmartPointerTracker {
-  private static final ReferenceQueue<SmartPsiElementPointerImpl<?>> ourQueue = new ReferenceQueue<>();
+class SmartPointerTracker {
+  private var nextAvailableIndex = 0
 
-  private int nextAvailableIndex;
-  private int size;
-  private PointerReference[] references = new PointerReference[10];
-  private final MarkerCache markerCache = new MarkerCache(this);
-  private boolean mySorted;
+  private var size: Int = 0
+  private var references = arrayOfNulls<PointerReference>(10)
+  private val markerCache = MarkerCache(this)
+  private var mySorted = false
 
-  static {
-    Application application = ApplicationManager.getApplication();
-    if (!application.isDisposed()) {
-      LowMemoryWatcher.register(() -> processQueue(), application);
-    }
-  }
-
-  synchronized void addReference(@NotNull SmartPsiElementPointerImpl<?> pointer) {
-    PointerReference reference = new PointerReference(pointer, this);
+  @JvmName("addReference")
+  @Synchronized
+  internal fun addReference(pointer: SmartPsiElementPointerImpl<*>) {
+    val reference = PointerReference(pointer, this)
     if (needsExpansion() || isTooSparse()) {
-      resize();
+      resize()
     }
 
-    if (references[nextAvailableIndex] != null) throw new AssertionError(references[nextAvailableIndex]);
-    storePointerReference(references, nextAvailableIndex++, reference);
-    size++;
-    mySorted = false;
-    if (((SelfElementInfo)pointer.getElementInfo()).hasRange()) {
-      markerCache.rangeChanged();
+    if (references[nextAvailableIndex] != null) {
+      throw AssertionError(references[nextAvailableIndex])
+    }
+
+    storePointerReference(references, nextAvailableIndex++, reference)
+    size++
+    mySorted = false
+    if ((pointer.elementInfo as SelfElementInfo).hasRange()) {
+      markerCache.rangeChanged()
     }
   }
 
-  private boolean needsExpansion() {
-    return nextAvailableIndex >= references.length;
-  }
+  private fun needsExpansion(): Boolean =
+    nextAvailableIndex >= references.size
 
-  private boolean isTooSparse() {
-    return nextAvailableIndex > size * 2;
-  }
+  private fun isTooSparse(): Boolean =
+    nextAvailableIndex > size * 2
 
-  private void resize() {
-    PointerReference[] newReferences = new PointerReference[size * 3 / 2 + 1];
-    int index = 0;
+  private fun resize() {
+    val newReferences = arrayOfNulls<PointerReference>(size * 3 / 2 + 1)
+    var index = 0
     // don't use processAlivePointers/removeReference since it can unregister the whole pointer list, and we're not prepared to that
-    for (PointerReference ref : references) {
+    for (ref in references) {
       if (ref != null) {
-        storePointerReference(newReferences, index++, ref);
+        storePointerReference(newReferences, index++, ref)
       }
     }
-    assert index == size : index + " != " + size;
-    references = newReferences;
-    nextAvailableIndex = index;
+    assert(index == size) { "$index != $size" }
+    references = newReferences
+    nextAvailableIndex = index
   }
 
-  synchronized void removeReference(@NotNull PointerReference reference) {
-    int index = reference.index;
-    if (index < 0) return;
+  @JvmName("removeReference")
+  @Synchronized
+  internal fun removeReference(reference: PointerReference) {
+    val index = reference.index
+    if (index < 0) return
 
-    if (references[index] != reference) {
-      throw new AssertionError("At " + index + " expected " + reference + ", found " + references[index]);
+    if (reference != references[index]) {
+      throw AssertionError("At " + index + " expected " + reference + ", found " + references[index])
     }
-    references[index].index = -1;
-    references[index] = null;
-    size--;
+    reference.index = -1
+    references[index] = null
+    size--
   }
 
-  private void processAlivePointers(@NotNull Processor<? super SmartPsiElementPointerImpl<?>> processor) {
-    for (int i = 0; i < nextAvailableIndex; i++) {
-      PointerReference ref = references[i];
-      if (ref == null) continue;
+  private fun processAlivePointers(processor: Processor<in SmartPsiElementPointerImpl<*>>) {
+    for (i in 0..<nextAvailableIndex) {
+      val ref = references[i] ?: continue
 
-      SmartPsiElementPointerImpl<?> pointer = ref.get();
-      if (pointer == null) {
-        removeReference(ref);
-        continue;
+      val pointer = ref.get() ?: run {
+        removeReference(ref)
+        continue
       }
 
       if (!processor.process(pointer)) {
-        return;
+        return
       }
     }
   }
 
-  private void ensureSorted() {
-    if (!mySorted) {
-      List<SmartPsiElementPointerImpl<?>> pointers = new ArrayList<>();
-      processAlivePointers(new CommonProcessors.CollectProcessor<>(pointers));
-      if (size != pointers.size()) throw new AssertionError();
+  private fun ensureSorted() {
+    if (mySorted) return
 
-      pointers
-        .sort((p1, p2) -> MarkerCache.INFO_COMPARATOR.compare((SelfElementInfo)p1.getElementInfo(), (SelfElementInfo)p2.getElementInfo()));
+    val pointers = ArrayList<SmartPsiElementPointerImpl<*>>()
+    processAlivePointers(CommonProcessors.CollectProcessor(pointers))
+    if (size != pointers.size) throw AssertionError()
 
-      for (int i = 0; i < pointers.size(); i++) {
-        //noinspection ConstantConditions
-        storePointerReference(references, i, pointers.get(i).pointerReference);
-      }
-      Arrays.fill(references, pointers.size(), nextAvailableIndex, null);
-      nextAvailableIndex = pointers.size();
-      mySorted = true;
+    pointers.sortWith { p1, p2 ->
+      MarkerCache.INFO_COMPARATOR.compare(p1.elementInfo as SelfElementInfo, p2.elementInfo as SelfElementInfo)
     }
+
+    for (i in pointers.indices) {
+      storePointerReference(references, i, pointers[i].pointerReference!!)
+    }
+    Arrays.fill(references, pointers.size, nextAvailableIndex, null)
+    nextAvailableIndex = pointers.size
+    mySorted = true
   }
 
-  synchronized void updateMarkers(@NotNull FrozenDocument frozen, @NotNull List<? extends DocumentEvent> events) {
-    boolean stillSorted = markerCache.updateMarkers(frozen, events);
+  @JvmName("updateMarkers")
+  @Synchronized
+  internal fun updateMarkers(frozen: FrozenDocument, events: List<DocumentEvent>) {
+    val stillSorted = markerCache.updateMarkers(frozen, events)
     if (!stillSorted) {
-      mySorted = false;
+      mySorted = false
     }
   }
 
-  synchronized @Nullable Segment getUpdatedRange(@NotNull SelfElementInfo info,
-                                                 @NotNull FrozenDocument document,
-                                                 @NotNull List<? extends DocumentEvent> events) {
-    return markerCache.getUpdatedRange(info, document, events);
+  @JvmName("getUpdatedRange")
+  @Synchronized
+  internal fun getUpdatedRange(
+    info: SelfElementInfo,
+    document: FrozenDocument,
+    events: List<DocumentEvent>,
+  ): Segment? {
+    return markerCache.getUpdatedRange(info, document, events)
   }
 
-  synchronized @Nullable Segment getUpdatedRange(@NotNull PsiFile containingFile,
-                                                 @NotNull Segment segment,
-                                                 boolean isSegmentGreedy,
-                                                 @NotNull FrozenDocument frozen,
-                                                 @NotNull List<? extends DocumentEvent> events) {
-    return MarkerCache.getUpdatedRange(containingFile, segment, isSegmentGreedy, frozen, events);
+  @JvmName("getUpdatedRange")
+  @Synchronized
+  internal fun getUpdatedRange(
+    containingFile: PsiFile,
+    segment: Segment,
+    isSegmentGreedy: Boolean,
+    frozen: FrozenDocument,
+    events: List<DocumentEvent>,
+  ): Segment? {
+    return MarkerCache.getUpdatedRange(containingFile, segment, isSegmentGreedy, frozen, events)
   }
 
-  synchronized void switchStubToAst(@NotNull AnchorElementInfo info, @NotNull PsiElement element) {
-    info.switchToTreeRange(element);
-    markerCache.rangeChanged();
-    mySorted = false;
+  @JvmName("switchStubToAst")
+  @Synchronized
+  internal fun switchStubToAst(info: AnchorElementInfo, element: PsiElement) {
+    info.switchToTreeRange(element)
+    markerCache.rangeChanged()
+    mySorted = false
   }
 
-  synchronized void fastenBelts(@NotNull SmartPointerManagerEx manager) {
-    processQueue();
-    processAlivePointers(pointer -> {
-      pointer.getElementInfo().fastenBelt(manager);
-      return true;
-    });
+  @JvmName("fastenBelts")
+  @Synchronized
+  internal fun fastenBelts(manager: SmartPointerManagerEx) {
+    processQueue()
+    processAlivePointers { pointer ->
+      pointer.elementInfo.fastenBelt(manager)
+      true
+    }
   }
 
-  synchronized void updatePointerTargetsAfterReparse() {
-    processAlivePointers(pointer -> {
-      if (!(pointer instanceof SmartPsiFileRangePointerImpl)) {
-        updatePointerTarget(pointer, pointer.getPsiRange());
+  @JvmName("updatePointerTargetsAfterReparse")
+  @Synchronized
+  internal fun updatePointerTargetsAfterReparse() {
+    processAlivePointers { pointer ->
+      if (pointer !is SmartPsiFileRangePointerImpl) {
+        updatePointerTarget(pointer, pointer.psiRange)
       }
-      return true;
-    });
+      true
+    }
   }
 
-  private static <E extends PsiElement> void updatePointerTarget(@NotNull SmartPsiElementPointerImpl<E> pointer,
-                                                                 @Nullable Segment pointerRange) {
-    E cachedElement = pointer.getCachedElement();
-    if (cachedElement == null) {
-      return;
-    }
+  private fun <E : PsiElement> updatePointerTarget(
+    pointer: SmartPsiElementPointerImpl<E>,
+    pointerRange: Segment?,
+  ) {
+    val cachedElement = pointer.getCachedElement() ?: return
 
-    boolean cachedValid = cachedElement.isValid();
+    val cachedValid = cachedElement.isValid()
     if (cachedValid) {
       if (pointerRange == null) {
         // document change could be damaging, but if PSI survived after reparse, let's point to it
-        ((SelfElementInfo)pointer.getElementInfo()).switchToAnchor(cachedElement);
-        return;
+        (pointer.elementInfo as SelfElementInfo).switchToAnchor(cachedElement)
+        return
       }
+
       // after reparse and its complex tree diff, the element might have "moved" to other range
       // but if an element of the same type can still be found at the old range, let's point there
-      if (pointerRange.equals(cachedElement.getTextRange())) {
-        return;
+      if (pointerRange == cachedElement.getTextRange()) {
+        return
       }
     }
 
-    E actual = pointer.doRestoreElement();
-    if (actual == null && cachedValid && ((SelfElementInfo)pointer.getElementInfo()).updateRangeToPsi(pointerRange, cachedElement)) {
-      return;
+    val actual = pointer.doRestoreElement()
+    if (actual == null && cachedValid && (pointer.elementInfo as SelfElementInfo).updateRangeToPsi(pointerRange!!, cachedElement)) {
+      return
     }
 
-    if (actual != cachedElement) {
-      pointer.cacheElement(actual);
+    if (actual !== cachedElement) {
+      pointer.cacheElement(actual)
     }
   }
 
-  private static void storePointerReference(PointerReference[] references, int index, PointerReference ref) {
-    references[index] = ref;
-    ref.index = index;
+  private fun storePointerReference(references: Array<PointerReference?>, index: Int, ref: PointerReference) {
+    references[index] = ref
+    ref.index = index
   }
 
-  synchronized List<SelfElementInfo> getSortedInfos() {
-    ensureSorted();
+  @JvmName("getSortedInfos")
+  @Synchronized
+  internal fun getSortedInfos(): List<SelfElementInfo> {
+    ensureSorted()
 
-    List<SelfElementInfo> infos = new ArrayList<>(size);
-    processAlivePointers(pointer -> {
-      SelfElementInfo info = (SelfElementInfo)pointer.getElementInfo();
-      if (!info.hasRange()) return false;
+    val infos = ArrayList<SelfElementInfo>(size)
+    processAlivePointers { pointer ->
+      val info = pointer.elementInfo as SelfElementInfo
+      if (!info.hasRange()) return@processAlivePointers false
 
-      infos.add(info);
-      return true;
-    });
-    return infos;
+      infos.add(info)
+      true
+    }
+    return infos
   }
 
   @TestOnly
-  synchronized int getSize() {
-    return size;
-  }
+  @Synchronized
+  fun getSize(): Int = size
 
-  static final class PointerReference extends WeakReference<SmartPsiElementPointerImpl<?>> {
-    final @NotNull SmartPointerTracker tracker;
-    private int index = -2;
+  internal class PointerReference(
+    pointer: SmartPsiElementPointerImpl<*>,
+    val tracker: SmartPointerTracker
+  ) : WeakReference<SmartPsiElementPointerImpl<*>?>(pointer, ourQueue) {
+    var index = -2
 
-    private PointerReference(@NotNull SmartPsiElementPointerImpl<?> pointer, @NotNull SmartPointerTracker tracker) {
-      super(pointer, ourQueue);
-      this.tracker = tracker;
-      pointer.pointerReference = this;
+    init {
+      pointer.pointerReference = this
     }
   }
 
-  @VisibleForTesting
-  public static void processQueue() {
-    while (true) {
-      PointerReference reference = (PointerReference)ourQueue.poll();
-      if (reference == null) break;
+  companion object {
+    private val ourQueue = ReferenceQueue<SmartPsiElementPointerImpl<*>?>()
 
-      if (reference.get() != null) {
-        throw new IllegalStateException("Queued reference has referent!");
+    init {
+      val application = ApplicationManager.getApplication()
+      if (!application.isDisposed()) {
+        LowMemoryWatcher.register({ processQueue() }, application)
       }
+    }
 
-      reference.tracker.removeReference(reference);
+    @JvmStatic
+    @VisibleForTesting
+    fun processQueue() {
+      while (true) {
+        val reference = ourQueue.poll() as PointerReference? ?: break
+
+        check(reference.get() == null) { "Queued reference has referent!" }
+
+        reference.tracker.removeReference(reference)
+      }
     }
   }
 }

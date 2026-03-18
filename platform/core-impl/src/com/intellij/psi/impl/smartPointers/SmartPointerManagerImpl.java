@@ -191,7 +191,7 @@ public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
         if (reference.get() != pointer) {
           throw new IllegalStateException("Reference points to " + reference.get());
         }
-        reference.tracker.removeReference(reference);
+        reference.getTracker().removeReference(reference);
       }
     }
   }
