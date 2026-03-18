@@ -34,6 +34,8 @@ public class PythonDebugConsoleCommunication<T extends XDebugProcess & PyDebugPr
   private boolean firstExecution = true;
   private final @NotNull PythonConsoleView myConsoleView;
   private boolean isExecuting = false;
+  // Set after stdin is written so that the pydevd "input ended" notification is ignored.
+  private volatile boolean inputRecentlyConsumed = false;
 
   @ApiStatus.Internal
   public PythonDebugConsoleCommunication(@NotNull Project project,
@@ -106,7 +108,10 @@ public class PythonDebugConsoleCommunication<T extends XDebugProcess & PyDebugPr
   public void execInterpreter(ConsoleCodeFragment code, final Function<InterpreterResponse, Object> callback) {
     isExecuting = true;
     if (waitingForInput) {
-      final OutputStream processInput = myDebugProcess.getProcessHandler().getProcessInput();
+      OutputStream processInput = myDebugProcess.getDebugConsoleInputStream();
+      if (processInput == null) {
+        processInput = myDebugProcess.getProcessHandler().getProcessInput();
+      }
       if (processInput != null) {
         try {
           final Charset defaultCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
@@ -121,6 +126,7 @@ public class PythonDebugConsoleCommunication<T extends XDebugProcess & PyDebugPr
       myNeedsMore = false;
       isExecuting = false;
       waitingForInput = false;
+      inputRecentlyConsumed = true;
       notifyCommandExecuted(waitingForInput);
     }
     else {
@@ -148,6 +154,10 @@ public class PythonDebugConsoleCommunication<T extends XDebugProcess & PyDebugPr
 
   @Override
   public void notifyInputRequested() {
+    if (inputRecentlyConsumed) {
+      inputRecentlyConsumed = false;
+      return;
+    }
     waitingForInput = true;
     super.notifyInputRequested();
   }

@@ -4,6 +4,7 @@ package com.jetbrains.python.debugger
 import com.jetbrains.python.console.pydev.PydevCompletionVariant
 import com.jetbrains.python.debugger.pydev.PyDebugCallback
 import org.jetbrains.annotations.ApiStatus
+import java.io.OutputStream
 
 
 /**
@@ -21,4 +22,7 @@ interface PyDebugProcessWithConsole {
   fun consoleExec(command: String?, callback: PyDebugCallback<String?>)
 
   fun interruptDebugConsole()
+
+  // Needs for input(...) command
+  fun getDebugConsoleInputStream(): OutputStream? = null
 }
