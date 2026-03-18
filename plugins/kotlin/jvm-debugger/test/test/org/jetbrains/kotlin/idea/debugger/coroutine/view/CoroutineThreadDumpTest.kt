@@ -7,6 +7,7 @@ import com.intellij.unscramble.CompoundDumpItem
 import com.intellij.unscramble.dumpItems
 import com.intellij.unscramble.parseIntelliJThreadDump
 import com.intellij.unscramble.serializeIntelliJThreadDump
+import junit.framework.TestCase.assertEquals
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.test.DEBUGGER_TESTDATA_PATH_BASE
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -81,7 +82,7 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
         assertEquals("scope:1", dumpItem.name)
         assertEquals(" (running)", dumpItem.stateDesc)
         assertEquals(
-            "\"scope:1@300\" [dispatcher=Dispatchers.Default]\n    at example.Parent.one(Parent.kt:1)",
+            "\"scope:1@300\" RUNNING [dispatcher=Dispatchers.Default]\n    at example.Parent.one(Parent.kt:1)",
             dumpItem.stackTrace,
         )
         assertTrue(dumpItem.exportedStackTrace.startsWith("\"scope:1@300\" virtual tid=0x0 nid=NA running [Coroutine] [dispatcher=Dispatchers.Default]"))
@@ -106,7 +107,7 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
         val dumpItem = CoroutineDumpItem(coroutineInfo)
         assertEquals("scope:1", dumpItem.name)
         assertEquals(
-            "\"scope:1@300\" [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}]\n",
+            "\"scope:1@300\" SUSPENDED [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}]\n",
             dumpItem.stackTrace,
         )
         assertFalse(dumpItem.stackTrace.contains("java.lang.Thread.State"))
@@ -126,6 +127,18 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
 
         assertTrue(serializedDump.contains(dumpItem.exportedStackTrace))
         assertFalse(serializedDump.contains(dumpItem.stackTrace))
+    }
+
+    @Test
+    fun `coroutine tree preserves visible stacktrace after serialize deserialize`() {
+        val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(loadThreadDump("importedCoroutineHierarchy.txt")))
+        val expectedStackTraces = parsedThreadDump.dumpItems().sortedBy { it.treeId }.map { it.stackTrace }
+
+        val serializedDump = serializeIntelliJThreadDump(parsedThreadDump.dumpItems(), listOf("Full thread dump"))
+        val reparsedThreadDump = requireNotNull(parseIntelliJThreadDump(serializedDump))
+        val actualStackTraces = reparsedThreadDump.dumpItems().sortedBy { it.treeId }.map { it.stackTrace }
+
+        assertEquals(expectedStackTraces, actualStackTraces)
     }
 
     @Test
