@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -118,7 +118,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
 
   /** Whether a system is able to open a directory in a file manager. */
   public static boolean isDirectoryOpenSupported() {
-    return OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS || Holder.fileManagerApp != null;
+    return isSupported() || PathEnvironmentVariableUtil.isOnPath("xdg-open");
   }
 
   public static @ActionText @NotNull String getActionName() {
