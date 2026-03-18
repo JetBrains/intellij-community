@@ -121,14 +121,6 @@ class NotebookCellInlayManager private constructor(
     }
   }
 
-  private fun addViewportChangeListener() {
-    editor.scrollPane.viewport.addChangeListener {
-      notebook.cells.forEach {
-        it.updateIfInVisibleRect()
-      }
-    }
-  }
-
   fun initialize() {
     editor.putUserData(CELL_INLAY_MANAGER_KEY, this)
 
@@ -139,9 +131,6 @@ class NotebookCellInlayManager private constructor(
     connection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
       updateAll()
     })
-
-    addViewportChangeListener()
-
 
     setupFoldingListener()
     setupSelectionUI()
