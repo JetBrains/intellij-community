@@ -1006,7 +1006,7 @@ private fun PsiElement.getImportableTypes(): Collection<String> {
       if (element is KtTypeReference) {
         val clsName = analyze(element) {
           val maybeNestedClass = element.type.takeIf { !it.isPrimitive && !it.isAnyType && !it.isNothingType }?.expandedSymbol?.classId
-          val rootClass = generateSequence(maybeNestedClass) { it.parentClassId }.lastOrNull()
+          val rootClass = generateSequence(maybeNestedClass) { it.outerClassId }.lastOrNull()
           rootClass?.asFqNameString()
         }
         if (clsName != null) {
