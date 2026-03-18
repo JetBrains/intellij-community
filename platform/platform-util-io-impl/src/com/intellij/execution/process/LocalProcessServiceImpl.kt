@@ -4,6 +4,7 @@ package com.intellij.execution.process
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.SystemProperties
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.pty4j.Command
 import com.pty4j.PtyProcess
@@ -32,7 +33,7 @@ class LocalProcessServiceImpl : LocalProcessService {
     redirectErrorStream: Boolean,
   ): PtyProcess = startPtyProcess(Command.RawCommandString(command.commandLine), directory, env, options, redirectErrorStream)
 
-  @Suppress("OPT_IN_USAGE")
+  @OptIn(LowLevelLocalMachineAccess::class)
   private fun startPtyProcess(
     command: Command,
     directory: String?,

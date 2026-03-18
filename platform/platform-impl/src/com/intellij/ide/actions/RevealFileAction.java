@@ -53,11 +53,9 @@ import java.util.stream.Stream;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.Objects.requireNonNullElseGet;
 
-/**
- * This helpful action opens a file or directory in a system file manager.
- *
- * @see ShowFilePathAction
- */
+/// This helpful action opens a file or directory in a system file manager.
+///
+/// @see ShowFilePathAction
 public class RevealFileAction extends DumbAwareAction implements LightEditCompatible, ActionRemoteBehaviorSpecification.Disabled {
   private static final Logger LOG = Logger.getInstance(RevealFileAction.class);
 
@@ -84,13 +82,12 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   @Override
   public void update(@NotNull AnActionEvent e) {
     var editor = e.getData(CommonDataKeys.EDITOR);
-    e.getPresentation().setEnabledAndVisible(
-      isSupported() &&
-      getFile(e) != null &&
-      (!e.isFromContextMenu() ||
-       editor == null ||
-       !editor.getSelectionModel().hasSelection() ||
-       EditorUtil.contextMenuInvokedOutsideOfSelection(e)));
+    e.getPresentation().setEnabledAndVisible(isSupported() && getFile(e) != null && (
+      !e.isFromContextMenu() ||
+      editor == null ||
+      !editor.getSelectionModel().hasSelection() ||
+      EditorUtil.contextMenuInvokedOutsideOfSelection(e)
+    ));
     e.getPresentation().setText(getActionName(e.getPlace()));
   }
 
@@ -111,12 +108,12 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return findLocalFile(e.getData(CommonDataKeys.VIRTUAL_FILE));
   }
 
-  /** Whether a system is able to open a directory in a file manager and highlight a file in it. */
+  /// Whether a system is able to open a directory in a file manager and highlight a file in it.
   public static boolean isSupported() {
     return OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS || Holder.fileManagerApp != null;
   }
 
-  /** Whether a system is able to open a directory in a file manager. */
+  /// Whether a system is able to open a directory in a file manager.
   public static boolean isDirectoryOpenSupported() {
     return isSupported() || PathEnvironmentVariableUtil.isOnPath("xdg-open");
   }
@@ -168,17 +165,17 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return null;
   }
 
-  /** Please use #openFile(Path) */
+  /// Please use [#openFile(Path)] instead.
   @ApiStatus.Obsolete
   @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"})
   public static void openFile(@NotNull java.io.File file) {
     openFile(file.toPath());
   }
 
-  /**
-   * Opens a system file manager with the given file's parent directory loaded and the file highlighted in it
-   * (note that some platforms do not support the file highlighting).
-   */
+  /// Opens a system file manager with the given file's parent directory loaded and the file highlighted in it
+  /// (note that some platforms do not support the file highlighting).
+  ///
+  /// @see #isSupported()
   public static void openFile(@NotNull Path file) {
     var parent = canonicalize(file).getParent();
     if (parent != null) {
@@ -189,16 +186,16 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
   }
 
-  /** Please use #openDirectory(Path) */
+  /// Please use [#openDirectory(Path)] instead.
   @ApiStatus.Obsolete
   @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"})
   public static void openDirectory(@NotNull java.io.File directory) {
     doOpen(directory.toPath(), null);
   }
 
-  /**
-   * Opens a system file manager with the given directory loaded in it.
-   */
+  /// Opens a system file manager with the given directory loaded in it.
+  ///
+  /// @see #isDirectoryOpenSupported()
   public static void openDirectory(@NotNull Path directory) {
     doOpen(directory, null);
   }
@@ -277,7 +274,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     });
   }
 
-  private static Path canonicalize(@NotNull Path path) {
+  private static Path canonicalize(Path path) {
     try {
       return path.toRealPath();
     }

@@ -14,6 +14,7 @@ import com.intellij.troubleshooting.TroubleInfoCollector
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.Compressor
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -32,6 +33,7 @@ import kotlin.io.path.name
 
 @ApiStatus.Internal
 @Suppress("UseOptimizedEelFunctions")
+@OptIn(LowLevelLocalMachineAccess::class)
 object LogPacker {
   @JvmStatic
   @RequiresBackgroundThread
@@ -68,7 +70,7 @@ object LogPacker {
 
         coroutineContext.ensureActive()
 
-        val filter = mutableSetOf<String>()  // temporary guard for recursive TBE provider
+        val filter = mutableSetOf<String>()  // temporary guard for recursive TBE provider (IDES-11674)
         LogProvider.EP.extensionList.forEach { logProvider ->
           logProvider.getAdditionalLogFiles(project).forEach { entry ->
             if (!filter.add(entry.entryName)) return@forEach

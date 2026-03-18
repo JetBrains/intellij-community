@@ -68,21 +68,20 @@ internal class CollectZippedLogsAction : AnAction(), DumbAware {
 
   private suspend fun collectLogs(project: Project? = null) {
     try {
-      val logs =
-        if (project == null) {
-          withContext(Dispatchers.EDT) {
-            runWithModalProgressBlocking(
-              owner = ModalTaskOwner.guess(),
-              title = @Suppress("DialogTitleCapitalization") IdeBundle.message("collect.logs.progress.title"),
-              action = { LogPacker.packLogs(project) },
-            )
-          }
+      val logs = if (project == null) {
+        withContext(Dispatchers.EDT) {
+          runWithModalProgressBlocking(
+            owner = ModalTaskOwner.guess(),
+            title = @Suppress("DialogTitleCapitalization") IdeBundle.message("collect.logs.progress.title"),
+            action = { LogPacker.packLogs(project) },
+          )
         }
-        else {
-          withBackgroundProgress(project, IdeBundle.message("collect.logs.progress.title")) {
-            LogPacker.packLogs(project)
-          }
+      }
+      else {
+        withBackgroundProgress(project, IdeBundle.message("collect.logs.progress.title")) {
+          LogPacker.packLogs(project)
         }
+      }
 
       if (RevealFileAction.isSupported()) {
         RevealFileAction.openFile(logs)
