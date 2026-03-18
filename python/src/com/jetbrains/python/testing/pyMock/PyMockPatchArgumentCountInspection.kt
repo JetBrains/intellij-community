@@ -42,7 +42,8 @@ private fun checkPatchArgumentCount(func: PyFunction, holder: ProblemsHolder, co
   val params = func.parameterList.parameters
 
   // Skip if any parameter uses *args or **kwargs — they absorb arbitrary arguments
-  if (params.any { !it.isSelf && it.text.startsWith("*") }) return
+  val namedParams = params.mapNotNull { it.asNamed }
+  if (namedParams.any { it.isPositionalContainer || it.isKeywordContainer }) return
 
   // Count non-self parameters; these are the ones that should match injecting decorators
   val extraParamCount = params.count { !it.isSelf }

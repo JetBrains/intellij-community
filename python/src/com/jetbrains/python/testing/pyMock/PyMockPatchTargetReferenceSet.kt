@@ -8,7 +8,6 @@ import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementResolveResult
-import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiPolyVariantReferenceBase
 import com.intellij.psi.PsiReference
 import com.intellij.psi.ResolveResult
@@ -23,6 +22,7 @@ import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.resolve.resolveTopLevelMember
 import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.intellij.util.ProcessingContext
 
 /**
  * Splits the dotted target string of a `@patch("module.Class.attr")` decorator into
@@ -141,7 +141,7 @@ private fun getMemberVariants(element: PsiElement, location: PsiElement): List<A
     if (initFile != null) {
       val moduleType = PyModuleType(initFile)
       val context = TypeEvalContext.codeCompletion(initFile.project, initFile)
-      result.addAll(moduleType.getCompletionVariantsAsLookupElements(location, com.intellij.util.ProcessingContext(), true, true, context))
+      result.addAll(moduleType.getCompletionVariantsAsLookupElements(location, ProcessingContext(), true, true, context))
     }
     return result
   }
@@ -151,7 +151,7 @@ private fun getMemberVariants(element: PsiElement, location: PsiElement): List<A
     is PyFile -> {
       val moduleType = PyModuleType(target)
       val context = TypeEvalContext.codeCompletion(target.project, target)
-      moduleType.getCompletionVariantsAsLookupElements(location, com.intellij.util.ProcessingContext(), true, true, context)
+      moduleType.getCompletionVariantsAsLookupElements(location, ProcessingContext(), true, true, context)
     }
     is PyClass -> target.getMethods().toList()
     else -> emptyList()

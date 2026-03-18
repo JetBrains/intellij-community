@@ -77,8 +77,8 @@ fun getPatchObjectCall(str: PyStringLiteralExpression): PyCallExpression? {
   if (!isPatchObjectCall(patchObjectCall, typeContext)) return null
 
   // Accept as the second positional argument (attribute name)
-  val args = argList.arguments
-  if (args.getOrNull(1) == str) return patchObjectCall
+  val positionalArgs = argList.arguments.filter { it !is PyKeywordArgument }
+  if (positionalArgs.getOrNull(1) == str) return patchObjectCall
 
   // Or as the "attribute" keyword argument
   val attrKeyword = patchObjectCall.getKeywordArgument("attribute")
