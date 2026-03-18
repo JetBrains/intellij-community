@@ -45,16 +45,3 @@ abstract class AbstractCoroutineAsyncStackTraceTest : AbstractAsyncStackTraceTes
         return XDebuggerTestUtil.getFramePresentation(f)
     }
 }
-
-abstract class AbstractK2CoroutineAsyncStackTraceTest : AbstractCoroutineAsyncStackTraceTest() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
-
-    override val compileWithK2: Boolean
-        get() = true
-
-    override fun lambdasGenerationScheme(): JvmClosureGenerationScheme {
-        return JvmClosureGenerationScheme.INDY
-    }
-}

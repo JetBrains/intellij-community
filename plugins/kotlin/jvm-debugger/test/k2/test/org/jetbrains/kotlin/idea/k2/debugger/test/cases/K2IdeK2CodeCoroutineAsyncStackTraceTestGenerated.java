@@ -1,6 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.debugger.test;
+package org.jetbrains.kotlin.idea.k2.debugger.test.cases;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
@@ -15,21 +15,21 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("jvm-debugger/test")
+@TestRoot("jvm-debugger/test/k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/asyncStackTrace/coroutines")
-public abstract class K2CoroutineAsyncStackTraceTestGenerated extends AbstractK2CoroutineAsyncStackTraceTest {
+@TestMetadata("../testData/asyncStackTrace/coroutines")
+public abstract class K2IdeK2CodeCoroutineAsyncStackTraceTestGenerated extends AbstractK2IdeK2CodeCoroutineAsyncStackTraceTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/asyncStackTrace/coroutines/todo")
-    public abstract static class Todo extends AbstractK2CoroutineAsyncStackTraceTest {
+    @TestMetadata("../testData/asyncStackTrace/coroutines/todo")
+    public abstract static class Todo extends AbstractK2IdeK2CodeCoroutineAsyncStackTraceTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/asyncStackTrace/coroutines/todo/skipped_suspend_frame")
-        public static class Skipped_suspend_frame extends AbstractK2CoroutineAsyncStackTraceTest {
+        @TestMetadata("../testData/asyncStackTrace/coroutines/todo/skipped_suspend_frame")
+        public static class Skipped_suspend_frame extends AbstractK2IdeK2CodeCoroutineAsyncStackTraceTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+                return KotlinPluginMode.K2;
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -38,18 +38,18 @@ public abstract class K2CoroutineAsyncStackTraceTestGenerated extends AbstractK2
 
             @TestMetadata("suspendFramesBeforeLaunch.kt")
             public void testSuspendFramesBeforeLaunch() throws Exception {
-                runTest("testData/asyncStackTrace/coroutines/todo/skipped_suspend_frame/suspendFramesBeforeLaunch.kt");
+                runTest("../testData/asyncStackTrace/coroutines/todo/skipped_suspend_frame/suspendFramesBeforeLaunch.kt");
             }
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/asyncStackTrace/coroutines")
-    public static class Uncategorized extends AbstractK2CoroutineAsyncStackTraceTest {
+    @TestMetadata("../testData/asyncStackTrace/coroutines")
+    public static class Uncategorized extends AbstractK2IdeK2CodeCoroutineAsyncStackTraceTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
+            return KotlinPluginMode.K2;
         }
 
         private void runTest(String testDataFilePath) throws Exception {
@@ -58,67 +58,67 @@ public abstract class K2CoroutineAsyncStackTraceTestGenerated extends AbstractK2
 
         @TestMetadata("channel.kt")
         public void testChannel() throws Exception {
-            runTest("testData/asyncStackTrace/coroutines/channel.kt");
+            runTest("../testData/asyncStackTrace/coroutines/channel.kt");
         }
 
         @TestMetadata("framesAboveCoroutineOwner.kt")
         public void testFramesAboveCoroutineOwner() throws Exception {
-            runTest("testData/asyncStackTrace/coroutines/framesAboveCoroutineOwner.kt");
+            runTest("../testData/asyncStackTrace/coroutines/framesAboveCoroutineOwner.kt");
         }
 
         @TestMetadata("nestedLaunches.kt")
         public void testNestedLaunches() throws Exception {
-            runTest("testData/asyncStackTrace/coroutines/nestedLaunches.kt");
+            runTest("../testData/asyncStackTrace/coroutines/nestedLaunches.kt");
         }
 
         @TestMetadata("nestedScopes1.kt")
         public void testNestedScopes1() throws Exception {
-            runTest("testData/asyncStackTrace/coroutines/nestedScopes1.kt");
+            runTest("../testData/asyncStackTrace/coroutines/nestedScopes1.kt");
         }
 
         @TestMetadata("nestedScopesWithSyncFrame.kt")
         public void testNestedScopesWithSyncFrame() throws Exception {
-            runTest("testData/asyncStackTrace/coroutines/nestedScopesWithSyncFrame.kt");
+            runTest("../testData/asyncStackTrace/coroutines/nestedScopesWithSyncFrame.kt");
         }
 
         @TestMetadata("nestedWithContexts1.kt")
         public void testNestedWithContexts1() throws Exception {
-            runTest("testData/asyncStackTrace/coroutines/nestedWithContexts1.kt");
+            runTest("../testData/asyncStackTrace/coroutines/nestedWithContexts1.kt");
         }
 
         @TestMetadata("nestedWithContexts2.kt")
         public void testNestedWithContexts2() throws Exception {
-            runTest("testData/asyncStackTrace/coroutines/nestedWithContexts2.kt");
+            runTest("../testData/asyncStackTrace/coroutines/nestedWithContexts2.kt");
         }
 
         @TestMetadata("suspendFramesBeforeWithContext.kt")
         public void testSuspendFramesBeforeWithContext() throws Exception {
-            runTest("testData/asyncStackTrace/coroutines/suspendFramesBeforeWithContext.kt");
+            runTest("../testData/asyncStackTrace/coroutines/suspendFramesBeforeWithContext.kt");
         }
 
         @TestMetadata("twoWithContextBlocks.kt")
         public void testTwoWithContextBlocks() throws Exception {
-            runTest("testData/asyncStackTrace/coroutines/twoWithContextBlocks.kt");
+            runTest("../testData/asyncStackTrace/coroutines/twoWithContextBlocks.kt");
         }
 
         @TestMetadata("withContextDispatched1.kt")
         public void testWithContextDispatched1() throws Exception {
-            runTest("testData/asyncStackTrace/coroutines/withContextDispatched1.kt");
+            runTest("../testData/asyncStackTrace/coroutines/withContextDispatched1.kt");
         }
 
         @TestMetadata("withContextDispatched2.kt")
         public void testWithContextDispatched2() throws Exception {
-            runTest("testData/asyncStackTrace/coroutines/withContextDispatched2.kt");
+            runTest("../testData/asyncStackTrace/coroutines/withContextDispatched2.kt");
         }
 
         @TestMetadata("withContextUndispatched1.kt")
         public void testWithContextUndispatched1() throws Exception {
-            runTest("testData/asyncStackTrace/coroutines/withContextUndispatched1.kt");
+            runTest("../testData/asyncStackTrace/coroutines/withContextUndispatched1.kt");
         }
 
         @TestMetadata("withTimeout.kt")
         public void testWithTimeout() throws Exception {
-            runTest("testData/asyncStackTrace/coroutines/withTimeout.kt");
+            runTest("../testData/asyncStackTrace/coroutines/withTimeout.kt");
         }
     }
 }

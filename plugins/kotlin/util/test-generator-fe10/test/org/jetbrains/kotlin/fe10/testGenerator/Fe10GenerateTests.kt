@@ -100,9 +100,6 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentComplet
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentHighlightingTest
 import org.jetbrains.kotlin.idea.debugger.test.AbstractBreakpointApplicabilityTest
 import org.jetbrains.kotlin.idea.debugger.test.AbstractClassNameCalculatorTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractCoroutineAsyncStackTraceTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractFlowAsyncStackTraceTest
-import org.jetbrains.kotlin.idea.debugger.test.AbstractK2CoroutineAsyncStackTraceTest
 import org.jetbrains.kotlin.idea.debugger.test.AbstractKotlinExceptionFilterTest
 import org.jetbrains.kotlin.idea.debugger.test.AbstractPositionManagerTest
 import org.jetbrains.kotlin.idea.debugger.test.AbstractSelectExpressionForDebuggerTestWithAnalysisApi
@@ -336,14 +333,6 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         testClass<AbstractKotlinExceptionFilterTest> {
             model("exceptionFilter", pattern = Patterns.forRegex("""^([^.]+)$"""), isRecursive = false)
         }
-    }
-
-    testGroup("jvm-debugger/test", category = DEBUGGER) {
-
-        testClass<AbstractK2CoroutineAsyncStackTraceTest> {
-            model("asyncStackTrace/coroutines")
-        }
-
     }
 
     testGroup("copyright/tests", category = CODE_INSIGHT) {

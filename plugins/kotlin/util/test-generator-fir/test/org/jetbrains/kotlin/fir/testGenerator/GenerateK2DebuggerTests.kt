@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2ClassNameCalcu
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2FlowAsyncStackTraceTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeBreakpointHighlightingTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeContinuationStackTraceTest
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeCoroutineAsyncStackTraceTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeCoroutineDumpTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeFileRankingTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinEvaluateExpressionTest
@@ -100,6 +101,12 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
         listOf(AbstractK2IdeK2CodeFileRankingTest::class,).forEach {
             testClass(it) {
                 model("fileRanking")
+            }
+        }
+
+        listOf(AbstractK2IdeK2CodeCoroutineAsyncStackTraceTest::class).forEach {
+            testClass(it) {
+                model("asyncStackTrace/coroutines")
             }
         }
 
