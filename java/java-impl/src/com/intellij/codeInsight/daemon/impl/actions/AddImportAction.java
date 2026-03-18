@@ -11,6 +11,7 @@ import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.java.JavaImportOptimizer;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
@@ -112,7 +113,7 @@ public class AddImportAction implements QuestionAction {
     }
 
     if (myTargetClasses.length == 1) {
-      addImport(myReference, myTargetClasses[0]);
+      addImport(myTargetClasses[0]);
     }
     else {
       chooseClassAndImport();
@@ -156,7 +157,7 @@ public class AddImportAction implements QuestionAction {
           if (finalChoice) {
             return doFinalStep(() -> {
               PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-              addImport(myReference, selectedValue);
+              addImport(selectedValue);
             });
           }
 
@@ -254,30 +255,39 @@ public class AddImportAction implements QuestionAction {
     return toExclude;
   }
 
-  private void addImport(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
+  private void addImport(@NotNull PsiClass targetClass) {
     DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
-      if (!ref.getElement().isValid() || !targetClass.isValid()) {
+      if (!myReference.getElement().isValid() || !targetClass.isValid()) {
         return;
       }
 
       StatisticsManager.getInstance().incUseCount(JavaStatisticsManager.createInfo(null, targetClass));
-      PsiFile file = ref.getElement().getContainingFile();
-      if (file instanceof PsiJavaFile) {
-        ActionContext ctx = ActionContext.from(myEditor, file);
-        ModCommandExecutor.executeInteractively(
-          ctx, QuickFixBundle.message("add.import"), myEditor,
-          () -> ModCommand.psiUpdate(ref.getElement(), (e, updater) -> {
-            bindReference(Objects.requireNonNull(e.getReference()), targetClass);
-            if (CodeInsightWorkspaceSettings.getInstance(myProject).isOptimizeImportsOnTheFly()) {
-              new JavaImportOptimizer().processFile(updater.getPsiFile()).run();
-            }
-          }));
-      } else {
+      PsiFile file = myReference.getElement().getContainingFile();
+      ImportOptimizer importOptimizer = getModCommandFriendlyImportOptimizer();
+      if (importOptimizer != null) {
+        runImportOptimizerThatIsModCommandFriendly(myReference, targetClass, file, importOptimizer);
+      }
+      else {
         WriteCommandAction.runWriteCommandAction(myProject, QuickFixBundle.message("add.import"), null,
-                                                 () -> doAddImport(ref, targetClass, file),
+                                                 () -> doAddImport(myReference, targetClass, file),
                                                  file);
       }
     });
+  }
+
+  private void runImportOptimizerThatIsModCommandFriendly(@NotNull PsiReference ref,
+                                                          @NotNull PsiClass targetClass,
+                                                          PsiFile file,
+                                                          ImportOptimizer importOptimizer) {
+    ActionContext ctx = ActionContext.from(myEditor, file);
+    ModCommandExecutor.executeInteractively(
+      ctx, QuickFixBundle.message("add.import"), myEditor,
+      () -> ModCommand.psiUpdate(ref.getElement(), (e, updater) -> {
+        bindReference(Objects.requireNonNull(e.getReference()), targetClass);
+        if (CodeInsightWorkspaceSettings.getInstance(myProject).isOptimizeImportsOnTheFly()) {
+          importOptimizer.processFile(updater.getPsiFile()).run();
+        }
+      }));
   }
 
   private void doAddImport(@NotNull PsiReference ref, @NotNull PsiClass targetClass, @NotNull PsiFile psiFile) {
@@ -291,6 +301,14 @@ public class AddImportAction implements QuestionAction {
       LOG.error(e);
     }
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  /**
+   * @return ImportOptimizer that is ModCommand friendly (can be run from ModCommandAction) if available or null otherwise.
+   */
+  protected @Nullable ImportOptimizer getModCommandFriendlyImportOptimizer() {
+    PsiFile file = myReference.getElement().getContainingFile();
+    return file instanceof PsiJavaFile ? new JavaImportOptimizer() : null;
   }
 
   protected void bindReference(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
