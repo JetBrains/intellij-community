@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,7 @@ public final class EditorLockFreeTyping {
 
   public static void assertReadAccess(@NotNull VirtualFile virtualFile) {
     if (isReadAccessNeeded(virtualFile)) {
-      ThreadingAssertions.assertReadAccess();
+      assertReadAccess();
     }
   }
 
@@ -67,5 +68,26 @@ public final class EditorLockFreeTyping {
       }
     }
     return true;
+  }
+
+  /**
+   * In a normal world, this method would not exist; {@link ThreadingAssertions#assertReadAccess} would be used instead.
+   * <p>
+   * {@link com.intellij.psi.impl.PsiManagerImpl#findFile(VirtualFile)} and other methods are annotated with {@code @RequiresReadLock}.
+   * Yet, this piece of s*** works unpredictably.
+   * For some reason, {@code findFile()} is called in RD without RA on EDT, and it WORKS!?!??
+   * <p>
+   * {@code
+   *  BackendEditorHost.bindEditor() ->
+   *    LanguageSubstitutionDocumentExtensionsProvider.getExtensions() ->
+   *      PsiManagerImpl.findFile()
+   * }
+   * <p>
+   * So to preserve disabled-ELF behavior, we need to replace {@code @RequiresReadLock} with {@code @RequiresReadLock(generateAssertion = false)}
+   * and call this helper method instead of {@code ThreadingAssertions.assertReadAccess()}.
+   */
+  @RequiresReadLock
+  private static void assertReadAccess() {
+    // ThreadingAssertions.assertReadAccess();
   }
 }
