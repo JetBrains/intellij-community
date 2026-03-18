@@ -159,7 +159,17 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         }
 
         override fun setupSettingsUI(builder: Panel) {
-            setupJavaSdkUI(builder, ::sdkFilter, KotlinJdkPredicate())
+            val bundledKotlinPluginVersion = getBundledKotlinPluginVersion()
+            val kotlinVersion = IdeKotlinVersion.parse(bundledKotlinPluginVersion).getOrNull()
+            val maxJvmTargetForBundledKotlinVersion = kotlinVersion?.let { KotlinGradleCompatibilityStore.getMaxJvmTarget(it) }
+
+            setupJavaSdkUI(
+                builder,
+                ::sdkFilter,
+                KotlinJdkPredicate(),
+                bundledKotlinPluginVersion,
+                maxJvmTargetForBundledKotlinVersion?.toString()
+            )
             setupGradleDslUI(builder)
             setupParentsUI(builder)
             setupSampleCodeUI(builder)

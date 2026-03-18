@@ -136,11 +136,19 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     builder: Panel,
     sdkFilter: (Sdk) -> Boolean = { true },
     jdkPredicate: ProjectWizardJdkPredicate? = null,
+    kotlinVersion: String? = null,
+    maxKotlinJvmTarget: String? = null,
   ) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
       projectWizardJdkComboBox(this, jdkIntentProperty, sdkFilter, jdkPredicate)
         .validationOnInput { validateJavaSdk(withDialog = false) }
         .validationOnApply { validateJavaSdk(withDialog = true) }
+        .validationOnApply {
+          if (kotlinVersion != null && maxKotlinJvmTarget != null) validateKotlinJdkCompatibility(withDialog = true,
+                                                                                                  sdkFilter,
+                                                                                                  maxKotlinJvmTarget, kotlinVersion)
+          else null
+        }
         .whenItemSelectedFromUi { jdkIntent.javaVersion?.let { logSdkChanged(it.feature) } }
         .onApply { jdkIntent.javaVersion?.let { logSdkFinished(it.feature) } }
     }.bottomGap(BottomGap.SMALL)
@@ -322,6 +330,37 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
         "gradle.settings.wizard.gradle.unsupported.message",
         ApplicationNamesInfo.getInstance().fullProductName,
         oldestSupportedGradleVersion.version,
+      )
+    )
+  }
+
+  /**
+   * For Kotlin, we don't filter out detected but incompatible JDKs, so it's still possible to choose them.
+   * In this case, we want to warn a user if there's an incompatibility with such a version.
+   */
+  private fun ValidationInfoBuilder.validateKotlinJdkCompatibility(
+    withDialog: Boolean,
+    sdkFilter: (Sdk) -> Boolean,
+    maxKotlinJvmTarget: String,
+    kotlinVersion: String,
+  ): ValidationInfo? {
+    val sdk = jdkIntent.prepareJdk() ?: return null
+    if (sdkFilter(sdk)) {
+      return null
+    }
+    val javaVersion = jdkIntent.javaVersion ?: return null
+    return validationWithDialog(
+      withDialog = withDialog,
+      message = GradleBundle.message(
+        "gradle.settings.wizard.kotlin.unsupported.message",
+        maxKotlinJvmTarget
+      ),
+      dialogTitle = GradleBundle.message(
+        "gradle.settings.wizard.java.unsupported.title"
+      ),
+      dialogMessage = GradleBundle.message(
+        "gradle.settings.wizard.kotlin.unsupported.dialog.message",
+        maxKotlinJvmTarget, kotlinVersion, javaVersion.toFeatureString(),
       )
     )
   }
