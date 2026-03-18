@@ -24,7 +24,7 @@ import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
-import com.intellij.util.EnvironmentUtil;
+import com.intellij.platform.eel.provider.LocalEelMachine;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.system.OS;
 import com.sun.jna.Native;
@@ -282,13 +282,15 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   private static Path canonicalize(Path path) {
-    try {
-      return path.toRealPath();
+    if (!LocalEelMachine.INSTANCE.ownsPath(path)) {
+      try {
+        return path.toRealPath();
+      }
+      catch (IOException e) {
+        LOG.info("Could not convert " + path + " to canonical path", e);
+      }
     }
-    catch (IOException e) {
-      LOG.info("Could not convert " + path + " to canonical path", e);
-      return path.toAbsolutePath();
-    }
+    return path.toAbsolutePath();
   }
 
   private static void openViaExplorerCall(String dir, @Nullable String toSelect) {
