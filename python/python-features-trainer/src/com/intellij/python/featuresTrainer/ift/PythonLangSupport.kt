@@ -32,6 +32,7 @@ import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.findBaseSdks
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
 import com.jetbrains.python.statistics.modules
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import training.dsl.LessonContext
@@ -90,13 +91,15 @@ internal class PythonLangSupport(private val errorSink: ErrorSink = ShowingMessa
   @Throws(NoSdkException::class)
   @RequiresEdt
   override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk = runWithModalProgressBlocking(project, "...") {
-    when (val r = createVenvAndSdk(ModuleOrProject.ProjectOnly(project))) {
-      is Result.Failure -> {
-        errorSink.emit(r.error, project)
-        null
-      }
-      is Result.Success -> r.result
-    } ?: throw NoSdkException()
+    pythonSdkConfigurationMutex.withLock {
+      when (val r = createVenvAndSdk(ModuleOrProject.ProjectOnly(project))) {
+        is Result.Failure -> {
+          errorSink.emit(r.error, project)
+          null
+        }
+        is Result.Success -> r.result
+      } ?: throw NoSdkException()
+    }
   }
 
 
