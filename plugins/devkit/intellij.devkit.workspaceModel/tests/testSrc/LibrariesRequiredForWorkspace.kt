@@ -50,7 +50,7 @@ internal object LibrariesRequiredForWorkspace {
         listOf(intellijJava)
       }
       "intellij.rider.plugins.unity" -> {
-        listOf(riderUnityPlugin, rdCore)
+        listOf(riderUnityPlugin, rdCore, riderRdClient)
       }
       "intellij.rider" -> {
         listOf(riderRdClient)
