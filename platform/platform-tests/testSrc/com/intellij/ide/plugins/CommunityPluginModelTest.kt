@@ -9,7 +9,7 @@ import java.nio.file.Path
 
 class CommunityPluginModelTest {
   companion object {
-    val communityPluginModelBuilderOptions = SimplifiedPluginModelBuilderOptions(
+    val communityPluginModelBuilderOptions = SourceCodeBasedPluginModelBuilderOptions(
       modulesWithIncorrectlyPlacedModuleDescriptor = setOf(
         "intellij.android.device-explorer",
       ),

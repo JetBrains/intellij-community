@@ -56,7 +56,7 @@ data class PluginValidationOptions(
   val reportDependsTagInPluginXmlWithPackageAttribute: Boolean = true,
   val referencedPluginIdsOfExternalPlugins: Set<String> = emptySet(),
 
-  val pluginModelBuilderOptions: SimplifiedPluginModelBuilderOptions = SimplifiedPluginModelBuilderOptions(),
+  val pluginModelBuilderOptions: SourceCodeBasedPluginModelBuilderOptions = SourceCodeBasedPluginModelBuilderOptions(),
 
   /**
    * Set of modules containing `plugin.xml` files which should be ignored because they correspond to smaller editions of plugins,
@@ -97,9 +97,9 @@ fun validatePluginModel(
   project: JpsProject, projectHomePath: Path,
   validationOptions: PluginValidationOptions = PluginValidationOptions(),
 ): PluginValidationResult {
-  val builder = SimplifiedPluginModelBuilder(project, validationOptions.pluginModelBuilderOptions)
+  val builder = SourceCodeBasedPluginModelBuilder(project, validationOptions.pluginModelBuilderOptions)
   return PluginModelValidator(
-    simplifiedPluginModel = builder.buildSimplifiedPluginModel(),
+    sourceCodeBasedPluginModel = builder.buildSourceCodeBasedPluginModel(),
     projectHomePath = projectHomePath,
     validationOptions = validationOptions,
   ).validate()
@@ -143,22 +143,22 @@ class PluginValidationResult internal constructor(
  * modules.
  */
 internal class PluginModelValidator(
-  private val simplifiedPluginModel: SimplifiedPluginModel,
+  private val sourceCodeBasedPluginModel: SourceCodeBasedPluginModel,
   private val projectHomePath: Path,
   private val validationOptions: PluginValidationOptions,
 ) {
-  private val pluginIdToInfo = simplifiedPluginModel.pluginIdToInfo
-  private val pluginAliases = simplifiedPluginModel.pluginAliases
+  private val pluginIdToInfo = sourceCodeBasedPluginModel.pluginIdToInfo
+  private val pluginAliases = sourceCodeBasedPluginModel.pluginAliases
   private val _errors = mutableListOf<PluginValidationError>()
 
   init {
-    simplifiedPluginModel.errors.forEach { reportError(it.message, it.sourceModule, it.params) }
+    sourceCodeBasedPluginModel.errors.forEach { reportError(it.message, it.sourceModule, it.params) }
   }
 
   fun validate(): PluginValidationResult {
-    val descriptorFileInfos = simplifiedPluginModel.descriptorFileInfos
-    val moduleNameToInfo = simplifiedPluginModel.moduleNameToInfo
-    val allMainModulesOfPlugins = simplifiedPluginModel.allMainModulesOfPlugins
+    val descriptorFileInfos = sourceCodeBasedPluginModel.descriptorFileInfos
+    val moduleNameToInfo = sourceCodeBasedPluginModel.moduleNameToInfo
+    val allMainModulesOfPlugins = sourceCodeBasedPluginModel.allMainModulesOfPlugins
 
     val contentModuleNameToFileInfo = descriptorFileInfos.filterIsInstance<ContentModuleDescriptorFileInfo>().associateBy { it.contentModuleName }
     val sourceModuleNameToPluginFileInfo = descriptorFileInfos.filterIsInstance<PluginDescriptorFileInfo>().associateBy { it.sourceModule.name }
@@ -249,7 +249,7 @@ internal class PluginModelValidator(
       checkDepends(pluginInfo, descriptor)
     }
 
-    for (contentModuleDescriptor in simplifiedPluginModel.contentModuleDescriptorsIncludedViaXiInclude) {
+    for (contentModuleDescriptor in sourceCodeBasedPluginModel.contentModuleDescriptorsIncludedViaXiInclude) {
       val moduleName = contentModuleDescriptor.nameWithoutExtension
       val moduleInfo = moduleNameToInfo[moduleName] ?: continue
       val pluginInfo = contentModuleToContainingPlugins[moduleName]?.firstOrNull()
@@ -637,7 +637,7 @@ internal class PluginModelValidator(
       if (moduleDescriptor.moduleVisibility != ModuleVisibilityValue.PRIVATE) {
         nonPrivateModules.add(moduleName)
       }
-      val moduleInfo = SimplifiedPluginModelBuilder.createModuleFileInfo(moduleDescriptorFileInfo, moduleName, moduleNameToInfo)
+      val moduleInfo = SourceCodeBasedPluginModelBuilder.createModuleFileInfo(moduleDescriptorFileInfo, moduleName, moduleNameToInfo)
       referencingModuleInfo.content.add(moduleInfo)
 
       // check that not specified using the "depends" tag

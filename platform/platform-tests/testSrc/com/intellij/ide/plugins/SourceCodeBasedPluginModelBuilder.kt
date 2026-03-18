@@ -14,7 +14,7 @@ import java.nio.file.Path
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.nameWithoutExtension
 
-data class SimplifiedPluginModelBuilderOptions(
+data class SourceCodeBasedPluginModelBuilderOptions(
   val prefixesOfPathsIncludedFromLibrariesViaXiInclude: List<String> = emptyList(),
 
   /**
@@ -64,27 +64,39 @@ internal data class PluginDescriptorFileInfo(
   val inTests: Boolean,
 ) : DescriptorFileInfo
 
-data class SimplifiedPluginModelBuilderError(
+data class SourceCodeBasedPluginModelBuilderError(
   val message: String,
   val sourceModule: JpsModule,
   val params: Map<String, Any?> = mapOf(),
 )
 
-data class SimplifiedPluginModel(
+data class SourceCodeBasedPluginModel(
   val descriptorFileInfos: List<DescriptorFileInfo>,
   val moduleNameToInfo: HashMap<String, ModuleInfo>,
   val allMainModulesOfPlugins: ArrayList<ModuleInfo>,
   val pluginIdToInfo: HashMap<String, ModuleInfo>,
   val pluginAliases: HashSet<String>,
   val contentModuleDescriptorsIncludedViaXiInclude: List<Path>,
-  val errors: List<SimplifiedPluginModelBuilderError>,
+  val errors: List<SourceCodeBasedPluginModelBuilderError>,
 )
 
-class SimplifiedPluginModelBuilder(
+/**
+ * Builds a [SourceCodeBasedPluginModel] from plugin descriptors found in [project] sources.
+ *
+ * This builder only uses source code to build the model, no real runtime is involved.
+ * Multiple build variants (e.g. os-specific builds) of the same plugin are supported via [SourceCodeBasedPluginModelBuilderOptions]
+ *
+ * See also: [com.intellij.ideaProjectStructure.fast.UltimatePluginModelValidation.ultimatePluginModelBuilderOptions]
+ *           [com.intellij.ide.plugins.CommunityPluginModelTest.getCommunityPluginModelBuilderOptions]
+ *           [com.intellij.ideaProjectStructure.fast.IntelliJProjectStructureExtensions.ultimateProject]
+ *           [com.intellij.ideaProjectStructure.fast.IntelliJProjectStructureExtensions.communityProject]
+ *
+ */
+class SourceCodeBasedPluginModelBuilder(
   private val project: JpsProject,
-  private val builderOptions: SimplifiedPluginModelBuilderOptions,
+  private val builderOptions: SourceCodeBasedPluginModelBuilderOptions,
 ) {
-  private val errors = mutableListOf<SimplifiedPluginModelBuilderError>()
+  private val errors = mutableListOf<SourceCodeBasedPluginModelBuilderError>()
 
   private val xIncludeLoader = LoadFromSourceXIncludeLoader(
     prefixesOfPathsIncludedFromLibrariesViaXiInclude = builderOptions.prefixesOfPathsIncludedFromLibrariesViaXiInclude,
@@ -114,10 +126,10 @@ class SimplifiedPluginModelBuilder(
   }
 
   private fun reportError(message: String, sourceModule: JpsModule, params: Map<String, Any?> = mapOf()) {
-    errors.add(SimplifiedPluginModelBuilderError(message, sourceModule, params))
+    errors.add(SourceCodeBasedPluginModelBuilderError(message, sourceModule, params))
   }
 
-  fun buildSimplifiedPluginModel(): SimplifiedPluginModel {
+  fun buildSourceCodeBasedPluginModel(): SourceCodeBasedPluginModel {
     // 1. collect plugin and module file info set
     val descriptorFileInfos = project.modules.flatMap { module ->
       try {
@@ -212,7 +224,7 @@ class SimplifiedPluginModelBuilder(
       }
     }
     val contentModuleDescriptorsIncludedViaXiInclude = xIncludeLoader.includedContentModuleDescriptors
-    return SimplifiedPluginModel(
+    return SourceCodeBasedPluginModel(
       descriptorFileInfos,
       moduleNameToInfo,
       allMainModulesOfPlugins,
