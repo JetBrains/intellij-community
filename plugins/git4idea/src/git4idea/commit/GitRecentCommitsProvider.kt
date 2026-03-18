@@ -17,10 +17,9 @@ import git4idea.GitUtil
 import git4idea.isCommitPublished
 import git4idea.history.GitLogUtil
 import git4idea.log.GitLogProvider
-import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
-import git4idea.repo.GitRepositoryStateChangeListener
 import git4idea.util.CaffeineUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -52,12 +51,11 @@ class GitRecentCommitsProvider(
     }
 
   init {
-    project.messageBus.connect(scope).subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
-      override fun repositoryChanged(repository: GitRepository, previousInfo: GitRepoInfo, info: GitRepoInfo) {
-        LOG.debug { "Refreshing cache entry for ${repository.root}" }
-        cache.synchronous().refresh(repository.root)
-      }
+    project.messageBus.connect(scope).subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { repository ->
+      LOG.debug { "Repository changed, refreshing cache entry for ${repository.root}" }
+      cache.synchronous().refresh(repository.root)
     })
+    cache.synchronous().refreshAll(GitRepositoryManager.getInstance(project).repositories.map { it.root })
   }
 
   suspend fun getRecentCommits(root: VirtualFile): List<VcsCommitMetadata> {
