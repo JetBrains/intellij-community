@@ -28,7 +28,7 @@ inline fun <R> analyzeInModalWindow(
     crossinline action: KaSession.() -> R
 ): R {
     ThreadingAssertions.assertEventDispatchThread()
-    val task = object : Task.WithResult<R, Exception>(contextElement.project, windowTitle, /*canBeCancelled*/ true) {
+    val task = object : Task.WithResult<R, Exception>(runReadAction { contextElement.project }, windowTitle, /*canBeCancelled*/ true) {
         override fun compute(indicator: ProgressIndicator): R =
             runReadAction { analyze(contextElement, action) }
     }

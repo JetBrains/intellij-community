@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdate
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractKotlinInplaceIntroducer
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
@@ -66,7 +67,7 @@ class KotlinVariableInplaceIntroducer(
     private var expressionTypeCheckBox: JCheckBox? = null
     private val addedVariablePointer: SmartPsiElementPointer<KtProperty> = addedVariable.createSmartPointer()
     private val addedVariable: KtProperty?
-        get() = addedVariablePointer.element
+        get() = runReadAction { addedVariablePointer.element }
 
     private fun createPopupPanel(): DialogPanel {
         return panel {
