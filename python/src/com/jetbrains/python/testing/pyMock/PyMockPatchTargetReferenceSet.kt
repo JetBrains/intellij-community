@@ -42,16 +42,15 @@ class PyMockPatchTargetReferenceSet(
     }
 
     val segments = content.split(".")
-    val refs = mutableListOf<PsiReference>()
     var currentOffset = valueRange.startOffset
 
-    for ((index, segment) in segments.withIndex()) {
-      val range = TextRange(currentOffset, currentOffset + segment.length)
-      refs.add(PyMockSegmentReference(element, range, segments, index, createAllowed))
-      currentOffset += segment.length + 1  // +1 for the '.' separator
-    }
-
-    return refs.toTypedArray()
+    return buildList {
+      for ((index, segment) in segments.withIndex()) {
+        val range = TextRange(currentOffset, currentOffset + segment.length)
+        add(PyMockSegmentReference(element, range, segments, index, createAllowed))
+        currentOffset += segment.length + 1  // +1 for the '.' separator
+      }
+    }.toTypedArray()
   }
 }
 
@@ -88,13 +87,13 @@ private class PyMockSegmentReference(
    */
   private fun getTopLevelModuleVariants(): Array<Any> {
     val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return emptyArray()
-    val psiManager = PsiManager.getInstance(element.project)
-    val result = mutableListOf<Any>()
-    for (root in ModuleRootManager.getInstance(module).sourceRoots) {
-      val dir = psiManager.findDirectory(root) ?: continue
-      result.addAll(PyModuleType.getSubModuleVariants(dir, element, null))
-    }
-    return result.toTypedArray()
+    val psiManager = element.manager
+    return buildList {
+      for (root in ModuleRootManager.getInstance(module).sourceRoots) {
+        val dir = psiManager.findDirectory(root) ?: continue
+        addAll(PyModuleType.getSubModuleVariants(dir, element, null))
+      }
+    }.toTypedArray()
   }
 }
 
@@ -107,7 +106,7 @@ internal fun resolveSegmentAt(
   upToIndex: Int,
   context: PyQualifiedNameResolveContext,
 ): PsiElement? {
-  val fullName = QualifiedName.fromComponents(segments.subList(0, upToIndex + 1))
+  val fullName = QualifiedName.fromComponents(segments.take(upToIndex + 1))
 
   // First try to resolve as a module or package
   val moduleResult = resolveQualifiedName(fullName, context).firstOrNull()

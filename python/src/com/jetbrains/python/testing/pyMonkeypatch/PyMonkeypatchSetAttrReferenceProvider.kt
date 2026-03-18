@@ -10,6 +10,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceProvider
 import com.intellij.psi.ResolveResult
 import com.intellij.util.ProcessingContext
+import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
@@ -52,7 +53,7 @@ class PyMonkeypatchSetAttrReferenceProvider : PsiReferenceProvider() {
 
     // Form 2: monkeypatch.setattr(obj, "attr", value) — string is the second positional arg
     // Only applies when the first arg is NOT a string (otherwise it's the dotted-path form)
-    if (positionalArgs.size >= 2 && positionalArgs[1] == str && positionalArgs[0] !is PyStringLiteralExpression) {
+    if (positionalArgs.getOrNull(1) == str && positionalArgs[0] !is PyStringLiteralExpression) {
       val valueRange = ElementManipulators.getValueTextRange(str)
       return arrayOf(PyMonkeypatchAttrReference(str, valueRange, callExpr))
     }
@@ -66,7 +67,7 @@ class PyMonkeypatchSetAttrReferenceProvider : PsiReferenceProvider() {
  * or returns null if this string is not inside one.
  */
 private fun findMonkeypatchAttrCall(str: PyStringLiteralExpression): PyCallExpression? {
-  val argList = str.parent as? com.jetbrains.python.psi.PyArgumentList ?: return null
+  val argList = str.parent as? PyArgumentList ?: return null
   val callExpr = argList.parent as? PyCallExpression ?: return null
   val typeContext = TypeEvalContext.codeAnalysis(str.project, str.containingFile)
   if (isMonkeypatchAttrCall(callExpr, "setattr", typeContext)) return callExpr
@@ -128,10 +129,8 @@ private class PyMonkeypatchAttrReference(
   private fun getMemberVariants(target: PsiElement): List<PsiElement> {
     val resolved = PyUtil.turnDirIntoInit(target) ?: target
     return when (resolved) {
-      is PyClass -> resolved.getMethods().toList() +
-                    (resolved.classAttributes + resolved.instanceAttributes).mapNotNull { it }
-      is PyFile -> resolved.topLevelClasses + resolved.topLevelFunctions +
-                   (resolved.topLevelAttributes ?: emptyList<PsiElement>())
+      is PyClass -> resolved.getMethods().toList() + (resolved.classAttributes + resolved.instanceAttributes).filterNotNull()
+      is PyFile -> resolved.topLevelClasses + resolved.topLevelFunctions + resolved.topLevelAttributes.orEmpty()
       else -> emptyList()
     }
   }

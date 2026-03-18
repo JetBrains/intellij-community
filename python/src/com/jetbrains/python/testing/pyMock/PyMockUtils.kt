@@ -33,9 +33,10 @@ internal fun isPatchCall(callExpr: PyCallExpression, context: TypeEvalContext): 
       .contains(PyKnownDecorator.UNITTEST_MOCK_PATCH)
   }
 
+  val callee = callExpr.callee ?: return false
   // For regular call expressions (e.g. `with patch(...)`), resolve the callee to its definition
   return PyUtil.multiResolveTopPriority(
-    callExpr.callee ?: return false,
+    callee,
     PyResolveContext.defaultContext(context),
   ).filterIsInstance<PyQualifiedNameOwner>()
     .any { it.qualifiedName == MOCK_PATCH_FQN }
@@ -138,7 +139,7 @@ internal fun getInjectingPatchDecorator(
 
   // innermost patch (last in AST) → first injected param
   val patchIndex = numParams - paramIndex - 1
-  if (patchIndex !in 0 until numPatches) return null
+  if (patchIndex >= numPatches) return null
 
   return injectingPatches[patchIndex]
 }

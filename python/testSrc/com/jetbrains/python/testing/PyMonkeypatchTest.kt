@@ -5,6 +5,7 @@ import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyStringLiteralExpression
@@ -58,7 +59,7 @@ class PyMonkeypatchTest : PyTestCase() {
 
     // "example_package.submodule.SubClass.sub_method" has 4 segments
     val refs = PyMockPatchTargetReferenceSet(strArg!!, false).createReferences()
-    assertEquals(4, refs.size)
+    assertSize(4, refs)
 
     // First segment (package) should resolve to __init__.py, not the directory
     val packageResolved = refs[0].resolve()
@@ -102,7 +103,7 @@ class PyMonkeypatchTest : PyTestCase() {
     assertNotNull("Expected string literal", strArg)
 
     val refs = PyMockPatchTargetReferenceSet(strArg!!, false).createReferences()
-    assertEquals(3, refs.size)
+    assertSize(3, refs)
     val resolved = refs[2].resolve()
     assertNotNull("my_method should resolve", resolved)
     assertInstanceOf(resolved, PyFunction::class.java)
@@ -117,7 +118,7 @@ class PyMonkeypatchTest : PyTestCase() {
     assertNotNull("Expected string literal", strArg)
 
     val refs = PyMockPatchTargetReferenceSet(strArg!!, false).createReferences()
-    assertEquals(2, refs.size)
+    assertSize(2, refs)
     val resolved = refs[1].resolve()
     assertNotNull("top_level_function should resolve", resolved)
     assertInstanceOf(resolved, PyFunction::class.java)
@@ -202,7 +203,7 @@ class PyMonkeypatchTest : PyTestCase() {
     assertNotNull("Expected string literal", strArg)
 
     val refs = PyMockPatchTargetReferenceSet(strArg!!, false).createReferences()
-    assertEquals(3, refs.size)
+    assertSize(3, refs)
     assertNotNull("class_attr should resolve", refs[2].resolve())
   }
 
@@ -237,7 +238,7 @@ class PyMonkeypatchTest : PyTestCase() {
   private fun findCallInFunction(func: PyFunction): PyCallExpression? {
     val stmts = func.statementList.statements
     for (stmt in stmts) {
-      val expr = (stmt as? com.jetbrains.python.psi.PyExpressionStatement)?.expression
+      val expr = (stmt as? PyExpressionStatement)?.expression
       if (expr is PyCallExpression) return expr
     }
     return null

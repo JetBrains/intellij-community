@@ -80,7 +80,7 @@ fun getPatchObjectCall(str: PyStringLiteralExpression): PyCallExpression? {
 
   // Accept as the second positional argument (attribute name)
   val args = argList.arguments
-  if (args.size >= 2 && args[1] == str) return patchObjectCall
+  if (args.getOrNull(1) == str) return patchObjectCall
 
   // Or as the "attribute" keyword argument
   val attrKeyword = patchObjectCall.getKeywordArgument("attribute")
@@ -143,10 +143,8 @@ private class PyMockPatchObjectAttrReference(
   private fun getMemberVariantsOf(target: PsiElement): List<PsiElement> {
     val resolved = PyUtil.turnDirIntoInit(target) ?: target
     return when (resolved) {
-      is PyClass -> resolved.getMethods().toList() +
-                    (resolved.classAttributes + resolved.instanceAttributes).mapNotNull { it }
-      is PyFile -> resolved.topLevelClasses + resolved.topLevelFunctions +
-                   (resolved.topLevelAttributes ?: emptyList<PsiElement>())
+      is PyClass -> resolved.getMethods().toList() + (resolved.classAttributes + resolved.instanceAttributes).filterNotNull()
+      is PyFile -> resolved.topLevelClasses + resolved.topLevelFunctions + resolved.topLevelAttributes.orEmpty()
       else -> emptyList()
     }
   }

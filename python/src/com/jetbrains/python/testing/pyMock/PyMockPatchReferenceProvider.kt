@@ -50,7 +50,7 @@ fun getPatchCall(str: PyStringLiteralExpression): PyCallExpression? =
   getPatchTargetCall(str)
 
 private fun getPatchTargetCall(str: PyStringLiteralExpression): PyCallExpression? {
-  val keyword = (str.parent as? PyKeywordArgument)
+  val keyword = str.parent as? PyKeywordArgument
   val argList = when (val parent = str.parent) {
     is PyArgumentList -> parent
     is PyKeywordArgument -> parent.parent as? PyArgumentList ?: return null

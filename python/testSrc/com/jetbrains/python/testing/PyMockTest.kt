@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyWithStatement
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.testing.pyMock.PyMockPatchArgumentCountInspection
 import com.jetbrains.python.testing.pyMock.PyMockPatchTargetReferenceSet
 import com.jetbrains.python.testing.pyMock.getPatchCall
 import com.jetbrains.python.testing.pyMock.getPatchObjectCall
@@ -64,7 +65,7 @@ class PyMockTest : PyTestCase() {
 
     // "example_package.submodule.SubClass.sub_method" has 4 segments
     val refs = PyMockPatchTargetReferenceSet(strArg, false).createReferences()
-    assertEquals(4, refs.size)
+    assertSize(4, refs)
 
     // First segment (package) should resolve to __init__.py, not the directory
     val packageResolved = refs[0].resolve()
@@ -94,7 +95,7 @@ class PyMockTest : PyTestCase() {
 
     // "example_module.MyClass" has 2 segments; the last one should resolve to MyClass
     val refs = PyMockPatchTargetReferenceSet(strArg, false).createReferences()
-    assertEquals(2, refs.size)
+    assertSize(2, refs)
     val resolved = refs[1].resolve()
     assertNotNull("MyClass segment should resolve", resolved)
     assertInstanceOf(resolved, PyClass::class.java)
@@ -110,7 +111,7 @@ class PyMockTest : PyTestCase() {
 
     // "example_module.MyClass.my_method" has 3 segments; the last one should resolve to my_method
     val refs = PyMockPatchTargetReferenceSet(strArg, false).createReferences()
-    assertEquals(3, refs.size)
+    assertSize(3, refs)
     val resolved = refs[2].resolve()
     assertNotNull("my_method segment should resolve", resolved)
     assertInstanceOf(resolved, PyFunction::class.java)
@@ -190,9 +191,9 @@ class PyMockTest : PyTestCase() {
       .findMethodByName("test_no_injection_when_new", false, null)!!
     // Function has only 'self', no injected param
     val paramNames = func.parameterList.parameters.map { it.name }
-    assertTrue(
+    assertEquals(
       "Function with new= should not receive injected parameter: $paramNames",
-      "self" in paramNames && paramNames.size == 1,
+      listOf("self"), paramNames,
     )
   }
 
@@ -202,9 +203,9 @@ class PyMockTest : PyTestCase() {
       .findMethodByName("test_no_injection_when_positional_new", false, null)!!
     // Function has only 'self', no injected param — new is passed positionally
     val paramNames = func.parameterList.parameters.map { it.name }
-    assertTrue(
+    assertEquals(
       "Function with positional new should not receive injected parameter: $paramNames",
-      "self" in paramNames && paramNames.size == 1,
+      listOf("self"), paramNames,
     )
   }
 
@@ -244,7 +245,7 @@ class PyMockTest : PyTestCase() {
 
     // "example_module.MyClass" has 2 segments; the last one should resolve to MyClass
     val refs = PyMockPatchTargetReferenceSet(strArg, false).createReferences()
-    assertEquals(2, refs.size)
+    assertSize(2, refs)
     val resolved = refs[1].resolve()
     assertNotNull("MyClass segment should resolve inside with patch()", resolved)
     assertInstanceOf(resolved, PyClass::class.java)
@@ -262,7 +263,7 @@ class PyMockTest : PyTestCase() {
 
     // "example_module.MyClass.my_method" has 3 segments; the last should resolve to my_method
     val refs = PyMockPatchTargetReferenceSet(strArg!!, false).createReferences()
-    assertEquals(3, refs.size)
+    assertSize(3, refs)
     val resolved = refs[2].resolve()
     assertNotNull("my_method segment should resolve inside with patch()", resolved)
     assertInstanceOf(resolved, PyFunction::class.java)
@@ -296,7 +297,7 @@ class PyMockTest : PyTestCase() {
 
     // "example_module.MyClass" has 2 segments; the last one should resolve to MyClass
     val refs = PyMockPatchTargetReferenceSet(strArg, false).createReferences()
-    assertEquals(2, refs.size)
+    assertSize(2, refs)
     val resolved = refs[1].resolve()
     assertNotNull("MyClass segment should resolve via target= keyword", resolved)
     assertInstanceOf(resolved, PyClass::class.java)
@@ -407,7 +408,7 @@ class PyMockTest : PyTestCase() {
 
   fun testPatchArgumentCountInspection() {
     myFixture.configureByFile("test_patch_arg_count/test.py")
-    myFixture.enableInspections(com.jetbrains.python.testing.pyMock.PyMockPatchArgumentCountInspection::class.java)
+    myFixture.enableInspections(PyMockPatchArgumentCountInspection::class.java)
     myFixture.checkHighlighting(true, false, true)
   }
 
