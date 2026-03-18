@@ -34,10 +34,10 @@ internal class GitAmendCommitService(project: Project) : AmendCommitService(proj
     return Git.getInstance().runCommand(h).getOutputOrThrow()
   }
 
-  override suspend fun getAmendSpecificCommitTargets(root: VirtualFile, limit: Int): List<CommitToAmend.Specific> =
+  override suspend fun getAmendSpecificCommitTargets(root: VirtualFile): List<CommitToAmend.Specific> =
     withContext(Dispatchers.Default) {
       val repo = GitRepositoryManager.getInstance(project).repositories.singleOrNull() ?: return@withContext emptyList()
-      val commits: List<VcsCommitMetadata> = GitRecentCommitsProvider.getInstance(project).getRecentCommits(repo.root, limit)
+      val commits: List<VcsCommitMetadata> = GitRecentCommitsProvider.getInstance(project).getRecentCommits(repo.root, COMMITS_LIMIT)
 
       commits.map { metadata ->
         CommitToAmend.Specific(metadata.id, metadata.subject)
@@ -53,4 +53,8 @@ internal class GitAmendCommitService(project: Project) : AmendCommitService(proj
       // %s strips newlines from subject; there is no way to work around it before 1.7.2 with %B (unless parsing some fixed format)
       "%s%n%n%-b"
     }
+
+  companion object {
+    private const val COMMITS_LIMIT: Int = 20
+  }
 }
