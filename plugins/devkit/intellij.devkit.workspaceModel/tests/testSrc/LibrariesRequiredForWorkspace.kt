@@ -80,7 +80,7 @@ internal object LibrariesRequiredForWorkspace {
         listOf(cidrProjectModel)
       }
       "intellij.android.projectSystem.gradle" -> {
-        listOf(androidProjectSystem, androidGradleModels, androidStudioPlatform)
+        listOf(androidProjectSystem, androidGradleModels, androidStudioPlatform, gradle, gradleToolingExtension)
       }
       else -> {
         emptyList()
