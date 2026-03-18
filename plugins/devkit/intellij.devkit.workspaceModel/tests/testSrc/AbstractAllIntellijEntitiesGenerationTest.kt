@@ -24,6 +24,8 @@ import com.intellij.openapi.util.io.findOrCreateDirectory
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.findDirectory
+import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
@@ -101,14 +103,11 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
   fun setUp(): Unit = runBlocking {
     setupCopyright()
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
-    EditorConfigCodeStyleSettingsModifier.Handler.setEnabledInTests(true)
-    Utils.isEnabledInTests = true
 
     CodeGeneratorVersions.checkApiInInterface = false
     CodeGeneratorVersions.checkApiInImpl = false
     CodeGeneratorVersions.checkImplInImpl = false
 
-    //enableKotlinOfficialCodeStyle(project)
     val jdk = IdeaTestUtil.getMockJdk21()
     writeAction {
       ProjectJdkTable.getInstance().addJdk(jdk, disposable.get())
@@ -223,12 +222,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
       VfsUtil.copyDirectory(this, ultimateSourceRootPath, actualSrcRoot, null)
     }
 
-    writeAction {
-      val mergedEditorconfigContent = mergeEditorconfigsUpToTheDirectory(ultimateSourceRoot)!!
-
-      val editorconfigFile = projectRoot.findOrCreateChildData(this@AbstractAllIntellijEntitiesGenerationTest, ".editorconfig")
-      VfsUtil.saveText(editorconfigFile, mergedEditorconfigContent)
-    }
+    configureFormatting(ultimateSourceRoot)
 
     val isTestModule = ultimateSourceRoot.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID
     val libraries = LibrariesRequiredForWorkspace.getRelatedLibraries(ultimateModuleEntity.name)
@@ -266,6 +260,22 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
       (jpsProjectSerializer as JpsProjectSerializersImpl).saveAffectedEntities(ultimateStorage,
                                                                                setOf(ultimateModuleEntity.entitySource),
                                                                                createProjectConfigLocation())
+    }
+  }
+
+  private suspend fun configureFormatting(ultimateSourceRoot: SourceRootEntity) {
+    EditorConfigCodeStyleSettingsModifier.Handler.setEnabledInTests(true)
+    Utils.isEnabledInTests = true
+
+    writeAction {
+      // .idea/codeStyles contains default code style that is used for parameters not defined in editorconfig
+      val ultimateRoot = VfsUtil.findFile(Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()), true)!!
+      VfsUtil.copyDirectory(this, ultimateRoot.findDirectory(".idea/codeStyles")!!, projectRoot.findOrCreateDirectory(".idea/codeStyles"), null)
+
+      val mergedEditorconfigContent = mergeEditorconfigsUpToTheDirectory(ultimateSourceRoot)!!
+
+      val editorconfigFile = projectRoot.findOrCreateChildData(this@AbstractAllIntellijEntitiesGenerationTest, ".editorconfig")
+      VfsUtil.saveText(editorconfigFile, mergedEditorconfigContent)
     }
   }
 
