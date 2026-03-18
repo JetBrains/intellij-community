@@ -180,6 +180,7 @@ data class XDebugSessionState(
   val isStepOverActionAllowed: Boolean,
   val isStepOutActionAllowed: Boolean,
   val isRunToCursorActionAllowed: Boolean,
+  val isForceStepIntoActionAllowed: Boolean,
 )
 
 @ApiStatus.Internal

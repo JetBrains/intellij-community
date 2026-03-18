@@ -24,4 +24,8 @@ private val ourHandler = object : XDebuggerProxySuspendedActionHandler() {
       session.stepInto(ignoreBreakpoints = true)
     }
   }
+
+  override fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean {
+    return super.isEnabled(session, dataContext) && session.isForceStepIntoActionAllowed
+  }
 }
