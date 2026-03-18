@@ -21,11 +21,13 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.ast.PyAstCaseClause;
 import com.jetbrains.python.ast.PyAstClass;
 import com.jetbrains.python.ast.PyAstElement;
 import com.jetbrains.python.ast.PyAstFile;
 import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.ast.PyAstLoopStatement;
+import com.jetbrains.python.ast.PyAstMatchStatement;
 import com.jetbrains.python.ast.PyAstPassStatement;
 import com.jetbrains.python.ast.PyAstStatement;
 import com.jetbrains.python.ast.PyAstStatementList;
@@ -43,6 +45,13 @@ import org.jetbrains.annotations.Nullable;
  * User : ktisha
  */
 public class PyStatementMover extends LineMover {
+  private static @Nullable PyAstCaseClause getCaseClauseIfOnHeader(@NotNull PsiElement element) {
+    PyAstCaseClause caseClause = PsiTreeUtil.getParentOfType(element, PyAstCaseClause.class, false);
+    if (caseClause == null) return null;
+    PyAstStatementList body = caseClause.getStatementList();
+    return PsiTreeUtil.isAncestor(body, element, false) ? null : caseClause;
+  }
+
   @Override
   public boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
     if (!(file instanceof PyAstFile)) return false;
@@ -65,8 +74,10 @@ public class PyStatementMover extends LineMover {
 
     if (ifInsideString(document, lineNumber, elementToMove1, down)) return false;
 
-    elementToMove1 = getCommentOrStatement(document, elementToMove1);
-    elementToMove2 = getCommentOrStatement(document, elementToMove2);
+    PyAstCaseClause caseClause1 = getCaseClauseIfOnHeader(elementToMove1);
+    elementToMove1 = caseClause1 != null ? caseClause1 : getCommentOrStatement(document, elementToMove1);
+    PyAstCaseClause caseClause2 = getCaseClauseIfOnHeader(elementToMove2);
+    elementToMove2 = caseClause2 != null ? caseClause2 : getCommentOrStatement(document, elementToMove2);
 
     if (PsiTreeUtil.isAncestor(elementToMove1, elementToMove2, false)) {
       elementToMove2 = elementToMove1;
@@ -121,6 +132,16 @@ public class PyStatementMover extends LineMover {
     final int startOffset = document.getLineStartOffset(lineNumber);
 
     final PyAstStatementList statementList = getStatementList(elementToMove);
+
+    if (elementToMove instanceof PyAstCaseClause) {
+      PsiElement parent = elementToMove.getParent();
+      if (!(parent instanceof PyAstMatchStatement)) return null;
+      PyAstCaseClause sibling = down
+                                ? PsiTreeUtil.getNextSiblingOfType(elementToMove, PyAstCaseClause.class)
+                                : PsiTreeUtil.getPrevSiblingOfType(elementToMove, PyAstCaseClause.class);
+      if (sibling == null) return null; // first clause moving up or last clause moving down
+      return new ScopeRange((PyAstElement)parent, sibling, !down, true);
+    }
 
     final PsiElement destination = getDestinationElement(elementToMove, document, lineEndOffset, down);
 
@@ -178,7 +199,7 @@ public class PyStatementMover extends LineMover {
   private static PyAstStatementList getStatementList(final @NotNull PsiElement elementToMove) {
     return PsiTreeUtil.getParentOfType(elementToMove, PyAstStatementList.class, true,
                                                                 PyAstStatementWithElse.class, PyAstLoopStatement.class,
-                                                                PyAstFunction.class, PyAstClass.class);
+                                       PyAstFunction.class, PyAstClass.class);
   }
 
   private static @Nullable ScopeRange moveOut(final @NotNull PsiElement elementToMove, final @NotNull Editor editor, boolean down) {

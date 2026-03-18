@@ -287,4 +287,29 @@ public class PyStatementMoverTest extends PyTestCase {
   public void testWith() { // PY-5202
     runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
+
+  // PY-48761
+  public void testMatchCaseMiddleClause() {
+    doTest();
+  }
+
+  // PY-48761
+  public void testMatchCaseFirstClause() {
+    doTest();
+  }
+
+  // PY-48761
+  public void testMatchCaseLastClause() {
+    doTest();
+  }
+
+  // PY-48761
+  public void testMatchCaseMultiStatementClause() {
+    doTest();
+  }
+
+  // PY-48761
+  public void testMatchCaseStatementInBody() {
+    doTest();
+  }
 }
