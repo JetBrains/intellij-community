@@ -1,10 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.CustomWrap;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LanguageLineWrapPositionStrategy;
 import com.intellij.openapi.editor.LineWrapPositionStrategy;
 import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.impl.softwrap.CustomWrapToSoftWrapAdapter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
@@ -21,6 +23,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.openapi.editor.impl.softwrap.CustomWrapToSoftWrapAdapter.*;
 
 /**
  * Class that calculates soft wrap positions for a given text fragment and available visible width.
@@ -74,8 +78,10 @@ public final class SoftWrapEngine {
       myEditor.getInlayModel().getAfterLineEndElementsInRange(DocumentUtil.getLineStartOffset(startOffset, myDocument), maxEndOffset),
       inlay -> !inlay.getProperties().isSoftWrappingDisabled()
     );
+    var customWraps = myEditor.getCustomWrapModel().getWrapsInRange(startOffset, maxEndOffset);
+
     var grid = myEditor.getCharacterGrid();
-    if (grid != null && inlineInlays.isEmpty() && afterLineEndInlays.isEmpty()) {
+    if (grid != null && inlineInlays.isEmpty() && afterLineEndInlays.isEmpty() && customWraps.isEmpty()) {
       generateGridSoftWraps(grid, startOffset, minEndOffset, maxEndOffset);
       return;
     }
@@ -96,8 +102,17 @@ public final class SoftWrapEngine {
       x = lastSoftWrap == null ? 0 : lastSoftWrap.getIndentInPixels();
     }
 
-    WrapElementMeasuringIterator it = new WrapElementMeasuringIterator(myView, startOffset, maxEndOffset, inlineInlays, afterLineEndInlays);
+    WrapElementMeasuringIterator it =
+      new WrapElementMeasuringIterator(myView, startOffset, maxEndOffset, inlineInlays, afterLineEndInlays, customWraps);
     while (!it.atEnd()) {
+      if (it.isAtCustomWrap()) {
+        minWrapOffset = -1;
+        maxWrapOffset = -1;
+        CustomWrap customWrap = it.getCurrentCustomWrap();
+        var customWrapAdapter = new CustomWrapToSoftWrapAdapter(customWrap, Type.DEFAULT, myEditor);
+        x = customWrapAdapter.getIndentInPixels();
+        myStorage.storeOrReplace(customWrapAdapter);
+      }
       if (it.isLineBreak()) {
         minWrapOffset = -1;
         maxWrapOffset = -1;
@@ -176,6 +191,7 @@ public final class SoftWrapEngine {
     return result;
   }
 
+  // the returned offset is in [minOffset; maxOffset], possibly in [minOffset-1; maxOffset] due to a surrogate pair
   private int calcSoftWrapOffset(int minOffset, int maxOffset, boolean preferMinOffset) {
     if (myLineWrapPositionStrategy == null) {
       myLineWrapPositionStrategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(myEditor);

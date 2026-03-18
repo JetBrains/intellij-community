@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CustomWrap;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.EditorThreading;
@@ -23,13 +24,14 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.CompositeSoftWrapPainter;
-import com.intellij.openapi.editor.impl.softwrap.DefaultSoftWrapRecalculationManager;
-import com.intellij.openapi.editor.impl.softwrap.NoopRecalculationManager;
+import com.intellij.openapi.editor.impl.softwrap.CustomWrapOnlyRecalculationManager;
+import com.intellij.openapi.editor.impl.softwrap.CustomWrapToSoftWrapAdapter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapEx;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapNotifier;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapRecalculationManager;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrappingEnabledRecalculationManager;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapParsingListener;
@@ -71,7 +73,8 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
    * {@code myRecalculationManager} is kept in sync with {@link #myUseSoftWraps}.
    */
   private SoftWrapRecalculationManager myRecalculationManager;
-  private final DefaultSoftWrapRecalculationManager myDefaultRecalculationManager;
+  private final SoftWrappingEnabledRecalculationManager mySoftWrappingRecalculationManager;
+  private final CustomWrapOnlyRecalculationManager myCustomWrapOnlyRecalculationManager;
 
   private final SoftWrapsStorage storage;
   private       SoftWrapPainter                    myPainter;
@@ -91,14 +94,15 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
     storage = new SoftWrapsStorage();
     mySoftWrapNotifier = new SoftWrapNotifier();
     myPainter = new CompositeSoftWrapPainter(editor);
-    myDefaultRecalculationManager = new DefaultSoftWrapRecalculationManager(editor, storage, myPainter, mySoftWrapNotifier);
+    mySoftWrappingRecalculationManager = new SoftWrappingEnabledRecalculationManager(editor, storage, myPainter, mySoftWrapNotifier);
+    myCustomWrapOnlyRecalculationManager = new CustomWrapOnlyRecalculationManager(editor, storage, mySoftWrapNotifier);
 
     if (!editor.getSettings().isUseSoftWraps() && shouldSoftWrapsBeForced()) {
       forceSoftWraps();
     }
 
     myUseSoftWraps = areSoftWrapsEnabledInEditor();
-    myRecalculationManager = myUseSoftWraps ? myDefaultRecalculationManager : NoopRecalculationManager.INSTANCE;
+    reinitRecalculationManager();
 
     this.editor.getColorsScheme().getFontPreferences().copyTo(myFontPreferences);
 
@@ -106,6 +110,18 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
 
     this.editor.getInlayModel().addListener(this, this);
   }
+
+  private void reinitRecalculationManager() {
+    if (myRecalculationManager instanceof SoftWrappingEnabledRecalculationManager manager) {
+      mySoftWrapNotifier.removeSoftWrapParsingListener(manager.myDataMapper);
+    }
+    myRecalculationManager = myUseSoftWraps ? mySoftWrappingRecalculationManager : myCustomWrapOnlyRecalculationManager;
+    if (myRecalculationManager instanceof SoftWrappingEnabledRecalculationManager manager) {
+      // CachingSoftWrapDataMapper must be the first to run
+      mySoftWrapNotifier.addFirstSoftWrapParsingListener(manager.myDataMapper);
+    }
+  }
+
 
   private void forceSoftWraps() {
     EditorSettings editorSettings = editor.getSettings();
@@ -120,7 +136,7 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
 
     editor.putUserData(EditorImpl.FORCED_SOFT_WRAPS, Boolean.TRUE);
     myUseSoftWraps = areSoftWrapsEnabledInEditor();
-    myRecalculationManager = myUseSoftWraps ? myDefaultRecalculationManager : NoopRecalculationManager.INSTANCE;
+    reinitRecalculationManager();
     Project project = editor.getProject();
     VirtualFile file = editor.getVirtualFile();
     if (project != null && file != null) {
@@ -196,7 +212,7 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
     }
     if (needsReinit) {
       myRecalculationManager.reset();
-      myRecalculationManager = myUseSoftWraps ? myDefaultRecalculationManager : NoopRecalculationManager.INSTANCE;
+      reinitRecalculationManager();
       storage.removeAll();
       mySoftWrapNotifier.notifySoftWrapsChanged();
       editor.myView.reinitSettings();
@@ -224,8 +240,9 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
   }
 
   @Override
-  public @Nullable SoftWrap getSoftWrap(int offset) {
-    if (!isSoftWrappingEnabled()) {
+  @ApiStatus.Internal
+  public @Nullable SoftWrapEx getSoftWrapEx(int offset) {
+    if (!isSoftWrappingEnabled() && !editor.getCustomWrapModel().hasWraps()) {
       return null;
     }
     return storage.getSoftWrap(offset);
@@ -233,7 +250,7 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
 
   @Override
   public int getSoftWrapIndex(int offset) {
-    if (!isSoftWrappingEnabled()) {
+    if (!isSoftWrappingEnabled() && !editor.getCustomWrapModel().hasWraps()) {
       return -1;
     }
     return storage.getSoftWrapIndex(offset);
@@ -241,7 +258,7 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
 
   @Override
   public @NotNull List<? extends SoftWrap> getSoftWrapsForRange(int start, int end) {
-    if (!isSoftWrappingEnabled() || end < start) {
+    if (!isSoftWrappingEnabled() && !editor.getCustomWrapModel().hasWraps() || end < start) {
       return Collections.emptyList();
     }
 
@@ -267,7 +284,7 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
 
   @Override
   public @NotNull List<? extends SoftWrap> getSoftWrapsForLine(int documentLine) {
-    if (!isSoftWrappingEnabled() || documentLine < 0) {
+    if (!isSoftWrappingEnabled() && !editor.getCustomWrapModel().hasWraps() || documentLine < 0) {
       return Collections.emptyList();
     }
     if (documentLine >= document.getLineCount()) {
@@ -291,12 +308,13 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
   }
 
   @Override
-  public List<? extends SoftWrap> getRegisteredSoftWraps() {
-    if (!isSoftWrappingEnabled()) {
+  @ApiStatus.Internal
+  public @NotNull List<? extends SoftWrapEx> getRegisteredSoftWrapsEx() {
+    if (!isSoftWrappingEnabled() && !editor.getCustomWrapModel().hasWraps()) {
       return Collections.emptyList();
     }
-    List<SoftWrapImpl> softWraps = storage.getSoftWraps();
-    if (!softWraps.isEmpty() && softWraps.get(softWraps.size() - 1).getStart() >= document.getTextLength()) {
+    List<? extends SoftWrapEx> softWraps = storage.getSoftWraps();
+    if (!softWraps.isEmpty() && softWraps.getLast().getStart() >= document.getTextLength()) {
       LOG.error("Unexpected soft wrap location", new Attachment("editorState.txt", editor.dumpState()));
     }
     return softWraps;
@@ -381,7 +399,7 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
   }
 
   private boolean isInsideSoftWrap(@NotNull VisualPosition visual, boolean countBeforeSoftWrap) {
-    if (!isSoftWrappingEnabled()) {
+    if (!isSoftWrappingEnabled() && !editor.getCustomWrapModel().hasWraps()) {
       return false;
     }
     int offset = editor.visualPositionToOffset(visual);
@@ -419,6 +437,9 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
     if (softWrap == null) {
       return;
     }
+    if (softWrap instanceof CustomWrapToSoftWrapAdapter customWrap) {
+      editor.getCustomWrapModel().removeWrap(customWrap.getCustomWrap());
+    }
 
     document.replaceString(softWrap.getStart(), softWrap.getEnd(), softWrap.getText());
     caretModel.moveToVisualPosition(visualCaretPosition);
@@ -448,61 +469,61 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
 
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent event) {
-    myDefaultRecalculationManager.myAfterLineEndInlayUpdated = false;
-    if (myDefaultRecalculationManager.myBulkUpdateInProgress) {
+    mySoftWrappingRecalculationManager.myAfterLineEndInlayUpdated = false;
+    if (mySoftWrappingRecalculationManager.myBulkUpdateInProgress) {
       return;
     }
-    myDefaultRecalculationManager.myUpdateInProgress = true;
+    mySoftWrappingRecalculationManager.myDocumentUpdateInProgress = true;
     myRecalculationManager.beforeDocumentChange(event);
   }
 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
-    if (myDefaultRecalculationManager.myBulkUpdateInProgress) {
+    if (mySoftWrappingRecalculationManager.myBulkUpdateInProgress) {
       return;
     }
-    myDefaultRecalculationManager.myUpdateInProgress = false;
+    mySoftWrappingRecalculationManager.myDocumentUpdateInProgress = false;
     if (!myUseSoftWraps) {
       if (shouldSoftWrapsBeForced(event)) {
         forceSoftWraps();
         if (myUseSoftWraps) {
-          assert myRecalculationManager instanceof DefaultSoftWrapRecalculationManager : "soft-wraps were not forced correctly";
-          var recalcManager = (DefaultSoftWrapRecalculationManager)myRecalculationManager;
-          recalcManager.recalculateAll();
+          assert myRecalculationManager instanceof SoftWrappingEnabledRecalculationManager : "soft-wraps were not forced correctly";
+          var recalculationManager = (SoftWrappingEnabledRecalculationManager)myRecalculationManager;
+          recalculationManager.recalculateAll();
           return;
         }
       }
-      return;
     }
     myRecalculationManager.documentChanged(event);
   }
 
   @Override
   void onBulkDocumentUpdateStarted() {
-    myDefaultRecalculationManager.myBulkUpdateInProgress = true;
+    mySoftWrappingRecalculationManager.myBulkUpdateInProgress = true;
+    myRecalculationManager.onBulkDocumentUpdateStarted();
   }
 
   @Override
   void onBulkDocumentUpdateFinished() {
-    myDefaultRecalculationManager.myBulkUpdateInProgress = false;
+    mySoftWrappingRecalculationManager.myBulkUpdateInProgress = false;
     if (!myUseSoftWraps && shouldSoftWrapsBeForced()) {
       forceSoftWraps();
     }
-    myRecalculationManager.recalculate();
+    myRecalculationManager.onBulkDocumentUpdateFinished();
   }
 
   @Override
   public void onFoldRegionStateChange(@NotNull FoldRegion region) {
-    myDefaultRecalculationManager.myUpdateInProgress = true;
+    mySoftWrappingRecalculationManager.myFoldingUpdateInProgress = true;
     if (!myUseSoftWraps) {
-      myDefaultRecalculationManager.myDirty = true;
+      mySoftWrappingRecalculationManager.myDirty = true;
     }
     myRecalculationManager.onFoldRegionStateChange(region);
   }
 
   @Override
   public void onFoldProcessingEnd() {
-    myDefaultRecalculationManager.myUpdateInProgress = false;
+    mySoftWrappingRecalculationManager.myFoldingUpdateInProgress = false;
     myRecalculationManager.onFoldProcessingEnd();
   }
 
@@ -514,8 +535,8 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
       return;
     }
     if (editor.getInlayModel().isInBatchMode()) {
-      myDefaultRecalculationManager.myInlayChangedInBatchMode = true;
-      if (myRecalculationManager instanceof DefaultSoftWrapRecalculationManager) {
+      mySoftWrappingRecalculationManager.myInlayChangedInBatchMode = true;
+      if (myRecalculationManager instanceof SoftWrappingEnabledRecalculationManager) {
         return;
       }
     }
@@ -551,7 +572,7 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
 
   @Override
   public SoftWrapApplianceManager getApplianceManager() {
-    return myDefaultRecalculationManager.getApplianceManager();
+    return mySoftWrappingRecalculationManager.getApplianceManager();
   }
 
   @Override
@@ -559,7 +580,7 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
   @ApiStatus.Experimental
   public void setSoftWrapPainter(SoftWrapPainter painter) {
     myPainter = painter;
-    myRecalculationManager.setSoftWrapPainter(painter);
+    mySoftWrappingRecalculationManager.setSoftWrapPainter(painter);
     reinitSettings();
   }
 
@@ -568,11 +589,13 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
     return String.format("""
 
                            use soft wraps: %b, tab width: %d, additional columns: %b
-                           default recalculation manager state: %s
+                           soft-wrapping recalculation manager state: %s
+                           custom-wrap-only recalculation manager state: %s
                            recalculation manager type: %s
                            soft wraps: %s""",
                          myUseSoftWraps, myTabWidth, myForceAdditionalColumns,
-                         myDefaultRecalculationManager.dumpState(),
+                         mySoftWrappingRecalculationManager.dumpState(),
+                         myCustomWrapOnlyRecalculationManager.dumpState(),
                          myRecalculationManager.dumpName(),
                          storage.dumpState());
   }
@@ -608,5 +631,23 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
                      "Soft wrap inside a surrogate pair or inside a line break");
       lastSoftWrapOffset = softWrapOffset;
     }
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public void customWrapAdded(@NotNull CustomWrap wrap) {
+    myRecalculationManager.customWrapAdded(wrap);
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public void customWrapRemoved(@NotNull CustomWrap wrap) {
+    myRecalculationManager.customWrapRemoved(wrap);
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void customWrapsMerged() {
+    myRecalculationManager.customWrapsMerged();
   }
 }

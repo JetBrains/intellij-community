@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.softwrap;
 
+import com.intellij.openapi.editor.CustomWrap;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
@@ -26,7 +27,7 @@ import java.util.Collections;
 import java.util.List;
 
 @ApiStatus.Internal
-public final class DefaultSoftWrapRecalculationManager extends SoftWrapRecalculationManager {
+public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecalculationManager {
   /**
    * There is a possible case that particular activity performs batch fold regions operations (addition, removal etc.).
    * We don't want to process them at the same time we get notifications about that because there is a big chance that
@@ -37,7 +38,8 @@ public final class DefaultSoftWrapRecalculationManager extends SoftWrapRecalcula
    */
   private final List<Segment> deferredFoldRegions = new ArrayList<>();
 
-  private final CachingSoftWrapDataMapper myDataMapper;
+  // visible for ExperimentalSoftWrapModelImpl#reinitRecalculationManager
+  public final CachingSoftWrapDataMapper myDataMapper;
   private final SoftWrapApplianceManager myApplianceManager;
   private final SoftWrapsStorage myStorage;
   private final @NotNull DocumentEx myDocument;
@@ -46,16 +48,29 @@ public final class DefaultSoftWrapRecalculationManager extends SoftWrapRecalcula
 
 
   /**
-   * Soft wraps need to be kept up-to-date on all editor modification (changing text, adding/removing/expanding/collapsing fold
-   * regions etc.). Hence, we need to react to all types of target changes. However, soft wraps processing uses various information
-   * provided by editor and there is a possible case that that information is inconsistent during update time (e.g., fold model
-   * advances fold region offsets when end-user types before it, hence, fold regions data is inconsistent between the moment
+   * Soft wraps must be kept up to date on document changes.
+   * During document update processing, editor state used by soft wraps can be transiently inconsistent
+   * (e.g., fold model advances fold region offsets when end-user types before it;
+   * hence, fold regions data is inconsistent between the moment
    * when text changes are applied to the document and fold data is actually updated).
-   * <p/>
-   * Current field serves as a flag that indicates if all preliminary actions necessary for successful soft wraps processing is done.
+   * <p>
+   * This flag indicates that soft wrap recalculations should wait until the document update is processed.
+   * <p>
+   * We avoid relying on {@link DocumentEx#isInEventsHandling()} which is not granular enough:
+   * less prioritized {@link com.intellij.openapi.editor.event.DocumentListener} instances
+   * may safely trigger soft-wrap recalculation on document events.
    */
   @ApiStatus.Internal
-  public boolean myUpdateInProgress;
+  public boolean myDocumentUpdateInProgress;
+
+  /**
+   * Soft wraps also depend on folding-related updates: adding/removing/expanding/collapsing.
+   * Folding model can report individual region changes before it reaches a consistent final state.
+   * <p>
+   * This flag indicates that soft wrap processing should wait until fold processing is finished.
+   */
+  @ApiStatus.Internal
+  public boolean myFoldingUpdateInProgress;
 
   @ApiStatus.Internal
   public boolean myBulkUpdateInProgress;
@@ -78,12 +93,12 @@ public final class DefaultSoftWrapRecalculationManager extends SoftWrapRecalcula
   public boolean myInlayChangedInBatchMode;
 
   @ApiStatus.Internal
-  public DefaultSoftWrapRecalculationManager(@NotNull EditorImpl editor,
-                                             @NotNull SoftWrapsStorage storage,
-                                             @NotNull SoftWrapPainter painter,
-                                             @NotNull SoftWrapNotifier softWrapNotifier) {
+  public SoftWrappingEnabledRecalculationManager(@NotNull EditorImpl editor,
+                                                 @NotNull SoftWrapsStorage storage,
+                                                 @NotNull SoftWrapPainter painter,
+                                                 @NotNull SoftWrapNotifier softWrapNotifier) {
     myEditor = editor;
-    myDocument = editor.getUiDocument();
+    myDocument = editor.getElfDocument();
     myStorage = storage;
     mySoftWrapNotifier = softWrapNotifier;
     myDataMapper = new CachingSoftWrapDataMapper(editor, storage, softWrapNotifier);
@@ -94,7 +109,6 @@ public final class DefaultSoftWrapRecalculationManager extends SoftWrapRecalcula
         mySoftWrapNotifier.notifySoftWrapRecalculationEnds();
       }
     });
-    mySoftWrapNotifier.addSoftWrapParsingListener(myDataMapper);
   }
 
   /**
@@ -103,9 +117,8 @@ public final class DefaultSoftWrapRecalculationManager extends SoftWrapRecalcula
    * not to be used).
    */
   @Override
-  @ApiStatus.Internal
   public void prepareToMapping() {
-    if (myUpdateInProgress || myBulkUpdateInProgress || myEditor.isPurePaintingMode()) {
+    if (myDocumentUpdateInProgress || myFoldingUpdateInProgress || myBulkUpdateInProgress || myEditor.isPurePaintingMode()) {
       return;
     }
 
@@ -120,8 +133,6 @@ public final class DefaultSoftWrapRecalculationManager extends SoftWrapRecalcula
     myApplianceManager.recalculateIfNecessary();
   }
 
-  // TODO: it is doing stuff even if soft-wrapping is disabled ...
-
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent event) {
     if (myEditor.isPurePaintingMode()) {
@@ -133,6 +144,16 @@ public final class DefaultSoftWrapRecalculationManager extends SoftWrapRecalcula
 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
+    if (myEditor.getCustomWrapModel().hasWraps() && DocumentEventUtil.isMoveInsertion(event)) {
+      int dstOffset = event.getOffset();
+      int srcOffset = event.getMoveOffset();
+      if (dstOffset < srcOffset) {
+        // offset before the insertion of the moved fragment, which corresponds to current state in storage
+        int srcOffsetBefore = srcOffset - event.getNewLength();
+        // they will be reinserted by recalculation for the following move deletion
+        myStorage.removeCustomWrapsInRange(srcOffsetBefore, srcOffset);
+      }
+    }
     myApplianceManager.documentChanged(event, myAfterLineEndInlayUpdated);
     if (DocumentEventUtil.isMoveInsertion(event)) {
       int dstOffset = event.getOffset();
@@ -142,6 +163,15 @@ public final class DefaultSoftWrapRecalculationManager extends SoftWrapRecalcula
       myApplianceManager.recalculate(Arrays.asList(new TextRange(srcOffset, Math.min(textLength, srcOffset + event.getNewLength() + 1)),
                                                    new TextRange(dstOffset, Math.min(textLength, dstOffset + event.getNewLength() + 1))));
     }
+  }
+
+  @Override
+  public void onBulkDocumentUpdateStarted() {
+  }
+
+  @Override
+  public void onBulkDocumentUpdateFinished() {
+    recalculate();
   }
 
   @Override
@@ -219,12 +249,6 @@ public final class DefaultSoftWrapRecalculationManager extends SoftWrapRecalcula
     return tabWidthChanged || fontChanged;
   }
 
-  @Override
-  public @NotNull SoftWrapPainter getSoftWrapPainter() {
-    return myApplianceManager.getSoftWrapPainter();
-  }
-
-  @Override
   public void setSoftWrapPainter(@NotNull SoftWrapPainter painter) {
     myApplianceManager.setSoftWrapPainter(painter);
   }
@@ -266,10 +290,10 @@ public final class DefaultSoftWrapRecalculationManager extends SoftWrapRecalcula
   public @NotNull String dumpState() {
     return String.format(
       """
-        update in progress: %b, bulk update in progress: %b, dirty: %b, deferred regions: %s
+        document update in progress: %b, folding update in progress: %b,bulk update in progress: %b, dirty: %b, deferred regions: %s
         appliance manager state: %s
         soft wraps mapping info: %s""",
-      myUpdateInProgress, myBulkUpdateInProgress, myDirty, deferredFoldRegions,
+      myDocumentUpdateInProgress, myFoldingUpdateInProgress, myBulkUpdateInProgress, myDirty, deferredFoldRegions,
       myApplianceManager.dumpState(),
       myDataMapper.dumpState());
   }
@@ -277,5 +301,19 @@ public final class DefaultSoftWrapRecalculationManager extends SoftWrapRecalcula
   @Override
   public @NotNull String dumpName() {
     return "default";
+  }
+
+  @Override
+  public void customWrapAdded(@NotNull CustomWrap wrap) {
+    myApplianceManager.recalculate(Collections.singletonList(new TextRange(wrap.getOffset(), wrap.getOffset())));
+  }
+
+  @Override
+  public void customWrapRemoved(@NotNull CustomWrap wrap) {
+    if (myDocumentUpdateInProgress) {
+      // wrap was removed due to a document change, recalculation will be handled in #documentChanged
+      return;
+    }
+    myApplianceManager.recalculate(Collections.singletonList(new TextRange(wrap.getOffset(), wrap.getOffset())));
   }
 }

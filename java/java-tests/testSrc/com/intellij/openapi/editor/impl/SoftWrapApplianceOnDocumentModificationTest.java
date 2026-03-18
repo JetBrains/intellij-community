@@ -495,6 +495,19 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     checkSoftWraps(41, 65, 89, 107);
   }
 
+  public void testCustomWrapWithSoftWrapsDisabled() {
+    String text = "0123456789";
+    init(100, text);
+
+    EditorSettings settings = getEditor().getSettings();
+    settings.setUseSoftWraps(false);
+
+    int wrapOffset = 5;
+    assertNotNull(getEditor().getCustomWrapModel().addWrap(wrapOffset, 0, 0));
+    assertNotNull(getEditor().getSoftWrapModel().getSoftWrap(wrapOffset));
+    ((EditorImpl)getEditor()).validateState();
+  }
+
   public void testEndProcessing() {
     String text =
       """

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CustomWrap;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.EditorThreading;
@@ -26,8 +27,8 @@ import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.CompositeSoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapEx;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapNotifier;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
@@ -260,7 +261,7 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
   }
 
   @Override
-  public @Nullable SoftWrap getSoftWrap(int offset) {
+  public @Nullable SoftWrapEx getSoftWrapEx(int offset) {
     if (!isSoftWrappingEnabled()) {
       return null;
     }
@@ -327,12 +328,12 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
   }
 
   @Override
-  public List<? extends SoftWrap> getRegisteredSoftWraps() {
+  public @NotNull List<? extends SoftWrapEx> getRegisteredSoftWrapsEx() {
     if (!isSoftWrappingEnabled()) {
       return Collections.emptyList();
     }
-    List<SoftWrapImpl> softWraps = storage.getSoftWraps();
-    if (!softWraps.isEmpty() && softWraps.get(softWraps.size() - 1).getStart() >= document.getTextLength()) {
+    List<SoftWrapEx> softWraps = storage.getSoftWraps();
+    if (!softWraps.isEmpty() && softWraps.getLast().getStart() >= document.getTextLength()) {
       LOG.error("Unexpected soft wrap location", new Attachment("editorState.txt", editor.dumpState()));
     }
     return softWraps;
@@ -710,5 +711,25 @@ public final class LegacySoftWrapModelImpl extends SoftWrapModelImpl {
                      "Soft wrap inside a surrogate pair or inside a line break");
       lastSoftWrapOffset = softWrapOffset;
     }
+  }
+
+  @Override
+  public void customWrapAdded(@NotNull CustomWrap wrap) {
+    logIllegalCustomWrapsCallback();
+  }
+
+  @Override
+  public void customWrapRemoved(@NotNull CustomWrap wrap) {
+    logIllegalCustomWrapsCallback();
+  }
+
+  @Override
+  public void customWrapsMerged() {
+    logIllegalCustomWrapsCallback();
+  }
+
+  private void logIllegalCustomWrapsCallback() {
+    LOG.error("unexpected handler for custom-wraps callback: legacy soft wraps implementation does not support custom wraps",
+              new Attachment("editorState.txt", editor.dumpState()));
   }
 }

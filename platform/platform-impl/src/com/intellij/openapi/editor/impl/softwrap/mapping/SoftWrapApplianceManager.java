@@ -160,6 +160,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
       return;
     }
 
+    // Sorts ranges by start offset ascending, then by end offset descending
     ranges = ContainerUtil.sorted(ranges, (o1, o2) -> {
       int startDiff = o1.getStartOffset() - o2.getStartOffset();
       return startDiff == 0 ? o2.getEndOffset() - o1.getEndOffset() : startDiff;

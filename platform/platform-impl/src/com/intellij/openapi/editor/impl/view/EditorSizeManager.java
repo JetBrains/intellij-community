@@ -563,6 +563,14 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
     if (checkDirty()) return;
     int startVisualLine = myView.offsetToVisualLine(startOffset, false);
     int endVisualLine = myView.offsetToVisualLine(endOffset, true);
+    if (startVisualLine > endVisualLine) {
+      // If startOffset = endOffset and there's a soft-wrap at this offset, startVisualLine > endVisualLine.
+      // In this case, we need to invalidate both of the visual lines.
+      int tmp = startVisualLine;
+      startVisualLine = endVisualLine;
+      endVisualLine = tmp;
+    }
+
     int lineDiff = myView.getVisibleLineCount() - myLineWidths.size();
     invalidateWidth(lineDiff == 0 && startVisualLine == endVisualLine, startVisualLine);
     if (lineDiff > 0) {

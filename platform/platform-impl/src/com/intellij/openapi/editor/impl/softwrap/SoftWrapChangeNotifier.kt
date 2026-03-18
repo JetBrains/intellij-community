@@ -26,6 +26,10 @@ internal class SoftWrapNotifier : SoftWrapChangeNotifier {
   // region SoftWrapParsingListener
   fun addSoftWrapParsingListener(listener: SoftWrapParsingListener): Boolean = softWrapParsingListeners.add(listener)
 
+  fun addFirstSoftWrapParsingListener(listener: SoftWrapParsingListener) {
+    softWrapParsingListeners.add(0, listener)
+  }
+
   fun removeSoftWrapParsingListener(listener: SoftWrapParsingListener): Boolean = softWrapParsingListeners.remove(listener)
 
   fun notifyAllDirtyRegionsReparsed() = softWrapParsingListeners.forEach { it.onAllDirtyRegionsReparsed() }

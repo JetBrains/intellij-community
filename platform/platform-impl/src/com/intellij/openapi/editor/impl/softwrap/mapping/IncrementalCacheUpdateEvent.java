@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,7 +15,8 @@ public final class IncrementalCacheUpdateEvent {
 
   private final int myLengthDiff;
 
-  IncrementalCacheUpdateEvent(int startOffset, int mandatoryEndOffset, int lengthDiff) {
+  @ApiStatus.Internal
+  public IncrementalCacheUpdateEvent(int startOffset, int mandatoryEndOffset, int lengthDiff) {
     myStartOffset = startOffset;
     myMandatoryEndOffset = mandatoryEndOffset;
     myLengthDiff = lengthDiff;
@@ -26,7 +28,8 @@ public final class IncrementalCacheUpdateEvent {
    *
    * @param document    target document to reparse
    */
-  static IncrementalCacheUpdateEvent forWholeDocument(@NotNull Document document) {
+  @ApiStatus.Internal
+  public static IncrementalCacheUpdateEvent forWholeDocument(@NotNull Document document) {
     return new IncrementalCacheUpdateEvent(0, document.getTextLength(), 0);
   }
 

@@ -7,9 +7,11 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.openapi.editor.impl.softwrap.CustomWrapToSoftWrapAdapter;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapEx;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.ScaleContext;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +50,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
 
   private final EditorView myView;
   private final Document myDocument;
-  private final SoftWrapModelEx mySoftWrapModel;
+  private final SoftWrapModelImpl mySoftWrapModel;
   private final FoldingModelEx myFoldingModel;
   private FoldRegion[] myRegions;
   private Fragment myFragment = new Fragment();
@@ -70,7 +72,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
   private int myCurrentStartLogicalLine;
   private int myCurrentStartLogicalLineStart;
   private int myCurrentEndLogicalLine;
-  private int myNextWrapOffset;
+  private SoftWrapEx myNextWrap;
   private ScaleContext myScaleContext;
 
   private VisualLineFragmentsIterator(EditorView view, int offset, boolean beforeSoftWrap, boolean align) {
@@ -136,11 +138,11 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     FoldingModelEx foldingModel = view.getFoldingModel();
     FoldRegion[] regions = foldingModel.fetchTopLevel();
     myRegions = regions == null ? FoldRegion.EMPTY_ARRAY : regions;
-    List<? extends SoftWrap> softWraps = mySoftWrapModel.getRegisteredSoftWraps();
-    SoftWrap currentOrPrevWrap = currentOrPrevWrapIndex < 0 || currentOrPrevWrapIndex >= softWraps.size() ? null :
-                                 softWraps.get(currentOrPrevWrapIndex);
-    SoftWrap followingWrap = currentOrPrevWrapIndex + 1 < 0 || currentOrPrevWrapIndex + 1 >= softWraps.size() ? null :
-                             softWraps.get(currentOrPrevWrapIndex + 1);
+    List<? extends SoftWrapEx> softWraps = mySoftWrapModel.getRegisteredSoftWrapsEx();
+    SoftWrapEx currentOrPrevWrap = currentOrPrevWrapIndex < 0 || currentOrPrevWrapIndex >= softWraps.size() ? null :
+                                   softWraps.get(currentOrPrevWrapIndex);
+    SoftWrapEx followingWrap = currentOrPrevWrapIndex + 1 < 0 || currentOrPrevWrapIndex + 1 >= softWraps.size() ? null :
+                               softWraps.get(currentOrPrevWrapIndex + 1);
 
     myVisualLineStartOffset = mySegmentStartOffset = startOffset;
 
@@ -154,23 +156,50 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       myCurrentX += alignToInt(currentOrPrevWrap.getIndentInPixels());
       myCurrentVisualColumn = currentOrPrevWrap.getIndentInColumns();
     }
-    myNextWrapOffset = followingWrap == null ? Integer.MAX_VALUE : followingWrap.getStart();
-    setInlaysAndFragmentIterator();
+    myNextWrap = followingWrap;
+    setInlaysAndFragmentIterator(currentOrPrevWrap);
   }
 
   private double alignToInt(int width) {
     return PaintUtil.alignToInt(width, myScaleContext);
   }
 
-  private void setInlaysAndFragmentIterator() {
+  private int getNextWrapOffset() {
+    return myNextWrap == null ? Integer.MAX_VALUE : myNextWrap.getStart();
+  }
+
+  private void setInlaysAndFragmentIterator(@Nullable SoftWrapEx startCustomWrap) {
     mySegmentEndOffset = getCurrentFoldRegionStartOffset();
     assert mySegmentEndOffset >= mySegmentStartOffset : assertMessage();
     if (mySegmentEndOffset > mySegmentStartOffset) {
-      mySegmentEndOffset = Math.min(myNextWrapOffset, Math.min(mySegmentEndOffset, myDocument.getLineEndOffset(myCurrentEndLogicalLine)));
-      boolean normalLineEnd = mySegmentEndOffset < getCurrentFoldRegionStartOffset() && mySegmentEndOffset < myNextWrapOffset;
+      mySegmentEndOffset = Math.min(getNextWrapOffset(), Math.min(mySegmentEndOffset, myDocument.getLineEndOffset(myCurrentEndLogicalLine)));
+      boolean normalLineEnd = mySegmentEndOffset < getCurrentFoldRegionStartOffset() &&
+                              (mySegmentEndOffset < getNextWrapOffset() || myNextWrap instanceof CustomWrapToSoftWrapAdapter);
       myInlays = myView.getInlayModel().getInlineElementsInRange(
         mySegmentStartOffset,
         mySegmentEndOffset - (normalLineEnd ? 0 : 1)); // including inlays at line end
+      if (myNextWrap instanceof CustomWrapToSoftWrapAdapter customWrap && customWrap.getStart() == mySegmentEndOffset) {
+        for (int i = myInlays.size() - 1; i >= 0; i--) {
+          Inlay<?> inlay = myInlays.get(i);
+          if (inlay.getOffset() < mySegmentEndOffset) {
+            break;
+          }
+          if (!inlay.isRelatedToPrecedingText()) {
+            myInlays.remove(i);
+          }
+        }
+      }
+      if (startCustomWrap instanceof CustomWrapToSoftWrapAdapter customWrap && customWrap.getStart() == mySegmentStartOffset) {
+        for (final var it = myInlays.iterator(); it.hasNext();) {
+          Inlay<?> inlay = it.next();
+          if (inlay.getOffset() > mySegmentStartOffset) {
+            break;
+          }
+          if (inlay.isRelatedToPrecedingText()) {
+            it.remove();
+          }
+        }
+      }
       if (myInlays.isEmpty() || myInlays.get(0).getOffset() > mySegmentStartOffset) {
         setFragmentIterator();
       }
@@ -193,7 +222,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       return Integer.MAX_VALUE;
     }
     int nextFoldingOffset = myRegions[myCurrentFoldRegionIndex].getStartOffset();
-    return nextFoldingOffset < myNextWrapOffset ? nextFoldingOffset : Integer.MAX_VALUE;
+    return nextFoldingOffset < getNextWrapOffset() ? nextFoldingOffset : Integer.MAX_VALUE;
   }
 
   private float getFoldRegionWidthInPixels() {
@@ -258,7 +287,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       myCurrentFoldRegionIndex++;
       myFragmentIterator = null;
       myCurrentInlayIndex = 0;
-      setInlaysAndFragmentIterator();
+      setInlaysAndFragmentIterator(null);
     }
     else if (myFragmentIterator == null) {
       myDelegate = null;

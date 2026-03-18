@@ -26,6 +26,7 @@ public final class EditorDocumentPriorities {
   public static final int EDITOR_TEXT_WIDTH_CACHE = 110;
   public static final int CARET_MODEL = 120;
   public static final int INLAY_MODEL = 150;
+  public static final int CUSTOM_WRAP_MODEL = 155;
   public static final int EDITOR_DOCUMENT_ADAPTER = 160;
 
   private EditorDocumentPriorities() {

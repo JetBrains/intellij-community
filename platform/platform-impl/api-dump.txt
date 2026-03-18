@@ -827,12 +827,15 @@ Fa:com.intellij.openapi.editor.impl.SoftWrapModelImpl
 - com.intellij.openapi.editor.InlayModel$SimpleAdapter
 - com.intellij.diagnostic.Dumpable
 - com.intellij.openapi.Disposable
+- com.intellij.openapi.editor.CustomWrapModel$Listener
 - com.intellij.openapi.editor.ex.FoldingListener
 - com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 - com.intellij.openapi.editor.ex.SoftWrapModelEx
 - java.beans.PropertyChangeListener
 - <init>():V
 - a:getApplianceManager():com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager
+- f:getRegisteredSoftWraps():java.util.List
+- f:getSoftWrap(I):com.intellij.openapi.editor.SoftWrap
 - a:isDirty():Z
 com.intellij.openapi.editor.impl.TextDrawingCallback
 - a:drawChars(java.awt.Graphics,C[],I,I,I,I,java.awt.Color,com.intellij.openapi.editor.impl.FontInfo):V
