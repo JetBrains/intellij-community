@@ -57,10 +57,17 @@ f:git4idea.changes.GitBranchComparisonResultKt
 - f:wrap(com.intellij.openapi.vcs.CheckoutProvider$Listener):git4idea.checkout.GitCheckoutListener
 *f:git4idea.commit.GitRecentCommitsProvider
 - *sf:Companion:git4idea.commit.GitRecentCommitsProvider$Companion
-- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
-- f:getRecentCommits(com.intellij.openapi.vfs.VirtualFile,I,kotlin.coroutines.Continuation):java.lang.Object
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,I,git4idea.commit.GitRecentCommitsProvider$UserScope,Z,Z):V
+- b:<init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,I,git4idea.commit.GitRecentCommitsProvider$UserScope,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getRecentCommits(com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 *f:git4idea.commit.GitRecentCommitsProvider$Companion
-- f:getInstance(com.intellij.openapi.project.Project):git4idea.commit.GitRecentCommitsProvider
+*e:git4idea.commit.GitRecentCommitsProvider$UserScope
+- java.lang.Enum
+- sf:ALL_USERS:git4idea.commit.GitRecentCommitsProvider$UserScope
+- sf:CURRENT_USER:git4idea.commit.GitRecentCommitsProvider$UserScope
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):git4idea.commit.GitRecentCommitsProvider$UserScope
+- s:values():git4idea.commit.GitRecentCommitsProvider$UserScope[]
 git4idea.push.GitPushListener
 - *:onCompleted(git4idea.repo.GitRepository,git4idea.push.GitPushRepoResult,java.util.Map):V
 f:git4idea.push.GitPushNotificationCustomizerKt
