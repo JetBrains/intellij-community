@@ -18,7 +18,7 @@ interface AmendCommitHandler {
   fun isAmendSpecificCommitSupported(): Boolean
   fun addAmendCommitModeListener(listener: AmendCommitModeListener, parent: Disposable)
 
-  suspend fun getAmendSpecificCommitTargets(limit: Int): List<CommitToAmend.Specific> = emptyList()
+  suspend fun getAmendSpecificCommitTargets(): List<CommitToAmend.Specific> = emptyList()
 }
 
 interface AmendCommitModeListener : EventListener {

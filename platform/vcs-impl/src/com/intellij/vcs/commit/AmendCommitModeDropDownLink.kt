@@ -28,7 +28,6 @@ internal class AmendCommitModeDropDownLink(val amendHandler: AmendCommitHandler)
   companion object {
     private const val LINK_TEXT_MAX: Int = 20
     private const val POPUP_TEXT_MAX: Int = 60
-    private const val COMMITS_LIMIT: Int = 20
 
     private fun itemToString(item: CommitToAmend): @Nls String = when (item) {
       is CommitToAmend.None -> error("There shouldn't be a None option in the popup")
@@ -70,7 +69,7 @@ internal class AmendCommitModeDropDownLink(val amendHandler: AmendCommitHandler)
 
       popup.content.launchOnShow("Amend targets fetcher") {
         updater.paintBusy(true)
-        val loaded = amendHandler.getAmendSpecificCommitTargets(COMMITS_LIMIT)
+        val loaded = amendHandler.getAmendSpecificCommitTargets()
         val newModel = listOf(CommitToAmend.Last) + loaded
         updater.replaceModel(newModel)
         updater.paintBusy(false)

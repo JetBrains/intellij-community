@@ -1,6 +1,6 @@
 f:git4idea.checkin.GitCheckinEnvironment
 - getAmendCommitDetails(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.commit.CommitToAmend):org.jetbrains.concurrency.CancellablePromise
-- getAmendSpecificCommitTargets(com.intellij.openapi.vfs.VirtualFile,I,kotlin.coroutines.Continuation):java.lang.Object
+- getAmendSpecificCommitTargets(com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 - isAmendSpecificCommitSupported():Z
 f:git4idea.checkin.GitCommitOptions
 - <init>(com.intellij.vcs.commit.CommitToAmend,Z,Z,com.intellij.vcs.log.VcsUser,java.util.Date,Z):V

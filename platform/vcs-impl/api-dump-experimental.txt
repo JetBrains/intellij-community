@@ -33,7 +33,7 @@
 - a:populateCache(com.intellij.openapi.vfs.VirtualFile):V
 *:com.intellij.vcs.commit.AmendCommitAware
 - a:getAmendCommitDetails(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.commit.CommitToAmend):org.jetbrains.concurrency.CancellablePromise
-- getAmendSpecificCommitTargets(com.intellij.openapi.vfs.VirtualFile,I,kotlin.coroutines.Continuation):java.lang.Object
+- getAmendSpecificCommitTargets(com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 - a:getLastCommitMessage(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - a:isAmendCommitSupported():Z
 - a:isAmendSpecificCommitSupported():Z

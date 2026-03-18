@@ -17,5 +17,5 @@ interface AmendCommitAware {
 
   fun getAmendCommitDetails(root: VirtualFile, commitToAmend: CommitToAmend): CancellablePromise<EditedCommitDetails>
 
-  suspend fun getAmendSpecificCommitTargets(root: VirtualFile, limit: Int): List<CommitToAmend.Specific>? = null
+  suspend fun getAmendSpecificCommitTargets(root: VirtualFile): List<CommitToAmend.Specific>? = null
 }
