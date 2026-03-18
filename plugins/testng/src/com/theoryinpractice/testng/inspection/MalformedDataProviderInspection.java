@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.DataProviderReference;
 import com.theoryinpractice.testng.TestNGFramework;
 import com.theoryinpractice.testng.TestngBundle;
@@ -39,39 +40,34 @@ public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspec
     return new JavaElementVisitor() {
       @Override
       public void visitAnnotation(@NotNull PsiAnnotation annotation) {
-        if (TestNGUtil.TEST_ANNOTATION_FQN.equals(annotation.getQualifiedName())) {
-          final PsiAnnotationMemberValue provider = annotation.findDeclaredAttributeValue("dataProvider");
-          if (provider != null && !TestNGUtil.isDisabled(annotation)) {
-            for (PsiReference reference : provider.getReferences()) {
-              if (reference instanceof DataProviderReference) {
-                final PsiElement dataProviderMethod = reference.resolve();
-                final PsiElement element = reference.getElement();
-                final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
-                final PsiClass providerClass = TestNGUtil.getProviderClass(element, topLevelClass);
-                if (!(dataProviderMethod instanceof PsiMethod providerMethod)) {
-                  final LocalQuickFix[] fixes;
-                  if (isOnTheFly && providerClass != null) {
-                    CreateMethodQuickFix fix = createMethodFix(provider, providerClass, topLevelClass);
-                    fixes = (fix != null) ? new LocalQuickFix[] {fix} : LocalQuickFix.EMPTY_ARRAY;
-                  }
-                  else {
-                    fixes = LocalQuickFix.EMPTY_ARRAY;
-                  }
+        if (!TestNGUtil.TEST_ANNOTATION_FQN.equals(annotation.getQualifiedName())) return;
 
-                  holder.registerProblem(provider, TestngBundle.message("inspection.testng.data.provider.does.not.exist.problem"), fixes);
-                } else {
-                  if (TestNGUtil.isVersionOrGreaterThan(holder.getProject(), ModuleUtilCore.findModuleForPsiElement(providerClass), 6, 9, 13)) {
-                    break;
-                  }
-                  if (providerClass != topLevelClass && !providerMethod.hasModifierProperty(PsiModifier.STATIC)) {
-                    holder.registerProblem(provider, TestngBundle.message("inspection.testng.data.provider.need.to.be.static"));
-                  }
-                }
-                break;
-              }
-            }
+        final PsiAnnotationMemberValue provider = annotation.findDeclaredAttributeValue("dataProvider");
+        if (provider == null || TestNGUtil.isDisabled(annotation)) return;
+
+        PsiReference dataProviderReference = ContainerUtil.find(provider.getReferences(), DataProviderReference.class::isInstance);
+        if (dataProviderReference == null) return;
+        final PsiElement dataProviderMethod = dataProviderReference.resolve();
+        final PsiElement element = dataProviderReference.getElement();
+        final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
+        final PsiClass providerClass = TestNGUtil.getProviderClass(element, topLevelClass);
+        if (dataProviderMethod instanceof PsiMethod providerMethod) {
+          if (!TestNGUtil.isVersionOrGreaterThan(holder.getProject(), ModuleUtilCore.findModuleForPsiElement(providerClass), 6, 9, 13) &&
+              providerClass != topLevelClass &&
+              !providerMethod.hasModifierProperty(PsiModifier.STATIC)) {
+            holder.registerProblem(provider, TestngBundle.message("inspection.testng.data.provider.need.to.be.static"));
           }
         }
+        else {
+          final LocalQuickFix[] fixes = (isOnTheFly && providerClass != null)
+                                        ? toArray(createMethodFix(provider, providerClass, topLevelClass))
+                                        : LocalQuickFix.EMPTY_ARRAY;
+          holder.registerProblem(provider, TestngBundle.message("inspection.testng.data.provider.does.not.exist.problem"), fixes);
+        }
+      }
+
+      private static LocalQuickFix[] toArray(@Nullable LocalQuickFix fix) {
+        return (fix == null) ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[]{fix};
       }
     };
   }
@@ -89,28 +85,18 @@ public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspec
     try {
       final Properties attributes = FileTemplateManager.getInstance(provider.getProject()).getDefaultProperties();
       attributes.setProperty(FileTemplate.ATTRIBUTE_NAME, name);
-      body = fileTemplate.getText(attributes);
-      body = body.replace("${BODY}\n", "");
-      final PsiMethod methodFromTemplate = JavaPsiFacade.getElementFactory(providerClass.getProject()).createMethodFromText(body, providerClass);
-      final PsiCodeBlock methodBody = methodFromTemplate.getBody();
+      final PsiCodeBlock methodBody = JavaPsiFacade.getElementFactory(providerClass.getProject())
+        .createMethodFromText(fileTemplate.getText(attributes).replace("${BODY}\n", ""), providerClass)
+        .getBody();
       if (methodBody != null) {
         body = StringUtil.trimEnd(StringUtil.trimStart(methodBody.getText(), "{"), "}");
       }
-      else {
-        body = "";
-      }
     }
-    catch (Exception ignored) {}
-    if (StringUtil.isEmptyOrSpaces(body)) {
-      body = "return new Object[][]{};";
+    catch (Exception ignored) {
     }
 
-    String signature = "@" + DataProvider.class.getName() + " public ";
-    if (providerClass == topLevelClass) {
-      signature += "static ";
-    }
-    signature += "Object[][] " + name + "()";
-
-    return CreateMethodQuickFix.createFix(providerClass, signature, body);
+    String signature = "@%s public %sObject[][] %s()"
+      .formatted(DataProvider.class.getName(), (providerClass == topLevelClass) ? "static " : "", name);
+    return CreateMethodQuickFix.createFix(providerClass, signature, StringUtil.isEmptyOrSpaces(body) ? "return new Object[][]{};" : body);
   }
 }
