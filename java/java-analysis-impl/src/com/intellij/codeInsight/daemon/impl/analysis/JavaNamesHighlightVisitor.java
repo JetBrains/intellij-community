@@ -140,8 +140,8 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
 
   @Override
   public void visitDocReferenceHolder(PsiDocReferenceHolder refHolder) {
-    PsiElement resolved = refHolder.getReference().resolve();
-    if (resolved instanceof PsiMethod psiMethod) {
+    PsiReference reference = refHolder.getReference();
+    if (reference != null && reference.resolve() instanceof PsiMethod psiMethod) {
       myHolder.add(HighlightNamesUtil.highlightMethodName(psiMethod, refHolder, false, myHolder.getColorsScheme()));
     }
 

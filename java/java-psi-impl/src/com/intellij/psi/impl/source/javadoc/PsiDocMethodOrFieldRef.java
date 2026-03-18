@@ -190,7 +190,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  /// Get the dog tag value name from the psi tree
+  /// Get the doc tag value name from the psi tree
   private static @Nullable PsiElement getNameElement(PsiElement element) {
     ASTNode name = element.getNode().findChildByType(DOC_TAG_VALUE_TOKEN);
     if (name != null) {
@@ -235,9 +235,9 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     MethodOrFieldReference psiReference = getReferenceInScope(element, scope, nameElement);
     if (psiReference != null) return psiReference;
 
-    PsiClass classScope;
+    PsiClass classScope = null;
     PsiClass containingClass = scope.getContainingClass();
-    while (containingClass != null) {
+    while (containingClass != null && classScope != containingClass) {
       classScope = containingClass;
       psiReference = getReferenceInScope(element, classScope, nameElement);
       if (psiReference != null) return psiReference;
@@ -472,8 +472,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     @Override
     public @NotNull TextRange getRangeInElement() {
       final ASTNode sharp = myReferringElement.getNode().findChildByType(DOC_TAG_VALUE_SHARP_TOKEN);
-      if (sharp == null) return new TextRange(0, myReferringElement.getTextLength());
-      final PsiElement nextSibling = SourceTreeToPsiMap.treeToPsiNotNull(sharp).getNextSibling();
+      final PsiElement nextSibling = sharp == null ? myReferringElement.getFirstChild() : SourceTreeToPsiMap.treeToPsiNotNull(sharp).getNextSibling();
       if (nextSibling != null) {
         final int startOffset = nextSibling.getTextRange().getStartOffset() - myReferringElement.getTextRange().getStartOffset();
         int endOffset = nextSibling.getTextRange().getEndOffset() - myReferringElement.getTextRange().getStartOffset();
