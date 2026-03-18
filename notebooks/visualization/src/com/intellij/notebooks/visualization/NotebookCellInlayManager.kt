@@ -310,14 +310,13 @@ class NotebookCellInlayManager private constructor(
     ThreadingAssertions.softAssertReadAccess()
     notebook.clear()
     val pointerFactory = NotebookIntervalPointerFactory.get(editor)
+    val intervals = notebookCellLines.intervals
 
     update(keepScrollingPosition = false) {
-      notebookCellLines.intervals.forEach { interval ->
+      intervals.forEach { interval ->
         notebook.addCell(pointerFactory.create(interval))
       }
-    }
-    //Forcefully synchronize components and inlays height
-    update(keepScrollingPosition = false) {
+      // Forcefully synchronize components and inlays height inside one applyUpdates() pass
       editor.contentComponent.components
         .filterIsInstance<EditorEmbeddedComponentManager.FullEditorWidthRenderer>()
         .forEach { it.doLayout() }

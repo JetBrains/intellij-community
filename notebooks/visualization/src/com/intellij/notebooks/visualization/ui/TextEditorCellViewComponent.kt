@@ -22,7 +22,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -76,7 +75,7 @@ class TextEditorCellViewComponent(private val cell: EditorCell) : EditorCellView
       detector?.debouncedScrollFlow?.collect {
         updateGutterIcons()
       }
-    }.cancelOnDispose(this)
+    }
   }
 
   private fun updateGutterIcons() {
