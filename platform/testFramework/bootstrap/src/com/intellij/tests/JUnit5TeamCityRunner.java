@@ -90,6 +90,7 @@ import java.util.logging.LogRecord;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class JUnit5TeamCityRunner {
   private static final String ENGINE_VINTAGE = System.getProperty("intellij.build.test.engine.vintage");
+  private static final String IGNORE_FIRST_AND_LAST_TESTS = System.getProperty("intellij.build.test.ignoreFirstAndLastTests");
   private static final String LIST_CLASSES = System.getProperty("intellij.build.test.list.classes");
   private static final String REVERSE_ORDER = System.getProperty("intellij.build.test.reverse.order");
   private static final String INCLUDE_TAGS = System.getProperty("intellij.build.test.tags");
@@ -216,8 +217,10 @@ public final class JUnit5TeamCityRunner {
     System.out.println(new TestStarted(testName, true, null));
     if (e != null) {
       var testFailedServiceMessage = new TestFailed(testName, e).toString();
-      if (!assertNoUnhandledExceptions_isLeak(testFailedServiceMessage)) {
-        // leaks are already checked by _LastInSuiteTest.testProjectLeak
+      if (assertNoUnhandledExceptions_isLeak(testFailedServiceMessage) && !"true".equals(IGNORE_FIRST_AND_LAST_TESTS)) {
+        // leaks are already checked by _LastInSuiteTest.testProjectLeak, ignore
+      }
+      else {
         System.out.println(testFailedServiceMessage);
       }
     }
