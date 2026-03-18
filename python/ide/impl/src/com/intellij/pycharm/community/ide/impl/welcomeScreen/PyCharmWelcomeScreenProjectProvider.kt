@@ -12,6 +12,7 @@ import com.intellij.pycharm.community.ide.impl.miscProject.impl.miscProjectDefau
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
 import java.nio.file.Path
 import kotlin.io.path.extension
 
@@ -49,7 +50,9 @@ internal class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvide
     if (PlatformProjectOpenProcessor.isNewProject(project)) {
       // Don't prompt to install Python on the welcome screen (PY-88204).
       // If Python is already available, the venv/SDK will be configured silently.
-      createVenvAndSdk(ModuleOrProject.ProjectOnly(project), confirmInstallation = { false }).orLogException(thisLogger())
+      pythonSdkConfigurationMutex.withLock {
+        createVenvAndSdk(ModuleOrProject.ProjectOnly(project), confirmInstallation = { false }).orLogException(thisLogger())
+      }
     }
     return project
   }

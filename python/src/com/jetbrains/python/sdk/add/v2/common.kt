@@ -99,9 +99,9 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
    */
   protected abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk>
 
-  protected suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> = pythonSdkConfigurationMutex.withLock {
+  protected suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk>  {
     savePathToExecutableToProperties(null)
-    val sdk = getOrCreateSdk(moduleOrProject).getOr { return@withLock it }
+    val sdk = getOrCreateSdk(moduleOrProject).getOr { return it }
 
     moduleOrProject.project.pySdkService.persistSdk(sdk)
     moduleOrProject.project.excludeInnerVirtualEnv(sdk)
@@ -110,7 +110,7 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
       sdk.setAssociationToModule(it)
     }
 
-    Result.success(sdk)
+    return Result.success(sdk)
   }
 
   @ApiStatus.Internal
