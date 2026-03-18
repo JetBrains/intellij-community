@@ -14,8 +14,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.project.DumbModeStatisticsCollector.IndexingFinishType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.platform.util.progress.RawProgressReporter;
 import kotlin.Unit;
+import kotlin.jvm.Volatile;
 import kotlinx.coroutines.Job;
 import kotlinx.coroutines.JobKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -298,14 +300,31 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
       beforeTask();
       ProgressIndicator indicator = new EmptyProgressIndicator() {
+        // this indicator is returned from CoreProgressManager.getCurrentIndicators()
+        // so let's save text for those who are interested in running indicators
+        @NlsSafe @Volatile private String text;
+        @NlsSafe @Volatile private String text2;
+
         @Override
         public void setText(String text) {
+          this.text = text;
           reporter.text(text);
         }
 
         @Override
         public void setText2(String text) {
+          this.text2 = text;
           reporter.details(text);
+        }
+
+        @Override
+        public String getText() {
+          return text;
+        }
+
+        @Override
+        public String getText2() {
+          return text2;
         }
 
         @Override
