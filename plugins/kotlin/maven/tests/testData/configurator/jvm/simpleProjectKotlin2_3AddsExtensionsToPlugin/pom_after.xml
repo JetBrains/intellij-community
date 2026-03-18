@@ -9,7 +9,7 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <kotlin.version>2.4.10</kotlin.version>
+        <kotlin.version>2.3.0</kotlin.version>
     </properties>
 
     <dependencies>
@@ -60,4 +60,4 @@
 
 </project>
 
-<!-- VERSION: 2.4.10 -->
+<!-- VERSION: 2.3.0 -->
