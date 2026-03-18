@@ -305,10 +305,6 @@ class NotebookCellInlayManager private constructor(
       intervals.forEach { interval ->
         notebook.addCell(pointerFactory.create(interval))
       }
-      // Forcefully synchronize components and inlays height inside one applyUpdates() pass
-      editor.contentComponent.components
-        .filterIsInstance<EditorEmbeddedComponentManager.FullEditorWidthRenderer>()
-        .forEach { it.doLayout() }
     }
   }
 

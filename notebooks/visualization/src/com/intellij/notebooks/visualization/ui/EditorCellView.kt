@@ -15,6 +15,7 @@ import java.awt.Rectangle
 
 class EditorCellView(val cell: EditorCell) : EditorCellViewComponent() {
   private val editor = cell.editor
+  private var outputsInitialized = false
 
   val input: EditorCellInput = EditorCellInput(cell).also {
     add(it)
@@ -42,12 +43,19 @@ class EditorCellView(val cell: EditorCell) : EditorCellViewComponent() {
     cell.isHovered.bind(this) {
       updateHovered()
     }
+  }
 
-    updateOutputs()
-    checkAndRebuildInlays()
+  private fun ensureOutputsInitialized() {
+    if (!outputsInitialized) {
+      outputsInitialized = true
+      cell.outputs.ensureOutputsLoaded()
+      updateOutputs()
+      checkAndRebuildInlays()
+    }
   }
 
   fun update(updateContext: UpdateContext) {
+    ensureOutputsInitialized()
     input.updateInput()
     updateOutputs()
     updateCellFolding(updateContext)
@@ -89,6 +97,7 @@ class EditorCellView(val cell: EditorCell) : EditorCellViewComponent() {
                              && (editor.editorKind != EditorKind.DIFF || Registry.`is`("jupyter.diff.viewer.output"))
 
   fun updateIfInVisibleRect() {
+    ensureOutputsInitialized()
     input.onUpdateIfInVisibleRect()
     outputs?.onUpdateIfInVisibleRect()
   }
