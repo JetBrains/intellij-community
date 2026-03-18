@@ -7,6 +7,7 @@ import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.impl.GraphElementInterner;
 import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.jps.util.Iterators;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -27,10 +28,10 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
     @NotNull Iterable<ElementAnnotation> annotations, Iterable<ParamAnnotation> parameterAnnotations,
     Iterable<String> exceptions, Object defaultValue) {
 
-    super(flags, signature, name, TypeRepr.getType(Type.getReturnType(descriptor)), annotations, defaultValue);
+    super(flags, signature, name, TypeRepr.getType(Type.getReturnType(GraphElementInterner.intern(descriptor))), annotations, defaultValue);
     myParamAnnotations = parameterAnnotations;
-    myExceptions = Iterators.collect(Iterators.map(exceptions, s -> new TypeRepr.ClassType(s)), new ArrayList<>());
-    myArgTypes = TypeRepr.getTypes(Type.getArgumentTypes(descriptor));
+    myExceptions = Iterators.collect(Iterators.map(exceptions, s -> new TypeRepr.ClassType(GraphElementInterner.intern(s))), new ArrayList<>());
+    myArgTypes = TypeRepr.getTypes(Type.getArgumentTypes(GraphElementInterner.intern(descriptor)));
   }
 
   public JvmMethod(GraphDataInput in) throws IOException {

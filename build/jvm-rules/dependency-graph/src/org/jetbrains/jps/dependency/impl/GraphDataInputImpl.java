@@ -237,7 +237,7 @@ public class GraphDataInputImpl implements GraphDataInput {
       return new GraphDataInputImpl(in) {
         @Override
         public @NotNull String readUTF() throws IOException {
-          return (String)elementInterner.apply(enumerator.toString(readInt()));
+          return enumerator.toString(readInt()); // interning is made automatically
         }
 
         @Override

@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.h2.mvstore.FileStore;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
@@ -20,6 +18,7 @@ import org.jetbrains.jps.dependency.impl.CachingMaplet;
 import org.jetbrains.jps.dependency.impl.CachingMultiMaplet;
 import org.jetbrains.jps.dependency.impl.GraphDataInputImpl;
 import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl;
+import org.jetbrains.jps.dependency.impl.GraphElementInterner;
 import org.jetbrains.jps.dependency.impl.ObjectEnumerator;
 
 import java.io.Closeable;
@@ -40,8 +39,6 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
   private static final int BASE_CACHE_SIZE = 512;
   private final MVSEnumerator myEnumerator;
   private final Function<Object, Object> myDataInterner;
-  private final LoadingCache<Usage, Usage> myUsageInternerCache;
-  private final LoadingCache<ReferenceID, ReferenceID> myRefIdInternerCache;
   private final int myCacheSize;
   private final MVStore myStore;
 
@@ -63,14 +60,12 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
     final int maxGb = (int) (Runtime.getRuntime().maxMemory() / 1_073_741_824L);
     myCacheSize = BASE_CACHE_SIZE * Math.clamp(maxGb, 1, 5); // increase by BASE_CACHE_SIZE for every additional Gb
 
-    myUsageInternerCache = Caffeine.newBuilder().maximumSize(myCacheSize).build(key -> key);
-    myRefIdInternerCache = Caffeine.newBuilder().maximumSize(myCacheSize).build(key -> key);
     myDataInterner = elem -> {
       if (elem instanceof Usage) {
-        return myUsageInternerCache.get((Usage)elem);
+        return GraphElementInterner.intern((Usage)elem);
       }
       if (elem instanceof ReferenceID) {
-        return myRefIdInternerCache.get((ReferenceID)elem);
+        return GraphElementInterner.intern((ReferenceID)elem);
       }
       return elem;
     };
@@ -107,15 +102,9 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
 
   @Override
   public void close() {
-    try {
-      myStore.commit();// first commit all open maps, that might use enumerator for serialization
-      myEnumerator.flush(); // save enumerator state
-      myStore.close(getCompactionTimeMs()); // completely close the store commiting the rest of unsaved data
-    }
-    finally {
-      myUsageInternerCache.invalidateAll();
-      myRefIdInternerCache.invalidateAll();
-    }
+    myStore.commit();// first commit all open maps, that might use enumerator for serialization
+    myEnumerator.flush(); // save enumerator state
+    myStore.close(getCompactionTimeMs()); // completely close the store commiting the rest of unsaved data
   }
 
   /*
@@ -209,7 +198,7 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
     MVSEnumerator(MVStore store) {
       myStoreMap = store.openMap("string-table");
       // expect sequential order in the myStoreMap
-      myEnumerator = new ObjectEnumerator<>(map(myStoreMap.entrySet(), Map.Entry::getValue));
+      myEnumerator = new ObjectEnumerator<>(map(myStoreMap.entrySet(), Map.Entry::getValue), GraphElementInterner::intern);
     }
 
     @Override

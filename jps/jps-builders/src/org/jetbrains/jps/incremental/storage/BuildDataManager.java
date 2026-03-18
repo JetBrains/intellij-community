@@ -34,6 +34,8 @@ import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.NodeSourcePathMapper;
 import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
+import org.jetbrains.jps.dependency.impl.ElementInternerImpl;
+import org.jetbrains.jps.dependency.impl.GraphElementInterner;
 import org.jetbrains.jps.dependency.impl.LoggingDependencyGraph;
 import org.jetbrains.jps.dependency.impl.PathSourceMapper;
 import org.jetbrains.jps.incremental.ProjectBuildException;
@@ -433,6 +435,7 @@ public final class BuildDataManager {
           if (deleteExisting) {
             FileUtil.delete(mappingsRoot);
           }
+          GraphElementInterner.setImplementation(new ElementInternerImpl());
           myDepGraph = asSynchronizedGraph(new DependencyGraphImpl(new PersistentMapletFactory(mappingsRoot.toString())));
         }
         else {
@@ -871,6 +874,7 @@ public final class BuildDataManager {
       public void close() throws IOException {
         lock.writeLock().lock();
         try {
+          GraphElementInterner.clear();
           delegate.close();
         }
         finally {

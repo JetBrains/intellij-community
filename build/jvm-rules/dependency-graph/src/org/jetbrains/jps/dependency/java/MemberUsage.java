@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.FactoredExternalizableGraphElement;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
+import org.jetbrains.jps.dependency.impl.GraphElementInterner;
 
 import java.io.IOException;
 
@@ -18,7 +19,7 @@ public abstract class MemberUsage extends JvmElementUsage implements FactoredExt
 
   protected MemberUsage(JvmNodeReferenceID clsId, String name) {
     super(clsId);
-    myName = name;
+    myName = GraphElementInterner.intern(name);
   }
 
   MemberUsage(@NotNull JvmNodeReferenceID owner, GraphDataInput in) throws IOException {

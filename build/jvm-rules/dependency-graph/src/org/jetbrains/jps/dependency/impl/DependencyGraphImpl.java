@@ -430,19 +430,17 @@ public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
 
   @Override
   public void importSnapshot(InputStream in) throws IOException {
-    ObjectEnumerator<String> enumerator = new ObjectEnumerator<>();
-    Map<Usage, Usage> usagesInterner = new HashMap<>();
-    Map<ReferenceID, ReferenceID> refIdInterner = new HashMap<>();
+    ObjectEnumerator<String> enumerator = new ObjectEnumerator<>(List.of(), GraphElementInterner::intern);
     DataInputStream dataIn = new DataInputStream(in);
     GraphDataInput graphIn = GraphDataInputImpl.wrap(
       dataIn,
       enumerator::lookup,
       o -> {
         if (o instanceof Usage) {
-          return usagesInterner.computeIfAbsent((Usage)o, Function.identity());
+          return GraphElementInterner.intern((Usage)o);
         }
         if (o instanceof ReferenceID) {
-          return refIdInterner.computeIfAbsent((ReferenceID)o, Function.identity());
+          return GraphElementInterner.intern((ReferenceID)o);
         }
         return o;
       }

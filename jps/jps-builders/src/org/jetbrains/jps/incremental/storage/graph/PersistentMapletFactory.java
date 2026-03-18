@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage.graph;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
@@ -21,11 +19,13 @@ import org.jetbrains.jps.dependency.Externalizer;
 import org.jetbrains.jps.dependency.Maplet;
 import org.jetbrains.jps.dependency.MapletFactory;
 import org.jetbrains.jps.dependency.MultiMaplet;
+import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.impl.CachingMaplet;
 import org.jetbrains.jps.dependency.impl.CachingMultiMaplet;
 import org.jetbrains.jps.dependency.impl.GraphDataInputImpl;
 import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl;
+import org.jetbrains.jps.dependency.impl.GraphElementInterner;
 import org.jetbrains.jps.util.Iterators;
 
 import java.io.Closeable;
@@ -47,7 +47,6 @@ public final class PersistentMapletFactory implements MapletFactory, Closeable {
   private final List<BaseMaplet<?>> myMaps = new ArrayList<>();
   private final Enumerator myEnumerator;
   private final Function<Object, Object> myDataInterner;
-  private final LoadingCache<Object, Object> myInternerCache;
   private final LowMemoryWatcher myMemWatcher;
   private final int myCacheSize;
 
@@ -68,11 +67,18 @@ public final class PersistentMapletFactory implements MapletFactory, Closeable {
     };
     final int maxGb = (int) (Runtime.getRuntime().maxMemory() / 1_073_741_824L);
     myCacheSize = BASE_CACHE_SIZE * Math.min(Math.max(1, maxGb), 5); // increase by BASE_CACHE_SIZE for every additional Gb
-
-    myInternerCache = Caffeine.newBuilder().maximumSize(myCacheSize).build(key -> key);
-    myDataInterner = elem -> elem instanceof Usage? myInternerCache.get(elem) : elem;
+    
+    myDataInterner = elem -> {
+      if (elem instanceof Usage) {
+        return GraphElementInterner.intern((Usage)elem);
+      }
+      if (elem instanceof ReferenceID) {
+        return GraphElementInterner.intern((ReferenceID)elem);
+      }
+      return elem;
+    };
     myMemWatcher = LowMemoryWatcher.register(() -> {
-      myInternerCache.invalidateAll();
+      GraphElementInterner.clear();
       myStringTable.force();
       for (BaseMaplet<?> map : myMaps) {
         try {
@@ -120,7 +126,6 @@ public final class PersistentMapletFactory implements MapletFactory, Closeable {
       }
     }
     myMaps.clear();
-    myInternerCache.invalidateAll();
     if (ex instanceof IOException) {
       throw new BuildDataCorruptedException((IOException) ex);
     }

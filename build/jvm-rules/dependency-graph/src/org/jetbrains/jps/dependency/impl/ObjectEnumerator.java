@@ -8,10 +8,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 public final class ObjectEnumerator<T> {
   private final Object2IntMap<T> myToIntMap = new Object2IntOpenHashMap<>();
   private final ArrayList<T> myTable = new ArrayList<>();
+  private final Function<T, T> myInterner;
   private int myUnsavedIndex; // "everything saved" condition: "myUnsavedIndex == myTable.size()"
 
   public ObjectEnumerator() {
@@ -19,16 +21,22 @@ public final class ObjectEnumerator<T> {
   }
   
   public ObjectEnumerator(Iterable<? extends T> initial) {
-    for (T str : initial) {
-      append(str);
+    this(initial, Function.identity());
+  }
+  
+  public ObjectEnumerator(Iterable<? extends T> initial, Function<T, T> interner) {
+    myInterner = interner;
+    for (T obj : initial) {
+      append(obj);
     }
     myUnsavedIndex = myTable.size();
   }
 
   public void append(T obj) {
     int num = myTable.size();
-    myTable.add(obj);
-    myToIntMap.put(obj, num);
+    T interned = myInterner.apply(obj);
+    myTable.add(interned);
+    myToIntMap.put(interned, num);
   }
 
   @Nullable
@@ -37,11 +45,12 @@ public final class ObjectEnumerator<T> {
   }
 
   public int toNumber(T obj) {
+    T interned = myInterner.apply(obj);
     int nextAvailable = myTable.size();
-    int num = myToIntMap.getOrDefault(obj, nextAvailable);
+    int num = myToIntMap.getOrDefault(interned, nextAvailable);
     if (num == nextAvailable) { // not in map yet
-      myTable.add(obj);
-      myToIntMap.put(obj, num);
+      myTable.add(interned);
+      myToIntMap.put(interned, num);
     }
     return num;
   }

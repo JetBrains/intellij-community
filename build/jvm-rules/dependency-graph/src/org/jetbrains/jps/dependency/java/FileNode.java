@@ -8,6 +8,7 @@ import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.impl.GraphElementInterner;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,17 +17,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.map;
+
 public final class FileNode implements Node<FileNode, FileNode.Diff> {
   private final JvmNodeReferenceID myId;
   private final Iterable<Usage> myUsages;
 
   public FileNode(String name, @NotNull Iterable<Usage> usages) {
-    myId = new JvmNodeReferenceID(name);
-    myUsages = usages;
+    myId = GraphElementInterner.intern(new JvmNodeReferenceID(name));
+    myUsages = collect(map(usages, GraphElementInterner::intern), new ArrayList<>());
   }
 
   public FileNode(GraphDataInput in) throws IOException {
-    myId = new JvmNodeReferenceID(in);
+    myId = GraphElementInterner.intern(new JvmNodeReferenceID(in));
 
     List<Usage> usages = new ArrayList<>();
     try {

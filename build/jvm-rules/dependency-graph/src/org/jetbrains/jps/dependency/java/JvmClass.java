@@ -7,14 +7,19 @@ import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.impl.GraphElementInterner;
 import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.jps.util.Iterators;
 
 import java.io.IOException;
 import java.lang.annotation.RetentionPolicy;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
+
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.map;
 
 public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
   public static final String OBJECT_CLASS_NAME = "java/lang/Object";
@@ -39,9 +44,9 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
   ) {
     
     super(flags, signature, fqName, outFilePath, annotations, usages, metadata);
-    mySuperFqName = superFqName == null || OBJECT_CLASS_NAME.equals(superFqName)? "" : superFqName;
-    myOuterFqName = outerFqName == null? "" : outerFqName;
-    myInterfaces = interfaces;
+    mySuperFqName = superFqName == null || OBJECT_CLASS_NAME.equals(superFqName)? "" : GraphElementInterner.intern(superFqName);
+    myOuterFqName = outerFqName == null? "" : GraphElementInterner.intern(outerFqName);
+    myInterfaces = collect(map(interfaces, GraphElementInterner::intern), new ArrayList<>());
     myFields = fields;
     myMethods = methods;
     myAnnotationTargets = annotationTargets;

@@ -6,6 +6,7 @@ import org.jetbrains.jps.dependency.ExternalizableGraphElement;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.impl.GraphElementInterner;
 import org.jetbrains.jps.dependency.impl.RW;
 
 import java.io.IOException;
@@ -20,8 +21,8 @@ public class Proto implements ExternalizableGraphElement {
 
   public Proto(@NotNull JVMFlags flags, String signature, String name, @NotNull Iterable<ElementAnnotation> annotations) {
     this.access = flags;
-    this.signature = signature == null? "" : signature;
-    this.name = name == null? "" : name;
+    this.signature = signature == null? "" : GraphElementInterner.intern(signature);
+    this.name = name == null? "" : GraphElementInterner.intern(name);
     this.annotations = annotations;
   }
 

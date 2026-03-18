@@ -10,6 +10,7 @@ import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerBase;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
+import org.jetbrains.jps.dependency.impl.GraphElementInterner;
 import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
@@ -74,6 +75,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      GraphElementInterner.clear();
       FileUtil.delete(workDir);
     }
     catch (Throwable e) {

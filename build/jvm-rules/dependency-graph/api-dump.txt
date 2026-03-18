@@ -87,6 +87,12 @@ org.jetbrains.jps.dependency.DifferentiateResult
 org.jetbrains.jps.dependency.DifferentiateStrategy
 - a:differentiate(org.jetbrains.jps.dependency.DifferentiateContext,java.lang.Iterable,java.lang.Iterable,java.lang.Iterable):Z
 - isIncremental(org.jetbrains.jps.dependency.DifferentiateContext,org.jetbrains.jps.dependency.Node):Z
+org.jetbrains.jps.dependency.ElementInterner
+- sf:IDENTITY:org.jetbrains.jps.dependency.ElementInterner
+- a:clear():V
+- a:intern(java.lang.String):java.lang.String
+- a:intern(org.jetbrains.jps.dependency.ReferenceID):org.jetbrains.jps.dependency.ReferenceID
+- a:intern(org.jetbrains.jps.dependency.Usage):org.jetbrains.jps.dependency.Usage
 org.jetbrains.jps.dependency.Enumerator
 org.jetbrains.jps.dependency.ExternalizableGraphElement
 - a:write(org.jetbrains.jps.dependency.GraphDataOutput):V
