@@ -80,14 +80,14 @@ public class MavenConfigureProjectByChangingFileTestGenerated extends AbstractMa
         runTest("testData/configurator/jvm/simpleProjectDev/");
     }
 
-    @TestMetadata("simpleProjectKotlin2_4AddsExtensionsToPlugin")
-    public void testSimpleProjectKotlin2_4AddsExtensionsToPlugin() throws Exception {
-        runTest("testData/configurator/jvm/simpleProjectKotlin2_4AddsExtensionsToPlugin/");
+    @TestMetadata("simpleProjectKotlin2_3AddsExtensionsToPlugin")
+    public void testSimpleProjectKotlin2_3AddsExtensionsToPlugin() throws Exception {
+        runTest("testData/configurator/jvm/simpleProjectKotlin2_3AddsExtensionsToPlugin/");
     }
 
-    @TestMetadata("simpleProjectKotlin2_4_10AddsExtensionsToPlugin")
-    public void testSimpleProjectKotlin2_4_10AddsExtensionsToPlugin() throws Exception {
-        runTest("testData/configurator/jvm/simpleProjectKotlin2_4_10AddsExtensionsToPlugin/");
+    @TestMetadata("simpleProjectKotlin2_3_10AddsExtensionsToPlugin")
+    public void testSimpleProjectKotlin2_3_10AddsExtensionsToPlugin() throws Exception {
+        runTest("testData/configurator/jvm/simpleProjectKotlin2_3_10AddsExtensionsToPlugin/");
     }
 
     @TestMetadata("simpleProjectMilestone")
