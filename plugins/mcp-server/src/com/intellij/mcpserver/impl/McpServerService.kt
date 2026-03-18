@@ -345,7 +345,7 @@ open class McpServerService(val cs: CoroutineScope) {
     val allTools = getAllMcpTools()
     val filterAdjusted = when(invocationMode) {
       McpToolInvocationMode.DIRECT -> filter ?: McpToolFilter.AllowAll
-      McpToolInvocationMode.VIA_ROUTER -> filter ?: McpToolFilter.ProhibitAll
+      McpToolInvocationMode.VIA_ROUTER -> filter ?: McpToolFilter.AllowAll
       McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED -> McpToolFilter.ProhibitAll
     }
 
