@@ -82,7 +82,7 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
         assertEquals("scope:1", dumpItem.name)
         assertEquals(" (running)", dumpItem.stateDesc)
         assertEquals(
-            "\"scope:1@300\" RUNNING [dispatcher=Dispatchers.Default]\n    at example.Parent.one(Parent.kt:1)",
+            "\"scope:1@300\" RUNNING [Dispatchers.Default]\n    at example.Parent.one(Parent.kt:1)",
             dumpItem.stackTrace,
         )
         assertTrue(dumpItem.exportedStackTrace.startsWith("\"scope:1@300\" virtual tid=0x0 nid=NA running [Coroutine] [dispatcher=Dispatchers.Default]"))
@@ -107,7 +107,7 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
         val dumpItem = CoroutineDumpItem(coroutineInfo)
         assertEquals("scope:1", dumpItem.name)
         assertEquals(
-            "\"scope:1@300\" SUSPENDED [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}]\n",
+            "\"scope:1@300\" SUSPENDED [Dispatchers.Default, StandaloneCoroutine{Active}]\n",
             dumpItem.stackTrace,
         )
         assertFalse(dumpItem.stackTrace.contains("java.lang.Thread.State"))
@@ -115,6 +115,20 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
         assertFalse(dumpItem.stackTrace.contains("[Coroutine]"))
         assertEquals(
             "\"scope:1@300\" virtual tid=0x0 nid=NA suspended [Coroutine] [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}]\n",
+            dumpItem.exportedStackTrace,
+        )
+    }
+
+    @Test
+    fun `running coroutine dump item exposes running thread in visible and exported stacktrace`() {
+        val dumpItem = CoroutineDumpItem(createCoroutineInfo(job = "StandaloneCoroutine{Active}", jobId = 300L, state = "RUNNING"))
+
+        assertEquals(
+            "\"scope:300@300\" RUNNING on thread UNKNOWN_THREAD [Dispatchers.Default, StandaloneCoroutine{Active}]\n",
+            dumpItem.stackTrace,
+        )
+        assertEquals(
+            "\"scope:300@300\" virtual tid=0x0 nid=NA running [Coroutine] [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}, runningThread=UNKNOWN_THREAD]\n",
             dumpItem.exportedStackTrace,
         )
     }
@@ -142,6 +156,32 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     @Test
+    fun `running thread is preserved after serialize deserialize`() {
+        val originalDump = loadThreadDump("runningCoroutineWithObservedThread.txt")
+
+        val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(originalDump))
+        val expectedStackTrace = parsedThreadDump.dumpItems().single { !it.isContainer }.stackTrace
+        val serializedDump = serializeIntelliJThreadDump(parsedThreadDump.dumpItems(), listOf("Full thread dump"))
+        val reparsedThreadDump = requireNotNull(parseIntelliJThreadDump(serializedDump))
+        val actualStackTrace = reparsedThreadDump.dumpItems().single { !it.isContainer }.stackTrace
+
+        assertEquals(expectedStackTrace, actualStackTrace)
+    }
+
+    @Test
+    fun `running coroutine dump item restores concrete running thread in visible stacktrace`() {
+        val originalDump = loadThreadDump("runningCoroutineWithObservedThread.txt")
+
+        val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(originalDump))
+        val dumpItem = parsedThreadDump.dumpItems().single { !it.isContainer }
+
+        assertEquals(
+            "\"scope:1@300\" RUNNING on thread DefaultDispatcher-worker-1 [Dispatchers.Default]\n    at example.Shared.run(Shared.kt:1)",
+            dumpItem.stackTrace,
+        )
+    }
+
+    @Test
     fun `regular thread with coroutine marker in name is not restored as coroutine`() {
         val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(loadThreadDump("regularThreadWithCoroutineMarkerInName.txt")))
 
@@ -151,11 +191,11 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
         assertEquals(" (runnable)", dumpItem.stateDesc)
     }
 
-    private fun createCoroutineInfo(job: String, jobId: Long, dispatcher: String = "Dispatchers.Default"): CoroutineInfoData {
+    private fun createCoroutineInfo(job: String, jobId: Long, dispatcher: String = "Dispatchers.Default", state: String = "SUSPENDED"): CoroutineInfoData {
         return CoroutineInfoData(
             name = "scope",
             id = jobId,
-            state = "SUSPENDED",
+            state = state,
             dispatcher = dispatcher,
             lastObservedFrame = null,
             lastObservedThread = null,

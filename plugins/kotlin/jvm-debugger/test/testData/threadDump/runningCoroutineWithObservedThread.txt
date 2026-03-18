@@ -1,0 +1,7 @@
+"scope:1@300" virtual tid=0x0 nid=NA running [Coroutine] [dispatcher=Dispatchers.Default, runningThread=DefaultDispatcher-worker-1]
+    at example.Shared.run(Shared.kt:1)
+
+============ INTELLIJ META_DATA ============
+{
+    "version": 1
+}
