@@ -44,6 +44,7 @@ interface RangeHighlighter {
   fun getStartOffset(): Int
   fun getEndOffset(): Int
   fun getTextAttributes(): TextAttributes?
+  fun getTextAttributesKey(): TextAttributesKey?
 }
 
 @Remote("com.intellij.openapi.editor.VisualPosition")
@@ -99,6 +100,7 @@ interface InlayModel {
   fun getInlineElementsInRange(startOffset: Int, endOffset: Int): List<Inlay>
   fun getBlockElementsInRange(startOffset: Int, endOffset: Int): List<Inlay>
   fun getAfterLineEndElementsForLogicalLine(logicalLine: Int): List<Inlay>
+  fun getAfterLineEndElementsInRange(startOffset: Int, endOffset: Int): List<Inlay>
 }
 
 @Remote("com.intellij.openapi.editor.Inlay")
@@ -121,6 +123,14 @@ interface EditorCustomElementRenderer {
 @Remote("com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRenderer")
 interface DeclarativeInlayRenderer {
   fun getPresentationList(): InlayPresentationList
+}
+
+@Remote("com.intellij.ui.SimpleColoredText")
+interface SimpleColoredText
+
+@Remote("com.intellij.xdebugger.impl.inline.InlineDebugRenderer")
+interface InlineDebugRenderer {
+  fun getPresentation(): SimpleColoredText?
 }
 
 @Remote("com.intellij.codeInsight.daemon.impl.HintRenderer")
