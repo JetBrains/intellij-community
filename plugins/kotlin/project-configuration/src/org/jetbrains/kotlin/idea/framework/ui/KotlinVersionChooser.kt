@@ -65,7 +65,7 @@ internal class KotlinVersionChooser(
             // Use IO dispatcher because loadVersions is blocking
             val loadedVersions = withContext(Dispatchers.IO) {
                 runCatching {
-                    ConfigureDialogWithModulesAndVersion.loadVersions(minimumVersion)
+                    ConfigureDialogWithModulesAndVersion.loadVersions(project, minimumVersion)
                 }.getOrNull()
             }
             error.set(loadedVersions == null)

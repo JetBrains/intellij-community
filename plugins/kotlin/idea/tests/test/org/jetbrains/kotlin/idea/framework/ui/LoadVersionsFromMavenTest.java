@@ -17,13 +17,14 @@ public class LoadVersionsFromMavenTest extends LightIdeaTestCase {
     public void testDownload() {
         Collection<String> versions;
         try {
-            versions = ConfigureDialogWithModulesAndVersion.loadVersions("1.0.0");
+            versions = ConfigureDialogWithModulesAndVersion.loadVersions(getProject(), "1.0.0");
         } catch (IOException e) {
             ExternalResourcesChecker.reportUnavailability("Kotlin artifact repository", e);
             return;
         }
 
-        assertTrue(versions.size() > 0);
+        assertFalse(versions.isEmpty());
+
         for (String version : versions) {
             assertTrue(VersionComparatorUtil.compare(version, "1.0.0") >= 0);
             assertFalse(version.contains("-"));
