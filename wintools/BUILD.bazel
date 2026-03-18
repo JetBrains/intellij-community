@@ -43,13 +43,13 @@ exports_files([
 
 ### auto-generated section `build intellij.community.wintools.tests` start
 jvm_library(
-  name = "wintools-tests",
+  name = "community-wintools-tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
-  name = "wintools-tests_test_lib",
+  name = "community-wintools-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   associates = [
@@ -65,7 +65,7 @@ jvm_library(
     "//libraries/hamcrest",
     "//libraries/hamcrest:hamcrest_test_lib",
   ],
-  runtime_deps = [":wintools-tests"]
+  runtime_deps = [":community-wintools-tests"]
 )
 ### auto-generated section `build intellij.community.wintools.tests` end
 
@@ -79,7 +79,7 @@ exports_files([
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "wintools-tests_test",
-  runtime_deps = [":wintools-tests_test_lib"]
+  name = "community-wintools-tests_test",
+  runtime_deps = [":community-wintools-tests_test_lib"]
 )
 ### auto-generated section `test intellij.community.wintools.tests` end
