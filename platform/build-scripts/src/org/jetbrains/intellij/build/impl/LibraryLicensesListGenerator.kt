@@ -29,7 +29,7 @@ internal suspend fun createLibraryLicensesListGenerator(
   allowEmpty: Boolean = false,
 ): LibraryLicensesListGenerator {
   val generator = createLibraryLicensesListGenerator(context.project, licenseList, usedModulesNames, allowEmpty)
-  checkLibraryUrls(context, generator.libraryLicenses)
+  checkLibraryUrls(generator.libraryLicenses, context)
   return generator
 }
 
