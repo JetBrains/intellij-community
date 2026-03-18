@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.CodeInsightUtil
@@ -14,6 +14,7 @@ import com.intellij.psi.PsiDeclarationStatement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiField
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiIfStatement
 import com.intellij.psi.PsiLambdaParameterType
@@ -115,12 +116,16 @@ class ExtractSelector {
   }
 
   private fun hasAssignmentInside(expression: PsiExpression): Boolean {
-    val assignment = PsiTreeUtil.findChildOfType(expression, PsiAssignmentExpression::class.java, false)
-    if (assignment == null) return false
-    val lhs = assignment.lExpression
-    if (lhs is PsiReferenceExpression) {
-      val target = lhs.resolve()
-      return target != null && !expression.textRange.contains(target.textRange)
+    if (expression is PsiAssignmentExpression && expression.parent is PsiExpressionStatement) return true;
+    val assignments = PsiTreeUtil.findChildrenOfAnyType(expression, false, PsiAssignmentExpression::class.java)
+    for (assignment in assignments) {
+      val lhs = assignment.lExpression
+      if (lhs is PsiReferenceExpression) {
+        val target = lhs.resolve()
+        if (target !is PsiField) {
+          return target != null && !expression.textRange.contains(target.textRange)
+        }
+      }
     }
     return false
   }
