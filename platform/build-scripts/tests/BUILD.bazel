@@ -80,6 +80,10 @@ jvm_library(
     "//platform/testFramework/bootstrap:tools-testsBootstrap",
     "//platform/testFramework/bootstrap:tools-testsBootstrap_test_lib",
     "@lib//:junit5Launcher",
+    "//build/tasks:tasks-tests",
+    "//build/tasks:tasks-tests_test_lib",
+    "//platform/build-scripts/product-dsl:buildScripts-productDsl-tests",
+    "//platform/build-scripts/product-dsl:buildScripts-productDsl-tests_test_lib",
   ],
   runtime_deps = [":tests"]
 )
