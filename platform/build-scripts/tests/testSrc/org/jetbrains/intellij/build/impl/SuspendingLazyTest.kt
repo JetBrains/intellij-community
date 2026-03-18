@@ -4,13 +4,16 @@ package org.jetbrains.intellij.build.impl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class SuspendingLazyTest {
   @Test
@@ -61,9 +64,33 @@ class SuspendingLazyTest {
       lazyValue.await()
     }
 
+    assertFailsFast {
+      lazyValue.await()
+    }
+  }
+
+  @Test
+  fun failsFastOnRecursiveAwaitFromChildCoroutine() {
+    lateinit var lazyValue: SuspendingLazy<Int>
+    lazyValue = suspendingLazy("recursive value") {
+      coroutineScope {
+        async {
+          lazyValue.await()
+        }.await()
+      }
+    }
+
+    assertFailsFast {
+      lazyValue.await()
+    }
+  }
+
+  private fun assertFailsFast(block: suspend () -> Unit) {
     assertThatThrownBy {
       runBlocking(Dispatchers.Default) {
-        lazyValue.await()
+        withTimeout(1.seconds) {
+          block()
+        }
       }
     }
       .isInstanceOf(IllegalStateException::class.java)

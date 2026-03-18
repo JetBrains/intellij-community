@@ -5,6 +5,7 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.LibraryLicense
@@ -106,21 +107,23 @@ private suspend fun checkUrls(type: String, urls: Map<String, List<LibraryLicens
     .followRedirects(HttpClient.Redirect.ALWAYS)
     .build()
 
-  urlsAndLicensesGroupedByHost.values.mapConcurrent { group ->
-    group.mapConcurrent(concurrency = maxParallelPerHosts) { (url, libraries) ->
-      try {
-        val request = HttpRequest.newBuilder(URI(url))
-          .apply { if (url.startsWith("https://redocly.com/")) GET() else method("HEAD", HttpRequest.BodyPublishers.noBody()) }
-          .timeout(READ_TIMEOUT)
-          .header("User-Agent", "IntelliJ")
-          .build()
-        val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-        if (response.statusCode() != HttpURLConnection.HTTP_OK) {
-          errors.add("${type} URL '${url}' error: ${response.statusCode()}. ${usedIn(libraries)}")
+  withContext(Dispatchers.IO) {
+    urlsAndLicensesGroupedByHost.values.mapConcurrent { group ->
+      group.mapConcurrent(concurrency = maxParallelPerHosts) { (url, libraries) ->
+        try {
+          val request = HttpRequest.newBuilder(URI(url))
+            .apply { if (url.startsWith("https://redocly.com/")) GET() else method("HEAD", HttpRequest.BodyPublishers.noBody()) }
+            .timeout(READ_TIMEOUT)
+            .header("User-Agent", "IntelliJ")
+            .build()
+          val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+          if (response.statusCode() != HttpURLConnection.HTTP_OK) {
+            errors.add("${type} URL '${url}' error: ${response.statusCode()}. ${usedIn(libraries)}")
+          }
         }
-      }
-      catch (e: Exception) {
-        errors.add("${type} URL '${url}': ${e.javaClass.name}: ${e.message}. ${usedIn(libraries)}")
+        catch (e: Exception) {
+          errors.add("${type} URL '${url}': ${e.javaClass.name}: ${e.message}. ${usedIn(libraries)}")
+        }
       }
     }
   }

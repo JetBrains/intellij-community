@@ -23,6 +23,8 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
 import java.util.function.Predicate
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 
 fun CoroutineScope.createSkippableJob(
   spanBuilder: SpanBuilder,
@@ -80,22 +82,46 @@ fun <T> suspendingLazy(coroutineName: String, initializer: suspend CoroutineScop
   return SuspendingLazyImpl(coroutineName = coroutineName, initializer = initializer)
 }
 
+private class ActiveSingleFlightComputations(
+  private val activeOwners: Set<Any>,
+) : AbstractCoroutineContextElement(Key) {
+  companion object Key : CoroutineContext.Key<ActiveSingleFlightComputations>
+
+  fun contains(owner: Any): Boolean = owner in activeOwners
+
+  fun add(owner: Any): ActiveSingleFlightComputations = ActiveSingleFlightComputations(activeOwners + owner)
+}
+
+internal fun singleFlightComputationContext(currentContext: CoroutineContext, owner: Any): CoroutineContext {
+  val activeComputations = currentContext[ActiveSingleFlightComputations]
+  return activeComputations?.add(owner) ?: ActiveSingleFlightComputations(setOf(owner))
+}
+
+internal fun checkRecursiveSingleFlightAwait(
+  currentContext: CoroutineContext,
+  owner: Any,
+  operationName: String,
+  deferred: CompletableDeferred<*>,
+) {
+  check(deferred.isCompleted || currentContext[ActiveSingleFlightComputations]?.contains(owner) != true) {
+    "Recursive await of '$operationName' detected"
+  }
+}
+
 private class SuspendingLazyImpl<T>(
   private val coroutineName: String,
   private val initializer: suspend CoroutineScope.() -> T,
 ) : SuspendingLazy<T> {
   private val lock = Mutex()
+  private val owner = Any()
 
   @Volatile
   private var deferred: CompletableDeferred<T>? = null
 
-  @Volatile
-  private var ownerJob: Job? = null
-
   override suspend fun await(): T {
-    val currentJob = currentCoroutineContext()[Job]
+    val currentContext = currentCoroutineContext()
     deferred?.let {
-      checkRecursiveAwait(currentJob, it)
+      checkRecursiveSingleFlightAwait(currentContext, owner, coroutineName, it)
       return it.await()
     }
 
@@ -106,18 +132,17 @@ private class SuspendingLazyImpl<T>(
 
       val created = CompletableDeferred<T>()
       deferred = created
-      ownerJob = currentJob
       created to true
     }
 
     if (!isOwner) {
-      checkRecursiveAwait(currentJob, actualDeferred)
+      checkRecursiveSingleFlightAwait(currentContext, owner, coroutineName, actualDeferred)
       return actualDeferred.await()
     }
 
     try {
       actualDeferred.complete(
-        withContext(CoroutineName(coroutineName)) {
+        withContext(CoroutineName(coroutineName) + singleFlightComputationContext(currentContext, owner)) {
           coroutineScope {
             initializer(this)
           }
@@ -127,15 +152,6 @@ private class SuspendingLazyImpl<T>(
     catch (t: Throwable) {
       actualDeferred.completeExceptionally(t)
     }
-    finally {
-      ownerJob = null
-    }
     return actualDeferred.await()
-  }
-
-  private fun checkRecursiveAwait(currentJob: Job?, deferred: CompletableDeferred<T>) {
-    check(currentJob == null || ownerJob !== currentJob || deferred.isCompleted) {
-      "Recursive await of '$coroutineName' detected"
-    }
   }
 }

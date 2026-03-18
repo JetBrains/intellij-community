@@ -7,9 +7,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.job
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -22,8 +20,10 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.OsFamily.Companion.currentOs
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.executeStep
+import org.jetbrains.intellij.build.impl.checkRecursiveSingleFlightAwait
 import org.jetbrains.intellij.build.impl.Docker
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder
+import org.jetbrains.intellij.build.impl.singleFlightComputationContext
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -250,7 +250,7 @@ class BuildContextSingleFlightCache<V>(
   private val cache = WeakHashMap<BuildContext, CacheEntry<V>>()
 
   suspend fun getOrLoad(context: BuildContext): V {
-    val currentJob = currentCoroutineContext().job
+    val currentContext = currentCoroutineContext()
     val (entry, isOwner) = lock.withLock {
       cache.get(context)?.let {
         return@withLock it to false
@@ -258,37 +258,28 @@ class BuildContextSingleFlightCache<V>(
 
       val created = CacheEntry(
         result = CompletableDeferred<V>(),
-        ownerJob = currentJob,
+        owner = Any(),
       )
       cache.put(context, created)
       created to true
     }
 
     if (!isOwner) {
-      checkRecursiveAwait(currentJob, entry)
+      checkRecursiveSingleFlightAwait(currentContext, entry.owner, operationName, entry.result)
       return entry.result.await()
     }
 
     try {
-      entry.result.complete(loader(context))
+      entry.result.complete(withContext(singleFlightComputationContext(currentContext, entry.owner)) { loader(context) })
     }
     catch (t: Throwable) {
       entry.result.completeExceptionally(t)
     }
-    finally {
-      entry.ownerJob = null
-    }
     return entry.result.await()
-  }
-
-  private fun checkRecursiveAwait(currentJob: Job?, entry: CacheEntry<V>) {
-    check(currentJob == null || entry.ownerJob !== currentJob || entry.result.isCompleted) {
-      "Recursive await of '$operationName' detected"
-    }
   }
 
   private class CacheEntry<V>(
     val result: CompletableDeferred<V>,
-    @Volatile var ownerJob: Job?,
+    val owner: Any,
   )
 }
