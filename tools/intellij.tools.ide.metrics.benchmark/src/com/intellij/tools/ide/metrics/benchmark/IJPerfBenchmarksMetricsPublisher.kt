@@ -2,12 +2,13 @@
 package com.intellij.tools.ide.metrics.benchmark
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.intellij.codeowners.runtime.resolver.TestClassCodeOwnerResolverImpl
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.teamcity.TeamCityClient
-import com.intellij.codeowners.runtime.resolver.TestClassCodeOwnerResolverImpl
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.tools.ide.metrics.collector.MetricsCollector
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
@@ -26,11 +27,14 @@ import kotlin.io.path.writer
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+private val LOG = fileLogger()
+
 /**
  * Metrics will be stored as TeamCity artifacts and later will be collected by IJ Perf collector (~ once/twice per hour).
  * Charts can be found at [IJ Perf Dashboard](https://ij-perf.labs.jb.gg/intellij/testsDev) - link is prone to change, though.
  */
 internal class IJPerfBenchmarksMetricsPublisher {
+
 
   companion object {
 
@@ -56,13 +60,8 @@ internal class IJPerfBenchmarksMetricsPublisher {
       return tempPropertiesFile.toPath()
     }
 
-    private val codeOwnerResolver: TestClassCodeOwnerResolverImpl? by lazy {
-      try {
-        TestClassCodeOwnerResolverImpl()
-      }
-      catch (_: Throwable) {
-        null
-      }
+    private val codeOwners: TestClassCodeOwnerResolverImpl? by lazy {
+      runCatching { codeOwnerResolver }.onFailure { LOG.warn(it) }.getOrNull()
     }
 
     private val teamCityClient = TeamCityClient(
@@ -97,7 +96,7 @@ internal class IJPerfBenchmarksMetricsPublisher {
         methodName = uniqueTestIdentifier,
         buildNumber = BuildNumber.currentVersion(),
         metrics = metrics,
-        owner = testClass?.let { codeOwnerResolver?.getOwnerGroupName(it) } ?: ""
+        owner = testClass?.let { codeOwners?.getOwnerGroupName(it) } ?: ""
       )
     }
 
