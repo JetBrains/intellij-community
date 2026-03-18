@@ -136,6 +136,7 @@ internal val SdkRoot = fqn(workspaceEntitiesPackageName, "SdkRoot")
 // Annotations
 internal val Parent = fqn(workspaceStorageAnnotationsPackageName, "Parent")
 internal val Internal = fqn("org.jetbrains.annotations.ApiStatus", "Internal")
+internal val K1Deprecation = fqn("org.jetbrains.kotlin", "K1Deprecation")
 
 
 // Collections

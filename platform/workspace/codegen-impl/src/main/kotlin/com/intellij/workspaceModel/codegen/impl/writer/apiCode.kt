@@ -1,17 +1,40 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer
 
-import com.intellij.workspaceModel.codegen.deft.meta.*
-import com.intellij.workspaceModel.codegen.engine.*
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
+import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.engine.GenerationProblem
+import com.intellij.workspaceModel.codegen.engine.ProblemLocation
 import com.intellij.workspaceModel.codegen.impl.CodeGeneratorVersionCalculator
 import com.intellij.workspaceModel.codegen.impl.engine.ProblemReporter
-import com.intellij.workspaceModel.codegen.impl.writer.classes.*
-import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
-import com.intellij.workspaceModel.codegen.impl.writer.fields.*
+import com.intellij.workspaceModel.codegen.impl.writer.classes.isEntityWithSymbolicId
+import com.intellij.workspaceModel.codegen.impl.writer.classes.noDefaultValue
+import com.intellij.workspaceModel.codegen.impl.writer.classes.noEntitySource
+import com.intellij.workspaceModel.codegen.impl.writer.classes.noOptional
+import com.intellij.workspaceModel.codegen.impl.writer.classes.noRefs
+import com.intellij.workspaceModel.codegen.impl.writer.classes.noSymbolicId
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.additionalAnnotations
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.allExtensions
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.allFields
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.allSuperClasses
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.builderWithTypeParameter
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.defaultJavaBuilderName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.isRefType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.isStandardInterface
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaBuilderName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.requiresCompatibility
+import com.intellij.workspaceModel.codegen.impl.writer.fields.javaBuilderTypeWithGeneric
+import com.intellij.workspaceModel.codegen.impl.writer.fields.javaMutableType
+import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
+import com.intellij.workspaceModel.codegen.impl.writer.fields.wsCode
 
 fun ObjClass<*>.generateMutableCode(reporter: ProblemReporter): String = lines {
   if (additionalAnnotations.isNotEmpty()) {
-    line(additionalAnnotations)
+    list(additionalAnnotations)
   }
   line("@${GeneratedCodeApiVersion}(${CodeGeneratorVersionCalculator.apiVersion})")
   val (typeParameter, typeDeclaration) = if (builderWithTypeParameter) "T" to "<T: $javaFullName>" else javaFullName to ""
@@ -187,7 +210,7 @@ fun ObjClass<*>.generateConstructorCode(): String? {
 
   return lines {
     if (additionalAnnotations.isNotEmpty()) {
-      line(additionalAnnotations)
+      list(additionalAnnotations)
     }
     line("@${JvmOverloads::class.fqn}")
     line("@${JvmName::class.fqn}(\"create$name\")")
@@ -212,7 +235,7 @@ fun ObjClass<*>.generateExtensionCode(): String? {
   return lines {
     if (!openness.extendable) {
       if (additionalAnnotations.isNotEmpty()) {
-        line(additionalAnnotations)
+        list(additionalAnnotations)
       }
       line("${generatedCodeVisibilityModifier}fun ${MutableEntityStorage}.modify$name(")
       line("entity: $name,")

@@ -120,7 +120,7 @@ fun ObjClass<*>.compatibilityModifyCode(linesBuilder: LinesBuilder) {
   with(linesBuilder) {
     line(DEPRECATION)
     if (additionalAnnotations.isNotEmpty()) {
-      line(additionalAnnotations)
+      list(additionalAnnotations)
     }
     line("${generatedCodeVisibilityModifier}fun ${MutableEntityStorage}.modify$name(")
     line("  entity: $name,")
