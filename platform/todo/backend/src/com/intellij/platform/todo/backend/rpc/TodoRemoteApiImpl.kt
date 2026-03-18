@@ -49,7 +49,9 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
         allTodoItems.filter { it.pattern != null && filter.contains(it.pattern) }
       } else allTodoItems.asList()
 
-      filteredTodoItems.map { todoItem ->
+      filteredTodoItems
+        .sortedWith(compareBy({ it.textRange.startOffset }, {it.textRange.endOffset}))
+        .map { todoItem ->
         val (line, preview) = if (document != null) {
           val startOffset = todoItem.textRange.startOffset
           val line = document.getLineNumber(startOffset)
