@@ -1,0 +1,239 @@
+// Signature format: 4.0
+package org.jetbrains.jewel.intui.window {
+
+  public final class DecoratedWindowIconKeys {
+    method public org.jetbrains.jewel.ui.icon.IconKey getClose();
+    method public org.jetbrains.jewel.ui.icon.IconKey getMaximize();
+    method public org.jetbrains.jewel.ui.icon.IconKey getMinimize();
+    method public org.jetbrains.jewel.ui.icon.IconKey getRestore();
+    property public org.jetbrains.jewel.ui.icon.IconKey close;
+    property public org.jetbrains.jewel.ui.icon.IconKey maximize;
+    property public org.jetbrains.jewel.ui.icon.IconKey minimize;
+    property public org.jetbrains.jewel.ui.icon.IconKey restore;
+    field public static final org.jetbrains.jewel.intui.window.DecoratedWindowIconKeys INSTANCE;
+  }
+
+  public final class IntUiDecoratedWindowResourceResolverKt {
+    method public static org.jetbrains.jewel.ui.painter.ResourcePainterProvider decoratedWindowPainterProvider(String path);
+  }
+
+  public final class IntUiThemeKt {
+    method public static org.jetbrains.jewel.ui.ComponentStyling decoratedWindow(org.jetbrains.jewel.ui.ComponentStyling, optional org.jetbrains.jewel.window.styling.DecoratedWindowStyle? windowStyle, optional org.jetbrains.jewel.window.styling.TitleBarStyle? titleBarStyle);
+  }
+
+}
+
+package org.jetbrains.jewel.intui.window.styling {
+
+  public final class IntUiDecoratedWindowStylingKt {
+    method public static org.jetbrains.jewel.window.styling.DecoratedWindowColors dark(org.jetbrains.jewel.window.styling.DecoratedWindowColors.Companion, optional long borderColor, optional long inactiveBorderColor);
+    method public static org.jetbrains.jewel.window.styling.DecoratedWindowStyle dark(org.jetbrains.jewel.window.styling.DecoratedWindowStyle.Companion, optional org.jetbrains.jewel.window.styling.DecoratedWindowColors colors, optional org.jetbrains.jewel.window.styling.DecoratedWindowMetrics metrics);
+    method public static org.jetbrains.jewel.window.styling.DecoratedWindowMetrics defaults(org.jetbrains.jewel.window.styling.DecoratedWindowMetrics.Companion, optional float borderWidth);
+    method public static org.jetbrains.jewel.window.styling.DecoratedWindowColors light(org.jetbrains.jewel.window.styling.DecoratedWindowColors.Companion, optional long borderColor, optional long inactiveBorderColor);
+    method public static org.jetbrains.jewel.window.styling.DecoratedWindowStyle light(org.jetbrains.jewel.window.styling.DecoratedWindowStyle.Companion, optional org.jetbrains.jewel.window.styling.DecoratedWindowColors colors, optional org.jetbrains.jewel.window.styling.DecoratedWindowMetrics metrics);
+  }
+
+  public final class IntUiTitleBarStylingKt {
+    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.window.styling.TitleBarColors dark(org.jetbrains.jewel.window.styling.TitleBarColors.Companion, optional long backgroundColor, optional long inactiveBackground, optional long fullscreenControlButtonsBackground, optional long contentColor, optional long borderColor, optional long titlePaneButtonHoveredBackground, optional long titlePaneButtonPressedBackground, optional long titlePaneCloseButtonHoveredBackground, optional long titlePaneCloseButtonPressedBackground, optional long iconButtonHoveredBackground, optional long iconButtonPressedBackground, optional long dropdownHoveredBackground, optional long dropdownPressedBackground);
+    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.window.styling.TitleBarStyle dark(org.jetbrains.jewel.window.styling.TitleBarStyle.Companion, optional org.jetbrains.jewel.window.styling.TitleBarColors colors, optional org.jetbrains.jewel.window.styling.TitleBarMetrics metrics, optional org.jetbrains.jewel.window.styling.TitleBarIcons icons);
+    method public static org.jetbrains.jewel.window.styling.TitleBarIcons defaults(org.jetbrains.jewel.window.styling.TitleBarIcons.Companion, optional org.jetbrains.jewel.ui.icon.IconKey minimizeButton, optional org.jetbrains.jewel.ui.icon.IconKey maximizeButton, optional org.jetbrains.jewel.ui.icon.IconKey restoreButton, optional org.jetbrains.jewel.ui.icon.IconKey closeButton);
+    method public static org.jetbrains.jewel.window.styling.TitleBarMetrics defaults(org.jetbrains.jewel.window.styling.TitleBarMetrics.Companion, optional float height, optional float gradientStartX, optional float gradientEndX, optional long titlePaneButtonSize);
+    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.window.styling.TitleBarColors light(org.jetbrains.jewel.window.styling.TitleBarColors.Companion, optional long backgroundColor, optional long inactiveBackground, optional long contentColor, optional long borderColor, optional long fullscreenControlButtonsBackground, optional long titlePaneButtonHoveredBackground, optional long titlePaneButtonPressedBackground, optional long titlePaneCloseButtonHoveredBackground, optional long titlePaneCloseButtonPressedBackground, optional long iconButtonHoveredBackground, optional long iconButtonPressedBackground, optional long dropdownHoveredBackground, optional long dropdownPressedBackground);
+    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.window.styling.TitleBarStyle light(org.jetbrains.jewel.window.styling.TitleBarStyle.Companion, optional org.jetbrains.jewel.window.styling.TitleBarColors colors, optional org.jetbrains.jewel.window.styling.TitleBarMetrics metrics, optional org.jetbrains.jewel.window.styling.TitleBarIcons icons);
+    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.window.styling.TitleBarColors lightWithLightHeader(org.jetbrains.jewel.window.styling.TitleBarColors.Companion, optional long backgroundColor, optional long inactiveBackground, optional long fullscreenControlButtonsBackground, optional long contentColor, optional long borderColor, optional long titlePaneButtonHoveredBackground, optional long titlePaneButtonPressedBackground, optional long titlePaneCloseButtonHoveredBackground, optional long titlePaneCloseButtonPressedBackground, optional long iconButtonHoveredBackground, optional long iconButtonPressedBackground, optional long dropdownHoveredBackground, optional long dropdownPressedBackground);
+    method @androidx.compose.runtime.Composable public static org.jetbrains.jewel.window.styling.TitleBarStyle lightWithLightHeader(org.jetbrains.jewel.window.styling.TitleBarStyle.Companion, optional org.jetbrains.jewel.window.styling.TitleBarColors colors, optional org.jetbrains.jewel.window.styling.TitleBarMetrics metrics, optional org.jetbrains.jewel.window.styling.TitleBarIcons icons);
+  }
+
+}
+
+package org.jetbrains.jewel.window {
+
+  public final class DecoratedWindowKt {
+    method @androidx.compose.runtime.Composable public static void DecoratedWindow(kotlin.jvm.functions.Function0<kotlin.Unit> onCloseRequest, optional androidx.compose.ui.window.WindowState state, optional boolean visible, optional String title, optional androidx.compose.ui.graphics.painter.Painter? icon, optional boolean resizable, optional boolean enabled, optional boolean focusable, optional boolean alwaysOnTop, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.input.key.KeyEvent,java.lang.Boolean> onPreviewKeyEvent, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.input.key.KeyEvent,java.lang.Boolean> onKeyEvent, optional org.jetbrains.jewel.window.styling.DecoratedWindowStyle style, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.window.DecoratedWindowScope,kotlin.Unit> content);
+  }
+
+  @androidx.compose.runtime.Stable public interface DecoratedWindowScope extends androidx.compose.ui.window.FrameWindowScope {
+    property public abstract org.jetbrains.jewel.window.DecoratedWindowState state;
+    property public abstract androidx.compose.ui.awt.ComposeWindow window;
+  }
+
+  @androidx.compose.runtime.Immutable @kotlin.jvm.JvmInline public final value class DecoratedWindowState {
+    ctor @KotlinOnly public DecoratedWindowState(kotlin.ULong state);
+    method public long copy(optional boolean fullscreen, optional boolean minimized, optional boolean maximized, optional boolean active);
+    property public boolean isActive;
+    property public boolean isFullscreen;
+    property public boolean isMaximized;
+    property public boolean isMinimized;
+    property public kotlin.ULong state;
+    field public static final org.jetbrains.jewel.window.DecoratedWindowState.Companion Companion;
+  }
+
+  public static final class DecoratedWindowState.Companion {
+    method public long of(androidx.compose.ui.awt.ComposeWindow window);
+    method public long of(optional boolean fullscreen, optional boolean minimized, optional boolean maximized, optional boolean active);
+    property public kotlin.ULong Active;
+    property public kotlin.ULong Fullscreen;
+    property public kotlin.ULong Maximize;
+    property public kotlin.ULong Minimize;
+  }
+
+  public final class ThemeKt {
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.window.styling.DecoratedWindowStyle getDefaultDecoratedWindowStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.window.styling.TitleBarStyle getDefaultTitleBarStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.window.styling.DecoratedWindowStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.defaultDecoratedWindowStyle;
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.window.styling.TitleBarStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.defaultTitleBarStyle;
+  }
+
+  public final class TitleBarKt {
+    method @androidx.compose.runtime.Composable public static void TitleBar(org.jetbrains.jewel.window.DecoratedWindowScope, optional androidx.compose.ui.Modifier modifier, optional long gradientStartColor, optional org.jetbrains.jewel.window.styling.TitleBarStyle style, kotlin.jvm.functions.Function2<? super org.jetbrains.jewel.window.TitleBarScope,? super org.jetbrains.jewel.window.DecoratedWindowState,kotlin.Unit> content);
+  }
+
+  public interface TitleBarScope {
+    method @androidx.compose.runtime.Stable public androidx.compose.ui.Modifier align(androidx.compose.ui.Modifier, androidx.compose.ui.Alignment.Horizontal alignment);
+    method public androidx.compose.ui.graphics.painter.Painter? getIcon();
+    method public String getTitle();
+    property public abstract androidx.compose.ui.graphics.painter.Painter? icon;
+    property public abstract String title;
+  }
+
+  public final class TitleBar_MacOSKt {
+    method public static androidx.compose.ui.Modifier newFullscreenControls(androidx.compose.ui.Modifier, optional boolean newControls);
+  }
+
+}
+
+package org.jetbrains.jewel.window.styling {
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class DecoratedWindowColors {
+    ctor @KotlinOnly public DecoratedWindowColors(androidx.compose.ui.graphics.Color border, androidx.compose.ui.graphics.Color borderInactive);
+    method @androidx.compose.runtime.Composable public androidx.compose.runtime.State<androidx.compose.ui.graphics.Color> borderFor(long state);
+    property public androidx.compose.ui.graphics.Color border;
+    property public androidx.compose.ui.graphics.Color borderInactive;
+    field public static final org.jetbrains.jewel.window.styling.DecoratedWindowColors.Companion Companion;
+  }
+
+  public static final class DecoratedWindowColors.Companion {
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class DecoratedWindowMetrics {
+    ctor @KotlinOnly public DecoratedWindowMetrics(androidx.compose.ui.unit.Dp borderWidth);
+    property public androidx.compose.ui.unit.Dp borderWidth;
+    field public static final org.jetbrains.jewel.window.styling.DecoratedWindowMetrics.Companion Companion;
+  }
+
+  public static final class DecoratedWindowMetrics.Companion {
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class DecoratedWindowStyle {
+    ctor public DecoratedWindowStyle(org.jetbrains.jewel.window.styling.DecoratedWindowColors colors, org.jetbrains.jewel.window.styling.DecoratedWindowMetrics metrics);
+    method public org.jetbrains.jewel.window.styling.DecoratedWindowColors getColors();
+    method public org.jetbrains.jewel.window.styling.DecoratedWindowMetrics getMetrics();
+    property public org.jetbrains.jewel.window.styling.DecoratedWindowColors colors;
+    property public org.jetbrains.jewel.window.styling.DecoratedWindowMetrics metrics;
+    field public static final org.jetbrains.jewel.window.styling.DecoratedWindowStyle.Companion Companion;
+  }
+
+  public static final class DecoratedWindowStyle.Companion {
+  }
+
+  public final class DecoratedWindowStylingKt {
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.window.styling.DecoratedWindowStyle> getLocalDecoratedWindowStyle();
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.window.styling.DecoratedWindowStyle> LocalDecoratedWindowStyle;
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class TitleBarColors {
+    ctor @KotlinOnly public TitleBarColors(androidx.compose.ui.graphics.Color background, androidx.compose.ui.graphics.Color inactiveBackground, androidx.compose.ui.graphics.Color content, androidx.compose.ui.graphics.Color border, androidx.compose.ui.graphics.Color fullscreenControlButtonsBackground, androidx.compose.ui.graphics.Color titlePaneButtonHoveredBackground, androidx.compose.ui.graphics.Color titlePaneButtonPressedBackground, androidx.compose.ui.graphics.Color titlePaneCloseButtonHoveredBackground, androidx.compose.ui.graphics.Color titlePaneCloseButtonPressedBackground, androidx.compose.ui.graphics.Color iconButtonHoveredBackground, androidx.compose.ui.graphics.Color iconButtonPressedBackground, androidx.compose.ui.graphics.Color dropdownPressedBackground, androidx.compose.ui.graphics.Color dropdownHoveredBackground);
+    method @androidx.compose.runtime.Composable public androidx.compose.runtime.State<androidx.compose.ui.graphics.Color> backgroundFor(long state);
+    property public androidx.compose.ui.graphics.Color background;
+    property public androidx.compose.ui.graphics.Color border;
+    property public androidx.compose.ui.graphics.Color content;
+    property public androidx.compose.ui.graphics.Color dropdownHoveredBackground;
+    property public androidx.compose.ui.graphics.Color dropdownPressedBackground;
+    property public androidx.compose.ui.graphics.Color fullscreenControlButtonsBackground;
+    property public androidx.compose.ui.graphics.Color iconButtonHoveredBackground;
+    property public androidx.compose.ui.graphics.Color iconButtonPressedBackground;
+    property public androidx.compose.ui.graphics.Color inactiveBackground;
+    property public androidx.compose.ui.graphics.Color titlePaneButtonHoveredBackground;
+    property public androidx.compose.ui.graphics.Color titlePaneButtonPressedBackground;
+    property public androidx.compose.ui.graphics.Color titlePaneCloseButtonHoveredBackground;
+    property public androidx.compose.ui.graphics.Color titlePaneCloseButtonPressedBackground;
+    field public static final org.jetbrains.jewel.window.styling.TitleBarColors.Companion Companion;
+  }
+
+  public static final class TitleBarColors.Companion {
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class TitleBarIcons {
+    ctor public TitleBarIcons(org.jetbrains.jewel.ui.icon.IconKey minimizeButton, org.jetbrains.jewel.ui.icon.IconKey maximizeButton, org.jetbrains.jewel.ui.icon.IconKey restoreButton, org.jetbrains.jewel.ui.icon.IconKey closeButton);
+    method public org.jetbrains.jewel.ui.icon.IconKey getCloseButton();
+    method public org.jetbrains.jewel.ui.icon.IconKey getMaximizeButton();
+    method public org.jetbrains.jewel.ui.icon.IconKey getMinimizeButton();
+    method public org.jetbrains.jewel.ui.icon.IconKey getRestoreButton();
+    property public org.jetbrains.jewel.ui.icon.IconKey closeButton;
+    property public org.jetbrains.jewel.ui.icon.IconKey maximizeButton;
+    property public org.jetbrains.jewel.ui.icon.IconKey minimizeButton;
+    property public org.jetbrains.jewel.ui.icon.IconKey restoreButton;
+    field public static final org.jetbrains.jewel.window.styling.TitleBarIcons.Companion Companion;
+  }
+
+  public static final class TitleBarIcons.Companion {
+  }
+
+  @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class TitleBarMetrics {
+    ctor @KotlinOnly public TitleBarMetrics(androidx.compose.ui.unit.Dp height, androidx.compose.ui.unit.Dp gradientStartX, androidx.compose.ui.unit.Dp gradientEndX, androidx.compose.ui.unit.DpSize titlePaneButtonSize);
+    property public androidx.compose.ui.unit.Dp gradientEndX;
+    property public androidx.compose.ui.unit.Dp gradientStartX;
+    property public androidx.compose.ui.unit.Dp height;
+    property public androidx.compose.ui.unit.DpSize titlePaneButtonSize;
+    field public static final org.jetbrains.jewel.window.styling.TitleBarMetrics.Companion Companion;
+  }
+
+  public static final class TitleBarMetrics.Companion {
+  }
+
+  @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class TitleBarStyle {
+    ctor public TitleBarStyle(org.jetbrains.jewel.window.styling.TitleBarColors colors, org.jetbrains.jewel.window.styling.TitleBarMetrics metrics, org.jetbrains.jewel.window.styling.TitleBarIcons icons, org.jetbrains.jewel.ui.component.styling.DropdownStyle dropdownStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle iconButtonStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle paneButtonStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle paneCloseButtonStyle);
+    method public org.jetbrains.jewel.window.styling.TitleBarColors getColors();
+    method public org.jetbrains.jewel.ui.component.styling.DropdownStyle getDropdownStyle();
+    method public org.jetbrains.jewel.ui.component.styling.IconButtonStyle getIconButtonStyle();
+    method public org.jetbrains.jewel.window.styling.TitleBarIcons getIcons();
+    method public org.jetbrains.jewel.window.styling.TitleBarMetrics getMetrics();
+    method public org.jetbrains.jewel.ui.component.styling.IconButtonStyle getPaneButtonStyle();
+    method public org.jetbrains.jewel.ui.component.styling.IconButtonStyle getPaneCloseButtonStyle();
+    property public org.jetbrains.jewel.window.styling.TitleBarColors colors;
+    property public org.jetbrains.jewel.ui.component.styling.DropdownStyle dropdownStyle;
+    property public org.jetbrains.jewel.ui.component.styling.IconButtonStyle iconButtonStyle;
+    property public org.jetbrains.jewel.window.styling.TitleBarIcons icons;
+    property public org.jetbrains.jewel.window.styling.TitleBarMetrics metrics;
+    property public org.jetbrains.jewel.ui.component.styling.IconButtonStyle paneButtonStyle;
+    property public org.jetbrains.jewel.ui.component.styling.IconButtonStyle paneCloseButtonStyle;
+    field public static final org.jetbrains.jewel.window.styling.TitleBarStyle.Companion Companion;
+  }
+
+  public static final class TitleBarStyle.Companion {
+  }
+
+  public final class TitleBarStylingKt {
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.window.styling.TitleBarStyle> getLocalTitleBarStyle();
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.window.styling.TitleBarStyle> LocalTitleBarStyle;
+  }
+
+}
+
+package org.jetbrains.jewel.window.utils {
+
+  public enum DesktopPlatform {
+    enum_constant public static final org.jetbrains.jewel.window.utils.DesktopPlatform Linux;
+    enum_constant public static final org.jetbrains.jewel.window.utils.DesktopPlatform MacOS;
+    enum_constant public static final org.jetbrains.jewel.window.utils.DesktopPlatform Unknown;
+    enum_constant public static final org.jetbrains.jewel.window.utils.DesktopPlatform Windows;
+    field public static final org.jetbrains.jewel.window.utils.DesktopPlatform.Companion Companion;
+  }
+
+  public static final class DesktopPlatform.Companion {
+    method public org.jetbrains.jewel.window.utils.DesktopPlatform getCurrent();
+    property public org.jetbrains.jewel.window.utils.DesktopPlatform Current;
+  }
+
+}
+
