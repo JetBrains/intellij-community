@@ -4,7 +4,6 @@ package com.intellij.compose.ide.plugin.shared.inspections
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
 import com.intellij.openapi.module.Module
@@ -24,8 +23,6 @@ abstract class ComposeMissingPluginInspection : AbstractKotlinInspection() {
 
   override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.ERROR
 
-  override fun getShortName(): String = "ComposableCallWithoutComposePlugin"
-
   abstract fun isComposePluginApplied(module: Module): Boolean
 
   abstract fun createQuickFix(): LocalQuickFix
@@ -43,13 +40,10 @@ abstract class ComposeMissingPluginInspection : AbstractKotlinInspection() {
 
     return object : KtVisitorVoid() {
       override fun visitCallExpression(expression: KtCallExpression) {
-        super.visitCallExpression(expression)
-
         if (isComposableInvocation(expression)) {
           holder.registerProblem(
             expression.calleeExpression ?: expression,
             ComposeIdeBundle.message("compose.inspection.missing.plugin.name"),
-            ProblemHighlightType.ERROR,
             createQuickFix(),
           )
         }

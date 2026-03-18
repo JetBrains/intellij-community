@@ -52,6 +52,8 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.compose.ide.plugin.k2" />
 </module>

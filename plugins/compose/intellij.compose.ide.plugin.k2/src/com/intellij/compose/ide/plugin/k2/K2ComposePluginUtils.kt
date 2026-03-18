@@ -2,6 +2,7 @@
 package com.intellij.compose.ide.plugin.k2
 
 import com.intellij.compose.ide.plugin.shared.COMPOSABLE_ANNOTATION_CLASS_ID
+import com.intellij.compose.ide.plugin.shared.REMEMBER_IN_COMPOSITION_CLASS_ID
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -30,14 +32,15 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 
-internal fun isPluginApplied(module: Module): Boolean {
-  val mainModuleDataNode = CachedModuleDataFinder.findMainModuleData(module) ?: return false
-  val extensions = getGradleExtensions(mainModuleDataNode) ?: return false
-  return extensions.any { ext ->
-    ext.name == COMPOSE_PLUGIN_ID &&
-    ext.typeFqn == COMPOSE_KOTLIN_PLUGIN_NAME
+internal val Module.isComposeCompilerPluginApplied: Boolean
+  get() {
+    val mainModuleDataNode = CachedModuleDataFinder.findMainModuleData(this) ?: return false
+    val extensions = getGradleExtensions(mainModuleDataNode) ?: return false
+    return extensions.any { ext ->
+      ext.name == COMPOSE_PLUGIN_ID &&
+      ext.typeFqn == COMPOSE_KOTLIN_PLUGIN_NAME
+    }
   }
-}
 
 private fun getGradleExtensions(moduleDataNode: DataNode<*>): List<GradleExtension>? =
   ExternalSystemApiUtil.find(moduleDataNode, GradleExtensionsDataService.KEY)?.data?.extensions
@@ -67,11 +70,11 @@ internal fun refreshGradleProject(module: Module) {
   }
 }
 
-internal fun isComposableFunctionCall(expression: KtCallExpression): Boolean = analyze(expression) {
+internal fun requiresComposePlugin(expression: KtCallExpression): Boolean = analyze(expression) {
   val call = expression.resolveToCall()?.singleFunctionCallOrNull() as? KaCallableMemberCall<*, *>
              ?: return@analyze false
 
-  isComposableInvocation(call)
+  isComposableInvocation(call) || isRememberInCompositionCall(call)
 }
 
 @OptIn(KaExperimentalApi::class)
@@ -81,21 +84,32 @@ internal fun KaSession.isComposableInvocation(memberCall: KaCallableMemberCall<*
   }
 
   fun KaNamedFunctionSymbol.isInvokeOperatorCall(): Boolean {
-    return this.isOperator && this.name == OperatorNameConventions.INVOKE
+    return isOperator && name == OperatorNameConventions.INVOKE
   }
 
   return when (val callableSymbol = memberCall.symbol) {
     is KaNamedFunctionSymbol -> {
       if (hasComposableAnnotation(callableSymbol)) return true
 
-      if (callableSymbol.isInvokeOperatorCall()) {
-        val typeInvokeOperatorIsCalledOn = memberCall.partiallyAppliedSymbol.dispatchReceiver?.type ?: return false
-        return hasComposableAnnotation(typeInvokeOperatorIsCalledOn)
-      }
+      if (!callableSymbol.isInvokeOperatorCall()) return false
 
-      false
+      val typeInvokeOperatorIsCalledOn = memberCall.partiallyAppliedSymbol.dispatchReceiver?.type ?: return false
+      hasComposableAnnotation(typeInvokeOperatorIsCalledOn)
     }
     is KaPropertySymbol -> hasComposableAnnotation(callableSymbol.getter)
+    else -> false
+  }
+}
+
+internal fun KaSession.isRememberInCompositionCall(memberCall: KaCallableMemberCall<*, *>): Boolean {
+  fun hasRememberInCompositionAnnotation(annotated: KaAnnotated?): Boolean {
+    return annotated != null && REMEMBER_IN_COMPOSITION_CLASS_ID in annotated.annotations
+  }
+
+  return when (val callableSymbol = memberCall.symbol) {
+    is KaNamedFunctionSymbol,
+    is KaConstructorSymbol,
+      -> hasRememberInCompositionAnnotation(callableSymbol)
     else -> false
   }
 }

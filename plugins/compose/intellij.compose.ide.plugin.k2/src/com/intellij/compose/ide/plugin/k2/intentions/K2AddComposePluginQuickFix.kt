@@ -10,8 +10,8 @@ import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.childrenOfType
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.psi.KtScriptInitializer
 
-@ApiStatus.Internal
 internal class K2AddComposePluginQuickFix : LocalQuickFix {
 
   override fun getFamilyName(): String = ComposeIdeBundle.message("compose.inspection.missing.plugin.fix.family.name")
@@ -66,22 +65,25 @@ private fun KtFile.findPluginsBlock(): KtBlockExpression? {
 private fun addPluginToExistingBlock(pluginsBlock: KtBlockExpression, factory: KtPsiFactory): Boolean {
   val pluginStatement = factory.createExpression(COMPOSE_PLUGIN_EXPRESSION)
   pluginsBlock.addBefore(factory.createNewLine(), pluginsBlock.rBrace)
-  pluginsBlock.addBefore(pluginStatement, pluginsBlock.rBrace)
+  val added = pluginsBlock.addBefore(pluginStatement, pluginsBlock.rBrace)
+  CodeStyleManager.getInstance(pluginsBlock.project).reformat(added)
   return true
 }
 
 private fun KtFile.addNewPluginsBlock(factory: KtPsiFactory): Boolean {
   val script = childrenOfType<KtScript>().firstOrNull()
   val block = script?.blockExpression ?: return false
-  val newPluginsBlock = factory.createExpression("plugins {\n    $COMPOSE_PLUGIN_EXPRESSION\n}")
+  val newPluginsBlock = factory.createExpression("plugins {\n$COMPOSE_PLUGIN_EXPRESSION\n}")
   val anchor = block.firstChild
-  if (anchor != null) {
-    block.addBefore(newPluginsBlock, anchor)
+  val added = if (anchor != null) {
+    val result = block.addBefore(newPluginsBlock, anchor)
     block.addBefore(factory.createNewLine(2), anchor)
+    result
   }
   else {
     block.add(newPluginsBlock)
   }
+  CodeStyleManager.getInstance(project).reformat(added)
   return true
 }
 

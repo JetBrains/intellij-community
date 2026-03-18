@@ -162,6 +162,10 @@ jvm_library(
     "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
     "//plugins/kotlin/code-insight/api",
     "//plugins/kotlin/code-insight/api:api_test_lib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
   ],
   runtime_deps = [":ide-plugin-k2-tests"]
 )

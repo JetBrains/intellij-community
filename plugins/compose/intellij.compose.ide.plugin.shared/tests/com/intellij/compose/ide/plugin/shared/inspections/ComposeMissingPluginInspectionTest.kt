@@ -15,11 +15,11 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
 
   private data class ExpectedError(val text: String, val line: Int? = null)
 
-  private infix fun String.at(line: Int) = ExpectedError(this, line)
+  private infix fun String.atLine(line: Int) = ExpectedError(this, line)
 
-  private operator fun String.unaryPlus() = ExpectedError(this)
+  private fun expectedError(text: String) = ExpectedError(text)
 
-  private fun runInspectionTest(
+  private fun assertHighlightedErrors(
     @Language("kotlin") code: String,
     vararg expected: ExpectedError,
   ) {
@@ -39,7 +39,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     }
   }
 
-  fun `test composable call is flagged when plugin is missing`() = runInspectionTest(
+  fun `test composable call is flagged when plugin is missing`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
       @Composable fun MyComposable() {}
@@ -48,10 +48,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         MyComposable()
       }
     """,
-    "MyComposable" at 4
+    "MyComposable" atLine 4
   )
 
-  fun `test multiple composable calls are all flagged`() = runInspectionTest(
+  fun `test multiple composable calls are all flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -65,12 +65,12 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         C()
       }
     """,
-    "A" at 7,
-    "B" at 8,
-    "C" at 9
+    "A" atLine 7,
+    "B" atLine 8,
+    "C" atLine 9
   )
 
-  fun `test composable call from another composable is flagged`() = runInspectionTest(
+  fun `test composable call from another composable is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -80,10 +80,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         Child()
       }
     """,
-    "Child" at 5
+    "Child" atLine 5
   )
 
-  fun `test deeply nested composable call is flagged`() = runInspectionTest(
+  fun `test deeply nested composable call is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -101,10 +101,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         }
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call button is flagged`() = runInspectionTest(
+  fun `test composable call button is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -121,11 +121,11 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         }
       }
     """,
-    +"Button",
-    +"Text"
+    expectedError("Button"),
+    expectedError("Text")
   )
 
-  fun `test composable call inside nested function is flagged`() = runInspectionTest(
+  fun `test composable call inside nested function is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -137,10 +137,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         }
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call with arguments is flagged`() = runInspectionTest(
+  fun `test composable call with arguments is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -150,10 +150,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         MyComposable("hello", 42)
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call with named arguments is flagged`() = runInspectionTest(
+  fun `test composable call with named arguments is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -163,10 +163,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         MyComposable(text = "hello", count = 42)
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call with default parameter values is flagged`() = runInspectionTest(
+  fun `test composable call with default parameter values is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -176,10 +176,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         MyComposable()
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call with vararg parameter is flagged`() = runInspectionTest(
+  fun `test composable call with vararg parameter is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -189,10 +189,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         MyComposable("a", "b", "c")
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call with generic parameter is flagged`() = runInspectionTest(
+  fun `test composable call with generic parameter is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -202,10 +202,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         GenericComposable(42)
       }
     """,
-    +"GenericComposable"
+    expectedError("GenericComposable")
   )
 
-  fun `test composable extension function call is flagged`() = runInspectionTest(
+  fun `test composable extension function call is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -215,10 +215,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         "hello".composableExtension()
       }
     """,
-    +"composableExtension"
+    expectedError("composableExtension")
   )
 
-  fun `test composable operator function call is flagged`() = runInspectionTest(
+  fun `test composable operator function call is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -231,10 +231,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         w()
       }
     """,
-    +"w"
+    expectedError("w")
   )
 
-  fun `test composable infix function call is flagged`() = runInspectionTest(
+  fun `test composable infix function call is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -245,10 +245,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         1.composableAdd(2)
       }
     """,
-    +"composableAdd"
+    expectedError("composableAdd")
   )
 
-  fun `test composable lambda parameter not flagged`() = runInspectionTest(
+  fun `test composable lambda parameter not flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -260,7 +260,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     """
   )
 
-  fun `test composable return type flagged`() = runInspectionTest(
+  fun `test composable return type flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -270,10 +270,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         returnsComposable()()
       }
     """,
-    +"returnsComposable()"
+    expectedError("returnsComposable()")
   )
 
-  fun `test composable call with trailing lambda is flagged`() = runInspectionTest(
+  fun `test composable call with trailing lambda is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -284,10 +284,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         }
       }
     """,
-    +"Container"
+    expectedError("Container")
   )
 
-  fun `test function with multiple composable lambda parameters is not flagged`() = runInspectionTest(
+  fun `test function with multiple composable lambda parameters is not flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -302,7 +302,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     """
   )
 
-  fun `test nullable composable parameter is not flagged`() = runInspectionTest(
+  fun `test nullable composable parameter is not flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
   
@@ -314,7 +314,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     """
   )
 
-  fun `test higher-order composable parameter type is not flagged`() = runInspectionTest(
+  fun `test higher-order composable parameter type is not flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
       @Composable fun MyComposable() {}
@@ -324,10 +324,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         takesHigherOrder { { MyComposable()} }
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call via type alias is flagged`() = runInspectionTest(
+  fun `test composable call via type alias is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -340,11 +340,11 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         TakesContent {}
       }
     """,
-    +"content",
-    +"TakesContent"
+    expectedError("content"),
+    expectedError("TakesContent")
   )
 
-  fun `test composable call inside lambda is flagged`() = runInspectionTest(
+  fun `test composable call inside lambda is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -356,10 +356,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         }
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call inside lambda with composable function type is flagged`() = runInspectionTest(
+  fun `test composable call inside lambda with composable function type is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
   
@@ -367,10 +367,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
   
       val foo: @Composable () -> Unit = { MyComposable() }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call inside anonymous function is flagged`() = runInspectionTest(
+  fun `test composable call inside anonymous function is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -382,10 +382,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         }
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call inside composable annotated lambda is flagged`() = runInspectionTest(
+  fun `test composable call inside composable annotated lambda is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
   
@@ -393,10 +393,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
   
       val foo = @Composable { MyComposable() }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test direct invocation of composable lambda variable is flagged`() = runInspectionTest(
+  fun `test direct invocation of composable lambda variable is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -404,10 +404,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         content()
       }
     """,
-    +"content"
+    expectedError("content")
   )
 
-  fun `test composable call in top-level initializer is flagged`() = runInspectionTest(
+  fun `test composable call in top-level initializer is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -415,10 +415,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
 
       val result = compute()
     """,
-    +"compute"
+    expectedError("compute")
   )
 
-  fun `test composable call in property getter is flagged`() = runInspectionTest(
+  fun `test composable call in property getter is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -427,10 +427,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
       val myProp: Any
         get() = compute()
     """,
-    +"compute"
+    expectedError("compute")
   )
 
-  fun `test composable call inside property setter is flagged`() = runInspectionTest(
+  fun `test composable call inside property setter is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -442,10 +442,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
           MyComposable()
         }
       """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call inside class init block is flagged`() = runInspectionTest(
+  fun `test composable call inside class init block is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -457,10 +457,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         }
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call inside companion object function is flagged`() = runInspectionTest(
+  fun `test composable call inside companion object function is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -474,10 +474,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         }
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call inside object expression is flagged`() = runInspectionTest(
+  fun `test composable call inside object expression is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -493,10 +493,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         }
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call inside if branch is flagged`() = runInspectionTest(
+  fun `test composable call inside if branch is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -508,10 +508,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         }
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call inside when branch is flagged`() = runInspectionTest(
+  fun `test composable call inside when branch is flagged`() = assertHighlightedErrors(
     """
         import androidx.compose.runtime.Composable
 
@@ -524,10 +524,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
           }
         }
       """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call inside forEach is flagged`() = runInspectionTest(
+  fun `test composable call inside forEach is flagged`() = assertHighlightedErrors(
     """
     import androidx.compose.runtime.Composable
 
@@ -539,10 +539,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
       }
     }
   """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call inside try block is flagged`() = runInspectionTest(
+  fun `test composable call inside try block is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -554,10 +554,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         } catch (_: Exception) {}
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call inside run block is flagged`() = runInspectionTest(
+  fun `test composable call inside run block is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -569,10 +569,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         }
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call inside let block is flagged`() = runInspectionTest(
+  fun `test composable call inside let block is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -584,10 +584,10 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         }
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
-  fun `test composable call inside also block is flagged`() = runInspectionTest(
+  fun `test composable call inside also block is flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -599,7 +599,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         }
       }
     """,
-    +"MyComposable"
+    expectedError("MyComposable")
   )
 
   fun `test multiple files with composable calls across files`() {
@@ -609,17 +609,17 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
         @Composable fun SharedComposable() {}
       """.trimIndent())
 
-    runInspectionTest(
+    assertHighlightedErrors(
       """
         fun caller() {
           SharedComposable()
         }
       """,
-      +"SharedComposable"
+      expectedError("SharedComposable")
     )
   }
 
-  fun `test non-composable call is not flagged`() = runInspectionTest(
+  fun `test non-composable call is not flagged`() = assertHighlightedErrors(
     """
       fun regularFunction() {}
 
@@ -629,7 +629,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
       """
   )
 
-  fun `test standard library call is not flagged`() = runInspectionTest(
+  fun `test standard library call is not flagged`() = assertHighlightedErrors(
     """
       fun caller() {
         println("hello")
@@ -639,7 +639,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     """
   )
 
-  fun `test constructor call is not flagged`() = runInspectionTest(
+  fun `test constructor call is not flagged`() = assertHighlightedErrors(
     """
       class MyClass(val name: String)
 
@@ -649,7 +649,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     """
   )
 
-  fun `test function with non-composable lambda parameter is not flagged`() = runInspectionTest("""
+  fun `test function with non-composable lambda parameter is not flagged`() = assertHighlightedErrors("""
       fun takesLambda(block: () -> Unit) {}
 
       fun caller() {
@@ -658,7 +658,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     """
   )
 
-  fun `test function with no parameters is not flagged`() = runInspectionTest(
+  fun `test function with no parameters is not flagged`() = assertHighlightedErrors(
     """
       fun simple() {}
 
@@ -668,7 +668,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     """
   )
 
-  fun `test extension function without composable annotation is not flagged`() = runInspectionTest(
+  fun `test extension function without composable annotation is not flagged`() = assertHighlightedErrors(
     """
       fun String.myExtension(): Int = length
 
@@ -678,7 +678,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     """
   )
 
-  fun `test higher order function with regular lambda is not flagged`() = runInspectionTest(
+  fun `test higher order function with regular lambda is not flagged`() = assertHighlightedErrors(
     """
       fun higherOrder(transform: (Int) -> String) {}
 
@@ -688,7 +688,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     """
   )
 
-  fun `test file with only declarations and no calls is not flagged`() = runInspectionTest(
+  fun `test file with only declarations and no calls is not flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -698,11 +698,11 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     """
   )
 
-  fun `test empty file is not flagged`() = runInspectionTest("")
+  fun `test empty file is not flagged`() = assertHighlightedErrors("")
 
-  fun `test file with only imports is not flagged`() = runInspectionTest("""import androidx.compose.runtime.Composable""")
+  fun `test file with only imports is not flagged`() = assertHighlightedErrors("""import androidx.compose.runtime.Composable""")
 
-  fun `test non-composable function with same name as composable is not flagged`() = runInspectionTest(
+  fun `test non-composable function with same name as composable is not flagged`() = assertHighlightedErrors(
     """
       import androidx.compose.runtime.Composable
 
@@ -715,7 +715,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     """
   )
 
-  fun `test suspend function is not flagged`() = runInspectionTest(
+  fun `test suspend function is not flagged`() = assertHighlightedErrors(
     """
       suspend fun mySuspend() {}
 
@@ -725,7 +725,7 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
     """
   )
 
-  fun `test infix function call is not flagged`() = runInspectionTest(
+  fun `test infix function call is not flagged`() = assertHighlightedErrors(
     """
       infix fun Int.add(other: Int): Int = this + other
 
@@ -734,4 +734,36 @@ abstract class ComposeMissingPluginInspectionTest : KotlinLightCodeInsightFixtur
       }
     """
   )
+
+  fun `test movableContentOf call is flagged when plugin is missing`() = assertHighlightedErrors(
+    """
+      import androidx.compose.runtime.Composable
+      import androidx.compose.runtime.annotation.RememberInComposition
+
+      @Composable fun baseComposable() {}
+
+      @RememberInComposition
+      fun <T> movableContentOf(content: @Composable () -> T): @Composable () -> T = content
+
+      fun caller() {
+        val movableComposable: @Composable () -> Unit = movableContentOf { baseComposable() }
+      }
+    """,
+    "movableContentOf" atLine 9,
+    "baseComposable" atLine 9
+  )
+
+  fun `test FocusRequester constructor is flagged when plugin is missing`() = assertHighlightedErrors(
+    """
+      import androidx.compose.runtime.annotation.RememberInComposition
+
+      class FocusRequester @RememberInComposition constructor()
+
+      fun caller() {
+        val focusRequester = FocusRequester()
+      }
+    """,
+    expectedError("FocusRequester")
+  )
+
 }

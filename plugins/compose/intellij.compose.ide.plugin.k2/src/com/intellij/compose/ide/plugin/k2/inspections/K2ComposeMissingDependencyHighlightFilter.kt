@@ -3,8 +3,8 @@ package com.intellij.compose.ide.plugin.k2.inspections
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter
-import com.intellij.compose.ide.plugin.k2.isComposableFunctionCall
-import com.intellij.compose.ide.plugin.k2.isPluginApplied
+import com.intellij.compose.ide.plugin.k2.requiresComposePlugin
+import com.intellij.compose.ide.plugin.k2.isComposeCompilerPluginApplied
 import com.intellij.compose.ide.plugin.shared.inspections.ComposeMissingPluginInspection
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiFile
@@ -25,11 +25,11 @@ internal class K2ComposeMissingDependencyHighlightFilter : HighlightInfoFilter {
     if (!description.contains(MISSING_DEPENDENCY_CLASS) && !description.contains(ARGUMENT_TYPE_MISMATCH)) return true
 
     val element = psiFile.findElementAt(highlightInfo.startOffset) ?: return true
-    val callExpression = element.parentOfType<KtCallExpression>(withSelf = false) ?: return true
-    if (!isComposableFunctionCall(callExpression)) return true
+    val callExpression = element.parentOfType<KtCallExpression>() ?: return true
+    if (!requiresComposePlugin(callExpression)) return true
 
     val module = ModuleUtilCore.findModuleForFile(psiFile) ?: return true
-    return isPluginApplied(module)
+    return module.isComposeCompilerPluginApplied
   }
 
   private companion object {

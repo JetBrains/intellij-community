@@ -1,14 +1,15 @@
 <idea-plugin package="com.intellij.compose.ide.plugin.k2">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.kotlin.k2"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.compose.ide.plugin.shared"/>
+    <module name="intellij.gradle"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.completion.impl"/>
     <module name="intellij.kotlin.highlighting"/>
     <module name="intellij.kotlin.refactorings"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="com.intellij.compose.ide.plugin.k2.intentions.K2CreateComposableQuickFixesRegistrar"/>

@@ -35,11 +35,12 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 /**
- * Enables Compose in the tests by adding Composable annotation to the test classpath.
+ * Enables Compose in the tests by adding Composable and RememberInComposition annotations to the test classpath.
  */
 internal fun JavaCodeInsightTestFixture.enableComposeInTest() {
   if (!this.isComposeEnabled()) {
     createComposableAnnotationInFile("Composable.kt")
+    createRememberInCompositionAnnotationInFile("RememberInComposition.kt")
   }
 }
 
@@ -64,6 +65,18 @@ private fun JavaCodeInsightTestFixture.createComposableAnnotationInFile(fileRela
                   annotation class DisallowComposableCalls
               """.trimIndent()
   this.addFileToProject(fileRelativePath, composableAnnotationDefinitionFileText)
+}
+
+/**
+ * Creates a Kotlin file [fileRelativePath] containing the definition of the `@RememberInComposition` annotation in the test's project directory.
+ */
+private fun JavaCodeInsightTestFixture.createRememberInCompositionAnnotationInFile(fileRelativePath: String) {
+  val annotationFileText = """
+      package androidx.compose.runtime.annotation
+
+      annotation class RememberInComposition
+  """.trimIndent()
+  this.addFileToProject(fileRelativePath, annotationFileText)
 }
 
 internal fun resolveTestDataDirectory(directoryPath: String): Path {
