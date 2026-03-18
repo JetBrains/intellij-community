@@ -219,24 +219,10 @@ class KotlinProjectConfigurationService(private val project: Project, val corout
         coroutineScope.launch(Dispatchers.Default) {
             var configured = false
             try {
-                val autoConfigurator = readAction {
-                    KotlinProjectConfigurator.EP_NAME.extensionList
-                        .firstOrNull { it.canRunAutoConfig() && it.isApplicable(module) }
-                } ?: return@launch
-
-                val autoConfigSettings = withBackgroundProgress(
-                    project = module.project,
-                    title = KotlinProjectConfigurationBundle.message("auto.configure.kotlin.check")
-                ) {
-                    val settings = autoConfigurator.calculateAutoConfigSettings(module)
-                    KotlinProjectSetupFUSCollector.logCheckAutoConfigStatus(module.project, settings != null)
-                    settings
+                configured = autoConfigure(module)
+                if (configured) {
+                    notificationCooldownEnd = System.currentTimeMillis() + 2000
                 }
-
-                if (autoConfigSettings == null) return@launch
-                autoConfigurator.runAutoConfig(autoConfigSettings)
-                configured = true
-                notificationCooldownEnd = System.currentTimeMillis() + 2000
             } finally {
                 checkingAndPerformingAutoConfig = false
                 if (!configured) {
@@ -246,5 +232,25 @@ class KotlinProjectConfigurationService(private val project: Project, val corout
                 }
             }
         }
+    }
+
+    @ApiStatus.Internal
+    suspend fun autoConfigure(module: Module): Boolean {
+        val autoConfigurator = readAction {
+            KotlinProjectConfigurator.EP_NAME.extensionList
+                .firstOrNull { it.canRunAutoConfig() && it.isApplicable(module) }
+        } ?: return false
+
+        val autoConfigSettings = withBackgroundProgress(
+            project = module.project,
+            title = KotlinProjectConfigurationBundle.message("auto.configure.kotlin.check")
+        ) {
+            val settings = autoConfigurator.calculateAutoConfigSettings(module)
+            KotlinProjectSetupFUSCollector.logCheckAutoConfigStatus(module.project, settings != null)
+            settings
+        } ?: return false
+
+        autoConfigurator.runAutoConfig(autoConfigSettings)
+        return true
     }
 }
