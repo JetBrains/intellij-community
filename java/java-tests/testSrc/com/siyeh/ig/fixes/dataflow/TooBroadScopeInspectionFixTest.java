@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.dataflow;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -30,5 +30,6 @@ public class TooBroadScopeInspectionFixTest extends IGQuickFixesTestCase {
   public void testComments() { doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "s")); }
   public void testComments2() { doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "alpha")); }
   public void testVarDeclarationUntouched() { doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "i")); }
+  public void testMayChangeSemantics() { doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.may.change.semantics.quickfix", "value")); }
   public void testUnmovableStringBuilder() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "sb"));}
 }
