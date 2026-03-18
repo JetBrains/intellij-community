@@ -142,18 +142,19 @@ class ConfigureDialogWithModulesAndVersion(
             .forEach {
                 val modules = versionsAndModules[it] ?: return@forEach
                 val modulesNames = modules.keys
-                val modulesEnumeration = java.lang.StringBuilder()
-                if (modulesNames.size > MODULES_TO_DISPLAY_SIZE) {
-                    modulesEnumeration.append(modulesNames.take(MODULES_TO_DISPLAY_SIZE).sorted().joinToString())
-                    modulesEnumeration.append(
-                        message(
-                            "configure.kotlin.version.and.modules.and.more", modulesNames.size - MODULES_TO_DISPLAY_SIZE
+                val modulesEnumeration = buildString {
+                    if (modulesNames.size > MODULES_TO_DISPLAY_SIZE) {
+                        append(modulesNames.take(MODULES_TO_DISPLAY_SIZE).sorted().joinToString())
+                        append(
+                            message(
+                                "configure.kotlin.version.and.modules.and.more", modulesNames.size - MODULES_TO_DISPLAY_SIZE
+                            )
                         )
-                    )
-                } else {
-                    modulesEnumeration.append(modulesNames.sorted().joinToString())
+                    } else {
+                        append(modulesNames.sorted().joinToString())
+                    }
                 }
-                message.append(message("configure.kotlin.version.and.modules", it, modulesEnumeration.toString()))
+                message.append(message("configure.kotlin.version.and.modules", it, modulesEnumeration))
             }
 
         message.append(message("configure.kotlin.choose.another.kotlin.version"))
