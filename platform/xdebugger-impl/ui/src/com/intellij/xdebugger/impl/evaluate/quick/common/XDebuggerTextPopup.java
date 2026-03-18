@@ -145,16 +145,12 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
       public void evaluated(final @NotNull String fullValue, final @Nullable Font font) {
         if (preventDoubleExecution(fullValue)) return;
 
-        AppUIUtil.invokeOnEdt(() -> {
-          myTextPanel.showVisualizedText(fullValue, afterEvaluation);
-        });
+        myTextPanel.showVisualizedText(fullValue, afterEvaluation);
       }
 
       @Override
       public void errorOccurred(final @NotNull String errorMessage) {
-        AppUIUtil.invokeOnEdt(() -> {
-          myTextPanel.showError(errorMessage);
-        });
+        myTextPanel.showError(errorMessage);
       }
 
       @Override

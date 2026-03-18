@@ -20,11 +20,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.limits.FileSizeLimit
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.JBTabbedPane
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.impl.ui.CustomComponentEvaluator
@@ -33,6 +33,14 @@ import com.intellij.xdebugger.impl.ui.TextViewer
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
 import com.intellij.xdebugger.ui.TextValueVisualizer
 import com.intellij.xdebugger.ui.VisualizedContentTab
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.CardLayout
 import java.awt.Dimension
@@ -43,14 +51,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.JPanel
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.math.max
 
 /**
@@ -126,9 +126,6 @@ internal class VisualizedTextPanel(private val project: Project) : JPanel(CardLa
   private data class Editing(val initText: String, val editor: Editor) : State()
   private object Other : State()
 
-  private val coroutineScope: CoroutineScope = project.service<VisualizedTextPopupUtilProjectCoroutineScope>().cs
-  private var visualizationJob: Job? = null
-
   private var state: State = Other
 
   init {
@@ -152,19 +149,22 @@ internal class VisualizedTextPanel(private val project: Project) : JPanel(CardLa
   }
 
   fun showError(errorMessage: String) {
-    showTextMessage("ERROR OCCURRED: $errorMessage") {
-      it.foreground = XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.fgColor
+    AppUIUtil.invokeOnEdt {
+      showTextMessage("ERROR OCCURRED: $errorMessage") {
+        it.foreground = XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.fgColor
+      }
     }
   }
 
   /** Visualize the text and show it nicely. */
-  fun showVisualizedText(value: String) {
-    showVisualizedText(value, onDone = null)
-  }
+  fun showVisualizedText(value: String, onDone: Runnable? = null) {
+    val cs = project.service<VisualizedTextPopupUtilProjectCoroutineScope>().cs.childScope("showVisualizedText")
+    if (!Disposer.tryRegister(this) { cs.cancel() }) {
+      cs.cancel()
+      return
+    }
 
-  fun showVisualizedText(value: String, onDone: Runnable?) {
-    visualizationJob?.cancel()
-    visualizationJob = coroutineScope.launch(Dispatchers.EDT) {
+    cs.launch(Dispatchers.EDT) {
       try {
         val tabs = VisualizedTextPopupUtil.collectVisualizedTabs(project, value, parentDisposable = this@VisualizedTextPanel)
         if (tabs.isEmpty()) {
@@ -193,7 +193,7 @@ internal class VisualizedTextPanel(private val project: Project) : JPanel(CardLa
           onDone?.run()
         }
       }
-    }.also { it.cancelOnDispose(this) }
+    }
   }
 
   private fun createTabbedPane(tabsAndComponents: List<Pair<VisualizedContentTab, JComponent>>): JComponent {
@@ -330,21 +330,11 @@ private class EvaluationCallback(private val panel: VisualizedTextPanel) : XFull
     if (hashCode == lastFullValueHashCode.get()) return
     lastFullValueHashCode.set(hashCode)
 
-    AppUIUtil.invokeOnEdt {
-      try {
-        panel.showVisualizedText(fullValue)
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-        errorOccurred(e.toString())
-      }
-    }
+    panel.showVisualizedText(fullValue)
   }
 
   override fun errorOccurred(errorMessage: String) {
-    AppUIUtil.invokeOnEdt {
-      panel.showError(errorMessage)
-    }
+    panel.showError(errorMessage)
   }
 
   fun setObsolete() {
