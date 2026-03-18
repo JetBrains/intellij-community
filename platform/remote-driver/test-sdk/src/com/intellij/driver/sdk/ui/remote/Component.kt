@@ -28,7 +28,7 @@ interface Component {
 }
 
 @Remote("java.awt.Window")
-interface Window: Component {
+interface Window : Component {
   fun isFocused(): Boolean
   fun dispose()
   fun toFront()

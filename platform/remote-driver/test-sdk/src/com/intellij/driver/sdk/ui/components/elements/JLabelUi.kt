@@ -4,6 +4,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.common.Icon
 
 fun Finder.linkLabel(labelText: String): JLabelUiComponent =
   x(JLabelUiComponent::class.java) { and(byType("com.intellij.ui.components.labels.LinkLabel"), byAccessibleName(labelText)) }
@@ -22,6 +23,7 @@ open class TabLabelUi(data: ComponentData) : UiComponent(data) {
   val text get() = tabComponent.info.text
   val fontSize get() = tabComponent.info.getFontSize()
   val isPinned get() = tabComponent.isPinned
+  val hasIcon get() = tabComponent.info.getIcon() != null
 
   fun clickClose() {
     moveMouse()
@@ -44,4 +46,5 @@ interface TabLabel {
 interface TabInfoRef {
   val text: String
   fun getFontSize(): Int
+  fun getIcon(): Icon?
 }

@@ -207,11 +207,16 @@ fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEd
 fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true, isTextEditor: Boolean = true) {
   step("Open file $relativePath") {
     val openedFile = if (!isRemDevMode) {
-      val fileToOpen = findFile(relativePath = relativePath, project = project)
-      if (fileToOpen == null) {
-        throw IllegalArgumentException("Fail to find file $relativePath")
-      }
-      openEditor(fileToOpen, project)
+      val fileToOpen = waitFor(message = "File is opened: $relativePath",
+                               errorMessage = { "Fail to find file $relativePath" },
+                               timeout = 10.seconds,
+                               getter = { findFile(relativePath = relativePath, project = project) },
+                               checker = { virtualFile ->
+                                 virtualFile != null &&
+                                 Path.of(virtualFile.getPath()).endsWith(Path.of(relativePath))
+                               })
+
+      openEditor(fileToOpen!!, project)
       fileToOpen
     }
     else {
