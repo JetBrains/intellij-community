@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
@@ -74,9 +75,10 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
       }
     });
     CoroutineScope queueScope = CoroutineScopeKt.CoroutineScope(SupervisorJob(null).plus(Dispatchers.getDefault()));
+    // Cancel the scope when progress window is disposed to prevent leaks
+    Disposer.register(myProgressWindow, () -> CoroutineScopeKt.cancel(queueScope, null));
     myUpdateQueue = DebouncedUpdates.<String>forScope(queueScope, "HotSwapProgress update queue", 100)
-      .runLatest(this::updateProgressText)
-      .cancelOnDispose(myProgressWindow);
+      .runLatest(this::updateProgressText);
   }
 
   @Override
