@@ -359,7 +359,7 @@ object CommunityLibraryLicenses {
       .mit("https://github.com/vdurmont/emoji-java/blob/master/LICENSE.md")
       .suppliedByPersons("Vincent DURMONT"),
 
-    LibraryLicense("entities", version = LibraryLicense.CUSTOM_REVISION, attachedTo = "intellij.vuejs", url = "https://github.com/fb55/entities")
+    LibraryLicense("entities", version = LibraryLicense.CUSTOM_REVISION, attachedTo = "intellij.vuejs.plugin", url = "https://github.com/fb55/entities")
       .simplifiedBsd("https://github.com/fb55/entities/blob/master/LICENSE"),
 
     LibraryLicense("epydoc", version = "3.0.1", attachedTo = "intellij.python", url = "https://epydoc.sourceforge.net/")
@@ -480,7 +480,7 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/carrotsearch/hppc/blob/master/LICENSE.txt")
       .suppliedByPersons("Stanisław Osiński", "Dawid Weiss", "Bruno Roustant"),
 
-    LibraryLicense("htmlparser2", url = "https://github.com/fb55/htmlparser2", attachedTo = "intellij.vuejs", version = LibraryLicense.CUSTOM_REVISION)
+    LibraryLicense("htmlparser2", url = "https://github.com/fb55/htmlparser2", attachedTo = "intellij.vuejs.plugin", version = LibraryLicense.CUSTOM_REVISION)
       .mit("https://github.com/fb55/htmlparser2/blob/master/LICENSE"),
 
     LibraryLicense("HttpComponents HttpClient", libraryName = "http-client", url = "https://github.com/apache/httpcomponents-client/")
