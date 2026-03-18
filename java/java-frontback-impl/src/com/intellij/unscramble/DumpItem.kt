@@ -366,8 +366,6 @@ class InfoDumpItem(private val title: @Nls String, private val details: @NlsSafe
     get() = ""
   override val stackTrace: @NlsSafe String
     get() = details
-  override val exportedStackTrace: @NlsSafe String
-    get() = ""
   override val interestLevel: Int
     get() = Int.MIN_VALUE
   override val icon: Icon
