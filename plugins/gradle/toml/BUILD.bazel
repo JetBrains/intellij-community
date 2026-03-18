@@ -30,7 +30,7 @@ jvm_library(
     "//platform/util",
     "//platform/analysis-api:analysis",
     "//plugins/toml/core",
-    "//plugins/repository-search/common",
+    "//plugins/repository-search/completion",
     "//plugins/gradle/completion",
     "//plugins/gradle",
   ]
@@ -48,7 +48,7 @@ jvm_library(
     "//platform/util:util_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//plugins/toml/core:core_test_lib",
-    "//plugins/repository-search/common:common_test_lib",
+    "//plugins/repository-search/completion:completion_test_lib",
     "//plugins/gradle/completion:completion_test_lib",
     "//plugins/gradle:gradle_test_lib",
   ]

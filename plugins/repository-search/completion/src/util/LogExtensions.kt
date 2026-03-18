@@ -16,17 +16,17 @@
 
 @file:Suppress("unused")
 
-package org.jetbrains.idea.completion.util
+package com.intellij.repository.search.completion.util
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CancellationException
-import org.jetbrains.idea.reposearch.PluginEnvironment
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-private val logger = Logger.getInstance("#${PluginEnvironment.PLUGIN_ID}")
+internal const val PLUGIN_ID = "org.jetbrains.idea.reposearch"
+private val logger = Logger.getInstance("#${PLUGIN_ID}")
 
 internal fun logError(contextName: String? = null, messageProvider: () -> String) {
   logError(traceInfo = null, contextName = contextName, messageProvider = messageProvider)
@@ -148,7 +148,7 @@ private fun warnNotLoggable() {
     """
         |!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         |Debug logging not enabled. Make sure you have a line like this:
-        |      #${PluginEnvironment.PLUGIN_ID}:trace
+        |      #${PLUGIN_ID}:trace
         |in your debug log settings (Help | Diagnostic Tools | Debug Log Settings)
         |then restart the IDE.
         |!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

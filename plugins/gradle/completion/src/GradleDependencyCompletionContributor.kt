@@ -3,15 +3,15 @@ package com.intellij.gradle.completion
 
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
 import com.intellij.openapi.components.service
+import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionContext
+import com.intellij.repository.search.completion.api.DependencyCompletionContributor
+import com.intellij.repository.search.completion.api.DependencyCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionResult
+import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
+import com.intellij.repository.search.completion.api.GradleDependencyCompletionContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionContext
-import org.jetbrains.idea.completion.api.DependencyCompletionContributor
-import org.jetbrains.idea.completion.api.DependencyCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionResult
-import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
-import org.jetbrains.idea.completion.api.GradleDependencyCompletionContext
 
 @ApiStatus.Internal
 class GradleDependencyCompletionContributor : DependencyCompletionContributor {

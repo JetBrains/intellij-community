@@ -1,10 +1,10 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.gradle"/>
-    <module name="intellij.repository.search.common"/>
-    <!-- endregion -->
+    <module name="intellij.repository.search.completion"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
       serviceInterface="com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer"

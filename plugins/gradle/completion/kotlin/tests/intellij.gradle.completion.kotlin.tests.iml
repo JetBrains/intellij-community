@@ -16,7 +16,7 @@
     <orderEntry type="module" module-name="intellij.toml" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.toml.core" />
-    <orderEntry type="module" module-name="intellij.repository.search.common" />
+    <orderEntry type="module" module-name="intellij.repository.search.completion" />
     <orderEntry type="module" module-name="intellij.gradle.completion" />
     <orderEntry type="module" module-name="intellij.gradle.toml" />
     <orderEntry type="module" module-name="intellij.gradle.completion.kotlin" />

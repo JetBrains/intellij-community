@@ -12,12 +12,12 @@ import com.intellij.gradle.completion.getCompletionContext
 import com.intellij.gradle.completion.removeDummySuffix
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import com.intellij.util.ProcessingContext
-import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionService
-import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 import org.toml.lang.psi.TomlLiteral
 

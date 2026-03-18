@@ -2,7 +2,7 @@
 
 @file:ApiStatus.Experimental
 
-package org.jetbrains.idea.completion.api
+package com.intellij.repository.search.completion.api
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.eel.EelDescriptor

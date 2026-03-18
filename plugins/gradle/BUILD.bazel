@@ -228,7 +228,7 @@ jvm_library(
     "//libraries/gson",
     "//libraries/guava",
     "//platform/forms_rt:java-guiForms-rt",
-    "//plugins/repository-search/common",
+    "//plugins/repository-search/completion",
   ]
 )
 
@@ -343,8 +343,8 @@ jvm_library(
     "//java/testFramework/backend",
     "//java/testFramework/backend:backend_test_lib",
     "@lib//:junit5Pioneer",
-    "//plugins/repository-search/common",
-    "//plugins/repository-search/common:common_test_lib",
+    "//plugins/repository-search/completion",
+    "//plugins/repository-search/completion:completion_test_lib",
     "//plugins/gradle/completion",
     "//plugins/gradle/completion:completion_test_lib",
     "//platform/code-style-api:codeStyle",

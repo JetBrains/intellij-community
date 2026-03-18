@@ -27,7 +27,7 @@ jvm_library(
   deps = [
     "//plugins/gradle",
     "//platform/projectModel-api:projectModel",
-    "//plugins/repository-search/common",
+    "//plugins/repository-search/completion",
     "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//platform/core-impl",
@@ -59,7 +59,7 @@ jvm_library(
     ":completion",
     "//plugins/gradle:gradle_test_lib",
     "//platform/projectModel-api:projectModel_test_lib",
-    "//plugins/repository-search/common:common_test_lib",
+    "//plugins/repository-search/completion:completion_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/platform-api:ide_test_lib",
     "//platform/core-impl:core-impl_test_lib",

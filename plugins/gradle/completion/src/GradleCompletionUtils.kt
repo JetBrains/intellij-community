@@ -4,9 +4,9 @@ package com.intellij.gradle.completion
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.repository.search.completion.api.DependencyCompletionContext
+import com.intellij.repository.search.completion.api.GradleDependencyCompletionContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.completion.api.DependencyCompletionContext
-import org.jetbrains.idea.completion.api.GradleDependencyCompletionContext
 
 @ApiStatus.Internal
 fun removeDummySuffix(value: String?): String {

@@ -6,6 +6,11 @@ import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.gradle.completion.kotlin.KotlinGradleScriptCompletionContributor
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionResult
+import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.replaceService
@@ -14,11 +19,6 @@ import com.intellij.util.application
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.gradle.util.GradleVersion
-import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionResult
-import org.jetbrains.idea.completion.api.DependencyCompletionService
-import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.UseK2PluginMode
@@ -41,10 +41,10 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     private val testCompletionService = object : DependencyCompletionService {
         override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> {
             return flowOf(
-                DependencyCompletionResult("myGroup1", "myArtifact1", "myVersion1"),
-                DependencyCompletionResult("myGroup2", "myArtifact2", "myVersion2"),
-                DependencyCompletionResult("myGroup3", "myArtifact3", "myVersion3"),
-                DependencyCompletionResult("fooGroup", "compileArtifact", "barVersion"),
+              DependencyCompletionResult("myGroup1", "myArtifact1", "myVersion1"),
+              DependencyCompletionResult("myGroup2", "myArtifact2", "myVersion2"),
+              DependencyCompletionResult("myGroup3", "myArtifact3", "myVersion3"),
+              DependencyCompletionResult("fooGroup", "compileArtifact", "barVersion"),
             )
         }
     }

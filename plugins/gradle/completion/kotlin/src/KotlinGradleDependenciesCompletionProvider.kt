@@ -20,14 +20,14 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.storage.entities
+import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionResult
+import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import com.intellij.util.ProcessingContext
 import kotlinx.coroutines.flow.flowOf
-import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionResult
-import org.jetbrains.idea.completion.api.DependencyCompletionService
-import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 
 private val exclude = setOf(
@@ -134,28 +134,28 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         val completionContext = parameters.getCompletionContext()
         val itemFlow = when {
             group.isBeingCompleted() -> completionService.suggestGroupCompletions(
-                DependencyGroupCompletionRequest(
-                    text,
-                    artifact,
-                    completionContext
-                )
+              DependencyGroupCompletionRequest(
+                text,
+                artifact,
+                completionContext
+              )
             )
 
             artifact.isBeingCompleted() -> completionService.suggestArtifactCompletions(
-                DependencyArtifactCompletionRequest(
-                    group,
-                    text,
-                    completionContext
-                )
+              DependencyArtifactCompletionRequest(
+                group,
+                text,
+                completionContext
+              )
             )
 
             version.isBeingCompleted() -> completionService.suggestVersionCompletions(
-                DependencyVersionCompletionRequest(
-                    group,
-                    artifact,
-                    text,
-                    completionContext
-                )
+              DependencyVersionCompletionRequest(
+                group,
+                artifact,
+                text,
+                completionContext
+              )
             )
 
             else -> flowOf()
