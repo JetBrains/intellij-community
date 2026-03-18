@@ -194,6 +194,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val myStepOverActionAllowed = MutableStateFlow(true)
   private val myStepOutActionAllowed = MutableStateFlow(true)
   private val myRunToCursorActionAllowed = MutableStateFlow(true)
+  private val myForceStepIntoActionAllowed = MutableStateFlow(true)
 
   private val myShowToolWindowOnSuspendOnly: Boolean = showToolWindowOnSuspendOnly
   private val myTabInitDataFlow = MutableStateFlow<XDebuggerSessionTabAbstractInfo?>(null)
@@ -332,6 +333,14 @@ class XDebugSessionImpl @JvmOverloads constructor(
     get() = myRunToCursorActionAllowed.value
     set(value) {
       myRunToCursorActionAllowed.value = value
+    }
+
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var isForceStepIntoActionAllowed: Boolean
+    get() = myForceStepIntoActionAllowed.value
+    set(value) {
+      myForceStepIntoActionAllowed.value = value
     }
 
   fun addRestartActions(vararg restartActions: AnAction) {

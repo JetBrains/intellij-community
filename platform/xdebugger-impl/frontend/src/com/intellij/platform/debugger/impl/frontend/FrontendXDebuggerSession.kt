@@ -175,6 +175,9 @@ class FrontendXDebuggerSession(
   override val isRunToCursorActionAllowed: Boolean
     get() = sessionStateFlow.value.isRunToCursorActionAllowed
 
+  override val isForceStepIntoActionAllowed: Boolean
+    get() = sessionStateFlow.value.isForceStepIntoActionAllowed
+
   override val isSuspended: Boolean
     get() = sessionStateFlow.value.isSuspended
 

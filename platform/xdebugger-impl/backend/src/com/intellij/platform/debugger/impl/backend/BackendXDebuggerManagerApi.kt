@@ -363,4 +363,5 @@ private fun XDebugSessionImpl.state(): XDebugSessionState = XDebugSessionState(
   isStepOverActionAllowed = isStepOverActionAllowed,
   isStepOutActionAllowed = isStepOutActionAllowed,
   isRunToCursorActionAllowed = isRunToCursorActionAllowed,
+  isForceStepIntoActionAllowed = isForceStepIntoActionAllowed,
 )

@@ -110,6 +110,8 @@ private class MonolithSessionProxy(val session: XDebugSession) : XDebugSessionPr
     get() = sessionImpl.isStepOutActionAllowed
   override val isRunToCursorActionAllowed: Boolean
     get() = sessionImpl.isRunToCursorActionAllowed
+  override val isForceStepIntoActionAllowed: Boolean
+    get() = sessionImpl.isForceStepIntoActionAllowed
   override val isLibraryFrameFilterSupported: Boolean
     get() = session.debugProcess.isLibraryFrameFilterSupported
   override val isValuesCustomSorted: Boolean
