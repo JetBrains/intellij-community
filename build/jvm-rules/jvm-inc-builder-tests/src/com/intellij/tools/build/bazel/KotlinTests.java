@@ -766,6 +766,11 @@ public class KotlinTests extends BazelIncBuildTest {
   }
 
   @Test
+  public void testRemoveImportedClass() throws Exception {
+    performTest("kotlin/classHierarchyAffected/removeImportedClass").assertFailure();
+  }
+
+  @Test
   public void testAnnotationListChanged() throws Exception {
     performTest(2, "kotlin/classHierarchyAffected/annotationListChanged").assertSuccessful();
   }
@@ -780,23 +785,15 @@ public class KotlinTests extends BazelIncBuildTest {
     performTest(2, "kotlin/classHierarchyAffected/classBecameFinal").assertSuccessful();
   }
 
-  /*
-    todo: investigate why no lookups are reported for empty "imports-only" *.kt files
-
   @Test
   public void testClassBecameInterface() throws Exception {
     performTest(2, "kotlin/classHierarchyAffected/classBecameInterface").assertSuccessful();
   }
-  */
-
-  /*
-    todo: investigate why no lookups are reported for empty "imports-only" *.kt files
 
   @Test
   public void testClassBecamePrivate() throws Exception {
     performTest(2, "kotlin/classHierarchyAffected/classBecamePrivate").assertSuccessful();
   }
-  */
 
   @Test
   public void testClassRemovedHierarchy() throws Exception {
@@ -813,14 +810,10 @@ public class KotlinTests extends BazelIncBuildTest {
     performTest("kotlin/classHierarchyAffected/methodRemoved").assertSuccessful();
   }
 
-  /*
-  todo: investigate why no lookups are reported for empty "imports-only" *.kt files
-
   @Test
   public void testSupertypesListChanged() throws Exception {
     performTest(2, "kotlin/classHierarchyAffected/supertypesListChanged").assertSuccessful();
   }
-  */
 
   @Test
   public void testClassMovedIntoOtherClass() throws Exception {
@@ -1521,14 +1514,10 @@ public class KotlinTests extends BazelIncBuildTest {
 
   // multiModule/common tests
 
-  /*
-    todo: investigate why no lookups are reported for empty "imports-only" *.kt files
-
   @Test
   public void testMultiModuleSimple() throws Exception {
     performTest(2, "kotlin/multiModule/common/simple").assertSuccessful();
   }
-  */
 
   @Test
   public void testMultiModuleSimpleDependency() throws Exception {

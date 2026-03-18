@@ -978,6 +978,12 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             runTest("classHierarchyAffected/propertyNullabilityChanged/");
         }
 
+
+        @TestMetadata("removeImportedClass")
+        public void testRemoveImportedClass() throws Exception {
+            runTest("classHierarchyAffected/removeImportedClass/");
+        }
+
         @TestMetadata("sealedClassImplAdded")
         public void testSealedClassImplAdded() throws Exception {
             runTest("classHierarchyAffected/sealedClassImplAdded/");

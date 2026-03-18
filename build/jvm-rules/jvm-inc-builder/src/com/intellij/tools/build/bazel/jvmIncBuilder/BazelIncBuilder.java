@@ -54,6 +54,7 @@ import static org.jetbrains.jps.util.Iterators.collect;
 import static org.jetbrains.jps.util.Iterators.contains;
 import static org.jetbrains.jps.util.Iterators.count;
 import static org.jetbrains.jps.util.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.find;
 import static org.jetbrains.jps.util.Iterators.flat;
 import static org.jetbrains.jps.util.Iterators.isEmpty;
 import static org.jetbrains.jps.util.Iterators.map;
@@ -309,7 +310,7 @@ public class BazelIncBuilder {
           }
 
           NodeSourceSnapshotDelta nextSnapshotDelta = graphUpdater.updateAfterCompilation(
-            storageManager.getGraph(), srcSnapshotDelta, createGraphDelta(storageManager.getGraph(), srcSnapshotDelta, outSink), diagnostic.hasErrors(), diagnosticCollector
+            storageManager.getGraph(), srcSnapshotDelta, createGraphDelta(storageManager.getGraph(), srcSnapshotDelta, diagnostic.hasErrors(), outSink), diagnostic.hasErrors(), diagnosticCollector
           );
 
           if (!diagnostic.hasErrors()) {
@@ -554,9 +555,18 @@ public class BazelIncBuilder {
     }
   }
 
-  private static Delta createGraphDelta(DependencyGraph depGraph, NodeSourceSnapshotDelta snapshotDelta, OutputSinkImpl outSink) {
+  private static Delta createGraphDelta(DependencyGraph depGraph, NodeSourceSnapshotDelta snapshotDelta, boolean compiledWithErrors, OutputSinkImpl outSink) {
     Delta delta = depGraph.createDelta(snapshotDelta.getModified(), snapshotDelta.getDeleted(), false);
-    for (var pair : outSink.getNodes()) {
+    Iterable<OutputSink.NodeWithSources> toRegister;
+    if (compiledWithErrors) {
+      // register only the nodes, that correspond to sources with at least one 'JvmClass' node associated => meaning "compiled successfully"
+      Set<NodeSource> compiledSuccessfully = collect(flat(map(outSink.getNodes(), ns -> ns.node() instanceof JVMClassNode<?, ?>? ns.sources() : List.of())), new HashSet<>());
+      toRegister = filter(outSink.getNodes(), ns -> find(ns.sources(), compiledSuccessfully::contains) != null);
+    }
+    else {
+      toRegister = outSink.getNodes();
+    }
+    for (var pair : toRegister) {
       delta.associate(pair.node(), pair.sources());
     }
     return delta;
