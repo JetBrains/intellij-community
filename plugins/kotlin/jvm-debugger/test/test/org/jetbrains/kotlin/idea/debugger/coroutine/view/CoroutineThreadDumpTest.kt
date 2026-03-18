@@ -82,7 +82,7 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
         assertEquals("scope:1", dumpItem.name)
         assertEquals(" (running)", dumpItem.stateDesc)
         assertEquals(
-            "\"scope:1@300\" RUNNING [Dispatchers.Default]\n    at example.Parent.one(Parent.kt:1)",
+            "\"scope:1\" RUNNING [Dispatchers.Default]\n    at example.Parent.one(Parent.kt:1)",
             dumpItem.stackTrace,
         )
         assertTrue(dumpItem.exportedStackTrace.startsWith("\"scope:1@300\" virtual tid=0x0 nid=NA running [Coroutine] [dispatcher=Dispatchers.Default]"))
@@ -107,7 +107,7 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
         val dumpItem = CoroutineDumpItem(coroutineInfo)
         assertEquals("scope:1", dumpItem.name)
         assertEquals(
-            "\"scope:1@300\" SUSPENDED [Dispatchers.Default, StandaloneCoroutine{Active}]\n",
+            "\"scope:1\" SUSPENDED [Dispatchers.Default, StandaloneCoroutine{Active}]\n",
             dumpItem.stackTrace,
         )
         assertFalse(dumpItem.stackTrace.contains("java.lang.Thread.State"))
@@ -124,7 +124,7 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
         val dumpItem = CoroutineDumpItem(createCoroutineInfo(job = "StandaloneCoroutine{Active}", jobId = 300L, state = "RUNNING"))
 
         assertEquals(
-            "\"scope:300@300\" RUNNING on thread UNKNOWN_THREAD [Dispatchers.Default, StandaloneCoroutine{Active}]\n",
+            "\"scope:300\" RUNNING on thread UNKNOWN_THREAD [Dispatchers.Default, StandaloneCoroutine{Active}]\n",
             dumpItem.stackTrace,
         )
         assertEquals(
@@ -176,7 +176,7 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
         val dumpItem = parsedThreadDump.dumpItems().single { !it.isContainer }
 
         assertEquals(
-            "\"scope:1@300\" RUNNING on thread DefaultDispatcher-worker-1 [Dispatchers.Default]\n    at example.Shared.run(Shared.kt:1)",
+            "\"scope:1\" RUNNING on thread DefaultDispatcher-worker-1 [Dispatchers.Default]\n    at example.Shared.run(Shared.kt:1)",
             dumpItem.stackTrace,
         )
     }

@@ -81,10 +81,9 @@ class CoroutineDumpItem internal constructor(
     )
 
     override val stackTrace: @NlsSafe String = buildString {
-        val coroutineName = if (treeId == null) name else "$name@$treeId"
         val coroutineContext = coroutineContextInfo?.presentableString()
         val header = buildString {
-            append("\"$coroutineName\" $coroutineState")
+            append("\"$name\" $coroutineState")
             coroutineContextInfo?.runningThread?.let {
                 append(' ')
                 append("on thread $it")
