@@ -58,7 +58,7 @@ fun NotebookEditorUiComponent.waitForHighlighting() {
   driver.waitForCodeAnalysis(file = editor.getVirtualFile())
 }
 
-typealias CellSelector = (List<UiComponent>) -> UiComponent?
+typealias CellSelector = (List<NotebookEditorUiComponent.CellEditor>) -> UiComponent?
 
 val FirstCell: CellSelector = { it.firstOrNull() }
 val SecondCell: CellSelector = { it.getOrNull(1) }
@@ -293,10 +293,12 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   }
 
 
+  class CellEditor(data: ComponentData): UiComponent(data)
+
   /**
    * Use to access text editing area
    */
-  val notebookCellEditors: List<UiComponent>
+  val notebookCellEditors: List<CellEditor>
     get() = xx("""
       //div[@class='FullEditorWidthRenderer']
       /div[@class='JPanel' and not(
@@ -309,7 +311,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
           .//div[contains(@class, 'LetsPlotComponent')]
         ) 
       ]
-    """.trimIndent()
+    """.trimIndent(),
+               CellEditor::class.java
     ).list()
 }
 
