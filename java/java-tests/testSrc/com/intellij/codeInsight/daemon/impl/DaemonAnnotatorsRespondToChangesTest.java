@@ -733,45 +733,43 @@ public class DaemonAnnotatorsRespondToChangesTest extends ProductionDaemonAnalyz
     MyCommentFastAnnotator.finished.set(false);
     MyFieldSlowAnnotator.finished.set(false);
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
-    useAnnotatorsIn(annotatorsByLanguage, () -> {
-      // now when the highlighting is restarted, we should get back our anno result very fast, despite very slow processing of every other element
-      TestTimeOut t= TestTimeOut.setTimeout(10_000, TimeUnit.MILLISECONDS);
-      while (!myTestDaemonCodeAnalyzer.daemonIsWorkingOrPending(myEditor.getDocument())) {
-        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-        t.assertNoTimeout("daemon to start");
-      }
-      try {
-        boolean fastToolFinishedFaster = false;
-        while (myTestDaemonCodeAnalyzer.daemonIsWorkingOrPending(myEditor.getDocument())) {
-          t.assertNoTimeout("daemon to finish");
-          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    LOG.trace("start waiting for fast/slow tools");
+    try {
+      useAnnotatorsIn(annotatorsByLanguage, () -> {
+        // now when the highlighting is restarted, we should get back our anno result very fast, despite very slow processing of every other element
+        TestTimeOut t = TestTimeOut.setTimeout(10_000, TimeUnit.MILLISECONDS);
+        AtomicBoolean fastToolFinishedFaster = new AtomicBoolean();
+        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), () -> {
           if (MyCommentFastAnnotator.finished.get() && !MyFieldSlowAnnotator.finished.get()) {
             boolean fastToolWarningFound = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0,
-                                                                    myEditor.getDocument().getTextLength(),
-                                                                    info -> !MyCommentFastAnnotator.fastToolText.equals(info.getDescription()));
-            fastToolFinishedFaster = true;
+                                                                                   myEditor.getDocument().getTextLength(),
+                                                                                   info -> !MyCommentFastAnnotator.fastToolText.equals(
+                                                                                     info.getDescription()));
+            fastToolFinishedFaster.set(true);
             if (fastToolWarningFound) {
               fail("Annotator must have removed its own obsolete highlights as soon as it's finished, but got:" +
-                   StringUtil.join(model.getAllHighlighters(), Object::toString, "\n   ") + "; thread dump:\n" + ThreadDumper.dumpThreadsToString());
+                   StringUtil.join(model.getAllHighlighters(), Object::toString, "\n   ") +
+                   "; thread dump:\n" +
+                   ThreadDumper.dumpThreadsToString());
             }
           }
-        }
-        assertTrue("Fast annotator must have finished faster than the slow one, but it didn't", fastToolFinishedFaster);
-      }
-      finally {
-        MyFieldSlowAnnotator.stallMs.set(0);
-      }
-    });
+        });
+        assertTrue("Fast annotator must have finished faster than the slow one, but it didn't", fastToolFinishedFaster.get());
+      });
+    }
+    finally {
+      MyFieldSlowAnnotator.stallMs.set(0);
+    }
   }
 
   // highlight all "xxx" comments
   static class MyComment1Annotator extends MyRecordingAnnotator {
-    static final AtomicBoolean stall1 = new AtomicBoolean();
+    static final AtomicBoolean stall = new AtomicBoolean();
     static final String comment1Text = "comment1Text";
 
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-      while (stall1.get()) {
+      while (stall.get()) {
         Thread.yield();
         //ProgressManager.checkCanceled();
       }
@@ -785,12 +783,12 @@ public class DaemonAnnotatorsRespondToChangesTest extends ProductionDaemonAnalyz
     }
   }
   static class MyComment2Annotator extends MyRecordingAnnotator {
-    static final AtomicBoolean stall2 = new AtomicBoolean();
+    static final AtomicBoolean stall = new AtomicBoolean();
     static final String comment2Text = "comment2Text";
 
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-      while (stall2.get()) {
+      while (stall.get()) {
         Thread.yield();
         //ProgressManager.checkCanceled();
       }
@@ -798,7 +796,6 @@ public class DaemonAnnotatorsRespondToChangesTest extends ProductionDaemonAnalyz
         if (element.getText().contains("xxx")) {
           holder.newAnnotation(HighlightSeverity.WARNING, comment2Text).range(element).create();
           iDidIt();
-          //stall2.set(true); // stall right after producing annotation
         }
       }
     }
@@ -820,34 +817,44 @@ public class DaemonAnnotatorsRespondToChangesTest extends ProductionDaemonAnalyz
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
 
     // both annos should produce their results
-    myDaemonCodeAnalyzer.restart(getTestName(false));
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
     useAnnotatorsIn(annotatorsByLanguage, () -> {
-      TestTimeOut t = TestTimeOut.setTimeout(20_000, TimeUnit.MILLISECONDS);
-      TestTimeOut t2 = TestTimeOut.setTimeout(20_000+10_000, TimeUnit.MILLISECONDS);
-      while (!myTestDaemonCodeAnalyzer.daemonIsWorkingOrPending(myEditor.getDocument())) {
-        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-        t.assertNoTimeout("daemon to start");
-      }
-      boolean tool1AnnoFound = false;
-      boolean tool2AnnoFound = false;
-      while (!tool1AnnoFound || !tool2AnnoFound) {
-        t.assertNoTimeout("daemon to finish");
-        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-        tool1AnnoFound = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0,
+      MyComment1Annotator.stall.set(true);
+      MyComment2Annotator.stall.set(false);
+      AtomicBoolean tool1AnnoFound = new AtomicBoolean();
+      AtomicBoolean tool2AnnoFound = new AtomicBoolean();
+      myDaemonCodeAnalyzer.restart(getTestName(false));
+      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), ()->{
+        tool1AnnoFound.set(!DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0,
                                                                  myEditor.getDocument().getTextLength(),
-                                                                 info -> !MyComment1Annotator.comment1Text.equals(info.getDescription()));
-        tool2AnnoFound = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0,
+                                                                 info -> !MyComment1Annotator.comment1Text.equals(info.getDescription())));
+        tool2AnnoFound.set(!DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0,
                                                                  myEditor.getDocument().getTextLength(),
-                                                                 info -> !MyComment2Annotator.comment2Text.equals(info.getDescription()));
-      }
-      MyComment1Annotator.stall1.set(false);
-      MyComment2Annotator.stall2.set(false);
-      while (myTestDaemonCodeAnalyzer.daemonIsWorkingOrPending(myEditor.getDocument())) {
-        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-        t2.assertNoTimeout("daemon finish after annotators completed: "+"; stall1="+MyComment1Annotator.stall1+"; stall2="+MyComment2Annotator.stall2);
-        Thread.yield();
-      }
+                                                                 info -> !MyComment2Annotator.comment2Text.equals(info.getDescription())));
+        // we must have Annotator2 results eventually, even though the Annotator1 was stalled
+        if (tool2AnnoFound.get()) {
+          MyComment1Annotator.stall.set(false);
+        }
+      });
+
+      // repeat in the other order in case it matters
+      MyComment1Annotator.stall.set(false);
+      MyComment2Annotator.stall.set(true);
+      tool1AnnoFound.set(false);
+      tool2AnnoFound.set(false);
+      myDaemonCodeAnalyzer.restart(getTestName(false));
+      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), ()->{
+        tool1AnnoFound.set(!DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0,
+                                                                 myEditor.getDocument().getTextLength(),
+                                                                 info -> !MyComment1Annotator.comment1Text.equals(info.getDescription())));
+        tool2AnnoFound.set(!DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0,
+                                                                 myEditor.getDocument().getTextLength(),
+                                                                 info -> !MyComment2Annotator.comment2Text.equals(info.getDescription())));
+        // we must have Annotator1 results eventually, even though the Annotator2 was stalled
+        if (tool1AnnoFound.get()) {
+          MyComment2Annotator.stall.set(false);
+        }
+      });
     });
   }
 

@@ -198,7 +198,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     @NotNull
     @Override
     public String getGroupDisplayName() {
-      return getClass().getName();
+      return "my inspection: "+getClass().getName();
     }
 
     @Nls
@@ -515,16 +515,14 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
 
         @Override
         public void visitFile(@NotNull PsiFile psiFile) {
-          // use this contrived form to be able to bail out immediately by modifying toSleepMs in the other thread
-          while (toSleepMs.addAndGet(-100) > 0) {
-            TimeoutUtil.sleep(100);
-          }
+          // to bail out immediately by modifying toSleepMs in the other thread
+          sleepInterruptibly(toSleepMs);
         }
       };
     }
   }
 
-  public void testLocalInspectionPassMustRunFastOrFertileInspectionsFirstToReduceLatency() {
+  public void testLocalInspectionPassMustRunFastFertileInspectionsFirstToReduceLatency() {
     @Language("JAVA")
     String text = """
       class LQF {
@@ -535,13 +533,16 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
        void foo//<caret>
       (){}}""";
     configureByText(JavaFileType.INSTANCE, text);
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    PsiField field = ((PsiJavaFile)getFile()).getClasses()[0].getFields()[0];
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
     UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
     SeverityRegistrar.getSeverityRegistrar(getProject()); //preload inspection profile
 
     AtomicReference<String> diagnosticText = new AtomicReference<>("1st run");
     AtomicInteger stallMs = new AtomicInteger();
-    // highlight fields, stall every other element
+    // highlight fields fast, stall every other element
     LocalInspectionTool tool = new MyInspectionBase() {
       @NotNull
       @Override
@@ -555,7 +556,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
           @Override
           public void visitElement(@NotNull PsiElement element) {
             // stall every other element to exacerbate latency problems if the order is wrong
-            TimeoutUtil.sleep(stallMs.get());
+            sleepInterruptibly(stallMs);
           }
         };
       }
@@ -566,34 +567,43 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     }
     enableInspectionTool(tool);
 
-    List<HighlightInfo> infos =
-      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
     HighlightInfo i = assertOneElement(infos);
     assertEquals(diagnosticText.get(), i.getDescription());
 
     diagnosticText.set("Aha, field, finally!");
-    stallMs.set(10000);
+    stallMs.set(TestDaemonCodeAnalyzerImpl.WAIT_DAEMON_FOR_FINISH_TIMEOUT_MS + 10_000);
     backspace();
     backspace();
     type("blah");
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
-
-    // now when the LIP restarted, we should get back our inspection result very fast, despite very slow processing of every other element
-    TestTimeOut t= TestTimeOut.setTimeout(10_000, TimeUnit.MILLISECONDS);
-    while (!myTestDaemonCodeAnalyzer.daemonIsWorkingOrPending(myEditor.getDocument())) {
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-      t.assertNoTimeout("daemon to start");
-    }
-    PsiField field = ((PsiJavaFile)getFile()).getClasses()[0].getFields()[0];
+    PsiField field2 = ((PsiJavaFile)getFile()).getClasses()[0].getFields()[0];
+    assertSame(field, field2);// assert the reparse didn't touch the field, in order to check the "fertile optimization"
     TextRange range = field.getNameIdentifier().getTextRange();
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
-    while (myTestDaemonCodeAnalyzer.daemonIsWorkingOrPending(myEditor.getDocument())) {
-      t.assertNoTimeout("daemon to finish");
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+
+    // now when the LIP restarted, we should get back our inspection result very fast, despite very slow processing of every other element
+    TestTimeOut t = TestTimeOut.setTimeout(TestDaemonCodeAnalyzerImpl.WAIT_DAEMON_FOR_FINISH_TIMEOUT_MS-5_000, TimeUnit.MILLISECONDS);
+
+    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), () -> {
       boolean found = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, range.getStartOffset(), range.getEndOffset(), info -> !diagnosticText.get().equals(info.getDescription()));
       if (found) {
-        break;
+        stallMs.set(0);
       }
+      if (t.isTimedOut()) {
+        LOG.debug("all highlighters:\n"+DaemonRespondToChangesTest.renderHighlighters(List.of(model.getAllHighlighters()))
+                  +"\nfound:"+!DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, range.getStartOffset(), range.getEndOffset(), info -> !diagnosticText.get().equals(info.getDescription()))
+        );
+        stallMs.set(0);
+        fail("time out waiting for fertile inspection");
+      }
+    });
+  }
+
+  private static void sleepInterruptibly(@NotNull AtomicInteger stallMs) {
+    for (int i = 0; i < stallMs.get(); i+=10) {
+      TimeoutUtil.sleep(10); // to make wait interruptible
     }
   }
 
@@ -760,7 +770,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     SeverityRegistrar.getSeverityRegistrar(getProject()); //preload inspection profile
 
     AtomicReference<String> fieldWarningText = new AtomicReference<>("1st run");
-    AtomicInteger stallMs = new AtomicInteger(0);
+    AtomicInteger stallSlowToolMs = new AtomicInteger(0);
     AtomicBoolean slowToolFinished = new AtomicBoolean();
     LocalInspectionTool slowTool = new MyInspectionBase() {
       @Override
@@ -787,7 +797,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
           public void visitElement(@NotNull PsiElement element) {
             //System.out.println("slow visit "+element + Thread.currentThread());
             // stall every other element to exacerbate latency problems if the order is wrong
-            TimeoutUtil.sleep(stallMs.get());
+            sleepInterruptibly(stallSlowToolMs);
           }
         };
       }
@@ -841,7 +851,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     assertTrue(infos.toString(), ContainerUtil.exists(infos, i -> i.getDescription().equals(fastToolText)));
 
     fieldWarningText.set("Aha, field, finally!");
-    stallMs.set(100);
+    stallSlowToolMs.set(100);
     type("// another comment");
     //System.out.println("-------------");
     fastToolFinished.set(false);
@@ -849,31 +859,24 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
 
     // now when the LIP restarted, we should get back our inspection result very fast, despite very slow processing of every other element
-    TestTimeOut t= TestTimeOut.setTimeout(10_000, TimeUnit.MILLISECONDS);
-    while (!myTestDaemonCodeAnalyzer.daemonIsWorkingOrPending(myEditor.getDocument())) {
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-      t.assertNoTimeout("daemon to start");
-    }
+    AtomicBoolean fastToolFinishedFaster = new AtomicBoolean();
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
     try {
-      boolean fastToolFinishedFaster = false;
-      while (myTestDaemonCodeAnalyzer.daemonIsWorkingOrPending(myEditor.getDocument())) {
-        t.assertNoTimeout("daemon to finish");
-        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), () -> {
         if (fastToolFinished.get() && !slowToolFinished.get()) {
-          fastToolFinishedFaster = true;
+          fastToolFinishedFaster.set(true);
           boolean fastFound = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0, myEditor.getDocument().getTextLength(),
-                          info -> !fastToolText.equals(info.getDescription()));
+                                                                      info -> !fastToolText.equals(info.getDescription()));
           if (fastFound) {
             fail("Inspection must have removed its own obsolete highlights as soon as it's finished, but got:" +
                  StringUtil.join(model.getAllHighlighters(), Object::toString, "\n   ")+"; thread dump:\n"+ThreadDumper.dumpThreadsToString());
           }
         }
-      }
-      assertTrue("Fast inspection must have finished faster than the slow one, but it didn't", fastToolFinishedFaster);
+      });
+      assertTrue("Fast inspection must have finished faster than the slow one, but it didn't", fastToolFinishedFaster.get());
     }
     finally {
-      stallMs.set(0);
+      stallSlowToolMs.set(0);
     }
   }
 
@@ -977,8 +980,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     enableInspectionTools(fieldTool);
 
     // inspections should produce their results
-    List<HighlightInfo> infos =
-      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
     assertTrue(infos.toString(), ContainerUtil.exists(infos, i -> i.getDescription().equals(fieldWarningText)));
     assertTrue(fieldIdentifierVisited.get());
     assertTrue(fieldHighlightsUpdated.get());
@@ -990,15 +992,9 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
 
     TestTimeOut t= TestTimeOut.setTimeout(10_000, TimeUnit.MILLISECONDS);
-    while (!myTestDaemonCodeAnalyzer.daemonIsWorkingOrPending(myEditor.getDocument())) {
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-      t.assertNoTimeout("daemon to start");
-    }
     // now when the LIP restarted, we should observe the range highlighter for the inspection to disappear as soon as visitIdentifier() method is finished
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
-    while (myTestDaemonCodeAnalyzer.daemonIsWorkingOrPending(myEditor.getDocument())) {
-      t.assertNoTimeout("daemon to finish");
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), () -> {
       if (fieldHighlightsUpdated.get()) {
         boolean found = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0, myEditor.getDocument().getTextLength(),
                         info -> !fieldWarningText.equals(info.getDescription()));
@@ -1007,7 +1003,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
                StringUtil.join(model.getAllHighlighters(), Object::toString, "\n   ") + "; thread dump:\n" + ThreadDumper.dumpThreadsToString());
         }
       }
-    }
+    });
     assertTrue(fieldIdentifierVisited.get());
     assertTrue(fieldHighlightsUpdated.get());
   }

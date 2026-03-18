@@ -117,7 +117,7 @@ public final class TestDaemonCodeAnalyzerImpl {
     }
     assert application.isUnitTestMode();
 
-    waitForAllThings(mustWaitForSmartMode, 10_000);
+    waitForAllThingsBeforeDaemonStart(mustWaitForSmartMode, 10_000);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     myDaemonCodeAnalyzer.clearReferences();
     // previous passes can be canceled but still in flight. wait for them to avoid interference
@@ -142,7 +142,7 @@ public final class TestDaemonCodeAnalyzerImpl {
   }
 
   @RequiresEdt
-  private void waitForAllThings(boolean mustWaitForSmartMode, int timeoutMs) {
+  private void waitForAllThingsBeforeDaemonStart(boolean mustWaitForSmartMode, long timeoutMs) {
     ThreadingAssertions.assertEventDispatchThread();
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     do {
@@ -370,6 +370,8 @@ public final class TestDaemonCodeAnalyzerImpl {
     return waitForDaemonToFinish(document, () -> {});
   }
 
+  public static final int WAIT_DAEMON_FOR_FINISH_TIMEOUT_MS = 60_000;
+
   @RequiresEdt
   public @NotNull Collection<? extends DaemonProgressIndicator> waitForDaemonToFinish(@NotNull Document document, @NotNull Runnable callbackWhileWaiting) {
     ThreadingAssertions.assertEventDispatchThread();
@@ -378,25 +380,25 @@ public final class TestDaemonCodeAnalyzerImpl {
     long start = System.currentTimeMillis();
     int timeoutMs = 60_000;
     long deadline = start + timeoutMs;
-    waitForAllThings(mustWaitForSmartModeByDefault, timeoutMs);
+    waitForAllThingsBeforeDaemonStart(mustWaitForSmartModeByDefault, timeoutMs);
     Collection<? extends DaemonProgressIndicator> progresses = waitForDaemonToStart(document, deadline - System.currentTimeMillis());
     assert myDaemonCodeAnalyzer.isUpdateByTimerEnabled() : "codeAnalyzer.isUpdateByTimerEnabled()=false so waitForDaemonToFinish() will never finish";
     Disposable disposable = Disposer.newDisposable();
     try {
       Semaphore listenersCalled = new Semaphore(1);
       myProject.getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
-          @Override
-          public void daemonFinished(@NotNull Collection<? extends FileEditor> fileEditors) {
-            listenersCalled.up();
-            PassExecutorService.LOG.trace("waitForDaemonToFinish.daemonFinished");
-          }
+        @Override
+        public void daemonFinished(@NotNull Collection<? extends FileEditor> fileEditors) {
+          listenersCalled.up();
+          PassExecutorService.LOG.trace("waitForDaemonToFinish.daemonFinished");
+        }
 
-          @Override
-          public void daemonCancelEventOccurred(@NotNull String reason) {
-            listenersCalled.up();
-            PassExecutorService.LOG.trace("waitForDaemonToFinish.daemonCancelEventOccurred: " + reason);
-          }
-        });
+        @Override
+        public void daemonCancelEventOccurred(@NotNull String reason) {
+          listenersCalled.up();
+          PassExecutorService.LOG.trace("waitForDaemonToFinish.daemonCancelEventOccurred: " + reason);
+        }
+      });
 
       do {
         if (System.currentTimeMillis() > deadline) {
@@ -440,26 +442,52 @@ public final class TestDaemonCodeAnalyzerImpl {
   public @NotNull Collection<? extends DaemonProgressIndicator> waitForDaemonToStart(@NotNull Document document, long timeoutMs) {
     waitForUpdateFileStatusBackgroundQueueInTests();
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    PassExecutorService.LOG.trace("waitForDaemonToStart start");
+    Disposable disposable = Disposer.newDisposable();
+    AtomicBoolean listenersCalled = new AtomicBoolean();
+    myProject.getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+      @Override
+      public void daemonFinished(@NotNull Collection<? extends FileEditor> fileEditors) {
+        listenersCalled.set(true);
+        PassExecutorService.LOG.trace("waitForDaemonToStart.daemonFinished");
+      }
+
+      @Override
+      public void daemonCancelEventOccurred(@NotNull String reason) {
+        listenersCalled.set(true);
+        PassExecutorService.LOG.trace("waitForDaemonToStart.daemonCancelEventOccurred: " + reason);
+      }
+    });
+    try {
+    waitForAllThingsBeforeDaemonStart(mustWaitForSmartModeByDefault, timeoutMs);
     long deadline = System.currentTimeMillis() + timeoutMs;
-    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-    assert codeAnalyzer.isUpdateByTimerEnabled() : "codeAnalyzer.isUpdateByTimerEnabled()=false so waitForDaemonToStart() will never finish";
-    while (!codeAnalyzer.isAllAnalysisFinished(psiFile)) {
+    assert myDaemonCodeAnalyzer.isUpdateByTimerEnabled() : "codeAnalyzer.isUpdateByTimerEnabled()=false so waitForDaemonToStart() will never finish";
+    while (!myDaemonCodeAnalyzer.isAllAnalysisFinished(psiFile) && !listenersCalled.get()) {
       dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
-      List<DaemonProgressIndicator> progresses = ContainerUtil.filter(codeAnalyzer.getUpdateProgress().values(), i -> !i.isCanceled());
+      List<DaemonProgressIndicator> progresses = ContainerUtil.filter(myDaemonCodeAnalyzer.getUpdateProgress().values(), i -> !i.isCanceled());
       if (!progresses.isEmpty()) {
+        DaemonCodeAnalyzerImpl.LOG.debug("waitForDaemonToStart("+document+") finished successfully: "+progresses+"; fileStatusMap:"+ myDaemonCodeAnalyzer.getFileStatusMap());
         return progresses;
       }
+
       if (System.currentTimeMillis() > deadline) {
-        throw new AssertionError("Too long waiting for daemon to start (" + (System.currentTimeMillis() - deadline + timeoutMs) + "ms) " +
-                                 "daemonIsWorkingOrPending=" + daemonIsWorkingOrPending(document) +
-                                 "; allFinished=" + codeAnalyzer.isAllAnalysisFinished(psiFile) + ": " + codeAnalyzer.getFileStatusMap() +
-                                 "; thread dump:\n------" + ThreadDumper.dumpThreadsToString() + "\n======");
+        AssertionError e = new AssertionError("Too long waiting for daemon to start (" + (System.currentTimeMillis() - deadline + timeoutMs) + "ms) " +
+                                              "daemonIsWorkingOrPending=" + daemonIsWorkingOrPending(document) +
+                                              "\n allFinished=" + myDaemonCodeAnalyzer.isAllAnalysisFinished(psiFile) +
+                                              "\n; filestatusmap: " +
+                                              myDaemonCodeAnalyzer.getFileStatusMap() +
+                                              "\n; thread dump:\n------" + ThreadDumper.dumpThreadsToString() + "\n======");
+        DaemonCodeAnalyzerImpl.LOG.error(e);
+        throw e;
       }
+    }
+    } finally {
+      Disposer.dispose(disposable);
     }
     return List.of();
   }
 
-  public boolean daemonIsWorkingOrPending(@NotNull Document document) {
+  private boolean daemonIsWorkingOrPending(@NotNull Document document) {
     return myDaemonCodeAnalyzer.isRunningOrPending() || PsiDocumentManager.getInstance(myProject).isUncommited(document);
   }
 

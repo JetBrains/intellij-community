@@ -2567,7 +2567,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     assertEquals(h1, h2);
   }
 
-  private static @NotNull String renderHighlighters(List<? extends RangeHighlighter> highlighters) {
+  static @NotNull String renderHighlighters(List<? extends RangeHighlighter> highlighters) {
     return StringUtil.join(highlighters, h->h.getTextRange()+":"+h.getLayer()+":"+h.getTextAttributes(EditorColorsUtil.getGlobalOrDefaultColorScheme()), "\n");
   }
 

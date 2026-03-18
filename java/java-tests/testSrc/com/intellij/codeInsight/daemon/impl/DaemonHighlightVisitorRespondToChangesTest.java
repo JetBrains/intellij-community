@@ -261,16 +261,19 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
       .subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
         @Override
         public void daemonFinished(@NotNull Collection<? extends FileEditor> fileEditors) {
+          LOG.debug("DaemonListener.daemonFinished");
           log.add("F");
         }
 
         @Override
         public void daemonStarting(@NotNull Collection<? extends FileEditor> fileEditors) {
+          LOG.debug("DaemonListener.daemonStarting");
           log.add("S");
         }
 
         @Override
         public void daemonCancelEventOccurred(@NotNull String reason) {
+          LOG.debug("DaemonListener.daemonCancelEventOccurred");
           log.add("C");
         }
       });

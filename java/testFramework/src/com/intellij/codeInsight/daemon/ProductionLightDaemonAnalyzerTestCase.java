@@ -40,7 +40,15 @@ public abstract class ProductionLightDaemonAnalyzerTestCase extends LightDaemonA
       ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(()-> {
       DaemonProgressIndicator.runInDebugMode(() ->
       CodeInsightTestFixtureImpl.disableInstantiateAndRunIn(() ->
-      TestDaemonCodeAnalyzerImpl.runWithReparseDelay(0, testRunnable)));
+      TestDaemonCodeAnalyzerImpl.runWithReparseDelay(0, ()-> {
+        try {
+          testRunnable.run();
+        }
+        catch (Throwable e) {
+          LOG.error(e); // to make the exact moment visible in the test log
+          throw e;
+        }
+      })));
       return null;
       });
     }
