@@ -584,7 +584,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollingModel = new ScrollingModelImpl(this);
     myInlayModel = new InlayModelImpl(this);
     Disposer.register(myCaretModel, myInlayModel);
-    mySoftWrapModel = new SoftWrapModelImpl(this);
+    mySoftWrapModel = SoftWrapModelImpl.create(this);
 
     myCommandProcessor = CommandProcessor.getInstance();
 

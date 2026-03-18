@@ -2068,6 +2068,9 @@
     <registryKey key="wayland.notification.delay.after.previous.activity" defaultValue="1"
                  description="Show the notification about the native Wayland toolkit after this many minutes have passed since the previous user activity" />
     <notificationGroup id="Wayland" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.wayland" isLogByDefault="true"/>
+
+    <registryKey key="editor.custom.soft.wraps.support.enabled" defaultValue="true"
+                 description="Enables support for custom soft wraps in the editor" restartRequired="true"/>
   </extensions>
 
   <applicationListeners>

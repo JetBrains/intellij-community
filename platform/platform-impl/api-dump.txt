@@ -823,6 +823,17 @@ f:com.intellij.openapi.editor.impl.FontInfo
 - <init>(java.awt.Font,F,Z,java.util.Set,java.awt.font.FontRenderContext):V
 com.intellij.openapi.editor.impl.HighlighterListener
 - a:highlighterChanged(I,I):V
+Fa:com.intellij.openapi.editor.impl.SoftWrapModelImpl
+- com.intellij.openapi.editor.InlayModel$SimpleAdapter
+- com.intellij.diagnostic.Dumpable
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.editor.ex.FoldingListener
+- com.intellij.openapi.editor.ex.PrioritizedDocumentListener
+- com.intellij.openapi.editor.ex.SoftWrapModelEx
+- java.beans.PropertyChangeListener
+- <init>():V
+- a:getApplianceManager():com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager
+- a:isDirty():Z
 com.intellij.openapi.editor.impl.TextDrawingCallback
 - a:drawChars(java.awt.Graphics,C[],I,I,I,I,java.awt.Color,com.intellij.openapi.editor.impl.FontInfo):V
 f:com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentationKt
