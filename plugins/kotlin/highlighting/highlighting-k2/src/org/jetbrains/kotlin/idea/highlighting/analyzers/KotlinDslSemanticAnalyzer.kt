@@ -6,6 +6,9 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.allSupertypes
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -13,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -52,7 +56,7 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
      * 2) The class or its superclasses' definition is marked by a dsl annotation
      */
     private fun expressionHighlightType(expression: KtExpression): HighlightInfoType? {
-        val dslAnnotation = with(session) {
+        val dslAnnotation = context(session) {
             val functionCall = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
             // function declaration argument has a dsl marker
 
@@ -61,7 +65,7 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
             functionCall.symbol.valueParameters.forEach { parameterSymbol ->
                 val receiverType = (parameterSymbol.returnType as? KaFunctionType)?.receiverType
                 receiverType?.let { type ->
-                    getDslAnnotation(type)?.let { return@with it }
+                    getDslAnnotation(type)?.let { return@context it }
                 }
             }
 
@@ -69,9 +73,9 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
             val symbol = functionCall.symbol
 
             // in context of implicit receiver
-            val dispatchReceiver = functionCall.partiallyAppliedSymbol.dispatchReceiver
+            val dispatchReceiver = functionCall.dispatchReceiver
             val dispatchReceiverType = (dispatchReceiver as? KaImplicitReceiverValue)?.type as? KaClassType
-            dispatchReceiverType?.symbol?.let(::firstDslAnnotationOrNull)?.let { return@with it }
+            dispatchReceiverType?.symbol?.let { firstDslAnnotationOrNull(it) }?.let { return@context it }
 
             // in case of ext function
             firstDslAnnotationOrNull(symbol)
@@ -107,7 +111,8 @@ private fun getDslAnnotation(namedClassSymbol: KaNamedClassSymbol?): ClassId? {
  * Returns a dsl annotation for a given symbol (or for one of its supertypes), if there is one.
  * A Dsl annotation is an annotation that is itself marked by [DslMarker] annotation.
  */
-private fun KaSession.firstDslAnnotationOrNull(symbol: KaDeclarationSymbol): ClassId? {
+context(session: KaSession)
+private fun firstDslAnnotationOrNull(symbol: KaDeclarationSymbol): ClassId? {
     val allAnnotationsWithSuperTypes = sequence {
         yieldAll(symbol.annotations.classIds)
         if (symbol is KaClassSymbol) {
@@ -121,7 +126,8 @@ private fun KaSession.firstDslAnnotationOrNull(symbol: KaDeclarationSymbol): Cla
     }
 }
 
-private fun KaSession.getDslAnnotation(type: KaType): ClassId? {
+context(session: KaSession)
+private fun getDslAnnotation(type: KaType): ClassId? {
     val allAnnotationsWithSuperTypes = sequence {
         yieldAll(type.annotations.classIds)
         type.symbol?.let { yieldAll(it.annotations.classIds) }

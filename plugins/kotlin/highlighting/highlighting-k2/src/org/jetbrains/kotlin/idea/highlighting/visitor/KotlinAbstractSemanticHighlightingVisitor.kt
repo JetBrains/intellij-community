@@ -44,7 +44,7 @@ internal abstract class KotlinAbstractSemanticHighlightingVisitor : HighlightVis
     /**
      * @see KotlinSemanticAnalyzer
      */
-    protected abstract fun createSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession): KotlinSemanticAnalyzer
+    protected abstract fun createSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession): KtVisitorVoid
 
     override fun visit(element: PsiElement) {
         val visitor = analyzer ?: error("Analyzer for ${this::class.simpleName} is not initialized")

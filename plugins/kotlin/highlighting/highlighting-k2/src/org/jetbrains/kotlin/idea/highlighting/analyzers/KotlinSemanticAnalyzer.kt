@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
+import org.jetbrains.kotlin.idea.highlighter.visitor.AbstractHighlightingVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 /**
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
  * @see org.jetbrains.kotlin.idea.highlighting.visitor.KotlinAbstractSemanticHighlightingVisitor
  */
 internal abstract class KotlinSemanticAnalyzer(
-    protected val holder: HighlightInfoHolder,
+    holder: HighlightInfoHolder,
 
     /**
      * This is safe to store [KaSession] as its lifetime is limited to the corresponding [org.jetbrains.kotlin.analysis.api.analyze]
@@ -27,9 +27,8 @@ internal abstract class KotlinSemanticAnalyzer(
      * But it must not be exposed or stored outside this visitor.
      */
     protected val session: KaSession,
-) : KtVisitorVoid() {
+) : AbstractHighlightingVisitor(holder) {
     protected fun highlightElement(element: PsiElement, type: HighlightInfoType) {
-        HighlightingFactory.highlightName(element, type)
-            ?.create()?.let(holder::add)
+        highlightName(element, type)
     }
 }
