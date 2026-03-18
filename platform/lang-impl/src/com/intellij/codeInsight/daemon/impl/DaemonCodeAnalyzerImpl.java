@@ -733,11 +733,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     return isRunning() || !myUpdateRunnableFuture.isDone() || GeneralHighlightingPass.isRestartPending();
   }
 
-  synchronized void stopProcess(boolean toRestartAlarm, @NotNull @NonNls String reason) {
-    cancelAllUpdateProgresses(toRestartAlarm, reason);
-    boolean restart = toRestartAlarm && !myDisposed;
+  synchronized void stopProcess(boolean toRestart, @NotNull @NonNls String reason) {
+    cancelAllUpdateProgresses(toRestart, reason);
+    boolean restart = toRestart && !myDisposed;
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Stopping process: toRestart:", toRestartAlarm, "; myDisposed:", myDisposed, "; reason: '", reason, "'");
+      LOG.debug("Stopping process: toRestart:", toRestart, "; myDisposed:", myDisposed, "; reason: '", reason, "'");
     }
     if (restart) {
       scheduleIfNotRunning();
@@ -823,12 +823,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   // return true if the progress really was canceled
-  synchronized void cancelAllUpdateProgresses(boolean toRestartAlarm, @NotNull @NonNls String reason) {
+  synchronized void cancelAllUpdateProgresses(boolean toRestart, @NotNull @NonNls String reason) {
     if (myDisposed || myProject.isDisposed() || myProject.getMessageBus().isDisposed()) {
       return;
     }
     processIndicators(indicator -> {
-      cancelIndicator(indicator, toRestartAlarm, null, reason);
+      cancelIndicator(indicator, toRestart, null, reason);
       return true;
     });
     myUpdateProgress.clear();
@@ -837,11 +837,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   private static void cancelIndicator(@NotNull DaemonProgressIndicator indicator,
-                                      boolean toRestartAlarm,
+                                      boolean toRestart,
                                       @Nullable Throwable cause,
                                       @NonNls @NotNull String reason) {
     if (!indicator.isCanceled()) {
-      PassExecutorService.log(indicator, null, "Cancel (reason: '", reason, "')", toRestartAlarm);
+      PassExecutorService.log(indicator, null, "Cancel (reason: '", reason, "')", toRestart);
       if (cause == null) {
         indicator.cancel(reason);
       }
