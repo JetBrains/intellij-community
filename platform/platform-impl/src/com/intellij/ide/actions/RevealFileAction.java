@@ -114,7 +114,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
 
   /** Whether a system is able to open a directory in a file manager and highlight a file in it. */
   public static boolean isSupported() {
-    return OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS || Holder.fileManagerApp != null;
+    return OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS || Holder.fileManagerApp != null || PathEnvironmentVariableUtil.isOnPath("gdbus");
   }
 
   /** Whether a system is able to open a directory in a file manager. */
@@ -236,13 +236,13 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
         spawn(fmApp, toSelect != null ? toSelect : dir);
       }
     }
-    else if (toSelect != null && EnvironmentUtil.getValue("FLATPAK_ID") != null) {
-      spawn("gdbus", "call", "--session", "--dest", "org.freedesktop.FileManager1", "--object-path", 
-            "/org/freedesktop/FileManager1", "--method", "org.freedesktop.FileManager1.ShowItems", 
-            "['file://" + toSelect + "']", ""
+    else if (PathEnvironmentVariableUtil.isOnPath("gdbus")) {
+      String method = toSelect == null ? "org.freedesktop.FileManager1.ShowFolders" : "org.freedesktop.FileManager1.ShowItems";
+      spawn("gdbus", "call", "--session", "--dest", "org.freedesktop.FileManager1", "--object-path",
+            "/org/freedesktop/FileManager1", "--method", method, "['file://" + toSelect + "']", ""
       );
     }
-    else if (PathEnvironmentVariableUtil.isOnPath("xdg-open")) {
+    else if (toSelect == null && PathEnvironmentVariableUtil.isOnPath("xdg-open")) {
       spawn("xdg-open", dir);
     }
     else {
