@@ -202,8 +202,10 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   private static void doOpen(@NotNull Path _dir, @Nullable Path _toSelect) {
-    var dir = canonicalize(_dir).normalize().toString();
-    var toSelect = _toSelect != null ? canonicalize(_toSelect).normalize().toString() : null;
+    _dir = canonicalize(_dir).normalize();
+    _toSelect = _toSelect != null ? canonicalize(_toSelect).normalize() : null;
+    var dir = _dir.toString();
+    var toSelect = _toSelect != null ? _toSelect.toString() : null;
     String fmApp;
 
     if (OS.CURRENT == OS.Windows) {
@@ -234,9 +236,11 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       }
     }
     else if (PathEnvironmentVariableUtil.isOnPath("gdbus")) {
-      String method = toSelect == null ? "org.freedesktop.FileManager1.ShowFolders" : "org.freedesktop.FileManager1.ShowItems";
-      spawn("gdbus", "call", "--session", "--dest", "org.freedesktop.FileManager1", "--object-path",
-            "/org/freedesktop/FileManager1", "--method", method, "['file://" + (toSelect == null ? dir : toSelect) + "']", ""
+      var method = "org.freedesktop.FileManager1." + (toSelect != null ? "ShowItems" : "ShowFolders");
+      var uri = (_toSelect != null ? _toSelect : _dir).toUri().toString();
+      spawn(
+        "gdbus", "call", "--session", "--dest", "org.freedesktop.FileManager1", "--object-path", "/org/freedesktop/FileManager1",
+        "--method", method, "['" + uri + "']", ""
       );
     }
     else if (toSelect == null && PathEnvironmentVariableUtil.isOnPath("xdg-open")) {
