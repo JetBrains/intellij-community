@@ -12,7 +12,7 @@ Mirrors the jar target generation logic in:
 
 load("@xml.bzl//:xml.bzl", "xml")
 
-def _is_snapshot_version(maven_urls):
+def is_snapshot_version(maven_urls):
     """Check if any Maven URL filename ends with -SNAPSHOT.jar.
 
     Mirrors dependency.kt:115-118 (isSnapshotOutsideOfTree / isSnapshotVersion).
@@ -27,7 +27,7 @@ def _is_snapshot_version(maven_urls):
             return True
     return False
 
-def _is_kotlin_dev_version_as_snapshot(maven_urls, kotlin_dev_snapshot_version):
+def is_kotlin_dev_version_as_snapshot(maven_urls, kotlin_dev_snapshot_version):
     """Check if any Maven URL filename ends with -<kotlin_dev_version>.jar.
 
     Mirrors dependency.kt:120-123 (isKotlinDevVersionAsSnapshotOutsideOfTree).
@@ -411,8 +411,8 @@ def derive_library_targets(ctx, project_root, library_xmls, iml_data_list,
             repo = "@ultimate_lib"
 
         # Mirrors dependency.kt:115-129: if ANY file is a snapshot, ALL files go to //snapshots:.
-        is_snapshot_outside_of_tree = _is_snapshot_version(parsed.maven_urls)
-        is_kotlin_dev_version_as_snapshot_outside_of_tree = _is_kotlin_dev_version_as_snapshot(parsed.maven_urls, kotlin_dev_snapshot_version)
+        is_snapshot_outside_of_tree = is_snapshot_version(parsed.maven_urls)
+        is_kotlin_dev_version_as_snapshot_outside_of_tree = is_kotlin_dev_version_as_snapshot(parsed.maven_urls, kotlin_dev_snapshot_version)
 
         for url in parsed.maven_urls:
             target = maven_url_to_jar_target(url, repo, is_snapshot_outside_of_tree or is_kotlin_dev_version_as_snapshot_outside_of_tree)
@@ -443,7 +443,7 @@ def derive_library_targets(ctx, project_root, library_xmls, iml_data_list,
 
         for module_lib in iml_data.parsed_iml.module_libraries:
             maven_urls = [u for u in module_lib.jar_urls if "$MAVEN_REPOSITORY$" in u]
-            is_snapshot_outside_of_tree = _is_snapshot_version(maven_urls)
+            is_snapshot_outside_of_tree = is_snapshot_version(maven_urls)
             for url in module_lib.jar_urls:
                 if "$MAVEN_REPOSITORY$" in url:
                     target = maven_url_to_jar_target(url, module_repo, is_snapshot_outside_of_tree)

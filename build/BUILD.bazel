@@ -6,6 +6,12 @@ load("//build:intellij_dev_community.bzl", "intellij_dev_binary_community")
 load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS")
 
+load(":jps_library_derivation_test.bzl", "jps_library_derivation_test_suite")
+jps_library_derivation_test_suite(name = "jps_library_derivation_test")
+
+load(":jps_library_derivation_pipeline_test.bzl", "jps_library_derivation_pipeline_test_suite")
+jps_library_derivation_pipeline_test_suite(name = "jps_library_derivation_pipeline_test")
+
 jps_to_bazel_targets_json(
   name = "bazel_targets_json",
   mode = "community",
