@@ -1,46 +1,74 @@
 ---
 name: commits
-description: Claude should use this skill whenever the user asks to commit changes, write or fix a commit message, amend or rename a commit, or do a larger workflow that includes committing in the IntelliJ repository. Trigger on phrases like commit, commit this, commit that, commit those changes, commit changes, commit current changes, commit that file, commit both files, make a commit, bump version and commit, put something into gitignore and commit, commit and push, commit & push, committing this file, proper commit message, amend commit, or rename commit. Do not trigger when the user only asks to inspect old commits, commit history, or commit hashes.
+description: >-
+  Use this skill whenever the user asks to commit changes, write or fix a
+  commit message, amend or rename a commit, or do a workflow that includes
+  committing in the IntelliJ repository. This is a thin repo-specific overlay:
+  use IntelliJ commit format, write full commit messages by default, and keep
+  requested suffixes such as IJ-MR trailers in a final separate paragraph.
 ---
 
 # Commits
 
-> **CRITICAL:** SafePush/Patronus validates commit messages BEFORE allowing merges.
-> Invalid format = robot failure (wastes 30-60 seconds + CI resources).
+> **Critical:** SafePush/Patronus validates commit messages before allowing merges.
+> Invalid format wastes CI time and reviewer time.
 
-## Required Format
+## Workflow
 
-- **Production changes**: `<YouTrack ticket ID> <subsystem>: <subject>`
-  - Example: `IDEA-125730 Groovy: declare explicit type`
-- **Non-production changes**: `<label> <subsystem>: <subject>`
-  - Example: `cleanup webstorm: remove old test code`
-  - Allowed labels: `cleanup`, `refactor`, `docs`, `tests`, `test`, `format`, `style`, `typo`, `setup`, `misc`
+1. Review the full diff (staged + unstaged) before writing the message.
+2. Identify the motivation: why is this change being made?
+3. Write a subject line: ticket (or label) + subsystem + concise summary.
+4. Write a body for any non-trivial change: explain the "why", summarize
+   key design decisions, and note any non-obvious behavioral effects.
+   Do not just restate what the diff shows — explain what the reader
+   cannot see from the code alone.
 
-## Common Mistakes
+## Source Of Truth
 
-**Conventional commit format** (NOT valid for IntelliJ):
-- `fix(test): Fix JUnit 5 migration` - Wrong format
-- `feat(editor): Add new feature` - Wrong format
+- Follow [`docs/IntelliJ-Platform/0_Intro/2_Commits.md`](../../../../docs/IntelliJ-Platform/0_Intro/2_Commits.md).
+- This skill is a repo-specific overlay, not a replacement for that document.
+- In this repository, IntelliJ commit format takes precedence over generic commit conventions.
+- Do not use Conventional Commits here.
+- If the user asks to push, use the `safe-push` skill for push workflow details.
 
-**Correct format:**
-- `test cidr: migrate to JUnit 5` - Use non-production label
-- `IJPL-12345 editor: add new feature` - Use YouTrack ticket
+## Quick Rules
 
-**Missing subsystem:**
-- `IJPL-123 fix the bug` - Missing subsystem before colon
-- `IJPL-123 editor: fix the bug` - Correct
+- Behavioral changes need a YouTrack ticket in the subject line.
+- Clearly non-behavioral changes may use a non-production label such as `tests`, `cleanup`, `refactor`, `docs`, `format`, `style`, `setup`, or `misc`.
+- If there is any doubt whether the change is behavioral, do not use a non-production label.
+- Write a full commit message (subject + body) for any non-trivial change.
+  Subject-only is acceptable only for truly mechanical changes (typo, import, format).
+- The body must explain *why* the change was made and summarize key decisions.
+  Do not just list what files changed — the diff already shows that.
+- Keep the first line concise; put rationale and important behavior notes in the body.
+- If the user requests a suffix such as `IJ-MR-100`, put it in a final separate paragraph after a blank line.
+- Do not use commits starting with `WIP`, `fixup!`, `squash!`, or `amend!`.
 
-## Restrictions
+## Examples
 
-- Commits starting with `WIP`, `fixup!`, `squash!`, or `amend!` are not allowed
-- Isolate commits: do not mix refactoring with business logic changes
+```text
+MRI-3589 build scripts: harden single-flight recursion checks
 
-## Safe Push
+Track active single-flight computations in coroutine context so recursive
+awaits fail fast in both the owning coroutine and child coroutines.
 
-- **ALWAYS specify target branch:** `./safePush.cmd HEAD:master`
-- **NEVER use default:** `./safePush.cmd` ← Will fail (uses current branch name)
+IJ-MR-100
+```
 
-## Full Documentation
+```text
+tests cidr: migrate JUnit 5 coverage
 
-- [Commit Message Format (comprehensive)](../../docs/IntelliJ-Platform/0_Intro/2_Commits.md)
+Convert remaining JUnit 4 test suites under cidr/coverage to JUnit 5.
+Parametrized tests now use @MethodSource instead of Theories runner.
+```
+
+## Anti-patterns
+
+- Subject-only messages for non-trivial changes (even non-production ones).
+- Restating the diff ("changed X in file Y") instead of explaining motivation.
+- Using Conventional Commits format (`fix(scope): ...`).
+
+## References
+
+- [Commit Message Format (comprehensive)](../../../../docs/IntelliJ-Platform/0_Intro/2_Commits.md)
 - [Online: YouTrack Article IJPL-A-217](https://youtrack.jetbrains.com/articles/IJPL-A-217/Commits)
