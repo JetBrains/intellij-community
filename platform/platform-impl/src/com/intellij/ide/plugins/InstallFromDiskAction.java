@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.InitSessionResult;
 import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController;
+import com.intellij.ide.plugins.newui.PluginManagerSessionService;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -77,13 +78,36 @@ public class InstallFromDiskAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     var project = e.getProject();
     var file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (myTableModel != null) {
+      installPluginFromDisk(file, project, myTableModel, myPluginEnabler, myParentComponent, callbackData -> {
+        onPluginInstalledFromDisk(callbackData, project);
+      });
+      return;
+    }
+
+    if (!PluginManagementPolicy.getInstance().isInstallFromDiskAllowed()) {
+      var message = IdeBundle.message("action.InstallFromDiskAction.not.allowed.description");
+      Messages.showErrorDialog(project, message, IdeBundle.message("action.InstallFromDiskAction.text"));
+      return;
+    }
+
+    var chosenFile = chooseFile(file, project, myParentComponent);
+    if (chosenFile == null) {
+      return;
+    }
+
     var sessionId = UUID.randomUUID();
-    //As backend and frontend have their own actions, we don't need a combined state and can use the local one.
+    // As backend and frontend have their own actions, we don't need a combined state and can use the local one.
     InitSessionResult initSessionResult = DefaultUiPluginManagerController.INSTANCE.initSessionSync(sessionId.toString());
-    var tableModel = myTableModel == null ? new InstalledPluginsTableModel(null, initSessionResult, sessionId) : myTableModel;
-    installPluginFromDisk(file, project, tableModel, myPluginEnabler, myParentComponent, callbackData -> {
-      onPluginInstalledFromDisk(callbackData, project);
-    });
+    InstalledPluginsTableModel tableModel = new InstalledPluginsTableModel(null, initSessionResult, sessionId);
+    try {
+      installPluginFromDisk(chosenFile.toNioPath(), project, tableModel, myPluginEnabler, myParentComponent, callbackData -> {
+        onPluginInstalledFromDisk(callbackData, project);
+      });
+    }
+    finally {
+      PluginManagerSessionService.getInstance().removeSession(sessionId);
+    }
   }
 
   public static void installPluginFromDisk(@Nullable VirtualFile fileToSelect,
@@ -107,18 +131,8 @@ public class InstallFromDiskAction extends DumbAwareAction {
       return;
     }
 
-    if (fileToSelect == null || !fileToSelect.isInLocalFileSystem() || !hasValidExtension(fileToSelect)) {
-      fileToSelect = getFileToSelect(PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH));
-    }
-
-    var descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-      .withTitle(IdeBundle.message("install.plugin.chooser.title"))
-      .withDescription(IdeBundle.message("install.plugin.chooser.description"))
-      .withExtensionFilter(IdeBundle.message("install.plugin.chooser.label"), "zip", "jar");
-
-    var chosenFile = FileChooser.chooseFile(descriptor, parentComponent, project, fileToSelect);
+    var chosenFile = chooseFile(fileToSelect, project, parentComponent);
     if (chosenFile != null) {
-      PropertiesComponent.getInstance().setValue(PLUGINS_PRESELECTION_PATH, chosenFile.getParent().getPath());
       installPluginFromDisk(chosenFile.toNioPath(), project, tableModel, pluginEnabler, parentComponent, callback);
     }
   }
@@ -141,6 +155,26 @@ public class InstallFromDiskAction extends DumbAwareAction {
   @RequiresEdt
   protected void onPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData, @Nullable Project project) {
     PluginInstaller.installPluginFromCallbackData(callbackData);
+  }
+
+  @RequiresEdt
+  private static @Nullable VirtualFile chooseFile(@Nullable VirtualFile fileToSelect,
+                                                  @Nullable Project project,
+                                                  @Nullable JComponent parentComponent) {
+    if (fileToSelect == null || !fileToSelect.isInLocalFileSystem() || !hasValidExtension(fileToSelect)) {
+      fileToSelect = getFileToSelect(PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH));
+    }
+
+    var descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withTitle(IdeBundle.message("install.plugin.chooser.title"))
+      .withDescription(IdeBundle.message("install.plugin.chooser.description"))
+      .withExtensionFilter(IdeBundle.message("install.plugin.chooser.label"), "zip", "jar");
+
+    var chosenFile = FileChooser.chooseFile(descriptor, parentComponent, project, fileToSelect);
+    if (chosenFile != null && chosenFile.getParent() != null) {
+      PropertiesComponent.getInstance().setValue(PLUGINS_PRESELECTION_PATH, chosenFile.getParent().getPath());
+    }
+    return chosenFile;
   }
 
   private static @Nullable VirtualFile getFileToSelect(@Nullable String path) {
