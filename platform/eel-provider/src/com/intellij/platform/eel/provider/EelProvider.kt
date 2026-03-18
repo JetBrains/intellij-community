@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("EelProviderUtil")
 package com.intellij.platform.eel.provider
 
@@ -21,10 +21,10 @@ import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.util.coroutines.mapNotNullConcurrent
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 
 @ApiStatus.Experimental
@@ -149,6 +149,7 @@ fun Project.getEelDescriptor(): EelDescriptor {
 }
 
 @get:ApiStatus.Experimental
+@OptIn(LowLevelLocalMachineAccess::class)
 val localEel: LocalEelApi by lazy {
   if (OS.CURRENT == OS.Windows) ApplicationManager.getApplication().service<LocalWindowsEelApi>()
   else ApplicationManager.getApplication().service<LocalPosixEelApi>()
@@ -180,10 +181,11 @@ data object LocalEelMachine : EelMachine {
 }
 
 @ApiStatus.Experimental
+@OptIn(LowLevelLocalMachineAccess::class)
 data object LocalEelDescriptor : EelDescriptor {
   private val LOG = logger<LocalEelDescriptor>()
 
-  override val name: @NonNls String = "Local: ${System.getProperty("os.name")}"
+  override val name: String = "Local: ${System.getProperty("os.name")}"
 
   override val osFamily: EelOsFamily by lazy {
     when (OS.CURRENT) {
