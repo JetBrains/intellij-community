@@ -32,7 +32,7 @@ import java.nio.file.attribute.BasicFileAttributes
 
 typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
 
-typealias DeprecatedPostScrambleProcessor = (String, ByteArray, PluginLayout, PlatformLayout, ScopedCachedDescriptorContainer, BuildContext) -> ByteArray?
+typealias DeprecatedPostScrambleProcessor = suspend (String, ByteArray, PluginLayout, PlatformLayout, ScopedCachedDescriptorContainer, BuildContext) -> ByteArray?
 
 /**
  * Describes layout of a plugin in the product distribution
