@@ -15,6 +15,7 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PySdkCreator
 import com.jetbrains.python.sdk.configurePythonSdk
+import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -46,12 +47,15 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
       }.getOr { return@coroutineScope it }
     }
 
-    val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = withBackgroundProgress(project, PyBundle.message("python.sdk.creating.python.sdk")) {
-      getSdkAndInterpreter(module)
-    }.getOr { return@coroutineScope it }
+    val sdkResult = pythonSdkConfigurationMutex.withLock {
+      val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = withBackgroundProgress(project, PyBundle.message("python.sdk.creating.python.sdk")) {
+        getSdkAndInterpreter(module)
+      }.getOr { return@withLock it }
 
-    configurePythonSdk(project, module, sdk)
-    return@coroutineScope Result.success(Pair(sdk, interpreterStatistics))
+      configurePythonSdk(project, module, sdk)
+      Result.success(Pair(sdk, interpreterStatistics))
+    }
+    return@coroutineScope sdkResult
   }
 
   private suspend fun getSdkAndInterpreter(module: Module): PyResult<Pair<Sdk, InterpreterStatisticsInfo>> =
