@@ -136,6 +136,25 @@ internal class IntelliJThreadDumpExportTest {
     )
   }
 
+  @Test
+  fun `serializer prefers exported stack trace over ui stack trace`() {
+    val actualDumpText = serializeIntelliJThreadDump(
+      listOf(
+        dumpItem(
+          name = "scope:1",
+          stackTrace = "\"scope:1@300\"\n[dispatcher=Dispatchers.Default]",
+          exportedStackTrace = "\"scope:1@300\" virtual tid=0x0 nid=NA suspended [Coroutine] [dispatcher=Dispatchers.Default]",
+          treeId = 300L,
+          parentTreeId = null,
+          isContainer = false,
+        ),
+      ),
+    )
+
+    assertThat(actualDumpText).contains("\"scope:1@300\" virtual tid=0x0 nid=NA suspended [Coroutine] [dispatcher=Dispatchers.Default]")
+    assertThat(actualDumpText).doesNotContain("\"scope:1@300\"\n[dispatcher=Dispatchers.Default]")
+  }
+
   private fun createDumpItemsForExport(): List<DumpItem> {
     val dumpText = loadThreadDump("commonIntelliJFormat.txt")
     return buildList {
@@ -153,6 +172,7 @@ internal class IntelliJThreadDumpExportTest {
   private fun dumpItem(
     name: String,
     stackTrace: String,
+    exportedStackTrace: String = stackTrace,
     treeId: Long?,
     parentTreeId: Long?,
     isContainer: Boolean,
@@ -161,6 +181,7 @@ internal class IntelliJThreadDumpExportTest {
       override val name: String = name
       override val stateDesc: String = ""
       override val stackTrace: String = stackTrace
+      override val exportedStackTrace: String = exportedStackTrace
       override val interestLevel: Int = 0
       override val icon: Icon = AllIcons.Actions.Resume
       override val iconToolTip: String? = null

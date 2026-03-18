@@ -23,7 +23,7 @@ internal class CoroutineThreadDumpItemFactory : ThreadDumpItemFactory {
 }
 
 private fun createCoroutineDumpItem(threadState: ThreadState): CoroutineDumpItem? {
-    val stackTrace = threadState.stackTrace ?: return null
+    val stackTrace = threadState.stackTrace?.trim() ?: return null
     val header = stackTrace.lineSequence().firstOrNull() ?: return null
     val headerMatch = coroutineHeaderPattern.matchEntire(header) ?: return null
     val coroutineState = headerMatch.groups["coroutineState"]?.value ?: return null
@@ -33,7 +33,7 @@ private fun createCoroutineDumpItem(threadState: ThreadState): CoroutineDumpItem
         parentTreeId = threadState.threadContainerUniqueId,
         coroutineState = State.fromString(coroutineState),
         coroutineContextInfo = DumpItemCoroutineContextInfo.parse(headerMatch.groups["coroutineContext"]?.value),
-        stackTrace = stackTrace,
+        stackTraceBody = stackTrace.substringAfter('\n'),
     )
 }
 

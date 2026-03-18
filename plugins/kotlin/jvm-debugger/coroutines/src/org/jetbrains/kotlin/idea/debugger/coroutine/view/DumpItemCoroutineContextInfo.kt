@@ -14,13 +14,18 @@ internal data class DumpItemCoroutineContextInfo(
         /**
          * Builds dump-item context info from live debugger data.
          */
-        fun from(info: CoroutineInfoData): DumpItemCoroutineContextInfo = DumpItemCoroutineContextInfo(info.dispatcher, info.job)
+        fun from(info: CoroutineInfoData): DumpItemCoroutineContextInfo? {
+            if (info.dispatcher == null && info.job == null) {
+                return null
+            }
+            return DumpItemCoroutineContextInfo(info.dispatcher, info.job)
+        }
 
         /**
          * Parses the serialized dump-item fragment, for example
          * `"[dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}]"`.
          */
-        fun parse(serialized: String?): DumpItemCoroutineContextInfo {
+        fun parse(serialized: String?): DumpItemCoroutineContextInfo? {
             val rawInfo = serialized?.trim() ?: return DumpItemCoroutineContextInfo(null, null)
             if (rawInfo.firstOrNull() != '[' || rawInfo.lastOrNull() != ']') {
                 return DumpItemCoroutineContextInfo(null, null)
@@ -33,6 +38,9 @@ internal data class DumpItemCoroutineContextInfo(
                     entry.startsWith("dispatcher=") -> dispatcher = entry.removePrefix("dispatcher=")
                     entry.startsWith("job=") -> job = entry.removePrefix("job=")
                 }
+            }
+            if (dispatcher == null && job == null) {
+                return null
             }
             return DumpItemCoroutineContextInfo(dispatcher, job)
         }
