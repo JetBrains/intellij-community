@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
@@ -366,13 +367,19 @@ object K2SemanticMatcher {
             if ((targetType.abbreviation != null) != (patternType.abbreviation != null)) return false
 
             if (targetType.semanticallyEquals(patternType)) return true
+            if (areUnresolvedTypesTextuallyEqual(targetType, patternType, targetTypeReference, patternTypeReference)) return true
 
             fun typeParameterSubstitution(targetType: KaTypeParameterType, patternType: KaType, typeReference: KtTypeReference?): Boolean {
                 val typeParameter = targetType.symbol.psi as KtNamedDeclaration
                 val subst = parameterSubstitution[typeParameter]
                 return when {
                     subst != null -> {
-                        subst is KtTypeReference && subst.type.semanticallyEquals(patternType)
+                        subst is KtTypeReference && (subst.type.semanticallyEquals(patternType) || areUnresolvedTypesTextuallyEqual(
+                            subst.type,
+                            patternType,
+                            subst,
+                            typeReference
+                        ))
                     }
                     parameterSubstitution.containsKey(typeParameter) -> {
                         parameterSubstitution[typeParameter] = typeReference
@@ -417,6 +424,18 @@ object K2SemanticMatcher {
                 }
             }
             return true
+        }
+
+        private fun areUnresolvedTypesTextuallyEqual(
+            targetType: KaType,
+            patternType: KaType,
+            targetTypeReference: KtTypeReference?,
+            patternTypeReference: KtTypeReference?,
+        ): Boolean {
+            if (targetType !is KaErrorType || patternType !is KaErrorType) return false
+            if (targetTypeReference == null || patternTypeReference == null) return false
+
+            return targetTypeReference.text == patternTypeReference.text
         }
 
         context(_: KaSession)

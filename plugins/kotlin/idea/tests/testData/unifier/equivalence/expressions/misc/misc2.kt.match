@@ -1,8 +1,8 @@
-(49,130)
+(34,115)
 (a.foo((n + 2)*(m - 1))[k[i]] is MyClass?) || (b.foo(n - 2)[i + 1] !is YourClass)
 
-(215,292)
+(200,277)
 a.foo((n + 2)*(m - 1))[k[i]] is MyClass? || b.foo(n - 2)[i + 1] !is YourClass
 
-(297,378)
+(282,363)
 (a.foo((n + 2)*(m - 1))[k[i]] is MyClass?) || (b.foo(n - 2)[i + 1] !is YourClass)
