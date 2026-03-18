@@ -24,7 +24,7 @@ open class WelcomeScreenUI(data: ComponentData) : WindowUiComponent(data) {
   open val openProjectButton: UiComponent = x("//div[(@accessiblename='Open' and @class='JButton')  or (@visible_text='Open' and @class!='JBLabel')]")
   val fromVcsButton: UiComponent = x("//div[@accessiblename='Clone Repository' and @class='JButton']")
 
-  val leftItems: JTreeUiComponent = tree("//div[@class='Tree']")
+  val leftItems: JTreeUiComponent = tree("//div[@accessiblename='Welcome screen categories']")
 
   fun openSettingsDialog() {
     driver.invokeAction("ShowSettings", now = false)
