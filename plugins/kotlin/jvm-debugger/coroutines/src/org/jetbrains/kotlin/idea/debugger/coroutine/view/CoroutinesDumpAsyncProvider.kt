@@ -10,6 +10,7 @@ import com.intellij.debugger.impl.ThreadDumpItemsProvider
 import com.intellij.debugger.impl.ThreadDumpItemsProviderFactory
 import com.intellij.debugger.statistics.DebuggerStatistics
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.unscramble.DumpItem
@@ -66,18 +67,54 @@ class CoroutineDumpItem internal constructor(
     override val treeId: Long?,
     override val parentTreeId: Long?,
     private val coroutineState: State,
-    private val coroutineContextInfo: DumpItemCoroutineContextInfo,
-    override val stackTrace: String,
+    private val coroutineContextInfo: DumpItemCoroutineContextInfo?,
+    private val stackTraceBody: String
 ) : MergeableDumpItem {
 
     constructor(info: CoroutineInfoData) : this(
-        name = buildCoroutineName(info.name, info.id),
+        name = "${info.name}:${info.id}",
         treeId = info.jobId,
         parentTreeId = info.parentJobId,
         coroutineState = info.state,
         coroutineContextInfo = DumpItemCoroutineContextInfo.from(info),
-        stackTrace = buildCoroutineStackTrace(info),
+        stackTraceBody = buildStackTraceBody(info),
     )
+
+    override val stackTrace: @NlsSafe String = buildString {
+        val coroutineName = if (treeId == null) name else "$name@$treeId"
+        val coroutineContext = coroutineContextInfo?.serialize()
+        val header = buildString {
+            append("\"$coroutineName\"")
+            coroutineContext?.let {
+                append(' ')
+                append(it)
+            }
+        }
+        append(header)
+        appendLine()
+        append(stackTraceBody)
+    }
+
+    override val exportedStackTrace: @NlsSafe String = buildString {
+        val coroutineName = if (treeId == null) name else "$name@$treeId"
+        val coroutineContext = coroutineContextInfo?.serialize()
+        val header = buildString {
+            append("\"$coroutineName\"")
+            // additional information for the old ThreadDumpParsers
+            append(" virtual tid=0x0 nid=NA ")
+            append(coroutineState.name.lowercase())
+            append(' ')
+            // Marker for the CoroutineThreadDumpItemFactory
+            append(COROUTINE_MARKER)
+            coroutineContext?.let {
+                append(' ')
+                append(it)
+            }
+        }
+        append(header)
+        appendLine()
+        append(stackTraceBody)
+    }
 
     override val stateDesc: String = " (${coroutineState.name.lowercase()})"
 
@@ -127,7 +164,7 @@ class CoroutineDumpItem internal constructor(
             if (other !is CoroutinesMergeableToken) return false
             val otherItem = other.item
             if (stateDesc != otherItem.stateDesc) return false
-            if (coroutineContextInfo.dispatcher != otherItem.coroutineContextInfo.dispatcher) return false
+            if (coroutineContextInfo?.dispatcher != otherItem.coroutineContextInfo?.dispatcher) return false
             if (this.comparableStackTrace != other.comparableStackTrace) return false
             return true
         }
@@ -135,29 +172,14 @@ class CoroutineDumpItem internal constructor(
         override fun hashCode(): Int {
             return Objects.hash(
                 stateDesc,
-                coroutineContextInfo.dispatcher,
+                coroutineContextInfo?.dispatcher,
                 comparableStackTrace
             )
         }
     }
 }
 
-private fun buildCoroutineStackTrace(info: CoroutineInfoData): String {
-    val coroutineName = buildSerializedCoroutineName(info.name, info.id, info.jobId)
-    val coroutineContext = DumpItemCoroutineContextInfo.from(info).serialize()
-    val header = buildString {
-        append("\"$coroutineName\"")
-        // additional information for the old ThreadDumpParsers
-        append(" virtual tid=0x0 nid=NA ")
-        append(info.state.name.lowercase())
-        append(' ')
-        // Marker for the CoroutineThreadDumpItemFactory
-        append(COROUTINE_MARKER)
-        coroutineContext?.let {
-            append(' ')
-            append(it)
-        }
-    }
+private fun buildStackTraceBody(info: CoroutineInfoData): String {
     val lastObservedStackTrace = info.lastObservedStackTrace.joinToString(separator = "\n\t") {
         ThreadDumpAction.renderLocation(it)
     }
@@ -165,7 +187,6 @@ private fun buildCoroutineStackTrace(info: CoroutineInfoData): String {
         ThreadDumpAction.renderLocation(it)
     }
     return buildString {
-        appendLine(header)
         if (lastObservedStackTrace.isNotEmpty()) {
             append('\t')
             appendLine(lastObservedStackTrace)
@@ -176,13 +197,6 @@ private fun buildCoroutineStackTrace(info: CoroutineInfoData): String {
             append(asyncStackTrace)
         }
     }
-}
-
-private fun buildCoroutineName(name: String, id: Long?): String = "$name:$id"
-
-private fun buildSerializedCoroutineName(name: String, id: Long?, treeId: Long?): String {
-    val visibleName = buildCoroutineName(name, id)
-    return if (treeId == null) visibleName else "$visibleName@$treeId"
 }
 
 private object CoroutineRootDumpItem : MergeableDumpItem {

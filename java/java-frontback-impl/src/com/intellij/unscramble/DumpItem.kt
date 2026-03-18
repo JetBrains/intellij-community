@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble
 
 import com.intellij.icons.AllIcons
@@ -20,6 +20,13 @@ interface DumpItem {
   val stateDesc: @NlsSafe String
 
   val stackTrace: @NlsSafe String
+
+  /**
+   * Serialized [stackTrace] used when exporting the [DumpItem].
+   * Defaults to the same text that is shown in the UI.
+   */
+  val exportedStackTrace: String
+    get() = stackTrace
 
   val interestLevel: Int
 
@@ -359,6 +366,8 @@ class InfoDumpItem(private val title: @Nls String, private val details: @NlsSafe
     get() = ""
   override val stackTrace: @NlsSafe String
     get() = details
+  override val exportedStackTrace: @NlsSafe String
+    get() = ""
   override val interestLevel: Int
     get() = Int.MIN_VALUE
   override val icon: Icon

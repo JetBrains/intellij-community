@@ -6,6 +6,7 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.unscramble.CompoundDumpItem
 import com.intellij.unscramble.dumpItems
 import com.intellij.unscramble.parseIntelliJThreadDump
+import com.intellij.unscramble.serializeIntelliJThreadDump
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.test.DEBUGGER_TESTDATA_PATH_BASE
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -79,11 +80,15 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
         assertTrue(dumpItem is CoroutineDumpItem)
         assertEquals("scope:1", dumpItem.name)
         assertEquals(" (running)", dumpItem.stateDesc)
-        assertTrue(dumpItem.stackTrace.startsWith("\"scope:1@300\" #1 prio=5 tid=0x1 nid=0x1 running [Coroutine] [dispatcher=Dispatchers.Default]"))
+        assertEquals(
+            "\"scope:1@300\" [dispatcher=Dispatchers.Default]\n    at example.Parent.one(Parent.kt:1)",
+            dumpItem.stackTrace,
+        )
+        assertTrue(dumpItem.exportedStackTrace.startsWith("\"scope:1@300\" virtual tid=0x0 nid=NA running [Coroutine] [dispatcher=Dispatchers.Default]"))
     }
 
     @Test
-    fun `coroutine dump item uses single serialized coroutine state in header`() {
+    fun `coroutine dump item exposes clean ui stacktrace and synthetic exported stacktrace`() {
         val coroutineInfo = CoroutineInfoData(
             name = "scope",
             id = 1L,
@@ -100,10 +105,27 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
 
         val dumpItem = CoroutineDumpItem(coroutineInfo)
         assertEquals("scope:1", dumpItem.name)
-        assertTrue(dumpItem.stackTrace.startsWith(
-            "\"scope:1@300\" virtual tid=0x0 nid=NA suspended [Coroutine] [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}]"
-        ))
+        assertEquals(
+            "\"scope:1@300\" [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}]\n",
+            dumpItem.stackTrace,
+        )
         assertFalse(dumpItem.stackTrace.contains("java.lang.Thread.State"))
+        assertFalse(dumpItem.stackTrace.contains("virtual tid=0x0"))
+        assertFalse(dumpItem.stackTrace.contains("[Coroutine]"))
+        assertEquals(
+            "\"scope:1@300\" virtual tid=0x0 nid=NA suspended [Coroutine] [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}]\n",
+            dumpItem.exportedStackTrace,
+        )
+    }
+
+    @Test
+    fun `coroutine dump serialization uses exported stacktrace instead of ui stacktrace`() {
+        val dumpItem = CoroutineDumpItem(createCoroutineInfo(job = "StandaloneCoroutine{Active}", jobId = 300L))
+
+        val serializedDump = serializeIntelliJThreadDump(listOf(dumpItem), listOf("Full thread dump"))
+
+        assertTrue(serializedDump.contains(dumpItem.exportedStackTrace))
+        assertFalse(serializedDump.contains(dumpItem.stackTrace))
     }
 
     @Test

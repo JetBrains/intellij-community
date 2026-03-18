@@ -64,15 +64,15 @@ private fun createMetadata(dumpItems: List<DumpItem>): ThreadDumpMetadata {
 }
 
 /**
- * Serialize [dumpItems] by concatenating their stacktraces
+ * Serialize [dumpItems] by concatenating their exported stack traces.
  */
 private fun serializeThreadDumpBody(dumpItems: List<DumpItem>): String {
   return buildString {
     for (dumpItem in dumpItems) {
-      if (dumpItem is InfoDumpItem || dumpItem.stackTrace.isBlank()) {
+      if (dumpItem.exportedStackTrace.isBlank()) {
         continue
       }
-      append(dumpItem.stackTrace.trim())
+      append(dumpItem.exportedStackTrace.trim())
       appendLine()
       appendLine()
     }
