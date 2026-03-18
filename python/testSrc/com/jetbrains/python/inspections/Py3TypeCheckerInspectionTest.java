@@ -4179,6 +4179,50 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-45958
+  public void testOrderedDataclassesSorting() {
+    doTestByText("""
+                   from dataclasses import dataclass
+                   
+                   @dataclass(order=True)
+                   class DC: ...
+                   
+                   sorted([DC(), DC()])
+                   """);
+  }
+
+  // PY-45958
+  public void testOrderedDataclassImplementsLessThanProtocol() {
+    doTestByText("""
+                   from dataclasses import dataclass
+                   from typing import Any, Protocol
+                   
+                   class SupportsLessThan(Protocol):
+                       def __lt__(self, other: Any) -> bool: ...
+                   
+                   @dataclass(order=True)
+                   class DC: ...
+                   
+                   a: SupportsLessThan = DC()
+                   """);
+  }
+
+  // PY-45958
+  public void testOrderedDataclassDunderLeCall() {
+    doTestByText("""
+                   from dataclasses import dataclass
+                   
+                   @dataclass(order=True)
+                   class A: ...
+                   
+                   @dataclass(order=True)
+                   class B: ...
+                   
+                   A().__le__(A())
+                   A().__le__(<warning descr="Expected type 'A', got 'B' instead">B()</warning>)
+                   """);
+  }
+
   // PY-85030
   public void testStructuralTypeAndStrictUnion() {
     doTestByText("""
