@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2026 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -241,9 +241,9 @@ public final class TooBroadScopeInspection extends BaseInspection {
     if (aClass == null) {
       return false;
     }
-    final @NonNls String qualifiedName = aClass.getQualifiedName();
-    if (qualifiedName == null || !qualifiedName.startsWith("java.") || qualifiedName.equals("java.lang.Thread") ||
-        qualifiedName.equals("java.lang.System") || qualifiedName.equals("java.lang.Runtime")) {
+    final @NonNls String name = aClass.getQualifiedName();
+    if (name == null || !name.startsWith("java.") || name.equals("java.lang.Thread") || name.equals("java.lang.System")
+        || name.equals("java.lang.Runtime") || name.equals("java.io.File")) {
       return false;
     }
     final String methodName = method.getName();
