@@ -68,10 +68,10 @@ internal suspend fun importConfigIfNeeded(
 
   initLafJob.join()
   val log = logDeferred.await()
-  val targetDirectoryToImportConfig = customTargetDirectoryToImportConfig ?: PathManager.getConfigDir()
-  val entries = NioFiles.list(targetDirectoryToImportConfig).joinToString(", ") { "\"${it.name}\"" }
-  log.info("Will import config to directory \"$targetDirectoryToImportConfig\" (exists = ${Files.exists(targetDirectoryToImportConfig)}). Current entries: ${entries}.")
-  importConfig(args, targetDirectoryToImportConfig, log, appStarterDeferred.await(), euaDocumentDeferred)
+  val importTo = customTargetDirectoryToImportConfig ?: PathManager.getConfigDir()
+  val entries = NioFiles.list(importTo).joinToString(", ") { "\"${it.name}\"" }
+  log.info("Will import config to directory \"${importTo}\": exists=${Files.exists(importTo)} custom=${customTargetDirectoryToImportConfig != null} entries=[${entries}]")
+  importConfig(args, importTo, log, appStarterDeferred.await(), euaDocumentDeferred)
 
   val isNewUser = InitialConfigImportState.isNewUser()
 

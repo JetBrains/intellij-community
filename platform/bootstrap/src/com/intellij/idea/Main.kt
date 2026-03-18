@@ -1,6 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Internal
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
 @file:JvmName("Main")
+@file:OptIn(LowLevelLocalMachineAccess::class)
 package com.intellij.idea
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
@@ -22,6 +23,7 @@ import com.intellij.platform.ide.bootstrap.startApplication
 import com.intellij.platform.impl.toolkit.IdeFontManager
 import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment
 import com.intellij.platform.impl.toolkit.IdeToolkit
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.ui.TextLayoutUtil
 import com.jetbrains.JBR
@@ -35,7 +37,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Toolkit
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -171,14 +173,8 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
     }
 
     startApplication(
-      scope = this,
-      args = args,
-      configImportNeededDeferred = configImportNeededDeferred,
-      customTargetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
-      mainClassLoaderDeferred = mainClassLoaderDeferred,
-      appStarterDeferred = appStarterDeferred,
-      mainScope = mainScope,
-      busyThread = busyThread,
+      scope = this, args, configImportNeededDeferred, customTargetDirectoryToImportConfig,
+      mainClassLoaderDeferred, appStarterDeferred, mainScope, busyThread
     )
   }
 }
@@ -270,7 +266,6 @@ private fun initLux() {
 
   @Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
   setStaticField(sun.font.FontManagerFactory::class.java, "instance", IdeFontManager())
-  @Suppress("SpellCheckingInspection")
   System.setProperty("sun.font.fontmanager", IdeFontManager::class.java.canonicalName)
 
   TextLayoutUtil.disableLayoutInTextComponents()

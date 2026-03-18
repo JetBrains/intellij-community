@@ -1,5 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
+@file:OptIn(LowLevelLocalMachineAccess::class)
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.BundleBase
@@ -45,6 +46,7 @@ import com.intellij.util.ShellEnvironmentReader
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.singleProduct.migrateCommunityToSingleProductIfNeeded
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.jetbrains.JBR
 import kotlinx.collections.immutable.toImmutableMap
