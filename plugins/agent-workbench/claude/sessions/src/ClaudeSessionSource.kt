@@ -5,6 +5,8 @@ import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
@@ -44,6 +46,39 @@ class ClaudeSessionSource(
       }
     }
     return threads.map { it.toAgentSessionThread(readTracker) }
+  }
+
+  override suspend fun prefetchRefreshHints(
+    paths: List<String>,
+    knownThreadIdsByPath: Map<String, Set<String>>,
+  ): Map<String, AgentSessionRefreshHints> {
+    if (paths.isEmpty()) return emptyMap()
+
+    val result = LinkedHashMap<String, AgentSessionRefreshHints>(paths.size)
+    for (path in paths) {
+      val threads = try {
+        backend.listThreads(path = path, openProject = null)
+      }
+      catch (_: Throwable) {
+        continue
+      }
+      val knownIds = knownThreadIdsByPath[path].orEmpty()
+      val rebindCandidates = threads
+        .filter { it.id !in knownIds }
+        .map { thread ->
+          AgentSessionRebindCandidate(
+            threadId = thread.id,
+            title = thread.title,
+            updatedAt = thread.updatedAt,
+            activity = thread.effectiveActivity(readTracker),
+          )
+        }
+      if (rebindCandidates.isNotEmpty()) {
+        result[path] = AgentSessionRefreshHints(rebindCandidates = rebindCandidates)
+      }
+    }
+
+    return result
   }
 
   override fun markThreadAsRead(threadId: String, updatedAt: Long) {

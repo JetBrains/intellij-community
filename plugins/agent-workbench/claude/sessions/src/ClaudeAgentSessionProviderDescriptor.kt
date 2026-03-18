@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessa
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentPendingSessionMetadata
 import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
@@ -49,6 +50,9 @@ internal class ClaudeAgentSessionProviderDescriptor(
     get() = listOf(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION)
 
   override val supportsPlanMode: Boolean
+    get() = true
+
+  override val supportsPendingEditorTabRebind: Boolean
     get() = true
 
   override val cliMissingMessageKey: String
@@ -95,6 +99,23 @@ internal class ClaudeAgentSessionProviderDescriptor(
     )
   }
 
+  override fun resolvePendingSessionMetadata(
+    identity: String,
+    launchSpec: AgentSessionTerminalLaunchSpec,
+  ): AgentPendingSessionMetadata? {
+    val separator = identity.indexOf(':')
+    if (separator <= 0 || separator == identity.lastIndex) {
+      return null
+    }
+    if (!identity.substring(separator + 1).startsWith("new-")) {
+      return null
+    }
+    if (AgentSessionProvider.from(identity.substring(0, separator)) != AgentSessionProvider.CLAUDE) {
+      return null
+    }
+    return AgentPendingSessionMetadata(createdAtMs = System.currentTimeMillis(), launchMode = resolveLaunchMode(launchSpec))
+  }
+
   override fun onConversationOpened() {
     service<ClaudeQuotaHintStateService>().markEligible()
   }
@@ -111,15 +132,20 @@ internal class ClaudeAgentSessionProviderDescriptor(
   }
 }
 
+private fun resolveLaunchMode(launchSpec: AgentSessionTerminalLaunchSpec): String {
+  return if ("--dangerously-skip-permissions" in launchSpec.command) "yolo" else "standard"
+}
+
 private fun replaceOrAddPermissionMode(command: List<String>, mode: String): List<String> {
-    val result = command.toMutableList()
-    val index = result.indexOf(PERMISSION_MODE_FLAG)
-    if (index >= 0 && index + 1 < result.size) {
-        result[index + 1] = mode
-    } else {
-        result.addAll(listOf(PERMISSION_MODE_FLAG, mode))
-    }
-    return result
+  val result = command.toMutableList()
+  val index = result.indexOf(PERMISSION_MODE_FLAG)
+  if (index >= 0 && index + 1 < result.size) {
+    result[index + 1] = mode
+  }
+  else {
+    result.addAll(listOf(PERMISSION_MODE_FLAG, mode))
+  }
+  return result
 }
 
 private const val CLAUDE_DISABLE_AUTO_UPDATER_ENV: String = "DISABLE_AUTOUPDATER"
