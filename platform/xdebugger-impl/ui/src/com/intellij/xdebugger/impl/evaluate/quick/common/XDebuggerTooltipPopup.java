@@ -15,7 +15,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -84,14 +83,7 @@ class XDebuggerTooltipPopup {
       return null;
     }
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
-    hideAndDisableFloatingToolbar(myEditor, myPopup);
     return myPopup;
-  }
-
-  private static void hideAndDisableFloatingToolbar(@NotNull Editor editor, @NotNull JBPopup popup){
-    CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
-    if (floatingToolbar == null) return;
-    floatingToolbar.hideOnPopupConflict(popup);
   }
 
   private class ShowErrorsAction extends AnAction {

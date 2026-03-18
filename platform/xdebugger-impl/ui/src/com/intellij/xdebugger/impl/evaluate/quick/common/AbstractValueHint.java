@@ -45,6 +45,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredComponentWithProgress;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBUI;
@@ -497,6 +498,10 @@ public abstract class AbstractValueHint {
       JBPopup popup = popupPresenter.apply(point);
       if (popup != null) {
         myCurrentPopup = popup;
+        CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(myEditor);
+        if (floatingToolbar != null) {
+          floatingToolbar.hideWhilePopupVisible(popup);
+        }
         myEditor.getScrollingModel().addVisibleAreaListener(e -> {
           if (!Objects.equals(e.getOldRectangle(), e.getNewRectangle())) {
             hideCurrentHint();

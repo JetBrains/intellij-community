@@ -35,6 +35,7 @@ import com.intellij.ui.LightweightHint
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.ui.popup.util.PopupImplUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
@@ -91,6 +92,7 @@ class CodeFloatingToolbar(
   }
 
   private var activeMenuPopup: JBPopup? = null
+  private var disabledCount = 0
 
   override fun hasIgnoredParent(element: PsiElement): Boolean {
     return !element.isWritable || TemplateManager.getInstance(element.project).getActiveTemplate(editor) != null
@@ -98,7 +100,7 @@ class CodeFloatingToolbar(
 
   override fun isEnabled(): Boolean {
     return !AdvancedSettings.getBoolean("floating.codeToolbar.hide")
-           && editor.document.isWritable && !TEMPORARILY_DISABLED
+           && editor.document.isWritable && !TEMPORARILY_DISABLED && disabledCount == 0
   }
 
   override fun disableForDoubleClickSelection(): Boolean = true
@@ -282,13 +284,20 @@ class CodeFloatingToolbar(
     val toolbarBounds = getScreenBounds(hintComponent) ?: return
     val popupBounds = getScreenBounds(popup.content) ?: return
     if (!toolbarBounds.intersects(popupBounds)) return
+    hideWhilePopupVisible(popup)
+  }
+
+  /**
+   * Hides and disables the toolbar for the whole popup lifetime.
+   */
+  fun hideWhilePopupVisible(popup: JBPopup) {
+    ThreadingAssertions.assertEventDispatchThread()
     val wasVisible = isShown()
-    val wasDisabled = TEMPORARILY_DISABLED
     val disposable = getPopupDisposable(popup)
-    temporarilyDisable(true)
+    disabledCount++
     scheduleHide()
     Disposer.register(disposable) {
-      temporarilyDisable(wasDisabled)
+      disabledCount--
       if (wasVisible) {
         allowInstantShowing()
       }

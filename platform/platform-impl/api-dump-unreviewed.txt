@@ -12145,6 +12145,7 @@ f:com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar
 - sf:getToolbar(com.intellij.openapi.editor.Editor):com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar
 - hideByOtherHints():Z
 - f:hideOnPopupConflict(com.intellij.openapi.ui.popup.JBPopup):V
+- f:hideWhilePopupVisible(com.intellij.openapi.ui.popup.JBPopup):V
 - isEnabled():Z
 - sf:isTemporarilyDisabled():Z
 - onHintShown():V
