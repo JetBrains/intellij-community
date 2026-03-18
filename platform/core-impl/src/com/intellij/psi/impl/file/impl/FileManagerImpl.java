@@ -67,6 +67,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -82,6 +83,7 @@ public final class FileManagerImpl implements FileManagerEx {
 
   private final AtomicReference<ConcurrentMap<VirtualFile, PsiDirectory>> myVFileToPsiDirMap = new AtomicReference<>();
   private final FileViewProviderCache myVFileToViewProviderMap;
+  private final Set<LightVirtualFile> myLightVirtualFiles = Collections.synchronizedSet(ContainerUtil.createWeakSet());
 
   /**
    * Holds thread-local temporary providers that are sometimes needed while checking if a file is valid
@@ -210,11 +212,11 @@ public final class FileManagerImpl implements FileManagerEx {
 
   @Override
   public void dispose() {
-    clearViewProviders("Dispose");
+    clearViewProviders("Dispose", true);
   }
 
   @RequiresWriteLock
-  private void clearViewProviders(@NotNull String reason) {
+  private void clearViewProviders(@NotNull String reason, boolean clearLightFiles) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("clearViewProviders: " + reason);
     }
@@ -224,13 +226,23 @@ public final class FileManagerImpl implements FileManagerEx {
         markInvalidated(provider);
       });
       myVFileToViewProviderMap.clear();
+
+      if (clearLightFiles) {
+        myLightVirtualFiles.forEach(file -> {
+          FileViewProvider viewProvider = file.getUserData(myPsiHardRefKey);
+          if (viewProvider != null) {
+            markInvalidated(viewProvider);
+          }
+        });
+        myLightVirtualFiles.clear();
+      }
     });
   }
 
   @Override
   @TestOnly
   public void cleanupForNextTest() {
-    ApplicationManager.getApplication().runWriteAction(() -> clearViewProviders("clearViewProvidersForNextTest"));
+    ApplicationManager.getApplication().runWriteAction(() -> clearViewProviders("clearViewProvidersForNextTest", false));
 
     myVFileToPsiDirMap.set(null);
     myManager.dropPsiCaches();
@@ -257,6 +269,7 @@ public final class FileManagerImpl implements FileManagerEx {
     FileViewProvider viewProvider = createFileViewProvider(vFile, context, !LightVirtualFile.shouldSkipEventSystem(vFile));
     if (vFile instanceof LightVirtualFile) {
       checkLightFileHasNoOtherPsi((LightVirtualFile)vFile);
+      myLightVirtualFiles.add((LightVirtualFile)vFile);
       return vFile.putUserDataIfAbsent(myPsiHardRefKey, viewProvider);
     }
     return myVFileToViewProviderMap.cacheOrGet(vFile, context, viewProvider);
@@ -352,6 +365,7 @@ public final class FileManagerImpl implements FileManagerEx {
       }
 
       checkLightFileHasNoOtherPsi((LightVirtualFile)vFile);
+      myLightVirtualFiles.add((LightVirtualFile)vFile);
       vFile.putUserData(myPsiHardRefKey, viewProvider);
     }
     else {
@@ -440,7 +454,7 @@ public final class FileManagerImpl implements FileManagerEx {
 
           possiblyInvalidatePhysicalPsi();
           if (clearViewProviders) {
-            clearViewProviders("processFileTypesChanged");
+            clearViewProviders("processFileTypesChanged", false);
           }
 
           myManager.propertyChanged(event);
