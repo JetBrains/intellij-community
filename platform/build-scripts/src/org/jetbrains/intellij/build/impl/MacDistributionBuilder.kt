@@ -601,9 +601,7 @@ class MacDistributionBuilder(
 
   private fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String {
     return if (context.options.isLanguageServer) {
-      val appInfo = context.applicationInfo
-      val buildNumber = context.buildNumber
-      "${appInfo.fullProductName}-${if (appInfo.isEAP) buildNumber else appInfo.fullVersion}"
+      customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
     }
     else {
       "${customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)}/Contents"
