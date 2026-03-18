@@ -294,13 +294,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     }
   }
 
-  private static class ShowErrorsUpdate {
-    final int myCurrentStamp;
-    final @Nls(capitalization = Nls.Capitalization.Sentence) String myText;
-
-    ShowErrorsUpdate(int currentStamp, @Nls(capitalization = Nls.Capitalization.Sentence) String text) {
-      myCurrentStamp = currentStamp;
-      myText = text;
-    }
+  private record ShowErrorsUpdate(int myCurrentStamp,
+                                  @Nls(capitalization = Nls.Capitalization.Sentence) String myText) {
   }
 }
