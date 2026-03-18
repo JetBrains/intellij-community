@@ -517,7 +517,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
   fun `test build output project using Daemon Jvm criteria`() {
     val jdkHome = requireJdkHome()
     val jdkVersion = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdkHome)!!.version.feature
-    createProjectSubFile("gradle.properties", "org.gradle.java.installations.paths=$jdkHome")
+    createProjectSubFile("gradle.properties", "org.gradle.java.installations.paths=${StringUtil.escapeBackSlashes(jdkHome)}")
     createProjectSubFile("gradle/gradle-daemon-jvm.properties", "toolchainVersion=$jdkVersion")
 
     overrideGradleUserHome(".gradle")
