@@ -1,8 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.disableInspections
+import com.intellij.unscramble.CompoundDumpItem
 import com.intellij.unscramble.dumpItems
 import com.intellij.unscramble.parseIntelliJThreadDump
 import org.jetbrains.kotlin.idea.debugger.test.DEBUGGER_TESTDATA_PATH_BASE
@@ -58,6 +60,19 @@ class CoroutineThreadDumpItemFactoryTest : KotlinLightCodeInsightFixtureTestCase
     }
 
     @Test
+    fun `coroutine items with different jobs but same dispatcher are merged`() {
+        val commonDispatcher = "Dispatchers.IO"
+        val firstCoroutine = CoroutineDumpItem(createCoroutineInfo(job = "StandaloneCoroutine{Active}", jobId = 300L, dispatcher = commonDispatcher))
+        val secondCoroutine = CoroutineDumpItem(createCoroutineInfo(job = "DeferredCoroutine{Active}", jobId = 301L, dispatcher = commonDispatcher))
+
+        val mergedDumpItems = CompoundDumpItem.mergeThreadDumpItems(listOf(firstCoroutine, secondCoroutine))
+
+        assertEquals(1, mergedDumpItems.size)
+        assertTrue(mergedDumpItems.single() is CompoundDumpItem<*>)
+        assertEquals(2, (mergedDumpItems.single() as CompoundDumpItem<*>).counter)
+    }
+
+    @Test
     fun `coroutine header state is restored from serialized state without exact synthetic prefix match`() {
         val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(loadThreadDump("coroutineHeaderStateWithoutSyntheticPrefix.txt")))
 
@@ -100,6 +115,22 @@ class CoroutineThreadDumpItemFactoryTest : KotlinLightCodeInsightFixtureTestCase
         assertFalse(dumpItem is CoroutineDumpItem)
         assertEquals("worker[Coroutine]@101", dumpItem.name)
         assertEquals(" (runnable)", dumpItem.stateDesc)
+    }
+
+    private fun createCoroutineInfo(job: String, jobId: Long, dispatcher: String = "Dispatchers.Default"): CoroutineInfoData {
+        return CoroutineInfoData(
+            name = "scope",
+            id = jobId,
+            state = "SUSPENDED",
+            dispatcher = dispatcher,
+            lastObservedFrame = null,
+            lastObservedThread = null,
+            debugCoroutineInfoRef = null,
+            stackFrameProvider = null,
+        ).also {
+            it.job = job
+            it.jobId = jobId
+        }
     }
 
     private fun loadThreadDump(fileName: String): String = Files.readString(Path(DEBUGGER_TESTDATA_PATH_BASE, "threadDump", fileName))

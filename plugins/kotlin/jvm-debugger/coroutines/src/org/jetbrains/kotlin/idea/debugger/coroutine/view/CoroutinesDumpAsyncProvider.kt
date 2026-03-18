@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
 import com.intellij.debugger.JavaDebuggerBundle
@@ -66,7 +66,7 @@ class CoroutineDumpItem internal constructor(
     override val treeId: Long?,
     override val parentTreeId: Long?,
     private val coroutineState: State,
-    private val coroutineContext: String?,
+    private val coroutineContextInfo: DumpItemCoroutineContextInfo,
     override val stackTrace: String,
 ) : MergeableDumpItem {
 
@@ -75,7 +75,7 @@ class CoroutineDumpItem internal constructor(
         treeId = info.jobId,
         parentTreeId = info.parentJobId,
         coroutineState = info.state,
-        coroutineContext = buildCoroutineContext(info),
+        coroutineContextInfo = DumpItemCoroutineContextInfo.from(info),
         stackTrace = buildCoroutineStackTrace(info),
     )
 
@@ -127,7 +127,7 @@ class CoroutineDumpItem internal constructor(
             if (other !is CoroutinesMergeableToken) return false
             val otherItem = other.item
             if (stateDesc != otherItem.stateDesc) return false
-            if (coroutineContext != otherItem.coroutineContext) return false
+            if (coroutineContextInfo.dispatcher != otherItem.coroutineContextInfo.dispatcher) return false
             if (this.comparableStackTrace != other.comparableStackTrace) return false
             return true
         }
@@ -135,7 +135,7 @@ class CoroutineDumpItem internal constructor(
         override fun hashCode(): Int {
             return Objects.hash(
                 stateDesc,
-                coroutineContext,
+                coroutineContextInfo.dispatcher,
                 comparableStackTrace
             )
         }
@@ -144,7 +144,7 @@ class CoroutineDumpItem internal constructor(
 
 private fun buildCoroutineStackTrace(info: CoroutineInfoData): String {
     val coroutineName = buildSerializedCoroutineName(info.name, info.id, info.jobId)
-    val coroutineContext = buildCoroutineContext(info)
+    val coroutineContext = DumpItemCoroutineContextInfo.from(info).serialize()
     val header = buildString {
         append("\"$coroutineName\"")
         // additional information for the old ThreadDumpParsers
@@ -176,17 +176,6 @@ private fun buildCoroutineStackTrace(info: CoroutineInfoData): String {
             append(asyncStackTrace)
         }
     }
-}
-
-/**
- * Builds additional info to the coroutine header like "[dispatcher=Dispatchers.Default, job=Job1]"
- */
-private fun buildCoroutineContext(info: CoroutineInfoData): String? {
-    val parts = buildList {
-        info.dispatcher?.let { add("dispatcher=$it") }
-        info.job?.let { add("job=$it") }
-    }
-    return parts.takeIf { it.isNotEmpty() }?.joinToString(prefix = "[", separator = ", ", postfix = "]")
 }
 
 private fun buildCoroutineName(name: String, id: Long?): String = "$name:$id"
