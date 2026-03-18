@@ -350,6 +350,430 @@ internal class DefaultTreeModelWithCachedPresentationTest {
     expectedLoadedNodes = 3,
   )
 
+  @Test
+  fun `update children - empty`() = updateChildrenTest(
+    initialState = "root",
+    updateChildren = listOf(
+      "root" to emptyList(),
+    ),
+    expectSame = emptyList(),
+    expectedResult = "root",
+    expectedEventCount = 1, // initial state
+  )
+
+  @Test
+  fun `update children - empty to not empty`() = updateChildrenTest(
+    initialState = "root",
+    updateChildren = listOf(
+      "root" to listOf("child1"),
+    ),
+    expectSame = emptyList(),
+    expectedResult = """
+      |root
+      | child1
+      """.trimMargin(),
+    expectedEventCount = 2, // initial state + inserted
+  )
+
+  @Test
+  fun `update children - not empty to empty`() = updateChildrenTest(
+    initialState = """
+      |root
+      | child1
+      | child2
+      """.trimMargin(),
+    updateChildren = listOf(
+      "root" to listOf(),
+    ),
+    expectSame = emptyList(),
+    expectedResult = """
+      |root
+      """.trimMargin(),
+    expectedEventCount = 2, // initial state + removed
+  )
+
+  @Test
+  fun `update children - to single identical`() = updateChildrenTest(
+    initialState = """
+      |root
+      | child1
+      """.trimMargin(),
+    updateChildren = listOf(
+      "root" to listOf("child1"),
+    ),
+    expectSame = listOf("root/child1"),
+    expectedResult = """
+      |root
+      | child1
+      """.trimMargin(),
+    expectedEventCount = 2, // initial state + changed
+  )
+
+  @Test
+  fun `update children - insert after`() = updateChildrenTest(
+    initialState = """
+      |root
+      | child1
+      """.trimMargin(),
+    updateChildren = listOf(
+      "root" to listOf("child1", "child2"),
+    ),
+    expectSame = listOf("root/child1"),
+    expectedResult = """
+      |root
+      | child1
+      | child2
+      """.trimMargin(),
+    expectedEventCount = 3, // initial state + inserted + changed
+  )
+
+  @Test
+  fun `update children - insert before`() = updateChildrenTest(
+    initialState = """
+      |root
+      | child1
+      """.trimMargin(),
+    updateChildren = listOf(
+      "root" to listOf("child0", "child1"),
+    ),
+    expectSame = listOf("root/child1"),
+    expectedResult = """
+      |root
+      | child0
+      | child1
+      """.trimMargin(),
+    expectedEventCount = 3, // initial state + inserted + changed
+  )
+
+  @Test
+  fun `update children - insert around`() = updateChildrenTest(
+    initialState = """
+      |root
+      | child1
+      """.trimMargin(),
+    updateChildren = listOf(
+      "root" to listOf("child0", "child1", "child2"),
+    ),
+    expectSame = listOf("root/child1"),
+    expectedResult = """
+      |root
+      | child0
+      | child1
+      | child2
+      """.trimMargin(),
+    expectedEventCount = 3, // initial state + inserted + changed
+  )
+
+  @Test
+  fun `update children - complicated insert`() = updateChildrenTest(
+    initialState = """
+      |root
+      | child1
+      | child2
+      | child3
+      """.trimMargin(),
+    updateChildren = listOf(
+      "root" to listOf("child0.5", "child1", "child1.1", "child1.2", "child2", "child3", "child4"),
+    ),
+    expectSame = listOf("root/child1", "root/child2", "root/child3"),
+    expectedResult = """
+      |root
+      | child0.5
+      | child1
+      | child1.1
+      | child1.2
+      | child2
+      | child3
+      | child4
+      """.trimMargin(),
+    expectedEventCount = 3, // initial state + inserted + changed
+  )
+
+  @Test
+  fun `update children - remove the only`() = updateChildrenTest(
+    initialState = """
+      |root
+      | child1
+      """.trimMargin(),
+    updateChildren = listOf(
+      "root" to listOf(),
+    ),
+    expectSame = emptyList(),
+    expectedResult = """
+      |root
+      """.trimMargin(),
+    expectedEventCount = 2, // initial state + removed
+  )
+
+  @Test
+  fun `update children - remove many`() = updateChildrenTest(
+    initialState = """
+      |root
+      | child1
+      | child2
+      | child3
+      """.trimMargin(),
+    updateChildren = listOf(
+      "root" to listOf(),
+    ),
+    expectSame = emptyList(),
+    expectedResult = """
+      |root
+      """.trimMargin(),
+    expectedEventCount = 2, // initial state + removed
+  )
+
+  @Test
+  fun `update children - remove one`() = updateChildrenTest(
+    initialState = """
+      |root
+      | child1
+      | child2
+      """.trimMargin(),
+    updateChildren = listOf(
+      "root" to listOf("child1"),
+    ),
+    expectSame = listOf("root/child1"),
+    expectedResult = """
+      |root
+      | child1
+      """.trimMargin(),
+    expectedEventCount = 3, // initial state + removed + changed
+  )
+
+  @Test
+  fun `update children - remove complicated`() = updateChildrenTest(
+    initialState = """
+      |root
+      | child1
+      | child1.5
+      | child2
+      | child3
+      | child3.5
+      | child4
+      | child5
+      | child6
+      """.trimMargin(),
+    updateChildren = listOf(
+      "root" to listOf("child2", "child4"),
+    ),
+    expectSame = listOf("root/child2", "root/child4"),
+    expectedResult = """
+      |root
+      | child2
+      | child4
+      """.trimMargin(),
+    expectedEventCount = 3, // initial state + removed + changed
+  )
+
+  @Test
+  fun `update children - to single equal-but-not-identical`() = updateChildrenTest(
+    initialState = """
+      |root
+      | child1
+      """.trimMargin(),
+    updateChildren = listOf(
+      "root" to listOf("CHILD1"),
+    ),
+    expectSame = listOf("root/child1"),
+    expectedResult = """
+      |root
+      | CHILD1
+      """.trimMargin(),
+    expectedEventCount = 2, // initial state + changed
+  )
+
+  @Test
+  fun `update children - a generic do-it-all test`() = updateChildrenTest(
+    initialState = """
+      |root
+      | child1
+      | child2
+      | child3
+      | child4
+      | child5
+      """.trimMargin(),
+    updateChildren = listOf(
+      "root" to listOf("child0.5", "CHILD1", "child1.1", "child1.2", "child2.5", "child3", "child3.5", "child4", "child5", "child6", "child7"),
+    ),
+    expectSame = listOf("root/child1", "root/child3", "root/child4", "root/child5"),
+    expectedResult = """
+      |root
+      | child0.5
+      | CHILD1
+      | child1.1
+      | child1.2
+      | child2.5
+      | child3
+      | child3.5
+      | child4
+      | child5
+      | child6
+      | child7
+      """.trimMargin(),
+    expectedEventCount = 4, // initial state + removed + inserted + changed
+  )
+
+  @Test
+  fun `update children - a single update with a cached presentation`() = updateChildrenTest(
+    initialState = """
+      |root
+      | child1
+      | child2
+      | child3
+      | child4
+      | child5
+      """.trimMargin(),
+    cachedPresentation = """
+      |root
+      | child1
+      |  child1-1
+      | child2
+      |  child2-1
+      |  child2-2
+      | child3
+      | child4
+      |  child4-1
+      |  child4-2
+      |  child4-3
+      | child5
+      """.trimMargin(),
+    updateChildren = listOf(
+      "root" to listOf("child0.5", "CHILD1", "child1.1", "child1.2", "child2.5", "child3", "child3.5", "child4", "child5", "child6", "child7"),
+    ),
+    expectSame = listOf("root/child1", "root/child3", "root/child4", "root/child5"),
+    expectedResult = """
+      |root
+      | child0.5
+      | CHILD1
+      |  *child1-1
+      | child1.1
+      | child1.2
+      | child2.5
+      | child3
+      | child3.5
+      | child4
+      |  *child4-1
+      |  *child4-2
+      |  *child4-3
+      | child5
+      | child6
+      | child7
+      """.trimMargin(),
+    expectedEventCount = 5, // initial state + cached + removed + inserted + changed
+    expectedLoadedNodes = null, // because not all of them are loaded in this test
+  )
+
+  @Test
+  fun `update children - two level updates with a cached presentation`() = updateChildrenTest(
+    initialState = """
+      |root
+      """.trimMargin(),
+    cachedPresentation = """
+      |root
+      | child1
+      |  child1-1
+      | child2
+      |  child2-1
+      |  child2-2
+      | child3
+      |  child3-1
+      | child4
+      |  child4-1
+      """.trimMargin(),
+    updateChildren = listOf(
+      "root" to listOf("child1", "child2", "child3", "child5"),
+      "root/child1" to listOf("child1-1"),
+      "root/child2" to listOf("child2-3"),
+      "root/child5" to listOf("child5-1"),
+    ),
+    expectSame = listOf("root"),
+    expectedResult = """
+      |root
+      | child1
+      |  child1-1
+      | child2
+      |  child2-3
+      | child3
+      |  *child3-1
+      | child5
+      |  child5-1
+      """.trimMargin(),
+    expectedEventCount = 9, // initial state + cached + removed 1-4 + inserted 1-5 + (2x) remove-insert 1&2 children + insert 5-1
+    expectedLoadedNodes = null, // because not all of them are loaded in this test
+  )
+
+  @Test
+  fun `update children - two level updates with a cached presentation and its full replacement`() = updateChildrenTest(
+    initialState = """
+      |root
+      """.trimMargin(),
+    cachedPresentation = """
+      |root
+      | child1
+      |  child1-1
+      | child2
+      |  child2-1
+      |  child2-2
+      | child3
+      |  child3-1
+      | child4
+      |  child4-1
+      """.trimMargin(),
+    updateChildren = listOf(
+      "root" to listOf("child1", "child2", "child3", "child5"),
+      "root/child1" to listOf("child1-1"),
+      "root/child2" to listOf("child2-3"),
+      "root/child3" to listOf("child3-1", "child3-2"),
+      "root/child5" to listOf("child5-1", "child5-2"),
+    ),
+    expectSame = listOf("root"),
+    expectedResult = """
+      |root
+      | child1
+      |  child1-1
+      | child2
+      |  child2-3
+      | child3
+      |  child3-1
+      |  child3-2
+      | child5
+      |  child5-1
+      |  child5-2
+      """.trimMargin(),
+    expectedEventCount = 11, // initial state + cached + removed 1-4 + inserted 1-5 + (3x) remove-insert 1&2&3 children + insert 5 children
+    expectedLoadedNodes = 8, // 10, but the last two children (5-1, 5-2) are inserted after the cached presentation is already gone
+  )
+
+  @Test
+  fun `update children - a one-to-one correspondence with the cached presentation`() = updateChildrenTest(
+    initialState = """
+      |root
+      """.trimMargin(),
+    cachedPresentation = """
+      |root
+      | child1
+      |  child1-1
+      | child2
+      |  child2-1
+      """.trimMargin(),
+    updateChildren = listOf(
+      "root" to listOf("child1", "child2"),
+      "root/child1" to listOf("child1-1"),
+      "root/child2" to listOf("child2-1"),
+    ),
+    expectSame = listOf("root"),
+    expectedResult = """
+      |root
+      | child1
+      |  child1-1
+      | child2
+      |  child2-1
+      """.trimMargin(),
+    expectedEventCount = 8, // initial state + cached + removed 1-2 + inserted 1-2 + (2x) remove-insert 1&2 children
+    expectedLoadedNodes = 4, // except root
+  )
+
   @Suppress("UnnecessaryVariable") // Variables are used to make the code self-documented!
   private fun restorePresentationTest(
     initialState: String,
@@ -405,6 +829,66 @@ internal class DefaultTreeModelWithCachedPresentationTest {
         val update = updates.single()
         sut.updateNode(path(update.first).lastPathComponent as DefaultMutableTreeNode, DefaultTreeModelUserObject(update.second))
       }
+    }
+    assertThat(dump(sut)).`as`("result model").isEqualTo(expectedResult)
+    // This checks that the listeners are working as expected:
+    assertThat(dump(mirrorModel)).`as`("result mirror").isEqualTo(expectedResult)
+    assertThat(eventCount).`as`("event count").isEqualTo(expectedEventCount)
+    assertThat(loadedNodeCount).`as`("loaded nodes").isEqualTo(expectedLoadedNodes)
+  }
+
+  private fun updateChildrenTest(
+    initialState: String,
+    cachedPresentation: String? = null,
+    updateChildren: List<Pair<String, List<String>>> = emptyList(),
+    expectSame: List<String>,
+    expectedResult: String,
+    expectedEventCount: Int,
+    expectedLoadedNodes: Int? = 0, // the most common case for this function, as most tests don't use a cached presentation
+  ) {
+    sut.setRoot(parse(initialState))
+    // This checks that the listeners are working as expected:
+    assertThat(dump(mirrorModel)).`as`("initial mirror").isEqualTo(initialState)
+    if (cachedPresentation != null) {
+      val cp = parse(cachedPresentation)?.toCachedPresentation()?.createTree()
+      if (cp != null) {
+        cps.applyAlreadyLoadedNodesTo(cp)
+      }
+      cps.cachedPresentation = cp
+    }
+    var loadedNodeCount: Int? = null
+    sut.promiseRealNodes().onProcessed { paths ->
+      loadedNodeCount = paths?.size
+    }
+    val pathsThatWillBeTheSame = expectSame.map { path(it) }
+    for ((parentPathString, childStrings) in updateChildren) {
+      val parentPath = path(parentPathString)
+      val parent = parentPath.lastPathComponent
+      // We use case-insensitive mapping to mimic updating of existing children.
+      // So ["child1"] -> ["child2"] = removed + inserted, but ["child1"] -> ["CHILD1"] = updated.
+      val existingChildrenByText = (0 until sut.getChildCount(parent))
+        .asSequence()
+        .map { sut.getChild(parent, it) }
+        .map { it.myUserObject?.text?.lowercase() to it }
+        .filter { it.first != null }
+        .toMap()
+      val newChildren = childStrings.map { DefaultMutableTreeNode(DefaultTreeModelUserObject(it)) }
+      sut.updateChildren(parent as DefaultMutableTreeNode, newChildren) { newChild ->
+        val myUserObject = newChild.myUserObject
+        // By the contract this thing is never called for cached nodes, so must never be null.
+        assertThat(myUserObject).isNotNull()
+        existingChildrenByText[myUserObject?.text?.lowercase()]
+      }
+    }
+    // Check that the paths that are supposed to be unaffected retained their node identity
+    // (and therefore anything that might be mapped to them anywhere).
+    // The user objects might have been updated, though.
+    val theSamePaths = expectSame.map { path(it) }
+    assertThat(theSamePaths).hasSameSizeAs(pathsThatWillBeTheSame)
+    for ((pathWas, pathIs) in pathsThatWillBeTheSame.zip(theSamePaths)) {
+      assertThat(pathIs.lastPathComponent)
+        .`as`(pathIs.toString())
+        .isSameAs(pathWas.lastPathComponent)
     }
     assertThat(dump(sut)).`as`("result model").isEqualTo(expectedResult)
     // This checks that the listeners are working as expected:
@@ -485,8 +969,8 @@ internal class DefaultTreeModelWithCachedPresentationTest {
   private fun pathElementMatches(element: String, node: DefaultMutableTreeNode): Boolean {
     val userObject = node.userObject
     return when (userObject) {
-      is DefaultTreeModelUserObject -> userObject.text == element
-      is CachedTreePresentationNode -> userObject.data.presentation.text == element
+      is DefaultTreeModelUserObject -> userObject.text.equals(element, ignoreCase = true)
+      is CachedTreePresentationNode -> userObject.data.presentation.text.equals(element, ignoreCase = true)
       else -> false
     }
   }
@@ -526,9 +1010,10 @@ internal class DefaultTreeModelWithCachedPresentationTest {
   }
 
   private fun DefaultMutableTreeNode.toCachedPresentation(): CachedTreePresentationData {
+    val userObject = checkNotNull(myUserObject) { "Can only convert a real user object to a cached one, but got ${this.userObject}" }
     return CachedTreePresentationData(
-      pathElement = DefaultCachedPathElement(myUserObject),
-      presentation = DefaultCachedPresentationData(myUserObject.text),
+      pathElement = DefaultCachedPathElement(userObject),
+      presentation = DefaultCachedPresentationData(userObject.text),
       extraAttributes = null,
       children = (0 until this.childCount).map { (getChildAt(it) as DefaultMutableTreeNode).toCachedPresentation() },
     )
@@ -622,7 +1107,7 @@ internal class DefaultTreeModelWithCachedPresentationTest {
   }
 }
 
-private val DefaultMutableTreeNode.myUserObject: DefaultTreeModelUserObject get() = userObject as DefaultTreeModelUserObject
+private val DefaultMutableTreeNode.myUserObject: DefaultTreeModelUserObject? get() = userObject as? DefaultTreeModelUserObject
 
 private data class DefaultTreeModelUserObject(val text: String, val isCached: Boolean) : PathElementIdProvider {
   constructor(text: String) : this(text.removePrefix("*"), isCached = text.startsWith("*"))

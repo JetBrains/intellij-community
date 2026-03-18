@@ -71,6 +71,7 @@ a:com.intellij.ide.ui.LafManager
 - removeTreeModelListener(javax.swing.event.TreeModelListener):V
 - f:setChildren(javax.swing.tree.DefaultMutableTreeNode,java.util.List):V
 - f:setRoot(javax.swing.tree.DefaultMutableTreeNode):V
+- f:updateChildren(javax.swing.tree.DefaultMutableTreeNode,java.util.List,kotlin.jvm.functions.Function1):V
 - f:updateNode(javax.swing.tree.DefaultMutableTreeNode,java.lang.Object):V
 - valueForPathChanged(javax.swing.tree.TreePath,java.lang.Object):V
 c:com.intellij.openapi.actionSystem.PlatformDataKeys

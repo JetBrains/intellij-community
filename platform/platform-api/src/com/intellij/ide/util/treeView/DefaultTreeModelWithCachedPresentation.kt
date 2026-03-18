@@ -6,6 +6,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.util.containers.nullize
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2IntMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -117,6 +119,81 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
     }
   }
 
+  fun updateChildren(
+    parent: DefaultMutableTreeNode,
+    newChildren: List<DefaultMutableTreeNode>,
+    findOldByNew: (DefaultMutableTreeNode) -> DefaultMutableTreeNode?,
+  ) {
+    val hadChildren = parent.childCount > 0
+    val willHaveChildren = newChildren.isNotEmpty()
+    if (!hadChildren && !willHaveChildren) return
+    if (!hadChildren || !willHaveChildren) {
+      setChildren(parent, newChildren)
+      return
+    }
+
+    val oldChildren = parent.children().asSequence().mapTo(mutableListOf()) { it as DefaultMutableTreeNode }
+
+    val removedWithIndices = computeRemoved(oldChildren, newChildren, findOldByNew)
+    removeChildrenFromDelegate(parent, removedWithIndices)
+
+    val addedWithIndices = computeAdded(newChildren, findOldByNew)
+    insertChildrenIntoDelegate(parent, addedWithIndices)
+    
+    val updatedWithIndices = computeUpdated(newChildren, findOldByNew)
+    updateChildrenInDelegate(parent, updatedWithIndices)
+
+    cachedPresentationApplier?.checkDone()
+    if (LOG.isTraceEnabled) {
+      dumpTree()
+    }
+  }
+
+  private fun computeRemoved(
+    oldChildren: MutableList<DefaultMutableTreeNode>,
+    newChildren: List<DefaultMutableTreeNode>,
+    findOldByNew: (DefaultMutableTreeNode) -> DefaultMutableTreeNode?,
+  ): Object2IntMap<DefaultMutableTreeNode> {
+    val removedWithIndices = Object2IntLinkedOpenHashMap<DefaultMutableTreeNode>()
+    for ((i, oldChild) in oldChildren.withIndex()) {
+      removedWithIndices[oldChild] = i
+    }
+    for (newChild in newChildren) {
+      val oldChild = findOldByNew(newChild)
+      if (oldChild != null) { // changed, not removed
+        removedWithIndices.removeInt(oldChild)
+      }
+    }
+    return removedWithIndices
+  }
+
+  private fun computeAdded(
+    newChildren: List<DefaultMutableTreeNode>,
+    findOldByNew: (DefaultMutableTreeNode) -> DefaultMutableTreeNode?,
+  ): Object2IntMap<DefaultMutableTreeNode> {
+    val addedWithIndices = Object2IntLinkedOpenHashMap<DefaultMutableTreeNode>()
+    for ((i, newChild) in newChildren.withIndex()) {
+      if (findOldByNew(newChild) == null) {
+        addedWithIndices[newChild] = i
+      }
+    }
+    return addedWithIndices
+  }
+
+  private fun computeUpdated(
+    newChildren: List<DefaultMutableTreeNode>,
+    findOldByNew: (DefaultMutableTreeNode) -> DefaultMutableTreeNode?,
+  ): Object2IntMap<DefaultMutableTreeNode> {
+    val updatedWithIndices = Object2IntLinkedOpenHashMap<DefaultMutableTreeNode>()
+    for ((i, newChild) in newChildren.withIndex()) {
+      val oldChild = findOldByNew(newChild)
+      if (oldChild != null) {
+        updatedWithIndices[newChild] = i
+      }
+    }
+    return updatedWithIndices
+  }
+
   fun insertChild(parent: DefaultMutableTreeNode, index: Int, newChild: DefaultMutableTreeNode) {
     LOG.debug { "Insert at $index into $parent: $newChild" }
     delegate.insertNodeInto(newChild, parent, index)
@@ -141,6 +218,7 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
 
   private fun removeChildrenFromDelegate(parent: DefaultMutableTreeNode) {
     val removedChildCount = parent.childCount
+    if (removedChildCount == 0) return
     val removedChildren = mutableListOf<DefaultMutableTreeNode>()
     for (i in removedChildCount - 1 downTo 0) {
       removedChildren += parent.getChildAt(i) as DefaultMutableTreeNode
@@ -150,15 +228,56 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
     this.cachedPresentationApplier?.nodesRemoved(removedChildren)
   }
 
+  private fun removeChildrenFromDelegate(
+    parent: DefaultMutableTreeNode,
+    childrenWithIndices: Object2IntMap<DefaultMutableTreeNode>,
+  ) {
+    if (childrenWithIndices.isEmpty()) return
+    val childIndices = childrenWithIndices.values.toIntArray()
+    for (i in childIndices.reversed()) { // reversed so that previously removed children won't affect to-be-removed indices
+      parent.remove(i)
+    }
+    val removedChildren = childrenWithIndices.keys.toTypedArray()
+    delegate.nodesWereRemoved(parent, childIndices, removedChildren)
+    this.cachedPresentationApplier?.nodesRemoved(removedChildren.toList())
+  }
+
   private fun insertChildrenIntoDelegate(
     parent: DefaultMutableTreeNode,
     children: List<DefaultMutableTreeNode>,
   ) {
+    if (children.isEmpty()) return
     this.cachedPresentationApplier?.childrenLoaded(CachingTreePath(parent.path), children)
     for ((index, child) in children.withIndex()) {
       parent.insert(child, index)
     }
     delegate.nodesWereInserted(parent, IntArray(children.size) { it })
+  }
+
+  private fun insertChildrenIntoDelegate(
+    parent: DefaultMutableTreeNode,
+    childrenWithIndices: Object2IntMap<DefaultMutableTreeNode>,
+  ) {
+    if (childrenWithIndices.isEmpty()) return
+    if (parent.childCount == 0) { // Not strictly necessary, as it's only needed for the first time, and the first time it's always true.
+      this.cachedPresentationApplier?.childrenLoaded(CachingTreePath(parent.path), childrenWithIndices.keys.toList())
+    }
+    for (entry in childrenWithIndices.object2IntEntrySet()) {
+      parent.insert(entry.key, entry.intValue)
+    }
+    delegate.nodesWereInserted(parent, childrenWithIndices.values.toIntArray())
+  }
+  
+  private fun updateChildrenInDelegate(
+    parent: DefaultMutableTreeNode,
+    childrenWithIndices: Object2IntMap<DefaultMutableTreeNode>,
+  ) {
+    if (childrenWithIndices.isEmpty()) return
+    val childIndices = childrenWithIndices.values.toIntArray()
+    for (entry in childrenWithIndices.object2IntEntrySet()) {
+      (parent.getChildAt(entry.intValue) as DefaultMutableTreeNode).userObject = entry.key.userObject
+    }
+    delegate.nodesChanged(parent, childIndices)
   }
 
   private fun dumpTree() {
