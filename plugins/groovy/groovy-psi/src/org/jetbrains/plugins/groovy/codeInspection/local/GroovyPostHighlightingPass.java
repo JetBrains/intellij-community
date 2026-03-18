@@ -14,15 +14,23 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -31,6 +39,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -70,6 +79,7 @@ import java.util.Set;
 import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImportUtil.unusedImports;
 
 public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
+  private static final Logger LOG = Logger.getInstance(GroovyPostHighlightingPass.class);
 
   private final @NotNull GroovyFile myFile;
   private final @NotNull Editor myEditor;
@@ -258,9 +268,32 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     if (!unusedImports.isEmpty()) {
       IntentionAction fix = GroovyQuickFixFactory.getInstance().createOptimizeImportsFix(true);
       if (fix.isAvailable(myProject, myEditor, myFile) && myFile.isWritable()) {
-        fix.invoke(myProject, myEditor, myFile);
+        invokeOnTheFlyImportOptimizer(() -> fix.invoke(myProject, myEditor, myFile), myFile, myEditor);
       }
     }
+  }
+
+  public static void invokeOnTheFlyImportOptimizer(final @NotNull Runnable runnable,
+                                                   final @NotNull PsiFile file,
+                                                   final @NotNull Editor editor) {
+    final long stamp = editor.getDocument().getModificationStamp();
+    Project project = file.getProject();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (project.isDisposed() || editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
+      //no need to optimize imports on the fly during undo/redo
+      if (UndoManager.getInstance(project).isUndoOrRedoInProgress()) return;
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      String beforeText = file.getText();
+      final long oldStamp = editor.getDocument().getModificationStamp();
+      DocumentUtil.writeInRunUndoTransparentAction(runnable);
+      if (oldStamp != editor.getDocument().getModificationStamp()) {
+        String afterText = file.getText();
+        if (Comparing.strEqual(beforeText, afterText)) {
+          String path = file.getViewProvider().getVirtualFile().getPath();
+          LOG.error("Import optimizer hasn't optimized any imports", new Attachment(path, afterText));
+        }
+      }
+    });
   }
 
   private static @NotNull List<HighlightInfo> convertUnusedImportsToInfos(@NotNull List<? extends HighlightInfo> unusedDeclarations,
