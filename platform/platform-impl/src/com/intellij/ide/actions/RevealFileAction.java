@@ -239,7 +239,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     else if (PathEnvironmentVariableUtil.isOnPath("gdbus")) {
       String method = toSelect == null ? "org.freedesktop.FileManager1.ShowFolders" : "org.freedesktop.FileManager1.ShowItems";
       spawn("gdbus", "call", "--session", "--dest", "org.freedesktop.FileManager1", "--object-path",
-            "/org/freedesktop/FileManager1", "--method", method, "['file://" + toSelect + "']", ""
+            "/org/freedesktop/FileManager1", "--method", method, "['file://" + (toSelect == null ? dir : toSelect) + "']", ""
       );
     }
     else if (toSelect == null && PathEnvironmentVariableUtil.isOnPath("xdg-open")) {
