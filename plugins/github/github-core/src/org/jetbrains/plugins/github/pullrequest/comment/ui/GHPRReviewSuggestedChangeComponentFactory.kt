@@ -7,8 +7,10 @@ import com.intellij.collaboration.ui.ClippingRoundedPanel
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
+import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
 import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -90,11 +92,20 @@ internal object GHPRReviewSuggestedChangeComponentFactory {
       }
 
       add(topPanel, BorderLayout.NORTH)
-      add(SimpleHtmlPane(addBrowserListener = false).apply {
-        addGithubHyperlinkListener(vm::openPullRequestInfoAndTimeline)
-        setHtmlBody(block.bodyHtml)
-      }, BorderLayout.CENTER)
+      add(createSuggestedChangeContent(cs, vm, block), BorderLayout.CENTER)
     }
+
+  private fun createSuggestedChangeContent(
+    cs: CoroutineScope,
+    vm: GHPRReviewCommentBodyViewModel,
+    block: GHPRCommentBodyBlock.SuggestedChange,
+  ): JComponent {
+    val hunk = block.patch?.hunks?.firstOrNull() ?: return SimpleHtmlPane(addBrowserListener = false).apply {
+      addGithubHyperlinkListener(vm::openPullRequestInfoAndTimeline)
+      setHtmlBody(block.bodyHtml)
+    }
+    return TimelineDiffComponentFactory.createDiffComponentIn(cs, vm.project, EditorFactory.getInstance(), hunk, null)
+  }
 
   private fun JBOptionButton.applyApplicability(applicability: GHPRCommentBodyBlock.SuggestionsApplicability) {
     isEnabled = applicability == GHPRCommentBodyBlock.SuggestionsApplicability.APPLICABLE
