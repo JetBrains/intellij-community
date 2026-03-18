@@ -25,10 +25,10 @@ abstract class GradleSettingsScriptBuilderTestCase {
   }
 
   fun assertBuildSettings(
-    groovyScript: String,
-    kotlinScript: String,
+    expectedGroovyScript: String,
+    expectedKotlinScript: String,
     configure: GradleSettingScriptBuilder<*>.() -> Unit
   ) {
-    assertBuildSettings(GradleVersion.current() to (groovyScript to kotlinScript), configure = configure)
+    assertBuildSettings(GradleVersion.current() to (expectedGroovyScript to expectedKotlinScript), configure = configure)
   }
 }
