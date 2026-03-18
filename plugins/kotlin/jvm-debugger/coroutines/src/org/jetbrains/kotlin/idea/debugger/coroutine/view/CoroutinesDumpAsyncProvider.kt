@@ -84,7 +84,7 @@ class CoroutineDumpItem internal constructor(
         val coroutineName = if (treeId == null) name else "$name@$treeId"
         val coroutineContext = coroutineContextInfo?.serialize()
         val header = buildString {
-            append("\"$coroutineName\"")
+            append("\"$coroutineName\" $coroutineState")
             coroutineContext?.let {
                 append(' ')
                 append(it)
