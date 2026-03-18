@@ -2,6 +2,7 @@ package com.intellij.mcpserver.impl
 
 import com.intellij.mcpserver.McpToolFilterProvider
 import com.intellij.mcpserver.McpToolFilterProvider.McpToolFilterContext
+import com.intellij.mcpserver.McpToolInvocationMode
 import com.intellij.openapi.util.registry.Registry
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import kotlinx.coroutines.CoroutineScope
@@ -29,7 +30,7 @@ private val TOOL_REGISTRY_KEYS: Map<String, String> = mapOf()
  */
 internal class IndividualRegistryKeyMcpToolFilterProvider : McpToolFilterProvider {
 
-  override fun applyFilters(context: McpToolFilterContext, clientInfo: Implementation?, sessionOptions: McpServerService.McpSessionOptions?) {
+  override fun applyFilters(context: McpToolFilterContext, clientInfo: Implementation?, sessionOptions: McpServerService.McpSessionOptions?, invocationMode: McpToolInvocationMode) {
     val disabledToolNames = TOOL_REGISTRY_KEYS
       .filter { (_, registryKey) -> !Registry.`is`(registryKey) }
       .map { (toolFqn, _) -> toolFqn }
@@ -39,7 +40,7 @@ internal class IndividualRegistryKeyMcpToolFilterProvider : McpToolFilterProvide
     }
   }
 
-  override fun getUpdates(clientInfo: Implementation?, scope: CoroutineScope, sessionOptions: McpServerService.McpSessionOptions?): Flow<Unit> {
+  override fun getUpdates(clientInfo: Implementation?, scope: CoroutineScope, sessionOptions: McpServerService.McpSessionOptions?, invocationMode: McpToolInvocationMode): Flow<Unit> {
     val flows = TOOL_REGISTRY_KEYS.values.map { registryKey ->
       Registry.get(registryKey).asBooleanFlow()
     }

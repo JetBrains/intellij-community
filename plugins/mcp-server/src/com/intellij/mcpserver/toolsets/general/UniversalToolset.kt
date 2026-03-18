@@ -7,6 +7,7 @@ import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.mcpCallInfo
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.reportToolActivity
 import com.intellij.util.execution.ParametersListUtil
@@ -52,8 +53,11 @@ class UniversalToolset : McpToolset {
       return formatToolHelp(toolName)
     }
 
-    // Get all available tools
-    val allTools = McpServerService.getInstance().getAllMcpTools()
+    val sessionHandler = currentCoroutineContext().mcpCallInfo.sessionHandler ?: mcpFail("Session handler not available")
+    val routerToolsProvider = sessionHandler.routerToolsProvider ?: mcpFail("Router tools provider not available")
+
+    val allTools = routerToolsProvider.mcpTools.value
+
     val tool = allTools.find { it.descriptor.name == toolName }
                 ?: mcpFail("Tool '$toolName' not found. Available tools: ${allTools.map { it.descriptor.name }.sorted().joinToString(", ")}")
 

@@ -1,9 +1,10 @@
 package com.intellij.mcpserver.impl
 
+import com.intellij.mcpserver.McpSessionInvocationMode
 import com.intellij.mcpserver.McpTool
 import com.intellij.mcpserver.McpToolFilter
 import com.intellij.mcpserver.McpToolFilterProvider
-import com.intellij.mcpserver.McpToolsProvider
+import com.intellij.mcpserver.McpToolInvocationMode
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.impl.util.network.findFirstFreePort
 import com.intellij.mcpserver.impl.util.network.installHostValidation
@@ -12,6 +13,7 @@ import com.intellij.mcpserver.impl.util.network.mcpPatched
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.stdio.IJ_MCP_ALLOWED_TOOLS
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
+import com.intellij.mcpserver.toolsets.general.UniversalToolset
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.service
@@ -64,8 +66,9 @@ open class McpServerService(val cs: CoroutineScope) {
   }
   class McpSessionOptions(
     val commandExecutionMode: AskCommandExecutionMode,
-    val toolFilter: McpToolFilter = McpToolFilter.AllowAll,
+    val toolFilter: McpToolFilter? = null,
     val localAgentId: String? = null,
+    val invocationMode: McpSessionInvocationMode? = null,
   ) {
     @Deprecated("ABI compat with 261.22158 that doesn't have `localAgentId`", level = DeprecationLevel.HIDDEN)
     constructor(
@@ -81,6 +84,8 @@ open class McpServerService(val cs: CoroutineScope) {
     internal val callId = AtomicInteger(0)
   }
 
+  internal val toolsStateProvider = McpToolsListProvider(cs)
+  
   private val server = MutableStateFlow(startGlobalServerIfEnabled())
 
   private class ServerAndCount(var server: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>?, var userCount: Int)
@@ -306,8 +311,12 @@ open class McpServerService(val cs: CoroutineScope) {
     }.start(wait = false)
   }
 
-  internal fun getMcpTools(filter: McpToolFilter = McpToolFilter.AllowAll, useFiltersFromEP: Boolean = true, clientInfo: Implementation? = null, sessionOptions: McpSessionOptions? = null): List<McpTool> {
-    return getMcpToolsFiltered(filter, useFiltersFromEP, excludeProviders = emptySet(), clientInfo = clientInfo, sessionOptions = sessionOptions)
+  internal fun getMcpTools(filter: McpToolFilter? = null, useFiltersFromEP: Boolean = true, clientInfo: Implementation? = null, sessionOptions: McpSessionOptions? = null, invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT): List<McpTool> {
+    return getMcpToolsFiltered(filter, useFiltersFromEP, excludeProviders = emptySet(), clientInfo = clientInfo, sessionOptions = sessionOptions, invocationMode = invocationMode)
+  }
+  
+  internal fun getAllMcpTools(): List<McpTool> {
+    return toolsStateProvider.allTools.value
   }
 
   /**
@@ -316,7 +325,7 @@ open class McpServerService(val cs: CoroutineScope) {
    * @param filter The filter to apply to the tools
    * @return true if at least one MCP tool is available after filtering, false otherwise
    */
-  fun hasActiveMcpTools(filter: McpToolFilter): Boolean {
+  fun hasActiveMcpTools(filter: McpToolFilter?): Boolean {
     return getMcpTools(filter = filter).isNotEmpty()
   }
 
@@ -326,45 +335,46 @@ open class McpServerService(val cs: CoroutineScope) {
    * (e.g., showing tools for disallow list configuration without applying the disallow-list filter itself).
    */
   internal fun getMcpToolsFiltered(
-    filter: McpToolFilter = McpToolFilter.AllowAll,
+    filter: McpToolFilter? = null,
     useFiltersFromEP: Boolean = true,
     excludeProviders: Set<Class<out McpToolFilterProvider>>,
     clientInfo: Implementation? = null,
     sessionOptions: McpSessionOptions? = null,
+    invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT,
   ): List<McpTool> {
     val allTools = getAllMcpTools()
+    val filterAdjusted = when(invocationMode) {
+      McpToolInvocationMode.DIRECT -> filter ?: McpToolFilter.AllowAll
+      McpToolInvocationMode.VIA_ROUTER -> filter ?: McpToolFilter.ProhibitAll
+      McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED -> McpToolFilter.ProhibitAll
+    }
+
     if (!useFiltersFromEP) {
-      return allTools.filter { filter.shouldInclude(it.descriptor.fullyQualifiedName) }
+      return allTools.filter { filterAdjusted.shouldInclude(it.descriptor.fullyQualifiedName) }
     }
     val filterProviders = McpToolFilterProvider.EP.extensionList
       .filter { provider -> excludeProviders.none { it.isInstance(provider) } }
     // Start with all tools in ON_DEMAND state
     val context = McpToolFilterProvider.McpToolFilterContext(allTools)
+    val routerToolName = UniversalToolset::execute_tool.name
+    if (invocationMode == McpToolInvocationMode.DIRECT || invocationMode == McpToolInvocationMode.VIA_ROUTER) {
+      context.turnOff { it.descriptor.name == routerToolName }
+    }
+    else {
+      context.turnOn { it.descriptor.name == routerToolName }
+    }
     
     // Apply filter providers (can move ON_DEMAND → ON/OFF, or ON → OFF)
     for (filterProvider in filterProviders) {
-      filterProvider.applyFilters(context, clientInfo, sessionOptions)
+      filterProvider.applyFilters(context, clientInfo, sessionOptions, invocationMode)
     }
     
     // Apply the filter parameter ONLY to ON_DEMAND tools
     // Tools that pass the filter are included, tools already in ON state are also included
-    val includedOnDemandTools = context.onDemandTools.filter { filter.shouldInclude(it.descriptor.fullyQualifiedName) }
+    val includedOnDemandTools = context.onDemandTools.filter { filterAdjusted.shouldInclude(it.descriptor.fullyQualifiedName) }
     
     // Return tools that are either ON or ON_DEMAND and pass the filter
     return (context.onTools + includedOnDemandTools).toList()
-  }
-
-  internal fun getAllMcpTools(): List<McpTool> {
-    val allTools = McpToolsProvider.EP.extensionList.flatMap {
-      try {
-        it.getTools()
-      }
-      catch (e: Exception) {
-        logger.error("Cannot load tools for $it", e)
-        emptyList()
-      }
-      }
-    return allTools
   }
 
 }

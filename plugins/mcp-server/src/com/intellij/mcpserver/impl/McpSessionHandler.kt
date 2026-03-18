@@ -14,14 +14,14 @@ import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.McpTool
 import com.intellij.mcpserver.McpToolCallResult
 import com.intellij.mcpserver.McpToolCallResultContent
-import com.intellij.mcpserver.McpToolFilterProvider
 import com.intellij.mcpserver.McpToolSideEffectEvent
-import com.intellij.mcpserver.McpToolsProvider
-import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.ToolCallListener
 import com.intellij.mcpserver.impl.util.network.httpRequestOrNull
 import com.intellij.mcpserver.impl.util.projectPathParameterName
+import com.intellij.mcpserver.McpSessionInvocationMode
+import com.intellij.mcpserver.McpToolInvocationMode
 import com.intellij.mcpserver.mcpCallInfoOrNull
+import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.noSuitableProjectError
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
@@ -37,8 +37,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.extensions.ExtensionPointListener
-import com.intellij.openapi.extensions.PluginDescriptor
+
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -83,7 +82,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -111,97 +109,68 @@ private fun getTracer(): IJTracer =
 internal class McpSessionHandler(
     parentScope: CoroutineScope,
     private val sessionOptions: McpServerService.McpSessionOptions,
-    private val mcpServerService: McpServerService,
+    mcpServerService: McpServerService,
     private val mcpServer: Server,
     private val projectPathFromInitialRequest: String?,
-    private val useFiltersFromEP: Boolean,
+    useFiltersFromEP: Boolean,
 ) {
   private val sessionScope = parentScope.childScope("SessionMcpToolsManager")
-  private val clientInfo = MutableStateFlow<Implementation?>(null)
-  val mcpTools = MutableStateFlow(mcpServerService.getMcpTools(
-    filter = sessionOptions.toolFilter,
-    clientInfo = null,
-    sessionOptions = sessionOptions,
-    useFiltersFromEP = useFiltersFromEP))
 
-  private val filterProvidersScope = AtomicReference<CoroutineScope?>(null)
+  /**
+   * The effective invocation mode for this session.
+   * Takes the value from sessionOptions if set, otherwise falls back to settings.
+   */
+  private val invocationMode: McpSessionInvocationMode =
+    sessionOptions.invocationMode ?: McpToolFilterSettings.getInstance().invocationMode
+
+  /**
+   * The tools provider for direct MCP exposure.
+   * - In DIRECT mode: provides tools with McpToolInvocationMode.DIRECT
+   * - In VIA_ROUTER mode: provides tools with McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED
+   *   (the router tool itself and exception tools that should be exposed directly)
+   */
+  private val toolsProvider = McpFilteredToolsListProvider(
+    sessionScope,
+    sessionOptions,
+    mcpServerService,
+    useFiltersFromEP,
+    invocationMode = if (invocationMode == McpSessionInvocationMode.DIRECT)
+      McpToolInvocationMode.DIRECT
+    else
+      McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED
+  )
+
+  /**
+   * The tools provider for the universal tool (router).
+   * Only created when invocationMode is VIA_ROUTER.
+   * Contains tools that are invoked via the router rather than directly.
+   */
+  val routerToolsProvider: McpFilteredToolsListProvider? =
+    if (invocationMode == McpSessionInvocationMode.VIA_ROUTER)
+      McpFilteredToolsListProvider(
+        sessionScope,
+        sessionOptions,
+        mcpServerService,
+        useFiltersFromEP,
+        invocationMode = McpToolInvocationMode.VIA_ROUTER
+      )
+    else
+      null
+
+  val mcpTools = toolsProvider.mcpTools
+
   private var previousTools: List<McpTool>? = null
 
   private val sessionAwaiter = CompletableDeferred<ServerSession>()
   private val sessionRoots = AtomicReference<Set<String>?>(null)
 
   init {
-    // Subscribe to extension point listeners
-    McpToolsProvider.EP.addExtensionPointListener(sessionScope, object : ExtensionPointListener<McpToolsProvider> {
-      override fun extensionAdded(extension: McpToolsProvider, pluginDescriptor: PluginDescriptor) {
-        emitMcpTools("McpToolsProvider extension added")
-      }
-
-      override fun extensionRemoved(extension: McpToolsProvider, pluginDescriptor: PluginDescriptor) {
-        emitMcpTools("McpToolsProvider extension removed")
-      }
-    })
-
-    McpToolset.EP.addExtensionPointListener(sessionScope, object : ExtensionPointListener<McpToolset> {
-      override fun extensionAdded(extension: McpToolset, pluginDescriptor: PluginDescriptor) {
-        emitMcpTools("McpToolset extension added")
-      }
-
-      override fun extensionRemoved(extension: McpToolset, pluginDescriptor: PluginDescriptor) {
-        emitMcpTools("McpToolset extension removed")
-      }
-    })
-
-    McpToolFilterProvider.EP.addExtensionPointListener(sessionScope, object : ExtensionPointListener<McpToolFilterProvider> {
-      override fun extensionAdded(extension: McpToolFilterProvider, pluginDescriptor: PluginDescriptor) {
-        subscribeToFilterProviders(clientInfo.value, sessionOptions)
-        emitMcpTools("McpToolFilterProvider extension added")
-      }
-
-      override fun extensionRemoved(extension: McpToolFilterProvider, pluginDescriptor: PluginDescriptor) {
-        subscribeToFilterProviders(clientInfo.value, sessionOptions)
-        emitMcpTools("McpToolFilterProvider extension removed")
-      }
-    })
-
-    // Initial subscription to filter providers
-    subscribeToFilterProviders(clientInfo.value, sessionOptions)
-
     // Process initial tools immediately to fix race condition
     processToolsUpdate(mcpTools.value)
   }
 
   fun updateClientInfo(newClientInfo: Implementation) {
-    clientInfo.value = newClientInfo
-    // Re-subscribe to filter providers with the new clientInfo
-    subscribeToFilterProviders(newClientInfo, sessionOptions)
-    // Re-fetch MCP tools with the new clientInfo
-    emitMcpTools("Session initialized with clientVersion=${newClientInfo.name}")
-  }
-
-  private fun emitMcpTools(reason: String) {
-    val currentClientInfo = clientInfo.value
-    logger.trace {
-      "Emitting MCP tools update: reason=$reason, clientName=${currentClientInfo?.name}, " +
-      "localAgentId=${sessionOptions.localAgentId}"
-    }
-    mcpTools.tryEmit(mcpServerService.getMcpTools(
-      filter = sessionOptions.toolFilter,
-      clientInfo = currentClientInfo,
-      sessionOptions = sessionOptions,
-      useFiltersFromEP = useFiltersFromEP))
-  }
-
-  private fun subscribeToFilterProviders(clientInfoValue: Implementation?, sessionOptionsValue: McpServerService.McpSessionOptions?) {
-    filterProvidersScope.getAndSet(sessionScope.childScope("subscribeToFilterProviders"))?.cancel()
-    val currentScope = filterProvidersScope.get() ?: return
-    McpToolFilterProvider.EP.extensionList.forEach { provider ->
-      currentScope.launch {
-        provider.getUpdates(clientInfoValue, currentScope, sessionOptionsValue).collectLatest {
-          emitMcpTools("Filter provider update from ${provider.javaClass.simpleName}")
-        }
-      }
-    }
+    toolsProvider.updateClientInfo(newClientInfo)
   }
 
   /**
@@ -373,7 +342,9 @@ internal class McpSessionHandler(
             meta = request.meta?.json ?: EmptyJsonObject,
             mcpSessionOptions = sessionOptions,
             headers = headersWithoutAuthToken ?: emptyMap(),
-        )
+        ).apply {
+            sessionHandler = this@McpSessionHandler
+        }
 
         val callResult = coroutineScope {
 

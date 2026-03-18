@@ -26,6 +26,10 @@ sealed interface McpToolFilter {
     override fun shouldInclude(toolName: String): Boolean = true
   }
 
+  data object ProhibitAll : McpToolFilter {
+    override fun shouldInclude(toolName: String): Boolean = false
+  }
+
   /**
    * Allow-list filter: only tools with names in the allowed set are included.
    *

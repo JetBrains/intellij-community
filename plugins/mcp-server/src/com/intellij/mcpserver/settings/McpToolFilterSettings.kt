@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.settings
 
+import com.intellij.mcpserver.McpSessionInvocationMode
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SimplePersistentStateComponent
@@ -43,8 +44,15 @@ internal class McpToolFilterSettings : SimplePersistentStateComponent<McpToolFil
       state.showExperimental = value
     }
 
+  var invocationMode: McpSessionInvocationMode
+    get() = state.invocationMode?.let { McpSessionInvocationMode.valueOf(it) } ?: McpSessionInvocationMode.DIRECT
+    set(value) {
+      state.invocationMode = value.name
+    }
+
   internal class MyState : BaseState() {
     var toolsFilter: String? by string(DEFAULT_FILTER)
     var showExperimental: Boolean by property(false)
+    var invocationMode: String? by string(McpSessionInvocationMode.DIRECT.name)
   }
 }
