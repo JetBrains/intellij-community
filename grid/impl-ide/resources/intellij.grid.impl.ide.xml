@@ -14,4 +14,8 @@
     <listener class="com.intellij.grid.impl.ide.CsvDataModeEditUsageListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
+  <projectListeners>
+    <listener class="com.intellij.grid.impl.ide.CsvDataModeEditUsageListener"
+              topic="com.intellij.database.datagrid.DataGridListener"/>
+  </projectListeners>
 </idea-plugin>
