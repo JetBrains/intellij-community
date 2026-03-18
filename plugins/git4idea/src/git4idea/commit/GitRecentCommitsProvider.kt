@@ -2,93 +2,135 @@
 package git4idea.commit
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogFilter
+import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromParentCount
 import git4idea.GitUserRegistry
 import git4idea.GitUtil
+import git4idea.isCommitPublished
 import git4idea.history.GitLogUtil
 import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitRepositoryStateChangeListener
 import git4idea.util.CaffeineUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.measureTimedValue
 
 @ApiStatus.Experimental
-@Service(Service.Level.PROJECT)
-class GitRecentCommitsProvider(private val project: Project, private val scope: CoroutineScope) {
-  private val requestedDepth = ConcurrentHashMap<VirtualFile, Int>()
+class GitRecentCommitsProvider(
+  private val project: Project,
+  private val scope: CoroutineScope,
+  private val limit: Int,
+  private val userScope: UserScope = UserScope.CURRENT_USER,
+  private val stopAtFirstMergeCommit: Boolean = false, // If true, only return commits from HEAD until (but not including) the first merge commit
+  private val unpublishedOnly: Boolean = false, // If true, only return commits that haven't been pushed to a protected remote branch
+) {
+  enum class UserScope {
+    CURRENT_USER,
+    ALL_USERS,
+  }
 
   private val cache: AsyncLoadingCache<VirtualFile, List<VcsCommitMetadata>> = CaffeineUtil.withIoExecutor()
-    .buildAsync { root, executor ->
-      val commitsToLoad = requestedDepth.get(root) ?: return@buildAsync CompletableFuture.completedFuture(emptyList())
+    .buildAsync { root, _ ->
       scope.future {
-        readRecentCommits(root, commitsToLoad)
+        readRecentCommits(root)
       }
     }
 
   init {
-    project.messageBus.connect(scope)
-      .subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
-        override fun repositoryChanged(repository: GitRepository, previousInfo: GitRepoInfo, info: GitRepoInfo) {
-          LOG.debug { "Refreshing cache entry for ${repository.root}" }
-          cache.synchronous().refresh(repository.root)
-        }
-      })
-  }
-
-  suspend fun getRecentCommits(root: VirtualFile, limit: Int): List<VcsCommitMetadata> {
-    var shouldInvalidate = false
-    requestedDepth.compute(root) { _, current ->
-      if (current == null || current < limit) {
-        shouldInvalidate = true
-        limit
+    project.messageBus.connect(scope).subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
+      override fun repositoryChanged(repository: GitRepository, previousInfo: GitRepoInfo, info: GitRepoInfo) {
+        LOG.debug { "Refreshing cache entry for ${repository.root}" }
+        cache.synchronous().refresh(repository.root)
       }
-      else current
-    }
-    if (shouldInvalidate) {
-      LOG.debug { "Limit updated for $root - $limit" }
-      cache.synchronous().invalidate(root)
-    }
-    return cache.get(root).await().take(limit)
+    })
   }
 
-  @RequiresBackgroundThread
-  private fun readRecentCommits(root: VirtualFile, limit: Int): List<VcsCommitMetadata> {
-    LOG.debug("Reading recent commits for $root")
+  suspend fun getRecentCommits(root: VirtualFile): List<VcsCommitMetadata> {
+    return cache.get(root).await()
+  }
 
-    val currentUser = GitUserRegistry.getInstance(project).getOrReadUser(root) ?: return emptyList()
-    val filters = VcsLogFilterObject.collection(VcsLogFilterObject.fromBranch(GitUtil.HEAD), VcsLogFilterObject.fromUser(currentUser))
-    val parameters =
-      GitLogProvider.getGitLogParameters(project, root, filters, null, PermanentGraph.Options.Default, limit)
-      ?: return emptyList()
+  private suspend fun readRecentCommits(root: VirtualFile): List<VcsCommitMetadata> = withContext(Dispatchers.IO) {
+    LOG.debug("Reading recent commits for $root (limit: $limit, userScope: $userScope, stopAtFirstMergeCommit: $stopAtFirstMergeCommit, filterNotPublished: $unpublishedOnly)")
+
+    val commits = loadCommits(root)
+
+    LOG.debug { "Loaded ${commits.size} commits for $root" }
+
+    if (unpublishedOnly) keepOnlyUnpublished(root, commits) else commits
+  }
+
+  private fun loadCommits(root: VirtualFile): List<VcsCommitMetadata> {
+    val range = if (stopAtFirstMergeCommit) findFromFirstMergeCommitRange(root) else null
+
+    val filters = VcsLogFilterObject.collection(
+      VcsLogFilterObject.fromBranch(GitUtil.HEAD),
+      getUserFilter(root)
+    )
+
+    val parameters = GitLogProvider.getGitLogParameters(project, root, filters, range, PermanentGraph.Options.Default, limit)
+                     ?: return emptyList()
 
     val (commits, duration) = measureTimedValue {
       GitLogUtil.collectMetadata(project, root, parameters).commits
     }
 
-    LOG.debug { "Loaded ${commits.size} commits for $root in ${duration}ms" }
+    LOG.debug { "Git log completed for $root in $duration" }
 
     return commits
   }
 
-  companion object {
-    private val LOG = thisLogger()
+  private fun getUserFilter(root: VirtualFile): VcsLogFilter? {
+    return when (userScope) {
+      UserScope.ALL_USERS -> null
+      UserScope.CURRENT_USER -> {
+        val currentUser = GitUserRegistry.getInstance(project).getOrReadUser(root) ?: return null
+        VcsLogFilterObject.fromUser(currentUser)
+      }
+    }
+  }
 
-    fun getInstance(project: Project): GitRecentCommitsProvider = project.service()
+  private fun keepOnlyUnpublished(root: VirtualFile, commits: List<VcsCommitMetadata>): List<VcsCommitMetadata> {
+    val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root) ?: return commits
+
+    // If a commit is published, then all its parents as well.
+    // So we can find this published suffix using binary search
+    val firstPublishedCommitIndex = commits.binarySearch { commit ->
+      if (isCommitPublished(repository, commit.id)) 1 else -1
+    }.let { -it - 1 }
+
+    return commits.take(firstPublishedCommitIndex)
+  }
+
+  private fun findFromFirstMergeCommitRange(root: VirtualFile): VcsLogRangeFilter.RefRange? {
+    val filters = VcsLogFilterObject.collection(
+      VcsLogFilterObject.fromBranch(GitUtil.HEAD),
+      fromParentCount(minParents = 2)
+    )
+    val parameters =
+      GitLogProvider.getGitLogParameters(project, root, filters, null, PermanentGraph.Options.Default, 1)
+      ?: return null
+
+    val mergeCommitHash = GitLogUtil.collectMetadata(project, root, parameters).commits.firstOrNull()?.id?.asString()
+                          ?: return null
+    return VcsLogRangeFilter.RefRange(mergeCommitHash, GitUtil.HEAD)
+  }
+
+  companion object {
+    private val LOG = logger<GitRecentCommitsProvider>()
   }
 }
