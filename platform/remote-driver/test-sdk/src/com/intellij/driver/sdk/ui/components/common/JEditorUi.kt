@@ -494,7 +494,7 @@ class EditorSearchReplaceComponent(data: ComponentData) : UiComponent(data) {
   val searchHistoryButton: ActionButtonUi = actionButton { byAccessibleName("Search History") }
 
   // The components below are available in "find in large file" only
-  val matchCaseCheckBox: JCheckBoxUi = checkBox { byAccessibleName("Match case") }
+  val matchCaseCheckBox: JCheckBoxUi = checkBox { byAccessibleName("Match сase") }
   val wordsCheckBox: JCheckBoxUi = checkBox { byAccessibleName("Words") }
   val regexCheckBox: JCheckBoxUi = checkBox { byAccessibleName("Regex") }
   val searchAllButton: ActionButtonUi = actionButton { byAccessibleName("Search All") }
