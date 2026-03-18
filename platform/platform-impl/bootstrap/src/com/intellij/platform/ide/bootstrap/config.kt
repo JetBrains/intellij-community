@@ -111,12 +111,6 @@ private suspend fun importConfig(
   appStarter: AppStarter,
   euaDocumentDeferred: Deferred<EndUserAgreementStatus>,
 ) {
-  span("screen reader checking") {
-    runCatching {
-      enableScreenReaderSupportIfNecessary()
-    }.getOrLogException(log)
-  }
-
   span("config importing") {
     appStarter.beforeImportConfigs()
     euaDocumentDeferred.await()
@@ -126,6 +120,12 @@ private suspend fun importConfig(
     appStarter.importFinished(targetDirectoryToImportConfig)
     EarlyAccessRegistryManager.invalidate()
     IconLoader.clearCache()
+  }
+
+  span("screen reader checking") {
+    runCatching {
+      enableScreenReaderSupportIfNecessary()
+    }.getOrLogException(log)
   }
 }
 
