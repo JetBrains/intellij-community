@@ -4,7 +4,6 @@ package com.intellij.application.options.editor
 import com.intellij.codeInsight.actions.ReaderModeSettingsListener
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.documentation.render.DocRenderManager
-import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
@@ -19,6 +18,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.components.Badge
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
@@ -82,7 +82,7 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       }
       row {
         checkBox(myCbSmoothBlinkCaret)
-        icon(AllIcons.General.New_badge)
+        icon(Badge.new)
       }.enabledIf(cbBlinkCaret!!.selected)
       row {
         checkBox(myCbBlockCursor)
@@ -103,7 +103,7 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
           }
         ).bindItem(model::getCaretEasing, model::setCaretEasing)
           .customize(UnscaledGaps(right = 20))
-        icon(AllIcons.General.New_badge)
+        icon(Badge.new)
       }
       row {
         checkBox(myCbHighlightSelectionOccurrences)
