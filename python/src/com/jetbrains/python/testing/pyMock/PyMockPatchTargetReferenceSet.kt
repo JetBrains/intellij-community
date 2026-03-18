@@ -66,7 +66,9 @@ private class PyMockSegmentReference(
   override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> {
     val context = fromFoothold(element).copyWithMembers()
     val resolved = resolveSegmentAt(segments, segmentIndex, context) ?: return emptyArray()
-    return arrayOf(PsiElementResolveResult(resolved))
+    // For packages, navigate to __init__.py instead of the directory
+    val navigable = if (resolved is PsiDirectory) PyUtil.turnDirIntoInit(resolved) ?: resolved else resolved
+    return arrayOf(PsiElementResolveResult(navigable))
   }
 
   override fun isSoft(): Boolean = createAllowed

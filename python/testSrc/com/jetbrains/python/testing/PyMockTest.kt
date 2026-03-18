@@ -55,6 +55,36 @@ class PyMockTest : PyTestCase() {
 
   // --- Navigation ---
 
+  fun testNavigationToPackageResolvesToInit() {
+    myFixture.configureByFile("test_patch_references/test_package.py")
+    val file = myFixture.file as PyFile
+    val testClass = file.findTopLevelClass("TestPatchPackageNavigation")!!
+    val method = testClass.findMethodByName("test_patch_through_package", false, null)!!
+    val strArg = method.decoratorList!!.decorators.first().argumentList!!.arguments.first() as PyStringLiteralExpression
+
+    // "example_package.submodule.SubClass.sub_method" has 4 segments
+    val refs = PyMockPatchTargetReferenceSet(strArg, false).createReferences()
+    assertEquals(4, refs.size)
+
+    // First segment (package) should resolve to __init__.py, not the directory
+    val packageResolved = refs[0].resolve()
+    assertNotNull("example_package should resolve", packageResolved)
+    assertInstanceOf(packageResolved, PyFile::class.java)
+    assertEquals("__init__.py", (packageResolved as PyFile).name)
+
+    // Second segment (submodule) should resolve to the .py file
+    val submoduleResolved = refs[1].resolve()
+    assertNotNull("submodule should resolve", submoduleResolved)
+    assertInstanceOf(submoduleResolved, PyFile::class.java)
+    assertEquals("submodule.py", (submoduleResolved as PyFile).name)
+
+    // Last segment should resolve to the method
+    val methodResolved = refs[3].resolve()
+    assertNotNull("sub_method should resolve", methodResolved)
+    assertInstanceOf(methodResolved, PyFunction::class.java)
+    assertEquals("sub_method", (methodResolved as PyFunction).name)
+  }
+
   fun testNavigationToClass() {
     myFixture.configureByFile("test_patch_references/test.py")
     val file = myFixture.file as PyFile

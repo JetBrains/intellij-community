@@ -49,6 +49,36 @@ class PyMonkeypatchTest : PyTestCase() {
 
   // --- Dotted string form: monkeypatch.setattr("module.Class.attr", value) ---
 
+  fun testDottedNavigationToPackageResolvesToInit() {
+    myFixture.configureByFile("test_package_navigation.py")
+    val file = myFixture.file as PyFile
+    val func = file.findTopLevelFunction("test_setattr_through_package")!!
+    val strArg = findFirstStringArg(func)
+    assertNotNull("Expected string literal", strArg)
+
+    // "example_package.submodule.SubClass.sub_method" has 4 segments
+    val refs = PyMockPatchTargetReferenceSet(strArg!!, false).createReferences()
+    assertEquals(4, refs.size)
+
+    // First segment (package) should resolve to __init__.py, not the directory
+    val packageResolved = refs[0].resolve()
+    assertNotNull("example_package should resolve", packageResolved)
+    assertInstanceOf(packageResolved, PyFile::class.java)
+    assertEquals("__init__.py", (packageResolved as PyFile).name)
+
+    // Second segment (submodule) should resolve to the .py file
+    val submoduleResolved = refs[1].resolve()
+    assertNotNull("submodule should resolve", submoduleResolved)
+    assertInstanceOf(submoduleResolved, PyFile::class.java)
+    assertEquals("submodule.py", (submoduleResolved as PyFile).name)
+
+    // Last segment should resolve to the method
+    val methodResolved = refs[3].resolve()
+    assertNotNull("sub_method should resolve", methodResolved)
+    assertInstanceOf(methodResolved, PyFunction::class.java)
+    assertEquals("sub_method", (methodResolved as PyFunction).name)
+  }
+
   fun testDottedNavigationToClass() {
     myFixture.configureByFile("test_setattr.py")
     val file = myFixture.file as PyFile
