@@ -46,6 +46,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -399,6 +400,10 @@ public final class TestDaemonCodeAnalyzerImpl {
           PassExecutorService.LOG.trace("waitForDaemonToFinish.daemonCancelEventOccurred: " + reason);
         }
       });
+      if (!daemonIsWorkingOrPending(document)) {
+        // listener installed too late, will never fire
+        listenersCalled.up();
+      }
 
       do {
         if (System.currentTimeMillis() > deadline) {
@@ -417,19 +422,35 @@ public final class TestDaemonCodeAnalyzerImpl {
         for (DaemonProgressIndicator indicator : progresses) {
           Throwable trace = indicator.getCancellationTrace();
           if (trace != null && !(trace instanceof ProcessCanceledException) && !DaemonProgressIndicator.CANCEL_WAS_CALLED_REASON.equals(trace.getMessage())) {
+            DaemonCodeAnalyzerImpl.LOG.debug("waitForDaemonToFinish canceled: exception was thrown: " + indicator + "; " + ExceptionUtil.getThrowableText(trace));
             ExceptionUtil.rethrow(trace);
           }
           if (indicator.isCanceled() && indicator.isRunning()) {
             // wait for daemon listeners to be called,
             // since many tests do "waitForFinish(); checkSomeState();", and the state is changed in DaemonListener
             listenersCalled.waitFor();
-            DaemonCodeAnalyzerImpl.LOG.debug("waitForDaemonToFinish finished: indicator was canceled: "+indicator
+            DaemonCodeAnalyzerImpl.LOG.debug("waitForDaemonToFinish canceled: indicator was canceled: "+indicator
                                              +"; "+(trace == null ? indicator.getTraceableDisposableStackTrace() : ExceptionUtil.getThrowableText(trace)));
             indicator.checkCanceled(); // canceled in the middle, throw PCE
           }
         }
       } while (daemonIsWorkingOrPending(document));
+      for (DaemonProgressIndicator indicator : progresses) {
+        Throwable trace = indicator.getCancellationTrace();
+        if (trace != null && !(trace instanceof ProcessCanceledException) && !DaemonProgressIndicator.CANCEL_WAS_CALLED_REASON.equals(trace.getMessage())) {
+          ExceptionUtil.rethrow(trace);
+        }
+      }
       dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
+      DaemonCodeAnalyzerImpl.LOG.debug("waitForDaemonToFinish("+document+") finished: "+progresses+"; fileStatusMap:"+ myDaemonCodeAnalyzer.getFileStatusMap()+"\n"+ContainerUtil.map(progresses, indicator -> {
+        Throwable trace = indicator.getCancellationTrace();
+        return (trace == null ? indicator.getTraceableDisposableStackTrace() : ExceptionUtil.getThrowableText(trace));
+      }));
+      // wait for daemon listeners to be called,
+      // since many tests do "waitForFinish(); checkSomeState();", and the state is changed in DaemonListener
+      if (!listenersCalled.waitFor(60_000)) {
+        throw new IncorrectOperationException();
+      }
       return progresses;
     }
     finally {
@@ -476,14 +497,20 @@ public final class TestDaemonCodeAnalyzerImpl {
                                               "\n; filestatusmap: " +
                                               myDaemonCodeAnalyzer.getFileStatusMap() +
                                               "\n; thread dump:\n------" + ThreadDumper.dumpThreadsToString() + "\n======");
-        DaemonCodeAnalyzerImpl.LOG.error(e);
+        DaemonCodeAnalyzerImpl.LOG.info(e);
         throw e;
       }
     }
     } finally {
       Disposer.dispose(disposable);
     }
-    return List.of();
+    DaemonCodeAnalyzerImpl.LOG.debug("waitForDaemonToStart("+document+") finished because daemon completed: progress="+myDaemonCodeAnalyzer.getUpdateProgress()+
+                                     "\n; fileStatusMap:"+ myDaemonCodeAnalyzer.getFileStatusMap()+
+                                     "\n; finished:"+myDaemonCodeAnalyzer.isAllAnalysisFinished(psiFile)+
+                                     "\n; running:"+myDaemonCodeAnalyzer.isRunningOrPending()+
+                                     "\n; listenersCalled:"+listenersCalled
+    );
+    return myDaemonCodeAnalyzer.getUpdateProgress().values();
   }
 
   private boolean daemonIsWorkingOrPending(@NotNull Document document) {
