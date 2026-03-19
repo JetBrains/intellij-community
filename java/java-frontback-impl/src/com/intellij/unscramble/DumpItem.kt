@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.util.Objects
 import javax.swing.Icon
+import kotlin.compareTo
 
 @ApiStatus.Internal
 interface DumpItem {
@@ -122,20 +123,29 @@ interface MergeableToken {
 class CompoundDumpItem<T : DumpItem>(
   val originalItem: T,
   val counter: Int,
+  override val parentTreeId: Long? = originalItem.parentTreeId
 ) : DumpItem by originalItem {
 
   override val name: String = originalItem.name + (if (counter == 1) "" else " [and ${counter - 1} similar]")
 
   companion object {
     @JvmStatic
-    fun mergeThreadDumpItems(originalItems: List<MergeableDumpItem>): List<DumpItem> =
-      originalItems
-        .groupingBy { it.mergeableToken }
-        .eachCount()
-        .map { (token, count) ->
-          val item = token.item
-          if (count > 1) CompoundDumpItem(item, count) else item
+    fun mergeThreadDumpItems(originalItems: List<MergeableDumpItem>): List<DumpItem> {
+      val groups = originalItems.groupBy { it.mergeableToken }
+      // Map every original treeId to the treeId of the representative of the merge group
+      val idToCompoundId = hashMapOf<Long, Long?>()
+      for ((token, items) in groups) {
+        val compoundId = token.item.treeId
+        for (item in items) {
+          item.treeId?.let { idToCompoundId[it] = compoundId }
         }
+      }
+      return groups.map { (token, items) ->
+        val item = token.item
+        val parentId = item.parentTreeId?.let { idToCompoundId.getOrDefault(it, it) }
+        CompoundDumpItem(item, items.size, parentId)
+      }
+    }
   }
 }
 
