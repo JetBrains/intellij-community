@@ -1630,6 +1630,12 @@ open class ConsoleViewImpl protected constructor(
   val text: String
     get() = editor!!.document.text
 
+  @TestOnly
+  @ApiStatus.Internal
+  fun initPredefinedFiltersForTests() {
+    updatePredefinedFiltersLater()
+  }
+
   companion object {
     private const val CONSOLE_VIEW_POPUP_MENU: @NonNls String = "ConsoleView.PopupMenu"
     private val LOG = logger<ConsoleViewImpl>()
