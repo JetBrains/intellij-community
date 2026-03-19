@@ -3,7 +3,6 @@ package com.intellij.compose.ide.plugin.resources
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,9 +26,26 @@ internal fun String.isValidInnerComposeResourcesDirNameFor(dirNames: Set<String>
 
 internal val String.withoutExtension: String get() = substringBeforeLast(".")
 
-/** Retrieves the module name for the Compose resources task of the given module. */
-internal fun Module.getModuleNameForComposeResourcesTask(): String? =
-  ExternalSystemApiUtil.getExternalProjectId(this)?.getModuleName()
+/** Returns sourceSet name from a module name
+ *
+ * - `projectName.composeApp.commonMain` -> `commonMain`
+ * - `projectName.composeApp.iosMain` -> `iosMain`
+ * - except for the main Android module which should be `projectName.composeApp.main` -> `androidMain`
+ */
+private fun Module.getSourceSetNameFromComposeResourcesDir(): String =
+  name.substringAfterLast('.').takeUnless { it == "main" } ?: "androidMain"
+
+/**
+ * Retrieves the module name for the Compose resources task of the given module.
+ *
+ * example:
+ * name: `projectName.composeApp.main` -> composeApp
+ * name: `projectName.app.shared.commonMain` -> shared
+ * */
+private fun Module.getModuleNameForComposeResourcesTask(): String? {
+  val nameParts = name.split('.')
+  return nameParts.getOrNull(nameParts.lastIndex - 1)
+}
 
 /**
  * Retrieves the directory for Compose resources for the specified source set name in the module.

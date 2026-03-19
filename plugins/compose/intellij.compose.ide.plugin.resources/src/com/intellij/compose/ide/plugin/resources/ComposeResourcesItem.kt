@@ -184,23 +184,6 @@ internal enum class ResourceType(val typeName: String, val resourceName: String,
   }
 }
 
-/** Returns sourceSet name from a module name
- *
- * - `projectName.composeApp.commonMain` -> `commonMain`
- * - `projectName.composeApp.iosMain` -> `iosMain`
- * - except for the main Android module which should be `projectName.composeApp.main` -> `androidMain`
- */
-internal fun Module.getSourceSetNameFromComposeResourcesDir(): String =
-  name.substringAfterLast('.').takeUnless { it == "main" } ?: "androidMain"
-
-/** Returns the module name from an external project ID represented by this string, trimming leading ':' */
-internal fun String.getModuleName(): String? = when (count { it == ':' }) {
-  0 -> null
-  1 -> drop(1) // e.g. `projectName.composeApp.commonMain` -> `:composeApp` -> composeApp
-  2 -> substringBeforeLast(':').drop(1) // e.g. `projectName.composeApp.main` -> `:composeApp:main` -> composeApp
-  else -> null
-}
-
 /** check if the new layout from version 1.8.1 is used */
 private fun KtElement.isNewLayout(): Boolean {
   val fileScope = GlobalSearchScope.fileScope(containingFile)
