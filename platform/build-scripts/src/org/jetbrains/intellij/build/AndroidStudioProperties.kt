@@ -162,12 +162,15 @@ class AndroidStudioProperties : ProductProperties() {
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.groovyPlugin(),
       // CIDR plugins migrated to v2 layouts, thus the included modules are computed
-      // mostly automatically based on the <content> tag in plugin.xml.
+      // mostly automatically based on the <content> tag in plugin.xml. Additional
+      // customization is mostly inspired by CidrPluginLayouts.kt.
       pluginAuto("intellij.cidr.clangd") { spec ->
         copyCidrLicense(spec)
       },
       pluginAuto("intellij.c") { spec ->
         copyCidrLicense(spec)
+        spec.excludeProjectLibrary("Kryo")
+        spec.excludeProjectLibrary("Objenesis")
       },
       pluginAuto("intellij.cidr.debugger") { spec ->
         copyCidrLicense(spec)
