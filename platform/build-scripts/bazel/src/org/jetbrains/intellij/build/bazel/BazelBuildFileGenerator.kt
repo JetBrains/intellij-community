@@ -619,9 +619,7 @@ internal class BazelBuildFileGenerator(
       productionCompileTargets.add(moduleDescriptor.targetAsLabel)
       productionCompileJars.add(moduleDescriptor.targetAsLabel)
 
-      if (sources.isNotEmpty()) {
-        option("module_name", module.name)
-      }
+      option("module_name", module.name)
 
       visibility(arrayOf("//visibility:public"))
       if (customModule == null) {
