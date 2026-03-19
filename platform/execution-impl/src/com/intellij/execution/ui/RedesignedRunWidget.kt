@@ -52,6 +52,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.WindowManager
@@ -497,7 +498,7 @@ open class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCompo
     val configurationName = e.project?.let { RunManager.getInstanceIfCreated(it) }?.selectedConfiguration?.name
     if (configurationName?.length?.let { it > CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH } == true) {
       e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description.long",
-                                                                   configurationName))
+                                                                   StringUtil.escapeXmlEntities(configurationName)))
     }
     else {
       e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description"))
