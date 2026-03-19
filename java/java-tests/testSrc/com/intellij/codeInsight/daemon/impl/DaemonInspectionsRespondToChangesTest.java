@@ -81,6 +81,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -912,12 +913,19 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
 
   public void testThrowingExceptionFromInspectionMustPropagateUpToTheLogger() {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    CountDownLatch inspectionStarted = new CountDownLatch(1);
     MyInspectionBase throwExceptionInspection = new MyInspectionBase() {
       @Override
       public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
         return new PsiElementVisitor() {
           @Override
           public void visitFile(@NotNull PsiFile psiFile) {
+            try {
+              inspectionStarted.await();
+            }
+            catch (InterruptedException e) {
+              throw new RuntimeException(e);
+            }
             throw new MyException();
           }
         };
@@ -931,7 +939,9 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
       """;
     configureByText(JavaFileType.INSTANCE, text);
 
-    assertThrows(Throwable.class, new MyException().getMessage(), () -> myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+    assertThrows(Throwable.class, new MyException().getMessage(), () -> myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile(), ()->{
+      inspectionStarted.countDown();
+    }));
   }
 
   public void testInspectionMustRemoveItsObsoleteHighlightsImmediatelyAfterVisitingPSIElementTheSecondTimeAndFailingToGenerateTheSameWarningAgain() {
