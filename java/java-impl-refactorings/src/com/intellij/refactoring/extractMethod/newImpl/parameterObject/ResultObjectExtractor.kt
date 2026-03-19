@@ -25,6 +25,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
+import com.intellij.refactoring.extractMethod.newImpl.ExtractException
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
@@ -111,10 +112,13 @@ object ResultObjectExtractor {
   }
 
   @RequiresReadLock
-  fun extractNonInteractively(variables: List<PsiVariable>, scope: List<PsiElement>): TextRange? {
-    val affectedReferences = findAffectedReferences(variables, scope) ?: return null
-    val builder = createBuilder(variables)
+  fun extractNonInteractively(variables: List<PsiVariable>, scope: List<PsiElement>): TextRange {
+    val affectedReferences = findAffectedReferences(variables, scope)
     val file = scope.first().containingFile
+    if (affectedReferences == null) {
+      throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.outputs"), file)
+    }
+    val builder = createBuilder(variables)
     val extractRange = createGreedyRangeMarker(file.viewProvider.document, scope.first().textRange.union(scope.last().textRange))
     introduceObjectForVariables(builder, variables, affectedReferences, scope.last())
     return extractRange.textRange
