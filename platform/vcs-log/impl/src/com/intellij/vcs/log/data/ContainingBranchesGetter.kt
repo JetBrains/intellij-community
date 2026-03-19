@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
@@ -130,12 +131,17 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
   fun getContainedInCurrentBranchCondition(root: VirtualFile): Predicate<Int> =
     conditionsCache.getContainedInCurrentBranchCondition(root)
 
-  @CalledInAny
-  fun getContainingBranchesSynchronously(root: VirtualFile, hash: Hash): List<String> {
+  @RequiresBackgroundThread
+  fun getContainingBranches(root: VirtualFile, hash: Hash): List<String> {
+    val cached = cache.getIfPresent(CommitId(hash, root))
+    if (cached != null) return cached
+    return getContainingBranchesSynchronously(root, hash)
+  }
+
+  private fun getContainingBranchesSynchronously(root: VirtualFile, hash: Hash): List<String> {
     return getContainingBranchesSynchronously(logData.graphData, root, hash)
   }
 
-  @CalledInAny
   private fun getContainingBranchesSynchronously(dataPack: VcsLogGraphData, root: VirtualFile, hash: Hash): List<String> {
     return CachingTask(createTask(root, hash, dataPack), dataPack.refsModel.branches.hashCode()).run()
   }

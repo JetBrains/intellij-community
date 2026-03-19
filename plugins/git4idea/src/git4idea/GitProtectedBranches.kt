@@ -33,7 +33,7 @@ fun isRemoteBranchProtected(repositories: Collection<GitRepository>, branchName:
 fun findProtectedRemoteBranchContainingCommit(repository: GitRepository, hash: Hash): String? {
   val root = repository.root
   val branchesGetter = VcsProjectLog.getInstance(repository.project).dataManager?.containingBranchesGetter
-  val branches = branchesGetter?.getContainingBranchesSynchronously(root, hash)
+  val branches = branchesGetter?.getContainingBranches(root, hash)
                  ?: GitBranchUtil.getBranches(repository.project, root, false, true, hash.asString())
   return findProtectedRemoteBranch(repository, branches)
 }
