@@ -349,14 +349,24 @@ open class McpServerService(val cs: CoroutineScope) {
       McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED -> McpToolFilter.ProhibitAll
     }
 
+    val routerToolName = UniversalToolset::execute_tool.name
     if (!useFiltersFromEP) {
-      return allTools.filter { filterAdjusted.shouldInclude(it.descriptor.fullyQualifiedName) }
+      return allTools.filter { tool ->
+        val isRouterTool = tool.descriptor.name == routerToolName
+        val shouldIncludeRouter = invocationMode == McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED
+        val shouldExcludeRouter = invocationMode == McpToolInvocationMode.DIRECT || invocationMode == McpToolInvocationMode.VIA_ROUTER
+        
+        when {
+          isRouterTool && shouldExcludeRouter -> false
+          isRouterTool && shouldIncludeRouter -> true
+          else -> filterAdjusted.shouldInclude(tool)
+        }
+      }
     }
     val filterProviders = McpToolFilterProvider.EP.extensionList
       .filter { provider -> excludeProviders.none { it.isInstance(provider) } }
     // Start with all tools in ON_DEMAND state
     val context = McpToolFilterProvider.McpToolFilterContext(allTools)
-    val routerToolName = UniversalToolset::execute_tool.name
     if (invocationMode == McpToolInvocationMode.DIRECT || invocationMode == McpToolInvocationMode.VIA_ROUTER) {
       context.turnOff { it.descriptor.name == routerToolName }
     }
@@ -371,7 +381,7 @@ open class McpServerService(val cs: CoroutineScope) {
     
     // Apply the filter parameter ONLY to ON_DEMAND tools
     // Tools that pass the filter are included, tools already in ON state are also included
-    val includedOnDemandTools = context.onDemandTools.filter { filterAdjusted.shouldInclude(it.descriptor.fullyQualifiedName) }
+    val includedOnDemandTools = context.onDemandTools.filter { filterAdjusted.shouldInclude(it) }
     
     // Return tools that are either ON or ON_DEMAND and pass the filter
     return (context.onTools + includedOnDemandTools).toList()

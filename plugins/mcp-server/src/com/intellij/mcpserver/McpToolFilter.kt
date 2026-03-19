@@ -11,22 +11,30 @@ sealed interface McpToolFilter {
   /**
    * Checks if a tool with the given name should be included in the session.
    *
-   * @param toolName the name of the tool to check
+   * @param tool the tool to check
    * @return true if the tool should be included, false otherwise
    */
-  fun shouldInclude(toolName: String): Boolean
+  fun shouldInclude(tool: McpTool): Boolean
 
+  data object AllowNonExperimental : McpToolFilter {
+    override fun shouldInclude(tool: McpTool): Boolean = !tool.descriptor.category.isExperimental
+  }
+
+  interface TextMcpToolFilter : McpToolFilter {
+    override fun shouldInclude(tool: McpTool): Boolean = shouldInclude(tool.descriptor.fullyQualifiedName)
+    fun shouldInclude(toolName: String): Boolean
+  }
   /**
    * Allow-all filter: all tools are included.
    *
    * This is the default filter when no restrictions are needed.
    * Use this instead of null to explicitly indicate no filtering.
    */
-  data object AllowAll : McpToolFilter {
+  data object AllowAll : TextMcpToolFilter {
     override fun shouldInclude(toolName: String): Boolean = true
   }
 
-  data object ProhibitAll : McpToolFilter {
+  data object ProhibitAll : TextMcpToolFilter {
     override fun shouldInclude(toolName: String): Boolean = false
   }
 
@@ -38,7 +46,7 @@ sealed interface McpToolFilter {
    *
    * @property allowedTools set of tool names that should be included
    */
-  data class AllowList(val allowedTools: Set<String>) : McpToolFilter {
+  data class AllowList(val allowedTools: Set<String>) : TextMcpToolFilter {
     override fun shouldInclude(toolName: String): Boolean = toolName.split('.').last() in allowedTools
   }
 
@@ -56,7 +64,7 @@ sealed interface McpToolFilter {
    *
    * @param maskList comma-separated list of mask patterns with +/- prefixes
    */
-  class MaskBased(maskList: String) : McpToolFilter {
+  class MaskBased(maskList: String) : TextMcpToolFilter {
     private val maskList: MaskList = MaskList(maskList)
 
     override fun shouldInclude(toolName: String): Boolean {
@@ -72,7 +80,7 @@ sealed interface McpToolFilter {
        */
       fun fromMaskList(maskList: String?): McpToolFilter {
         if (maskList.isNullOrBlank()) {
-          return AllowList(emptySet()) // Empty mask = deny all
+          return ProhibitAll // Empty mask = deny all
         }
         return MaskBased(maskList)
       }

@@ -6,7 +6,6 @@ import com.intellij.mcpserver.McpSessionInvocationMode
 import com.intellij.mcpserver.McpTool
 import com.intellij.mcpserver.McpToolFilterProvider.McpToolState
 import com.intellij.mcpserver.McpToolsMarkdownExporter
-import com.intellij.mcpserver.impl.DisallowListBasedMcpToolFilterProvider
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.settings.ui.CategoryNode
 import com.intellij.mcpserver.settings.ui.McpToolNode
@@ -65,53 +64,44 @@ class McpToolFilterConfigurable : SearchableConfigurable {
   override fun createComponent(): JComponent {
     val panel = JPanel(BorderLayout())
 
-    // Get tools filtered by all providers except DisallowListBasedMcpToolFilterProvider
-    val tools = McpServerService.getInstance().getMcpToolsFiltered(
-      useFiltersFromEP = false,
-      excludeProviders = emptySet() //setOf(DisallowListBasedMcpToolFilterProvider::class.java)
-    )
-
     val settings = McpToolDisallowListSettings.getInstance()
     initialToolStates = settings.toolStates
-    
+
     val filterSettings = McpToolFilterSettings.getInstance()
     initialShowExperimental = filterSettings.showExperimental
     initialInvocationMode = filterSettings.invocationMode
 
-    val treeTableComponent = createTreeTable(tools, initialToolStates, initialShowExperimental)
-    val scrollPane = ScrollPaneFactory.createScrollPane(treeTableComponent)
-    scrollPane.preferredSize = Dimension(800, 400)
+    setupTreeTable(panel, initialShowExperimental)
 
-    panel.add(scrollPane, BorderLayout.CENTER)
-    treeTableScrollPane = scrollPane
-
-    // Add top panel with invocation mode selector and "Show experimental tools" checkbox
+    // Add top panel with invocation mode selector (if advanced options enabled) and "Show experimental tools" checkbox
     val topPanel = panel {
-      row(McpServerBundle.message("configurable.mcp.tool.filter.invocation.mode")) {
-        val comboBox = comboBox(McpSessionInvocationMode.entries)
-          .applyToComponent {
-            selectedItem = initialInvocationMode
-            renderer = object : javax.swing.DefaultListCellRenderer() {
-              override fun getListCellRendererComponent(
-                list: javax.swing.JList<*>?,
-                value: Any?,
-                index: Int,
-                isSelected: Boolean,
-                cellHasFocus: Boolean
-              ): java.awt.Component {
-                val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-                if (value is McpSessionInvocationMode) {
-                  text = when (value) {
-                    McpSessionInvocationMode.DIRECT -> McpServerBundle.message("configurable.mcp.tool.filter.invocation.mode.direct")
-                    McpSessionInvocationMode.VIA_ROUTER -> McpServerBundle.message("configurable.mcp.tool.filter.invocation.mode.via.router")
+      if (Registry.`is`("mcp.server.show.advanced.filter.options.ui", false)) {
+        row(McpServerBundle.message("configurable.mcp.tool.filter.invocation.mode")) {
+          val comboBox = comboBox(McpSessionInvocationMode.entries)
+            .applyToComponent {
+              selectedItem = initialInvocationMode
+              renderer = object : javax.swing.DefaultListCellRenderer() {
+                override fun getListCellRendererComponent(
+                  list: javax.swing.JList<*>?,
+                  value: Any?,
+                  index: Int,
+                  isSelected: Boolean,
+                  cellHasFocus: Boolean
+                ): java.awt.Component {
+                  val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+                  if (value is McpSessionInvocationMode) {
+                    text = when (value) {
+                      McpSessionInvocationMode.DIRECT -> McpServerBundle.message("configurable.mcp.tool.filter.invocation.mode.direct")
+                      McpSessionInvocationMode.VIA_ROUTER -> McpServerBundle.message("configurable.mcp.tool.filter.invocation.mode.via.router")
+                    }
                   }
+                  return component
                 }
-                return component
               }
             }
-          }
-        invocationModeComboBox = comboBox.component
-      }.rowComment(McpServerBundle.message("configurable.mcp.tool.filter.invocation.mode.comment"))
+          invocationModeComboBox = comboBox.component
+        }.rowComment(McpServerBundle.message("configurable.mcp.tool.filter.invocation.mode.comment"))
+      }
       
       row {
         val checkbox = checkBox(McpServerBundle.message("configurable.mcp.tool.filter.show.experimental"))
@@ -152,7 +142,6 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     }
 
     mainPanel = panel
-    treeTable = treeTableComponent
     return panel
   }
 
@@ -170,7 +159,25 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     virtualFile.toNioPath().writeText(markdown)
   }
 
-  private fun createTreeTable(tools: List<McpTool>, toolStates: Map<String, McpToolState>, showExperimental: Boolean = false): TreeTable {
+  /**
+   * Sets up the tree table UI component and adds it to the panel.
+   */
+  private fun setupTreeTable(panel: JPanel, showExperimental: Boolean, toolStates: Map<String, McpToolState> = initialToolStates) {
+    val tools = McpServerService.getInstance().getMcpToolsFiltered(
+      useFiltersFromEP = false,
+      excludeProviders = emptySet()
+    )
+
+    val treeTableComponent = createTreeTable(tools, showExperimental, toolStates)
+    val scrollPane = ScrollPaneFactory.createScrollPane(treeTableComponent)
+    scrollPane.preferredSize = Dimension(800, 400)
+
+    panel.add(scrollPane, BorderLayout.CENTER)
+    treeTable = treeTableComponent
+    treeTableScrollPane = scrollPane
+  }
+
+  private fun createTreeTable(tools: List<McpTool>, showExperimental: Boolean = false, toolStates: Map<String, McpToolState> = initialToolStates): TreeTable {
     val root = DefaultMutableTreeNode("Root")
     toolNodes.clear()
 
@@ -212,20 +219,20 @@ class McpToolFilterConfigurable : SearchableConfigurable {
         renderer.setShowsRootHandles(true)
         return renderer
       }
-      
+
       override fun getCellRenderer(row: Int, column: Int): TableCellRenderer {
         val treePath = tree.getPathForRow(row) ?: return super.getCellRenderer(row, column)
         val node = treePath.lastPathComponent
         return columns[column].getRenderer(node) ?: super.getCellRenderer(row, column)
       }
-      
+
       override fun getCellEditor(row: Int, column: Int): TableCellEditor {
         val treePath = tree.getPathForRow(row) ?: return super.getCellEditor(row, column)
         val node = treePath.lastPathComponent
         return columns[column].getEditor(node) ?: super.getCellEditor(row, column)
       }
     }
-    
+
     table.setRootVisible(false)
     TreeUtil.expandAll(table.tree)
 
@@ -238,7 +245,11 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     
     val showExperimentalModified = (showExperimentalCheckbox?.isSelected ?: false) != initialShowExperimental
     
-    val invocationModeModified = (invocationModeComboBox?.selectedItem as? McpSessionInvocationMode) != initialInvocationMode
+    val invocationModeModified = if (Registry.`is`("mcp.server.show.advanced.filter.options.ui", false)) {
+      (invocationModeComboBox?.selectedItem as? McpSessionInvocationMode) != initialInvocationMode
+    } else {
+      false
+    }
     
     val filterModified = if (Registry.`is`("mcp.server.show.advanced.filter.options.ui", false)) {
       toolsFilterTextArea?.text != initialToolsFilter
@@ -259,9 +270,11 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     McpToolFilterSettings.getInstance().showExperimental = newShowExperimental
     initialShowExperimental = newShowExperimental
     
-    val newInvocationMode = invocationModeComboBox?.selectedItem as? McpSessionInvocationMode ?: McpSessionInvocationMode.DIRECT
-    McpToolFilterSettings.getInstance().invocationMode = newInvocationMode
-    initialInvocationMode = newInvocationMode
+    if (Registry.`is`("mcp.server.show.advanced.filter.options.ui", false)) {
+      val newInvocationMode = invocationModeComboBox?.selectedItem as? McpSessionInvocationMode ?: McpSessionInvocationMode.DIRECT
+      McpToolFilterSettings.getInstance().invocationMode = newInvocationMode
+      initialInvocationMode = newInvocationMode
+    }
     
     val filterChanged = if (Registry.`is`("mcp.server.show.advanced.filter.options.ui", false)) {
       val newFilter = toolsFilterTextArea?.text ?: ""
@@ -294,10 +307,10 @@ class McpToolFilterConfigurable : SearchableConfigurable {
     initialShowExperimental = filterSettings.showExperimental
     showExperimentalCheckbox?.isSelected = initialShowExperimental
     
-    initialInvocationMode = filterSettings.invocationMode
-    invocationModeComboBox?.selectedItem = initialInvocationMode
-    
     if (Registry.`is`("mcp.server.show.advanced.filter.options.ui", false)) {
+      initialInvocationMode = filterSettings.invocationMode
+      invocationModeComboBox?.selectedItem = initialInvocationMode
+      
       initialToolsFilter = filterSettings.toolsFilter
       toolsFilterTextArea?.text = initialToolsFilter
     }
@@ -315,29 +328,16 @@ class McpToolFilterConfigurable : SearchableConfigurable {
 
   private fun refreshTreeTable() {
     val panel = mainPanel ?: return
-    
-    // Get tools filtered by all providers except DisallowListBasedMcpToolFilterProvider
-    val tools = McpServerService.getInstance().getMcpToolsFiltered(
-      excludeProviders = setOf(DisallowListBasedMcpToolFilterProvider::class.java)
-    )
-    
-    val settings = McpToolDisallowListSettings.getInstance()
-    initialToolStates = settings.toolStates
-    
+
     val currentShowExperimental = showExperimentalCheckbox?.isSelected ?: false
-    
+    val currentToolStates = getCurrentToolStates()
+
     // Remove old tree table scroll pane
     treeTableScrollPane?.let { panel.remove(it) }
-    
-    // Create new tree table with updated tools
-    val newTreeTable = createTreeTable(tools, initialToolStates, currentShowExperimental)
-    val scrollPane = ScrollPaneFactory.createScrollPane(newTreeTable)
-    scrollPane.preferredSize = Dimension(800, 400)
-    
-    panel.add(scrollPane, BorderLayout.CENTER)
-    treeTable = newTreeTable
-    treeTableScrollPane = scrollPane
-    
+
+    // Setup new tree table with updated tools, preserving current states
+    setupTreeTable(panel, currentShowExperimental, currentToolStates)
+
     panel.revalidate()
     panel.repaint()
   }
