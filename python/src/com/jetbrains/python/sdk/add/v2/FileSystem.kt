@@ -20,7 +20,6 @@ import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
-import com.intellij.python.community.execService.execute
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
@@ -33,6 +32,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.isCondaVirtualEnv
+import com.jetbrains.python.isSuccess
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
@@ -262,7 +262,7 @@ sealed interface FileSystem<P : PathHolder> {
     override val isLocal: Boolean = false
 
     private val systemPythonCache = ArrayList<DetectedSelectableInterpreter<PathHolder.Target>>()
-    private lateinit var shellImpl: PyResult<String>
+    private lateinit var shellImpl: String
 
     override fun parsePath(raw: String): PyResult<PathHolder.Target> {
       return PyResult.success(PathHolder.Target(raw))
@@ -278,8 +278,7 @@ sealed interface FileSystem<P : PathHolder> {
       else PyResult.localizedError(message("sdk.create.not.executable.does.not.exist.error"))
 
     override suspend fun fileExists(path: PathHolder.Target): Boolean {
-      val bin = getBinaryToExec(PathHolder.Target("/usr/bin/test"))
-      return ExecService().execute(bin, Args("-f", path.pathString), processOutputTransformer = { output -> PyResult.success(output.exitCode == 0) }).successOrNull ?: false
+      return executeCommand("test -f ${path.pathString}").isSuccess
     }
 
     override suspend fun validateVenv(homePath: PathHolder.Target): PyResult<Unit> = withContext(Dispatchers.IO) {
@@ -373,22 +372,22 @@ sealed interface FileSystem<P : PathHolder> {
     }
 
     override suspend fun which(cmd: String): PathHolder.Target? {
-      val binaryPathString = executeCommand("which $cmd") ?: return null
+      val binaryPathString = executeCommand("which $cmd").getOr { return null }
       val binaryPathOnFS = parsePath(binaryPathString).getOr { return null }
       return binaryPathOnFS
     }
 
-    override suspend fun getHomePath(): PathHolder.Target? = executeCommand($$"echo ${HOME}")?.let { PathHolder.Target(it) }
+    override suspend fun getHomePath(): PathHolder.Target? = executeCommand($$"echo ${HOME}").successOrNull?.let { PathHolder.Target(it) }
 
-    private suspend fun executeCommand(cmd: String): String? {
-      val shell = getShell().getOr { return null }
+    private suspend fun executeCommand(cmd: String): PyResult<String> {
+      val shell = getShell()
       val bin = getBinaryToExec(PathHolder.Target(shell))
-      return ExecService().execGetStdout(bin, Args("-l", "-c", cmd)).successOrNull
+      return ExecService().execGetStdout(bin, Args("-l", "-c", cmd))
     }
 
-    private suspend fun getShell(): PyResult<String> {
+    private suspend fun getShell(): String {
       if (!this::shellImpl.isInitialized) {
-        shellImpl = getShellImpl()
+        shellImpl = getShellImpl().orLogException(LOG) ?: "/bin/sh"
       }
       return shellImpl
     }
