@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.problems
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -9,7 +10,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.cache.CacheManager
-import com.intellij.psi.impl.search.JavaFilesSearchScope
+import com.intellij.psi.impl.search.JavaFilesSearchScopeProvider
 import com.intellij.psi.impl.search.LowLevelSearchUtil
 import com.intellij.psi.impl.source.PsiJavaFileImpl
 import com.intellij.psi.search.GlobalSearchScope
@@ -31,11 +32,11 @@ public open class MemberUsageCollector {
       memberName: String,
       containingFile: PsiFile,
       scope: GlobalSearchScope,
-      usageExtractor: (PsiFile, Int) -> PsiElement?
+      usageExtractor: (PsiFile, Int) -> PsiElement?,
     ): List<PsiElement>? {
       val project = containingFile.project
       val cacheManager = CacheManager.getInstance(project)
-      val javaScope = scope.intersectWith(JavaFilesSearchScope(project))
+      val javaScope = scope.intersectWith(project.service<JavaFilesSearchScopeProvider>().getScope())
       val relatedFiles = cacheManager.getVirtualFilesWithWord(memberName, UsageSearchContext.IN_CODE, javaScope, true)
       val javaFiles = getJavaFiles(relatedFiles, containingFile) ?: return null
       val usages: MutableList<PsiElement> = mutableListOf()

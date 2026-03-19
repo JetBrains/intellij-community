@@ -62,6 +62,9 @@
                     serviceImplementation="com.intellij.psi.impl.CompositeShortNamesCache"/>
     <projectService serviceInterface="com.intellij.openapi.roots.PackageIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectPackageIndexImpl"/>
+    <projectService serviceInterface="com.intellij.psi.impl.search.JavaFilesSearchScopeProvider"
+                    serviceImplementation="com.intellij.psi.impl.search.JavaFilesSearchScopeProviderImpl"
+                    open="true"/>
     <functionalExpressionSearch implementation="com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher"/>
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.MethodImplementationsSearch"/>

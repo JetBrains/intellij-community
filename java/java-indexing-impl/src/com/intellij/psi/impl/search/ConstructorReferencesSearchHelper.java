@@ -101,7 +101,7 @@ class ConstructorReferencesSearchHelper {
     };
 
     SearchScope restrictedScope = searchScope instanceof GlobalSearchScope scope
-                                  ? scope.intersectWith(new JavaFilesSearchScope(project))
+                                  ? scope.intersectWith(project.getService(JavaFilesSearchScopeProvider.class).getScope())
                                   : searchScope;
 
     ReferencesSearch.searchOptimized(containingClass, restrictedScope, ignoreAccessScope, collector, true, processor1);
