@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.MarkupModelImpl;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -401,13 +402,16 @@ public final class TestDaemonCodeAnalyzerImpl {
         if (System.currentTimeMillis() > deadline) {
           String dump = ThreadDumper.dumpThreadsToString();
           MarkupModelImpl markupModel = (MarkupModelImpl)DocumentMarkupModel.forDocument(document, myProject, true);
-          throw new AssertionError("Too long waiting for daemon to finish (" + (System.currentTimeMillis() - start) + "ms already). " +
+          List<RangeHighlighter> highlighters = List.of(markupModel.getAllHighlighters());
+          AssertionError e = new AssertionError("Too long waiting for daemon to finish (" + (System.currentTimeMillis() - start) + "ms already). " +
              "file status map:" + myDaemonCodeAnalyzer.getFileStatusMap() +
              "\nprogress: "+progresses+
              "\ndaemonIsWorkingOrPending(document)="+daemonIsWorkingOrPending(document)+
              "\nPsiDocumentManager.getInstance(myProject).isUncommited(document)="+PsiDocumentManager.getInstance(myProject).isUncommited(document)+
-             "\ncurrent highlights:\n" + StringUtil.join(markupModel.getAllHighlighters(), Object::toString, "\n")+
+             "\ncurrent highlights:("+highlighters.size()+")\n" + StringUtil.join(ContainerUtil.getFirstItems(highlighters, 100), Object::toString, "\n")+
              "\nthread dump:"+ dump);
+          DaemonCodeAnalyzerImpl.LOG.info(e);
+          throw e;
         }
         callbackWhileWaiting.run();
         dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();

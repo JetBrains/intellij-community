@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.RandomAccessFile;
+import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -208,7 +209,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  private record Record(long timeStamp, @NotNull LogLevel level, @NotNull String category, @Nullable String message, @Nullable Throwable t) {
+  private record Record(long timeStamp, @NotNull LogLevel level, @NotNull String category, @Nullable CharSequence message, @Nullable Throwable t) {
     private int estimateSize() {
       return 12 + 1 + 6 + 1 + 30 + 3 + // header
              (message==null?0:message.length()) +
@@ -227,7 +228,10 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
   private void buffer(@NotNull LogLevel level, @NotNull String category, @Nullable String message, @Nullable Throwable t) {
     synchronized (myBuffer) {
-      Record logRecord = new Record(System.currentTimeMillis(), level, category, message, t);
+      int messageLen = message == null ? 0 : message.length();
+      // do not call substring to reduce work
+      CharSequence truncated = messageLen <= MAX_BUFFER_LENGTH ? message : CharBuffer.wrap(message, messageLen - MAX_BUFFER_LENGTH, messageLen);
+      Record logRecord = new Record(System.currentTimeMillis(), level, category, truncated, t);
       myBuffer.add(logRecord);
       length += logRecord.estimateSize();
       while (length >= MAX_BUFFER_LENGTH && !myBuffer.isEmpty()) {
