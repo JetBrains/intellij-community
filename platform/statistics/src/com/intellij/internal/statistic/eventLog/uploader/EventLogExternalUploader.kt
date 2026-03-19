@@ -39,6 +39,7 @@ import com.intellij.internal.statistic.uploader.events.ExternalEventsLogger
 import com.intellij.internal.statistic.uploader.events.ExternalSystemErrorEvent
 import com.intellij.internal.statistic.uploader.events.ExternalSystemEvent
 import com.intellij.internal.statistic.uploader.events.ExternalUploadFinishedEvent
+import com.intellij.internal.statistic.config.StatisticsStringUtil
 import com.intellij.internal.statistic.uploader.events.ExternalUploadSendEvent
 import com.intellij.internal.statistic.uploader.events.ExternalUploadStartedEvent
 import com.intellij.internal.statistic.uploader.util.ExtraHTTPHeadersParser
@@ -156,7 +157,8 @@ object EventLogExternalUploader {
       findLibraryByClass(StatsConnectionSettings::class.java), // com.jetbrains.fus.reporting.model
       findLibraryByClass(MetadataStorage::class.java), // com.jetbrains.fus.reporting.fus-api
       findLibraryByClass(Json::class.java), // kotlinx.serialization.json
-      findLibraryByClass(StringFormat::class.java) // kotlinx.serialization
+      findLibraryByClass(StringFormat::class.java), // kotlinx.serialization
+      findLibraryByClass(StatisticsStringUtil::class.java) // statistics config (IJPL-238623 extracted to separate jar)
     )
     val classpath = joinAsClasspath(libPaths.toList(), uploader)
 
