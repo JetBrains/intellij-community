@@ -33,12 +33,6 @@ abstract public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener,
              PropertyChangeListener, Dumpable, Disposable, CustomWrapModel.Listener
 {
-  static @NotNull SoftWrapModelImpl create(@NotNull EditorImpl editor) {
-    return Registry.is("editor.custom.soft.wraps.support.enabled") ?
-           new ExperimentalSoftWrapModelImpl(editor) :
-           new LegacySoftWrapModelImpl(editor);
-  }
-
   @ApiStatus.Internal
   public abstract boolean shouldSoftWrapsBeForced();
 

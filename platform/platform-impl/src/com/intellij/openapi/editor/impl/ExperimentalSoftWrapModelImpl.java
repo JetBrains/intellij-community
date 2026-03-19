@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SoftWrap;
@@ -87,6 +86,7 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
   private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
 
   private boolean myForceAdditionalColumns;
+  private boolean myBulkDocumentUpdateInProgress;
 
   ExperimentalSoftWrapModelImpl(@NotNull EditorImpl editor) {
     this.editor = editor;
@@ -94,8 +94,17 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
     storage = new SoftWrapsStorage();
     mySoftWrapNotifier = new SoftWrapNotifier();
     myPainter = new CompositeSoftWrapPainter(editor);
-    mySoftWrappingRecalculationManager = new SoftWrappingEnabledRecalculationManager(editor, storage, myPainter, mySoftWrapNotifier);
-    myCustomWrapOnlyRecalculationManager = new CustomWrapOnlyRecalculationManager(editor, storage, mySoftWrapNotifier);
+    mySoftWrappingRecalculationManager = new SoftWrappingEnabledRecalculationManager(editor, storage, myPainter, mySoftWrapNotifier,
+                                                                                     () -> myBulkDocumentUpdateInProgress);
+    myCustomWrapOnlyRecalculationManager = new CustomWrapOnlyRecalculationManager(editor, storage, mySoftWrapNotifier,
+                                                                                  () -> myBulkDocumentUpdateInProgress);
+
+    mySoftWrapNotifier.addSoftWrapParsingListener(new SoftWrapParsingListener() {
+      @Override
+      public void onAllDirtyRegionsReparsed() {
+        mySoftWrapNotifier.notifySoftWrapRecalculationEnds();
+      }
+    });
 
     if (!editor.getSettings().isUseSoftWraps() && shouldSoftWrapsBeForced()) {
       forceSoftWraps();
@@ -469,20 +478,14 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
 
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent event) {
-    mySoftWrappingRecalculationManager.myAfterLineEndInlayUpdated = false;
-    if (mySoftWrappingRecalculationManager.myBulkUpdateInProgress) {
-      return;
-    }
-    mySoftWrappingRecalculationManager.myDocumentUpdateInProgress = true;
     myRecalculationManager.beforeDocumentChange(event);
   }
 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
-    if (mySoftWrappingRecalculationManager.myBulkUpdateInProgress) {
+    if (myBulkDocumentUpdateInProgress) {
       return;
     }
-    mySoftWrappingRecalculationManager.myDocumentUpdateInProgress = false;
     if (!myUseSoftWraps) {
       if (shouldSoftWrapsBeForced(event)) {
         forceSoftWraps();
@@ -499,13 +502,13 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
 
   @Override
   void onBulkDocumentUpdateStarted() {
-    mySoftWrappingRecalculationManager.myBulkUpdateInProgress = true;
+    myBulkDocumentUpdateInProgress = true;
     myRecalculationManager.onBulkDocumentUpdateStarted();
   }
 
   @Override
   void onBulkDocumentUpdateFinished() {
-    mySoftWrappingRecalculationManager.myBulkUpdateInProgress = false;
+    myBulkDocumentUpdateInProgress = false;
     if (!myUseSoftWraps && shouldSoftWrapsBeForced()) {
       forceSoftWraps();
     }
@@ -514,32 +517,16 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
 
   @Override
   public void onFoldRegionStateChange(@NotNull FoldRegion region) {
-    mySoftWrappingRecalculationManager.myFoldingUpdateInProgress = true;
-    if (!myUseSoftWraps) {
-      mySoftWrappingRecalculationManager.myDirty = true;
-    }
     myRecalculationManager.onFoldRegionStateChange(region);
   }
 
   @Override
   public void onFoldProcessingEnd() {
-    mySoftWrappingRecalculationManager.myFoldingUpdateInProgress = false;
     myRecalculationManager.onFoldProcessingEnd();
   }
 
   @Override
   public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
-    if (document.isInBulkUpdate() ||
-        inlay.getPlacement() != Inlay.Placement.INLINE && inlay.getPlacement() != Inlay.Placement.AFTER_LINE_END ||
-        (changeFlags & InlayModel.ChangeFlags.WIDTH_CHANGED) == 0) {
-      return;
-    }
-    if (editor.getInlayModel().isInBatchMode()) {
-      mySoftWrappingRecalculationManager.myInlayChangedInBatchMode = true;
-      if (myRecalculationManager instanceof SoftWrappingEnabledRecalculationManager) {
-        return;
-      }
-    }
     myRecalculationManager.onUpdated(inlay, changeFlags);
   }
 
@@ -589,11 +576,13 @@ public final class ExperimentalSoftWrapModelImpl extends SoftWrapModelImpl {
     return String.format("""
 
                            use soft wraps: %b, tab width: %d, additional columns: %b
+                           bulk document update in progress: %b
                            soft-wrapping recalculation manager state: %s
                            custom-wrap-only recalculation manager state: %s
                            recalculation manager type: %s
                            soft wraps: %s""",
                          myUseSoftWraps, myTabWidth, myForceAdditionalColumns,
+                         myBulkDocumentUpdateInProgress,
                          mySoftWrappingRecalculationManager.dumpState(),
                          myCustomWrapOnlyRecalculationManager.dumpState(),
                          myRecalculationManager.dumpName(),

@@ -6,13 +6,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
-import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapParsingListener;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.DocumentEventUtil;
@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 @ApiStatus.Internal
 public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecalculationManager {
@@ -44,8 +45,8 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
   private final SoftWrapsStorage myStorage;
   private final @NotNull DocumentEx myDocument;
   private final @NotNull EditorImpl myEditor;
-  private final @NotNull SoftWrapNotifier mySoftWrapNotifier;
-
+  private final @NotNull SoftWrapChangeNotifier mySoftWrapChangeNotifier;
+  private final @NotNull BooleanSupplier myBulkDocumentUpdateInProgress;
 
   /**
    * Soft wraps must be kept up to date on document changes.
@@ -60,8 +61,7 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
    * less prioritized {@link com.intellij.openapi.editor.event.DocumentListener} instances
    * may safely trigger soft-wrap recalculation on document events.
    */
-  @ApiStatus.Internal
-  public boolean myDocumentUpdateInProgress;
+  private boolean myDocumentUpdateInProgress;
 
   /**
    * Soft wraps also depend on folding-related updates: adding/removing/expanding/collapsing.
@@ -69,11 +69,7 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
    * <p>
    * This flag indicates that soft wrap processing should wait until fold processing is finished.
    */
-  @ApiStatus.Internal
-  public boolean myFoldingUpdateInProgress;
-
-  @ApiStatus.Internal
-  public boolean myBulkUpdateInProgress;
+  private boolean myFoldingUpdateInProgress;
 
   /**
    * There is a possible case that target document is changed while its editor is inactive (e.g., user opens two editors for classes
@@ -84,31 +80,24 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
    * <p/>
    * Current field serves as a flag for that {@code 'dirty document, need complete soft wraps cache recalculation'} state.
    */
-  @ApiStatus.Internal
-  public boolean myDirty;
+  private boolean myDirty;
 
-  @ApiStatus.Internal
-  public boolean myAfterLineEndInlayUpdated;
-  @ApiStatus.Internal
-  public boolean myInlayChangedInBatchMode;
+  private boolean myAfterLineEndInlayUpdated;
+  private boolean myInlayChangedInBatchMode;
 
   @ApiStatus.Internal
   public SoftWrappingEnabledRecalculationManager(@NotNull EditorImpl editor,
                                                  @NotNull SoftWrapsStorage storage,
                                                  @NotNull SoftWrapPainter painter,
-                                                 @NotNull SoftWrapNotifier softWrapNotifier) {
+                                                 @NotNull SoftWrapNotifier softWrapNotifier,
+                                                 @NotNull BooleanSupplier bulkDocumentUpdateInProgress) {
     myEditor = editor;
     myDocument = editor.getElfDocument();
     myStorage = storage;
-    mySoftWrapNotifier = softWrapNotifier;
+    mySoftWrapChangeNotifier = softWrapNotifier;
     myDataMapper = new CachingSoftWrapDataMapper(editor, storage, softWrapNotifier);
     myApplianceManager = new SoftWrapApplianceManager(storage, editor, painter, myDataMapper, softWrapNotifier);
-    mySoftWrapNotifier.addSoftWrapParsingListener(new SoftWrapParsingListener() {
-      @Override
-      public void onAllDirtyRegionsReparsed() {
-        mySoftWrapNotifier.notifySoftWrapRecalculationEnds();
-      }
-    });
+    myBulkDocumentUpdateInProgress = bulkDocumentUpdateInProgress;
   }
 
   /**
@@ -118,13 +107,13 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
    */
   @Override
   public void prepareToMapping() {
-    if (myDocumentUpdateInProgress || myFoldingUpdateInProgress || myBulkUpdateInProgress || myEditor.isPurePaintingMode()) {
+    if (myDocumentUpdateInProgress || myFoldingUpdateInProgress || myBulkDocumentUpdateInProgress.getAsBoolean() || myEditor.isPurePaintingMode()) {
       return;
     }
 
     if (myDirty) {
       myStorage.removeAll();
-      mySoftWrapNotifier.notifySoftWrapsChanged();
+      mySoftWrapChangeNotifier.notifySoftWrapsChanged();
       myApplianceManager.reset();
       deferredFoldRegions.clear();
       myDirty = false;
@@ -135,6 +124,11 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
 
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent event) {
+    if (myBulkDocumentUpdateInProgress.getAsBoolean()) {
+      return;
+    }
+    myAfterLineEndInlayUpdated = false;
+    myDocumentUpdateInProgress = true;
     if (myEditor.isPurePaintingMode()) {
       myDirty = true;
       return;
@@ -144,6 +138,10 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
+    if (myBulkDocumentUpdateInProgress.getAsBoolean()) {
+      return;
+    }
+    myDocumentUpdateInProgress = false;
     if (myEditor.getCustomWrapModel().hasWraps() && DocumentEventUtil.isMoveInsertion(event)) {
       int dstOffset = event.getOffset();
       int srcOffset = event.getMoveOffset();
@@ -176,6 +174,7 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
 
   @Override
   public void onFoldRegionStateChange(@NotNull FoldRegion region) {
+    myFoldingUpdateInProgress = true;
     if (myEditor.isPurePaintingMode() || !region.isValid()) {
       myDirty = true;
       return;
@@ -188,6 +187,7 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
 
   @Override
   public void onFoldProcessingEnd() {
+    myFoldingUpdateInProgress = false;
     if (myEditor.isPurePaintingMode()) {
       return;
     }
@@ -203,12 +203,21 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
 
   @Override
   public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
+    if (myBulkDocumentUpdateInProgress.getAsBoolean() ||
+        inlay.getPlacement() != Inlay.Placement.INLINE && inlay.getPlacement() != Inlay.Placement.AFTER_LINE_END ||
+        (changeFlags & InlayModel.ChangeFlags.WIDTH_CHANGED) == 0) {
+      return;
+    }
+    if (myEditor.getInlayModel().isInBatchMode()) {
+      myInlayChangedInBatchMode = true;
+      return;
+    }
     if (myEditor.isPurePaintingMode()) {
       myDirty = true;
       return;
     }
     if (!myDirty) {
-      if (myDocument.isInEventsHandling()) {
+      if (myDocumentUpdateInProgress) {
         if (inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
           myAfterLineEndInlayUpdated = true;
         }
@@ -224,7 +233,7 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
 
   @Override
   public void onBatchModeFinish(@NotNull Editor editor) {
-    if (myDocument.isInBulkUpdate()) return;
+    if (myBulkDocumentUpdateInProgress.getAsBoolean()) return;
     if (myInlayChangedInBatchMode) {
       myInlayChangedInBatchMode = false;
       recalculate();
@@ -272,7 +281,7 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
     myDirty = false;
     myApplianceManager.reset();
     myStorage.removeAll();
-    mySoftWrapNotifier.notifySoftWrapsChanged();
+    mySoftWrapChangeNotifier.notifySoftWrapsChanged();
     deferredFoldRegions.clear();
     myApplianceManager.recalculateIfNecessary();
   }
@@ -290,10 +299,10 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
   public @NotNull String dumpState() {
     return String.format(
       """
-        document update in progress: %b, folding update in progress: %b,bulk update in progress: %b, dirty: %b, deferred regions: %s
+        document update in progress: %b, folding update in progress: %b, dirty: %b, deferred regions: %s
         appliance manager state: %s
         soft wraps mapping info: %s""",
-      myDocumentUpdateInProgress, myFoldingUpdateInProgress, myBulkUpdateInProgress, myDirty, deferredFoldRegions,
+      myDocumentUpdateInProgress, myFoldingUpdateInProgress, myDirty, deferredFoldRegions,
       myApplianceManager.dumpState(),
       myDataMapper.dumpState());
   }

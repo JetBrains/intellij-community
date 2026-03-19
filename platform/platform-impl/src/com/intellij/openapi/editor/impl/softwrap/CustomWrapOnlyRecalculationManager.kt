@@ -14,15 +14,16 @@ import com.intellij.openapi.util.Segment
 import com.intellij.util.DocumentEventUtil
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeEvent
+import java.util.function.BooleanSupplier
 
 internal class CustomWrapOnlyRecalculationManager(
   private val editor: EditorImpl,
   private val storage: SoftWrapsStorage,
   private val softWrapNotifier: SoftWrapNotifier,
+  private val isBulkDocumentUpdateInProgress: BooleanSupplier,
 ) : SoftWrapRecalculationManager() {
   private var isDocumentUpdateInProgress: Boolean = false
   private var isFoldingUpdateInProgress: Boolean = false
-  private var isBulkDocumentUpdateInProgress: Boolean = false
   private val deferredFoldRegions: MutableList<Segment> = ArrayList()
 
   private var customWrapsMerged: Boolean = false
@@ -33,7 +34,7 @@ internal class CustomWrapOnlyRecalculationManager(
     private set
 
   override fun prepareToMapping() {
-    if (!isDirty || isDocumentUpdateInProgress || isFoldingUpdateInProgress || isBulkDocumentUpdateInProgress) {
+    if (!isDirty || isDocumentUpdateInProgress || isFoldingUpdateInProgress || isBulkDocumentUpdateInProgress.getAsBoolean()) {
       return
     }
     isDirty = false
@@ -45,7 +46,7 @@ internal class CustomWrapOnlyRecalculationManager(
   override fun propertyChange(evt: PropertyChangeEvent?) {}
 
   override fun dumpState(): @NonNls String = """
-    document update in progress: $isDocumentUpdateInProgress, folding update in progress: $isDocumentUpdateInProgress, dirty: $isDirty, 
+    document update in progress: $isDocumentUpdateInProgress, folding update in progress: $isFoldingUpdateInProgress, dirty: $isDirty, 
     deferred fold regions: $deferredFoldRegions,
     customWrapsMerged: $customWrapsMerged, customWrapsMoved: $customWrapsMoved, customWrapRemovedByUpdate: $customWrapRemovedByUpdate
     """.trimIndent()
@@ -74,7 +75,7 @@ internal class CustomWrapOnlyRecalculationManager(
   override fun dumpName() = "custom wraps only"
 
   override fun beforeDocumentChange(event: DocumentEvent) {
-    if (isBulkDocumentUpdateInProgress) {
+    if (isBulkDocumentUpdateInProgress.getAsBoolean()) {
       return
     }
     isDocumentUpdateInProgress = true
@@ -107,7 +108,7 @@ internal class CustomWrapOnlyRecalculationManager(
   }
 
   override fun documentChanged(event: DocumentEvent) {
-    if (isBulkDocumentUpdateInProgress) {
+    if (isBulkDocumentUpdateInProgress.getAsBoolean()) {
       return
     }
     isDocumentUpdateInProgress = false
@@ -122,12 +123,9 @@ internal class CustomWrapOnlyRecalculationManager(
     }
   }
 
-  override fun onBulkDocumentUpdateStarted() {
-    isBulkDocumentUpdateInProgress = true
-  }
+  override fun onBulkDocumentUpdateStarted() {}
 
   override fun onBulkDocumentUpdateFinished() {
-    isBulkDocumentUpdateInProgress = false
     recalculate()
   }
 
@@ -156,7 +154,7 @@ internal class CustomWrapOnlyRecalculationManager(
   }
 
   override fun customWrapRemoved(wrap: CustomWrap) {
-    if (isBulkDocumentUpdateInProgress) {
+    if (isBulkDocumentUpdateInProgress.getAsBoolean()) {
       // wrap was removed during bulk update, full recalculation to follow in #bulkUpdateFinished
       return
     }
@@ -190,7 +188,7 @@ internal class CustomWrapOnlyRecalculationManager(
 
     softWrapNotifier.notifyRegionReparseStart(event)
 
-    val actual: List<CustomWrapImpl> = editor.customWrapModelImpl
+    val actual: List<CustomWrap> = editor.customWrapModel
       .getWrapsInRange(startOffset, endOffset)
     val replacement = ArrayList<CustomWrapToSoftWrapAdapter>()
     actual.forEach {

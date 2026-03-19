@@ -6,10 +6,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.CustomWrap
 import com.intellij.openapi.editor.CustomWrapModel
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.EmptyCustomWrapModel
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.impl.customwrap.CustomWrapImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NonNls
 
@@ -49,7 +51,7 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
   }
 
   override fun addWrap(offset: Int, indentInColumns: Int, priority: Int): CustomWrap? {
-    val wrap = CustomWrapImpl(offset, editor, indentInColumns, priority)
+    val wrap = CustomWrapImpl(offset, editor.document, this, indentInColumns, priority)
     tree.addInterval(wrap, offset, offset, false, false, false, 0)
     notifyAdded(wrap)
     return wrap
@@ -128,7 +130,7 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
     ) : RMNode<CustomWrapImpl>(rangeMarkerTree, key, start, end, false, false, false) {
       override fun addIntervalsFrom(otherNode: IntervalNode<CustomWrapImpl>) {
         super.addIntervalsFrom(otherNode)
-        intervals.firstOrNull()?.get()?.editor?.customWrapModelImpl?.notifyMerged()
+        intervals.firstOrNull()?.get()?.model?.notifyMerged()
       }
     }
 
@@ -161,7 +163,19 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
     }
 
     override fun fireBeforeRemoved(marker: CustomWrapImpl) {
-      marker.editor.customWrapModelImpl.notifyRemoved(marker)
+      marker.model.notifyRemoved(marker)
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    fun create(editor: EditorImpl): CustomWrapModel {
+      return if (Registry.`is`("editor.custom.soft.wraps.support.enabled")) {
+        CustomWrapModelImpl(editor)
+      }
+      else {
+        EmptyCustomWrapModel
+      }
     }
   }
 }

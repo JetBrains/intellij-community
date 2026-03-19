@@ -64,6 +64,7 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.EditorThreading;
+import com.intellij.openapi.editor.EmptyCustomWrapModel;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.IndentsModel;
 import com.intellij.openapi.editor.Inlay;
@@ -410,7 +411,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final @NotNull FoldingModelImpl myFoldingModel;
   private final @NotNull ScrollingModelImpl myScrollingModel;
   private final @NotNull CaretModelImpl myCaretModel;
-  private final @NotNull CustomWrapModelImpl myCustomWrapModel;
+  private final @NotNull CustomWrapModel myCustomWrapModel;
   private final @NotNull SoftWrapModelImpl mySoftWrapModel;
   private final @NotNull InlayModelImpl myInlayModel;
 
@@ -586,8 +587,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollingModel = new ScrollingModelImpl(this);
     myInlayModel = new InlayModelImpl(this);
     Disposer.register(myCaretModel, myInlayModel);
-    myCustomWrapModel = new CustomWrapModelImpl(this);
-    mySoftWrapModel = SoftWrapModelImpl.create(this);
+    if (Registry.is("editor.custom.soft.wraps.support.enabled")) {
+      myCustomWrapModel = new CustomWrapModelImpl(this);
+      mySoftWrapModel = new ExperimentalSoftWrapModelImpl(this);
+    } else {
+      myCustomWrapModel = EmptyCustomWrapModel.INSTANCE;
+      mySoftWrapModel = new LegacySoftWrapModelImpl(this);
+    }
 
     myCommandProcessor = CommandProcessor.getInstance();
 
@@ -716,7 +722,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     getElfDocument().addDocumentListener(new EditorDocumentAdapter(), myCaretModel);
     getElfDocument().addDocumentListener(mySoftWrapModel, myCaretModel);
     getElfDocument().addDocumentListener(myMarkupModel, myCaretModel);
-    getElfDocument().addDocumentListener(myCustomWrapModel, myCaretModel);
+    if (myCustomWrapModel instanceof CustomWrapModelImpl customWrapModelImpl) {
+      getElfDocument().addDocumentListener(customWrapModelImpl, myCaretModel);
+    }
 
     myFoldingModel.addListener(mySoftWrapModel, myCaretModel);
 
@@ -1272,11 +1280,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @ApiStatus.Experimental
   @Override
   public @NotNull CustomWrapModel getCustomWrapModel() {
-    return getCustomWrapModelImpl();
-  }
-
-  @ApiStatus.Internal
-  public @NotNull CustomWrapModelImpl getCustomWrapModelImpl() {
     return myCustomWrapModel;
   }
 
@@ -2694,7 +2697,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            + ", soft wraps: " + (mySoftWrapModel.isSoftWrappingEnabled() ? "on" : "off")
            + ", caret model: " + getCaretModel().dumpState()
            + ", soft wraps data: " + getSoftWrapModel().dumpState()
-           + "\ncustom wraps data: " + getCustomWrapModelImpl().dumpState()
+           + "\ncustom wraps data: " + ((myCustomWrapModel instanceof CustomWrapModelImpl) ? ((CustomWrapModelImpl)myCustomWrapModel).dumpState() : myCustomWrapModel.toString())
            + "\n\nfolding data: " + getFoldingModel().dumpState()
            + "\ninlay model: " + getInlayModel().dumpState()
            + (myDocument instanceof DocumentImpl ? "\n\ndocument info: " + ((DocumentImpl)myDocument).dumpState() : "")

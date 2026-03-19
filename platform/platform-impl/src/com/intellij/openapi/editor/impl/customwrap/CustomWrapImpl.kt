@@ -2,17 +2,20 @@
 package com.intellij.openapi.editor.impl.customwrap
 
 import com.intellij.openapi.editor.CustomWrap
+import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.impl.CustomWrapModelImpl
+import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.RangeMarkerImpl
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class CustomWrapImpl(
+internal class CustomWrapImpl(
   offset: Int,
-  val editor: EditorImpl,
+  document: DocumentEx,
+  val model: CustomWrapModelImpl,
   override val indent: Int,
   override val priority: Int,
-) : RangeMarkerImpl(editor.elfDocument, offset, offset, false, true),
+) : RangeMarkerImpl(document, offset, offset, false, true),
     CustomWrap {
 
   override val offset: Int
