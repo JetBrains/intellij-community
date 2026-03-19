@@ -21,6 +21,7 @@ public final class OSProcessUtil {
   }
 
   /// Forceful termination of a process tree.
+  /// Returns `true` is the attempt was successful.
   public static boolean killProcessTree(@NotNull Process process) {
     if (OS.CURRENT == OS.Windows) {
       try {
@@ -41,7 +42,22 @@ public final class OSProcessUtil {
       }
     }
     else {
-      return UnixProcessManager.sendSigKillToProcessTree(process);
+      ProcessHandle handle;
+      try {
+        handle = process.toHandle();
+      }
+      catch (UnsupportedOperationException e) {
+        // workaround for `com.pty4j.unix.UnixPtyProcess` (https://github.com/JetBrains/pty4j/issues/179)
+        handle = ProcessHandle.of(process.pid()).orElse(null);
+      }
+      if (handle != null) {
+        var handles = handle.descendants().toList();
+        for (var iterator = handles.listIterator(handles.size()); iterator.hasPrevious(); ) {
+          iterator.previous().destroyForcibly();
+        }
+      }
+      process.destroyForcibly();
+      return true;
     }
   }
 
