@@ -22,6 +22,7 @@ class ComposeResourcesGradleImportTest : ComposeResourcesTestCase() {
   fun `test default composeResources`() = doTestWithComposeResourcesModel { composeResourcesModel ->
     kAssertEquals("Res", composeResourcesModel.nameOfResClass)
     kAssertEquals(false, composeResourcesModel.isPublicResClass)
+    kAssertEquals("", composeResourcesModel.packageOfResClass)
 
     assertNotEmpty(composeResourcesModel.customComposeResourcesDirs.entries)
     val composeResources = composeResourcesModel.customComposeResourcesDirs[sourceSetName]
@@ -39,6 +40,7 @@ class ComposeResourcesGradleImportTest : ComposeResourcesTestCase() {
     """
         nameOfResClass = "CustomRes"
         publicResClass = true
+        packageOfResClass = "custom.package.name"
         customDirectory(
           sourceSetName = "${sourceSetName}",
           directoryProvider = provider { layout.projectDirectory.dir("customDir") }
@@ -48,6 +50,7 @@ class ComposeResourcesGradleImportTest : ComposeResourcesTestCase() {
   ) { composeResourcesModel ->
     kAssertEquals("CustomRes", composeResourcesModel.nameOfResClass)
     kAssertEquals(true, composeResourcesModel.isPublicResClass)
+    kAssertEquals("custom.package.name", composeResourcesModel.packageOfResClass)
     assertNotEmpty(composeResourcesModel.customComposeResourcesDirs.entries)
 
     val composeResources = composeResourcesModel.customComposeResourcesDirs[sourceSetName]

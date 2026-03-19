@@ -61,6 +61,7 @@ internal class ComposeResourcesManager(private val project: Project) {
         directoriesBySourceSetName = dirs,
         isPublicResClass = node.data.isPublicResClass,
         nameOfResClass = node.data.nameOfResClass,
+        packageOfResClass = node.data.packageOfResClass
       )
     }
 

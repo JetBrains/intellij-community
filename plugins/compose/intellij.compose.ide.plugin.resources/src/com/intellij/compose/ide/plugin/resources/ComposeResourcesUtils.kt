@@ -93,6 +93,7 @@ internal data class ComposeResources(
   val directoriesBySourceSetName: Map<String, ComposeResourcesDir>,
   val isPublicResClass: Boolean,
   val nameOfResClass: String,
+  val packageOfResClass: String
 )
 
 private val log by lazy { fileLogger() }
