@@ -158,6 +158,8 @@ internal class SelectionLinePainter(
   private val leftExtensionWidth = if (editor.isRightAligned) lineExtensionWidth else 0.0
   private val rightExtensionWidth = if (editor.isRightAligned) 0.0 else lineExtensionWidth
   private val visibleScrollArea = editor.scrollingModel.visibleArea.let {
+    if (it.height <= 0) return@let 0 to Int.MAX_VALUE
+
     val startOffset = editor.visualLineStartOffset(editor.yToVisualLine(it.y) - 1)
     val endOffset = editor.visualLineStartOffset(editor.yToVisualLine(it.y + it.height) + 1)
 
