@@ -273,24 +273,19 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
     }
 
     private fun classOfAcceptableLiteral(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyClass? {
-      return when {
-        expression is PyNumericLiteralExpression -> if (expression.isIntegerLiteral) getPyClass(expression, context) else null
-
-        expression is PyStringLiteralExpression ->
-          if (isAcceptableStringLiteral(expression, index)) getPyClass(expression, context) else null
-
-        expression is PyEllipsisLiteralExpression -> null
-
-        expression is PyLiteralExpression -> getPyClass(expression, context)
-
-        expression is PyPrefixExpression && (expression.operator == PyTokenTypes.PLUS || expression.operator == PyTokenTypes.MINUS) -> {
+      return when (expression) {
+        is PyNumericLiteralExpression -> if (expression.isIntegerLiteral) getPyClass(expression, context) else null
+        is PyStringLiteralExpression -> if (isAcceptableStringLiteral(expression, index)) getPyClass(expression, context) else null
+        is PyEllipsisLiteralExpression, is PyNoneLiteralExpression -> null
+        is PyLiteralExpression -> getPyClass(expression, context)
+        is PyPrefixExpression if (expression.operator == PyTokenTypes.PLUS || expression.operator == PyTokenTypes.MINUS) -> {
           val operand = expression.operand
           if (operand is PyNumericLiteralExpression && operand.isIntegerLiteral) getPyClass(operand, context) else null
         }
-
-        PyEvaluator.getBooleanLiteralValue(expression) != null -> getPyClass(expression, context)
-
-        else -> null
+        else -> if (PyEvaluator.getBooleanLiteralValue(expression) != null) {
+          getPyClass(expression, context)
+        }
+        else null
       }
     }
 
