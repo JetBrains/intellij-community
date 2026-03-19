@@ -46,10 +46,10 @@ class GradleTomlVersionCatalogEntrySearcherTest {
     @Test
     fun `test findEntryElement for a library entry`() {
       testFindEntryElement("groovy.core", """
-      plugins.groovy-core = "plugin"
-      [libraries]
-      groovy-core = "lib"
-      """.trimIndent()
+        plugins.groovy-core = "plugin"
+        [libraries]
+        groovy-core = "lib"
+        """.trimIndent()
       ) {
         assertNotNull(it)
         assertEquals("groovy-core = \"lib\"", it.text)
@@ -59,8 +59,8 @@ class GradleTomlVersionCatalogEntrySearcherTest {
     @Test
     fun `test findEntryElement for a library entry when libraries is inline table`() {
       testFindEntryElement("groovy.core", """
-      libraries = { groovy-core = "lib" }
-      """.trimIndent()
+        libraries = { groovy-core = "lib" }
+        """.trimIndent()
       ) {
         assertNotNull(it)
         assertEquals("groovy-core = \"lib\"", it.text)
@@ -70,8 +70,8 @@ class GradleTomlVersionCatalogEntrySearcherTest {
     @Test
     fun `test findEntryElement for a library entry when libraries table name is a part of alias`() {
       testFindEntryElement("groovy.core", """
-      libraries.groovy-core = "lib"
-      """.trimIndent()
+        libraries.groovy-core = "lib"
+        """.trimIndent()
       ) {
         assertNotNull(it)
         assertEquals("libraries.groovy-core = \"lib\"", it.text)
@@ -81,9 +81,9 @@ class GradleTomlVersionCatalogEntrySearcherTest {
     @Test
     fun `test findEntryElement for a bundle entry`() {
       testFindEntryElement("bundles.bundle", """
-      [bundles]
-      bundle = ["lib"]
-      """.trimIndent()
+        [bundles]
+        bundle = ["lib"]
+        """.trimIndent()
       ) {
         assertNotNull(it)
         assertEquals("bundle = [\"lib\"]", it.text)
@@ -93,8 +93,8 @@ class GradleTomlVersionCatalogEntrySearcherTest {
     @Test
     fun `test findEntryElement for a bundle entry when bundles is inline table`() {
       testFindEntryElement("bundles.bundle.core", """
-      bundles = { bundle-core = ["lib"] }
-      """.trimIndent()
+        bundles = { bundle-core = ["lib"] }
+        """.trimIndent()
       ) {
         assertNotNull(it)
         assertEquals("bundle-core = [\"lib\"]", it.text)
@@ -104,8 +104,8 @@ class GradleTomlVersionCatalogEntrySearcherTest {
     @Test
     fun `test findEntryElement for a bundle entry when bundles table name is a part of alias`() {
       testFindEntryElement("bundles.bundle.core", """
-      bundles.bundle-core = "lib"
-      """.trimIndent()
+        bundles.bundle-core = "lib"
+        """.trimIndent()
       ) {
         assertNotNull(it)
         assertEquals("bundles.bundle-core = \"lib\"", it.text)
@@ -115,10 +115,10 @@ class GradleTomlVersionCatalogEntrySearcherTest {
     @Test
     fun `test findEntryElement for a version entry`() {
       testFindEntryElement("versions.my.foo", """
-      [versions]
-      my-foo = ["foo"]
-      my-foo-bar = ["foo-bar"]
-      """.trimIndent()
+        [versions]
+        my-foo = ["foo"]
+        my-foo-bar = ["foo-bar"]
+        """.trimIndent()
       ) {
         assertNotNull(it)
         assertEquals("my-foo = [\"foo\"]", it.text)
@@ -128,9 +128,9 @@ class GradleTomlVersionCatalogEntrySearcherTest {
     @Test
     fun `test findEntryElement for a plugin entry`() {
       testFindEntryElement("plugins.plugin", """
-      [plugins]
-      plugin = "plugin"
-      """.trimIndent()
+        [plugins]
+        plugin = "plugin"
+        """.trimIndent()
       ) {
         assertNotNull(it)
         assertEquals("plugin = \"plugin\"", it.text)
@@ -140,8 +140,8 @@ class GradleTomlVersionCatalogEntrySearcherTest {
     @Test
     fun `test findEntryElement for a plugin entry when plugins is inline table`() {
       testFindEntryElement("plugins.plugin.core", """
-      plugins = { plugin_core = ["plugin"] }
-      """.trimIndent()
+        plugins = { plugin_core = ["plugin"] }
+        """.trimIndent()
       ) {
         assertNotNull(it)
         assertEquals("plugin_core = [\"plugin\"]", it.text)
@@ -151,8 +151,8 @@ class GradleTomlVersionCatalogEntrySearcherTest {
     @Test
     fun `test findEntryElement for a plugin entry when plugins table name is a part of alias`() {
       testFindEntryElement("plugins.plugin.core", """
-      plugins.plugin_core = "plugin"
-      """.trimIndent()
+        plugins.plugin_core = "plugin"
+        """.trimIndent()
       ) {
         assertNotNull(it)
         assertEquals("plugins.plugin_core = \"plugin\"", it.text)
@@ -162,9 +162,9 @@ class GradleTomlVersionCatalogEntrySearcherTest {
     @Test
     fun `test findEntryElement when a TOML entry name has various delimiters`() {
       testFindEntryElement("alias.core.ext", """
-      [libraries]
-      alias_core-ext = "aaa"
-      """.trimIndent()
+        [libraries]
+        alias_core-ext = "aaa"
+        """.trimIndent()
       ) {
         assertNotNull(it)
         assertEquals("alias_core-ext = \"aaa\"", it.text)
@@ -174,9 +174,9 @@ class GradleTomlVersionCatalogEntrySearcherTest {
     @Test
     fun `test findEntryElement when given entry path has various delimiters`() {
       testFindEntryElement("alias_core-ext", """
-      [libraries]
-      alias-core-ext = "aaa"
-      """.trimIndent()
+        [libraries]
+        alias-core-ext = "aaa"
+        """.trimIndent()
       ) {
         assertNotNull(it)
         assertEquals("alias-core-ext = \"aaa\"", it.text)
@@ -186,9 +186,9 @@ class GradleTomlVersionCatalogEntrySearcherTest {
     @Test
     fun `test findEntryElement shouldn't return an entry with name containing given path but larger`() {
       testFindEntryElement("alias.core", """
-      [libraries]
-      alias-core-ext = "aaa"
-      """.trimIndent()
+        [libraries]
+        alias-core-ext = "aaa"
+        """.trimIndent()
       ) {
         assertNull(it) { "findEntryElement shouldn return an entry having more letters than given path." }
       }
