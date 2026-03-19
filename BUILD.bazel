@@ -954,6 +954,8 @@ jvm_library(
     "//platform/jewel/markdown/extensions/autolink:jewel-markdown-extensions-autolink-tests_test_lib",
     "//platform/jewel/markdown/extensions/gfm-alerts:jewel-markdown-extensions-gfmAlerts-tests",
     "//platform/jewel/markdown/extensions/gfm-alerts:jewel-markdown-extensions-gfmAlerts-tests_test_lib",
+    "//platform/jewel/markdown/extensions/gfm-tables:jewel-markdown-extensions-gfmTables-tests",
+    "//platform/jewel/markdown/extensions/gfm-tables:jewel-markdown-extensions-gfmTables-tests_test_lib",
     "//platform/jewel/markdown/extensions/images:jewel-markdown-extensions-images-tests",
     "//platform/jewel/markdown/extensions/images:jewel-markdown-extensions-images-tests_test_lib",
     "//platform/jewel/ui:ui-tests",

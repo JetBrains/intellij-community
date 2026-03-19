@@ -209,6 +209,7 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.core.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.autolink.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmAlerts.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmTables.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.images.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ui.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl.tests" scope="TEST" />
