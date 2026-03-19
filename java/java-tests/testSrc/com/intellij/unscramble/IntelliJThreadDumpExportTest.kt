@@ -16,7 +16,7 @@ import kotlin.io.path.Path
 @TestDataPath($$"$CONTENT_ROOT/testData/threadDump")
 internal class IntelliJThreadDumpExportTest {
   @Test
-  fun `serializer writes documented format and skips info items`() {
+  fun `serializer writes documented format and includes info items`() {
     val expectedDumpText = loadGoldenThreadDump("serializedFull")
 
     val actualDumpText = serializeIntelliJThreadDump(createDumpItemsForExport(), listOf("Full thread dump"))
@@ -91,7 +91,7 @@ internal class IntelliJThreadDumpExportTest {
   }
 
   @Test
-  fun `serializer writes metadata without body and skips containers without ids`() {
+  fun `serializer writes metadata, includes info items, and skips containers without ids`() {
     val actualDumpText = serializeIntelliJThreadDump(
       listOf(
         dumpItem(
@@ -115,6 +115,8 @@ internal class IntelliJThreadDumpExportTest {
     assertThat(actualDumpText).isEqualTo(
       """
       # This dump may be opened in IntelliJ IDEA using Analyze Stack Trace or Thread Dump...
+      
+      Collection of extended dump was disabled.
       
       ${IntelliJThreadDumpMetadata.META_DATA_MARKER}
       {
