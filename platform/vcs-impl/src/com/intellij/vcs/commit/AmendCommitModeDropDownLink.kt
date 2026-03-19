@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.ui.launchOnShow
+import com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getSubjectRightMargin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
@@ -27,7 +28,6 @@ internal class AmendCommitModeDropDownLink(val amendHandler: AmendCommitHandler)
 
   companion object {
     private const val LINK_TEXT_MAX: Int = 20
-    private const val POPUP_TEXT_MAX: Int = 60
 
     private fun itemToString(item: CommitToAmend): @Nls String = when (item) {
       is CommitToAmend.None -> error("There shouldn't be a None option in the popup")
@@ -39,11 +39,11 @@ internal class AmendCommitModeDropDownLink(val amendHandler: AmendCommitHandler)
       StringUtil.shortenTextWithEllipsis(itemToString(item), maxLength, 0)
 
     private fun itemToLinkText(item: CommitToAmend): @Nls String = itemToText(item, LINK_TEXT_MAX)
-    private fun itemToPopupText(item: CommitToAmend): @Nls String = itemToText(item, POPUP_TEXT_MAX)
 
     private fun createPopup(link: DropDownLink<CommitToAmend>, amendHandler: AmendCommitHandler): JBPopup {
       val items = mutableListOf<CommitToAmend>()
       items.add(CommitToAmend.Last)
+      val subjectMaxLength = getSubjectRightMargin(amendHandler.project)
       val builder = JBPopupFactory.getInstance()
         .createPopupChooserBuilder(items)
         .setNamerForFiltering { value ->
@@ -51,7 +51,7 @@ internal class AmendCommitModeDropDownLink(val amendHandler: AmendCommitHandler)
         }
         .setRenderer(listCellRenderer {
           val fullText = itemToString(value)
-          val popupText = itemToPopupText(value)
+          val popupText = itemToText(value, subjectMaxLength)
           icon(if (value == link.selectedItem) AllIcons.Actions.Checked else AllIcons.Empty)
           text(popupText) {
             speedSearch {}
