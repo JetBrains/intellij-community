@@ -114,8 +114,12 @@ public class JulLogger extends Logger {
   }
 
   @Override
-  public void setLevel(@NotNull LogLevel level) {
-    myLogger.setLevel(level.getLevel());
+  public void setLevel(@Nullable LogLevel level) {
+    myLogger.setLevel(level==null?null:level.getLevel());
+  }
+  public LogLevel getLevel() {
+    Level level = myLogger.getLevel();
+    return level==null?null:LogLevel.from(level);
   }
 
   public static void clearHandlers() {
