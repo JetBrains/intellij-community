@@ -6,7 +6,6 @@ import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
-import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.mcpCallInfo
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.reportToolActivity
@@ -25,9 +24,9 @@ class UniversalToolset : McpToolset {
         |Example: "reformat_file --path ./myfile.kt"
         |
         |Help:
-        |  --help           Show list of all available tools
         |  tool_name --help Show details for specific tool
   """)
+  //         |  --help           Show list of all available tools
   suspend fun execute_tool(
     @McpDescription("Command-line string with tool name and arguments, e.g., 'reformat_file --path ./myfile.kt', or '--help' for help")
     command: String,
@@ -40,23 +39,24 @@ class UniversalToolset : McpToolset {
       mcpFail("Command is empty")
     }
 
+    val sessionHandler = currentCoroutineContext().mcpCallInfo.sessionHandler ?: mcpFail("Session handler not available")
+    val routerToolsProvider = sessionHandler.routerToolsProvider ?: mcpFail("Router tools provider not available")
+
+    val allTools = routerToolsProvider.mcpTools.value
+
     // Check for --help flag
-    if (parts[0] == "--help") {
-      return formatAllToolsHelp()
-    }
+    //if (parts[0] == "--help") {
+    //  return formatAllToolsHelp(allTools)
+    //}
 
     val toolName = parts[0]
     val args = parts.drop(1)
 
     // Check for tool-specific help
     if (args.isNotEmpty() && args[0] == "--help") {
-      return formatToolHelp(toolName)
+      return formatToolHelp(allTools, toolName)
     }
 
-    val sessionHandler = currentCoroutineContext().mcpCallInfo.sessionHandler ?: mcpFail("Session handler not available")
-    val routerToolsProvider = sessionHandler.routerToolsProvider ?: mcpFail("Router tools provider not available")
-
-    val allTools = routerToolsProvider.mcpTools.value
 
     val tool = allTools.find { it.descriptor.name == toolName }
                 ?: mcpFail("Tool '$toolName' not found. Available tools: ${allTools.map { it.descriptor.name }.sorted().joinToString(", ")}")
@@ -81,8 +81,7 @@ class UniversalToolset : McpToolset {
     return result.toString()
   }
 
-  private fun formatAllToolsHelp(): String {
-    val allTools = McpServerService.getInstance().getAllMcpTools()
+  private fun formatAllToolsHelp(allTools: List<com.intellij.mcpserver.McpTool>): String {
     val sortedTools = allTools.sortedBy { it.descriptor.name }
     
     val result = buildString {
@@ -107,8 +106,7 @@ class UniversalToolset : McpToolset {
     return result
   }
 
-  private fun formatToolHelp(toolName: String): String {
-    val allTools = McpServerService.getInstance().getAllMcpTools()
+  private fun formatToolHelp(allTools: List<com.intellij.mcpserver.McpTool>, toolName: String): String {
     val tool = allTools.find { it.descriptor.name == toolName }
                 ?: mcpFail("Tool '$toolName' not found. Use '--help' to see all available tools.")
     

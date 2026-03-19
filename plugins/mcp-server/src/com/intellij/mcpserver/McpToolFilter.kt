@@ -20,6 +20,10 @@ sealed interface McpToolFilter {
     override fun shouldInclude(tool: McpTool): Boolean = !tool.descriptor.category.isExperimental
   }
 
+  data object AlwaysIncluded : McpToolFilter {
+    override fun shouldInclude(tool: McpTool): Boolean = tool.descriptor.category.alwaysIncluded
+  }
+
   interface TextMcpToolFilter : McpToolFilter {
     override fun shouldInclude(tool: McpTool): Boolean = shouldInclude(tool.descriptor.fullyQualifiedName)
     fun shouldInclude(toolName: String): Boolean

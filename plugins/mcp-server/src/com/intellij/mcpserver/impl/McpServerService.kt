@@ -11,6 +11,7 @@ import com.intellij.mcpserver.impl.util.network.installHostValidation
 import com.intellij.mcpserver.impl.util.network.installHttpRequestPropagation
 import com.intellij.mcpserver.impl.util.network.mcpPatched
 import com.intellij.mcpserver.settings.McpServerSettings
+import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.stdio.IJ_MCP_ALLOWED_TOOLS
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.toolsets.general.UniversalToolset
@@ -325,8 +326,11 @@ open class McpServerService(val cs: CoroutineScope) {
    * @param filter The filter to apply to the tools
    * @return true if at least one MCP tool is available after filtering, false otherwise
    */
-  fun hasActiveMcpTools(filter: McpToolFilter?): Boolean {
-    return getMcpTools(filter = filter).isNotEmpty()
+  fun hasActiveMcpTools(filter: McpToolFilter?, invocationMode: McpSessionInvocationMode?): Boolean {
+    return getMcpTools(filter = filter, invocationMode = when(invocationMode ?: McpToolFilterSettings.getInstance().invocationMode) {
+      McpSessionInvocationMode.DIRECT -> McpToolInvocationMode.DIRECT
+      McpSessionInvocationMode.VIA_ROUTER -> McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED
+    }).isNotEmpty()
   }
 
   /**
@@ -345,8 +349,8 @@ open class McpServerService(val cs: CoroutineScope) {
     val allTools = getAllMcpTools()
     val filterAdjusted = when(invocationMode) {
       McpToolInvocationMode.DIRECT -> filter ?: McpToolFilter.AllowAll
-      McpToolInvocationMode.VIA_ROUTER -> filter ?: McpToolFilter.AllowAll
-      McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED -> McpToolFilter.ProhibitAll
+      McpToolInvocationMode.VIA_ROUTER -> McpToolFilter.AllowAll
+      McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED -> McpToolFilter.AlwaysIncluded
     }
 
     val routerToolName = UniversalToolset::execute_tool.name
