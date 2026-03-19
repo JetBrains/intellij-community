@@ -18,26 +18,28 @@ these steps:
 4. Before pushing, run all the GitHub CI checks locally and fix any issues that are found
 5. Ensure impacted public APIs are properly covered by KDocs and the docs are up to date
 6. Run the `ApiCheckTest` to make sure the API dumps are up to date
-7. Ensure there are no breaking changes in stable APIs (they look like removed lines in `api-dump.txt` files), and try
-   to avoid or at least minimise changes in experimental APIs too (see `api-dump-experimental.txt` files)
-8. Check that there are no new issues reported by Metalava either, with `scripts/metalava-signatures.main.kts validate`;
-   if any is found, update the baseline files accordingly with the `--update-baseline` parameter.
+7. Ensure there are no binary or source compatibility breakages in stable APIs. See the [API compatibility guide](api-compatibility.md) for the expected compatibility-preserving
+   patterns and the Metalava workflow.
+8. Check that there are no new issues reported by Metalava either, with `./scripts/metalava-signatures.main.kts validate`
+   from the Jewel root; if an intentional API change is reported, update the API dumps, and if a finding should be
+   suppressed instead, update the baseline files with the `--update-baseline` parameter. See the
+   [API compatibility guide](api-compatibility.md).
 9. If your PR has any user-visible changes, add release notes to the bottom of the PR description using this template:
 
    ```
    ## Release notes
-   
+
    ### ⚠️ Important Changes
-    * 
-   
+    *
+
    ### New features
-    * 
-   
+    *
+
    ### Bug fixes
-    * 
-   
+    *
+
    ### Deprecated API
-    *   
+    *
    ```
 
    Remove the sections you do not need. Use the [existing release notes](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/RELEASE%20NOTES.md)
