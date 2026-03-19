@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "community",
+  module_name = "intellij.javaFX.community",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":community_resources"],
@@ -89,6 +90,7 @@ exports_files([
 ### auto-generated section `build intellij.javaFX.community.tests` start
 jvm_library(
   name = "community-tests",
+  module_name = "intellij.javaFX.community.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["//plugins/javaFX"]
@@ -96,9 +98,12 @@ jvm_library(
 
 jvm_library(
   name = "community-tests_test_lib",
-  module_name = "intellij.javaFX.community.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [
+    "//plugins/javaFX/community",
+    "//plugins/javaFX/community:community_test_lib",
+  ],
   deps = [
     "//plugins/javaFX",
     "//plugins/javaFX:javaFX_test_lib",
@@ -147,8 +152,6 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings_test_lib",
     "//libraries/fastutil",
     "//libraries/fastutil:fastutil_test_lib",
-    "//plugins/javaFX/community",
-    "//plugins/javaFX/community:community_test_lib",
     "//plugins/javaFX:javaFX-tests",
     "//plugins/javaFX:javaFX-tests_test_lib",
   ],

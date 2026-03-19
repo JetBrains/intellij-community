@@ -57,6 +57,7 @@ exports_files([
 ### auto-generated section `build intellij.tools.ide.starter.bus.tests` start
 jvm_library(
   name = "tools-ide-starter-bus-tests",
+  module_name = "intellij.tools.ide.starter.bus.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

@@ -73,6 +73,7 @@ exports_files([
 ### auto-generated section `build intellij.searchEverywhereMl.typos.tests` start
 jvm_library(
   name = "searchEverywhereMl-typos-tests",
+  module_name = "intellij.searchEverywhereMl.typos.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

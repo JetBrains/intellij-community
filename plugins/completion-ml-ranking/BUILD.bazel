@@ -96,6 +96,7 @@ exports_files([
 ### auto-generated section `build intellij.completionMlRanking.tests` start
 jvm_library(
   name = "completionMlRanking-tests",
+  module_name = "intellij.completionMlRanking.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["//platform/core-ui"]

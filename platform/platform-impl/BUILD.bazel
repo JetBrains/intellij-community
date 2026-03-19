@@ -351,6 +351,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.ide.impl.tests` start
 jvm_library(
   name = "ide-impl-tests",
+  module_name = "intellij.platform.ide.impl.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = [

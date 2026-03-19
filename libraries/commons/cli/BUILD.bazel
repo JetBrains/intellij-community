@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "cli",
+  module_name = "intellij.libraries.commons.cli",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":cli_resources"],

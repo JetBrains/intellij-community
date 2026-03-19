@@ -63,6 +63,7 @@ exports_files([
 ### auto-generated section `build intellij.performanceTesting.ui.tests` start
 jvm_library(
   name = "ui-tests",
+  module_name = "intellij.performanceTesting.ui.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

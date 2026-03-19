@@ -190,6 +190,7 @@ exports_files([
 ### auto-generated section `build intellij.groovy.tests` start
 jvm_library(
   name = "groovy-tests",
+  module_name = "intellij.groovy.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["//plugins/groovy/groovy-psi:psi"]

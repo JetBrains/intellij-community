@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "psi-tests",
+  module_name = "intellij.platform.syntax.psi.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

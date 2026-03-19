@@ -41,6 +41,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.pluginSystem.parser.impl.tests` start
 jvm_library(
   name = "pluginSystem-parser-impl-tests",
+  module_name = "intellij.platform.pluginSystem.parser.impl.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

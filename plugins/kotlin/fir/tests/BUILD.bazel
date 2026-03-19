@@ -15,6 +15,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "tests",
+  module_name = "kotlin.fir.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

@@ -5,6 +5,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "testFramework",
+  module_name = "kotlin.jvm-debugger.testFramework",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

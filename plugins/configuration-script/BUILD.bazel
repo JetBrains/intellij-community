@@ -87,6 +87,7 @@ exports_files([
 ### auto-generated section `build intellij.configurationScript.test.java` start
 jvm_library(
   name = "configurationScript-test-java",
+  module_name = "intellij.configurationScript.test.java",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -142,6 +143,7 @@ jps_test(
 ### auto-generated section `build intellij.configurationScript.tests` start
 jvm_library(
   name = "configurationScript-tests",
+  module_name = "intellij.configurationScript.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

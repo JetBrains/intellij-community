@@ -109,6 +109,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "kotlin-codeInsight-lineMarkers-tests",
+  module_name = "intellij.kotlin.codeInsight.lineMarkers.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

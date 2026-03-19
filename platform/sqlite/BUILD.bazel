@@ -40,6 +40,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.sqlite.tests` start
 jvm_library(
   name = "sqlite-tests",
+  module_name = "intellij.platform.sqlite.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["@lib//:sqlite-native"]

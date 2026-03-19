@@ -55,6 +55,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.syntax.extensions.tests` start
 jvm_library(
   name = "extensions-tests",
+  module_name = "intellij.platform.syntax.extensions.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

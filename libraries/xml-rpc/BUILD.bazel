@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "xml-rpc",
+  module_name = "intellij.libraries.xml.rpc",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":xml-rpc_resources"],

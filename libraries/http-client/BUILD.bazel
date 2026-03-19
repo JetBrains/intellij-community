@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "http-client",
+  module_name = "intellij.libraries.http.client",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":http-client_resources"],

@@ -159,6 +159,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "debugger-impl-tests",
+  module_name = "intellij.platform.debugger.impl.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

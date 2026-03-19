@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "monolith",
+  module_name = "intellij.platform.monolith",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":monolith_resources"],

@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "aliasProvider",
+  module_name = "intellij.python.community.aliasProvider",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":aliasProvider_resources"],

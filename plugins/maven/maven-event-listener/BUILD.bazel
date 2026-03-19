@@ -44,6 +44,7 @@ exports_files([
 ### auto-generated section `build intellij.maven.server.eventListener.tests` start
 jvm_library(
   name = "server-eventListener-tests",
+  module_name = "intellij.maven.server.eventListener.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

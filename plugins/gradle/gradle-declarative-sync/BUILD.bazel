@@ -63,6 +63,7 @@ exports_files([
 ### auto-generated section `build intellij.gradle.declarativeSync.tests` start
 jvm_library(
   name = "declarativeSync-tests",
+  module_name = "intellij.gradle.declarativeSync.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["@lib//:kotlin-stdlib"]

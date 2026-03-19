@@ -118,6 +118,7 @@ exports_files([
 ### auto-generated section `build intellij.kotlin.jvm.tests` start
 jvm_library(
   name = "kotlin-jvm-tests",
+  module_name = "intellij.kotlin.jvm.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

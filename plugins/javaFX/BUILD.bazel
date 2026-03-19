@@ -177,6 +177,7 @@ exports_files([
 ### auto-generated section `build intellij.javaFX.tests` start
 jvm_library(
   name = "javaFX-tests",
+  module_name = "intellij.javaFX.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

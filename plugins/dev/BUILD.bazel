@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "dev-noJava-plugin-main",
+  module_name = "intellij.dev.noJava.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -37,6 +38,7 @@ exports_files([
 ### auto-generated section `build intellij.dev.plugin.main` start
 jvm_library(
   name = "dev-plugin-main",
+  module_name = "intellij.dev.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

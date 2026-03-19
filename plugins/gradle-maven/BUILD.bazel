@@ -67,6 +67,7 @@ exports_files([
 ### auto-generated section `build intellij.gradle.java.maven.tests` start
 jvm_library(
   name = "gradle-java-maven-tests",
+  module_name = "intellij.gradle.java.maven.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

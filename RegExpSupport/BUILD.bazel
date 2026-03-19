@@ -75,6 +75,7 @@ exports_files([
 ### auto-generated section `build intellij.regexp.tests` start
 jvm_library(
   name = "regexp-tests",
+  module_name = "intellij.regexp.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "plugin",
+  module_name = "intellij.sh.plugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":plugin_resources"]
@@ -32,6 +33,7 @@ exports_files([
 ### auto-generated section `build intellij.sh.plugin.main` start
 jvm_library(
   name = "plugin-main",
+  module_name = "intellij.sh.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

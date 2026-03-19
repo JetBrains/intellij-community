@@ -82,6 +82,7 @@ exports_files([
 ### auto-generated section `build intellij.evaluationPlugin.languages.java.tests` start
 jvm_library(
   name = "evaluationPlugin-languages-java-tests",
+  module_name = "intellij.evaluationPlugin.languages.java.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

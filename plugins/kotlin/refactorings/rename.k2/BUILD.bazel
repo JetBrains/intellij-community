@@ -98,6 +98,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "kotlin-refactorings-rename-tests",
+  module_name = "intellij.kotlin.refactorings.rename.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

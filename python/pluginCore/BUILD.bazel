@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "community-plugin",
+  module_name = "intellij.python.community.plugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":community-plugin_resources"],

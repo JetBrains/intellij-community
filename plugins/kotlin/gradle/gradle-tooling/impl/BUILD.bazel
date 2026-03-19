@@ -71,6 +71,7 @@ exports_files([
 ### auto-generated section `build intellij.kotlin.gradle.tooling.impl.tests` start
 jvm_library(
   name = "kotlin-gradle-tooling-impl-tests",
+  module_name = "intellij.kotlin.gradle.tooling.impl.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

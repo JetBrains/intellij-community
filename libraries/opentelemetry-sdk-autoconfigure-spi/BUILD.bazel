@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "opentelemetry-sdk-autoconfigure-spi",
+  module_name = "intellij.libraries.opentelemetry.sdk.autoconfigure.spi",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":opentelemetry-sdk-autoconfigure-spi_resources"],

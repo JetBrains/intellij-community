@@ -274,6 +274,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.lang.tests` start
 jvm_library(
   name = "lang-tests",
+  module_name = "intellij.platform.lang.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = [

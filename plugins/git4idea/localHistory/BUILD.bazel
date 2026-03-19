@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "localHistory",
+  module_name = "intellij.vcs.git.localHistory",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":localHistory_resources"]

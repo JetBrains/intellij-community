@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "kotlin-plugin-community-main",
+  module_name = "intellij.kotlin.plugin.community.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = [

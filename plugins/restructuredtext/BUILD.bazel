@@ -111,6 +111,7 @@ resourcegroup(
 
 jvm_library(
   name = "restructuredtext-tests",
+  module_name = "intellij.restructuredtext.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

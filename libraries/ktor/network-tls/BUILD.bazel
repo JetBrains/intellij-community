@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "libraries-ktor-network-tls",
+  module_name = "intellij.libraries.ktor.network.tls",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":libraries-ktor-network-tls_resources"],

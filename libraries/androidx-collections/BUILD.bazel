@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "androidx-collections",
+  module_name = "intellij.libraries.androidx.collections",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":androidx-collections_resources"],

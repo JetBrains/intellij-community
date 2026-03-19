@@ -235,6 +235,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.testFramework.tests` start
 jvm_library(
   name = "testFramework-tests",
+  module_name = "intellij.platform.testFramework.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = [

@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "bouncy-castle-provider",
+  module_name = "intellij.libraries.bouncy.castle.provider",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":bouncy-castle-provider_resources"],

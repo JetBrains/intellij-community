@@ -44,6 +44,7 @@ exports_files([
 ### auto-generated section `build intellij.community.wintools.tests` start
 jvm_library(
   name = "wintools-tests",
+  module_name = "intellij.community.wintools.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

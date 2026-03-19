@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "keymap-visualAssist",
+  module_name = "intellij.keymap.visualAssist",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":keymap-visualAssist_resources"]

@@ -111,6 +111,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.vcs.dvcs.impl.tests` start
 jvm_library(
   name = "vcs-dvcs-impl-tests",
+  module_name = "intellij.platform.vcs.dvcs.impl.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

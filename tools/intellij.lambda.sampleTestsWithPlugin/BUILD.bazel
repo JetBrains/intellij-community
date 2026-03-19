@@ -15,6 +15,7 @@ resourcegroup(
 
 jvm_library(
   name = "lambda-sampleTestsWithPlugin",
+  module_name = "intellij.lambda.sampleTestsWithPlugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

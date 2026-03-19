@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "trove",
+  module_name = "intellij.platform.util.trove",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["@lib//:platform-util-trove-trove"],

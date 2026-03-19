@@ -58,6 +58,7 @@ exports_files([
 ### auto-generated section `build intellij.java.guiForms.compiler.tests` start
 jvm_library(
   name = "java-guiForms-compiler-tests",
+  module_name = "intellij.java.guiForms.compiler.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["//java/compiler/instrumentation-util"]

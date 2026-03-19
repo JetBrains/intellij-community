@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "moduleSet-plugin-debugger-streams",
+  module_name = "intellij.moduleSet.plugin.debugger.streams",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":moduleSet-plugin-debugger-streams_resources"]

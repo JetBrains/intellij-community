@@ -9,6 +9,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "kotlin-base-analysis-analysis-api-k2-tests",
+  module_name = "kotlin.base.analysis.analysis-api.k2.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

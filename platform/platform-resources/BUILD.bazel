@@ -15,6 +15,7 @@ resourcegroup(
 
 jvm_library(
   name = "resources",
+  module_name = "intellij.platform.resources",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [

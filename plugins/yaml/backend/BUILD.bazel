@@ -118,6 +118,7 @@ resourcegroup(
 
 jvm_library(
   name = "backend-tests",
+  module_name = "intellij.yaml.backend.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["//platform/backend"]

@@ -131,6 +131,7 @@ resourcegroup(
 
 jvm_library(
   name = "testng-tests",
+  module_name = "intellij.testng.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

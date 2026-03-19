@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "moduleSet-plugin-recentFiles",
+  module_name = "intellij.moduleSet.plugin.recentFiles",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":moduleSet-plugin-recentFiles_resources"]

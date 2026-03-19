@@ -51,6 +51,7 @@ exports_files([
 ### auto-generated section `build intellij.ant.jps.tests` start
 jvm_library(
   name = "jps-tests",
+  module_name = "intellij.ant.jps.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

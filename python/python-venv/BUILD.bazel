@@ -65,6 +65,7 @@ resourcegroup(
 
 jvm_library(
   name = "venv-tests",
+  module_name = "intellij.python.venv.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

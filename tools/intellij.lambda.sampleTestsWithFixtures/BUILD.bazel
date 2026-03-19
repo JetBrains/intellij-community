@@ -15,6 +15,7 @@ resourcegroup(
 
 jvm_library(
   name = "lambda-sampleTestsWithFixtures",
+  module_name = "intellij.lambda.sampleTestsWithFixtures",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

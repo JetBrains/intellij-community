@@ -109,6 +109,7 @@ resourcegroup(
 
 jvm_library(
   name = "builtInServer-tests",
+  module_name = "intellij.platform.builtInServer.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

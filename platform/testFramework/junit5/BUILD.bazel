@@ -117,6 +117,7 @@ resourcegroup(
 
 jvm_library(
   name = "junit5-tests",
+  module_name = "intellij.platform.testFramework.junit5.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

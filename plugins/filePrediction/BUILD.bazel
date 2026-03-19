@@ -90,6 +90,7 @@ resourcegroup(
 
 jvm_library(
   name = "filePrediction-tests",
+  module_name = "intellij.filePrediction.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

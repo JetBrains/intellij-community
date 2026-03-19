@@ -86,6 +86,7 @@ resourcegroup(
 
 jvm_library(
   name = "i18n-tests",
+  module_name = "intellij.devkit.i18n.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

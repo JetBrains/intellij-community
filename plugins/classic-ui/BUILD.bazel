@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "classic-ui",
+  module_name = "intellij.classic.ui",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":classic-ui_resources"]

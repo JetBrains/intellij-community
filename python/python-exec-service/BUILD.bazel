@@ -97,6 +97,7 @@ resourcegroup(
 
 jvm_library(
   name = "community-execService-tests",
+  module_name = "intellij.python.community.execService.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

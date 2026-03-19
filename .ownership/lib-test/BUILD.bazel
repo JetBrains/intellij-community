@@ -28,6 +28,7 @@ resourcegroup(
 
 jvm_library(
   name = "codeowners-test",
+  module_name = "intellij.codeowners.test",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

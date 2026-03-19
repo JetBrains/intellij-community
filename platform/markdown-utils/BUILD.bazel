@@ -43,6 +43,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.markdown.utils.tests` start
 jvm_library(
   name = "markdown-utils-tests",
+  module_name = "intellij.platform.markdown.utils.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

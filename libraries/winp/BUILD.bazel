@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "winp",
+  module_name = "intellij.libraries.winp",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":winp_resources"],

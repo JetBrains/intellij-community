@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "compiler-plugin",
+  module_name = "intellij.platform.compose.compilerPlugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

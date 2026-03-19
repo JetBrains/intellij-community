@@ -114,6 +114,7 @@ resourcegroup(
 
 jvm_library(
   name = "kotlin-base-plugin-tests",
+  module_name = "intellij.kotlin.base.plugin.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["//platform/util/trove"]

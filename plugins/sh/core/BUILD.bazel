@@ -85,6 +85,7 @@ exports_files([
 ### auto-generated section `build intellij.sh.tests` start
 jvm_library(
   name = "tests",
+  module_name = "intellij.sh.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

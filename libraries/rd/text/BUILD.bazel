@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "text",
+  module_name = "intellij.libraries.rd.text",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":text_resources"],

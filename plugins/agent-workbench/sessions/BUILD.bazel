@@ -93,6 +93,7 @@ exports_files([
 ### auto-generated section `build intellij.agent.workbench.sessions.tests` start
 jvm_library(
   name = "agent-workbench-sessions-tests",
+  module_name = "intellij.agent.workbench.sessions.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

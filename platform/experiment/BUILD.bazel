@@ -51,6 +51,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.experiment.tests` start
 jvm_library(
   name = "experiment-tests",
+  module_name = "intellij.platform.experiment.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "copyright",
+  module_name = "intellij.properties.copyright",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":copyright_resources"]

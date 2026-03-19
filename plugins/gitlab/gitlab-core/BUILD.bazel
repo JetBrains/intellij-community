@@ -148,6 +148,7 @@ resourcegroup(
 
 jvm_library(
   name = "vcs-gitlab-tests",
+  module_name = "intellij.vcs.gitlab.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

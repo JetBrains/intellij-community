@@ -12,6 +12,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "kotlin-completion-tests-k1",
+  module_name = "kotlin.completion.tests.k1",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "compose-foundation-desktop",
+  module_name = "intellij.libraries.compose.foundation.desktop",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":compose-foundation-desktop_resources"],

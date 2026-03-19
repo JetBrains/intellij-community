@@ -88,6 +88,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.testRunner.tests` start
 jvm_library(
   name = "testRunner-tests",
+  module_name = "intellij.platform.testRunner.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

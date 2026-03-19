@@ -39,6 +39,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.util.text.matching.tests` start
 jvm_library(
   name = "text-matching-tests",
+  module_name = "intellij.platform.util.text.matching.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

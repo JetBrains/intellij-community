@@ -52,6 +52,7 @@ exports_files([
 ### auto-generated section `build intellij.maven.proofreading.tests` start
 jvm_library(
   name = "proofreading-tests",
+  module_name = "intellij.maven.proofreading.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

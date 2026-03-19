@@ -69,6 +69,7 @@ exports_files([
 ### auto-generated section `build intellij.settingsSync.tests` start
 jvm_library(
   name = "settingsSync-tests",
+  module_name = "intellij.settingsSync.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

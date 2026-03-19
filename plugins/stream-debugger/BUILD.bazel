@@ -94,6 +94,7 @@ exports_files([
 ### auto-generated section `build intellij.java.debugger.streams.tests` start
 jvm_library(
   name = "java-debugger-streams-tests",
+  module_name = "intellij.java.debugger.streams.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["//java/debugger/backend"]

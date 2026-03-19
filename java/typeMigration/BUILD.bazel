@@ -79,6 +79,7 @@ exports_files([
 ### auto-generated section `build intellij.java.typeMigration.tests` start
 jvm_library(
   name = "typeMigration-tests",
+  module_name = "intellij.java.typeMigration.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

@@ -156,6 +156,7 @@ resourcegroup(
 
 jvm_library(
   name = "java-tests",
+  module_name = "intellij.gradle.java.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

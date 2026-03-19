@@ -88,6 +88,7 @@ exports_files([
 ### auto-generated section `build intellij.devkit.themes.tests` start
 jvm_library(
   name = "themes-tests",
+  module_name = "intellij.devkit.themes.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

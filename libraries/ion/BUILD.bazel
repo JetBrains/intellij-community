@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "ion",
+  module_name = "intellij.libraries.ion",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":ion_resources"],

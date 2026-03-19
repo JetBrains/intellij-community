@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "color-scheme-monokai",
+  module_name = "intellij.color.scheme.monokai",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":color-scheme-monokai_resources"]

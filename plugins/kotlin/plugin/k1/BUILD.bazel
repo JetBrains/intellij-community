@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "k1",
+  module_name = "kotlin.plugin.k1",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":k1_resources"],

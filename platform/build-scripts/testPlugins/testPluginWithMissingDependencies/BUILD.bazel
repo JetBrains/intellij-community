@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "testPluginWithMissingDependencies",
+  module_name = "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":testPluginWithMissingDependencies_resources"]

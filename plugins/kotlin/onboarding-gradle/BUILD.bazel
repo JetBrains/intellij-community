@@ -87,6 +87,7 @@ exports_files([
 ### auto-generated section `build intellij.kotlin.onboarding.gradle.tests` start
 jvm_library(
   name = "onboarding-gradle-tests",
+  module_name = "intellij.kotlin.onboarding.gradle.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

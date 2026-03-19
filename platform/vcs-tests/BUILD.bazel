@@ -66,6 +66,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.vcs.tests` start
 jvm_library(
   name = "vcs-tests",
+  module_name = "intellij.platform.vcs.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["//platform/vcs-tests:vcs-testFramework"],

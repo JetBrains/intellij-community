@@ -141,6 +141,7 @@ exports_files([
 ### auto-generated section `build intellij.ant.tests` start
 jvm_library(
   name = "ant-tests",
+  module_name = "intellij.ant.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

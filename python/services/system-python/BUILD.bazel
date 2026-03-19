@@ -78,6 +78,7 @@ resourcegroup(
 
 jvm_library(
   name = "python-community-services-systemPython-tests",
+  module_name = "intellij.python.community.services.systemPython.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["//python/services/shared"]

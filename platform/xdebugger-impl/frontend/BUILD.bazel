@@ -96,6 +96,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.debugger.impl.frontend.tests` start
 jvm_library(
   name = "debugger-impl-frontend-tests",
+  module_name = "intellij.platform.debugger.impl.frontend.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

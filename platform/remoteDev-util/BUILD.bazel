@@ -121,6 +121,7 @@ exports_files([
 ### auto-generated section `build intellij.remoteDev.util.tests` start
 jvm_library(
   name = "remoteDev-util-tests",
+  module_name = "intellij.remoteDev.util.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

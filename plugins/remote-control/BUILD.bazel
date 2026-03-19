@@ -73,6 +73,7 @@ exports_files([
 ### auto-generated section `build intellij.remoteControl.tests` start
 jvm_library(
   name = "remoteControl-tests",
+  module_name = "intellij.remoteControl.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

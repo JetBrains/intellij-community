@@ -107,6 +107,7 @@ resourcegroup(
 
 jvm_library(
   name = "sdk-tests",
+  module_name = "intellij.python.sdk.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["//platform/backend"]

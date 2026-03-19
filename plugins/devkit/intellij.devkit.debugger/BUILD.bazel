@@ -68,6 +68,7 @@ exports_files([
 ### auto-generated section `build intellij.devkit.debugger.tests` start
 jvm_library(
   name = "debugger-tests",
+  module_name = "intellij.devkit.debugger.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

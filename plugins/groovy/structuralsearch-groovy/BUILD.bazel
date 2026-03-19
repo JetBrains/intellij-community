@@ -67,6 +67,7 @@ exports_files([
 ### auto-generated section `build intellij.groovy.structuralSearch.tests` start
 jvm_library(
   name = "structuralSearch-tests",
+  module_name = "intellij.groovy.structuralSearch.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

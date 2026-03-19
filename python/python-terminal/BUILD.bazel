@@ -79,6 +79,7 @@ resourcegroup(
 
 jvm_library(
   name = "terminal-tests",
+  module_name = "intellij.python.terminal.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

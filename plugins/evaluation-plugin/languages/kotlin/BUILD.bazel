@@ -72,6 +72,7 @@ exports_files([
 ### auto-generated section `build intellij.evaluationPlugin.languages.kotlin.tests` start
 jvm_library(
   name = "evaluationPlugin-languages-kotlin-tests",
+  module_name = "intellij.evaluationPlugin.languages.kotlin.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"]

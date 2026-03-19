@@ -86,6 +86,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.compose.tests` start
 jvm_library(
   name = "compose-tests",
+  module_name = "intellij.platform.compose.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = [

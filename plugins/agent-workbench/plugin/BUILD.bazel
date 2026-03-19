@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "plugin",
+  module_name = "intellij.agent.workbench.plugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":plugin_resources"],
@@ -67,6 +68,7 @@ exports_files([
 ### auto-generated section `build intellij.agent.workbench.plugin.tests` start
 jvm_library(
   name = "agent-workbench-plugin-tests",
+  module_name = "intellij.agent.workbench.plugin.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -89,15 +91,16 @@ jvm_library(
 
 jvm_library(
   name = "agent-workbench-plugin-tests_test_lib",
-  module_name = "intellij.agent.workbench.plugin.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [
+    "//plugins/agent-workbench/plugin",
+    "//plugins/agent-workbench/plugin:plugin_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:junit5",
     "@lib//:junit5Suites",
-    "//plugins/agent-workbench/plugin",
-    "//plugins/agent-workbench/plugin:plugin_test_lib",
   ],
   runtime_deps = [
     ":agent-workbench-plugin-tests",

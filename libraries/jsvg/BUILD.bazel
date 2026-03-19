@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "jsvg",
+  module_name = "intellij.libraries.jsvg",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":jsvg_resources"],

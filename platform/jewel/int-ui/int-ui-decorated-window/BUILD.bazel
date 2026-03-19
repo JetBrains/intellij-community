@@ -22,6 +22,7 @@ resourcegroup(
 
 jvm_library(
   name = "jewel-intUi-decoratedWindow",
+  module_name = "intellij.platform.jewel.intUi.decoratedWindow",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":jewel-intUi-decoratedWindow_resources"],

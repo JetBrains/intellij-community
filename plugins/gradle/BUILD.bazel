@@ -179,6 +179,7 @@ exports_files([
 ### auto-generated section `build intellij.gradle.common` start
 jvm_library(
   name = "gradle-common",
+  module_name = "intellij.gradle.common",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["//plugins/gradle"],
@@ -216,6 +217,7 @@ resourcegroup(
 
 jvm_library(
   name = "gradle-tests",
+  module_name = "intellij.gradle.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["//platform/external-system-api/testFramework"],

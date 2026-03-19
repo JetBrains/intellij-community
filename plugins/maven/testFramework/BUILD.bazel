@@ -99,6 +99,7 @@ exports_files([
 ### auto-generated section `build intellij.maven.testFramework.tests` start
 jvm_library(
   name = "testFramework-tests",
+  module_name = "intellij.maven.testFramework.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

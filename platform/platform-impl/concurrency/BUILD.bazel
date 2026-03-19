@@ -63,6 +63,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.ide.concurrency.tests` start
 jvm_library(
   name = "ide-concurrency-tests",
+  module_name = "intellij.platform.ide.concurrency.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

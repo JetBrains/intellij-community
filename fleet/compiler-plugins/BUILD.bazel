@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "compiler-plugins",
+  module_name = "fleet.compiler.plugins",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":compiler-plugins_resources"],

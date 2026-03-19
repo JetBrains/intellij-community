@@ -45,6 +45,7 @@ exports_files([
 ### auto-generated section `build intellij.kotlin.gradle.java.tests` start
 jvm_library(
   name = "kotlin-gradle-java-tests",
+  module_name = "intellij.kotlin.gradle.java.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

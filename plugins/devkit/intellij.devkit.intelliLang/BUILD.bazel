@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "intelliLang",
+  module_name = "intellij.devkit.intelliLang",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":intelliLang_resources"]

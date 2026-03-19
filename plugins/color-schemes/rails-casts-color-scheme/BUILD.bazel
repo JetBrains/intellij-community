@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "color-scheme-rails_casts",
+  module_name = "intellij.color.scheme.rails_casts",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":color-scheme-rails_casts_resources"]

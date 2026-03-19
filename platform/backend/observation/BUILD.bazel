@@ -38,6 +38,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.backend.observation.tests` start
 jvm_library(
   name = "observation-tests",
+  module_name = "intellij.platform.backend.observation.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

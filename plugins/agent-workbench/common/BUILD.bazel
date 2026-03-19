@@ -46,6 +46,7 @@ exports_files([
 ### auto-generated section `build intellij.agent.workbench.common.tests` start
 jvm_library(
   name = "agent-workbench-common-tests",
+  module_name = "intellij.agent.workbench.common.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

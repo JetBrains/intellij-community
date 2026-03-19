@@ -71,6 +71,7 @@ exports_files([
 ### auto-generated section `build intellij.java.ide.customization.tests` start
 jvm_library(
   name = "ide-customization-tests",
+  module_name = "intellij.java.ide.customization.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "kryo5",
+  module_name = "intellij.libraries.kryo5",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":kryo5_resources"],

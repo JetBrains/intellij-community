@@ -106,6 +106,7 @@ resourcegroup(
 
 jvm_library(
   name = "featuresTrainer-tests",
+  module_name = "intellij.python.featuresTrainer.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

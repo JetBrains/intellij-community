@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "descriptions",
+  module_name = "intellij.kotlin.codeInsight.descriptions",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":descriptions_resources"],

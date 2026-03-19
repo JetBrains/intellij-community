@@ -85,6 +85,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "kotlin-code-insight-live-templates-k1-tests",
+  module_name = "kotlin.code-insight.live-templates.k1.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

@@ -153,6 +153,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "kotlin-gradle-scripting-tests",
+  module_name = "intellij.kotlin.gradle.scripting.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

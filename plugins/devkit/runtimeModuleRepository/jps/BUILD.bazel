@@ -68,6 +68,7 @@ exports_files([
 ### auto-generated section `build intellij.devkit.runtimeModuleRepository.jps.tests` start
 jvm_library(
   name = "devkit-runtimeModuleRepository-jps-tests",
+  module_name = "intellij.devkit.runtimeModuleRepository.jps.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

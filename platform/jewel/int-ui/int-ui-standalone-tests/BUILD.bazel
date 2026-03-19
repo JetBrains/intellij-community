@@ -22,6 +22,7 @@ resourcegroup(
 
 jvm_library(
   name = "jewel-intUi-standalone-tests",
+  module_name = "intellij.platform.jewel.intUi.standalone.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

@@ -115,6 +115,7 @@ exports_files([
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.core.tests` start
 jvm_library(
   name = "searchEverywhereMl-ranking-core-tests",
+  module_name = "intellij.searchEverywhereMl.ranking.core.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["//platform/statistics"]

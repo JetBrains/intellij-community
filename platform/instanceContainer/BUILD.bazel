@@ -39,6 +39,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.instanceContainer.tests` start
 jvm_library(
   name = "instanceContainer-tests",
+  module_name = "intellij.platform.instanceContainer.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

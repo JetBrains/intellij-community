@@ -82,6 +82,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.tests` start
 jvm_library(
   name = "ide-nonModalWelcomeScreen-tests",
+  module_name = "intellij.platform.ide.nonModalWelcomeScreen.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   plugins = ["@lib//:compose-plugin"]

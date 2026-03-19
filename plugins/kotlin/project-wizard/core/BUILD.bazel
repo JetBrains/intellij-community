@@ -84,6 +84,7 @@ exports_files([
 ### auto-generated section `build intellij.kotlin.projectWizard.core.tests` start
 jvm_library(
   name = "kotlin-projectWizard-core-tests",
+  module_name = "intellij.kotlin.projectWizard.core.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "blockmap",
+  module_name = "intellij.libraries.blockmap",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":blockmap_resources"],

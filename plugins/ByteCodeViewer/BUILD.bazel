@@ -84,6 +84,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "java-byteCodeViewer-tests",
+  module_name = "intellij.java.byteCodeViewer.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

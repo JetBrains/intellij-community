@@ -55,6 +55,7 @@ exports_files([
 ### auto-generated section `build intellij.idea.tools.launch.tests` start
 jvm_library(
   name = "idea-tools-launch-tests",
+  module_name = "intellij.idea.tools.launch.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

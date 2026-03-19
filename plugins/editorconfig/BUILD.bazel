@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "editorconfig-plugin",
+  module_name = "intellij.editorconfig.plugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":editorconfig-plugin_resources"]
@@ -32,6 +33,7 @@ exports_files([
 ### auto-generated section `build intellij.editorconfig.plugin.main` start
 jvm_library(
   name = "editorconfig-plugin-main",
+  module_name = "intellij.editorconfig.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

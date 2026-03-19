@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "min",
+  module_name = "intellij.platform.customization.min",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":min_resources"]

@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "slf4j",
+  module_name = "intellij.libraries.kotlinx.coroutines.slf4j",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":slf4j_resources"],

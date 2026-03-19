@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "toml",
+  module_name = "intellij.toml",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":toml_resources"]

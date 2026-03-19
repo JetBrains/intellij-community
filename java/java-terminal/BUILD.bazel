@@ -57,6 +57,7 @@ exports_files([
 ### auto-generated section `build intellij.java.terminal.tests` start
 jvm_library(
   name = "terminal-tests",
+  module_name = "intellij.java.terminal.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["@lib//:kotlin-stdlib"]

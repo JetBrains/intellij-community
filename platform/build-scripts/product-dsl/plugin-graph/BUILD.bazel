@@ -64,6 +64,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "pluginGraph-tests",
+  module_name = "intellij.platform.pluginGraph.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

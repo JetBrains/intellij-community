@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "keymap-eclipse",
+  module_name = "intellij.keymap.eclipse",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":keymap-eclipse_resources"]

@@ -93,6 +93,7 @@ resourcegroup(
 
 jvm_library(
   name = "pyproject-tests",
+  module_name = "intellij.python.pyproject.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["@lib//:tuweni-toml"]

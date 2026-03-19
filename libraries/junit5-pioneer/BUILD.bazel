@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "junit5-pioneer",
+  module_name = "intellij.libraries.junit5.pioneer",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":junit5-pioneer_resources"],

@@ -40,6 +40,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.testFramework.junit5.jimfs.tests` start
 jvm_library(
   name = "junit5-jimfs-tests",
+  module_name = "intellij.platform.testFramework.junit5.jimfs.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

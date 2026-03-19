@@ -100,6 +100,7 @@ resourcegroup(
 
 jvm_library(
   name = "whatsNew-tests",
+  module_name = "intellij.platform.whatsNew.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

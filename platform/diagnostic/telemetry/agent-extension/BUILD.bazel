@@ -50,6 +50,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.agent.extension.tests` start
 jvm_library(
   name = "diagnostic-telemetry-agent-extension-tests",
+  module_name = "intellij.platform.diagnostic.telemetry.agent.extension.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

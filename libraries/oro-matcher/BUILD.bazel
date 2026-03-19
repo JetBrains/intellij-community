@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "oro-matcher",
+  module_name = "intellij.libraries.oro.matcher",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":oro-matcher_resources"],

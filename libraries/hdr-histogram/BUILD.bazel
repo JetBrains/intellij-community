@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "hdr-histogram",
+  module_name = "intellij.libraries.hdr.histogram",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":hdr-histogram_resources"],

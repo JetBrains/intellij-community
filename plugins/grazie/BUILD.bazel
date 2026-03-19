@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "grazie",
+  module_name = "intellij.grazie",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":grazie_resources"],

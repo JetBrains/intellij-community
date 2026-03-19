@@ -71,6 +71,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.externalProcessAuthHelper.tests` start
 jvm_library(
   name = "externalProcessAuthHelper-tests",
+  module_name = "intellij.platform.externalProcessAuthHelper.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["//platform/built-in-server:builtInServer-impl"]

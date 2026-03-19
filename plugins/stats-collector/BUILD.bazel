@@ -67,6 +67,7 @@ exports_files([
 ### auto-generated section `build intellij.statsCollector.tests` start
 jvm_library(
   name = "statsCollector-tests",
+  module_name = "intellij.statsCollector.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["//platform/core-ui"]

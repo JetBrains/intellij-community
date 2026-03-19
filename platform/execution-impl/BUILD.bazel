@@ -150,6 +150,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.execution.tests` start
 jvm_library(
   name = "execution-tests",
+  module_name = "intellij.platform.execution.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

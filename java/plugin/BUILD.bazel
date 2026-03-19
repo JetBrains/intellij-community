@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "plugin",
+  module_name = "intellij.java.plugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":plugin_resources"],

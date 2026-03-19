@@ -83,6 +83,7 @@ exports_files([
 ### auto-generated section `build intellij.java.rareRefactorings.tests` start
 jvm_library(
   name = "java-rareRefactorings-tests",
+  module_name = "intellij.java.rareRefactorings.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

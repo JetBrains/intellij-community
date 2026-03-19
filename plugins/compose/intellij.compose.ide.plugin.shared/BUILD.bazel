@@ -99,6 +99,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "ide-plugin-shared-tests",
+  module_name = "intellij.compose.ide.plugin.shared.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

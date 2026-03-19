@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "junit5-launcher",
+  module_name = "intellij.libraries.junit5.launcher",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":junit5-launcher_resources"],

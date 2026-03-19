@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "customization.shared",
+  module_name = "intellij.pycharm.community.customization.shared",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":customization.shared_resources"],

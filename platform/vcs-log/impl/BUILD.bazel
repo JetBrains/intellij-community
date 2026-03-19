@@ -132,6 +132,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.vcs.log.impl.tests` start
 jvm_library(
   name = "vcs-log-impl-tests",
+  module_name = "intellij.platform.vcs.log.impl.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

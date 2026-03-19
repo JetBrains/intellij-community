@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "tests",
+  module_name = "intellij.kotlin.gradle.gradle.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["@lib//:kotlin-tooling-core"],

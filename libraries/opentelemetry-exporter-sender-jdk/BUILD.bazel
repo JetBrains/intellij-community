@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "opentelemetry-exporter-sender-jdk",
+  module_name = "intellij.libraries.opentelemetry.exporter.sender.jdk",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":opentelemetry-exporter-sender-jdk_resources"],

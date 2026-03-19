@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "coverage-agent",
+  module_name = "intellij.platform.coverage.agent",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":coverage-agent_resources"],

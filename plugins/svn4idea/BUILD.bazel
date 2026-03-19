@@ -106,6 +106,7 @@ exports_files([
 ### auto-generated section `build intellij.vcs.svn.tests` start
 jvm_library(
   name = "vcs-svn-tests",
+  module_name = "intellij.vcs.svn.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

@@ -137,6 +137,7 @@ exports_files([
 ### auto-generated section `build intellij.settingsSync.core.tests` start
 jvm_library(
   name = "settingsSync-core-tests",
+  module_name = "intellij.settingsSync.core.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"]

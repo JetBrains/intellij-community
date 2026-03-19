@@ -15,6 +15,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "testFramework",
+  module_name = "kotlin.fir.testFramework",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

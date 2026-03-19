@@ -81,6 +81,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "kotlin-codeInsight-liveTemplates-tests",
+  module_name = "intellij.kotlin.codeInsight.liveTemplates.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

@@ -98,6 +98,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.credentialStore.impl.tests` start
 jvm_library(
   name = "credentialStore-impl-tests",
+  module_name = "intellij.platform.credentialStore.impl.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

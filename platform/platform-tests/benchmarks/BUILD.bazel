@@ -11,6 +11,7 @@ kt_javac_options(
 
 jvm_library(
   name = "benchmarks",
+  module_name = "intellij.platform.benchmarks",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

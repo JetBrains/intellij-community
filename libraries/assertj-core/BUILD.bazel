@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "assertj-core",
+  module_name = "intellij.libraries.assertj.core",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":assertj-core_resources"],

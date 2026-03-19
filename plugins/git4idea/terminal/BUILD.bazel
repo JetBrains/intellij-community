@@ -67,6 +67,7 @@ exports_files([
 ### auto-generated section `build intellij.vcs.git.terminal.tests` start
 jvm_library(
   name = "vcs-git-terminal-tests",
+  module_name = "intellij.vcs.git.terminal.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

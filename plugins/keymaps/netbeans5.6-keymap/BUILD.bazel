@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "keymap-netbeans",
+  module_name = "intellij.keymap.netbeans",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":keymap-netbeans_resources"]

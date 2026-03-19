@@ -63,6 +63,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.testFramework.selfContainedProjects.tests` start
 jvm_library(
   name = "selfContainedProjects-tests",
+  module_name = "intellij.platform.testFramework.selfContainedProjects.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

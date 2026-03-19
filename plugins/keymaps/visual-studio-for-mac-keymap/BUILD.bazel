@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "keymap-visualStudioForMac",
+  module_name = "intellij.keymap.visualStudioForMac",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":keymap-visualStudioForMac_resources"]

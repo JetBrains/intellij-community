@@ -19,6 +19,7 @@ resourcegroup(
 
 jvm_library(
   name = "repository-search",
+  module_name = "intellij.repository.search",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":repository-search_resources"],

@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "community-junit5Tests-framework",
+  module_name = "intellij.python.community.junit5Tests.framework",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["//libraries/system-stubs-jupiter"],

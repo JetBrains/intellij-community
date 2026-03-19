@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "libraries-jackson-dataformat-yaml",
+  module_name = "intellij.libraries.jackson.dataformat.yaml",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":libraries-jackson-dataformat-yaml_resources"],

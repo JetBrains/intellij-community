@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "kotlin-gradle-tooling",
+  module_name = "intellij.kotlin.gradle.tooling",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":kotlin-gradle-tooling_resources"],

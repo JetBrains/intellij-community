@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "backend",
+  module_name = "intellij.platform.backend",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":backend_resources"]

@@ -65,6 +65,7 @@ resourcegroup(
 
 jvm_library(
   name = "pycharm-community-customization",
+  module_name = "intellij.pycharm.community.customization",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":pycharm-community-customization_resources"],
@@ -101,6 +102,7 @@ exports_files([
 ### auto-generated section `build intellij.pycharm.community.main` start
 jvm_library(
   name = "pycharm-community-main",
+  module_name = "intellij.pycharm.community.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -217,6 +219,7 @@ exports_files([
 ### auto-generated section `build intellij.python.commonTests` start
 jvm_library(
   name = "python-commonTests",
+  module_name = "intellij.python.commonTests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["//platform/util"]
@@ -601,6 +604,7 @@ resourcegroup(
 
 jvm_library(
   name = "python-community-impl-tests",
+  module_name = "intellij.python.community.impl.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = [
@@ -891,6 +895,7 @@ exports_files([
 ### auto-generated section `build intellij.python.community.plugin.main` start
 jvm_library(
   name = "python-community-plugin-main",
+  module_name = "intellij.python.community.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -931,6 +936,7 @@ exports_files([
 ### auto-generated section `build intellij.python.community.plugin.modules` start
 jvm_library(
   name = "python-community-plugin-modules",
+  module_name = "intellij.python.community.plugin.modules",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -975,6 +981,7 @@ resourcegroup(
 
 jvm_library(
   name = "python-community-tests",
+  module_name = "intellij.python.community.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -1234,6 +1241,7 @@ resourcegroup(
 
 jvm_library(
   name = "python-helpers",
+  module_name = "intellij.python.helpers",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":python-helpers_resources"]
@@ -1269,6 +1277,7 @@ resourcegroup(
 
 jvm_library(
   name = "python-helpers-tests",
+  module_name = "intellij.python.helpers.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

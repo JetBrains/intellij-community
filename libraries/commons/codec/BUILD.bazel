@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "codec",
+  module_name = "intellij.libraries.commons.codec",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":codec_resources"],

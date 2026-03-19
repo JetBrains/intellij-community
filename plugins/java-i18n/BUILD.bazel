@@ -137,6 +137,7 @@ exports_files([
 ### auto-generated section `build intellij.java.i18n.tests` start
 jvm_library(
   name = "java-i18n-tests",
+  module_name = "intellij.java.i18n.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = [

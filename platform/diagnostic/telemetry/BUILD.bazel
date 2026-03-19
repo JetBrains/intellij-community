@@ -67,6 +67,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.tests` start
 jvm_library(
   name = "telemetry-tests",
+  module_name = "intellij.platform.diagnostic.telemetry.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["//platform/diagnostic"]

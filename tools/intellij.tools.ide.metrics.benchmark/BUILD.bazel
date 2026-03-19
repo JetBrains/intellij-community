@@ -72,6 +72,7 @@ resourcegroup(
 
 jvm_library(
   name = "ide-metrics-benchmark-tests",
+  module_name = "intellij.tools.ide.metrics.benchmark.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

@@ -108,6 +108,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.objectSerializer.tests` start
 jvm_library(
   name = "objectSerializer-tests",
+  module_name = "intellij.platform.objectSerializer.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

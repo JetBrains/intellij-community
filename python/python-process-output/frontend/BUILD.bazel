@@ -128,6 +128,7 @@ resourcegroup(
 
 jvm_library(
   name = "python-processOutput-frontend-tests",
+  module_name = "intellij.python.processOutput.frontend.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   plugins = ["@lib//:compose-plugin"]

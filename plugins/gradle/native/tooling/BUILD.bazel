@@ -59,6 +59,7 @@ exports_files([
 ### auto-generated section `build intellij.gradle.native.tooling.tests` start
 jvm_library(
   name = "gradle-native-tooling-tests",
+  module_name = "intellij.gradle.native.tooling.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

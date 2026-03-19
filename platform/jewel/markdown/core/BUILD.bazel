@@ -93,6 +93,7 @@ resourcegroup(
 
 jvm_library(
   name = "jewel-markdown-core-tests",
+  module_name = "intellij.platform.jewel.markdown.core.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["@lib//:platform-jewel-markdown-core-tests-org-commonmark-commonmark"],

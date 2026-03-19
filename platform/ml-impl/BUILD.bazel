@@ -87,6 +87,7 @@ resourcegroup(
 
 jvm_library(
   name = "ml-impl-tests",
+  module_name = "intellij.platform.ml.impl.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["@lib//:ngram-slp"],

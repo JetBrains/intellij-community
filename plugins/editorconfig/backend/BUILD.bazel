@@ -115,6 +115,7 @@ exports_files([
 ### auto-generated section `build intellij.editorconfig.backend.tests` start
 jvm_library(
   name = "backend-tests",
+  module_name = "intellij.editorconfig.backend.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

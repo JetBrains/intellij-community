@@ -68,6 +68,7 @@ exports_files([
 ### auto-generated section `build intellij.agent.workbench.prompt.vcs.tests` start
 jvm_library(
   name = "agent-workbench-prompt-vcs-tests",
+  module_name = "intellij.agent.workbench.prompt.vcs.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

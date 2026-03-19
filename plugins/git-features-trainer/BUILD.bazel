@@ -81,6 +81,7 @@ exports_files([
 ### auto-generated section `build intellij.vcs.git.featuresTrainer.tests` start
 jvm_library(
   name = "vcs-git-featuresTrainer-tests",
+  module_name = "intellij.vcs.git.featuresTrainer.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

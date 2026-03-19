@@ -120,6 +120,7 @@ resourcegroup(
 
 jvm_library(
   name = "xpath-tests",
+  module_name = "intellij.xpath.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["//xml/dom-impl"]

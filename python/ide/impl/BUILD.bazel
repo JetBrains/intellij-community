@@ -166,6 +166,7 @@ resourcegroup(
 
 jvm_library(
   name = "pycharm-community-ide-impl-tests",
+  module_name = "intellij.pycharm.community.ide.impl.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["//python/python-features-trainer:featuresTrainer"],

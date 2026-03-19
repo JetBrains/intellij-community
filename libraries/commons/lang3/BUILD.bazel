@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "lang3",
+  module_name = "intellij.libraries.commons.lang3",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":lang3_resources"],

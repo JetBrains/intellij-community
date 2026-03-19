@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "actions",
+  module_name = "intellij.platform.vcs.impl.lang.actions",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":actions_resources"],

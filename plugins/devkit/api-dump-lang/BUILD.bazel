@@ -71,6 +71,7 @@ exports_files([
 ### auto-generated section `build intellij.devkit.apiDump.lang.tests` start
 jvm_library(
   name = "apiDump-lang-tests",
+  module_name = "intellij.devkit.apiDump.lang.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

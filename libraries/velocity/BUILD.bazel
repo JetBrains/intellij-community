@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "velocity",
+  module_name = "intellij.libraries.velocity",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":velocity_resources"],

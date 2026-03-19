@@ -91,6 +91,7 @@ exports_files([
 ### auto-generated section `build intellij.kotlin.onboarding.tests` start
 jvm_library(
   name = "onboarding-tests",
+  module_name = "intellij.kotlin.onboarding.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

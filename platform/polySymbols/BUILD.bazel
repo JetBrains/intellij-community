@@ -157,6 +157,7 @@ resourcegroup(
 
 jvm_library(
   name = "polySymbols-tests",
+  module_name = "intellij.platform.polySymbols.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

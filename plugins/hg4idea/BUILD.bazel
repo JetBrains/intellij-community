@@ -101,6 +101,7 @@ exports_files([
 ### auto-generated section `build intellij.vcs.hg.tests` start
 jvm_library(
   name = "vcs-hg-tests",
+  module_name = "intellij.vcs.hg.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "keymap-resharper",
+  module_name = "intellij.keymap.resharper",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":keymap-resharper_resources"]

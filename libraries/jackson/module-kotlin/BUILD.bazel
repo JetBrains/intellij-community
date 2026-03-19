@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "libraries-jackson-module-kotlin",
+  module_name = "intellij.libraries.jackson.module.kotlin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":libraries-jackson-module-kotlin_resources"],

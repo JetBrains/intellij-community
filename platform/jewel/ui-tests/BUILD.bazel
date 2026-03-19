@@ -21,6 +21,7 @@ resourcegroup(
 
 jvm_library(
   name = "ui-tests",
+  module_name = "intellij.platform.jewel.uiTests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   plugins = ["@lib//:compose-plugin"]

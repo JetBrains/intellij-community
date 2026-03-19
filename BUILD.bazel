@@ -115,6 +115,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "main",
+  module_name = "intellij.idea.community.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -485,6 +486,7 @@ exports_files([
 ### auto-generated section `build intellij.idea.community.main.android` start
 jvm_library(
   name = "main-android",
+  module_name = "intellij.idea.community.main.android",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -529,6 +531,7 @@ exports_files([
 ### auto-generated section `build intellij.idea.community.main.tests` start
 jvm_library(
   name = "main-tests",
+  module_name = "intellij.idea.community.main.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

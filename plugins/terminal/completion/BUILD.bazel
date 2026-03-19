@@ -39,6 +39,7 @@ exports_files([
 ### auto-generated section `build intellij.terminal.completion.tests` start
 jvm_library(
   name = "completion-tests",
+  module_name = "intellij.terminal.completion.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["@lib//:terminal-completion-tests-terminal-completion-spec"]

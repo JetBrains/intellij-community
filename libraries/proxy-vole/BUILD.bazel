@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "proxy-vole",
+  module_name = "intellij.libraries.proxy.vole",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":proxy-vole_resources"],

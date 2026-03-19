@@ -82,6 +82,7 @@ exports_files([
 ### auto-generated section `build intellij.agent.workbench.prompt.tests` start
 jvm_library(
   name = "agent-workbench-prompt-tests",
+  module_name = "intellij.agent.workbench.prompt.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

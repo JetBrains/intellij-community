@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "keymap-visualStudio2022",
+  module_name = "intellij.keymap.visualStudio2022",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":keymap-visualStudio2022_resources"]

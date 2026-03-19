@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "cio",
+  module_name = "fleet.ktor.client.cio",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":cio_resources"],

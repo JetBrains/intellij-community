@@ -80,6 +80,7 @@ exports_files([
 ### auto-generated section `build intellij.java.decompiler.tests` start
 jvm_library(
   name = "java-decompiler-tests",
+  module_name = "intellij.java.decompiler.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["//plugins/java-decompiler/engine"]

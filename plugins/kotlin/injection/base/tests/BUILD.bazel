@@ -9,6 +9,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "tests",
+  module_name = "kotlin.base.injection.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["//platform/editor-ui-ex:editor-ex"]

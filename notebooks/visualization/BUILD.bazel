@@ -103,6 +103,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "visualization-tests",
+  module_name = "intellij.notebooks.visualization.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

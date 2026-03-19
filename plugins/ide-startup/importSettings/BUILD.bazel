@@ -108,6 +108,7 @@ exports_files([
 ### auto-generated section `build intellij.ide.startup.importSettings.tests` start
 jvm_library(
   name = "ide-startup-importSettings-tests",
+  module_name = "intellij.ide.startup.importSettings.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

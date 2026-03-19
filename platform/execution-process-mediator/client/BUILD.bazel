@@ -67,6 +67,7 @@ exports_files([
 ### auto-generated section `build intellij.execution.process.mediator.client.tests` start
 jvm_library(
   name = "execution-process-mediator-client-tests",
+  module_name = "intellij.execution.process.mediator.client.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

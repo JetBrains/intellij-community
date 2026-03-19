@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "codeOptimizer",
+  module_name = "intellij.platform.buildScripts.codeOptimizer",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

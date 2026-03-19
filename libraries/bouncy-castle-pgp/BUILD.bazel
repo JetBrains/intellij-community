@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "bouncy-castle-pgp",
+  module_name = "intellij.libraries.bouncy.castle.pgp",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":bouncy-castle-pgp_resources"],

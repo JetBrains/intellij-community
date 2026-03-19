@@ -128,6 +128,7 @@ exports_files([
 ### auto-generated section `build intellij.compose.ide.plugin.resources.tests` start
 jvm_library(
   name = "ide-plugin-resources-tests",
+  module_name = "intellij.compose.ide.plugin.resources.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

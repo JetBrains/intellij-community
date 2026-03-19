@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "annotations",
+  module_name = "intellij.libraries.jackson.annotations",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":annotations_resources"],

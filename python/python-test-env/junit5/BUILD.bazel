@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "junit5",
+  module_name = "intellij.python.test.env.junit5",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["//python/python-test-env/core"],

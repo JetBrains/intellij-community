@@ -76,6 +76,7 @@ resourcegroup(
 
 jvm_library(
   name = "kotlin-projectWizard-compose-tests",
+  module_name = "intellij.kotlin.projectWizard.compose.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

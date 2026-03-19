@@ -124,6 +124,7 @@ resourcegroup(
 
 jvm_library(
   name = "repository-search-common-tests",
+  module_name = "intellij.repository.search.common.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["@lib//:package-search-api-client"]

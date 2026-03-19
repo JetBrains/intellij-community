@@ -108,6 +108,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.statistics.tests` start
 jvm_library(
   name = "statistics-tests",
+  module_name = "intellij.platform.statistics.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = [

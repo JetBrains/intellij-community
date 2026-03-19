@@ -43,6 +43,7 @@ exports_files([
 ### auto-generated section `build intellij.java.decompiler.engine.tests` start
 jvm_library(
   name = "java-decompiler-engine-tests",
+  module_name = "intellij.java.decompiler.engine.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

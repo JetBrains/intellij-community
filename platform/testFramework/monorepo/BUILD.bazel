@@ -66,6 +66,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.testFramework.monorepo.tests` start
 jvm_library(
   name = "monorepo-tests",
+  module_name = "intellij.platform.testFramework.monorepo.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

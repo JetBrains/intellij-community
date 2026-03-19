@@ -86,6 +86,7 @@ exports_files([
 ### auto-generated section `build intellij.java.featuresTrainer.tests` start
 jvm_library(
   name = "featuresTrainer-tests",
+  module_name = "intellij.java.featuresTrainer.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

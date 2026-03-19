@@ -82,6 +82,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.vcs.impl.frontend.tests` start
 jvm_library(
   name = "vcs-impl-frontend-tests",
+  module_name = "intellij.platform.vcs.impl.frontend.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

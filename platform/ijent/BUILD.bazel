@@ -55,6 +55,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.ijent.tests` start
 jvm_library(
   name = "ijent-tests",
+  module_name = "intellij.platform.ijent.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["//platform/eel"]

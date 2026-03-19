@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "color-scheme-twilight",
+  module_name = "intellij.color.scheme.twilight",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":color-scheme-twilight_resources"]

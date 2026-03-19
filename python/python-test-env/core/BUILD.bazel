@@ -15,6 +15,7 @@ resourcegroup(
 
 jvm_library(
   name = "core",
+  module_name = "intellij.python.test.env.core",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

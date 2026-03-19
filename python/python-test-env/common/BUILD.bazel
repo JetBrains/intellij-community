@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "common",
+  module_name = "intellij.python.test.env.common",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = [

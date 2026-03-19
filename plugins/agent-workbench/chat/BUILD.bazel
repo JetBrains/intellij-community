@@ -78,6 +78,7 @@ exports_files([
 ### auto-generated section `build intellij.agent.workbench.chat.tests` start
 jvm_library(
   name = "agent-workbench-chat-tests",
+  module_name = "intellij.agent.workbench.chat.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

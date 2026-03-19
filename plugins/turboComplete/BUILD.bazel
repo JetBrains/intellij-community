@@ -64,6 +64,7 @@ exports_files([
 ### auto-generated section `build intellij.turboComplete.tests` start
 jvm_library(
   name = "turboComplete-tests",
+  module_name = "intellij.turboComplete.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

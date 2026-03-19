@@ -94,6 +94,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.coverage.tests` start
 jvm_library(
   name = "coverage-tests",
+  module_name = "intellij.platform.coverage.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

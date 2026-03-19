@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "libraries-jackson3",
+  module_name = "intellij.libraries.jackson3",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":libraries-jackson3_resources"],

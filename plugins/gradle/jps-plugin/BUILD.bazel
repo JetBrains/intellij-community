@@ -65,6 +65,7 @@ exports_files([
 ### auto-generated section `build intellij.gradle.jps.tests` start
 jvm_library(
   name = "jps-tests",
+  module_name = "intellij.gradle.jps.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

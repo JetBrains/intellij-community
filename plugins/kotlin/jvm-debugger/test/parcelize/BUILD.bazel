@@ -21,6 +21,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "parcelize",
+  module_name = "intellij.kotlin.jvm.debugger.test.parcelize",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["//plugins/kotlin/plugin/k2"]

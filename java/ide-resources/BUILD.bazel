@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "ide-resources",
+  module_name = "intellij.java.ide.resources",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":ide-resources_resources"]

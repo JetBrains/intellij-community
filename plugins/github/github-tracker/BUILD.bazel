@@ -61,6 +61,7 @@ exports_files([
 ### auto-generated section `build intellij.vcs.github.tracker.tests` start
 jvm_library(
   name = "vcs-github-tracker-tests",
+  module_name = "intellij.vcs.github.tracker.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

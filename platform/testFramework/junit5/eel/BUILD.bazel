@@ -74,6 +74,7 @@ resourcegroup(
 
 jvm_library(
   name = "testFramework-junit5-eel-tests",
+  module_name = "intellij.platform.testFramework.junit5.eel.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["//platform/testFramework/junit5"]

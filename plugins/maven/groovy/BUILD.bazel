@@ -84,6 +84,7 @@ exports_files([
 ### auto-generated section `build intellij.maven.groovy.tests` start
 jvm_library(
   name = "groovy-tests",
+  module_name = "intellij.maven.groovy.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

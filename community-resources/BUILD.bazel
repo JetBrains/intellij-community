@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "customization",
+  module_name = "intellij.idea.community.customization",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":customization_resources"],

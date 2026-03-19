@@ -57,6 +57,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.completion.common.tests` start
 jvm_library(
   name = "common-tests",
+  module_name = "intellij.platform.completion.common.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

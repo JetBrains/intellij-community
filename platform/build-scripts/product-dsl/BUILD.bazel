@@ -88,6 +88,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "buildScripts-productDsl-tests",
+  module_name = "intellij.platform.buildScripts.productDsl.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )

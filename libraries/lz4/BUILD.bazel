@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "lz4",
+  module_name = "intellij.libraries.lz4",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":lz4_resources"],

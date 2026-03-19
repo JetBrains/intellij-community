@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "color-scheme-cobalt",
+  module_name = "intellij.color.scheme.cobalt",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":color-scheme-cobalt_resources"]

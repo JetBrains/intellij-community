@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "ai.grazie.spell.gec.engine.local",
+  module_name = "intellij.libraries.ai.grazie.spell.gec.engine.local",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":ai.grazie.spell.gec.engine.local_resources"],

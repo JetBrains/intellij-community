@@ -36,6 +36,7 @@ exports_files([
 ### auto-generated section `build intellij.platform.eel.codegen` start
 jvm_library(
   name = "eel-codegen",
+  module_name = "intellij.platform.eel.codegen",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -119,6 +120,7 @@ jps_test(
 ### auto-generated section `build intellij.platform.eel.tests` start
 jvm_library(
   name = "eel-tests",
+  module_name = "intellij.platform.eel.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["@lib//:kotlin-stdlib"]

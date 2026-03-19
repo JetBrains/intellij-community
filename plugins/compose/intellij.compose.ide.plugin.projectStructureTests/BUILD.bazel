@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "ide-plugin-projectStructureTests",
+  module_name = "intellij.compose.ide.plugin.projectStructureTests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
