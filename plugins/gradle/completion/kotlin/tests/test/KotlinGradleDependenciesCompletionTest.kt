@@ -1,8 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.kotlin.tests.completion
+package com.intellij.gradle.completion.kotlin
 
 import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.gradle.completion.kotlin.KotlinGradleScriptCompletionContributor
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
