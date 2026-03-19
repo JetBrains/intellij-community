@@ -19,6 +19,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointListener
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointItem
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
@@ -137,17 +138,9 @@ private class MonolithBreakpointManager(val breakpointManager: XBreakpointManage
     breakpointManager.rememberRemovedBreakpoint(breakpoint.breakpoint)
   }
 
-  override fun findBreakpointAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): XLineBreakpointProxy? {
-    val breakpoint = breakpointManager.findBreakpointAtLine((type as MonolithLineBreakpointTypeProxy).breakpointType, file, line)
-    if (breakpoint is XLineBreakpointImpl<*>) {
-      return breakpoint.asProxy()
-    }
-    return null
-  }
-
-  override fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): List<XLineBreakpointProxy> {
+  override fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int, placement: XLineBreakpointPlacement): List<XLineBreakpointProxy> {
     val breakpointType = (type as MonolithLineBreakpointTypeProxy).breakpointType
-    return breakpointManager.findBreakpointsAtLine(breakpointType, file, line)
+    return breakpointManager.findBreakpointsAtLine(breakpointType, file, line, placement)
       .filterIsInstance<XLineBreakpointImpl<*>>()
       .map { it.asProxy() }
   }

@@ -38,8 +38,6 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
   fun isDefaultBreakpoint(): Boolean
   fun getSuspendPolicy(): SuspendPolicy
   fun setSuspendPolicy(suspendPolicy: SuspendPolicy)
-  @ApiStatus.Internal
-  fun supportsInterLinePlacement(): Boolean
 
   fun getTimestamp(): Long
 

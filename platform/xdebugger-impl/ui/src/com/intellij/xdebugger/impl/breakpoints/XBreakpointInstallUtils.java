@@ -25,6 +25,7 @@ import com.intellij.util.ModalityUiUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement;
 import com.intellij.xdebugger.impl.FrontendXLineBreakpointVariant;
 import com.intellij.xdebugger.impl.FrontendXLineBreakpointVariantKt;
 import com.intellij.xdebugger.impl.VariantChoiceData;
@@ -64,7 +65,7 @@ public final class XBreakpointInstallUtils {
     boolean isLogging,
     @Nullable String logExpression
   ) {
-    var breakpointInfo = new XLineBreakpointInstallationInfo(types, position, temporary, isLogging, logExpression, canRemove);
+    var breakpointInfo = new XLineBreakpointInstallationInfo(types, position, XLineBreakpointPlacement.ON_LINE, temporary, isLogging, logExpression, canRemove);
     return toggleAndReturnLineBreakpointProxy(project, editor, breakpointInfo, selectVariantByPositionColumn);
   }
 
@@ -92,7 +93,7 @@ public final class XBreakpointInstallUtils {
     var breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project);
 
     for (XLineBreakpointTypeProxy type : breakpointInfo.getTypes()) {
-      XLineBreakpointProxy breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
+      XLineBreakpointProxy breakpoint = breakpointManager.findBreakpointAtLine(type, file, line, breakpointInfo.getPlacement());
       if (breakpoint != null) {
         return XBreakpointUIUtil.removeBreakpointIfPossible(breakpointInfo, breakpoint).thenApply(v -> null);
       }
@@ -101,7 +102,7 @@ public final class XBreakpointInstallUtils {
       assert !variantChoice.getVariants().isEmpty();
       ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {
         for (XLineBreakpointTypeProxy type : breakpointInfo.getTypes()) {
-          if (breakpointManager.findBreakpointAtLine(type, file, line) != null) {
+          if (breakpointManager.findBreakpointAtLine(type, file, line, breakpointInfo.getPlacement()) != null) {
             variantChoice.breakpointRemoved();
             return;
           }

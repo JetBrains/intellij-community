@@ -168,7 +168,9 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   /**
-   * Return {@code true} if breakpoints of this type can be rendered between editor lines.
+   * Return {@code true} if new breakpoints of this type may use {@link XLineBreakpointPlacement#INTER_LINE}.
+   * When this returns {@code false}, inter-line creation is disabled.
+   * The actual placement of a created breakpoint is stored on the breakpoint entity itself.
    */
   @ApiStatus.Internal
   public boolean supportsInterLinePlacement() {

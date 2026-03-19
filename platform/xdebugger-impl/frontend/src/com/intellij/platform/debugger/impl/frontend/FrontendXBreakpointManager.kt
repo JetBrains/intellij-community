@@ -30,6 +30,7 @@ import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointItem
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
@@ -220,7 +221,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
 
   private suspend fun canToggleLightBreakpoint(editor: Editor, info: XLineBreakpointInstallationInfo): Boolean {
     val type = info.types.singleOrNull() ?: return false
-    if (findBreakpointsAtLine(type, info.position.file, info.position.line).isNotEmpty()) {
+    if (findBreakpointsAtLine(type, info.position.file, info.position.line, info.placement).isNotEmpty()) {
       return false
     }
     if (info.isTemporary || info.isLogging) {
@@ -240,7 +241,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     if (editor == null || !canToggleLightBreakpoint(editor, info)) {
       return block()
     }
-    val lightBreakpointPosition = LightBreakpointPosition(info.position.file, info.position.line)
+    val lightBreakpointPosition = LightBreakpointPosition(info.position.file, info.position.line, info.placement)
     val type = info.types.first()
     return coroutineScope {
       val lightBreakpoint = createLightBreakpointIfPossible(lightBreakpointPosition, type, info, editor)
@@ -399,14 +400,15 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     }
   }
 
-  override fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): List<XLineBreakpointProxy> {
+  override fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int, placement: XLineBreakpointPlacement): List<XLineBreakpointProxy> {
     return breakpoints.values.filterIsInstance<XLineBreakpointProxy>().filter {
-      it.type == type && it.getFile()?.url == file.url && it.getLine() == line
+      it.type == type && it.getFile()?.url == file.url && it.getLine() == line &&
+      it.getPlacement() == placement
     }
   }
 
 
-  private data class LightBreakpointPosition(val file: VirtualFile, val line: Int)
+  private data class LightBreakpointPosition(val file: VirtualFile, val line: Int, val placement: XLineBreakpointPlacement)
 
   private fun FrontendXLineBreakpointProxy.registerInManager(updateUI: Boolean) {
     while (true) {

@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.editor.GutterMarkPreprocessor;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import com.intellij.util.containers.ContainerUtil;
@@ -16,11 +17,12 @@ import static com.intellij.xdebugger.XDebuggerUtil.INLINE_BREAKPOINTS_KEY;
 final class BreakpointGutterIconMerge implements GutterMarkPreprocessor {
   @Override
   public @NotNull List<GutterMark> processMarkers(@NotNull List<GutterMark> marks) {
-    // In general, it seems ok to merge breakpoints because they are drawn one over another in the new UI.
+    // In general, it seems ok to merge on-line breakpoints because they are drawn one over another in the new UI.
+    // Inter-line breakpoints must stay separate, otherwise they are painted at the wrong vertical position.
     // But we disable it in the old mode just for ease of regressions debugging.
     if (!Registry.is(INLINE_BREAKPOINTS_KEY)) return marks;
 
-    var breakpointCount = ContainerUtil.count(marks, m -> m instanceof BreakpointGutterIconRenderer);
+    var breakpointCount = ContainerUtil.count(marks, m -> m instanceof BreakpointGutterIconRenderer renderer && canMerge(renderer));
     if (breakpointCount <= 1) {
       return marks;
     }
@@ -30,7 +32,7 @@ final class BreakpointGutterIconMerge implements GutterMarkPreprocessor {
     var breakpointMarkPosition = -1;
     for (GutterMark mark : marks) {
       assert !(mark instanceof MultipleBreakpointGutterIconRenderer) : "they are not expected to be created before processing";
-      if (mark instanceof BreakpointGutterIconRenderer singleBreakpointMark) {
+      if (mark instanceof BreakpointGutterIconRenderer singleBreakpointMark && canMerge(singleBreakpointMark)) {
         breakpoints.add(singleBreakpointMark.getBreakpoint());
         breakpointMarkPosition = newMarks.size();
         continue;
@@ -41,5 +43,9 @@ final class BreakpointGutterIconMerge implements GutterMarkPreprocessor {
     newMarks.add(breakpointMarkPosition, new MultipleBreakpointGutterIconRenderer(breakpoints));
 
     return newMarks;
+  }
+
+  private static boolean canMerge(@NotNull BreakpointGutterIconRenderer renderer) {
+    return renderer.getVerticalAlignment() == GutterIconRenderer.VerticalAlignment.ON_LINE;
   }
 }

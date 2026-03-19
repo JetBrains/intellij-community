@@ -12,6 +12,7 @@ import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallat
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.SplitDebuggerMode
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement
 import com.intellij.xdebugger.impl.breakpoints.CommonBreakpointGutterIconRenderer
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointVisualRepresentation
 import kotlinx.coroutines.CoroutineScope
@@ -62,8 +63,11 @@ internal class FrontendXLightLineBreakpoint(
     return installationInfo.position.line
   }
 
+  override fun getPlacement(): XLineBreakpointPlacement {
+    return installationInfo.placement
+  }
+
   override fun getHighlightRange(): XLineBreakpointHighlighterRange {
-    // only full line breakpoints can be light breakpoints
     return XLineBreakpointHighlighterRange.Available(null)
   }
 
@@ -86,6 +90,14 @@ internal class FrontendXLightLineBreakpoint(
   private class FrontendXLightBreakpointGutterIconRenderer(
     private val lightBreakpoint: FrontendXLightLineBreakpoint,
   ) : CommonBreakpointGutterIconRenderer() {
+    override fun getVerticalAlignment(): VerticalAlignment {
+      return if (lightBreakpoint.getPlacement() == XLineBreakpointPlacement.INTER_LINE) {
+        VerticalAlignment.BETWEEN_LINES
+      }
+      else {
+        VerticalAlignment.ON_LINE
+      }
+    }
 
     override fun equals(obj: Any?): Boolean {
       return obj is FrontendXLightBreakpointGutterIconRenderer

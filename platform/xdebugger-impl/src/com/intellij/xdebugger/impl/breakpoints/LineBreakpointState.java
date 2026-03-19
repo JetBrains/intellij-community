@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement;
 import org.jetbrains.annotations.ApiStatus;
 
 @Tag("line-breakpoint")
@@ -11,16 +12,23 @@ public class LineBreakpointState extends BreakpointState {
   private String myFileUrl;
   private int myLine;
   private boolean myTemporary;
+  private XLineBreakpointPlacement myPlacement = XLineBreakpointPlacement.ON_LINE;
 
   public LineBreakpointState() {
   }
 
   public LineBreakpointState(final boolean enabled, final String typeId, final String fileUrl, final int line, boolean temporary,
                              final long timeStamp, final SuspendPolicy suspendPolicy) {
+    this(enabled, typeId, fileUrl, line, temporary, XLineBreakpointPlacement.ON_LINE, timeStamp, suspendPolicy);
+  }
+
+  public LineBreakpointState(final boolean enabled, final String typeId, final String fileUrl, final int line, boolean temporary,
+                             final XLineBreakpointPlacement placement, final long timeStamp, final SuspendPolicy suspendPolicy) {
     super(enabled, typeId, timeStamp, suspendPolicy);
     myFileUrl = fileUrl;
     myLine = line;
     myTemporary = temporary;
+    myPlacement = placement;
   }
 
   @Tag("url")
@@ -47,5 +55,14 @@ public class LineBreakpointState extends BreakpointState {
 
   public void setTemporary(boolean temporary) {
     myTemporary = temporary;
+  }
+
+  @Tag("placement")
+  public XLineBreakpointPlacement getPlacement() {
+    return myPlacement;
+  }
+
+  public void setPlacement(XLineBreakpointPlacement placement) {
+    myPlacement = placement == null ? XLineBreakpointPlacement.ON_LINE : placement;
   }
 }

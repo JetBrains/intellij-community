@@ -303,7 +303,7 @@ class XBreakpointVisualRepresentation(
 
   private fun canMoveTo(line: Int, file: VirtualFile?): Boolean {
     if (file != null && myBreakpoint.type.canPutAtFast(file, line, myProject) == ThreeState.YES) {
-      val existing = myBreakpointManager.findBreakpointAtLine(myBreakpoint.type, file, line)
+      val existing = myBreakpointManager.findBreakpointAtLine(myBreakpoint.type, file, line, myBreakpoint.getPlacement())
       return existing == null || existing == myBreakpoint
     }
     return false

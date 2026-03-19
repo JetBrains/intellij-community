@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.util.ThreeState
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 import com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUIUtil
@@ -30,6 +31,12 @@ class XToggleLineBreakpointActionHandler(private val myTemporary: Boolean) : Deb
     if (editor == null || DiffUtil.isDiffEditor(editor)) {
       return false
     }
+    val placement = if (event.getData(XLineBreakpointManager.INTER_LINE_BREAKPOINT_KEY) == true) {
+      XLineBreakpointPlacement.INTER_LINE
+    }
+    else {
+      XLineBreakpointPlacement.ON_LINE
+    }
     val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
     val breakpointTypes = breakpointManager.getLineBreakpointTypes()
     val breakpointPositions = ToggleLineBreakpointAction.getAllPositionsForBreakpoints(project, event.dataContext)
@@ -37,8 +44,9 @@ class XToggleLineBreakpointActionHandler(private val myTemporary: Boolean) : Deb
       for (breakpointType in breakpointTypes) {
         val file = position.getFile()
         val line = position.getLine()
-        if (breakpointType.canPutAtFast(position.editor, line, project).isAtLeast(ThreeState.UNSURE) ||
-            breakpointManager.findBreakpointAtLine(breakpointType, file, line) != null) {
+        if ((XBreakpointUIUtil.supportsPlacement(breakpointType, placement) &&
+             breakpointType.canPutAtFast(position.editor, line, project).isAtLeast(ThreeState.UNSURE)) ||
+            breakpointManager.findBreakpointAtLine(breakpointType, file, line, placement) != null) {
           return true
         }
       }
@@ -54,11 +62,18 @@ class XToggleLineBreakpointActionHandler(private val myTemporary: Boolean) : Deb
   fun toggleLineBreakpoint(project: Project, event: AnActionEvent): CompletableFuture<Void> {
     val editor = event.getData(CommonDataKeys.EDITOR)
     val isFromGutterClick = event.getData(XLineBreakpointManager.BREAKPOINT_LINE_KEY) != null
+    val placement = if (event.getData(XLineBreakpointManager.INTER_LINE_BREAKPOINT_KEY) == true) {
+      XLineBreakpointPlacement.INTER_LINE
+    }
+    else {
+      XLineBreakpointPlacement.ON_LINE
+    }
     val inputEvent = event.inputEvent
     val isAltClick = isFromGutterClick && inputEvent != null && inputEvent.isAltDown
     val isShiftClick = isFromGutterClick && inputEvent != null && inputEvent.isShiftDown
     val canRemove = !isFromGutterClick || (!isShiftClick && !`is`("debugger.click.disable.breakpoints"))
-    val isInterlineLogging = event.getData(InterLineBreakpointProperties.KEY)?.isLogging == true
+    val isInterlineLogging = placement == XLineBreakpointPlacement.INTER_LINE &&
+                             event.getData(InterLineBreakpointProperties.KEY)?.isLogging == true
     val isLoggingBreakpoint = isFromGutterClick && editor != null && inputEvent is MouseEvent
                               && !isAltClick && (isShiftClick || isInterlineLogging)
     val selection = if (isLoggingBreakpoint) editor.getSelectionModel().selectedText else null
@@ -71,7 +86,7 @@ class XToggleLineBreakpointActionHandler(private val myTemporary: Boolean) : Deb
       if (processedLines.add(position.getLine())) {
         val future = XBreakpointUIUtil.toggleLineBreakpointProxy(
           project, position, !isFromGutterClick, position.editor, isAltClick || myTemporary,
-          !isFromGutterClick, canRemove, isLoggingBreakpoint, selection
+          !isFromGutterClick, canRemove, isLoggingBreakpoint, selection, placement
         ).thenAccept { breakpoint ->
           if (breakpoint != null && isLoggingBreakpoint && !isInterlineLogging) {
             runInEdt {

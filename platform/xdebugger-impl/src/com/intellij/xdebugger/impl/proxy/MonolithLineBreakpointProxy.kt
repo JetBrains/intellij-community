@@ -10,6 +10,7 @@ import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointAttachment
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 import com.intellij.xdebugger.impl.breakpoints.highlightRange
 
@@ -40,6 +41,8 @@ internal class MonolithLineBreakpointProxy @Deprecated("Use breakpoint.asProxy()
   override fun setLine(line: Int) {
     breakpoint.line = line
   }
+
+  override fun getPlacement(): XLineBreakpointPlacement = breakpoint.placement
 
   override fun getHighlightRange(): XLineBreakpointHighlighterRange {
     val range = runReadActionBlocking { breakpoint.highlightRange }

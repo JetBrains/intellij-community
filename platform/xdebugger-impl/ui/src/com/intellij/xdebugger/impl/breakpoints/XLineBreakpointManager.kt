@@ -236,12 +236,11 @@ class XLineBreakpointManager(
                 return
               }
             }
-            Triple(b.type, b.getLine(), startOffset)
+            listOf(b.type, b.getLine(), startOffset, b.getPlacement())
           }
         }
         else {
-          // We cannot show multiple breakpoints of any type at the same line.
-          b.getLine()
+          listOf(b.getLine(), b.getPlacement())
         }
       }
       .values

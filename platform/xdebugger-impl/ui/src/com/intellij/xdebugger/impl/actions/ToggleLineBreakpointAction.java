@@ -18,6 +18,7 @@ import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XEditorSourcePosition;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
@@ -70,7 +71,7 @@ public class ToggleLineBreakpointAction extends XDebuggerActionBase implements D
       for (XLineBreakpointTypeProxy breakpointType : breakpointTypes) {
         final VirtualFile file = position.getFile();
         final int line = position.getLine();
-        if (breakpointManager.findBreakpointAtLine(breakpointType, file, line) != null) {
+        if (breakpointManager.findBreakpointAtLine(breakpointType, file, line, XLineBreakpointPlacement.ON_LINE) != null) {
           return true;
         }
       }

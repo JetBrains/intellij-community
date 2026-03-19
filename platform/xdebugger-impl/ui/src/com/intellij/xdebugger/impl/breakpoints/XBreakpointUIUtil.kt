@@ -27,6 +27,7 @@ import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.scale.JBUIScale
@@ -81,16 +82,26 @@ object XBreakpointUIUtil {
     return Pair.create(null, null)
   }
 
-  fun findBreakpoint(project: Project, document: Document, line: Int): XLineBreakpointProxy? {
+  fun findBreakpoint(
+    project: Project,
+    document: Document,
+    line: Int,
+    placement: XLineBreakpointPlacement = XLineBreakpointPlacement.ON_LINE,
+  ): XLineBreakpointProxy? {
     val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
     val file = FileDocumentManager.getInstance().getFile(document) ?: return null
     for (type in breakpointManager.getLineBreakpointTypes()) {
-      val breakpoint = breakpointManager.findBreakpointAtLine(type, file, line)
+      val breakpoint = breakpointManager.findBreakpointAtLine(type, file, line, placement)
       if (breakpoint != null) {
         return breakpoint
       }
     }
     return null
+  }
+
+  @JvmStatic
+  fun supportsPlacement(type: XLineBreakpointTypeProxy, placement: XLineBreakpointPlacement): Boolean {
+    return placement != XLineBreakpointPlacement.INTER_LINE || type.supportsInterLinePlacement()
   }
 
   /**
@@ -110,12 +121,13 @@ object XBreakpointUIUtil {
     canRemove: Boolean,
     isLogging: Boolean = false,
     logExpression: String? = null,
+    placement: XLineBreakpointPlacement = XLineBreakpointPlacement.ON_LINE,
   ): CompletableFuture<XLineBreakpointProxy?> {
     // TODO: Replace with `coroutineScope.future` after IJPL-184112 is fixed
     val future = CompletableFuture<XLineBreakpointProxy?>()
     project.service<XBreakpointUtilProjectCoroutineScope>().cs.launch(Dispatchers.EDT) {
       try {
-        val (typeWinner, lineWinner) = getAvailableLineBreakpointInfoProxy(project, position, selectVariantByPositionColumn, editor)
+        val (typeWinner, lineWinner) = getAvailableLineBreakpointInfoProxy(project, position, selectVariantByPositionColumn, editor, placement)
         if (typeWinner.isEmpty()) {
           fileLogger().warn("Cannot find appropriate type for line breakpoint at $position: ${position.file.url} ${position.line}")
           future.completeExceptionally(RuntimeException("Cannot find appropriate type"))
@@ -123,9 +135,8 @@ object XBreakpointUIUtil {
         }
         val lineStart = position.line
         val winPosition = if (lineStart == lineWinner) position else XSourcePositionImpl.create(position.file, lineWinner)
-
-        val res = XBreakpointInstallUtils.toggleAndReturnLineBreakpointProxy(
-          project, typeWinner, winPosition, selectVariantByPositionColumn, temporary, editor, canRemove, isLogging, logExpression)
+        val breakpointInfo = XLineBreakpointInstallationInfo(typeWinner, winPosition, placement, temporary, isLogging, logExpression, canRemove)
+        val res = XBreakpointInstallUtils.toggleAndReturnLineBreakpointProxy(project, editor, breakpointInfo, selectVariantByPositionColumn)
         if (lineStart != lineWinner) {
           val offset = editor.document.getLineStartOffset(lineWinner)
           ExpandRegionAction.expandRegionAtOffset(editor, offset)
@@ -148,14 +159,15 @@ object XBreakpointUIUtil {
     position: XSourcePosition,
     selectTypeByPositionColumn: Boolean,
     editor: Editor,
+    placement: XLineBreakpointPlacement,
   ): Pair<List<XLineBreakpointTypeProxy>, Int> {
     val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
     val lineTypes = breakpointManager.getLineBreakpointTypes()
     return getAvailableLineBreakpointInfo(position, selectTypeByPositionColumn, editor, lineTypes,
-                                          { type, line -> breakpointManager.findBreakpointAtLine(type, position.file, line) },
+                                          { type, line -> breakpointManager.findBreakpointAtLine(type, position.file, line, placement) },
                                           { type -> type.priority },
                                           { callback -> readAction { callback() } },
-                                          { type, line -> type.canPutAt(editor, line, project) })
+                                          { type, line -> supportsPlacement(type, placement) && type.canPutAt(editor, line, project) })
   }
 
   inline fun <T, B> getAvailableLineBreakpointInfo(
@@ -231,7 +243,7 @@ object XBreakpointUIUtil {
     val file = breakpointInfo.position.file
     val line = breakpointInfo.position.line
     return breakpointInfo.types
-      .flatMap { t -> breakpointManager.findBreakpointsAtLine(t, file, line) }
+      .flatMap { t -> breakpointManager.findBreakpointsAtLine(t, file, line, breakpointInfo.placement) }
       .toList()
   }
 

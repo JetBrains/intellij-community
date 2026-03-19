@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.shared.proxy
 
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -21,6 +22,8 @@ interface XLineBreakpointProxy : XBreakpointProxy, XLightLineBreakpointProxy {
   fun setFileUrl(url: String)
   fun getFileUrl(): String
   fun setLine(line: Int)
+
+  override fun getPlacement(): XLineBreakpointPlacement
 
   fun updatePosition()
   fun fastUpdatePosition()

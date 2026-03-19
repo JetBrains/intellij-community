@@ -26,6 +26,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointVisualRepresentation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -169,6 +170,10 @@ internal class FrontendXLineBreakpointProxy(
 
   override fun getLine(): Int {
     return lineBreakpointInfo.line
+  }
+
+  override fun getPlacement(): XLineBreakpointPlacement {
+    return lineBreakpointInfo.placement
   }
 
   override fun setFileUrl(url: String) {

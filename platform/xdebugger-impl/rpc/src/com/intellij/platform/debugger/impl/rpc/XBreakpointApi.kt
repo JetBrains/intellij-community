@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -116,6 +117,7 @@ data class XLineBreakpointInfo(
     val isTemporary: Boolean,
     val line: Int,
     val fileUrl: String,
+    val placement: XLineBreakpointPlacement,
     val highlightingRange: TextRangeDto?,
     val file: VirtualFileId?,
 )

@@ -50,6 +50,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -291,9 +292,18 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                                        VirtualFile file,
                                                                                        int line,
                                                                                        Boolean temporary) {
+    return addLineBreakpoint(breakpointManager, variant, file, line, temporary, XLineBreakpointPlacement.ON_LINE);
+  }
+
+  public static <P extends XBreakpointProperties> XLineBreakpoint<P> addLineBreakpoint(XBreakpointManager breakpointManager,
+                                                                                       XLineBreakpointType<P>.XLineBreakpointVariant variant,
+                                                                                       VirtualFile file,
+                                                                                       int line,
+                                                                                       Boolean temporary,
+                                                                                       @NotNull XLineBreakpointPlacement placement) {
     var properties = variant.createProperties();
     var type = variant.getType();
-    var breakpoint = addLineBreakpoint(breakpointManager, type, properties, file, line, temporary);
+    var breakpoint = addLineBreakpoint(breakpointManager, type, properties, file, line, temporary, placement);
     if (!type.variantAndBreakpointMatch(breakpoint, variant)) {
       LOG.error("breakpoint doesn't match source variant, " + type + ", " + variant.getClass());
     }
@@ -305,8 +315,9 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                                         P properties,
                                                                                         VirtualFile file,
                                                                                         int line,
-                                                                                        Boolean temporary) {
-    return breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary);
+                                                                                        Boolean temporary,
+                                                                                        @NotNull XLineBreakpointPlacement placement) {
+    return breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary, placement);
   }
 
   @ApiStatus.Internal

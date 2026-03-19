@@ -42,6 +42,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.impl.BreakpointManagerState;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
@@ -393,8 +394,18 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
                                                                                          final @NotNull String fileUrl,
                                                                                          final int line,
                                                                                          final @Nullable T properties,
+                                                                                         boolean temporary,
+                                                                                         final @NotNull XLineBreakpointPlacement placement) {
+    return addLineBreakpoint(type, fileUrl, line, properties, temporary, placement, true);
+  }
+
+  @Override
+  public @NotNull <T extends XBreakpointProperties> XLineBreakpoint<T> addLineBreakpoint(final XLineBreakpointType<T> type,
+                                                                                         final @NotNull String fileUrl,
+                                                                                         final int line,
+                                                                                         final @Nullable T properties,
                                                                                          boolean temporary) {
-    return addLineBreakpoint(type, fileUrl, line, properties, temporary, true);
+    return addLineBreakpoint(type, fileUrl, line, properties, temporary, XLineBreakpointPlacement.ON_LINE, true);
   }
 
   public @NotNull <T extends XBreakpointProperties> XLineBreakpoint<T> addLineBreakpoint(final XLineBreakpointType<T> type,
@@ -402,9 +413,10 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
                                                                                          final int line,
                                                                                          final @Nullable T properties,
                                                                                          boolean temporary,
+                                                                                         final @NotNull XLineBreakpointPlacement placement,
                                                                                          boolean initUI) {
     return withLockMaybeCancellable(myLock, () -> {
-      LineBreakpointState state = new LineBreakpointState(true, type.getId(), fileUrl, line, temporary,
+      LineBreakpointState state = new LineBreakpointState(true, type.getId(), fileUrl, line, temporary, placement,
                                                                ++myTime, type.getDefaultSuspendPolicy());
       getBreakpointDefaults(type).applyDefaults(state);
       state.setGroup(myDefaultGroup);
@@ -453,11 +465,27 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   public @NotNull <B extends XLineBreakpoint<P>, P extends XBreakpointProperties> Collection<B> findBreakpointsAtLine(@NotNull XLineBreakpointType<P> type,
                                                                                                          @NotNull VirtualFile file,
                                                                                                          int line) {
+    return doFindBreakpointsAtLine(type, file, line, XLineBreakpointPlacement.ON_LINE);
+  }
+
+  @Override
+  public @NotNull <B extends XLineBreakpoint<P>, P extends XBreakpointProperties> Collection<B> findBreakpointsAtLine(@NotNull XLineBreakpointType<P> type,
+                                                                                                                     @NotNull VirtualFile file,
+                                                                                                                     int line,
+                                                                                                                     @NotNull XLineBreakpointPlacement placement) {
+    return doFindBreakpointsAtLine(type, file, line, placement);
+  }
+
+  private @NotNull <B extends XLineBreakpoint<P>, P extends XBreakpointProperties> Collection<B> doFindBreakpointsAtLine(@NotNull XLineBreakpointType<P> type,
+                                                                                                                          @NotNull VirtualFile file,
+                                                                                                                          int line,
+                                                                                                                          @NotNull XLineBreakpointPlacement placement) {
     return withLockMaybeCancellable(myLock, () -> {
       //noinspection unchecked
       return (Collection<B>)((StreamEx<XLineBreakpoint<P>>)(StreamEx<?>)StreamEx.of(myBreakpoints.get(type))
         .select(XLineBreakpoint.class)
-        .filter(b -> b.getFileUrl().equals(file.getUrl()) && b.getLine() == line))
+        .filter(b -> b.getFileUrl().equals(file.getUrl()) && b.getLine() == line)
+        .filter(b -> b.getPlacement() == placement))
         .toList();
     });
   }
@@ -466,7 +494,14 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   public @Nullable <P extends XBreakpointProperties> XLineBreakpoint<P> findBreakpointAtLine(final @NotNull XLineBreakpointType<P> type,
                                                                                              final @NotNull VirtualFile file,
                                                                                              final int line) {
-    return ContainerUtil.getFirstItem(findBreakpointsAtLine(type, file, line));
+    return ContainerUtil.getFirstItem(doFindBreakpointsAtLine(type, file, line, XLineBreakpointPlacement.ON_LINE));
+  }
+
+  public @Nullable <P extends XBreakpointProperties> XLineBreakpoint<P> findBreakpointAtLine(final @NotNull XLineBreakpointType<P> type,
+                                                                                             final @NotNull VirtualFile file,
+                                                                                             final int line,
+                                                                                             final @NotNull XLineBreakpointPlacement placement) {
+    return ContainerUtil.getFirstItem(doFindBreakpointsAtLine(type, file, line, placement));
   }
 
   @Override
@@ -824,7 +859,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
         if (file == null) { // file was deleted
           return null;
         }
-        XLineBreakpoint existingBreakpoint = findBreakpointAtLine(lineBreakpoint.getType(), file, lineBreakpoint.getLine());
+        XLineBreakpoint existingBreakpoint = findBreakpointAtLine(lineBreakpoint.getType(), file, lineBreakpoint.getLine(), lineBreakpoint.getPlacement());
         if (existingBreakpoint != null) {
           removeBreakpoint(existingBreakpoint);
         }

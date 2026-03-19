@@ -57,6 +57,11 @@ public abstract class XDebuggerTestCase extends HeavyPlatformTestCase {
     public MyBreakpointProperties createProperties() {
       return new MyBreakpointProperties();
     }
+
+    @Override
+    public boolean supportsInterLinePlacement() {
+      return true;
+    }
   }
 
   public static class MySimpleBreakpointType extends XBreakpointType<XBreakpoint<MyBreakpointProperties>,MyBreakpointProperties> {
