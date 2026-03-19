@@ -452,20 +452,12 @@ public final class JUnit5TeamCityRunner {
         myFinishCount++;
       }
       else if (hasNonTrivialParent(testIdentifier)) {
-        String messageName = null;
         if (status == TestExecutionResult.Status.FAILED) {
-          messageName = ServiceMessageTypes.TEST_FAILED;
+          myPrintStream.println(new TestStarted(CLASS_CONFIGURATION, false, null));
+          testFailure(CLASS_CONFIGURATION, ServiceMessageTypes.TEST_FAILED, throwableOptional, 0, reason);
+          myPrintStream.println(new TestFinished(CLASS_CONFIGURATION, 0));
         }
-        else if (status == TestExecutionResult.Status.ABORTED) {
-          messageName = ServiceMessageTypes.TEST_IGNORED;
-        }
-        if (messageName != null) {
-          if (status == TestExecutionResult.Status.FAILED) {
-            myPrintStream.println(new TestStarted(CLASS_CONFIGURATION, false, null));
-            testFailure(CLASS_CONFIGURATION, messageName, throwableOptional, 0, reason);
-            myPrintStream.println(new TestFinished(CLASS_CONFIGURATION, 0));
-          }
-
+        if (status != TestExecutionResult.Status.SUCCESSFUL) {
           final Set<TestIdentifier> descendants = myTestPlan != null ? myTestPlan.getDescendants(testIdentifier) : Collections.emptySet();
           if (!descendants.isEmpty() && myFinishCount == 0) {
             for (TestIdentifier childIdentifier : descendants) {
@@ -481,6 +473,15 @@ public final class JUnit5TeamCityRunner {
           myPrintStream.println(new TestSuiteFinished(getName(testIdentifier)));
         }
         if (status == TestExecutionResult.Status.ABORTED) myCurrentTestStart = 1;  // mark ignored classes as #smthExecuted
+      }
+      else {
+        if (status == TestExecutionResult.Status.FAILED) {
+          myPrintStream.println(new TestSuiteStarted(getName(testIdentifier)));  // root (e.g. JupiterTestEngine)
+          myPrintStream.println(new TestStarted(CLASS_CONFIGURATION, false, null));
+          testFailure(CLASS_CONFIGURATION, ServiceMessageTypes.TEST_FAILED, throwableOptional, 0, reason);
+          myPrintStream.println(new TestFinished(CLASS_CONFIGURATION, 0));
+          myPrintStream.println(new TestSuiteFinished(getName(testIdentifier)));
+        }
       }
     }
 
