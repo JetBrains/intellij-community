@@ -1,0 +1,13 @@
+This package (git4idea.inMemory) contains an implementation inspired by:
+
+  git-revise
+  https://github.com/mystor/git-revise
+
+Copyright (c) the git-revise authors
+
+Licensed under the MIT License.
+See LICENSE.git-revise for the full license text.
+
+The implementation in this package is a reworked and adapted version
+written for the IntelliJ Platform and does not contain direct copies
+of the original source code unless explicitly stated.
