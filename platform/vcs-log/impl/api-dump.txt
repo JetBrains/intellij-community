@@ -79,9 +79,9 @@ f:com.intellij.vcs.log.data.ContainingBranchesGetter
 - sf:Companion:com.intellij.vcs.log.data.ContainingBranchesGetter$Companion
 - f:addTaskCompletedListener(java.lang.Runnable):V
 - f:getContainedInCurrentBranchCondition(com.intellij.openapi.vfs.VirtualFile):java.util.function.Predicate
+- f:getContainingBranches(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash):java.util.List
 - f:getContainingBranchesFromCache(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash):java.util.List
 - f:getContainingBranchesQuickly(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash):java.util.List
-- f:getContainingBranchesSynchronously(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash):java.util.List
 - f:removeTaskCompletedListener(java.lang.Runnable):V
 - f:requestContainingBranches(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash):java.util.List
 f:com.intellij.vcs.log.data.ContainingBranchesGetter$Companion
