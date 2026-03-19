@@ -48,6 +48,7 @@ class ProcessExecutor(
   val expectedExitCode: Int = 0,
   val analyzeProcessExit: Boolean = true,
   val silent: Boolean = false,
+  val killChildrenAtEnd: Boolean = true,
 ) {
 
   companion object {
@@ -247,7 +248,9 @@ class ProcessExecutor(
     fun killProcess() {
       catchAll { runBlocking(Dispatchers.IO) { onProcessCreatedJob.cancelAndJoin() } }
       catchAll { runBlocking(Dispatchers.IO) { withTimeout(1.minutes) { onBeforeKilled(process, processId) } } }
-      process.realDescendants().forEach { catchAll { killProcessGracefully(it) } }
+      if (killChildrenAtEnd) {
+        process.realDescendants().forEach { catchAll { killProcessGracefully(it) } }
+      }
       catchAll { killProcessGracefully(process.toHandle()) }
       catchAll { ioThreads.forEach { it.interrupt() } }
       finishedGracefully = true
@@ -294,9 +297,11 @@ class ProcessExecutor(
         killProcess()
       }
       process.destroyForcibly()
-      val descendants = process.realDescendants().toList()
-      val skipProcesses = collectUpdateRelatedProcesses(descendants)
-      descendants.filter { it !in skipProcesses }.forEach { it.destroyForcibly() }
+      if (killChildrenAtEnd) {
+        val descendants = process.realDescendants().toList()
+        val skipProcesses = collectUpdateRelatedProcesses(descendants)
+        descendants.filter { it !in skipProcesses }.forEach { it.destroyForcibly() }
+      }
 
       try {
         Runtime.getRuntime().removeShutdownHook(shutdownHookThread)
