@@ -658,6 +658,9 @@ class InfoAndProgressPanel internal constructor(
         inlinePanel.updateState(null)
         if (host.shouldClosePopupAndOnProcessFinish) {
           host.popup?.setHideOnFocusLost(true)
+          if (host.popup?.isBannerPresent == false) {
+            host.hideProcessPopup()
+          }
         }
       }
       else if (inlinePanel.indicator != null && inlinePanel.indicator!!.info === progress.info) {
