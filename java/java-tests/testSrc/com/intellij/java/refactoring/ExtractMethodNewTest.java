@@ -446,6 +446,12 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   public void testFinalOutputVar() {
     doDuplicatesTest();
   }
+  
+  public void testGenerateFinalVar() {
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.GENERATE_FINAL_LOCALS = true;
+    doTest();
+  }
 
   public void testIdeaDev2291() {
     doTest();
