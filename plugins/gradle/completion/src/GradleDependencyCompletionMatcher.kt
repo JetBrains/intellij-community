@@ -28,16 +28,16 @@ class GradleDependencyCompletionMatcher(prefix: String) : PrefixMatcher(prefix) 
     }
   }
 
-  private fun tryGetMatchingFragments(prefix: String, name: String): List<MatchedFragment> {
+  private fun tryGetMatchingFragments(input: String, searchResult: String): List<MatchedFragment> {
     // handle top level completion case:
     // implementation("org.example:lib-implementation:1.0") - "implementation" in the artifact name should be matched
-    val start = name.indexOf("(").coerceAtLeast(0)
-    val prefixParts = prefix.split(":")
-    val nameParts = name.substring(start).split(":")
+    val start = searchResult.indexOf("(").coerceAtLeast(0)
+    val prefixParts = input.split(":")
+    val nameParts = searchResult.substring(start).split(":")
     val result = mutableListOf<MatchedFragment>()
     var offset = start
     var j = 0
-    for (i in 0 until prefixParts.size) {
+    for (i in prefixParts.indices) {
       var matchingFragment: MatchedFragment? = null
       while (j < nameParts.size && matchingFragment == null) {
         matchingFragment = getMatchingFragment(offset, prefixParts[i], nameParts[j])
