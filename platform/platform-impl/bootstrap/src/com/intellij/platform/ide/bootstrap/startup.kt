@@ -255,7 +255,7 @@ fun startApplication(
     // action.script and auto-update data are located in the system directory, it must be first locked before accessing
     lockSystemDirsJob.join()
     // command line starters should opt in to apply plugin updates
-    if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
+    if (!AppMode.isCommandLine() || System.getProperty(AppMode.FORCE_PLUGIN_UPDATES).toBoolean()) {
       span("run action.script") {
         // Consider following steps:
         // - user opens settings, and installs some plugins;
@@ -275,7 +275,7 @@ fun startApplication(
     PluginManagerCore.scheduleDescriptorLoading(coroutineScope = this, zipPoolDeferred, mainClassLoaderDeferred, logDeferred)
   }
 
-  val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
+  val isInternal = System.getProperty(ApplicationManagerEx.IS_INTERNAL_PROPERTY).toBoolean()
   if (isInternal) {
     scope.launch(CoroutineName("assert on missed keys enabling")) {
       BundleBase.assertOnMissedKeys(true)
@@ -583,7 +583,7 @@ private fun setupLogger(scope: CoroutineScope, consoleLoggerJob: Job, checkSyste
     val log = logger<AppStarter>()
     log.info(IDE_STARTED)
     ShutDownTracker.getInstance().registerShutdownTask { log.info(IDE_SHUTDOWN) }
-    if (java.lang.Boolean.parseBoolean(System.getProperty("intellij.log.stdout", "true"))) {
+    if (System.getProperty("intellij.log.stdout", "true").toBoolean()) {
       System.setOut(PrintStreamLogger("STDOUT", System.out))
       System.setErr(PrintStreamLogger("STDERR", System.err))
     }

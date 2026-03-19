@@ -102,8 +102,8 @@ public final class OSProcessUtil {
 
   /// Terminates the specified process gracefully: on Windows, sends Ctrl-C, on Unix, sends the SIGINT signal.
   ///
-  /// Just sending CTRL+C event on Windows might not be enough to terminate the process (PY-50064).
-  /// Use [#terminateProcessGracefully(Process)], or handle the case when the process doesn't terminate.
+  /// Just sending a CTRL+C event on Windows might not be enough to terminate the process (PY-50064).
+  /// Use [#terminateProcessGracefully(Process)] or handle the case when the process doesn't terminate.
   ///
   /// @throws UnsupportedOperationException if it cannot interrupt the process
   /// @see KillableProcessHandler#destroyProcessGracefully()

@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.system.LowLevelLocalMachineAccess;
 import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -24,14 +25,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-/**
- * A utility class for reading shell environment.
- * Use in two steps: first, call one of {@code *command} methods to prepare a command,
- * then run it with {@link #readEnvironment(ProcessBuilder, long)}.
- *
- * @since 2025.3
- */
+/// A utility class for reading shell environment.
+/// Use in two steps: first, call one of `*command` methods to prepare a command,
+/// then run it with [#readEnvironment(ProcessBuilder, long)].
+///
+/// @since 2025.3
 @ApiStatus.Experimental
+@LowLevelLocalMachineAccess
 public final class ShellEnvironmentReader {
   private static final Logger LOG = Logger.getInstance(ShellEnvironmentReader.class);
 
@@ -42,19 +42,20 @@ public final class ShellEnvironmentReader {
 
   private ShellEnvironmentReader() { }
 
-  /**
-   * Prepares a command for reading the environment from the given shell (or from the user's shell if {@code null}).
-   * Optionally, runs the given script with given parameters before reading.
-   */
+  /// Prepares a command for reading the environment from the given shell (or from the user's shell if `null`).
+  /// Optionally, runs the given script with given parameters before reading.
   public static @NotNull ProcessBuilder shellCommand(@Nullable String shell, @Nullable Path shFile, @Nullable List<@NotNull String> args) {
     return shellCommand(shell, shFile, true, args);
   }
 
-  /**
-   * Prepares a command for reading the environment from the given shell (or from the user's shell if {@code null}).
-   * Optionally, runs the given script with given parameters before reading.
-   */
-  public static @NotNull ProcessBuilder shellCommand(@Nullable String shell, @Nullable Path shFile, boolean interactive, @Nullable List<@NotNull String> args) {
+  /// Prepares a command for reading the environment from the given shell (or from the user's shell if `null`).
+  /// Optionally, runs the given script with given parameters before reading.
+  public static @NotNull ProcessBuilder shellCommand(
+    @Nullable String shell,
+    @Nullable Path shFile,
+    boolean interactive,
+    @Nullable List<@NotNull String> args
+  ) {
     if (shell == null) {
       shell = System.getenv("SHELL");
       if (shell == null || shell.isBlank()) throw new IllegalStateException("'SHELL' environment variable is not set");
@@ -114,10 +115,8 @@ public final class ShellEnvironmentReader {
     return processBuilder;
   }
 
-  /**
-   * Prepares a command for reading the environment from the Windows shell.
-   * Optionally, runs the given script with given parameters before reading.
-   */
+  /// Prepares a command for reading the environment from the Windows shell.
+  /// Optionally, runs the given script with given parameters before reading.
   public static @NotNull ProcessBuilder winShellCommand(@Nullable Path batFile, @Nullable List<@NotNull String> args) {
     if (batFile != null && !Files.exists(batFile)) throw new IllegalArgumentException("Missing: " + batFile);
 
@@ -157,10 +156,8 @@ public final class ShellEnvironmentReader {
     return '\"' + String.join(" ", preparedCallArgs) + "\"";
   }
 
-  /**
-   * Prepares a command for reading the environment from PowerShell.
-   * Optionally, runs the given script with given parameters before reading.
-   */
+  /// Prepares a command for reading the environment from PowerShell.
+  /// Optionally, runs the given script with given parameters before reading.
   @SuppressWarnings("SpellCheckingInspection")
   public static @NotNull ProcessBuilder powerShellCommand(@Nullable Path psFile, @Nullable List<@NotNull String> args) {
     if (psFile != null && !Files.exists(psFile)) throw new IllegalArgumentException("Missing: " + psFile);
@@ -200,10 +197,8 @@ public final class ShellEnvironmentReader {
     return cp;
   }
 
-  /**
-   * Runs the given command.
-   * Returns loaded environment and the command output (stdout/stderr combined).
-   */
+  /// Runs the given command.
+  /// Returns the loaded environment and the command output (stdout/stderr combined).
   public static @NotNull Pair<@NotNull Map<String, String>, @NotNull String> readEnvironment(
     @NotNull ProcessBuilder command,
     long timeoutMillis
