@@ -74,6 +74,8 @@ internal class NonSerializableTypeInRpcInterfaceInspection : LocalInspectionTool
     "kotlin.Triple",
     "kotlin.Unit",
     "kotlin.time.Duration",
+    "kotlin.time.Instant",
+    "kotlin.uuid.Uuid",
 
     // collections:
     "kotlin.collections.Collection",
