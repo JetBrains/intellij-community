@@ -53,10 +53,10 @@ public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspec
         final PsiElement dataProviderMethod = dataProviderReference.resolve();
         final PsiElement element = dataProviderReference.getElement();
         final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
-        final PsiClass providerClass = TestNGUtil.getProviderClass(element, topLevelClass);
-        if (dataProviderMethod instanceof PsiMethod providerMethod) {
-          if (!TestNGUtil.isVersionOrGreaterThan(holder.getProject(), ModuleUtilCore.findModuleForPsiElement(providerClass), 6, 9, 13) &&
-              providerClass != topLevelClass &&
+        final PsiClass[] providerClasses = TestNGUtil.getProviderClasses(element, topLevelClass);
+        if (dataProviderMethod instanceof PsiMethod providerMethod && providerClasses.length > 0) {
+          if (!TestNGUtil.isVersionOrGreaterThan(holder.getProject(), ModuleUtilCore.findModuleForPsiElement(providerClasses[0]), 6, 9, 13) &&
+              providerClasses[0] != topLevelClass &&
               !providerMethod.hasModifierProperty(PsiModifier.STATIC)) {
             holder.registerProblem(provider, TestngBundle.message("inspection.testng.data.provider.need.to.be.static"));
           }
@@ -66,8 +66,8 @@ public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspec
           PsiClass containingClass = testMethod != null ? testMethod.getContainingClass() : null;
           if (containingClass != null && containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) return;
 
-          final LocalQuickFix[] fixes = (isOnTheFly && providerClass != null)
-                                        ? toArray(createMethodFix(provider, providerClass, topLevelClass))
+          final LocalQuickFix[] fixes = (isOnTheFly && providerClasses.length > 0)
+                                        ? toArray(createMethodFix(provider, providerClasses[0], topLevelClass))
                                         : LocalQuickFix.EMPTY_ARRAY;
           holder.registerProblem(provider, TestngBundle.message("inspection.testng.data.provider.does.not.exist.problem"), fixes);
         }

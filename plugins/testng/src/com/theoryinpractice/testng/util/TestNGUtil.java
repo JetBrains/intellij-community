@@ -36,6 +36,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
@@ -72,6 +73,7 @@ import org.testng.annotations.ObjectFactory;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -80,6 +82,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.regex.Matcher;
@@ -451,19 +454,24 @@ public final class TestNGUtil {
     return false;
   }
 
-  public static PsiClass getProviderClass(final PsiElement element, final PsiClass topLevelClass) {
+  public static PsiClass @NotNull [] getProviderClasses(@NotNull final PsiElement element, @Nullable final PsiClass topLevelClass) {
     final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(element, PsiAnnotation.class);
-    if (annotation == null) return topLevelClass;
+    if (annotation == null) return topLevelClass != null ? new PsiClass[]{topLevelClass} : PsiClass.EMPTY_ARRAY;
     PsiAnnotationMemberValue value = extractDataProviderClass(annotation);
-    if (value == null) { // Fall back to class-level @Test(dataProviderClass=...)
-      value = findDataProviderClass(PsiTreeUtil.getParentOfType(element, PsiMethod.class));
-    }
+    List<PsiAnnotationMemberValue> values = (value == null)
+                                            ? findDataProviderClass(PsiTreeUtil.getParentOfType(element, PsiMethod.class))
+                                            : List.of(value);
 
-    if (value instanceof PsiClassObjectAccessExpression expression) {
-      final PsiClass psiClass = PsiUtil.resolveClassInType(expression.getOperand().getType());
-      if (psiClass != null) return psiClass;
-    }
-    return topLevelClass;
+    PsiClass[] result = values.stream()
+      .filter(PsiClassObjectAccessExpression.class::isInstance)
+      .map(PsiClassObjectAccessExpression.class::cast)
+      .map(expression -> PsiUtil.resolveClassInType(expression.getOperand().getType()))
+      .filter(Objects::nonNull)
+      .toArray(PsiClass[]::new);
+
+    return result.length != 0
+           ? result
+           : topLevelClass != null ? new PsiClass[]{topLevelClass} : PsiClass.EMPTY_ARRAY;
   }
 
   private static @Nullable PsiAnnotationMemberValue extractDataProviderClass(@NotNull PsiAnnotation annotation) {
@@ -472,18 +480,34 @@ public final class TestNGUtil {
            : null;
   }
 
-  private static @Nullable PsiAnnotationMemberValue findDataProviderClass(@Nullable PsiMethod method) {
-    if (method == null) return null;
+  private static List<PsiAnnotationMemberValue> findDataProviderClass(@Nullable PsiMethod method) {
+    if (method == null) return List.of();
     PsiClass aClass = method.getContainingClass();
 
-    while (aClass != null) { // find parent class with data provider class
+    List<PsiAnnotationMemberValue> result = new ArrayList<>();
+    while (aClass != null && result.isEmpty()) { // find parent class with data provider class
       for (PsiAnnotation annotation : aClass.getAnnotations()) {
         PsiAnnotationMemberValue value = extractDataProviderClass(annotation);
-        if (value != null) return value;
+        if (value != null) {
+          result.add(value);
+          break;
+        }
       }
       aClass = aClass.getSuperClass();
     }
-    return null;
+
+    if (isVersionOrGreaterThan(method.getProject(), ModuleUtilCore.findModuleForPsiElement(method), 7, 0, 0)) {
+      aClass = method.getContainingClass();
+      if (aClass == null) return List.of();
+      for (PsiClass psiClass : ClassInheritorsSearch.search(aClass, aClass.getResolveScope(), true)) {
+        for (PsiAnnotation annotation : psiClass.getAnnotations()) {
+          PsiAnnotationMemberValue value = extractDataProviderClass(annotation);
+          if (value != null) result.add(value);
+        }
+      }
+    }
+
+    return result;
   }
 
   /**
