@@ -31,6 +31,8 @@ class ComposeResourcesExtension private constructor(extension: Any) {
 
   val nameOfResClass: String by lazy { extension("getNameOfResClass") as? String ?: "Res" }
 
+  val packageOfResClass: String by lazy { extension("getPackageOfResClass") as? String ?: "" }
+
   companion object {
     val Project.composeResourcesExtension: ComposeResourcesExtension?
       get() = (this.extensions.findByName("compose") as? ExtensionAware)?.extensions?.findByName("resources")?.let(::ComposeResourcesExtension)
@@ -56,6 +58,7 @@ class ComposeResourcesModelBuilder : ModelBuilderService {
       customComposeResourcesDirs = resourcesExtension.customComposeResourcesDirectories,
       isPublicResClass = resourcesExtension.isPublicResClass,
       nameOfResClass = resourcesExtension.nameOfResClass,
+      packageOfResClass = resourcesExtension.packageOfResClass
     )
   }
 }

@@ -38,10 +38,12 @@ internal class ComposeResourcesProjectResolver : AbstractProjectResolverExtensio
 
     val isPublicResClass = composeResourcesModel?.isPublicResClass ?: false
     val nameOfResClass = composeResourcesModel?.nameOfResClass ?: "Res"
+    val packageOfResClass = composeResourcesModel?.packageOfResClass ?: ""
     val composeResources = ComposeResourcesModelImpl(
       customComposeResourcesDirs = composeResourcesDirs,
       isPublicResClass = isPublicResClass,
       nameOfResClass = nameOfResClass,
+      packageOfResClass = packageOfResClass
     )
     ideModule.createChild(COMPOSE_RESOURCES_KEY, composeResources)
   }

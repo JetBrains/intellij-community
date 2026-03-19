@@ -7,10 +7,12 @@ interface ComposeResourcesModel : Serializable {
   val customComposeResourcesDirs: Map<String, Pair<String, Boolean>>
   val isPublicResClass: Boolean
   val nameOfResClass: String
+  val packageOfResClass: String
 }
 
 data class ComposeResourcesModelImpl(
   override val customComposeResourcesDirs: Map<String, Pair<String, Boolean>> = emptyMap(),
   override val isPublicResClass: Boolean = false,
-  override val nameOfResClass: String = "Res"
+  override val nameOfResClass: String = "Res",
+  override val packageOfResClass: String = ""
 ) : ComposeResourcesModel
