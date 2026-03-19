@@ -2529,6 +2529,7 @@ c:com.intellij.ui.JBColor
 - sf:ORANGE:com.intellij.ui.JBColor
 - sf:PINK:com.intellij.ui.JBColor
 - sf:PanelBackground:java.awt.Color
+- sf:PanelForeground:java.awt.Color
 - sf:RED:com.intellij.ui.JBColor
 - sf:WHITE:com.intellij.ui.JBColor
 - sf:YELLOW:com.intellij.ui.JBColor
