@@ -214,9 +214,6 @@
 - name: lib/modules/intellij.jvm.analysis.refactoring.jar
   contentModules:
   - name: intellij.jvm.analysis.refactoring
-- name: lib/modules/intellij.jvm.dfa.analysis.ui.jar
-  contentModules:
-  - name: intellij.jvm.dfa.analysis.ui
 - name: lib/modules/intellij.platform.jps.build.dependencyGraph.jar
   contentModules:
   - name: intellij.platform.jps.build.dependencyGraph

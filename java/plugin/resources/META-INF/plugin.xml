@@ -97,7 +97,6 @@
     <module name="intellij.profiler.ultimate"/>
     <module name="intellij.debugger.jvm.advanced.java"/>
     <module name="intellij.debugger.logpoints"/>
-    <module name="intellij.jvm.dfa.analysis.ui"/>
     <module name="intellij.java.copyright"/>
     <module name="intellij.java.promo"/>
   </content>
