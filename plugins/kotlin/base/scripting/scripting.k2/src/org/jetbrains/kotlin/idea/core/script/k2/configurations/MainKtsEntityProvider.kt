@@ -138,14 +138,7 @@ class MainKtsEntityProvider(
         }
     }
 
-    private val ScriptCompilationConfigurationResult.importedScripts: List<VirtualFile>
-        get() {
-            val importedScripts = this.valueOrNull()?.importedScripts ?: return emptyList()
-            return importedScripts.mapNotNull { (it as? VirtualFileScriptSource)?.virtualFile }.filterNot { it.isNonScript() }
-        }
-
     companion object {
-        private val COMPARATOR = Comparator<VirtualFile> { left, right -> left.path.compareTo(right.path) }
 
         @JvmStatic
         fun getInstance(project: Project): MainKtsEntityProvider = project.service()

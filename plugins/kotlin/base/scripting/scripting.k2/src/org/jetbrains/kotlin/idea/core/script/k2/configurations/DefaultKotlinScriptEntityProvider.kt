@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k2.configurations
 
+import com.google.common.collect.TreeMultimap
+import com.google.common.graph.Traverser
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -12,6 +14,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.core.script.k2.getOrCreateScriptConfigurationId
+import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
@@ -35,6 +38,17 @@ import kotlin.script.experimental.jvm.jvm
 class DefaultKotlinScriptEntityProvider(
     override val project: Project, val coroutineScope: CoroutineScope
 ) : KotlinScriptEntityProvider(project) {
+
+    private val visitedScripts = TreeMultimap.create(COMPARATOR, COMPARATOR)
+    private val visitedScriptsTraverser = Traverser.forTree<VirtualFile> { visitedScripts.get(it) }
+
+    fun getImportedScripts(kts: VirtualFile): List<VirtualFile> = visitedScriptsTraverser.breadthFirst(kts) - kts
+
+    override suspend fun removeKotlinScriptEntity(virtualFile: VirtualFile) {
+        visitedScripts.removeAll(virtualFile)
+        super.removeKotlinScriptEntity(virtualFile)
+    }
+
     override suspend fun updateWorkspaceModel(
         virtualFile: VirtualFile, definition: ScriptDefinition
     ) {
@@ -53,6 +67,12 @@ class DefaultKotlinScriptEntityProvider(
                     )
                 )
             }
+        }
+
+        val scriptsToResolve = result.importedScripts - visitedScripts.keys()
+        if (scriptsToResolve.isNotEmpty()) {
+            visitedScripts.putAll(virtualFile, scriptsToResolve)
+            KotlinScriptResolutionService.getInstance(project).process(scriptsToResolve)
         }
 
         fun updateStorage(storage: MutableEntityStorage) {

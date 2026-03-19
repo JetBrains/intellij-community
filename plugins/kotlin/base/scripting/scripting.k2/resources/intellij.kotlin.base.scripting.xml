@@ -83,6 +83,9 @@
             implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.BundledScriptDefinitionSource"/>
 
     <k2IdeScriptAdditionalIdeaDependenciesProvider
+            implementation="org.jetbrains.kotlin.idea.core.script.k2.modules.DefaultKotlinScriptDependenciesProvider"/>
+
+    <k2IdeScriptAdditionalIdeaDependenciesProvider
             implementation="org.jetbrains.kotlin.idea.core.script.k2.modules.MainKtsScriptDependenciesProvider"/>
 
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.MainKtsScriptDefinitionSource"/>
