@@ -140,6 +140,12 @@ abstract class AbstractGradleCodeInsightTest : AbstractKotlinGradleCodeInsightBa
                 includeBuild("includedBuildWithoutSettings")
                 addCode(
                     $$"""
+                    dependencyResolutionManagement {
+                        versionCatalogs {
+                            create("customLibs") { from(files("customPath/customLibs.toml")) }
+                        }
+                    }     
+                   
                     fun includeSubprojectsDynamically(path: String) {
                         val dirsWithBuildScripts = file(path).listFiles()
                             ?.filter { File(it, "build.gradle.kts").exists() }
@@ -157,6 +163,7 @@ abstract class AbstractGradleCodeInsightTest : AbstractKotlinGradleCodeInsightBa
                 withMavenCentral()
             }
             withFile("gradle/libs.versions.toml", "")
+            withFile("customPath/customLibs.toml", "")
             // subprojects files
             withBuildFile(gradleVersion, "subprojectsDir/subproject1", gradleDsl = GradleDsl.KOTLIN) {
                 withKotlinDsl()

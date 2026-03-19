@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.kotlin.tests.completion
 
-import com.intellij.codeInsight.completion.CompletionContributor
-import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.gradle.completion.kotlin.KotlinGradleScriptCompletionContributor
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
@@ -33,9 +31,9 @@ import org.junit.jupiter.params.ParameterizedTest
 @UseK2PluginMode
 @GradleProjectTestApplication
 @AssertKotlinPluginMode
-@TestRoot("idea/tests/testData/")
-@TestDataPath("/")
-@TestMetadata("testData/gradle/completion/buildGradleKts/dependencies")
+@TestDataPath($$"$CONTENT_ROOT/testData")
+@TestRoot("completion/kotlin/tests/testData")
+@TestMetadata("buildGradleKts/dependencies")
 internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompletionTest() {
 
     private val testCompletionService = object : DependencyCompletionService {
@@ -54,6 +52,30 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         application.replaceService(DependencyCompletionService::class.java, testCompletionService, testRootDisposable)
         removeOtherCompletionContributors()
     }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("versionCatalogs/scopeArgumentCatalogNames")
+    fun `test catalog name completion in a scope argument`(gradleVersion: GradleVersion) =
+        verifyVersionCatalogCompletion(gradleVersion)
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("versionCatalogs/scopeArgumentLibraries")
+    fun `test library entry completion in a scope argument`(gradleVersion: GradleVersion) =
+        verifyVersionCatalogCompletion(gradleVersion)
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("versionCatalogs/scopeArgumentLibrariesFromCustomCatalog")
+    fun `test library entry completion in a scope argument for a custom catalog`(gradleVersion: GradleVersion) =
+        verifyVersionCatalogCompletion(gradleVersion)
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("versionCatalogs/scopeArgumentBundles")
+    fun `test bundle entry completion in a scope argument`(gradleVersion: GradleVersion) =
+        verifyVersionCatalogCompletion(gradleVersion)
 
     @ParameterizedTest
     @BaseGradleVersionSource(DEPENDENCY_CONFIGURATIONS_AND_NOTATIONS)
@@ -232,6 +254,10 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     @TestMetadata("artifactCompletionOnTopLevel.test")
     fun testArtifactCompletionOnTopLevel(gradleVersion: GradleVersion) = verifyCompletion(gradleVersion)
 
+    private fun verifyVersionCatalogCompletion(gradleVersion: GradleVersion) {
+        verifyCompletion(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE)
+    }
+
     private fun verifyCompletion(gradleVersion: GradleVersion) {
         verifyCompletion(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT)
     }
@@ -239,17 +265,6 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     private fun String.unescape(): String = this
         .replace("<colon>", ":")
         .replace("<comma>", ",")
-
-    private fun removeOtherCompletionContributors() {
-        val pluginDescriptor = DefaultPluginDescriptor("registerCompletionContributor")
-        val contributor =
-            CompletionContributorEP("any", KotlinGradleScriptCompletionContributor::class.java.getName(), pluginDescriptor)
-        ExtensionTestUtil.maskExtensions(
-            CompletionContributor.EP,
-            listOf(contributor),
-            testRootDisposable
-        )
-    }
 
     companion object {
         const val DEPENDENCY_CONFIGURATIONS_AND_NOTATIONS = """

@@ -1,0 +1,17 @@
+// "EXPECTED-SUGGESTION": libs.my.library.aaa, libs.my.library.bbb
+// "SUGGESTION-INDEX-TO-APPLY": 0
+// "COMPLETION-RESULT-PATH": build.gradle.after.kts
+// FILE: build.gradle.kts
+dependencies {
+    implementation(libs.m<caret>)
+}
+
+// FILE: build.gradle.after.kts
+dependencies {
+    implementation(libs.my.library.aaa<caret>)
+}
+
+// FILE: gradle/libs.versions.toml
+[libraries]
+my-library-aaa = "com.example:my-library-aaa:1.0.0"
+my-library-bbb = "com.example:my-library-bbb:1.0.0"

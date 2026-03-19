@@ -1,16 +1,26 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.kotlin.tests.completion
 
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.gradle.completion.kotlin.KotlinGradleScriptCompletionContributor
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.AbstractGradleCodeInsightTest
 import org.jetbrains.kotlin.gradle.GRADLE_KMP_KOTLIN_FIXTURE
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.TestFiles
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getAnnotationValue
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getTestMetadata
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
+import java.io.File
 import java.util.regex.Pattern
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -58,6 +68,36 @@ abstract class AbstractKotlinGradleCompletionTest : AbstractGradleCodeInsightTes
                 maybeCheckResult()
             }
         }
+    }
+
+    protected fun removeOtherCompletionContributors() {
+        val pluginDescriptor = DefaultPluginDescriptor("registerCompletionContributor")
+        val contributor =
+            CompletionContributorEP("any", KotlinGradleScriptCompletionContributor::class.java.getName(), pluginDescriptor)
+        ExtensionTestUtil.maskExtensions(
+            CompletionContributor.EP,
+            listOf(contributor),
+            testRootDisposable
+        )
+    }
+
+    /**
+     * TODO Refactor. The current logic test data logic is too complicated.
+     * There are three annotations applied to the test class:
+     * - @TestDataPath - currently is used only for navigation to test data directories.
+     * - @TestRoot - required, a path to @TestDataPath directory, but relative to a root of Gradle plugin
+     * - @TestMetadata - optional, is a relative path to @TestDataPath. Allows setting a common path for all tests in the class.
+     */
+    override fun getTestDataDirectory(testName: String): File {
+        val repoPath = PathManager.getHomeDir()
+        val gradlePluginPath = repoPath.resolve("community/plugins/gradle")
+        val clazz = this::class.java
+        val testRoot = getAnnotationValue(clazz, TestRoot::class.java)?.value
+            ?: error("Please specify @TestRoot for ${clazz.name} class with a path relative to $gradlePluginPath")
+        val testRootPath = gradlePluginPath.resolve(testRoot)
+        val testMetadataPath = getTestMetadata(clazz)
+        val testDataPath = if (testMetadataPath != null) testRootPath.resolve(testMetadataPath) else testRootPath
+        return testDataPath.toFile()
     }
 
     override val testFileFactory = object : TestFiles.TestFileFactoryNoModules<TestFile>() {

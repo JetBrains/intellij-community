@@ -6,8 +6,6 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogEntrySearcher
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogEntry
-import org.jetbrains.plugins.gradle.toml.MatchingType.EXACT
-import org.jetbrains.plugins.gradle.toml.MatchingType.STARTS_WITH
 import org.toml.lang.psi.TomlFile
 import org.toml.lang.psi.TomlInlineTable
 import org.toml.lang.psi.TomlKeyValue
@@ -59,7 +57,7 @@ class GradleTomlVersionCatalogEntrySearcher : GradleVersionCatalogEntrySearcher 
   ): List<VersionCatalogEntry> {
     if (versionCatalog !is TomlFile) return emptyList()
 
-    val matchingType = STARTS_WITH
+    val matchingType = MatchingType.STARTS_WITH
     val result = mutableListOf<VersionCatalogEntry>()
     val (section, lookupKey) = getLookupSectionAndKey(entrySearchString)
     // At the root level, look for the right section (versions, libraries, plugins, bundles)
@@ -133,15 +131,15 @@ private fun findAliases(table: TomlKeyValueOwner, lookupKey: String, matchingTyp
 
 private enum class MatchingType { EXACT, STARTS_WITH }
 
-private fun keysMatch(keyText: String, lookupKey: String, matchingType: MatchingType = EXACT): Boolean {
-  if (keyText.length != lookupKey.length && matchingType == EXACT) {
+private fun keysMatch(keyText: String, lookupKey: String, matchingType: MatchingType = MatchingType.EXACT): Boolean {
+  if (keyText.length != lookupKey.length && matchingType == MatchingType.EXACT) {
     return false
   }
   val normalizedTomlKey = normalizeTomlKey(keyText)
   val normalizedLookupKey = getKeyParts(lookupKey).joinToString(".")
   return when (matchingType) {
-    EXACT -> normalizedTomlKey == normalizedLookupKey
-    STARTS_WITH -> normalizedTomlKey.startsWith(normalizedLookupKey)
+    MatchingType.EXACT -> normalizedTomlKey == normalizedLookupKey
+    MatchingType.STARTS_WITH -> normalizedTomlKey.startsWith(normalizedLookupKey)
   }
 }
 
