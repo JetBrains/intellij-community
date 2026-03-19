@@ -53,6 +53,9 @@ a:com.intellij.ide.todo.TodoPanel
 - selectItem(com.intellij.psi.search.TodoItem):V
 - p:setDisplayName(java.lang.String):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+f:com.intellij.ide.todo.TodoRemoteTreeHelper
+- sf:INSTANCE:com.intellij.ide.todo.TodoRemoteTreeHelper
+- sf:getNeighbourTreeNode(javax.swing.tree.DefaultMutableTreeNode,Z):javax.swing.tree.DefaultMutableTreeNode
 a:com.intellij.ide.todo.TodoTreeBuilder
 - com.intellij.openapi.Disposable
 - sf:NODE_DESCRIPTOR_COMPARATOR:java.util.Comparator

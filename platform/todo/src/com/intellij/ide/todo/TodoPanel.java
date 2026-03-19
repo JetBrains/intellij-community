@@ -511,6 +511,9 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
         return false;
       }
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      if (node.getUserObject() instanceof TodoRemoteItemNode) {
+        return getNextRemoteNode() != null;
+      }
       Object userObject = node.getUserObject();
       if (userObject == null) {
         return false;
@@ -531,6 +534,9 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
         return false;
       }
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      if (node.getUserObject() instanceof TodoRemoteItemNode) {
+        return getPreviousRemoteNode() != null;
+      }
       Object userObject = node.getUserObject();
       return userObject instanceof NodeDescriptor && !isFirst(node);
     }
@@ -542,11 +548,17 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
 
     @Override
     public @Nullable OccurenceInfo goNextOccurence() {
+      if (getSelectedNode().getUserObject() instanceof TodoRemoteItemNode) {
+        return goToRemoteNode(getNextRemoteNode());
+      }
       return goToPointer(getNextPointer());
     }
 
     @Override
     public @Nullable OccurenceInfo goPreviousOccurence() {
+      if (getSelectedNode().getUserObject() instanceof TodoRemoteItemNode) {
+        return goToRemoteNode(getPreviousRemoteNode());
+      }
       return goToPointer(getPreviousPointer());
     }
 
@@ -570,6 +582,37 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
         -1,
         -1
       );
+    }
+
+    private @Nullable OccurenceInfo goToRemoteNode(@Nullable DefaultMutableTreeNode treeNode) {
+      if (treeNode == null) return null;
+      TodoRemoteItemNode node = ObjectUtils.tryCast(treeNode.getUserObject(), TodoRemoteItemNode.class);
+      if (node == null) return null;
+      TodoRemoteItemNode.Value value = node.getValue();
+      if (value == null) return null;
+      TreePath path = new TreePath(treeNode.getPath());
+      myTree.setSelectionPath(path);
+      myTree.scrollPathToVisible(path);
+      return new OccurenceInfo(
+        new OpenFileDescriptor(myProject, value.getFile(), value.getNavigationOffset()),
+        -1,
+        -1
+      );
+    }
+
+    private @Nullable DefaultMutableTreeNode getSelectedNode() {
+      TreePath path = myTree.getSelectionPath();
+      return path == null ? null : (DefaultMutableTreeNode)path.getLastPathComponent();
+    }
+
+    private @Nullable DefaultMutableTreeNode getNextRemoteNode() {
+      DefaultMutableTreeNode selectedNode = getSelectedNode();
+      return TodoRemoteTreeHelper.getNeighbourTreeNode(selectedNode, true);
+    }
+
+    private @Nullable DefaultMutableTreeNode getPreviousRemoteNode() {
+      DefaultMutableTreeNode selectedNode = getSelectedNode();
+      return TodoRemoteTreeHelper.getNeighbourTreeNode(selectedNode, false);
     }
 
     private @Nullable TodoItemNode getNextPointer() {
