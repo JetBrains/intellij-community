@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GroupHeaderSeparator
+import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.gridLayout.GridLayout
@@ -326,6 +327,9 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     cellsPanel.isOpaque = false
     selectablePanel.layout = BorderLayout()
     selectablePanel.add(cellsPanel, BorderLayout.CENTER)
+    
+    selectablePanel.foreground = JBColor.PanelForeground
+    cellsPanel.foreground = JBColor.PanelForeground
 
     val builder = RowsGridBuilder(cellsPanel)
     builder.resizableRow()
