@@ -20,9 +20,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.psi.PyExpression
-import com.jetbrains.python.psi.PyConditionalExpression
 import com.jetbrains.python.psi.PyPsiFacade
-import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
 import com.jetbrains.python.psi.types.PyTypeChecker.convertToType
@@ -30,6 +28,7 @@ import com.jetbrains.python.psi.types.PyTypeChecker.findGenericDefinitionType
 import com.jetbrains.python.psi.types.PyTypeChecker.match
 import com.jetbrains.python.psi.types.PyTypeUtil.createTupleOfLiteralStringsType
 import com.jetbrains.python.psi.types.PyTypeUtil.extractStringLiteralsFromTupleType
+import com.jetbrains.python.psi.types.PyTypeUtil.widenLiteralAndNumeric
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
@@ -372,7 +371,7 @@ object PyTypeUtil {
 
   @JvmStatic
   fun widenLiteralAndNumeric(type: PyType?): PyType? {
-    return type
+    return type.widenTupleLiterals()
       .let { PyLiteralType.upcastLiteralToClass(it) }
       .let { PyNumericTowerUtil.enrich(it) }
   }
@@ -414,3 +413,15 @@ val PyType?.isUnknown: Boolean get() {
 @ApiStatus.Internal
 fun PyExpression.getLiteralType(context: TypeEvalContext): PyType? =
   PyLiteralType.getLiteralType(this, context)
+
+/**
+ * Widens literal types within a tuple type.
+ * When a tuple appears nested in a non-tuple container type (e.g., `list[tuple[Literal[1], Literal["a"]]]`),
+ * its literal element types should be widened to their base types (e.g., `list[tuple[int, str]]`).
+ */
+@ApiStatus.Experimental
+fun PyType?.widenTupleLiterals(): PyType? {
+  if (this !is PyTupleType) return this
+  val widenedElements = this.elementTypes.map { widenLiteralAndNumeric(it) }
+  return PyTupleType(this.pyClass, widenedElements, this.isHomogeneous)
+}

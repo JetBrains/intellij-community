@@ -1002,7 +1002,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-9334
   public void testIterateOverListOfNestedTuples() {
-    doTest("Literal['foo']",
+    doTest("str",
            """
              def f():
                  for i, (expr, v) in [(0, ('foo', []))]:
@@ -1047,7 +1047,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-10967
   public void testDefaultTupleParameterMember() {
-    doTest("Literal[1]",
+    doTest("int",
            """
              def foo(xs=(1, 2)):
                expr, foo = xs
@@ -1174,7 +1174,7 @@ public class PyTypeTest extends PyTestCase {
   // PY-38928
   public void testIterateListOfTuples() {
     doTest(
-      "Literal['foo']",
+      "str",
       """
         for ((_, expr)) in [(1, 'foo')]:
             pass
@@ -2721,7 +2721,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testUnpackingToNestedTargetsInSquareBracketsInForLoops() {
-    doTest("Literal[\"foo\"]",
+    doTest("str",
            """
              xs = [(1, ("foo",))]
              for [_, [expr]] in xs:
@@ -2730,7 +2730,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testUnpackingToNestedTargetsInSquareBracketsInComprehensions() {
-    doTest("Literal[\"foo\"]",
+    doTest("str",
            """
              xs = [(1, ("foo",))]
              ys = [expr for [_, [expr]] in xs]
