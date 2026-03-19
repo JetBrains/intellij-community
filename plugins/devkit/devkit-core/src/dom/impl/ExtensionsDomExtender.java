@@ -85,20 +85,21 @@ public final class ExtensionsDomExtender extends DomExtender<Extensions> {
 
   private static Set<VirtualFile> getVisibleFiles(Project project, @NotNull VirtualFile file) {
     Set<VirtualFile> result = new HashSet<>();
-    collectFiles(project, file, result);
+    collectFiles(project, file, result, new HashSet<>());
     result.addAll(PluginIdModuleIndex.getFiles(project, ""));
     return result;
   }
 
-  private static void collectFiles(Project project, @NotNull VirtualFile file, Set<VirtualFile> result) {
+  private static void collectFiles(Project project, @NotNull VirtualFile file, Set<VirtualFile> result, Set<String> processedDeps) {
     ProgressManager.checkCanceled();
     if (!result.add(file)) {
       return;
     }
 
     for (String id : getDependencies(project, file)) {
+      if (!processedDeps.add(id)) continue;
       for (VirtualFile dep : PluginIdModuleIndex.getFiles(project, id)) {
-        collectFiles(project, dep, result);
+        collectFiles(project, dep, result, processedDeps);
       }
     }
   }
