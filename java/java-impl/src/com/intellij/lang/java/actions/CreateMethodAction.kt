@@ -44,7 +44,7 @@ import com.intellij.psi.util.PsiUtil.setModifierProperty
 /**
  * @param abstract whether this action creates a method with explicit abstract modifier
  */
-internal class CreateMethodAction(
+public class CreateMethodAction(
   targetClass: PsiClass,
   override val request: CreateMethodRequest,
   private val abstract: Boolean

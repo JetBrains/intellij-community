@@ -11,7 +11,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 
-internal abstract class CreateTargetAction<T : PsiElement>(
+public abstract class CreateTargetAction<T : PsiElement>(
   target: T,
   @SafeFieldForPreview protected open val request: ActionRequest
 ) : LocalQuickFixAndIntentionActionOnPsiElement(target) {
@@ -26,7 +26,7 @@ internal abstract class CreateTargetAction<T : PsiElement>(
     return isAvailable(project, psiFile, target)
   }
 
-  open fun isAvailable(project: Project, file: PsiFile, target: T): Boolean {
+  public open fun isAvailable(project: Project, file: PsiFile, target: T): Boolean {
     return request.isValid
   }
 
@@ -38,12 +38,12 @@ internal abstract class CreateTargetAction<T : PsiElement>(
     invoke(project, psiFile, target)
   }
 
-  abstract fun invoke(project: Project, file: PsiFile, target: T)
+  public abstract fun invoke(project: Project, file: PsiFile, target: T)
 
   override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = target
 }
 
-internal abstract class CreateMemberAction(target: PsiClass, request: ActionRequest) : CreateTargetAction<PsiClass>(target, request) {
+public abstract class CreateMemberAction(target: PsiClass, request: ActionRequest) : CreateTargetAction<PsiClass>(target, request) {
 
-  open fun getTarget(): JvmClass = target
+  public open fun getTarget(): JvmClass = target
 }
