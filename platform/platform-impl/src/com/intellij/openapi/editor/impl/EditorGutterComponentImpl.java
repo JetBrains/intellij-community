@@ -934,14 +934,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
               VisualPosition visualPosition = myEditor.logicalToVisualPosition(new LogicalPosition(logicalLine, 0));
               Optional<GutterMark> breakpoint = getGutterRenderers(visualPosition.line).stream()
                 .filter(r -> r instanceof GutterIconRenderer &&
-                             ((GutterIconRenderer)r).getAlignment() == GutterIconRenderer.Alignment.LINE_NUMBERS)
+                             ((GutterIconRenderer)r).getAlignment() == GutterIconRenderer.Alignment.LINE_NUMBERS &&
+                             ((GutterIconRenderer)r).getVerticalAlignment() != GutterIconRenderer.VerticalAlignment.BETWEEN_LINES)
                 .findFirst();
               if (breakpoint.isPresent()) {
-                // Don't suppress line number if the icon is positioned between lines
-                GutterIconRenderer renderer = (GutterIconRenderer)breakpoint.get();
-                if (renderer.getVerticalAlignment() != GutterIconRenderer.VerticalAlignment.BETWEEN_LINES) {
-                  iconOnTheLine = breakpoint.get().getIcon();
-                }
+                iconOnTheLine = breakpoint.get().getIcon();
               }
               if ((myAlphaContext.isVisible() || isGutterContextMenuShown()) &&
                   Objects.equals(getClientProperty("active.line.number"), logicalLine)) {
@@ -968,8 +965,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
               g.drawString(lineToDisplay, textOffset, yShifted + myEditor.getAscent());
             }
 
-            // Draw hover icon if present
-            if (hoverIcon != null && iconOnTheLine == null) {
+            // BETWEEN_LINES hover icons can coexist with an on-line icons
+            if (hoverIcon != null && (iconOnTheLine == null || hoverIconBetweenLines)) {
               Icon icon = scaleIcon(hoverIcon);
               int iconX = offset - icon.getIconWidth();
 
@@ -3033,8 +3030,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
         int iconWidth = icon.getIconWidth();
         int centerX = x + iconWidth / 2;
         xPos.put(x, centerX);
-        if (x <= cX && cX <= x + iconWidth) {
-          int iconHeight = icon.getIconHeight();
+        int iconHeight = icon.getIconHeight();
+        if (x <= cX && cX <= x + iconWidth &&
+            y <= p.y && p.y <= y + iconHeight) {
           result[0] = new PointInfo((GutterIconRenderer)renderer, new Point(centerX, y + iconHeight / 2));
         }
       });
