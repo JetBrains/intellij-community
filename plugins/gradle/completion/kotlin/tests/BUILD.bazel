@@ -76,6 +76,8 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_test_lib",
     "//plugins/groovy:groovy-tests",
     "//plugins/groovy:groovy-tests_test_lib",
+    "//plugins/repository-search",
+    "//plugins/repository-search:repository-search_test_lib",
   ],
   runtime_deps = [
     ":tests",
