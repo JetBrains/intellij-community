@@ -32,8 +32,8 @@ import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.setPosixFilePermissions
 
-class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder: String?, project: Project?)
-  : PySkeletonGenerator(skeletonPath, pySdk, currentFolder) {
+class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder: String?, project: Project?) :
+  PySkeletonGenerator(skeletonPath, pySdk, currentFolder) {
   private val pyRequest: HelpersAwareTargetEnvironmentRequest = checkNotNull(
     // TODO Get rid of the dependency on the default project
     PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, project ?: ProjectManager.getInstance().defaultProject)

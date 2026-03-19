@@ -38,7 +38,10 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = fileLogger()
 
-internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, launchRequest: LaunchRequest): Result<ProcessLauncher, ExecuteGetProcessError.EnvironmentError> = withContext(Dispatchers.IO) {
+internal suspend fun createProcessLauncherOnTarget(
+  binOnTarget: BinOnTarget,
+  launchRequest: LaunchRequest,
+): Result<ProcessLauncher, ExecuteGetProcessError.EnvironmentError> = withContext(Dispatchers.IO) {
   val target = binOnTarget.target
 
   val request = if (target != null) {
@@ -115,7 +118,13 @@ internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, lau
       commandLineBuilder.addEnvironmentVariable(k, v)
     }
   }.build()
-  return@withContext Result.success(ProcessLauncher(exeForError = Exe.OnTarget(exePath), args = args, processCommands = TargetProcessCommands(launchRequest.scopeToBind, exePath, targetEnv, cmdLine, downloadConfig)))
+  return@withContext Result.success(ProcessLauncher(exeForError = Exe.OnTarget(exePath),
+                                                    args = args,
+                                                    processCommands = TargetProcessCommands(launchRequest.scopeToBind,
+                                                                                            exePath,
+                                                                                            targetEnv,
+                                                                                            cmdLine,
+                                                                                            downloadConfig)))
 }
 
 private class TargetProcessCommands(
@@ -134,16 +143,17 @@ private class TargetProcessCommands(
 
   private var process: Process? = null
 
-  override val processFunctions: ProcessFunctions = ProcessFunctions(waitForExit = { // `waitForExit` seems to be broken in Targets API, hence polling
-    while (process?.isAlive == true) {
-      delay(100.milliseconds)
-    }
-    downloadAfterExecution()
-    targetEnv.shutdown()
-  }, killProcess = {
-    process?.destroyForcibly()
-    targetEnv.shutdown()
-  })
+  override val processFunctions: ProcessFunctions =
+    ProcessFunctions(waitForExit = { // `waitForExit` seems to be broken in Targets API, hence polling
+      while (process?.isAlive == true) {
+        delay(100.milliseconds)
+      }
+      downloadAfterExecution()
+      targetEnv.shutdown()
+    }, killProcess = {
+      process?.destroyForcibly()
+      targetEnv.shutdown()
+    })
 
   private suspend fun downloadAfterExecution() {
     if (downloadConfig == null) return
@@ -180,4 +190,5 @@ private class TargetProcessCommands(
   }
 }
 
-private fun ExecutionException.asCantStart(): Result.Failure<ExecErrorReason.CantStart> = Result.failure(ExecErrorReason.CantStart(null, localizedMessage))
+private fun ExecutionException.asCantStart(): Result.Failure<ExecErrorReason.CantStart> =
+  Result.failure(ExecErrorReason.CantStart(null, localizedMessage))
