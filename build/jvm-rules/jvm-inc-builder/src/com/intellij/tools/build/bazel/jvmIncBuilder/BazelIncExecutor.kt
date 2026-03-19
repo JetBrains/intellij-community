@@ -46,8 +46,10 @@ internal class BazelIncExecutor : WorkRequestExecutor {
     private fun configureGlobals() {
       ExternalRefCollectorCompilerToolExtension.enable()
       // TMH assertions
+      /* Android Studio (b/493960803): disable threading assertions for now, matching the previous behavior in the JPS build.
       System.setProperty(ThreadingModelInstrumenter.INSTRUMENT_ANNOTATIONS_PROPERTY, "true")
       System.setProperty(ThreadingModelInstrumenter.GENERATE_LINE_NUMBERS_PROPERTY, "true")
+      */
     }
 
     @JvmStatic
