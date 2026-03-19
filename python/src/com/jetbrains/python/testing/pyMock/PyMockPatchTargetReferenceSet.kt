@@ -66,7 +66,9 @@ private class PyMockSegmentReference(
     val context = fromFoothold(element).copyWithMembers()
     val resolved = resolveSegmentAt(segments, segmentIndex, context) ?: return emptyArray()
     // For packages, navigate to __init__.py instead of the directory
-    val navigable = if (resolved is PsiDirectory) PyUtil.turnDirIntoInit(resolved) ?: resolved else resolved
+    val navigable = if (resolved is PsiDirectory) {
+      PyUtil.turnDirIntoInitPy(resolved) ?: PyUtil.turnDirIntoInit(resolved) ?: resolved
+    } else resolved
     return arrayOf(PsiElementResolveResult(navigable))
   }
 

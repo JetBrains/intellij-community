@@ -86,6 +86,23 @@ class PyMockTest : PyTestCase() {
     assertEquals("sub_method", (methodResolved as PyFunction).name)
   }
 
+  fun testNavigationToPackagePrefersInitPyOverPyi() {
+    myFixture.configureByFile("test_patch_references/test_package_with_stubs.py")
+    val file = myFixture.file as PyFile
+    val testClass = file.findTopLevelClass("TestPatchPackageWithStubs")!!
+    val method = testClass.findMethodByName("test_patch_pkg_with_stubs", false, null)!!
+    val strArg = method.decoratorList!!.decorators.first().argumentList!!.arguments.first() as PyStringLiteralExpression
+
+    val refs = PyMockPatchTargetReferenceSet(strArg, false).createReferences()
+    assertSize(2, refs)
+
+    // Package with both __init__.py and __init__.pyi should resolve to __init__.py
+    val packageResolved = refs[0].resolve()
+    assertNotNull("example_pkg_with_stubs should resolve", packageResolved)
+    assertInstanceOf(packageResolved, PyFile::class.java)
+    assertEquals("__init__.py", (packageResolved as PyFile).name)
+  }
+
   fun testNavigationToClass() {
     myFixture.configureByFile("test_patch_references/test.py")
     val file = myFixture.file as PyFile
