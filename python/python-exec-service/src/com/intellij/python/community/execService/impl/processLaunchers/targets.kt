@@ -11,19 +11,21 @@ import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.getTargetPaths
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.local.LocalTargetPtyOptions
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.provider.utils.ProcessFunctions
 import com.intellij.platform.eel.provider.utils.bindProcessToScopeImpl
 import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.ExecuteGetProcessError
 import com.intellij.python.community.execService.impl.PyExecBundle
-import com.intellij.python.community.execService.spi.TargetEnvironmentRequestHandler
+import com.intellij.python.community.execService.impl.TargetEnvironmentRequestHandler
 import com.intellij.remoteServer.util.ServerRuntimeException
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.Exe
 import com.jetbrains.python.errorProcessing.ExecErrorReason
@@ -32,9 +34,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
+import java.nio.file.Path
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.measureTime
 
 private val logger = fileLogger()
 
@@ -44,7 +49,7 @@ internal suspend fun createProcessLauncherOnTarget(
 ): Result<ProcessLauncher, ExecuteGetProcessError.EnvironmentError> = withContext(Dispatchers.IO) {
   val target = binOnTarget.target
 
-  val request = if (target != null) {
+  val request = run {
     val projectMan = ProjectManager.getInstance() // Broken Targets API doesn't work without project
     try {
       target.createEnvironmentRequest(projectMan.openProjects.firstOrNull() ?: projectMan.defaultProject)
@@ -53,7 +58,6 @@ internal suspend fun createProcessLauncherOnTarget(
       return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(MessageError(e.localizedMessage)))
     }
   }
-  else LocalTargetEnvironmentRequest()
 
   // Broken Targets API can only upload the whole directory
   val dirsToMap = buildSet {
@@ -62,15 +66,15 @@ internal suspend fun createProcessLauncherOnTarget(
       add(it)
     }
   }
-  val handler = TargetEnvironmentRequestHandler.getHandler(request)
-  val uploadRoots = handler.mapUploadRoots(request, dirsToMap, binOnTarget.workingDir?.takeIf { it.pathString.isNotBlank() })
-  request.uploadVolumes.addAll(uploadRoots)
+  val uploadRoots =
+    TargetEnvironmentRequestHandler.mapUploadRoots(request, dirsToMap, binOnTarget.workingDir?.takeIf { it.pathString.isNotBlank() })
+  request.uploadVolumes.addAll(uploadRoots.map { it.value.root })
 
   // Setup download roots if download is requested
   val downloadConfig = launchRequest.downloadConfig
   if (downloadConfig != null) {
     val localDirsToDownload = binOnTarget.workingDir?.takeIf { it.pathString.isNotBlank() }?.let { setOf(it) } ?: emptySet()
-    val downloadRoots = handler.mapDownloadRoots(request, request.uploadVolumes, localDirsToDownload)
+    val downloadRoots = mapDownloadRoots(request.uploadVolumes, localDirsToDownload)
     request.downloadVolumes.addAll(downloadRoots)
   }
 
@@ -85,8 +89,11 @@ internal suspend fun createProcessLauncherOnTarget(
     fileLogger().warn("Failed to start $target", e) // TODO: i18n
     return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(MessageError("Failed to start environment due to ${e.localizedMessage}")))
   }
-  targetEnv.uploadVolumes.forEach { _, volume ->
-    volume.upload(".", TargetProgressIndicator.EMPTY)
+  for (volume in targetEnv.uploadVolumes.values) {
+    val skipUploading = uploadRoots[volume.localRoot]?.uploadVolumeExplicitly == false
+    if (! skipUploading) { // Volume explicitly marked as non-uploadable, i.e.: helpers (they are uploaded by handlers)
+      volume.uploadMeasureTime(".", TargetProgressIndicator.EMPTY, "execService")
+    }
   }
 
   val args = launchRequest.args.getArgs { localFile ->
@@ -192,3 +199,60 @@ private class TargetProcessCommands(
 
 private fun ExecutionException.asCantStart(): Result.Failure<ExecErrorReason.CantStart> =
   Result.failure(ExecErrorReason.CantStart(null, localizedMessage))
+
+/**
+ * Temporary function to [upload] from [localRoot] + [relativePath] to [targetRoot], much like [upload]
+ * but also reports time using [logger] if `debug` enabled.
+ */
+@ApiStatus.Internal
+@Throws(IOException::class)
+@RequiresBackgroundThread
+fun TargetEnvironment.UploadableVolume.uploadMeasureTime(
+  relativePath: String,
+  targetProgressIndicator: TargetProgressIndicator,
+  @NlsSafe reason: String,
+) {
+  measureUploadTime(
+    upload = {
+      upload(relativePath, targetProgressIndicator)
+    },
+    genMessage = {
+      "$reason: ${this.localRoot} -> ${targetRoot}"
+    }
+  )
+}
+
+/**
+ * Measures time for [upload] and reports it along with [genMessage] if `debug` enabled using [logger]
+ */
+@ApiStatus.Internal
+@RequiresBackgroundThread
+fun measureUploadTime(@RequiresBackgroundThread upload: () -> Unit, genMessage: () -> @NlsSafe String) {
+  val duration = measureTime { upload() }
+  logger.debug { "upload ${genMessage()} : $duration" }
+}
+
+/**
+ * Maps download roots using existing upload roots.
+ * This allows downloading files modified on the target back to the local machine.
+ *
+ * @param uploadRoots set of upload roots
+ * @param localDirs local directories that were uploaded and may need to be downloaded
+ * @return list of download roots, empty by default
+ */
+private fun mapDownloadRoots(
+  uploadRoots: Set<TargetEnvironment.UploadRoot>,
+  localDirs: Set<Path>,
+): List<TargetEnvironment.DownloadRoot> = localDirs.mapNotNull { localDir ->
+  val matchingUpload = uploadRoots.find { localDir.startsWith(it.localRootPath) }
+
+  if (matchingUpload != null) {
+    TargetEnvironment.DownloadRoot(
+      localRootPath = localDir,
+      targetRootPath = matchingUpload.targetRootPath,
+    )
+  }
+  else {
+    null // No matching upload, skip download
+  }
+}
