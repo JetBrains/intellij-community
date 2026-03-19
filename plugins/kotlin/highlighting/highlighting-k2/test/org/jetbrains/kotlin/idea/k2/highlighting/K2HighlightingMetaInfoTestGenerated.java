@@ -560,6 +560,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../../idea/tests/testData/highlighterMetaInfo/AutoCreatedItParameter.kt");
         }
 
+        @TestMetadata("ContextArguments.kt")
+        public void testContextArguments() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/ContextArguments.kt");
+        }
+
         @TestMetadata("DefinitelyNotNullType.kt")
         public void testDefinitelyNotNullType() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/DefinitelyNotNullType.kt");
