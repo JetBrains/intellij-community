@@ -46,6 +46,11 @@ final class ModCommandActionPresentationDelegate implements ModCommandAction, Re
   }
 
   @Override
+  public boolean availableInBatchMode() {
+    return myAction.availableInBatchMode();
+  }
+
+  @Override
   public @NotNull Class<?> getSubstitutedClass() {
     return ReportingClassSubstitutor.getClassToReport(myAction);
   }

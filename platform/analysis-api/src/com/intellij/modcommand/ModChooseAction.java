@@ -58,6 +58,11 @@ public record ModChooseAction(@NotNull @NlsContexts.PopupTitle String title,
     }
 
     @Override
+    public boolean availableInBatchMode() {
+      return myAction.availableInBatchMode();
+    }
+
+    @Override
     public @NotNull Class<?> getSubstitutedClass() {
       return ReportingClassSubstitutor.getClassToReport(myAction);
     }
