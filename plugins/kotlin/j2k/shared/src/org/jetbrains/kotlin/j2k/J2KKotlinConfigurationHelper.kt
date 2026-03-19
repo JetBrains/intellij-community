@@ -5,6 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.withCurrentThreadCoroutineScope
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.psi.PsiJavaFile
@@ -96,8 +97,8 @@ internal object J2KKotlinConfigurationHelper {
 
             withContext(Dispatchers.EDT) {
                 if (!autoConfigured) {
-                    // TODO: KTIJ-38048 need to configure kotlin in specified module only
-                    configurator.configureAndGetConfiguredModules(project, excludeModules = emptyList())
+                    val excludeModules = project.modules.asList().filter { it != module }
+                    configurator.configureAndGetConfiguredModules(project, excludeModules)
                     configurator.queueSyncAndWaitForProjectToBeConfigured(project)
                 }
 

@@ -102,7 +102,12 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
 
     @RequiresEdt
     override fun configureAndGetConfiguredModules(project: Project, excludeModules: Collection<Module>): Set<Module> {
-        val dialog = ConfigureDialogWithModulesAndVersion(project, this, excludeModules, getMinimumSupportedVersion())
+        val dialog = ConfigureDialogWithModulesAndVersion(
+            project,
+            this,
+            effectiveModules(project, excludeModules) ?: emptyList(),
+            getMinimumSupportedVersion()
+        )
 
         dialog.show()
         if (!dialog.isOK) return emptySet()
