@@ -1,6 +1,6 @@
 class Test {
 
-    private void extracted() {
+    private void tested() {
         test();
     }
 

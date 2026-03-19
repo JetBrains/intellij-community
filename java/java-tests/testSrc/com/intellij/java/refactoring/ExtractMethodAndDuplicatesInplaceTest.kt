@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring
 
 import com.intellij.codeInsight.hint.HintManager
@@ -577,6 +577,11 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = true
     doTest()
   }
+
+  fun testUseVariableName() = doTest()
+  fun testNameFromComment1() = doTest()
+  fun testNameFromComment2() = doTest()
+  fun testCreatePrefixForNewExpression() = doTest()
 
   fun testRefactoringListener(){
     templateTest {

@@ -7,12 +7,12 @@ public class Test<R> {
   }
 
   public <T extends CharSequence> void main(String[] args, T param) {
-      Result<T, R> result = getTrResult(param);
+      Result<T, R> result = getResult(param);
 
       System.out.println("Custom(" + result.t() + ", " + result.r() + ")");
   }
 
-    private <T extends CharSequence> @NotNull Result<T, R> getTrResult(T param) {
+    private <T extends CharSequence> @NotNull Result<T, R> getResult(T param) {
         T t = param;
         R r = getR();
         System.out.println();
