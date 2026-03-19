@@ -392,6 +392,12 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
   private sealed interface UpdateLensesRequest {
     data object All : UpdateLensesRequest
     data class Specific(val providerIds: Collection<String>) : UpdateLensesRequest
+
+    companion object {
+      fun of(providerIds: Collection<String>): UpdateLensesRequest {
+        return if (providerIds.isEmpty()) All else Specific(providerIds)
+      }
+    }
   }
 
   private fun onEditorCreated(editorLifetime: Lifetime, editor: Editor) {
@@ -453,7 +459,7 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
 
     invalidateProviderSignal.advise(editorLifetime) {
       if (it.editor == null || it.editor === editor) {
-        pokeEditor(UpdateLensesRequest.Specific(it.providerIds))
+        pokeEditor(UpdateLensesRequest.of(it.providerIds))
       }
     }
 
