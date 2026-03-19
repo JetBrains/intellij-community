@@ -86,7 +86,7 @@ internal fun generateDeps(
 
       // intellij.platform.configurationStore.tests uses internal symbols from intellij.platform.configurationStore.impl
       val dependencyModuleName = dependencyModule.name
-      val effectiveDepContainer = if (isTestFriend(dependencyModuleName, testModuleProperties) && dependencyModuleDescriptor.sources.isNotEmpty()) associates else deps
+      val effectiveDepContainer = if (isTestFriend(dependencyModuleName, testModuleProperties)) associates else deps
       addDep(
         isTest = isTest,
         scope = scope,
