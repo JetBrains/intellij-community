@@ -18595,6 +18595,13 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "platform-jewel-markdown-core-tests-org-commonmark-commonmark",
+  jar = "@org_commonmark-commonmark-0_24_0_http//file",
+  source_jar = "@org_commonmark-commonmark-0_24_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
   name = "org.commonmark/commonmark-ext-autolink-0.24.0.jar_copy",
   src = "@org_commonmark-commonmark-ext-autolink-0_24_0_http//file",
