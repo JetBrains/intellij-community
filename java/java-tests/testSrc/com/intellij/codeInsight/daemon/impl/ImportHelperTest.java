@@ -711,8 +711,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     CodeInsightWorkspaceSettings.getInstance(getProject()).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
-    List<HighlightInfo> errs =
-      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
+    List<HighlightInfo> errs = myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     waitForAutoOptimizeImports();
 
     //error in import list
@@ -773,8 +772,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
 
     CodeInsightWorkspaceSettings.getInstance(getProject()).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
 
-    List<HighlightInfo> errs =
-      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
+    List<HighlightInfo> errs = myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
 
     assertEmpty(errs);
 
@@ -801,8 +799,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
 
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
 
-    List<HighlightInfo> errs =
-      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
+    List<HighlightInfo> errs = myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     assertSize(1, errs);
 
     assertNoImportsAdded();
@@ -836,8 +833,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
 
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
 
-    List<HighlightInfo> errs =
-      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
+    List<HighlightInfo> errs = myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     assertTrue(errs.size() > 1);
 
     PsiJavaFile javaFile = (PsiJavaFile)getFile();

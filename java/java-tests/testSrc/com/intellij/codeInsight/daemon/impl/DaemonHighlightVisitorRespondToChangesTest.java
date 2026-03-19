@@ -205,8 +205,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
       """;
     configureByText(JavaFileType.INSTANCE, text);
 
-    List<HighlightInfo> infos =
-      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     MyHighlightCommentVisitor.assertHighlighted(infos);
   }
 

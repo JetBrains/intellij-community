@@ -152,8 +152,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
 
   public void testWholeFileInspection() throws Exception {
     configureByFile(DaemonRespondToChangesTest.BASE_PATH + "FieldCanBeLocal.java");
-    List<HighlightInfo> infos =
-      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertSize(1, infos);
     assertEquals("Field can be converted to a local variable", infos.get(0).getDescription());
 
@@ -229,8 +228,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     @Language("JAVA")
     String text = "class X { void f() { <caret> } }";
     configureByText(JavaFileType.INSTANCE, text);
-    List<HighlightInfo> infos =
-      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertEmpty(infos);
     int visitedCount = new HashSet<>(tool.visited).size();
     tool.visited.clear();
@@ -846,8 +844,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     enableInspectionTools(fastTool, slowTool);
 
     // both inspections should produce their results
-    List<HighlightInfo> infos =
-      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertTrue(infos.toString(), ContainerUtil.exists(infos, i -> i.getDescription().equals(fieldWarningText.get())));
     assertTrue(infos.toString(), ContainerUtil.exists(infos, i -> i.getDescription().equals(fastToolText)));
 
@@ -1034,8 +1031,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
      }
      """;
     configureByText(JavaFileType.INSTANCE, text);
-    List<HighlightInfo> infos =
-      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertTrue(infos.toString(), ContainerUtil.exists(infos, info-> new RawUseOfParameterizedTypeInspection().getShortName()
       .equals(info.getInspectionToolId())));
     type("@SuppressWarnings(\"rawtypes\")    ") ;
@@ -1080,8 +1076,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
      }
      """;
     configureByText(JavaFileType.INSTANCE, text);
-    List<HighlightInfo> infos =
-      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertOneElement(ContainerUtil.filter(infos, info-> myTool.getShortName().equals(info.getInspectionToolId())));
     type("// ") ;
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING));

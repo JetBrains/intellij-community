@@ -518,8 +518,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
   public void testRehighlightInnerBlockAfterInline() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
 
-    HighlightInfo error = assertOneElement(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+    HighlightInfo error = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     assertEquals("Variable 'e' is already defined in the scope", error.getDescription());
     PsiElement element = getFile().findElementAt(getEditor().getCaretModel().getOffset()).getParent();
 
@@ -651,8 +650,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       }}""";
     configureByText(JavaFileType.INSTANCE, text);
 
-    HighlightInfo error = assertOneElement(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+    HighlightInfo error = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     assertSame(HighlightInfoType.WRONG_REF, error.type);
 
     Document document = getDocument(getFile());
@@ -676,8 +674,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       }
     }
 
-    HighlightInfo error2 = assertOneElement(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+    HighlightInfo error2 = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     assertSame(HighlightInfoType.WRONG_REF, error2.type);
   }
 
@@ -806,13 +803,11 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       
       """;
     configureByText(JavaFileType.INSTANCE, text);
-    HighlightInfo error = assertOneElement(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+    HighlightInfo error = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     assertEquals("'}' expected", error.getDescription());
 
     type("//comment");
-    HighlightInfo error2 = assertOneElement(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+    HighlightInfo error2 = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     assertEquals("'}' expected", error2.getDescription());
   }
 
@@ -888,8 +883,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
 
     assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING));
     Editor editor = getEditor();
-    List<HighlightInfo.IntentionActionDescriptor> actions =
-      ShowIntentionsPass.getAvailableFixes(editor, getFile(), -1, ((EditorEx)editor).getExpectedCaretOffset());
+    List<HighlightInfo.IntentionActionDescriptor> actions = ShowIntentionsPass.getAvailableFixes(editor, getFile(), -1, ((EditorEx)editor).getExpectedCaretOffset());
     HighlightInfo.IntentionActionDescriptor descriptor = assertOneElement(actions);
     CodeInsightTestFixtureImpl.invokeIntention(descriptor.getAction(), getFile(), getEditor());
     myDaemonCodeAnalyzer.restart(getTestName(false));
@@ -1118,8 +1112,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     Document document = myEditor.getDocument();
     assertTrue(visibleRange.getLength() < document.getTextLength());
 
-    HighlightInfo info = assertOneElement(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+    HighlightInfo info = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     final String errorDescription = "Incompatible types. Found: 'null', required: 'int'";
     assertEquals(errorDescription, info.getDescription());
 
@@ -1556,8 +1549,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
         }
       }""";
     configureByText(JavaFileType.INSTANCE, text);
-    HighlightInfo error = assertOneElement(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+    HighlightInfo error = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     assertEquals("Incompatible types. Found: 'java.lang.String', required: 'int'", error.getDescription());
 
     error.getHighlighter().dispose();
@@ -1569,8 +1561,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
 
     myEditor.getCaretModel().moveToOffset(0);
     type("/* */");
-    HighlightInfo error2 = assertOneElement(
-      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+    HighlightInfo error2 = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     assertEquals("Incompatible types. Found: 'java.lang.String', required: 'int'", error2.getDescription());
   }
 
@@ -1651,14 +1642,12 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
 
       myDaemonCodeAnalyzer.restart(getTestName(false));
 
-      HighlightInfo error = assertOneElement(
-        myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+      HighlightInfo error = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
       assertEquals("Operator '+' cannot be applied to 'java.lang.String'", error.getDescription());
 
       type(" ");
 
-      HighlightInfo after = assertOneElement(
-        myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+      HighlightInfo after = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
       assertEquals("Operator '+' cannot be applied to 'java.lang.String'", after.getDescription());
     }
     finally {
