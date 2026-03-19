@@ -3618,6 +3618,8 @@ f:com.intellij.psi.util.PsiTreeUtilKt
 - bs:parentOfTypes$default(com.intellij.psi.PsiElement,kotlin.reflect.KClass[],Z,I,java.lang.Object):com.intellij.psi.PsiElement
 - sf:parents(com.intellij.psi.PsiElement):kotlin.sequences.Sequence
 - sf:parents(com.intellij.psi.PsiElement,Z):kotlin.sequences.Sequence
+- sf:parents(com.intellij.psi.PsiElement,Z,Z):kotlin.sequences.Sequence
+- bs:parents$default(com.intellij.psi.PsiElement,Z,Z,I,java.lang.Object):kotlin.sequences.Sequence
 - bsf:parentsOfType(com.intellij.psi.PsiElement,java.lang.Class):kotlin.sequences.Sequence
 - sf:parentsOfType(com.intellij.psi.PsiElement,java.lang.Class,Z):kotlin.sequences.Sequence
 - bs:parentsOfType$default(com.intellij.psi.PsiElement,java.lang.Class,Z,I,java.lang.Object):kotlin.sequences.Sequence

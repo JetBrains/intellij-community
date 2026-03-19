@@ -619,6 +619,13 @@ public class PsiTreeUtil {
     return getParentOfType(element, aClass, true);
   }
 
+  /**
+   * @param element the element to get the parent for.
+   * @return the parent stub's psi or null if {@code element} has an active stub, otherwise the parent psi or null.
+   *
+   * @see StubElement#getParentStub()
+   * @see PsiElement#getParent()
+   */
   @Contract("null -> null")
   public static @Nullable PsiElement getStubOrPsiParent(@Nullable PsiElement element) {
     if (element instanceof StubBasedPsiElement) {

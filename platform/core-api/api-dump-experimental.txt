@@ -460,6 +460,7 @@ com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider
 f:com.intellij.psi.util.PsiTreeUtilKt
 - *sf:elementsAroundOffsetUp(com.intellij.psi.PsiFile,I):java.util.Iterator
 - *sf:elementsAtOffsetUp(com.intellij.psi.PsiFile,I):java.util.Iterator
+- *sf:getStubOrPsiParent(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - *sf:leavesAroundOffset(com.intellij.psi.PsiFile,I):java.lang.Iterable
 - *sf:walkUp(com.intellij.psi.PsiElement,I):java.util.Iterator
 - *sf:walkUp(com.intellij.psi.PsiElement,I,com.intellij.psi.PsiElement):java.util.Iterator
