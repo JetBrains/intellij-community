@@ -94,7 +94,7 @@ internal class TestFixtureExtension : BeforeAllCallback,
       return
     }
 
-    TestLoggerFactory.fixtureInitialization<Exception>(static) {
+    TestLoggerFactory.fixtureInitialization<Exception>(static, context.displayName) {
       val exceptionHandler = CoroutineExceptionHandler { _, exception ->
         context[exceptionsKey] = exception
         throw exception
