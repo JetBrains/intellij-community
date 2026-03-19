@@ -51,7 +51,6 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//platform/jewel/markdown/core",
-    "//platform/jewel/markdown/core:core_test_lib",
     "//platform/jewel/ui",
     "//platform/jewel/ui:ui_test_lib",
     "//platform/jewel/foundation",
