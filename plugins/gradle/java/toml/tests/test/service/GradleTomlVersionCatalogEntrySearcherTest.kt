@@ -54,7 +54,10 @@ class GradleTomlVersionCatalogEntrySearcherTest {
         assertNotNull(it)
         assertEquals("groovy-core = \"lib\"", it.text)
       }
+    }
 
+    @Test
+    fun `test findEntryElement for a library entry when libraries is inline table`() {
       testFindEntryElement("groovy.core", """
       libraries = { groovy-core = "lib" }
       """.trimIndent()
@@ -62,7 +65,10 @@ class GradleTomlVersionCatalogEntrySearcherTest {
         assertNotNull(it)
         assertEquals("groovy-core = \"lib\"", it.text)
       }
+    }
 
+    @Test
+    fun `test findEntryElement for a library entry when libraries table name is a part of alias`() {
       testFindEntryElement("groovy.core", """
       libraries.groovy-core = "lib"
       """.trimIndent()
@@ -82,7 +88,10 @@ class GradleTomlVersionCatalogEntrySearcherTest {
         assertNotNull(it)
         assertEquals("bundle = [\"lib\"]", it.text)
       }
+    }
 
+    @Test
+    fun `test findEntryElement for a bundle entry when bundles is inline table`() {
       testFindEntryElement("bundles.bundle.core", """
       bundles = { bundle-core = ["lib"] }
       """.trimIndent()
@@ -90,7 +99,10 @@ class GradleTomlVersionCatalogEntrySearcherTest {
         assertNotNull(it)
         assertEquals("bundle-core = [\"lib\"]", it.text)
       }
+    }
 
+    @Test
+    fun `test findEntryElement for a bundle entry when bundles table name is a part of alias`() {
       testFindEntryElement("bundles.bundle.core", """
       bundles.bundle-core = "lib"
       """.trimIndent()
@@ -123,7 +135,10 @@ class GradleTomlVersionCatalogEntrySearcherTest {
         assertNotNull(it)
         assertEquals("plugin = \"plugin\"", it.text)
       }
+    }
 
+    @Test
+    fun `test findEntryElement for a plugin entry when plugins is inline table`() {
       testFindEntryElement("plugins.plugin.core", """
       plugins = { plugin_core = ["plugin"] }
       """.trimIndent()
@@ -131,7 +146,10 @@ class GradleTomlVersionCatalogEntrySearcherTest {
         assertNotNull(it)
         assertEquals("plugin_core = [\"plugin\"]", it.text)
       }
+    }
 
+    @Test
+    fun `test findEntryElement for a plugin entry when plugins table name is a part of alias`() {
       testFindEntryElement("plugins.plugin.core", """
       plugins.plugin_core = "plugin"
       """.trimIndent()
@@ -142,16 +160,7 @@ class GradleTomlVersionCatalogEntrySearcherTest {
     }
 
     @Test
-    fun `test findEntryElement for a complex entry path`() {
-      testFindEntryElement("alias_core-ext", """
-      [libraries]
-      alias-core-ext = "aaa"
-      """.trimIndent()
-      ) {
-        assertNotNull(it)
-        assertEquals("alias-core-ext = \"aaa\"", it.text)
-      }
-
+    fun `test findEntryElement when a TOML entry name has various delimiters`() {
       testFindEntryElement("alias.core.ext", """
       [libraries]
       alias_core-ext = "aaa"
@@ -160,54 +169,51 @@ class GradleTomlVersionCatalogEntrySearcherTest {
         assertNotNull(it)
         assertEquals("alias_core-ext = \"aaa\"", it.text)
       }
+    }
 
-      testFindEntryElement("alias.core", """
+    @Test
+    fun `test findEntryElement when given entry path has various delimiters`() {
+      testFindEntryElement("alias_core-ext", """
       [libraries]
       alias-core-ext = "aaa"
-      alias-core = "aaa"
       """.trimIndent()
       ) {
         assertNotNull(it)
-        assertEquals("alias-core = \"aaa\"", it.text)
+        assertEquals("alias-core-ext = \"aaa\"", it.text)
       }
     }
 
     @Test
-    fun `test findEntryElement when first letter after the separator is Uppercase`() {
-      testFindEntryElement("alias_core-ext", """
-        [libraries]
-        alias-Core-ext = "aaa"
-        """.trimIndent()
-      ) {
-        assertNotNull(it)
-        assertEquals("alias-Core-ext = \"aaa\"", it.text)
-      }
-
-      testFindEntryElement("alias.core.ext", """
-      [libraries]
-      alias-core-Ext = "aaa"
-      """.trimIndent()
-      ) {
-        assertNotNull(it)
-        assertEquals("alias-core-Ext = \"aaa\"", it.text)
-      }
-
+    fun `test findEntryElement shouldn't return an entry with name containing given path but larger`() {
       testFindEntryElement("alias.core", """
       [libraries]
       alias-core-ext = "aaa"
-      alias-Core = "aaa"
       """.trimIndent()
+      ) {
+        assertNull(it) { "findEntryElement shouldn return an entry having more letters than given path." }
+      }
+    }
+
+    @Test
+    fun `test findEntryElement considers case insensitivity for a first letter after delimeter in TOML entry`() {
+      testFindEntryElement("alias.core.ext.foo", """
+        [libraries]
+        alias-Core-Ext-Foo = "aaa"
+        """.trimIndent()
       ) {
         assertNotNull(it)
-        assertEquals("alias-Core = \"aaa\"", it.text)
+        assertEquals("alias-Core-Ext-Foo = \"aaa\"", it.text)
       }
+    }
 
-      testFindEntryElement("alias.core.Ext", """
-      [libraries]
-      alias-core-ext = "aaa"
-      """.trimIndent()
+    @Test
+    fun `test findEntryElement considers case sensitivity for non-first letter after delimiter in TOML entry`() {
+      testFindEntryElement("alias.core.ext.foo", """
+        [libraries]
+        alias-Core-eXt-Foo = "aaa"
+        """.trimIndent()
       ) {
-        assertNull(it)
+        assertNull(it) { "In TOML version catalog, only first letter after delimiter is case insensitive." }
       }
     }
   }
