@@ -63,5 +63,14 @@ object CommonScope {
     scopeForProcesses = testSuiteSupervisorScope
   }
 
+  /*
+    Restores the default process scope.
+    Processes started in ProcessExecutor and by various runWithDriver will be launched on per class scope.
+    It means that they will be stopped when the current test container is finished.
+   */
+  fun perClassScopeForIdeActivities() {
+    scopeForProcesses = perClassSupervisorScope
+  }
+
   fun shouldKillOutdatedProcessesBetweenContainers(): Boolean = scopeForProcesses == perClassSupervisorScope
 }
