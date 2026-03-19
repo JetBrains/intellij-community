@@ -957,6 +957,8 @@ com.intellij.openapi.project.configuration.ConfigurationResult
 com.intellij.openapi.project.configuration.ConfigurationResult$Failure
 - com.intellij.openapi.project.configuration.ConfigurationResult
 - a:getMessage():java.lang.String
+f:com.intellij.openapi.project.impl.UndefinedMacrosConfigurable
+- <init>(com.intellij.openapi.project.Project,java.lang.String,java.util.Collection):V
 f:com.intellij.openapi.ui.WindowWrapperBuilder
 - setMaximizable(Z):com.intellij.openapi.ui.WindowWrapperBuilder
 c:com.intellij.openapi.ui.impl.DialogWrapperPeerImpl

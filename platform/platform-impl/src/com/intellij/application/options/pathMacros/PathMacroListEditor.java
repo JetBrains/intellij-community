@@ -4,11 +4,13 @@ package com.intellij.application.options.pathMacros;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.text.StringTokenizer;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 import java.util.ArrayList;
@@ -18,14 +20,26 @@ import java.util.List;
 public final class PathMacroListEditor {
 
   private final PathMacroListEditorUI ui;
+  @Nullable private final Project myProject;
   private final PathMacroTable myPathMacroTable;
 
-  public PathMacroListEditor() {
-    this(null);
+  public PathMacroListEditor(@Nullable Project project) {
+    this(project, null);
   }
 
+  /**
+   * @deprecated Use {@link #PathMacroListEditor(Project)}, pass {@code null} only if there is no current project
+   * (global settings). The project is needed for the correct project-specific path macros, e.g., containing paths
+   * which may be container-specific.
+   */
+  @Deprecated
   public PathMacroListEditor(final Collection<String> undefinedMacroNames) {
-    myPathMacroTable = undefinedMacroNames != null ? new PathMacroTable(undefinedMacroNames) : new PathMacroTable();
+    this(null, undefinedMacroNames);
+  }
+
+  public PathMacroListEditor(@Nullable Project project, final Collection<String> undefinedMacroNames) {
+    myProject = project;
+    myPathMacroTable = undefinedMacroNames != null ? new PathMacroTable(myProject, undefinedMacroNames) : new PathMacroTable(myProject);
     ui = new PathMacroListEditorUI(
       ToolbarDecorator.createDecorator(myPathMacroTable)
         .setAddAction(new AnActionButtonRunnable() {

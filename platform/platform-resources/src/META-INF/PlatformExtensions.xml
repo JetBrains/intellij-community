@@ -378,7 +378,7 @@
                     key="configurable.ExternalDiffSettingsConfigurable.display.name"
                     instance="com.intellij.diff.settings.ExternalDiffSettingsConfigurable"/>
     </applicationConfigurable>
-    <applicationConfigurable groupId="appearance" groupWeight="-10"
+    <projectConfigurable groupId="appearance" groupWeight="-10"
                              id="preferences.pathVariables"
                              key="title.path.variables"
                              bundle="messages.ApplicationBundle"
