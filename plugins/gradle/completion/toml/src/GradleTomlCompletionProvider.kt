@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.gradle.completion.FullStringInsertHandler
 import com.intellij.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
-import com.intellij.gradle.completion.GradleDependencyCompletionMatcher
+import com.intellij.gradle.completion.GradleDependencyCompletionFuzzyMatcher
 import com.intellij.gradle.completion.getCompletionContext
 import com.intellij.gradle.completion.removeDummySuffix
 import com.intellij.openapi.components.service
@@ -47,7 +47,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
 
     val completionService = service<DependencyCompletionService>()
 
-    val resultSet = result.withPrefixMatcher(GradleDependencyCompletionMatcher(text))
+    val resultSet = result.withPrefixMatcher(GradleDependencyCompletionFuzzyMatcher(text))
 
     when {
       key == moduleKey -> {

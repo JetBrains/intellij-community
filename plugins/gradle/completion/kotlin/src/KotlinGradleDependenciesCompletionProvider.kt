@@ -13,7 +13,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.gradle.completion.FullStringInsertHandler
 import com.intellij.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
 import com.intellij.gradle.completion.GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY
-import com.intellij.gradle.completion.GradleDependencyCompletionMatcher
+import com.intellij.gradle.completion.GradleDependencyCompletionFuzzyMatcher
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition
 import com.intellij.gradle.completion.getCompletionContext
 import com.intellij.gradle.completion.removeDummySuffix
@@ -140,7 +140,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         val completionService = service<DependencyCompletionService>()
         val request = DependencyCompletionRequest(text, parameters.getCompletionContext())
 
-        val resultSet = result.withPrefixMatcher(GradleDependencyCompletionMatcher(text))
+        val resultSet = result.withPrefixMatcher(GradleDependencyCompletionFuzzyMatcher(text))
 
         runBlockingCancellable {
             completionService.suggestCompletions(request)
