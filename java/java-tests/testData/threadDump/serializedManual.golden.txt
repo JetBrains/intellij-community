@@ -9,6 +9,8 @@
    java.lang.Thread.State: RUNNABLE
 	at example.worker-1.run(worker-1.java:2)
 
+Collection of extended dump was disabled.
+
 ============ INTELLIJ META_DATA ============
 {
     "version": 1,
