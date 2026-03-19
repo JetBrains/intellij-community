@@ -26,13 +26,12 @@ import com.jetbrains.python.ast.PyAstClass;
 import com.jetbrains.python.ast.PyAstElement;
 import com.jetbrains.python.ast.PyAstFile;
 import com.jetbrains.python.ast.PyAstFunction;
-import com.jetbrains.python.ast.PyAstLoopStatement;
 import com.jetbrains.python.ast.PyAstMatchStatement;
 import com.jetbrains.python.ast.PyAstPassStatement;
 import com.jetbrains.python.ast.PyAstStatement;
 import com.jetbrains.python.ast.PyAstStatementList;
+import com.jetbrains.python.ast.PyAstStatementListContainer;
 import com.jetbrains.python.ast.PyAstStatementPart;
-import com.jetbrains.python.ast.PyAstStatementWithElse;
 import com.jetbrains.python.ast.PyAstStringLiteralExpression;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.ast.impl.PyUtilCore;
@@ -197,9 +196,7 @@ public class PyStatementMover extends LineMover {
   }
 
   private static PyAstStatementList getStatementList(final @NotNull PsiElement elementToMove) {
-    return PsiTreeUtil.getParentOfType(elementToMove, PyAstStatementList.class, true,
-                                                                PyAstStatementWithElse.class, PyAstLoopStatement.class,
-                                       PyAstFunction.class, PyAstClass.class);
+    return PsiTreeUtil.getParentOfType(elementToMove, PyAstStatementList.class, true, PyAstStatementListContainer.class);
   }
 
   private static @Nullable ScopeRange moveOut(final @NotNull PsiElement elementToMove, final @NotNull Editor editor, boolean down) {
