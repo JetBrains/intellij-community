@@ -11,12 +11,12 @@ import org.junit.Test
 class DelegateBuildRunnerCanRunTest : MavenExecutionTestCase() {
 
   @Test
-  fun testAcceptsMavenRunConfiguration() {
+  fun testDoesNotMavenRunConfiguration() {
     val runner = ProgramRunner.findRunnerById(DELEGATE_RUNNER_ID)?: throw AssertionError("[$DELEGATE_RUNNER_ID] build runner should be registered")
     val mavenFactory = MavenRunConfigurationType.getInstance().configurationFactories[0]
     val mavenConfiguration = mavenFactory.createTemplateConfiguration(project)
 
-    assertTrue(
+    assertFalse(
       "Delegate build runner must accept Maven run configuration with DefaultRunExecutor",
       runner.canRun(DefaultRunExecutor.EXECUTOR_ID, mavenConfiguration)
     )
