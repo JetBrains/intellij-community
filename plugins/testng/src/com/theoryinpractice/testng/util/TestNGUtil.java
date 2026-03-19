@@ -521,11 +521,12 @@ public final class TestNGUtil {
     if (method == null) return null;
     PsiClass aClass = method.getContainingClass();
 
-    if (aClass != null) {
+    while (aClass != null) {
       for (PsiAnnotation annotation : aClass.getAnnotations()) {
         PsiAnnotationMemberValue value = extractDataProviderClass(annotation);
         if (value != null) return value;
       }
+      aClass = aClass.getSuperClass();
     }
     return null;
   }
