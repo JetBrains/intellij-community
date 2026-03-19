@@ -170,16 +170,14 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     @Override
     public boolean canClose(@NotNull Project project) {
       FileDocumentManagerImpl manager = (FileDocumentManagerImpl)getInstance();
-      if (!manager.myUnsavedDocuments.isEmpty()) {
-        manager.myOnClose = true;
-        try {
-          manager.saveAllDocuments();
-        }
-        finally {
-          manager.myOnClose = false;
-        }
+      if (manager.myUnsavedDocuments.isEmpty()) return true;
+      manager.myOnClose = true;
+      try {
+        return manager.saveDocuments(null, true);
       }
-      return manager.myUnsavedDocuments.isEmpty();
+      finally {
+        manager.myOnClose = false;
+      }
     }
   }
 
@@ -257,23 +255,26 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     saveDocuments(filter, true);
   }
 
-  private void saveDocuments(@Nullable Predicate<? super Document> filter, boolean isExplicit) {
+  /**
+   * @return {@code true} if saving was performed without errors, and {@code false} otherwise
+   */
+  private boolean saveDocuments(@Nullable Predicate<? super Document> filter, boolean isExplicit) {
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
       .beforeAllDocumentsSaving();
-    if (myUnsavedDocuments.isEmpty()) return;
+    if (myUnsavedDocuments.isEmpty()) return true;
 
     if (EDT.isCurrentThreadEdt()) {
-      saveDocumentsOnEdt(isExplicit, filter);
+      return saveDocumentsOnEdt(isExplicit, filter);
     }
     else {
-      doSave(null, isExplicit, filter);
+      return doSave(null, isExplicit, filter);
     }
   }
 
   @RequiresEdt
-  private void saveDocumentsOnEdt(boolean isExplicit, @Nullable Predicate<? super Document> filter) {
+  private boolean saveDocumentsOnEdt(boolean isExplicit, @Nullable Predicate<? super Document> filter) {
     ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
     PotemkinProgress myProgress = current instanceof PotemkinProgress p ? p :
                                   new PotemkinProgress("", null, null, null);
@@ -282,10 +283,14 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     try {
       // if already run under progress, reuse it with another title, otherwise create and show the progress dialog
       if (current instanceof PotemkinProgress) {
-        doSave(myProgress, isExplicit, filter);
+        return doSave(myProgress, isExplicit, filter);
       }
       else {
-        myProgress.runInSwingThread(() -> doSave(myProgress, isExplicit, filter));
+        boolean[] result = new boolean[1];
+        myProgress.runInSwingThread(() -> {
+          result[0] = doSave(myProgress, isExplicit, filter);
+        });
+        return result[0];
       }
     }
     finally {
@@ -293,7 +298,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     }
   }
 
-  private void doSave(@Nullable PotemkinProgress myProgress, boolean isExplicit, @Nullable Predicate<? super Document> filter) {
+  private boolean doSave(@Nullable PotemkinProgress myProgress, boolean isExplicit, @Nullable Predicate<? super Document> filter) {
     Map<Document, IOException> failedToSave = new HashMap<>();
     Set<Document> vetoed = new HashSet<>();
     while (true) {
@@ -327,9 +332,9 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
       if (count == 0) break;
     }
-    if (!failedToSave.isEmpty()) {
-      handleErrorsOnSave(failedToSave);
-    }
+    if (failedToSave.isEmpty()) return true;
+    handleErrorsOnSave(failedToSave);
+    return false;
   }
 
   @Override
