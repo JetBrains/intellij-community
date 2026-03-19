@@ -61,6 +61,10 @@ public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspec
           }
         }
         else {
+          PsiMethod testMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+          PsiClass containingClass = testMethod != null ? testMethod.getContainingClass() : null;
+          if (containingClass != null && containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) return;
+
           final LocalQuickFix[] fixes = (isOnTheFly && providerClass != null)
                                         ? toArray(createMethodFix(provider, providerClass, topLevelClass))
                                         : LocalQuickFix.EMPTY_ARRAY;
