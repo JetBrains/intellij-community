@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
@@ -4370,6 +4371,21 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                            # StrEnum inherits str which inherits Iterable[str], thus, iterable for both instance and definition
                            return set(self) # OK
                    """);
+  }
+
+  @TestFor(issues="PY-57621")
+  public void testTupleInGenericExplicitIsValid() {
+    doTestByText("""
+      from typing import Literal
+      
+      class A[T]:
+          def __init__(self, t: T): ...
+      
+      A[list[tuple[Literal[1]]]]([(1,)])
+      
+      _: list[tuple[Literal[1]]] = [(1,)]
+      _: list[tuple[int]] = [(1,)]
+      """);
   }
 }
 

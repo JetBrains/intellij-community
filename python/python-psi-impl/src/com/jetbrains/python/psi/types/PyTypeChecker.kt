@@ -1473,7 +1473,7 @@ object PyTypeChecker {
         return PyCollectionTypeImpl(
           genericType.pyClass, genericType.isDefinition,
           genericType.elementTypes.flatMap {
-            flattenUnpackedTuple(clone(it))
+            flattenUnpackedTuple(clone<PyType>(it).widenTupleLiterals())
           }
         )
       }

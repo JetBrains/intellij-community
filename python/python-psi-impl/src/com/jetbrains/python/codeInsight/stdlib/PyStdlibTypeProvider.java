@@ -59,6 +59,7 @@ import java.util.stream.Stream;
 
 import static com.jetbrains.python.PyNames.TYPE_ENUM_FLAG;
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.widenTupleLiterals;
 
 
 public final class PyStdlibTypeProvider extends PyTypeProviderBase {
@@ -243,14 +244,8 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       PyExpression value = targetExpression.findAssignedValue();
       if (value == null) return null;
 
-      PyType type = context.getType(value);
-      if (type instanceof PyTupleType tupleType) {
-        // until heterogeneous enums are supported, we must widen tuple types
-        type = PyTupleType.create(
-          tupleType.getDeclarationElement(),
-          ContainerUtil.map(tupleType.getElementTypes(), t -> PyLiteralType.upcastLiteralToClass(t))
-        );
-      }
+      // until heterogeneous enums are supported, we must widen tuple types
+      PyType type = widenTupleLiterals(context.getType(value));
       return getEnumAttributeInfo(enumClass, type, context);
     }
     else {

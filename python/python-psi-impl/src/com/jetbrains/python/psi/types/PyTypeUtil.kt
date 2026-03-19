@@ -373,3 +373,15 @@ val PyType?.isUnknown: Boolean
 @ApiStatus.Internal
 fun PyExpression.getLiteralType(context: TypeEvalContext): PyType? =
   PyLiteralType.getLiteralType(this, context)
+
+/**
+ * Widens literal types within a tuple type.
+ * When a tuple appears nested in a non-tuple container type (e.g., `list[tuple[Literal[1], Literal["a"]]]`),
+ * its literal element types should be widened to their base types (e.g., `list[tuple[int, str]]`).
+ */
+@ApiStatus.Experimental
+fun PyType?.widenTupleLiterals(): PyType? {
+  if (this !is PyTupleType) return this
+  val widenedElements = this.elementTypes.map { PyLiteralType.upcastLiteralToClass(it.widenTupleLiterals()) }
+  return PyTupleType(this.pyClass, widenedElements, this.isHomogeneous)
+}

@@ -5262,6 +5262,48 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  @TestFor(issues="PY-57621")
+  public void testTupleInListWidens() {
+    doTest("list[tuple[int, str]]", """
+      t = (1, 'hello')
+      expr = [t]
+    """);
+  }
+
+  @TestFor(issues="PY-57621")
+  public void testTupleInTupleIsLiteral() {
+    var t = "tuple[Literal[1], Literal['hello']]";
+    doTest("tuple[" + t + ", " + t + "]", """
+      t = (1, 'hello')
+      expr = (t, t)
+    """);
+  }
+
+  @TestFor(issues="PY-57621")
+  public void testTupleInGenericWidens() {
+    doTest("list[tuple[int, str]]", """
+      def f[T](t: T) -> list[T]: ...
+      expr = f((1, "hello"))
+    """);
+  }
+
+  @TestFor(issues="PY-57621")
+  public void testTupleAsGenericInTupleNarrows() {
+    var t = "tuple[Literal[1], Literal['hello']]";
+    doTest("tuple[list[tuple[int, str]], " + t + "]" + " | " + t, """
+      def f[T](t: T) -> tuple[list[T], T] | T: ...
+      expr = f((1, 'hello'))
+    """);
+  }
+
+  @TestFor(issues="PY-57621")
+  public void testTupleAsBareTypeVariableIsLiteral() {
+    doTest("tuple[Literal[1], Literal[\"hello\"]]", """
+      def f[T](t: T) -> T: ...
+      expr = f((1, "hello"))
+    """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

@@ -361,7 +361,7 @@ class PyTestFixtureResolvingTest : PyTestCase() {
   }
 
   fun testNamedParameterTypes() {
-    assertCorrectType(PARAMETRIZED_DIR, TEST_PARAMETER_TYPES, "Literal[9] | str")
+    assertCorrectType(PARAMETRIZED_DIR, TEST_PARAMETER_TYPES, INT_STR_UNION)
   }
 
   @TestFor(issues = ["PY-56268"])
