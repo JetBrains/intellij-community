@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -32,7 +32,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameValuePair;
-import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -155,6 +154,9 @@ public final class TestNGUtil {
       Arrays.asList("org.junit.Test", "org.junit.Before", "org.junit.BeforeClass", "org.junit.After", "org.junit.AfterClass");
 
   private static final @NonNls String SUITE_TAG_NAME = "suite";
+
+  public static final String DATA_PROVIDER_ATTRIBUTE = "dataProvider";
+  public static final String DATA_PROVIDER_CLASS_ATTRIBUTE = "dataProviderClass";
 
   public static boolean hasConfig(PsiModifierListOwner element) {
     return hasConfig(element, CONFIG_ANNOTATIONS_FQN);
@@ -496,21 +498,41 @@ public final class TestNGUtil {
 
   public static PsiClass getProviderClass(final PsiElement element, final PsiClass topLevelClass) {
     final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(element, PsiAnnotation.class);
-    if (annotation != null) {
-      final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("dataProviderClass");
-      if (value instanceof PsiClassObjectAccessExpression) {
-        final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
-        final PsiClass psiClass = PsiUtil.resolveClassInType(operand.getType());
-        if (psiClass != null) {
-          return psiClass;
-        }
-      }
+    if (annotation == null) return topLevelClass;
+    PsiAnnotationMemberValue value = extractDataProviderClass(annotation);
+    if (value == null) { // Fall back to class-level @Test(dataProviderClass=...)
+      value = findDataProviderClass(PsiTreeUtil.getParentOfType(element, PsiMethod.class));
+    }
+
+    if (value instanceof PsiClassObjectAccessExpression expression) {
+      final PsiClass psiClass = PsiUtil.resolveClassInType(expression.getOperand().getType());
+      if (psiClass != null) return psiClass;
     }
     return topLevelClass;
   }
 
+  private static @Nullable PsiAnnotationMemberValue extractDataProviderClass(@NotNull PsiAnnotation annotation) {
+    return TEST_ANNOTATION_FQN.equals(annotation.getQualifiedName())
+           ? annotation.findDeclaredAttributeValue(DATA_PROVIDER_CLASS_ATTRIBUTE)
+           : null;
+  }
+
+  private static @Nullable PsiAnnotationMemberValue findDataProviderClass(@Nullable PsiMethod method) {
+    if (method == null) return null;
+    PsiClass aClass = method.getContainingClass();
+
+    if (aClass != null) {
+      for (PsiAnnotation annotation : aClass.getAnnotations()) {
+        PsiAnnotationMemberValue value = extractDataProviderClass(annotation);
+        if (value != null) return value;
+      }
+    }
+    return null;
+  }
+
   /**
    * Returns whether the version is greater or equal to the one passed into this method.
+   * Returns false when the version cannot be detected.
    * Check only works when the supplied version is <= 7.4.0, otherwise it will always return true.
    */
   public static boolean isVersionOrGreaterThan(@NotNull Project project,

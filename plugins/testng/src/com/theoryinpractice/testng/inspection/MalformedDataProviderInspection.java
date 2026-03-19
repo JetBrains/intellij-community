@@ -33,6 +33,8 @@ import org.testng.annotations.DataProvider;
 
 import java.util.Properties;
 
+import static com.theoryinpractice.testng.util.TestNGUtil.DATA_PROVIDER_ATTRIBUTE;
+
 public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
@@ -42,7 +44,7 @@ public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspec
       public void visitAnnotation(@NotNull PsiAnnotation annotation) {
         if (!TestNGUtil.TEST_ANNOTATION_FQN.equals(annotation.getQualifiedName())) return;
 
-        final PsiAnnotationMemberValue provider = annotation.findDeclaredAttributeValue("dataProvider");
+        final PsiAnnotationMemberValue provider = annotation.findDeclaredAttributeValue(DATA_PROVIDER_ATTRIBUTE);
         if (provider == null || TestNGUtil.isDisabled(annotation)) return;
 
         PsiReference dataProviderReference = ContainerUtil.find(provider.getReferences(), DataProviderReference.class::isInstance);
