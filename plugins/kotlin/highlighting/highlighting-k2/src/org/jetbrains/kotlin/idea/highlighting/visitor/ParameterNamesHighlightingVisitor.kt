@@ -35,54 +35,50 @@ internal class ParameterNamesHighlightingVisitor(
 
     @OptIn(KaExperimentalApi::class)
     override fun visitArgument(argument: KtValueArgument) {
-        if (!explicitContextArgumentsEnabled) {
-            visitPlainArgument(argument)
-            return
-        }
-
-        val kaSession = session ?: return
         val argumentName = argument.getArgumentName() ?: return
         val eq = argument.equalsToken ?: return
         val parent = argument.parent
+
         val infoType = if (parent is KtValueArgumentList && parent.parent is KtAnnotationEntry) {
             KotlinHighlightInfoTypeSemanticNames.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES
         } else {
-            val contextArgument = run {
-                val callExpression = parent.parent as? KtCallExpression ?: return@run false
-                val argumentExpression = argument.getArgumentExpression()
-                context(kaSession) {
-                    val resolvedSymbol =
-                        callExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
-                    val contextArguments = resolvedSymbol?.contextArguments
-                    contextArguments?.any { (it as? KaExplicitReceiverValue)?.expression == argumentExpression }
+            val callExpression = parent.parent as? KtCallExpression
+            val kaSession = session
+
+            val isContextArgument = when {
+                callExpression == null -> {
+                    false
+                }
+
+                !explicitContextArgumentsEnabled -> false
+
+                kaSession == null -> {
+                    // to cover explicit context arguments case we have to use resolve session,
+                    // it is handled by another instance of ParameterNamesHighlightingVisitor
+                    return
+                }
+
+                else -> {
+                    val argumentExpression = argument.getArgumentExpression()
+                    context(kaSession) {
+                        val resolvedSymbol =
+                            callExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+                        val contextArguments = resolvedSymbol?.contextArguments
+                        contextArguments?.any { (it as? KaExplicitReceiverValue)?.expression == argumentExpression }
+                    }
                 }
             }
 
-            if (contextArgument == true) {
+            if (isContextArgument == true) {
                 KotlinHighlightInfoTypeSemanticNames.CONTEXT_ARGUMENT
             } else {
                 KotlinHighlightInfoTypeSemanticNames.NAMED_ARGUMENT
             }
         }
 
-        highlightName(argument.project,
-            argument,
-            TextRange(argumentName.startOffset, eq.endOffset),
-            infoType
-        )
-    }
-
-    private fun visitPlainArgument(argument: KtValueArgument) {
-        val argumentName = argument.getArgumentName() ?: return
-        val eq = argument.equalsToken ?: return
-        val parent = argument.parent
         val range = TextRange(argumentName.startOffset, eq.endOffset)
-        val type = if (parent is KtValueArgumentList && parent.parent is KtAnnotationEntry)
-            KotlinHighlightInfoTypeSemanticNames.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES
-        else
-            KotlinHighlightInfoTypeSemanticNames.NAMED_ARGUMENT
 
-        highlightName(argument.project, argument, range, type)
+        highlightName(argument.project, argument, range, infoType)
     }
 }
 
