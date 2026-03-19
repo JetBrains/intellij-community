@@ -30,7 +30,7 @@ import com.jetbrains.python.psi.PyTypeDeclarationStatement
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.attributeDoesNotAffectVarianceInference
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.combineVariance
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.functionDoesNotAffectVarianceInference
-import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getInferredVariance
+import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrInferredVariance
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance.BIVARIANT
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance.CONTRAVARIANT
@@ -138,7 +138,7 @@ object PyExpectedVarianceJudgment {
       val typeParamType = definitionType.elementTypes.getOrNull(index) as? PyTypeVarType
         ?: qualifierType.elementTypes.getOrNull(index) as? PyTypeVarType
         ?: return null
-      return getInferredVariance(typeParamType, context)
+      return getDeclaredOrInferredVariance(typeParamType, context)
     }
     return null
   }

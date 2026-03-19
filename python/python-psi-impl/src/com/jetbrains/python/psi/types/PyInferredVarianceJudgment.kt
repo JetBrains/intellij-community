@@ -5,8 +5,8 @@ import com.intellij.openapi.util.StackOverflowPreventedException
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Processor
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.ProtectionLevel
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyAnnotation
@@ -43,13 +43,24 @@ object PyInferredVarianceJudgment {
   fun isEffectivelyInvariant(element: PsiElement?, context: TypeEvalContext): Boolean {
     val reference = element as? PyReferenceExpression ?: return false
     val parent = PsiTreeUtil.getParentOfType(reference, PyFunction::class.java, PyClass::class.java) as? PyFunction ?: return false
-    val inferredVariance = getInferredVariance(reference, context) ?: return false
+    val inferredVariance = getDeclaredOrInferredVariance(reference, context) ?: return false
     if (inferredVariance == INVARIANT) return false
     return functionIgnoresVariance(parent)
   }
 
   @JvmStatic
+  fun getDeclaredOrInferredVariance(element: PsiElement?, context: TypeEvalContext): Variance? {
+    val typeVarType = findTypeVariable(element, context) ?: return null
+    return guardedGetInferredVariance(typeVarType, true, context)
+  }
+
+  @JvmStatic
   fun getInferredVariance(element: PsiElement?, context: TypeEvalContext): Variance? {
+    val typeVarType = findTypeVariable(element, context) ?: return null
+    return guardedGetInferredVariance(typeVarType, false, context)
+  }
+
+  private fun findTypeVariable(element: PsiElement?, context: TypeEvalContext): PyTypeVarType? {
     val typeParamType = when (element) {
       is PyTypeParameter -> PyTypingTypeProvider.getTypeParameterTypeFromTypeParameter(element, context)
       is PyReferenceExpression,
@@ -57,21 +68,25 @@ object PyInferredVarianceJudgment {
         -> PyTypingTypeProvider.getType(element, context)?.get()
       else -> return null
     }
-    val typeVarType = typeParamType as? PyTypeVarType ?: return null
-    return guardedGetInferredVariance(typeVarType, context)
+    return typeParamType as? PyTypeVarType
+  }
+
+  /** Returns the variance inferred from the use of a type parameter */
+  @JvmStatic
+  fun getDeclaredOrInferredVariance(typeVarType: PyTypeVarType, context: TypeEvalContext): Variance {
+    return guardedGetInferredVariance(typeVarType, true, context)
   }
 
   /** Returns the variance inferred from the use of a type parameter */
   @JvmStatic
   fun getInferredVariance(typeVarType: PyTypeVarType, context: TypeEvalContext): Variance {
-    return guardedGetInferredVariance(typeVarType, context)
+    return guardedGetInferredVariance(typeVarType, false, context)
   }
 
-  private fun guardedGetInferredVariance(typeVarType: PyTypeVarType, context: TypeEvalContext): Variance {
-    // only infer variance if implicitly/explicitly declared as INFER_VARIANCE
+  private fun guardedGetInferredVariance(typeVarType: PyTypeVarType, checkDeclaredVariance: Boolean, context: TypeEvalContext): Variance {
     val scopeOwner = typeVarType.scopeOwner
     if (scopeOwner is PyFunction) return INVARIANT
-    if (typeVarType.variance != INFER_VARIANCE) return typeVarType.variance
+    if (checkDeclaredVariance && typeVarType.variance != INFER_VARIANCE) return typeVarType.variance
     if (scopeOwner == null) return INVARIANT
 
     val tvId = TypeVariableId(typeVarType.name, scopeOwner)

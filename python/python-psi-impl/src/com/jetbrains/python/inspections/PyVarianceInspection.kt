@@ -4,9 +4,13 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.PyAnnotation
+import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
@@ -15,7 +19,10 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.types.PyExpectedVarianceJudgment
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment
@@ -121,20 +128,89 @@ class PyVarianceInspection : PyInspection() {
   }
 
 
-  private fun onPyTypeValTypeUsedInAnnotation(
-    holder: ProblemsHolder,
-    node: PyReferenceExpression,
-    context: TypeEvalContext,
-  ) {
+  private fun onPyTypeValTypeUsedInAnnotation(holder: ProblemsHolder, node: PyReferenceExpression, context: TypeEvalContext) {
+    val isInProtocol = node.parentOfType<PyClass>()?.isProtocol(context) ?: false
+    val subscriptionExpression = node.parentOfType<PySubscriptionExpression>()
+    val isInProtocolHeader = subscriptionExpression?.parent is PyArgumentList && subscriptionExpression?.parent?.parent is PyClass
+    if (isInProtocol && isInProtocolHeader) {
+      checkProtocol(holder, node, context)
+    }
+    else {
+      checkClass(holder, node, context)
+    }
+  }
+
+  private fun checkProtocol(holder: ProblemsHolder, node: PyReferenceExpression, context: TypeEvalContext) {
+    val containingClass = node.parentOfType<PyClass>() ?: return
+    if (containingClass.hasQuotedTypesInMethodOrFieldDefinitions()) return
+
+    val varianceExpected = PyInferredVarianceJudgment.getInferredVariance(node, context) ?: return
+    val varianceActual = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(node, context) ?: return
+
+    val isInProtocolSubscriptionExpr = isInProtocolSubscriptionExpr(node)
+    if (isInProtocolSubscriptionExpr) {
+      val varianceExpected = if (varianceExpected == BIVARIANT) COVARIANT else varianceExpected
+      if (varianceExpected != varianceActual) {
+        val msg = PyPsiBundle.message("INSP.variance.checker.protocols.keep.effective.variance",
+                                      varianceExpected.name.lowercase(), varianceActual.name.lowercase())
+        holder.registerProblem(node, msg)
+      }
+    }
+    else checkIncompatibleVariance(varianceActual, varianceExpected, holder, node)
+  }
+
+  private fun isInProtocolSubscriptionExpr(node: PyReferenceExpression): Boolean {
+    val parentSubscriptionExpr = node.parent as? PySubscriptionExpression
+                                 ?: (node.parent as? PyTupleExpression)?.parent as? PySubscriptionExpression
+                                 ?: return false
+    if (node == parentSubscriptionExpr.indexExpression) return true
+    val indexTupleExpression = parentSubscriptionExpr.indexExpression as? PyTupleExpression ?: return false
+    val nodeTupleParent = node.parentOfType<PyTupleExpression>()
+    return indexTupleExpression === nodeTupleParent
+  }
+
+  // FIXME: Remove when PY-87942 is fixed
+  private fun PyClass.hasQuotedTypesInMethodOrFieldDefinitions(): Boolean {
+    return methods.any { it.hasQuotedTypesInDefinition() } || classAttributes.any { it.hasQuotedTypesInDefinition() }
+  }
+
+  private fun PyFunction.hasQuotedTypesInDefinition(): Boolean {
+    if (annotation?.hasQuotedTypes() == true) return true
+    return parameterList.parameters
+      .asSequence()
+      .filterIsInstance<PyNamedParameter>()
+      .any { it.annotation?.hasQuotedTypes() == true }
+  }
+
+  private fun PyTargetExpression.hasQuotedTypesInDefinition(): Boolean {
+    return annotation?.hasQuotedTypes() == true
+  }
+
+  private fun PyAnnotation.hasQuotedTypes(): Boolean {
+    val annotationValue = value ?: return false
+    return annotationValue is PyStringLiteralExpression ||
+           PsiTreeUtil.findChildOfType(annotationValue, PyStringLiteralExpression::class.java) != null
+  }
+
+  private fun checkClass(holder: ProblemsHolder, node: PyReferenceExpression, context: TypeEvalContext) {
     val varianceExpected = PyExpectedVarianceJudgment.getExpectedVariance(node, context) ?: return
     if (varianceExpected == BIVARIANT) return
-    val varianceInferred = PyInferredVarianceJudgment.getInferredVariance(node, context) ?: return
+    val varianceInferred = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(node, context) ?: return
 
-    if (!isCompatibleWith(varianceInferred, varianceExpected)) {
-      val msg = PyPsiBundle.message("INSP.variance.checker.incompatible",
-                                    varianceExpected.name.lowercase(), varianceInferred.name.lowercase())
-      holder.registerProblem(node, msg)
-    }
+    checkIncompatibleVariance(varianceInferred, varianceExpected, holder, node)
+  }
+
+  private fun checkIncompatibleVariance(
+    varianceInferred: Variance,
+    varianceExpected: Variance,
+    holder: ProblemsHolder,
+    node: PyReferenceExpression,
+  ) {
+    if (isCompatibleWith(varianceInferred, varianceExpected)) return
+
+    val msg = PyPsiBundle.message("INSP.variance.checker.incompatible",
+                                  varianceExpected.name.lowercase(), varianceInferred.name.lowercase())
+    holder.registerProblem(node, msg)
   }
 
   /**
@@ -157,4 +233,3 @@ class PyVarianceInspection : PyInspection() {
     }
   }
 }
-

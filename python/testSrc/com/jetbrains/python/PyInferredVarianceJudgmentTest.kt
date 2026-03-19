@@ -6,7 +6,7 @@ import com.jetbrains.python.fixtures.fixme
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTypeParameter
-import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getInferredVariance
+import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrInferredVariance
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance
 import com.jetbrains.python.psi.types.TypeEvalContext
 import junit.framework.AssertionFailedError
@@ -25,7 +25,7 @@ internal class PyInferredVarianceJudgmentTest : PyTestCase() {
     val typeVar: PyElement = myFixture.findElementByText(expression, clazz)
 
     val context = TypeEvalContext.userInitiated(typeVar.project, typeVar.containingFile)
-    val actualVariance = getInferredVariance(typeVar, context)
+    val actualVariance = getDeclaredOrInferredVariance(typeVar, context)
     assertEquals(expectedVariance, actualVariance)
   }
 

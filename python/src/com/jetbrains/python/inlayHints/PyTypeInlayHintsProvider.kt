@@ -126,14 +126,14 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
       val typeVarType = PyTypingTypeProvider.getType(refExpr, resolveContext.typeEvalContext)?.get() as? PyTypeVarType ?: return
       if (typeVarType.variance == Variance.INVARIANT) return
 
-      val inferredVariance = PyInferredVarianceJudgment.getInferredVariance(typeVarType, resolveContext.typeEvalContext)
+      val inferredVariance = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(typeVarType, resolveContext.typeEvalContext)
       sink.addPresentation(inferredVariance, element)
     }
 
     private fun getInlaysForTypeParameterVariance(element: PsiElement, sink: InlayTreeSink, resolveContext: PyResolveContext) {
       if (element !is PyTypeParameter) return
 
-      val inferredVariance = PyInferredVarianceJudgment.getInferredVariance(element, resolveContext.typeEvalContext)
+      val inferredVariance = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(element, resolveContext.typeEvalContext)
       sink.addPresentation(inferredVariance, element)
     }
 
