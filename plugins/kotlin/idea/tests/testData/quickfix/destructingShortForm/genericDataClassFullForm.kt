@@ -1,0 +1,13 @@
+// "Convert to a full name-based destructuring form" "true"
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
+
+
+data class Box<T>(val id: Int, val content: T)
+
+fun test(box: Box<String>) {
+
+    val (i, <caret>c) = box
+
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertNameBasedDestructuringShortFormToFullFix

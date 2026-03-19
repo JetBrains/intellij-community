@@ -8247,6 +8247,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/fullFormLambda.kt");
         }
 
+        @TestMetadata("genericDataClassFullForm.kt")
+        public void testGenericDataClassFullForm() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/genericDataClassFullForm.kt");
+        }
+
         @TestMetadata("multipleEntriesSameOriginalName.kt")
         public void testMultipleEntriesSameOriginalName() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/multipleEntriesSameOriginalName.kt");
@@ -8291,6 +8296,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/convertToSquareBracketsLambda.kt");
         }
 
+        @TestMetadata("convertToSquareBracketsTrailingComma.kt")
+        public void testConvertToSquareBracketsTrailingComma() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/convertToSquareBracketsTrailingComma.kt");
+        }
+
         @TestMetadata("convertToSquareBracketsTriple.kt")
         public void testConvertToSquareBracketsTriple() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/convertToSquareBracketsTriple.kt");
@@ -8319,6 +8329,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("moreEntriesThanParameters.kt")
         public void testMoreEntriesThanParameters() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/moreEntriesThanParameters.kt");
+        }
+
+        @TestMetadata("nestedDestructuringToBrackets.kt")
+        public void testNestedDestructuringToBrackets() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/nestedDestructuringToBrackets.kt");
         }
 
         @TestMetadata("underscoreInMiddle.kt")
