@@ -13,11 +13,11 @@ import java.util.List;
  * A command that displays a UI and allows users to select a subsequent action from the list.
  * Intention preview assumes that the first available action is selected by default.
  * In batch mode, the first option is also selected automatically.
- * 
- * @param title title to display to the user
- * @param actions actions to select from. If there's only one action, then it could be executed right away without asking the user. 
+ *
+ * @param title   title to display to the user
+ * @param actions actions to select from. If there's only one action, then it could be executed right away without asking the user.
  */
-public record ModChooseAction(@NotNull @NlsContexts.PopupTitle String title, 
+public record ModChooseAction(@NotNull @NlsContexts.PopupTitle String title,
                               @NotNull List<? extends @NotNull ModCommandAction> actions) implements ModCommand {
   @Override
   public boolean isEmpty() {
@@ -28,11 +28,11 @@ public record ModChooseAction(@NotNull @NlsContexts.PopupTitle String title,
   public @NotNull ModCommand andThen(@NotNull ModCommand next) {
     if (next.isEmpty()) return this;
     return new ModChooseAction(title, ContainerUtil.map(
-      actions, action -> action instanceof ActionDelegate delegate ? 
-                         new ActionDelegate(delegate.myAction, delegate.myAdditionalCommand.andThen(next)) : 
+      actions, action -> action instanceof ActionDelegate delegate ?
+                         new ActionDelegate(delegate.myAction, delegate.myAdditionalCommand.andThen(next)) :
                          new ActionDelegate(action, next)));
   }
-  
+
   private static class ActionDelegate implements ModCommandAction, ReportingClassSubstitutor {
     private final @NotNull ModCommandAction myAction;
     private final @NotNull ModCommand myAdditionalCommand;
@@ -56,7 +56,7 @@ public record ModChooseAction(@NotNull @NlsContexts.PopupTitle String title,
     public @NotNull String getFamilyName() {
       return myAction.getFamilyName();
     }
-    
+
     @Override
     public @NotNull Class<?> getSubstitutedClass() {
       return ReportingClassSubstitutor.getClassToReport(myAction);
