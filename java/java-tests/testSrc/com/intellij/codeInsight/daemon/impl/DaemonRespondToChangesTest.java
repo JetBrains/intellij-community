@@ -484,17 +484,18 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       configureByFiles(null, BASE_PATH + getTestName(false) + ".xml", BASE_PATH + getTestName(false) + ".xsd");
       Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
       setActiveEditors(allEditors);
-      assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
-
-      Editor schemaEditor = null;
       retained = new ArrayList<>();
       for (Editor editor : allEditors) {
         Document document = editor.getDocument();
-        PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-        if (psiFile == null) {
-          continue;
-        }
+        PsiFile psiFile = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getPsiFile(document));
         retained.add(psiFile);
+      }
+      assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+
+      Editor schemaEditor = null;
+      for (Editor editor : allEditors) {
+        Document document = editor.getDocument();
+        PsiFile psiFile = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getPsiFile(document));
         if (location.equals(psiFile.getName())) {
           schemaEditor = editor;
           break;
@@ -502,8 +503,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       }
       delete(Objects.requireNonNull(schemaEditor));
 
-      List<HighlightInfo> errors =
-        myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
+      List<HighlightInfo> errors = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
       assertNotEmpty(errors);
     }
     finally {

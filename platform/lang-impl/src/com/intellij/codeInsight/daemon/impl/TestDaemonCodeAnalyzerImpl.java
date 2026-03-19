@@ -428,7 +428,9 @@ public final class TestDaemonCodeAnalyzerImpl {
           if (indicator.isCanceled() && indicator.isRunning()) {
             // wait for daemon listeners to be called,
             // since many tests do "waitForFinish(); checkSomeState();", and the state is changed in DaemonListener
-            listenersCalled.waitFor();
+            if (!listenersCalled.waitFor(60_000)) {
+              throw new IncorrectOperationException();
+            }
             DaemonCodeAnalyzerImpl.LOG.debug("waitForDaemonToFinish canceled: indicator was canceled: "+indicator
                                              +"; "+(trace == null ? indicator.getTraceableDisposableStackTrace() : ExceptionUtil.getThrowableText(trace)));
             indicator.checkCanceled(); // canceled in the middle, throw PCE
