@@ -69,10 +69,11 @@ class DefaultKotlinScriptEntityProvider(
             }
         }
 
-        val scriptsToResolve = result.importedScripts - visitedScripts.keys()
-        if (scriptsToResolve.isNotEmpty()) {
-            visitedScripts.putAll(virtualFile, scriptsToResolve)
-            KotlinScriptResolutionService.getInstance(project).process(scriptsToResolve)
+        result.importedScripts.let { scriptsToResolve ->
+            if (scriptsToResolve.isNotEmpty()) {
+                visitedScripts.putAll(virtualFile, scriptsToResolve)
+                KotlinScriptResolutionService.getInstance(project).process(scriptsToResolve - visitedScripts.keys())
+            }
         }
 
         fun updateStorage(storage: MutableEntityStorage) {

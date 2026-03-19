@@ -62,10 +62,11 @@ class MainKtsEntityProvider(
         if (project.workspaceModel.currentSnapshot.containsScriptEntity(scriptUrl)) return
 
         val mainKtsConfiguration = resolveMainKtsConfiguration(virtualFile, definition)
-        val scriptsToResolve = mainKtsConfiguration.importedScripts - visitedScripts.keys()
-        if (scriptsToResolve.isNotEmpty()) {
-            visitedScripts.putAll(virtualFile, scriptsToResolve)
-            KotlinScriptResolutionService.getInstance(project).process(scriptsToResolve)
+        mainKtsConfiguration.importedScripts.let { scriptsToResolve ->
+            if (scriptsToResolve.isNotEmpty()) {
+                visitedScripts.putAll(virtualFile, scriptsToResolve)
+                KotlinScriptResolutionService.getInstance(project).process(scriptsToResolve - visitedScripts.keys())
+            }
         }
 
         fun updateStorage(storage: MutableEntityStorage) {
