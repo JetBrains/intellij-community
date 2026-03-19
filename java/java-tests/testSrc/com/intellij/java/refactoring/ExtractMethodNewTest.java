@@ -648,6 +648,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   public void testNullableCheckBreak() {
     doTest();
   }
+  
+  public void testArrayInitializer() {
+    doTest();
+  }
 
   public void testSimpleArrayAccess() {
     doTest();

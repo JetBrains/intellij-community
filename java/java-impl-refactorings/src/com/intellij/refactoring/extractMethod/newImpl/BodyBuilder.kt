@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl
 
+import com.intellij.codeInsight.daemon.impl.quickfix.AddNewArrayExpressionFix
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix
+import com.intellij.psi.PsiArrayInitializerExpression
 import com.intellij.psi.PsiBlockStatement
 import com.intellij.psi.PsiCodeBlock
 import com.intellij.psi.PsiDeclarationStatement
@@ -140,11 +142,8 @@ class BodyBuilder(private val factory: PsiElementFactory) {
             inputParameters: List<InputParameter>,
             disabledParameters: List<InputParameter>,
             missedDeclarations: List<PsiVariable>): PsiCodeBlock {
-
-    val project = elements.first().project
-
     val expression = elements.singleOrNull() as? PsiExpression
-    val normalizedExpression = PsiUtil.skipParenthesizedExprDown(expression)
+    val normalizedExpression = normalizeExpression(expression)
     if (normalizedExpression != null) {
       require(dataOutput is ExpressionOutput)
       val parameterMarkers = inputParameters.associateWith { parameter -> createMarkers(parameter.references) }
@@ -191,6 +190,7 @@ class BodyBuilder(private val factory: PsiElementFactory) {
     if (defaultReturn != null) {
       block.addAfter(statementOf(defaultReturn), copy.last())
     }
+    val project = block.project
     val disabledDeclarations = disabledParameters.map { createDeclarationForDisabledParameter(it) }
     disabledDeclarations.reversed().forEach { declaration ->
       block.addBefore(declaration, copy.first())
@@ -199,6 +199,14 @@ class BodyBuilder(private val factory: PsiElementFactory) {
     }
     requiredDeclarations.forEach { declaration -> block.addBefore(declaration, copy.first()) }
     return block
+  }
+
+  private fun normalizeExpression(expression: PsiExpression?): PsiExpression? {
+    var result = PsiUtil.skipParenthesizedExprDown(expression)
+    if (result is PsiArrayInitializerExpression) {
+      result = AddNewArrayExpressionFix.doFix(result.copy() as PsiArrayInitializerExpression)
+    }
+    return result; 
   }
 
   private fun createMarkers(elements: List<PsiElement>): List<Any> {
