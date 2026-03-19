@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.params.ParameterizedTest
 
 @UseK2PluginMode
@@ -19,9 +18,6 @@ import org.junit.jupiter.params.ParameterizedTest
 @TestRoot("completion/kotlin/tests/testData")
 @TestMetadata("buildGradleKts/plugins")
 internal class KotlinGradlePluginsCompletionTest : AbstractKotlinGradleCompletionTest() {
-
-    @BeforeEach
-    fun setup() = removeOtherCompletionContributors()
 
     @ParameterizedTest
     @BaseGradleVersionSource
