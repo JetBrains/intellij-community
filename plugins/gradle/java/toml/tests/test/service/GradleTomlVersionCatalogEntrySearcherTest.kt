@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogSection
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogSection.BUNDLES
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogSection.LIBRARIES
@@ -25,7 +26,9 @@ import org.toml.lang.psi.TomlFile
 
 @TestApplication
 class GradleTomlVersionCatalogEntrySearcherTest {
-  private val entrySearcher = GradleTomlVersionCatalogEntrySearcher()
+  private val entrySearcher by testFixture {
+    initialized(GradleTomlVersionCatalogEntrySearcher()) {}
+  }
   private val project by projectFixture()
 
   @Nested
