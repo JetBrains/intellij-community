@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -16,6 +16,7 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -55,6 +56,7 @@ public final class DeannotateIntentionActionTest extends LightJavaCodeInsightFix
         """);
     PsiMethod method = ((PsiJavaFile)getFile()).getClasses()[0].getMethods()[0];
     ExternalAnnotationsManager.getInstance(getProject()).annotateExternally(method, CommonClassNames.JAVA_LANG_OVERRIDE, getFile(), null);
+    UIUtil.dispatchAllInvocationEvents();
     ExternalAnnotationsManager.getInstance(getProject()).annotateExternally(method, CommonClassNames.JAVA_LANG_SAFE_VARARGS, getFile(), null);
     IntentionAction action = myFixture.findSingleIntention("Deannotate");
     assertEquals("""
