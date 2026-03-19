@@ -249,13 +249,7 @@ public final class BuildDataManager {
 
   public @NotNull SourceToOutputMapping getSourceToOutputMap(@NotNull BuildTarget<?> target) throws IOException {
     if (newDataManager == null) {
-      try {
-        return buildTargetToSourceToOutputMapping.computeIfAbsent(target, this::createSourceToOutputMap);
-      }
-      catch (BuildDataCorruptedException e) {
-        LOG.info(e);
-        throw e.getCause();
-      }
+      return buildTargetToSourceToOutputMapping.computeIfAbsent(target, this::createSourceToOutputMap);
     }
     else {
       return newDataManager.getSourceToOutputMapping(target);
@@ -269,7 +263,7 @@ public final class BuildDataManager {
       map = new SourceToOutputMappingImpl(file, myRelativizer);
     }
     catch (IOException e) {
-      LOG.info(e);
+      LOG.info("Assuming storage data is corrupted:", e);
       throw new BuildDataCorruptedException(e);
     }
     return new SourceToOutputMappingWrapper(map, targetStateManager.impl.getBuildTargetId(target), outputToTargetMapping);
