@@ -323,7 +323,17 @@ internal class PyVarianceTest : PyTestCase() {
       """)
   }
 
+  fun `test Protocol declaration variance ignores fixed tuple covariance`() {
+    doTestByText("""
+      from typing import Protocol, TypeVar
 
+      S = TypeVar("S")
+      T = TypeVar("T")
+
+      class PairProto(Protocol[S, T]):
+          def method1(self, a: S, b: T) -> tuple[S, T]: ...
+      """)
+  }
 
   fun `test Protocol declaration variance tuple expression`() {
     doTestByText("""
