@@ -14,7 +14,6 @@ import com.intellij.mcpserver.stdio.IJ_MCP_ALLOWED_TOOLS
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -67,7 +66,13 @@ open class McpServerService(val cs: CoroutineScope) {
     val commandExecutionMode: AskCommandExecutionMode,
     val toolFilter: McpToolFilter = McpToolFilter.AllowAll,
     val localAgentId: String? = null,
-  )
+  ) {
+    @Deprecated("ABI compat with 261.22158 that doesn't have `localAgentId`", level = DeprecationLevel.HIDDEN)
+    constructor(
+      commandExecutionMode: AskCommandExecutionMode,
+      toolFilter: McpToolFilter = McpToolFilter.AllowAll,
+    ) : this(commandExecutionMode, toolFilter, null)
+  }
 
   companion object {
     fun getInstance(): McpServerService = service()
