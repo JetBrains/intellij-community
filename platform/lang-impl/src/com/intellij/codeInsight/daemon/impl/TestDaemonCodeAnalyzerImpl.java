@@ -95,8 +95,6 @@ public final class TestDaemonCodeAnalyzerImpl {
   /**
    * do not run in production since it differs slightly from the {@link DaemonCodeAnalyzerImpl#runUpdate()}
    */
-  @TestOnly
-  @ApiStatus.Internal
   public void runPasses(@NotNull PsiFile psiFile,
                         @NotNull Document document,
                         @NotNull TextEditor textEditor,
@@ -167,7 +165,6 @@ public final class TestDaemonCodeAnalyzerImpl {
     waitForUpdateFileStatusBackgroundQueueInTests();
   }
 
-  @TestOnly
   private void doRunPasses(@NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer,
                            @NotNull TextEditor textEditor,
                            int @NotNull [] passesToIgnore,
@@ -263,7 +260,6 @@ public final class TestDaemonCodeAnalyzerImpl {
       return null;
     });
   }
-  @TestOnly
   private void waitInOtherThread(@NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer,
                                  int millis,
                                  boolean canChangeDocument,
@@ -318,7 +314,6 @@ public final class TestDaemonCodeAnalyzerImpl {
     }
   }
 
-  @TestOnly
   public void prepareForTest() throws InterruptedException, ExecutionException {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(false);
@@ -326,14 +321,12 @@ public final class TestDaemonCodeAnalyzerImpl {
     myDaemonCodeAnalyzer.clearReferences();
   }
 
-  @TestOnly
   public void cleanupAfterTest() throws InterruptedException, ExecutionException {
     assert ApplicationManager.getApplication().isUnitTestMode();
     if (myProject.isOpen()) {
       prepareForTest();
     }
   }
-  @TestOnly
   public void waitForTermination() throws InterruptedException, ExecutionException {
     assert ApplicationManager.getApplication().isUnitTestMode();
     Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
@@ -360,7 +353,6 @@ public final class TestDaemonCodeAnalyzerImpl {
     } while (!future.isDone());
   }
 
-  @TestOnly
   public void waitForUpdateFileStatusBackgroundQueueInTests() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myDaemonCodeAnalyzer.myListeners.waitForUpdateFileStatusQueue();
