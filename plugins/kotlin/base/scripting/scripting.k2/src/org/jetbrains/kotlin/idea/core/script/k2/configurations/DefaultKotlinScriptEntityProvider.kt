@@ -40,7 +40,7 @@ class DefaultKotlinScriptEntityProvider(
 ) : KotlinScriptEntityProvider(project) {
 
     private val visitedScripts = TreeMultimap.create(COMPARATOR, COMPARATOR)
-    private val visitedScriptsTraverser = Traverser.forTree<VirtualFile> { visitedScripts.get(it) }
+    private val visitedScriptsTraverser = Traverser.forGraph<VirtualFile> { visitedScripts.get(it) }
 
     fun getImportedScripts(kts: VirtualFile): List<VirtualFile> = visitedScriptsTraverser.breadthFirst(kts) - kts
 

@@ -42,7 +42,7 @@ class MainKtsEntityProvider(
     val coroutineScope: CoroutineScope
 ) : KotlinScriptEntityProvider(project) {
     private val visitedScripts = TreeMultimap.create(COMPARATOR, COMPARATOR)
-    private val visitedScriptsTraverser = Traverser.forTree<VirtualFile> { visitedScripts.get(it) }
+    private val visitedScriptsTraverser = Traverser.forGraph<VirtualFile> { visitedScripts.get(it) }
 
     fun getImportedScripts(mainKts: VirtualFile): List<VirtualFile> = visitedScriptsTraverser.breadthFirst(mainKts) - mainKts
 
