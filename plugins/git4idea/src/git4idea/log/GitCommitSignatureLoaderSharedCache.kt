@@ -22,7 +22,9 @@ internal class GitCommitSignatureLoaderSharedCache : Disposable {
     object : VcsCommitsDataLoader<GitCommitSignature> {
       override fun loadData(commits: List<CommitId>, onChange: (Map<CommitId, GitCommitSignature>) -> Unit) {
         val cached = cache.getAllPresent(commits)
-        onChange(cached)
+        if (cached.isNotEmpty()) {
+          onChange(cached)
+        }
         val toLoad = commits - cached.keys
         loader.loadData(toLoad) {
           cache.putAll(it)
