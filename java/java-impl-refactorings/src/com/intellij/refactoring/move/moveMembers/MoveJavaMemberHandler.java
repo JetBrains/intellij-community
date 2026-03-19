@@ -4,6 +4,7 @@ package com.intellij.refactoring.move.moveMembers;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -11,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.PsiElement;
@@ -24,6 +26,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiReferenceParameterList;
@@ -31,6 +34,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiSwitchLabelStatement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -56,6 +60,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.codeInsight.AnnotationUtil.J_SPECIFY_NULL_MARKED;
+import static com.intellij.codeInsight.AnnotationUtil.J_SPECIFY_NULL_UNMARKED;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 /**
@@ -293,8 +299,52 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
         VisibilityUtil.setVisibility(list, VisibilityUtil.getVisibilityModifier(member.getModifierList()));
       }
     }
+    boolean isSourceNullMarked = isNullMarked(member);
     member.delete();
-    return anchor != null ? (PsiMember)targetClass.addAfter(memberCopy, anchor) : (PsiMember)targetClass.add(memberCopy);
+    PsiMember movedMember = anchor != null ? (PsiMember)targetClass.addAfter(memberCopy, anchor) : (PsiMember)targetClass.add(memberCopy);
+    if (movedMember instanceof PsiMethod movedMethod) {
+      adjustMovedMemberJSpecifyNullability(isSourceNullMarked, movedMethod);
+    }
+    else if (movedMember instanceof PsiClass movedClass) {
+      adjustMovedMemberJSpecifyNullability(isSourceNullMarked, movedClass);
+    }
+    return movedMember;
+  }
+
+  private static void adjustMovedMemberJSpecifyNullability(boolean isSourceNullMarked,
+                                                           @NotNull PsiModifierListOwner targetModifierListOwner) {
+    var isTargetNullMarked = isNullMarked(targetModifierListOwner);
+    if (isSourceNullMarked && !isTargetNullMarked) {
+      adjustJSpecifyAnnotations(targetModifierListOwner, J_SPECIFY_NULL_MARKED, J_SPECIFY_NULL_UNMARKED);
+    }
+    if (!isSourceNullMarked && isTargetNullMarked) {
+      adjustJSpecifyAnnotations(targetModifierListOwner, J_SPECIFY_NULL_UNMARKED, J_SPECIFY_NULL_MARKED);
+    }
+  }
+
+  private static boolean isNullMarked(@NotNull PsiModifierListOwner modifierListOwner) {
+    var annotationInfo = NullableNotNullManager.getInstance(modifierListOwner.getProject()).findContainerAnnotation(modifierListOwner);
+    return annotationInfo != null && annotationInfo.getAnnotation().hasQualifiedName(J_SPECIFY_NULL_MARKED);
+  }
+
+  private static void adjustJSpecifyAnnotations(@NotNull PsiModifierListOwner modifierListOwner, String addFqn, String removeFqn) {
+    if (isAnnotationAvailable(modifierListOwner, addFqn)) {
+      PsiModifierList modifierList = modifierListOwner.getModifierList();
+      if (modifierList != null) {
+        if (!modifierList.hasAnnotation(addFqn)) {
+          PsiAnnotation addedAnnotation = modifierList.addAnnotation(addFqn);
+          JavaCodeStyleManager.getInstance(modifierListOwner.getProject()).shortenClassReferences(addedAnnotation);
+        }
+        PsiAnnotation toRemove = modifierList.findAnnotation(removeFqn);
+        if (toRemove != null) {
+          toRemove.delete();
+        }
+      }
+    }
+  }
+
+  private static boolean isAnnotationAvailable(@NotNull PsiElement context, @NotNull String annotationFqn) {
+    return JavaPsiFacade.getInstance(context.getProject()).findClass(annotationFqn, context.getResolveScope()) != null;
   }
 
   private static boolean toBeConvertedToEnum(@NotNull MoveMembersOptions options,

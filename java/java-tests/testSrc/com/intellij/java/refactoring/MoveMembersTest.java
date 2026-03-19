@@ -2,6 +2,9 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -12,12 +15,30 @@ import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import com.intellij.util.VisibilityUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
 public class MoveMembersTest extends LightMultiFileTestCase {
+  private static final LightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+    @Override
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      super.configureModule(module, model, contentEntry);
+      addJetBrainsAnnotationsWithTypeUse(model);
+      MavenDependencyUtil.addFromMaven(model, "org.jspecify:jspecify:1.0.0");
+    }
+  };
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return PROJECT_DESCRIPTOR;
+  }
+
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/refactoring/moveMembers/";
@@ -255,6 +276,46 @@ public class MoveMembersTest extends LightMultiFileTestCase {
     finally {
       IdeaTestUtil.setProjectLanguageLevel(getProject(), oldLevel);
     }
+  }
+
+  public void testNullabilityMethodFromUnspecifiedToNullMarked() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityMethodFromNullMarkedToUnspecified() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityMethodFromNullMarkedToNullMarked() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityMethodWithConflictFromUnspecifiedToNullMarked() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityMethodWithConflictFromNullMarkedToUnspecified() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityClassFromNullMarkedToNullMarked() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityClassFromNullMarkedToUnspecified() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityClassFromUnspecifiedToNullMarked() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityFieldFromNullMarkedToUnspecified() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityFieldFromUnspecifiedToNullMarked() {
+    doTest("A", "B", 0);
   }
 
   private void doTest(final String sourceClassName, final String targetClassName, final int... memberIndices) {
