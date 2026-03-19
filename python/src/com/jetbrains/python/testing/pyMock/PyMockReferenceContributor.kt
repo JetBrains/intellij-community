@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression
  * Registers reference providers for `unittest.mock.patch` and `unittest.mock.patch.object`
  * string targets. Enables navigation, completion, and error highlighting.
  */
-class PyMockReferenceContributor : PsiReferenceContributor() {
+internal class PyMockReferenceContributor : PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
     val pattern = PlatformPatterns.psiElement(PyStringLiteralExpression::class.java)
     registrar.registerReferenceProvider(pattern, PyMockPatchReferenceProvider())

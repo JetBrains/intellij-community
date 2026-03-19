@@ -12,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
  * Suppresses false-positive "unused parameter" warnings on parameters injected by
  * `@patch` and `@patch.object` decorators.
  */
-@ApiStatus.Internal
 internal class PyMockInspectionExtension : PyInspectionExtension() {
   override fun ignoreUnused(local: PsiElement, evalContext: TypeEvalContext): Boolean {
     if (local !is PyNamedParameter) return false

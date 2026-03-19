@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyWithItem
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Provides references for the target string in `@patch("module.Class.attr")` and related
@@ -24,7 +25,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  *
  * When `create=True` is present, references are marked soft (no unresolved error).
  */
-class PyMockPatchReferenceProvider : PsiReferenceProvider() {
+internal class PyMockPatchReferenceProvider : PsiReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val str = element as? PyStringLiteralExpression ?: return emptyArray()
     val callExpr = getPatchTargetCall(str) ?: return emptyArray()
@@ -46,6 +47,7 @@ class PyMockPatchReferenceProvider : PsiReferenceProvider() {
  * For `patch()` and `patch.multiple()`, the keyword form is `target=`.
  * For `patch.dict()`, the keyword form is `in_dict=`.
  */
+@ApiStatus.Internal
 fun getPatchCall(str: PyStringLiteralExpression): PyCallExpression? =
   getPatchTargetCall(str)
 

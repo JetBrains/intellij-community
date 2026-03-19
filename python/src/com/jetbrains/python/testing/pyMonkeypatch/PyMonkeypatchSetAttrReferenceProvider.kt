@@ -37,7 +37,7 @@ import com.jetbrains.python.testing.pyMock.findMemberByName
  * - `monkeypatch.delattr(obj, "attr")` — second arg is an attribute name on `obj`
  * → The attribute string gets a single reference resolved against `obj`'s type.
  */
-class PyMonkeypatchSetAttrReferenceProvider : PsiReferenceProvider() {
+internal class PyMonkeypatchSetAttrReferenceProvider : PsiReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val str = element as? PyStringLiteralExpression ?: return emptyArray()
     if (str.stringValue.isEmpty()) return emptyArray()

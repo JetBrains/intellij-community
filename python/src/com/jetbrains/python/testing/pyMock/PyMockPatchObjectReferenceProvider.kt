@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.PyWithItem
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Provides a reference for the attribute-name string in `patch.object(Target, "attr")`.
@@ -31,7 +32,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  *
  * When `create=True` is present, the reference is marked soft (no unresolved error).
  */
-class PyMockPatchObjectReferenceProvider : PsiReferenceProvider() {
+internal class PyMockPatchObjectReferenceProvider : PsiReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val str = element as? PyStringLiteralExpression ?: return emptyArray()
     val callExpr = getPatchObjectCall(str) ?: return emptyArray()
@@ -54,6 +55,7 @@ class PyMockPatchObjectReferenceProvider : PsiReferenceProvider() {
  * Returns the `patch.object(...)` call expression if [str] is the attribute-name argument
  * (second positional or `attribute=` keyword), or null otherwise.
  */
+@ApiStatus.Internal
 fun getPatchObjectCall(str: PyStringLiteralExpression): PyCallExpression? {
   val argList = when (val parent = str.parent) {
     is PyArgumentList -> parent

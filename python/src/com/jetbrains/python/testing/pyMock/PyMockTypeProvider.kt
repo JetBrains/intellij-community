@@ -28,7 +28,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  * If `new_callable=SomeClass` is present, the injected parameter has type `SomeClass`.
  * Decorators with `new=value` do not inject a parameter.
  */
-class PyMockTypeProvider : PyTypeProviderBase() {
+internal class PyMockTypeProvider : PyTypeProviderBase() {
   override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
     if (!context.maySwitchToAST(func)) return null
 

@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression
  * Registers reference providers for `monkeypatch.setattr` and `monkeypatch.delattr`
  * string arguments. Enables navigation, completion, and error highlighting.
  */
-class PyMonkeypatchReferenceContributor : PsiReferenceContributor() {
+internal class PyMonkeypatchReferenceContributor : PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
     registrar.registerReferenceProvider(
       PlatformPatterns.psiElement(PyStringLiteralExpression::class.java),

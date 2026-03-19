@@ -10,6 +10,7 @@ import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Reports a mismatch between the number of `@patch`/`@patch.object` decorators (that inject
@@ -18,6 +19,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  * A decorator injects a parameter unless it has an explicit `new` argument (keyword or positional).
  * Functions with `*args` or `**kwargs` are skipped since they accept arbitrary parameters.
  */
+@ApiStatus.Internal
 class PyMockPatchArgumentCountInspection : PyInspection() {
   override fun buildVisitor(
     holder: ProblemsHolder,

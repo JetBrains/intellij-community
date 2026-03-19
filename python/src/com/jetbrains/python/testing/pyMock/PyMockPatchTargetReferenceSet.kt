@@ -23,11 +23,13 @@ import com.jetbrains.python.psi.resolve.resolveTopLevelMember
 import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.intellij.util.ProcessingContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Splits the dotted target string of a `@patch("module.Class.attr")` decorator into
  * individual segment references, enabling navigation and completion for each part.
  */
+@ApiStatus.Internal
 class PyMockPatchTargetReferenceSet(
   private val element: PyStringLiteralExpression,
   private val createAllowed: Boolean,
