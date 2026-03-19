@@ -152,12 +152,12 @@
 - name: lib/modules/intellij.gradle.completion.kotlin.jar
   contentModules:
   - name: intellij.gradle.completion.kotlin
+- name: lib/modules/intellij.gradle.completion.toml.jar
+  contentModules:
+  - name: intellij.gradle.completion.toml
 - name: lib/modules/intellij.gradle.properties.jar
   contentModules:
   - name: intellij.gradle.properties
-- name: lib/modules/intellij.gradle.toml.jar
-  contentModules:
-  - name: intellij.gradle.toml
 - name: lib/modules/intellij.gradle.toolingProxy.jar
   contentModules:
   - name: intellij.gradle.toolingProxy

@@ -10,6 +10,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="TOML"
                             id="KotlinGradleTomlCompletionContributor"
-                            implementationClass="com.intellij.gradle.toml.GradleTomlCompletionContributor"/>
+                            implementationClass="com.intellij.gradle.completion.toml.GradleTomlCompletionContributor"/>
   </extensions>
 </idea-plugin>

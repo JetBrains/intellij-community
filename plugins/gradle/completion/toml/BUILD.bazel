@@ -1,4 +1,4 @@
-### auto-generated section `build intellij.gradle.toml` start
+### auto-generated section `build intellij.gradle.completion.toml` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
@@ -19,7 +19,7 @@ resourcegroup(
 
 jvm_library(
   name = "toml",
-  module_name = "intellij.gradle.toml",
+  module_name = "intellij.gradle.completion.toml",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":toml_resources"],
@@ -38,7 +38,7 @@ jvm_library(
 
 jvm_library(
   name = "toml_test_lib",
-  module_name = "intellij.gradle.toml",
+  module_name = "intellij.gradle.completion.toml",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_toml",
@@ -53,10 +53,10 @@ jvm_library(
     "//plugins/gradle:gradle_test_lib",
   ]
 )
-### auto-generated section `build intellij.gradle.toml` end
+### auto-generated section `build intellij.gradle.completion.toml` end
 
-### auto-generated section `iml intellij.gradle.toml` start
+### auto-generated section `iml intellij.gradle.completion.toml` start
 exports_files([
-  "intellij.gradle.toml.iml",
+  "intellij.gradle.completion.toml.iml",
 ], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.gradle.toml` end
+### auto-generated section `iml intellij.gradle.completion.toml` end
