@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
@@ -22,7 +23,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 /**
  * A utility class for reading shell environment.
@@ -276,18 +276,10 @@ public final class ShellEnvironmentReader {
     if (exitCode != null) return exitCode;
 
     LOG.warn("shell env loader is timed out");
-    var handles = Stream.concat(Stream.of(process.toHandle()), process.descendants()).toList();
-
-    for (var iterator = handles.listIterator(handles.size()); iterator.hasPrevious(); ) {
-      iterator.previous().destroy();
-    }
+    OSProcessUtil.terminateProcessGracefully(process);
     exitCode = waitFor(process, 1000L);
     if (exitCode != null) return exitCode;
-    LOG.warn("failed to terminate shell env loader process gracefully, terminating forcibly");
-
-    for (var iterator = handles.listIterator(handles.size()); iterator.hasPrevious(); ) {
-      iterator.previous().destroyForcibly();
-    }
+    OSProcessUtil.killProcessTree(process);
     exitCode = waitFor(process, 1000L);
     if (exitCode != null) return exitCode;
     LOG.warn("failed to kill shell env loader");
