@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -48,6 +48,8 @@ public final class ExtensionsDomExtender extends DomExtender<Extensions> {
   @Override
   public void registerExtensions(final @NotNull Extensions extensions, final @NotNull DomExtensionsRegistrar registrar) {
     Project project = extensions.getManager().getProject();
+    if (DumbService.isDumb(project)) return;
+
     VirtualFile currentFile = getVirtualFile(extensions);
 
     if (currentFile == null || DumbService.isDumb(project)) return;
