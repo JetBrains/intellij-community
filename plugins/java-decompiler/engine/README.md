@@ -133,3 +133,7 @@ Fernflower is licensed under the [Apache License Version 2.0](http://www.apache.
 Fernflower was originally developed by [Stiver](https://blog.jetbrains.com/idea/2024/11/in-memory-of-stiver) but has been maintained by
 JetBrains since 2014. Some patches from [ForgeFlower](https://github.com/MinecraftForge/ForgeFlower) were merged into this repository. The
 mirror of Fernflower was also maintained by [Andrew McRae](https://github.com/fesh0r) for a very long time.
+
+### Naming
+
+The correct name is Fernflower, not FernFlower.
