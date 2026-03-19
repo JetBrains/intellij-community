@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.debugger.impl.shared.actions
 
 import com.intellij.execution.filters.Filter
@@ -104,7 +104,9 @@ private fun ThreadDumpWithAwaitingDependencies.toDumpItems(): List<DumpItem> {
   val iconsCache = icons.map { it.icon() }
   val attributesCache = attributes.map { it.attributes() }
 
-  val feDumpItems = items.map { FrontendDumpItem(it, iconsCache, attributesCache, stackTraces, stateDescriptions, iconToolTips) }
+  val feDumpItems = items.map {
+    FrontendDumpItem(it, iconsCache, attributesCache, stackTraces, exportedStackTraces, stateDescriptions, iconToolTips)
+  }
   for ((index, awaitingIndices) in awaitingDependencies) {
     val awaitingItems = awaitingIndices.map { feDumpItems[it] }.toHashSet()
     feDumpItems[index].setAwaitingItems(awaitingItems)
@@ -117,6 +119,7 @@ private class FrontendDumpItem(
   private val iconsCache: List<Icon>,
   private val attributesCache: List<SimpleTextAttributes>,
   private val stackTracesCache: List<@NlsSafe String>,
+  private val exportedStackTracesCache: List<@NlsSafe String>,
   private val stateDescriptionsCache: List<@NlsSafe String>,
   private val iconToolTipsCache: List<@Nls String?>,
 ) : DumpItem {
@@ -125,6 +128,7 @@ private class FrontendDumpItem(
   override val name: @NlsSafe String get() = itemDto.name
   override val stateDesc: @NlsSafe String get() = stateDescriptionsCache[itemDto.stateDescriptionIndex]
   override val stackTrace: @NlsSafe String get() = "${itemDto.firstLine}\n${stackTracesCache[itemDto.stackTraceIndex]}"
+  override val exportedStackTrace: @NlsSafe String get() = exportedStackTracesCache[itemDto.exportedStackTraceIndex]
   override val iconToolTip: @Nls String? get() = iconToolTipsCache[itemDto.iconToolTipIndex.toUInt().toInt()]
   override val interestLevel: Int get() = itemDto.interestLevel
   override val icon: Icon get() = iconsCache[itemDto.iconIndex.toUInt().toInt()]

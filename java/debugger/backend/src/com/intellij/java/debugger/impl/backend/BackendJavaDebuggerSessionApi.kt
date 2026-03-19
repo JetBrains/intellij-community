@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.debugger.impl.backend
 
 import com.intellij.debugger.actions.FreezeThreadAction
@@ -177,6 +177,7 @@ private fun dumpItemDtos(allDumpItems: List<DumpItem>, maxItems: Int): ThreadDum
   val (icons, iconToIndex) = prepareIndex { it.icon }
   val (stateDescriptions, stateDescriptionToIndex) = prepareIndex { it.stateDesc }
   val (iconToolTips, iconToolTipToIndex) = prepareIndex { it.iconToolTip }
+  val (exportedStackTraces, exportedStackTraceToIndex) = prepareIndex { it.exportedStackTrace }
 
   val awaiting = hashMapOf<Int, IntArray>()
   val itemToIndex = dumpItems.withIndex().associate { it.value to it.index }
@@ -216,6 +217,7 @@ private fun dumpItemDtos(allDumpItems: List<DumpItem>, maxItems: Int): ThreadDum
                           attributesIndex = attributesToIndex[it.attributes]!!.toByte(),
                           isDeadLocked = it.isDeadLocked,
                           stackTraceIndex = stackTraceIndex,
+                          exportedStackTraceIndex = exportedStackTraceToIndex[it.exportedStackTrace]!!,
                           iconToolTipIndex = iconToolTipToIndex[it.iconToolTip]!!.toByte(),
                           firstLine = firstLine,
                           isContainer = it.isContainer,
@@ -229,6 +231,7 @@ private fun dumpItemDtos(allDumpItems: List<DumpItem>, maxItems: Int): ThreadDum
                                             icons = icons.map { it.rpcId() },
                                             attributes = attributes.map { it.rpcId() },
                                             stackTraces = stackTraces,
+                                            exportedStackTraces = exportedStackTraces,
                                             awaitingDependencies = awaiting,
                                             stateDescriptions = stateDescriptions,
                                             iconToolTips = iconToolTips,

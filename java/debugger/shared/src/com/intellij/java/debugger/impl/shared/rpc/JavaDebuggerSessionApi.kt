@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.debugger.impl.shared.rpc
 
 import com.intellij.execution.filters.Filter
@@ -69,6 +69,7 @@ data class ThreadDumpWithAwaitingDependencies(
   val icons: List<IconId>,
   val attributes: List<SerializableSimpleTextAttributes>,
   val stackTraces: List<@NlsSafe String>,
+  val exportedStackTraces: List<@NlsSafe String>,
   val stateDescriptions: List<@NlsSafe String>,
   val iconToolTips: List<@Nls String?>,
   val awaitingDependencies: Map<Int, IntArray>,
@@ -82,6 +83,7 @@ data class JavaThreadDumpItemDto(
   val firstLine: @NlsSafe String,
   val stateDescriptionIndex: Int,
   val stackTraceIndex: Int,
+  val exportedStackTraceIndex: Int,
   val iconToolTipIndex: Byte,
   val interestLevel: Int,
   val iconIndex: Byte,
