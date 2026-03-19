@@ -39,10 +39,12 @@ public final class UserDictionary implements EditableDictionary {
   }
 
   @Override
-  public @Nullable Boolean contains(@NotNull String word) {
-    if (words.contains(word)) return true;
-    if (isUpperCase(word) || isCapitalized(word)) return words.contains(toLowerCase(word)) ? true : null;
-    return null;
+  public @NotNull LookupStatus lookup(@NotNull String word) {
+    if (words.contains(word)) return LookupStatus.Present;
+    if (isUpperCase(word) || isCapitalized(word)) {
+      return words.contains(toLowerCase(word)) ? LookupStatus.Present : LookupStatus.Alien;
+    }
+    return LookupStatus.Alien;
   }
 
   @Override
