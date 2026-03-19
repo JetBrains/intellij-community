@@ -35,189 +35,173 @@ class GradleTomlVersionCatalogEntrySearcherTest {
   @DisplayName("Tests for findEntryElement(...) method")
   inner class FindEntryElementTests {
 
-    private fun testFindEntryElement(
-      tomlKeyPath: String,
+    private fun test(
+      givenEntryPath: String,
       versionCatalogText: String,
-      checker: (PsiElement?) -> Unit,
+      expectedToFind: String? = null,
+      checker: (PsiElement?) -> Unit = {},
     ) = runReadAction {
       val tomPsiFile = PsiFileFactory.getInstance(project)
         .createFileFromText(TomlLanguage, versionCatalogText) as TomlFile
-      val element = entrySearcher.findEntryElement(tomPsiFile, tomlKeyPath)
+      val element = entrySearcher.findEntryElement(tomPsiFile, givenEntryPath)
+
+      if (expectedToFind != null) {
+        assertNotNull(element) {
+          "Expected that $expectedToFind TOML element is found for the given path $givenEntryPath"
+        }
+        assertEquals(expectedToFind, element.text) {
+          "The found element should match the expected text for the given path $givenEntryPath"
+        }
+      }
       checker(element)
     }
 
     @Test
-    fun `test findEntryElement for a library entry`() {
-      testFindEntryElement("groovy.core", """
+    fun `test findEntryElement for a library entry`() = test(
+      givenEntryPath = "groovy.core",
+      versionCatalogText = """
         plugins.groovy-core = "plugin"
         [libraries]
         groovy-core = "lib"
-        """.trimIndent()
-      ) {
-        assertNotNull(it)
-        assertEquals("groovy-core = \"lib\"", it.text)
-      }
-    }
+      """.trimIndent(),
+      expectedToFind = "groovy-core = \"lib\""
+    )
 
     @Test
-    fun `test findEntryElement for a library entry when libraries is inline table`() {
-      testFindEntryElement("groovy.core", """
+    fun `test findEntryElement for a library entry when libraries is inline table`() = test(
+      givenEntryPath = "groovy.core",
+      versionCatalogText = """
         libraries = { groovy-core = "lib" }
-        """.trimIndent()
-      ) {
-        assertNotNull(it)
-        assertEquals("groovy-core = \"lib\"", it.text)
-      }
-    }
+      """.trimIndent(),
+      expectedToFind = "groovy-core = \"lib\""
+    )
 
     @Test
-    fun `test findEntryElement for a library entry when libraries table name is a part of alias`() {
-      testFindEntryElement("groovy.core", """
+    fun `test findEntryElement for a library entry when libraries table name is a part of alias`() = test(
+      givenEntryPath = "groovy.core",
+      versionCatalogText = """
         libraries.groovy-core = "lib"
-        """.trimIndent()
-      ) {
-        assertNotNull(it)
-        assertEquals("libraries.groovy-core = \"lib\"", it.text)
-      }
-    }
+      """.trimIndent(),
+      expectedToFind = "libraries.groovy-core = \"lib\""
+    )
 
     @Test
-    fun `test findEntryElement for a bundle entry`() {
-      testFindEntryElement("bundles.bundle", """
+    fun `test findEntryElement for a bundle entry`() = test(
+      givenEntryPath = "bundles.bundle",
+      versionCatalogText = """
         [bundles]
         bundle = ["lib"]
-        """.trimIndent()
-      ) {
-        assertNotNull(it)
-        assertEquals("bundle = [\"lib\"]", it.text)
-      }
-    }
+      """.trimIndent(),
+      expectedToFind = "bundle = [\"lib\"]"
+    )
 
     @Test
-    fun `test findEntryElement for a bundle entry when bundles is inline table`() {
-      testFindEntryElement("bundles.bundle.core", """
+    fun `test findEntryElement for a bundle entry when bundles is inline table`() = test(
+      givenEntryPath = "bundles.bundle.core",
+      versionCatalogText = """
         bundles = { bundle-core = ["lib"] }
-        """.trimIndent()
-      ) {
-        assertNotNull(it)
-        assertEquals("bundle-core = [\"lib\"]", it.text)
-      }
-    }
+      """.trimIndent(),
+      expectedToFind = "bundle-core = [\"lib\"]"
+    )
 
     @Test
-    fun `test findEntryElement for a bundle entry when bundles table name is a part of alias`() {
-      testFindEntryElement("bundles.bundle.core", """
+    fun `test findEntryElement for a bundle entry when bundles table name is a part of alias`() = test(
+      givenEntryPath = "bundles.bundle.core",
+      versionCatalogText = """
         bundles.bundle-core = "lib"
-        """.trimIndent()
-      ) {
-        assertNotNull(it)
-        assertEquals("bundles.bundle-core = \"lib\"", it.text)
-      }
-    }
+      """.trimIndent(),
+      expectedToFind = "bundles.bundle-core = \"lib\""
+    )
 
     @Test
-    fun `test findEntryElement for a version entry`() {
-      testFindEntryElement("versions.my.foo", """
+    fun `test findEntryElement for a version entry`() = test(
+      givenEntryPath = "versions.my.foo",
+      versionCatalogText = """
         [versions]
         my-foo = ["foo"]
         my-foo-bar = ["foo-bar"]
-        """.trimIndent()
-      ) {
-        assertNotNull(it)
-        assertEquals("my-foo = [\"foo\"]", it.text)
-      }
-    }
+      """.trimIndent(),
+      expectedToFind = "my-foo = [\"foo\"]"
+    )
 
     @Test
-    fun `test findEntryElement for a plugin entry`() {
-      testFindEntryElement("plugins.plugin", """
+    fun `test findEntryElement for a plugin entry`() = test(
+      givenEntryPath = "plugins.plugin",
+      versionCatalogText = """
         [plugins]
         plugin = "plugin"
-        """.trimIndent()
-      ) {
-        assertNotNull(it)
-        assertEquals("plugin = \"plugin\"", it.text)
-      }
-    }
+      """.trimIndent(),
+      expectedToFind = "plugin = \"plugin\""
+    )
 
     @Test
-    fun `test findEntryElement for a plugin entry when plugins is inline table`() {
-      testFindEntryElement("plugins.plugin.core", """
+    fun `test findEntryElement for a plugin entry when plugins is inline table`() = test(
+      givenEntryPath = "plugins.plugin.core",
+      versionCatalogText = """
         plugins = { plugin_core = ["plugin"] }
-        """.trimIndent()
-      ) {
-        assertNotNull(it)
-        assertEquals("plugin_core = [\"plugin\"]", it.text)
-      }
-    }
+      """.trimIndent(),
+      expectedToFind = "plugin_core = [\"plugin\"]"
+    )
 
     @Test
-    fun `test findEntryElement for a plugin entry when plugins table name is a part of alias`() {
-      testFindEntryElement("plugins.plugin.core", """
+    fun `test findEntryElement for a plugin entry when plugins table name is a part of alias`() = test(
+      givenEntryPath = "plugins.plugin.core",
+      versionCatalogText = """
         plugins.plugin_core = "plugin"
-        """.trimIndent()
-      ) {
-        assertNotNull(it)
-        assertEquals("plugins.plugin_core = \"plugin\"", it.text)
-      }
-    }
+      """.trimIndent(),
+      expectedToFind = "plugins.plugin_core = \"plugin\""
+    )
 
     @Test
-    fun `test findEntryElement when a TOML entry name has various delimiters`() {
-      testFindEntryElement("alias.core.ext", """
+    fun `test findEntryElement when a TOML entry name has various delimiters`() = test(
+      givenEntryPath = "alias.core.ext",
+      versionCatalogText = """
         [libraries]
         alias_core-ext = "aaa"
-        """.trimIndent()
-      ) {
-        assertNotNull(it)
-        assertEquals("alias_core-ext = \"aaa\"", it.text)
-      }
-    }
+      """.trimIndent(),
+      expectedToFind = "alias_core-ext = \"aaa\""
+    )
 
     @Test
-    fun `test findEntryElement when given entry path has various delimiters`() {
-      testFindEntryElement("alias_core-ext", """
+    fun `test findEntryElement when given entry path has various delimiters`() = test(
+      givenEntryPath = "alias_core-ext",
+      versionCatalogText = """
         [libraries]
         alias-core-ext = "aaa"
-        """.trimIndent()
-      ) {
-        assertNotNull(it)
-        assertEquals("alias-core-ext = \"aaa\"", it.text)
-      }
-    }
+      """.trimIndent(),
+      expectedToFind = "alias-core-ext = \"aaa\""
+    )
 
     @Test
-    fun `test findEntryElement shouldn't return an entry with name containing given path but larger`() {
-      testFindEntryElement("alias.core", """
+    fun `test findEntryElement shouldn't return an entry with name containing given path but larger`() = test(
+      givenEntryPath = "alias.core",
+      versionCatalogText = """
         [libraries]
         alias-core-ext = "aaa"
-        """.trimIndent()
-      ) {
-        assertNull(it) { "findEntryElement shouldn return an entry having more letters than given path." }
-      }
+      """.trimIndent()
+    ) { foundElement ->
+      assertNull(foundElement) { "findEntryElement shouldn return an entry having more letters than given path." }
     }
 
     @Test
-    fun `test findEntryElement considers case insensitivity for a first letter after delimeter in TOML entry`() {
-      testFindEntryElement("alias.core.ext.foo", """
+    fun `test findEntryElement considers case insensitivity for a first letter after delimeter in TOML entry`() = test(
+      givenEntryPath = "alias.core.ext.foo",
+      versionCatalogText = """
         [libraries]
         alias-Core-Ext-Foo = "aaa"
-        """.trimIndent()
-      ) {
-        assertNotNull(it)
-        assertEquals("alias-Core-Ext-Foo = \"aaa\"", it.text)
-      }
-    }
+      """.trimIndent(),
+      expectedToFind = "alias-Core-Ext-Foo = \"aaa\""
+    )
 
     @Test
-    fun `test findEntryElement considers case sensitivity for non-first letter after delimiter in TOML entry`() {
-      testFindEntryElement("alias.core.ext.foo", """
+    fun `test findEntryElement considers case sensitivity for non-first letter after delimiter in TOML entry`() = test(
+      givenEntryPath = "alias.core.ext.foo",
+      versionCatalogText = """
         [libraries]
         alias-Core-eXt-Foo = "aaa"
-        """.trimIndent()
-      ) {
-        assertNull(it) { "In TOML version catalog, only first letter after delimiter is case insensitive." }
-      }
+      """.trimIndent()
+    ) { foundElement ->
+      assertNull(foundElement) { "In TOML version catalog, only first letter after delimiter is case insensitive." }
     }
   }
 
