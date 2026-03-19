@@ -68,7 +68,13 @@ class McpServerService(val cs: CoroutineScope) {
     val commandExecutionMode: AskCommandExecutionMode,
     val toolFilter: McpToolFilter = McpToolFilter.AllowAll,
     val localAgentId: String? = null,
-  )
+  ) {
+    @Deprecated("ABI compat with 261.22158 that doesn't have `localAgentId`", level = DeprecationLevel.HIDDEN)
+    constructor(
+      commandExecutionMode: AskCommandExecutionMode,
+      toolFilter: McpToolFilter = McpToolFilter.AllowAll,
+    ) : this(commandExecutionMode, toolFilter, null)
+  }
 
   companion object {
     fun getInstance(): McpServerService = service()
