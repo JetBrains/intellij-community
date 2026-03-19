@@ -44,6 +44,7 @@ jvm_library(
     "//libraries/guava",
     "//python/python-process-output/common",
     "//python/impl.helperLocator:community-helpersLocator",
+    "//platform/execution-impl",
   ]
 )
 
@@ -82,6 +83,7 @@ jvm_library(
     "//libraries/guava",
     "//python/python-process-output/common",
     "//python/impl.helperLocator:community-helpersLocator",
+    "//platform/execution-impl",
   ]
 )
 ### auto-generated section `build intellij.python.community.execService` end

@@ -55,5 +55,6 @@
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.python.processOutput.common" />
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
   </component>
 </module>

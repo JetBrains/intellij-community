@@ -1,24 +1,18 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <module name="intellij.python.community"/>
     <module name="intellij.python.community.helpersLocator"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.python.community"/>
     <module name="intellij.python.processOutput.common"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>
     <extensionPoint qualifiedName="Pythonid.execService.targetEnvironmentRequestHandler"
-                    interface="com.intellij.python.community.execService.spi.TargetEnvironmentRequestHandler"
+                    interface="com.intellij.python.community.execService.impl.TargetEnvironmentRequestHandler"
                     dynamic="true"/>
 
   </extensionPoints>
-
-  <extensions defaultExtensionNs="Pythonid">
-    <execService.targetEnvironmentRequestHandler
-      implementation="com.intellij.python.community.execService.impl.processLaunchers.DefaultTargetEnvironmentRequestHandler"
-      order="last"
-    />
-  </extensions>
-
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="2"
                  description="How many heavy processes to execute concurrently"
