@@ -1,10 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
+import com.intellij.psi.util.PsiTreeUtil
+import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
@@ -37,6 +39,8 @@ class PyMockTest : PyTestCase() {
 
   override fun setUp() {
     super.setUp()
+    TestRunnerService.getInstance(myFixture.module).selectedFactory =
+      PythonTestConfigurationType.getInstance().pyTestFactory
     myFixture.copyDirectoryToProject("", "")
   }
 
@@ -564,5 +568,65 @@ class PyMockTest : PyTestCase() {
     assertNotNull("First arg should be a string literal", strArgForMethod)
     val directRefs2 = PyMockPatchTargetReferenceSet(strArgForMethod!!, false).createReferences()
     assertEquals("example_module.MyClass.my_method should produce 3 references", 3, directRefs2.size)
+  }
+
+  // --- pytest-mock (mocker fixture) ---
+
+  @TestFor(issues = ["PY-63257"])
+  fun `test mocker fixture type`() {
+    assertEquals("MockerFixture", getParameterTypeName("test_pytest_mock/test.py", "test_mocker_fixture_type", "mocker"))
+  }
+
+  @TestFor(issues = ["PY-63257"])
+  fun `test mocker fixture type in class method`() {
+    val file = myFixture.configureByFile("test_pytest_mock/test.py") as PyFile
+    val method = file.findTopLevelClass("TestMockerFixture")!!.findMethodByName("test_mocker_type_in_method", false, null)!!
+    assertEquals("MockerFixture", getParameterTypeName(method, "mocker"))
+  }
+
+  @TestFor(issues = ["PY-63257"])
+  fun `test overridden mocker fixture keeps its own type`() {
+    assertEquals("int", getParameterTypeName("test_pytest_mock/test_override.py", "test_overridden_mocker", "mocker"))
+  }
+
+  @TestFor(issues = ["PY-36260"])
+  fun `test mocker patch reference resolution`() {
+    val call = getPytestMockCall("test_mocker_patch_call")
+    val strArg = call.arguments.first() as PyStringLiteralExpression
+    assertNotNull("getPatchCall should recognize mocker.patch()", getPatchCall(strArg))
+
+    val refs = PyMockPatchTargetReferenceSet(strArg, false).createReferences()
+    assertEquals("example_module.MyClass.my_method should produce 3 references", 3, refs.size)
+    val resolved = refs[2].resolve()
+    assertInstanceOf(resolved, PyFunction::class.java)
+    assertEquals("my_method", (resolved as PyFunction).name)
+  }
+
+  @TestFor(issues = ["PY-36260"])
+  fun `test mocker patch object reference resolution`() {
+    val call = getPytestMockCall("test_mocker_patch_object_call")
+    val strArg = call.arguments[1] as PyStringLiteralExpression
+    assertNotNull("getPatchObjectCall should recognize mocker.patch.object()", getPatchObjectCall(strArg))
+
+    val resolved = strArg.references.last().resolve()
+    assertInstanceOf(resolved, PyFunction::class.java)
+    assertEquals("my_method", (resolved as PyFunction).name)
+  }
+
+  private fun getParameterTypeName(filePath: String, functionName: String, parameterName: String): String {
+    val file = myFixture.configureByFile(filePath) as PyFile
+    return getParameterTypeName(file.findTopLevelFunction(functionName)!!, parameterName)
+  }
+
+  private fun getParameterTypeName(function: PyFunction, parameterName: String): String {
+    val parameter = function.parameterList.findParameterByName(parameterName)!!
+    val context = TypeEvalContext.codeAnalysis(myFixture.project, function.containingFile)
+    return PythonDocumentationProvider.getTypeName(context.getType(parameter), context)
+  }
+
+  /** Returns the first call in the function [functionName] of `test_pytest_mock/test.py`. */
+  private fun getPytestMockCall(functionName: String): PyCallExpression {
+    val file = myFixture.configureByFile("test_pytest_mock/test.py") as PyFile
+    return PsiTreeUtil.findChildOfType(file.findTopLevelFunction(functionName)!!.statementList, PyCallExpression::class.java)!!
   }
 }

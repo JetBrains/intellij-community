@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.pyMock
 
 import com.intellij.openapi.util.TextRange
@@ -16,7 +16,6 @@ import com.jetbrains.python.psi.PyDecorator
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.psi.PyWithItem
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -29,6 +28,7 @@ import org.jetbrains.annotations.ApiStatus
  * - `@patch.object(Target, "attr")` — second positional argument
  * - `@patch.object(Target, attribute="attr")` — `attribute` keyword argument
  * - `with patch.object(Target, "attr") as mock:` — context manager form
+ * - `patch.object(Target, "attr")` and `mocker.patch.object(Target, "attr")` — plain calls
  *
  * When `create=True` is present, the reference is marked soft (no unresolved error).
  */
@@ -71,8 +71,8 @@ fun getPatchObjectCall(str: PyStringLiteralExpression): PyCallExpression? {
   val patchObjectCall: PyCallExpression = when {
     callExpr is PyDecorator -> callExpr
     callExpr.parent is PyDecorator -> callExpr.parent as PyDecorator
-    callExpr.parent is PyWithItem -> callExpr
-    else -> return null
+    // A context manager or a plain call
+    else -> callExpr
   }
 
   val typeContext = TypeEvalContext.codeAnalysis(str.project, str.containingFile)

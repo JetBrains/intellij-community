@@ -1117,6 +1117,7 @@
     <typeProvider implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.testing.pyTestFixtures.PyTextFixtureTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.testing.pyMock.PyMockTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.testing.pyMock.PyMockerFixtureTypeProvider"/>
 
     <!-- typing -->
     <visitorFilter language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiVisitorFilter"/>

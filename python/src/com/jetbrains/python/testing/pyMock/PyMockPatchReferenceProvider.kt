@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.pyMock
 
 import com.intellij.psi.PsiElement
@@ -16,12 +16,13 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Provides references for the target string in `@patch("module.Class.attr")` and related
- * decorator calls and context managers.
+ * decorator calls, context managers, and pytest-mock `mocker.patch()` calls.
  *
  * Supported calls:
  * - `patch("target")` / `patch(target="target")` — dotted path to attribute being patched
  * - `patch.dict("target", ...)` / `patch.dict(in_dict="target", ...)` — dotted path to dict
  * - `patch.multiple("target", ...)` / `patch.multiple(target="target", ...)` — dotted path to module/class
+ * - `mocker.patch("target")` — pytest-mock style patching
  *
  * When `create=True` is present, references are marked soft (no unresolved error).
  */
@@ -65,7 +66,14 @@ private fun getPatchTargetCall(str: PyStringLiteralExpression): PyCallExpression
     callExpr is PyDecorator -> callExpr
     callExpr.parent is PyDecorator -> callExpr.parent as PyDecorator
     callExpr.parent is PyWithItem -> callExpr
-    else -> return null
+    else -> {
+      // Check if this is a mocker.patch() style call (pytest-mock)
+      val typeContext = TypeEvalContext.codeAnalysis(str.project, str.containingFile)
+      if (isMockerFixtureMethodCall(callExpr, "patch", typeContext)) {
+        return validateTargetArg(str, keyword, argList, callExpr, "target")
+      }
+      return null
+    }
   }
 
   val typeContext = TypeEvalContext.codeAnalysis(str.project, str.containingFile)

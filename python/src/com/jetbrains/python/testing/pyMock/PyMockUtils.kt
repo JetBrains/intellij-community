@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.pyMock
 
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyDecorator
+import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyKnownDecorator
@@ -12,15 +13,18 @@ import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 private const val MOCK_PATCH_FQN = "unittest.mock.patch"
+internal const val MOCKER_FIXTURE_FQN = "pytest_mock.plugin.MockerFixture"
 
 /**
- * Returns `true` if [callExpr] is a call to `unittest.mock.patch`
+ * Returns `true` if [callExpr] is a call to `unittest.mock.patch` or `MockerFixture.patch`
  * (bare `patch`, not `patch.object` or `patch.dict`).
  *
- * Handles both `@patch(...)` decorator and `with patch(...)` context manager usage.
+ * Handles both `@patch(...)` decorator and `with patch(...)` context manager usage,
+ * as well as `mocker.patch(...)` from pytest-mock.
  * Uses a fast callee-name check first, then resolves via PSI to confirm the FQN.
  */
 internal fun isPatchCall(callExpr: PyCallExpression, context: TypeEvalContext): Boolean {
@@ -34,6 +38,12 @@ internal fun isPatchCall(callExpr: PyCallExpression, context: TypeEvalContext): 
   }
 
   val callee = callExpr.callee ?: return false
+
+  // Check if this is a mocker.patch() call (pytest-mock)
+  if (isMockerFixtureMethodCall(callExpr, "patch", context)) {
+    return true
+  }
+
   // For regular call expressions (e.g. `with patch(...)`), resolve the callee to its definition
   return PyUtil.multiResolveTopPriority(
     callee,
@@ -43,33 +53,61 @@ internal fun isPatchCall(callExpr: PyCallExpression, context: TypeEvalContext): 
 }
 
 /**
- * Returns `true` if [callExpr] is a call to `patch.<methodName>` where the qualifier
- * resolves to `unittest.mock.patch`.
+ * Returns `true` if [callExpr] is a call to `mocker.<methodName>` where the qualifier
+ * is a MockerFixture instance from pytest-mock.
+ *
+ * Detection strategy:
+ * 1. The callee must be `<qualifier>.<methodName>`.
+ * 2. The qualifier is identified as a MockerFixture by either:
+ *    - Type: its type is `pytest_mock.plugin.MockerFixture`
+ *    - Name: it resolves to a parameter named `mocker` (a reserved pytest fixture)
+ */
+internal fun isMockerFixtureMethodCall(callExpr: PyCallExpression, methodName: String, context: TypeEvalContext): Boolean {
+  val callee = callExpr.callee as? PyQualifiedExpression ?: return false
+  return isMockerFixtureAttribute(callee, methodName, context)
+}
+
+/**
+ * Returns `true` if [expression] is `<qualifier>.<name>`, where the type of the qualifier is `MockerFixture`.
+ */
+private fun isMockerFixtureAttribute(expression: PyExpression, name: String, context: TypeEvalContext): Boolean {
+  val reference = expression as? PyQualifiedExpression ?: return false
+  if (reference.name != name) return false
+  val qualifier = reference.qualifier ?: return false
+  val qualifierType = context.getType(qualifier)
+  return qualifierType is PyClassType && qualifierType.pyClass.qualifiedName == MOCKER_FIXTURE_FQN
+}
+
+/**
+ * Returns `true` if [callExpr] is a call to `patch.<methodName>`.
+ *
+ * The qualifier must resolve to `unittest.mock.patch`, or be `mocker.patch` from pytest-mock.
  */
 private fun isPatchMethodCall(callExpr: PyCallExpression, methodName: String, context: TypeEvalContext): Boolean {
   val callee = callExpr.callee ?: return false
   if (callee.name != methodName) return false
 
   val qualifier = (callee as? PyQualifiedExpression)?.qualifier ?: return false
-  return PyUtil.multiResolveTopPriority(qualifier, PyResolveContext.defaultContext(context))
-    .filterIsInstance<PyQualifiedNameOwner>()
-    .any { it.qualifiedName == MOCK_PATCH_FQN }
+  return isMockerFixtureAttribute(qualifier, "patch", context) ||
+         PyUtil.multiResolveTopPriority(qualifier, PyResolveContext.defaultContext(context))
+           .filterIsInstance<PyQualifiedNameOwner>()
+           .any { it.qualifiedName == MOCK_PATCH_FQN }
 }
 
 /**
- * Returns `true` if [callExpr] is a call to `unittest.mock.patch.object`.
+ * Returns `true` if [callExpr] is a call to `unittest.mock.patch.object` or `mocker.patch.object`.
  */
 internal fun isPatchObjectCall(callExpr: PyCallExpression, context: TypeEvalContext): Boolean =
   isPatchMethodCall(callExpr, "object", context)
 
 /**
- * Returns `true` if [callExpr] is a call to `unittest.mock.patch.dict`.
+ * Returns `true` if [callExpr] is a call to `unittest.mock.patch.dict` or `mocker.patch.dict`.
  */
 internal fun isPatchDictCall(callExpr: PyCallExpression, context: TypeEvalContext): Boolean =
   isPatchMethodCall(callExpr, "dict", context)
 
 /**
- * Returns `true` if [callExpr] is a call to `unittest.mock.patch.multiple`.
+ * Returns `true` if [callExpr] is a call to `unittest.mock.patch.multiple` or `mocker.patch.multiple`.
  */
 internal fun isPatchMultipleCall(callExpr: PyCallExpression, context: TypeEvalContext): Boolean =
   isPatchMethodCall(callExpr, "multiple", context)
