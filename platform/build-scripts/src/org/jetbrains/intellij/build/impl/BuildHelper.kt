@@ -15,16 +15,16 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.checkRecursiveSingleFlightAwait
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.singleFlightComputationContext
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
 import java.util.function.Predicate
-import kotlin.coroutines.AbstractCoroutineContextElement
-import kotlin.coroutines.CoroutineContext
 
 fun CoroutineScope.createSkippableJob(
   spanBuilder: SpanBuilder,
@@ -80,32 +80,6 @@ interface SuspendingLazy<T> {
  */
 fun <T> suspendingLazy(coroutineName: String, initializer: suspend CoroutineScope.() -> T): SuspendingLazy<T> {
   return SuspendingLazyImpl(coroutineName = coroutineName, initializer = initializer)
-}
-
-private class ActiveSingleFlightComputations(
-  private val activeOwners: Set<Any>,
-) : AbstractCoroutineContextElement(Key) {
-  companion object Key : CoroutineContext.Key<ActiveSingleFlightComputations>
-
-  fun contains(owner: Any): Boolean = owner in activeOwners
-
-  fun add(owner: Any): ActiveSingleFlightComputations = ActiveSingleFlightComputations(activeOwners + owner)
-}
-
-internal fun singleFlightComputationContext(currentContext: CoroutineContext, owner: Any): CoroutineContext {
-  val activeComputations = currentContext[ActiveSingleFlightComputations]
-  return activeComputations?.add(owner) ?: ActiveSingleFlightComputations(setOf(owner))
-}
-
-internal fun checkRecursiveSingleFlightAwait(
-  currentContext: CoroutineContext,
-  owner: Any,
-  operationName: String,
-  deferred: CompletableDeferred<*>,
-) {
-  check(deferred.isCompleted || currentContext[ActiveSingleFlightComputations]?.contains(owner) != true) {
-    "Recursive await of '$operationName' detected"
-  }
 }
 
 private class SuspendingLazyImpl<T>(

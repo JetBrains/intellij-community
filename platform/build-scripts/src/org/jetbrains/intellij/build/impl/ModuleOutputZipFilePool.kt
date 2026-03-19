@@ -29,11 +29,16 @@ internal class ModuleOutputZipFilePool(scope: CoroutineScope?) {
   }
 
   suspend fun getData(file: Path, entryPath: String): ByteArray? {
-    if (cache == null) {
-      return loadZipFile(file)?.use { it.getData(entryPath) }
+    try {
+      if (cache == null) {
+        return loadZipFile(file)?.use { it.getData(entryPath) }
+      }
+      else {
+        return cache.getOrPut(file) { loadZipFile(file) }?.getData(entryPath)
+      }
     }
-    else {
-      return cache.getOrPut(file) { loadZipFile(file) }?.getData(entryPath)
+    catch (e: Throwable) {
+      throw IllegalStateException("Cannot read '$entryPath' from archived module output '$file'", e)
     }
   }
 
