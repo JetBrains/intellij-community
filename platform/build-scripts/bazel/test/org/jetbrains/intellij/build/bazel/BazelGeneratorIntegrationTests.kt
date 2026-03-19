@@ -43,6 +43,7 @@ class BazelGeneratorIntegrationTests {
   @Test fun snapshotLibrary() = doTest("snapshot-library")
   @Test fun snapshotLibraryInTree() = doTest("snapshot-library-in-tree")
   @Test fun moduleRepositoryLibrarySnapshot() = doTest("module-repository-library-snapshot")
+  @Test fun communitySubdirNaming() = doTest("community-subdir-naming")
 
   private fun doTest(
     testName: String,
@@ -70,21 +71,11 @@ class BazelGeneratorIntegrationTests {
 
     val bazelTargetsBeforeRunningGenerator = Files.createTempFile("bazel-targets-before-running-generator", ".json")
     JpsModuleToBazelTargetsOnly.main(
-      if (runWithoutUltimateRoot) {
-        arrayOf(
-          "--community_root=$tempDir",
-          "--default-custom-modules=$defaultCustomModules",
-          "--output=$bazelTargetsBeforeRunningGenerator",
-        )
-      }
-      else {
-        arrayOf(
-          "--community_root=${tempDir.resolve("community")}",
-          "--ultimate_root=$tempDir",
-          "--default-custom-modules=$defaultCustomModules",
-          "--output=$bazelTargetsBeforeRunningGenerator",
-        )
-      }
+      arrayOf(
+        "--manifest=${createManifest(tempDir)}",
+        "--default-custom-modules=$defaultCustomModules",
+        "--output=$bazelTargetsBeforeRunningGenerator",
+      )
     )
 
     compareDirectoriesWithoutMutation(projectDataPath, tempDir, "targets-only must not modify the project tree")
@@ -107,21 +98,11 @@ class BazelGeneratorIntegrationTests {
 
     val bazelTargetsAfterRunningGenerator = Files.createTempFile("bazel-targets-after-running-generator", ".json")
     JpsModuleToBazelTargetsOnly.main(
-      if (runWithoutUltimateRoot) {
-        arrayOf(
-          "--community_root=$tempDir",
-          "--default-custom-modules=$defaultCustomModules",
-          "--output=$bazelTargetsAfterRunningGenerator",
-        )
-      }
-      else {
-        arrayOf(
-          "--community_root=${tempDir.resolve("community")}",
-          "--ultimate_root=$tempDir",
-          "--default-custom-modules=$defaultCustomModules",
-          "--output=$bazelTargetsAfterRunningGenerator",
-        )
-      }
+      arrayOf(
+        "--manifest=${createManifest(tempDir)}",
+        "--default-custom-modules=$defaultCustomModules",
+        "--output=$bazelTargetsAfterRunningGenerator",
+      )
     )
 
     assertAndRemoveSameFiles(projectDataPath, tempDir)
@@ -184,6 +165,18 @@ class BazelGeneratorIntegrationTests {
       tempWorkspaceBaseDir.deleteRecursively()
       normalizedProjectDir.deleteRecursively()
     }
+  }
+
+  private fun createManifest(projectDir: Path): Path {
+    val manifest = Files.createTempFile("manifest", ".txt")
+    val lines = mutableListOf<String>()
+    for (path in projectDir.walk()) {
+      if (path.isDirectory()) continue
+      val relativePath = projectDir.relativize(path).toString()
+      lines.add("copy\t${path.toAbsolutePath()}\t$relativePath")
+    }
+    manifest.writeText(lines.joinToString("\n"))
+    return manifest
   }
 
   private fun getTestDataPath(testName: String): Path {

@@ -1,0 +1,23 @@
+### auto-generated section `build intellij.community.wintools.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "wintools-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "wintools-tests_test_lib",
+  module_name = "intellij.community.wintools.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":wintools-tests"]
+)
+### auto-generated section `build intellij.community.wintools.tests` end
+
+### auto-generated section `iml intellij.community.wintools.tests` start
+exports_files([
+  "intellij.community.wintools.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.community.wintools.tests` end

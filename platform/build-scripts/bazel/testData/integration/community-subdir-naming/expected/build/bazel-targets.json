@@ -1,0 +1,24 @@
+{
+  "modules": {
+    "intellij.community.wintools.tests": {
+      "productionTargets": [
+        "@community//wintools:wintools-tests.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/wintools/wintools-tests.jar"
+      ],
+      "testTargets": [
+        "@community//wintools:wintools-tests_test_lib.jar"
+      ],
+      "testJars": [
+        "out/bazel-out/jvm-fastbuild/bin/wintools/wintools-tests_test_lib.jar"
+      ],
+      "exports": [],
+      "moduleLibraries": {}
+    }
+  },
+  "imlTargets": [
+    "@community//wintools:intellij.community.wintools.tests.iml"
+  ],
+  "projectLibraries": {}
+}
