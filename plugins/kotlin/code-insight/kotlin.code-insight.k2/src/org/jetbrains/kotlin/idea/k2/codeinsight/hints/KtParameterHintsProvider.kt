@@ -194,11 +194,17 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         val contextParameters = functionSymbol.contextParameters
         val contextArguments: List<KaReceiverValue> = functionCall.contextArguments
 
-        val contextParameterPairs =
-            contextParameters.zip(contextArguments).filter { !it.first.name.isSpecial }
+        val explicitArgumentNames =
+            callElement.valueArguments.mapNotNullTo(hashSetOf()) { it.getArgumentName()?.asName }
+
+        val implicitContextParameterPairs =
+            contextParameters.zip(contextArguments).filter {
+                val name = it.first.name
+                !name.isSpecial && name !in explicitArgumentNames
+            }
 
         sink.whenOptionEnabled(SHOW_CONTEXT_PARAMETERS.name) {
-            collectContextParameters(callElement, sink, contextMenuPayloads, contextParameterPairs, valueParametersWithNames)
+            collectContextParameters(callElement, sink, contextMenuPayloads, implicitContextParameterPairs, valueParametersWithNames)
         }
 
         val args: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>> = functionCall.valueArgumentMapping
