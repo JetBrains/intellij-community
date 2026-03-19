@@ -12,12 +12,10 @@ import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 @OptIn(WorkspaceEntityInternalApi::class)
 internal object MetadataStorageImpl : MetadataStorageBase() {
     override fun initializeMetadata() {
-        val primitiveTypeStringNotNullable =
-            ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
+        val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
         val primitiveTypeSetNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Set")
         val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
-        val primitiveTypeBooleanNotNullable =
-            ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Boolean")
+        val primitiveTypeBooleanNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Boolean")
 
         var typeMetadata: StorageTypeMetadata
 
@@ -241,11 +239,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     withDefault = false
                 ),
                 OwnPropertyMetadata(
-                    isComputable = false,
-                    isKey = false,
-                    isOpen = false,
-                    name = "roots",
-                    valueType = ValueTypeMetadata.ParameterizedType(
+                    isComputable = false, isKey = false, isOpen = false, name = "roots", valueType = ValueTypeMetadata.ParameterizedType(
                         generics = listOf(
                             ValueTypeMetadata.SimpleType.CustomType(
                                 isNullable = false,
@@ -292,8 +286,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                 )
                             )
                         ), primitive = primitiveTypeListNotNullable
-                    ),
-                    withDefault = false
+                    ), withDefault = false
                 ),
                 OwnPropertyMetadata(
                     isComputable = false,
@@ -380,42 +373,18 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(
-            typeFqn = "org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptEntity",
-            metadataHash = 28529041
-        )
-        addMetadataHash(
-            typeFqn = "org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryEntity",
-            metadataHash = 1720086036
-        )
-        addMetadataHash(
-            typeFqn = "org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryId",
-            metadataHash = 1339490769
-        )
-        addMetadataHash(
-            typeFqn = "org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptId",
-            metadataHash = 771684902
-        )
-        addMetadataHash(
-            typeFqn = "org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryRoot",
-            metadataHash = 1494240429
-        )
-        addMetadataHash(
-            typeFqn = "org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryRootTypeId",
-            metadataHash = 535707220
-        )
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptEntity", metadataHash = 28529041)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryEntity", metadataHash = 1720086036)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryId", metadataHash = 1339490769)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptId", metadataHash = 771684902)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryRoot", metadataHash = 1494240429)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryRootTypeId", metadataHash = 535707220)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 444396911)
-        addMetadataHash(
-            typeFqn = "org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptEntitySource",
-            metadataHash = -239581324
-        )
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptEntitySource", metadataHash = -239581324)
         addMetadataHash(
             typeFqn = "org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryEntitySource",
             metadataHash = 1187525315
         )
-        addMetadataHash(
-            typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId",
-            metadataHash = -1251885517
-        )
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = -1251885517)
     }
 }

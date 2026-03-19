@@ -16,6 +16,7 @@ import com.intellij.util.PathUtil
 import com.jetbrains.rd.framework.RdId
 import com.jetbrains.rd.util.string.IPrintable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.KotlinModuleKind
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertNotNull
 import kotlin.script.experimental.api.SourceCode
@@ -42,6 +43,7 @@ internal object LibrariesRequiredForWorkspace {
 
   private val kotlinJpsCommon = JarLibrary("kotlinc-kotlin-jps-common", KotlinModuleKind::class.java)
   private val kotlinScriptingCommon = JarLibrary("kotlinc-kotlin-scripting-common", SourceCode::class.java)
+  private val kotlinCompilerCommon = JarLibrary("kotlinc-kotlin-compiler-common", K1Deprecation::class.java)
   private val rdCore = JarLibrary("rd-core", IPrintable::class.java)
   private val rdFramework = JarLibrary("rd-framework", RdId::class.java)
   private val androidStudioPlatform = JarLibrary("studio-platform", AgpVersion::class.java)
@@ -65,6 +67,9 @@ internal object LibrariesRequiredForWorkspace {
       }
       "intellij.kotlin.base.scripting" -> {
         listOf(kotlinScriptingCommon)
+      }
+      "kotlin.base.scripting.k1" -> {
+        listOf(kotlinCompilerCommon)
       }
       "intellij.kotlin.gradle.scripting" -> {
         listOf(kotlinBaseScripting)

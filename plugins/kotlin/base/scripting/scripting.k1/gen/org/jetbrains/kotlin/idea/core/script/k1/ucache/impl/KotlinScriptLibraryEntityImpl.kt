@@ -22,17 +22,19 @@ import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableInde
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptId
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryEntityBuilder
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryId
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryRoot
 
+@K1Deprecation
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScriptLibraryEntityData) :
-    KotlinScriptLibraryEntity, WorkspaceEntityBase(dataSource) {
+internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScriptLibraryEntityData) : KotlinScriptLibraryEntity,
+    WorkspaceEntityBase(dataSource) {
 
     private companion object {
 
@@ -75,8 +77,7 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
 
 
     internal class Builder(result: KotlinScriptLibraryEntityData?) :
-        ModifiableWorkspaceEntityBase<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityData>(result),
-        KotlinScriptLibraryEntityBuilder {
+        ModifiableWorkspaceEntityBase<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityData>(result), KotlinScriptLibraryEntityBuilder {
         internal constructor() : this(KotlinScriptLibraryEntityData())
 
         override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -136,10 +137,8 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
             if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
             if (this.name != dataSource.name) this.name = dataSource.name
             if (this.roots != dataSource.roots) this.roots = dataSource.roots.toMutableList()
-            if (this.indexSourceRoots != dataSource.indexSourceRoots) this.indexSourceRoots =
-                dataSource.indexSourceRoots
-            if (this.usedInScripts != dataSource.usedInScripts) this.usedInScripts =
-                dataSource.usedInScripts.toMutableSet()
+            if (this.indexSourceRoots != dataSource.indexSourceRoots) this.indexSourceRoots = dataSource.indexSourceRoots
+            if (this.usedInScripts != dataSource.usedInScripts) this.usedInScripts = dataSource.usedInScripts.toMutableSet()
             updateChildToParentReferences(parents)
         }
 

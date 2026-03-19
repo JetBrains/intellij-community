@@ -22,8 +22,7 @@ interface KotlinScriptLibraryEntityBuilder : WorkspaceEntityBuilder<KotlinScript
     var usedInScripts: MutableSet<KotlinScriptId>
 }
 
-internal object KotlinScriptLibraryEntityType :
-    EntityType<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityBuilder>() {
+internal object KotlinScriptLibraryEntityType : EntityType<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityBuilder>() {
     override val entityClass: Class<KotlinScriptLibraryEntity> get() = KotlinScriptLibraryEntity::class.java
     operator fun invoke(
         name: String,
@@ -60,5 +59,4 @@ fun KotlinScriptLibraryEntity(
     usedInScripts: Set<KotlinScriptId>,
     entitySource: EntitySource,
     init: (KotlinScriptLibraryEntityBuilder.() -> Unit)? = null,
-): KotlinScriptLibraryEntityBuilder =
-    KotlinScriptLibraryEntityType(name, roots, indexSourceRoots, usedInScripts, entitySource, init)
+): KotlinScriptLibraryEntityBuilder = KotlinScriptLibraryEntityType(name, roots, indexSourceRoots, usedInScripts, entitySource, init)

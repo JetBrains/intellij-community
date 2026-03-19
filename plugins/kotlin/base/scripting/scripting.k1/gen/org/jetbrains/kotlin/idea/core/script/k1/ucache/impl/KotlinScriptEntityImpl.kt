@@ -20,11 +20,13 @@ import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableInde
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptEntityBuilder
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptId
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryId
 
+@K1Deprecation
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
