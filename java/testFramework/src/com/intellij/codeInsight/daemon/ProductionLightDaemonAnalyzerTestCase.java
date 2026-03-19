@@ -60,7 +60,7 @@ public abstract class ProductionLightDaemonAnalyzerTestCase extends LightDaemonA
           testRunnable.run();
         }
         catch (Throwable e) {
-          LOG.error(e); // to make the exact moment visible in the test log
+          LOG.info(e); // to make the exact moment visible in the test log
           throw e;
         }
       })));
