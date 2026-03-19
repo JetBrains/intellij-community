@@ -613,6 +613,40 @@ class PyMockTest : PyTestCase() {
     assertEquals("my_method", (resolved as PyFunction).name)
   }
 
+  // --- Mock with a spec ---
+
+  @TestFor(issues = ["PY-32282"])
+  fun `test mock with spec member completion`() {
+    myFixture.configureByText("test_spec_completion.py", """
+      from unittest.mock import MagicMock
+
+      class A:
+          def foo(self): ...
+
+      m = MagicMock(spec=A)
+      m.<caret>
+    """.trimIndent())
+    myFixture.completeBasic()
+    val variants = myFixture.lookupElementStrings!!
+    assertContainsElements(variants, "foo", "assert_called")
+  }
+
+  @TestFor(issues = ["PY-32282"])
+  fun `test mock with spec type hint names the mock class`() {
+    myFixture.configureByText("test_spec_type_hint.py", """
+      from unittest.mock import MagicMock
+
+      class A: ...
+
+      x = MagicMock(spec=A)
+    """.trimIndent())
+    val target = (myFixture.file as PyFile).findTopLevelAttribute("x")!!
+    val context = TypeEvalContext.codeAnalysis(myFixture.project, myFixture.file)
+    val type = context.getType(target)
+    assertEquals("MagicMock (A)", PythonDocumentationProvider.getTypeName(type, context))
+    assertEquals("MagicMock", PythonDocumentationProvider.getTypeHint(type, context))
+  }
+
   private fun getParameterTypeName(filePath: String, functionName: String, parameterName: String): String {
     val file = myFixture.configureByFile(filePath) as PyFile
     return getParameterTypeName(file.findTopLevelFunction(functionName)!!, parameterName)

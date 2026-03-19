@@ -9,15 +9,60 @@ import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyKnownDecorator
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyPsiFacade
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 private const val MOCK_PATCH_FQN = "unittest.mock.patch"
+private const val MOCK_FQN = "unittest.mock.Mock"
+private const val MAGIC_MOCK_FQN = "unittest.mock.MagicMock"
+private const val ASYNC_MOCK_FQN = "unittest.mock.AsyncMock"
+private const val NON_CALLABLE_MOCK_FQN = "unittest.mock.NonCallableMock"
+private const val NON_CALLABLE_MAGIC_MOCK_FQN = "unittest.mock.NonCallableMagicMock"
+
+internal val MOCK_CLASS_FQNS = setOf(
+  MOCK_FQN,
+  MAGIC_MOCK_FQN,
+  ASYNC_MOCK_FQN,
+  NON_CALLABLE_MOCK_FQN,
+  NON_CALLABLE_MAGIC_MOCK_FQN,
+)
+
 internal const val MOCKER_FIXTURE_FQN = "pytest_mock.plugin.MockerFixture"
+
+/**
+ * Returns the type of the mock that CPython creates for an attribute of a mock of [parentMock].
+ *
+ * The rules follow `NonCallableMock._get_child_mock` for a mock with a spec.
+ * An attribute for an async method of the spec is an `AsyncMock`.
+ * An attribute of a non-callable mock or of an `AsyncMock` is the matching callable mock.
+ * Other attributes have the class of the parent.
+ */
+internal fun getChildMockType(parentMock: PyClassType, isAsyncMember: Boolean): PyClassType {
+  val childFqn = if (isAsyncMember) ASYNC_MOCK_FQN
+  else when (parentMock.classQName) {
+    NON_CALLABLE_MAGIC_MOCK_FQN, ASYNC_MOCK_FQN -> MAGIC_MOCK_FQN
+    NON_CALLABLE_MOCK_FQN -> MOCK_FQN
+    else -> return parentMock
+  }
+  if (childFqn == parentMock.classQName) return parentMock
+  val childClass = PyPsiFacade.getInstance(parentMock.pyClass.project).createClassByQName(childFqn, parentMock.pyClass)
+                   ?: return parentMock
+  return PyClassTypeImpl(childClass, false)
+}
+
+/**
+ * Returns the type of the return value of a call on a mock of [mockType].
+ *
+ * The return value has the class of the mock. Returns `null` for an `AsyncMock`, because a call on it returns a coroutine.
+ */
+internal fun getReturnValueMockType(mockType: PyClassType): PyClassType? =
+  if (mockType.classQName == ASYNC_MOCK_FQN) null else mockType
 
 /**
  * Returns `true` if [callExpr] is a call to `unittest.mock.patch` or `MockerFixture.patch`
