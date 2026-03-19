@@ -84,7 +84,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
     TableUtil.setupCheckboxColumn(myTable.getColumnModel().getColumn(0));
 
     myUpdateQueue = DebouncedUpdates.<OverheadProducer>forScope(process.childScope("OverheadView"), "OverheadView", 500)
-      .withContext(CoroutinesKt.getUI(Dispatchers.INSTANCE))
+      .withContext(CoroutinesKt.getEDT(Dispatchers.INSTANCE))
       .runBatched(producers -> {
         List<OverheadProducer> distinctProducers = new ArrayList<>(new LinkedHashSet<>(producers));
         List<Integer> indices = new ArrayList<>();
