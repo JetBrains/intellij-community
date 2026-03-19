@@ -19,7 +19,7 @@ public class ImportHelperMultiFileTest extends ProductionDaemonAnalyzerTestCase 
   public void testReimportConflictingClasses() throws Exception {
     String path = BASE_PATH + getTestName(true);
     configureByFile(path + "/x/Usage.java", path);
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
 
     JavaCodeStyleSettings.getInstance(getProject()).CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 2;
     WriteCommandAction.runWriteCommandAction(getProject(),
@@ -34,7 +34,7 @@ public class ImportHelperMultiFileTest extends ProductionDaemonAnalyzerTestCase 
   public void testConflictBetweenRegularAndStaticClassesInImportList() throws Exception {
     String path = BASE_PATH + getTestName(true);
     configureByFile(path + "/foo/A.java", path);
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
 
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
@@ -43,6 +43,6 @@ public class ImportHelperMultiFileTest extends ProductionDaemonAnalyzerTestCase 
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
 
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
   }
 }

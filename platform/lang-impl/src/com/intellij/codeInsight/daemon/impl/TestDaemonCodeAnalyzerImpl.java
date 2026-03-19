@@ -366,23 +366,23 @@ public final class TestDaemonCodeAnalyzerImpl {
   }
 
   @RequiresEdt
-  public @NotNull Collection<? extends DaemonProgressIndicator> waitForDaemonToFinish(@NotNull Document document) {
-    return waitForDaemonToFinish(document, () -> {});
+  public @NotNull Collection<? extends DaemonProgressIndicator> waitForDaemonToFinish(@NotNull PsiFile psiFile) {
+    return waitForDaemonToFinish(psiFile, () -> {});
   }
 
   public static final int WAIT_DAEMON_FOR_FINISH_TIMEOUT_MS = 60_000;
 
   @RequiresEdt
-  public @NotNull Collection<? extends DaemonProgressIndicator> waitForDaemonToFinish(@NotNull Document document, @NotNull Runnable callbackWhileWaiting) {
+  public @NotNull Collection<? extends DaemonProgressIndicator> waitForDaemonToFinish(@NotNull PsiFile psiFile, @NotNull Runnable callbackWhileWaiting) {
     ThreadingAssertions.assertEventDispatchThread();
-    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    assert psiFile != null;
+    Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
+    assert document != null;
     long start = System.currentTimeMillis();
     int timeoutMs = 60_000;
     long deadline = start + timeoutMs;
     waitForAllThingsBeforeDaemonStart(mustWaitForSmartModeByDefault, timeoutMs);
-    Collection<? extends DaemonProgressIndicator> progresses = waitForDaemonToStart(document, deadline - System.currentTimeMillis());
     assert myDaemonCodeAnalyzer.isUpdateByTimerEnabled() : "codeAnalyzer.isUpdateByTimerEnabled()=false so waitForDaemonToFinish() will never finish";
+    Collection<? extends DaemonProgressIndicator> progresses = waitForDaemonToStart(psiFile, deadline - System.currentTimeMillis());
     Disposable disposable = Disposer.newDisposable();
     try {
       Semaphore listenersCalled = new Semaphore(1);
@@ -434,14 +434,13 @@ public final class TestDaemonCodeAnalyzerImpl {
     }
     finally {
       Disposer.dispose(disposable);
-      Reference.reachabilityFence(psiFile);
+      Reference.reachabilityFence(document);
     }
   }
 
   @RequiresEdt
-  public @NotNull Collection<? extends DaemonProgressIndicator> waitForDaemonToStart(@NotNull Document document, long timeoutMs) {
-    waitForUpdateFileStatusBackgroundQueueInTests();
-    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+  public @NotNull Collection<? extends DaemonProgressIndicator> waitForDaemonToStart(@NotNull PsiFile psiFile, long timeoutMs) {
+    Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
     PassExecutorService.LOG.trace("waitForDaemonToStart start");
     Disposable disposable = Disposer.newDisposable();
     AtomicBoolean listenersCalled = new AtomicBoolean();
@@ -492,8 +491,9 @@ public final class TestDaemonCodeAnalyzerImpl {
   }
 
   @RequiresEdt
-  public @NotNull List<HighlightInfo> waitHighlighting(@NotNull Document document, @NotNull HighlightSeverity minSeverity) {
-    waitForDaemonToFinish(document);
+  public @NotNull List<HighlightInfo> waitHighlighting(@NotNull PsiFile psiFile, @NotNull HighlightSeverity minSeverity) {
+    waitForDaemonToFinish(psiFile);
+    Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
     return DaemonCodeAnalyzerImpl.getHighlights(document, minSeverity, myProject);
   }
 
@@ -537,10 +537,10 @@ public final class TestDaemonCodeAnalyzerImpl {
     mustWaitForSmartModeByDefault = value;
   }
 
-  public @NotNull List<HighlightInfo> waitHighlightingSurviveCancellations(@NotNull Document document, @NotNull HighlightSeverity minSeverity) {
+  public @NotNull List<HighlightInfo> waitHighlightingSurviveCancellations(@NotNull PsiFile psiFile, @NotNull HighlightSeverity minSeverity) {
     while (true) {
       try {
-        return waitHighlighting(document, minSeverity);
+        return waitHighlighting(psiFile, minSeverity);
       }
       catch (ProcessCanceledException e) {
         // document modifications are expected here, e.g. when auto-import adds an import and cancels the current highlighting

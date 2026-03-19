@@ -170,7 +170,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     @Language("JAVA")
     @NonNls String text = "class I {}";
     final PsiJavaFile file = configureByText(text);
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
     CommandProcessor.getInstance().executeCommand(
       getProject(), () -> WriteCommandAction.runWriteCommandAction(null, () -> {
         try {
@@ -223,7 +223,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
       /** @noinspection ALL*/ class I {{ max(0, 0); Map.class.hashCode(); min(0,0); Component.class.hashCode(); int i = CENTER; }}""";
 
     final PsiJavaFile file = configureByText(text);
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
     CommandProcessor.getInstance().executeCommand(
       getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
         try {
@@ -279,7 +279,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     @Language("JAVA")
     String text = "package java.util; class X{ Date d;}";
     final PsiJavaFile file = configureByText(text);
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
       JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(file);
@@ -298,7 +298,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     type(" ");
     backspace();
 
-    assertOneElement(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertOneElement(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
     int offset = getEditor().getCaretModel().getOffset();
     PsiReference ref = getFile().findReferenceAt(offset - 1);
     assertTrue(ref instanceof PsiJavaCodeReferenceElement);
@@ -314,7 +314,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
   }
   public void testAutoImportCaretLocationNotImportIfResolved() throws ExecutionException, InterruptedException {
 
@@ -404,7 +404,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     type(" ");
     backspace();
 
-    assertSize(1, myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertSize(1, myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     int offset = getEditor().getCaretModel().getOffset();
@@ -415,7 +415,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
   }
 
   public void testAutoImportWorksWhenITypeSpaceAfterClassName() throws Exception {
@@ -423,7 +423,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     @NonNls String text = "class S { ArrayList<caret> }";
     configureByText(text);
 
-    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     //caret is too close
     assertNoImportsAdded();
 
@@ -450,7 +450,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     SHOWN.set(false);
     configureByText(text);
     type(" xxx"); // make undoable to enable showing autoimports
-    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     assertTrue(SHOWN.get());
   }
   public void testAutoImportHintIsNotShownAfterEscapePressed() {
@@ -465,13 +465,13 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     SHOWN.set(false);
     configureByText(text);
     type(" xxx"); // make undoable to enable showing autoimports
-    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     assertTrue(SHOWN.get());
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     getEditor().getSelectionModel().setSelection(0,null, 1); // to enable escape
     escape();
     SHOWN.set(false);
-    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     assertFalse(SHOWN.get());
   }
 
@@ -552,13 +552,13 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
-    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
 
     assertNoImportsAdded();
 
     EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_COMMENT_BLOCK);
 
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
     waitForAutoOptimizeImports();
 
     assertSize(2, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
@@ -605,7 +605,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     javaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS = true;
 
     HighlightInfo error = assertOneElement(
-      (Collection<? extends HighlightInfo>)myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(),
+      (Collection<? extends HighlightInfo>)myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(),
                                                                                                          HighlightSeverity.ERROR));
     assertEquals("Cannot resolve symbol 'SomeOtherMethodClass12'", error.getDescription());
 
@@ -621,7 +621,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     assertNotNull(PsiDocumentManager.getInstance(getProject()).getPsiFile(otherEditor.getDocument()));
 
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
     waitForAutoOptimizeImports();
     assertOneImportAdded("x.OtherClass.SomeOtherMethodClass12");
     assertSize(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
@@ -639,12 +639,12 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     CodeInsightWorkspaceSettings.getInstance(getProject()).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
 
     //error corresponding to too short class name
-    assertOneElement(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertOneElement(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
 
     assertOneImportAdded("java.util.List");
 
     type("/* */");
-    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     assertNoImportsAdded();
   }
@@ -657,7 +657,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent, ThreeState.UNSURE));
 
 
-    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent, ThreeState.UNSURE));
 
     type(" ");
@@ -680,13 +680,13 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     type(" ");
     backspace();
 
-    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     //caret is too close
     assertNoImportsAdded();
 
     caretRight();
 
-    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
 
     assertOneImportAdded("java.util.ArrayList");
   }
@@ -712,7 +712,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
     List<HighlightInfo> errs =
-      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     waitForAutoOptimizeImports();
 
     //error in import list
@@ -721,7 +721,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     assertSize(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
 
     type("/* */");
-    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
 
     assertNoImportsAdded();
   }
@@ -753,7 +753,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
       configureByText(text);
       type(" ");
       backspace();
-      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
       assertOneImportAdded("java.util.ArrayList");
@@ -774,20 +774,20 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     CodeInsightWorkspaceSettings.getInstance(getProject()).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
 
     List<HighlightInfo> errs =
-      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
 
     assertEmpty(errs);
 
     type("/* ");
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-    errs = myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+    errs = myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     assertNotEmpty(errs);
     assertOneImportAdded("java.util.ArrayList");
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     type(" */ ");
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-    errs = myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+    errs = myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     assertEmpty(errs);
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
@@ -802,12 +802,12 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
 
     List<HighlightInfo> errs =
-      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     assertSize(1, errs);
 
     assertNoImportsAdded();
     type("/* */");
-    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     assertNoImportsAdded();
   }
@@ -823,7 +823,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
     type(" ");
-    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
 
     assertOneImportAdded("java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock");
   }
@@ -837,7 +837,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
 
     List<HighlightInfo> errs =
-      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     assertTrue(errs.size() > 1);
 
     PsiJavaFile javaFile = (PsiJavaFile)getFile();
@@ -856,7 +856,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
     CodeInsightWorkspaceSettings.getInstance(getProject()).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
 
-    assertSize(1, myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertSize(1, myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
   }
 
   public void testAutoImportIgnoresUnresolvedImportReferences() throws ExecutionException, InterruptedException {
@@ -906,7 +906,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
     ThreadingAssertions.assertEventDispatchThread();
-    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR);
     assertOneImportAdded("java.util.ArrayList");
   }
 
@@ -937,7 +937,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 5000 && visibleRange.getEndOffset() < 10_000); // sanity check that visible range has been indeed changed
 
     List<HighlightInfo> errors = ContainerUtil.sorted(
-      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR), Segment.BY_START_OFFSET_THEN_END_OFFSET);
+      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR), Segment.BY_START_OFFSET_THEN_END_OFFSET);
     assertSize(1000, errors);
     LazyQuickFixUpdaterImpl updater = (LazyQuickFixUpdaterImpl)LazyQuickFixUpdater.getInstance(getProject());
     long deadline = System.currentTimeMillis() + 60_000;
@@ -984,7 +984,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
 
   private void assertHasImportHintAllOverUnresolvedReference(String message) throws Exception {
     List<HighlightInfo> errors = ContainerUtil.sorted(
-      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR), Segment.BY_START_OFFSET_THEN_END_OFFSET);
+      myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR), Segment.BY_START_OFFSET_THEN_END_OFFSET);
     IdentifierHighlighterPassFactory.waitForIdentifierHighlighting(getEditor());
     CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getProject(), getEditor());
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();//auto-imports use non-blocking read actions to compute imports

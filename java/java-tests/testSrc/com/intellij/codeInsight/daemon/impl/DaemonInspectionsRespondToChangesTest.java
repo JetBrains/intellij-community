@@ -152,7 +152,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
   public void testWholeFileInspection() throws Exception {
     configureByFile(DaemonRespondToChangesTest.BASE_PATH + "FieldCanBeLocal.java");
     List<HighlightInfo> infos =
-      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertSize(1, infos);
     assertEquals("Field can be converted to a local variable", infos.get(0).getDescription());
 
@@ -160,14 +160,14 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     WriteCommandAction.runWriteCommandAction(getProject(), () -> EditorModificationUtilEx.deleteSelectedText(getEditor()));
     type("xxxx");
 
-    infos = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+    infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertEmpty(infos);
 
     ctrlW();
     WriteCommandAction.runWriteCommandAction(getProject(), () -> EditorModificationUtilEx.deleteSelectedText(getEditor()));
     type("0");
 
-    infos = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+    infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertSize(1, infos);
     assertEquals("Field can be converted to a local variable", infos.get(0).getDescription());
   }
@@ -229,14 +229,14 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     String text = "class X { void f() { <caret> } }";
     configureByText(JavaFileType.INSTANCE, text);
     List<HighlightInfo> infos =
-      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertEmpty(infos);
     int visitedCount = new HashSet<>(tool.visited).size();
     tool.visited.clear();
 
     type(" ");  // white space modification
 
-    infos = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+    infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertEmpty(infos);
 
     int countAfter = new HashSet<>(tool.visited).size();
@@ -256,7 +256,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     PsiFile psiFile = configureByText(JavaFileType.INSTANCE, text);
     PsiFile otherPsiFile = createFile(myModule, psiFile.getContainingDirectory().getVirtualFile(), "otherFile.txt", "xxx");
     myDaemonCodeAnalyzer.restart(getTestName(false));
-    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertEmpty(infos);
     assertFalse(tool.visited.isEmpty());
     tool.visited.clear();
@@ -264,7 +264,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     Document otherDocument = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(otherPsiFile));
     WriteCommandAction.runWriteCommandAction(getProject(), () -> otherDocument.setText("zzz"));
     myDaemonCodeAnalyzer.restart(getTestName(false));
-    infos = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+    infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertEmpty(infos);
 
     assertFalse(tool.visited.isEmpty());
@@ -273,7 +273,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     //ensure started on another file
     configureByExistingFile(otherPsiFile.getVirtualFile());
     myDaemonCodeAnalyzer.restart(getTestName(false));
-    infos = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+    infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertEmpty(infos);
 
     assertFalse(tool.visited.isEmpty());
@@ -285,12 +285,12 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     @Language("JAVA")
     String text = "class X { void f() { <caret> } }";
     configureByText(JavaFileType.INSTANCE, text);
-    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myEditor.getDocument());
+    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile());
     tool.visited.clear();
 
     getPsiManager().dropPsiCaches();
 
-    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myEditor.getDocument());
+    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile());
     assertNotEmpty(tool.visited);
   }
 
@@ -322,7 +322,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     disposeOnTearDown(() -> disableInspectionTool(tool.getShortName()));
     enableInspectionTool(tool);
 
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
 
     List<PsiElement> allPsi = CollectHighlightsUtil.getElementsInRange(myFile, 0, myFile.getTextLength());
     assertEquals(new HashSet<>(allPsi), new HashSet<>(visitedElements));
@@ -332,7 +332,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     backspace();
     backspace();
 
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
 
     PsiMethod method = ((PsiJavaFile)myFile).getClasses()[0].getMethods()[0];
     List<PsiElement> methodAndParents =
@@ -347,7 +347,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     @Language("JAVA")
     String text = "class X { void f() { i<caret>f (this == null) {} else return; } }";
     configureByText(JavaFileType.INSTANCE, text);
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
     List<IntentionAction> fixes = findStupidFixes();
     IntentionAction fix = assertOneElement(fixes);
     fix.invoke(getProject(), getEditor(), getFile());
@@ -355,7 +355,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     fixes = findStupidFixes();
     assertEmpty(fixes);
 
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlightingSurviveCancellations(getFile(), HighlightSeverity.ERROR));
     fixes = findStupidFixes();
     assertEmpty(fixes);
   }
@@ -465,7 +465,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
       CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       long start = System.currentTimeMillis();
-      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), checkHighlighted);
+      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile(), checkHighlighted);
       List<RangeHighlighter> errors = ContainerUtil.filter(markupModel.getAllHighlighters(), highlighter -> highlighter.isValid() && HighlightInfo.fromRangeHighlighter(highlighter) != null && HighlightInfo.fromRangeHighlighter(highlighter).getSeverity() == HighlightSeverity.ERROR);
       long elapsed = System.currentTimeMillis() - start;
 
@@ -567,7 +567,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     }
     enableInspectionTool(tool);
 
-    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     HighlightInfo i = assertOneElement(infos);
     assertEquals(diagnosticText.get(), i.getDescription());
 
@@ -586,7 +586,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     // now when the LIP restarted, we should get back our inspection result very fast, despite very slow processing of every other element
     TestTimeOut t = TestTimeOut.setTimeout(TestDaemonCodeAnalyzerImpl.WAIT_DAEMON_FOR_FINISH_TIMEOUT_MS-5_000, TimeUnit.MILLISECONDS);
 
-    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), () -> {
+    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile(), () -> {
       boolean found = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, range.getStartOffset(), range.getEndOffset(), info -> !diagnosticText.get().equals(info.getDescription()));
       if (found) {
         stallMs.set(0);
@@ -638,12 +638,12 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 0);
     myDaemonCodeAnalyzer.restart(getTestName(false));
     expectedVisibleRange = visibleRange;
-    myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.INFORMATION);
+    myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.INFORMATION);
     assertNull(expectedVisibleRange); // check the inspection was run
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible(editor);
     myDaemonCodeAnalyzer.restart(getTestName(false));
     expectedVisibleRange = new TextRange(0, editor.getDocument().getTextLength());
-    myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.INFORMATION);
+    myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.INFORMATION);
     assertNull(expectedVisibleRange); // check the inspection was run
   }
 
@@ -673,11 +673,11 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
       }""";
     configureByText(JavaFileType.INSTANCE, text);
 
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
 
     type('2');
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
   }
 
@@ -690,7 +690,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
       }""";
     PsiFile psiFile = configureByText(JavaFileType.INSTANCE, text);
 
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
     FileEditorManager.getInstance(myProject).closeFile(psiFile.getVirtualFile());
 
@@ -700,12 +700,12 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
 
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       type('2');
-      assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
+      assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       backspace();
-      assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
+      assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
 
@@ -742,17 +742,17 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
       }""";
     configureByText(JavaFileType.INSTANCE, text);
 
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     HighlightInfo info = assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
     assertEquals("xxx: xxx", info.getDescription());
 
     type('2');
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     info = assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
     assertEquals("xxx: xxx2", info.getDescription());
 
     type('y');
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     info = assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
     assertEquals("xxx: xxx2y", info.getDescription());
   }
@@ -846,7 +846,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
 
     // both inspections should produce their results
     List<HighlightInfo> infos =
-      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertTrue(infos.toString(), ContainerUtil.exists(infos, i -> i.getDescription().equals(fieldWarningText.get())));
     assertTrue(infos.toString(), ContainerUtil.exists(infos, i -> i.getDescription().equals(fastToolText)));
 
@@ -862,7 +862,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     AtomicBoolean fastToolFinishedFaster = new AtomicBoolean();
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
     try {
-      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), () -> {
+      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile(), () -> {
         if (fastToolFinished.get() && !slowToolFinished.get()) {
           fastToolFinishedFaster.set(true);
           boolean fastFound = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0, myEditor.getDocument().getTextLength(),
@@ -894,12 +894,12 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
       """;
     configureByText(JavaFileType.INSTANCE, text);
 
-    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertEmpty(filter(infos, HighlightSeverity.ERROR));
     HighlightInfo error = ContainerUtil.find(infos, e->e.getDescription().contains("always 'false'"));
     assertNotNull(infos.toString(), error);
     type("d");
-    List<HighlightInfo> infos2 = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos2 = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     HighlightInfo error2 = ContainerUtil.find(infos2, e->e.getDescription().contains("always 'false'"));
     assertNotNull(infos2.toString(), error2);
   }
@@ -931,7 +931,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
       """;
     configureByText(JavaFileType.INSTANCE, text);
 
-    assertThrows(Throwable.class, new MyException().getMessage(), () -> myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.ERROR));
+    assertThrows(Throwable.class, new MyException().getMessage(), () -> myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
   }
 
   public void testInspectionMustRemoveItsObsoleteHighlightsImmediatelyAfterVisitingPSIElementTheSecondTimeAndFailingToGenerateTheSameWarningAgain() {
@@ -980,7 +980,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     enableInspectionTools(fieldTool);
 
     // inspections should produce their results
-    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertTrue(infos.toString(), ContainerUtil.exists(infos, i -> i.getDescription().equals(fieldWarningText)));
     assertTrue(fieldIdentifierVisited.get());
     assertTrue(fieldHighlightsUpdated.get());
@@ -994,7 +994,7 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
     TestTimeOut t= TestTimeOut.setTimeout(10_000, TimeUnit.MILLISECONDS);
     // now when the LIP restarted, we should observe the range highlighter for the inspection to disappear as soon as visitIdentifier() method is finished
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
-    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getEditor().getDocument(), () -> {
+    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile(), () -> {
       if (fieldHighlightsUpdated.get()) {
         boolean found = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0, myEditor.getDocument().getTextLength(),
                         info -> !fieldWarningText.equals(info.getDescription()));
@@ -1025,13 +1025,13 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
      """;
     configureByText(JavaFileType.INSTANCE, text);
     List<HighlightInfo> infos =
-      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertTrue(infos.toString(), ContainerUtil.exists(infos, info-> new RawUseOfParameterizedTypeInspection().getShortName()
       .equals(info.getInspectionToolId())));
     type("@SuppressWarnings(\"rawtypes\")    ") ;
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING));
     type("\n");
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING));
   }
 
   public void testHighlightsForInvalidPSIMustBeRemovedFastForExampleBeforeTheInspectionsStartRunning() {
@@ -1071,9 +1071,9 @@ public class DaemonInspectionsRespondToChangesTest extends ProductionDaemonAnaly
      """;
     configureByText(JavaFileType.INSTANCE, text);
     List<HighlightInfo> infos =
-      myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING);
+      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
     assertOneElement(ContainerUtil.filter(infos, info-> myTool.getShortName().equals(info.getInspectionToolId())));
     type("// ") ;
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getEditor().getDocument(), HighlightSeverity.WARNING));
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING));
   }
 }
