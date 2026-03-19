@@ -51,20 +51,14 @@ public final class ExtensionsDomExtender extends DomExtender<Extensions> {
     if (DumbService.isDumb(project)) return;
 
     VirtualFile currentFile = getVirtualFile(extensions);
-
-    if (currentFile == null || DumbService.isDumb(project)) return;
-
-    Set<VirtualFile> files;
-    if (currentFile instanceof VirtualFileWithId) {
-      files = getVisibleFiles(project, currentFile);
-    }
-    else if (currentFile instanceof VirtualFileWindow) {
-      // injected code, consider it the context of all project files
-      files = new HashSet<>(PluginIdModuleIndex.getFiles(project, ""));
-    }
-    else {
-      return;
-    }
+    if (currentFile == null) return;
+    Set<VirtualFile> files = switch (currentFile) {
+      case VirtualFileWithId ignored -> getVisibleFiles(project, currentFile);
+      // injected code, consider it the context of all project files:
+      case VirtualFileWindow ignored -> new HashSet<>(PluginIdModuleIndex.getFiles(project, ""));
+      default -> null;
+    };
+    if (files == null) return;
 
     String epPrefix = extensions.getEpPrefix();
     Map<String, Supplier<ExtensionPoint>> points = ExtensionPointIndex.getExtensionPoints(project, files, epPrefix);
