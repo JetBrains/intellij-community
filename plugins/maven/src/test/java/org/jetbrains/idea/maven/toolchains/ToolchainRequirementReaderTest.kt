@@ -74,7 +74,6 @@ internal class ToolchainRequirementReaderTest : MavenMultiVersionImportingTestCa
   @Test
   fun testReadToolchainFromToolchainGoal() = runBlocking {
     val finder = ToolchainFinder()
-    //Registry.get("maven.server.debug").setValue("true")
 
     importProjectAsync("""
       <groupId>test</groupId>

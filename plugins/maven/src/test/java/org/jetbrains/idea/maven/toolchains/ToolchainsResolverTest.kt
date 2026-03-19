@@ -52,6 +52,7 @@ internal class ToolchainsResolverTest : MavenTestCase() {
 
     try {
       jdk = ToolchainResolverSession.forSession(mavenSession).findOrInstallJdk(requirement)
+      assertNotNull(jdk)
     }
     finally {
       if (jdk != null) {
