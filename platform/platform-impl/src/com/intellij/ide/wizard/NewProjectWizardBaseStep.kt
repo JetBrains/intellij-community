@@ -7,6 +7,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logNameChan
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.KEY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -14,6 +15,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.observable.util.joinCanonicalPath
 import com.intellij.openapi.observable.util.operation
@@ -36,6 +38,8 @@ import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.ui.validation.CHECK_PROJECT_PATH
 import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
 import com.intellij.openapi.ui.validation.invoke
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -58,12 +62,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
 
-/**
- * Handles the project **Name** and **Location** fields.
- *
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/new-project-wizard.html">New Project Wizard API (IntelliJ Platform Docs)</a>
- */
-class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent), NewProjectWizardBaseData {
+private class NewProjectWizardBaseDataImpl(propertyGraph: PropertyGraph, val context: WizardContext) :
+  NewProjectWizardBaseData {
   override val nameProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestName)
   override val pathProperty: GraphProperty<String> = propertyGraph.lazyProperty { suggestLocation().toCanonicalPath() }
 
@@ -71,8 +71,6 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
   override var path: String by pathProperty
 
   var defaultName: String = "untitled"
-
-  internal var bottomGap: Boolean = true
 
   private fun suggestLocation(): Path {
     val location = context.projectDirectory
@@ -120,6 +118,30 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
   init {
     nameProperty.dependsOn(pathProperty, ::suggestUniqueName)
   }
+
+  companion object {
+    val KEY: Key<NewProjectWizardBaseDataImpl> = Key.create(NewProjectWizardBaseDataImpl::class.java.name)
+  }
+}
+
+/**
+ * Handles the project **Name** and **Location** fields.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/new-project-wizard.html">New Project Wizard API (IntelliJ Platform Docs)</a>
+ */
+class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent), NewProjectWizardBaseData {
+
+  private var wizardBaseData: NewProjectWizardBaseDataImpl =
+    context.getOrCreateUserData(NewProjectWizardBaseDataImpl.KEY) { NewProjectWizardBaseDataImpl(propertyGraph, context) }
+
+  override val nameProperty: GraphProperty<String> by wizardBaseData::nameProperty
+  override val pathProperty: GraphProperty<String> by wizardBaseData::pathProperty
+  override var name: String by wizardBaseData::name
+  override var path: String by wizardBaseData::path
+
+  var defaultName: String by wizardBaseData::defaultName
+
+  internal var bottomGap: Boolean = true
 
   override fun setupUI(builder: Panel) {
     val locationProperty = pathProperty.joinCanonicalPath(nameProperty)
@@ -185,7 +207,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
   }
 
   init {
-    data.putUserData(NewProjectWizardBaseData.KEY, this)
+    data.putUserData(KEY, wizardBaseData)
   }
 
   companion object {
