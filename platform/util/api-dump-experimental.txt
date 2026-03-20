@@ -183,3 +183,6 @@ com.intellij.util.io.PersistentMap
 - withVersion(I):com.intellij.util.io.PersistentMapBuilder
 - withWal(Z):com.intellij.util.io.PersistentMapBuilder
 - withWalExecutor(java.util.concurrent.ExecutorService):com.intellij.util.io.PersistentMapBuilder
+f:com.intellij.util.io.ProcessKt
+- *sf:computeDetached(kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- *bs:computeDetached$default(kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
