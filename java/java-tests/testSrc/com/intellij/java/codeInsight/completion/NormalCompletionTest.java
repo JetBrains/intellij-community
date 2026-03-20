@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
+import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -1728,6 +1729,8 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
 
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for equals() and hashCode())")
   public void testInvokeGenerateEqualsHashCodeOnOverrideCompletion() {
+    EqualsHashCodeTemplatesManager.getInstance().setDefaultTemplate(
+      EqualsHashCodeTemplatesManager.JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE);
     configure();
     assertEquals(2, myFixture.getLookupElementStrings().size());
     getLookup().setSelectedIndex(1);
