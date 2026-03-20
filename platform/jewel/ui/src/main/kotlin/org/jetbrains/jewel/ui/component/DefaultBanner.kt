@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -850,10 +851,10 @@ private fun DefaultBannerImpl(
     modifier: Modifier = Modifier,
     content: @Composable (() -> Unit),
 ) {
-    Column(modifier = modifier) {
+    Column(modifier = modifier.width(IntrinsicSize.Max)) {
         Divider(orientation = Orientation.Horizontal, color = style.colors.border, modifier = Modifier.fillMaxWidth())
         Row(
-            modifier = Modifier.background(style.colors.background).padding(10.dp),
+            modifier = Modifier.background(style.colors.background).padding(style.metrics.padding),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (icon != null) {

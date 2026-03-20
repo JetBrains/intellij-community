@@ -190,7 +190,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
         .align(AlignY.CENTER)
 
       compose {
-        Box(Modifier.width(400.dp)) {
+        Box {
           DefaultInformationBanner(
             text = DevkitComposeBundle.message("jewel.compose.banners"),
             iconActions = {
