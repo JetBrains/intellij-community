@@ -470,6 +470,11 @@
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.test.frameworks"
                      key="INSP.NAME.mock-patch-argument-count" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.testing.pyMock.PyMockPatchArgumentCountInspection"/>
+    <localInspection language="Python" shortName="PyMockPatchTargetInspection" suppressId="PyMockPatchTarget"
+                     bundle="messages.PyPsiBundle" key="INSP.NAME.mock-patch-target"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.test.frameworks"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.testing.pyMock.PyMockPatchTargetInspection"/>
     <localInspection shortName="PyPackageRequirementsInspection" suppressId="PyPackageRequirements"
                      bundle="messages.PyPsiBundle" key="INSP.NAME.requirements"
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.packaging"

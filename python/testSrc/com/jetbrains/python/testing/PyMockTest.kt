@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyWithStatement
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.testing.pyMock.PyMockPatchArgumentCountInspection
+import com.jetbrains.python.testing.pyMock.PyMockPatchTargetInspection
 import com.jetbrains.python.testing.pyMock.PyMockPatchTargetReferenceSet
 import com.jetbrains.python.testing.pyMock.getPatchCall
 import com.jetbrains.python.testing.pyMock.getPatchObjectCall
@@ -456,6 +457,15 @@ class PyMockTest : PyTestCase() {
   fun testPatchArgumentCountInspection() {
     myFixture.configureByFile("test_patch_arg_count/test.py")
     myFixture.enableInspections(PyMockPatchArgumentCountInspection::class.java)
+    myFixture.checkHighlighting(true, false, true)
+  }
+
+  // --- Patch Target Inspection ---
+
+  @TestFor(issues=["PY-88509"])
+  fun `test patch target inspection`() {
+    myFixture.configureByFile("test_patch_target/test.py")
+    myFixture.enableInspections(PyMockPatchTargetInspection::class.java)
     myFixture.checkHighlighting(true, false, true)
   }
 
