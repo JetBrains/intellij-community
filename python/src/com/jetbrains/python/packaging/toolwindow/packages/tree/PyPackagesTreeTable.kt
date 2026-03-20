@@ -241,6 +241,7 @@ class PyPackagesTreeTable(
       val node = table.getValueAt(row, 0) as? DisplayablePackage ?: return
 
       if (shouldShowPopupForNode(node)) {
+        handlePackageSelection(node)
         createAndShowPopupMenu(comp, x, y, actionGroup)
       }
     }
