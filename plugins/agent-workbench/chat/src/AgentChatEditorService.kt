@@ -70,7 +70,7 @@ data class AgentChatTabRebindTarget(
   @JvmField val threadUpdatedAt: Long = 0L,
 )
 
-data class AgentChatPendingCodexTabSnapshot(
+data class AgentChatPendingTabSnapshot(
   @JvmField val projectPath: String,
   @JvmField val pendingTabKey: String,
   @JvmField val pendingThreadIdentity: String,
@@ -79,68 +79,68 @@ data class AgentChatPendingCodexTabSnapshot(
   @JvmField val pendingLaunchMode: String?,
 )
 
-data class AgentChatConcreteCodexTabSnapshot(
+data class AgentChatConcreteTabSnapshot(
   @JvmField val projectPath: String,
   @JvmField val tabKey: String,
   @JvmField val currentThreadIdentity: String,
   @JvmField val newThreadRebindRequestedAtMs: Long,
 )
 
-data class AgentChatPendingCodexTabRebindRequest(
+data class AgentChatPendingTabRebindRequest(
   @JvmField val pendingTabKey: String,
   @JvmField val pendingThreadIdentity: String,
   @JvmField val target: AgentChatTabRebindTarget,
 )
 
-data class AgentChatConcreteCodexTabRebindRequest(
+data class AgentChatConcreteTabRebindRequest(
   @JvmField val tabKey: String,
   @JvmField val currentThreadIdentity: String,
   @JvmField val newThreadRebindRequestedAtMs: Long,
   @JvmField val target: AgentChatTabRebindTarget,
 )
 
-enum class AgentChatPendingCodexTabRebindStatus {
+enum class AgentChatPendingTabRebindStatus {
   REBOUND,
   PENDING_TAB_NOT_OPEN,
   INVALID_PENDING_TAB,
   TARGET_ALREADY_OPEN,
 }
 
-data class AgentChatPendingCodexTabRebindOutcome(
+data class AgentChatPendingTabRebindOutcome(
   @JvmField val projectPath: String,
-  @JvmField val request: AgentChatPendingCodexTabRebindRequest,
-  @JvmField val status: AgentChatPendingCodexTabRebindStatus,
+  @JvmField val request: AgentChatPendingTabRebindRequest,
+  @JvmField val status: AgentChatPendingTabRebindStatus,
   @JvmField val reboundFiles: Int,
 )
 
-data class AgentChatPendingCodexTabRebindReport(
+data class AgentChatPendingTabRebindReport(
   @JvmField val requestedBindings: Int,
   @JvmField val reboundBindings: Int,
   @JvmField val reboundFiles: Int,
   @JvmField val updatedPresentations: Int,
-  @JvmField val outcomesByPath: Map<String, List<AgentChatPendingCodexTabRebindOutcome>>,
+  @JvmField val outcomesByPath: Map<String, List<AgentChatPendingTabRebindOutcome>>,
 )
 
-enum class AgentChatConcreteCodexTabRebindStatus {
+enum class AgentChatConcreteTabRebindStatus {
   REBOUND,
   CONCRETE_TAB_NOT_OPEN,
   INVALID_CONCRETE_TAB,
   TARGET_ALREADY_OPEN,
 }
 
-data class AgentChatConcreteCodexTabRebindOutcome(
+data class AgentChatConcreteTabRebindOutcome(
   @JvmField val projectPath: String,
-  @JvmField val request: AgentChatConcreteCodexTabRebindRequest,
-  @JvmField val status: AgentChatConcreteCodexTabRebindStatus,
+  @JvmField val request: AgentChatConcreteTabRebindRequest,
+  @JvmField val status: AgentChatConcreteTabRebindStatus,
   @JvmField val reboundFiles: Int,
 )
 
-data class AgentChatConcreteCodexTabRebindReport(
+data class AgentChatConcreteTabRebindReport(
   @JvmField val requestedBindings: Int,
   @JvmField val reboundBindings: Int,
   @JvmField val reboundFiles: Int,
   @JvmField val updatedPresentations: Int,
-  @JvmField val outcomesByPath: Map<String, List<AgentChatConcreteCodexTabRebindOutcome>>,
+  @JvmField val outcomesByPath: Map<String, List<AgentChatConcreteTabRebindOutcome>>,
 )
 
 suspend fun openChat(
@@ -303,21 +303,21 @@ fun codexScopedRefreshSignals(): Flow<Set<String>> {
 
 suspend fun collectOpenPendingAgentChatTabsByPath(
   provider: AgentSessionProvider,
-): Map<String, List<AgentChatPendingCodexTabSnapshot>> {
+): Map<String, List<AgentChatPendingTabSnapshot>> {
   return collectOpenAgentChatTabsSnapshotOnUi().pendingTabsByPath(provider)
 }
 
-suspend fun collectOpenPendingCodexTabsByPath(): Map<String, List<AgentChatPendingCodexTabSnapshot>> {
+suspend fun collectOpenPendingCodexTabsByPath(): Map<String, List<AgentChatPendingTabSnapshot>> {
   return collectOpenPendingAgentChatTabsByPath(AgentSessionProvider.CODEX)
 }
 
 suspend fun collectOpenConcreteAgentChatTabsAwaitingNewThreadRebindByPath(
   provider: AgentSessionProvider,
-): Map<String, List<AgentChatConcreteCodexTabSnapshot>> {
+): Map<String, List<AgentChatConcreteTabSnapshot>> {
   return collectOpenAgentChatTabsSnapshotOnUi().concreteTabsAwaitingNewThreadRebindByPath(provider)
 }
 
-suspend fun collectOpenConcreteCodexTabsAwaitingNewThreadRebindByPath(): Map<String, List<AgentChatConcreteCodexTabSnapshot>> {
+suspend fun collectOpenConcreteCodexTabsAwaitingNewThreadRebindByPath(): Map<String, List<AgentChatConcreteTabSnapshot>> {
   return collectOpenConcreteAgentChatTabsAwaitingNewThreadRebindByPath(AgentSessionProvider.CODEX)
 }
 
@@ -375,15 +375,15 @@ private suspend fun resolveRebindLaunchSpecs(
 
 suspend fun rebindOpenPendingAgentChatTabs(
   provider: AgentSessionProvider,
-  requestsByProjectPath: Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
-): AgentChatPendingCodexTabRebindReport {
+  requestsByProjectPath: Map<String, List<AgentChatPendingTabRebindRequest>>,
+): AgentChatPendingTabRebindReport {
   if (requestsByProjectPath.isEmpty()) {
-    return emptyPendingCodexTabRebindReport()
+    return emptyPendingTabRebindReport()
   }
 
   val normalizedRequestsByPath = normalizePathToListMap(requestsByProjectPath)
   if (normalizedRequestsByPath.isEmpty()) {
-    return emptyPendingCodexTabRebindReport()
+    return emptyPendingTabRebindReport()
   }
 
   val launchSpecsByTarget = resolveRebindLaunchSpecs(
@@ -395,17 +395,17 @@ suspend fun rebindOpenPendingAgentChatTabs(
 
     var reboundBindings = 0
     val changedFiles = LinkedHashSet<AgentChatVirtualFile>()
-    val outcomesByPath = LinkedHashMap<String, MutableList<AgentChatPendingCodexTabRebindOutcome>>()
+    val outcomesByPath = LinkedHashMap<String, MutableList<AgentChatPendingTabRebindOutcome>>()
     for ((normalizedPath, requests) in normalizedRequestsByPath) {
       val outcomes = outcomesByPath.computeIfAbsent(normalizedPath) { ArrayList(requests.size) }
       for (request in requests) {
         val pendingFile = openTabsSnapshot.findPendingFile(provider, normalizedPath, request.pendingTabKey)
         if (pendingFile == null) {
           outcomes.add(
-            AgentChatPendingCodexTabRebindOutcome(
+            AgentChatPendingTabRebindOutcome(
               projectPath = normalizedPath,
               request = request,
-              status = AgentChatPendingCodexTabRebindStatus.PENDING_TAB_NOT_OPEN,
+              status = AgentChatPendingTabRebindStatus.PENDING_TAB_NOT_OPEN,
               reboundFiles = 0,
             )
           )
@@ -415,10 +415,10 @@ suspend fun rebindOpenPendingAgentChatTabs(
         val managers = openTabsSnapshot.managersFor(pendingFile)
         if (managers.isEmpty()) {
           outcomes.add(
-            AgentChatPendingCodexTabRebindOutcome(
+            AgentChatPendingTabRebindOutcome(
               projectPath = normalizedPath,
               request = request,
-              status = AgentChatPendingCodexTabRebindStatus.PENDING_TAB_NOT_OPEN,
+              status = AgentChatPendingTabRebindStatus.PENDING_TAB_NOT_OPEN,
               reboundFiles = 0,
             )
           )
@@ -430,10 +430,10 @@ suspend fun rebindOpenPendingAgentChatTabs(
           pendingFile.threadIdentity != request.pendingThreadIdentity
         ) {
           outcomes.add(
-            AgentChatPendingCodexTabRebindOutcome(
+            AgentChatPendingTabRebindOutcome(
               projectPath = normalizedPath,
               request = request,
-              status = AgentChatPendingCodexTabRebindStatus.INVALID_PENDING_TAB,
+              status = AgentChatPendingTabRebindStatus.INVALID_PENDING_TAB,
               reboundFiles = 0,
             )
           )
@@ -447,10 +447,10 @@ suspend fun rebindOpenPendingAgentChatTabs(
         )
         if (targetIdentityAlreadyOpen) {
           outcomes.add(
-            AgentChatPendingCodexTabRebindOutcome(
+            AgentChatPendingTabRebindOutcome(
               projectPath = normalizedPath,
               request = request,
-              status = AgentChatPendingCodexTabRebindStatus.TARGET_ALREADY_OPEN,
+              status = AgentChatPendingTabRebindStatus.TARGET_ALREADY_OPEN,
               reboundFiles = 0,
             )
           )
@@ -460,10 +460,10 @@ suspend fun rebindOpenPendingAgentChatTabs(
         val launchSpec = launchSpecsByTarget[request.target.toRebindLaunchSpecKey()]
         if (launchSpec == null) {
           outcomes.add(
-            AgentChatPendingCodexTabRebindOutcome(
+            AgentChatPendingTabRebindOutcome(
               projectPath = normalizedPath,
               request = request,
-              status = AgentChatPendingCodexTabRebindStatus.INVALID_PENDING_TAB,
+              status = AgentChatPendingTabRebindStatus.INVALID_PENDING_TAB,
               reboundFiles = 0,
             )
           )
@@ -480,10 +480,10 @@ suspend fun rebindOpenPendingAgentChatTabs(
         )
         if (!changed) {
           outcomes.add(
-            AgentChatPendingCodexTabRebindOutcome(
+            AgentChatPendingTabRebindOutcome(
               projectPath = normalizedPath,
               request = request,
-              status = AgentChatPendingCodexTabRebindStatus.INVALID_PENDING_TAB,
+              status = AgentChatPendingTabRebindStatus.INVALID_PENDING_TAB,
               reboundFiles = 0,
             )
           )
@@ -495,10 +495,10 @@ suspend fun rebindOpenPendingAgentChatTabs(
         changedFiles.add(pendingFile)
         openTabsSnapshot.recordConcreteThreadIdentityOpen(normalizedPath, managers, request.target.threadIdentity)
         outcomes.add(
-          AgentChatPendingCodexTabRebindOutcome(
+          AgentChatPendingTabRebindOutcome(
             projectPath = normalizedPath,
             request = request,
-            status = AgentChatPendingCodexTabRebindStatus.REBOUND,
+            status = AgentChatPendingTabRebindStatus.REBOUND,
             reboundFiles = 1,
           )
         )
@@ -515,7 +515,7 @@ suspend fun rebindOpenPendingAgentChatTabs(
     }
 
     val requestedBindings = normalizedRequestsByPath.values.sumOf { it.size }
-    AgentChatPendingCodexTabRebindReport(
+    AgentChatPendingTabRebindReport(
       requestedBindings = requestedBindings,
       reboundBindings = reboundBindings,
       reboundFiles = changedFiles.size,
@@ -524,22 +524,25 @@ suspend fun rebindOpenPendingAgentChatTabs(
     )
   }
   LOG.debug {
-    "rebindOpenPendingCodexTabs requestedBindings=${report.requestedBindings}, reboundBindings=${report.reboundBindings}, " +
+    "rebindOpenPendingAgentChatTabs requestedBindings=${report.requestedBindings}, reboundBindings=${report.reboundBindings}, " +
     "reboundFiles=${report.reboundFiles}, updatedPresentations=${report.updatedPresentations}, paths=${report.outcomesByPath.size}"
   }
   return report
 }
 
 suspend fun rebindOpenPendingCodexTabs(
-  requestsByProjectPath: Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
-): AgentChatPendingCodexTabRebindReport {
-  return rebindOpenPendingAgentChatTabs(AgentSessionProvider.CODEX, requestsByProjectPath)
+  requestsByProjectPath: Map<String, List<AgentChatPendingTabRebindRequest>>,
+): AgentChatPendingTabRebindReport {
+  return rebindOpenPendingAgentChatTabs(
+    provider = AgentSessionProvider.CODEX,
+    requestsByProjectPath = requestsByProjectPath,
+  )
 }
 
 suspend fun rebindOpenConcreteAgentChatTabs(
   provider: AgentSessionProvider,
-  requestsByProjectPath: Map<String, List<AgentChatConcreteCodexTabRebindRequest>>,
-): AgentChatConcreteCodexTabRebindReport {
+  requestsByProjectPath: Map<String, List<AgentChatConcreteTabRebindRequest>>,
+): AgentChatConcreteTabRebindReport {
   if (requestsByProjectPath.isEmpty()) {
     return emptyConcreteCodexTabRebindReport()
   }
@@ -558,17 +561,17 @@ suspend fun rebindOpenConcreteAgentChatTabs(
 
     var reboundBindings = 0
     val changedFiles = LinkedHashSet<AgentChatVirtualFile>()
-    val outcomesByPath = LinkedHashMap<String, MutableList<AgentChatConcreteCodexTabRebindOutcome>>()
+    val outcomesByPath = LinkedHashMap<String, MutableList<AgentChatConcreteTabRebindOutcome>>()
     for ((normalizedPath, requests) in normalizedRequestsByPath) {
       val outcomes = outcomesByPath.computeIfAbsent(normalizedPath) { ArrayList(requests.size) }
       for (request in requests) {
         val concreteFile = openTabsSnapshot.findConcreteFile(provider, normalizedPath, request.tabKey)
         if (concreteFile == null) {
           outcomes.add(
-            AgentChatConcreteCodexTabRebindOutcome(
+            AgentChatConcreteTabRebindOutcome(
               projectPath = normalizedPath,
               request = request,
-              status = AgentChatConcreteCodexTabRebindStatus.CONCRETE_TAB_NOT_OPEN,
+              status = AgentChatConcreteTabRebindStatus.CONCRETE_TAB_NOT_OPEN,
               reboundFiles = 0,
             )
           )
@@ -578,10 +581,10 @@ suspend fun rebindOpenConcreteAgentChatTabs(
         val managers = openTabsSnapshot.managersFor(concreteFile)
         if (managers.isEmpty()) {
           outcomes.add(
-            AgentChatConcreteCodexTabRebindOutcome(
+            AgentChatConcreteTabRebindOutcome(
               projectPath = normalizedPath,
               request = request,
-              status = AgentChatConcreteCodexTabRebindStatus.CONCRETE_TAB_NOT_OPEN,
+              status = AgentChatConcreteTabRebindStatus.CONCRETE_TAB_NOT_OPEN,
               reboundFiles = 0,
             )
           )
@@ -596,10 +599,10 @@ suspend fun rebindOpenConcreteAgentChatTabs(
           concreteFile.newThreadRebindRequestedAtMs != request.newThreadRebindRequestedAtMs
         ) {
           outcomes.add(
-            AgentChatConcreteCodexTabRebindOutcome(
+            AgentChatConcreteTabRebindOutcome(
               projectPath = normalizedPath,
               request = request,
-              status = AgentChatConcreteCodexTabRebindStatus.INVALID_CONCRETE_TAB,
+              status = AgentChatConcreteTabRebindStatus.INVALID_CONCRETE_TAB,
               reboundFiles = 0,
             )
           )
@@ -613,10 +616,10 @@ suspend fun rebindOpenConcreteAgentChatTabs(
         )
         if (targetIdentityAlreadyOpen) {
           outcomes.add(
-            AgentChatConcreteCodexTabRebindOutcome(
+            AgentChatConcreteTabRebindOutcome(
               projectPath = normalizedPath,
               request = request,
-              status = AgentChatConcreteCodexTabRebindStatus.TARGET_ALREADY_OPEN,
+              status = AgentChatConcreteTabRebindStatus.TARGET_ALREADY_OPEN,
               reboundFiles = 0,
             )
           )
@@ -626,10 +629,10 @@ suspend fun rebindOpenConcreteAgentChatTabs(
         val launchSpec = launchSpecsByTarget[request.target.toRebindLaunchSpecKey()]
         if (launchSpec == null) {
           outcomes.add(
-            AgentChatConcreteCodexTabRebindOutcome(
+            AgentChatConcreteTabRebindOutcome(
               projectPath = normalizedPath,
               request = request,
-              status = AgentChatConcreteCodexTabRebindStatus.INVALID_CONCRETE_TAB,
+              status = AgentChatConcreteTabRebindStatus.INVALID_CONCRETE_TAB,
               reboundFiles = 0,
             )
           )
@@ -647,10 +650,10 @@ suspend fun rebindOpenConcreteAgentChatTabs(
         )
         if (!changed) {
           outcomes.add(
-            AgentChatConcreteCodexTabRebindOutcome(
+            AgentChatConcreteTabRebindOutcome(
               projectPath = normalizedPath,
               request = request,
-              status = AgentChatConcreteCodexTabRebindStatus.INVALID_CONCRETE_TAB,
+              status = AgentChatConcreteTabRebindStatus.INVALID_CONCRETE_TAB,
               reboundFiles = 0,
             )
           )
@@ -667,10 +670,10 @@ suspend fun rebindOpenConcreteAgentChatTabs(
           threadIdentity = request.target.threadIdentity,
         )
         outcomes.add(
-          AgentChatConcreteCodexTabRebindOutcome(
+          AgentChatConcreteTabRebindOutcome(
             projectPath = normalizedPath,
             request = request,
-            status = AgentChatConcreteCodexTabRebindStatus.REBOUND,
+            status = AgentChatConcreteTabRebindStatus.REBOUND,
             reboundFiles = 1,
           )
         )
@@ -687,7 +690,7 @@ suspend fun rebindOpenConcreteAgentChatTabs(
     }
 
     val requestedBindings = normalizedRequestsByPath.values.sumOf { it.size }
-    AgentChatConcreteCodexTabRebindReport(
+    AgentChatConcreteTabRebindReport(
       requestedBindings = requestedBindings,
       reboundBindings = reboundBindings,
       reboundFiles = changedFiles.size,
@@ -703,14 +706,14 @@ suspend fun rebindOpenConcreteAgentChatTabs(
 }
 
 suspend fun rebindOpenConcreteCodexTabs(
-  requestsByProjectPath: Map<String, List<AgentChatConcreteCodexTabRebindRequest>>,
-): AgentChatConcreteCodexTabRebindReport {
+  requestsByProjectPath: Map<String, List<AgentChatConcreteTabRebindRequest>>,
+): AgentChatConcreteTabRebindReport {
   return rebindOpenConcreteAgentChatTabs(AgentSessionProvider.CODEX, requestsByProjectPath)
 }
 
 fun clearOpenConcreteAgentChatNewThreadRebindAnchors(
   provider: AgentSessionProvider,
-  tabsByProjectPath: Map<String, List<AgentChatConcreteCodexTabSnapshot>>,
+  tabsByProjectPath: Map<String, List<AgentChatConcreteTabSnapshot>>,
 ): Int {
   if (tabsByProjectPath.isEmpty()) {
     return 0
@@ -746,7 +749,7 @@ fun clearOpenConcreteAgentChatNewThreadRebindAnchors(
 
 @Suppress("unused")
 fun clearOpenConcreteCodexNewThreadRebindAnchors(
-  tabsByProjectPath: Map<String, List<AgentChatConcreteCodexTabSnapshot>>,
+  tabsByProjectPath: Map<String, List<AgentChatConcreteTabSnapshot>>,
 ): Int {
   return clearOpenConcreteAgentChatNewThreadRebindAnchors(AgentSessionProvider.CODEX, tabsByProjectPath)
 }
@@ -852,8 +855,8 @@ private fun <T> normalizePathAndThreadIdentityMap(
   return normalizedValuesByPathAndThreadIdentity
 }
 
-private fun emptyPendingCodexTabRebindReport(): AgentChatPendingCodexTabRebindReport {
-  return AgentChatPendingCodexTabRebindReport(
+private fun emptyPendingTabRebindReport(): AgentChatPendingTabRebindReport {
+  return AgentChatPendingTabRebindReport(
     requestedBindings = 0,
     reboundBindings = 0,
     reboundFiles = 0,
@@ -862,8 +865,8 @@ private fun emptyPendingCodexTabRebindReport(): AgentChatPendingCodexTabRebindRe
   )
 }
 
-private fun emptyConcreteCodexTabRebindReport(): AgentChatConcreteCodexTabRebindReport {
-  return AgentChatConcreteCodexTabRebindReport(
+private fun emptyConcreteCodexTabRebindReport(): AgentChatConcreteTabRebindReport {
+  return AgentChatConcreteTabRebindReport(
     requestedBindings = 0,
     reboundBindings = 0,
     reboundFiles = 0,

@@ -118,6 +118,8 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/execution-impl",
     "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
     "//plugins/terminal/frontend",
     "//plugins/terminal/frontend:frontend_test_lib",
     "//platform/testFramework",

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions
 
+import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
@@ -43,6 +44,16 @@ class ClaudeAgentSessionProviderDescriptorTest {
   fun buildStandardLaunchSpec() {
     assertThat(bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD).command)
       .containsExactly("claude", "--permission-mode", "default")
+  }
+
+  @Test
+  fun enablesPendingEditorTabRebind() {
+    assertThat(bridge.supportsPendingEditorTabRebind).isTrue()
+    assertThat(bridge.emitsScopedRefreshSignals).isTrue()
+    assertThat(bridge.refreshPathAfterCreateNewSession).isTrue()
+    assertThat(bridge.supportsNewThreadRebind).isFalse()
+    assertThat(bridge.editorTabActionIds)
+      .containsExactly(AgentWorkbenchActionIds.Sessions.BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB)
   }
 
   @Test

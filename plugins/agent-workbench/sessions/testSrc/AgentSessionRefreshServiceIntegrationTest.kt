@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindOutcome
-import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
-import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
-import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindStatus
-import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindOutcome
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindReport
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindStatus
+import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
@@ -628,7 +628,7 @@ class AgentSessionRefreshServiceIntegrationTest {
       openPendingCodexTabsProvider = {
         mapOf(
           PROJECT_PATH to listOf(
-            AgentChatPendingCodexTabSnapshot(
+            AgentChatPendingTabSnapshot(
               projectPath = PROJECT_PATH,
               pendingTabKey = "pending-codex:new-1",
               pendingThreadIdentity = "codex:new-1",
@@ -740,7 +740,7 @@ class AgentSessionRefreshServiceIntegrationTest {
       openPendingCodexTabsProvider = {
         mapOf(
           PROJECT_PATH to listOf(
-            AgentChatPendingCodexTabSnapshot(
+            AgentChatPendingTabSnapshot(
               projectPath = PROJECT_PATH,
               pendingTabKey = "pending-codex:new-ea4cecdd-f115-410d-9c73-f652c21558a9",
               pendingThreadIdentity = "codex:new-ea4cecdd-f115-410d-9c73-f652c21558a9",
@@ -894,23 +894,23 @@ private data class ServicePendingCodexRebindInvocation(
 )
 
 private fun successfulPendingCodexRebindReport(
-  requestsByPath: Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
-): AgentChatPendingCodexTabRebindReport {
-  val outcomesByPath = LinkedHashMap<String, List<AgentChatPendingCodexTabRebindOutcome>>()
+  requestsByPath: Map<String, List<AgentChatPendingTabRebindRequest>>,
+): AgentChatPendingTabRebindReport {
+  val outcomesByPath = LinkedHashMap<String, List<AgentChatPendingTabRebindOutcome>>()
   var requestedBindings = 0
   for ((path, requests) in requestsByPath) {
     requestedBindings += requests.size
     outcomesByPath[path] = requests.map { request ->
-      AgentChatPendingCodexTabRebindOutcome(
+      AgentChatPendingTabRebindOutcome(
         projectPath = path,
         request = request,
-        status = AgentChatPendingCodexTabRebindStatus.REBOUND,
+        status = AgentChatPendingTabRebindStatus.REBOUND,
         reboundFiles = 1,
       )
     }
   }
 
-  return AgentChatPendingCodexTabRebindReport(
+  return AgentChatPendingTabRebindReport(
     requestedBindings = requestedBindings,
     reboundBindings = requestedBindings,
     reboundFiles = requestedBindings,

@@ -56,7 +56,7 @@ internal class CodexAgentSessionProviderDescriptor(
     get() = listOf(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION)
 
   override val editorTabActionIds: List<String>
-    get() = listOf(AgentWorkbenchActionIds.Sessions.BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB)
+    get() = listOf(AgentWorkbenchActionIds.Sessions.BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB)
 
   override val supportsPendingEditorTabRebind: Boolean
     get() = true

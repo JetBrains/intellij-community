@@ -11,7 +11,7 @@ object AgentWorkbenchActionIds {
     const val REFRESH: String = "AgentWorkbenchSessions.Refresh"
     const val ARCHIVE_THREAD_FROM_EDITOR_TAB: String = "AgentWorkbenchSessions.ArchiveThreadFromEditorTab"
     const val GO_TO_SOURCE_PROJECT_FROM_EDITOR_TAB: String = "AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"
-    const val BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB: String = "AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab"
+    const val BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB: String = "AgentWorkbenchSessions.BindPendingAgentThreadFromEditorTab"
     const val EDITOR_TAB_POPUP_SEPARATOR_BEFORE_CLOSE_ACTIONS: String =
       "AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions"
     const val COPY_THREAD_ID_FROM_EDITOR_TAB: String = "AgentWorkbenchSessions.CopyThreadIdFromEditorTab"

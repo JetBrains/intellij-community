@@ -138,7 +138,7 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Terminal initialization failures caused by command lookup must include actionable warning text with attempted command and startup `PATH` snapshot when available.
   [@test] ../chat/testSrc/AgentChatRestoreNotificationServiceTest.kt
 
-- Editor tab actions must include `Bind Pending Codex Thread` for pending Codex tabs, invoking targeted rebind for the active pending tab only.
+- Editor tab actions must include `Bind Pending Thread` for providers that support pending editor-tab rebinding, invoking targeted rebind for the active pending tab only.
   [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
@@ -159,7 +159,7 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Command lookup failures should expose actionable diagnostics (command + startup `PATH`) without adding fallback launch behavior.
 
 ## Testing / Local Run
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatEditorServiceTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatEditorServiceTest -Dintellij.build.test.main.module=intellij.agent.workbench.plugin.tests'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatFileEditorProviderTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatTabSelectionServiceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatRestoreNotificationServiceTest'`

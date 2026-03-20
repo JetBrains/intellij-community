@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions
 
+import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
@@ -49,10 +50,19 @@ internal class ClaudeAgentSessionProviderDescriptor(
   override val promptOptions: List<AgentPromptProviderOption>
     get() = listOf(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION)
 
-  override val supportsPlanMode: Boolean
-    get() = true
+  override val editorTabActionIds: List<String>
+    get() = listOf(AgentWorkbenchActionIds.Sessions.BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB)
 
   override val supportsPendingEditorTabRebind: Boolean
+    get() = true
+
+  override val emitsScopedRefreshSignals: Boolean
+    get() = true
+
+  override val refreshPathAfterCreateNewSession: Boolean
+    get() = true
+
+  override val supportsPlanMode: Boolean
     get() = true
 
   override val cliMissingMessageKey: String

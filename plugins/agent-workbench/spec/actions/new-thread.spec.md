@@ -150,8 +150,9 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
   [@test] ../../codex/sessions/testSrc/backend/rollout/CodexRolloutRefreshHintsProviderTest.kt
 
-- When automatic pending-Codex matching is ambiguous or unmatched, users must be able to manually rebind from editor tab actions via `Bind Pending Codex Thread`.
+- When automatic pending-thread matching is ambiguous or unmatched, users must be able to manually rebind from editor tab actions via `Bind Pending Thread`.
 - Manual bind remains pending-tab-only and must not repurpose the editor-tab action for already-concrete `/new` rebinding.
+- Pending-thread rebinding is provider-neutral; concrete `/new` rebinding remains Codex-only.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt

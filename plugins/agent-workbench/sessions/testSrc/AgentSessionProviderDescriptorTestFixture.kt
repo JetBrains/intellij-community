@@ -23,6 +23,11 @@ class TestAgentSessionProviderDescriptor(
   private val sourceId: String = provider.value,
   override val displayPriority: Int = Int.MAX_VALUE,
   override val yoloSessionLabelKey: String? = null,
+  override val editorTabActionIds: List<String> = emptyList(),
+  override val supportsPendingEditorTabRebind: Boolean = false,
+  override val supportsNewThreadRebind: Boolean = false,
+  override val emitsScopedRefreshSignals: Boolean = false,
+  override val refreshPathAfterCreateNewSession: Boolean = false,
 ) : AgentSessionProviderDescriptor {
   override val displayNameKey: String
     get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.provider.claude" else "toolwindow.provider.codex"
