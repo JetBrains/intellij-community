@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.shellDetection
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.environmentVariables
@@ -19,13 +20,16 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.where
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 
 @ApiStatus.Internal
 object TerminalShellsDetectionUtil {
-  const val LOCAL_ENVIRONMENT_NAME: String = "Host"
-  const val WSL_ENVIRONMENT_NAME: String = "WSL"
-  const val DEV_CONTAINER_ENVIRONMENT_NAME: String = "Dev Container"
+  val LOCAL_ENVIRONMENT_NAME: @Nls String
+    get() = TerminalBundle.message("local.environment.name")
+  const val WSL_ENVIRONMENT_NAME: @NlsSafe String = "WSL"
+  const val DEV_CONTAINER_ENVIRONMENT_NAME: @NlsSafe String = "Dev Container"
 
   private val UNIX_BINARIES_DIRECTORIES = listOf(
     "/bin",
