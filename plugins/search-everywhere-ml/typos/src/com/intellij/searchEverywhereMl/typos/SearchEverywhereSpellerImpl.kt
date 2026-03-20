@@ -17,6 +17,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResul
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrector
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrectorFactory
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.typos.models.ActionsLanguageModel
 import com.intellij.searchEverywhereMl.typos.models.CorpusBuilder
 import com.intellij.searchEverywhereMl.typos.models.LanguageModelDictionary
@@ -82,14 +83,17 @@ class SearchEverywhereSpellerImpl : SearchEverywhereSpellingCorrector {
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun getAllCorrections(query: String, maxCorrections: Int): List<SearchEverywhereSpellCheckResult.Correction> {
     // If the query is blank or the speller hasn't completed initialization, return an empty list.
-    if (query.isBlank()) return emptyList()
+    if (query.isBlank() || maxCorrections <= 0) return emptyList()
     if (deferredSpeller == null || !deferredSpeller.isCompleted) return emptyList()
 
     val speller = deferredSpeller.getCompleted()
     val suggestionsGenerator = SpellerSuggestionsGenerator(speller)
 
     // Generate combined corrections from the speller.
-    return suggestionsGenerator.combinedCorrections(query).take(maxCorrections)
+    return selectCorrections(query,
+                             suggestionsGenerator.combinedCorrections(query),
+                             maxCorrections,
+                             Registry.doubleValue(MIN_CONFIDENCE_REGISTRY_KEY))
   }
 
   /**
@@ -178,6 +182,22 @@ class SearchEverywhereSpellerImpl : SearchEverywhereSpellingCorrector {
     service<CorpusBuilder>()
     service<ActionsLanguageModel>()
   }
+}
+
+internal const val MIN_CONFIDENCE_REGISTRY_KEY: String = "search.everywhere.ml.typos.min.confidence"
+
+internal fun selectCorrections(query: String,
+                               corrections: List<SearchEverywhereSpellCheckResult.Correction>,
+                               maxCorrections: Int,
+                               minConfidence: Double): List<SearchEverywhereSpellCheckResult.Correction> {
+  if (maxCorrections <= 0) return emptyList()
+
+  return corrections.asSequence()
+    .filter { it.correction != query }
+    .filter { it.confidence >= minConfidence }
+    .distinctBy { it.correction }
+    .take(maxCorrections)
+    .toList()
 }
 
 internal class GrazieSpellingCorrectorFactoryImpl : SearchEverywhereSpellingCorrectorFactory {

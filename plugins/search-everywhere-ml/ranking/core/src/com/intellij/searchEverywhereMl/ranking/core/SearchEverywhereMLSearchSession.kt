@@ -281,21 +281,16 @@ internal class SearchEverywhereMLSearchSession private constructor(
      *
      * @param searchResult The raw search result to be processed. Must implement the `SearchResultAdapter.Raw` interface
      *                     and provide a fetchable raw item.
-     * @param correction   The spelling correction result, which determines if updates such as typo corrections
-     *                     should influence certain features. Defaults to `SearchEverywhereSpellCheckResult.NoCorrection`.
      * @return A `SearchResultAdapter.Processed` instance if the raw item exists otherwise, returns null.
      */
-    fun processSearchResult(
-      searchResult: SearchResultAdapter.Raw,
-      correction: SearchEverywhereSpellCheckResult = SearchEverywhereSpellCheckResult.NoCorrection,
-    ): SearchResultAdapter.Processed {
+    fun processSearchResult(searchResult: SearchResultAdapter.Raw): SearchResultAdapter.Processed {
       searchResult.providerWeight?.let {
         providerWeightsById.putIfAbsent(searchResult.provider.id, it)
       }
 
       val processed = searchResult
         .toProcessed()
-        .computeMlFeatures(correction)
+        .computeMlFeatures()
         .computeMlProbabilityIfEnabled()
         .tryComputeId()
         .also {
@@ -363,7 +358,7 @@ internal class SearchEverywhereMLSearchSession private constructor(
       return SearchResultAdapter.Processed(this, fetchRawItemIfExists(), null, null, null)
     }
 
-    private fun SearchResultAdapter.Processed.computeMlFeatures(correction: SearchEverywhereSpellCheckResult = SearchEverywhereSpellCheckResult.NoCorrection): SearchResultAdapter.Processed {
+    private fun SearchResultAdapter.Processed.computeMlFeatures(): SearchResultAdapter.Processed {
       if (rawItem == null) return this // We cannot comput ML features when the rawItem does not exist
       val providerWeight = this.providerWeight
 

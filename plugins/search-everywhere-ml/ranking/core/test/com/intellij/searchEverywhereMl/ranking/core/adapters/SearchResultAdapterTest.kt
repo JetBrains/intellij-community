@@ -1,6 +1,7 @@
 package com.intellij.searchEverywhereMl.ranking.core.adapters
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.MatchMode
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -187,6 +188,21 @@ class SearchResultAdapterTest {
     assertNotNull(processed.mlFeatures)
     assertTrue(processed.mlFeatures!!.isEmpty())
     assertEquals(mlProbability.value, processed.mlProbability?.value)
+  }
+
+  @Test
+  fun `Processed delegates correction`() {
+    val correction = SearchEverywhereSpellCheckResult.Correction("show color picker", 0.84)
+    val adapter = TestSearchResultRawAdapter(
+      provider = SearchResultProviderAdapter.createAdapterFor("actions"),
+      originalWeight = 10,
+      correction = correction,
+      stateLocalId = StateLocalId("split-adapter-uuid"),
+      rawItem = "raw-item",
+    )
+    val processed = SearchResultAdapter.Processed(adapter, adapter.fetchRawItemIfExists(), null, null, null)
+
+    assertSame(correction, processed.correction)
   }
 
   private fun createMatchedValue(type: GotoActionModel.MatchedValueType): GotoActionModel.MatchedValue {

@@ -1,11 +1,21 @@
 package com.intellij.searchEverywhereMl.ranking.core
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.ide.util.gotoByName.MatchMode
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultAdapter
+import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultProviderAdapter
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchStateChangeReason
 import com.intellij.searchEverywhereMl.ranking.core.adapters.StateLocalId
+import com.intellij.searchEverywhereMl.ranking.core.adapters.TestSearchResultRawAdapter
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -209,5 +219,38 @@ internal class SearchEverywhereMLSearchSessionTest {
     session.onStateStarted(actionsTabId, "", SearchStateChangeReason.SEARCH_START, null, false)
 
     assertFalse(session.activeState!!.orderByMl)
+  }
+
+  @Test
+  fun `split action correction reaches ml features`() = runBlocking {
+    val session = SearchEverywhereMLSearchSession.createNext(null)
+    session.onStateStarted(actionsTabId, "show colr piker", SearchStateChangeReason.SEARCH_START, null, false)
+    val correction = SearchEverywhereSpellCheckResult.Correction("show color picker", 0.84)
+    val adapter = createCorrectedActionAdapter(correction)
+
+    val processed = session.activeState!!.processSearchResult(adapter)
+    val features = processed.mlFeatures!!.associate { it.field.name to it.data }
+
+    assertEquals(true, features["is_spell_checked"])
+    assertEquals(correction.confidence, features["correction_confidence"])
+  }
+
+  private fun createCorrectedActionAdapter(correction: SearchEverywhereSpellCheckResult.Correction): SearchResultAdapter.Raw {
+    return TestSearchResultRawAdapter(
+      provider = SearchResultProviderAdapter.createAdapterFor(SeProviderIdUtils.ACTIONS_ID),
+      originalWeight = 42,
+      correction = correction,
+      stateLocalId = StateLocalId("split-corrected-item"),
+      rawItem = createMatchedValue(),
+    )
+  }
+
+  private fun createMatchedValue(): GotoActionModel.MatchedValue {
+    val action = object : AnAction("show color picker") {
+      override fun actionPerformed(e: AnActionEvent) {
+      }
+    }
+    val wrapper = GotoActionModel.ActionWrapper(action, null, MatchMode.NAME, Presentation().apply { text = "show color picker" })
+    return GotoActionModel.MatchedValue(wrapper, "show color picker", GotoActionModel.MatchedValueType.ACTION)
   }
 }

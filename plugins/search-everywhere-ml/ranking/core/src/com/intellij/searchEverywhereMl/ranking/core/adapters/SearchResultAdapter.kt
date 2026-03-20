@@ -1,11 +1,13 @@
 package com.intellij.searchEverywhereMl.ranking.core.adapters
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeItemDataKeys
+import com.intellij.platform.searchEverywhere.frontend.providers.actions.SeSpellCorrectionAwareItem
 import com.intellij.platform.searchEverywhere.isSemantic
 
 @JvmInline
@@ -29,6 +31,8 @@ sealed interface SearchResultAdapter {
   val providerWeight: Int?
 
   val isSemantic: Boolean
+
+  val correction: SearchEverywhereSpellCheckResult
 
   /**
    * Unique identifier of the element in the current search state
@@ -77,8 +81,8 @@ sealed interface SearchResultAdapter {
      * Represents the final priority of a search result, determined by combining machine learning
      * probability, if available, and a default weight from the associated adapter.
      *
-     * If machine learning (ML) probability is present, it is converted to a weight using the
-     * [toWeight] method, which scales the probability value for scoring purposes. If ML probability
+     * If machine learning (ML) probability is present, it is converted to a weight using
+     * `MlProbability.toWeight()`, which scales the probability value for scoring purposes. If ML probability
      * is not available, the original default weight provided by the associated search result adapter
      * is used as a fallback.
      */
@@ -101,6 +105,8 @@ private class SeItemDataAdapter(private val seItemData: SeItemData) : SearchResu
   override val originalWeight: Int = seItemData.weight
   override val providerWeight: Int? = seItemData.additionalInfo[SeItemDataKeys.PROVIDER_SORT_WEIGHT]?.toIntOrNull()
   override val isSemantic: Boolean = seItemData.isSemantic
+  override val correction: SearchEverywhereSpellCheckResult
+    get() = (seItemData.fetchItemIfExists() as? SeSpellCorrectionAwareItem)?.correction ?: SearchEverywhereSpellCheckResult.NoCorrection
   override val stateLocalId: StateLocalId
     get() = StateLocalId(requireNotNull(seItemData.uuid) { "UUID cannot be null for ${seItemData.javaClass.simpleName}" })
 }
@@ -118,6 +124,9 @@ private class LegacyFoundElementInfoAdapter(private val foundElementInfo: Search
 
   override val isSemantic: Boolean
     get() = (foundElementInfo.contributor as? SemanticSearchEverywhereContributor)?.isElementSemantic(foundElementInfo.element) ?: false
+
+  override val correction: SearchEverywhereSpellCheckResult
+    get() = foundElementInfo.correction
 
   override val stateLocalId: StateLocalId =
     StateLocalId(requireNotNull(foundElementInfo.uuid) { "UUID cannot be null for ${foundElementInfo::class.java.simpleName}" })
