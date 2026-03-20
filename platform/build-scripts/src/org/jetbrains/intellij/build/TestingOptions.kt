@@ -10,7 +10,6 @@ import org.jetbrains.intellij.build.impl.JUnitRunConfigurationProperties
 private val OLD_TEST_GROUP = System.getProperty("idea.test.group", TestingOptions.ALL_EXCLUDE_DEFINED_GROUP)
 private val OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
 private val OLD_PLATFORM_PREFIX = System.getProperty("idea.platform.prefix")
-private val OLD_DEBUG_PORT = System.getProperty("debug.port")?.toIntOrNull() ?: 0
 
 /**
  * Options available for tests running on TeamCity.
@@ -79,7 +78,7 @@ open class TestingOptions {
   /**
    * Specifies port on which the testing process will listen for connections, by default, a random port will be used.
    */
-  var debugPort: Int = System.getProperty("intellij.build.test.debug.port")?.toIntOrNull() ?: OLD_DEBUG_PORT
+  var debugPort: Int = System.getProperty("intellij.build.test.debug.port")?.toIntOrNull() ?: 0
 
   /**
    * If `true` to suspend the testing process until a debugger connects to it.
