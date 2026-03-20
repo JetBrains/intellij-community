@@ -169,7 +169,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
    * If true -- track {@link FilesToUpdateCollector#modificationCount()} per project, and skip looking for
    * updates if current modCount was already processed per project
    */
-  private static final boolean USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES = getBooleanProperty("FileBasedIndexImpl.USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES", false);
+  private static final boolean USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES = getBooleanProperty("FileBasedIndexImpl.USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES", true);
 
   final CoroutineScope coroutineScope;
 
