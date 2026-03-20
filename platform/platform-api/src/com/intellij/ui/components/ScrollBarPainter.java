@@ -164,7 +164,7 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
   private static Color updateTransparency(Color color, ColorKey key) {
     if (!CONTRAST_ELEMENTS_KEYS.contains(key)) return color;
 
-    int alpha = Registry.intValue("contrast.scrollbars.alpha.level");
+    int alpha = Registry.intValue("contrast.scrollbars.alpha.level", -1);
     if (alpha > 0) {
       alpha = Integer.min(alpha, 255);
     }
