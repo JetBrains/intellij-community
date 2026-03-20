@@ -32,7 +32,7 @@ final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
       public @NotNull CachedValueProvider.Result<ConcurrentMap<TypeEvalConstraints, TypeEvalContext>> compute() {
         // This method is called if cache is empty. Create new map for it.
         // Concurrent map allows several threads to call get and put, so it is thread safe but not atomic
-        final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = ContainerUtil.createConcurrentSoftValueMap();
+        final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = ContainerUtil.createConcurrentWeakKeySoftValueMap();
         return new CachedValueProvider.Result<>(map, PsiModificationTracker.MODIFICATION_COUNT, myLowMemoryModificationTracker);
       }
     });
@@ -42,7 +42,7 @@ final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
       public @NotNull CachedValueProvider.Result<ConcurrentMap<TypeEvalConstraints, TypeEvalContext>> compute() {
         // This method is called if cache is empty. Create new map for it.
         // Concurrent map allows several threads to call get and put, so it is thread safe but not atomic
-        final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = ContainerUtil.createConcurrentSoftValueMap();
+        final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = ContainerUtil.createConcurrentWeakKeySoftValueMap();
         return new CachedValueProvider.Result<>(map, PyLibraryModificationTracker.Companion.getInstance(project), myLowMemoryModificationTracker);
       }
     });
