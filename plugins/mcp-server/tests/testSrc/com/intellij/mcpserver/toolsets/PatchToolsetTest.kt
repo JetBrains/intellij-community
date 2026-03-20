@@ -69,7 +69,7 @@ class PatchToolsetTest : McpToolsetTestBase() {
       buildJsonObject {
         put("pathInProject", JsonPrimitive(pathInProject))
       },
-      "updated content\n"
+      "updated content"
     )
   }
 
@@ -98,7 +98,7 @@ class PatchToolsetTest : McpToolsetTestBase() {
       buildJsonObject {
         put("pathInProject", JsonPrimitive(pathInProject))
       },
-      "Test.java content\n"
+      "Test.java content"
     )
   }
 
@@ -280,7 +280,7 @@ class PatchToolsetTest : McpToolsetTestBase() {
       buildJsonObject {
         put("pathInProject", JsonPrimitive(pathInProject))
       },
-      "updated with strict pair\n"
+      "updated with strict pair"
     )
   }
 
@@ -311,7 +311,7 @@ class PatchToolsetTest : McpToolsetTestBase() {
       buildJsonObject {
         put("pathInProject", JsonPrimitive(pathInProject))
       },
-      "updated from git diff\n"
+      "updated from git diff"
     )
   }
 

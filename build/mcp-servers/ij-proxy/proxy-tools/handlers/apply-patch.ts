@@ -755,6 +755,7 @@ async function moveFile(fromAbsolute: string, toAbsolute: string): Promise<void>
 }
 
 function applyHunks(originalText: string, hunks: Hunk[]): string {
+  const hadTrailingNewline = originalText.endsWith('\n') || originalText.endsWith('\r\n')
   let content = splitLines(originalText)
   let searchStart = 0
 
@@ -785,7 +786,7 @@ function applyHunks(originalText: string, hunks: Hunk[]): string {
     searchStart = index + newLines.length
   }
 
-  if (content.length > 0 && content[content.length - 1] !== '') {
+  if (hadTrailingNewline && content.length > 0 && content[content.length - 1] !== '') {
     content = [...content, '']
   }
   return content.join('\n')

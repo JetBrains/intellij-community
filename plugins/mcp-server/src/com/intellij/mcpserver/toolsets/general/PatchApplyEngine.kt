@@ -78,6 +78,7 @@ internal object PatchApplyEngine {
   }
 
   fun applyHunks(originalText: String, hunks: List<PatchHunk>): String {
+    val hadTrailingNewline = originalText.endsWith('\n') || originalText.endsWith("\r\n")
     val content = splitLines(originalText).toMutableList()
     var searchStart = 0
 
@@ -107,7 +108,7 @@ internal object PatchApplyEngine {
       searchStart = matchedIndex + newLines.size
     }
 
-    if (content.isNotEmpty() && content.last().isNotEmpty()) {
+    if (hadTrailingNewline && content.isNotEmpty() && content.last().isNotEmpty()) {
       content += ""
     }
 

@@ -202,6 +202,48 @@ describe('apply_patch handler (unit)', () => {
     assertSingleUpdatedWrite(result, calls, 'file.txt', '## Goals\n- new\n')
   })
 
+  it('preserves absence of trailing newline after patching', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'alpha\nbeta'}),
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const patch = buildPatch([
+      '*** Begin Patch',
+      '*** Update File: file.txt',
+      '@@',
+      ' alpha',
+      '-beta',
+      '+BETA',
+      '*** End Patch'
+    ])
+
+    const result = await handleApplyPatchTool({patch}, projectPath, callUpstreamTool)
+
+    assertSingleUpdatedWrite(result, calls, 'file.txt', 'alpha\nBETA')
+  })
+
+  it('preserves trailing newline after patching', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'alpha\nbeta\n'}),
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const patch = buildPatch([
+      '*** Begin Patch',
+      '*** Update File: file.txt',
+      '@@',
+      ' alpha',
+      '-beta',
+      '+BETA',
+      '*** End Patch'
+    ])
+
+    const result = await handleApplyPatchTool({patch}, projectPath, callUpstreamTool)
+
+    assertSingleUpdatedWrite(result, calls, 'file.txt', 'alpha\nBETA\n')
+  })
+
   it('fuzz: updates a single line and writes back', async () => {
     const rng = createSeededRng(5150)
 

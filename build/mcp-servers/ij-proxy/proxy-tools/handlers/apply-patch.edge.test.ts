@@ -318,7 +318,7 @@ describe('apply_patch handler (edge cases)', () => {
     strictEqual(result, 'Applied patch to 1 file.')
     strictEqual(calls.some((call) => call.name === 'search_in_files_by_regex'), true)
     const writeCall = calls.find((call) => call.name === 'create_new_file')
-    strictEqual(writeCall.args.text, 'gamma\nbeta\n')
+    strictEqual(writeCall.args.text, 'gamma\nbeta')
   })
 
   it('requests full content to avoid truncation on update', async () => {
