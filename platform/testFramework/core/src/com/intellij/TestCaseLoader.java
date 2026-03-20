@@ -155,7 +155,7 @@ public class TestCaseLoader {
   }
 
   private static @Nullable String getTestPatterns() {
-    return System.getProperty("intellij.build.test.patterns", System.getProperty("idea.test.patterns"));
+    return System.getProperty("intellij.build.test.patterns");
   }
 
   private static @Unmodifiable List<String> getTestGroups() {

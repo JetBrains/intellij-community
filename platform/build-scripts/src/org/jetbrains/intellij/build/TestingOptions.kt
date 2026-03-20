@@ -8,7 +8,6 @@ import org.jetbrains.intellij.build.TestingOptions.Companion.ALL_EXCLUDE_DEFINED
 import org.jetbrains.intellij.build.impl.JUnitRunConfigurationProperties
 
 private val OLD_TEST_GROUP = System.getProperty("idea.test.group", TestingOptions.ALL_EXCLUDE_DEFINED_GROUP)
-private val OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
 private val OLD_PLATFORM_PREFIX = System.getProperty("idea.platform.prefix")
 
 /**
@@ -38,7 +37,7 @@ open class TestingOptions {
    * Semicolon-separated patterns for test class names which need to be executed. Wildcard '*' is supported. If this option is specified,
    * [testGroups] will be ignored.
    */
-  var testPatterns: String? = System.getProperty("intellij.build.test.patterns").nullize(nullizeSpaces = true) ?: OLD_TEST_PATTERNS
+  var testPatterns: String? = System.getProperty("intellij.build.test.patterns").nullize(nullizeSpaces = true)
 
   /**
    * Semicolon-separated JUnit 5 tag expressions to include; only tests tagged with at least one of these are executed.
