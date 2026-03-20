@@ -19,6 +19,7 @@ import javax.swing.Action
 internal class GitLabLoginErrorStatusPresenter(
   private val cs: CoroutineScope,
   private val model: GitLabTokenLoginPanelModel,
+  private val canLogInWithGit: Boolean,
 ) : ErrorStatusPresenter.HTML<Throwable> {
   override fun getErrorTitle(error: Throwable): String = ""
 
@@ -36,14 +37,13 @@ internal class GitLabLoginErrorStatusPresenter(
     return builder.wrapWithHtmlBody().toString()
   }
 
-  override fun getErrorAction(error: Throwable): Action? = when (error) {
-    is LoginException.UnsupportedServerVersion,
-    is LoginException.InvalidTokenOrUnsupportedServerVersion -> swingAction(CollaborationToolsBundle.message("login.via.git")) {
-      cs.launch {
-        model.tryGitAuthorization()
-      }
+  override fun getErrorAction(error: Throwable): Action? {
+    if (!canLogInWithGit) return null
+    if (error !is LoginException.UnsupportedServerVersion &&
+        error !is LoginException.InvalidTokenOrUnsupportedServerVersion) return null
+    return swingAction(CollaborationToolsBundle.message("login.via.git")) {
+      cs.launch { model.tryGitAuthorization() }
     }
-    else -> null
   }
 
   private fun HtmlBuilder.customizeUnsupportedVersionError(
@@ -51,6 +51,7 @@ internal class GitLabLoginErrorStatusPresenter(
   ): HtmlBuilder {
     val builder = this
     val text = GitLabBundle.message("server.version.unsupported", error.earliestSupportedVersion)
+    if (!canLogInWithGit) return builder.append(text)
     val link = HtmlChunk.link(ErrorStatusPresenter.ERROR_ACTION_HREF, CollaborationToolsBundle.message("login.via.git"))
 
     return builder
@@ -63,6 +64,7 @@ internal class GitLabLoginErrorStatusPresenter(
   ): HtmlBuilder {
     val builder = this
     val text = GitLabBundle.message("invalid.token.or.server.version.unsupported", error.earliestSupportedVersion)
+    if (!canLogInWithGit) return builder.append(text)
     val linkAction = HtmlChunk.link(ErrorStatusPresenter.ERROR_ACTION_HREF, CollaborationToolsBundle.message("login.via.git"))
     val linkAdditionalText = GitLabBundle.message("invalid.token.or.server.version.unsupported.additional.text", error.earliestSupportedVersion)
 
