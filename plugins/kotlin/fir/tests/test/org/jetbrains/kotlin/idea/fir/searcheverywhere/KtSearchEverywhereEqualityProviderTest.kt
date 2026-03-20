@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.searcheverywhere
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.fir.searcheverywhere
 
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.DoNothing
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.Replace
@@ -9,20 +9,29 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.searcheverywhere.KtSearchEverywhereEqualityProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.runner.RunWith
 
 /**
- * @see KtSearchEverywhereEqualityProvider
+ * @see org.jetbrains.kotlin.idea.searcheverywhere.KtSearchEverywhereEqualityProvider
  */
 @RunWith(JUnit3RunnerWithInners::class)
-abstract class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixtureTestCase() {
+abstract class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
+
     @RunWith(JUnit3RunnerWithInners::class)
     class KtFileAndKtClass : KtSearchEverywhereEqualityProviderTest() {
         fun `test KtFile and KtClass should be deduplicated`() {
@@ -150,6 +159,6 @@ abstract class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixt
             .flatMapTo(mutableSetOf()) { it.toBeReplaced }
             .map { it.element as PsiElement }
             .singleOrNull()
-        TestCase.assertEquals(expectedToRemove(file), actualRemoved)
+        assertEquals(expectedToRemove(file), actualRemoved)
     }
 }

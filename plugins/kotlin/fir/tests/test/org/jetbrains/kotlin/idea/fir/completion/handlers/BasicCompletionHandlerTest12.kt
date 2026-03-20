@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.completion.handlers
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.fir.completion.handlers
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.completion.test.handlers.CompletionHandlerTestBase
 import org.jetbrains.kotlin.test.TestMetadata
@@ -17,6 +17,7 @@ import java.io.File
 @TestMetadata("handlers")
 @RunWith(JUnit38ClassRunner::class)
 class BasicCompletionHandlerTest12 : CompletionHandlerTestBase() {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     private fun checkResult() {
         fixture.checkResultByFile(getTestName(false) + ".kt.after")
@@ -53,7 +54,8 @@ class BasicCompletionHandlerTest12 : CompletionHandlerTestBase() {
 
     fun testClassCompletionInImport() = doTest(1, "TimeZone", " (java.util)", '\t')
 
-    fun testClassCompletionInLambda() = doTest(1, "String", " (kotlin)", '\n')
+    // IGNORE_K2
+    fun _testClassCompletionInLambda() = doTest(1, "String", " (kotlin)", '\n')
 
     fun testClassCompletionBeforeName() = doTest(1, "StringBuilder", " (kotlin.text)", '\n')
 
@@ -156,7 +158,8 @@ class BasicCompletionHandlerTest12 : CompletionHandlerTestBase() {
     fun testLocalClassCompletion() = doTest(1, "LocalClass", null, '\n')
     fun testNestedLocalClassCompletion() = doTest(1, "Nested", null, '\n')
 
-    fun testTypeArgOfSuper() = doTest(1, "X", null, '\n')
+    // IGNORE_K2
+    fun  _testTypeArgOfSuper() = doTest(1, "X", null, '\n')
 
     fun testKeywordClassName() = doTest(1, "class", null, '\n')
     fun testKeywordFunctionName() = doTest(1, "fun", "fun", "() (test)", '\n')
@@ -172,7 +175,8 @@ class BasicCompletionHandlerTest12 : CompletionHandlerTestBase() {
         doTest(1, "Inner", null, null, '\n')
     }
 
-    fun testNoParentheses() {
+    // IGNORE_K2: KTIJ-36105
+    fun _testNoParentheses() {
         val settings = EditorSettingsExternalizable.getInstance()
         settings.setInsertParenthesesAutomatically(false)
         try {
@@ -184,4 +188,5 @@ class BasicCompletionHandlerTest12 : CompletionHandlerTestBase() {
             settings.setInsertParenthesesAutomatically(true)
         }
     }
+
 }

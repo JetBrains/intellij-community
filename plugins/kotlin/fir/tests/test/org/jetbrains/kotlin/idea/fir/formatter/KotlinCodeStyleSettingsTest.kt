@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.formatter
+package org.jetbrains.kotlin.idea.fir.formatter
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.util.JDOMUtil
@@ -28,6 +28,7 @@ import java.io.File
 
 
 class KotlinCodeStyleSettingsTest : LightPlatformTestCase(), ExpectedPluginModeProvider {
+
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }
     }
@@ -119,7 +120,7 @@ class KotlinCodeStyleSettingsTest : LightPlatformTestCase(), ExpectedPluginModeP
         assertTrue(copyOfSettings.kotlinCustomSettings == copyOfSettings.kotlinCustomSettings)
     }
 
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
 }
 

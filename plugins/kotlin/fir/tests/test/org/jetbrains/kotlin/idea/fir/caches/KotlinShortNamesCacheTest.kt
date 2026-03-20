@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.caches
+package org.jetbrains.kotlin.idea.fir.caches
 
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMember
@@ -13,8 +13,10 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
@@ -30,6 +32,8 @@ import kotlin.reflect.KMutableProperty0
 @TestMetadata("testData/cache")
 @RunWith(JUnit38ClassRunner::class)
 class KotlinShortNamesCacheTest : KotlinLightCodeInsightFixtureTestCase() {
+
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     private lateinit var cacheInstance: PsiShortNamesCache
 
@@ -117,15 +121,12 @@ class KotlinShortNamesCacheTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun checkIsSingleMethodFoundCompanion(
         scope: GlobalSearchScope,
-        delegateFqName: String,
         originalFqName: String,
         query: String = shortName(originalFqName)
     ) {
         cacheInstance.getMethodsByName(query, scope).let {
-            checkMethodFound(it, delegateFqName, true)
             checkMethodFound(it, originalFqName, false)
-            assertEquals((it[0] as KtLightMethod).kotlinOrigin, (it[1] as KtLightMethod).kotlinOrigin)
-            assertSize(2, it)
+            assertSize(1, it)
         }
     }
 
@@ -207,7 +208,7 @@ class KotlinShortNamesCacheTest : KotlinLightCodeInsightFixtureTestCase() {
         checkIsSingleMethodFound(scope, "B1.staticMethodOfObject", true)
         checkIsSingleMethodFound(scope, "B1.nonStaticMethodOfObject", false)
         checkIsSingleMethodFound(scope, "C1.methodOfClass", false)
-        checkIsSingleMethodFoundCompanion(scope, "C1.staticMethodOfCompanion", "C1.Companion.staticMethodOfCompanion")
+        checkIsSingleMethodFoundCompanion(scope, "C1.Companion.staticMethodOfCompanion")
         checkIsSingleMethodFound(scope, "C1.Companion.nonStaticMethodOfCompanion", false)
     }
 

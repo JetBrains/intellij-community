@@ -1,10 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.findUsages
+package org.jetbrains.kotlin.idea.fir.findUsages
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.findUsages.findUsages
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithLibraryFirTest
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -12,7 +15,8 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class KotlinFindUsagesWithLibraryCustomTest : AbstractK1KotlinFindUsagesWithLibraryTest() {
+class KotlinFindUsagesWithLibraryCustomTest : AbstractKotlinFindUsagesWithLibraryFirTest() {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     override val isWithSourcesTestData = false
 
@@ -28,7 +32,7 @@ class KotlinFindUsagesWithLibraryCustomTest : AbstractK1KotlinFindUsagesWithLibr
         val usages = findUsages(privateClass, null, false, project)
         assertEquals(
             listOf(
-                "PrivateLibraryClass (class org.jetbrains.kotlin.references.fe10.KtFe10SimpleNameReference)",
+                "PrivateLibraryClass (class org.jetbrains.kotlin.analysis.api.fir.references.KaFirSimpleNameReference)",
                 "library.PrivateLibraryClass (class com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl)",
             ),
             usages.map { it.toString() }.sorted(),

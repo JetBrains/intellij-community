@@ -1,12 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.navigation
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.fir.navigation
 
-import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinImportAliasGotoDeclarationHandler
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtImportAlias
 
 class GotoImportAliasTest : KotlinLightCodeInsightFixtureTestCase() {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+
     fun `test multi declarations`() {
         myFixture.configureByText(
             "dummy.kt",
@@ -32,6 +34,6 @@ class GotoImportAliasTest : KotlinLightCodeInsightFixtureTestCase() {
             editor,
         )
 
-        TestCase.assertEquals(2, result?.size)
+        assertEquals(2, result?.size)
     }
 }

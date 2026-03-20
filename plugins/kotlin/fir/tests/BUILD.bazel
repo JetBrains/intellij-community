@@ -60,6 +60,8 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-low-level-api-fir",
     "@lib//:kotlinc-kotlin-compiler-tests",
+    "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
@@ -209,6 +211,14 @@ jvm_library(
     "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename-tests_test_lib",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/formatter",
+    "//plugins/kotlin/formatter:formatter_test_lib",
+    "//platform/platform-tests:tests",
+    "//platform/platform-tests:tests_test_lib",
+    "//plugins/kotlin/kotlin.ide",
+    "//plugins/kotlin/kotlin.ide:kotlin.ide_test_lib",
   ],
   runtime_deps = [":tests"]
 )

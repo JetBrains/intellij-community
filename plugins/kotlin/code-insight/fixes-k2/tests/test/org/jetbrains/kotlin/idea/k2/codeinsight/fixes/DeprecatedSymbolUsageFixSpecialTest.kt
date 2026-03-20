@@ -1,24 +1,27 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.quickfix
+package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.TestDataPath
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix
 import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWithData
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
 @TestRoot("idea/tests")
-@TestDataPath("\$CONTENT_ROOT")
+@TestDataPath("/")
 @TestMetadata("testData/quickfix.special/deprecatedSymbolUsage")
 class DeprecatedSymbolUsageFixSpecialTest : KotlinLightCodeInsightFixtureTestCase() {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+
     override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
     fun testMemberInCompiledClass() {
@@ -37,10 +40,11 @@ class DeprecatedSymbolUsageFixSpecialTest : KotlinLightCodeInsightFixtureTestCas
         val element = file.findElementAt(offset)
         val nameExpression = element!!.parents.firstIsInstance<KtSimpleNameExpression>()
         val fix = ActionUtil.underModalProgress(project, "") {
-            DeprecatedSymbolUsageFix(nameExpression, ReplaceWithData(pattern, emptyList(), false))
+            DeprecatedSymbolUsageFix(nameExpression,
+                ReplaceWithData(pattern, emptyList(), false))
         }
 
-        project.executeWriteCommand("") {
+        WriteCommandAction.runWriteCommandAction(project) {
             fix.invoke(project, editor, file)
         }
 

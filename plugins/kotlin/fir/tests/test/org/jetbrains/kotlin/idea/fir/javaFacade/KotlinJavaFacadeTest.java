@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.javaFacade;
+package org.jetbrains.kotlin.idea.fir.javaFacade;
 
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -17,7 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.asJava.LightClassUtil;
 import org.jetbrains.kotlin.asJava.classes.KtLightClass;
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;import org.jetbrains.kotlin.idea.base.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor;
 import org.jetbrains.kotlin.name.SpecialNames;
@@ -38,6 +39,16 @@ import static org.jetbrains.kotlin.asJava.LightClassUtilsKt.toLightClass;
 @TestMetadata("testData/javaFacade")
 @RunWith(JUnit38ClassRunner.class)
 public class KotlinJavaFacadeTest extends KotlinLightCodeInsightFixtureTestCase {
+    @Override
+    public @NotNull KotlinPluginMode getPluginMode() {
+      return KotlinPluginMode.K2;
+    }
+
+    @Override
+    protected void setUp() {
+        ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, () -> super.setUp());
+    }
+
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {

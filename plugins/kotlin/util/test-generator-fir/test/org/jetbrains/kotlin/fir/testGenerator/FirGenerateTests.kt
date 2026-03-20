@@ -58,6 +58,8 @@ import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralTextToKotlinCop
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocMultiplatformTest
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocTest
 import org.jetbrains.kotlin.idea.fir.editor.AbstractK2EnterHandlerTest
+import org.jetbrains.kotlin.idea.fir.editor.commenter.AbstractK2KotlinCommenterTest
+import org.jetbrains.kotlin.idea.fir.editor.editor.backspaceHandler.AbstractK2BackspaceHandlerTest
 import org.jetbrains.kotlin.idea.fir.externalAnnotations.AbstractK2ExternalAnnotationTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesFirTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesMultiModuleFirTest
@@ -296,6 +298,14 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
         testClass<AbstractK2EnterHandlerTest> {
             model("editor/enterHandler", pattern = Patterns.forRegex("""^([^.]+)\.after\.kt.*$"""), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
             model("editor/enterHandler", pattern = Patterns.forRegex("""^([^.]+)\.after\.inv\.kt.*$"""), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
+        }
+
+        testClass<AbstractK2BackspaceHandlerTest> {
+            model("editor/backspaceHandler")
+        }
+
+        testClass<AbstractK2KotlinCommenterTest> {
+            model("editor/commenter", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractK2FormatterTest> {

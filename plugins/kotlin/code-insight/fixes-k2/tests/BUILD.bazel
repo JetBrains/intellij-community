@@ -33,6 +33,8 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/test-framework",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/code-insight/api:api_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/plugin",
@@ -47,6 +49,8 @@ jvm_library(
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
     "//plugins/kotlin/fir/testFramework",
     "//plugins/kotlin/fir/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
   ],
   runtime_deps = [":tests"]
 )

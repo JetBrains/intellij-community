@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.kdoc;
+package org.jetbrains.kotlin.idea.fir.kdoc;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
+import org.jetbrains.annotations.NotNull;import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.internal.runners.JUnit38ClassRunner;
@@ -15,7 +15,12 @@ import org.junit.runner.RunWith;
 @TestMetadata("testData/kdoc/rename")
 @RunWith(JUnit38ClassRunner.class)
 public class KdocRenameTest extends KotlinLightCodeInsightFixtureTestCase {
-    public void testParamReference() {
+  @Override
+  public @NotNull KotlinPluginMode getPluginMode() {
+    return KotlinPluginMode.K2;
+  }
+
+  public void testParamReference() {
         doTest("bar");
     }
 
