@@ -10,16 +10,20 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.intellij.psi.util.findParentOfType
 import com.intellij.python.pyproject.PY_PROJECT_TOML_BUILD_SYSTEM
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.packaging.NonModulePackageName
-import com.jetbrains.python.packaging.PyPackage
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
+import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.extractDependenciesAsync
 import com.jetbrains.python.requirements.RequirementsFile
 import com.jetbrains.python.requirements.RequirementsInspectionVisitor
 import com.jetbrains.python.requirements.getPythonSdk
@@ -49,9 +53,9 @@ class NotInstalledRequirementInspection : LocalInspectionTool() {
 
       val packageManager = PythonPackageManager.forSdk(project, sdk)
       val installedPackages = packageManager.listInstalledPackagesSnapshot()
-        .map { PyPackage(it.name, it.version) }
+      val mainPackageNames = getMainDeclaredPackageNames(packageManager)
 
-      val notInstalled = findNotInstalledRequirements(requirementsFile, installedPackages, project)
+      val notInstalled = findNotInstalledRequirements(requirementsFile, installedPackages, project, mainPackageNames)
       if (notInstalled.isEmpty()) return
 
       val isTomlInjection = isInjectedIntoToml(holder.file)
@@ -59,13 +63,13 @@ class NotInstalledRequirementInspection : LocalInspectionTool() {
     }
   }
 
-  private fun isInBuildSystemToml(psiFile: com.intellij.psi.PsiFile): Boolean {
+  private fun isInBuildSystemToml(psiFile: PsiFile): Boolean {
     val injectedElement = psiFile.getUserData(FileContextUtil.INJECTED_IN_ELEMENT) ?: return false
     val tableName = injectedElement.element?.findParentOfType<TomlTable>()?.header?.key?.text
     return tableName == PY_PROJECT_TOML_BUILD_SYSTEM
   }
 
-  private fun handleEmptyFile(psiFile: com.intellij.psi.PsiFile, holder: ProblemsHolder): Boolean {
+  private fun handleEmptyFile(psiFile: PsiFile, holder: ProblemsHolder): Boolean {
     if (psiFile.text.isNullOrBlank()) {
       val fixes = ModuleUtilCore.findModuleForPsiElement(psiFile)
                     ?.let { arrayOf(PyGenerateRequirementsFileQuickFix(it)) }
@@ -81,21 +85,29 @@ class NotInstalledRequirementInspection : LocalInspectionTool() {
     return false
   }
 
+  @RequiresBackgroundThread
+  private fun getMainDeclaredPackageNames(manager: PythonPackageManager): Set<PyPackageName>? {
+    val packages = manager.extractDependenciesAsync() ?: return null
+    return packages.filter { it.dependencyGroup == null }.mapTo(mutableSetOf()) { PyPackageName.from(it.name) }
+  }
+
   private fun findNotInstalledRequirements(
     requirementsFile: RequirementsFile,
-    installedPackages: List<PyPackage>,
+    installedPackages: List<PythonPackage>,
     project: Project,
+    mainPackageNames: Set<PyPackageName>?,
   ): List<Pair<Requirement, PyRequirement>> {
     return requirementsFile.requirements()
       .mapNotNull { req ->
         val parsed = PyRequirementParser.fromLine(req.text) ?: return@mapNotNull null
         NonModulePackageName.create(parsed.name, project) ?: return@mapNotNull null
-        if (parsed.match(installedPackages) != null) return@mapNotNull null
+        if (mainPackageNames != null && PyPackageName.from(parsed.name) !in mainPackageNames) return@mapNotNull null
+        if (installedPackages.any { it.matches(parsed) }) return@mapNotNull null
         req to parsed
       }
   }
 
-  private fun isInjectedIntoToml(file: com.intellij.psi.PsiFile): Boolean {
+  private fun isInjectedIntoToml(file: PsiFile): Boolean {
     return file.getUserData(FileContextUtil.INJECTED_IN_ELEMENT) != null
   }
 

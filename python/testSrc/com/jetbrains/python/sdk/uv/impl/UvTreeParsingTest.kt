@@ -1,7 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv.impl
 
-import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor.Companion.parseTree
+import com.jetbrains.python.packaging.common.PyDependencyGroupName
+import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor.Companion.parseTrees
 import com.jetbrains.python.packaging.packageRequirements.TreeParser
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
@@ -144,6 +145,61 @@ class UvTreeParsingTest {
     }
 
     @Test
+    fun `dependency groups are parsed from group annotation`() {
+      val input = """
+        myapp v1.0.0
+        ├── requests v2.31.0
+        ├── pytest v8.0.0 (group: dev)
+        ├── ruff v0.15.2 (group: lint)
+        └── ty v0.0.18 (group: lint)
+      """.trimIndent()
+
+      val packages = UvOutputParser.parseUvPackageList(input)
+
+      assertThat(packages).hasSize(4)
+      val byName = packages.associateBy { it.name }
+      assertThat(byName["requests"]!!.dependencyGroup).isNull()
+      assertThat(byName["pytest"]!!.dependencyGroup).isEqualTo(PyDependencyGroupName("dev"))
+      assertThat(byName["ruff"]!!.dependencyGroup).isEqualTo(PyDependencyGroupName("lint"))
+      assertThat(byName["ty"]!!.dependencyGroup).isEqualTo(PyDependencyGroupName("lint"))
+    }
+
+    @Test
+    fun `dependency groups are parsed from extra annotation`() {
+      val input = """
+        myapp v1.0.0
+        ├── fastapi v0.129.2
+        ├── pytest-cov v7.0.0 (extra: dev)
+        ├── ruff v0.15.2 (extra: lint)
+        └── ty v0.0.18 (extra: lint)
+      """.trimIndent()
+
+      val packages = UvOutputParser.parseUvPackageList(input)
+
+      assertThat(packages).hasSize(4)
+      val byName = packages.associateBy { it.name }
+      assertThat(byName["fastapi"]!!.dependencyGroup).isNull()
+      assertThat(byName["pytest-cov"]!!.dependencyGroup).isEqualTo(PyDependencyGroupName("dev"))
+      assertThat(byName["ruff"]!!.dependencyGroup).isEqualTo(PyDependencyGroupName("lint"))
+      assertThat(byName["ty"]!!.dependencyGroup).isEqualTo(PyDependencyGroupName("lint"))
+    }
+
+    @Test
+    fun `extras are stripped from package names`() {
+      val input = """
+        myapp v1.0.0
+        ├── uvicorn[standard] v0.41.0
+        └── boto3[crt] v1.35.0
+      """.trimIndent()
+
+      val packages = UvOutputParser.parseUvPackageList(input)
+
+      assertThat(packages).hasSize(2)
+      assertThat(packages.map { it.name }).containsExactly("uvicorn", "boto3")
+      assertThat(packages.map { it.version }).containsExactly("0.41.0", "1.35.0")
+    }
+
+    @Test
     fun `trailing blank lines are ignored`() {
       val input = "myapp v1.0.0\n├── requests v2.31.0\n\n\n"
 
@@ -161,7 +217,7 @@ class UvTreeParsingTest {
     fun `single root with no children`() {
       val lines = listOf("requests v2.31.0")
 
-      val tree = parseTree(lines)
+      val tree = parseTrees(lines).first()
 
       assertThat(tree.name.name).isEqualTo("requests")
       assertThat(tree.children).isEmpty()
@@ -174,7 +230,7 @@ class UvTreeParsingTest {
         "├── urllib3 v2.1.0",
       )
 
-      val tree = parseTree(lines)
+      val tree = parseTrees(lines).first()
 
       assertThat(tree.name.name).isEqualTo("requests")
       assertThat(tree.children).hasSize(1)
@@ -191,7 +247,7 @@ class UvTreeParsingTest {
         "└── urllib3 v2.1.0",
       )
 
-      val tree = parseTree(lines)
+      val tree = parseTrees(lines).first()
 
       assertThat(tree.name.name).isEqualTo("requests")
       assertThat(tree.children).hasSize(4)
@@ -209,7 +265,7 @@ class UvTreeParsingTest {
         "    └── markupsafe v2.1.5",
       )
 
-      val tree = parseTree(lines)
+      val tree = parseTrees(lines).first()
 
       assertThat(tree.name.name).isEqualTo("flask")
       assertThat(tree.children).hasSize(2)
@@ -234,7 +290,7 @@ class UvTreeParsingTest {
         "        └── c v1.0.0",
       )
 
-      val tree = parseTree(lines)
+      val tree = parseTrees(lines).first()
 
       assertThat(tree.name.name).isEqualTo("app")
       assertThat(tree.children).hasSize(1)
@@ -252,7 +308,7 @@ class UvTreeParsingTest {
         "└── requests v2.31.0",
       )
 
-      val tree = parseTree(lines)
+      val tree = parseTrees(lines).first()
 
       assertThat(tree.children).hasSize(2)
       assertThat(tree.children[0].name.name).isEqualTo("pytest")

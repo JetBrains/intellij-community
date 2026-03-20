@@ -1,0 +1,13 @@
+[project]
+dependencies = [
+  "<warning descr="Package mypy is not installed">mypy</warning>"
+]
+
+[build-system]
+requires = ["poetry-core"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[dependency-groups]
+dev = ["uvicorn[standard]>=0.35.0"]

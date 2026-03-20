@@ -8,9 +8,8 @@ import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPacka
 import com.jetbrains.python.packaging.packageRequirements.PackageNode
 import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor
-import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor.Companion.parseTree
+import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor.Companion.parseTrees
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractorProvider
-import com.jetbrains.python.packaging.packageRequirements.TreeParser
 import com.jetbrains.python.sdk.poetry.isPoetry
 import com.jetbrains.python.sdk.poetry.runPoetryWithSdk
 
@@ -28,7 +27,7 @@ internal class PoetryPackageRequirementsTreeExtractor(private val sdk: Sdk) : Py
       thisLogger().info("extracting all package trees: error. Output: \n${it.error}")
       return emptyList()
     }
-    return TreeParser.splitIntoPackageGroups(data.lines()).map { parseTree(it) }
+    return parseTrees(data.lines())
   }
 }
 

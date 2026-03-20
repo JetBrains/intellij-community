@@ -8,7 +8,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.value.constant
 import com.intellij.execution.target.value.getRelativeTargetPath
-import com.intellij.openapi.module.Module
 import com.intellij.platform.eel.provider.localEel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ExecError
@@ -165,9 +164,8 @@ private class UvLowLevelImpl<P : PathHolder>(private val cwd: Path, private val 
     }
   }
 
-  override suspend fun listTopLevelPackages(module: Module): PyResult<List<PythonPackage>> {
-    val args = mutableListOf("tree", "--depth=1", "--frozen", "--package", module.name)
-    val out = uvCli.runUv(cwd, venvPath, false, *args.toTypedArray())
+  override suspend fun listTopLevelPackages(packageName: PyWorkspaceMember): PyResult<List<PythonPackage>> {
+    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--depth=1", "--frozen", "--package", packageName.name)
       .getOr { return it }
 
     return PyExecResult.success(UvOutputParser.parseUvPackageList(out))

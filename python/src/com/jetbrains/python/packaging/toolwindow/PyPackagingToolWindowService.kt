@@ -583,7 +583,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     declaredPackageNames: Set<String>,
   ): WorkspaceMember {
     val member = PyWorkspaceMember(memberName)
-    val packages = tree.children.mapNotNull { node ->
+    val packages = tree.children.distinctBy { it.name.name }.mapNotNull { node ->
       val pkg = packageIndex.installedByName[node.name.name] ?: return@mapNotNull null
       val repository = resolveRepository(context, pkg)
       val nextVersion = packageIndex.outdated[pkg.name]?.latestVersion?.let { PyPackageVersionNormalizer.normalize(it) }
