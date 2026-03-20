@@ -48,7 +48,6 @@ class K2MppHighlightingIntegrationTest : AbstractKotlinMppGradleImportingTest() 
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.9.20+")
-    @Ignore("KTIJ-37464")
     fun testForwardDeclarations() {
         doTest()
     }
