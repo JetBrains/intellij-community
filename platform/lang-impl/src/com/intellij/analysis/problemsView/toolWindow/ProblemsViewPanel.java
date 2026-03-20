@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -81,6 +82,8 @@ import static com.intellij.util.ArrayUtil.getFirstElement;
 import static com.intellij.util.OpenSourceUtil.navigate;
 
 public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, UiCompatibleDataProvider, ProblemsViewTab {
+  public static final @NotNull DataKey<ProblemsViewPanel> DATA_KEY = DataKey.create("ProblemsViewPanel");
+  
   private final ClientProjectSession mySession;
   volatile boolean myDisposed;
   private final String myId;
@@ -292,6 +295,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     sink.set(CommonDataKeys.PROJECT, getProject());
+    sink.set(DATA_KEY, this);
     sink.set(PlatformDataKeys.TREE_EXPANDER, getTreeExpander());
     sink.set(PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER, shouldHideExpandCollapseActionsIfThereIsNoTreeExpander());
 
