@@ -17,10 +17,12 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -858,9 +860,14 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
                                  @NotNull Project project,
                                  @NotNull List<? extends PlaceInfo> placeInfos) {
     VirtualFile file = (VirtualFile)virtualFile;
-    SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    LexerEditorHighlighter highlighter = new LexerEditorHighlighter(syntaxHighlighter, scheme);
+    LanguageFileType fileType = language.getAssociatedFileType();
+    var provider = fileType != null && fileType.getLanguage() == language
+                   ? FileTypeEditorHighlighterProviders.getInstance().forFileType(fileType) : null;
+    EditorHighlighter highlighter =
+      provider != null
+      ? provider.getEditorHighlighter(project, fileType, file, scheme)
+      : new LexerEditorHighlighter(SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file), scheme);
     highlighter.setText(outChars);
     HighlighterIterator iterator = highlighter.createIterator(0);
     int hostNum = -1;
