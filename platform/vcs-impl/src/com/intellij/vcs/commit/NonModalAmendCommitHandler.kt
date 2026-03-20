@@ -19,7 +19,10 @@ import kotlin.properties.Delegates.observable
 private val AMEND_AUTHOR_DATA_KEY = Key.create<AmendAuthorData>("Vcs.Commit.AmendAuthorData")
 private var CommitContext.amendAuthorData: AmendAuthorData? by commitProperty(AMEND_AUTHOR_DATA_KEY, null)
 
-private class AmendAuthorData(val beforeAmendAuthor: VcsUser?, val amendAuthor: VcsUser)
+private class AmendAuthorData(
+  val beforeAmendAuthor: VcsUser?, // Author before entering amend mode
+  val amendAuthor: VcsUser?, // Last author that was set by selecting amend mode
+)
 
 class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWorkflowHandler<*, *>) :
   AmendCommitHandlerImpl(workflowHandler) {
@@ -96,22 +99,36 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
   }
 
   private fun setAmendAuthor(currentUser: VcsUser?, amendAuthor: VcsUser) {
-    val beforeAmendAuthor = workflowHandler.ui.commitAuthor
-    if (beforeAmendAuthor != null && isSamePerson(beforeAmendAuthor, amendAuthor)) return
-    if (beforeAmendAuthor == null && currentUser != null && isSamePerson(currentUser, amendAuthor)) return
+    val currentAuthor = workflowHandler.ui.commitAuthor
+    val newAuthor = if (currentUser != null && isSamePerson(amendAuthor, currentUser)) null else amendAuthor
 
-    workflowHandler.ui.commitAuthor = amendAuthor
-    commitContext.amendAuthorData = AmendAuthorData(beforeAmendAuthor, amendAuthor)
+    workflowHandler.ui.commitAuthor = newAuthor
+
+    val previousAuthorData = commitContext.amendAuthorData
+
+    // Preserve the original author from before first entering amend mode
+    commitContext.amendAuthorData = AmendAuthorData(
+      beforeAmendAuthor = if (previousAuthorData != null) previousAuthorData.beforeAmendAuthor else currentAuthor,
+      amendAuthor = newAuthor
+    )
   }
 
   private fun restoreAmendAuthor() {
     val amendAuthorData = commitContext.amendAuthorData ?: return
     commitContext.amendAuthorData = null
 
-    val author = workflowHandler.ui.commitAuthor
-    if (author == null || !isSamePerson(author, amendAuthorData.amendAuthor)) return
+    val currentAuthor = workflowHandler.ui.commitAuthor
+
+    // don't restore if user changed author manually
+    if (!isSameAuthor(currentAuthor, amendAuthorData.amendAuthor)) return
 
     workflowHandler.ui.commitAuthor = amendAuthorData.beforeAmendAuthor
+  }
+
+  private fun isSameAuthor(author1: VcsUser?, author2: VcsUser?): Boolean = when {
+    author1 == null && author2 == null -> true
+    author1 != null && author2 != null -> isSamePerson(author1, author2)
+    else -> false
   }
 
   private inner class EditedCommitCleaner : CommitterResultHandler {
