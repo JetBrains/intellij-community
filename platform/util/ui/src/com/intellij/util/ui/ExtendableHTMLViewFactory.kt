@@ -22,6 +22,7 @@ import com.intellij.util.ui.html.CssAttributesEx.BORDER_RADIUS
 import com.intellij.util.ui.html.DetailsView
 import com.intellij.util.ui.html.FitToWidthImageView
 import com.intellij.util.ui.html.FormViewEx
+import com.intellij.util.ui.html.GlyphViewFix
 import com.intellij.util.ui.html.HRViewEx
 import com.intellij.util.ui.html.HTML_Tag_DETAILS
 import com.intellij.util.ui.html.HTML_Tag_SUMMARY
@@ -103,6 +104,11 @@ class ExtendableHTMLViewFactory internal constructor(
 
     @JvmField
     internal val DEFAULT_WORD_WRAP: ExtendableHTMLViewFactory = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS_WORD_WRAP)
+
+    init {
+      GlyphViewFix.init()
+    }
+
   }
 
   @FunctionalInterface

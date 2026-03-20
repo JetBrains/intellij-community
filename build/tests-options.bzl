@@ -39,6 +39,7 @@ PKGS = [
     "java.desktop/sun.lwawt",
     "java.desktop/sun.lwawt.macosx",
     "java.desktop/sun.swing",
+    "java.desktop/sun.swing.text",
     "jdk.attach/sun.tools.attach",
     "jdk.compiler/com.sun.tools.javac.api",
     "jdk.internal.jvmstat/sun.jvmstat.monitor",

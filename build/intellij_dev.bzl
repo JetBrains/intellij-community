@@ -50,6 +50,7 @@ INTELLIJ_ADD_OPENS = [
     "java.desktop/sun.lwawt",
     "java.desktop/sun.lwawt.macosx",
     "java.desktop/sun.swing",
+    "java.desktop/sun.swing.text",
     "java.management/sun.management",
     "jdk.attach/sun.tools.attach",
     "jdk.compiler/com.sun.tools.javac.api",
