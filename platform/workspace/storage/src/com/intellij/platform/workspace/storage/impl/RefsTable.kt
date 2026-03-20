@@ -26,7 +26,7 @@ import com.intellij.platform.workspace.storage.impl.references.MutableOneToOneCo
 import com.intellij.platform.workspace.storage.impl.references.ReferenceContainer
 import com.intellij.platform.workspace.storage.instrumentation.Modification
 import it.unimi.dsi.fastutil.ints.IntArrayList
-import java.util.function.BiConsumer
+import it.unimi.dsi.fastutil.ints.IntIntBiConsumer
 import java.util.function.IntConsumer
 import java.util.function.IntFunction
 
@@ -248,7 +248,7 @@ internal class MutableRefsTable(
         add(Modification.Remove(parentId, createEntityId(it, connectionId.childClass)))
       })
       val previousParents = copiedMap.addAll(newChildren, parentId.arrayId)
-      previousParents.forEach(BiConsumer { child, parent ->
+      previousParents.forEach(IntIntBiConsumer { child, parent ->
         add(Modification.Remove(createEntityId(parent, connectionId.parentClass), createEntityId(child, connectionId.childClass)))
       })
       newChildren.forEach { child ->
@@ -392,7 +392,7 @@ internal class MutableRefsTable(
       val removedParent = copiedMap.removeKey(childId.arrayId)
       val removedChildren = copiedMap.addAll(intArrayOf(childId.arrayId), parentId.id.arrayId)
       if (removedParent != null) add(Modification.Remove(createEntityId(removedParent, connectionId.parentClass), childId))
-      removedChildren.forEach { (child, parent) ->
+      removedChildren.forEach { child, parent ->
         add(Modification.Remove(createEntityId(parent, connectionId.parentClass), createEntityId(child, connectionId.childClass)))
       }
       add(Modification.Add(parentId.id, childId))
