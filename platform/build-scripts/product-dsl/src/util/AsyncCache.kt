@@ -47,7 +47,13 @@ class AsyncCache<K : Any, V>(scope: CoroutineScope) {
         }
         else -> {
           val owner = Any()
-          val result = CompletableDeferred<V>(currentContext[Job] ?: defaultParentJob)
+          val result = CompletableDeferred<V>()
+          val parentCancellationHandle = defaultParentJob?.invokeOnCompletion {
+            result.cancel()
+          }
+          result.invokeOnCompletion {
+            parentCancellationHandle?.dispose()
+          }
           @Suppress("RAW_SCOPE_CREATION")
           val entry = CacheEntry(
             result = result,
@@ -57,8 +63,8 @@ class AsyncCache<K : Any, V>(scope: CoroutineScope) {
                 try {
                   result.complete(loader())
                 }
-                catch (t: Throwable) {
-                  result.completeExceptionally(t)
+                catch (e: Throwable) {
+                  result.completeExceptionally(e)
                 }
               },
           )
@@ -122,12 +128,12 @@ class AsyncCache<K : Any, V>(scope: CoroutineScope) {
     }
     return false
   }
-
-  private class CacheEntry<V>(
-    val result: CompletableDeferred<V>,
-    val owner: Any,
-    val computation: Job,
-  )
-
-  private class CachedValue<V>(@JvmField val value: V)
 }
+
+private class CacheEntry<V>(
+  @JvmField val result: CompletableDeferred<V>,
+  @JvmField val owner: Any,
+  @JvmField val computation: Job,
+)
+
+private class CachedValue<V>(@JvmField val value: V)

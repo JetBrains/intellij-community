@@ -314,6 +314,46 @@ class AsyncCacheTest {
     }
   }
 
+  @Test
+  fun `waiter cancellation does not poison cached computation`() {
+    runBlocking(Dispatchers.Default) {
+      val cache = AsyncCache<String, String>(this)
+      val loadCount = AtomicInteger(0)
+      val started = CompletableDeferred<Unit>()
+      val release = CompletableDeferred<Unit>()
+      val firstAttempt = async {
+        cache.getOrPut("key") {
+          loadCount.incrementAndGet()
+          started.complete(Unit)
+          release.await()
+          "value"
+        }
+      }
+
+      withTimeout(5.seconds) {
+        started.await()
+      }
+      firstAttempt.cancel()
+
+      var failure: Throwable? = null
+      try {
+        firstAttempt.await()
+      }
+      catch (t: Throwable) {
+        failure = t
+      }
+
+      assertThat(failure).isInstanceOf(CancellationException::class.java)
+      release.complete(Unit)
+      assertThat(
+        withTimeout(5.seconds) {
+          cache.getOrPut("key") { "should-not-be-called" }
+        }
+      ).isEqualTo("value")
+      assertThat(loadCount.get()).isEqualTo(1)
+    }
+  }
+
   private fun assertFailsFast(block: suspend () -> Unit) {
     assertThatThrownBy {
       runBlocking(Dispatchers.Default) {
