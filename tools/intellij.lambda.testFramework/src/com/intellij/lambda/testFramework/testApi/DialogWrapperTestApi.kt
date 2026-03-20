@@ -3,9 +3,13 @@
 package com.intellij.lambda.testFramework.testApi
 
 import com.intellij.lambda.testFramework.frameworkLogger
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.ui.ComponentUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -14,6 +18,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import java.awt.KeyboardFocusManager
 import java.awt.Window
@@ -66,6 +71,12 @@ fun activeDialogsFlow(): Flow<DialogWrapper> {
 suspend fun DialogWrapper.closeDialog(closingAction: suspend DialogWrapper.() -> Unit) {
   closingAction()
   waitClosed()
+}
+
+suspend fun DialogWrapper.disposeDirectly() {
+  withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
+    disposeIfNeeded()
+  }
 }
 
 suspend fun DialogWrapper.waitClosed() {
