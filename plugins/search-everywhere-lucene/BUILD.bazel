@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "searchEverywhereLucene-plugin",
+  module_name = "intellij.searchEverywhereLucene.plugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":searchEverywhereLucene-plugin_resources"]
