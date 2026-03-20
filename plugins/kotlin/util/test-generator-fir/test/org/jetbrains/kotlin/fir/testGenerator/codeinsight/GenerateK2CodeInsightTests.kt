@@ -29,6 +29,9 @@ import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractKtCompilerSupe
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractFirMoveLeftRightTest
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractKotlinFirMoveStatementTest
 import org.jetbrains.kotlin.idea.k2.quickDoc.AbstractFirRenderingKDocTest
+import org.jetbrains.kotlin.idea.k2.selection.AbstractK2ExpressionSelectionTest
+import org.jetbrains.kotlin.idea.k2.selection.AbstractK2SmartSelectionTest
+import org.jetbrains.kotlin.idea.k2.selection.AbstractK2WordSelectionTest
 import org.jetbrains.kotlin.idea.k2.slicer.AbstractFirSlicerLeafGroupingTest
 import org.jetbrains.kotlin.idea.k2.slicer.AbstractFirSlicerMultiplatformTest
 import org.jetbrains.kotlin.idea.k2.slicer.AbstractFirSlicerNullnessGroupingTest
@@ -67,6 +70,18 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
     testGroup("code-insight/kotlin.code-insight.k2", category = CODE_INSIGHT) {
         testClass<AbstractKotlinGoToSuperDeclarationsHandlerTest> {
             model("gotoSuperDeclarationsHandler", pattern = KT_WITHOUT_DOTS, passTestDataPath = false)
+        }
+
+        testClass<AbstractK2ExpressionSelectionTest> {
+            model("../../../idea/tests/testData/expressionSelection", testMethodName = "doTestExpressionSelection", pattern = KT_OR_KTS)
+        }
+
+        testClass<AbstractK2SmartSelectionTest> {
+            model("../../../idea/tests/testData/smartSelection", testMethodName = "doTestSmartSelection", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractK2WordSelectionTest> {
+            model("../../../idea/tests/testData/wordSelection", pattern = DIRECTORY)
         }
 
         testClass<AbstractKotlinGotoSuperMultiModuleTest> {
