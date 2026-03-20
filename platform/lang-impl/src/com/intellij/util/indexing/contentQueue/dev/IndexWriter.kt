@@ -17,7 +17,6 @@ import com.intellij.util.ConcurrencyUtil.newNamedThreadFactory
 import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.SystemProperties.getIntProperty
 import com.intellij.util.SystemProperties.getLongProperty
-import com.intellij.util.TimeoutUtil
 import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.FileIndexingResult
 import com.intellij.util.indexing.FileIndexingResult.ApplicationMode
@@ -53,6 +52,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.LockSupport
 import java.util.function.Supplier
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.milliseconds
 
 /** Abstracts out writing of indexed files data into the actual index storages */
 abstract class IndexWriter {
@@ -124,8 +124,8 @@ abstract class IndexWriter {
      * This is why we 'assign' a worker/thread to a specific set of the indexes and don't use >1 thread/worker per index
      */
     @JvmField
-    val WRITE_INDEXES_ON_SEPARATE_THREAD = getBooleanProperty("idea.write.indexes.on.separate.thread",
-                                                              UnindexedFilesUpdater.getMaxNumberOfIndexingThreads() > 5)
+    val WRITE_INDEXES_ON_SEPARATE_THREAD: Boolean = getBooleanProperty("idea.write.indexes.on.separate.thread",
+                                                                       UnindexedFilesUpdater.getMaxNumberOfIndexingThreads() > 5)
 
     private val PARALLEL_WRITER_IMPL: String? = System.getProperty("IndexWriter.parallel.impl")
 
@@ -281,7 +281,7 @@ abstract class ParallelIndexWriter(val workersCount: Int = TOTAL_WRITERS_NUMBER)
   }
 
   /** Waiting till current async tasks are finished */
-  abstract fun waitCurrentIndexingToFinish()
+  abstract suspend fun waitCurrentIndexingToFinish()
 
   /**
    * Monitoring: provides information about time spent on writing (applying) index changes by specific worker, if any,
@@ -508,35 +508,47 @@ class LegacyMultiThreadedIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) :
    *
    * @see .WRITERS_SHUTDOWN_WAITING_TIME_MS
    */
-  override fun waitCurrentIndexingToFinish() {
+  override suspend fun waitCurrentIndexingToFinish() {
     if (writers.isEmpty()) {
       return
     }
 
-    val futures: MutableList<Future<*>> = ArrayList<Future<*>>(writers.size)
-    writers.forEach { writer -> futures.add(writer.submit(EmptyRunnable.getInstance())) }
+    val sentinelTasks: MutableList<Future<*>> = ArrayList(writers.size)
+    writers.forEach { writer -> sentinelTasks.add(writer.submit(EmptyRunnable.getInstance())) }
 
-    val startTime = System.currentTimeMillis()
-    while (!futures.isEmpty()) {
-      val iterator = futures.iterator()
-      while (iterator.hasNext()) {
-        val future = iterator.next()
-        if (future.isDone) {
-          iterator.remove()
-        }
-      }
-      TimeoutUtil.sleep(10)
-      if (System.currentTimeMillis() - startTime > WRITERS_SHUTDOWN_WAITING_TIME_MS) {
-        val queueSize = indexWritesQueued.get()
-        val errorMessage = "Failed to shutdown index writers, queue size: $queueSize; executors active: $futures"
-        if (queueSize == 0) {
-          LOG.warn(errorMessage)
-        }
-        else {
-          LOG.error(errorMessage)
-        }
+    val startedAtMs = System.currentTimeMillis()
+    var queueSizesForDebug: MutableList<Int>? = null
+    while (true) {
+      sentinelTasks.removeIf { it.isDone }
+      if (sentinelTasks.isEmpty()) {
         return
       }
+
+      val elapsedMs = System.currentTimeMillis() - startedAtMs
+      if (elapsedMs > WRITERS_SHUTDOWN_WAITING_TIME_MS - 100) {
+        val queueSize = indexWritesQueued.get()
+
+        if (queueSizesForDebug == null) {
+          queueSizesForDebug = ArrayList()
+        }
+        queueSizesForDebug += queueSize
+
+        if (elapsedMs > WRITERS_SHUTDOWN_WAITING_TIME_MS) {
+          val message = "Indexing tasks are not finished in $elapsedMs ms. " +
+                        "queue sizes during last 100ms: $queueSizesForDebug; " +
+                        "writers size: ${writers.size}; " +
+                        "unfinished sentinel tasks: $sentinelTasks"
+          if (queueSize == 0) {
+            LOG.warn(message)
+          }
+          else {
+            LOG.error(message)
+          }
+          return
+        }
+      }
+
+      delay(10.milliseconds)
     }
   }
 
@@ -785,35 +797,47 @@ class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMB
    *
    * @see .WRITERS_SHUTDOWN_WAITING_TIME_MS
    */
-  override fun waitCurrentIndexingToFinish() {
+  override suspend fun waitCurrentIndexingToFinish() {
     if (writers.isEmpty()) {
       return
     }
 
-    val futures: MutableList<Future<*>> = ArrayList<Future<*>>(writers.size)
-    writers.forEach { writer -> futures.add(writer.submit(EmptyRunnable.getInstance())) }
+    val sentinelTasks: MutableList<Future<*>> = ArrayList(writers.size)
+    writers.forEach { writer -> sentinelTasks.add(writer.submit(EmptyRunnable.getInstance())) }
 
-    val startTime = System.currentTimeMillis()
-    while (!futures.isEmpty()) {
-      val iterator = futures.iterator()
-      while (iterator.hasNext()) {
-        val future = iterator.next()
-        if (future.isDone) {
-          iterator.remove()
-        }
-      }
-      TimeoutUtil.sleep(10)
-      if (System.currentTimeMillis() - startTime > WRITERS_SHUTDOWN_WAITING_TIME_MS) {
-        val queueSize = indexWritesQueued.get()
-        val errorMessage = "Failed to shutdown index writers, queue size: $queueSize; executors active: $futures"
-        if (queueSize == 0) {
-          LOG.warn(errorMessage)
-        }
-        else {
-          LOG.error(errorMessage)
-        }
+    val startedAtMs = System.currentTimeMillis()
+    var queueSizesForDebug: MutableList<Int>? = null
+    while (true) {
+      sentinelTasks.removeIf { it.isDone }
+      if (sentinelTasks.isEmpty()) {
         return
       }
+
+      val elapsedMs = System.currentTimeMillis() - startedAtMs
+      if (elapsedMs > WRITERS_SHUTDOWN_WAITING_TIME_MS - 100) {
+        val queueSize = indexWritesQueued.get()
+
+        if (queueSizesForDebug == null) {
+          queueSizesForDebug = ArrayList()
+        }
+        queueSizesForDebug += queueSize
+
+        if (elapsedMs > WRITERS_SHUTDOWN_WAITING_TIME_MS) {
+          val message = "Indexing tasks are not finished in $elapsedMs ms. " +
+                        "queue sizes during last 100ms: $queueSizesForDebug; " +
+                        "writers size: ${writers.size}; " +
+                        "unfinished sentinel tasks: $sentinelTasks"
+          if (queueSize == 0) {
+            LOG.warn(message)
+          }
+          else {
+            LOG.error(message)
+          }
+          return
+        }
+      }
+
+      delay(10.milliseconds)
     }
   }
 
@@ -945,7 +969,7 @@ class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : Paral
     }
   }
 
-  override fun waitCurrentIndexingToFinish() {
+  override suspend fun waitCurrentIndexingToFinish() {
     //send fake (empty) tasks to all the workers, and wait for them to complete the task
     runBlockingCancellable {
       (0..<workersCount).map { workerIndex ->
@@ -1058,7 +1082,7 @@ object FakeIndexWriter : ParallelIndexWriter() {
 
   override suspend fun writeChangesToIndexes(fileIndexingResult: FileIndexingResult, finishCallback: () -> Unit) = Unit
 
-  override fun waitCurrentIndexingToFinish() = Unit
+  override suspend fun waitCurrentIndexingToFinish() = Unit
 
   override fun totalTimeSpentWriting(unit: TimeUnit, workerNo: Int): Long = 0
 
