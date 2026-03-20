@@ -31,4 +31,12 @@ class Consumer {
   void fromField() {
     MyServiceImpl impl = <warning descr="Casting open service 'MyService' to a specific subclass is unsafe: the actual implementation may differ at runtime">(MyServiceImpl) field</warning>;
   }
+
+  // Safe cast - should report
+  void instanceofCast(MyService service) {
+    if (service instanceof MyServiceImpl serviceImpl) {
+      // do something
+    }
+  }
+
 }

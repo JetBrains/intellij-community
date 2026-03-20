@@ -22,6 +22,8 @@ class MyServiceImpl implements MyService {
   public void implOnly() {}
 }
 
+interface UnrelatedType {}
+
 class Consumer {
   // Cast of getInstance() result - should warn
   void castGetInstance() {
@@ -51,5 +53,10 @@ class Consumer {
   // Cast to same type - OK
   void castToSameType() {
     MyService service = (MyService) MyService.getInstance();
+  }
+
+  // Unrelated type - OK
+  void castToUnrelatedType() {
+    UnrelatedType service = (UnrelatedType) MyService.getInstance();
   }
 }

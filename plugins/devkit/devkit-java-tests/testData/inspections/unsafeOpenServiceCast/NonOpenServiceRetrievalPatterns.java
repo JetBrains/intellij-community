@@ -22,6 +22,8 @@ class MyClosedServiceImpl implements MyClosedService {
   public void implOnly() {}
 }
 
+interface UnrelatedType {}
+
 class Consumer {
   // Cast of getInstance() result - OK for non-open service
   void castGetInstance() {
@@ -53,8 +55,20 @@ class Consumer {
     MyClosedServiceImpl impl = (MyClosedServiceImpl) service;
   }
 
+  // Safe cast - OK for non-open service
+  void instanceofCast(MyClosedService service) {
+    if (service instanceof MyClosedServiceImpl serviceImpl) {
+      // do something
+    }
+  }
+
   // Cast to same type - OK
   void castToSameType() {
     MyClosedService service = (MyClosedService) MyClosedService.getInstance();
+  }
+
+  // Unrelated type - OK
+  void castToUnrelatedType() {
+    UnrelatedType service = (UnrelatedType) MyClosedService.getInstance();
   }
 }
