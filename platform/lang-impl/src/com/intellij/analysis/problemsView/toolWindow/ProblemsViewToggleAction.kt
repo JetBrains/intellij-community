@@ -14,9 +14,8 @@ internal class SortFoldersFirst : ProblemsViewToggleAction({ it.sortFoldersFirst
 internal class SortBySeverity : ProblemsViewToggleAction({ it.sortBySeverity })
 internal class SortByName : ProblemsViewToggleAction({ it.sortByName })
 
-@ApiStatus.Internal
-abstract class ProblemsViewToggleAction(optionSupplier: (ProblemsViewPanel) -> Option?)
-  : DumbAware, ToggleOptionAction({ it.project?.let{ProblemsView.getSelectedPanel(it)}?.let(optionSupplier) }) {
+internal abstract class ProblemsViewToggleAction(optionSupplier: (ProblemsViewPanel) -> Option?)
+  : DumbAware, ToggleOptionAction({ event -> event.getData(ProblemsViewPanel.DATA_KEY)?.let(optionSupplier) }) {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.EDT
   }
