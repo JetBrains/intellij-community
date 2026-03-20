@@ -11,6 +11,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NlsContexts;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import javax.swing.event.HyperlinkListener;
+import java.util.function.Consumer;
 
 /**
  * Instances of this class are created by the debugging subsystem
@@ -209,12 +211,25 @@ public interface XDebugSession extends AbstractDebuggerSession {
    * To migrate, please use one of the following approaches:
    * <ul>
    *   <li>Use {@link XDebugProcess#createTabLayouter()} to create static tabs. Note that this option still uses LUX.</li>
-   *   <li>Use {@link com.intellij.xdebugger.impl.XDebugSessionImpl#runWhenUiReady} as a temporary workaround to avoid races.</li>
-   *   <li>Use {@link com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy#getSessionTab()} to add a tab on the frontend.</li>
+   *   <li>Use {@link #runWhenUiReady} as a temporary workaround to avoid races.</li>
+   *   <li>(internal) Use {@link com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy#getSessionTab()} to add a tab on the frontend.</li>
    * </ul>
    */
   @ApiStatus.Obsolete
   @Nullable RunnerLayoutUi getUI();
+
+  /**
+   * Calls <code>block</code> in EDT when the tab UI is ready.
+   * <p>
+   * See {@link #getUI()} doc for proper migration steps.
+   */
+  @ApiStatus.Obsolete
+  default void runWhenUiReady(@NotNull Consumer<@NotNull RunnerLayoutUi> block) {
+    var ui = getUI();
+    if (ui != null) {
+      ApplicationManager.getApplication().invokeLater(() -> block.accept(ui));
+    }
+  }
 
   @ApiStatus.Internal
   boolean isMixedMode();
