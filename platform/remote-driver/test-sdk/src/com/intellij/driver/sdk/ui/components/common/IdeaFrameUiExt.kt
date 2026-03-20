@@ -34,6 +34,9 @@ fun IdeaFrameUI.terminalToolWindow(action: TerminalToolWindowUi.() -> Unit = {})
 fun IdeaFrameUI.problemsToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): ToolWindowUiComponent =
   x(ToolWindowUiComponent::class.java) { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byAccessibleName("Problems")) }.apply(action)
 
+fun IdeaFrameUI.usagesToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): ToolWindowUiComponent =
+  x(ToolWindowUiComponent::class.java) { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byAccessibleName("Find")) }.apply(action)
+
 fun IdeaFrameUI.jupyterToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): ToolWindowUiComponent =
   x(ToolWindowUiComponent::class.java) { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byAccessibleName("Jupyter")) }.apply(action)
 
