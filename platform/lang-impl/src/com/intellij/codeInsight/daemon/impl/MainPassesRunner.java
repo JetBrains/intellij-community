@@ -4,9 +4,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
-import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
-import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
@@ -192,18 +189,7 @@ public final class MainPassesRunner {
     }
     ProperTextRange range = ProperTextRange.create(0, document.getTextLength());
     ProgressManager.getInstance().runProcess(() -> {
-      // todo IJPL-339 figure out what is the correct context here
-      CodeInsightContext context;
-      if (CodeInsightContexts.isSharedSourceSupportEnabled(myProject)) {
-        context = ReadAction.computeBlocking(() -> {
-          CodeInsightContextManager manager = CodeInsightContextManager.getInstance(psiFile.getProject());
-          return manager.getCodeInsightContext(psiFile.getViewProvider());
-        });
-      }
-      else {
-        context = CodeInsightContexts.defaultContext();
-      }
-      HighlightingSessionImpl.runInsideHighlightingSession(psiFile, context, null, range, false, session -> {
+      HighlightingSessionImpl.runInsideHighlightingSession(psiFile, null, range, false, session -> {
         ((HighlightingSessionImpl)session).setMinimumSeverity(minimumSeverity);
         runMainPasses(daemonIndicator, result, psiFile, document);
       });

@@ -167,7 +167,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     //noinspection IncorrectCancellationExceptionHandling
     try {
       ProperTextRange visibleRange = new ProperTextRange(0, document.getTextLength());
-      HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, context, (DaemonProgressIndicator)progressIndicator, visibleRange);
+      HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, (DaemonProgressIndicator)progressIndicator, visibleRange);
       GeneralHighlightingPass pass = new NasueousGeneralHighlightingPass(psiFile, document, visibleRange, error);
       pass.setContext(context);
       pass.collectInformation(progressIndicator);

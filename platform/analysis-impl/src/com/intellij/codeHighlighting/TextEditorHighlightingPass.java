@@ -109,12 +109,11 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     }
 
     if (myDocument.getModificationStamp() != myInitialDocStamp) return false;
-    CodeInsightContext codeInsightContext = getContext();
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument, codeInsightContext);
+    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument, getContext());
     PsiElement context;
-    return file != null
-           && file.isValid()
-           && ((context = file.getContext()) == null || context == file || context.isValid());
+    return psiFile != null
+           && psiFile.isValid()
+           && ((context = psiFile.getContext()) == null || context == psiFile || context.isValid());
   }
 
   @Override
