@@ -33,6 +33,7 @@ com.intellij.analysis.problemsView.ProblemsProvider
 - a:getProject():com.intellij.openapi.project.Project
 c:com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanel
 - sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:PREVIEW_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - pf:myScrollPane:javax.swing.JScrollPane
 com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanelProvider
 - sf:Companion:com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanelProvider$Companion

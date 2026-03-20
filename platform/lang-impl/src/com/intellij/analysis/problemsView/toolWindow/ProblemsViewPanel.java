@@ -83,6 +83,7 @@ import static com.intellij.util.OpenSourceUtil.navigate;
 
 public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, UiCompatibleDataProvider, ProblemsViewTab {
   public static final @NotNull DataKey<ProblemsViewPanel> DATA_KEY = DataKey.create("ProblemsViewPanel");
+  public static final @NotNull DataKey<Editor> PREVIEW_DATA_KEY = DataKey.create("ProblemsViewPanel.preview");
   
   private final ClientProjectSession mySession;
   volatile boolean myDisposed;
@@ -296,6 +297,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
   public void uiDataSnapshot(@NotNull DataSink sink) {
     sink.set(CommonDataKeys.PROJECT, getProject());
     sink.set(DATA_KEY, this);
+    sink.set(PREVIEW_DATA_KEY, getPreview());
     sink.set(PlatformDataKeys.TREE_EXPANDER, getTreeExpander());
     sink.set(PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER, shouldHideExpandCollapseActionsIfThereIsNoTreeExpander());
 
