@@ -43,11 +43,10 @@ import kotlin.time.Duration.Companion.nanoseconds
  * - **forScope**: Tied to a [CoroutineScope] lifecycle
  * - **forComponent**: Tied to a [JComponent] visibility lifecycle
  *
- * Supports two execution modes:
+ * Supports three execution modes (all execute sequentially without cancellation):
  * - **runLatest**: Processes only the latest queued item (replaces earlier items with newer ones).
- *   Actions execute sequentially without cancellation.
  * - **runBatched**: Collects and processes all items accumulated during the delay window.
- *   Actions execute sequentially without cancellation.
+ * - **runBatchedDistinct**: Like runBatched, but automatically removes duplicate items.
  *
  * Supports two timing modes:
  * - **Throttle mode** (default, `restartTimerOnAdd = false`): Timer starts on first item, waits for delay
@@ -80,12 +79,12 @@ import kotlin.time.Duration.Companion.nanoseconds
  * var queue1 = DebouncedUpdates.forScope(scope, "update-ui", 300)
  *   .withContext(Dispatchers.getEDT())
  *   .restartTimerOnAdd(true)
- *   .runLatestConsumer(state -> updateUI(state))
+ *   .runLatest(state -> updateUI(state))
  *   .cancelOnDispose(disposable);
  *
  * // Batched, component-bound
  * var queue2 = DebouncedUpdates.forComponent(component, "process-events", 100)
- *   .runBatchedConsumer(events -> processEvents(events));
+ *   .runBatched(events -> processEvents(events));
  *
  * queue1.queue(newState);
  * queue2.queue(event);
@@ -271,6 +270,8 @@ object DebouncedUpdates {
      * Collects all items queued within the delay period and processes them together as a batch.
      * Supports both throttle mode (default) and debounce mode via [restartTimerOnAdd].
      *
+     * To automatically deduplicate items, use [runBatchedDistinct] instead.
+     *
      * Throttle mode example:
      * ```kotlin
      * val queue = DebouncedUpdates.forScope<Int>(scope, "batch", 100.milliseconds)
@@ -325,6 +326,47 @@ object DebouncedUpdates {
      */
     fun runBatched(action: Consumer<List<T>>): UpdateQueue<T> {
       return runBatched { action.accept(it) }
+    }
+
+    /**
+     * Creates a queue that batches all items during the delay window with automatic deduplication.
+     *
+     * Like [runBatched], but automatically removes duplicate items. The action receives a [Set] of unique items.
+     * Useful when multiple identical items may be queued, and you only want to process each unique item once.
+     *
+     * Example:
+     * ```kotlin
+     * val queue = DebouncedUpdates.forScope<String>(scope, "batch", 100.milliseconds)
+     *   .runBatchedDistinct { ids -> processUniqueIds(ids) }
+     *
+     * queue.queue("id1")
+     * queue.queue("id2")
+     * queue.queue("id1")  // Duplicate, will be deduplicated
+     * delay(150)  // Batch emitted: ["id1", "id2"]
+     * ```
+     *
+     * @param action The action to perform for each batch of deduplicated items
+     * @return A queue that can be used to submit items via [UpdateQueue.queue]
+     */
+    @JvmSynthetic
+    fun runBatchedDistinct(action: suspend (Set<T>) -> Unit): UpdateQueue<T> {
+      return when (owner) {
+        is ScopeOwner -> BatchedDistinctScopeQueue(owner.scope, name, delay, context, restartTimerOnAdd, action)
+        is ComponentOwner -> BatchedDistinctComponentQueue(owner.component, name, delay, context, restartTimerOnAdd, action)
+      }
+    }
+
+    /**
+     * Creates a queue that batches all items during the delay window with automatic deduplication.
+     * Java-friendly overload accepting a [Consumer].
+     *
+     * See [runBatchedDistinct] for behavior details.
+     *
+     * @param action The action to perform for each batch of deduplicated items
+     * @return A queue that can be used to submit items via [UpdateQueue.queue]
+     */
+    fun runBatchedDistinct(action: Consumer<Set<T>>): UpdateQueue<T> {
+      return runBatchedDistinct { action.accept(it) }
     }
   }
 }
@@ -654,6 +696,32 @@ private abstract class BaseUpdateQueue<T>(
       onProcess = { batch -> action(batch) }
     )
   }
+
+  /**
+   * Process all items as a deduplicated batch (collects all items into a set).
+   */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  protected suspend fun processBatchedDistinct(
+    delay: Duration,
+    context: CoroutineContext,
+    restartTimerOnAdd: Boolean,
+    action: suspend (Set<T>) -> Unit
+  ) {
+    val buffer = mutableSetOf<T>()
+
+    processWithDelay(
+      delay = delay,
+      context = context,
+      restartTimerOnAdd = restartTimerOnAdd,
+      onReceive = { buffer.add(it) },
+      onPrepare = {
+        val batch = buffer.toSet() // Create immutable copy before clearing
+        buffer.clear()
+        batch
+      },
+      onProcess = { batch -> action(batch) }
+    )
+  }
 }
 
 /**
@@ -725,5 +793,41 @@ private class BatchedComponentQueue<T>(
 
   override val job: Job = component.launchOnShow(name) {
     processBatched(delay, context, restartTimerOnAdd, action)
+  }
+}
+
+/**
+ * Batched deduplicating queue bound to a CoroutineScope.
+ */
+@ApiStatus.Experimental
+private class BatchedDistinctScopeQueue<T>(
+  scope: CoroutineScope,
+  name: String,
+  delay: Duration,
+  context: CoroutineContext,
+  restartTimerOnAdd: Boolean,
+  action: suspend (Set<T>) -> Unit
+) : BaseUpdateQueue<T>(name, context, channelCapacity = Channel.UNLIMITED) {
+
+  override val job: Job = scope.launch(CoroutineName(name)) {
+    processBatchedDistinct(delay, context, restartTimerOnAdd, action)
+  }
+}
+
+/**
+ * Batched deduplicating queue bound to a JComponent lifecycle.
+ */
+@ApiStatus.Experimental
+private class BatchedDistinctComponentQueue<T>(
+  component: JComponent,
+  name: String,
+  delay: Duration,
+  context: CoroutineContext,
+  restartTimerOnAdd: Boolean,
+  action: suspend (Set<T>) -> Unit
+) : BaseUpdateQueue<T>(name, context, channelCapacity = Channel.UNLIMITED) {
+
+  override val job: Job = component.launchOnShow(name) {
+    processBatchedDistinct(delay, context, restartTimerOnAdd, action)
   }
 }

@@ -47,18 +47,18 @@ import kotlin.coroutines.coroutineContext
  *
  * ## Alternatives to MergingUpdateQueue
  *
- * **For new code, always use [DebouncedUpdates] instead.** It provides a simpler, coroutine-based API with better lifecycle management.
+ * **For new code, prefer [DebouncedUpdates] instead.** It provides a simpler, coroutine-based API with better lifecycle management.
  *
  * **Use [DebouncedUpdates] for:**
  * - Queuing single updates that don't need identity-based merging (use [DebouncedUpdates.Builder.runLatest])
- * - Collecting updates over time for batch processing (use [DebouncedUpdates.Builder.runBatched]; you can handle priorities, deduplication, and other merging logic in the batch handler)
+ * - Collecting updates over time for batch processing (use [DebouncedUpdates.Builder.runBatched] or [DebouncedUpdates.Builder.runBatchedDistinct]; you can handle priorities and other merging logic in the batch handler)
  * - Component lifecycle integration (use [DebouncedUpdates.forComponent])
  * - Almost all debouncing/throttling use cases
  *
  * **Note:** You can also use [kotlinx.coroutines.flow.Flow] with [kotlinx.coroutines.flow.debounce].
  *
  * **Only keep using [MergingUpdateQueue] if you have a rare, specific need for:**
- * - Manual activation/suspension control via [activate]/[suspend]/[resume] (think twice: can you use coroutine scope cancellation/restart instead?)
+ * - Manual activation/suspension control via [activate]/[suspend]/[resume]
  * - Flushing updates immediately with [sendFlush] (think twice: can you use a shorter delay or trigger the update directly? For tests, use [UpdateQueue.waitForAllExecuted] instead)
  *
  * If you are still using [MergingUpdateQueue], you can consider queuing via [queueTracked]

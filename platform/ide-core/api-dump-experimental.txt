@@ -89,6 +89,8 @@ f:com.intellij.util.ui.UiScopeKt
 - bs:restartTimerOnAdd$default(com.intellij.util.ui.update.DebouncedUpdates$Builder,Z,I,java.lang.Object):com.intellij.util.ui.update.DebouncedUpdates$Builder
 - f:runBatched(java.util.function.Consumer):com.intellij.util.ui.update.UpdateQueue
 - bf:runBatched(kotlin.jvm.functions.Function2):com.intellij.util.ui.update.UpdateQueue
+- f:runBatchedDistinct(java.util.function.Consumer):com.intellij.util.ui.update.UpdateQueue
+- bf:runBatchedDistinct(kotlin.jvm.functions.Function2):com.intellij.util.ui.update.UpdateQueue
 - f:runLatest(java.util.function.Consumer):com.intellij.util.ui.update.UpdateQueue
 - bf:runLatest(kotlin.jvm.functions.Function2):com.intellij.util.ui.update.UpdateQueue
 - f:withComponentModality(javax.swing.JComponent):com.intellij.util.ui.update.DebouncedUpdates$Builder

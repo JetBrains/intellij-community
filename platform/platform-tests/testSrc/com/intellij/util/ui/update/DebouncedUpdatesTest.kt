@@ -554,6 +554,45 @@ class DebouncedUpdatesTest {
   }
 
   @Test
+  fun `test batched distinct queue removes duplicates`() {
+    timeoutRunBlocking {
+      val batches = CopyOnWriteArrayList<Set<String>>()
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+      try {
+        val queue = DebouncedUpdates.forScope<String>(scope, "test-batched-deduplicating", 100.milliseconds)
+          .runBatchedDistinct { batch ->
+            batches.add(batch)
+          }
+
+        // Queue items with duplicates
+        queue.queue("id1")
+        queue.queue("id2")
+        queue.queue("id1")  // Duplicate
+        queue.queue("id3")
+        queue.queue("id2")  // Duplicate
+        delay(150.milliseconds) // Wait for first batch
+
+        // Should deduplicate: ["id1", "id2", "id3"]
+        assertEquals(1, batches.size)
+        assertEquals(setOf("id1", "id2", "id3"), batches[0], "Batch should contain deduplicated items")
+
+        // Queue another batch with duplicates
+        queue.queue("id4")
+        queue.queue("id4")  // Duplicate
+        queue.queue("id5")
+        delay(150.milliseconds)
+
+        assertEquals(2, batches.size)
+        assertEquals(setOf("id4", "id5"), batches[1], "Second batch should also deduplicate")
+      }
+      finally {
+        scope.cancel()
+      }
+    }
+  }
+
+  @Test
   fun `test component queue executes only when component is showing`() {
     edtTest {
       val component = JLabel()
