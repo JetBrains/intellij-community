@@ -362,9 +362,10 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             }
             is KtClass, is KtTypeReference -> "this"
             else -> null
-        } ?: return
+        } ?: if (valueSymbol is KaContextParameterSymbol) "context" else return
 
         val targetPsi = when(valueSymbol) {
+            is KaContextParameterSymbol -> valueSymbol.psi ?: valueSymbol.containingSymbol?.psi
             is KaReceiverParameterSymbol -> {
                 val element = valueSymbol.owningCallableSymbol.psi
                 (element as? KtNamedFunction)?.receiverTypeReference ?: element

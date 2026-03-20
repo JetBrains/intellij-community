@@ -50,6 +50,11 @@ public class KtParameterHintsProviderTestGenerated extends AbstractKtParameterHi
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParametersAndExplicitContextArguments.kt");
     }
 
+    @TestMetadata("contextParametersInContext.kt")
+    public void testContextParametersInContext() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParametersInContext.kt");
+    }
+
     @TestMetadata("contextParametersLambda.kt")
     public void testContextParametersLambda() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParametersLambda.kt");
