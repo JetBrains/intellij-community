@@ -27,7 +27,6 @@ import kotlin.time.Duration.Companion.seconds
 
 @ExtendWith(KillOutdatedProcessesAfterEach::class)
 class IdeLaunchEventTest {
-
   @AfterEach
   fun afterEach() {
     EventsBus.unsubscribeAll()
@@ -36,9 +35,7 @@ class IdeLaunchEventTest {
   @RepeatedTest(value = 2)
   fun `events for twice ide launch should be fired`(testInfo: TestInfo) {
     val firedEvents = mutableListOf<Event>()
-    EventsBus.subscribe(this) {
-      event: IdeBeforeLaunchEvent -> firedEvents.add(event)
-    }
+    EventsBus.subscribe(this) { event: IdeBeforeLaunchEvent -> firedEvents.add(event) }
     EventsBus.subscribe(this) { event: IdeLaunchEvent -> firedEvents.add(event) }
     EventsBus.subscribe(this) { event: IdeBeforeKillEvent -> firedEvents.add(event) }
     EventsBus.subscribe(this) { event: IdeAfterLaunchEvent -> firedEvents.add(event) }
@@ -67,7 +64,7 @@ class IdeLaunchEventTest {
       firedEvents.filterIsInstance<IdeBeforeLaunchEvent>().shouldHaveSize(2)
       firedEvents.filterIsInstance<IdeLaunchEvent>().shouldHaveSize(2)
       firedEvents.filterIsInstance<IdeBeforeKillEvent>().shouldHaveSize(2)
-      firedEvents.filterIsInstance<IdeBeforeKillEvent>().shouldHaveSize(2)
+      firedEvents.filterIsInstance<IdeAfterLaunchEvent>().shouldHaveSize(2)
     }
   }
 }
