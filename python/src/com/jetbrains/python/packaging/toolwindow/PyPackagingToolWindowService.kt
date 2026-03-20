@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging.toolwindow
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -11,6 +12,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.ex.SingleConfigurableEditor
 import com.intellij.openapi.project.Project
@@ -20,6 +22,7 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.messages.MessageBusConnection
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.TraceContext
@@ -43,6 +46,7 @@ import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageNode
+import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor
 import com.jetbrains.python.packaging.packageRequirements.WorkspaceMemberPackageStructureNode
 import com.jetbrains.python.packaging.pyRequirement
@@ -56,10 +60,12 @@ import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.ExpandResultNode
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.toolwindow.model.LoadingNode
 import com.jetbrains.python.packaging.toolwindow.model.PyInvalidRepositoryViewData
 import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
+import com.jetbrains.python.sdk.PySdkListener
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.PythonPackagesIdsHolder.Companion.PYTHON_PACKAGE_DELETED
@@ -89,7 +95,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       get() = managerUI.manager
   }
 
-  private var sdkContext: SdkContext? = null
+  @Volatile private var sdkContext: SdkContext? = null
 
   internal val currentSdk: Sdk?
     get() = sdkContext?.sdk
@@ -294,23 +300,26 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
         text = message("python.packaging.notification.deleted", selectedPackages.joinToString(", ") { it.name }),
         displayId = PYTHON_PACKAGE_DELETED
       )
-      refreshInstalledPackages()
       toolWindowPanel?.clearFocus()
     }
   }
 
   @ApiStatus.Internal
   suspend fun initForSdk(sdk: Sdk?) {
+    if (project.isDisposed) return
     if (sdk != null && sdk == currentSdk) {
       return
     }
 
     withContext(Dispatchers.EDT) {
-      toolWindowPanel?.startLoadingSdk()
+      toolWindowPanel?.let {
+        it.startLoadingSdk()
+        it.syncSdkControllerSelection(sdk)
+      }
     }
 
     val previousSdk = currentSdk
-    
+
     if (sdk == null) {
       sdkContext = null
       withContext(Dispatchers.EDT) {
@@ -353,29 +362,69 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   }
 
   private fun subscribeToChanges() {
+    subscribeToSdkChanges()
+    subscribeToPackageManagementChanges()
+    subscribeToProjectChanges()
+  }
+
+  private fun subscribeToSdkChanges() {
+    ApplicationManager.getApplication().messageBus.connect(serviceScope)
+      .subscribe(PySdkListener.TOPIC, object : PySdkListener {
+        override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) {
+          if (newSdk != null && newSdk == currentSdk) return
+          serviceScope.launch(Dispatchers.IO) {
+            initForSdk(newSdk)
+          }
+        }
+      })
+  }
+
+  private fun subscribeToPackageManagementChanges() {
+    ApplicationManager.getApplication().messageBus.connect(serviceScope)
+      .subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
+        override fun packagesChanged(sdk: Sdk) {
+          val context = sdkContext ?: return
+          if (context.sdk == sdk) {
+            serviceScope.launch(Dispatchers.IO + NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+              refreshInstalledPackages()
+            }
+          }
+        }
+
+        override fun outdatedPackagesChanged(sdk: Sdk) {
+          val context = sdkContext ?: return
+          if (context.sdk == sdk) {
+            serviceScope.launch(Dispatchers.IO + NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+              refreshInstalledPackages(showIndicator = false)
+            }
+          }
+        }
+      })
+  }
+
+  private fun subscribeToProjectChanges() {
     val connection = project.messageBus.connect(this)
-    connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
-      override fun packagesChanged(sdk: Sdk) {
-        if (sdkContext?.sdk == sdk) serviceScope.launch(Dispatchers.IO + NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
-          refreshInstalledPackages()
-        }
-      }
+    subscribeToRootChanges(connection)
+    subscribeToFileEditorChanges(connection)
+  }
 
-      override fun outdatedPackagesChanged(sdk: Sdk) {
-        if (sdkContext?.sdk == sdk) serviceScope.launch(Dispatchers.IO + NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
-          refreshInstalledPackages()
-        }
-
-      }
-    })
+  // Needed alongside PySdkListener: covers structural changes (module added/removed) that affect SDK availability
+  private fun subscribeToRootChanges(connection: MessageBusConnection) {
     connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         serviceScope.launch(Dispatchers.IO) {
-          initForSdk(readAction { project.modules.firstNotNullOfOrNull { it.pythonSdk } })
+          val sdk = readAction {
+            project.modules.firstNotNullOfOrNull { it.pythonSdk }
+          }
+          if (sdk != currentSdk) {
+            initForSdk(sdk)
+          }
         }
       }
     })
+  }
 
+  private fun subscribeToFileEditorChanges(connection: MessageBusConnection) {
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun selectionChanged(event: FileEditorManagerEvent) {
         event.newFile?.let { newFile ->
@@ -384,7 +433,6 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
               val module = ModuleUtilCore.findModuleForFile(newFile, project)
               PythonSdkUtil.findPythonSdk(module)
             }
-
             initForSdk(sdk)
           }
         }
@@ -392,9 +440,37 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     })
   }
 
-  suspend fun refreshInstalledPackages() {
+  suspend fun refreshInstalledPackages(showIndicator: Boolean = true) {
+    if (project.isDisposed) return
     val context = sdkContext ?: return
+    
+    if (showIndicator) {
+      showRefreshIndicatorIfNeeded()
+    }
+    
+    try {
+      refreshInstalledPackagesImpl(context)
+    }
+    finally {
+      if (showIndicator) {
+        hideRefreshIndicatorIfNeeded()
+      }
+    }
+  }
 
+  private suspend fun showRefreshIndicatorIfNeeded() {
+      withContext(Dispatchers.EDT) {
+        toolWindowPanel?.setRefreshIndicatorVisible(true)
+      }
+  }
+
+  private suspend fun hideRefreshIndicatorIfNeeded() {
+      withContext(Dispatchers.EDT) {
+        toolWindowPanel?.setRefreshIndicatorVisible(false)
+    }
+  }
+
+  private suspend fun refreshInstalledPackagesImpl(context: SdkContext) {
     val declaredPackageNames = if (context.manager.installedMightBeTransitive) {
       context.manager.extractDependenciesCached()?.getOrNull() ?: emptyList()
     }
@@ -402,12 +478,14 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       context.manager.listInstalledPackages()
     }.mapTo(mutableSetOf()) { it.name }
 
-    withContext(Dispatchers.Default) {
-      val packageIndex = PackageIndex(context.manager)
-      val treeExtractor = PythonPackageRequirementsTreeExtractor.forSdk(context.sdk, project)
+    val packageIndex = PackageIndex(context.manager)
+    val treeExtractor = PythonPackageRequirementsTreeExtractor.forSdk(context.sdk, project)
 
-      val allPackages = if (treeExtractor != null) {
-        buildPackagesFromTree(context, treeExtractor, packageIndex, declaredPackageNames)
+    val treeNode = treeExtractor?.extract(declaredPackageNames)
+
+    withContext(Dispatchers.Default) {
+      val allPackages = if (treeNode != null) {
+        buildPackagesFromTree(context, treeNode, packageIndex, declaredPackageNames)
       }
       else {
         buildPackagesFromManager(packageIndex, declaredPackageNames)
@@ -437,11 +515,11 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   private suspend fun buildPackagesFromTree(
     context: SdkContext,
-    treeExtractor: PythonPackageRequirementsTreeExtractor,
+    node: PackageStructureNode,
     packageIndex: PackageIndex,
     declaredPackageNames: Set<String>,
   ): List<DisplayablePackage> {
-    return when (val node = treeExtractor.extract(declaredPackageNames)) {
+    return when (node) {
       is WorkspaceMemberPackageStructureNode -> {
         val workspaceMembers = buildWorkspaceMembers(context, node, packageIndex, declaredPackageNames)
         val undeclared = buildInstalledPackages(context, node.undeclaredPackages, packageIndex, declaredPackageNames)
@@ -473,7 +551,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       is InstalledPackage -> pkg.isDeclared
       is RequirementPackage -> pkg.isDeclared
       is WorkspaceMember -> true
-      is ExpandResultNode, is InstallablePackage -> false
+      is ExpandResultNode, is InstallablePackage, is LoadingNode -> false
     }
   }
 

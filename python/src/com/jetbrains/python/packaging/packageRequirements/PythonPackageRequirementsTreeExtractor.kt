@@ -137,11 +137,25 @@ class TreeParser {
     private const val CORNER_ASCII = '`'
     private const val HORIZONTAL_ASCII = '-'
 
-    private val INDENT_PREFIXES = charArrayOf(' ', VERTICAL, BRANCH, CORNER)
+    private val INDENT_PREFIXES = charArrayOf(' ', VERTICAL, BRANCH, CORNER, VERTICAL_ASCII, CORNER_ASCII)
 
     fun isRootLine(line: String): Boolean {
       val first = line.firstOrNull() ?: return false
       return first !in INDENT_PREFIXES
+    }
+
+    fun splitIntoPackageGroups(lines: List<String>): List<List<String>> {
+      val groups = mutableListOf<MutableList<String>>()
+      for (line in lines) {
+        if (line.isBlank()) continue
+        if (isRootLine(line)) {
+          groups.add(mutableListOf(line))
+        }
+        else {
+          groups.lastOrNull()?.add(line)
+        }
+      }
+      return groups
     }
 
     private val TREE_LINE_REGEX = Regex(

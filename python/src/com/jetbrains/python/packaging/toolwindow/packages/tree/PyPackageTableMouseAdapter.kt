@@ -12,6 +12,7 @@ import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.ExpandResultNode
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.toolwindow.model.LoadingNode
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
@@ -37,7 +38,7 @@ internal class PyPackageTableMouseAdapter(private val treeTable: PyPackagesTreeT
       when (selectedPackage) {
         is InstallablePackage -> installablePackageMouseAdapter(treeTable, selectedPackage, e)
         is InstalledPackage -> installedPackageMouseAdapter(selectedPackage)
-        is RequirementPackage, is ExpandResultNode, is WorkspaceMember -> null
+        is RequirementPackage, is ExpandResultNode, is WorkspaceMember, is LoadingNode -> null
       }
     }
   }

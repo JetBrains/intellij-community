@@ -26,6 +26,7 @@ import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.ExpandResultNode
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.toolwindow.model.LoadingNode
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PackageNameCellRenderer
@@ -155,6 +156,7 @@ class PyPackagesTreeTable(
       is InstallablePackage -> controller.packageSelected(pkg)
       is RequirementPackage -> controller.packageSelected(pkg)
       is WorkspaceMember -> controller.packageSelected(pkg)
+      is LoadingNode -> {}
       is ExpandResultNode -> controller.setEmpty()
     }
   }
@@ -245,7 +247,7 @@ class PyPackagesTreeTable(
 
     private fun shouldShowPopupForNode(node: DisplayablePackage): Boolean = when (node) {
       is InstallablePackage, is InstalledPackage -> true
-      is RequirementPackage, is ExpandResultNode, is WorkspaceMember -> false
+      is RequirementPackage, is ExpandResultNode, is WorkspaceMember, is LoadingNode -> false
     }
 
     private fun createAndShowPopupMenu(comp: Component?, x: Int, y: Int, actionGroup: ActionGroup) {
@@ -304,7 +306,7 @@ class PyPackagesTreeTable(
 
   private fun getTextForCopy(): String? = when (val pkg = selectedItem()) {
     is InstalledPackage, is InstallablePackage, is RequirementPackage, is WorkspaceMember -> pkg.name
-    is ExpandResultNode, null -> null
+    is ExpandResultNode, is LoadingNode, null -> null
   }
 }
 

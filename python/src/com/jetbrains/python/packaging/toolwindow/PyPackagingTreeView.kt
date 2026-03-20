@@ -202,6 +202,10 @@ internal class PyPackagingTreeView(
     return repos.flatMap { it.tree.selectedItems() }
   }
 
+  fun setInstalledLoading(loading: Boolean) {
+    installedPackages.setLoading(loading)
+  }
+
   fun collapseAll() {
     getRepos().forEach { it.collapseAll() }
   }

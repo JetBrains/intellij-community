@@ -96,6 +96,7 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
   }
 
   private val versionSelector = JBComboBoxLabel()
+  private var versionSelectorMouseListener: MouseAdapter? = null
 
   private val progressEnabledProperty = AtomicBooleanProperty(false)
 
@@ -133,7 +134,7 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
       cell(progressIndicatorComponent).gap(RightGap.SMALL).visibleIf(progressEnabledProperty)
       versionSelector.apply {
         versionSelector.text = packageVersionProperty.get()
-        addMouseListener(object : MouseAdapter() {
+        versionSelectorMouseListener = object : MouseAdapter() {
           override fun mouseClicked(e: MouseEvent?) {
             if (!isManagement.get())
               return
@@ -158,7 +159,8 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
             })
             popup.showUnderneathOf(this@apply)
           }
-        })
+        }
+        addMouseListener(versionSelectorMouseListener)
       }
 
       packageVersionProperty.afterChange {
@@ -272,5 +274,10 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
     }
   }
 
-  override fun dispose() {}
+  override fun dispose() {
+    versionSelectorMouseListener?.let {
+      versionSelector.removeMouseListener(it)
+      versionSelectorMouseListener = null
+    }
+  }
 }
