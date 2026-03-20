@@ -230,8 +230,10 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
                    : result.withNullability(origNullability.instantiatedWith(result.getNullability()));
       }
       PsiSubstitutor resultSubstitutor = processClass(aClass, resolveResult.getSubstitutor());
+      //if (resultSubstitutor.equals(resolveResult.getSubstitutor())) return classType;
       return new PsiImmediateClassType(aClass, resultSubstitutor, classType.getLanguageLevel(),
-                                       classType.getAnnotationProvider(), classType.getPsiContext());
+                                       classType.getAnnotationProvider(), classType.getPsiContext())
+        .withNullability(classType.getNullability());
     }
 
     private @NotNull PsiSubstitutor processClass(@NotNull PsiClass resolve, @NotNull PsiSubstitutor originalSubstitutor) {

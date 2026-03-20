@@ -513,6 +513,12 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
 
+  public void testStreamFilterPatchingInFunction() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
   public void testNullableExtendsNullable() {
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
