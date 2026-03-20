@@ -8,6 +8,7 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
@@ -57,7 +58,7 @@ internal suspend fun uploadArchives(
 
   val urlPathPrefix = "${config.serverUrlPathPrefix}/${config.uploadUrlPathPrefix}"
   val zstdCompressContextPool = ZstdCompressContextPool()
-  items.forEachConcurrent(uploadParallelism) { item ->
+  items.forEachConcurrent(concurrency = uploadParallelism, workerDispatcher = Dispatchers.IO) { item ->
     if (alreadyUploaded.contains(item.name)) {
       reusedCount.increment()
       reusedBytes.add(Files.size(item.archive))

@@ -53,6 +53,7 @@ import kotlin.io.path.name
 
 private val nettyMax = Runtime.getRuntime().availableProcessors() * 2
 internal val uploadParallelism = nettyMax.coerceIn(4, 32)
+
 // max not 32 as for upload because we write to disk (not read as upload)
 internal val downloadParallelism = nettyMax.coerceIn(4, 24)
 
@@ -116,7 +117,7 @@ suspend fun packAndUploadToServer(context: CompilationContext, zipDir: Path, con
     }.map { (name, output) ->
       PackAndUploadItem(output = Path.of(""), name = name, archive = output!!)
     }.apply {
-      forEachConcurrent { item ->
+      forEachConcurrent(workerDispatcher = Dispatchers.IO) { item ->
         spanBuilder("compute hash").setAttribute("name", item.name).blockingUse {
           item.hash = computeHash(item.archive)
         }
@@ -341,7 +342,10 @@ suspend fun fetchAndUnpackCompiledClasses(
       }
       true
     }
-      .forEachConcurrent(Runtime.getRuntime().availableProcessors().coerceAtLeast(4)) { item ->
+      .forEachConcurrent(
+        concurrency = Runtime.getRuntime().availableProcessors().coerceAtLeast(4),
+        workerDispatcher = Dispatchers.IO,
+      ) { item ->
         val file = item.file
         when {
           Files.notExists(file) -> toDownload.add(item)
@@ -459,7 +463,7 @@ private suspend fun checkPreviouslyUnpackedDirectories(
       }
     }
 
-    items.forEachConcurrent { item ->
+    items.forEachConcurrent(workerDispatcher = Dispatchers.IO) { item ->
       val out = item.output
       if (Files.notExists(out)) {
         span.addEvent("output directory doesn't exist", Attributes.of(AttributeKey.stringKey("name"), item.name, AttributeKey.stringKey("outDir"), out.toString()))
@@ -547,7 +551,8 @@ internal data class PackAndUploadItem(
   @JvmField val name: String,
   @JvmField val archive: Path,
 ) {
-  @JvmField var hash: String? = null
+  @JvmField
+  var hash: String? = null
 }
 
 internal data class FetchAndUnpackItem(
