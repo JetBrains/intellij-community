@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionResult;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
@@ -66,7 +67,7 @@ import static com.intellij.openapi.options.newEditor.ConfigurablesListPanelKt.cr
 @ApiStatus.Internal
 public class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWTEventListener {
   private final UpdateQueue<Configurable> queue = DebouncedUpdates.<Configurable>forScope(coroutineScope, "SettingsModification", 1000)
-    .runLatest(configurable -> SwingUtilities.invokeLater(() -> updateIfCurrent(configurable)));
+    .runLatest(it -> updateIfCurrent(it));
   private final ConfigurableCardPanel myCardPanel = new ConfigurableCardPanel() {
     @Override
     protected JComponent create(Configurable configurable) {
@@ -242,9 +243,11 @@ public class ConfigurableEditor extends AbstractEditor implements AnActionListen
   }
 
   final void updateIfCurrent(Configurable configurable) {
-    if (this.configurable == configurable) {
-      updateCurrent(configurable, false);
-    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (this.configurable == configurable) {
+        updateCurrent(configurable, false);
+      }
+    }, ModalityState.stateForComponent(this));
   }
 
   final @NotNull Promise<? super Object> select(final Configurable configurable) {
