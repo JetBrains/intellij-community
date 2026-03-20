@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.BaseCompletionLookupArranger
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
@@ -39,6 +40,7 @@ import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
+import com.intellij.repository.search.completion.lookup.StrictOrderWeigher
 import com.intellij.repository.search.completion.statistics.BT_COMPLETION_IS_AUTO_POPUP
 import com.intellij.util.ProcessingContext
 import kotlinx.coroutines.flow.flowOf
@@ -160,7 +162,9 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     val request = DependencyCompletionRequest(text, parameters.getCompletionContext())
 
     val resultSet = result.withPrefixMatcher(GradleDependencyCompletionFuzzyMatcher(text))
+      .withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
 
+    var index = 0
     runBlockingCancellable {
       completionService.suggestCompletions(request)
         .collect { item ->
@@ -171,6 +175,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
             .withInsertHandler(insertHandler)
           lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
           lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
+          lookupElement.putUserData(StrictOrderWeigher.ORDER_KEY, index++)
 
           // Store FUS metadata
           lookupElement.putUserData(BT_COMPLETION_IS_AUTO_POPUP, parameters.isAutoPopup)
