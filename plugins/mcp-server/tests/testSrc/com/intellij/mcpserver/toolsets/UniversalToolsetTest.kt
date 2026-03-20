@@ -6,7 +6,10 @@ import com.intellij.mcpserver.McpSessionInvocationMode
 import com.intellij.mcpserver.McpToolsetTestBase
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.toolsets.general.UniversalToolset
-import io.kotest.common.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import org.junit.jupiter.api.AfterEach
@@ -15,6 +18,25 @@ import org.junit.jupiter.api.Test
 
 class UniversalToolsetTest : McpToolsetTestBase() {
   private var oldInvocationMode = McpSessionInvocationMode.DIRECT
+  private val json = Json { ignoreUnknownKeys = true }
+
+  @Serializable
+  private data class SearchItem(
+    val filePath: String,
+  )
+
+  @Serializable
+  private data class SearchResult(
+    val items: List<SearchItem> = emptyList(),
+    val more: Boolean = false,
+  )
+
+  private fun parseSearchResult(text: String?): SearchResult {
+    val payload = text ?: error("Tool call result should include text content")
+    return json.decodeFromString(SearchResult.serializer(), payload)
+  }
+
+  private fun SearchResult.filePaths(): List<String> = items.map { it.filePath }
 
   @BeforeEach
   fun setUpInvocationMode() {
@@ -29,7 +51,7 @@ class UniversalToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_tool_reformat_file() = runBlocking {
+  fun execute_tool_reformat_file(): Unit = runBlocking(Dispatchers.Default) {
     testMcpTool(
       UniversalToolset::execute_tool.name,
       buildJsonObject {
@@ -40,35 +62,35 @@ class UniversalToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_tool_find_files_by_name() = runBlocking {
+  fun execute_tool_search_file_by_name(): Unit = runBlocking(Dispatchers.Default) {
     testMcpTool(
       UniversalToolset::execute_tool.name,
       buildJsonObject {
-        put("command", JsonPrimitive("find_files_by_name_keyword --nameKeyword test"))
+        put("command", JsonPrimitive("search_file --q Test.java"))
       }
     ) { result ->
-      val textContent = result.textContent
-      assert(textContent.text.contains("Test.java")) { "Result should contain Test.java" }
+      val searchResult = parseSearchResult(result.textContent.text)
+      assert(searchResult.filePaths().contains("src/Test.java")) { "Result should contain src/Test.java" }
     }
   }
 
   @Test
-  fun execute_tool_find_files_by_glob() = runBlocking {
+  fun execute_tool_search_file_by_glob(): Unit = runBlocking(Dispatchers.Default) {
     testMcpTool(
       UniversalToolset::execute_tool.name,
       buildJsonObject {
-        put("command", JsonPrimitive("find_files_by_glob --globPattern **/*.java"))
+        put("command", JsonPrimitive("search_file --q **/*.java"))
       }
     ) { result ->
-      val textContent = result.textContent
-      assert(textContent.text.contains("Main.java")) { "Result should contain Main.java" }
-      assert(textContent.text.contains("Test.java")) { "Result should contain Test.java" }
-      assert(textContent.text.contains("Class.java")) { "Result should contain Class.java" }
+      val filePaths = parseSearchResult(result.textContent.text).filePaths()
+      assert(filePaths.contains("src/Main.java")) { "Result should contain src/Main.java" }
+      assert(filePaths.contains("src/Test.java")) { "Result should contain src/Test.java" }
+      assert(filePaths.contains("src/Class.java")) { "Result should contain src/Class.java" }
     }
   }
 
   @Test
-  fun execute_tool_create_file() = runBlocking {
+  fun execute_tool_create_file(): Unit = runBlocking(Dispatchers.Default) {
     testMcpTool(
       UniversalToolset::execute_tool.name,
       buildJsonObject {
@@ -79,7 +101,7 @@ class UniversalToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_tool_with_boolean_parameter() = runBlocking {
+  fun execute_tool_with_boolean_parameter(): Unit = runBlocking(Dispatchers.Default) {
     testMcpTool(
       UniversalToolset::execute_tool.name,
       buildJsonObject {
@@ -90,20 +112,22 @@ class UniversalToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_tool_with_integer_parameter() = runBlocking {
+  fun execute_tool_search_file_with_limit(): Unit = runBlocking(Dispatchers.Default) {
     testMcpTool(
       UniversalToolset::execute_tool.name,
       buildJsonObject {
-        put("command", JsonPrimitive("find_files_by_glob --globPattern **/*.java --fileCountLimit 5"))
+        put("command", JsonPrimitive("search_file --q **/*.java --limit 1"))
       }
     ) { result ->
-      val textContent = result.textContent
-      assert(textContent.text.contains("files")) { "Result should contain files" }
+      assert(result.isError == false) { "search_file with limit should succeed" }
+      val searchResult = parseSearchResult(result.textContent.text)
+      assert(searchResult.items.size == 1) { "Result should contain exactly one item" }
+      assert(searchResult.more) { "Result should indicate there are more matches" }
     }
   }
 
   @Test
-  fun execute_tool_nonexistent_tool() = runBlocking {
+  fun execute_tool_nonexistent_tool(): Unit = runBlocking(Dispatchers.Default) {
     testMcpTool(
       UniversalToolset::execute_tool.name,
       buildJsonObject {
@@ -117,7 +141,7 @@ class UniversalToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_tool_missing_required_parameter() = runBlocking {
+  fun execute_tool_missing_required_parameter(): Unit = runBlocking(Dispatchers.Default) {
     testMcpTool(
       UniversalToolset::execute_tool.name,
       buildJsonObject {
@@ -133,7 +157,7 @@ class UniversalToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_tool_invalid_argument_format() = runBlocking {
+  fun execute_tool_invalid_argument_format(): Unit = runBlocking(Dispatchers.Default) {
     testMcpTool(
       UniversalToolset::execute_tool.name,
       buildJsonObject {
@@ -149,7 +173,7 @@ class UniversalToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_tool_empty_command() = runBlocking {
+  fun execute_tool_empty_command(): Unit = runBlocking(Dispatchers.Default) {
     testMcpTool(
       UniversalToolset::execute_tool.name,
       buildJsonObject {
@@ -165,7 +189,7 @@ class UniversalToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_tool_help_all_tools() = runBlocking {
+  fun execute_tool_help_all_tools(): Unit = runBlocking(Dispatchers.Default) {
     testMcpTool(
       UniversalToolset::execute_tool.name,
       buildJsonObject {
@@ -179,14 +203,14 @@ class UniversalToolsetTest : McpToolsetTestBase() {
       assert(textContent.text.contains("reformat_file")) {
         "Help should list reformat_file tool"
       }
-      assert(textContent.text.contains("find_files_by_glob")) {
-        "Help should list find_files_by_glob tool"
+      assert(textContent.text.contains("search_file")) {
+        "Help should list search_file tool"
       }
     }
   }
 
   @Test
-  fun execute_tool_help_specific_tool() = runBlocking {
+  fun execute_tool_help_specific_tool(): Unit = runBlocking(Dispatchers.Default) {
     testMcpTool(
       UniversalToolset::execute_tool.name,
       buildJsonObject {
@@ -216,7 +240,7 @@ class UniversalToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_tool_help_nonexistent_tool() = runBlocking {
+  fun execute_tool_help_nonexistent_tool(): Unit = runBlocking(Dispatchers.Default) {
     testMcpTool(
       UniversalToolset::execute_tool.name,
       buildJsonObject {

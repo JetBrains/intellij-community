@@ -51,7 +51,7 @@ To migrate a product to programmatic content:
 Content modules (have .xml descriptors):
 ```bash
 # Check if module has a descriptor
-find_files_by_glob("**/moduleName.xml")
+search_file(q: "**/moduleName.xml")
 
 # Or look in resources directory
 ls community/modulePath/resources/*.xml

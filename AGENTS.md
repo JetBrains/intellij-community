@@ -60,7 +60,7 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 
 ## Tools (use in this order)
 
-### ijproxy (required when available)
+### ijproxy (required)
 
 - Read: `mcp__ijproxy__read_file`
 - Edit/Write: `mcp__ijproxy__apply_patch`
@@ -69,18 +69,6 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 - Search text: `mcp__ijproxy__search_text`
 - Search regex: `mcp__ijproxy__search_regex`
 - List dir: `mcp__ijproxy__list_dir`
-
-### jetbrains MCP (fallback)
-Direct JetBrains MCP connection. Use when ijproxy unavailable.
-
-- Read: `get_file_text_by_path`
-- Edit: `replace_text_in_file`
-- Write: `create_new_file`
-- Find by glob: `find_files_by_glob`
-- Find by name: `find_files_by_name_keyword`
-- Search text: `search_in_files_by_text`
-- Search regex: `search_in_files_by_regex`
-- List dir: `list_directory_tree`
 
 ### Client fallback (no MCP)
 

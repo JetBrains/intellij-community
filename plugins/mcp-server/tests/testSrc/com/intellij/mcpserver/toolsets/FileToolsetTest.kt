@@ -30,27 +30,6 @@ class FileToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun find_files_by_name_keyword() = runBlocking {
-    testMcpTool(
-      FileToolset::find_files_by_name_keyword.name,
-      buildJsonObject {
-        put("nameKeyword", JsonPrimitive("test"))
-      },
-      """{"files":["src/Test.java"]}"""
-    )
-  }
-  @Test
-  fun find_files_by_glob() = runBlocking {
-    testMcpTool(
-      FileToolset::find_files_by_glob.name,
-      buildJsonObject {
-        put("globPattern", JsonPrimitive("**/*.java"))
-      },
-      """{"files":["src/Main.java","src/Test.java","src/Class.java"]}"""
-    )
-  }
-
-  @Test
   fun open_file_in_editor() = runBlocking {
     testMcpTool(
       FileToolset::open_file_in_editor.name,

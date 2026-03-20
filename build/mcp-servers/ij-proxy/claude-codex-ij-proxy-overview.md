@@ -18,8 +18,8 @@ Note: The proxy exposes search shims only when upstream does not provide the sam
 - Read: Claude Code `Read` supports absolute path + offset/limit; Codex uses `read_file` with indentation mode; JetBrains MCP uses `get_file_text_by_path`; ij-proxy exposes `read_file`.
 - Indentation: available in Codex; not available in native Claude Code or native JetBrains MCP; exposed by ij-proxy via `read_file`.
 - Directory listing: Codex has `list_dir`; JetBrains MCP has `list_directory_tree`; Claude Code capture had none; ij-proxy exposes `list_dir`.
-- File discovery: Claude Code uses glob; JetBrains MCP has `find_files_by_glob/name`; Codex relies on directory listing; ij-proxy exposes `list_dir` and `search_file`.
-- Search output: Claude Code uses Grep; Codex uses grep/find; JetBrains MCP uses structured `search_in_files_*`; ij-proxy normalizes to `search_text`/`search_regex`/`search_file`/`search_symbol` when shims are active.
+- File discovery: Claude Code uses glob; JetBrains MCP uses `search_file`; Codex relies on directory listing; ij-proxy exposes `list_dir` and `search_file`.
+- Search output: Claude Code uses Grep; Codex uses grep/find; JetBrains MCP uses structured `search_*`; ij-proxy normalizes to `search_text`/`search_regex`/`search_file`/`search_symbol` when shims are active.
 - Edit/write: Claude Code uses `Edit`/`Write`; Codex uses `apply_patch`; JetBrains MCP uses `replace_text_in_file` + `create_new_file`; ij-proxy uses `apply_patch`.
 - Path model: Claude Code and Codex read tools use absolute paths; JetBrains MCP tools are project-relative; ij-proxy accepts absolute or project-relative paths.
 - `apply_patch`: supported in Codex and ij-proxy; not supported in native Claude Code or native JetBrains MCP.
