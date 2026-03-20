@@ -27,10 +27,10 @@ open class TestingOptions {
   /**
    * Semicolon-separated names of test groups tests from which should be executed, by default all tests will be executed.
    *
-   *  Test groups are defined in testGroups.properties files and there is an implicit [ALL_EXCLUDE_DEFINED_GROUP] group for tests which aren't
-   * included into any group and 'ALL' group for all tests. By default, [ALL_EXCLUDE_DEFINED_GROUP] group is used.
+   * Test groups are defined in testGroups.properties files and there is an implicit [ALL_EXCLUDE_DEFINED_GROUP] group for tests which aren't
+   * included into any group and 'ALL' group for all tests.
    */
-  var testGroups: String = System.getProperty("intellij.build.test.groups").nullize(nullizeSpaces = true) ?: ALL_EXCLUDE_DEFINED_GROUP
+  var testGroups: String? = System.getProperty("intellij.build.test.groups").nullize(nullizeSpaces = true)
 
   /**
    * Semicolon-separated patterns for test class names which need to be executed. Wildcard '*' is supported. If this option is specified,

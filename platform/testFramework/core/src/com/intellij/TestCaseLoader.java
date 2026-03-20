@@ -112,9 +112,7 @@ public class TestCaseLoader {
       System.out.println("Using patterns: " + patterns);
       return new PatternListTestClassFilter(patterns);
     }
-    if (testGroupNames == null) {
-      testGroupNames = Collections.emptyList();
-    }
+    if (ContainerUtil.isEmpty(testGroupNames)) throw new IllegalArgumentException("No test groups specified");
 
     if (testGroupNames.contains(ALL_TESTS_GROUP)) {
       System.out.println("Using all classes");

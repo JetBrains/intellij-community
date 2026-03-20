@@ -245,7 +245,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       if (options.testSimplePatterns != null) {
         errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.simple.patterns")
       }
-      if (options.testGroups != TestingOptions.ALL_EXCLUDE_DEFINED_GROUP) {
+      if (options.testGroups != null) {
         errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.groups")
       }
       if (mainModule != null && !options.validateMainModule) {
@@ -259,7 +259,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       if (options.testSimplePatterns != null) {
         errorOptionIgnored("intellij.build.test.patterns", "intellij.build.test.simple.patterns")
       }
-      if (options.testGroups != TestingOptions.ALL_EXCLUDE_DEFINED_GROUP) {
+      if (options.testGroups != null) {
         errorOptionIgnored("intellij.build.test.patterns", "intellij.build.test.groups")
       }
     }
@@ -267,9 +267,13 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       if (TeamCityHelper.isUnderTeamCity) {
         context.messages.logErrorAndThrow("'intellij.build.test.simple.patterns' option should be used only for local runs")
       }
-      if (options.testGroups != TestingOptions.ALL_EXCLUDE_DEFINED_GROUP) {
+      if (options.testGroups != null) {
         errorOptionIgnored("intellij.build.test.simple.patterns", "intellij.build.test.groups")
       }
+    }
+
+    if (options.testConfigurations == null && options.testPatterns == null && options.testSimplePatterns == null && options.testGroups == null) {
+      context.messages.logErrorAndThrow("'intellij.build.test.configurations', 'intellij.build.test.patterns', 'intellij.build.test.simple.patterns', or 'intellij.build.test.groups' option should be set")
     }
 
     if (options.validateMainModule && mainModule.isNullOrEmpty()) {
