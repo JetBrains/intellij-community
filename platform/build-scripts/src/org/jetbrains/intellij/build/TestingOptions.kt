@@ -12,7 +12,6 @@ private val OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
 private val OLD_PLATFORM_PREFIX = System.getProperty("idea.platform.prefix")
 private val OLD_DEBUG_PORT = System.getProperty("debug.port")?.toIntOrNull() ?: 0
 private val OLD_SUSPEND_DEBUG_PROCESS = System.getProperty("debug.suspend", "n") == "y"
-private val OLD_JVM_MEMORY_OPTIONS = System.getProperty("test.jvm.memory")
 
 /**
  * Options available for tests running on TeamCity.
@@ -91,7 +90,7 @@ open class TestingOptions {
   /**
    * Custom JVM memory options (e.g. -Xmx) for the testing process.
    */
-  var jvmMemoryOptions: String? = System.getProperty("intellij.build.test.jvm.memory.options", OLD_JVM_MEMORY_OPTIONS)
+  var jvmMemoryOptions: String? = System.getProperty("intellij.build.test.jvm.memory.options")
 
   /**
    * Specifies a module which classpath will be used to search the test classes by default.
