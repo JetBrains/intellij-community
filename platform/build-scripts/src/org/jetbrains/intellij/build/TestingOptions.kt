@@ -13,7 +13,6 @@ private val OLD_PLATFORM_PREFIX = System.getProperty("idea.platform.prefix")
 private val OLD_DEBUG_PORT = System.getProperty("debug.port")?.toIntOrNull() ?: 0
 private val OLD_SUSPEND_DEBUG_PROCESS = System.getProperty("debug.suspend", "n") == "y"
 private val OLD_JVM_MEMORY_OPTIONS = System.getProperty("test.jvm.memory")
-private val OLD_MAIN_MODULE = System.getProperty("module.to.make")
 
 /**
  * Options available for tests running on TeamCity.
@@ -99,7 +98,7 @@ open class TestingOptions {
    *
    * If [searchScope] is set to `singleModule`, only tests from the main module are searched.
    */
-  var mainModule: String? = System.getProperty("intellij.build.test.main.module").nullize(nullizeSpaces = true) ?: OLD_MAIN_MODULE
+  var mainModule: String? = System.getProperty("intellij.build.test.main.module").nullize(nullizeSpaces = true)
 
   /**
    * Abort tests execution if [mainModule] does not match the module specified in the Run Configuration from [testConfigurations].
