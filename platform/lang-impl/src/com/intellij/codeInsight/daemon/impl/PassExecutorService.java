@@ -83,7 +83,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class PassExecutorService implements Disposable {
   @VisibleForTesting
   public static final Logger LOG = Logger.getInstance(PassExecutorService.class);
-  private static final boolean CHECK_CONSISTENCY = ApplicationManager.getApplication().isUnitTestMode();
+  private static final boolean CHECK_CONSISTENCY = ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode();
 
   private final AtomicReference<@NotNull Map<ScheduledPass, Job>> mySubmittedPasses = new AtomicReference<>(new ConcurrentHashMap<>());
   private final Project myProject;
