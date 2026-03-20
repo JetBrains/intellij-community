@@ -549,7 +549,7 @@ private fun <T> contextToIndicator(ctx: CoroutineContext, action: () -> T): T {
     }
   }
   else {
-    val indicator = JobDependentIndicator(contextModality)
+    val indicator = JobDependentIndicator(contextModality, job)
     jobToIndicator(job, indicator, action)
   }
 }
@@ -558,7 +558,11 @@ private fun <T> contextToIndicator(ctx: CoroutineContext, action: () -> T): T {
  * We keep this class as an inheritor of [EmptyProgressIndicator] for ease of debugging -- if one sees an instance of this class,
  * it means that the currently used indicator depends on some job.
  */
-private class JobDependentIndicator(modalityState: ModalityState): BridgeJobIndicatorBase(modalityState)
+private class JobDependentIndicator(modalityState: ModalityState, val job: Job): BridgeJobIndicatorBase(modalityState) {
+  override fun toString(): String {
+    return "JobDependentIndicator($job)"
+  }
+}
 
 @Throws(CancellationException::class)
 @Internal
