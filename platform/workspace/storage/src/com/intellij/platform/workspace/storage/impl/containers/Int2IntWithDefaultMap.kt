@@ -3,14 +3,13 @@
 
 package com.intellij.platform.workspace.storage.impl.containers
 
-import com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap.Companion.DEFAULT_VALUE
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.ints.Int2IntMap
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntCollection
+import it.unimi.dsi.fastutil.ints.IntIntBiConsumer
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.objects.ObjectSet
-import java.util.function.BiConsumer
 
 /**
  * Int2IntMap with [DEFAULT_VALUE] (-1) as default return value. This is the wrapper class for [Int2IntMap]
@@ -64,11 +63,7 @@ internal class Int2IntWithDefaultMap private constructor(internal val backingMap
     backingMap.clear()
   }
 
-  fun forEach(consumer: BiConsumer<Int, Int>) {
-    backingMap.forEach(consumer)
-  }
-
-  fun forEach(consumer: (Map.Entry<Int, Int>) -> Unit) {
+  fun forEach(consumer: IntIntBiConsumer) {
     backingMap.forEach(consumer)
   }
 
