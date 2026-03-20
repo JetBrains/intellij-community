@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorTestUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -47,6 +48,8 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
 
     EditorSettings settings = getEditor().getSettings();
     mySmartHome = settings.isSmartHome();
+
+    Registry.get("editor.use.new.soft.wraps.impl").setValue(false, getTestRootDisposable());
   }
 
   @Override
@@ -495,19 +498,6 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
 
     init(30, text, true);
     checkSoftWraps(41, 65, 89, 107);
-  }
-
-  public void testCustomWrapWithSoftWrapsDisabled() {
-    String text = "0123456789";
-    init(100, text);
-
-    EditorSettings settings = getEditor().getSettings();
-    settings.setUseSoftWraps(false);
-
-    int wrapOffset = 5;
-    assertNotNull(getEditor().getCustomWrapModel().addWrap(wrapOffset, 0, 0));
-    assertNotNull(getEditor().getSoftWrapModel().getSoftWrap(wrapOffset));
-    ((EditorImpl)getEditor()).validateState();
   }
 
   public void testEndProcessing() {
@@ -1104,36 +1094,36 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
   }
 
   private static final int DEFAULT_SYMBOL_WIDTH_PX = 10;
-  private void init(final int visibleWidthInColumns, @NotNull String fileText) {
+  protected void init(final int visibleWidthInColumns, @NotNull String fileText) {
     init(visibleWidthInColumns, 10, fileText);
   }
 
-  private void init(final int visibleWidthInColumns, @NotNull String fileText, boolean useCustomSoftWrapIndent) {
+  protected void init(final int visibleWidthInColumns, @NotNull String fileText, boolean useCustomSoftWrapIndent) {
     init(visibleWidthInColumns * DEFAULT_SYMBOL_WIDTH_PX, fileText, PlainTextFileType.INSTANCE, DEFAULT_SYMBOL_WIDTH_PX, useCustomSoftWrapIndent);
   }
 
-  private void init(final int visibleWidthInColumns, final int symbolWidthInPixels, @NotNull String fileText) {
+  protected void init(final int visibleWidthInColumns, final int symbolWidthInPixels, @NotNull String fileText) {
     init(visibleWidthInColumns * symbolWidthInPixels, fileText, symbolWidthInPixels);
   }
-  
-  private void init(final int visibleWidth, @NotNull String fileText, int symbolWidth) {
+
+  protected void init(final int visibleWidth, @NotNull String fileText, int symbolWidth) {
     init(visibleWidth, fileText, PlainTextFileType.INSTANCE, symbolWidth);
   }
 
-  private void init(final int visibleWidth, @NotNull String fileText, @NotNull FileType fileType, final int symbolWidth) {
+  protected void init(final int visibleWidth, @NotNull String fileText, @NotNull FileType fileType, final int symbolWidth) {
     init(visibleWidth, fileText, fileType, symbolWidth, true);
   }
 
-  private void init(final int visibleWidth, @NotNull String fileText, @NotNull FileType fileType, final int symbolWidth, boolean useCustomSoftWrapIndent) {
+  protected void init(final int visibleWidth, @NotNull String fileText, @NotNull FileType fileType, final int symbolWidth, boolean useCustomSoftWrapIndent) {
     init(fileText, fileType);
     EditorTestUtil.configureSoftWraps(getEditor(), visibleWidth, 1000, symbolWidth, useCustomSoftWrapIndent);
   }
 
-  private void checkSoftWraps(int... startOffsets) {
+  protected void checkSoftWraps(int... startOffsets) {
     assertArrayEquals(startOffsets, getSoftWrapModel().getRegisteredSoftWraps().stream().mapToInt(s -> s.getStart()).toArray());
   }
-  
-  private SoftWrapModelImpl getSoftWrapModel() {
+
+  protected SoftWrapModelImpl getSoftWrapModel() {
     return (SoftWrapModelImpl)getEditor().getSoftWrapModel();
   }
 }
