@@ -48,7 +48,7 @@ internal class SplitSeMlService : SeMlService {
 
     val scopeDescriptor = searchParams.getScopeDescriptorIfExists(currentProject)
     val isSearchEverywhere = searchParams.isSearchEverywhere()
-    val previousState = activeSession.activeState ?: activeSession.previousSearchState
+    val previousState = activeSession.currentOrPreviousState
     val reason = SearchStateChangeReason.inferFromStateChange(previousState, tabId, searchParams, isDumbMode)
 
     SearchEverywhereMlFacade.onStateStarted(tabId, searchParams.inputQuery, reason, scopeDescriptor, isSearchEverywhere,

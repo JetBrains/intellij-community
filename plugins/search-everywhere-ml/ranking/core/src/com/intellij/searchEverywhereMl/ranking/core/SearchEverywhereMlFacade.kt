@@ -56,7 +56,7 @@ internal object SearchEverywhereMlFacade {
 
   fun processSearchResult(result: SearchResultAdapter.Raw): SearchResultAdapter.Processed {
     val currentSession = checkNotNull(activeSession) { "No active search session found - cannot calculate ML properties" }
-    val currentState = checkNotNull(currentSession.activeState ?: currentSession.previousSearchState) { "No active search state found - cannot calculate ML properties" }
+    val currentState = checkNotNull(currentSession.currentOrPreviousState) { "No active search state found - cannot calculate ML properties" }
 
     return currentState.processSearchResult(result)
   }

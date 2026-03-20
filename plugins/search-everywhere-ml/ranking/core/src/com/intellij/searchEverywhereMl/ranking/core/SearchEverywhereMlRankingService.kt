@@ -10,7 +10,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.openapi.diagnostic.ThrottledLogger
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultAdapter
@@ -83,7 +82,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
 
   private fun inferReasonForOldSE(tabId: String, searchQuery: String): SearchStateChangeReason {
     val activeSession = SearchEverywhereMlFacade.activeSession ?: return SearchStateChangeReason.SCOPE_CHANGE
-    val previousState = activeSession.activeState ?: activeSession.previousSearchState
+    val previousState = activeSession.currentOrPreviousState
                         ?: return SearchStateChangeReason.SEARCH_START
 
     val tab = SearchEverywhereTab.getById(tabId)

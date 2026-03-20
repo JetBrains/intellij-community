@@ -37,6 +37,9 @@ import com.intellij.searchEverywhereMl.ranking.core.performance.PerformanceTrack
 import com.intellij.searchEverywhereMl.ranking.core.utils.convertNameToNaturalLanguage
 import com.intellij.util.applyIf
 import com.intellij.util.concurrency.NonUrgentExecutor
+import java.util.Collections
+import java.util.HashMap
+import java.util.LinkedHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -73,6 +76,7 @@ internal class SearchEverywhereMLSearchSession private constructor(
   // search state is updated on each typing, tab or setting change
   // element features & ML score are also re-calculated on each typing because some of them might change, e.g. matching degree
   private val _activeState: AtomicReference<SearchState?> = AtomicReference<SearchState?>()
+  private val stateTransitionLock = Any()
 
   val activeState: SearchState?
     get() = _activeState.get()
@@ -80,7 +84,10 @@ internal class SearchEverywhereMLSearchSession private constructor(
   private val stateHistory: MutableList<SearchState> = mutableListOf()
 
   val previousSearchState: SearchState?
-    get() = stateHistory.lastOrNull()
+    get() = synchronized(stateTransitionLock) { stateHistory.lastOrNull() }
+
+  val currentOrPreviousState: SearchState?
+    get() = synchronized(stateTransitionLock) { _activeState.get() ?: stateHistory.lastOrNull() }
 
   private val performanceTracker = PerformanceTracker()
 
@@ -96,30 +103,44 @@ internal class SearchEverywhereMLSearchSession private constructor(
     isSearchEverywhere: Boolean, searchFilter: SeFilterState? = null, isDumbMode: Boolean = false,
   ) {
     val tab = SearchEverywhereTab.getById(tabId)
+    val (interruptedState, newSearchState) = synchronized(stateTransitionLock) {
+      val interruptedState = finishUnfinishedActiveStateLocked()
+      val previousState = stateHistory.lastOrNull()
+      val stateChangeReason = if (previousState == null) SearchStateChangeReason.SEARCH_START else reason
+      val nextSearchIndex = (previousState?.index ?: 0) + 1
+      val newSearchState = SearchState(nextSearchIndex, tab, scopeDescriptor, isSearchEverywhere, stateChangeReason, query,
+                                       searchFilter, isDumbMode)
 
-    finishUnfinishedActiveState()
+      interruptedState to newSearchState
+    }
 
-    val previousState = stateHistory.lastOrNull()
-    val stateChangeReason = if (previousState == null) SearchStateChangeReason.SEARCH_START else reason
-    val nextSearchIndex = (previousState?.index ?: 0) + 1
-    val newSearchState = SearchState(nextSearchIndex, tab, scopeDescriptor, isSearchEverywhere, stateChangeReason, query,
-                                     searchFilter, isDumbMode)
+    // Keep the interrupted state visible until its partial results are reported,
+    // so late-scored items from the old query do not get attached to the new state.
+    reportInterruptedState(interruptedState)
 
-    LOG.trace("Session $sessionId: State started: stateIndex=$nextSearchIndex, tab=$tab, query='$query', reason=$stateChangeReason, scope=$scopeDescriptor, everywhere=$isSearchEverywhere")
-    _activeState.set(newSearchState)
+    synchronized(stateTransitionLock) {
+      _activeState.set(newSearchState)
+    }
+
+    LOG.trace("Session $sessionId: State started: stateIndex=${newSearchState.index}, tab=$tab, query='$query', reason=${newSearchState.searchStateChangeReason}, scope=$scopeDescriptor, everywhere=$isSearchEverywhere")
     performanceTracker.start()
   }
 
   fun onStateFinished(results: List<SearchResultAdapter.Raw>) {
-    val finishedState = _activeState.getAndSet(null)
+    val finishedState = synchronized(stateTransitionLock) {
+      val state = _activeState.getAndSet(null)
+      if (state != null) {
+        state.markAsFinished()
+        stateHistory.add(state)
+      }
+      state
+    }
     if (finishedState == null) {
       LOG.trace("Session $sessionId: State finished called but no active state (already finished)")
       return // Already finished, ignore duplicate call
     }
 
-    finishedState.markAsFinished()
     LOG.trace("Session $sessionId: State finished: stateIndex=${finishedState.index}, resultsCount=${results.size}")
-    stateHistory.add(finishedState)
 
     val processedResults = getProcessedResults(results)
 
@@ -129,7 +150,7 @@ internal class SearchEverywhereMLSearchSession private constructor(
   fun onItemsSelected(selectedItems: List<Pair<Int, SearchResultAdapter.Raw>>) {
     if (selectedItems.isEmpty()) return
 
-    val candidateStates = stateHistory + listOfNotNull(activeState)
+    val candidateStates = getCandidateStatesSnapshot()
     val state = candidateStates.lastOrNull {
       it.getProcessedResultByIdOrNull(selectedItems.first().second.stateLocalId) != null
     }
@@ -163,25 +184,16 @@ internal class SearchEverywhereMLSearchSession private constructor(
     val sessionEndTime = System.currentTimeMillis()
     val sessionDuration = (sessionEndTime - sessionStartTime).toInt()
 
-    finishUnfinishedActiveState()
+    val (interruptedState, lastState) = synchronized(stateTransitionLock) {
+      val interruptedState = finishUnfinishedActiveStateLocked()
+      interruptedState to checkNotNull(stateHistory.lastOrNull()) { "No previous search state found " }
+    }
 
-    val lastState = checkNotNull(stateHistory.last()) { "No previous search state found " }
+    reportInterruptedState(interruptedState)
 
     LOG.trace("Session finished: sessionId=$sessionId, duration=${sessionDuration}ms, lastStateIndex=${lastState.index}")
     SearchEverywhereMLStatisticsCollector.onSessionFinished(project, sessionId, lastState.tab, sessionDuration)
     MissingKeyProviderCollector.report(sessionId)
-  }
-
-  private fun finishUnfinishedActiveState() {
-    // If there's an active state that wasn't properly finished (e.g., due to rapid query changes),
-    // finish it first with its cached results before starting a new one
-    val unfinishedState = _activeState.getAndSet(null) ?: return
-
-    unfinishedState.markAsInterrupted()
-    val cachedResults = unfinishedState.getCachedResults()
-    LOG.trace("Session $sessionId: Finishing interrupted state ${unfinishedState.index} before starting new state, cachedResultsCount=${cachedResults.size}")
-    stateHistory.add(unfinishedState)
-    SearchEverywhereMLStatisticsCollector.onSearchRestarted(project, this, unfinishedState, cachedResults, performanceTracker.timeElapsed)
   }
 
 
@@ -198,7 +210,7 @@ internal class SearchEverywhereMLSearchSession private constructor(
   }
 
   private fun getProcessedResults(rawResults: List<SearchResultAdapter.Raw>): List<SearchResultAdapter.Processed> {
-    val candidateStates = stateHistory + listOfNotNull(activeState).asReversed()
+    val candidateStates = getCandidateStatesSnapshot()
     
     return rawResults
       .map { raw ->
@@ -206,6 +218,32 @@ internal class SearchEverywhereMLSearchSession private constructor(
           it.getProcessedResultByIdOrNull(raw.stateLocalId)
         } ?: error("Result ${raw.stateLocalId} was not processed by any search state")
       }
+  }
+
+  private fun getCandidateStatesSnapshot(): List<SearchState> {
+    return synchronized(stateTransitionLock) {
+      buildList {
+        addAll(stateHistory)
+        _activeState.get()?.let { add(it) }
+      }
+    }
+  }
+
+  private fun finishUnfinishedActiveStateLocked(): Pair<SearchState, List<SearchResultAdapter.Processed>>? {
+    val unfinishedState = _activeState.getAndSet(null) ?: return null
+
+    unfinishedState.markAsInterrupted()
+    val cachedResults = unfinishedState.getCachedResults()
+    stateHistory.add(unfinishedState)
+    return unfinishedState to cachedResults
+  }
+
+  private fun reportInterruptedState(interruptedState: Pair<SearchState, List<SearchResultAdapter.Processed>>?) {
+    if (interruptedState == null) return
+
+    val (unfinishedState, cachedResults) = interruptedState
+    LOG.trace("Session $sessionId: Finishing interrupted state ${unfinishedState.index}, cachedResultsCount=${cachedResults.size}")
+    SearchEverywhereMLStatisticsCollector.onSearchRestarted(project, this, unfinishedState, cachedResults, performanceTracker.timeElapsed)
   }
 
   inner class SearchState(
@@ -242,7 +280,9 @@ internal class SearchEverywhereMLSearchSession private constructor(
      * This is useful for retrieving partial results when a state is interrupted.
      */
     fun getCachedResults(): List<SearchResultAdapter.Processed> {
-      return searchResultCache.values.toList()
+      return synchronized(searchResultCache) {
+        searchResultCache.values.toList()
+      }
     }
 
     val project: Project?
@@ -270,8 +310,8 @@ internal class SearchEverywhereMLSearchSession private constructor(
 
     private val model: SearchEverywhereRankingModel by lazy { modelProviderWithCache.getModel(tab as SearchEverywhereTab.TabWithMlRanking) }
 
-    private val searchResultCache: MutableMap<StateLocalId, SearchResultAdapter.Processed> = mutableMapOf()
-    private val providerWeightsById: MutableMap<String, Int> = mutableMapOf()
+    private val searchResultCache: MutableMap<StateLocalId, SearchResultAdapter.Processed> = Collections.synchronizedMap(LinkedHashMap())
+    private val providerWeightsById: MutableMap<String, Int> = Collections.synchronizedMap(HashMap())
 
     /**
      * Processes a raw search result to transform it into a processed search result,

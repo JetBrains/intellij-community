@@ -198,6 +198,19 @@ internal class SearchEverywhereMLSearchSessionTest {
   }
 
   @Test
+  fun `onItemsSelected resolves items from finished state`() = runBlocking {
+    val session = SearchEverywhereMLSearchSession.createNext(null)
+    session.onStateStarted(actionsTabId, "show colr piker", SearchStateChangeReason.SEARCH_START, null, false)
+    val correction = SearchEverywhereSpellCheckResult.Correction("show color picker", 0.84)
+    val adapter = createCorrectedActionAdapter(correction)
+
+    session.activeState!!.processSearchResult(adapter)
+    session.onStateFinished(listOf(adapter))
+
+    session.onItemsSelected(listOf(0 to adapter))
+  }
+
+  @Test
   fun `orderByMl false when tab has no ML ranking`() {
     val session = SearchEverywhereMLSearchSession.createNext(null)
     session.onStateStarted("UnknownTabWithNoMlRanking", "query", SearchStateChangeReason.SEARCH_START, null, false)
