@@ -105,12 +105,12 @@ public class TestCaseLoader {
     System.out.println("Using tests filter: " + myTestClassesFilter);
   }
 
-  private static TestClassesFilter calcTestClassFilter(@Nullable String patterns,
+  private static TestClassesFilter calcTestClassFilter(@Nullable List<@NotNull String> patterns,
                                                        @Nullable List<@NotNull String> testGroupNames,
                                                        @Nullable String classFilterName) {
-    if (!StringUtil.isEmpty(patterns)) {
-      System.out.println("Using patterns: [" + patterns + "]");
-      return new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
+    if (!ContainerUtil.isEmpty(patterns)) {
+      System.out.println("Using patterns: " + patterns);
+      return new PatternListTestClassFilter(patterns);
     }
     if (testGroupNames == null) {
       testGroupNames = Collections.emptyList();
@@ -154,8 +154,8 @@ public class TestCaseLoader {
     return new GroupBasedTestClassFilter(groups, testGroupNames);
   }
 
-  private static @Nullable String getTestPatterns() {
-    return System.getProperty("intellij.build.test.patterns");
+  private static @Unmodifiable List<String> getTestPatterns() {
+    return StringUtil.split(System.getProperty("intellij.build.test.patterns", ""), ";");
   }
 
   private static @Unmodifiable List<String> getTestGroups() {
@@ -344,7 +344,7 @@ public class TestCaseLoader {
   // We assume that getPatterns and getTestGroups won't change during execution
   @ApiStatus.Internal
   public record TestClassesFilterArgs(
-    @Nullable String patterns, @Nullable List<@NotNull String> testGroupNames, @Nullable String testGroupsResourcePath
+    @Nullable List<@NotNull String> patterns, @Nullable List<@NotNull String> testGroupNames, @Nullable String testGroupsResourcePath
   ) {
   }
 
@@ -450,7 +450,7 @@ public class TestCaseLoader {
   @ApiStatus.Experimental
   public static class Builder {
     private String myTestGroupsResourcePath;
-    private String myPatterns;
+    private List<String> myPatterns;
     private List<String> myTestGroups;
     private boolean myForceLoadPerformanceTests = false;
 
@@ -482,7 +482,7 @@ public class TestCaseLoader {
       return this;
     }
 
-    public Builder withPatterns(String patterns) {
+    public Builder withPatterns(List<String> patterns) {
       myPatterns = patterns;
       return this;
     }
@@ -501,7 +501,7 @@ public class TestCaseLoader {
     }
   }
 
-  private static TestClassesFilter getFilter(@Nullable String patterns,
+  private static TestClassesFilter getFilter(@Nullable List<@NotNull String> patterns,
                                              @Nullable String testGroupsResourcePath,
                                              @Nullable List<@NotNull String> testGroups) {
     TestClassesFilter filter;
