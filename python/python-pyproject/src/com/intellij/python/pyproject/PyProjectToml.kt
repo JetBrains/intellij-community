@@ -1,8 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pyproject
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.readText
+import com.intellij.psi.PsiManager
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.findAmongRoots
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +40,7 @@ const val PY_PROJECT_TOML_DEPENDENCY_GROUPS: String = "dependency-groups"
 
 @Internal
 const val PY_PROJECT_TOML_TOOL_PREFIX: String = "tool"
+
 
 /**
  * Represents an issue that could occur in [PyProjectToml.parse].
@@ -102,6 +111,21 @@ data class PyProjectToml(
   }
 
   companion object {
+    private val CACHE_KEY = Key.create<CachedValue<PyProjectToml>>("PyProjectTomlCache")
+
+    /**
+     * Parses and caches [pyProjectFile] content. Cache is invalidated automatically when the file changes.
+     */
+    @Internal
+    suspend fun parseCached(project: Project, pyProjectFile: VirtualFile): PyProjectToml? {
+      return readAction {
+        val psiFile = PsiManager.getInstance(project).findFile(pyProjectFile) ?: return@readAction null
+        CachedValuesManager.getManager(project).getCachedValue(psiFile, CACHE_KEY, {
+          CachedValueProvider.Result.create(parse(pyProjectFile.readText()), pyProjectFile)
+        }, false)
+      }
+    }
+
     /**
      * TODO: REDOC
      * Attempts to parse [inputStream] and construct an instance of [PyProjectToml].
