@@ -237,10 +237,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
   }
 
   private fun checkOptions(mainModule: String?) {
-    if (mainModule != System.getProperty("intellij.build.test.main.module")) {
-      context.messages.warning("Main module is temporarily remapped to '${mainModule}', ignore 'intellij.build.test.main.module' value: '${System.getProperty("intellij.build.test.main.module")}'")
-    }
-
     if (options.testConfigurations != null) {
       val testConfigurationsOptionName = "intellij.build.test.configurations"
       if (options.testPatterns != null) {
