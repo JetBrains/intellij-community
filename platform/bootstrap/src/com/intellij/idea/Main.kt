@@ -43,7 +43,6 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Collections
 import java.util.function.Consumer
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -55,7 +54,7 @@ fun main(rawArgs: Array<String>) {
   val startupTimings = ArrayList<Any>(12)
   startupTimings.add("startup begin")
   startupTimings.add(startTimeNano)
-  mainImpl(rawArgs = rawArgs, startupTimings = startupTimings, startTimeUnixNano = startTimeUnixNano, changeClassPath = null)
+  mainImpl(rawArgs, startupTimings, startTimeUnixNano, changeClassPath = null)
 }
 
 internal fun mainImpl(
@@ -82,7 +81,7 @@ internal fun mainImpl(
         addBootstrapTiming("init scope creating", startupTimings)
         StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixNano)
 
-        startApp(args = args, mainScope = this@runBlocking, busyThread = busyThread, changeClassPath = changeClassPath)
+        startApp(args, mainScope = this@runBlocking, busyThread, changeClassPath)
       }
 
       awaitCancellation()
@@ -106,16 +105,15 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
           name: String,
           context: CoroutineContext,
           action: suspend CoroutineScope.() -> T,
-        ): T {
-          return com.intellij.platform.diagnostic.telemetry.impl.span(name, context, action)
-        }
+        ): T = com.intellij.platform.diagnostic.telemetry.impl.span(name, context, action)
       }
     }
+
     launch {
       P3SupportInstaller.seal()
     }
 
-    if (AppMode.isRemoteDevHost() || java.lang.Boolean.getBoolean("ide.started.from.remote.dev.launcher")) {
+    if (AppMode.isRemoteDevHost() || System.getProperty("ide.started.from.remote.dev.launcher").toBoolean()) {
       span("cwm host init") {
         initRemoteDev(args)
       }
@@ -131,7 +129,7 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
       isConfigImportNeeded(PathManager.getConfigDir())
     }
 
-    if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
+    if (!AppMode.isCommandLine() || System.getProperty(AppMode.FORCE_PLUGIN_UPDATES).toBoolean()) {
       span("update marketplace plugin") {
         // this check must be performed before system directories are locked
         val configImportNeeded = !AppMode.isHeadless() && Files.notExists(PathManager.getConfigDir())
@@ -278,12 +276,12 @@ private fun addBootstrapTiming(name: String, startupTimings: MutableList<Any>) {
 
 private fun preprocessArgs(args: Array<String>): List<String> {
   if (args.isEmpty()) {
-    return Collections.emptyList()
+    return listOf()
   }
 
   // a buggy DE may fail to strip an unused parameter from a .desktop file
   if (args.size == 1 && args[0] == "%f") {
-    return Collections.emptyList()
+    return listOf()
   }
 
   if (AppMode.HELP_OPTION in args) {
@@ -322,7 +320,7 @@ private fun preprocessArgs(args: Array<String>): List<String> {
 private fun runMarketplaceCommandsInActionScript() {
   try {
     // load `StartupActionScriptManager` and other related classes (`ObjectInputStream`, etc.) only when there is a script to run
-    // (referencing a string constant is OK - it is inlined by the compiler)
+    // (referencing a string constant is OK - it is inlined by the compiler 🤞)
     val scriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE)
     if (Files.isRegularFile(scriptFile)) {
       if (System.getProperty("disable.IJPL.221005") == "true") {

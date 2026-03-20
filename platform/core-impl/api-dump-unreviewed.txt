@@ -379,7 +379,6 @@ f:com.intellij.ide.plugins.PluginManager
 - s:getPlugins():com.intellij.ide.plugins.IdeaPluginDescriptor[]
 - s:isPluginInstalled(com.intellij.openapi.extensions.PluginId):Z
 f:com.intellij.ide.plugins.PluginManagerCore
-- sf:ALL_MODULES_MARKER:com.intellij.openapi.extensions.PluginId
 - sf:CORE_ID:com.intellij.openapi.extensions.PluginId
 - sf:CORE_PLUGIN_ID:java.lang.String
 - sf:DISABLE:java.lang.String
@@ -391,11 +390,8 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - sf:META_INF:java.lang.String
 - sf:PLUGIN_XML:java.lang.String
 - sf:PLUGIN_XML_PATH:java.lang.String
-- sf:SPECIAL_IDEA_PLUGIN_ID:com.intellij.openapi.extensions.PluginId
 - sf:VENDOR_JETBRAINS:java.lang.String
 - sf:VENDOR_JETBRAINS_SRO:java.lang.String
-- s:isIgnoreCompatibility:Z
-- s:isUnitTestMode:Z
 - sf:addDisablePluginListener(java.lang.Runnable):V
 - sf:checkBuildNumberCompatibility(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.BuildNumber):com.intellij.ide.plugins.PluginNonLoadReason
 - sf:disablePlugin(com.intellij.openapi.extensions.PluginId):Z

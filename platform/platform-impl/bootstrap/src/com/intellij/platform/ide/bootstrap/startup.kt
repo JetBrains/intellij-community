@@ -122,7 +122,7 @@ fun startApplication(
   val appInfoDeferred = scope.async {
     mainClassLoaderDeferred?.await()
     coroutineScope {
-      // required for log essential info about IDE, Wayland app id
+      // required for logging essential info about the IDE
       async(CoroutineName("app name info")) {
         ApplicationNamesInfo.getInstance()
       }
@@ -240,7 +240,7 @@ fun startApplication(
   }
 
   configImportDeferred.invokeOnCompletion {
-    // after updating from a Community Edition to a single product we need to rename the macOS app bundle
+    // after updating from a Community Edition to a single product, we need to rename the macOS app bundle
     migrateCommunityToSingleProductIfNeeded(args)
   }
 
