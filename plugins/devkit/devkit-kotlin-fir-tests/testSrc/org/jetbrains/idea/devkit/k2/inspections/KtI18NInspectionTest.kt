@@ -710,4 +710,42 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
     """.trimIndent())
     myFixture.testHighlighting()
   }
+
+  fun testLoops() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+
+    configureKt("""
+    package pkg
+    
+    import org.jetbrains.annotations.Nls
+    
+    fun test(strings: List<String>, nlsStrings: List<@Nls String>) {
+      for (s in strings) {
+        takeNls(s)
+      }
+      for (s: @Nls String in strings) {
+        takeNls(s)
+      }
+      strings.forEach { s: String ->
+        takeNls(<warning descr="Reference to non-localized string is used where localized string is expected">s</warning>)
+      }
+  
+      for (s in nlsStrings) {
+        takeNls(s)
+      }
+      for (s: @Nls String in nlsStrings) {
+        takeNls(s)
+      }
+      nlsStrings.forEach { s: String ->
+        takeNls(<warning descr="Reference to non-localized string is used where localized string is expected">s</warning>)
+      }
+    }
+    
+    private fun takeNls(@Nls localized: @Nls String?) {}
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
 }
