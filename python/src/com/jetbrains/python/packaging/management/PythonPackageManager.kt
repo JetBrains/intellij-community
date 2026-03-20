@@ -173,18 +173,20 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
       return it
     }
 
-    if (packages != installedPackages) {
-      if (!isInit) {
-        refreshPaths(project, sdk)
-      }
+    val changed = packages != installedPackages
+    if (changed) {
       installedPackages = packages
-      PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
-        reloadOutdatedPackages()
-      }.cancelOnDispose(this)
 
       ApplicationManager.getApplication().messageBus.apply {
         syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(sdk)
         syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
+      }
+
+      PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+        reloadOutdatedPackages()
+      }.cancelOnDispose(this)
+      if (!isInit) {
+        refreshPaths(project, sdk)
       }
     }
 

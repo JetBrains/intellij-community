@@ -255,6 +255,14 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     packageListController.startSdkInit()
   }
 
+  internal fun setRefreshIndicatorVisible(visible: Boolean) {
+    packageListController.setLoadingState(visible)
+  }
+
+  internal fun syncSdkControllerSelection(sdk: Sdk?) {
+    moduleController.refreshAndSyncSelection(sdk)
+  }
+
   fun clearFocus() {
     val kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()
     val owner = kfm.focusOwner

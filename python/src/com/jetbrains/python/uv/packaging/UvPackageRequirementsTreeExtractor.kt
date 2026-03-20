@@ -31,7 +31,7 @@ internal class UvPackageRequirementsTreeExtractor(private val sdk: Sdk, private 
     val workspaceTree = buildWorkspaceStructure(uv, declaredPackageNames, uvExecutionContext.workingDir)
     if (workspaceTree != null) return workspaceTree
 
-    val declaredPackages = declaredPackageNames.map { extractPackageTree(uv, it) }
+    val declaredPackages = extractDeclaredPackagesFromProjectTree(uv, declaredPackageNames)
     val undeclaredPackages = extractUndeclaredPackages(uv, declaredPackageNames)
     return PackageCollectionPackageStructureNode(declaredPackages, undeclaredPackages)
   }
@@ -41,6 +41,21 @@ internal class UvPackageRequirementsTreeExtractor(private val sdk: Sdk, private 
       return createLeafNode(packageName)
     }
     return parseTree(output.lines())
+  }
+
+  /**
+   * Extracts declared package trees using a single `uv tree --frozen` call.
+   * Falls back to per-package extraction if the project tree call fails.
+   */
+  private suspend fun extractDeclaredPackagesFromProjectTree(
+    uv: UvLowLevel<*>,
+    declaredPackageNames: Set<String>,
+  ): List<PackageNode> {
+    val output = uv.listProjectStructureTree().getOrNull()
+      ?: return declaredPackageNames.map { extractPackageTree(uv, it) }
+    val projectRoot = parseTree(output.lines())
+    val childrenByName = projectRoot.children.associateBy { it.name.name }
+    return declaredPackageNames.map { name -> childrenByName[name] ?: createLeafNode(name) }
   }
 
   private fun createLeafNode(packageName: String): PackageNode =
@@ -110,23 +125,9 @@ internal class UvPackageRequirementsTreeExtractor(private val sdk: Sdk, private 
   }
 
   private suspend fun extractUndeclaredPackages(uv: UvLowLevel<*>, declaredPackageNames: Set<String>): List<PackageNode> {
-    val output = uv?.listAllPackagesTree()?.getOrNull() ?: return emptyList()
-    return splitIntoPackageGroups(output.lines()).map { parseTree(it) }
+    val output = uv.listAllPackagesTree().getOrNull() ?: return emptyList()
+    return TreeParser.splitIntoPackageGroups(output.lines()).map { parseTree(it) }
       .filter { it.name.name !in declaredPackageNames }
-  }
-
-  private fun splitIntoPackageGroups(lines: List<String>): List<List<String>> {
-    val groups = mutableListOf<MutableList<String>>()
-    for (line in lines) {
-      if (line.isBlank()) continue
-      if (TreeParser.isRootLine(line)) {
-        groups.add(mutableListOf(line))
-      }
-      else {
-        groups.lastOrNull()?.add(line)
-      }
-    }
-    return groups
   }
 }
 

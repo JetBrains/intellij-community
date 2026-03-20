@@ -5,9 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.SimpleToolWindowPanel.LEFT_ALIGNMENT
-import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
@@ -40,10 +38,6 @@ internal class PyPackagesListController(val project: Project, val controller: Py
     horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
   }
 
-  private val loadingPanel = JBPanelWithEmptyText().apply {
-    emptyText.appendLine(AnimatedIcon.Default.INSTANCE, message("python.toolwindow.packages.description.panel.loading"), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES, null)
-  }
-
   private val noSdkPanel = JBPanelWithEmptyText().apply {
     emptyText.text = message("python.sdk.no.interpreter.selected")
   }
@@ -51,7 +45,7 @@ internal class PyPackagesListController(val project: Project, val controller: Py
   val component: JPanel = JPanel(BorderLayout())
 
   init {
-    setLoadingState(false)
+    setContentPanel(scrollingPackageListComponent)
   }
 
   override fun dispose() {}
@@ -89,8 +83,7 @@ internal class PyPackagesListController(val project: Project, val controller: Py
 
   @RequiresEdt
   internal fun setLoadingState(isLoading: Boolean) {
-    val newPanel = if (isLoading) loadingPanel else scrollingPackageListComponent
-    setContentPanel(newPanel)
+    tablesView.setInstalledLoading(isLoading)
   }
 
   private fun setContentPanel(panel: JComponent) {
