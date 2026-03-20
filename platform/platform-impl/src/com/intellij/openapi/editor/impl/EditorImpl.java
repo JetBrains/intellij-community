@@ -589,13 +589,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollingModel = new ScrollingModelImpl(this);
     myInlayModel = new InlayModelImpl(this);
     Disposer.register(myCaretModel, myInlayModel);
-    if (Registry.is("editor.custom.soft.wraps.support.enabled")) {
-      myCustomWrapModel = new CustomWrapModelImpl(this);
-      mySoftWrapModel = new ExperimentalSoftWrapModelImpl(this);
-    } else {
-      myCustomWrapModel = EmptyCustomWrapModel.INSTANCE;
-      mySoftWrapModel = new LegacySoftWrapModelImpl(this);
-    }
+    myCustomWrapModel = CustomWrapModel.isCustomWrapsSupportEnabled()
+                        ? new CustomWrapModelImpl(this)
+                        : EmptyCustomWrapModel.INSTANCE;
+    mySoftWrapModel = Registry.is("editor.use.new.soft.wraps.impl")
+                      ? new ExperimentalSoftWrapModelImpl(this)
+                      : new LegacySoftWrapModelImpl(this);
 
     myCommandProcessor = CommandProcessor.getInstance();
 
