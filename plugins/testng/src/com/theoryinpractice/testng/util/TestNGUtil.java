@@ -104,13 +104,14 @@ public final class TestNGUtil {
 
   public static final String MAVEN_TEST_NG = "org.testng:testng";
   public static final String TEST_ANNOTATION_FQN = Test.class.getName();
+  public static final String DATA_PROVIDER_ANNOTATION_FQN = DataProvider.class.getName();
   public static final String TESTNG_PACKAGE = "org.testng";
   public static final String FACTORY_ANNOTATION_FQN = Factory.class.getName();
   public static final String[] CONFIG_ANNOTATIONS_FQN = {
     "org.testng.annotations.Configuration",
     Factory.class.getName(),
     ObjectFactory.class.getName(),
-    DataProvider.class.getName(),
+    DATA_PROVIDER_ANNOTATION_FQN,
     BeforeClass.class.getName(),
     BeforeGroups.class.getName(),
     BeforeMethod.class.getName(),
@@ -459,7 +460,7 @@ public final class TestNGUtil {
     if (annotation == null) return topLevelClass != null ? new PsiClass[]{topLevelClass} : PsiClass.EMPTY_ARRAY;
     PsiAnnotationMemberValue value = extractDataProviderClass(annotation);
     List<PsiAnnotationMemberValue> values = (value == null)
-                                            ? findDataProviderClass(PsiTreeUtil.getParentOfType(element, PsiMethod.class))
+                                            ? findDataProviderClasses(PsiTreeUtil.getParentOfType(element, PsiMethod.class))
                                             : List.of(value);
 
     PsiClass[] result = values.stream()
@@ -474,13 +475,13 @@ public final class TestNGUtil {
            : topLevelClass != null ? new PsiClass[]{topLevelClass} : PsiClass.EMPTY_ARRAY;
   }
 
-  private static @Nullable PsiAnnotationMemberValue extractDataProviderClass(@NotNull PsiAnnotation annotation) {
+  public static @Nullable PsiAnnotationMemberValue extractDataProviderClass(@NotNull PsiAnnotation annotation) {
     return TEST_ANNOTATION_FQN.equals(annotation.getQualifiedName())
            ? annotation.findDeclaredAttributeValue(DATA_PROVIDER_CLASS_ATTRIBUTE)
            : null;
   }
 
-  private static List<PsiAnnotationMemberValue> findDataProviderClass(@Nullable PsiMethod method) {
+  private static List<PsiAnnotationMemberValue> findDataProviderClasses(@Nullable PsiMethod method) {
     if (method == null) return List.of();
     PsiClass aClass = method.getContainingClass();
 
@@ -541,5 +542,11 @@ public final class TestNGUtil {
       return CachedValueProvider.Result.createSingleDependency(Version.parseVersion(version),
                                                                ProjectRootManager.getInstance(module.getProject()));
     });
+  }
+
+  public static String getAttributeValue(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
+    final PsiAnnotationMemberValue dataProviderMethodName = annotation.findDeclaredAttributeValue(attributeName);
+    if (dataProviderMethodName == null) return null;
+    return StringUtil.unquoteString(dataProviderMethodName.getText());
   }
 }

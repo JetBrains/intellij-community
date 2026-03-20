@@ -5,9 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.reference.PsiMemberReference;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementResolveResult;
@@ -26,11 +24,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.testng.annotations.DataProvider;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
+import static com.theoryinpractice.testng.util.TestNGUtil.DATA_PROVIDER_ANNOTATION_FQN;
+import static com.theoryinpractice.testng.util.TestNGUtil.getAttributeValue;
 
 public class DataProviderReference extends PsiReferenceBase<PsiLiteral> implements PsiMemberReference, PsiPolyVariantReference {
 
@@ -66,13 +66,6 @@ public class DataProviderReference extends PsiReferenceBase<PsiLiteral> implemen
       .resolveWithCaching(this, new OurGenericsResolver(getValue()), false, incompleteCode, file);
   }
 
-  private static String getAttributeValue(@NotNull PsiAnnotation annotation,
-                                          @SuppressWarnings("SameParameterValue") @NotNull String attributeName) {
-    final PsiAnnotationMemberValue dataProviderMethodName = annotation.findDeclaredAttributeValue(attributeName);
-    if (dataProviderMethodName == null) return null;
-    return StringUtil.unquoteString(dataProviderMethodName.getText());
-  }
-
   @Override
   public Object @NotNull [] getVariants() {
     final PsiClass topLevelClass = PsiUtil.getTopLevelClass(getElement());
@@ -89,7 +82,7 @@ public class DataProviderReference extends PsiReferenceBase<PsiLiteral> implemen
         if (needToBeStatic && !method.hasModifierProperty(PsiModifier.STATIC)) continue;
         if (!needToBeStatic && cls != method.getContainingClass() && method.hasModifierProperty(PsiModifier.PRIVATE)) continue;
 
-        final PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
+        final PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DATA_PROVIDER_ANNOTATION_FQN);
         if (dataProviderAnnotation == null) continue;
         String value = getAttributeValue(dataProviderAnnotation, "name");
         result.add(LookupElementBuilder.create(value != null ? value : method.getName()));
@@ -114,7 +107,7 @@ public class DataProviderReference extends PsiReferenceBase<PsiLiteral> implemen
       for (PsiClass cls : classes) {
         PsiMethod[] methods = cls.getAllMethods();
         for (PsiMethod method : methods) {
-          PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
+          PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DATA_PROVIDER_ANNOTATION_FQN);
           if (dataProviderAnnotation == null) continue;
           if (myValue.equals(method.getName()) || myValue.equals(getAttributeValue(dataProviderAnnotation, "name"))) {
             result.add(method);
