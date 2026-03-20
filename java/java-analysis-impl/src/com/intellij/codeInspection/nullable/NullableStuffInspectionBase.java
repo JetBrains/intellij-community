@@ -607,7 +607,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         super.visitLambdaExpression(lambda);
         PsiElement body = lambda.getBody();
         if (body instanceof PsiExpression psiExpression) {
-          checkNestedGenericClasses(holder, body, LambdaUtil.getFunctionalInterfaceReturnType(lambda), psiExpression.getType(), ConflictNestedTypeProblem.ASSIGNMENT_NESTED_TYPE_PROBLEM);
+          checkNestedGenericClasses(holder, body, LambdaUtil.getFunctionalInterfaceReturnType(lambda), psiExpression.getType(), ConflictNestedTypeProblem.RETURN_NESTED_TYPE_PROBLEM);
         }
       }
 
