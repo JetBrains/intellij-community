@@ -11,7 +11,6 @@ private val OLD_TEST_GROUP = System.getProperty("idea.test.group", TestingOption
 private val OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
 private val OLD_PLATFORM_PREFIX = System.getProperty("idea.platform.prefix")
 private val OLD_DEBUG_PORT = System.getProperty("debug.port")?.toIntOrNull() ?: 0
-private val OLD_SUSPEND_DEBUG_PROCESS = System.getProperty("debug.suspend", "n") == "y"
 
 /**
  * Options available for tests running on TeamCity.
@@ -85,7 +84,7 @@ open class TestingOptions {
   /**
    * If `true` to suspend the testing process until a debugger connects to it.
    */
-  var isSuspendDebugProcess: Boolean = getBooleanProperty("intellij.build.test.debug.suspend", OLD_SUSPEND_DEBUG_PROCESS)
+  var isSuspendDebugProcess: Boolean = getBooleanProperty("intellij.build.test.debug.suspend")
 
   /**
    * Custom JVM memory options (e.g. -Xmx) for the testing process.
