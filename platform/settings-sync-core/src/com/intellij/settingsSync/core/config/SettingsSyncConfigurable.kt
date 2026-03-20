@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -828,7 +829,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         }
       }
       else if (currentStatus is SettingsSyncStatusTracker.SyncStatus.Error) {
-        cellUserComboBox.comment?.text = message("sync.status.failed", currentStatus.errorMessage)
+        cellUserComboBox.comment?.text = message("sync.status.failed", StringUtil.escapeXmlEntities(currentStatus.errorMessage))
       }
     }
     else {
