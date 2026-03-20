@@ -23,8 +23,8 @@
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/test">
-      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" packagePrefix="com.intellij.gradle.completion" />
+    <content url="file://$MODULE_DIR$/tests">
+      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" packagePrefix="com.intellij.gradle.completion" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

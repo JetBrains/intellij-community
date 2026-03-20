@@ -109,7 +109,7 @@ jvm_library(
 jvm_library(
   name = "completion-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_completion-tests",
   associates = [
     "//plugins/gradle/completion",

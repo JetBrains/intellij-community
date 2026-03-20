@@ -513,6 +513,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/completion/kotlin/tests/intellij.gradle.completion.kotlin.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/completion/kotlin/tests/intellij.gradle.completion.kotlin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/completion/intellij.gradle.completion.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/completion/intellij.gradle.completion.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/completion/toml/intellij.gradle.completion.toml.iml" filepath="$PROJECT_DIR$/plugins/gradle/completion/toml/intellij.gradle.completion.toml.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/completion/toml/tests/intellij.gradle.completion.toml.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/completion/toml/tests/intellij.gradle.completion.toml.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/gradle-declarative-sync/intellij.gradle.declarativeSync.iml" filepath="$PROJECT_DIR$/plugins/gradle/gradle-declarative-sync/intellij.gradle.declarativeSync.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/gradle-declarative-sync/intellij.gradle.declarativeSync.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/gradle-declarative-sync/intellij.gradle.declarativeSync.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/gradle-dependency-updater/intellij.gradle.dependencyUpdater.iml" filepath="$PROJECT_DIR$/plugins/gradle/gradle-dependency-updater/intellij.gradle.dependencyUpdater.iml" />
