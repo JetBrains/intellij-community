@@ -42,7 +42,7 @@ internal class SeverityFiltersActionGroup : DumbAware, ActionGroup() {
 }
 
 internal abstract class SeverityFilterActionBase(name: @Nls String, val panel: HighlightingPanel): DumbAwareToggleAction(name) {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   abstract fun updateState(selected: Boolean): Boolean
 
