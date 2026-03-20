@@ -52,7 +52,9 @@ class BreakpointsTreeCellRenderer  {
         BreakpointsTreeCellRenderer.customizeRenderer(myProject, value, selected, expanded, textRenderer);
       }
       catch (Exception e) {
-        LOG.error(e);
+        if (!Logger.shouldRethrow(e)) {
+          LOG.error(e);
+        }
         textRenderer.clear();
         textRenderer.append(e.getMessage());
       }
