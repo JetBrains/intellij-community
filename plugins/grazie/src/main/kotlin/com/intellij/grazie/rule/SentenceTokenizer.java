@@ -29,8 +29,17 @@ import java.util.List;
 
 public class SentenceTokenizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.grazie.text.SentenceTokenizer");
-  private static final Key<List<Sentence>> tokenized =
+  private static final Key<List<Tokenizer.Token>> tokenized =
     Key.create("grazie pro sentence tokenization");
+
+  public static List<Tokenizer.Token> toTokens(@NotNull TextContent text) {
+    List<Tokenizer.Token> result = text.getUserData(tokenized);
+    if (result == null) {
+      result = tokenize((CharSequence)text);
+      text.putUserData(tokenized, result);
+    }
+    return result;
+  }
 
   public static List<Tokenizer.Token> tokenize(@NotNull CharSequence text) {
     CharSequence bombed = bombed(text);
@@ -54,14 +63,8 @@ public class SentenceTokenizer {
   }
 
   public static List<Sentence> tokenize(@NotNull TextContent content) {
-    List<Sentence> result = content.getUserData(tokenized);
-    if (result == null) {
-      List<Exclusion> exclusions = rangeExclusions(content, TextRange.from(0, content.length()));
-      Text text = ExclusionUtilsKt.withExclusions(new Text(bombed(content)), exclusions);
-      result = ContainerUtil.map(StandardSentenceTokenizer.Companion.getDefault().tokenize(text), SentenceTokenizer::toSentence);
-      content.putUserData(tokenized, result);
-    }
-    return result;
+    List<Tokenizer.Token> tokens = toTokens(content);
+    return ContainerUtil.map(tokens, SentenceTokenizer::toSentence);
   }
 
   private static Sentence toSentence(Tokenizer.Token token) {

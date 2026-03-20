@@ -1,5 +1,6 @@
 package com.intellij.grazie.mlec
 
+import ai.grazie.gec.model.CorrectionServiceType
 import ai.grazie.gec.model.problem.Problem
 import ai.grazie.gec.model.problem.ProblemFix
 import ai.grazie.gec.model.problem.SentenceWithProblems
@@ -17,21 +18,23 @@ import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.RuleGroup
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextProblem
+import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.Text
 import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.grazie.utils.getAssociatedGrazieRule
 import com.intellij.grazie.utils.getProblems
+import com.intellij.grazie.utils.getTextProblems
 import com.intellij.grazie.utils.isEnabledInState
-import com.intellij.grazie.utils.shouldCheckGrammarStyle
+import com.intellij.grazie.utils.hasLanguage
 import com.intellij.grazie.utils.underline
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import java.util.Locale
-import kotlin.String
 
 class MlecChecker : ExternalTextChecker() {
   override fun getRules(locale: Locale): List<Rule> {
@@ -41,13 +44,31 @@ class MlecChecker : ExternalTextChecker() {
   }
 
   override suspend fun checkExternally(context: ProofreadingContext): Collection<TextProblem> {
-    if (!GrazieCloudConnector.seemsCloudConnected() || !context.shouldCheckGrammarStyle()) return emptyList()
+    if (!GrazieCloudConnector.seemsCloudConnected() || !context.hasLanguage()) return emptyList()
+
+    val typos = getProblems(context, MlecServerBatcherHolder::class.java)?.takeIf { it.isNotEmpty() } ?: return emptyList()
+    return typos.toMlecProblems(context)
+  }
+
+  override suspend fun checkExternally(contexts: List<ProofreadingContext>): Collection<TextProblem> {
+    if (!Registry.`is`("grazie.correct.text.enabled")) return super.checkExternally(contexts)
+    if (!GrazieCloudConnector.seemsCloudConnected() || contexts.isEmpty()) return emptyList()
+
+    val contextsWithProblems = getTextProblems(contexts, CorrectionServiceType.MLEC)?.takeIf { it.isNotEmpty() }
+                               ?: return emptyList()
+    val checkedDomains = HighlightingUtil.checkedDomains()
+    return contextsWithProblems
+      .filter { it.key.text.domain in checkedDomains }
+      .map { (context, problems) -> problems.toMlecProblems(context) }
+      .flatten()
+  }
+
+  private fun List<Problem>.toMlecProblems(context: ProofreadingContext): List<TextProblem> {
+    if (this.isEmpty()) return emptyList()
     val rules = Constants.mlecRules[context.language] ?: return emptyList()
     if (rules.none { it.isCurrentlyEnabled(context.text) }) return emptyList()
 
-    val typos = getProblems(context, MlecServerBatcherHolder::class.java)?.takeIf { it.isNotEmpty() } ?: return emptyList()
-    return typos
-      .mapNotNull { typo ->
+    return this.mapNotNull { typo ->
         val underline: TextRange = typo.highlighting.underline ?: return@mapNotNull null
         val rule =
           if (context.language == Language.ENGLISH && typo.info.id.id.endsWith("article.missing")) Constants.enMissingArticle

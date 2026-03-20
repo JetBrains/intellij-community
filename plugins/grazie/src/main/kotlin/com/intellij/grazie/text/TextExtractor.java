@@ -183,6 +183,7 @@ public abstract class TextExtractor {
       }
 
       if (!contents.isEmpty()) {
+        contents.forEach(content -> content.putUserData(EXTRACTOR_SOURCE, psi));
         return ContainerUtil.filter(
           contents,
           c -> Boolean.FALSE.equals(c.getUserData(IGNORED)) && allowedDomains.contains(c.getDomain()) && c.intersectsRange(psiRange)
@@ -339,9 +340,7 @@ public abstract class TextExtractor {
     for (PsiFile root : vp.getAllFiles()) {
       for (PsiElement element : SyntaxTraverser.psiTraverser(root)) {
         if (element instanceof PsiWhiteSpace) continue;
-        List<TextContent> texts = findTextsAt(element, domains);
-        texts.forEach(text -> text.putUserData(EXTRACTOR_SOURCE, element));
-        allContents.addAll(texts);
+        allContents.addAll(findTextsAt(element, domains));
       }
     }
     return allContents;

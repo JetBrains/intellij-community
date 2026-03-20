@@ -1,7 +1,10 @@
 package com.intellij.grazie.cloud
 
 import ai.grazie.gec.model.CorrectionServiceType
+import ai.grazie.gec.model.doc.Paragraph
+import ai.grazie.gec.model.problem.Problem
 import ai.grazie.gec.model.problem.SentenceWithProblems
+import ai.grazie.gec.model.request.ClientAbility
 import ai.grazie.gec.model.settings.StyleProfile
 import ai.grazie.gec.model.settings.UserSettings
 import ai.grazie.gen.tasks.text.rewrite.full.RewriteFullTaskDescriptor
@@ -95,6 +98,18 @@ object APIQueries {
         .map { it.trim() }
         .distinct()
         .filter { it != text }
+    }
+  }
+
+  @JvmOverloads
+  suspend fun correctText(paragraphs: List<Paragraph>, project: Project,
+                          services: Set<CorrectionServiceType>,
+                          userSettings: UserSettings? = null,
+                          clientAbilities: Set<ClientAbility>? = null): List<Problem>? {
+    return handleExceptions(project, BackgroundCloudService.GEC) {
+      withContext(Dispatchers.IO) {
+        GrazieCloudConnector.api()?.gec()?.correctText(paragraphs, services, userSettings, clientAbilities)?.corrections
+      }
     }
   }
 

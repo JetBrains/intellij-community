@@ -36,8 +36,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.spellchecker.inspections.SpellCheckingInspection.SpellCheckingScope
-import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy.getSpellcheckingStrategy
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -74,7 +72,6 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
 
     val areChecksDisabled = getDisabledChecker(file)
     val checkedDomains = checkedDomains()
-    val scopes = GrazieSpellCheckingInspection.buildAllowedScopes(file)
     return object : PsiElementVisitor() {
       override fun visitWhiteSpace(space: PsiWhiteSpace) {}
 
@@ -84,20 +81,19 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
 
         val texts = HighlightingUtil.getAllFileTexts(file.viewProvider)
           .filter { ProblemFilter.allIgnoringFilters(it).findAny().isEmpty }
+        texts.forEach { text -> require(text.getUserData(EXTRACTOR_SOURCE) != null) { "Inspection requires text's source element" } }
         if (texts.sumOf { it.length } > MAX_TEXT_LENGTH_IN_FILE) return
 
         getAllProblems(texts)
           .flatMap { (text, problems) -> TextProblemAggregator.aggregate(text.toString(), problems) }
-          .also { problems -> psiFile.registerProblems(problems) }
+          .also { problems -> file.registerProblems(problems) }
           .forEach { reportProblem(it, holder) }
       }
 
       private fun getAllProblems(texts: List<TextContent>): Map<TextContent, List<TextProblem>> {
         val textsWithProblems = mutableMapOf<TextContent, MutableList<TextProblem>>()
-        texts.forEach { text ->
-          val element = text.getUserData(EXTRACTOR_SOURCE) ?: throw IllegalArgumentException("Grazie Inspection requires text's root element")
-          val textProblems = CheckerRunner(text).run(filterCheckers(checkers, element, scopes), checkedDomains)
-          textsWithProblems.computeIfAbsent(text) { ArrayList() }.addAll(textProblems)
+        CheckerRunner.checkText(checkers, texts, checkedDomains).forEach { problem ->
+          textsWithProblems.computeIfAbsent(problem.text) { ArrayList() }.add(problem)
         }
         TreeRuleChecker.checkTextLevelProblems(file).forEach { problem ->
           textsWithProblems.computeIfAbsent(problem.text) { ArrayList() }.add(problem)
@@ -120,14 +116,6 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
     if (isDisabled(session, spellCheckingInspections)) allCheckers.removeIf { it.isSpelling() }
     if (isDisabled(session, grammarInspections)) allCheckers.removeIf { it.isGrammar() }
     return allCheckers
-  }
-
-  private fun filterCheckers(checkers: List<TextChecker>, element: PsiElement, scopes: Set<SpellCheckingScope>): List<TextChecker> {
-    val strategy = getSpellcheckingStrategy(element)
-    if (strategy == null || !strategy.elementFitsScope(element, scopes) || !strategy.useTextLevelSpellchecking(element)) {
-      return checkers.filterNot { it.isSpelling() }
-    }
-    return checkers
   }
 
   private fun hasTooLowSeverity(session: LocalInspectionToolSession, inspections: List<LocalInspectionTool>): Boolean =

@@ -14,7 +14,7 @@ import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextProblem
 import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.grazie.utils.getTextDomain
-import com.intellij.grazie.utils.shouldCheckGrammarStyle
+import com.intellij.grazie.utils.hasLanguage
 import com.intellij.grazie.utils.trimToNull
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -56,7 +56,7 @@ open class LanguageToolChecker : ExternalTextChecker() {
 
   @OptIn(DelicateCoroutinesApi::class)
   override suspend fun checkExternally(context: ProofreadingContext): List<Problem> {
-    if (!context.shouldCheckGrammarStyle()) return emptyList()
+    if (!context.hasLanguage()) return emptyList()
     val domain = context.text.getTextDomain()
     return computeDetached(Dispatchers.Default) {
       try {

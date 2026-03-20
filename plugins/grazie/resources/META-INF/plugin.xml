@@ -123,6 +123,7 @@
                  description="Controls whether expensive linguistic checks should be performed during pre-commit code analysis"/>
     <registryKey key="grazie.show.gpl.warning" defaultValue="false" description="Whether to show warning for GPL licensed languages"/>
     <registryKey key="grazie.batch.language.detector" defaultValue="true" description="Whether to use batch language detector instead of regular one"/>
+    <registryKey key="grazie.correct.text.enabled" defaultValue="false" description="Whether to use new /correct-text REST API"/>
 
     <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker" id="treeRules"/>
     <grazie.textChecker implementation="com.intellij.grazie.grammar.LanguageToolChecker" id="languageTool"/>

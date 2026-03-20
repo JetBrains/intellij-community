@@ -3,7 +3,7 @@ package com.intellij.grazie.text
 import ai.grazie.nlp.langs.Language
 import com.intellij.grazie.rule.ParsedSentence
 import com.intellij.grazie.text.TreeRuleChecker.TreeProblem
-import com.intellij.grazie.utils.shouldCheckGrammarStyle
+import com.intellij.grazie.utils.hasLanguage
 import java.util.Locale
 
 class AsyncTreeRuleChecker : ExternalTextChecker() {
@@ -13,7 +13,7 @@ class AsyncTreeRuleChecker : ExternalTextChecker() {
   }
 
   override suspend fun checkExternally(context: ProofreadingContext): Collection<TreeProblem> {
-    if (!context.shouldCheckGrammarStyle()) return emptyList()
+    if (!context.hasLanguage()) return emptyList()
     val sentences = ParsedSentence.getSentencesAsync(context)
     if (sentences.isEmpty()) return emptyList()
 
