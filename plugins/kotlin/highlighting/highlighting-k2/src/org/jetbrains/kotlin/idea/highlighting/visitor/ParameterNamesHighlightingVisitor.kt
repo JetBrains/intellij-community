@@ -43,6 +43,7 @@ internal class ParameterNamesHighlightingVisitor(
             KotlinHighlightInfoTypeSemanticNames.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES
         } else {
             val callExpression = parent.parent as? KtCallExpression
+            val argumentExpression = argument.getArgumentExpression()
             val kaSession = session
 
             val isContextArgument = when {
@@ -59,17 +60,17 @@ internal class ParameterNamesHighlightingVisitor(
                 }
 
                 else -> {
-                    val argumentExpression = argument.getArgumentExpression()
                     context(kaSession) {
                         val resolvedSymbol =
                             callExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
-                        val contextArguments = resolvedSymbol?.contextArguments
-                        contextArguments?.any { (it as? KaExplicitReceiverValue)?.expression == argumentExpression }
+                        val contextArguments = resolvedSymbol?.contextArguments ?: emptyList()
+                        contextArguments.any { (it as? KaExplicitReceiverValue)?.expression == argumentExpression } ||
+                                (contextArguments.isEmpty() && argumentExpression == null)
                     }
                 }
             }
 
-            if (isContextArgument == true) {
+            if (isContextArgument) {
                 KotlinHighlightInfoTypeSemanticNames.CONTEXT_ARGUMENT
             } else {
                 KotlinHighlightInfoTypeSemanticNames.NAMED_ARGUMENT

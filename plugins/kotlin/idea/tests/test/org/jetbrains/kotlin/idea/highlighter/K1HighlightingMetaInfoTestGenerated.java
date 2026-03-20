@@ -570,6 +570,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/ContextArguments.kt");
         }
 
+        @TestMetadata("ContextArgumentsWithoutValue.kt")
+        public void testContextArgumentsWithoutValue() throws Exception {
+            runTest("testData/highlighterMetaInfo/ContextArgumentsWithoutValue.kt");
+        }
+
         @TestMetadata("DefinitelyNotNullType.kt")
         public void testDefinitelyNotNullType() throws Exception {
             runTest("testData/highlighterMetaInfo/DefinitelyNotNullType.kt");
