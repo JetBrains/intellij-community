@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
@@ -50,7 +51,8 @@ internal class UvPackageManager(project: Project, sdk: Sdk, uvExecutionContextDe
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?): PyResult<Unit> {
     return withUv { uv ->
       if (module != null) {
-        uv.addDependency(installRequest, emptyList(), PyWorkspaceMember(module.name))
+        val packageName = resolvePackageName(module)
+        uv.addDependency(installRequest, emptyList(), PyWorkspaceMember(packageName))
       }
       else if (sdk.uvUsePackageManagement) {
         uv.installPackage(installRequest, emptyList())
@@ -105,7 +107,8 @@ internal class UvPackageManager(project: Project, sdk: Sdk, uvExecutionContextDe
     val allPackages = mutableSetOf<PythonPackage>()
     var lastFailure: PyResult<List<PythonPackage>>? = null
     for (module in modules) {
-      val result = withUv { uv -> uv.listTopLevelPackages(module) }
+      val packageName = resolvePackageName(module)
+      val result = withUv { uv -> uv.listTopLevelPackages(PyWorkspaceMember(packageName)) }
       when (result) {
         is Result.Success -> allPackages.addAll(result.result)
         is Result.Failure -> lastFailure = result
@@ -181,6 +184,11 @@ internal class UvPackageManager(project: Project, sdk: Sdk, uvExecutionContextDe
       }
       reloadPackages().mapSuccess { }
     }
+  }
+
+  private suspend fun resolvePackageName(module: Module): String {
+    val pyProjectFile = PyProjectToml.findFile(module) ?: return module.name
+    return PyProjectToml.parseCached(module.project, pyProjectFile)?.project?.name ?: module.name
   }
 
   // TODO PY-87712 Double check for remotes

@@ -25,7 +25,7 @@ interface PythonPackageRequirementsTreeExtractor {
       PythonPackageRequirementsTreeExtractorProvider.EP_NAME.extensionList
         .firstNotNullOfOrNull { it.createExtractor(sdk, project) }
 
-    fun parseTree(lines: List<String>): PackageNode = treeParser.parseTree(lines)
+    fun parseTrees(lines: List<String>): List<PackageNode> = treeParser.parseTrees(lines)
   }
 }
 
@@ -91,9 +91,19 @@ class TreeParser {
     val nextIndex: Int,
   )
 
-  fun parseTree(lines: List<String>): PackageNode {
-    val (node, _) = parseLevel(lines, calculateIndentLevel(lines.first()), 0)
-    return node
+  fun parseTrees(lines: List<String>): List<PackageNode> {
+    val nonBlankLines = lines.withIndex().filterNot { it.value.isBlank() }
+    val result = mutableListOf<PackageNode>()
+    var currentIndex = 0
+
+    while (currentIndex < nonBlankLines.size) {
+      val (originalIndex, line) = nonBlankLines[currentIndex]
+      val (node, nextIndex) = parseLevel(lines, calculateIndentLevel(line), originalIndex)
+      result.add(node)
+      currentIndex = nonBlankLines.indexOfFirst { it.index >= nextIndex }.takeIf { it != -1 } ?: nonBlankLines.size
+    }
+
+    return result
   }
 
   private fun parseLevel(lines: List<String>, startIndent: Int, index: Int): ParseResult {

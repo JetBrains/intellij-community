@@ -9,6 +9,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.common.PyDependencyGroupName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
@@ -78,16 +79,22 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
   }
 
   override suspend fun extractDependencies(): PyResult<List<PythonPackage>> {
-    val output = runPoetryWithSdk(sdk, "show", "--top-level")
+    val allOutput = runPoetryWithSdk(sdk, "show", "--top-level")
       .getOr { return it }
 
-    if (output.isBlank()) {
-      return PyResult.success(emptyList())
+    val allPackages = if (allOutput.isBlank()) emptyList() else parsePoetryShow(allOutput)
+
+    val mainOutput = runPoetryWithSdk(sdk, "show", "--only", "main", "--tree")
+      .getOr { return PyResult.success(allPackages) }
+    val mainNames = parsePoetryShowTree(mainOutput).mapTo(mutableSetOf()) { it.name }
+
+    val annotated = allPackages.map { pkg ->
+      if (pkg.name in mainNames) pkg
+      else PythonPackage(pkg.name, pkg.version, pkg.isEditableMode, NON_MAIN_DEPENDENCY_GROUP)
     }
 
-    return PyResult.success(parsePoetryShow(output))
+    return PyResult.success(annotated)
   }
-
   /**
    * Categorizes packages into standalone packages and pyproject.toml declared packages.
    */
@@ -182,6 +189,10 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
   override suspend fun addDependencyImpl(requirement: PyRequirement): Boolean {
     poetryInstallPackage(sdk, listOf(requirement.presentableText), emptyList()).getOr { return false }
     return true
+  }
+
+  companion object {
+    private val NON_MAIN_DEPENDENCY_GROUP = PyDependencyGroupName("dev")
   }
 }
 

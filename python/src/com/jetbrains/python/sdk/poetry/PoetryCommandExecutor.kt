@@ -23,6 +23,7 @@ import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.packageRequirements.TreeParser
 import com.jetbrains.python.sdk.ToolCommandExecutor
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.runTool
@@ -185,6 +186,20 @@ fun parsePoetryShow(input: String): List<PythonPackage> {
     }
   }
 
+  return result
+}
+
+@Internal
+fun parsePoetryShowTree(input: String): List<PythonPackage> {
+  val result = mutableListOf<PythonPackage>()
+  for (line in input.lines()) {
+    if (line.isBlank()) continue
+    if (!TreeParser.isRootLine(line)) continue
+    val packageInfo = line.split(" ").filter { it.isNotBlank() && it != "(!)" }
+    if (packageInfo.size >= 2) {
+      result.add(PythonPackage(packageInfo[0], packageInfo[1], false))
+    }
+  }
   return result
 }
 
