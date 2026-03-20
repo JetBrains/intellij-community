@@ -2,14 +2,31 @@
 
 package com.intellij.mcpserver.toolsets
 
+import com.intellij.mcpserver.McpSessionInvocationMode
 import com.intellij.mcpserver.McpToolsetTestBase
+import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.toolsets.general.UniversalToolset
 import io.kotest.common.runBlocking
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class UniversalToolsetTest : McpToolsetTestBase() {
+  private var oldInvocationMode = McpSessionInvocationMode.DIRECT
+
+  @BeforeEach
+  fun setUpInvocationMode() {
+    val settings = McpToolFilterSettings.getInstance()
+    oldInvocationMode = settings.invocationMode
+    settings.invocationMode = McpSessionInvocationMode.VIA_ROUTER
+  }
+
+  @AfterEach
+  fun restoreInvocationMode() {
+    McpToolFilterSettings.getInstance().invocationMode = oldInvocationMode
+  }
 
   @Test
   fun execute_tool_reformat_file() = runBlocking {

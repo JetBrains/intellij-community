@@ -45,9 +45,9 @@ class UniversalToolset : McpToolset {
     val allTools = routerToolsProvider.mcpTools.value
 
     // Check for --help flag
-    //if (parts[0] == "--help") {
-    //  return formatAllToolsHelp(allTools)
-    //}
+    if (parts[0] == "--help") {
+      return formatAllToolsHelp(allTools)
+    }
 
     val toolName = parts[0]
     val args = parts.drop(1)

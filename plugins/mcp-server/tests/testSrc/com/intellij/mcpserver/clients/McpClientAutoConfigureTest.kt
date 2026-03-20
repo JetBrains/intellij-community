@@ -14,9 +14,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.replacedServiceFixture
 import com.intellij.util.application
-import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.JsonObject
@@ -57,12 +56,11 @@ class McpClientAutoConfigureTest {
     )
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
   @Suppress("unused")
   private val mcpServerService = application.replacedServiceFixture(
     McpServerService::class.java
   ) {
-    TestMcpServerService(GlobalScope, 7777)
+    TestMcpServerService(CoroutineScope(Dispatchers.Default), 7777)
   }
 
   @AfterEach
