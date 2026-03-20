@@ -7,15 +7,14 @@ import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -34,7 +33,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   private static final Logger LOG = Logger.getInstance(KillableProcessHandler.class);
 
   private boolean myShouldKillProcessSoftly = true;
-  private boolean myShouldKillProcessSoftlyWithWinP = SystemInfo.isWin10OrNewer && Registry.is("use.winp.for.graceful.process.termination");
+  private boolean myShouldKillProcessSoftlyWithWinP = OS.CURRENT == OS.Windows && OS.CURRENT.isAtLeast(10, 0) && Registry.is("use.winp.for.graceful.process.termination");
 
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
@@ -61,7 +60,8 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   /**
    * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
-  public KillableProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset, @Nullable Set<File> filesToDelete) {
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public KillableProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset, @Nullable Set<java.io.File> filesToDelete) {
     super(process, commandLine, charset, filesToDelete);
   }
 
@@ -88,12 +88,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    */
   protected final boolean canDestroyProcessGracefully() {
     if (processCanBeKilledByOS(myProcess)) {
-      if (SystemInfo.isWindows) {
-        return hasPty() || canTerminateGracefullyWithWinP();
-      }
-      if (SystemInfo.isUnix) {
-        return true;
-      }
+      return OS.CURRENT != OS.Windows || hasPty() || canTerminateGracefullyWithWinP();
     }
     return false;
   }
@@ -137,12 +132,13 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    */
   @ApiStatus.Experimental
   @Deprecated(forRemoval = true)
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public void setShouldKillProcessSoftlyWithWinP(boolean shouldKillProcessSoftlyWithWinP) {
     myShouldKillProcessSoftlyWithWinP = shouldKillProcessSoftlyWithWinP;
   }
 
   private boolean canTerminateGracefullyWithWinP() {
-    return myShouldKillProcessSoftlyWithWinP && SystemInfo.isWin10OrNewer && !isWslProcess();
+    return myShouldKillProcessSoftlyWithWinP && OS.CURRENT == OS.Windows && OS.CURRENT.isAtLeast(10, 0) && !isWslProcess();
   }
 
   /**
@@ -168,7 +164,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   protected boolean destroyProcessGracefully() {
     LocalProcessService processService = getProcessService();
-    if (SystemInfo.isWindows) {
+    if (OS.CURRENT == OS.Windows) {
       if (processService.hasControllingTerminal(myProcess) &&
           WinProcessTerminator.terminateWinProcessGracefully(this, processService, this::sendInterruptToPtyProcess)) {
         return true;
@@ -176,13 +172,15 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
       if (canTerminateGracefullyWithWinP() && !Registry.is("disable.winp")) {
         try {
           if (!myProcess.isAlive()) {
+            //noinspection LoggingSimilarMessage
             LOG.info("Cannot destroy already terminated process (PID: " + myProcess.pid() + ", command: " + getCommandLineForLog() + ")");
             return true;
           }
-          return WinProcessTerminator.terminateWinProcessGracefully(this, processService);
+          return WinProcessTerminator.terminateWinProcessGracefully(this, processService, () -> processService.sendWinProcessCtrlC(myProcess));
         }
         catch (Throwable e) {
           if (!myProcess.isAlive()) {
+            //noinspection LoggingSimilarMessage
             LOG.info("Cannot destroy already terminated process (PID: " + myProcess.pid() + ", command: " + getCommandLineForLog() + ")");
             return true;
           }
@@ -205,17 +203,17 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
           }
         }
       }
+      return false;
     }
-    else if (SystemInfo.isUnix) {
+    else {
       if (processService.hasControllingTerminal(myProcess) && sendInterruptToPtyProcess()) {
         return true;
       }
       if (shouldDestroyProcessRecursively()) {
         return UnixProcessManager.sendSigIntToProcessTree(myProcess);
       }
-      return UnixProcessManager.sendSignal(UnixProcessManager.getProcessId(myProcess), UnixProcessManager.SIGINT) == 0;
+      return UnixProcessManager.sendSignal((int)myProcess.pid(), UnixProcessManager.SIGINT) == 0;
     }
-    return false;
   }
 
   private static @NotNull LocalProcessService getProcessService() {

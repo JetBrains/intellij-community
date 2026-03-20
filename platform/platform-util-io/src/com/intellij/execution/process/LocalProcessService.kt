@@ -41,8 +41,6 @@ interface LocalProcessService {
 
   fun hasControllingTerminal(process: Process): Boolean
 
-  fun killWinProcess(pid: Int)
-
   /**
    * @return the command line of the process
    */

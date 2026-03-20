@@ -3,6 +3,7 @@ package com.intellij.execution.process;
 
 import com.intellij.execution.process.impl.ProcessListUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
@@ -10,14 +11,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
+import java.nio.file.Path;
 
 public final class OSProcessUtil {
   private static final Logger LOG = Logger.getInstance(OSProcessUtil.class);
 
   private OSProcessUtil() { }
 
+  /// Consider using [ProcessHandle#allProcesses()] instead.
+  @ApiStatus.Obsolete
   public static ProcessInfo @NotNull [] getProcessList() {
     return ProcessListUtil.getProcessList();
+  }
+
+  /// Returns an executable name for the given process if available, or an empty string.
+  ///
+  /// @since 2026.2
+  public static @NotNull String processName(@NotNull ProcessHandle handle) {
+    return NioFiles.getFileName(Path.of(handle.info().command().orElse("")));
   }
 
   /// Forceful termination of a process tree.
@@ -61,35 +72,14 @@ public final class OSProcessUtil {
     }
   }
 
-  /// Prefer [Process#destroyForcibly()]
-  @ApiStatus.Obsolete
+  /// @deprecated use [Process#destroyForcibly()]
+  @Deprecated(forRemoval = true)
   public static void killProcess(@NotNull Process process) {
-    killProcess((int)process.pid());
+    process.destroyForcibly();
   }
 
-  /// Prefer [ProcessHandle#destroyForcibly()]
-  @ApiStatus.Obsolete
   public static void killProcess(int pid) {
-    if (OS.CURRENT == OS.Windows) {
-      try {
-        if (!Registry.is("disable.winp", false)) {
-          try {
-            LocalProcessService.getInstance().killWinProcess(pid);
-            return;
-          }
-          catch (Throwable e) {
-            LOG.error("Failed to kill " + pid + " with WinP, falling back to the default logic", e);
-          }
-        }
-        WinProcessManager.kill(pid, false);
-      }
-      catch (Throwable e) {
-        LOG.info("Cannot kill process", e);
-      }
-    }
-    else {
-      UnixProcessManager.sendSignal(pid, UnixProcessManager.SIGKILL);
-    }
+    ProcessHandle.of(pid).ifPresent(ProcessHandle::destroyForcibly);
   }
 
   /// Terminates the specified process gracefully: on Windows, sends Ctrl-C, on Unix, sends the SIGINT signal.

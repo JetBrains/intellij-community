@@ -5,7 +5,6 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
@@ -32,8 +31,11 @@ import java.util.Objects;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-/// Do not call this class directly - use [OSProcessUtil] or [Process] API instead.
+/**
+ * Do not call this class directly - use [OSProcessUtil] or [Process] API instead.
+ */
 @ApiStatus.Internal
+@SuppressWarnings("DeprecatedIsStillUsed")
 public final class UnixProcessManager {
   private static final Logger LOG = Logger.getInstance(UnixProcessManager.class);
 
@@ -67,7 +69,7 @@ public final class UnixProcessManager {
 
   private UnixProcessManager() { }
 
-  /// @deprecated use `Process#pid`
+  /** @deprecated use `Process#pid`*/
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static int getProcessId(@NotNull Process process) {
@@ -88,7 +90,7 @@ public final class UnixProcessManager {
     }
   }
 
-  /// @deprecated use `ProcessHandle.current().pid()`
+  /** @deprecated use `ProcessHandle.current().pid()`*/
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static int getCurrentProcessId() {
@@ -169,18 +171,27 @@ public final class UnixProcessManager {
 
   private static void checkCLib() {
     if (Java8Helper.C_LIB == null) {
-      throw new IllegalStateException("Couldn't load c library, OS: " + SystemInfo.OS_NAME + ", isUnix: " + SystemInfo.isUnix);
+      throw new IllegalStateException("Couldn't load c library, OS: " + OS.CURRENT + ", isUnix: " + (OS.CURRENT != OS.Windows));
     }
   }
 
+  /** @deprecated iterate over {@link Process#descendants()} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean sendSigIntToProcessTree(@NotNull Process process) {
     return sendSignalToProcessTree(process, SIGINT);
   }
 
+  /** @deprecated use {@link com.intellij.execution.process.OSProcessUtil#killProcessTree} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean sendSigKillToProcessTree(@NotNull Process process) {
     return sendSignalToProcessTree(process, SIGKILL);
   }
 
+  /** @deprecated iterate over {@link Process#descendants()} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean sendSignalToProcessTree(@NotNull Process process, int signal) {
     try {
       return sendSignalToProcessTree(getProcessId(process), signal);
@@ -191,6 +202,9 @@ public final class UnixProcessManager {
     }
   }
 
+  /** @deprecated iterate over {@link Process#descendants()} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean sendSignalToProcessTree(int processId, int signal) {
     checkCLib();
 
@@ -198,6 +212,9 @@ public final class UnixProcessManager {
     return sendSignalToProcessTree(processId, signal, ourPid);
   }
 
+  /** @deprecated iterate over {@link Process#descendants()} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean sendSignalToProcessTree(int processId, int signal, int ourPid) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Sending signal " + signal + " to process tree with root PID " + processId);
@@ -359,7 +376,7 @@ final class Java8Helper {
   static {
     CLib lib = null;
     try {
-      if (SystemInfoRt.isUnix && JnaLoader.isLoaded()) {
+      if (OS.CURRENT != OS.Windows && JnaLoader.isLoaded()) {
         lib = Native.load("c", CLib.class);
       }
     }

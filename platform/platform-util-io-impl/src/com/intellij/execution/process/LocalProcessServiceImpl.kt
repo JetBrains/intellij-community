@@ -73,7 +73,7 @@ class LocalProcessServiceImpl : LocalProcessService {
   override fun sendWinProcessCtrlC(pid: Int): Boolean = sendWinProcessCtrlC(pid, null)
 
   override fun sendWinProcessCtrlC(pid: Int, processOutputStream: OutputStream?): Boolean {
-    val r = createWinProcess(pid).sendCtrlC()
+    val r = WinProcess(pid).sendCtrlC()
     try {
       processOutputStream?.apply {
         // CTRL-C on Windows sends "-1" to the stdin
@@ -90,20 +90,12 @@ class LocalProcessServiceImpl : LocalProcessService {
   }
 
   override fun killWinProcessRecursively(process: Process) {
-    createWinProcess(process).killRecursively()
+    WinProcess(process.pid().toInt()).killRecursively()
   }
 
   override fun isLocalPtyProcess(process: Process): Boolean = process is PtyProcess
 
   override fun hasControllingTerminal(process: Process): Boolean = process is PtyProcess && !process.isConsoleMode
-
-  private fun createWinProcess(process: Process): WinProcess = WinProcess(process.pid().toInt())
-
-  private fun createWinProcess(pid: Int) = WinProcess(pid)
-
-  override fun killWinProcess(pid: Int) {
-    createWinProcess(pid).kill()
-  }
 
   override fun getCommand(process: Process): List<String> {
     return when (process) {

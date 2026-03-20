@@ -313,6 +313,7 @@ f:com.intellij.execution.process.OSProcessUtil
 - s:killProcess(I):V
 - s:killProcess(java.lang.Process):V
 - s:killProcessTree(java.lang.Process):Z
+- s:processName(java.lang.ProcessHandle):java.lang.String
 - s:terminateProcessGracefully(I):V
 - s:terminateProcessGracefully(java.lang.Process):V
 c:com.intellij.execution.process.ProcessInfo
