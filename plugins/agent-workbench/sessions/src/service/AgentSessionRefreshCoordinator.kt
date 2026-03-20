@@ -3,12 +3,12 @@
 
 package com.intellij.agent.workbench.sessions.service
 
-import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindReport
-import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindRequest
-import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabSnapshot
+import com.intellij.agent.workbench.chat.AgentChatConcreteTabRebindReport
+import com.intellij.agent.workbench.chat.AgentChatConcreteTabRebindRequest
+import com.intellij.agent.workbench.chat.AgentChatConcreteTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatOpenTabsRefreshSnapshot
-import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
-import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindReport
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
 import com.intellij.agent.workbench.chat.agentChatScopedRefreshSignals
 import com.intellij.agent.workbench.chat.clearOpenConcreteAgentChatNewThreadRebindAnchors
 import com.intellij.agent.workbench.chat.collectOpenAgentChatRefreshSnapshot
@@ -19,6 +19,7 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
@@ -37,36 +38,38 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 internal class AgentSessionRefreshCoordinator(
-    private val serviceScope: CoroutineScope,
-    private val sessionSourcesProvider: () -> List<AgentSessionSource>,
-    private val projectEntriesProvider: suspend () -> List<ProjectEntry>,
-    private val stateStore: AgentSessionsStateStore,
-    private val contentRepository: AgentSessionContentRepository,
-    private val isRefreshGateActive: suspend () -> Boolean,
-    private val openAgentChatSnapshotProvider: suspend () -> AgentChatOpenTabsRefreshSnapshot = ::collectOpenAgentChatRefreshSnapshot,
-    codexScopedRefreshSignalsProvider: (AgentSessionProvider) -> Flow<Set<String>> = { provider ->
+  private val serviceScope: CoroutineScope,
+  private val sessionSourcesProvider: () -> List<AgentSessionSource>,
+  private val projectEntriesProvider: suspend () -> List<ProjectEntry>,
+  private val stateStore: AgentSessionsStateStore,
+  private val contentRepository: AgentSessionContentRepository,
+  private val isRefreshGateActive: suspend () -> Boolean,
+  private val openAgentChatSnapshotProvider: suspend () -> AgentChatOpenTabsRefreshSnapshot = ::collectOpenAgentChatRefreshSnapshot,
+  private val providerDescriptorsByIdProvider: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProvidersById,
+  private val providerDescriptorProvider: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = AgentSessionProviders::find,
+  scopedRefreshSignalsProvider: (AgentSessionProvider) -> Flow<Set<String>> = { provider ->
       agentChatScopedRefreshSignals(provider)
     },
-    private val openAgentChatTabPresentationUpdater: suspend (
+  private val openAgentChatTabPresentationUpdater: suspend (
     Map<Pair<String, String>, String>,
     Map<Pair<String, String>, AgentThreadActivity>,
   ) -> Int = ::updateOpenAgentChatTabPresentation,
   private val openAgentChatPendingTabsBinder: suspend (
     AgentSessionProvider,
-    Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
-  ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingAgentChatTabs,
+    Map<String, List<AgentChatPendingTabRebindRequest>>,
+  ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingAgentChatTabs,
   private val openAgentChatConcreteTabsBinder: suspend (
     AgentSessionProvider,
-    Map<String, List<AgentChatConcreteCodexTabRebindRequest>>,
-  ) -> AgentChatConcreteCodexTabRebindReport = ::rebindOpenConcreteAgentChatTabs,
-  private val clearOpenConcreteCodexTabAnchors: (
-    AgentSessionProvider,
-    Map<String, List<AgentChatConcreteCodexTabSnapshot>>,
+    Map<String, List<AgentChatConcreteTabRebindRequest>>,
+  ) -> AgentChatConcreteTabRebindReport = ::rebindOpenConcreteAgentChatTabs,
+  private val clearOpenConcreteNewThreadRebindAnchors: (
+      AgentSessionProvider,
+      Map<String, List<AgentChatConcreteTabSnapshot>>,
   ) -> Int = ::clearOpenConcreteAgentChatNewThreadRebindAnchors,
 ) {
   private val refreshMutex = Mutex()
   private val archiveSuppressionSupport = AgentSessionArchiveSuppressionSupport()
-  private val providerRefreshSupportByProvider = LinkedHashMap<AgentSessionProvider, AgentSessionCodexRefreshSupport>()
+  private val providerRefreshSupportByProvider = LinkedHashMap<AgentSessionProvider, AgentSessionThreadRebindSupport>()
   private val providerRefreshSupportLock = Any()
   private val threadLoadSupport = AgentSessionThreadLoadSupport(
     sessionSourcesProvider = sessionSourcesProvider,
@@ -99,13 +102,13 @@ internal class AgentSessionRefreshCoordinator(
     serviceScope = serviceScope,
     sessionSourcesProvider = sessionSourcesProvider,
     scopedRefreshProvidersProvider = {
-      AgentSessionProviders.allProvidersById()
+      providerDescriptorsByIdProvider()
         .asSequence()
         .filter { provider -> provider.emitsScopedRefreshSignals }
         .map { provider -> provider.provider }
         .toList()
     },
-    scopedRefreshSignalsProvider = codexScopedRefreshSignalsProvider,
+    scopedRefreshSignalsProvider = scopedRefreshSignalsProvider,
     isRefreshGateActive = isRefreshGateActive,
     executeFullRefresh = ::refreshNow,
     executeProviderRefresh = providerRefreshRunner::refreshLoadedProviderThreads,
@@ -118,18 +121,18 @@ internal class AgentSessionRefreshCoordinator(
     refreshScheduler.observeSessionSourceUpdates()
   }
 
-  private fun refreshSupportFor(provider: AgentSessionProvider): AgentSessionCodexRefreshSupport? {
-    val descriptor = AgentSessionProviders.find(provider) ?: return null
+  private fun refreshSupportFor(provider: AgentSessionProvider): AgentSessionThreadRebindSupport? {
+    val descriptor = providerDescriptorProvider(provider) ?: return null
     if (!descriptor.supportsPendingEditorTabRebind && !descriptor.supportsNewThreadRebind) {
       return null
     }
     return synchronized(providerRefreshSupportLock) {
       providerRefreshSupportByProvider.getOrPut(provider) {
-        AgentSessionCodexRefreshSupport(
+        AgentSessionThreadRebindSupport(
           provider = provider,
           openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
           openAgentChatConcreteTabsBinder = openAgentChatConcreteTabsBinder,
-          clearOpenConcreteCodexTabAnchors = clearOpenConcreteCodexTabAnchors,
+          clearOpenConcreteNewThreadRebindAnchors = clearOpenConcreteNewThreadRebindAnchors,
         )
       }
     }

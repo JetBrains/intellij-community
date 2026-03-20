@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabSnapshot
+import com.intellij.agent.workbench.chat.AgentChatConcreteTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatOpenTabsRefreshSnapshot
-import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
-import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
-import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindReport
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
+import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.chat.collectOpenConcreteAgentChatThreadIdentitiesByPath
 import com.intellij.agent.workbench.chat.collectOpenPendingCodexTabsByPath
 import com.intellij.agent.workbench.chat.rebindOpenPendingCodexTabs
@@ -50,8 +50,8 @@ internal const val WORKTREE_PATH = "/work/project-feature"
 internal fun buildOpenChatRefreshSnapshot(
   openProjectPaths: Set<String> = emptySet(),
   selectedChatThreadIdentity: Pair<AgentSessionProvider, String>? = null,
-  pendingTabsByProvider: Map<AgentSessionProvider, Map<String, List<AgentChatPendingCodexTabSnapshot>>> = emptyMap(),
-  concreteTabsAwaitingNewThreadRebindByProvider: Map<AgentSessionProvider, Map<String, List<AgentChatConcreteCodexTabSnapshot>>> = emptyMap(),
+  pendingTabsByProvider: Map<AgentSessionProvider, Map<String, List<AgentChatPendingTabSnapshot>>> = emptyMap(),
+  concreteTabsAwaitingNewThreadRebindByProvider: Map<AgentSessionProvider, Map<String, List<AgentChatConcreteTabSnapshot>>> = emptyMap(),
   concreteThreadIdentitiesByPath: Map<String, Set<String>> = emptyMap(),
 ): AgentChatOpenTabsRefreshSnapshot {
   val normalizedOpenProjectPaths = LinkedHashSet<String>()
@@ -223,13 +223,13 @@ internal suspend fun withService(
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
   treeUiState: SessionsTreeUiState = InMemorySessionsTreeUiState(),
   chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
-  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> =
+  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingTabSnapshot>> =
     ::collectOpenPendingCodexTabsByPath,
   openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
     ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
   openAgentChatPendingTabsBinder: suspend (
-    Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
-  ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingCodexTabs,
+    Map<String, List<AgentChatPendingTabRebindRequest>>,
+  ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
   action: suspend (AgentSessionStateSyncTestFacade) -> Unit,
 ) {
   withServiceAndLaunch(
@@ -250,13 +250,13 @@ internal suspend fun withServiceAndLaunch(
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
   treeUiState: SessionsTreeUiState = InMemorySessionsTreeUiState(),
   chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
-  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> =
+  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingTabSnapshot>> =
     ::collectOpenPendingCodexTabsByPath,
   openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
     ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
   openAgentChatPendingTabsBinder: suspend (
-    Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
-  ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingCodexTabs,
+    Map<String, List<AgentChatPendingTabRebindRequest>>,
+  ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionLaunchService) -> Unit,
 ) {
   withServiceAndArchiveAndLaunch(
@@ -279,13 +279,13 @@ internal suspend fun withServiceAndArchive(
   treeUiState: SessionsTreeUiState = InMemorySessionsTreeUiState(),
   archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
   chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
-  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> =
+  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingTabSnapshot>> =
     ::collectOpenPendingCodexTabsByPath,
   openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
     ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
   openAgentChatPendingTabsBinder: suspend (
-    Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
-  ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingCodexTabs,
+    Map<String, List<AgentChatPendingTabRebindRequest>>,
+  ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionArchiveService) -> Unit,
 ) {
   withServiceAndArchiveAndLaunch(
@@ -308,13 +308,13 @@ internal suspend fun withServiceAndArchiveAndLaunch(
   treeUiState: SessionsTreeUiState = InMemorySessionsTreeUiState(),
   archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
   chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
-  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingCodexTabSnapshot>> =
+  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingTabSnapshot>> =
     ::collectOpenPendingCodexTabsByPath,
   openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
     ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
   openAgentChatPendingTabsBinder: suspend (
-    Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
-  ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingCodexTabs,
+    Map<String, List<AgentChatPendingTabRebindRequest>>,
+  ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionArchiveService, AgentSessionLaunchService) -> Unit,
 ) {
   @Suppress("RAW_SCOPE_CREATION")

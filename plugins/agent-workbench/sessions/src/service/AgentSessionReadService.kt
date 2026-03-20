@@ -73,9 +73,6 @@ class AgentSessionReadService private constructor(
     )
   }
 
-  fun resolvePendingCodexRebindTarget(context: AgentChatEditorTabActionContext): AgentChatTabRebindTarget? {
-    return resolvePendingThreadRebindTarget(context = context, provider = AgentSessionProvider.CODEX)
-  }
 }
 
 internal data class AgentSessionPathState(

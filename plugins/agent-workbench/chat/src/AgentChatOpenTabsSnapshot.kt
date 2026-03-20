@@ -16,15 +16,15 @@ import java.util.Locale
 data class AgentChatOpenTabsRefreshSnapshot(
   @JvmField val openProjectPaths: Set<String>,
   val selectedChatThreadIdentity: Pair<AgentSessionProvider, String>?,
-  private val pendingTabsByProvider: Map<AgentSessionProvider, Map<String, List<AgentChatPendingCodexTabSnapshot>>>,
-  private val concreteTabsAwaitingNewThreadRebindByProvider: Map<AgentSessionProvider, Map<String, List<AgentChatConcreteCodexTabSnapshot>>>,
+  private val pendingTabsByProvider: Map<AgentSessionProvider, Map<String, List<AgentChatPendingTabSnapshot>>>,
+  private val concreteTabsAwaitingNewThreadRebindByProvider: Map<AgentSessionProvider, Map<String, List<AgentChatConcreteTabSnapshot>>>,
   @JvmField val concreteThreadIdentitiesByPath: Map<String, Set<String>>,
 ) {
-  fun pendingTabsByPath(provider: AgentSessionProvider): Map<String, List<AgentChatPendingCodexTabSnapshot>> {
+  fun pendingTabsByPath(provider: AgentSessionProvider): Map<String, List<AgentChatPendingTabSnapshot>> {
     return pendingTabsByProvider[provider].orEmpty()
   }
 
-  fun concreteTabsAwaitingNewThreadRebindByPath(provider: AgentSessionProvider): Map<String, List<AgentChatConcreteCodexTabSnapshot>> {
+  fun concreteTabsAwaitingNewThreadRebindByPath(provider: AgentSessionProvider): Map<String, List<AgentChatConcreteTabSnapshot>> {
     return concreteTabsAwaitingNewThreadRebindByProvider[provider].orEmpty()
   }
 }
@@ -163,14 +163,14 @@ internal class AgentChatOpenTabsSnapshot(
     return LinkedHashSet(if (includePendingOnly) pendingProjectPaths else openProjectPaths)
   }
 
-  fun pendingTabsByPath(provider: AgentSessionProvider): Map<String, List<AgentChatPendingCodexTabSnapshot>> {
+  fun pendingTabsByPath(provider: AgentSessionProvider): Map<String, List<AgentChatPendingTabSnapshot>> {
     val filesByPath = pendingFilesByProviderAndPathAndTabKey[provider].orEmpty()
-    val result = LinkedHashMap<String, List<AgentChatPendingCodexTabSnapshot>>(filesByPath.size)
+    val result = LinkedHashMap<String, List<AgentChatPendingTabSnapshot>>(filesByPath.size)
     for ((normalizedPath, filesByTabKey) in filesByPath) {
-      val tabs = ArrayList<AgentChatPendingCodexTabSnapshot>(filesByTabKey.size)
+      val tabs = ArrayList<AgentChatPendingTabSnapshot>(filesByTabKey.size)
       for (chatFile in filesByTabKey.values) {
         tabs.add(
-          AgentChatPendingCodexTabSnapshot(
+          AgentChatPendingTabSnapshot(
             projectPath = normalizedPath,
             pendingTabKey = chatFile.tabKey,
             pendingThreadIdentity = chatFile.threadIdentity,
@@ -187,15 +187,15 @@ internal class AgentChatOpenTabsSnapshot(
     return result
   }
 
-  fun concreteTabsAwaitingNewThreadRebindByPath(provider: AgentSessionProvider): Map<String, List<AgentChatConcreteCodexTabSnapshot>> {
+  fun concreteTabsAwaitingNewThreadRebindByPath(provider: AgentSessionProvider): Map<String, List<AgentChatConcreteTabSnapshot>> {
     val filesByPath = concreteFilesByProviderAndPathAndTabKey[provider].orEmpty()
-    val result = LinkedHashMap<String, List<AgentChatConcreteCodexTabSnapshot>>(filesByPath.size)
+    val result = LinkedHashMap<String, List<AgentChatConcreteTabSnapshot>>(filesByPath.size)
     for ((normalizedPath, filesByTabKey) in filesByPath) {
-      val tabs = ArrayList<AgentChatConcreteCodexTabSnapshot>(filesByTabKey.size)
+      val tabs = ArrayList<AgentChatConcreteTabSnapshot>(filesByTabKey.size)
       for (chatFile in filesByTabKey.values) {
         val requestedAtMs = chatFile.newThreadRebindRequestedAtMs ?: continue
         tabs.add(
-          AgentChatConcreteCodexTabSnapshot(
+          AgentChatConcreteTabSnapshot(
             projectPath = normalizedPath,
             tabKey = chatFile.tabKey,
             currentThreadIdentity = chatFile.threadIdentity,
@@ -285,14 +285,14 @@ internal class AgentChatOpenTabsSnapshot(
   }
 
   fun toRefreshSnapshot(): AgentChatOpenTabsRefreshSnapshot {
-    val pendingTabsByProvider = LinkedHashMap<AgentSessionProvider, Map<String, List<AgentChatPendingCodexTabSnapshot>>>(
+    val pendingTabsByProvider = LinkedHashMap<AgentSessionProvider, Map<String, List<AgentChatPendingTabSnapshot>>>(
       pendingFilesByProviderAndPathAndTabKey.size
     )
     for (provider in pendingFilesByProviderAndPathAndTabKey.keys) {
       pendingTabsByProvider[provider] = pendingTabsByPath(provider)
     }
 
-    val concreteTabsByProvider = LinkedHashMap<AgentSessionProvider, Map<String, List<AgentChatConcreteCodexTabSnapshot>>>(
+    val concreteTabsByProvider = LinkedHashMap<AgentSessionProvider, Map<String, List<AgentChatConcreteTabSnapshot>>>(
       concreteFilesByProviderAndPathAndTabKey.size
     )
     for (provider in concreteFilesByProviderAndPathAndTabKey.keys) {

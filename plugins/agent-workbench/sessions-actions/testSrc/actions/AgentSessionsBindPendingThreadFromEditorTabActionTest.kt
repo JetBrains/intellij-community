@@ -1,14 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.sessions
+package com.intellij.agent.workbench.sessions.actions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.AgentChatThreadCoordinates
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
-import com.intellij.agent.workbench.codex.sessions.actions.AgentSessionsBindPendingCodexThreadFromEditorTabAction
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
@@ -16,7 +14,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
-class AgentSessionsBindPendingCodexThreadFromEditorTabActionTest {
+class AgentSessionsBindPendingThreadFromEditorTabActionTest {
   @Test
   fun actionVisibleAndEnabledWhenTargetIsAvailable() {
     val normalizedPath = normalizeAgentWorkbenchPath("/tmp/project")
@@ -35,10 +33,11 @@ class AgentSessionsBindPendingCodexThreadFromEditorTabActionTest {
       threadTitle = "Recovered",
       threadActivity = AgentThreadActivity.READY,
     )
-    val action = AgentSessionsBindPendingCodexThreadFromEditorTabAction(
+    val action = AgentSessionsBindPendingThreadFromEditorTabAction(
       resolveContext = { context },
-      resolveTarget = { target },
-      rebindPendingTab = { },
+      resolveProvider = { AgentSessionProvider.CODEX },
+      resolveTarget = { _, _ -> target },
+      rebindPendingTab = { _, _ -> },
     )
     val event = TestActionEvent.createTestEvent(action)
 
@@ -49,31 +48,48 @@ class AgentSessionsBindPendingCodexThreadFromEditorTabActionTest {
   }
 
   @Test
-  fun actionHiddenForNonPendingOrNonCodexContext() {
-    val actionForNonPending = AgentSessionsBindPendingCodexThreadFromEditorTabAction(
+  fun actionHiddenForNonPendingContext() {
+    val actionForNonPending = AgentSessionsBindPendingThreadFromEditorTabAction(
       resolveContext = { editorContext(isPendingThread = false) },
-      resolveTarget = { error("resolveTarget must not be called for non-pending context") },
-      rebindPendingTab = { error("rebindPendingTab must not be called for non-pending context") },
+      resolveProvider = { null },
+      resolveTarget = { _, _ -> error("resolveTarget must not be called for non-pending context") },
+      rebindPendingTab = { _, _ -> error("rebindPendingTab must not be called for non-pending context") },
     )
     val nonPendingEvent = TestActionEvent.createTestEvent(actionForNonPending)
     actionForNonPending.update(nonPendingEvent)
     assertThat(nonPendingEvent.presentation.isEnabledAndVisible).isFalse()
+  }
 
-    val actionForClaudePending = AgentSessionsBindPendingCodexThreadFromEditorTabAction(
-      resolveContext = {
-        editorContext(
-          threadIdentity = "claude:new-1",
-          provider = AgentSessionProvider.CLAUDE,
-          sessionId = "new-1",
-          isPendingThread = true,
-        )
-      },
-      resolveTarget = { error("resolveTarget must not be called for non-codex pending context") },
-      rebindPendingTab = { error("rebindPendingTab must not be called for non-codex pending context") },
+  @Test
+  fun actionVisibleAndEnabledForClaudeWhenTargetIsAvailable() {
+    val normalizedPath = normalizeAgentWorkbenchPath("/tmp/project")
+    val context = editorContext(
+      path = normalizedPath,
+      threadIdentity = "claude:new-1",
+      provider = AgentSessionProvider.CLAUDE,
+      sessionId = "new-1",
+      isPendingThread = true,
     )
-    val claudePendingEvent = TestActionEvent.createTestEvent(actionForClaudePending)
-    actionForClaudePending.update(claudePendingEvent)
-    assertThat(claudePendingEvent.presentation.isEnabledAndVisible).isFalse()
+    val target = AgentChatTabRebindTarget(
+      projectPath = normalizedPath,
+      provider = AgentSessionProvider.CLAUDE,
+      threadIdentity = "claude:thread-42",
+      threadId = "thread-42",
+      threadTitle = "Recovered Claude",
+      threadActivity = AgentThreadActivity.READY,
+    )
+    val action = AgentSessionsBindPendingThreadFromEditorTabAction(
+      resolveContext = { context },
+      resolveProvider = { AgentSessionProvider.CLAUDE },
+      resolveTarget = { _, _ -> target },
+      rebindPendingTab = { _, _ -> },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    action.update(event)
+
+    assertThat(event.presentation.isVisible).isTrue()
+    assertThat(event.presentation.isEnabled).isTrue()
   }
 
   @Test
@@ -99,10 +115,11 @@ class AgentSessionsBindPendingCodexThreadFromEditorTabActionTest {
     var reboundPendingIdentity: String? = null
     var reboundTarget: AgentChatTabRebindTarget? = null
 
-    val action = AgentSessionsBindPendingCodexThreadFromEditorTabAction(
+    val action = AgentSessionsBindPendingThreadFromEditorTabAction(
       resolveContext = { context },
-      resolveTarget = { target },
-      rebindPendingTab = { requestsByPath ->
+      resolveProvider = { AgentSessionProvider.CODEX },
+      resolveTarget = { _, _ -> target },
+      rebindPendingTab = { _, requestsByPath ->
         val entry = requestsByPath.entries.single()
         val request = entry.value.single()
         reboundPath = entry.key
@@ -122,19 +139,11 @@ class AgentSessionsBindPendingCodexThreadFromEditorTabActionTest {
 
   @Test
   fun actionIsRegisteredInEditorTabPopupMenu() {
-    val actionManager = ActionManager.getInstance()
-
-    assertThat(actionManager.getAction("AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab"))
-      .isNotNull
-      .isInstanceOf(AgentSessionsBindPendingCodexThreadFromEditorTabAction::class.java)
-
-    val entries = editorTabPopupEntries(actionManager)
-    val goToSourceIndex = entries.requiredIndex("AgentWorkbenchSessions.GoToSourceProjectFromEditorTab")
-    val bindPendingIndex = entries.requiredIndex("AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab")
-    val closeEditorsGroupIndex = entries.requiredIndex("CloseEditorsGroup")
-
-    assertThat(goToSourceIndex).isLessThan(bindPendingIndex)
-    assertThat(bindPendingIndex).isLessThan(closeEditorsGroupIndex)
+    assertThat(actionsDescriptor())
+      .contains("id=\"AgentWorkbenchSessions.BindPendingAgentThreadFromEditorTab\"")
+      .contains(
+        "<add-to-group group-id=\"EditorTabPopupMenu\" anchor=\"after\" relative-to-action=\"AgentWorkbenchSessions.GoToSourceProjectFromEditorTab\"/>",
+      )
   }
 }
 
@@ -165,18 +174,8 @@ private fun editorContext(
   )
 }
 
-private fun editorTabPopupEntries(actionManager: ActionManager): List<String> {
-  val group = actionManager.getAction("EditorTabPopupMenu") as com.intellij.openapi.actionSystem.ActionGroup
-  return group.getChildren(TestActionEvent.createTestEvent()).mapNotNull { action ->
-    when (action) {
-      is com.intellij.openapi.actionSystem.Separator -> "<separator>"
-      else -> actionManager.getId(action)
-    }
-  }
-}
-
-private fun List<String>.requiredIndex(id: String): Int {
-  val index = indexOf(id)
-  assertThat(index).withFailMessage("Expected action '%s' in %s", id, this).isGreaterThanOrEqualTo(0)
-  return index
+private fun actionsDescriptor(): String {
+  return checkNotNull(AgentSessionsBindPendingThreadFromEditorTabActionTest::class.java.classLoader.getResource("intellij.agent.workbench.sessions.actions.xml")) {
+    "Module descriptor intellij.agent.workbench.sessions.actions.xml is missing"
+  }.readText()
 }

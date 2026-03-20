@@ -132,7 +132,17 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
-- When automatic pending-Codex matching is ambiguous or unmatched, users must be able to manually rebind from editor tab actions via `Bind Pending Codex Thread`.
+- Refresh may also rebind an already-concrete top-level Codex tab after exact terminal `/new`, but only from rollout/app-server refresh hints for the same normalized path, never from arbitrary listed rows.
+- Concrete `/new` rebinding must consider only top-level CLI thread candidates, use a bounded timestamp window around the `/new` request, clear stale anchors after 30 seconds, validate the stored `/new` anchor timestamp before applying, and skip rebinding if the candidate target is already open.
+- When the same candidate could satisfy both a pending Codex tab and an explicit concrete `/new` rebind, the explicit `/new` rebind wins and the pending tab remains pending.
+- Concrete `/new` rebinding must require an unambiguous one-to-one match; if multiple candidates fall in the window, the tab remains anchored and is not rebound automatically.
+  [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
+  [@test] ../../codex/sessions/testSrc/backend/rollout/CodexRolloutRefreshHintsProviderTest.kt
+
+- When automatic pending-thread matching is ambiguous or unmatched, users must be able to manually rebind from editor tab actions via `Bind Pending Thread`.
+- Manual bind remains pending-tab-only and must not repurpose the editor-tab action for already-concrete `/new` rebinding.
+- Pending-thread rebinding is provider-neutral; concrete `/new` rebinding remains Codex-only.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt

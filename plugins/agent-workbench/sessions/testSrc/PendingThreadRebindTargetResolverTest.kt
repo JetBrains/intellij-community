@@ -16,7 +16,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
-class PendingCodexRebindTargetResolverTest {
+class PendingThreadRebindTargetResolverTest {
   @Test
   fun resolveReturnsLightweightRebindTarget() {
     val readService = AgentSessionReadService(
@@ -47,7 +47,7 @@ class PendingCodexRebindTargetResolverTest {
       ),
     )
 
-    val target = readService.resolvePendingCodexRebindTarget(context)
+    val target = readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.CODEX)
 
     assertThat(target).isNotNull
     assertThat(target?.projectPath).isEqualTo(PROJECT_PATH)
@@ -89,7 +89,7 @@ class PendingCodexRebindTargetResolverTest {
       )
 
       val target = withTestLaunchSpecAugmenter {
-        readService.resolvePendingCodexRebindTarget(context)
+        readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.CODEX)
       }
 
       assertThat(target).isNotNull
@@ -98,5 +98,44 @@ class PendingCodexRebindTargetResolverTest {
       assertThat(target?.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-42"))
       assertThat(target?.threadId).isEqualTo("codex-42")
     }
+  }
+
+  @Test
+  fun resolveSupportsClaudePendingContext() {
+    val readService = AgentSessionReadService(
+      stateProvider = {
+        AgentSessionsState(
+          projects = listOf(
+            AgentProjectSessions(
+              path = PROJECT_PATH,
+              name = "Project A",
+              isOpen = true,
+              hasLoaded = true,
+              threads = listOf(thread(id = "claude-42", updatedAt = 700L, provider = AgentSessionProvider.CLAUDE, title = "Recovered Claude")),
+            )
+          )
+        )
+      },
+    )
+
+    val context = AgentChatEditorTabActionContext(
+      project = ProjectManager.getInstance().defaultProject,
+      path = PROJECT_PATH,
+      tabKey = "pending-claude:new-1",
+      threadIdentity = "claude:new-1",
+      threadCoordinates = AgentChatThreadCoordinates(
+        provider = AgentSessionProvider.CLAUDE,
+        sessionId = "new-1",
+        isPending = true,
+      ),
+    )
+
+    val target = readService.resolvePendingThreadRebindTarget(context, AgentSessionProvider.CLAUDE)
+
+    assertThat(target).isNotNull
+    assertThat(target?.provider).isEqualTo(AgentSessionProvider.CLAUDE)
+    assertThat(target?.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "claude-42"))
+    assertThat(target?.threadId).isEqualTo("claude-42")
+    assertThat(target?.threadTitle).isEqualTo("Recovered Claude")
   }
 }

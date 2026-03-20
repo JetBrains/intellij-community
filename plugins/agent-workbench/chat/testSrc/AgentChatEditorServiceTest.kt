@@ -346,7 +346,7 @@ class AgentChatEditorServiceTest {
     val reboundTabs = rebindOpenAgentChatPendingTabs(
       targetsByProjectPath = mapOf(
         projectPath to listOf(
-          AgentChatPendingCodexTabRebindRequest(
+          AgentChatPendingTabRebindRequest(
             pendingTabKey = file.tabKey,
             pendingThreadIdentity = file.threadIdentity,
             target = rebindTarget(
@@ -359,7 +359,10 @@ class AgentChatEditorServiceTest {
         )
       )
     )
-    assertThat(reboundTabs).isEqualTo(1)
+    assertThat(rebindReport.requestedBindings).isEqualTo(1)
+    assertThat(rebindReport.reboundBindings).isEqualTo(1)
+    assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
+      .isEqualTo(AgentChatPendingTabRebindStatus.REBOUND)
 
     assertThat(file.threadIdentity).isEqualTo("CODEX:thread-3")
     assertThat(file.threadId).isEqualTo("thread-3")
@@ -399,6 +402,56 @@ class AgentChatEditorServiceTest {
     assertThat(pendingSnapshot.pendingCreatedAtMs).isEqualTo(1_000L)
     assertThat(pendingSnapshot.pendingFirstInputAtMs).isEqualTo(1_250L)
     assertThat(pendingSnapshot.pendingLaunchMode).isEqualTo("yolo")
+  }
+
+  @Test
+  fun testRebindOpenPendingClaudeChatTabToConcreteThread(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CLAUDE:new-1",
+      shellCommand = claudeCommand,
+      threadId = "",
+      threadTitle = "New thread",
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    val rebindReport = rebindOpenPendingAgentChatTabs(
+      provider = AgentSessionProvider.CLAUDE,
+      requestsByProjectPath = mapOf(
+        projectPath to listOf(
+          AgentChatPendingTabRebindRequest(
+            pendingTabKey = file.tabKey,
+            pendingThreadIdentity = file.threadIdentity,
+            target = rebindTarget(
+              threadIdentity = "CLAUDE:thread-3",
+              threadId = "thread-3",
+              threadTitle = "Recovered Claude thread",
+              threadActivity = AgentThreadActivity.UNREAD,
+              provider = AgentSessionProvider.CLAUDE,
+            ),
+          )
+        )
+      )
+    )
+    assertThat(rebindReport.requestedBindings).isEqualTo(1)
+    assertThat(rebindReport.reboundBindings).isEqualTo(1)
+    assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
+      .isEqualTo(AgentChatPendingTabRebindStatus.REBOUND)
+
+    assertThat(file.threadIdentity).isEqualTo("CLAUDE:thread-3")
+    assertThat(file.threadId).isEqualTo("thread-3")
+    assertThat(file.shellCommand).containsExactly("claude", "--resume", "thread-3")
+    assertThat(file.threadTitle).isEqualTo("Recovered Claude thread")
+    assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
+
+    openChatInModal(
+      threadIdentity = "CLAUDE:thread-3",
+      shellCommand = listOf("claude", "--resume", "thread-3"),
+      threadId = "thread-3",
+      threadTitle = "Recovered Claude thread",
+      subAgentId = null,
+    )
+    assertThat(openedChatFiles()).hasSize(1)
   }
 
   @Test
@@ -461,7 +514,7 @@ class AgentChatEditorServiceTest {
     val rebindReport = rebindOpenConcreteCodexTabs(
       requestsByProjectPath = mapOf(
         projectPath to listOf(
-          AgentChatConcreteCodexTabRebindRequest(
+          AgentChatConcreteTabRebindRequest(
             tabKey = file.tabKey,
             currentThreadIdentity = file.threadIdentity,
             newThreadRebindRequestedAtMs = 1_000L,
@@ -479,7 +532,7 @@ class AgentChatEditorServiceTest {
     assertThat(rebindReport.requestedBindings).isEqualTo(1)
     assertThat(rebindReport.reboundBindings).isEqualTo(1)
     assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
-      .isEqualTo(AgentChatConcreteCodexTabRebindStatus.REBOUND)
+      .isEqualTo(AgentChatConcreteTabRebindStatus.REBOUND)
     assertThat(file.threadIdentity).isEqualTo("CODEX:thread-2")
     assertThat(file.threadId).isEqualTo("thread-2")
     assertThat(file.shellCommand).containsExactlyElementsOf(resolvedCodexResumeCommand("thread-2"))
@@ -512,7 +565,7 @@ class AgentChatEditorServiceTest {
     val rebindReport = rebindOpenConcreteCodexTabs(
       requestsByProjectPath = mapOf(
         projectPath to listOf(
-          AgentChatConcreteCodexTabRebindRequest(
+          AgentChatConcreteTabRebindRequest(
             tabKey = concreteTab.tabKey,
             currentThreadIdentity = "CODEX:thread-1",
             newThreadRebindRequestedAtMs = 1_000L,
@@ -529,7 +582,7 @@ class AgentChatEditorServiceTest {
 
     assertThat(rebindReport.reboundBindings).isEqualTo(0)
     assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
-      .isEqualTo(AgentChatConcreteCodexTabRebindStatus.TARGET_ALREADY_OPEN)
+      .isEqualTo(AgentChatConcreteTabRebindStatus.TARGET_ALREADY_OPEN)
     assertThat(concreteTab.threadIdentity).isEqualTo("CODEX:thread-1")
     assertThat(concreteTab.newThreadRebindRequestedAtMs).isEqualTo(1_000L)
   }
@@ -555,7 +608,7 @@ class AgentChatEditorServiceTest {
     val rebindReport = rebindOpenConcreteCodexTabs(
       requestsByProjectPath = mapOf(
         projectPath to listOf(
-          AgentChatConcreteCodexTabRebindRequest(
+          AgentChatConcreteTabRebindRequest(
             tabKey = staleSnapshot.tabKey,
             currentThreadIdentity = staleSnapshot.currentThreadIdentity,
             newThreadRebindRequestedAtMs = staleSnapshot.newThreadRebindRequestedAtMs,
@@ -572,7 +625,7 @@ class AgentChatEditorServiceTest {
 
     assertThat(rebindReport.reboundBindings).isEqualTo(0)
     assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
-      .isEqualTo(AgentChatConcreteCodexTabRebindStatus.INVALID_CONCRETE_TAB)
+      .isEqualTo(AgentChatConcreteTabRebindStatus.INVALID_CONCRETE_TAB)
     assertThat(file.threadIdentity).isEqualTo("CODEX:thread-1")
     assertThat(file.newThreadRebindRequestedAtMs).isEqualTo(2_000L)
   }
@@ -598,7 +651,7 @@ class AgentChatEditorServiceTest {
     val rebindReport = rebindOpenPendingCodexTabs(
       requestsByProjectPath = mapOf(
         projectPath to listOf(
-          AgentChatPendingCodexTabRebindRequest(
+          AgentChatPendingTabRebindRequest(
             pendingTabKey = pendingTab.tabKey,
             pendingThreadIdentity = "CODEX:new-2",
             target = rebindTarget(
@@ -613,7 +666,7 @@ class AgentChatEditorServiceTest {
     )
     assertThat(rebindReport.reboundBindings).isEqualTo(1)
     assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
-      .isEqualTo(AgentChatPendingCodexTabRebindStatus.REBOUND)
+      .isEqualTo(AgentChatPendingTabRebindStatus.REBOUND)
 
     val filesByIdentity = openedChatFiles().associateBy { it.threadIdentity }
     assertThat(filesByIdentity).containsKey("CODEX:new-1")
@@ -642,7 +695,7 @@ class AgentChatEditorServiceTest {
     val rebindReport = rebindOpenPendingCodexTabs(
       requestsByProjectPath = mapOf(
         projectPath to listOf(
-          AgentChatPendingCodexTabRebindRequest(
+          AgentChatPendingTabRebindRequest(
             pendingTabKey = pendingTab.tabKey,
             pendingThreadIdentity = "CODEX:new-1",
             target = rebindTarget(
@@ -657,7 +710,7 @@ class AgentChatEditorServiceTest {
     )
     assertThat(rebindReport.reboundBindings).isEqualTo(0)
     assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
-      .isEqualTo(AgentChatPendingCodexTabRebindStatus.TARGET_ALREADY_OPEN)
+      .isEqualTo(AgentChatPendingTabRebindStatus.TARGET_ALREADY_OPEN)
     assertThat(openedChatFiles().map { it.threadIdentity }).contains("CODEX:new-1", "CODEX:thread-2")
   }
 
@@ -674,7 +727,7 @@ class AgentChatEditorServiceTest {
     val rebindReport = rebindOpenPendingCodexTabs(
       requestsByProjectPath = mapOf(
         projectPath to listOf(
-          AgentChatPendingCodexTabRebindRequest(
+          AgentChatPendingTabRebindRequest(
             pendingTabKey = "missing-tab-key",
             pendingThreadIdentity = "CODEX:new-1",
             target = rebindTarget(
@@ -690,7 +743,7 @@ class AgentChatEditorServiceTest {
 
     assertThat(rebindReport.reboundBindings).isEqualTo(0)
     assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
-      .isEqualTo(AgentChatPendingCodexTabRebindStatus.PENDING_TAB_NOT_OPEN)
+      .isEqualTo(AgentChatPendingTabRebindStatus.PENDING_TAB_NOT_OPEN)
   }
 
   @Test

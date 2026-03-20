@@ -1,30 +1,30 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions.codex
+package com.intellij.agent.workbench.sessions.service
 
-import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
+import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 
-internal data class CodexPendingTabBinding(
+internal data class PendingTabBinding(
   @JvmField val pendingTabKey: String,
   @JvmField val pendingThreadIdentity: String,
   @JvmField val target: AgentChatTabRebindTarget,
 )
 
-internal data class CodexPendingTabMatchResult(
-  @JvmField val bindingsByPath: Map<String, List<CodexPendingTabBinding>>,
+internal data class PendingTabMatchResult(
+  @JvmField val bindingsByPath: Map<String, List<PendingTabBinding>>,
   @JvmField val ambiguousPendingThreadIdentitiesByPath: Map<String, Set<String>>,
   @JvmField val noMatchPendingThreadIdentitiesByPath: Map<String, Set<String>>,
 )
 
-internal object CodexPendingTabMatcher {
+internal object PendingAgentChatTabMatcher {
   fun match(
-    pendingTabsByPath: Map<String, List<AgentChatPendingCodexTabSnapshot>>,
-    candidatesByPath: Map<String, List<AgentChatTabRebindTarget>>,
-    openConcreteIdentitiesByPath: Map<String, Set<String>>,
-    preWindowMs: Long,
-    postWindowMs: Long,
-  ): CodexPendingTabMatchResult {
-    val bindingsByPath = LinkedHashMap<String, List<CodexPendingTabBinding>>()
+      pendingTabsByPath: Map<String, List<AgentChatPendingTabSnapshot>>,
+      candidatesByPath: Map<String, List<AgentChatTabRebindTarget>>,
+      openConcreteIdentitiesByPath: Map<String, Set<String>>,
+      preWindowMs: Long,
+      postWindowMs: Long,
+  ): PendingTabMatchResult {
+    val bindingsByPath = LinkedHashMap<String, List<PendingTabBinding>>()
     val ambiguousByPath = LinkedHashMap<String, Set<String>>()
     val noMatchByPath = LinkedHashMap<String, Set<String>>()
 
@@ -52,7 +52,7 @@ internal object CodexPendingTabMatcher {
       }
     }
 
-    return CodexPendingTabMatchResult(
+    return PendingTabMatchResult(
       bindingsByPath = bindingsByPath,
       ambiguousPendingThreadIdentitiesByPath = ambiguousByPath,
       noMatchPendingThreadIdentitiesByPath = noMatchByPath,
@@ -60,11 +60,11 @@ internal object CodexPendingTabMatcher {
   }
 
   private fun matchPath(
-    pendingTabs: List<AgentChatPendingCodexTabSnapshot>,
-    candidates: List<AgentChatTabRebindTarget>,
-    openConcreteIdentities: Set<String>,
-    preWindowMs: Long,
-    postWindowMs: Long,
+      pendingTabs: List<AgentChatPendingTabSnapshot>,
+      candidates: List<AgentChatTabRebindTarget>,
+      openConcreteIdentities: Set<String>,
+      preWindowMs: Long,
+      postWindowMs: Long,
   ): PathMatchResult {
     val uniquePendingTabs = pendingTabs
       .asSequence()
@@ -143,7 +143,7 @@ internal object CodexPendingTabMatcher {
       .sortedBy { it.key }
       .mapNotNull { (pendingTabKey, target) ->
         val pendingTab = pendingTabByKey[pendingTabKey] ?: return@mapNotNull null
-        CodexPendingTabBinding(
+        PendingTabBinding(
           pendingTabKey = pendingTabKey,
           pendingThreadIdentity = pendingTab.pendingThreadIdentity,
           target = target,
@@ -169,7 +169,7 @@ internal object CodexPendingTabMatcher {
   }
 
   private data class PathMatchResult(
-    @JvmField val bindings: List<CodexPendingTabBinding>,
+    @JvmField val bindings: List<PendingTabBinding>,
     @JvmField val ambiguousPendingThreadIdentities: Set<String>,
     @JvmField val noMatchPendingThreadIdentities: Set<String>,
   )

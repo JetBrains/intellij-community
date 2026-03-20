@@ -24,15 +24,15 @@ import kotlinx.coroutines.sync.withLock
 private val LOG = logger<AgentSessionProviderRefreshRunner>()
 
 internal class AgentSessionProviderRefreshRunner(
-  private val refreshMutex: Mutex,
-  private val sessionSourcesProvider: () -> List<AgentSessionSource>,
-  private val stateStore: AgentSessionsStateStore,
-  private val contentRepository: AgentSessionContentRepository,
-  private val archiveSuppressionSupport: AgentSessionArchiveSuppressionSupport,
-  private val refreshSupportProvider: (AgentSessionProvider) -> AgentSessionCodexRefreshSupport?,
-  private val resolveProviderWarningMessage: (AgentSessionProvider, Throwable) -> String,
-  private val openAgentChatSnapshotProvider: suspend () -> AgentChatOpenTabsRefreshSnapshot = ::collectOpenAgentChatRefreshSnapshot,
-  private val openAgentChatTabPresentationUpdater: suspend (
+    private val refreshMutex: Mutex,
+    private val sessionSourcesProvider: () -> List<AgentSessionSource>,
+    private val stateStore: AgentSessionsStateStore,
+    private val contentRepository: AgentSessionContentRepository,
+    private val archiveSuppressionSupport: AgentSessionArchiveSuppressionSupport,
+    private val refreshSupportProvider: (AgentSessionProvider) -> AgentSessionThreadRebindSupport?,
+    private val resolveProviderWarningMessage: (AgentSessionProvider, Throwable) -> String,
+    private val openAgentChatSnapshotProvider: suspend () -> AgentChatOpenTabsRefreshSnapshot = ::collectOpenAgentChatRefreshSnapshot,
+    private val openAgentChatTabPresentationUpdater: suspend (
     Map<Pair<String, String>, String>,
     Map<Pair<String, String>, AgentThreadActivity>,
   ) -> Int = ::updateOpenAgentChatTabPresentation,

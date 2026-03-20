@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
-import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindReport
-import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabRebindRequest
-import com.intellij.agent.workbench.chat.AgentChatConcreteCodexTabSnapshot
+import com.intellij.agent.workbench.chat.AgentChatConcreteTabRebindReport
+import com.intellij.agent.workbench.chat.AgentChatConcreteTabRebindRequest
+import com.intellij.agent.workbench.chat.AgentChatConcreteTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatOpenTabsRefreshSnapshot
-import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindReport
-import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindRequest
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindReport
+import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.chat.agentChatScopedRefreshSignals
 import com.intellij.agent.workbench.chat.clearOpenConcreteAgentChatNewThreadRebindAnchors
@@ -52,17 +52,17 @@ internal class AgentSessionRefreshService(
     ::collectOpenAgentChatRefreshSnapshot,
   private val openAgentChatPendingTabsBinder: suspend (
     AgentSessionProvider,
-    Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
-  ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingAgentChatTabs,
+    Map<String, List<AgentChatPendingTabRebindRequest>>,
+  ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingAgentChatTabs,
   private val openAgentChatConcreteTabsBinder: suspend (
     AgentSessionProvider,
-    Map<String, List<AgentChatConcreteCodexTabRebindRequest>>,
-  ) -> AgentChatConcreteCodexTabRebindReport = ::rebindOpenConcreteAgentChatTabs,
-  private val clearOpenConcreteCodexTabAnchors: (
-    AgentSessionProvider,
-    Map<String, List<AgentChatConcreteCodexTabSnapshot>>,
+    Map<String, List<AgentChatConcreteTabRebindRequest>>,
+  ) -> AgentChatConcreteTabRebindReport = ::rebindOpenConcreteAgentChatTabs,
+  private val clearOpenConcreteNewThreadRebindAnchors: (
+      AgentSessionProvider,
+      Map<String, List<AgentChatConcreteTabSnapshot>>,
   ) -> Int = ::clearOpenConcreteAgentChatNewThreadRebindAnchors,
-  private val codexScopedRefreshSignalsProvider: (AgentSessionProvider) -> kotlinx.coroutines.flow.Flow<Set<String>> = { provider ->
+  private val scopedRefreshSignalsProvider: (AgentSessionProvider) -> kotlinx.coroutines.flow.Flow<Set<String>> = { provider ->
     agentChatScopedRefreshSignals(provider)
   },
   subscribeToProjectLifecycle: Boolean,
@@ -85,8 +85,10 @@ internal class AgentSessionRefreshService(
     stateStore = stateStore,
     isRefreshGateActive = ::isSourceRefreshGateActive,
     openAgentChatSnapshotProvider = openAgentChatSnapshotProvider,
-    codexScopedRefreshSignalsProvider = codexScopedRefreshSignalsProvider,
+    scopedRefreshSignalsProvider = scopedRefreshSignalsProvider,
     openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
+    openAgentChatConcreteTabsBinder = openAgentChatConcreteTabsBinder,
+    clearOpenConcreteNewThreadRebindAnchors = clearOpenConcreteNewThreadRebindAnchors,
   )
 
   init {
@@ -171,7 +173,7 @@ internal class AgentSessionRefreshService(
 
   fun rebindPendingTabsInBackground(
     provider: AgentSessionProvider,
-    requestsByProjectPath: Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
+    requestsByProjectPath: Map<String, List<AgentChatPendingTabRebindRequest>>,
   ): Job {
     return serviceScope.launch(Dispatchers.IO) {
       openAgentChatPendingTabsBinder(provider, requestsByProjectPath)

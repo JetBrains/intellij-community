@@ -56,9 +56,15 @@
       class="com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromEditorTabAction">
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"/>
     </action>
+    <action
+      id="AgentWorkbenchSessions.BindPendingAgentThreadFromEditorTab"
+      icon="AllIcons.Actions.Attach"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsBindPendingThreadFromEditorTabAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"/>
+    </action>
     <group id="AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions">
       <separator/>
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="CloseEditorsGroup"/>
     </group>
     <action
       id="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"

@@ -130,8 +130,7 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Dedicated-frame vs current-project target frame selection must follow `spec/agent-dedicated-frame.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 
-- Shared command mapping and editor-tab popup action contract must follow `spec/agent-core-contracts.spec.md`.
-  [@test] ../sessions/testSrc/AgentSessionCliTest.kt
+- Editor tab actions must include `Bind Pending Thread` for providers that support pending editor-tab rebinding, invoking targeted rebind for the active pending tab only.
   [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
 
 ## User Experience
@@ -150,7 +149,7 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Restore/initialization warning notifications must be deduplicated per tab+reason for the IDE session.
 
 ## Testing / Local Run
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatEditorServiceTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatEditorServiceTest -Dintellij.build.test.main.module=intellij.agent.workbench.plugin.tests'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatFileEditorProviderTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatTabSelectionServiceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsOpenModeRoutingTest'`
