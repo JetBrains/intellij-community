@@ -2,10 +2,14 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.execution.ui.TagButton
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.WrapLayout
+import org.jetbrains.annotations.Nls
 import java.awt.FlowLayout
+import java.util.function.Consumer
+import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -46,9 +50,10 @@ internal class AgentPromptContextChipsComponent(
   }
 
   private fun createContextChip(entry: ContextEntry): JComponent {
-    return TagButton(entry.displayText) {
+    val chipIcon = AgentPromptScreenshotChipIcon.resolve(entry.item)
+    return ContextChipTagButton(entry.displayText, chipIcon, java.util.function.Consumer { _: Any? ->
       onRemove(entry)
-    }.apply {
+    }).apply {
       isOpaque = false
       isFocusable = false
       // TagButton's inner `styleTag` button is opaque by default; make it non-opaque and
@@ -61,6 +66,19 @@ internal class AgentPromptContextChipsComponent(
           button.putClientProperty("JButton.backgroundColor", UIUtil.TRANSPARENT_COLOR)
           installPlainTextIdeTooltip(component = button) { entry.tooltipText }
         }
+    }
+  }
+}
+
+private class ContextChipTagButton(
+  @Nls text: String,
+  icon: Icon?,
+  action: Consumer<in AnActionEvent>,
+) : TagButton(text, action) {
+  init {
+    if (icon != null) {
+      myButton.iconTextGap = JBUI.scale(4)
+      updateButton(text, icon)
     }
   }
 }

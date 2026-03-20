@@ -8,7 +8,10 @@ package com.intellij.agent.workbench.prompt.ui
 import com.dynatrace.hash4j.hashing.HashValue128
 import com.intellij.CommonBundle
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
+import com.intellij.agent.workbench.prompt.context.AGENT_PROMPT_IMAGE_PASTE_HANDLER_KEY
 import com.intellij.agent.workbench.prompt.context.AgentPromptContextResolverService
+import com.intellij.agent.workbench.prompt.context.AgentPromptImagePasteHandler
+import com.intellij.agent.workbench.prompt.context.IMAGE_PASTE_SOURCE_ID
 import com.intellij.agent.workbench.prompt.context.dataContextOrNull
 import com.intellij.agent.workbench.prompt.ui.AgentPromptContextRemovalDecisions.removeManualContextItemsAfterExplicitRemoval
 import com.intellij.agent.workbench.prompt.ui.AgentPromptContextRemovalDecisions.resolveContextEntriesAfterRemoval
@@ -398,6 +401,20 @@ internal class AgentPromptPalettePopup(
     showInfo(AgentPromptBundle.message("popup.status.context.added"))
   }
 
+  private fun installImagePasteHandler() {
+    promptArea.addSettingsProvider { editor ->
+      editor.putUserData(AGENT_PROMPT_IMAGE_PASTE_HANDLER_KEY, AgentPromptImagePasteHandler { item ->
+        val existing = manualContextItemsBySourceId[IMAGE_PASTE_SOURCE_ID].orEmpty()
+        manualContextItemsBySourceId[IMAGE_PASTE_SOURCE_ID] = existing + item
+        refreshContextEntries()
+        resolveExtensionTabs()
+        updateTargetModeUi()
+        updateSendAvailability()
+        showInfo(AgentPromptBundle.message("popup.status.context.added"))
+      })
+    }
+  }
+
   private fun onExistingTaskSelected(selected: ThreadEntry) {
     existingTaskController.onUserSelected(selected)
     updateSendAvailability()
@@ -405,6 +422,8 @@ internal class AgentPromptPalettePopup(
   }
 
   private fun attachHandlers() {
+    installImagePasteHandler()
+
     installPromptEnterHandlers(
       promptArea = promptArea,
       canSubmit = { canSubmitNow },
