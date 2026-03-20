@@ -145,7 +145,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
           MutableEntityStorage.create()
         }
         else {
-          log.info("Load workspace model from cache in $loadingCacheTime ms")
+          log.info("Load workspace model from cache in $loadingCacheTime ms (project=${project.name}, locationHash=${project.locationHash})")
           loadedFromCache = true
           entityTracer.printInfoAboutTracedEntity(previousStorage, "cache")
           previousStorage
@@ -231,7 +231,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       totalUpdatesTimeMs.duration.addAndGet(this)
       updatesCounter.incrementAndGet()
     }
-    log.info("Project model for project ${project.name} updated to version ${entityStorage.pointer.version} in $generalTime ms: $description")
+    log.info("Project model for project ${project.name} (locationHash=${project.locationHash}) updated to version ${entityStorage.pointer.version} in $generalTime ms: $description")
     if (generalTime > 1000) {
       log.info(
         "Project model update details: Updater code: $updateTimeMillis ms, Pre handlers: $preHandlersTimeMillis ms, Collect changes: $collectChangesTimeMillis ms")
@@ -267,7 +267,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
         }
         checkCanceled()
         val replacement = builderSnapshot.getStorageReplacement()
-        log.info("Workspace model update attempt $attempt/$maxRetryAttempts, updater took $updaterTime ms: $description")
+        log.info("Workspace model update attempt $attempt/$maxRetryAttempts, updater took $updaterTime ms: $description  (project=${project.name}, locationHash=${project.locationHash})")
         success = edtWriteAction { replaceWorkspaceModel(description, replacement) }
         if (success) {
           break
@@ -276,12 +276,12 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
     }
     if (!success) {
       if (maxRetryAttempts > 1) {
-        log.info("Failed to update workspace model after ${maxRetryAttempts - 1} attempts in $generalTime ms. Falling back to update under WA: $description")
+        log.info("Failed to update workspace model after ${maxRetryAttempts - 1} attempts in $generalTime ms. Falling back to update under WA: $description  (project=${project.name}, locationHash=${project.locationHash})")
       }
       updateUnderWriteAction(description, updater)
     }
     else {
-      log.info("Workspace model updated in $generalTime ms: $description")
+      log.info("Workspace model updated in $generalTime ms: $description (project=${project.name}, locationHash=${project.locationHash})")
     }
   }
 
@@ -341,7 +341,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
     }
 
     if (logSilentUpdates) {
-      log.info("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description")
+      log.info("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description (project=${project.name}, locationHash=${project.locationHash})")
     }
   }
 
@@ -418,7 +418,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       unloadedEntitiesStorage.replace(newStorage, changes, builder.collectSymbolicEntityIdsChanges(), {}, ::onUnloadedEntitiesChanged)
     }.apply { updateUnloadedEntitiesTimeMs.duration.addAndGet(this) }
 
-    log.info("Unloaded entity storage updated in $time ms: $description")
+    log.info("Unloaded entity storage updated in $time ms: $description (project=${project.name}, locationHash=${project.locationHash})")
   }
 
   final override fun getBuilderSnapshot(): BuilderSnapshot {
@@ -441,7 +441,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       val builder = replacement.builder
       this.initializeBridges(replacement.changes, builder)
       entityStorage.replace(builder.toSnapshot(), replacement.changes, replacement.symbolicEntityIdChanges, this::onBeforeChanged, this::onChanged)
-      log.info("Project model for project ${project.name} updated to version ${entityStorage.pointer.version}: $description")
+      log.info("Project model for project ${project.name} (locationHash=${project.locationHash}) updated to version ${entityStorage.pointer.version}: $description")
     }
     return true
   }
@@ -461,7 +461,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
 
       val unloadBuilder = unloadStorageReplacement.builder
       unloadedEntitiesStorage.replace(unloadBuilder.toSnapshot(), unloadStorageReplacement.changes, unloadStorageReplacement.symbolicEntityIdChanges, {}, ::onUnloadedEntitiesChanged)
-      log.info("Project model for project ${project.name} updated to version ${entityStorage.pointer.version}")
+      log.info("Project model for project ${project.name} (locationHash=${project.locationHash}) updated to version ${entityStorage.pointer.version}")
     }
     return true
   }
