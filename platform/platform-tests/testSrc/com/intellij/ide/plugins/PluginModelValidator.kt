@@ -254,11 +254,6 @@ internal class PluginModelValidator(
       val moduleInfo = moduleNameToInfo[moduleName] ?: continue
       val pluginInfo = contentModuleToContainingPlugins[moduleName]?.firstOrNull()
       if (pluginInfo != null) {
-        //todo: this case is already fixed in khbminus/ij-light/IJPL-222430-unmbed-thin-client branch, remove this condition after it's merged to master
-        if (moduleName == "intellij.rider.rdclient.languages") {
-          continue
-        }
-
         reportError(
           """
             |Module '$moduleName' is registered as a content module in '${pluginInfo.pluginId}', but its descriptor ${contentModuleDescriptor.name}
