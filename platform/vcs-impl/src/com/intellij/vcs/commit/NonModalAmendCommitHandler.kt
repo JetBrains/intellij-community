@@ -48,7 +48,7 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
 
   val isLoading: Boolean get() = _isLoading
 
-  internal fun isAmendWithoutChangesAllowed(): Boolean = commitToAmend is CommitToAmend.Last && amendRoot != null
+  internal fun isAmendWithoutChangesAllowed(): Boolean = commitToAmend !is CommitToAmend.None && amendRoot != null
 
   override fun amendCommitModeToggled() {
     val root = amendRoot?.path ?: return super.amendCommitModeToggled()
@@ -62,7 +62,7 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
   }
 
   private fun updateAmendCommitState() {
-    commitContext.commitWithoutChangesRoots = if (commitToAmend is CommitToAmend.Last) listOfNotNull(amendRoot) else emptyList()
+    commitContext.commitWithoutChangesRoots = if (commitToAmend !is CommitToAmend.None) listOfNotNull(amendRoot) else emptyList()
   }
 
   private fun loadAmendDetails(amendAware: AmendCommitAware, root: VirtualFile, commitToAmend: CommitToAmend) {

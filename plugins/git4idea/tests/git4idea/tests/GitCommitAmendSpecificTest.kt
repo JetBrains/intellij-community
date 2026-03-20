@@ -4,9 +4,11 @@ package git4idea.tests
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.vcs.Executor.overwrite
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.commit.CommitToAmend
 import com.intellij.vcs.commit.commitToAmend
+import com.intellij.vcs.commit.commitWithoutChangesRoots
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -53,6 +55,19 @@ internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {
     repo.assertCommitted(2) {
       added("a.txt", updatedContent)
     }
+  }
+
+  fun `test commit amend specific without changes`() {
+    tac("a.txt")
+    val targetHash = HashImpl.build(repo.last())
+    val targetMessage = repo.lastMessage()
+    tac("b.txt")
+
+    val newMessage = "new message\n"
+    val exceptions = amendSpecificCommit(targetHash, targetMessage, emptyList(), newMessage)
+    assertEmpty(exceptions)
+
+    assertMessage(newMessage, repo.message("HEAD~1"))
   }
 
   fun `test commit amend specific with conflict`() {
@@ -169,6 +184,9 @@ internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {
     newMessage: String,
   ): List<VcsException> {
     commitContext.commitToAmend = CommitToAmend.Specific(targetHash, targetMessage)
+    if (changes.isEmpty()) {
+      commitContext.commitWithoutChangesRoots = listOf(VcsRoot(vcs, repo.root))
+    }
 
     return runBlocking {
       coroutineToIndicator {

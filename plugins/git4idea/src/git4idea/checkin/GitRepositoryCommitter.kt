@@ -117,6 +117,7 @@ internal class GitRepositoryCommitter(val repository: GitRepository, private val
 
 private fun GitLineHandler.setCommitOptions(options: GitCommitOptions) {
   if (options.commitToAmend is CommitToAmend.Last) addParameters("--amend")
+  if (options.commitToAmend is CommitToAmend.Specific) addParameters("--allow-empty")
   if (options.isSignOff) addParameters("--signoff")
   if (options.isSkipHooks) addParameters("--no-verify")
   if (options.isCleanupCommitMessage) addParameters("--cleanup=strip")
