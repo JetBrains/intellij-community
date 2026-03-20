@@ -159,7 +159,7 @@ public class TestCaseLoader {
   }
 
   private static @Unmodifiable List<String> getTestGroups() {
-    return StringUtil.split(System.getProperty("intellij.build.test.groups", System.getProperty("idea.test.group", "")).trim(), ";");
+    return StringUtil.split(System.getProperty("intellij.build.test.groups", ""), ";");
   }
 
   private boolean isPotentiallyTestCase(String className, String moduleName) {
