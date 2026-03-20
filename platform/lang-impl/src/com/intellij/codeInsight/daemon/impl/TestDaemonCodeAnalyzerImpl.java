@@ -361,7 +361,9 @@ public final class TestDaemonCodeAnalyzerImpl {
 
   @RequiresEdt
   public @NotNull Collection<? extends DaemonProgressIndicator> waitForDaemonToFinish(@NotNull PsiFile psiFile) {
-    return waitForDaemonToFinish(psiFile, () -> {});
+    return waitForDaemonToFinish(psiFile, () -> {
+      TimeoutUtil.sleep(100);
+    });
   }
 
   public static final int WAIT_DAEMON_FOR_FINISH_TIMEOUT_MS = 60_000;
