@@ -116,10 +116,6 @@ public final class VariableExtractor {
   private final boolean myReplaceSelf;
   private final @NotNull FieldConflictsResolver myFieldConflictsResolver;
   private final @Nullable LogicalPosition myPosition;
-  /**
-   * Stores the replaced reference on `myExpression`
-   */
-  private @Nullable PsiElement myReplacedExpression = null;
 
   VariableExtractor(final @NotNull Project project,
                     final @NotNull PsiExpression expression,
@@ -141,7 +137,7 @@ public final class VariableExtractor {
     myPosition = editor != null ? editor.getCaretModel().getLogicalPosition() : null;
   }
 
-  @NotNull Pair<@NotNull SmartPsiElementPointer<PsiVariable>, @Nullable PsiElement> extractVariable() {
+  @NotNull Pair<@NotNull SmartPsiElementPointer<PsiVariable>, @Nullable SmartPsiElementPointer<PsiElement>> extractVariable() {
     if (!IntentionPreviewUtils.isPreviewElement(myExpression)) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }
@@ -160,7 +156,8 @@ public final class VariableExtractor {
     PsiType type = stripNullabilityAnnotationsFromTargetType(selectedType, newExpr);
     PsiElement declaration = createDeclaration(type, mySettings.getEnteredName(), initializer);
 
-    replaceOccurrences(newExpr);
+    PsiElement replacedExpr = replaceOccurrences(newExpr);
+    SmartPsiElementPointer<PsiElement> replacedExprPointer = replacedExpr == null ? null : SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(replacedExpr);
 
     ensureCodeBlock(type);
 
@@ -189,7 +186,7 @@ public final class VariableExtractor {
       }
     }
     myFieldConflictsResolver.fix();
-    return new Pair(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(var), myReplacedExpression);
+    return new Pair<>(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(var), replacedExprPointer);
   }
 
   private void ensureCodeBlock(PsiType type) {
@@ -233,19 +230,24 @@ public final class VariableExtractor {
     }
   }
 
-  private void replaceOccurrences(PsiExpression newExpr) {
+  /**
+   * replaced selected expression
+   */
+  private @Nullable PsiElement replaceOccurrences(PsiExpression newExpr) {
     assert myAnchor.isValid();
+    PsiElement replacedExpression = null;
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     PsiExpression ref = elementFactory.createExpressionFromText(mySettings.getEnteredName(), null);
     boolean needReplaceSelf = myReplaceSelf;
     if (mySettings.isReplaceAllOccurrences()) {
       for (PsiExpression occurrence : myOccurrences) {
-        PsiExpression correctedOccurrence = occurrence.equals(myExpression) ? newExpr : occurrence;
+        boolean isOccurenceEqualsToSelectedExpression = occurrence.equals(myExpression);
+        PsiExpression correctedOccurrence = isOccurenceEqualsToSelectedExpression ? newExpr : occurrence;
         correctedOccurrence = CommonJavaRefactoringUtil.outermostParenthesizedExpression(correctedOccurrence);
         if (mySettings.isReplaceLValues() || !RefactoringUtil.isAssignmentLHS(correctedOccurrence)) {
           PsiElement replacement = IntroduceVariableUtil.replace(correctedOccurrence, ref, myProject);
 
-          if (occurrence.equals(myExpression)) myReplacedExpression = replacement;
+          if (isOccurenceEqualsToSelectedExpression) replacedExpression = replacement;
 
           if (!myAnchor.isValid()) {
             myAnchor = replacement;
@@ -256,11 +258,12 @@ public final class VariableExtractor {
       needReplaceSelf &= newExpr instanceof PsiPolyadicExpression && newExpr.isValid() && !newExpr.isPhysical();
     }
     if (needReplaceSelf) {
-      myReplacedExpression = IntroduceVariableUtil.replace(newExpr, ref, myProject);
+      replacedExpression = IntroduceVariableUtil.replace(newExpr, ref, myProject);
       if (!myAnchor.isValid()) {
-        myAnchor = myReplacedExpression;
+        myAnchor = replacedExpression;
       }
     }
+    return replacedExpression;
   }
 
   private @NotNull PsiVariable addVariable(PsiElement declaration, @NotNull PsiExpression initializer) {
@@ -525,20 +528,21 @@ public final class VariableExtractor {
                                                                                 final @NotNull PsiElement anchorStatement,
                                                                                 final PsiExpression @NotNull [] occurrences,
                                                                                 final @NotNull IntroduceVariableSettings settings) {
-    Computable<Pair<SmartPsiElementPointer<PsiVariable>, PsiElement>> computation =
+    Computable<Pair<SmartPsiElementPointer<PsiVariable>, SmartPsiElementPointer<PsiElement>>> computation =
       new VariableExtractor(project, expr, editor, anchorStatement, occurrences, settings)::extractVariable;
     PsiFile file = expr.getContainingFile();
-    Pair<SmartPsiElementPointer<PsiVariable>, PsiElement> result = ApplicationManager.getApplication().runWriteAction(computation);
+    Pair<SmartPsiElementPointer<PsiVariable>, SmartPsiElementPointer<PsiElement>> result = ApplicationManager.getApplication().runWriteAction(computation);
 
-    SmartPsiElementPointer<PsiVariable> pointer = result.first;
-    PsiElement replacedExpression = result.second;
-    PsiVariable var = pointer.dereference();
+    SmartPsiElementPointer<PsiVariable> variablePointer = result.first;
+    SmartPsiElementPointer<PsiElement> initialExprPointer = result.second;
+    PsiElement initialExpr = initialExprPointer != null ? initialExprPointer.dereference() : null;
+    PsiVariable var = variablePointer.dereference();
     if (var == null) {
       throw new RuntimeExceptionWithAttachments("Refactoring is interrupted due to syntax errors in the file",
                                                 new Attachment("expression.txt", expr.getText()),
                                                 new Attachment("source.java", file.getText()));
     }
-    return new VariableWithExpression(var, replacedExpression);
+    return new VariableWithExpression(var, initialExpr);
   }
 
   /**
