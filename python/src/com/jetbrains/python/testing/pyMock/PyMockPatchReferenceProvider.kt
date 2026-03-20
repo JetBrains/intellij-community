@@ -10,7 +10,6 @@ import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyDecorator
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyStringLiteralExpression
-import com.jetbrains.python.psi.PyWithItem
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
 
@@ -22,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus
  * - `patch("target")` / `patch(target="target")` — dotted path to attribute being patched
  * - `patch.dict("target", ...)` / `patch.dict(in_dict="target", ...)` — dotted path to dict
  * - `patch.multiple("target", ...)` / `patch.multiple(target="target", ...)` — dotted path to module/class
- * - `mocker.patch("target")` — pytest-mock style patching
+ * - `mocker.patch("target")`, `mocker.patch.dict(...)` and `mocker.patch.multiple(...)` from pytest-mock
  *
  * When `create=True` is present, references are marked soft (no unresolved error).
  */
@@ -65,15 +64,8 @@ private fun getPatchTargetCall(str: PyStringLiteralExpression): PyCallExpression
   val effectiveCall: PyCallExpression = when {
     callExpr is PyDecorator -> callExpr
     callExpr.parent is PyDecorator -> callExpr.parent as PyDecorator
-    callExpr.parent is PyWithItem -> callExpr
-    else -> {
-      // Check if this is a mocker.patch() style call (pytest-mock)
-      val typeContext = TypeEvalContext.codeAnalysis(str.project, str.containingFile)
-      if (isMockerFixtureMethodCall(callExpr, "patch", typeContext)) {
-        return validateTargetArg(str, keyword, argList, callExpr, "target")
-      }
-      return null
-    }
+    // A context manager or a plain call, such as `patch("target")` or `mocker.patch("target")`
+    else -> callExpr
   }
 
   val typeContext = TypeEvalContext.codeAnalysis(str.project, str.containingFile)

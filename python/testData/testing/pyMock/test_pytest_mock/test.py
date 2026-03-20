@@ -1,5 +1,7 @@
 #  Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
+from unittest.mock import DEFAULT
+
 from example_module import MyClass
 from pytest_mock import MockerFixture
 
@@ -17,6 +19,16 @@ def test_mocker_patch_call(mocker):
 def test_mocker_patch_object_call(mocker):
     """Test that mocker.patch.object() is recognized."""
     mocker.patch.object(MyClass, "my_method")
+
+
+def test_mocker_patch_dict_call(mocker):
+    """Test that mocker.patch.dict() is recognized."""
+    mocker.patch.dict("example_module.TOP_LEVEL_VAR", {})
+
+
+def test_mocker_patch_multiple_call(mocker):
+    """Test that mocker.patch.multiple() is recognized."""
+    mocker.patch.multiple("example_module", top_level_function=DEFAULT)
 
 
 class TestMockerFixture:

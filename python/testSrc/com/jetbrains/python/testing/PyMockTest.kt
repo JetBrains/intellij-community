@@ -75,6 +75,15 @@ class PyMockTest : PyTestCase() {
     assertTrue("Should suggest class_attr", variants.contains("class_attr"))
   }
 
+  @TestFor(issues=["PY-21952"])
+  fun `test completion call expression first segment`() {
+    myFixture.configureByFile("test_patch_completion/test_complete_call_first_segment.py")
+    myFixture.completeBasic()
+    val variants = myFixture.lookupElementStrings
+    assertNotNull("Completion should provide variants for patch() call", variants)
+    assertTrue("Should suggest example_module", "example_module" in variants!!)
+  }
+
   // --- Navigation ---
 
   fun testNavigationToPackageResolvesToInit() {
@@ -611,6 +620,18 @@ class PyMockTest : PyTestCase() {
     val resolved = strArg.references.last().resolve()
     assertInstanceOf(resolved, PyFunction::class.java)
     assertEquals("my_method", (resolved as PyFunction).name)
+  }
+
+  @TestFor(issues = ["PY-36260"])
+  fun `test mocker patch dict and multiple targets`() {
+    val dictTarget = getPytestMockCall("test_mocker_patch_dict_call").arguments.first() as PyStringLiteralExpression
+    assertNotNull("getPatchCall should recognize mocker.patch.dict()", getPatchCall(dictTarget))
+
+    val multipleTarget = getPytestMockCall("test_mocker_patch_multiple_call").arguments.first() as PyStringLiteralExpression
+    assertNotNull("getPatchCall should recognize mocker.patch.multiple()", getPatchCall(multipleTarget))
+    val refs = PyMockPatchTargetReferenceSet(multipleTarget, false).createReferences()
+    assertEquals("example_module should produce 1 reference", 1, refs.size)
+    assertEquals("example_module.py", (refs.single().resolve() as? PyFile)?.name)
   }
 
   // --- Mock with a spec ---
