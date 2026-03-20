@@ -8,6 +8,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     "@lib//:kotlin-stdlib",
+    "//plugins/kotlin/plugin/k2",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/i18n",
@@ -54,7 +55,10 @@ jvm_library(
     "//platform/lang-core",
     "//platform/lang-core:lang-core_test_lib",
   ],
-  runtime_deps = [":tests"]
+  runtime_deps = [
+    ":tests",
+    "//plugins/kotlin/plugin/k2:k2_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.kotlin.i18n.tests` end
 

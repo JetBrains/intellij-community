@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.testsFromCompiler" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.i18n.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.util.test-generator-api" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k2" scope="RUNTIME" />
