@@ -86,6 +86,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   override var rowHeight: Int? = null
   override var rowWidth: Int? = null
   override var uiInspectorContext: List<PropertyBean>? = null
+  override var selectable: Boolean = true
 
   private var foreground: Color = JBUI.CurrentTheme.List.FOREGROUND
 
@@ -143,6 +144,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     cells.clear()
     separator = null
     gap = LcrRow.Gap.DEFAULT
+    selectable = true
     listCellRendererParams = ListCellRendererParams(list, value, index, isSelected, cellHasFocus)
     rowHeight = JBUI.CurrentTheme.List.rowHeight()
 
@@ -192,6 +194,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     result.applySeparator(listSeparator, index == 0, list)
     result.setToolTipText(toolTipText)
     result.providerUiInspectorContext = uiInspectorContext
+    result.selectable = selectable
 
     var minHeight = 0
 
@@ -305,7 +308,8 @@ private class RendererCache {
   }
 }
 
-private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRendererComponent, UiInspectorContextProvider {
+private class RendererPanel(key: RowKey) :
+  JPanel(BorderLayout()), KotlinUIDslRendererComponent, UiInspectorContextProvider, ComboBox.SelectableItem {
 
   private val cellsLayout = GridLayout()
 
@@ -317,8 +321,8 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
   private val selectablePanel = SelectablePanel()
   private val separator = GroupHeaderSeparator(if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Popup.separatorLabelInsets()
                                                else JBUI.insets(UIUtil.getListCellVPadding(), UIUtil.getListCellHPadding()))
-
   var providerUiInspectorContext: List<PropertyBean>? = null
+  var selectable: Boolean = true
 
   init {
     add(separator, BorderLayout.NORTH)
@@ -340,6 +344,10 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
 
   override fun getUiInspectorContext(): List<PropertyBean?> {
     return providerUiInspectorContext ?: emptyList()
+  }
+
+  override fun isSelectable(): Boolean {
+    return selectable
   }
 
   override var listSeparator: ListSeparator? = null

@@ -8,10 +8,8 @@ import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.observable.util.whenItemSelected
 import com.intellij.openapi.observable.util.whenItemSelectedFromUi
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.ComboBox.SelectableItem
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.IconLoader
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.MutableProperty
@@ -24,15 +22,14 @@ import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelectedFromUi
 import com.intellij.ui.dsl.gridLayout.Constraints
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.dsl.validation.impl.CompoundCellValidation
-import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
 import javax.swing.Icon
-import javax.swing.JList
 
 @ApiStatus.Internal
 internal class SegmentedButtonImpl<T>(
@@ -93,32 +90,22 @@ internal class SegmentedButtonImpl<T>(
   init {
     comboBox.isSwingPopup = false
     comboBox.setMinLength(Int.MAX_VALUE)
-    comboBox.renderer = object : SimpleListCellRenderer<T>(), SelectableItem {
+    comboBox.renderer = listCellRenderer("") {
+      val presentation = presentations[value]!!
+      val enabled = presentation.enabled
 
-      private var enabled = true
-
-      override fun customize(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
-        if (value == null) {
-          return
-        }
-
-        val presentation = presentations[value]!!
-        text = presentation.text
-        toolTipText = presentation.toolTipText
-        icon = presentation.icon
-        enabled = presentation.enabled
-
-        if (!enabled) {
-          foreground = NamedColorUtil.getInactiveTextColor()
-          presentation.icon?.let {
-            icon = IconLoader.getDisabledIcon(it)
+      presentation.icon?.let {
+        icon(if (enabled) it else IconLoader.getDisabledIcon(it))
+      }
+      presentation.text?.let {
+        text(it) {
+          if (!enabled) {
+            foreground = greyForeground
           }
         }
       }
-
-      override fun isSelectable(): Boolean {
-        return enabled
-      }
+      toolTipText = presentation.toolTipText
+      selectable = enabled
     }
 
     segmentedButtonComponent.isOpaque = false
