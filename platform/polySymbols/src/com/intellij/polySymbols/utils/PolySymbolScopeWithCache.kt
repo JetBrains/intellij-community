@@ -245,7 +245,7 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
     fun getMap(
       namesProvider: PolySymbolNamesProvider,
     ): PolySymbolSearchMap? =
-      cache[PolySymbolThreadLocalCacheKeyProvider.getCacheKeys(namesProvider, project)]?.value
+      cache[PolySymbolThreadLocalCacheKeyProvider.getCacheKeys(namesProvider, project)]?.upToDateOrNull?.get()
 
     fun getOrCreatePartialMap(
       namesProvider: PolySymbolNamesProvider,
