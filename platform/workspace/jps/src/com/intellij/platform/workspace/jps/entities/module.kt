@@ -16,6 +16,10 @@ data class ModuleTypeId(val name: @NonNls String)
 /**
  * Describes configuration of a [Module][com.intellij.openapi.module.Module].
  * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
+ *
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
  */
 interface ModuleEntity : WorkspaceEntityWithSymbolicId {
   override val symbolicId: ModuleId

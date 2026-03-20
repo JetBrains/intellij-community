@@ -15,6 +15,10 @@ import org.jetbrains.annotations.NonNls
 /**
  * Describes a [ContentEntry][com.intellij.openapi.roots.ContentEntry].
  * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
+ *
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
  */
 interface ContentRootEntity : WorkspaceEntity {
   @EqualsBy
@@ -96,6 +100,10 @@ data class SourceRootTypeId(val name: @NonNls String)
 /**
  * Describes a [SourceFolder][com.intellij.openapi.roots.SourceFolder].
  * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
+ *
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
  */
 interface SourceRootEntity : WorkspaceEntity {
   val url: VirtualFileUrl

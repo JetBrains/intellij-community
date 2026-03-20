@@ -22,6 +22,10 @@ data class ArtifactId(val name: @NlsSafe String) : SymbolicEntityId<ArtifactEnti
 
 /**
  * See [com.intellij.packaging.artifacts.LegacyBridgeJpsArtifactEntitySourceFactory]
+ *
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
  */
 interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
   val name: String
@@ -85,6 +89,11 @@ fun MutableEntityStorage.modifyArtifactEntity(
 }
 //endregion
 
+/**
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
+ */
 interface ArtifactPropertiesEntity : WorkspaceEntity {
   @Parent
   val artifact: ArtifactEntity
@@ -129,6 +138,11 @@ fun MutableEntityStorage.modifyArtifactPropertiesEntity(
 }
 //endregion
 
+/**
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
+ */
 @Abstract interface PackagingElementEntity : WorkspaceEntity {
   @Parent
   val parentEntity: CompositePackagingElementEntity?

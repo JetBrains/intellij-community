@@ -11,6 +11,11 @@ import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 
+/**
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
+ */
 interface JavaProjectSettingsEntity : WorkspaceEntity {
   @Parent
   val projectSettings: ProjectSettingsEntity
