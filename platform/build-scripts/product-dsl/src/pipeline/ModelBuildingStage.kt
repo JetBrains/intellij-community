@@ -131,7 +131,7 @@ internal object ModelBuildingStage {
     val generatedArtifactWritePolicy = GeneratedArtifactWritePolicy(generationMode, fileUpdater)
 
     // Create xi:include cache (shared across plugin content extraction)
-    val xIncludeCache = AsyncCache<String, ByteArray?>(scope)
+    val xIncludeCache = AsyncCache<String, ByteArray?>()
 
     // Create plugin content cache
     // ErrorSink is used to emit xi:include errors during plugin content extraction
@@ -141,7 +141,6 @@ internal object ModelBuildingStage {
       skipXIncludePaths = config.skipXIncludePaths,
       xIncludePrefixFilter = config.xIncludePrefixFilter,
       pluginXmlOverrides = productPluginXmlOverrides,
-      scope = scope,
       errorSink = errorSink,
     )
     val moduleSetPluginContents = buildModuleSetPluginContentInfos(
@@ -182,7 +181,7 @@ internal object ModelBuildingStage {
       .toSet()
 
     // Create descriptor cache
-    val descriptorCache = ModuleDescriptorCache(outputProvider = outputProvider, scope = scope)
+    val descriptorCache = ModuleDescriptorCache(outputProvider = outputProvider)
 
     // Build unified graph model for plugin/module/product relationships
     // Graph is the single source of truth - built DURING extraction
@@ -217,8 +216,8 @@ internal object ModelBuildingStage {
       testFrameworkContentModules = config.testFrameworkContentModules,
     )
 
-    val includeAliasCache = AsyncCache<String, Set<PluginId>>(scope)
-    val moduleDescriptorAliasCache = AsyncCache<ContentModuleName, Set<PluginId>>(scope)
+    val includeAliasCache = AsyncCache<String, Set<PluginId>>()
+    val moduleDescriptorAliasCache = AsyncCache<ContentModuleName, Set<PluginId>>()
     linkProductsAndBundledPlugins(discovery, builder)
     linkTestPluginsByProduct(config, builder)
     addModuleSets(discovery, builder)

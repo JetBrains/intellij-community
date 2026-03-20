@@ -350,7 +350,7 @@ class ContentModuleDependencyGeneratorTest {
           }
         }
 
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, this)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = ContentModuleName("intellij.test.only.consumer"),
           descriptorCache = descriptorCache,
@@ -448,7 +448,7 @@ class ContentModuleDependencyGeneratorTest {
           }
         }
 
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, this)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = ContentModuleName("intellij.shared.consumer"),
           descriptorCache = descriptorCache,
@@ -1231,7 +1231,7 @@ class ContentModuleDependencyGeneratorTest {
           )
         )
 
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, this)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = ContentModuleName("owner.content"),
           descriptorCache = descriptorCache,
@@ -1297,7 +1297,7 @@ class ContentModuleDependencyGeneratorTest {
           )
         )
 
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, this)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = ContentModuleName("shared.content"),
           descriptorCache = descriptorCache,
@@ -1338,7 +1338,7 @@ class ContentModuleDependencyGeneratorTest {
         }
 
         val graph = buildContentModuleAliasGraph(aliasId)
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, this)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = ContentModuleName("owner.content"),
           descriptorCache = descriptorCache,
@@ -1391,7 +1391,7 @@ class ContentModuleDependencyGeneratorTest {
         }
 
         val graph = buildContentModuleAliasGraph(aliasId)
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, this)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = ContentModuleName("owner.content"),
           descriptorCache = descriptorCache,
@@ -1447,7 +1447,7 @@ class ContentModuleDependencyGeneratorTest {
           linkPluginMainTarget("dep.plugin")
         }
 
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, this)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = ContentModuleName("owner.content"),
           descriptorCache = descriptorCache,
@@ -1503,7 +1503,7 @@ class ContentModuleDependencyGeneratorTest {
           linkPluginMainTarget("dep.plugin")
         }
 
-        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, this)
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider)
         val generation = planContentModuleDependenciesWithBothSets(
           contentModuleName = ContentModuleName("owner.content"),
           descriptorCache = descriptorCache,

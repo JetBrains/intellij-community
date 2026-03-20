@@ -793,7 +793,7 @@ internal fun testGenerationModel(
     projectRoot = Path.of("."),
     outputProvider = effectiveOutputProvider,
     isUltimateBuild = false,
-    descriptorCache = ModuleDescriptorCache(effectiveOutputProvider, GlobalScope),
+    descriptorCache = ModuleDescriptorCache(effectiveOutputProvider),
     pluginContentCache = effectivePluginContentCache,
     fileUpdater = effectiveFileUpdater,
     generatedArtifactWritePolicy = GeneratedArtifactWritePolicy(generationMode, effectiveFileUpdater),
@@ -958,10 +958,9 @@ private fun stubModuleOutputProvider(): ModuleOutputProvider {
 private fun stubPluginContentCache(): PluginContentCache {
   return PluginContentCache(
     outputProvider = stubModuleOutputProvider(),
-    xIncludeCache = AsyncCache(GlobalScope),
+    xIncludeCache = AsyncCache(),
     skipXIncludePaths = emptySet(),
     xIncludePrefixFilter = { null },
-    scope = GlobalScope,
     errorSink = ErrorSink(),
   )
 }

@@ -4,23 +4,18 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.system.OS
 import io.opentelemetry.api.trace.SpanBuilder
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.checkRecursiveSingleFlightAwait
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.copyDir
-import org.jetbrains.intellij.build.singleFlightComputationContext
+import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
@@ -75,57 +70,30 @@ interface SuspendingLazy<T> {
 /**
  * Computes a value on the first `await()` and shares the result with all concurrent awaiters.
  *
- * The first caller computes the value in its own coroutine instead of starting a detached global job. This keeps failures and
- * cancellation inside the owning build flow and turns recursive waits into an immediate error instead of a hang.
+ * Cancellation evicts the in-flight computation so the next call retries, while successful values and ordinary failures are reused.
  */
 fun <T> suspendingLazy(coroutineName: String, initializer: suspend CoroutineScope.() -> T): SuspendingLazy<T> {
-  return SuspendingLazyImpl(coroutineName = coroutineName, initializer = initializer)
+  return AsyncCacheBackedSuspendingLazy(coroutineName = coroutineName, initializer = initializer)
 }
 
-private class SuspendingLazyImpl<T>(
+private class AsyncCacheBackedSuspendingLazy<T>(
   private val coroutineName: String,
   private val initializer: suspend CoroutineScope.() -> T,
 ) : SuspendingLazy<T> {
-  private val lock = Mutex()
-  private val owner = Any()
-
-  @Volatile
-  private var deferred: CompletableDeferred<T>? = null
+  private val key = NamedSuspendingLazyKey(coroutineName)
+  private val cache = AsyncCache<NamedSuspendingLazyKey, T>()
 
   override suspend fun await(): T {
-    val currentContext = currentCoroutineContext()
-    deferred?.let {
-      checkRecursiveSingleFlightAwait(currentContext, owner, coroutineName, it)
-      return it.await()
-    }
-
-    val (actualDeferred, isOwner) = lock.withLock {
-      deferred?.let {
-        return@withLock it to false
-      }
-
-      val created = CompletableDeferred<T>()
-      deferred = created
-      created to true
-    }
-
-    if (!isOwner) {
-      checkRecursiveSingleFlightAwait(currentContext, owner, coroutineName, actualDeferred)
-      return actualDeferred.await()
-    }
-
-    try {
-      actualDeferred.complete(
-        withContext(CoroutineName(coroutineName) + singleFlightComputationContext(currentContext, owner)) {
-          coroutineScope {
-            initializer(this)
-          }
+    return cache.getOrPut(key) {
+      withContext(CoroutineName(coroutineName)) {
+        coroutineScope {
+          initializer(this)
         }
-      )
+      }
     }
-    catch (t: Throwable) {
-      actualDeferred.completeExceptionally(t)
-    }
-    return actualDeferred.await()
   }
+}
+
+private class NamedSuspendingLazyKey(private val name: String) {
+  override fun toString(): String = name
 }

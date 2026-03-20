@@ -35,7 +35,6 @@ import java.nio.file.Path
  */
 internal class ModuleDescriptorCache(
   private val outputProvider: ModuleOutputProvider,
-  scope: CoroutineScope,
 ) {
   data class DescriptorInfo(
     @JvmField val descriptorPath: Path,
@@ -55,7 +54,7 @@ internal class ModuleDescriptorCache(
     @JvmField val suppressibleError: UnsuppressedPipelineError? = null,
   )
 
-  private val cache = AsyncCache<String, DescriptorInfo?>(scope)
+  private val cache = AsyncCache<String, DescriptorInfo?>()
 
   /**
    * Gets cached descriptor info or analyzes the module if not yet cached.

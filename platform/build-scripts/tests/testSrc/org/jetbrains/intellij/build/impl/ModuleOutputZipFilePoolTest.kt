@@ -70,7 +70,7 @@ internal class ModuleOutputZipFilePoolTest {
   }
 
   @Test
-  fun `timeout does not poison cached zip entry`() {
+  fun `timeout evicts canceled cached zip entry and retries`() {
     val file = Path.of("module-output.zip")
     val entryPath = "META-INF/plugin.xml"
     val expectedData = "<idea-plugin/>".encodeToByteArray()
@@ -119,7 +119,7 @@ internal class ModuleOutputZipFilePoolTest {
           pool.getData(file, entryPath)
         }
       ).isEqualTo(expectedData)
-      assertThat(loadCount.get()).isEqualTo(1)
+      assertThat(loadCount.get()).isEqualTo(2)
     }
   }
 

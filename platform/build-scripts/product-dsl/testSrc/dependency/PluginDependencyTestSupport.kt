@@ -69,23 +69,21 @@ internal suspend fun PluginTestSetupContext.generateDependencies(
   productAllowedMissing: Map<String, Set<ContentModuleName>> = emptyMap(),
   updateSuppressions: Boolean = false,
 ): PluginDependencyGenerationResult {
-  return coroutineScope {
-    val descriptorCache = ModuleDescriptorCache(jps.outputProvider, this)
-    generatePluginDependencies(
-      plugins = plugins,
-      pluginContentCache = pluginContentCache,
-      testSetup = this@generateDependencies,
-      graph = pluginGraph,
-      descriptorCache = descriptorCache,
-      suppressionConfig = suppressionConfig,
-      updateSuppressions = updateSuppressions,
-      strategy = strategy,
-      testFrameworkContentModules = testFrameworkContentModules,
-      pluginAllowedMissingDependencies = pluginAllowedMissingDependencies,
-      contentModuleAllowedMissingPluginDeps = contentModuleAllowedMissingPluginDeps,
-      productAllowedMissing = productAllowedMissing,
-    )
-  }
+  val descriptorCache = ModuleDescriptorCache(jps.outputProvider)
+  return generatePluginDependencies(
+    plugins = plugins,
+    pluginContentCache = pluginContentCache,
+    testSetup = this@generateDependencies,
+    graph = pluginGraph,
+    descriptorCache = descriptorCache,
+    suppressionConfig = suppressionConfig,
+    updateSuppressions = updateSuppressions,
+    strategy = strategy,
+    testFrameworkContentModules = testFrameworkContentModules,
+    pluginAllowedMissingDependencies = pluginAllowedMissingDependencies,
+    contentModuleAllowedMissingPluginDeps = contentModuleAllowedMissingPluginDeps,
+    productAllowedMissing = productAllowedMissing,
+  )
 }
 
 /**
@@ -120,8 +118,8 @@ internal suspend fun generatePluginDependencies(
     }
 
     val outputProvider = testSetup.jps.outputProvider
-    val contentModuleCache = AsyncCache<String, PlannedContentModuleResult?>(this)
-    val testContentModuleCache = AsyncCache<String, DependencyFileResult?>(this)
+    val contentModuleCache = AsyncCache<String, PlannedContentModuleResult?>()
+    val testContentModuleCache = AsyncCache<String, DependencyFileResult?>()
     val allRealProductNames = embeddedCheckProductNames(testSetup.products.map { it.name })
     val pluginGraphDeps = collectPluginGraphDeps(
       graph = graph,
@@ -468,6 +466,7 @@ private suspend fun generateTestDescriptorDependencies(
   )
 }
 
+@Suppress("UNUSED_PARAMETER")
 private suspend fun buildValidationCache(
   outputProvider: ModuleOutputProvider,
   pluginContentInfos: Map<String, PluginContentInfo>,
@@ -475,10 +474,9 @@ private suspend fun buildValidationCache(
 ): PluginContentCache {
   val cache = PluginContentCache(
     outputProvider = outputProvider,
-    xIncludeCache = AsyncCache(scope),
+    xIncludeCache = AsyncCache(),
     skipXIncludePaths = emptySet(),
     xIncludePrefixFilter = { null },
-    scope = scope,
     errorSink = ErrorSink(),
   )
   for ((moduleName, info) in pluginContentInfos) {

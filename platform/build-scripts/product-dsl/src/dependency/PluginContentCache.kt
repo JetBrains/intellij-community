@@ -49,10 +49,27 @@ internal class PluginContentCache(
   private val skipXIncludePaths: Set<String>,
   private val xIncludePrefixFilter: (String) -> String?,
   private val pluginXmlOverrides: Map<TargetName, PluginXmlOverride> = emptyMap(),
-  scope: CoroutineScope,
   private val errorSink: ErrorSink,
 ) : PluginContentProvider {
-  private val cache = AsyncCache<TargetName, PluginContentInfo?>(scope)
+  @Suppress("UNUSED_PARAMETER")
+  constructor(
+    outputProvider: ModuleOutputProvider,
+    xIncludeCache: AsyncCache<String, ByteArray?>,
+    skipXIncludePaths: Set<String>,
+    xIncludePrefixFilter: (String) -> String?,
+    pluginXmlOverrides: Map<TargetName, PluginXmlOverride> = emptyMap(),
+    scope: CoroutineScope,
+    errorSink: ErrorSink,
+  ) : this(
+    outputProvider = outputProvider,
+    xIncludeCache = xIncludeCache,
+    skipXIncludePaths = skipXIncludePaths,
+    xIncludePrefixFilter = xIncludePrefixFilter,
+    pluginXmlOverrides = pluginXmlOverrides,
+    errorSink = errorSink,
+  )
+
+  private val cache = AsyncCache<TargetName, PluginContentInfo?>()
 
   /**
    * Extracts plugin content with explicit source type.

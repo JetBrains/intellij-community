@@ -32,7 +32,7 @@ class ModuleOutputZipFilePool(
   private val zipFileLoader: suspend (Path) -> ZipFile? = ::loadZipFile,
 ) {
   private val cache: AsyncCache<Path, ZipFile?>? = scope?.let {
-    AsyncCache<Path, ZipFile?>(it).also { cache ->
+    AsyncCache<Path, ZipFile?>().also { cache ->
       scope.coroutineContext.job.invokeOnCompletion {
         cache.close { zipFile -> zipFile?.close() }
       }
