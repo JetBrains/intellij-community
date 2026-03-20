@@ -2,21 +2,25 @@
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleOptionAction
 import com.intellij.openapi.project.DumbAware
-import org.jetbrains.annotations.ApiStatus
 
-internal class AutoscrollToSource : ProblemsViewToggleAction({ it.autoscrollToSource })
-internal class OpenInPreviewTab : ProblemsViewToggleAction({ it.openInPreviewTab })
-internal class ShowPreview : ProblemsViewToggleAction({ it.showPreview })
-internal class GroupByToolId : ProblemsViewToggleAction({ it.groupByToolId })
-internal class SortFoldersFirst : ProblemsViewToggleAction({ it.sortFoldersFirst })
-internal class SortBySeverity : ProblemsViewToggleAction({ it.sortBySeverity })
-internal class SortByName : ProblemsViewToggleAction({ it.sortByName })
+internal class AutoscrollToSource : ProblemsViewToggleAction({ panel, event -> panel.getAutoscrollToSource(event) })
+internal class OpenInPreviewTab : ProblemsViewToggleAction({ panel, event -> panel.getOpenInPreviewTab(event) })
+internal class ShowPreview : ProblemsViewToggleAction({ panel, event -> panel.getShowPreview(event) })
+internal class GroupByToolId : ProblemsViewToggleAction({ panel, _ -> panel.groupByToolId })
+internal class SortFoldersFirst : ProblemsViewToggleAction({ panel, _ -> panel.sortFoldersFirst })
+internal class SortBySeverity : ProblemsViewToggleAction({ panel, _ -> panel.sortBySeverity })
+internal class SortByName : ProblemsViewToggleAction({ panel, _ -> panel.sortByName })
 
-internal abstract class ProblemsViewToggleAction(optionSupplier: (ProblemsViewPanel) -> Option?)
-  : DumbAware, ToggleOptionAction({ event -> event.getData(ProblemsViewPanel.DATA_KEY)?.let(optionSupplier) }) {
+internal abstract class ProblemsViewToggleAction(optionSupplier: (ProblemsViewPanel, AnActionEvent) -> Option?)
+  : DumbAware, ToggleOptionAction({ event ->
+    event.getData(ProblemsViewPanel.DATA_KEY)?.let { panel ->
+      optionSupplier(panel, event)
+    } 
+  }) {
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+    return ActionUpdateThread.BGT
   }
 }

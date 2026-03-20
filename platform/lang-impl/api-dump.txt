@@ -35,6 +35,7 @@ c:com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanel
 - sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:PREVIEW_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - pf:myScrollPane:javax.swing.JScrollPane
+- getShowPreview(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.ToggleOptionAction$Option
 com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanelProvider
 - sf:Companion:com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanelProvider$Companion
 - a:create():com.intellij.analysis.problemsView.toolWindow.ProblemsViewTab
