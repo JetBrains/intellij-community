@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase.LOG
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase.toIoPath
 import com.intellij.openapi.vfs.limits.FileSizeLimit
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.EelFileInfo
@@ -22,8 +21,8 @@ import com.intellij.platform.eel.fs.EelWindowsFileInfo
 import com.intellij.platform.eel.fs.listDirectoryWithAttrs
 import com.intellij.platform.eel.fs.readFile
 import com.intellij.platform.eel.fs.stat
-import com.intellij.platform.eel.getOrNull
 import com.intellij.platform.eel.getOr
+import com.intellij.platform.eel.getOrNull
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.EelMountRoot
@@ -42,6 +41,7 @@ import com.intellij.platform.ijent.community.impl.nio.fsBlocking
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.toByteArray
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.AccessDeniedException
 import java.nio.file.AccessMode
@@ -201,15 +201,13 @@ private suspend fun toVfs(eelPath: EelPath, eelFileInfo: EelFileInfo, eelFsApi: 
   }
 }
 
-internal fun listWithAttributesUsingEel(
-  dir: VirtualFile,
+@ApiStatus.Internal
+@VisibleForTesting
+fun listWithAttributesUsingEel(
+  nioPath: Path,
   filter: Set<String>?,
 ): Map<String, FileAttributes> {
-  if (!dir.isDirectory()) {
-    return emptyMap()
-  }
   try {
-    val nioPath = Path.of(toIoPath(dir))
     val eelDescriptor = nioPath.getEelDescriptor()
     if (eelDescriptor === LocalEelDescriptor) {
       return LocalFileSystemImpl.listWithAttributesImpl(nioPath, filter)
@@ -230,8 +228,8 @@ internal fun listWithAttributesUsingEel(
 
     visitDirectory(eelPath, filter) { file: EelPath, attributes: EelFileInfo, eelFsApi: EelFileSystemApi ->
       try {
-        //val attributes = amendAttributes(file, fromNio(file, attributes))
-        childrenWithAttributes[file.fileName] = toVfs(file, attributes, eelFsApi)
+        val childAttributes = toVfs(file, attributes, eelFsApi)
+        childrenWithAttributes[file.fileName] = amendAttributes(childAttributes) { file.asNioPath() }
       }
       catch (e: Exception) {
         LOG.debug(e)
@@ -254,6 +252,20 @@ internal fun listWithAttributesUsingEel(
     LOG.warn(e)
   }
   return emptyMap()
+}
+
+internal fun amendAttributes(file: Path, attributes: FileAttributes): FileAttributes {
+  return amendAttributes(attributes) { file }
+}
+
+private inline fun amendAttributes(attributes: FileAttributes, file: () -> Path): FileAttributes {
+  for (provider in LocalFileSystemTimestampEvaluator.EP_NAME.extensionList) {
+    val customTS = provider.getTimestamp(file())
+    if (customTS != null) {
+      return attributes.withTimeStamp(customTS)
+    }
+  }
+  return attributes
 }
 
 @Throws(IOException::class, SecurityException::class)

@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -79,7 +80,19 @@ public class LocalFileSystemImpl
   private final DiskQueryRelay<VirtualFile, Object> myContentGetter = new DiskQueryRelay<>(file -> readContent(file));
   private final DiskQueryRelay<VirtualFile, FileAttributes> myAttributeGetter = new DiskQueryRelay<>(file -> readAttributes(file));
   private final DiskQueryRelay<Pair<VirtualFile, @Nullable Set<String>>, Map<String, FileAttributes>> myChildrenAttrGetter =
-    new DiskQueryRelay<>(pair -> listWithAttributesUsingEel(pair.first, pair.second));
+    new DiskQueryRelay<>(pair -> {
+      if (!pair.first.isDirectory()) {
+        return Collections.emptyMap();
+      }
+      Path path;
+      try {
+        path = Path.of(toIoPath(pair.first));
+      }
+      catch (InvalidPathException e) {
+        throw new RuntimeException(e);
+      }
+      return listWithAttributesUsingEel(path, pair.second);
+    });
 
   private final FileNavigator<NewVirtualFile> NON_REFRESHING_NAVIGATOR = new FileNavigator<>() {
     @Override
@@ -454,14 +467,8 @@ public class LocalFileSystemImpl
     return null;
   }
 
-  private static FileAttributes amendAttributes(Path file, FileAttributes attributes) {
-    for (var provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
-      var customTS = provider.getTimestamp(file);
-      if (customTS != null) {
-        return attributes.withTimeStamp(customTS);
-      }
-    }
-    return attributes;
+  protected static FileAttributes amendAttributes(Path file, FileAttributes attributes) {
+    return LocalFileSystemEelUtil.amendAttributes(file, attributes);
   }
 
   @Override

@@ -2,12 +2,15 @@
 package com.intellij.openapi.util.io
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.impl.local.listWithAttributesUsingEel
 import com.intellij.openapi.vfs.impl.local.readAttributesUsingEel
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
@@ -30,6 +33,7 @@ import java.nio.file.attribute.PosixFilePermissions
 import java.time.Instant
 import java.util.function.Consumer
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.name
 import kotlin.math.max
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -108,7 +112,7 @@ class FileAttributesReadingTest(val eelHolder: EelHolder) {
   fun missingFile() {
     val path = tempDir.resolve("missing.txt")
     assertFalse(Files.exists(path))
-    val attributes = getAttributes(path.absolutePathString())
+    val attributes = getAttributesNullable(path)
     assertNull(attributes)
 
     val target = resolveSymLink(path)
@@ -484,14 +488,14 @@ class FileAttributesReadingTest(val eelHolder: EelHolder) {
     Assumptions.assumeTrue(isLocal)
 
     tempDir.newFile("file.txt") // just to populate a directory
-    IoTestUtil.performTestOnWindowsSubst(tempDir.root.absolutePathString(), Consumer { substRoot: File ->
+    IoTestUtil.performTestOnWindowsSubst(tempDir.absolutePathString(), Consumer { substRoot: File ->
       val attributes = getAttributes(substRoot.toPath())
       assertEquals(FileAttributes.Type.DIRECTORY, attributes.getType(), "$substRoot $attributes")
       assertFalse(attributes.isSymLink, "$substRoot $attributes")
 
       val children = substRoot.listFiles()
       assertNotNull(children)
-      assertEquals(1, children.size.toLong())
+      assertEquals(1, children.size.toLong(), "only one child expected, found ${children.toList()}")
       val filePath = children[0].toPath()
       val target = resolveSymLink(filePath)
       assertEquals(filePath.absolutePathString(), target)
@@ -556,10 +560,10 @@ class FileAttributesReadingTest(val eelHolder: EelHolder) {
 
     val exitCode = runBlocking {
       val process = if (isWindows) {
-        eelHolder.eel.exec.spawnProcess("attrib").args("-A", path.absolutePathString()).eelIt()
+        eelHolder.eel.exec.spawnProcess("attrib").args("-A", path.asEelPath().toString()).eelIt()
       }
       else {
-        eelHolder.eel.exec.spawnProcess("chmod").args("644", path.absolutePathString()).eelIt()
+        eelHolder.eel.exec.spawnProcess("chmod").args("644", path.asEelPath().toString()).eelIt()
       }
       process.exitCode.await()
     }
@@ -652,17 +656,16 @@ class FileAttributesReadingTest(val eelHolder: EelHolder) {
     Assumptions.assumeTrue(isLocal)
   }
 
-  // Instance method to access Eel OS info
-  private fun resolveSymLink(path: Path): String? {
-    val realPath = FileSystemUtil.resolveSymLink(path.absolutePathString())
-    if (realPath != null && (isWindows && realPath.startsWith("\\\\") || Files.exists(Path.of(realPath)))) {
-      return realPath
-    }
-    return null
-  }
-
   companion object {
-    // Extension methods to minimize diff when creating test files/directories
+
+    private fun resolveSymLink(path: Path): String? {
+      val realPath = FileSystemUtil.resolveSymLink(path.absolutePathString())
+      if (realPath != null && (path.getEelDescriptor().osFamily == EelOsFamily.Windows && realPath.startsWith("\\\\") || Files.exists(Path.of(realPath)))) {
+        return realPath
+      }
+      return null
+    }
+
     private fun Path.newFile(name: String): Path {
       val path = resolve(name)
       path.parent?.let { Files.createDirectories(it) }
@@ -683,16 +686,14 @@ class FileAttributesReadingTest(val eelHolder: EelHolder) {
     }
 
     private fun getAttributesNullable(path: Path): FileAttributes? {
-      return try {
+      val directoryListElement = listWithAttributesUsingEel(path, setOf(path.name))[path.name]
+      val singleFileAttributes = try {
         readAttributesUsingEel(path)
-      }
-      catch (e: IOException) {
+      } catch (e: IOException) {
         null
       }
-    }
-
-    private fun getAttributes(pathStr: String): FileAttributes? {
-      return getAttributesNullable(Path.of(pathStr))
+      assertEquals(directoryListElement, singleFileAttributes)
+      return singleFileAttributes
     }
 
     private fun assertFileAttributes(path: Path) {
