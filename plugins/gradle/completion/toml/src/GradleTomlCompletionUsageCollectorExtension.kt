@@ -2,7 +2,7 @@
 
 @file:ApiStatus.Experimental
 
-package com.intellij.gradle.toml
+package com.intellij.gradle.completion.toml
 
 import com.intellij.codeInsight.lookup.impl.LookupResultDescriptor
 import com.intellij.codeInsight.lookup.impl.LookupUsageDescriptor
