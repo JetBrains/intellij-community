@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -185,6 +186,10 @@ public fun DefaultInformationBanner(
  * @param content The primary content of the banner, briefly describing the information it conveys.
  *
  * This banner is primarily used to display persistent messages without interrupting the workflow.
+ *
+ * **Note:** The [content] slot does not support subcomposition-based composables (e.g., `BoxWithConstraints`, lazy
+ * layouts), because the banner uses `Modifier.width(IntrinsicSize.Max)` internally. Subcomposition-based layouts cannot
+ * report intrinsic measurements and will throw at runtime.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/banner.html)
  *
@@ -376,6 +381,10 @@ public fun DefaultSuccessBanner(
  *
  * Use this banner to provide clear, visual feedback of a completed or successful action.
  *
+ * **Note:** The [content] slot does not support subcomposition-based composables (e.g., `BoxWithConstraints`, lazy
+ * layouts), because the banner uses `Modifier.width(IntrinsicSize.Max)` internally. Subcomposition-based layouts cannot
+ * report intrinsic measurements and will throw at runtime.
+ *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/banner.html)
  *
  * **Swing equivalent:**
@@ -563,6 +572,10 @@ public fun DefaultWarningBanner(
  *
  * Use this banner to make users aware of potential issues without stopping their flow.
  *
+ * **Note:** The [content] slot does not support subcomposition-based composables (e.g., `BoxWithConstraints`, lazy
+ * layouts), because the banner uses `Modifier.width(IntrinsicSize.Max)` internally. Subcomposition-based layouts cannot
+ * report intrinsic measurements and will throw at runtime.
+ *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/banner.html)
  *
  * **Swing equivalent:**
@@ -747,6 +760,10 @@ public fun DefaultErrorBanner(
  *
  * Use this banner to provide high-visibility error messages requiring immediate user attention.
  *
+ * **Note:** The [content] slot does not support subcomposition-based composables (e.g., `BoxWithConstraints`, lazy
+ * layouts), because the banner uses `Modifier.width(IntrinsicSize.Max)` internally. Subcomposition-based layouts cannot
+ * report intrinsic measurements and will throw at runtime.
+ *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/banner.html)
  *
  * **Swing equivalent:**
@@ -850,10 +867,10 @@ private fun DefaultBannerImpl(
     modifier: Modifier = Modifier,
     content: @Composable (() -> Unit),
 ) {
-    Column(modifier = modifier) {
+    Column(modifier = modifier.width(IntrinsicSize.Max)) {
         Divider(orientation = Orientation.Horizontal, color = style.colors.border, modifier = Modifier.fillMaxWidth())
         Row(
-            modifier = Modifier.background(style.colors.background).padding(10.dp),
+            modifier = Modifier.background(style.colors.background).padding(style.metrics.padding),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (icon != null) {
