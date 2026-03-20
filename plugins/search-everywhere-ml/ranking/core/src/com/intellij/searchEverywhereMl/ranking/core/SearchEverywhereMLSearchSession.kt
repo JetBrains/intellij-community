@@ -411,7 +411,7 @@ internal class SearchEverywhereMLSearchSession private constructor(
         val model = getForContributor(contributorId)
         model.predict(features)
       }
-      catch (e: IllegalArgumentException) {
+      catch (_: IllegalArgumentException) {
         null
       }
     }
