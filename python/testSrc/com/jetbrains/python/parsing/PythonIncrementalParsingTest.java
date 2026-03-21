@@ -53,4 +53,140 @@ public class PythonIncrementalParsingTest extends PythonIncrementalParsingTestCa
   public void testStatementListMoveMethodToChildIndentationLevel() {
     doTest();
   }
+
+  public void testStatementListEditInNestedFunction() {
+    doTest();
+  }
+
+  public void testStatementListEditInNestedIfElse() {
+    doTest();
+  }
+
+  public void testStatementListEditIn3LevelNesting() {
+    doTest();
+  }
+
+  public void testStatementListAddInExceptBlock() {
+    doTest();
+  }
+
+  public void testStatementListAddInFinallyBlock() {
+    doTest();
+  }
+
+  public void testStatementListEditClassBody() {
+    doTest();
+  }
+
+  public void testStatementListAddMethodToClass() {
+    doTest();
+  }
+
+  public void testStatementListReplacePassWithStatement() {
+    doTest();
+  }
+
+  public void testStatementListEditInWithBody() {
+    doTest();
+  }
+
+  public void testStatementListEditInsideParentheses() {
+    doTest();
+  }
+
+  public void testStatementListAddCommentOnlyLine() {
+    doTest();
+  }
+
+  public void testStatementListEditSameLineIf() {
+    doTest();
+  }
+
+  public void testStatementListBackslashContinuation() {
+    doTest();
+  }
+
+  public void testStatementListEditMultilineString() {
+    doTest();
+  }
+
+  public void testStatementListEditInNestedClass() {
+    doTest();
+  }
+
+  public void testStatementListEditOuterWithNestedClass() {
+    doTest();
+  }
+
+  public void testStatementListEditInDeeplyNestedClassMethod() {
+    doTest();
+  }
+
+  public void testStatementListInsertEntireFunction() {
+    doTest();
+  }
+
+  public void testStatementListDeleteEntireFunction() {
+    doTest();
+  }
+
+  public void testStatementListInsertClassIntoClass() {
+    doTest();
+  }
+
+  public void testStatementListDeleteMultipleStatements() {
+    doTest();
+  }
+
+  public void testStatementListInsertMultipleFunctions() {
+    doTest();
+  }
+
+  public void testStatementListDeleteNestedFunctionBody() {
+    doTest();
+  }
+
+  public void testStatementListEditFunctionFirstStatement() {
+    doTest();
+  }
+
+  public void testStatementListEditFunctionLastStatement() {
+    doTest();
+  }
+
+  public void testStatementListEditBetweenMethods() {
+    doTest();
+  }
+
+  public void testStatementListAddEmptyLineInBlock() {
+    doTest();
+  }
+
+  public void testStatementListEditNearFunctionDef() {
+    doTest();
+  }
+
+  public void testStatementListEditAfterDecorator() {
+    doTest();
+  }
+
+  public void testStatementListDedentDeeplyNestedToZero() {
+    doTest(true, false);
+  }
+
+  public void testStatementListOverIndentDeeplyNested() {
+    doTest(true, false);
+  }
+
+  public void testStatementListDedentMiddleOfBlock() {
+    doTest(true, false);
+  }
+
+  public void testStatementListIndentEntireBlock() {
+    doTest(true, false);
+  }
+
+  public void testStatementListMoveStatementAcrossBlocks() {
+    doTest(true, false);
+  }
 }

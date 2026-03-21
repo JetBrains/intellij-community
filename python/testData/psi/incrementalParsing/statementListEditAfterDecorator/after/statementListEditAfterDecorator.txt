@@ -1,0 +1,23 @@
+Original text:
+---------------
+class MyClass:
+    @staticmethod
+    def helper():
+        value = compute()
+        return value
+
+    def regular(self):
+        return 1
+---------------
+Subtree: Language: Python
+---------------
+class MyClass:
+    <reparse>@staticmethod
+    def helper():
+        value = compute()
+        extra = validate(value)
+        return extra
+
+    def regular(self):
+        return 1</reparse>
+---------------

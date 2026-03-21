@@ -1,0 +1,5 @@
+def foo():
+    x = 1 + \
+        2
+    y = 4
+    return x + y

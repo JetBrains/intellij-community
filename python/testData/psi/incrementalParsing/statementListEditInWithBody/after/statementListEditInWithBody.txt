@@ -1,0 +1,17 @@
+Original text:
+---------------
+def foo():
+    with open("f") as f:
+        data = f.read()
+        print(data)
+    return
+---------------
+Subtree: Language: Python
+---------------
+def foo():
+    with open("f") as f:
+        <reparse>data = f.read()
+        result = data.strip()
+        print(result)</reparse>
+    return
+---------------

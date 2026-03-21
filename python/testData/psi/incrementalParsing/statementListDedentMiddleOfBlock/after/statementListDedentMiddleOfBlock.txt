@@ -1,0 +1,18 @@
+Original text:
+---------------
+class Outer:
+    def method(self):
+        a = 1
+        b = 2
+        c = 3
+        return a + b + c
+---------------
+Subtree: Language: Python
+---------------
+<reparse>class Outer:
+    def method(self):
+        a = 1
+    b = 2
+        c = 3
+        return a + b + c</reparse>
+---------------

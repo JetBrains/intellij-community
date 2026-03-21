@@ -1,0 +1,7 @@
+def process():
+    if True:
+        important = 42
+    else:
+        fallback = -1
+    extra = 0
+    return 0

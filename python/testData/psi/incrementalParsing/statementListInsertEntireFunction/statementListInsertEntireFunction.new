@@ -1,0 +1,11 @@
+class MyClass:
+    def first(self):
+        return 1
+
+    def middle(self):
+        x = 42
+        y = x * 2
+        return y
+
+    def last(self):
+        return 99

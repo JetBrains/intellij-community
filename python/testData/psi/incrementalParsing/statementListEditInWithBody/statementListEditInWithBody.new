@@ -1,0 +1,6 @@
+def foo():
+    with open("f") as f:
+        data = f.read()
+        result = data.strip()
+        print(result)
+    return

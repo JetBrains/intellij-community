@@ -1,0 +1,15 @@
+Original text:
+---------------
+class MyClass:
+    x = 1
+    y = 2
+    z = 3
+---------------
+Subtree: Language: Python
+---------------
+class MyClass:
+    <reparse>x = 1
+    y = 2
+    w = 4
+    z = 3</reparse>
+---------------

@@ -1,0 +1,9 @@
+class MyClass:
+    @staticmethod
+    def helper():
+        value = compute()
+        extra = validate(value)
+        return extra
+
+    def regular(self):
+        return 1

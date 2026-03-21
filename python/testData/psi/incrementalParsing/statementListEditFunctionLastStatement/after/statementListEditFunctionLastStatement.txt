@@ -1,0 +1,16 @@
+Original text:
+---------------
+def compute():
+    a = 1
+    b = 2
+    c = 3
+    return a + b + c
+---------------
+Subtree: Language: Python
+---------------
+def compute():
+    <reparse>a = 1
+    b = 2
+    c = 3
+    return a * b * c</reparse>
+---------------

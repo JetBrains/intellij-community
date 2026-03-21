@@ -1,0 +1,5 @@
+def process():
+    step1 = init()
+    step5 = aggregate(step1)
+    step6 = format(step5)
+    return step6

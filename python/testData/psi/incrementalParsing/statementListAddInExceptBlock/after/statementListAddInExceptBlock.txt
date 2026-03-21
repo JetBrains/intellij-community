@@ -1,0 +1,15 @@
+Original text:
+---------------
+try:
+    print("try")
+except Exception:
+    print("except")
+---------------
+Subtree: Language: Python
+---------------
+try:
+    print("try")
+except Exception:
+    <reparse>print("except")
+    print("more")</reparse>
+---------------

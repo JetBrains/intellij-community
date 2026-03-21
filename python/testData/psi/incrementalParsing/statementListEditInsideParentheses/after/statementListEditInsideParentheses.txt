@@ -1,0 +1,19 @@
+Original text:
+---------------
+def foo():
+    result = func(
+        arg1,
+        arg2
+    )
+    return result
+---------------
+Subtree: Language: Python
+---------------
+def foo():
+    <reparse>result = func(
+        arg1,
+        arg2,
+        arg3
+    )
+    return result</reparse>
+---------------
