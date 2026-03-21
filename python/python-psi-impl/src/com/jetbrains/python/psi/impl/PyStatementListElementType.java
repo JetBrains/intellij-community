@@ -62,10 +62,11 @@ public class PyStatementListElementType extends PyReparseableElementType impleme
     }
 
     boolean isAfterColonOnSameLine = isAfterColonOnSameLine((PyStatementListImpl)currentNode);
+    int baseIndent = isAfterColonOnSameLine ? 0 : PyIndentUtil.getElementIndent(currentNode.getPsi()).length();
 
-    String firstLineIndent = isAfterColonOnSameLine ? "" : PyIndentUtil.getElementIndent(currentNode.getPsi());
+    currentNode.putUserData(BASE_INDENT_KEY, baseIndent);
 
-    PythonIndentingLexerForLazyElements lexer = new PythonIndentingLexerForLazyElements(firstLineIndent.length());
+    PythonIndentingLexerForLazyElements lexer = new PythonIndentingLexerForLazyElements(baseIndent);
     return checkIndentDedentBalanceWithLexer(newText, lexer, isAfterColonOnSameLine);
   }
 
@@ -110,13 +111,15 @@ public class PyStatementListElementType extends PyReparseableElementType impleme
   @Override
   public boolean isValidReparse(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
     PsiFile file = oldNode.getPsi().getContainingFile();
-    String firstLineIndent = isAfterColonOnSameLine(oldNode.getPsi()) ? "" : PyIndentUtil.getElementIndent(oldNode.getPsi());
     if (!(file instanceof PyFile)) return false;
 
     LanguageLevel languageLevel = LanguageLevel.forElement(file);
+    // Reuse base indent cached by isReparseable on the same node
+    Integer cachedIndent = oldNode.getUserData(BASE_INDENT_KEY);
+    int baseIndent = cachedIndent != null ? cachedIndent : 0;
 
     newNode.putUserData(LANGUAGE_LEVEL_KEY, languageLevel);
-    newNode.putUserData(BASE_INDENT_KEY, firstLineIndent.length());
+    newNode.putUserData(BASE_INDENT_KEY, baseIndent);
 
     // Single pass: verify children exist and contain no error elements
     ASTNode child = newNode.getFirstChildNode();
