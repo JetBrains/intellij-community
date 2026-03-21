@@ -5,14 +5,20 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.SyntaxTreeBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.TriConsumer;
 import com.jetbrains.python.PyParsingBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyLazyParser extends PyParser {
+/**
+ * Parser for lazily-reparsed {@code PyStatementList} elements.
+ * <p>
+ * Unlike {@link PyParser}, this class does not implement {@link com.intellij.lang.PsiParser}
+ * and does not carry mutable language-level state. All context (language level, builder)
+ * is passed explicitly through method parameters.
+ */
+public final class PyLazyParser {
 
   private static final Logger LOG = Logger.getInstance(PyLazyParser.class);
 
@@ -22,7 +28,7 @@ public class PyLazyParser extends PyParser {
       super(context);
     }
 
-    public void lazyParseStatementList() {
+    void lazyParseStatementList() {
       boolean indentFound = myBuilder.getTokenType() == PyTokenTypes.INDENT;
       if (indentFound) {
         myBuilder.advanceLexer();
@@ -36,7 +42,9 @@ public class PyLazyParser extends PyParser {
         }
 
         if (!myBuilder.eof()) {
-          assert myBuilder.getTokenType() == PyTokenTypes.DEDENT;
+          if (myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
+            LOG.error("Expected DEDENT token, got " + myBuilder.getTokenType());
+          }
           myBuilder.advanceLexer();
         }
       }
@@ -78,10 +86,9 @@ public class PyLazyParser extends PyParser {
 
   public @Nullable ASTNode parseLazyElement(@NotNull IElementType rootElement,
                                             @NotNull PsiBuilder builder,
-                                            @NotNull LanguageLevel languageLevel,
-                                            @NotNull TriConsumer<? super IElementType, ? super SyntaxTreeBuilder, ? super LanguageLevel> parsingFunction) {
+                                            @NotNull LanguageLevel languageLevel) {
     long start = LOG.isDebugEnabled() ? System.currentTimeMillis() : 0;
-    parsingFunction.accept(rootElement, builder, languageLevel);
+    parseStatementList(rootElement, builder, languageLevel);
     try {
       if (!builder.eof()) {
         LOG.debug("Lazy parseable element of type " + rootElement + " ends before EOF");

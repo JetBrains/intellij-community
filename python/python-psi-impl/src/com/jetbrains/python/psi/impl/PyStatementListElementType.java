@@ -158,9 +158,7 @@ public class PyStatementListElementType extends IReparseableElementType implemen
     PsiBuilder builder = PsiBuilderFactory.getInstance()
       .createBuilder(parentPsiElement.getProject(), chameleon, lexer, PythonLanguage.INSTANCE, chameleon.getChars());
 
-    PyLazyParser parser = new PyLazyParser();
-    parser.setLanguageLevel(languageLevel);
-    return parser.parseLazyElement(this, builder, languageLevel, PyLazyParser::parseStatementList);
+    return new PyLazyParser().parseLazyElement(this, builder, languageLevel);
   }
 
   @Override
