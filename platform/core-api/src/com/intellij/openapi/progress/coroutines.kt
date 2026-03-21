@@ -34,6 +34,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
@@ -58,7 +59,7 @@ private val LOG = Logger.getInstance("#com.intellij.openapi.progress")
  * @see coroutineSuspender
  */
 suspend fun checkCanceled() {
-  val ctx = coroutineContext
+  val ctx = currentCoroutineContext()
   ctx.ensureActive() // standard check first
   val coroutineSuspender = ctx[CoroutineSuspenderElementKey]?.coroutineSuspender
   (coroutineSuspender as? CoroutineSuspenderImpl)?.checkPaused() // will suspend if paused
@@ -125,8 +126,11 @@ suspend fun checkCanceled() {
  *
  * @throws ProcessCanceledException if [current indicator][ProgressManager.getGlobalProgressIndicator] is canceled
  * or [current job][Cancellation.currentJob] is canceled
+ *
  * @see coroutineToIndicator
  * @see runBlocking
+ * @see com.intellij.openapi.progress.util.UtilKt.runWithCheckCanceled for blocking executor contexts, such as inspections
+ * @see com.intellij.openapi.progress.util.UtilKt.awaitWithCheckCanceled for blocking executor contexts, such as inspections
  */
 @RequiresBackgroundThread(generateAssertion = false)
 @RequiresBlockingContext
@@ -147,7 +151,7 @@ fun <T> runBlockingCancellable(compensateParallelism: Boolean, action: suspend C
 }
 
 private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParallelism: Boolean, action: suspend CoroutineScope.() -> T): T {
-  assertBackgroundThreadAndNoWriteAction()
+  assertRunBlockingBackgroundThreadAndNoWriteAction()
   return prepareThreadContext { ctx ->
     if (!allowOrphan && ctx[Job] == null) {
       LOG.error(IllegalStateException("There is no ProgressIndicator or Job in this thread, the current job is not cancellable."))
@@ -234,7 +238,7 @@ fun <T> runBlockingMaybeCancellable(compensateParallelism: Boolean, action: susp
 @Internal
 @RequiresBlockingContext
 fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
-  assertBackgroundThreadAndNoWriteAction()
+  assertRunBlockingBackgroundThreadAndNoWriteAction()
   return prepareIndicatorThreadContext(indicator) { ctx ->
     val context = ctx +
                   CoroutineName("indicator run blocking")
@@ -359,7 +363,7 @@ fun <T> withCurrentThreadCoroutineScopeBlocking(action: () -> T): Pair<T, Job> {
  */
 @ApiStatus.Experimental
 suspend fun <T> withCurrentThreadCoroutineScope(action: suspend CoroutineScope.() -> T): Pair<T, Job> {
-  val checkpoint = getFixThreadScopeElements(coroutineContext)
+  val checkpoint = getFixThreadScopeElements(currentCoroutineContext())
   return withContext(checkpoint) {
     val actionResult = try {
       action()
@@ -431,7 +435,7 @@ private fun getFixThreadScopeElements(context: CoroutineContext): ThreadScopeChe
  *   }
  * }
  * ```
- * the difference between these two approaches is similar to the difference between [coroutineScope] and [GlobalScope]:
+ * The difference between these two approaches is similar to the difference between [coroutineScope] and [GlobalScope]:
  * the coroutines spawned on the service scope are not controlled by the code that spawned them.
  */
 @RequiresBlockingContext
@@ -462,7 +466,7 @@ internal fun <T> blockingContextInner(currentContext: CoroutineContext, action: 
 
 @Deprecated(message = "This function does not provide an instance of `ProgressIndicator` to `action`", level = DeprecationLevel.HIDDEN)
 suspend fun <T> coroutineToIndicator(action: () -> T): T {
-  val ctx = coroutineContext
+  val ctx = currentCoroutineContext()
   return contextToIndicator(ctx, action)
 }
 
@@ -491,7 +495,7 @@ suspend fun <T> coroutineToIndicator(action: () -> T): T {
  * @see ProgressManager.runProcess
  */
 suspend fun <T> coroutineToIndicator(action: (ProgressIndicator) -> T): T {
-  val ctx = coroutineContext
+  val ctx = currentCoroutineContext()
   return contextToIndicator(ctx) {
     action(ProgressManager.getGlobalProgressIndicator())
   }
@@ -596,7 +600,9 @@ fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T):
   }
 }
 
-private fun assertBackgroundThreadAndNoWriteAction() {
+@IntellijInternalApi
+@Internal
+fun assertRunBlockingBackgroundThreadAndNoWriteAction() {
   if (!EDT.isCurrentThreadEdt()) {
     return
   }
@@ -690,7 +696,7 @@ private fun rememberElements(job: BlockingJob, context: CoroutineContext) {
 
 
 /**
- * Assigns a title to a write action. Intended to be invoked with write lock
+ * Assigns a title to a Write action. Intended to be invoked with write lock
  */
 @RequiresWriteLock
 @ApiStatus.Experimental

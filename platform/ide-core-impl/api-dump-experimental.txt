@@ -28,6 +28,7 @@ com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 - com.intellij.openapi.project.DumbAware
 - *:getEditorTabTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.progress.util.UtilKt
+- *sf:awaitWithCheckCanceled(kotlinx.coroutines.Deferred):java.lang.Object
 - *sf:runWithCheckCanceled(kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):java.lang.Object
 - *bs:runWithCheckCanceled$default(kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):java.lang.Object
 a:com.intellij.openapi.project.ex.ProjectManagerEx
