@@ -585,7 +585,7 @@
                  description="It optimises cache usage for storing calculated types."/>
     <registryKey key="python.use.separated.libraries.type.cache" defaultValue="true"
                  description="It enables the use of a library-level cache for PSI elements from packages."/>
-    <registryKey key="python.statement.lists.incremental.reparse" defaultValue="false"
+    <registryKey key="python.statement.lists.incremental.reparse" defaultValue="true"
                  description="Enables incremental reparse for statement lists"/>
     <registryKey key="python.strict.type.narrow" defaultValue="false"
                  description="Allows narrowing types exhaustively to Never"/>
