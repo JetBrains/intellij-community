@@ -6,18 +6,19 @@ import com.intellij.mcpserver.McpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.TextToolset
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.testFramework.junit5.fixture.virtualFileFixture
-import io.kotest.common.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import kotlin.test.assertTrue
 
 class TextToolsetTest : McpToolsetTestBase() {
   private val emptyFileFixture = sourceRootFixture.virtualFileFixture("empty.txt", "")
   private val emptyFile by emptyFileFixture
 
   @Test
-  fun get_file_text_by_path() = runBlocking {
+  fun get_file_text_by_path() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       TextToolset::get_file_text_by_path.name,
       buildJsonObject {
@@ -28,7 +29,7 @@ class TextToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun get_file_text_by_path_accepts_lowercase_enum() = runBlocking {
+  fun get_file_text_by_path_accepts_lowercase_enum() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       TextToolset::get_file_text_by_path.name,
       buildJsonObject {
@@ -40,7 +41,7 @@ class TextToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun replace_file_text_by_path() = runBlocking {
+  fun replace_file_text_by_path() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       TextToolset::replace_text_in_file.name,
       buildJsonObject {
@@ -53,7 +54,7 @@ class TextToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun replace_text_in_file_with_empty_old_text_on_non_empty_file_should_fail() = runBlocking {
+  fun replace_text_in_file_with_empty_old_text_on_non_empty_file_should_fail() = runBlocking(Dispatchers.Default) {
     // Should fail with an error when oldText is empty but file has content
     testMcpTool(
       TextToolset::replace_text_in_file.name,
@@ -65,12 +66,13 @@ class TextToolsetTest : McpToolsetTestBase() {
       }
     ) { actualResult ->
       // Should fail with an error about empty oldText on non-empty file
-      assertTrue { actualResult.isError == true && actualResult.textContent.text.contains("empty") }
+      assertThat(actualResult.isError).isTrue()
+      assertThat(actualResult.textContent.text).contains("empty")
     }
   }
 
   @Test
-  fun replace_text_in_file_with_empty_old_text_on_empty_file_should_succeed() = runBlocking {
+  fun replace_text_in_file_with_empty_old_text_on_empty_file_should_succeed() = runBlocking(Dispatchers.Default) {
     // Should succeed when oldText is empty and file is empty (LLM create-then-fill workflow)
     testMcpTool(
       TextToolset::replace_text_in_file.name,

@@ -3,7 +3,8 @@ package com.intellij.mcpserver.clients.impl
 import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.clients.McpClient.Companion.TransportType
 import com.intellij.mcpserver.clients.McpClientInfo
-import io.kotest.common.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -72,7 +73,7 @@ class CodexClientTest {
     McpClient.overrideWriteLegacyForTests(false)
 
     val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:7777/stream")
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       client.configure(client.getStreamableHttpConfig())
     }
 
@@ -92,7 +93,7 @@ class CodexClientTest {
     McpClient.overrideWriteLegacyForTests(true)
 
     val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:8888/stream")
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       client.configure(client.getStreamableHttpConfig())
     }
 
@@ -167,7 +168,7 @@ class CodexClientTest {
     McpClient.overrideWriteLegacyForTests(false)
 
     val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:2222/stream")
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       client.configure(client.getStreamableHttpConfig())
     }
 
@@ -191,7 +192,7 @@ class CodexClientTest {
     McpClient.overrideWriteLegacyForTests(false)
 
     val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:3333/stream")
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       client.configure(client.getStreamableHttpConfig())
     }
 
@@ -218,7 +219,7 @@ class CodexClientTest {
     McpClient.overrideWriteLegacyForTests(false)
 
     val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:4444/stream")
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       client.configure(client.getStreamableHttpConfig())
     }
 
@@ -287,7 +288,7 @@ class CodexClientTest {
     McpClient.overrideProductSpecificServerKeyForTests("codextest")
 
     val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:5555/stream")
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
 
@@ -312,7 +313,7 @@ class CodexClientTest {
     McpClient.overrideProductSpecificServerKeyForTests("codextest")
 
     val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:5555/stream")
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
 

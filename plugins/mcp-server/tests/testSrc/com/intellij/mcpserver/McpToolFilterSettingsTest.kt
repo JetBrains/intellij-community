@@ -5,11 +5,10 @@ package com.intellij.mcpserver
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.testFramework.junit5.TestApplication
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.platform.commons.annotation.Testable
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 @Testable
 @TestApplication
@@ -26,9 +25,9 @@ class McpToolFilterSettingsTest {
 
     val tools = McpServerService.getInstance().getMcpTools()
 
-    assertTrue(tools.isNotEmpty(), "Tools list should not be empty")
-    assertTrue(tools.any { it.descriptor.name == "get_file_text_by_path" }, "Should contain get_file_text_by_path tool")
-    assertTrue(tools.any { it.descriptor.name == "replace_text_in_file" }, "Should contain replace_text_in_file tool")
+    assertThat(tools).isNotEmpty()
+    assertThat(tools).anyMatch { it.descriptor.name == "get_file_text_by_path" }
+    assertThat(tools).anyMatch { it.descriptor.name == "replace_text_in_file" }
   }
 
   @Test
@@ -38,13 +37,10 @@ class McpToolFilterSettingsTest {
 
     val tools = McpServerService.getInstance().getMcpTools()
 
-    assertTrue(tools.isNotEmpty(), "Tools list should not be empty")
+    assertThat(tools).isNotEmpty()
     // All tools should be from the general package
     tools.forEach { tool ->
-      assertTrue(
-        tool.descriptor.fullyQualifiedName.startsWith("com.intellij.mcpserver.toolsets.general."),
-        "Tool ${tool.descriptor.fullyQualifiedName} should be from the general package"
-      )
+      assertThat(tool.descriptor.fullyQualifiedName).startsWith("com.intellij.mcpserver.toolsets.general.")
     }
   }
 
@@ -55,15 +51,9 @@ class McpToolFilterSettingsTest {
 
     val tools = McpServerService.getInstance().getMcpTools()
 
-    assertTrue(tools.isNotEmpty(), "Tools list should not be empty")
-    assertFalse(
-      tools.any { it.descriptor.name == "get_file_text_by_path" },
-      "Should not contain get_file_text_by_path tool"
-    )
-    assertTrue(
-      tools.any { it.descriptor.name == "replace_text_in_file" },
-      "Should still contain replace_text_in_file tool"
-    )
+    assertThat(tools).isNotEmpty()
+    assertThat(tools).noneMatch { it.descriptor.name == "get_file_text_by_path" }
+    assertThat(tools).anyMatch { it.descriptor.name == "replace_text_in_file" }
   }
 
   @Test
@@ -73,23 +63,14 @@ class McpToolFilterSettingsTest {
 
     val tools = McpServerService.getInstance().getMcpTools()
 
-    assertTrue(tools.isNotEmpty(), "Tools list should not be empty")
+    assertThat(tools).isNotEmpty()
     // All tools should be from the general package
     tools.forEach { tool ->
-      assertTrue(
-        tool.descriptor.fullyQualifiedName.startsWith("com.intellij.mcpserver.toolsets.general."),
-        "Tool ${tool.descriptor.fullyQualifiedName} should be from the general package"
-      )
+      assertThat(tool.descriptor.fullyQualifiedName).startsWith("com.intellij.mcpserver.toolsets.general.")
     }
     // But not get_file_text_by_path
-    assertFalse(
-      tools.any { it.descriptor.name == "get_file_text_by_path" },
-      "Should not contain get_file_text_by_path tool"
-    )
-    assertTrue(
-      tools.any { it.descriptor.name == "replace_text_in_file" },
-      "Should still contain replace_text_in_file tool"
-    )
+    assertThat(tools).noneMatch { it.descriptor.name == "get_file_text_by_path" }
+    assertThat(tools).anyMatch { it.descriptor.name == "replace_text_in_file" }
   }
 
   @Test
@@ -98,7 +79,7 @@ class McpToolFilterSettingsTest {
 
     val tools = McpServerService.getInstance().getMcpTools()
 
-    assertTrue(tools.isEmpty(), "Tools list should be empty when all tools are excluded")
+    assertThat(tools).isEmpty()
   }
 
   @Test
@@ -107,17 +88,11 @@ class McpToolFilterSettingsTest {
 
     val tools = McpServerService.getInstance().getMcpTools()
 
-    assertTrue(tools.isNotEmpty(), "Tools list should not be empty")
+    assertThat(tools).isNotEmpty()
     tools.forEach { tool ->
-      assertTrue(
-        tool.descriptor.fullyQualifiedName.startsWith("com.intellij.mcpserver.toolsets.general.TextToolset."),
-        "Tool ${tool.descriptor.fullyQualifiedName} should be from TextToolset"
-      )
+      assertThat(tool.descriptor.fullyQualifiedName).startsWith("com.intellij.mcpserver.toolsets.general.TextToolset.")
     }
-    assertTrue(
-      tools.any { it.descriptor.name == "get_file_text_by_path" },
-      "Should contain get_file_text_by_path from TextToolset"
-    )
+    assertThat(tools).anyMatch { it.descriptor.name == "get_file_text_by_path" }
   }
 
   @Test
@@ -132,11 +107,8 @@ class McpToolFilterSettingsTest {
 
     val tools = McpServerService.getInstance().getMcpTools()
 
-    assertTrue(tools.isNotEmpty(), "Tools list should not be empty")
-    assertTrue(
-      tools.any { it.descriptor.name == "get_file_text_by_path" },
-      "Should contain get_file_text_by_path since it was included last"
-    )
+    assertThat(tools).isNotEmpty()
+    assertThat(tools).anyMatch { it.descriptor.name == "get_file_text_by_path" }
   }
 
   @Test
@@ -146,12 +118,9 @@ class McpToolFilterSettingsTest {
 
     val tools = McpServerService.getInstance().getMcpTools()
 
-    assertTrue(tools.isNotEmpty(), "Tools list should not be empty")
+    assertThat(tools).isNotEmpty()
     tools.forEach { tool ->
-      assertTrue(
-        tool.descriptor.fullyQualifiedName.startsWith("com.intellij.mcpserver.toolsets.general.TextToolset."),
-        "Tool ${tool.descriptor.fullyQualifiedName} should be from TextToolset"
-      )
+      assertThat(tool.descriptor.fullyQualifiedName).startsWith("com.intellij.mcpserver.toolsets.general.TextToolset.")
     }
   }
 }

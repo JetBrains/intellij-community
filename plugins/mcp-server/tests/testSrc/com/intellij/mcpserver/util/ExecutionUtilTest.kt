@@ -2,24 +2,23 @@ package com.intellij.mcpserver.util
 
 import com.intellij.mcpserver.toolsets.Constants
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class ExecutionUtilTest {
   @Test
   fun buildSessionId_returns_plain_name_for_unique_session() {
-    assertEquals("run", buildSessionId("run", 42, listOf("run")))
+    assertThat(buildSessionId("run", 42, listOf("run"))).isEqualTo("run")
   }
 
   @Test
   fun buildSessionId_appends_execution_id_for_duplicate_sessions() {
-    assertEquals("run#42", buildSessionId("run", 42, listOf("run", "run")))
+    assertThat(buildSessionId("run", 42, listOf("run", "run"))).isEqualTo("run#42")
   }
 
   @Test
-  fun runConfigurationOutputCollector_limits_preview_to_max_length_and_persists_full_output() = runBlocking {
+  fun runConfigurationOutputCollector_limits_preview_to_max_length_and_persists_full_output() = runBlocking<Unit> {
     val outputFile = Files.createTempFile("execution-util-test", ".log")
     try {
       val collector = OutputCollector(this, outputFile)
@@ -29,12 +28,11 @@ class ExecutionUtilTest {
       collector.close()
       collector.waitForDrain()
 
-      assertEquals(
+      assertThat(collector.getOutputPreview()).isEqualTo(
         "a".repeat(Constants.RUN_CONFIGURATION_PREVIEW_MAX_LENGTH) + Constants.RUN_CONFIGURATION_PREVIEW_TRUNCATED_MARKER,
-        collector.getOutputPreview(),
       )
-      assertTrue(collector.isOutputPreviewTruncated)
-      assertEquals(output, Files.readString(outputFile))
+      assertThat(collector.isOutputPreviewTruncated).isTrue()
+      assertThat(Files.readString(outputFile)).isEqualTo(output)
     }
     finally {
       Files.deleteIfExists(outputFile)
@@ -47,7 +45,7 @@ class ExecutionUtilTest {
 
     val truncated = truncateRunConfigurationPreviewLine(longLine)
 
-    assertTrue(truncated.endsWith("<truncated>"))
-    assertEquals(1_000, truncated.length)
+    assertThat(truncated).endsWith("<truncated>")
+    assertThat(truncated).hasSize(1_000)
   }
 }

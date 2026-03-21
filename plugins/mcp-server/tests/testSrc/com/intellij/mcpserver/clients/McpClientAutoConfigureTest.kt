@@ -77,7 +77,7 @@ class McpClientAutoConfigureTest {
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
     val client = CursorClient(McpClientInfo.Scope.GLOBAL, configPath)
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
 
@@ -96,7 +96,7 @@ class McpClientAutoConfigureTest {
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
     val client = VSCodeClient(McpClientInfo.Scope.GLOBAL, configPath)
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
 
@@ -115,7 +115,7 @@ class McpClientAutoConfigureTest {
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
     val client = WindsurfClient(McpClientInfo.Scope.GLOBAL, configPath)
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
 
@@ -135,7 +135,7 @@ class McpClientAutoConfigureTest {
 
     val client = CodexClient(McpClientInfo.Scope.GLOBAL, configPath)
     // CodexClient overrides streamableHttpUrl, so it doesn't need service substitution
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
 
@@ -198,7 +198,7 @@ class McpClientAutoConfigureTest {
     McpClient.overrideProductSpecificServerKeyForTests("test")
 
     val client = CursorClient(McpClientInfo.Scope.GLOBAL, configPath)
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
 
@@ -227,7 +227,7 @@ class McpClientAutoConfigureTest {
     McpClient.overrideWriteLegacyForTests(false)
 
     val client = VSCodeClient(McpClientInfo.Scope.GLOBAL, configPath)
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
 
@@ -249,7 +249,7 @@ class McpClientAutoConfigureTest {
     McpClient.overrideProductSpecificServerKeyForTests("codextest")
 
     val client = CodexClient(McpClientInfo.Scope.GLOBAL, configPath)
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       client.autoConfigure()
     }
 

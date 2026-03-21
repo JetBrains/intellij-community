@@ -1,6 +1,5 @@
 package com.intellij.mcpserver.impl.util.network
 
-import io.kotest.common.runBlocking
 import io.modelcontextprotocol.kotlin.sdk.shared.McpJson
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import io.modelcontextprotocol.kotlin.sdk.types.InitializeResult
@@ -10,22 +9,24 @@ import io.modelcontextprotocol.kotlin.sdk.types.JSONRPCResponse
 import io.modelcontextprotocol.kotlin.sdk.types.RequestId
 import io.modelcontextprotocol.kotlin.sdk.types.ServerCapabilities
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
+@OptIn(DelicateCoroutinesApi::class)
 class StreamableHttpServerTransportTest {
 
   @Test
-  fun `send completes pending request and updates protocol version`() = runBlocking {
+  fun `send completes pending request and updates protocol version`() = runBlocking<Unit> {
     val transport = StreamableHttpServerTransport()
     transport.start()
 
@@ -46,14 +47,14 @@ class StreamableHttpServerTransportTest {
     val initialVersion = transport.negotiatedProtocolVersion()
     transport.send(response)
 
-    assertTrue(deferred.isCompleted)
-    assertEquals(response, deferred.await())
-    assertEquals("1.1", transport.negotiatedProtocolVersion())
-    assertNotEquals(initialVersion, transport.negotiatedProtocolVersion(), "Protocol version should update after initialize response")
+    assertThat(deferred.isCompleted).isTrue()
+    assertThat(deferred.await()).isEqualTo(response)
+    assertThat(transport.negotiatedProtocolVersion()).isEqualTo("1.1")
+    assertThat(transport.negotiatedProtocolVersion()).isNotEqualTo(initialVersion)
   }
 
   @Test
-  fun `send emits notification to SSE when subscriber present`() = runBlocking {
+  fun `send emits notification to SSE when subscriber present`() = runBlocking<Unit> {
     val transport = StreamableHttpServerTransport()
     transport.start()
 
@@ -68,10 +69,14 @@ class StreamableHttpServerTransportTest {
 
     transport.send(notification)
 
-    val event = withTimeout(1_000) { sseEvents.receive() }
+    val event = withTimeout(1.seconds) { sseEvents.receive() }
     val lines = event.lineSequence().map { it.trim() }.filter { it.isNotEmpty() }.toList()
-    assertTrue(lines.isNotEmpty(), "Expected at least one SSE line, got: '$event'")
-    assertEquals("event: message", lines.first(), "Unexpected SSE event line: '$event'")
+    assertThat(lines)
+      .withFailMessage("Expected at least one SSE line, got: '%s'", event)
+      .isNotEmpty()
+    assertThat(lines.first())
+      .withFailMessage("Unexpected SSE event line: '%s'", event)
+      .isEqualTo("event: message")
     val dataLine = lines.first { it.startsWith("data: ") }
     val payload = dataLine.removePrefix("data: ").trim()
     val json = McpJson.parseToJsonElement(payload)
@@ -80,11 +85,13 @@ class StreamableHttpServerTransportTest {
       put("params", buildJsonObject { put("payload", JsonPrimitive("value")) })
       put("jsonrpc", JsonPrimitive("2.0"))
     }
-    assertEquals(expectedJson, json, "Unexpected payload in SSE data line")
+    assertThat(json)
+      .withFailMessage("Unexpected payload in SSE data line")
+      .isEqualTo(expectedJson)
   }
 
   @Test
-  fun `send drops notification when no SSE subscriber`() = runBlocking {
+  fun `send drops notification when no SSE subscriber`() = runBlocking<Unit> {
     val transport = StreamableHttpServerTransport()
     transport.start()
 
@@ -97,11 +104,13 @@ class StreamableHttpServerTransportTest {
 
     transport.send(notification)
 
-    assertTrue(sseEvents.tryReceive().isFailure, "Notification should be dropped when there is no active SSE subscriber")
+    assertThat(sseEvents.tryReceive().isFailure)
+      .withFailMessage("Notification should be dropped when there is no active SSE subscriber")
+      .isTrue()
   }
 
   @Test
-  fun `close cancels pending requests and closes SSE channel`() = runBlocking {
+  fun `close cancels pending requests and closes SSE channel`() = runBlocking<Unit> {
     val transport = StreamableHttpServerTransport()
     transport.start()
 
@@ -113,9 +122,9 @@ class StreamableHttpServerTransportTest {
 
     transport.close()
 
-    assertTrue(deferred.isCancelled)
-    assertTrue(sseEvents.isClosedForSend)
-    assertTrue(sseEvents.isClosedForReceive)
+    assertThat(deferred.isCancelled).isTrue()
+    assertThat(sseEvents.isClosedForSend).isTrue()
+    assertThat(sseEvents.isClosedForReceive).isTrue()
   }
 }
 

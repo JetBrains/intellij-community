@@ -1,13 +1,13 @@
 package com.intellij.mcpserver
 
 import com.intellij.mcpserver.impl.util.asTool
-import io.kotest.common.runBlocking
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.buildJsonObject
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import kotlin.reflect.KFunction
-import kotlin.test.assertEquals
 
 fun returnLong(): Long { return 123456789123456789 }
 fun returnInt(): Int { return 1234567891 }
@@ -18,7 +18,7 @@ fun returnChar(): Char { return 'a' }
 fun returnString(): String { return "string" }
 fun returnFloat(): Float { return 1.23458f }
 fun returnDouble(): Double { return 1.2345 }
-fun returnVoid(): Unit {}
+fun returnVoid() {}
 fun returnNull(): Any? { return null }
 fun returnResult(): McpToolCallResult { return McpToolCallResult(arrayOf(McpToolCallResultContent.Text("text1"), McpToolCallResultContent.Text("text2"))) }
 fun returnErrorResult(): McpToolCallResult { return McpToolCallResult(arrayOf(McpToolCallResultContent.Text("text1"), McpToolCallResultContent.Text("text2")), isError = true) }
@@ -47,9 +47,9 @@ class ReturnValueRenderingTest {
 
   @ParameterizedTest
   @MethodSource("functions")
-  fun test(callable: KFunction<*>, expected: String) = runBlocking {
+  fun test(callable: KFunction<*>, expected: String) = runBlocking<Unit> {
     val asTool = callable.asTool()
     val actualResult = asTool.call(buildJsonObject {})
-    assertEquals(expected, actualResult.toString())
+    assertThat(actualResult.toString()).isEqualTo(expected)
   }
 }

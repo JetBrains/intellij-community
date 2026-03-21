@@ -7,7 +7,7 @@ import com.intellij.mcpserver.toolsets.general.FileToolset
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import io.kotest.common.runBlocking
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonPrimitive
@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test
 class FileToolsetTest : McpToolsetTestBase() {
   @Disabled("Output contains the project directory name that is not predictable because of generated")
   @Test
-  fun list_directory_tree() = runBlocking {
+  fun list_directory_tree() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       FileToolset::list_directory_tree.name,
       buildJsonObject {
@@ -30,7 +30,7 @@ class FileToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun open_file_in_editor() = runBlocking {
+  fun open_file_in_editor() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       FileToolset::open_file_in_editor.name,
       buildJsonObject {
@@ -41,7 +41,7 @@ class FileToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun get_all_open_file_paths() = runBlocking {
+  fun get_all_open_file_paths() = runBlocking(Dispatchers.Default) {
     withContext(Dispatchers.EDT) {
       FileEditorManagerEx.getInstanceExAsync(project).openFile(mainJavaFile, true)
     }
@@ -53,7 +53,7 @@ class FileToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun create_new_file() = runBlocking {
+  fun create_new_file() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       FileToolset::create_new_file.name,
       buildJsonObject {

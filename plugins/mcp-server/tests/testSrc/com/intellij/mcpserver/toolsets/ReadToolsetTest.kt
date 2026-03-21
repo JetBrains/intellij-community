@@ -7,7 +7,8 @@ import com.intellij.mcpserver.toolsets.general.ReadToolset
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.testFramework.junit5.fixture.virtualFileFixture
-import io.kotest.common.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import org.assertj.core.api.Assertions.assertThat
@@ -33,7 +34,7 @@ class ReadToolsetTest : McpToolsetTestBase() {
   private val readFile by readFileFixture
 
   @Test
-  fun read_file_slice_returns_numbered_lines() = runBlocking {
+  fun read_file_slice_returns_numbered_lines() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       ReadToolset::read_file.name,
       buildJsonObject {
@@ -49,7 +50,7 @@ class ReadToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun read_file_slice_rejects_offset_beyond_file_length() = runBlocking {
+  fun read_file_slice_rejects_offset_beyond_file_length() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       ReadToolset::read_file.name,
       buildJsonObject {
@@ -65,7 +66,7 @@ class ReadToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun read_file_slice_rejects_non_positive_limit() = runBlocking {
+  fun read_file_slice_rejects_non_positive_limit() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       ReadToolset::read_file.name,
       buildJsonObject {
@@ -81,7 +82,7 @@ class ReadToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun read_file_range_by_lines_is_inclusive() = runBlocking {
+  fun read_file_range_by_lines_is_inclusive() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       ReadToolset::read_file.name,
       buildJsonObject {
@@ -102,7 +103,7 @@ class ReadToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun read_file_indentation_includes_header_lines() = runBlocking {
+  fun read_file_indentation_includes_header_lines() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       ReadToolset::read_file.name,
       buildJsonObject {
@@ -123,7 +124,7 @@ class ReadToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun read_file_indentation_respects_max_lines() = runBlocking {
+  fun read_file_indentation_respects_max_lines() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       ReadToolset::read_file.name,
       buildJsonObject {
@@ -138,7 +139,7 @@ class ReadToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun read_file_indentation_excludes_siblings_when_disabled() = runBlocking {
+  fun read_file_indentation_excludes_siblings_when_disabled() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       ReadToolset::read_file.name,
       buildJsonObject {
@@ -156,7 +157,7 @@ class ReadToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun read_file_range_by_line_column_includes_context_lines() = runBlocking {
+  fun read_file_range_by_line_column_includes_context_lines() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       ReadToolset::read_file.name,
       buildJsonObject {
@@ -179,7 +180,7 @@ class ReadToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun read_file_range_by_offsets_reads_exact_line() = runBlocking {
+  fun read_file_range_by_offsets_reads_exact_line() = runBlocking(Dispatchers.Default) {
     val fileText = readFile.contentsToByteArray().toString(Charsets.UTF_8)
     val needle = "println(\"bar\")"
     val startOffset = fileText.indexOf(needle)

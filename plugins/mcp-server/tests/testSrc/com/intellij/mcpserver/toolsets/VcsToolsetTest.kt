@@ -7,7 +7,8 @@ import com.intellij.mcpserver.McpToolsetTestBase
 import com.intellij.mcpserver.toolsets.vcs.VcsToolset
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.openapi.vfs.LocalFileSystem
-import io.kotest.common.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -23,7 +24,7 @@ import kotlin.io.path.writeText
 
 class VcsToolsetTest : McpToolsetTestBase() {
   @Test
-  fun git_status_returns_empty_when_no_git_roots() = runBlocking {
+  fun git_status_returns_empty_when_no_git_roots() = runBlocking(Dispatchers.Default) {
     cleanupExistingGitRepository(project.projectDirectory)
 
     testMcpTool(
@@ -37,7 +38,7 @@ class VcsToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun git_status_returns_structured_status_for_repo() = runBlocking {
+  fun git_status_returns_structured_status_for_repo() = runBlocking(Dispatchers.Default) {
     val repositoryPath = project.projectDirectory
     cleanupExistingGitRepository(repositoryPath)
     setupGitRepository(repositoryPath)
@@ -83,7 +84,7 @@ class VcsToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun git_status_respects_limit_and_sets_hasMoreEntries() = runBlocking {
+  fun git_status_respects_limit_and_sets_hasMoreEntries() = runBlocking(Dispatchers.Default) {
     val repositoryPath = project.projectDirectory
     cleanupExistingGitRepository(repositoryPath)
     setupGitRepository(repositoryPath)
@@ -111,7 +112,7 @@ class VcsToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun git_status_filters_by_repository_path() = runBlocking {
+  fun git_status_filters_by_repository_path() = runBlocking(Dispatchers.Default) {
     val repositoryPath = project.projectDirectory
     cleanupExistingGitRepository(repositoryPath)
     setupGitRepository(repositoryPath)
@@ -136,7 +137,7 @@ class VcsToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun git_status_rejects_non_positive_limit() = runBlocking {
+  fun git_status_rejects_non_positive_limit() = runBlocking(Dispatchers.Default) {
     cleanupExistingGitRepository(project.projectDirectory)
 
     testMcpTool(

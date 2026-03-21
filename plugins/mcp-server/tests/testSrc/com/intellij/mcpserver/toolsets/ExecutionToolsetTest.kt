@@ -37,7 +37,8 @@ import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.common.waitUntilAssertSucceedsBlocking
 import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import com.intellij.util.ui.EmptyIcon
-import io.kotest.common.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -45,15 +46,10 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotSame
-import kotlin.test.assertNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import javax.swing.JPanel
 
@@ -68,7 +64,7 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
   private val mainKotlinFile by mainKotlinFileFixture
 
   @Test
-  fun get_run_configurations() = runBlocking {
+  fun get_run_configurations() = runBlocking(Dispatchers.Default) {
     val runManager = RunManager.getInstance(project)
     val editableSettings = createEditableConfiguration(runManager)
     setDynamicLaunchOverrides(editableSettings.configuration)
@@ -90,21 +86,19 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
         .associateBy { it.jsonObject.getValue("name").jsonPrimitive.content }
 
       val editable = configurations.getValue("editable-config").jsonObject
-      assertTrue(editable.getValue("supportsDynamicLaunchOverrides").jsonPrimitive.content.toBoolean())
-      assertEquals("--sample", editable.getValue("commandLine").jsonPrimitive.content)
-      assertEquals(project.basePath, editable.getValue("workingDirectory").jsonPrimitive.content)
-      assertEquals("bar", editable.getValue("environment").jsonObject.getValue("FOO").jsonPrimitive.content)
+      assertThat(editable.getValue("supportsDynamicLaunchOverrides").jsonPrimitive.content.toBoolean()).isTrue()
+      assertThat(editable.getValue("commandLine").jsonPrimitive.content).isEqualTo("--sample")
+      assertThat(editable.getValue("workingDirectory").jsonPrimitive.content).isEqualTo(project.basePath)
+      assertThat(editable.getValue("environment").jsonObject.getValue("FOO").jsonPrimitive.content).isEqualTo("bar")
 
       val nonEditable = configurations.getValue("compound-config").jsonObject
-      assertFalse(nonEditable.getValue("supportsDynamicLaunchOverrides").jsonPrimitive.content.toBoolean())
-      assertFalse("commandLine" in nonEditable)
-      assertFalse("workingDirectory" in nonEditable)
-      assertFalse("environment" in nonEditable)
+      assertThat(nonEditable.getValue("supportsDynamicLaunchOverrides").jsonPrimitive.content.toBoolean()).isFalse()
+      assertThat(nonEditable).doesNotContainKeys("commandLine", "workingDirectory", "environment")
     }
   }
 
   @Test
-  fun get_run_configurations_collects_run_points_from_slow_markers() = runBlocking {
+  fun get_run_configurations_collects_run_points_from_slow_markers() = runBlocking(Dispatchers.Default) {
     val mainKotlinPath = Path.of(requireNotNull(project.basePath)).relativizeIfPossible(mainKotlinFile)
 
     testMcpTool(
@@ -114,16 +108,16 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
       },
     ) { result ->
       val response = Json.parseToJsonElement(result.textContent.text).jsonObject
-      assertEquals(mainKotlinPath, response.getValue("filePath").jsonPrimitive.content)
+      assertThat(response.getValue("filePath").jsonPrimitive.content).isEqualTo(mainKotlinPath)
 
       val runPoints = response.getValue("runPoints").jsonArray
-      assertEquals(1, runPoints.size)
-      assertEquals(1, runPoints.single().jsonObject.getValue("line").jsonPrimitive.content.toInt())
+      assertThat(runPoints).hasSize(1)
+      assertThat(runPoints.single().jsonObject.getValue("line").jsonPrimitive.content.toInt()).isEqualTo(1)
     }
   }
 
   @Test
-  fun execute_run_configuration() = runBlocking {
+  fun execute_run_configuration() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       ExecutionToolset::execute_run_configuration.name,
       buildJsonObject {
@@ -134,7 +128,7 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_run_configuration_from_context() = runBlocking {
+  fun execute_run_configuration_from_context() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       ExecutionToolset::execute_run_configuration.name,
       buildJsonObject {
@@ -146,7 +140,7 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_run_configuration_rejects_mixed_targets() = runBlocking {
+  fun execute_run_configuration_rejects_mixed_targets() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       ExecutionToolset::execute_run_configuration.name,
       buildJsonObject {
@@ -159,7 +153,7 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_run_configuration_rejects_incomplete_context_target() = runBlocking {
+  fun execute_run_configuration_rejects_incomplete_context_target() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       ExecutionToolset::execute_run_configuration.name,
       buildJsonObject {
@@ -170,7 +164,7 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_run_configuration_with_dynamic_launch_overrides_on_unsupported_configuration() = runBlocking {
+  fun execute_run_configuration_with_dynamic_launch_overrides_on_unsupported_configuration() = runBlocking(Dispatchers.Default) {
     val runManager = RunManager.getInstance(project)
     val nonEditableSettings = createNonEditableConfiguration(runManager)
 
@@ -189,7 +183,7 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_run_configuration_returns_output_file_without_waiting_for_exit() = runBlocking {
+  fun execute_run_configuration_returns_output_file_without_waiting_for_exit() = runBlocking(Dispatchers.Default) {
     val runManager = RunManager.getInstance(project)
     val settings = createExecutableConfiguration(
       runManager = runManager,
@@ -215,13 +209,13 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
         },
       ) { result ->
         val executionResult = Json.parseToJsonElement(result.textContent.text).jsonObject
-        assertFalse("exitCode" in executionResult)
+        assertThat(executionResult).doesNotContainKey("exitCode")
         assertPublicExecutionResultDoesNotExposeInternalFields(executionResult)
 
         val logPath = Path.of(executionResult.getValue("fullOutputPath").jsonPrimitive.content)
-        assertTrue(Files.exists(logPath))
+        assertThat(logPath).exists()
         waitUntilAssertSucceedsBlocking(5.seconds) {
-          assertTrue(Files.readString(logPath).contains("finished"))
+          assertThat(Files.readString(logPath)).contains("finished")
         }
         cleanupRunningDescriptors()
       }
@@ -229,7 +223,7 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_run_configuration_returns_output_file_when_timeout_expires() = runBlocking {
+  fun execute_run_configuration_returns_output_file_when_timeout_expires() = runBlocking(Dispatchers.Default) {
     val runManager = RunManager.getInstance(project)
     val settings = createExecutableConfiguration(
       runManager = runManager,
@@ -254,13 +248,13 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
         },
       ) { result ->
         val executionResult = Json.parseToJsonElement(result.textContent.text).jsonObject
-        assertFalse("exitCode" in executionResult)
+        assertThat(executionResult).doesNotContainKey("exitCode")
         assertPublicExecutionResultDoesNotExposeInternalFields(executionResult)
 
         val logPath = Path.of(executionResult.getValue("fullOutputPath").jsonPrimitive.content)
-        assertTrue(Files.exists(logPath))
+        assertThat(logPath).exists()
         waitUntilAssertSucceedsBlocking(5.seconds) {
-          assertTrue(Files.readString(logPath).contains("finished"))
+          assertThat(Files.readString(logPath)).contains("finished")
         }
         cleanupRunningDescriptors()
       }
@@ -268,7 +262,7 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_run_configuration_returns_exit_code_and_omits_output_file_for_small_output() = runBlocking {
+  fun execute_run_configuration_returns_exit_code_and_omits_output_file_for_small_output() = runBlocking(Dispatchers.Default) {
     val runManager = RunManager.getInstance(project)
     val settings = createExecutableConfiguration(
       runManager = runManager,
@@ -294,9 +288,9 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
         },
       ) { result ->
         val executionResult = Json.parseToJsonElement(result.textContent.text).jsonObject
-        assertEquals(7, executionResult.getValue("exitCode").jsonPrimitive.content.toInt())
-        assertEquals("started\nfinished\n", executionResult.getValue("output").jsonPrimitive.content)
-        assertFalse("fullOutputPath" in executionResult)
+        assertThat(executionResult.getValue("exitCode").jsonPrimitive.content.toInt()).isEqualTo(7)
+        assertThat(executionResult.getValue("output").jsonPrimitive.content).isEqualTo("started\nfinished\n")
+        assertThat(executionResult).doesNotContainKey("fullOutputPath")
         assertPublicExecutionResultDoesNotExposeInternalFields(executionResult)
         cleanupRunningDescriptors()
       }
@@ -304,7 +298,7 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_run_configuration_keeps_output_file_after_exit_when_preview_is_truncated() = runBlocking {
+  fun execute_run_configuration_keeps_output_file_after_exit_when_preview_is_truncated() = runBlocking(Dispatchers.Default) {
     val runManager = RunManager.getInstance(project)
     val longOutput = "a".repeat(Constants.RUN_CONFIGURATION_PREVIEW_MAX_LENGTH + 50)
     val finalOutput = "\nfinished\n"
@@ -331,16 +325,15 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
         },
       ) { result ->
         val executionResult = Json.parseToJsonElement(result.textContent.text).jsonObject
-        assertEquals(0, executionResult.getValue("exitCode").jsonPrimitive.content.toInt())
-        assertEquals(
+        assertThat(executionResult.getValue("exitCode").jsonPrimitive.content.toInt()).isEqualTo(0)
+        assertThat(executionResult.getValue("output").jsonPrimitive.content).isEqualTo(
           "a".repeat(Constants.RUN_CONFIGURATION_PREVIEW_MAX_LENGTH) + Constants.RUN_CONFIGURATION_PREVIEW_TRUNCATED_MARKER,
-          executionResult.getValue("output").jsonPrimitive.content,
         )
         assertPublicExecutionResultDoesNotExposeInternalFields(executionResult)
 
         val logPath = Path.of(executionResult.getValue("fullOutputPath").jsonPrimitive.content)
-        assertTrue(Files.exists(logPath))
-        assertEquals(longOutput + finalOutput, Files.readString(logPath))
+        assertThat(logPath).exists()
+        assertThat(Files.readString(logPath)).isEqualTo(longOutput + finalOutput)
         cleanupRunningDescriptors()
       }
     }
@@ -360,9 +353,9 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
       envs = null,
     )
 
-    assertSame(editableConfiguration, preparedConfiguration)
-    assertEquals("--sample", getProgramParameters(preparedConfiguration))
-    assertEquals(project.basePath, getWorkingDirectory(preparedConfiguration))
+    assertThat(preparedConfiguration).isSameAs(editableConfiguration)
+    assertThat(getProgramParameters(preparedConfiguration)).isEqualTo("--sample")
+    assertThat(getWorkingDirectory(preparedConfiguration)).isEqualTo(project.basePath)
   }
 
   @Test
@@ -379,11 +372,11 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
       envs = null,
     )
 
-    assertNotSame(editableConfiguration, preparedConfiguration)
-    assertNull(getProgramParameters(preparedConfiguration))
-    assertNull(getWorkingDirectory(preparedConfiguration))
-    assertEquals("--sample", getProgramParameters(editableConfiguration))
-    assertEquals(project.basePath, getWorkingDirectory(editableConfiguration))
+    assertThat(preparedConfiguration).isNotSameAs(editableConfiguration)
+    assertThat(getProgramParameters(preparedConfiguration)).isNull()
+    assertThat(getWorkingDirectory(preparedConfiguration)).isNull()
+    assertThat(getProgramParameters(editableConfiguration)).isEqualTo("--sample")
+    assertThat(getWorkingDirectory(editableConfiguration)).isEqualTo(project.basePath)
   }
 
   private fun createEditableConfiguration(
@@ -425,13 +418,12 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
       descriptor.processHandler?.destroyProcess()
     }
     waitUntilAssertSucceedsBlocking(5.seconds) {
-      assertTrue(executionManager.getRunningDescriptors(Conditions.alwaysTrue()).isEmpty())
+      assertThat(executionManager.getRunningDescriptors(Conditions.alwaysTrue())).isEmpty()
     }
   }
 
   private fun assertPublicExecutionResultDoesNotExposeInternalFields(executionResult: JsonObject) {
-    assertFalse("sessionId" in executionResult)
-    assertFalse("timedOut" in executionResult)
+    assertThat(executionResult).doesNotContainKeys("sessionId", "timedOut")
   }
 
   private fun setDynamicLaunchOverrides(configuration: RunConfiguration) {

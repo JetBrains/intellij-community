@@ -5,21 +5,18 @@ import com.intellij.mcpserver.clients.McpClientInfo
 import com.intellij.mcpserver.clients.configs.ServerConfig
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
-import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.replacedServiceFixture
 import com.intellij.util.application
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
-import kotlin.test.assertEquals
 
 /**
  * Abstract base class for VSCode fork MCP client tests (VSCode, Cursor, Windsurf).
@@ -84,7 +81,7 @@ abstract class VscodeForkMcpClientTest {
    * Default implementation throws an error if null. VSCode overrides to use `!!`.
    */
   protected open fun getStreamableHttpConfigOrThrow(client: McpClient): ServerConfig {
-    return runBlocking { client.getStreamableHttpConfig() } ?: error("Streamable HTTP config is null")
+    return runBlocking(Dispatchers.Default) { client.getStreamableHttpConfig() } ?: error("Streamable HTTP config is null")
   }
 
   /**
@@ -111,8 +108,8 @@ abstract class VscodeForkMcpClientTest {
    * Default checks for "projects" section, VSCode overrides to check "customSection".
    */
   protected open fun verifyUnrelatedSectionsPreserved(result: String) {
-    assertTrue(result.contains("projects"))
-    assertTrue(result.contains("/Users/test/project"))
+    assertThat(result).contains("projects")
+    assertThat(result).contains("/Users/test/project")
   }
 
   @Test
@@ -131,7 +128,7 @@ abstract class VscodeForkMcpClientTest {
     )
 
     val client = createClient(McpClientInfo.Scope.GLOBAL, configPath)
-    assertTrue(client.isConfigured() == true)
+    assertThat(client.isConfigured()).isTrue()
   }
 
   @Test
@@ -142,15 +139,15 @@ abstract class VscodeForkMcpClientTest {
     McpClient.overrideProductSpecificServerKeyForTests(getTestOverrideKey())
 
     val client = createClient(McpClientInfo.Scope.GLOBAL, configPath)
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       client.configure(getStreamableHttpConfigOrThrow(client))
     }
 
     val servers = readServers(client, configPath)
     val config = servers[getTestOverrideKey()]
-    kotlin.requireNotNull(config)
-    assertEquals("http://localhost:7777/stream", config.url)
-    assertEquals("http", config.type)
+    requireNotNull(config)
+    assertThat(config.url).isEqualTo("http://localhost:7777/stream")
+    assertThat(config.type).isEqualTo("http")
   }
 
   @Test
@@ -161,14 +158,14 @@ abstract class VscodeForkMcpClientTest {
     McpClient.overrideProductSpecificServerKeyForTests(getTestOverrideKey())
 
     val client = createClient(McpClientInfo.Scope.GLOBAL, configPath)
-    val sseConfig = runBlocking { client.getSSEConfig() } ?: error("SSE config is null")
-    runBlocking { client.configure(sseConfig) }
+    val sseConfig = runBlocking(Dispatchers.Default) { client.getSSEConfig() } ?: error("SSE config is null")
+    runBlocking(Dispatchers.Default) { client.configure(sseConfig) }
 
     val servers = readServers(client, configPath)
     val config = servers[getTestOverrideKey()]
-    kotlin.requireNotNull(config)
-    assertEquals("http://localhost:7777/sse", config.url)
-    assertEquals("sse", config.type)
+    requireNotNull(config)
+    assertThat(config.url).isEqualTo("http://localhost:7777/sse")
+    assertThat(config.type).isEqualTo("sse")
   }
 
   @Test
@@ -179,14 +176,14 @@ abstract class VscodeForkMcpClientTest {
     McpClient.overrideProductSpecificServerKeyForTests(getTestOverrideKey())
 
     val client = createClient(McpClientInfo.Scope.GLOBAL, configPath)
-    runBlocking { client.configure(client.getStdioConfig()) }
+    runBlocking(Dispatchers.Default) { client.configure(client.getStdioConfig()) }
 
     val servers = readServers(client, configPath)
     val config = servers[getTestOverrideKey()]
     requireNotNull(config)
     requireNotNull(config.command)
     requireNotNull(config.args)
-    assertTrue(config.args.any { it.contains("McpStdioRunnerKt") })
+    assertThat(config.args).anyMatch { it.contains("McpStdioRunnerKt") }
   }
 
   @Test
@@ -208,11 +205,11 @@ abstract class VscodeForkMcpClientTest {
     McpClient.overrideWriteLegacyForTests(false)
 
     val client = createClient(McpClientInfo.Scope.GLOBAL, configPath)
-    runBlocking { client.configure(getStreamableHttpConfigOrThrow(client)) }
+    runBlocking(Dispatchers.Default) { client.configure(getStreamableHttpConfigOrThrow(client)) }
 
     val result = configPath.readText()
-    assertTrue(result.contains(getTestOverrideKey()))
-    assertFalse(result.contains("jetbrains"))
+    assertThat(result).contains(getTestOverrideKey())
+    assertThat(result).doesNotContain("jetbrains")
   }
 
   @Test
@@ -223,11 +220,11 @@ abstract class VscodeForkMcpClientTest {
     McpClient.overrideProductSpecificServerKeyForTests(getTestOverrideKey())
 
     val client = createClient(McpClientInfo.Scope.GLOBAL, configPath)
-    runBlocking { client.autoConfigure() }
+    runBlocking(Dispatchers.Default) { client.autoConfigure() }
 
     val result = configPath.readText()
     verifyUnrelatedSectionsPreserved(result)
-    assertTrue(result.contains("custom-server"))
-    assertTrue(result.contains(getTestOverrideKey()))
+    assertThat(result).contains("custom-server")
+    assertThat(result).contains(getTestOverrideKey())
   }
 }

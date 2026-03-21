@@ -4,9 +4,9 @@ package com.intellij.mcpserver
 
 import com.intellij.mcpserver.settings.McpToolFilterOptimizer
 import com.intellij.mcpserver.settings.McpToolFilterOptimizer.CategoryToolsInfo
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.platform.commons.annotation.Testable
-import kotlin.test.assertEquals
 
 @Testable
 class McpToolFilterOptimizerTest {
@@ -26,7 +26,7 @@ class McpToolFilterOptimizerTest {
       categoriesInfo = categoriesInfo
     )
     
-    assertEquals("*", result)
+    assertThat(result).isEqualTo("*")
   }
 
   @Test
@@ -42,7 +42,7 @@ class McpToolFilterOptimizerTest {
       categoriesInfo = categoriesInfo
     )
     
-    assertEquals("-*", result)
+    assertThat(result).isEqualTo("-*")
   }
 
   @Test
@@ -62,7 +62,7 @@ class McpToolFilterOptimizerTest {
       categoriesInfo = categoriesInfo
     )
     
-    assertEquals("-Cat2.*", result)
+    assertThat(result).isEqualTo("-Cat2.*")
   }
 
   @Test
@@ -84,7 +84,7 @@ class McpToolFilterOptimizerTest {
       categoriesInfo = categoriesInfo
     )
     
-    assertEquals("-*,+Cat1.*", result)
+    assertThat(result).isEqualTo("-*,+Cat1.*")
   }
 
   @Test
@@ -105,7 +105,7 @@ class McpToolFilterOptimizerTest {
     )
     
     // Cat1 has <50% enabled, so disable category and enable individually
-    assertEquals("-Cat1.*,+Cat1.tool1", result)
+    assertThat(result).isEqualTo("-Cat1.*,+Cat1.tool1")
   }
 
   @Test
@@ -126,7 +126,7 @@ class McpToolFilterOptimizerTest {
     )
     
     // Cat1 has >=50% enabled, so disable tools individually
-    assertEquals("-Cat1.tool3,-Cat1.tool4", result)
+    assertThat(result).isEqualTo("-Cat1.tool3,-Cat1.tool4")
   }
 
   @Test
@@ -150,7 +150,7 @@ class McpToolFilterOptimizerTest {
       categoriesInfo = categoriesInfo
     )
     
-    assertEquals("-*,+Cat1.*", result)
+    assertThat(result).isEqualTo("-*,+Cat1.*")
   }
 
   @Test
@@ -170,7 +170,7 @@ class McpToolFilterOptimizerTest {
       categoriesInfo = categoriesInfo
     )
     
-    assertEquals("-Cat2.*", result)
+    assertThat(result).isEqualTo("-Cat2.*")
   }
 
   @Test
@@ -196,7 +196,7 @@ class McpToolFilterOptimizerTest {
     // Cat1: 75% enabled (>=50%), so enable category and disable individuals
     // Cat2: all disabled, skip (already disabled by -*)
     // Cat3: 25% enabled (<50%), so enable tools individually
-    assertEquals("-*,+Cat1.*,-Cat1.tool4,+Cat3.tool1", result)
+    assertThat(result).isEqualTo("-*,+Cat1.*,-Cat1.tool4,+Cat3.tool1")
   }
 
   @Test
@@ -214,6 +214,6 @@ class McpToolFilterOptimizerTest {
     )
     
     // Disabled tools should be sorted
-    assertEquals("-Cat1.banana,-Cat1.mango", result)
+    assertThat(result).isEqualTo("-Cat1.banana,-Cat1.mango")
   }
 }

@@ -5,11 +5,8 @@ import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import kotlin.test.assertContains
-import kotlin.test.assertEquals
 
 @TestApplication
 class McpJsonGenerationTest {
@@ -22,19 +19,16 @@ class McpJsonGenerationTest {
     val jsonConfig = createStdioMcpServerJsonConfiguration(port, projectPath)
 
     // Verify the JSON structure
-    Assertions.assertNotNull(jsonConfig["command"]!!)
-    Assertions.assertNotNull(jsonConfig["args"]!!)
-    Assertions.assertNotNull(jsonConfig["env"]!!)
+    assertThat(jsonConfig).containsKeys("command", "args", "env")
 
     // Verify command is a java executable
     val command = jsonConfig["command"]!!.jsonPrimitive.content
-    assertTrue(command?.endsWith("java") == true, "Command should be java executable")
+    assertThat(command).endsWith("java")
 
     // Verify environment variables
     val env = jsonConfig["env"]!!.jsonObject
-    Assertions.assertNotNull(env)
-    assertEquals(port.toString(), env[IJ_MCP_SERVER_PORT]?.jsonPrimitive?.content)
-    assertEquals(projectPath, env[IJ_MCP_SERVER_PROJECT_PATH]?.jsonPrimitive?.content)
+    assertThat(env[IJ_MCP_SERVER_PORT]?.jsonPrimitive?.content).isEqualTo(port.toString())
+    assertThat(env[IJ_MCP_SERVER_PROJECT_PATH]?.jsonPrimitive?.content).isEqualTo(projectPath)
   }
 
   @Test
@@ -44,17 +38,14 @@ class McpJsonGenerationTest {
     val jsonConfig = createStdioMcpServerJsonConfiguration(port, null)
 
     // Verify the JSON structure
-    Assertions.assertNotNull(jsonConfig["command"]!!)
-    Assertions.assertNotNull(jsonConfig["args"]!!)
-    Assertions.assertNotNull(jsonConfig["env"]!!)
-    assertEquals("stdio", jsonConfig["type"]!!.jsonPrimitive.content)
+    assertThat(jsonConfig).containsKeys("command", "args", "env")
+    assertThat(jsonConfig["type"]!!.jsonPrimitive.content).isEqualTo("stdio")
 
     // Verify environment variables
     val env = jsonConfig["env"]!!.jsonObject
-    Assertions.assertNotNull(env)
-    assertEquals(port.toString(), env[IJ_MCP_SERVER_PORT]?.jsonPrimitive?.content)
+    assertThat(env[IJ_MCP_SERVER_PORT]?.jsonPrimitive?.content).isEqualTo(port.toString())
     // Project path should not be present when null
-    assertTrue(env[IJ_MCP_SERVER_PROJECT_PATH] == null)
+    assertThat(env).doesNotContainKey(IJ_MCP_SERVER_PROJECT_PATH)
   }
 
   @Test
@@ -65,8 +56,8 @@ class McpJsonGenerationTest {
     val jsonConfig = createSseServerJsonEntry(port, projectBasePath = projectPath)
 
     // Verify the JSON structure
-    assertEquals("sse", jsonConfig["type"]!!.jsonPrimitive.content)
+    assertThat(jsonConfig["type"]!!.jsonPrimitive.content).isEqualTo("sse")
     val expectedUrls = setOf("http://127.0.0.1:$port/sse", "http://localhost:$port/sse", "http://[localhost]:$port/sse")
-    assertContains(expectedUrls, jsonConfig["url"]!!.jsonPrimitive.content)
+    assertThat(expectedUrls).contains(jsonConfig["url"]!!.jsonPrimitive.content)
   }
 }

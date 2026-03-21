@@ -22,6 +22,7 @@ import io.modelcontextprotocol.kotlin.sdk.shared.AbstractTransport
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
@@ -32,11 +33,10 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.io.asSink
 import kotlinx.io.asSource
 import kotlinx.io.buffered
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.concurrent.TimeUnit
-import kotlin.test.assertEquals
-import kotlin.test.fail
 import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
@@ -73,7 +73,7 @@ class TransportTest {
       client.callTool("test_tool", emptyMap())
 
       val actual = withTimeout(2000.milliseconds) { projectFromTool.await() }
-      assertEquals(project, actual)
+      assertThat(actual).isEqualTo(project)
     }
     // the same to unregistration. Otherwise, tools change notification is being sent into a closed transport
     delay(500.milliseconds) // delay for exit from use {}
@@ -87,7 +87,7 @@ class TransportTest {
     projectFromTool.complete(currentCoroutineContext().projectOrNull)
   }
 
-  private fun transportTest(transportHolder: TransportHolder, action: suspend (Client) -> Unit) = runBlocking {
+  private fun transportTest(transportHolder: TransportHolder, action: suspend (Client) -> Unit) = runBlocking(Dispatchers.Default) {
     try {
       McpServerService.getInstance().start()
       val client = Client(Implementation(name = "test client", version = "1.0"))
@@ -95,7 +95,7 @@ class TransportTest {
         client.connect(transportHolder.transport)
       }
       catch (e: Exception) {
-        fail("Failed to connect to the server: ${e.message}. Additional diagnostics:\r\n${transportHolder.diagnostics}")
+        throw AssertionError("Failed to connect to the server: ${e.message}. Additional diagnostics:\r\n${transportHolder.diagnostics}")
       }
       action(client)
     }
@@ -112,7 +112,7 @@ abstract class TransportHolder {
 
   // do not make it AutoCloseable because Junit tries to close it automatically but we want to close it in test method manually
   open fun close() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       transport.close()
     }
   }
@@ -147,7 +147,7 @@ class StdioTransportHolder(project: Project) : TransportHolder() {
     super.close() //sseClientTransport.close()
     scope.cancel()
     if (!process.waitFor(10, TimeUnit.SECONDS)) process.destroyForcibly()
-    if (!process.waitFor(10, TimeUnit.SECONDS)) fail("Process is still alive")
+    if (!process.waitFor(10, TimeUnit.SECONDS)) throw AssertionError("Process is still alive")
   }
 
   override fun toString(): String = "Stdio"
@@ -155,7 +155,7 @@ class StdioTransportHolder(project: Project) : TransportHolder() {
 
 class SseTransportHolder(project: Project) : TransportHolder() {
   override val transport: AbstractTransport by lazy {
-    val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull() ?: fail("No address provider")
+    val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull() ?: throw AssertionError("No address provider")
     val transportUrl = addressProvider.serverSseUrl
     SseClientTransport(HttpClient {
       install(SSE)
@@ -169,7 +169,7 @@ class SseTransportHolder(project: Project) : TransportHolder() {
 
 class HttpTransportHolder(project: Project) : TransportHolder() {
   override val transport: AbstractTransport by lazy {
-    val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull() ?: fail("No address provider")
+    val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull() ?: throw AssertionError("No address provider")
     val transportUrl = addressProvider.serverStreamUrl
     StreamableHttpClientTransport(HttpClient {
       install(SSE)

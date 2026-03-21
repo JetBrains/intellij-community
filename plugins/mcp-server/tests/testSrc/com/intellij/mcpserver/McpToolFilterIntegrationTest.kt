@@ -8,7 +8,8 @@ import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import io.kotest.common.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.sse.SSE
 import io.ktor.client.request.HttpRequestBuilder
@@ -16,18 +17,17 @@ import io.ktor.client.request.header
 import io.modelcontextprotocol.kotlin.sdk.Implementation
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.SseClientTransport
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.platform.commons.annotation.Testable
-import kotlin.test.DefaultAsserter.assertNotNull
 
 @Testable
 @TestApplication
 class McpToolFilterIntegrationTest {
   private val projectFixture = projectFixture(openAfterCreation = true)
   private val project by projectFixture
+  @Suppress("unused")
   private val moduleFixture = projectFixture.moduleFixture("testModule")
 
   private val tool1 = "list_directory_tree"
@@ -35,22 +35,22 @@ class McpToolFilterIntegrationTest {
   private val tool3 = "get_file_text_by_path"
 
   @Test
-  fun `server exposes all tools with AllowAll filter`() = runBlocking {
+  fun `server exposes all tools with AllowAll filter`() = runBlocking(Dispatchers.Default) {
     withConnection(filter = McpToolFilter.AllowAll) { client, _ ->
       val tools = client.listTools().tools
 
       // Should have all available tools
-      assertTrue(tools.size >= 10, "Should expose multiple tools with AllowAll filter")
+      assertThat(tools).hasSizeGreaterThanOrEqualTo(10)
 
       // Verify some common tools are present
-      assertTrue(tools.any { it.name == tool1 }, "Should have $tool1 tool")
-      assertTrue(tools.any { it.name == tool2 }, "Should have $tool2 tool")
+      assertThat(tools).anyMatch { it.name == tool1 }
+      assertThat(tools).anyMatch { it.name == tool2 }
     }
   }
 
 
   @Test
-  fun `server filters tools with AllowList filter`() = runBlocking {
+  fun `server filters tools with AllowList filter`() = runBlocking(Dispatchers.Default) {
     val allowedTools = setOf(tool1, tool2)
     val filter = McpToolFilter.AllowList(allowedTools)
 
@@ -58,34 +58,34 @@ class McpToolFilterIntegrationTest {
       val tools = client.listTools().tools
 
       // Should only have allowed tools
-      assertEquals(2, tools.size, "Should only expose allowed tools")
+      assertThat(tools).hasSize(2)
 
       // Verify only allowed tools are present
       val toolNames = tools.map { it.name }.toSet()
-      assertEquals(allowedTools, toolNames, "Should only have allowed tools")
+      assertThat(toolNames).isEqualTo(allowedTools)
 
       // Verify filtered tools are not present
-      assertFalse(tools.any { it.name == tool3 }, "Should not have git_commit")
+      assertThat(tools).noneMatch { it.name == tool3 }
     }
   }
 
   @Test
-  fun `server filters tools with header-based filter`() = runBlocking {
+  fun `server filters tools with header-based filter`() = runBlocking(Dispatchers.Default) {
     val allowedToolsHeader = "$tool1,$tool2,$tool3"
 
     withConnectionUsingHeader(allowedToolsHeader = allowedToolsHeader) { client ->
       val tools = client.listTools().tools
 
       // Should only have tools from header
-      assertEquals(3, tools.size, "Should only expose tools from header")
+      assertThat(tools).hasSize(3)
 
       val toolNames = tools.map { it.name }.toSet()
-      assertEquals(setOf(tool1, tool2, tool3), toolNames)
+      assertThat(toolNames).isEqualTo(setOf(tool1, tool2, tool3))
     }
   }
 
   @Test
-  fun `server handles malformed header gracefully`() = runBlocking {
+  fun `server handles malformed header gracefully`() = runBlocking(Dispatchers.Default) {
     // Test with spaces and empty entries
     val allowedToolsHeader = " $tool1 , , $tool2 , "
 
@@ -93,48 +93,46 @@ class McpToolFilterIntegrationTest {
       val tools = client.listTools().tools
 
       // Should filter out empty entries and trim spaces
-      assertEquals(2, tools.size, "Should handle malformed header")
+      assertThat(tools).hasSize(2)
 
       val toolNames = tools.map { it.name }.toSet()
-      assertEquals(setOf(tool1, tool2), toolNames)
+      assertThat(toolNames).isEqualTo(setOf(tool1, tool2))
     }
   }
 
   @Test
-  fun `server exposes no tools with empty AllowList`() = runBlocking {
+  fun `server exposes no tools with empty AllowList`() = runBlocking(Dispatchers.Default) {
     val filter = McpToolFilter.AllowList(emptySet())
 
     withConnection(filter = filter) { client, _ ->
       val tools = client.listTools().tools
 
       // Should have no tools
-      assertEquals(0, tools.size, "Should expose no tools with empty allow list")
+      assertThat(tools).isEmpty()
     }
   }
 
   @Test
-  fun `filtered tools cannot be called`() = runBlocking {
+  fun `filtered tools cannot be called`() = runBlocking(Dispatchers.Default) {
     val filter = McpToolFilter.AllowList(setOf(tool1))
 
     withConnection(filter = filter) { client, _ ->
       val tools = client.listTools().tools
 
       // Only read_file should be available
-      assertEquals(1, tools.size)
-      assertEquals(tool1, tools[0].name)
+      assertThat(tools).hasSize(1)
+      assertThat(tools.first().name).isEqualTo(tool1)
 
       // Attempting to call a filtered-out tool should fail
-      // (The tool won't be registered, so the SDK should return an error)
-      val result = try {
-        client.callTool(tool2, kotlinx.serialization.json.buildJsonObject {
-          put("filePath", kotlinx.serialization.json.JsonPrimitive("test.txt"))
-        })
-        null
-      } catch (_: Exception) {
-        "error" // Expected to fail
-      }
+      // (The tool won't be registered, so the SDK should return an error result)
+      val result = client.callTool(tool2, kotlinx.serialization.json.buildJsonObject {
+        put("filePath", kotlinx.serialization.json.JsonPrimitive("test.txt"))
+      })
 
-      assertNotNull(result, "Calling filtered tool should fail")
+      assertThat(result.isError).isTrue()
+      val textContent = result.content.firstOrNull() as? TextContent
+      assertThat(textContent).isNotNull()
+      assertThat(textContent!!.text).contains("not found")
     }
   }
 
