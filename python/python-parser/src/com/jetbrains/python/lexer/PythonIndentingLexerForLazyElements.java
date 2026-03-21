@@ -12,7 +12,14 @@ public class PythonIndentingLexerForLazyElements extends PythonIndentingLexer {
     myBaseIndent = baseIndent;
   }
 
-  public void setStartStateForLazyReparse(int baseIndent) {
+  /**
+   * Initializes the indent stack as if we are already inside a block indented to {@code baseIndent}.
+   * <p>
+   * Stack {@code [0, baseIndent]} means: module level (0) → current block (baseIndent).
+   * This lets the lexer generate correct INDENT/DEDENT tokens for content within the block
+   * without needing the surrounding file context.
+   */
+  private void setStartStateForLazyReparse(int baseIndent) {
     myIndentStack.clear();
     myIndentStack.push(0);
     myIndentStack.push(baseIndent);
@@ -29,7 +36,7 @@ public class PythonIndentingLexerForLazyElements extends PythonIndentingLexer {
     super.start(buffer, startOffset, endOffset, bsaeIndent);
     setStartStateForLazyReparse(myBaseIndent);
     if (myBaseIndent > 0) {
-      myTokenQueue.add(0, new PendingToken(PyTokenTypes.INDENT, 0, 0));
+      myTokenQueue.addFirst(new PendingToken(PyTokenTypes.INDENT, 0, 0));
     }
   }
 }
