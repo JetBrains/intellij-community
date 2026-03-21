@@ -12,19 +12,15 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.util.runWithCheckCanceled
 import com.intellij.openapi.util.ClassLoaderUtil.computeWithClassLoader
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Absent
 import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Alien
 import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present
-import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +34,6 @@ import org.jetbrains.annotations.TestOnly
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.spelling.SpellingCheckRule
 import java.nio.file.Files
-import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
@@ -97,16 +92,14 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     @OptIn(DelicateCoroutinesApi::class)
     fun suggest(text: String): Set<String> = synchronized(speller) {
       computeWithClassLoader<Set<String>, Throwable>(GraziePlugin.classLoader) {
-        runBlockingCancellable {
-          computeDetached {
-            speller.match(tool.getRawAnalyzedSentence(text))
-              .flatMap { match ->
-                match.suggestedReplacements.map {
-                  text.replaceRange(match.fromPos, match.toPos, it)
-                }
+        runWithCheckCanceled {
+          speller.match(tool.getRawAnalyzedSentence(text))
+            .flatMap { match ->
+              match.suggestedReplacements.map {
+                text.replaceRange(match.fromPos, match.toPos, it)
               }
-              .toSet()
-          }
+            }
+            .toSet()
         }
       }
     }
@@ -114,10 +107,8 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     @OptIn(DelicateCoroutinesApi::class)
     private fun <T> runCancellableOnFirstInvocation(block: () -> T): T {
       if (!isFirstInvocation.get()) return block()
-      val result = runBlockingCancellable {
-        computeDetached {
-          block()
-        }
+      val result = runWithCheckCanceled {
+        block()
       }
       isFirstInvocation.set(false)
       return result
@@ -144,10 +135,8 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     val langs = GrazieConfig.get().availableLanguages.filterNot { it.isEnglish() }
     val set = LinkedHashSet<SpellerTool>()
     for (lang in langs) {
-      val tool = runBlockingCancellable {
-        computeDetached {
-          LangTool.getTool(lang, TextStyleDomain.Other)
-        }
+      val tool = runWithCheckCanceled {
+        LangTool.getTool(lang, TextStyleDomain.Other)
       }
       tool.allSpellingCheckRules.firstOrNull()
         ?.let { set.add(SpellerTool(tool, lang, it)) }
@@ -181,23 +170,21 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     return if (isAlien) Alien else Absent
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   fun getSuggestions(word: String): Collection<String> {
     val filtered = filterCheckers(word)
     if (filtered.isEmpty()) {
       return emptyList()
     }
 
-    val indicator = EmptyProgressIndicator.notNullize(ProgressManager.getGlobalProgressIndicator())
-    return ApplicationUtil.runWithCheckCanceled(Callable {
+    return runWithCheckCanceled {
       filtered
         .asSequence()
-        .map { speller ->
-          indicator.checkCanceled()
+        .flatMap { speller ->
           speller.suggest(word)
         }
-        .flatten()
         .toLinkedSet()
-    }, indicator)
+    }
   }
 
   @TestOnly

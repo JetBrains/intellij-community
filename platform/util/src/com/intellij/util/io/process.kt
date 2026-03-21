@@ -53,6 +53,8 @@ suspend fun Process.awaitExit(): Int {
  *
  * This function is designed to work with native calls which may un-interruptibly hang.
  * Do not run CPU-bound work computations in [action].
+ *
+ * If you require the blocking version then use [com.intellij.openapi.progress.util.runWithCheckCanceled].
  */
 @DelicateCoroutinesApi // require explicit opt-in
 @ApiStatus.Experimental

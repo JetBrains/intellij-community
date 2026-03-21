@@ -32,7 +32,9 @@ public abstract class TextChecker {
    * @deprecated Implement and use {@link #check(ProofreadingContext)} instead.
    */
   @Deprecated(forRemoval = true)
-  public abstract @NotNull Collection<? extends TextProblem> check(@NotNull TextContent extracted);
+  public @NotNull Collection<? extends TextProblem> check(@NotNull TextContent extracted) {
+    throw new UnsupportedOperationException("Implement and use #check(ProofreadingContext) instead");
+  }
 
   /**
    * Perform the checks on the given context.

@@ -33,11 +33,10 @@ import com.intellij.grazie.utils.HighlightingUtil.findInstalledLang
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.util.runWithCheckCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.util.io.computeDetached
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -164,9 +163,8 @@ object APIQueries {
 
   @OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
   private fun <T> request(project: Project, service: BackgroundCloudService?, compute: suspend () -> T?): T? {
-    return runBlockingCancellable {
-      @Suppress("UnstableApiUsage")
-      computeDetached { handleExceptions<T>(project, service, compute) }
+    return runWithCheckCanceled {
+      handleExceptions<T>(project, service, compute)
     }
   }
 

@@ -11,7 +11,6 @@ import com.intellij.grazie.utils.filterFor
 import com.intellij.grazie.utils.toProofreadingContext
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPlainText
-import kotlinx.coroutines.runBlocking
 import org.junit.Assert
 import org.junit.Test
 
@@ -114,9 +113,7 @@ class GrammarCheckerTest : GrazieTestBase() {
   private fun check(tokens: Collection<PsiElement>): List<TextProblem> {
     return tokens.flatMap {
       TextExtractor.findTextsAt(it, TextContent.TextDomain.ALL).flatMap { text ->
-        runBlocking {
-          LanguageToolChecker().checkExternally(text.toProofreadingContext())
-        }
+        LanguageToolChecker().check(context = text.toProofreadingContext())
       }
     }
   }
