@@ -6,6 +6,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -85,7 +86,11 @@ public class PyStatementListElementType extends PyReparseableElementType impleme
   private static boolean checkIndentDedentBalanceWithLexer(@NotNull CharSequence text, @NotNull Lexer lexer, boolean isOnTheSameLine) {
     lexer.start(text);
     int balance = isOnTheSameLine ? 0 : -1;
+    int tokenCount = 0;
     while (lexer.getTokenType() != null) {
+      if (++tokenCount % 1000 == 0) {
+        ProgressManager.checkCanceled();
+      }
       if (lexer.getTokenType() == PyTokenTypes.INDENT) {
         balance++;
       }
