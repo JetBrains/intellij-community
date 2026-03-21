@@ -36,7 +36,7 @@ import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.coverage.Coverage
 import org.jetbrains.intellij.build.impl.coverage.CoverageImpl
 import org.jetbrains.intellij.build.io.runProcess
-import org.jetbrains.intellij.build.productLayout.util.mapConcurrent
+import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use

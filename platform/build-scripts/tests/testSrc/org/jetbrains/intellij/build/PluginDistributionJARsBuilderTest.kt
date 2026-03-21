@@ -12,13 +12,11 @@ import org.junit.Test
 
 class PluginDistributionJARsBuilderTest {
   @Test
-  fun verifyStableClasspathOrder() {
-    val productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot)
-    runBlocking(Dispatchers.Default) {
-      val context = createBuildContext(COMMUNITY_ROOT.communityRoot, productProperties)
-      val ideClasspath1 = createIdeClassPath(createPlatformLayout(context = context), context)
-      val ideClasspath2 = createIdeClassPath(createPlatformLayout(context = context), context)
-      assertThat(ideClasspath1).isEqualTo(ideClasspath2)
-    }
+  @Suppress("DEPRECATION")
+  fun verifyStableClasspathOrder(): Unit = runBlocking(Dispatchers.Default) {
+    val context = createBuildContext(COMMUNITY_ROOT.communityRoot, IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot))
+    val ideClasspath1 = createIdeClassPath(createPlatformLayout(context = context), context)
+    val ideClasspath2 = createIdeClassPath(createPlatformLayout(context = context), context)
+    assertThat(ideClasspath1).isEqualTo(ideClasspath2)
   }
 }

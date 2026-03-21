@@ -48,7 +48,7 @@ import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
 import org.jetbrains.intellij.build.io.transformFile
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.io.zipWithCompression
-import org.jetbrains.intellij.build.productLayout.util.mapConcurrent
+import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.io.InputStream
