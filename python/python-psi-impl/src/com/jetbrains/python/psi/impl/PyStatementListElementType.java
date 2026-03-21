@@ -13,7 +13,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.tree.ICompositeElementType;
+import com.intellij.psi.tree.IReparseableElementType;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.lexer.PythonIndentingLexerForLazyElements;
@@ -21,7 +23,6 @@ import com.jetbrains.python.parsing.PyLazyParser;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyIndentUtil;
-import com.intellij.psi.tree.IReparseableElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PyStatementListElementType extends IReparseableElementType implements ICompositeElementType {
@@ -55,9 +56,13 @@ public class PyStatementListElementType extends IReparseableElementType implemen
       return false;
     }
 
-    // Error elements in the previous statement list may cause some errors to remain in the PSI tree after reparse
-    if (hasErrorElements(currentNode)) {
-      LOG.debug("Previous node contains error elements, reparse is declined");
+    // Error elements in this or any ancestor statement list mean the tree structure
+    // may be wrong (e.g., after a cascading string literal break). In that case,
+    // incremental reparse of an inner statement list can produce a tree inconsistent
+    // with the outer, because the inner's text boundaries in the broken tree don't
+    // match the correct code structure. Decline to let the platform reparse higher.
+    if (anyAncestorHasErrors(currentNode)) {
+      LOG.debug("Statement list or ancestor contains error elements, reparse is declined");
       return false;
     }
 
@@ -143,9 +148,10 @@ public class PyStatementListElementType extends IReparseableElementType implemen
     PsiElement parentPsiElement = chameleon.getTreeParent().getPsi();
     assert parentPsiElement != null : "parent psi is null: " + chameleon;
 
+    // BASE_INDENT_KEY is set by isReparseable during incremental reparse.
+    // During full file parse, it's not set — fall back to 0 (file-level indent).
     Integer indent = chameleon.getUserData(BASE_INDENT_KEY);
     if (indent == null) {
-      LOG.error("BASE_INDENT_KEY is missing on chameleon node, falling back to 0");
       indent = 0;
     }
 
@@ -174,6 +180,23 @@ public class PyStatementListElementType extends IReparseableElementType implemen
   @Override
   public @NotNull ASTNode createCompositeNode() {
     return new PyStatementListImpl(this, null);
+  }
+
+  /**
+   * Walks up the tree from the given node, checking all ancestors (including the file)
+   * for error elements among their direct children. When any ancestor has errors,
+   * the tree structure may be wrong (e.g., nodes that belong inside a class or function
+   * may have "spilled out" to a higher level), making incremental reparse unsafe.
+   * <p>
+   * Skips unparsed lazy nodes to avoid triggering their parsing.
+   * The walk is cheap: typically 3–7 hops, each scanning only direct children.
+   */
+  private static boolean anyAncestorHasErrors(@NotNull ASTNode node) {
+    for (ASTNode current = node; current != null; current = current.getTreeParent()) {
+      if (current instanceof LazyParseableElement lazy && !lazy.isParsed()) continue;
+      if (hasErrorElements(current)) return true;
+    }
+    return false;
   }
 
   /**
