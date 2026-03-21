@@ -1,12 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.util
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import java.util.concurrent.atomic.AtomicInteger
 
 // IO-bounded
 private val BUILD_CONCURRENCY: Int = (Runtime.getRuntime().availableProcessors() * 2).coerceIn(4, 16)
+private const val WORK_CHUNK_SIZE: Int = 4
 
 suspend fun <T, R> Collection<T>.mapConcurrent(
   concurrency: Int = BUILD_CONCURRENCY,
@@ -19,22 +23,34 @@ suspend fun <T, R> Collection<T>.mapConcurrent(
 
   @Suppress("UNCHECKED_CAST")
   val source = (this as? List<T>) ?: toList()
-  if (concurrency == 1 || source.size == 1) {
-    return source.mapSequentially(action)
+  return when {
+    concurrency == 1 || source.size == 1 -> mapSequentially(source, action)
+    source.size <= concurrency -> source.mapWithCoroutinePerItem(action)
+    else -> mapWithWorkerPool(source, concurrency, action)
   }
+}
 
-  val result = arrayOfNulls<Any?>(source.size)
-  val nextIndex = AtomicInteger(0)
-  val workers = minOf(concurrency, source.size)
+private suspend fun <T, R> mapSequentially(list: List<T>, action: suspend (T) -> R): List<R> {
+  val result = ArrayList<R>(list.size)
+  for (item in list) {
+    result.add(action(item))
+  }
+  return result
+}
+
+private suspend fun <T, R> List<T>.mapWithCoroutinePerItem(action: suspend (T) -> R): List<R> {
+  val result = arrayOfNulls<Any?>(size)
   coroutineScope {
-    repeat(workers) {
+    val scopeJob = coroutineContext.job
+    forEachIndexed { index, item ->
+      yield()
       launch {
-        while (true) {
-          val index = nextIndex.getAndIncrement()
-          if (index >= source.size) {
-            break
-          }
-          result[index] = action(source[index])
+        try {
+          result[index] = action(item)
+        }
+        catch (e: CancellationException) {
+          scopeJob.cancel(e)
+          throw e
         }
       }
     }
@@ -44,10 +60,35 @@ suspend fun <T, R> Collection<T>.mapConcurrent(
   return result.asList() as List<R>
 }
 
-private suspend fun <T, R> List<T>.mapSequentially(action: suspend (T) -> R): List<R> {
-  val result = ArrayList<R>(size)
-  for (item in this) {
-    result.add(action(item))
+private suspend fun <T, R> mapWithWorkerPool(list: List<T>, concurrency: Int, action: suspend (T) -> R): List<R> {
+  val result = arrayOfNulls<Any?>(list.size)
+  val nextIndex = AtomicInteger(0)
+  coroutineScope {
+    val scopeJob = coroutineContext.job
+    repeat(concurrency) {
+      launch {
+        while (true) {
+          val startIndex = nextIndex.getAndAdd(WORK_CHUNK_SIZE)
+          if (startIndex >= list.size) {
+            break
+          }
+
+          val endIndex = minOf(startIndex + WORK_CHUNK_SIZE, list.size)
+          for (index in startIndex until endIndex) {
+            try {
+              result[index] = action(list[index])
+            }
+            catch (e: CancellationException) {
+              scopeJob.cancel(e)
+              throw e
+            }
+          }
+          yield()
+        }
+      }
+    }
   }
-  return result
+
+  @Suppress("UNCHECKED_CAST")
+  return result.asList() as List<R>
 }

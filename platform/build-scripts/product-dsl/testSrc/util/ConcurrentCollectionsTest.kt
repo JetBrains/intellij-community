@@ -1,12 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.util
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.milliseconds
 
 internal class ConcurrentCollectionsTest {
   @Test
@@ -15,11 +17,25 @@ internal class ConcurrentCollectionsTest {
       val input = (1..8).toList()
 
       val result = input.mapConcurrent(concurrency = input.size) {
-        delay((input.size - it).toLong() * 5)
+        delay(((input.size - it) * 5).milliseconds)
         it * 2
       }
 
       assertThat(result).hasSize(input.size)
+      assertThat(result).containsExactlyElementsOf(input.map { it * 2 })
+    }
+  }
+
+  @Test
+  fun `map concurrent preserves order with worker pool`() {
+    runBlocking(Dispatchers.Default) {
+      val input = (1..8).toList()
+
+      val result = input.mapConcurrent(concurrency = 3) {
+        delay(((input.size - it) * 5).milliseconds)
+        it * 2
+      }
+
       assertThat(result).containsExactlyElementsOf(input.map { it * 2 })
     }
   }
@@ -47,5 +63,22 @@ internal class ConcurrentCollectionsTest {
     }
       .isInstanceOf(IllegalStateException::class.java)
       .hasMessageContaining("boom")
+  }
+
+  @Test
+  fun `map concurrent propagates cancellation`() {
+    assertThatThrownBy {
+      runBlocking(Dispatchers.Default) {
+        listOf(1, 2, 3).mapConcurrent(concurrency = 2) { item ->
+          if (item == 2) {
+            throw CancellationException("cancel")
+          }
+          delay(50.milliseconds)
+          item
+        }
+      }
+    }
+      .isInstanceOf(CancellationException::class.java)
+      .hasMessageContaining("cancel")
   }
 }
