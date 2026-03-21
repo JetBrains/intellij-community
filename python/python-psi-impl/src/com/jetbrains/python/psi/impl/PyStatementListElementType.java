@@ -156,6 +156,11 @@ public class PyStatementListElementType extends PyReparseableElementType impleme
   }
 
   @Override
+  public boolean reuseCollapsedTokens() {
+    return true;
+  }
+
+  @Override
   public ASTNode createNode(CharSequence text) {
     return new PyStatementListImpl(text);
   }
