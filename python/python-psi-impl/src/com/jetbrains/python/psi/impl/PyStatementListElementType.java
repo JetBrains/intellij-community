@@ -21,13 +21,13 @@ import com.jetbrains.python.parsing.PyLazyParser;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyIndentUtil;
-import com.jetbrains.python.psi.PyReparseableElementType;
+import com.intellij.psi.tree.IReparseableElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class PyStatementListElementType extends PyReparseableElementType implements ICompositeElementType {
+public class PyStatementListElementType extends IReparseableElementType implements ICompositeElementType {
 
   public PyStatementListElementType() {
-    super("PyStatementList");
+    super("PyStatementList", PythonLanguage.INSTANCE);
   }
 
   private static final Logger LOG = Logger.getInstance(PyStatementListElementType.class);
