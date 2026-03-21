@@ -80,11 +80,11 @@ public class PyLazyParser extends PyParser {
                                             @NotNull PsiBuilder builder,
                                             @NotNull LanguageLevel languageLevel,
                                             @NotNull TriConsumer<? super IElementType, ? super SyntaxTreeBuilder, ? super LanguageLevel> parsingFunction) {
-    long start = System.currentTimeMillis();
+    long start = LOG.isDebugEnabled() ? System.currentTimeMillis() : 0;
     parsingFunction.accept(rootElement, builder, languageLevel);
     try {
       if (!builder.eof()) {
-        LOG.debug("Lazy parseable element of type " + rootElement + "ends before EOF");
+        LOG.debug("Lazy parseable element of type " + rootElement + " ends before EOF");
         return null;
       }
       ASTNode ast = builder.getTreeBuilt();
@@ -94,7 +94,7 @@ public class PyLazyParser extends PyParser {
       if (LOG.isDebugEnabled()) {
         long diff = System.currentTimeMillis() - start;
         double kb = builder.getCurrentOffset() / 1000.0;
-        LOG.debug("Parsed " + String.format("%.1f", kb) + "K file in " + diff + "ms");
+        LOG.debug("Parsed " + String.format("%.1f", kb) + "K in " + diff + "ms");
       }
     }
   }

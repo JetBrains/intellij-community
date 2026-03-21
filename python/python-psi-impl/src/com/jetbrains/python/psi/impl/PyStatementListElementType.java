@@ -10,13 +10,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.ICompositeElementType;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.lexer.PythonIndentingLexer;
 import com.jetbrains.python.lexer.PythonIndentingLexerForLazyElements;
 import com.jetbrains.python.parsing.PyLazyParser;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -31,11 +29,10 @@ public class PyStatementListElementType extends PyReparseableElementType impleme
     super("PyStatementList");
   }
 
-  @SuppressWarnings("LoggerInitializedWithForeignClass")
-  private static final Logger LOG = Logger.getInstance(PyReparseableElementType.class);
+  private static final Logger LOG = Logger.getInstance(PyStatementListElementType.class);
 
-  public static final Key<LanguageLevel> LANGUAGE_LEVEL_KEY = Key.create("LANGUAGE_LEVEL_FOR_REPARSEABLE_ELEMENT");
-  public static final Key<Integer> BASE_INDENT_KEY = Key.create("FIRST_LINE_INDENT_FOR_REPARSEABLE_ELEMENT");
+  private static final Key<LanguageLevel> LANGUAGE_LEVEL_KEY = Key.create("LANGUAGE_LEVEL_FOR_REPARSEABLE_ELEMENT");
+  private static final Key<Integer> BASE_INDENT_KEY = Key.create("FIRST_LINE_INDENT_FOR_REPARSEABLE_ELEMENT");
 
   @Override
   public boolean isReparseable(@NotNull ASTNode currentNode,
@@ -57,12 +54,9 @@ public class PyStatementListElementType extends PyReparseableElementType impleme
       return false;
     }
 
-    // Error elements on top level of previous statement list may cause some errors to remain in the PSI tree after reparse
-    boolean parentContainsErrors =
-      ContainerUtil.findInstance(((PyStatementListImpl)currentNode).getChildren(), PsiErrorElement.class) != null;
-
-    if (parentContainsErrors) {
-      LOG.debug("Previous node contains PsiErrorElement, reparse is declined");
+    // Error elements in the previous statement list may cause some errors to remain in the PSI tree after reparse
+    if (hasErrorElements(currentNode)) {
+      LOG.debug("Previous node contains error elements, reparse is declined");
       return false;
     }
 
@@ -88,7 +82,7 @@ public class PyStatementListElementType extends PyReparseableElementType impleme
    * @param lexer the lexer to use for tokenizing the text
    * @return true if the balance is positive or zero, otherwise - false
    */
-  public static boolean checkIndentDedentBalanceWithLexer(@NotNull CharSequence text, @NotNull Lexer lexer, boolean isOnTheSameLine) {
+  private static boolean checkIndentDedentBalanceWithLexer(@NotNull CharSequence text, @NotNull Lexer lexer, boolean isOnTheSameLine) {
     lexer.start(text);
     int balance = isOnTheSameLine ? 0 : -1;
     while (lexer.getTokenType() != null) {
@@ -119,10 +113,19 @@ public class PyStatementListElementType extends PyReparseableElementType impleme
     newNode.putUserData(LANGUAGE_LEVEL_KEY, languageLevel);
     newNode.putUserData(BASE_INDENT_KEY, firstLineIndent.length());
 
-    ASTNode tmp = newNode.getFirstChildNode();
-    if (tmp == null) {
+    // Single pass: verify children exist and contain no error elements
+    ASTNode child = newNode.getFirstChildNode();
+    if (child == null) {
       return false;
     }
+    while (child != null) {
+      if (child.getElementType() == TokenType.ERROR_ELEMENT) {
+        LOG.debug("Reparsed tree contains error elements, declining reparse");
+        return false;
+      }
+      child = child.getTreeNext();
+    }
+
     LOG.debug("Element of type " + this + " reparsed successfully");
     return true;
   }
@@ -133,25 +136,23 @@ public class PyStatementListElementType extends PyReparseableElementType impleme
     assert parentPsiElement != null : "parent psi is null: " + chameleon;
 
     Integer indent = chameleon.getUserData(BASE_INDENT_KEY);
-    assert indent != null;
+    if (indent == null) {
+      LOG.error("BASE_INDENT_KEY is missing on chameleon node, falling back to 0");
+      indent = 0;
+    }
 
     LanguageLevel languageLevel = chameleon.getUserData(LANGUAGE_LEVEL_KEY);
     if (languageLevel == null) {
       languageLevel = LanguageLevel.getDefault();
     }
 
-    PythonIndentingLexer lexer = new PythonIndentingLexerForLazyElements(indent.intValue());
+    Lexer lexer = new PythonIndentingLexerForLazyElements(indent);
+    PsiBuilder builder = PsiBuilderFactory.getInstance()
+      .createBuilder(parentPsiElement.getProject(), chameleon, lexer, PythonLanguage.INSTANCE, chameleon.getChars());
 
-    LOG.debug("Performing lazy reparse for element of type " + this);
-    final PsiBuilder builder = createBuilder(parentPsiElement, chameleon, lexer);
-    final PyLazyParser parser = new PyLazyParser();
+    PyLazyParser parser = new PyLazyParser();
     parser.setLanguageLevel(languageLevel);
     return parser.parseLazyElement(this, builder, languageLevel, PyLazyParser::parseStatementList);
-  }
-
-  private static @NotNull PsiBuilder createBuilder(@NotNull PsiElement parentPsi, @NotNull ASTNode chameleon, @NotNull Lexer lexer) {
-    Language languageForParser = PythonLanguage.INSTANCE;
-    return PsiBuilderFactory.getInstance().createBuilder(parentPsi.getProject(), chameleon, lexer, languageForParser, chameleon.getChars());
   }
 
   @Override
@@ -162,6 +163,28 @@ public class PyStatementListElementType extends PyReparseableElementType impleme
   @Override
   public @NotNull ASTNode createCompositeNode() {
     return new PyStatementListImpl(this, null);
+  }
+
+  /**
+   * Checks if any direct AST child of the given node is an error element.
+   * <p>
+   * Only checks direct children (not recursive) because:
+   * <ul>
+   *   <li>Errors at deeper nesting levels (inside nested if/for/def) would be the same
+   *       regardless of incremental vs full reparse, so they don't indicate a reparse problem.</li>
+   *   <li>Recursion into nested lazy elements would trigger their parsing,
+   *       defeating the purpose of lazy parsing.</li>
+   * </ul>
+   */
+  private static boolean hasErrorElements(@NotNull ASTNode node) {
+    ASTNode child = node.getFirstChildNode();
+    while (child != null) {
+      if (child.getElementType() == TokenType.ERROR_ELEMENT) {
+        return true;
+      }
+      child = child.getTreeNext();
+    }
+    return false;
   }
 
   @Override
