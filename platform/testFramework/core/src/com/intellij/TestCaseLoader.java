@@ -23,17 +23,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -119,27 +120,20 @@ public class TestCaseLoader {
       return TestClassesFilter.ALL_CLASSES;
     }
 
-    List<URL> groupingFileUrls = Collections.emptyList();
-    if (!StringUtil.isEmpty(classFilterName)) {
-      try {
-        groupingFileUrls = Collections.list(getClassLoader().getResources(classFilterName));
-      }
-      catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
+    String testGroupRoots = System.getProperty("test.group.roots");
+    if (testGroupRoots == null) throw new RuntimeException("No test group roots specified");
 
-    List<URL> finalGroupingFileUrls = groupingFileUrls;
+    List<Path> groupingFiles = ContainerUtil.map(testGroupRoots.split(File.pathSeparator), Paths::get);
     TeamCityLogger.block("Loading test groups from ...", () -> {
-      System.out.println("Loading test groups from: " + finalGroupingFileUrls);
+      System.out.println("Loading test groups from: " + groupingFiles);
     });
     MultiMap<String, String> groups = MultiMap.createLinked();
-    for (URL fileUrl : groupingFileUrls) {
-      try (InputStreamReader reader = new InputStreamReader(fileUrl.openStream(), StandardCharsets.UTF_8)) {
+    for (Path file : groupingFiles) {
+      try (InputStreamReader reader = new InputStreamReader(Files.newInputStream(file), StandardCharsets.UTF_8)) {
         GroupBasedTestClassFilter.readGroups(reader, groups);
       }
       catch (IOException e) {
-        throw new RuntimeException("Failed to load test groups from " + fileUrl, e);
+        throw new RuntimeException("Failed to load test groups from " + file, e);
       }
     }
     System.out.println("Using test groups: " + testGroupNames);

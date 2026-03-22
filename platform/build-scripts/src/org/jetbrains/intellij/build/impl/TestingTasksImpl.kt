@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.ClassFinder
+import com.intellij.GroupBasedTestClassFilter
 import com.intellij.TestCaseLoader
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.idea.IJIgnore
@@ -41,6 +42,7 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.incremental.java.ModulePathSplitter
+import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaSdkType
@@ -344,6 +346,20 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     rootExcludeCondition: ((Path) -> Boolean)?,
     systemProperties: MutableMap<String, String>,
   ) {
+    if (options.testGroups != null) {
+      val testGroupRoots = let {
+        if (options.testGroups!!.contains(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED)) context.project.modules
+        else JpsJavaExtensionService.dependencies(context.project.findModuleByName(mainModule)).recursively().modules.toList()
+      }.mapConcurrent {
+        it.sourceRoots
+          .filter { it.rootType is JavaResourceRootType }
+          .map { it.path.resolve(TestCaseLoader.COMMON_TEST_GROUPS_RESOURCE_NAME) }
+          .filter(Files::exists)
+      }.flatten().sorted()
+
+      systemProperties.put("test.group.roots", testGroupRoots.joinToString(File.pathSeparator, transform = Path::absolutePathString))
+    }
+
     try {
       runTestsProcess(
         mainModule = mainModule,
