@@ -19,6 +19,16 @@ Run a single test class (use FQN or wildcard - simple names don't work):
 ./tests.cmd -Dintellij.build.test.patterns=*MyTest
 ```
 
+### Windows PowerShell note
+
+When running `tests.cmd` from PowerShell, pass JVM `-D...` arguments via stop-parsing mode to avoid argument mangling:
+
+```powershell
+./tests.cmd --% -Dintellij.build.test.patterns=com.example.MyTest
+```
+
+Without `--%`, PowerShell can alter `-D...` arguments before they reach `tests.cmd`, which may lead to errors like `Could not find or load main class ...`.
+
 ## Separate Bazel Modules
 
 Some parts of the repository are standalone Bazel modules and must not use `tests.cmd` or `community/tests.cmd`.
@@ -362,6 +372,8 @@ With `idea.include.unconventionally.named.tests=true`:
 - Verify pattern uses class name, not file path: `-Dintellij.build.test.patterns=com.example.MyTest`
 - Check that class name ends with `Test` (or use `-Dpass.idea.include.unconventionally.named.tests=true`)
 - Ensure test module is part of the build classpath
+- For `plugins/llm/**` tests, set `-Dintellij.build.test.main.module` to the nearest `*.tests.iml` module (for example, `plugins/llm/chat/tests/...` -> `intellij.ml.llm.chat.tests`)
+- On Windows PowerShell, pass JVM args through `--%` (for example: `./tests.cmd --% -Dintellij.build.test.patterns=...`)
 - Before changing `main.module`, check whether the test lives in a separate Bazel module such as `community/platform/build-scripts/bazel`; those tests must be run with module-local `../../../../bazel.cmd test`, not `tests.cmd`
 - For performance tests, add `-Dpass.idea.performance.tests=true` or `-Dpass.idea.include.performance.tests=true`
 
