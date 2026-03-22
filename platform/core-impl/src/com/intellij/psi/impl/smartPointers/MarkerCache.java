@@ -196,6 +196,15 @@ class MarkerCache {
     }
   }
 
+  /**
+   * Orders {@link SelfElementInfo} instances for deterministic range-marker processing:
+   * <ol>
+   *   <li>entries with a valid range (non-negative start offset) before entries without a range;</li>
+   *   <li>ascending start offset;</li>
+   *   <li>ascending end offset when starts are equal;</li>
+   *   <li>non-greedy before greedy when ranges are identical.</li>
+   * </ol>
+   */
   private static class SelfElementInfoComparator implements Comparator<SelfElementInfo> {
     @Override
     public int compare(SelfElementInfo info1, SelfElementInfo info2) {
