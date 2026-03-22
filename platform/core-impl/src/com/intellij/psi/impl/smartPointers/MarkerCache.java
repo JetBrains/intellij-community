@@ -155,7 +155,7 @@ class MarkerCache {
     boolean greedy = info.isGreedy();
     int start = info.getPsiStartOffset();
     int end = info.getPsiEndOffset();
-    boolean surviveOnExternalChange = events.stream().anyMatch(event -> isWholeDocumentReplace(frozen, (DocumentEventImpl)event));
+    boolean surviveOnExternalChange = ContainerUtil.exists(events, event -> isWholeDocumentReplace(frozen, (DocumentEventImpl)event));
     ManualRangeMarker marker = new ManualRangeMarker(start, end, greedy, greedy, surviveOnExternalChange, null);
 
     UpdatedRanges ranges = new UpdatedRanges(0, frozen, infos, new ManualRangeMarker[]{marker});
