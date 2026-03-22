@@ -27,7 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object InstallJBAcademyTask {
   val JB_ACADEMY_PLUGIN_ID: PluginId = PluginId.getId("com.jetbrains.edu")
-  
+
   suspend fun install(): Unit = reportSequentialProgress { reporter ->
     val descriptors = reporter.nextStep(endFraction = 20) {
       val marketplacePlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(setOf(JB_ACADEMY_PLUGIN_ID))
@@ -45,7 +45,8 @@ object InstallJBAcademyTask {
     }
 
     val plugins: List<PluginNode> = reporter.nextStep(endFraction = 40) {
-      val downloader = PluginDownloader.createDownloader(descriptors.first())
+      val pluginToInstall = descriptors.firstOrNull() ?: return@nextStep emptyList()
+      val downloader = PluginDownloader.createDownloader(pluginToInstall)
       val nodes = mutableListOf<PluginNode>()
       val plugin = downloader.descriptor
       if (plugin.isEnabled) {
