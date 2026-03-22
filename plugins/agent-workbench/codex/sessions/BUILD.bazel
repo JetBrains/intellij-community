@@ -53,6 +53,8 @@ jvm_library(
     "//plugins/agent-workbench/json:json_test_lib",
     "//plugins/agent-workbench/sessions",
     "//plugins/agent-workbench/sessions:sessions_test_lib",
+    "//plugins/agent-workbench/sessions:agent-workbench-sessions-tests",
+    "//plugins/agent-workbench/sessions:agent-workbench-sessions-tests_test_lib",
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
     "//libraries/jackson/jackson",

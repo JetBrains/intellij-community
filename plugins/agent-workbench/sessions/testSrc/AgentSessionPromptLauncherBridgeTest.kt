@@ -5,7 +5,6 @@ import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
-import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
 import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_PROJECT_PATH_CONTEXT_DATA_KEY
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
@@ -17,7 +16,6 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBrid
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathContext
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
@@ -37,7 +35,6 @@ import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelem
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.frame.OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID
-import com.intellij.agent.workbench.sessions.service.AgentSessionChatOpenExecutor
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherBridge
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
@@ -568,22 +565,22 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(providerBridge.createCalls.get()).isZero()
           waitForCondition {
             providerBridge.composeCalls.get() == 1 &&
-            providerBridge.startupCommandCalls.get() == 1 &&
             chatOpenExecutor.openChatCalls.get() == 1
           }
           assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
-          assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
-          assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command).containsExactly("test", "resume", "thread-existing")
-          assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
+          assertThat(providerBridge.startupCommandCalls.get()).isZero()
+          assertThat(providerBridge.lastStartupBaseLaunchSpec.get()).isNull()
+          assertThat(providerBridge.lastStartupPrompt.get()).isNull()
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
           assertThat(openRequest.normalizedPath).isEqualTo(PROJECT_PATH)
           assertThat(openRequest.thread.id).isEqualTo("thread-existing")
           assertThat(openRequest.subAgent).isNull()
-          assertThat(openRequest.startupLaunchSpecOverride?.command)
-            .containsExactly("test", "resume", "thread-existing", "--", "composed:Refactor selected code")
-          assertThat(openRequest.startupLaunchSpecOverride?.envVariables).isEmpty()
+          assertThat(openRequest.startupLaunchSpecOverride).isNull()
           assertThat(openRequest.initialComposedMessage).isEqualTo("composed:Refactor selected code")
+          assertThat(openRequest.postStartDispatchSteps).containsExactly(
+            AgentInitialMessageDispatchStep(text = "composed:Refactor selected code"),
+          )
           assertThat(openRequest.initialMessageToken).isNotNull()
           assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
         }
@@ -785,9 +782,9 @@ class AgentSessionPromptLauncherBridgeTest {
 
               assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
               assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
-              assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
-              assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command).containsExactly("test", "resume", "thread-existing")
-              assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
+              assertThat(providerBridge.startupCommandCalls.get()).isZero()
+              assertThat(providerBridge.lastStartupBaseLaunchSpec.get()).isNull()
+              assertThat(providerBridge.lastStartupPrompt.get()).isNull()
 
               assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
               assertThat(chatOpenExecutor.openChatRequests).hasSize(2)
@@ -801,10 +798,11 @@ class AgentSessionPromptLauncherBridgeTest {
               assertThat(promptOpen.normalizedPath).isEqualTo(PROJECT_PATH)
               assertThat(promptOpen.thread.id).isEqualTo("thread-existing")
               assertThat(promptOpen.subAgent).isNull()
-              assertThat(promptOpen.startupLaunchSpecOverride?.command)
-                .containsExactly("test", "resume", "thread-existing", "--", "composed:Refactor selected code")
-              assertThat(promptOpen.startupLaunchSpecOverride?.envVariables).isEmpty()
+              assertThat(promptOpen.startupLaunchSpecOverride).isNull()
               assertThat(promptOpen.initialComposedMessage).isEqualTo("composed:Refactor selected code")
+              assertThat(promptOpen.postStartDispatchSteps).containsExactly(
+                AgentInitialMessageDispatchStep(text = "composed:Refactor selected code"),
+              )
               assertThat(promptOpen.initialMessageToken).isNotNull()
             }
             finally {
@@ -817,7 +815,7 @@ class AgentSessionPromptLauncherBridgeTest {
   }
 
   @Test
-  fun launchFallsBackForExistingThreadWhenStartupPromptCommandIsNotSupported() {
+  fun launchUsesPostStartDispatchForExistingThreadWithoutEvaluatingStartupPromptCommandSupport() {
     val providerBridge = RecordingPromptLaunchProviderBridge(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
@@ -863,20 +861,22 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(providerBridge.createCalls.get()).isZero()
           waitForCondition {
             providerBridge.composeCalls.get() == 1 &&
-            providerBridge.startupCommandCalls.get() == 1 &&
             chatOpenExecutor.openChatCalls.get() == 1
           }
           assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
-          assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
-          assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command).containsExactly("test", "resume", "thread-existing")
-          assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
+          assertThat(providerBridge.startupCommandCalls.get()).isZero()
+          assertThat(providerBridge.lastStartupBaseLaunchSpec.get()).isNull()
+          assertThat(providerBridge.lastStartupPrompt.get()).isNull()
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
           assertThat(openRequest.normalizedPath).isEqualTo(PROJECT_PATH)
           assertThat(openRequest.thread.id).isEqualTo("thread-existing")
           assertThat(openRequest.subAgent).isNull()
           assertThat(openRequest.startupLaunchSpecOverride).isNull()
           assertThat(openRequest.initialComposedMessage).isEqualTo("composed:Refactor selected code")
+          assertThat(openRequest.postStartDispatchSteps).containsExactly(
+            AgentInitialMessageDispatchStep(text = "composed:Refactor selected code"),
+          )
           assertThat(openRequest.initialMessageToken).isNotNull()
           assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
         }
@@ -1164,7 +1164,8 @@ class AgentSessionPromptLauncherBridgeTest {
     ) { service, launchService ->
       service.refresh()
       waitForCondition {
-        val ids = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.threads?.map { thread -> thread.id } ?: return@waitForCondition false
+        val ids = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.threads?.map { thread -> thread.id }
+                  ?: return@waitForCondition false
         ids.contains("codex-open") && ids.contains("claude-open")
       }
 
@@ -1173,7 +1174,8 @@ class AgentSessionPromptLauncherBridgeTest {
       bridge.refreshExistingThreads(projectPath = PROJECT_PATH, provider = AgentSessionProvider.CLAUDE)
 
       waitForCondition {
-        val ids = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.threads?.map { thread -> thread.id } ?: return@waitForCondition false
+        val ids = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.threads?.map { thread -> thread.id }
+                  ?: return@waitForCondition false
         ids.contains("codex-open") && ids.contains("claude-closed-2")
       }
 
@@ -1413,85 +1415,6 @@ private fun promptLauncherBridge(
 }
 
 private const val INVALID_PROMPT_PROJECT_PATH: String = "invalid\u0000project"
-
-private class RecordingChatOpenExecutor(
-  private val onOpenChat: (suspend (OpenChatRequest, Int) -> Unit)? = null,
-) : AgentSessionChatOpenExecutor {
-  val openChatCalls: AtomicInteger = AtomicInteger(0)
-  val openNewChatCalls: AtomicInteger = AtomicInteger(0)
-  val openChatRequests: CopyOnWriteArrayList<OpenChatRequest> = CopyOnWriteArrayList()
-  val lastOpenChatRequest: AtomicReference<OpenChatRequest?> = AtomicReference(null)
-  val lastOpenNewChatRequest: AtomicReference<OpenNewChatRequest?> = AtomicReference(null)
-
-  override suspend fun openChat(
-    normalizedPath: String,
-    thread: AgentSessionThread,
-    subAgent: AgentSubAgent?,
-    launchSpecOverride: AgentSessionTerminalLaunchSpec?,
-    initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
-  ) {
-    val request = OpenChatRequest(
-      normalizedPath = normalizedPath,
-      thread = thread,
-      subAgent = subAgent,
-      launchSpecOverride = launchSpecOverride,
-      startupLaunchSpecOverride = initialMessageDispatchPlan.startupLaunchSpecOverride,
-      postStartDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps,
-      initialMessageToken = initialMessageDispatchPlan.initialMessageToken,
-    )
-    val callIndex = openChatCalls.incrementAndGet()
-    openChatRequests.add(request)
-    lastOpenChatRequest.set(request)
-    onOpenChat?.invoke(request, callIndex)
-  }
-
-  override suspend fun openNewChat(
-    normalizedPath: String,
-    identity: String,
-    launchSpec: AgentSessionTerminalLaunchSpec,
-    initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
-    preferredDedicatedFrame: Boolean?,
-  ) {
-    val request = OpenNewChatRequest(
-      normalizedPath = normalizedPath,
-      identity = identity,
-      launchSpec = launchSpec,
-      startupLaunchSpecOverride = initialMessageDispatchPlan.startupLaunchSpecOverride,
-      postStartDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps,
-      initialMessageToken = initialMessageDispatchPlan.initialMessageToken,
-      preferredDedicatedFrame = preferredDedicatedFrame,
-    )
-    val callIndex = openNewChatCalls.incrementAndGet()
-    lastOpenNewChatRequest.set(request)
-    onOpenNewChat?.invoke(request, callIndex)
-  }
-}
-
-private data class OpenChatRequest(
-  @JvmField val normalizedPath: String,
-  @JvmField val thread: AgentSessionThread,
-  @JvmField val subAgent: AgentSubAgent?,
-  @JvmField val launchSpecOverride: AgentSessionTerminalLaunchSpec?,
-  @JvmField val startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
-  @JvmField val postStartDispatchSteps: List<AgentInitialMessageDispatchStep>,
-  @JvmField val initialMessageToken: String?,
-) {
-  val initialComposedMessage: String?
-    get() = postStartDispatchSteps.singleOrNull()?.text
-}
-
-private data class OpenNewChatRequest(
-  @JvmField val normalizedPath: String,
-  @JvmField val identity: String,
-  @JvmField val launchSpec: AgentSessionTerminalLaunchSpec,
-  @JvmField val startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
-  @JvmField val postStartDispatchSteps: List<AgentInitialMessageDispatchStep>,
-  @JvmField val initialMessageToken: String?,
-  @JvmField val preferredDedicatedFrame: Boolean?,
-) {
-  val initialComposedMessage: String?
-    get() = postStartDispatchSteps.singleOrNull()?.text
-}
 
 private fun promptLaunchRequest(
   provider: AgentSessionProvider = AgentSessionProvider.CODEX,

@@ -166,7 +166,7 @@ class AgentSessionStateSyncTestFacade(
   }
 }
 
-internal class ScriptedSessionSource(
+class ScriptedSessionSource(
   override val provider: AgentSessionProvider,
   override val canReportExactThreadCount: Boolean = true,
   override val supportsUpdates: Boolean = false,
@@ -199,7 +199,7 @@ internal class ScriptedSessionSource(
   }
 }
 
-internal fun thread(
+fun thread(
   id: String,
   updatedAt: Long,
   provider: AgentSessionProvider,
@@ -215,6 +215,46 @@ internal fun thread(
     provider = provider,
     activity = activity,
     subAgents = subAgents,
+  )
+}
+
+suspend fun withTestService(
+  sessionSourcesProvider: () -> List<AgentSessionSource>,
+  projectEntriesProvider: suspend () -> List<TestProjectCatalogEntry>,
+  action: suspend (AgentSessionStateSyncTestFacade) -> Unit,
+) {
+  withService(
+    sessionSourcesProvider = sessionSourcesProvider,
+    projectEntriesProvider = { projectEntriesProvider().map { it.toProjectEntry() } },
+    action = action,
+  )
+}
+
+internal suspend fun withTestServiceAndLaunch(
+  sessionSourcesProvider: () -> List<AgentSessionSource>,
+  projectEntriesProvider: suspend () -> List<TestProjectCatalogEntry>,
+  warmState: SessionWarmState = InMemorySessionWarmState(),
+  uiPreferencesState: AgentSessionUiPreferencesStateService = AgentSessionUiPreferencesStateService(),
+  chatOpenExecutor: AgentSessionChatOpenExecutor? = null,
+  openPendingCodexTabsProvider: suspend () -> Map<String, List<AgentChatPendingTabSnapshot>> =
+    ::collectOpenPendingCodexTabsByPath,
+  openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> =
+    ::collectOpenConcreteAgentChatThreadIdentitiesByPath,
+  openAgentChatPendingTabsBinder: suspend (
+    Map<String, List<AgentChatPendingTabRebindRequest>>,
+  ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
+  action: suspend (AgentSessionStateSyncTestFacade, AgentSessionLaunchService) -> Unit,
+) {
+  withServiceAndLaunch(
+    sessionSourcesProvider = sessionSourcesProvider,
+    projectEntriesProvider = { projectEntriesProvider().map { it.toProjectEntry() } },
+    warmState = warmState,
+    uiPreferencesState = uiPreferencesState,
+    chatOpenExecutor = chatOpenExecutor,
+    openPendingCodexTabsProvider = openPendingCodexTabsProvider,
+    openConcreteChatThreadIdentitiesByPathProvider = openConcreteChatThreadIdentitiesByPathProvider,
+    openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
+    action = action,
   )
 }
 
@@ -317,6 +357,8 @@ internal suspend fun withServiceAndArchiveAndLaunch(
   ) -> AgentChatPendingTabRebindReport = ::rebindOpenPendingCodexTabs,
   action: suspend (AgentSessionStateSyncTestFacade, AgentSessionArchiveService, AgentSessionLaunchService) -> Unit,
 ) {
+  val job = SupervisorJob()
+
   @Suppress("RAW_SCOPE_CREATION")
   val scope = CoroutineScope(job + Dispatchers.Default)
   val settingDisposable = Disposer.newDisposable()
