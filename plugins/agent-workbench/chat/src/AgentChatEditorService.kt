@@ -174,6 +174,7 @@ suspend fun openChat(
   val snapshotInitialMessageDispatchSteps = if (startupOverrideForNewTab != null) emptyList() else initialMessageDispatchPlan.postStartDispatchSteps
   val snapshotInitialMessageToken = if (startupOverrideForNewTab != null) null else initialMessageDispatchPlan.initialMessageToken
   val snapshotInitialMessageSent = false
+  val hasExplicitInitialMessageDispatch = snapshotInitialMessageDispatchSteps.isNotEmpty() || snapshotInitialMessageToken != null
   val snapshot = AgentChatTabSnapshot.create(
     projectHash = project.locationHash,
     projectPath = projectPath,
@@ -219,10 +220,7 @@ suspend fun openChat(
     else {
       false
     }
-    val initialMessageUpdated = if (
-      initialMessageDispatchPlan.postStartDispatchSteps.isNotEmpty() ||
-      initialMessageDispatchPlan.initialMessageToken != null
-    ) {
+    if (hasExplicitInitialMessageDispatch) {
       existing.updateInitialMessageMetadata(
         initialMessageDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps,
         initialMessageDispatchStepIndex = 0,
@@ -230,20 +228,14 @@ suspend fun openChat(
         initialMessageSent = false,
       )
     }
-    else {
-      false
-    }
     tabsService.upsert(existing.toSnapshot())
     LOG.debug {
       "openChat existing tab update(identity=$threadIdentity, subAgentId=$subAgentId): " +
       "titleUpdated=$titleUpdated, activityUpdated=$activityUpdated, currentName=${existing.name}," +
       " currentTitle=${existing.threadTitle}, currentActivity=${existing.threadActivity}"
     }
-    if (titleUpdated || activityUpdated || pendingUpdated || initialMessageUpdated) {
+    if (titleUpdated || activityUpdated || pendingUpdated || hasExplicitInitialMessageDispatch) {
       manager.updateFilePresentation(existing)
-    }
-    if (initialMessageUpdated && !existing.initialMessageSent) {
-      flushPendingInitialMessageForOpenEditors(manager = manager, file = existing)
     }
   }
   else {
@@ -266,6 +258,9 @@ suspend fun openChat(
     file = file,
     options = FileEditorOpenOptions(requestFocus = true, reuseOpen = true),
   )
+  if (existing != null && hasExplicitInitialMessageDispatch && !file.initialMessageSent) {
+    flushPendingInitialMessageForOpenEditors(manager = manager, file = file)
+  }
   LOG.debug {
     "openChat openFile completed(identity=$threadIdentity, subAgentId=$subAgentId, fileName=${file.name}, activity=$threadActivity)"
   }

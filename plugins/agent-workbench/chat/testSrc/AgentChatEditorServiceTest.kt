@@ -20,15 +20,23 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.terminal.frontend.view.TerminalKeyEvent
+import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -36,11 +44,19 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JPanel
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 class AgentChatEditorServiceTest {
+  companion object {
+    @Volatile
+    private var customFileEditorFactory: ((Project, AgentChatVirtualFile) -> FileEditor)? = null
+  }
+
   private val projectFixture = projectFixture(openAfterCreation = true)
   private val project get() = projectFixture.get()
   private val fileEditorManagerFixture = projectFixture.fileEditorManagerFixture()
@@ -63,6 +79,7 @@ class AgentChatEditorServiceTest {
 
   @AfterEach
   fun tearDown(): Unit = timeoutRunBlocking {
+    customFileEditorFactory = null
     withTimeout(30.seconds) {
       project.waitForSmartMode()
     }
@@ -228,6 +245,60 @@ class AgentChatEditorServiceTest {
     assertThat(persisted.runtime.initialMessageDispatchStepIndex).isZero()
     assertThat(persisted.runtime.initialMessageToken).isEqualTo("existing-multi-step-token")
     assertThat(persisted.runtime.initialMessageSent).isFalse()
+  }
+
+  @Test
+  fun testExistingTabReuseFlushesInitialMessageToOpenEditor(): Unit = timeoutRunBlocking {
+    val terminalTabs = EditorServiceFakeAgentChatTerminalTabs()
+    customFileEditorFactory = { editorProject, file ->
+      AgentChatFileEditor(
+        project = editorProject,
+        file = file,
+        terminalTabs = terminalTabs,
+        tabSnapshotWriter = AgentChatTabSnapshotWriter { snapshot ->
+          editorProject.service<AgentChatTabsService>().upsert(snapshot)
+        },
+      )
+    }
+
+    openChatInModal(
+      threadIdentity = "CODEX:thread-existing-send",
+      shellCommand = codexCommand,
+      threadId = "thread-existing-send",
+      threadTitle = "Existing send thread",
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    val editor = runInUi {
+      FileEditorManager.getInstance(project).getAllEditors(file)
+        .filterIsInstance<AgentChatFileEditor>()
+        .single()
+    }
+    runInUi {
+      editor.selectNotify()
+    }
+    assertThat(terminalTabs.createCalls).isEqualTo(1)
+    terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
+
+    openChatInModal(
+      threadIdentity = "CODEX:thread-existing-send",
+      shellCommand = codexCommand,
+      threadId = "thread-existing-send",
+      threadTitle = "Existing send thread",
+      subAgentId = null,
+      initialComposedMessage = "Send through already open editor",
+      initialMessageToken = "existing-send-token",
+    )
+
+    waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
+
+    assertThat(file.initialMessageSent).isTrue()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(EditorServiceSentTerminalText("Send through already open editor", shouldExecute = true))
+
+    val persisted = checkNotNull(service<AgentChatTabsService>().load(file.tabKey))
+    assertThat(persisted.runtime.initialMessageSent).isTrue()
   }
 
   @Test
@@ -1327,7 +1398,9 @@ class AgentChatEditorServiceTest {
     override fun acceptRequiresReadAction(): Boolean = false
 
     override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-      return LightweightTestFileEditor(file, editorName = "AgentChatTestEditor")
+      val chatFile = file as AgentChatVirtualFile
+      return customFileEditorFactory?.invoke(project, chatFile)
+             ?: LightweightTestFileEditor(file, editorName = "AgentChatTestEditor")
     }
 
     override fun getEditorTypeId(): String = "agent.workbench-chat-editor-test"
@@ -1335,6 +1408,79 @@ class AgentChatEditorServiceTest {
     override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_OTHER_EDITORS
   }
 }
+
+private class EditorServiceFakeAgentChatTerminalTabs : AgentChatTerminalTabs {
+  var createCalls: Int = 0
+  val tab = EditorServiceFakeAgentChatTerminalTab()
+
+  override fun createTab(project: Project, file: AgentChatVirtualFile): AgentChatTerminalTab {
+    createCalls++
+    return tab
+  }
+
+  override fun closeTab(project: Project, tab: AgentChatTerminalTab) {
+    (tab as? EditorServiceFakeAgentChatTerminalTab)?.coroutineScope?.coroutineContext?.get(Job)?.cancel()
+  }
+}
+
+private class EditorServiceFakeAgentChatTerminalTab : AgentChatTerminalTab {
+  override val component: JComponent = JPanel()
+  override val preferredFocusableComponent: JComponent = JButton("focus")
+  override val coroutineScope: CoroutineScope = object : CoroutineScope {
+    override val coroutineContext = Job()
+  }
+  private val mutableSessionState: MutableStateFlow<TerminalViewSessionState> = MutableStateFlow(TerminalViewSessionState.NotStarted)
+  override val sessionState: StateFlow<TerminalViewSessionState> = mutableSessionState
+  override val keyEventsFlow: Flow<TerminalKeyEvent> = emptyFlow()
+
+  val sentTexts: MutableList<EditorServiceSentTerminalText> = mutableListOf()
+
+  fun setSessionState(state: TerminalViewSessionState) {
+    mutableSessionState.value = state
+  }
+
+  override suspend fun captureOutputCheckpoint(): AgentChatTerminalOutputCheckpoint {
+    return AgentChatTerminalOutputCheckpoint(regularEndOffset = 0, alternativeEndOffset = 0)
+  }
+
+  override suspend fun awaitOutputObservation(
+    checkpoint: AgentChatTerminalOutputCheckpoint,
+    timeoutMs: Long,
+    idleMs: Long,
+  ): AgentChatTerminalOutputObservation {
+    return AgentChatTerminalOutputObservation(
+      readiness = if (sessionState.value == TerminalViewSessionState.Terminated) {
+        AgentChatTerminalInputReadiness.TERMINATED
+      }
+      else {
+        AgentChatTerminalInputReadiness.READY
+      },
+      text = "",
+    )
+  }
+
+  override fun sendText(text: String, shouldExecute: Boolean) {
+    sentTexts += EditorServiceSentTerminalText(text, shouldExecute)
+  }
+
+  override suspend fun awaitInitialMessageReadiness(
+    timeoutMs: Long,
+    idleMs: Long,
+    checkpoint: AgentChatTerminalOutputCheckpoint?,
+  ): AgentChatTerminalInputReadiness {
+    return if (sessionState.value == TerminalViewSessionState.Terminated) {
+      AgentChatTerminalInputReadiness.TERMINATED
+    }
+    else {
+      AgentChatTerminalInputReadiness.READY
+    }
+  }
+}
+
+private data class EditorServiceSentTerminalText(
+  @JvmField val text: String,
+  @JvmField val shouldExecute: Boolean,
+)
 
 private fun resolvedCodexResumeCommand(threadId: String): List<String> {
   return listOf("codex", "-c", "check_for_update_on_startup=false", "resume", threadId)

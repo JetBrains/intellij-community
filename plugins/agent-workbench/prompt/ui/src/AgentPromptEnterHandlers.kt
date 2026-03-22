@@ -6,8 +6,10 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.EditorTextField
+import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import javax.swing.JComponent
 import javax.swing.JTabbedPane
 import javax.swing.KeyStroke
 
@@ -22,6 +24,20 @@ internal fun selectAdjacentPromptTab(tabbedPane: JTabbedPane, direction: Int) {
 
   val currentIndex = tabbedPane.selectedIndex.takeIf { it >= 0 } ?: 0
   tabbedPane.selectedIndex = (currentIndex + offset + tabCount) % tabCount
+}
+
+internal fun installConfirmActionOnEnter(
+  component: JComponent,
+  onConfirm: () -> Boolean,
+) {
+  val enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
+  val fallbackAction = component.getActionForKeyStroke(enter)
+  component.registerKeyboardAction({ event: ActionEvent ->
+    val handled = onConfirm()
+    if (!handled) {
+      fallbackAction?.actionPerformed(event)
+    }
+  }, enter, JComponent.WHEN_FOCUSED)
 }
 
 internal fun installPromptEnterHandlers(

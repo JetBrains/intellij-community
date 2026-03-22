@@ -145,6 +145,7 @@ internal class AgentPromptPalettePopup(
 
   private lateinit var tabbedPane: JBTabbedPane
   private lateinit var providerIconLabel: JBLabel
+  private lateinit var existingTaskList: JList<ThreadEntry>
   private lateinit var existingTaskScrollPane: JBScrollPane
   private lateinit var providerOptionsPanel: JPanel
   private lateinit var footerLabel: JBLabel
@@ -286,6 +287,7 @@ internal class AgentPromptPalettePopup(
     }
     tabbedPane = view.tabbedPane
     providerIconLabel = view.providerIconLabel
+    existingTaskList = view.existingTaskList
     existingTaskScrollPane = view.existingTaskScrollPane
     providerOptionsPanel = checkNotNull(view.providerOptionsPanel)
     footerLabel = view.footerLabel
@@ -401,6 +403,11 @@ internal class AgentPromptPalettePopup(
 
   private fun attachHandlers() {
     installImagePasteHandler()
+
+    installConfirmActionOnEnter(existingTaskList) {
+      submit()
+      true
+    }
 
     installPromptEnterHandlers(
       promptArea = promptArea,

@@ -105,7 +105,7 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
 - If no working project path can be resolved automatically, submit must prompt user to choose from available non-dedicated project candidates; cancel keeps popup open and shows project-path validation error.
 
 - Keyboard behavior contract:
-  - `Enter` runs submit action,
+  - `Enter` runs submit action from the prompt editor and from the existing-task selector when it owns focus,
   - `Shift+Enter` inserts line break,
   - `Tab` submits only when tab-queue shortcut is enabled; otherwise it selects the next available prompt tab and wraps around,
   - `Shift+Tab` selects the previous available prompt tab and wraps around.
