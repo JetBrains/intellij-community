@@ -102,8 +102,9 @@ interface PluginImportProgress : ImportProgress {
 interface WizardPlugin {
   val id: String
   val icon: Icon
-  val name: String
-  val description: String?
+  val name: @Nls String
+  val description: @Nls String?
+  val tag: @Nls String?
 }
 
 interface KeymapService {
