@@ -10,8 +10,10 @@ import org.junit.platform.suite.api.Suite
   "com.intellij.agent.workbench.chat",
   "com.intellij.agent.workbench.claude.sessions",
   "com.intellij.agent.workbench.codex.sessions",
-  "com.intellij.agent.workbench.prompt",
+  "com.intellij.agent.workbench.prompt.core",
+  "com.intellij.agent.workbench.prompt.ui",
   "com.intellij.agent.workbench.prompt.vcs",
+  "com.intellij.agent.workbench.prompt.testrunner",
   "com.intellij.agent.workbench.sessions",
   "com.intellij.agent.workbench.sessions.launch.config.backend",
 )

@@ -1,14 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.launch.config.backend
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.expandPathEnvVar
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.pathSeparator
-import com.intellij.util.system.LowLevelLocalMachineAccess
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -153,7 +152,6 @@ private fun resolvePathEnvironmentVariableKey(baseEnvVariables: Map<String, Stri
          ?: if (osFamily.isWindows) WINDOWS_PATH_ENVIRONMENT_VARIABLE else PATH_ENVIRONMENT_VARIABLE
 }
 
-@OptIn(LowLevelLocalMachineAccess::class)
 private fun writeFileIfChanged(path: Path, content: String) {
   val existingContent = try {
     Files.readString(path, StandardCharsets.UTF_8)

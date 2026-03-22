@@ -1,14 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.core
 
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.common.session.AgentSubAgent
+
 sealed interface SessionActionTarget {
   data class Project(
-    val path: String,
-    val isOpen: Boolean,
+    @JvmField val path: String,
+    @JvmField val isOpen: Boolean,
   ) : SessionActionTarget
 
   data class Worktree(
-    val path: String,
+    @JvmField val path: String,
   ) : SessionActionTarget
 
   sealed interface Conversation : SessionActionTarget {
@@ -29,22 +33,22 @@ sealed interface SessionActionTarget {
   data class SubAgent(
     override val path: String,
     override val provider: AgentSessionProvider,
-    val parentThreadId: String,
-    val subAgentId: String,
+    @JvmField val parentThreadId: String,
+    @JvmField val subAgentId: String,
     override val title: String,
-    val thread: AgentSessionThread? = null,
-    val subAgent: AgentSubAgent? = null,
+    @JvmField val thread: AgentSessionThread? = null,
+    @JvmField val subAgent: AgentSubAgent? = null,
   ) : Conversation {
     override val threadId: String
       get() = subAgentId
   }
 
   data class MoreProjects(
-    val hiddenCount: Int,
+    @JvmField val hiddenCount: Int,
   ) : SessionActionTarget
 
   data class MoreThreads(
-    val path: String,
-    val hiddenCount: Int?,
+    @JvmField val path: String,
+    @JvmField val hiddenCount: Int?,
   ) : SessionActionTarget
 }

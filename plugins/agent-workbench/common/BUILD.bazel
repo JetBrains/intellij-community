@@ -15,6 +15,8 @@ jvm_library(
   resources = [":common_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
     "//platform/util",
     "//platform/util:util-ui",
   ]
@@ -23,12 +25,13 @@ jvm_library(
 jvm_library(
   name = "common_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":common"],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/util",
-    "//platform/util:util-ui",
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":common",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//libraries/junit5",
     "//libraries/assertj-core",
   ]

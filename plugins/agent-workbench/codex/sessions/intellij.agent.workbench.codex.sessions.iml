@@ -44,6 +44,8 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.common" />
     <orderEntry type="module" module-name="intellij.agent.workbench.common" />
     <orderEntry type="module" module-name="intellij.agent.workbench.json" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.actions" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" />

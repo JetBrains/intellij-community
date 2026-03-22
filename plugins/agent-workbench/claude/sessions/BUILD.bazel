@@ -25,6 +25,9 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//plugins/agent-workbench/filewatch",
     "//plugins/agent-workbench/claude/common",
+    "//plugins/agent-workbench/common",
+    "//plugins/agent-workbench/json",
+    "//plugins/agent-workbench/prompt/core",
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
     "//libraries/jackson/jackson",
     "@lib//:jna",
@@ -33,6 +36,56 @@ jvm_library(
 
 jvm_library(
   name = "sessions_test_lib",
+  module_name = "intellij.agent.workbench.claude.sessions",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":sessions",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//plugins/agent-workbench/filewatch:filewatch_test_lib",
+    "//plugins/agent-workbench/claude/common:common_test_lib",
+    "//plugins/agent-workbench/common:common_test_lib",
+    "//plugins/agent-workbench/json:json_test_lib",
+    "//plugins/agent-workbench/prompt/core:core_test_lib",
+    "//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions_test_lib",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//libraries/assertj-core",
+    "//libraries/assertj-core:assertj-core_test_lib",
+  ]
+)
+### auto-generated section `build intellij.agent.workbench.claude.sessions` end
+
+### auto-generated section `iml intellij.agent.workbench.claude.sessions` start
+exports_files([
+  "intellij.agent.workbench.claude.sessions.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.claude.sessions` end
+
+### auto-generated section `build intellij.agent.workbench.claude.sessions.tests` start
+jvm_library(
+  name = "agent-workbench-claude-sessions-tests",
+  module_name = "intellij.agent.workbench.claude.sessions.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//plugins/agent-workbench/sessions-actions:agent-workbench-sessions-actions"]
+)
+
+jvm_library(
+  name = "agent-workbench-claude-sessions-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":sessions"],
@@ -55,6 +108,8 @@ jvm_library(
     "//plugins/agent-workbench/claude/common:common_test_lib",
     "//plugins/agent-workbench/common",
     "//plugins/agent-workbench/common:common_test_lib",
+    "//plugins/agent-workbench/prompt/core",
+    "//plugins/agent-workbench/prompt/core:core_test_lib",
     "//plugins/agent-workbench/json",
     "//plugins/agent-workbench/json:json_test_lib",
     "//plugins/agent-workbench/sessions:agent-workbench-sessions-tests",

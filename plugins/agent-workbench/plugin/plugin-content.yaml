@@ -25,9 +25,15 @@
 - name: lib/modules/intellij.agent.workbench.json.jar
   contentModules:
   - name: intellij.agent.workbench.json
-- name: lib/modules/intellij.agent.workbench.prompt.jar
+- name: lib/modules/intellij.agent.workbench.prompt.core.jar
   contentModules:
-  - name: intellij.agent.workbench.prompt
+  - name: intellij.agent.workbench.prompt.core
+- name: lib/modules/intellij.agent.workbench.prompt.testrunner.jar
+  contentModules:
+  - name: intellij.agent.workbench.prompt.testrunner
+- name: lib/modules/intellij.agent.workbench.prompt.ui.jar
+  contentModules:
+  - name: intellij.agent.workbench.prompt.ui
 - name: lib/modules/intellij.agent.workbench.prompt.vcs.jar
   contentModules:
   - name: intellij.agent.workbench.prompt.vcs

@@ -4,12 +4,14 @@ package com.intellij.agent.workbench.chat
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
@@ -86,7 +88,7 @@ internal class AgentChatFileEditor(
     }
     DefaultActionGroup(actions)
   }
-  private var tab: TerminalToolWindowTab? = null
+  private var tab: AgentChatTerminalTab? = null
   private var initializationStarted: Boolean = false
   private var disposed: Boolean = false
   private var pendingInitialMessageJob: Job? = null
@@ -94,9 +96,6 @@ internal class AgentChatFileEditor(
 
   private val providerBehavior
     get() = file.provider?.let(AgentSessionProviders::find)
-
-  private val providerBehavior
-    get() = file.provider?.let(AgentSessionProviderBehaviors::find)
 
   override fun getComponent(): JComponent = component
 
@@ -126,7 +125,13 @@ internal class AgentChatFileEditor(
 
   override fun dispose() {
     disposed = true
-    tab?.view?.coroutineScope?.cancel()
+    codexTuiPatchFoldController?.dispose()
+    codexTuiPatchFoldController = null
+    pendingInitialMessageJob?.cancel()
+    pendingInitialMessageJob = null
+    tab?.let { terminalTab ->
+      terminalTabs.closeTab(project, terminalTab)
+    }
     tab = null
     component.removeAll()
   }
@@ -137,13 +142,7 @@ internal class AgentChatFileEditor(
     }
     initializationStarted = true
     try {
-      val terminalManager = TerminalToolWindowTabsManager.getInstance(project)
-      val createdTab = terminalManager.createTabBuilder()
-        .shouldAddToToolWindow(false)
-        .workingDirectory(file.projectPath)
-        .tabName(file.threadTitle)
-        .shellCommand(file.shellCommand)
-        .createTab()
+      val createdTab = terminalTabs.createTab(project, file)
       tab = createdTab
       subscribePendingFirstInput(createdTab)
       subscribeConcreteCodexNewThreadRebind(createdTab)

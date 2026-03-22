@@ -25,8 +25,10 @@
     <module name="intellij.agent.workbench.codex.sessions"/>
     <module name="intellij.agent.workbench.sessions.core"/>
     <module name="intellij.agent.workbench.sessions.launch.config.backend"/>
-    <module name="intellij.agent.workbench.prompt"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.agent.workbench.prompt.ui"/>
     <module name="intellij.agent.workbench.prompt.vcs"/>
+    <module name="intellij.agent.workbench.prompt.testrunner"/>
     <module name="intellij.agent.workbench.sessions"/>
     <module name="intellij.agent.workbench.sessions.actions"/>
     <module name="intellij.agent.workbench.sessions.toolwindow"/>

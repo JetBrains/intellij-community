@@ -12,9 +12,9 @@ import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
@@ -72,9 +72,10 @@ internal class AgentSessionThreadRebindSupport(
 
     val hintThreadIdsByPath = LinkedHashMap<String, LinkedHashSet<String>>()
     for (path in targetPaths) {
+      val baselineKnownThreadIds = knownThreadIdsByPath[path].orEmpty()
+      val pathHasConcreteTabsAwaitingNewThreadRebind = concreteTabsByPath[path]?.isNotEmpty() == true
       val ids = LinkedHashSet<String>()
-      knownThreadIdsByPath[path]
-        .orEmpty()
+      baselineKnownThreadIds
         .asSequence()
         .filterNot(::isAgentSessionNewSessionId)
         .forEach(ids::add)
@@ -191,7 +192,7 @@ internal class AgentSessionThreadRebindSupport(
       return PendingTabBindOutcome(pendingTabsForProjectionByPath = pendingTabsByPath)
     }
 
-    val candidatesByPath = LinkedHashMap<String, MutableList<AgentChatPendingTabRebindTarget>>()
+    val candidatesByPath = LinkedHashMap<String, MutableList<AgentChatTabRebindTarget>>()
     for ((path, outcome) in outcomes) {
       val threads = outcome.threads ?: continue
       val hasEligiblePendingTabs = eligiblePendingTabsByPath[path]?.isNotEmpty() == true

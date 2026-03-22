@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions.providers
+package com.intellij.agent.workbench.sessions.core.providers
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeFormatter
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
+import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -116,13 +116,24 @@ interface AgentSessionProviderDescriptor {
   val supportsArchiveThread: Boolean
     get() = false
 
+  val supportsPlanMode: Boolean
+    get() = false
+
+  val supportsUnarchiveThread: Boolean
+    get() = false
+
   fun isCliAvailable(): Boolean
 
-  fun buildResumeCommand(sessionId: String): List<String>
+  fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec
 
-  fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String>
+  fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec
 
-  fun buildNewEntryCommand(): List<String>
+  fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec
+
+  fun buildLaunchSpecWithInitialPrompt(
+    baseLaunchSpec: AgentSessionTerminalLaunchSpec,
+    prompt: String,
+  ): AgentSessionTerminalLaunchSpec? = null
 
   suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec
 
@@ -145,7 +156,12 @@ interface AgentSessionProviderDescriptor {
   fun isCliMissingError(throwable: Throwable): Boolean = false
 }
 
+data class AgentSessionTerminalLaunchSpec(
+  @JvmField val command: List<String>,
+  @JvmField val envVariables: Map<String, String> = emptyMap(),
+)
+
 data class AgentSessionLaunchSpec(
   @JvmField val sessionId: String?,
-  @JvmField val command: List<String>,
+  @JvmField val launchSpec: AgentSessionTerminalLaunchSpec,
 )

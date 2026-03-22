@@ -13,8 +13,8 @@ targets:
   - ../../prompt-vcs/src/context/AgentPromptVcsCommitManualContextSource.kt
   - ../../prompt/resources/intellij.agent.workbench.prompt.xml
   - ../../prompt/resources/messages/AgentPromptBundle.properties
-  - ../../sessions-core/src/prompt/AgentPromptLauncherBridge.kt
-  - ../../sessions-core/src/prompt/AgentPromptPaletteExtension.kt
+  - ../../prompt/core/src/AgentPromptLauncherBridge.kt
+  - ../../prompt/core/src/AgentPromptPaletteExtension.kt
   - ../../sessions/src/service/AgentSessionPromptLauncherBridge.kt
   - ../../prompt/testSrc/ui/AgentPromptSubmitValidationDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptFooterHintDecisionsTest.kt
@@ -221,11 +221,11 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptFooterHintDecisionsTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPlanModeDecisionsTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptEnterHandlersTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.actions.AgentWorkbenchPromptActionPromoterTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchPromptActionPromoterTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteViewStructureTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteViewLayoutTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateServiceTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.context.AgentPromptProjectPathsManualContextSourceTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.context.AgentPromptProjectPathsManualContextSourceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsCommitManualContextSourceTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest'`
 

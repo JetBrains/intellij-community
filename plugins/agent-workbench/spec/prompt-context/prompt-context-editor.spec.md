@@ -5,7 +5,7 @@ targets:
   - ../../prompt/src/context/AgentPromptEditorContextContributor.kt
   - ../../prompt/src/context/AgentPromptSelectedEditorFallbackContextContributor.kt
   - ../../prompt/src/context/AgentPromptEditorContextSupport.kt
-  - ../../sessions-core/src/prompt/AgentPromptBuiltinContextRenderers.kt
+  - ../../prompt/core/src/AgentPromptBuiltinContextRenderers.kt
   - ../../prompt/resources/intellij.agent.workbench.prompt.xml
   - ../../prompt/testSrc/context/AgentPromptEditorContextContributorTest.kt
 ---
@@ -95,7 +95,7 @@ Define editor-driven prompt context behavior for both direct invocation and fall
 - Missing editor, PSI file, symbol, or file path degrades to available subset of context items.
 
 ## Testing / Local Run
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.context.AgentPromptEditorContextContributorTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.context.AgentPromptEditorContextContributorTest'`
 
 ## Open Questions / Risks
 - No dedicated test currently asserts selected-editor fallback item content end-to-end.

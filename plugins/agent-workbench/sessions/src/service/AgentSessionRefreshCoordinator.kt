@@ -17,8 +17,8 @@ import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
 import com.intellij.agent.workbench.chat.updateOpenAgentChatTabPresentation
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
@@ -26,7 +26,6 @@ import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.SessionsTreeUiState
 import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageKey
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -265,12 +264,12 @@ internal class AgentSessionRefreshCoordinator(
     }
   }
 
-  fun suppressArchivedThread(path: String, provider: AgentSessionProvider, threadId: String) {
-    archiveSuppressionSupport.suppress(path = path, provider = provider, threadId = threadId)
+  fun suppressArchivedTarget(target: ArchiveThreadTarget) {
+    archiveSuppressionSupport.suppress(target)
   }
 
-  fun unsuppressArchivedThread(path: String, provider: AgentSessionProvider, threadId: String) {
-    archiveSuppressionSupport.unsuppress(path = path, provider = provider, threadId = threadId)
+  fun unsuppressArchivedTarget(target: ArchiveThreadTarget) {
+    archiveSuppressionSupport.unsuppress(target)
   }
 
   fun loadProjectThreadsOnDemand(path: String) {

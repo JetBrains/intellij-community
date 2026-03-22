@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.model.WorktreeEntry
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
-import com.intellij.agent.workbench.sessions.state.InMemorySessionsTreeUiState
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -58,14 +58,62 @@ class AgentSessionRefreshOnDemandIntegrationTest {
 
       assertThat(service.state.value.visibleThreadCounts[PROJECT_PATH])
         .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT + DEFAULT_VISIBLE_THREAD_COUNT)
-      assertThat(treeUiState.getVisibleThreadCount(PROJECT_PATH))
-        .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT)
     }
   }
 
   @Test
-  fun showMoreThreadsUpdatesRuntimeVisibleCountWithoutPersistingUiState() = runBlocking {
-    val treeUiState = InMemorySessionsTreeUiState()
+  fun ensureThreadVisibleExpandsProjectVisibleCountForHiddenSubAgent() = runBlocking(Dispatchers.Default) {
+    withService(
+      sessionSourcesProvider = {
+        listOf(
+          ScriptedSessionSource(
+            provider = AgentSessionProvider.CODEX,
+            canReportExactThreadCount = true,
+            listFromClosedProject = { path ->
+              if (path != PROJECT_PATH) {
+                emptyList()
+              }
+              else {
+                listOf(
+                  thread(id = "codex-1", updatedAt = 500, provider = AgentSessionProvider.CODEX),
+                  thread(id = "codex-2", updatedAt = 400, provider = AgentSessionProvider.CODEX),
+                  thread(id = "codex-3", updatedAt = 300, provider = AgentSessionProvider.CODEX),
+                  thread(id = "codex-4", updatedAt = 200, provider = AgentSessionProvider.CODEX),
+                  thread(
+                    id = "codex-parent",
+                    updatedAt = 100,
+                    provider = AgentSessionProvider.CODEX,
+                    subAgents = listOf(AgentSubAgent(id = "codex-sub-1", name = "Sub-agent 1")),
+                  ),
+                )
+              }
+            },
+          ),
+        )
+      },
+      projectEntriesProvider = {
+        listOf(closedProjectEntry(PROJECT_PATH, "Project A"))
+      },
+    ) { service ->
+      service.refresh()
+      waitForCondition {
+        service.state.value.projects.any { it.path == PROJECT_PATH }
+      }
+
+      service.loadProjectThreadsOnDemand(PROJECT_PATH)
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }?.hasLoaded == true
+      }
+
+      service.ensureThreadVisible(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-sub-1")
+
+      assertThat(service.state.value.visibleThreadCounts[PROJECT_PATH])
+        .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT + DEFAULT_VISIBLE_THREAD_COUNT)
+    }
+  }
+
+  @Test
+  fun showMoreThreadsUpdatesRuntimeVisibleCount() = runBlocking(Dispatchers.Default) {
     withService(
       sessionSourcesProvider = {
         listOf(
@@ -88,8 +136,6 @@ class AgentSessionRefreshOnDemandIntegrationTest {
 
       assertThat(service.state.value.visibleThreadCounts[PROJECT_PATH])
         .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT + DEFAULT_VISIBLE_THREAD_COUNT)
-      assertThat(treeUiState.getVisibleThreadCount(PROJECT_PATH))
-        .isEqualTo(DEFAULT_VISIBLE_THREAD_COUNT)
     }
   }
 
