@@ -32,14 +32,7 @@ object BazelRunfiles {
       append(label.target)
     }
 
-    val resolved = if (runfilesManifestOnly || runfileManifest.exists) {
-      // On Windows there could be no runfiles tree, so we need to use manifest only
-      Path.of(runfileManifest.get(manifestKey))
-    }
-    else {
-      // Locate file under runfiles tree
-      bazelJavaRunfilesPath.resolve(manifestKey)
-    }
+    val resolved = resolveRunfilePath(manifestKey)
 
     check(resolved.exists()) {
       "Unable to find dependency '${label.asLabel}' at $resolved\n" +
@@ -100,6 +93,22 @@ object BazelRunfiles {
       if (it) {
         require(runfileManifest.exists) { "$RUNFILES_MANIFEST_ONLY_ENV_NAME=1, but ${runfileManifest.manifestFile} not found." }
       }
+    }
+  }
+
+  /**
+   * Resolves an rlocationpath (e.g., `_main/toolbox/build-params.env`) to an absolute [Path],
+   * using the runfiles manifest on Windows or the runfiles tree on other platforms.
+   */
+  @JvmStatic
+  fun resolveRunfilePath(rlocationPath: String): Path {
+    return if (runfilesManifestOnly || runfileManifest.exists) {
+      // On Windows there could be no runfiles tree, so we need to use manifest only
+      Path.of(runfileManifest.get(rlocationPath))
+    }
+    else {
+      // Locate file under runfiles tree
+      bazelJavaRunfilesPath.resolve(rlocationPath)
     }
   }
 
