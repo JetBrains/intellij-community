@@ -2,7 +2,9 @@
 package org.jetbrains.intellij.build.dependencies
 
 import com.intellij.openapi.util.SystemInfo
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.BuildPaths
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
 import org.apache.commons.compress.archivers.tar.TarConstants
@@ -210,6 +212,19 @@ internal class BuildDependenciesExtractTest(private val archiveType: TestArchive
         BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
       Assert.assertEquals(root.toString(), root3.toString())
     }
+  }
+
+  @Test
+  fun `extractFileToCacheLocation - suspend helper from default dispatcher`() = runBlocking(Dispatchers.Default) {
+    val testArchive = createTestFile(archiveType, listOf(TestFile("a")))
+
+    val root = extractFileToCacheLocation(testArchive, BuildPaths.COMMUNITY_ROOT)
+    Assert.assertEquals("a", Files.readString(root.resolve("a")))
+
+    val oldValue = BuildDependenciesDownloader.getExtractCount()
+    val root2 = extractFileToCacheLocation(testArchive, BuildPaths.COMMUNITY_ROOT)
+    Assert.assertEquals(root.toString(), root2.toString())
+    Assert.assertEquals(oldValue, BuildDependenciesDownloader.getExtractCount())
   }
 
   @Test

@@ -929,19 +929,17 @@ private suspend fun buildJars(
     return emptyBuildJarsResult()
   }
 
-  val list = withContext(Dispatchers.IO) {
-    assets.mapConcurrent { asset ->
-      withContext(CoroutineName("build jar for ${asset.relativePath}")) {
-        buildAsset(
-          asset = asset,
-          isCodesignEnabled = isCodesignEnabled,
-          context = context,
-          cache = cache,
-          useCacheAsTargetFile = useCacheAsTargetFile,
-          layout = layout,
-          helper = helper,
-        )
-      }
+  val list = assets.mapConcurrent(workerDispatcher = Dispatchers.IO) { asset ->
+    withContext(CoroutineName("build jar for ${asset.relativePath}")) {
+      buildAsset(
+        asset = asset,
+        isCodesignEnabled = isCodesignEnabled,
+        context = context,
+        cache = cache,
+        useCacheAsTargetFile = useCacheAsTargetFile,
+        layout = layout,
+        helper = helper,
+      )
     }
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.util.lang.ImmutableZipFile
 import com.intellij.util.lang.ZipFile
 import kotlinx.coroutines.CancellationException
@@ -28,7 +29,7 @@ import kotlin.time.Duration.Companion.minutes
 @ApiStatus.Internal
 class ModuleOutputZipFilePool(
   scope: CoroutineScope?,
-  private val cacheReadTimeout: Duration = 1.minutes,
+  private val cacheReadTimeout: Duration = 2.minutes,
   private val zipFileLoader: suspend (Path) -> ZipFile? = ::loadZipFile,
 ) {
   private val cache: AsyncCache<Path, ZipFile?>? = scope?.let {
@@ -52,7 +53,7 @@ class ModuleOutputZipFilePool(
     }
     catch (e: TimeoutCancellationException) {
       throw IllegalStateException(
-        "Timed out after $cacheReadTimeout reading '$entryPath' from archived module output '$file'; possible deadlock in module output zip cache",
+        "Timed out after $cacheReadTimeout reading '$entryPath' from archived module output '$file'; possible deadlock in module output zip cache: ${dumpCoroutines()}",
         e,
       )
     }

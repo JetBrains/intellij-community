@@ -5,8 +5,10 @@ import com.dynatrace.hash4j.hashing.Hashing
 import com.github.luben.zstd.ZstdInputStreamNoFinalizer
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.IExceptionWithRetryPolicy
@@ -193,7 +195,7 @@ object BuildDependenciesDownloader {
   }
 }
 
-suspend fun extractFileToCacheLocation(archiveFile: Path, communityRoot: BuildDependenciesCommunityRoot, stripRoot: Boolean = false): Path {
+suspend fun extractFileToCacheLocation(archiveFile: Path, communityRoot: BuildDependenciesCommunityRoot, stripRoot: Boolean = false): Path = withContext(Dispatchers.IO) {
   cleanUpIfRequired(communityRoot)
 
   val archivePath = archiveFile.invariantSeparatorsPathString
@@ -217,7 +219,7 @@ suspend fun extractFileToCacheLocation(archiveFile: Path, communityRoot: BuildDe
       flagFile = flagFile,
       options = if (stripRoot) arrayOf(BuildDependenciesExtractOptions.STRIP_ROOT) else EMPTY_OPTIONS,
     )
-    return targetDir
+    return@withLock targetDir
   }
 }
 
