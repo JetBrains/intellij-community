@@ -13,9 +13,9 @@ targets:
   - ../../prompt/testSrc/ui/AgentPromptSuggestionControllerTest.kt
   - ../../prompt/testSrc/ui/AgentPromptPaletteViewStructureTest.kt
   - ../../prompt/testSrc/ui/AgentPromptSuggestionsComponentTest.kt
-  - ../../sessions-core/src/prompt/AgentPromptSuggestionGenerator.kt
-  - ../../sessions-core/src/prompt/AgentPromptSuggestionSeeds.kt
-  - ../../sessions-core/src/prompt/AgentPromptSuggestionBundle.kt
+  - ../../prompt/core/src/AgentPromptSuggestionGenerator.kt
+  - ../../prompt/core/src/AgentPromptSuggestionSeeds.kt
+  - ../../prompt/core/src/AgentPromptSuggestionBundle.kt
   - ../../sessions-core/resources/intellij.agent.workbench.sessions.core.xml
   - ../../sessions-core/resources/messages/AgentPromptSuggestionsBundle.properties
   - ../../codex/common/src/CodexPromptSuggestions.kt
@@ -146,8 +146,8 @@ Global prompt entry, target routing, submit validation, and manual context selec
 - Abandoned prompt-suggestion turns must be interrupted or the dedicated prompt-suggestion client must be reset before reuse; a reused client must not keep running stale suggestion turns in the background, and notifications from other threads or turns must never be treated as cleanup confirmation for the active abandoned turn.
 
 ## Testing / Local Run
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.suggestions.AgentPromptSuggestionSeedsTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.suggestions.AgentPromptSuggestionGeneratorTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionSeedsTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionGeneratorTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptSuggestionControllerTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteViewStructureTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptSuggestionsComponentTest'`

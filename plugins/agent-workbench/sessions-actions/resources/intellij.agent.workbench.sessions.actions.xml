@@ -5,6 +5,7 @@
   <dependencies>
     <module name="intellij.agent.workbench.chat"/>
     <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
     <module name="intellij.agent.workbench.sessions"/>
     <module name="intellij.agent.workbench.sessions.core"/>
   </dependencies>

@@ -3,7 +3,7 @@ name: "Prompt Context: Project View"
 description: Requirements for project-view selection context contributor and `paths` rendering/chip behavior.
 targets:
   - ../../prompt/src/context/AgentPromptProjectViewSelectionContextContributor.kt
-  - ../../sessions-core/src/prompt/AgentPromptBuiltinContextRenderers.kt
+  - ../../prompt/core/src/AgentPromptBuiltinContextRenderers.kt
   - ../../prompt/resources/intellij.agent.workbench.prompt.xml
   - ../../prompt/testSrc/context/AgentPromptProjectViewSelectionContextContributorTest.kt
   - ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt
@@ -77,7 +77,7 @@ Define project-view prompt context collection from selected files/directories, i
 - Blank/invalid paths are filtered from payload entries.
 
 ## Testing / Local Run
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.context.AgentPromptProjectViewSelectionContextContributorTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.context.AgentPromptProjectViewSelectionContextContributorTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptContextEntryPathRenderingTest'`
 
 ## Open Questions / Risks

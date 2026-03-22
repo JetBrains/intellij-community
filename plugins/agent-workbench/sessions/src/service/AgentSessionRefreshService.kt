@@ -14,7 +14,7 @@ import com.intellij.agent.workbench.chat.collectOpenAgentChatRefreshSnapshot
 import com.intellij.agent.workbench.chat.rebindOpenConcreteAgentChatTabs
 import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID

@@ -140,8 +140,9 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.sessions.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.json.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.testrunner.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.prompt.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.prompt.ui.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.vcs.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.actions.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.launch.config.backend.tests" scope="TEST" />

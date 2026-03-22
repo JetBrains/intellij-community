@@ -3,8 +3,8 @@ package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource

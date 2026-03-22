@@ -4,9 +4,9 @@ package com.intellij.agent.workbench.sessions.actions
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.collectDistinctChatProjectPaths
 import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries

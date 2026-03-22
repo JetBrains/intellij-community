@@ -3,11 +3,11 @@ package com.intellij.agent.workbench.sessions.core.statistics
 
 // @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchError
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchRequest
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchResult
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchError
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EnumEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields

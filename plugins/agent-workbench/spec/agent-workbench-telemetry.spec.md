@@ -3,7 +3,7 @@ name: Agent Workbench Telemetry
 description: Requirements for custom IntelliJ Feature Usage Statistics collected by Agent Workbench.
 targets:
   - ../sessions-core/src/statistics/AgentWorkbenchTelemetry.kt
-  - ../sessions-core/src/prompt/AgentPromptModels.kt
+  - ../prompt/core/src/AgentPromptModels.kt
   - ../sessions-core/resources/intellij.agent.workbench.sessions.core.xml
   - ../prompt/src/ui/AgentPromptPaletteDecisions.kt
   - ../prompt/src/ui/AgentPromptPalettePopup.kt

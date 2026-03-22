@@ -2,8 +2,8 @@
 package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
-import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_PROJECT_PATH_CONTEXT_DATA_KEY
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathContext
+import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_PROJECT_PATH_CONTEXT_DATA_KEY
+import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathContext
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.archiveThreadTargetKey
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupActionContext

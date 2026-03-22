@@ -3,15 +3,15 @@ package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptExistingThreadsSnapshot
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchRequest
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchResult
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBridge
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
-import com.intellij.agent.workbench.sessions.core.prompt.getAgentPromptProjectPathContext
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
+import com.intellij.agent.workbench.prompt.core.AgentPromptExistingThreadsSnapshot
+import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
+import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
+import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
+import com.intellij.agent.workbench.prompt.core.getAgentPromptProjectPathContext
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService

@@ -6,9 +6,9 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 // @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService

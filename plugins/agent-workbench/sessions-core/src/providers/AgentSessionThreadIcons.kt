@@ -2,8 +2,8 @@
 package com.intellij.agent.workbench.sessions.core.providers
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.withAgentThreadActivityBadge
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.ui.BadgeDotProvider
 import com.intellij.ui.BadgeIcon
 import com.intellij.ui.IconManager

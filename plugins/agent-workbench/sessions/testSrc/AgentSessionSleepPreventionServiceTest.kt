@@ -1,6 +1,8 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
@@ -286,8 +288,8 @@ private fun sleepPreventionFixture(
 }
 
 private fun sessionsState(
-  projectThreads: List<com.intellij.agent.workbench.sessions.core.AgentSessionThread> = emptyList(),
-  worktreeThreads: List<com.intellij.agent.workbench.sessions.core.AgentSessionThread> = emptyList(),
+  projectThreads: List<AgentSessionThread> = emptyList(),
+  worktreeThreads: List<AgentSessionThread> = emptyList(),
 ): AgentSessionsState {
   return AgentSessionsState(
     projects = listOf(
@@ -315,7 +317,7 @@ private fun sessionsState(
 private fun activeThread(activity: AgentThreadActivity, id: String = "thread-1") = thread(
   id = id,
   updatedAt = 1,
-  provider = com.intellij.agent.workbench.sessions.core.AgentSessionProvider.CODEX,
+  provider = AgentSessionProvider.CODEX,
   activity = activity,
 )
 

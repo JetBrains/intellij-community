@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThread
-import com.intellij.agent.workbench.sessions.core.AgentSubAgent
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchRequest
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.common.session.AgentSubAgent
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PLAN_MODE_COMMAND
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy

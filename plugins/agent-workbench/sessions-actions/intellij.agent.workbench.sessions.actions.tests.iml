@@ -42,6 +42,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.concurrency" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />

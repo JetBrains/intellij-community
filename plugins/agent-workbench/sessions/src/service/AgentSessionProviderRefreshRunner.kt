@@ -5,8 +5,8 @@ import com.intellij.agent.workbench.chat.AgentChatOpenTabsRefreshSnapshot
 import com.intellij.agent.workbench.chat.collectOpenAgentChatRefreshSnapshot
 import com.intellij.agent.workbench.chat.updateOpenAgentChatTabPresentation
 import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions

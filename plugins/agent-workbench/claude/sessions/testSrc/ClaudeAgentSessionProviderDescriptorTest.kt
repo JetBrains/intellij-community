@@ -2,10 +2,10 @@
 package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
+import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy

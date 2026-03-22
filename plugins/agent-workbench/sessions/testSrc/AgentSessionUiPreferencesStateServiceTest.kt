@@ -1,9 +1,9 @@
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBridge
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

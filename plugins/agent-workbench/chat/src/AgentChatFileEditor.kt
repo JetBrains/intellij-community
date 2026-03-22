@@ -4,7 +4,7 @@ package com.intellij.agent.workbench.chat
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.openapi.actionSystem.ActionGroup

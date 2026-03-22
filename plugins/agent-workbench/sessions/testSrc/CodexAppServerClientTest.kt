@@ -66,6 +66,21 @@ class CodexAppServerClientTest {
     }
   }
 
+  private suspend fun waitForRequestLogMethod(
+    requestLogPath: Path,
+    method: String,
+    timeout: kotlin.time.Duration = 30.seconds,
+  ) {
+    withTimeout(timeout) {
+      while (true) {
+        if (Files.exists(requestLogPath) && Files.readAllLines(requestLogPath).contains(method)) {
+          return@withTimeout
+        }
+        delay(10.milliseconds)
+      }
+    }
+  }
+
   @ParameterizedTest(name = "{0}")
   @MethodSource("backends")
   fun listThreadsUsesCodexAppServerBackends(backend: CodexBackend): Unit = runBlocking(Dispatchers.Default) {
@@ -1354,11 +1369,7 @@ class CodexAppServerClientTest {
         client.suggestPrompt(createPromptSuggestionRequest())
       }
 
-      withTimeout(5.seconds) {
-        while (!Files.exists(requestLogPath) || !Files.readAllLines(requestLogPath).contains("turn/start")) {
-          delay(10.milliseconds)
-        }
-      }
+      waitForRequestLogMethod(requestLogPath, method = "turn/start")
 
       suggestion.cancel()
       try {
@@ -1368,6 +1379,7 @@ class CodexAppServerClientTest {
       catch (_: CancellationException) {
       }
 
+      waitForRequestLogMethod(requestLogPath, method = "turn/interrupt")
       assertThat(Files.readAllLines(requestLogPath)).contains("turn/interrupt")
     }
     finally {

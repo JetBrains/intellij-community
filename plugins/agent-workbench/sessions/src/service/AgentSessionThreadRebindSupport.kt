@@ -12,9 +12,9 @@ import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId

@@ -8,7 +8,7 @@ import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindStatus
 import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmPathSnapshot
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT

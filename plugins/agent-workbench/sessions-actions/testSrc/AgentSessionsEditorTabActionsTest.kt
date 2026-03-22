@@ -4,6 +4,9 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.AgentChatThreadCoordinates
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsCopyThreadIdFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabArchiveThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadPopupGroup
@@ -12,10 +15,7 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProj
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadInToolWindowAction
 import com.intellij.agent.workbench.sessions.actions.providerIcon
 import com.intellij.agent.workbench.sessions.actions.resolveQuickStartProjectPopupAnchor
-import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.SessionActionTarget
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.openapi.actionSystem.ActionGroup

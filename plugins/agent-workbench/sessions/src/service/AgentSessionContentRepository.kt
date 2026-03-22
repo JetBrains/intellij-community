@@ -3,9 +3,9 @@ package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionThreadTitle
 import com.intellij.agent.workbench.sessions.core.formatCompactAgentSessionTitle
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions

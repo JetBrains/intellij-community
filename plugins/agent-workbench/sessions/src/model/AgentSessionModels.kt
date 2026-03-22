@@ -2,8 +2,8 @@
 package com.intellij.agent.workbench.sessions.model
 
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT
 import com.intellij.openapi.util.NlsSafe
 import javax.swing.Icon
