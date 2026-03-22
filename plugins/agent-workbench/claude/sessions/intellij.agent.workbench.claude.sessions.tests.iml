@@ -44,6 +44,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.json" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.actions" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jna" level="project" />

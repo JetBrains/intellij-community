@@ -320,6 +320,7 @@ class AgentSessionLaunchService internal constructor(
           baseLaunchSpec = launchSpec,
           identity = identity,
           initialMessagePlan = initialMessagePlan,
+          allowStartupPromptOverride = true,
         )
         logPreparedNewSessionLaunch(
           provider = provider,
@@ -530,6 +531,7 @@ private fun buildInitialMessageDispatchPlan(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
     identity: String,
     initialMessagePlan: AgentInitialMessagePlan,
+    allowStartupPromptOverride: Boolean,
 ): AgentInitialMessageDispatchPlan {
   val postStartDispatchSteps = buildPostStartDispatchSteps(
     provider = descriptor.provider,
@@ -543,6 +545,7 @@ private fun buildInitialMessageDispatchPlan(
       descriptor = descriptor,
       baseLaunchSpec = baseLaunchSpec,
       initialMessagePlan = initialMessagePlan,
+      allowStartupPromptOverride = allowStartupPromptOverride,
     ),
     postStartDispatchSteps = postStartDispatchSteps,
     initialMessageToken = buildInitialMessageToken(identity = identity, steps = postStartDispatchSteps),
@@ -553,7 +556,12 @@ private fun buildStartupLaunchSpecOverride(
     descriptor: AgentSessionProviderDescriptor,
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
     initialMessagePlan: AgentInitialMessagePlan,
+    allowStartupPromptOverride: Boolean,
 ): AgentSessionTerminalLaunchSpec? {
+  // Existing-thread launches intentionally deliver the prompt after the chat opens.
+  if (!allowStartupPromptOverride) {
+    return null
+  }
   if (initialMessagePlan.startupPolicy != AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND) {
     return null
   }
@@ -660,6 +668,7 @@ private suspend fun resolvePromptInitialMessageDispatchPlan(
     baseLaunchSpec = resumeLaunchSpec,
     identity = identity,
     initialMessagePlan = initialMessagePlan,
+    allowStartupPromptOverride = false,
   )
 }
 
