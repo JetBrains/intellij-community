@@ -401,12 +401,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
 
   @Override
   public boolean hasInlineElementAt(@NotNull VisualPosition visualPosition) {
-    int offset = myEditor.visualPositionToOffset(visualPosition);
-    int inlayCount = getInlineElementsInRange(offset, offset).size();
-    if (inlayCount == 0) return false;
-    VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
-    return visualPosition.line == inlayStartPosition.line &&
-           visualPosition.column >= inlayStartPosition.column && visualPosition.column < inlayStartPosition.column + inlayCount;
+    return getInlineElementAt(visualPosition) != null;
   }
 
   @Override
