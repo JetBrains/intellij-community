@@ -20,34 +20,45 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * A utility class responsible for caching and updating text ranges in response to document changes.
+ * Is NOT synchronized.
+ */
 class MarkerCache {
   static final Comparator<SelfElementInfo> INFO_COMPARATOR = new SelfElementInfoComparator();
   private final SmartPointerTracker myPointers;
-  private UpdatedRanges myUpdatedRanges;
+
+  /**
+   * temporary cache of ranges that is recreated and dropped on each document commit.
+   */
+  private MarkerRanges myMarkerRanges;
 
   MarkerCache(@NotNull SmartPointerTracker pointers) {
     myPointers = pointers;
   }
 
-  private @NotNull UpdatedRanges getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<? extends DocumentEvent> events) {
+  private @NotNull MarkerCache.MarkerRanges getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEventImpl> events) {
     int eventCount = events.size();
     assert eventCount > 0;
 
-    UpdatedRanges cache = myUpdatedRanges;
+    MarkerRanges cache = myMarkerRanges;
     if (cache != null && cache.myEventCount == eventCount) return cache;
 
-    UpdatedRanges answer;
+    MarkerRanges answer;
     if (cache != null && cache.myEventCount < eventCount) {
       // apply only the new events
-      answer = applyEvents(events.subList(cache.myEventCount, eventCount), cache);
+      answer = cache.applyEvents(events.subList(cache.myEventCount, eventCount));
     }
     else {
+      // cache is either missing or corresponds to a newer event (contains "future").
+      // apply all events from scratch.
       List<SelfElementInfo> infos = myPointers.getSortedInfos();
       ManualRangeMarker[] markers = createMarkers(infos);
-      answer = applyEvents(events, new UpdatedRanges(0, frozen, infos, markers));
+      MarkerRanges initial = new MarkerRanges(0, frozen, infos, markers);
+      answer = initial.applyEvents(events);
     }
 
-    myUpdatedRanges = answer;
+    myMarkerRanges = answer;
     return answer;
   }
 
@@ -74,39 +85,9 @@ class MarkerCache {
     return start == info.getPsiStartOffset() && end == info.getPsiEndOffset() && greedy == info.isGreedy();
   }
 
-  private static @NotNull UpdatedRanges applyEvents(@NotNull List<? extends DocumentEvent> events, @NotNull UpdatedRanges struct) {
-    FrozenDocument frozen = struct.myResultDocument;
-    ManualRangeMarker[] resultMarkers = struct.myMarkers.clone();
-    for (DocumentEvent event : events) {
-      FrozenDocument before = frozen;
-      frozen = frozen.applyEvent(event, 0);
-      DocumentEvent corrected = new DocumentEventImpl(frozen, event.getOffset(), event.getOldFragment(), event.getNewFragment(),
-                                                      event.getOldTimeStamp(), event.isWholeTextReplaced(),
-                                                      ((DocumentEventImpl)event).getInitialStartOffset(),
-                                                      ((DocumentEventImpl)event).getInitialOldLength(),
-                                                      event.getMoveOffset());
-
-      int i = 0;
-      while (i < resultMarkers.length) {
-        ManualRangeMarker currentRange = resultMarkers[i];
-
-        int sameMarkersEnd = i + 1;
-        while (sameMarkersEnd < resultMarkers.length && resultMarkers[sameMarkersEnd] == currentRange) {
-          sameMarkersEnd++;
-        }
-
-        ManualRangeMarker updatedRange = currentRange == null ? null : currentRange.getUpdatedRange(corrected, before);
-        while (i < sameMarkersEnd) {
-          resultMarkers[i] = updatedRange;
-          i++;
-        }
-      }
-    }
-    return new UpdatedRanges(struct.myEventCount + events.size(), frozen, struct.mySortedInfos, resultMarkers);
-  }
-
   boolean updateMarkers(@NotNull FrozenDocument frozen, @NotNull List<? extends DocumentEvent> events) {
-    UpdatedRanges updated = getUpdatedMarkers(frozen, events);
+    //noinspection unchecked
+    MarkerRanges updated = getUpdatedMarkers(frozen, (List<DocumentEventImpl>)events);
 
     boolean sorted = true;
     for (int i = 0; i < updated.myMarkers.length; i++) {
@@ -117,39 +98,52 @@ class MarkerCache {
       }
     }
 
-    myUpdatedRanges = null;
+    myMarkerRanges = null;
     return sorted;
   }
 
+  /**
+   * infers the up-to-date range for the given segment in the given containingFile, and the frozen document after apllying the given events.
+   */
   @Nullable
   TextRange getUpdatedRange(@NotNull SelfElementInfo info, @NotNull FrozenDocument frozen, @NotNull List<? extends DocumentEvent> events) {
-    UpdatedRanges struct = getUpdatedMarkers(frozen, events);
-    int i = Collections.binarySearch(struct.mySortedInfos, info, INFO_COMPARATOR);
-    ManualRangeMarker updated = i >= 0 ? struct.myMarkers[i] : null;
+    //noinspection unchecked
+    MarkerRanges struct = getUpdatedMarkers(frozen, (List<DocumentEventImpl>)events);
+    ManualRangeMarker updated = struct.findManualMarker(info);
     return updated == null ? null : new UnfairTextRange(updated.getStartOffset(), updated.getEndOffset());
   }
 
+  /**
+   * infers the up-to-date range for the given segment in the given containingFile, and the frozen document after apllying the given events.
+   */
   static @Nullable Segment getUpdatedRange(@NotNull PsiFile containingFile,
                                            @NotNull Segment segment,
                                            boolean isSegmentGreedy,
                                            @NotNull FrozenDocument frozen,
                                            @NotNull List<? extends DocumentEvent> events) {
-    SelfElementInfo info = new SelfElementInfo(ProperTextRange.create(segment), new Identikit() {
-      @Override
-      public @Nullable PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
-        return null;
-      }
+    MarkerRanges ranges = createInitialRangesForSegment(segment, isSegmentGreedy, frozen, events, containingFile);
 
-      @Override
-      public @NotNull Language getFileLanguage() {
-        throw new IllegalStateException();
+    // NB: convert events from completion to whole doc change event to more precise translation
+    //noinspection unchecked
+    List<DocumentEventImpl> newEvents = ContainerUtil.map((List<DocumentEventImpl>)events, event -> {
+      if (isWholeDocumentReplace(frozen, event)) {
+        return withWholeTextReplaced(event);
       }
+      else {
+        return event;
+      }
+    });
+    MarkerRanges updated = ranges.applyEvents(newEvents);
+    return updated.myMarkers[0];
+  }
 
-      @Override
-      public boolean isForPsiFile() {
-        return false;
-      }
-    }, containingFile, isSegmentGreedy);
+  private static @NotNull MarkerRanges createInitialRangesForSegment(@NotNull Segment segment,
+                                                                     boolean isSegmentGreedy,
+                                                                     @NotNull FrozenDocument frozen,
+                                                                     @NotNull List<? extends DocumentEvent> events,
+                                                                     @NotNull PsiFile containingFile) {
+    // using a mock SelfElementInfo to infer updated range for the segment
+    SelfElementInfo info = new SelfElementInfo(ProperTextRange.create(segment), new MockIdentikit(), containingFile, isSegmentGreedy);
     List<SelfElementInfo> infos = Collections.singletonList(info);
 
     boolean greedy = info.isGreedy();
@@ -158,17 +152,7 @@ class MarkerCache {
     boolean surviveOnExternalChange = ContainerUtil.exists(events, event -> isWholeDocumentReplace(frozen, (DocumentEventImpl)event));
     ManualRangeMarker marker = new ManualRangeMarker(start, end, greedy, greedy, surviveOnExternalChange, null);
 
-    UpdatedRanges ranges = new UpdatedRanges(0, frozen, infos, new ManualRangeMarker[]{marker});
-    // NB: convert events from completion to whole doc change event to more precise translation
-    List<DocumentEvent> newEvents =
-      ContainerUtil.map(events, event -> isWholeDocumentReplace(frozen, (DocumentEventImpl)event)
-                                         ? new DocumentEventImpl(event.getDocument(), event.getOffset(), event.getOldFragment(),
-                                                                 event.getNewFragment(), event.getOldTimeStamp(), true,
-                                                                 ((DocumentEventImpl)event).getInitialStartOffset(),
-                                                                 ((DocumentEventImpl)event).getInitialOldLength(),
-                                                                 event.getMoveOffset()) : event);
-    UpdatedRanges updated = applyEvents(newEvents, ranges);
-    return updated.myMarkers[0];
+    return new MarkerRanges(0, frozen, infos, new ManualRangeMarker[]{marker});
   }
 
   private static boolean isWholeDocumentReplace(@NotNull FrozenDocument frozen, @NotNull DocumentEventImpl event) {
@@ -176,23 +160,109 @@ class MarkerCache {
   }
 
   void rangeChanged() {
-    myUpdatedRanges = null;
+    myMarkerRanges = null;
   }
 
-  private static class UpdatedRanges {
+  private static @NotNull DocumentEventImpl withWholeTextReplaced(@NotNull DocumentEventImpl event) {
+    return new DocumentEventImpl(event.getDocument(),
+                                 event.getOffset(),
+                                 event.getOldFragment(),
+                                 event.getNewFragment(),
+                                 event.getOldTimeStamp(),
+                                 true,
+                                 event.getInitialStartOffset(),
+                                 event.getInitialOldLength(),
+                                 event.getMoveOffset());
+  }
+
+  private static @NotNull DocumentEventImpl withFrozenDocument(@NotNull DocumentEventImpl event, @NotNull FrozenDocument frozen) {
+    return new DocumentEventImpl(frozen,
+                                 event.getOffset(),
+                                 event.getOldFragment(),
+                                 event.getNewFragment(),
+                                 event.getOldTimeStamp(),
+                                 event.isWholeTextReplaced(),
+                                 event.getInitialStartOffset(),
+                                 event.getInitialOldLength(),
+                                 event.getMoveOffset());
+  }
+
+  /**
+   * An immutable cache of document state and marker ranges after applying a sequence of events.
+   */
+  private static class MarkerRanges {
+    /**
+     * Number of events that have been applied to the document to get this state.
+     * Zero corresponds to the currently committed document.
+     */
     private final int myEventCount;
+
+    /**
+     * The document state after applying {@link myEventCount} events.
+     */
     private final FrozenDocument myResultDocument;
+
+    /**
+     * Sorted list of {@link SelfElementInfo} instances stored for this file.
+     * Their state corresponds to the last committed document state, i.e., it is NOT in sync with {@link myResultDocument}.
+     * The list is sorted by {@link SelfElementInfoComparator}.
+     */
     private final List<SelfElementInfo> mySortedInfos;
+
+    /**
+     * Manual markers for {@link mySortedInfos}.
+     * Their state is updated by applying {@link myEventCount} events.
+     */
     private final ManualRangeMarker[] myMarkers;
 
-    UpdatedRanges(int eventCount,
-                  @NotNull FrozenDocument resultDocument,
-                  @NotNull List<SelfElementInfo> sortedInfos,
-                  ManualRangeMarker @NotNull [] markers) {
+    MarkerRanges(int eventCount,
+                 @NotNull FrozenDocument resultDocument,
+                 @NotNull List<SelfElementInfo> sortedInfos,
+                 ManualRangeMarker @NotNull [] markers) {
       myEventCount = eventCount;
       myResultDocument = resultDocument;
       mySortedInfos = sortedInfos;
       myMarkers = markers;
+    }
+
+    /**
+     * Applies the given events to the document state and updates the marker ranges.
+     *
+     * @return the updated cache after applying the given events.
+     */
+    @NotNull MarkerCache.MarkerRanges applyEvents(@NotNull List<DocumentEventImpl> events) {
+      FrozenDocument frozen = myResultDocument;
+      ManualRangeMarker[] resultMarkers = myMarkers.clone();
+      for (DocumentEventImpl event : events) {
+        FrozenDocument before = frozen;
+        frozen = frozen.applyEvent(event, 0);
+        DocumentEvent corrected = withFrozenDocument(event, frozen);
+
+        int i = 0;
+        while (i < resultMarkers.length) {
+          ManualRangeMarker currentRange = resultMarkers[i];
+
+          int sameMarkersEnd = i + 1;
+          while (sameMarkersEnd < resultMarkers.length && resultMarkers[sameMarkersEnd] == currentRange) {
+            sameMarkersEnd++;
+          }
+
+          ManualRangeMarker updatedRange = currentRange == null ? null : currentRange.getUpdatedRange(corrected, before);
+          while (i < sameMarkersEnd) {
+            resultMarkers[i] = updatedRange;
+            i++;
+          }
+        }
+      }
+      return new MarkerRanges(myEventCount + events.size(), frozen, mySortedInfos, resultMarkers);
+    }
+
+    /**
+     * Finds the manual marker for the given {@link SelfElementInfo}.
+     */
+    @Nullable ManualRangeMarker findManualMarker(@NotNull SelfElementInfo info) {
+      int i = Collections.binarySearch(mySortedInfos, info, INFO_COMPARATOR);
+      return i >= 0 ? myMarkers[i] : null;
     }
   }
 
@@ -218,6 +288,23 @@ class MarkerCache {
       if (o1 != o2) return o1 > o2 ? 1 : -1;
 
       return (info1.isGreedy() ? 1 : 0) - (info2.isGreedy() ? 1 : 0);
+    }
+  }
+
+  private static class MockIdentikit extends Identikit {
+    @Override
+    public @Nullable PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
+      return null;
+    }
+
+    @Override
+    public @NotNull Language getFileLanguage() {
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean isForPsiFile() {
+      return false;
     }
   }
 }
