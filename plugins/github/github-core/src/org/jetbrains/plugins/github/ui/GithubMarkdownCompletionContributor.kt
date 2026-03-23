@@ -13,6 +13,7 @@ import com.intellij.collaboration.util.IncrementallyComputedValue
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.DumbAware
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.takeWhile
@@ -22,7 +23,7 @@ import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
 private val LOG: Logger = logger<GithubMarkdownCompletionContributor>()
 
-internal class GithubMarkdownCompletionContributor : CompletionContributor() {
+internal class GithubMarkdownCompletionContributor : CompletionContributor(), DumbAware {
 
   override fun fillCompletionVariants(
     parameters: CompletionParameters,
