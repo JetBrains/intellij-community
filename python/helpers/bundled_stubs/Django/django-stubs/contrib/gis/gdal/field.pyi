@@ -1,6 +1,7 @@
 from typing import Any
 
 from django.contrib.gis.gdal.base import GDALBase
+from typing_extensions import override
 
 class Field(GDALBase):
     ptr: Any
@@ -26,12 +27,15 @@ class Field(GDALBase):
 
 class OFTInteger(Field):
     @property
+    @override
     def value(self) -> Any: ...
     @property
+    @override
     def type(self) -> Any: ...
 
 class OFTReal(Field):
     @property
+    @override
     def value(self) -> Any: ...
 
 class OFTString(Field): ...
@@ -40,14 +44,17 @@ class OFTBinary(Field): ...
 
 class OFTDate(Field):
     @property
+    @override
     def value(self) -> Any: ...
 
 class OFTDateTime(Field):
     @property
+    @override
     def value(self) -> Any: ...
 
 class OFTTime(Field):
     @property
+    @override
     def value(self) -> Any: ...
 
 class OFTInteger64(OFTInteger): ...

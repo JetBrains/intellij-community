@@ -11,7 +11,7 @@ from django.db.models.constraints import BaseConstraint
 from django.db.models.fields import Field
 from django.db.models.indexes import Index
 from django.db.models.sql.compiler import _AsSqlType
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 logger: Logger
 
@@ -51,6 +51,7 @@ class BaseDatabaseSchemaEditor(AbstractContextManager[Any]):
     sql_delete_index: str
     sql_create_pk: str
     sql_delete_pk: str
+    sql_pk_constraint: str
     sql_delete_procedure: str
     sql_alter_table_comment: str
     sql_alter_column_comment: str
@@ -61,12 +62,14 @@ class BaseDatabaseSchemaEditor(AbstractContextManager[Any]):
     def __init__(self, connection: BaseDatabaseWrapper, collect_sql: bool = False, atomic: bool = True) -> None: ...
     deferred_sql: Any
     atomic: Any
+    @override
     def __enter__(self) -> Self: ...
+    @override
     def __exit__(
         self,
         exc_type: type[BaseException] | None,
         exc_value: BaseException | None,
-        exc_tb: TracebackType | None,
+        traceback: TracebackType | None,
     ) -> None: ...
     def execute(self, sql: Statement | str, params: Sequence[Any] | None = ()) -> None: ...
     def quote_name(self, name: str) -> str: ...

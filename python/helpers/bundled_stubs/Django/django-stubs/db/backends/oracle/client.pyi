@@ -3,6 +3,7 @@ from typing import Any
 
 from django.db.backends.base.client import BaseDatabaseClient
 from django.db.backends.oracle.base import DatabaseWrapper
+from typing_extensions import override
 
 class DatabaseClient(BaseDatabaseClient):
     connection: DatabaseWrapper
@@ -11,6 +12,7 @@ class DatabaseClient(BaseDatabaseClient):
     @staticmethod
     def connect_string(settings_dict: dict[str, Any]) -> str: ...
     @classmethod
+    @override
     def settings_to_cmd_args_env(
         cls, settings_dict: dict[str, Any], parameters: Iterable[str]
     ) -> tuple[list[str], None]: ...

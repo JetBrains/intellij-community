@@ -23,6 +23,7 @@ class Migration:
     def unapply(
         self, project_state: ProjectState, schema_editor: BaseDatabaseSchemaEditor, collect_sql: bool = False
     ) -> ProjectState: ...
+    def suggest_name(self) -> str: ...
 
 class SwappableTuple(tuple[str, str]):
     setting: str

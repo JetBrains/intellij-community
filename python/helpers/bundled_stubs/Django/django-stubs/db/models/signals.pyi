@@ -4,10 +4,12 @@ from django.apps.registry import Apps
 from django.db.models.base import Model
 from django.dispatch import Signal
 from django.dispatch.dispatcher import _AnyHashable
+from typing_extensions import override
 
 class_prepared: Signal
 
 class ModelSignal(Signal):
+    @override
     def connect(  # type: ignore[override]
         self,
         receiver: Callable,
@@ -16,6 +18,7 @@ class ModelSignal(Signal):
         dispatch_uid: _AnyHashable | None = None,
         apps: Apps | None = None,
     ) -> None: ...
+    @override
     def disconnect(  # type: ignore[override]
         self,
         receiver: Callable | None = None,

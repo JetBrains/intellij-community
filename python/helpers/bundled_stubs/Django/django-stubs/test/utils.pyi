@@ -15,7 +15,7 @@ from django.db.models.lookups import Lookup, Transform
 from django.db.models.query_utils import RegisterLookupMixin
 from django.test.runner import DiscoverRunner
 from django.test.testcases import SimpleTestCase
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 _TestClass: TypeAlias = type[SimpleTestCase]
 
@@ -31,8 +31,10 @@ class Approximate:
     def __init__(self, val: Decimal | float, places: int = ...) -> None: ...
 
 class ContextList(list[dict[str, Any]]):
+    @override
     def __getitem__(self, key: str | SupportsIndex | slice) -> Any: ...
     def get(self, key: str, default: Any | None = ...) -> Any: ...
+    @override
     def __contains__(self, key: object) -> bool: ...
     def keys(self) -> set[str]: ...
 
@@ -65,12 +67,14 @@ class override_settings(TestContextDecorator):
     def __init__(self, **kwargs: Any) -> None: ...
     wrapped: Settings
     def save_options(self, test_func: _DecoratedTest) -> None: ...
+    @override
     def decorate_class(self, cls: type) -> type: ...
 
 class modify_settings(override_settings):
     wrapped: Settings
     operations: list[tuple[str, dict[str, list[str] | str]]]
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    @override
     def save_options(self, test_func: _DecoratedTest) -> None: ...
     options: dict[str, list[tuple[str, str] | str]]
 

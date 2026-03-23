@@ -9,9 +9,10 @@ from django.db.models.fields import _ErrorMessagesMapping
 from django.db.models.sql import Query
 from django.utils.choices import _Choices
 from django.utils.datastructures import DictWrapper
-from django.utils.functional import _StrOrPromise
+from django.utils.functional import _StrOrPromise, cached_property
+from typing_extensions import override
 
-class GeneratedField(models.Field):
+class GeneratedField(models.Field[Any, Any]):
     generated: ClassVar[Literal[True]]
     db_returning: Literal[True]
     _query: Query | None
@@ -46,6 +47,9 @@ class GeneratedField(models.Field):
         **kwargs: Any,
     ) -> None: ...
     def generated_sql(self, connection: BaseDatabaseWrapper) -> tuple[str, Any]: ...
+    @cached_property
+    def referenced_fields(self) -> frozenset[models.Field]: ...
+    @override
     def db_type_parameters(self, connection: BaseDatabaseWrapper) -> DictWrapper: ...
 
 __all__ = ["GeneratedField"]

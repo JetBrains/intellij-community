@@ -8,7 +8,7 @@ from typing import Any, overload
 from _typeshed import Incomplete
 from django.utils.functional import SimpleLazyObject, _StrOrPromise
 from django.utils.safestring import SafeData, SafeString
-from typing_extensions import deprecated
+from typing_extensions import deprecated, override
 
 VOID_ELEMENTS: frozenset[str]
 MAX_URL_LENGTH: int
@@ -32,8 +32,11 @@ def linebreaks(value: Any, autoescape: bool = False) -> str: ...
 class MLStripper(HTMLParser):
     fed: Any
     def __init__(self) -> None: ...
+    @override
     def handle_data(self, d: str) -> None: ...
+    @override
     def handle_entityref(self, name: str) -> None: ...
+    @override
     def handle_charref(self, name: str) -> None: ...
     def get_data(self) -> str: ...
 

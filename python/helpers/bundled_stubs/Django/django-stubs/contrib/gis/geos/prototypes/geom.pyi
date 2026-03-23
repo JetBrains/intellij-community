@@ -41,3 +41,4 @@ geom_clone: Any
 destroy_geom: Any
 geos_get_srid: Any
 geos_set_srid: Any
+geos_makevalid: Any

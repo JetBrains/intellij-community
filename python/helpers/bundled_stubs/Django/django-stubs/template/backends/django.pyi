@@ -5,12 +5,15 @@ from django.template.base import Origin
 from django.template.base import Template as _BaseTemplate
 from django.template.engine import Engine
 from django.template.exceptions import TemplateDoesNotExist
+from typing_extensions import override
 
 from .base import BaseEngine, _EngineTemplate
 
 class DjangoTemplates(BaseEngine):
     engine: Engine
+    @override
     def from_string(self, template_code: str) -> Template: ...
+    @override
     def get_template(self, template_name: str) -> Template: ...
     def get_templatetag_libraries(self, custom_libraries: dict[str, str]) -> dict[str, str]: ...
 

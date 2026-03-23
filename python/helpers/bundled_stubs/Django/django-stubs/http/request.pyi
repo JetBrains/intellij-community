@@ -1,7 +1,7 @@
 import datetime
 from collections.abc import Awaitable, Callable, Iterable, Iterator, Mapping, Sequence
 from re import Pattern
-from typing import Any, BinaryIO, Literal, NoReturn, TypeAlias, TypeVar, overload, type_check_only
+from typing import Any, BinaryIO, Literal, NoReturn, Protocol, TypeAlias, TypeVar, overload, type_check_only
 
 from django.contrib.auth.models import _AnyUser
 from django.contrib.sessions.backends.base import SessionBase
@@ -10,10 +10,17 @@ from django.core.files import uploadedfile, uploadhandler
 from django.urls import ResolverMatch
 from django.utils.datastructures import CaseInsensitiveMapping, ImmutableList, MultiValueDict
 from django.utils.functional import cached_property
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 RAISE_ERROR: object
 host_validation_re: Pattern[str]
+
+@type_check_only
+class _PostDataProtocol(Protocol):
+    def read(self, num_bytes: int | None = ..., /) -> bytes: ...
+    def readline(self, limit: int | None = ..., /) -> bytes: ...
+    def readlines(self) -> list[bytes]: ...
+    def __iter__(self) -> Iterator[bytes]: ...
 
 class UnreadablePostError(OSError): ...
 class RawPostDataException(Exception): ...
@@ -97,7 +104,7 @@ class HttpRequest:
     def accepted_type(self, media_type: str) -> MediaType | None: ...
     def get_preferred_type(self, media_types: Sequence[str]) -> str | None: ...
     def parse_file_upload(
-        self, META: Mapping[str, Any], post_data: BinaryIO
+        self, META: Mapping[str, Any], post_data: _PostDataProtocol
     ) -> tuple[QueryDict, MultiValueDict[str, uploadedfile.UploadedFile]]: ...
     @cached_property
     def headers(self) -> HttpHeaders: ...
@@ -124,6 +131,7 @@ _Z = TypeVar("_Z")
 # we need to use an intermediary class for the `__init__` method.
 # See https://github.com/python/mypy/issues/17251
 # https://github.com/python/mypy/blob/c724a6a806655f94d0c705a7121e3d671eced96d/mypy/typeops.py#L148-L149
+@type_check_only
 class _QueryDictMixin:
     def __init__(
         self,
@@ -163,6 +171,7 @@ class QueryDict(_QueryDictMixin, MultiValueDict[str, str]):
         encoding: str | None = ...,
     ) -> _ImmutableQueryDict: ...
     @classmethod
+    @override
     def fromkeys(  # type: ignore[override]
         cls,
         iterable: Iterable[bytes | str],
@@ -174,44 +183,68 @@ class QueryDict(_QueryDictMixin, MultiValueDict[str, str]):
     def encoding(self) -> str: ...
     @encoding.setter
     def encoding(self, value: str) -> None: ...
+    @override
     def __setitem__(self, key: str | bytes, value: str | bytes) -> None: ...
+    @override
     def __delitem__(self, key: str | bytes) -> None: ...
+    @override
     def setlist(self, key: str | bytes, list_: Iterable[str | bytes]) -> None: ...
+    @override
     def setlistdefault(self, key: str | bytes, default_list: list[str] | None = ...) -> list[str]: ...
+    @override
     def appendlist(self, key: str | bytes, value: str | bytes) -> None: ...
     # Fake signature (because *args is used in source, but it fails with more that 1 argument)
     @overload  # type:ignore[override]
     def pop(self, key: str | bytes, /) -> list[str]: ...
     @overload
+    @override
     def pop(self, key: str | bytes, default: str | _Z = ..., /) -> list[str] | _Z: ...
+    @override
     def popitem(self) -> tuple[str, list[str]]: ...  # type:ignore[override]
+    @override
     def clear(self) -> None: ...
+    @override
     def setdefault(self, key: str | bytes, default: str | bytes | None = ...) -> str: ...
+    @override
     def copy(self) -> QueryDict: ...
     def urlencode(self, safe: str | None = ...) -> str: ...
 
 @type_check_only
 class _ImmutableQueryDict(QueryDict):
     _mutable: Literal[False]
+    @override
     def __setitem__(self, key: str | bytes, value: str | bytes) -> NoReturn: ...
+    @override
     def __delitem__(self, key: str | bytes) -> NoReturn: ...
+    @override
     def setlist(self, key: str | bytes, list_: Iterable[str | bytes]) -> NoReturn: ...
+    @override
     def setlistdefault(self, key: str | bytes, default_list: list[str] | None = ...) -> NoReturn: ...
+    @override
     def appendlist(self, key: str | bytes, value: str | bytes) -> NoReturn: ...
     # Fake signature (because *args is used in source, but it fails with more that 1 argument)
     @overload
+    @override
     def pop(self, key: str | bytes, /) -> NoReturn: ...
     @overload
+    @override
     def pop(self, key: str | bytes, default: str | _Z = ..., /) -> NoReturn: ...
+    @override
     def popitem(self) -> NoReturn: ...
+    @override
     def clear(self) -> NoReturn: ...
+    @override
     def setdefault(self, key: str | bytes, default: str | bytes | None = ...) -> NoReturn: ...
+    @override
     def copy(self) -> QueryDict: ...  # type: ignore[override]
+    @override
     def urlencode(self, safe: str | None = ...) -> str: ...
     # Fakes for convenience (for `request.GET` and `request.POST`). If dict
     # was created by Django, there is no chance to hit `List[object]` (empty list)
     # edge case.
+    @override
     def __getitem__(self, key: str) -> str: ...
+    @override
     def dict(self) -> dict[str, str]: ...  # type: ignore[override]
 
 class MediaType:

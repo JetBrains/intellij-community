@@ -10,7 +10,7 @@ from django.db.models import QuerySet
 from django.db.models.base import Model
 from django.db.models.manager import EmptyManager
 from django.utils.functional import _StrOrPromise
-from typing_extensions import Self
+from typing_extensions import Never, Self
 
 # This is our "placeholder" type the mypy plugin refines to configured 'AUTH_USER_MODEL'
 # wherever it is used as a type. The most recognised example of this is (probably)
@@ -79,6 +79,9 @@ class PermissionsMixin(models.Model):
     groups = models.ManyToManyField(Group)
     user_permissions = models.ManyToManyField(Permission)
 
+    class Meta:
+        abstract: ClassVar[bool]
+
     def get_user_permissions(self, obj: Model | None = ...) -> set[str]: ...
     async def aget_user_permissions(self, obj: Model | None = ...) -> set[str]: ...
     def get_group_permissions(self, obj: Model | None = ...) -> set[str]: ...
@@ -94,6 +97,11 @@ class PermissionsMixin(models.Model):
 
 class AbstractUser(AbstractBaseUser, PermissionsMixin):
     username_validator: UnicodeUsernameValidator
+
+    class Meta:
+        abstract: ClassVar[bool]
+        verbose_name: ClassVar[str]
+        verbose_name_plural: ClassVar[str]
 
     username = models.CharField(max_length=150)
     first_name = models.CharField(max_length=30, blank=True)
@@ -111,7 +119,7 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
     def get_full_name(self) -> str: ...
     def get_short_name(self) -> str: ...
     def email_user(
-        self, subject: _StrOrPromise, message: _StrOrPromise, from_email: str = ..., **kwargs: Any
+        self, subject: _StrOrPromise, message: _StrOrPromise, from_email: str | None = ..., **kwargs: Any
     ) -> None: ...
 
 class User(AbstractUser): ...
@@ -123,10 +131,11 @@ class AnonymousUser:
     is_staff: Literal[False]
     is_active: Literal[False]
     is_superuser: Literal[False]
+    def __int__(self) -> Never: ...
     def save(self) -> None: ...
     def delete(self) -> None: ...
-    def set_password(self, raw_password: str) -> None: ...
-    def check_password(self, raw_password: str) -> Any: ...
+    def set_password(self, raw_password: str | None) -> None: ...
+    def check_password(self, raw_password: str | None) -> bool: ...
     @property
     def groups(self) -> EmptyManager[Group]: ...
     @property

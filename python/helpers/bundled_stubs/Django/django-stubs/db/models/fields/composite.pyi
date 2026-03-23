@@ -1,13 +1,14 @@
 from collections.abc import Iterable, Iterator, Mapping
 from typing import Any, Literal
 
-from django.contrib.contenttypes.fields import GenericForeignKey
 from django.core import validators  # due to weird mypy.stubtest error
 from django.db.models import NOT_PROVIDED, Field
 from django.db.models.base import Model
 from django.db.models.fields.reverse_related import ForeignObjectRel
+from django.db.models.options import _AnyField
 from django.utils.choices import _ChoicesInput
 from django.utils.functional import _StrOrPromise, cached_property
+from typing_extensions import override
 
 class AttributeSetter:
     def __init__(self, name: str, value: Any) -> None: ...
@@ -20,7 +21,7 @@ class CompositeAttribute:
     def __get__(self, instance: Model, cls: type[Model] | None = None) -> tuple[Any, ...]: ...
     def __set__(self, instance: Model, values: list[Any] | tuple[Any] | None) -> None: ...
 
-class CompositePrimaryKey(Field):
+class CompositePrimaryKey(Field[Any, Any]):
     field_names: tuple[str]
     descriptor_class: type[CompositeAttribute]
     def __init__(
@@ -54,11 +55,12 @@ class CompositePrimaryKey(Field):
     @cached_property
     def fields(
         self,
-    ) -> tuple[Field | ForeignObjectRel | GenericForeignKey, ...]: ...
+    ) -> tuple[_AnyField, ...]: ...
     @cached_property
     def columns(self) -> tuple[str, ...]: ...
-    def __iter__(self) -> Iterator[Field | ForeignObjectRel | GenericForeignKey]: ...
+    def __iter__(self) -> Iterator[_AnyField]: ...
     def __len__(self) -> int: ...
+    @override
     def get_pk_value_on_save(self, instance: Model) -> tuple: ...  # actual type is tuple of field.value_from_object
 
 def unnest(fields: Iterable[Field[Any, Any]]) -> list[Field[Any, Any]]: ...

@@ -2,6 +2,7 @@ from typing import Any, TypeVar
 
 from django.db.models import Model
 from django.forms.models import BaseModelFormSet, ModelForm
+from typing_extensions import override
 
 _M = TypeVar("_M", bound=Model)
 _ModelFormT = TypeVar("_ModelFormT", bound=ModelForm)
@@ -20,9 +21,12 @@ class BaseGenericInlineFormSet(BaseModelFormSet[_M, _ModelFormT]):
         queryset: Any | None = ...,
         **kwargs: Any,
     ) -> None: ...
+    @override
     def initial_form_count(self) -> int: ...
     @classmethod
+    @override
     def get_default_prefix(cls) -> str: ...
+    @override
     def save_new(self, form: Any, commit: bool = ...) -> _M: ...
 
 def generic_inlineformset_factory(
