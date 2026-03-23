@@ -137,8 +137,6 @@ internal class GitLabCiIncludeApplicationMetricsCollector : ApplicationUsagesCol
     }
 
     for (project in openProjects) {
-      if (project.isDisposed) continue
-
       val gitlabCiFiles = collectGitLabCiFileForAnalyzing(project)
 
       for (file in gitlabCiFiles) {
