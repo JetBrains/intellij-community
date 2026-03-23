@@ -14,7 +14,7 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.EditorSettingsRefactoringOptionsProvider;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -169,7 +169,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
     }
     Project project = context.project();
     if (mode == InlineMode.CHECK_CONFLICTS || mode == InlineMode.ASK) {
-      if (refExpr == null || allRefs.size() == 1 || !EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog()) {
+      if (refExpr == null || allRefs.size() == 1 || !EditorSettingsRefactoringOptionsProvider.getInstance().isShowInlineDialog()) {
         mode = InlineMode.INLINE_ALL_AND_DELETE;
       } else {
         return createChooser(pattern, refExpr, allRefs);
@@ -285,7 +285,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
 
     if (mode == InlineMode.ASK) {
       if (refExpr != null && refsToInlineList.size() > 1 && refsToInlineList.contains(refExpr) &&
-          EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog()) {
+          EditorSettingsRefactoringOptionsProvider.getInstance().isShowInlineDialog()) {
         return createChooser(local, refExpr, refsToInlineList);
       }
       if (defToInline == local.getInitializer() && PsiUtil.skipParenthesizedExprDown(defToInline) instanceof PsiReferenceExpression ref &&
