@@ -9,11 +9,14 @@ import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
+@ApiStatus.Internal
 data class PathMapping(val localPath: Path, val targetPathFun: TargetEnvironmentFunction<FullPathOnTarget>)
 
+@ApiStatus.Internal
 data class PythonHelpersMappings(val helpers: List<PathMapping>)
 
 /**
@@ -28,22 +31,27 @@ interface HelpersAwareTargetEnvironmentRequest {
    * helpers scripts.
    */
   @RequiresBackgroundThread
+  @ApiStatus.Internal
   fun preparePyCharmHelpers(): PythonHelpersMappings
 }
 
+@ApiStatus.Internal
 fun getPythonHelpers(): List<Path> = PythonHelpersLocator.getHelpersRoots()
 
 /**
  * Returns the mappings where Python helpers of Community and Professional versions are mapped to a single directory.
  * For example, when their contents are uploaded to the same directory on the SSH machine.
  */
+@ApiStatus.Internal
 fun singleDirectoryPythonHelpersMappings(targetPathFun: TargetEnvironmentFunction<FullPathOnTarget>): PythonHelpersMappings =
   PythonHelpersMappings(getPythonHelpers().map { it to targetPathFun })
 
 
+@ApiStatus.Internal
 infix fun Path.to(targetPathFun: TargetEnvironmentFunction<FullPathOnTarget>): PathMapping =
   PathMapping(localPath = this, targetPathFun)
 
+@ApiStatus.Internal
 fun String.tryResolveAsPythonHelperDir(mappings: PythonHelpersMappings): PathMapping? {
   val thisLocalPath = Path.of(this)
   val rootPaths = mappings.helpers
