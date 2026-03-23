@@ -3,14 +3,11 @@ from collections.abc import Iterable
 from hashlib import _Hash
 from logging import Logger, LogRecord
 from types import TracebackType
-from typing import IO, AnyStr, Protocol
+from typing import IO, AnyStr
 from typing_extensions import Self
 
 from paramiko.config import SSHConfig, SSHConfigDict
 from paramiko.hostkeys import HostKeys
-
-class SupportsClose(Protocol):
-    def close(self) -> None: ...
 
 def inflate_long(s: bytes | bytearray, always_positive: bool = False) -> int: ...
 def deflate_long(n: int, add_sign_padding: bool = True) -> bytes: ...

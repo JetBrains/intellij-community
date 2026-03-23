@@ -2,7 +2,7 @@
 # Everything in this module is private for stubs. There is no runtime equivalent.
 
 from collections.abc import Iterable, Mapping, Sequence
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar, type_check_only
 from typing_extensions import TypeAlias
 
 import numpy as np
@@ -20,9 +20,11 @@ RaggedTensorLike: TypeAlias = tf.Tensor | tf.RaggedTensor
 # _RaggedTensorLikeT = TypeVar("_RaggedTensorLikeT", tf.Tensor, tf.RaggedTensor)
 Gradients: TypeAlias = tf.Tensor | tf.IndexedSlices
 
+@type_check_only
 class KerasSerializable1(Protocol):
     def get_config(self) -> dict[str, Any]: ...
 
+@type_check_only
 class KerasSerializable2(Protocol):
     __name__: str
 

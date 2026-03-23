@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
 from collections.abc import Iterable, Mapping
-from typing import Final, Literal, TypedDict, TypeVar, overload
+from typing import Final, Literal, TypedDict, TypeVar, overload, type_check_only
 
 from .healthcheck import Healthcheck
 
@@ -75,6 +75,7 @@ class Mount(dict[str, Incomplete]):
     @classmethod
     def parse_mount_string(cls, string: str) -> Mount: ...
 
+@type_check_only
 class _ResourceDict(TypedDict):
     Kind: str
     Value: int

@@ -3,8 +3,9 @@
 # Anything not referenced in the PyInstaller stubs doesn't need to be added here.
 
 from types import CodeType
-from typing import Protocol
+from typing import Protocol, type_check_only
 
+@type_check_only
 class _SupportsGraphident(Protocol):
     graphident: str
 
