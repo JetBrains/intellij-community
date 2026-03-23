@@ -4,8 +4,6 @@ package org.jetbrains.plugins.gitlab.yaml.codeInsight.include.fus
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventId
-import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.readAction
@@ -33,74 +31,14 @@ import kotlin.time.Duration.Companion.minutes
 
 internal class GitLabCiIncludeApplicationMetricsCollector : ApplicationUsagesCollector() {
 
-  private val group = EventLogGroup(
-    id = "gitlab.ci.include",
-    version = 1
-  )
-
-  override fun getGroup(): EventLogGroup = group
-
-  private val explicitLocalTypeEvent = group.registerVarargEvent(
-    "explicit.local",
-    WITH_RULES, WITH_ENV_VAR,
-    WITH_SINGLE_ASTERISK, WITH_DOUBLE_ASTERISK,
-  )
-
-  private val explicitRemoteTypeEvent = group.registerVarargEvent(
-    "explicit.remote",
-    WITH_RULES, WITH_ENV_VAR,
-    WITH_CACHE
-  )
-
-  private val implicitLocalOrRemoteTypeEvent = group.registerVarargEvent(
-    "implicit.local.or.remote",
-    WITH_ENV_VAR,
-    WITH_SINGLE_ASTERISK, WITH_DOUBLE_ASTERISK,
-  )
-
-  private val templateTypeEvent = group.registerVarargEvent(
-    "template",
-    WITH_RULES, WITH_ENV_VAR,
-  )
-
-  private val componentTypeEvent = group.registerVarargEvent(
-    "component",
-    WITH_RULES, WITH_ENV_VAR,
-  )
-
-  private val projectTypeEvent = group.registerVarargEvent(
-    "project",
-    WITH_RULES, WITH_ENV_VAR,
-    WITH_REF,
-    WITH_SINGLE_ASTERISK,  // no usages expected
-    WITH_DOUBLE_ASTERISK,  // no usages expected
-  )
-
-  private val unknownTypeEvent = group.registerEvent(
-    "unknown"
-  )
-
-  private val analyzingQualityEvent = group.registerVarargEvent(
-    "analyzing.quality",
-    FILES_ANALYZED,
-    FILES_FAILED,
-    TIMEOUT_HAPPENED
-  )
+  override fun getGroup(): EventLogGroup = GROUP
 
   override suspend fun getMetricsAsync(): Set<MetricEvent> {
     val result = performAnalyzing()
 
-    val metricEvents = result.includeStats.toMetricEvents(
-      explicitLocalTypeEvent,
-      explicitRemoteTypeEvent,
-      implicitLocalOrRemoteTypeEvent,
-      templateTypeEvent,
-      componentTypeEvent,
-      projectTypeEvent,
-      unknownTypeEvent
-    ).toMutableSet()
+    val metricEvents = result.includeStats.toMetricEvents().toMutableSet()
 
-    metricEvents += analyzingQualityEvent.metric(
+    metricEvents += ANALYZING_QUALITY_EVENT.metric(
       FILES_ANALYZED.with(StatisticsUtil.roundToPowerOfTwo(result.filesAnalyzed)),
       FILES_FAILED.with(StatisticsUtil.roundToPowerOfTwo(result.filesFailed)),
       TIMEOUT_HAPPENED.with(result.timeoutHappened)
@@ -380,19 +318,11 @@ internal class IncludeStats(
     unknown = unknown || other.unknown
   }
 
-  fun toMetricEvents(
-    explicitLocalEvent: VarargEventId,
-    explicitRemoteEvent: VarargEventId,
-    implicitLocalOrRemoteEvent: VarargEventId,
-    templateEvent: VarargEventId,
-    componentEvent: VarargEventId,
-    projectEvent: VarargEventId,
-    unknownEvent: EventId,
-  ): Set<MetricEvent> {
+  fun toMetricEvents(): Set<MetricEvent> {
     val result = mutableSetOf<MetricEvent>()
 
     if (explicitLocal.found) {
-      result += explicitLocalEvent.metric(
+      result += EXPLICIT_LOCAL_TYPE_EVENT.metric(
         WITH_RULES.with(explicitLocal.hasRules),
         WITH_ENV_VAR.with(explicitLocal.hasEnvVar),
         WITH_SINGLE_ASTERISK.with(explicitLocal.hasSingleAsterisk),
@@ -401,7 +331,7 @@ internal class IncludeStats(
     }
 
     if (explicitRemote.found) {
-      result += explicitRemoteEvent.metric(
+      result += EXPLICIT_REMOTE_TYPE_EVENT.metric(
         WITH_RULES.with(explicitRemote.hasRules),
         WITH_ENV_VAR.with(explicitRemote.hasEnvVar),
         WITH_CACHE.with(explicitRemote.hasCache),
@@ -409,7 +339,7 @@ internal class IncludeStats(
     }
 
     if (implicitLocalOrRemote.found) {
-      result += implicitLocalOrRemoteEvent.metric(
+      result += IMPLICIT_LOCAL_OR_REMOTE_TYPE_EVENT.metric(
         WITH_ENV_VAR.with(implicitLocalOrRemote.hasEnvVar),
         WITH_SINGLE_ASTERISK.with(implicitLocalOrRemote.hasSingleAsterisk),
         WITH_DOUBLE_ASTERISK.with(implicitLocalOrRemote.hasDoubleAsterisk),
@@ -417,21 +347,21 @@ internal class IncludeStats(
     }
 
     if (template.found) {
-      result += templateEvent.metric(
+      result += TEMPLATE_TYPE_EVENT.metric(
         WITH_RULES.with(template.hasRules),
         WITH_ENV_VAR.with(template.hasEnvVar),
       )
     }
 
     if (component.found) {
-      result += componentEvent.metric(
+      result += COMPONENT_TYPE_EVENT.metric(
         WITH_RULES.with(component.hasRules),
         WITH_ENV_VAR.with(component.hasEnvVar),
       )
     }
 
     if (project.found) {
-      result += projectEvent.metric(
+      result += PROJECT_TYPE_EVENT.metric(
         WITH_RULES.with(project.hasRules),
         WITH_ENV_VAR.with(project.hasEnvVar),
         WITH_REF.with(project.hasRef),
@@ -441,7 +371,7 @@ internal class IncludeStats(
     }
 
     if (unknown) {
-      result += unknownEvent.metric()
+      result += UNKNOWN_TYPE_EVENT.metric()
     }
 
     return result
@@ -484,3 +414,55 @@ private val WITH_REF = EventFields.Boolean("with_ref", "is `ref:` key-value pres
 private val FILES_ANALYZED = EventFields.Int("files_analyzed", "Number of GitLab CI files successfully analyzed")
 private val FILES_FAILED = EventFields.Int("files_failed", "Number of GitLab CI files that failed to analyze")
 private val TIMEOUT_HAPPENED = EventFields.Boolean("timeout_happened", "Whether the analyzing timed out before completion")
+
+private val GROUP = EventLogGroup(
+  id = "gitlab.ci.include",
+  version = 1
+)
+
+private val EXPLICIT_LOCAL_TYPE_EVENT = GROUP.registerVarargEvent(
+  "explicit.local",
+  WITH_RULES, WITH_ENV_VAR,
+  WITH_SINGLE_ASTERISK, WITH_DOUBLE_ASTERISK,
+)
+
+private val EXPLICIT_REMOTE_TYPE_EVENT = GROUP.registerVarargEvent(
+  "explicit.remote",
+  WITH_RULES, WITH_ENV_VAR,
+  WITH_CACHE
+)
+
+private val IMPLICIT_LOCAL_OR_REMOTE_TYPE_EVENT = GROUP.registerVarargEvent(
+  "implicit.local.or.remote",
+  WITH_ENV_VAR,
+  WITH_SINGLE_ASTERISK, WITH_DOUBLE_ASTERISK,
+)
+
+private val TEMPLATE_TYPE_EVENT = GROUP.registerVarargEvent(
+  "template",
+  WITH_RULES, WITH_ENV_VAR,
+)
+
+private val COMPONENT_TYPE_EVENT = GROUP.registerVarargEvent(
+  "component",
+  WITH_RULES, WITH_ENV_VAR,
+)
+
+private val PROJECT_TYPE_EVENT = GROUP.registerVarargEvent(
+  "project",
+  WITH_RULES, WITH_ENV_VAR,
+  WITH_REF,
+  WITH_SINGLE_ASTERISK,  // no usages expected
+  WITH_DOUBLE_ASTERISK,  // no usages expected
+)
+
+private val UNKNOWN_TYPE_EVENT = GROUP.registerEvent(
+  "unknown"
+)
+
+private val ANALYZING_QUALITY_EVENT = GROUP.registerVarargEvent(
+  "analyzing.quality",
+  FILES_ANALYZED,
+  FILES_FAILED,
+  TIMEOUT_HAPPENED
+)
