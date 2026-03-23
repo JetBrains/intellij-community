@@ -219,9 +219,21 @@ class PluginDependenciesValidator private constructor(
 
           val allExpectedTargets = jpsModuleToRuntimeDescriptors[targetModuleName]
           if (allExpectedTargets == null) {
-            //println("Skipping reporting '$sourceModuleName' -> '$targetModuleName' because no runtime descriptors found\n")
+            if (options.reportProblemIfTargetModuleIsNotIncludedInDistribution) {
+              val errorMessage = """
+                  |'${sourceModule.name}' has compile dependency on '$targetModuleName' in *.iml,
+                  |and it's included in ${sourceDescriptors.joinToString { it.shortPresentation }}, but '$targetModuleName' isn't found in the distribution. 
+                  |This may cause NoClassDefFoundError at runtime.
+                  |Check if classes from '${sourceModule.name}' really use classes from '$targetModuleName' using 'Analyze This Dependency' action in the Project Structure dialog:
+                  |If no, remove the dependency. 
+                  |If the dependency is really used, ensure that '$targetModuleName' is included in the distribution.
+                  |$messageDescribingHowToUpdateLayoutData 
+                  |""".trimMargin()
+              errors.add(PluginModuleConfigurationError(pluginModelModuleName = sourceModule.name, errorMessage = errorMessage))
+            }
             return@processModules
           }
+
           val expectedTargets = allExpectedTargets.filter { it.contentModuleName?.contains("/") != true }.takeIf { it.isNotEmpty() } ?: allExpectedTargets
           val sourceDescriptorsString = if (sourceDescriptors.size == 1) {
             "${sourceDescriptors.first().shortPresentation} doesn't have dependency"
