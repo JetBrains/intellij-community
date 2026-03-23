@@ -41,6 +41,7 @@ jvm_library(
     "//platform/statistics",
     "//python/python-process-output/common",
     "//libraries/kotlin/reflect",
+    "//python/common",
   ],
   plugins = ["@lib//:compose-plugin"]
 )
@@ -101,6 +102,7 @@ jvm_library(
     "//libraries/kotlin/reflect:reflect_test_lib",
     "//python/python-test-env/junit5",
     "//python/python-test-env/junit5:junit5_test_lib",
+    "//python/common:common_test_lib",
   ],
   plugins = ["@lib//:compose-plugin"]
 )
