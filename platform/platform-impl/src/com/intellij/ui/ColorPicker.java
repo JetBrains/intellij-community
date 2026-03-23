@@ -10,6 +10,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.VisualPosition;
@@ -1273,6 +1274,7 @@ public final class ColorPicker extends JPanel implements ColorListener, Document
   }
 
   private static final class DefaultColorPipette extends ColorPipetteBase {
+    private static final Logger LOG = Logger.getInstance(DefaultColorPipette.class);
     private static final int SIZE = 30;
     private static final int DIALOG_SIZE = SIZE - 4;
     private static final Point HOT_SPOT = new Point(DIALOG_SIZE / 2, DIALOG_SIZE / 2);
@@ -1318,7 +1320,13 @@ public final class ColorPicker extends JPanel implements ColorListener, Document
     @Override
     public boolean isAvailable() {
       if (myRobot != null) {
-        myRobot.createScreenCapture(new Rectangle(0, 0, 1, 1));
+        try {
+          myRobot.createScreenCapture(new Rectangle(0, 0, 1, 1));
+        }
+        catch (UnsupportedOperationException e) {
+          LOG.warn(e);
+          return false;
+        }
         return WindowManager.getInstance().isAlphaModeSupported();
       }
       return false;
