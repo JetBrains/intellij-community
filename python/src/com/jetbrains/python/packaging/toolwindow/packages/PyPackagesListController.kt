@@ -43,6 +43,7 @@ internal class PyPackagesListController(val project: Project, val controller: Py
   }
 
   val component: JPanel = JPanel(BorderLayout())
+  private var currentPanel: JComponent? = null
 
   init {
     setContentPanel(scrollingPackageListComponent)
@@ -50,14 +51,16 @@ internal class PyPackagesListController(val project: Project, val controller: Py
 
   override fun dispose() {}
 
+  @RequiresEdt
   fun showSearchResult(installed: List<DisplayablePackage>, repoData: List<PyPackagesViewData>) {
+    showPackageList()
     tablesView.showSearchResult(installed, repoData)
-    setLoadingState(false)
   }
 
+  @RequiresEdt
   fun resetSearch(installed: List<DisplayablePackage>, repos: List<PyPackagesViewData>, currentSdk: Sdk?) {
+    showPackageList()
     tablesView.resetSearch(installed, repos, currentSdk)
-    setLoadingState(false)
   }
 
   fun selectPackage(name: String) {
@@ -69,6 +72,7 @@ internal class PyPackagesListController(val project: Project, val controller: Py
   }
 
   fun startSdkInit() {
+    setContentPanel(scrollingPackageListComponent)
     setLoadingState(true)
   }
 
@@ -81,14 +85,18 @@ internal class PyPackagesListController(val project: Project, val controller: Py
     setContentPanel(noSdkPanel)
   }
 
-  @RequiresEdt
+  private fun showPackageList() {
+    setContentPanel(scrollingPackageListComponent)
+    setLoadingState(false)
+  }
+
   internal fun setLoadingState(isLoading: Boolean) {
     tablesView.setInstalledLoading(isLoading)
   }
 
   private fun setContentPanel(panel: JComponent) {
-    val currentComponent = component.components.firstOrNull()
-    if (currentComponent != panel) {
+    if (currentPanel != panel) {
+      currentPanel = panel
       component.removeAll()
       component.add(panel)
       component.revalidate()
