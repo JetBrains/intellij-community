@@ -57,8 +57,10 @@ suspend fun generateInitDescriptor(
 
       val uniqueJarsClassPath = runtimeClasspath.mapNotNull {
         val uniqueJarName = ModuleFinder.of(it).findAll().single().descriptor().name() + ".jar"
-        if (uniqueJarName in alreadyIncludedJarNames) return@mapNotNull null
-        it.copyTo(uniqueJarsDir.resolve(uniqueJarName), overwrite = true)
+        when {
+          uniqueJarName in alreadyIncludedJarNames -> null
+          else -> it.copyTo(uniqueJarsDir.resolve(uniqueJarName), overwrite = true)
+        }
       }
       val packedModulesDir = temporaryDir.resolve("packed-modules")
       val modulePacker = ModulePacker(
