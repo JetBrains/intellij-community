@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
 import org.gradle.tooling.model.idea.IdeaModule
+import org.jetbrains.kotlin.idea.gradleJava.run.usesComposeGradlePlugin
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 
@@ -24,6 +25,7 @@ internal class ComposeResourcesProjectResolver : AbstractProjectResolverExtensio
 
   override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
     super.populateModuleExtraModels(gradleModule, ideModule)
+    if (!usesComposeGradlePlugin(ideModule)) return
     val mppModel = resolverCtx.getExtraProject(gradleModule, KotlinMPPGradleModel::class.java)
     val composeResourcesModel = resolverCtx.getExtraProject(gradleModule, ComposeResourcesModel::class.java)
     val customComposeResourcesDirs = composeResourcesModel?.customComposeResourcesDirs.orEmpty()
