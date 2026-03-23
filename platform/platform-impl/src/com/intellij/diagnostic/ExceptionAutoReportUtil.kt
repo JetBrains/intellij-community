@@ -96,14 +96,22 @@ object ExceptionAutoReportUtil {
     val throwable = message.throwable
     if (throwable is JBRCrash) return null
     val plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(message.throwable))
-    if (plugin != null && !getPluginInfoByDescriptor(plugin).isDevelopedByJetBrains()) {
-      return null
-    }
     val submitter = DefaultIdeaErrorLogger.findSubmitter(throwable, plugin)
-    if (submitter !is ITNReporter || !isDefaultSubmitter(submitter)) {
+    val itnReporter = submitter as? ITNReporter ?: return null
+
+    val isErrorSendable = if (plugin == null || getPluginInfoByDescriptor(plugin).isDevelopedByJetBrains()) {
+      isDefaultSubmitter(submitter)
+    }
+    else {
+      submitter.javaClass == JetBrainsMarketplaceErrorReportSubmitter::class.java
+    }
+
+    if (isErrorSendable) {
+      return Pair(itnReporter, plugin)
+    }
+    else {
       return null
     }
-    return Pair(submitter, plugin)
   }
 
   private fun isDefaultSubmitter(submitter: ITNReporter): Boolean {
