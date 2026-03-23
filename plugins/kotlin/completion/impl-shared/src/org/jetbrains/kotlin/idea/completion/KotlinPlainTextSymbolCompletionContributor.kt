@@ -1,17 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
+import kotlin.collections.plusAssign
 
 private val separators = listOf(".", "#", "::")
 
-@K1Deprecation
 class KotlinPlainTextSymbolCompletionContributor : PlainTextSymbolCompletionContributor {
     override fun getLookupElements(file: PsiFile, invocationCount: Int, prefix: String): Collection<LookupElement> {
         val ktFile = file as? KtFile ?: return emptyList()

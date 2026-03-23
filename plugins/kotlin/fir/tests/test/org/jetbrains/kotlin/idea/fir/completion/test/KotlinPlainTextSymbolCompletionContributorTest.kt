@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.completion.test
+package org.jetbrains.kotlin.idea.fir.completion.test
 
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributorEP
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 class KotlinPlainTextSymbolCompletionContributorTest : KotlinLightCodeInsightFixtureTestCase() {
 
     override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
+        get() = KotlinPluginMode.K2
 
     fun testBasics() {
         myFixture.configureByText(

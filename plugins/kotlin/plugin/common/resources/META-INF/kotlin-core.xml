@@ -260,6 +260,11 @@
             id="KotlinDumbCompletionContributor"
             order="first, after KotlinCompletionContributor"
             implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.KotlinDumbCompletionContributor"/>
+
+    <completion.plainTextSymbol
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.completion.KotlinPlainTextSymbolCompletionContributor"/>
+
     <codeInsight.wordCompletionFilter language="kotlin"
                                       implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.KotlinWordCompletionFilter"/>
 
