@@ -6,7 +6,7 @@ package com.intellij.codeInsight.highlighting
 import com.intellij.find.FindBundle
 import com.intellij.find.FindManager
 import com.intellij.find.findUsages.FindUsagesHandler
-import com.intellij.find.impl.FindManagerImpl
+import com.intellij.find.impl.FindManagerBase
 import com.intellij.find.usages.api.PsiUsage
 import com.intellij.find.usages.api.Usage
 import com.intellij.find.usages.api.UsageAccess
@@ -79,7 +79,7 @@ private fun getPsiUsageRanges(hostFile: PsiFile, psiTarget: PsiElement): UsageRa
   val project = hostFile.project
   val searchScope: SearchScope = LocalSearchScope(hostFile)
   val detector: ReadWriteAccessDetector? = ReadWriteAccessDetector.findDetector(psiTarget)
-  val oldHandler: FindUsagesHandler? = (FindManager.getInstance(project) as FindManagerImpl)
+  val oldHandler: FindUsagesHandler? = (FindManager.getInstance(project) as FindManagerBase)
     .findUsagesManager
     .getFindUsagesHandler(psiTarget, true)
   val refs = oldHandler?.findReferencesToHighlight(psiTarget, searchScope)

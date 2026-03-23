@@ -42,7 +42,7 @@ import com.intellij.find.actions.SearchTarget2UsageTarget;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
-import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.find.impl.FindManagerBase;
 import com.intellij.find.usages.api.SearchTarget;
 import com.intellij.find.usages.api.UsageOptions;
 import com.intellij.find.usages.impl.AllSearchOptions;
@@ -1218,7 +1218,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public @NotNull String getUsageViewTreeTextRepresentation(@NotNull PsiElement targetElement) {
-    FindUsagesManager usagesManager = ((FindManagerImpl)FindManager.getInstance(getProject())).getFindUsagesManager();
+    FindUsagesManager usagesManager = ((FindManagerBase)FindManager.getInstance(getProject())).getFindUsagesManager();
     FindUsagesHandler handler = usagesManager.getFindUsagesHandler(targetElement, false);
     assertNotNull("Cannot find handler for: " + targetElement, handler);
     UsageViewImpl usageView = (UsageViewImpl)usagesManager.doFindUsages(handler.getPrimaryElements(),
@@ -1249,7 +1249,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public @NotNull @Unmodifiable Collection<UsageInfo> findUsages(@NotNull PsiElement targetElement, @Nullable SearchScope scope) {
     Project project = getProject();
     FindUsagesHandler handler =
-      ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().getFindUsagesHandler(targetElement, false);
+      ((FindManagerBase)FindManager.getInstance(project)).getFindUsagesManager().getFindUsagesHandler(targetElement, false);
 
     CommonProcessors.CollectProcessor<UsageInfo> processor =
       new CommonProcessors.CollectProcessor<>(Collections.synchronizedList(new ArrayList<>()));
