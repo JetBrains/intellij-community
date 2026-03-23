@@ -175,7 +175,7 @@ private suspend fun createOrOpenProjectAndSdk(
       title = PyCharmCommunityCustomizationBundle.message("misc.project.generating.env"),
       cancellation = TaskCancellation.cancellable()
     ) {
-      pythonSdkConfigurationMutex.withLock {
+      project.pythonSdkConfigurationMutex.withLock {
         createVenvAndSdk(ModuleOrProject.ProjectOnly(project), confirmInstallation, systemPythonService, vfsProjectPath)
       }
     }

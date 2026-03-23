@@ -105,7 +105,7 @@ private fun CreateSdkInfoWithTool.asDTO(moduleDir: Directory?): ModuleCreateInfo
  * Returns the configured SDK, or `null` if no SDK could be configured.
  */
 @ApiStatus.Internal
-suspend fun Module.autoConfigureSdkIfNeeded(): PyResult<Sdk>? = pythonSdkConfigurationMutex.withLock {
+suspend fun Module.autoConfigureSdkIfNeeded(): PyResult<Sdk>? = project.pythonSdkConfigurationMutex.withLock {
   val moduleInfo = getModuleInfo() ?: return@withLock null
 
   when (moduleInfo) {

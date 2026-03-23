@@ -50,7 +50,7 @@ internal class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvide
     if (PlatformProjectOpenProcessor.isNewProject(project)) {
       // Don't prompt to install Python on the welcome screen (PY-88204).
       // If Python is already available, the venv/SDK will be configured silently.
-      pythonSdkConfigurationMutex.withLock {
+      project.pythonSdkConfigurationMutex.withLock {
         createVenvAndSdk(ModuleOrProject.ProjectOnly(project), confirmInstallation = { false }).orLogException(thisLogger())
       }
     }

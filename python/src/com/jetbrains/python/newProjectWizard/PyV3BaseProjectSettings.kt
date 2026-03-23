@@ -47,7 +47,7 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
       }.getOr { return@coroutineScope it }
     }
 
-    val sdkResult = pythonSdkConfigurationMutex.withLock {
+    val sdkResult = module.project.pythonSdkConfigurationMutex.withLock {
       val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = withBackgroundProgress(project, PyBundle.message("python.sdk.creating.python.sdk")) {
         getSdkAndInterpreter(module)
       }.getOr { return@withLock it }

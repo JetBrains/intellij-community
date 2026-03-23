@@ -117,7 +117,7 @@ class PythonLanguageRuntimeUI(
 
     val sdk = runWithModalProgressBlocking(project, message("python.sdk.progress.setting.up.environment")) {
       withContext(TraceContext(message("trace.context.add.remote.python.sdk.dialog", targetSupplier.get().getTargetType().displayName))) {
-        pythonSdkConfigurationMutex.withLock {
+        project.pythonSdkConfigurationMutex.withLock {
           sdkManager.getOrCreateSdkWithModal(ModuleOrProject.ModuleAndProject(module)).onFailure {
             errorSink.emit(it)
           }.successOrNull?.also {

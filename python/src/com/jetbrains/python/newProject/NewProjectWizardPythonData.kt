@@ -129,7 +129,7 @@ class NewPythonProjectStep(parent: NewProjectWizardStep, val createPythonModuleS
     }
 
     runWithModalProgressBlocking(project, PyBundle.message("python.sdk.creating.python.sdk")) {
-      pythonSdkConfigurationMutex.withLock {
+      project.pythonSdkConfigurationMutex.withLock {
         val (sdk, _) = pySdkCreator.getSdk(moduleOrProject).getOr {
           errorSink.emit(it.error, project)
           return@withLock
