@@ -164,6 +164,9 @@ abstract class ScratchFileEditorWithPreview(
     fun setPreviewEnabled(isPreviewEnabled: Boolean) {
         setLayout(if (isPreviewEnabled) Layout.SHOW_EDITOR_AND_PREVIEW else Layout.SHOW_EDITOR)
     }
+
+    @TestOnly
+    fun dumpExplainContent(): String = previewOutputManager.dumpContent()
 }
 
 fun TextEditor.findScratchFileEditorWithPreview(): ScratchFileEditorWithPreview? =

@@ -8,7 +8,6 @@ import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.testFramework.FileEditorManagerTestCase
@@ -67,9 +66,11 @@ abstract class AbstractK2ScratchRunActionTest : FileEditorManagerTestCase(), Exp
                 .replace(Regex("(?m)^WARNING:[^\n]*\n"), "")
         }
 
-        val previewText = (editorWithPreview.previewEditor as? TextEditor)?.editor?.document?.text ?: error("failed to get explain text")
+        val previewText = editorWithPreview.dumpExplainContent()
         val expectedExplainFile = Path(testDataPath, fileName.replace(".kts", ".explain"))
-        assertEqualsToFile(expectedExplainFile, previewText)
+        assertEqualsToFile(expectedExplainFile, previewText) { output ->
+            output.replace(hexAddressRegex, "<address>")
+        }
     }
 
     protected fun configureScratchEditor(fileName: String): ScratchFileEditorWithPreview {
@@ -135,3 +136,5 @@ abstract class AbstractK2ScratchRunActionTest : FileEditorManagerTestCase(), Exp
         }
     }
 }
+
+private val hexAddressRegex = Regex("@[0-9a-fA-F]+")

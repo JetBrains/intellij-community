@@ -87,20 +87,22 @@ class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val proje
                 handler.handle(scratchFile, ScratchOutput(stdout, ScratchOutputType.OUTPUT))
             }
 
-            val explanations = scriptFile.explainFilePath.readLines().associate {
-                it.substringBefore('=', "") to it.substringAfter('=')
-            }.filterKeys { it.isNotBlank() }.map { (key, value) ->
-                val leftBracketIndex = key.indexOf("(")
-                val rightBracketIndex = key.indexOf(")")
-                val commaIndex = key.indexOf(",")
+            val explanations = if (!Files.exists(scriptFile.explainFilePath)) emptyList() else {
+                scriptFile.explainFilePath.readLines().associate {
+                    it.substringBefore('=', "") to unescapeExplainValue(it.substringAfter('='))
+                }.filterKeys { it.isNotBlank() }.map { (key, value) ->
+                    val leftBracketIndex = key.indexOf("(")
+                    val rightBracketIndex = key.indexOf(")")
+                    val commaIndex = key.indexOf(",")
 
-                val offsets =
-                    key.substring(leftBracketIndex + 1, commaIndex).toInt() to key.substring(commaIndex + 2, rightBracketIndex)
-                        .toInt()
+                    val offsets =
+                        key.substring(leftBracketIndex + 1, commaIndex).trim().toInt() to
+                                key.substring(commaIndex + 1, rightBracketIndex).trim().toInt()
 
-                ExplainInfo(
-                    key.substring(0, leftBracketIndex), offsets, value, scratchFile.getPsiFile()?.getLineNumber(offsets.second)
-                )
+                    ExplainInfo(
+                        key.substring(0, leftBracketIndex), offsets, value, scratchFile.getPsiFile()?.getLineNumber(offsets.first)
+                    )
+                }
             }
 
             handler.handle(scratchFile, explanations, scope)
@@ -184,6 +186,12 @@ class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val proje
     override fun stop() {
         handler.onFinish(scratchFile)
     }
+
+    private fun unescapeExplainValue(value: String): String =
+        value.replace("\\\\", "\u0000")
+            .replace("\\n", "\n")
+            .replace("\\r", "\r")
+            .replace("\u0000", "\\")
 
     private data class CompilationResult(
         val code: Int,
