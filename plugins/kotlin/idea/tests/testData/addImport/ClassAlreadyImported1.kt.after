@@ -1,3 +1,4 @@
+// IGNORE_K2
 // IMPORT: java.util.ArrayList
 package p
 

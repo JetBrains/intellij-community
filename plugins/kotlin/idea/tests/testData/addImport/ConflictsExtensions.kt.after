@@ -1,3 +1,4 @@
+// IGNORE_K2
 //IMPORT: conflicts.extensions.foo5
 package p
 

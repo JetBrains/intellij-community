@@ -1,3 +1,4 @@
+// IGNORE_K2
 // IMPORT: dependency.Class2
 package p
 
