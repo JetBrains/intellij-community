@@ -61,7 +61,8 @@ Provider/source-specific context rules are defined in separate specs under `spec
 
 - `AgentPromptContextResolverService.collectDefaultContext(...)` returns auto context only; manual context items are merged later by popup UI state.
 
-- In invocation phase, lower contributor order wins precedence for mutually exclusive sources (for example test-runner before VCS before project-view).
+- In invocation phase, extension registration order wins precedence for mutually exclusive sources.
+  - Contributors must use stable extension ids plus `order="before ..."` / `order="after ..."` metadata to declare precedence across modules.
   [@test] ../../prompt/testSrc/context/AgentPromptContextResolverServiceTest.kt
 
 - Envelope formatting contract:

@@ -24,9 +24,6 @@ internal class AgentPromptProjectViewSelectionContextContributor : AgentPromptCo
   override val phase: AgentPromptContextContributorPhase
     get() = AgentPromptContextContributorPhase.INVOCATION
 
-  override val order: Int
-    get() = 100
-
   override fun collect(invocationData: AgentPromptInvocationData): List<AgentPromptContextItem> {
     val selectedFiles = extractSelectedFiles(invocationData) ?: return emptyList()
     if (selectedFiles.isEmpty()) {

@@ -22,9 +22,6 @@ internal class AgentPromptTreeSelectionContextContributor : AgentPromptContextCo
   override val phase: AgentPromptContextContributorPhase
     get() = AgentPromptContextContributorPhase.INVOCATION
 
-  override val order: Int
-    get() = 200
-
   override fun collect(invocationData: AgentPromptInvocationData): List<AgentPromptContextItem> {
     val dataContext = invocationData.dataContextOrNull() ?: return emptyList()
     val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext)

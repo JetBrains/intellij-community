@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncationReas
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
 import com.intellij.agent.workbench.prompt.core.array
+import com.intellij.agent.workbench.prompt.core.bool
 import com.intellij.agent.workbench.prompt.core.number
 import com.intellij.agent.workbench.prompt.core.objOrNull
 import com.intellij.agent.workbench.prompt.core.string
@@ -13,13 +14,17 @@ import com.intellij.agent.workbench.prompt.testrunner.AgentPromptTestRunnerBundl
 import com.intellij.execution.Location
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.TestConsoleProperties
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.pom.Navigatable
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -41,6 +46,87 @@ class AgentPromptTestSelectionContextContributorTest {
     val result = contributor.collect(invocationData(dataContext = dataContext))
 
     assertThat(result).isEmpty()
+  }
+
+  @Test
+  fun returnsEmptyWhenSelectedTestsComeFromSourceEditorInvocation() {
+    runInEdtAndWait {
+      val editorFactory = EditorFactory.getInstance()
+      val editor = editorFactory.createEditor(editorFactory.createDocument("fun test() = Unit"))
+      try {
+        val dataContext = SimpleDataContext.builder()
+          .add(CommonDataKeys.EDITOR, editor)
+          .add(AbstractTestProxy.DATA_KEY, testProxy(name = "testSingle", isDefect = true, errorMessage = "single failure"))
+          .build()
+
+        val result = contributor.collect(invocationData(dataContext = dataContext))
+
+        assertThat(result).isEmpty()
+      }
+      finally {
+        editorFactory.releaseEditor(editor)
+      }
+    }
+  }
+
+  @Test
+  fun includesSelectedTestsWhenInvocationUsesConsoleEditor() {
+    val project = ProjectManager.getInstance().defaultProject
+
+    runInEdtAndWait {
+      val editorFactory = EditorFactory.getInstance()
+      val editor = editorFactory.createViewer(editorFactory.createDocument("AssertionError: boom"), project, EditorKind.CONSOLE)
+      try {
+        val dataContext = SimpleDataContext.builder()
+          .add(CommonDataKeys.EDITOR, editor)
+          .add(AbstractTestProxy.DATA_KEY, testProxy(name = "testSingle", isDefect = true, errorMessage = "single failure"))
+          .build()
+
+        val result = contributor.collect(invocationData(dataContext = dataContext))
+
+        assertThat(result).hasSize(1)
+        val item = result.single()
+        val payload = item.payload.objOrNull()!!
+        assertThat(item.body).isEqualTo("failed: testSingle | assertion: single failure")
+        assertThat(payload.string("focusedOutput")).isEqualTo("AssertionError: boom")
+        assertThat(payload.bool("focusedOutputFromSelection")).isFalse()
+      }
+      finally {
+        editorFactory.releaseEditor(editor)
+      }
+    }
+  }
+
+  @Test
+  fun prefersSelectedConsoleTextOverFullDocument() {
+    val project = ProjectManager.getInstance().defaultProject
+    val documentText = "\n\nAssertionError: boom\n  at MainTest.test(MainTest.kt:42)\nextra tail\n"
+
+    runInEdtAndWait {
+      val editorFactory = EditorFactory.getInstance()
+      val editor = editorFactory.createViewer(editorFactory.createDocument(documentText), project, EditorKind.CONSOLE)
+      try {
+        val selectionStart = documentText.indexOf("AssertionError")
+        val selectionEnd = documentText.indexOf("\nextra tail")
+        editor.selectionModel.setSelection(selectionStart, selectionEnd)
+        val dataContext = SimpleDataContext.builder()
+          .add(CommonDataKeys.EDITOR, editor)
+          .add(AbstractTestProxy.DATA_KEY, testProxy(name = "testSingle", isDefect = true, errorMessage = "single failure"))
+          .build()
+
+        val result = contributor.collect(invocationData(dataContext = dataContext))
+
+        assertThat(result).hasSize(1)
+        val payload = result.single().payload.objOrNull()!!
+        assertThat(payload.string("focusedOutput")).isEqualTo(
+          "AssertionError: boom\n  at MainTest.test(MainTest.kt:42)"
+        )
+        assertThat(payload.bool("focusedOutputFromSelection")).isTrue()
+      }
+      finally {
+        editorFactory.releaseEditor(editor)
+      }
+    }
   }
 
   @Test
@@ -162,6 +248,38 @@ class AgentPromptTestSelectionContextContributorTest {
     assertThat(payload.number("candidateCount")).isEqualTo("8")
     assertThat(payload.number("includedCount")).isEqualTo("5")
     assertThat(item.truncation.reason).isEqualTo(AgentPromptContextTruncationReason.SOURCE_LIMIT)
+  }
+
+  @Test
+  fun truncatesFocusedConsoleOutput() {
+    val project = ProjectManager.getInstance().defaultProject
+    val documentText = buildString {
+      append("AssertionError: ")
+      append("x".repeat(5_000))
+    }
+
+    runInEdtAndWait {
+      val editorFactory = EditorFactory.getInstance()
+      val editor = editorFactory.createViewer(editorFactory.createDocument(documentText), project, EditorKind.CONSOLE)
+      try {
+        val dataContext = SimpleDataContext.builder()
+          .add(CommonDataKeys.EDITOR, editor)
+          .add(AbstractTestProxy.DATA_KEY, testProxy(name = "testSingle", isDefect = true, errorMessage = null))
+          .build()
+
+        val result = contributor.collect(invocationData(dataContext = dataContext))
+
+        assertThat(result).hasSize(1)
+        val item = result.single()
+        val payload = item.payload.objOrNull()!!
+        assertThat(payload.string("focusedOutput")).hasSize(4_000)
+        assertThat(payload.bool("focusedOutputFromSelection")).isFalse()
+        assertThat(item.truncation.reason).isEqualTo(AgentPromptContextTruncationReason.SOURCE_LIMIT)
+      }
+      finally {
+        editorFactory.releaseEditor(editor)
+      }
+    }
   }
 
   @Test

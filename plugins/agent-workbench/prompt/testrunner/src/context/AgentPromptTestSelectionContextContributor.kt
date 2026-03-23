@@ -14,10 +14,15 @@ import com.intellij.agent.workbench.prompt.testrunner.AgentPromptTestRunnerBundl
 import com.intellij.agent.workbench.prompt.testrunner.computeTestStatusCounts
 import com.intellij.agent.workbench.prompt.testrunner.formatTestReference
 import com.intellij.agent.workbench.prompt.testrunner.normalizeTestStatus
+import com.intellij.execution.impl.ConsoleViewUtil
 import com.intellij.execution.testframework.AbstractTestProxy
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.editor.Editor
 
 private const val MAX_INCLUDED_SELECTION_TESTS = 5
 private const val MAX_ASSERTION_HINT_CHARS = 180
+private const val MAX_FOCUSED_OUTPUT_CHARS = 4_000
 private val WHITESPACE_REGEX = Regex("\\s+")
 
 private data class SelectedTestContext(
@@ -29,20 +34,29 @@ private data class SelectedTestContext(
   @JvmField val isDefect: Boolean,
 )
 
+private data class FocusedOutputExcerpt(
+  @JvmField val text: String,
+  @JvmField val fromSelection: Boolean,
+  @JvmField val originalChars: Int,
+  @JvmField val includedChars: Int,
+)
+
 internal class AgentPromptTestSelectionContextContributor : AgentPromptContextContributorBridge {
   override val phase: AgentPromptContextContributorPhase
     get() = AgentPromptContextContributorPhase.INVOCATION
 
-  override val order: Int
-    get() = 40
-
   override fun collect(invocationData: AgentPromptInvocationData): List<AgentPromptContextItem> {
-    val selectedTests = extractSelectedTests(invocationData)
+    val dataContext = invocationData.dataContextOrNull() ?: return emptyList()
+    val selectedTests = extractSelectedTests(dataContext)
       .map(::toSelectedContext)
     val normalizedSelection = normalizeSelection(selectedTests)
     if (normalizedSelection.isEmpty()) {
       return emptyList()
     }
+    if (!isTestOwnedInvocation(dataContext)) {
+      return emptyList()
+    }
+    val focusedOutput = extractFocusedOutput(dataContext)
 
     val included = normalizedSelection.take(MAX_INCLUDED_SELECTION_TESTS)
     if (included.isEmpty()) {
@@ -70,13 +84,22 @@ internal class AgentPromptTestSelectionContextContributor : AgentPromptContextCo
       }
       AgentPromptPayloadValue.Obj(fields)
     }
-    val payload = AgentPromptPayload.obj(
+    val payloadFields = linkedMapOf<String, AgentPromptPayloadValue>(
       "entries" to AgentPromptPayloadValue.Arr(payloadEntries),
       "selectedCount" to AgentPromptPayload.num(normalizedSelection.size),
       "candidateCount" to AgentPromptPayload.num(normalizedSelection.size),
       "includedCount" to AgentPromptPayload.num(included.size),
       "statusCounts" to toPayloadStatusCounts(statusCounts),
     )
+    focusedOutput?.let { excerpt ->
+      payloadFields["focusedOutput"] = AgentPromptPayload.str(excerpt.text)
+      payloadFields["focusedOutputFromSelection"] = AgentPromptPayload.bool(excerpt.fromSelection)
+    }
+    val payload = AgentPromptPayloadValue.Obj(payloadFields)
+    val outputWasTruncated = focusedOutput?.let { excerpt ->
+      excerpt.originalChars > excerpt.includedChars
+    } == true
+    val summaryWasTruncated = normalizedSelection.size > included.size
 
     return listOf(
       AgentPromptContextItem(
@@ -87,9 +110,9 @@ internal class AgentPromptTestSelectionContextContributor : AgentPromptContextCo
         itemId = "testRunner.selection",
         source = "testRunner",
         truncation = AgentPromptContextTruncation(
-          originalChars = fullContent.length,
-          includedChars = content.length,
-          reason = if (normalizedSelection.size > included.size) {
+          originalChars = fullContent.length + (focusedOutput?.originalChars ?: 0),
+          includedChars = content.length + (focusedOutput?.includedChars ?: 0),
+          reason = if (summaryWasTruncated || outputWasTruncated) {
             AgentPromptContextTruncationReason.SOURCE_LIMIT
           }
           else {
@@ -100,8 +123,7 @@ internal class AgentPromptTestSelectionContextContributor : AgentPromptContextCo
     )
   }
 
-  private fun extractSelectedTests(invocationData: AgentPromptInvocationData): List<AbstractTestProxy> {
-    val dataContext = invocationData.dataContextOrNull() ?: return emptyList()
+  private fun extractSelectedTests(dataContext: DataContext): List<AbstractTestProxy> {
     val fromArray = AbstractTestProxy.DATA_KEYS
       .getData(dataContext)
       ?.toList()
@@ -114,6 +136,32 @@ internal class AgentPromptTestSelectionContextContributor : AgentPromptContextCo
       .getData(dataContext)
       ?.let(::listOf)
       .orEmpty()
+  }
+
+  private fun isTestOwnedInvocation(dataContext: DataContext): Boolean {
+    val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: return true
+    return ConsoleViewUtil.isConsoleViewEditor(editor)
+  }
+
+  private fun extractFocusedOutput(dataContext: DataContext): FocusedOutputExcerpt? {
+    val editor = focusedConsoleEditor(dataContext) ?: return null
+    val selectedText = editor.selectionModel.selectedText
+      ?.let(::normalizeFocusedOutput)
+      ?.takeIf { it.isNotEmpty() }
+    if (selectedText != null) {
+      return truncateFocusedOutput(selectedText, fromSelection = true)
+    }
+
+    val documentText = normalizeFocusedOutput(editor.document.text)
+    if (documentText.isEmpty()) {
+      return null
+    }
+    return truncateFocusedOutput(documentText, fromSelection = false)
+  }
+
+  private fun focusedConsoleEditor(dataContext: DataContext): Editor? {
+    val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: return null
+    return editor.takeIf { candidate -> ConsoleViewUtil.isConsoleViewEditor(candidate) }
   }
 
   private fun toSelectedContext(testProxy: AbstractTestProxy): SelectedTestContext {
@@ -212,6 +260,34 @@ internal class AgentPromptTestSelectionContextContributor : AgentPromptContextCo
     }
     return false
   }
+}
+
+private fun normalizeFocusedOutput(rawText: String): String {
+  val normalizedNewlines = rawText
+    .replace("\r\n", "\n")
+    .replace('\r', '\n')
+  val lines = normalizedNewlines.lines()
+  val firstNonBlank = lines.indexOfFirst { line -> line.isNotBlank() }
+  if (firstNonBlank < 0) {
+    return ""
+  }
+  val lastNonBlank = lines.indexOfLast { line -> line.isNotBlank() }
+  return lines.subList(firstNonBlank, lastNonBlank + 1).joinToString(separator = "\n")
+}
+
+private fun truncateFocusedOutput(text: String, fromSelection: Boolean): FocusedOutputExcerpt {
+  val includedText = if (text.length <= MAX_FOCUSED_OUTPUT_CHARS) {
+    text
+  }
+  else {
+    text.take(MAX_FOCUSED_OUTPUT_CHARS)
+  }
+  return FocusedOutputExcerpt(
+    text = includedText,
+    fromSelection = fromSelection,
+    originalChars = text.length,
+    includedChars = includedText.length,
+  )
 }
 
 private fun renderLine(entry: SelectedTestContext): String {

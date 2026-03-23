@@ -85,9 +85,7 @@
     <orderEntry type="module" module-name="intellij.terminal.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.terminal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.instanceContainer.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.chat" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.plugin" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.sessions" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.plugin.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.polySymbols.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.native.tooling.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />

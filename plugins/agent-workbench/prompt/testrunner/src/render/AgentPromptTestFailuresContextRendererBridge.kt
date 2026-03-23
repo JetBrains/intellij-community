@@ -39,12 +39,23 @@ class AgentPromptTestFailuresContextRendererBridge : AgentPromptContextRendererB
     val statusCounts = extractStatusCounts(item, entries)
     val label = composeTestsGroupLabel(statusCounts)
     val includeStatusPrefix = shouldIncludeStatusPrefix(statusCounts)
+    val focusedOutput = extractFocusedOutput(item)
     return buildString {
       append(label)
       append(renderTruncationSuffix(item))
       if (entries.isNotEmpty()) {
         append('\n')
         append(entries.joinToString(separator = "\n") { entry -> renderEntryLine(entry, includeStatusPrefix) })
+      }
+      if (focusedOutput != null) {
+        if (entries.isNotEmpty()) {
+          append("\n\n")
+        }
+        else {
+          append('\n')
+        }
+        append("focused failure output:\n")
+        append(appendCodeBlock(content = focusedOutput))
       }
     }
   }
@@ -166,6 +177,12 @@ class AgentPromptTestFailuresContextRendererBridge : AgentPromptContextRendererB
     return computeTestStatusCounts(entries.map { entry -> entry.status })
   }
 
+  private fun extractFocusedOutput(item: AgentPromptContextItem): String? {
+    return item.payload.objOrNull()
+      ?.string("focusedOutput")
+      ?.takeIf { it.isNotBlank() }
+  }
+
   private fun parseStatusCount(value: AgentPromptPayloadValue): Int? {
     return when (value) {
       is AgentPromptPayloadValue.Num -> value.value.toIntOrNull()
@@ -234,4 +251,32 @@ private fun composeChipText(label: String, preview: String): String {
     else -> normalizedPreview.take(60) + "\u2026"
   }
   return "$label: $suffix"
+}
+
+private fun appendCodeBlock(content: String): String {
+  val fence = "`".repeat(maxOf(3, maxConsecutiveBackticks(content) + 1))
+  return buildString(content.length + 16) {
+    append(fence)
+    append("text\n")
+    append(content)
+    append('\n')
+    append(fence)
+  }
+}
+
+private fun maxConsecutiveBackticks(value: String): Int {
+  var best = 0
+  var current = 0
+  value.forEach { ch ->
+    if (ch == '`') {
+      current += 1
+      if (current > best) {
+        best = current
+      }
+    }
+    else {
+      current = 0
+    }
+  }
+  return best
 }

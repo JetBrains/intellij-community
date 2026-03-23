@@ -31,7 +31,7 @@ class AgentPromptContextResolverServiceUiContributorsTest {
       contributorsProvider = {
         listOf(
           AgentPromptEditorContextContributor(),
-          testContributor(contributorOrder = 50) {
+          testContributor {
             listOf(contextItem(AgentPromptContextRendererIds.VCS_COMMITS, expectedHashes.joinToString(separator = "\n")))
           },
           AgentPromptProjectViewSelectionContextContributor(),
@@ -60,10 +60,10 @@ class AgentPromptContextResolverServiceUiContributorsTest {
       contributorsProvider = {
         listOf(
           AgentPromptEditorContextContributor(),
-          testContributor(contributorOrder = 40) {
+          testContributor {
             listOf(contextItem(AgentPromptContextRendererIds.TEST_FAILURES, expectedTestLine))
           },
-          testContributor(contributorOrder = 50) {
+          testContributor {
             listOf(contextItem(AgentPromptContextRendererIds.VCS_COMMITS, expectedVcsHash))
           },
           AgentPromptProjectViewSelectionContextContributor(),
@@ -103,15 +103,11 @@ class AgentPromptContextResolverServiceUiContributorsTest {
   }
 
   private fun testContributor(
-    contributorOrder: Int,
     collector: (AgentPromptInvocationData) -> List<AgentPromptContextItem>,
   ): AgentPromptContextContributorBridge {
     return object : AgentPromptContextContributorBridge {
       override val phase: AgentPromptContextContributorPhase
         get() = AgentPromptContextContributorPhase.INVOCATION
-
-      override val order: Int
-        get() = contributorOrder
 
       override fun collect(invocationData: AgentPromptInvocationData): List<AgentPromptContextItem> {
         return collector(invocationData)

@@ -19,15 +19,15 @@ class AgentPromptContextResolverServiceTest {
     val service = AgentPromptContextResolverService(
       contributorsProvider = {
         listOf(
-          testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION, contributorOrder = 0) {
+          testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION) {
             firstInvocationCalls++
             emptyList()
           },
-          testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION, contributorOrder = 1) {
+          testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION) {
             secondInvocationCalls++
             listOf(contextItem(AgentPromptContextRendererIds.SNIPPET))
           },
-          testContributor(contributorPhase = AgentPromptContextContributorPhase.FALLBACK, contributorOrder = 0) {
+          testContributor(contributorPhase = AgentPromptContextContributorPhase.FALLBACK) {
             fallbackCalls++
             listOf(contextItem(AgentPromptContextRendererIds.PATHS))
           },
@@ -51,8 +51,8 @@ class AgentPromptContextResolverServiceTest {
     val service = AgentPromptContextResolverService(
       contributorsProvider = {
         listOf(
-          testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION, contributorOrder = 0) { emptyList() },
-          testContributor(contributorPhase = AgentPromptContextContributorPhase.FALLBACK, contributorOrder = 0) {
+          testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION) { emptyList() },
+          testContributor(contributorPhase = AgentPromptContextContributorPhase.FALLBACK) {
             fallbackCalls++
             listOf(contextItem(AgentPromptContextRendererIds.PATHS))
           },
@@ -72,10 +72,10 @@ class AgentPromptContextResolverServiceTest {
     val service = AgentPromptContextResolverService(
       contributorsProvider = {
         listOf(
-          testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION, contributorOrder = 0) {
+          testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION) {
             error("boom")
           },
-          testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION, contributorOrder = 1) {
+          testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION) {
             listOf(contextItem(AgentPromptContextRendererIds.FILE))
           },
         )
@@ -86,6 +86,22 @@ class AgentPromptContextResolverServiceTest {
 
     assertThat(resolved.map { it.rendererId }).containsExactly(AgentPromptContextRendererIds.FILE)
     assertThat(resolved.single().phase).isEqualTo(AgentPromptContextContributorPhase.INVOCATION)
+  }
+
+  @Test
+  fun registrationOrderWinsOverClassNameSortingWithinPhase() {
+    val service = AgentPromptContextResolverService(
+      contributorsProvider = {
+        listOf(
+          ZuluInvocationContributor(contextItem(AgentPromptContextRendererIds.FILE)),
+          AlphaInvocationContributor(contextItem(AgentPromptContextRendererIds.SNIPPET)),
+        )
+      }
+    )
+
+    val resolved = service.collectDefaultContext(invocationData())
+
+    assertThat(resolved.map { it.rendererId }).containsExactly(AgentPromptContextRendererIds.FILE)
   }
 
   private fun invocationData(dataContext: com.intellij.openapi.actionSystem.DataContext? = null): AgentPromptInvocationData {
@@ -116,19 +132,27 @@ class AgentPromptContextResolverServiceTest {
 
   private fun testContributor(
     contributorPhase: AgentPromptContextContributorPhase,
-    contributorOrder: Int,
     collector: (AgentPromptInvocationData) -> List<AgentPromptContextItem>,
   ): AgentPromptContextContributorBridge {
     return object : AgentPromptContextContributorBridge {
       override val phase: AgentPromptContextContributorPhase
         get() = contributorPhase
 
-      override val order: Int
-        get() = contributorOrder
-
       override fun collect(invocationData: AgentPromptInvocationData): List<AgentPromptContextItem> {
         return collector(invocationData)
       }
     }
+  }
+
+  private class AlphaInvocationContributor(
+    private val item: AgentPromptContextItem,
+  ) : AgentPromptContextContributorBridge {
+    override fun collect(invocationData: AgentPromptInvocationData): List<AgentPromptContextItem> = listOf(item)
+  }
+
+  private class ZuluInvocationContributor(
+    private val item: AgentPromptContextItem,
+  ) : AgentPromptContextContributorBridge {
+    override fun collect(invocationData: AgentPromptInvocationData): List<AgentPromptContextItem> = listOf(item)
   }
 }

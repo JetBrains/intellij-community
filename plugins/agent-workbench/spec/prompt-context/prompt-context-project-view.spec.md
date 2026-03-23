@@ -28,7 +28,7 @@ Define project-view prompt context collection from selected files/directories, i
 ## Requirements
 - Contributor registration contract:
   - phase is `INVOCATION`,
-  - order is `100`.
+  - registration is ordered after the VCS contributor and before the tree-selection contributor via extension ordering.
 
 - Project-view contributor must collect selection from:
   - `CommonDataKeys.VIRTUAL_FILE_ARRAY` when present,

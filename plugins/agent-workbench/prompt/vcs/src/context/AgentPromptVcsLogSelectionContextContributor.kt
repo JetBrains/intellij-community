@@ -26,9 +26,6 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
   override val phase: AgentPromptContextContributorPhase
     get() = AgentPromptContextContributorPhase.INVOCATION
 
-  override val order: Int
-    get() = 50
-
   override fun collect(invocationData: AgentPromptInvocationData): List<AgentPromptContextItem> {
     val selectedCommits = extractSelectedCommits(invocationData)
     if (selectedCommits.isEmpty()) {

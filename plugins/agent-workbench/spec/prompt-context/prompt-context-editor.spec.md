@@ -29,8 +29,8 @@ Define editor-driven prompt context behavior for both direct invocation and fall
 
 ## Requirements
 - Contributor registration contract:
-  - `AgentPromptEditorContextContributor` runs in `INVOCATION` phase with order `0`,
-  - `AgentPromptSelectedEditorFallbackContextContributor` runs in `FALLBACK` phase with order `0`.
+  - `AgentPromptEditorContextContributor` runs in `INVOCATION` phase and is registered after the test-runner contributor and before the VCS contributor via extension ordering,
+  - `AgentPromptSelectedEditorFallbackContextContributor` runs in `FALLBACK` phase.
 
 - Editor invocation contributor must return no items when invocation has no editor in data context.
   [@test] ../../prompt/testSrc/context/AgentPromptEditorContextContributorTest.kt
