@@ -79,14 +79,6 @@ com.intellij.ide.script.IdeScriptEngine
 c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet
 f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$PropNames
-c:com.intellij.openapi.editor.ex.EditorSettingsRefactoringOptionsProvider
-- sf:Companion:com.intellij.openapi.editor.ex.EditorSettingsRefactoringOptionsProvider$Companion
-- <init>():V
-- sf:getInstance():com.intellij.openapi.editor.ex.EditorSettingsRefactoringOptionsProvider
-- isShowInlineDialog():Z
-- setShowInlineDialog(Z):V
-f:com.intellij.openapi.editor.ex.EditorSettingsRefactoringOptionsProvider$Companion
-- f:getInstance():com.intellij.openapi.editor.ex.EditorSettingsRefactoringOptionsProvider
 com.intellij.openapi.fileEditor.impl.EditorTabColorProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

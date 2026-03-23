@@ -25,7 +25,8 @@
     <applicationService serviceImplementation="com.intellij.ide.GeneralSettings"/>
     <applicationSettings service="com.intellij.ide.GeneralSettings"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsRefactoringOptionsProvider"/>
+    <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsRefactoringOptionsProviderImpl"
+                        serviceInterface="com.intellij.openapi.editor.ex.EditorSettingsRefactoringOptionsProvider"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable" client="all"/>
     <applicationSettings service="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
 

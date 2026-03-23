@@ -24,10 +24,10 @@ abstract class AbstractKotlinInlinePropertyDialog(property: KtProperty,
         if (simpleLocal) {
             @Suppress("RemoveRedundantQualifierName")
             setDoNotAskOption(object : com.intellij.openapi.ui.DoNotAskOption {
-                override fun isToBeShown() = EditorSettingsRefactoringOptionsProvider.getInstance().isShowInlineDialog()
+                override fun isToBeShown() = EditorSettingsRefactoringOptionsProvider.getInstance().isShowInlineLocalDialog
 
                 override fun setToBeShown(value: Boolean, exitCode: Int) {
-                    EditorSettingsRefactoringOptionsProvider.getInstance().setShowInlineDialog(value)
+                    EditorSettingsRefactoringOptionsProvider.getInstance().isShowInlineLocalDialog = value
                 }
 
                 override fun canBeHidden() = true

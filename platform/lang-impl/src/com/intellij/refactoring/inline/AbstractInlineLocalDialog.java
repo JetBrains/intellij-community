@@ -15,12 +15,12 @@ public abstract class AbstractInlineLocalDialog extends InlineOptionsDialog {
       setDoNotAskOption(new com.intellij.openapi.ui.DoNotAskOption() {
         @Override
         public boolean isToBeShown() {
-          return EditorSettingsRefactoringOptionsProvider.getInstance().isShowInlineDialog();
+          return EditorSettingsRefactoringOptionsProvider.getInstance().isShowInlineLocalDialog();
         }
 
         @Override
         public void setToBeShown(boolean value, int exitCode) {
-          EditorSettingsRefactoringOptionsProvider.getInstance().setShowInlineDialog(value);
+          EditorSettingsRefactoringOptionsProvider.getInstance().setShowInlineLocalDialog(value);
         }
 
         @Override

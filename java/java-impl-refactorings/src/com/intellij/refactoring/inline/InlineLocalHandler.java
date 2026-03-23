@@ -169,7 +169,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
     }
     Project project = context.project();
     if (mode == InlineMode.CHECK_CONFLICTS || mode == InlineMode.ASK) {
-      if (refExpr == null || allRefs.size() == 1 || !EditorSettingsRefactoringOptionsProvider.getInstance().isShowInlineDialog()) {
+      if (refExpr == null || allRefs.size() == 1 || !EditorSettingsRefactoringOptionsProvider.getInstance().isShowInlineLocalDialog()) {
         mode = InlineMode.INLINE_ALL_AND_DELETE;
       } else {
         return createChooser(pattern, refExpr, allRefs);
@@ -285,7 +285,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
 
     if (mode == InlineMode.ASK) {
       if (refExpr != null && refsToInlineList.size() > 1 && refsToInlineList.contains(refExpr) &&
-          EditorSettingsRefactoringOptionsProvider.getInstance().isShowInlineDialog()) {
+          EditorSettingsRefactoringOptionsProvider.getInstance().isShowInlineLocalDialog()) {
         return createChooser(local, refExpr, refsToInlineList);
       }
       if (defToInline == local.getInitializer() && PsiUtil.skipParenthesizedExprDown(defToInline) instanceof PsiReferenceExpression ref &&
