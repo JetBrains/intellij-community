@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.platform.statistics.envTests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "envTests_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 jvm_library(
   name = "envTests",
@@ -21,6 +27,7 @@ jvm_library(
   module_name = "intellij.platform.statistics.envTests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":envTests_test_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:junit4",
