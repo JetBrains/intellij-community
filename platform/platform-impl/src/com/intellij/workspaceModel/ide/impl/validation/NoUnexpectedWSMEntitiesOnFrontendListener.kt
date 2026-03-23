@@ -16,7 +16,7 @@ internal class NoUnexpectedWSMEntitiesOnFrontendListener : WorkspaceModelChangeL
   private val unwantedEntities = listOf(
     ModuleEntity::class.java,
     LibraryEntity::class.java,
-    //SdkEntity::class.java,
+    SdkEntity::class.java,
   )
 
   init {
@@ -36,7 +36,7 @@ internal class NoUnexpectedWSMEntitiesOnFrontendListener : WorkspaceModelChangeL
     }
 
     if (violations.isNotEmpty()) {
-      thisLogger().error("It is not correct to change the following WSM entities on frontend: ${violations}")
+      thisLogger().error("It is not correct to change the following WSM entities on frontend: {$violations}")
     }
   }
 }
