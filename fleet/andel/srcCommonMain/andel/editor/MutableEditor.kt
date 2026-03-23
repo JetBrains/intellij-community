@@ -136,9 +136,11 @@ interface MutableEditor : Editor {
 
   fun scrollTo(scrollCommand: EditorScrollCommand)
 
-  fun command(commandType: EditorCommandType,
-              groupKey: UndoGroupKey = commandType.defaultGroupKey(),
-              command: UndoScope.() -> Unit)
+  fun command(
+    commandType: EditorCommandType,
+    groupKey: UndoGroupKey = commandType.defaultGroupKey(),
+    command: UndoScope.() -> Unit
+  )
 
   fun addHistoryPlace()
 
@@ -164,19 +166,21 @@ interface MutableEditorLayout : EditorLayout {
 // Order is significant: the greater index, the more specific is the command type
 @Serializable
 enum class EditorCommandType {
-  NAVIGATION, EDIT,
+  NAVIGATION,
+  EDIT,
   GENERATED_EDIT,
 
   // This is not really a good third action command, but rather an ad-hoc solution not to introduce an actionTracker.
   COMMENT
 }
 
-fun EditorCommandType.defaultGroupKey() = when (this) {
-  EditorCommandType.NAVIGATION -> NavigationUndoGroupKey
-  EditorCommandType.EDIT -> DefaultUndoGroupKey
-  EditorCommandType.GENERATED_EDIT -> DefaultUndoGroupKey
-  EditorCommandType.COMMENT -> DefaultUndoGroupKey
-}
+fun EditorCommandType.defaultGroupKey() =
+  when (this) {
+    EditorCommandType.NAVIGATION -> NavigationUndoGroupKey
+    EditorCommandType.EDIT -> DefaultUndoGroupKey
+    EditorCommandType.GENERATED_EDIT -> DefaultUndoGroupKey
+    EditorCommandType.COMMENT -> DefaultUndoGroupKey
+  }
 
 interface Document {
   val text: Text
@@ -197,8 +201,10 @@ interface MutableDocument : Document {
   fun createRangeMarker(rangeStart: Long, rangeEnd: Long, lifetime: AnchorLifetime): RangeMarkerId
   fun removeRangeMarker(markerId: RangeMarkerId)
 
-  fun batchUpdateAnchors(anchorIds: List<AnchorId>, anchorOffsets: LongArray,
-                         rangeIds: List<RangeMarkerId>, ranges: List<TextRange>)
+  fun batchUpdateAnchors(
+    anchorIds: List<AnchorId>, anchorOffsets: LongArray,
+    rangeIds: List<RangeMarkerId>, ranges: List<TextRange>
+  )
 }
 
 object EditorCommandKey : EditorMetaKey<EditorCommandType>

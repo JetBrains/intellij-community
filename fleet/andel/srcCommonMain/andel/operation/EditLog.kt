@@ -11,10 +11,11 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 
 @Serializable
-class EditLog(val operations: IBifurcanVector<Operation>,
-              private val ids: IBifurcanVector<UID>,
-              val timestamp: Long = operations.size(),
-              private val sumOfOperationSizes: Long = totalOperationSize(operations)
+class EditLog(
+  val operations: IBifurcanVector<Operation>,
+  private val ids: IBifurcanVector<UID>,
+  val timestamp: Long = operations.size(),
+  private val sumOfOperationSizes: Long = totalOperationSize(operations)
 ) {
 
   companion object {
@@ -35,8 +36,12 @@ class EditLog(val operations: IBifurcanVector<Operation>,
   fun asOf(timestamp: Long): EditLog {
     val opCount = operations.size()
     val newSize = timestampToOffset(timestamp, opCount)
-    return EditLog(operations.slice(0, newSize), ids.slice(0, newSize), timestamp,
-                   sumOfOperationSizes - operations.slice(newSize + 1, opCount).sumOf { totalOpSize(it) })
+    return EditLog(
+      operations = operations.slice(0, newSize),
+      ids = ids.slice(0, newSize),
+      timestamp = timestamp,
+      sumOfOperationSizes = sumOfOperationSizes - operations.slice(newSize + 1, opCount).sumOf { totalOpSize(it) },
+    )
   }
 
   fun slice(fromTimestamp: Long, toTimestamp: Long): IBifurcanVector<Operation> {
