@@ -90,7 +90,8 @@ import kotlin.coroutines.CoroutineContext
 @Service
 @ApiStatus.Internal
 class BackgroundHighlighter(coroutineScope: CoroutineScope) {
-  @JvmField val alarm: Alarm = Alarm(coroutineScope, Alarm.ThreadToUse.SWING_THREAD)
+  @JvmField
+  val alarm: Alarm = Alarm(coroutineScope, Alarm.ThreadToUse.SWING_THREAD)
 
   /**
    * register a callback which runs whenever the caret/selection/whatever changes (see [registerListeners])
@@ -110,7 +111,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
       }
     }
 
-    editorFactory.addEditorFactoryListener(object:EditorFactoryListener {
+    editorFactory.addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorReleased(event: EditorFactoryEvent) {
         cancelJob(event.editor)
       }
@@ -236,80 +237,86 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     }
   }
 
-    @RequiresEdt
-    private fun updateHighlighted(project: Project, hostEditor: Editor, coroutineScope: CoroutineScope) {
-      ThreadingAssertions.assertEventDispatchThread()
-      val hostDocument = hostEditor.document
-      if (hostDocument.isInBulkUpdate || !BackgroundHighlightingUtil.isValidEditor(hostEditor)) {
-        return
+  @RequiresEdt
+  private fun updateHighlighted(project: Project, hostEditor: Editor, coroutineScope: CoroutineScope) {
+    ThreadingAssertions.assertEventDispatchThread()
+    val hostDocument = hostEditor.document
+    if (hostDocument.isInBulkUpdate || !BackgroundHighlightingUtil.isValidEditor(hostEditor)) {
+      return
+    }
+    val offsetBefore = hostEditor.caretModel.offset
+    val visibleRange = hostEditor.calculateVisibleRange()
+    val needMatching = BackgroundHighlightingUtil.needMatching(hostEditor, CodeInsightSettings.getInstance())
+    val coroutineName = "BackgroundHighlighter.updateHighlighted(${hostEditor.document})"
+    val job = coroutineScope.launch(context = CoroutineName(coroutineName)) {
+      val job: Job = coroutineContext.job
+      val documentModStampBefore = hostDocument.modificationStamp
+      val injected = readAction { BackgroundHighlightingUtil.findInjected(hostEditor, project, offsetBefore) } ?: return@launch
+      val newPsiFile = injected.first
+      val newEditor = injected.second
+      val modalityState: CoroutineContext = ModalityState.stateForComponent(hostEditor.component).asContextElement()
+      val maybeMatch = if (needMatching) {
+        readAction {
+          HeavyBraceHighlighter.match(newPsiFile, offsetBefore)
+        }
       }
-      val offsetBefore = hostEditor.caretModel.offset
-      val visibleRange = hostEditor.calculateVisibleRange()
-      val needMatching = BackgroundHighlightingUtil.needMatching(hostEditor, CodeInsightSettings.getInstance())
-      val coroutineName = "BackgroundHighlighter.updateHighlighted(${hostEditor.document})"
-      val job = coroutineScope.launch(context = CoroutineName(coroutineName)) {
-        val job: Job = coroutineContext.job
-        val documentModStampBefore = hostDocument.modificationStamp
-        val injected = readAction { BackgroundHighlightingUtil.findInjected(hostEditor, project, offsetBefore) } ?: return@launch
-        val newPsiFile = injected.first
-        val newEditor = injected.second
-        val modalityState: CoroutineContext = ModalityState.stateForComponent(hostEditor.component).asContextElement()
-        val maybeMatch = if (needMatching) {
-          readAction {
-            HeavyBraceHighlighter.match(newPsiFile, offsetBefore)
+      else {
+        null
+      }
+      // launch nested coroutines that finish only after the main job is finished, to be able to wait for identifier highlighting to apply, see waitForIdentifierHighlighting
+      launch(Dispatchers.EDT + modalityState) {
+        if (isEditorUpToDate(hostEditor, offsetBefore, newEditor, newPsiFile, documentModStampBefore, job)) {
+          applyBraceMatching(project, newEditor, newPsiFile, maybeMatch, needMatching)
+        }
+      }
+
+      val identPass = readAction {
+        createPass(newPsiFile, hostEditor, newEditor)
+      }
+      if (identPass != null) {
+        var infos = listOf<HighlightInfo>()
+        var result = EMPTY_RESULT
+        try {
+          result = identPass.doCollectInformation(project, visibleRange)
+          if (result == WRONG_DOCUMENT_VERSION) {
+            launch(Dispatchers.EDT + modalityState) {
+              updateHighlighted(project, hostEditor, coroutineScope)
+            }
+            return@launch
+          }
+          infos = readAction {
+            identPass.createHighlightInfos(result)
           }
         }
-        else {
-          null
+        catch (_: IndexNotReadyException) {
         }
-        // launch nested coroutines that finish only after the main job is finished, to be able to wait for identifier highlighting to apply, see waitForIdentifierHighlighting
         launch(Dispatchers.EDT + modalityState) {
           if (isEditorUpToDate(hostEditor, offsetBefore, newEditor, newPsiFile, documentModStampBefore, job)) {
-            applyBraceMatching(project, newEditor, newPsiFile, maybeMatch, needMatching)
+            val group = (IdentifierHighlightingManager.getInstance(project) as IdentifierHighlightingManagerImpl).getPassId()
+            UpdateHighlightersUtil.setHighlightersToSingleEditor(project,
+                                                                 hostEditor,
+                                                                 0,
+                                                                 hostDocument.textLength,
+                                                                 infos,
+                                                                 hostEditor.colorsScheme,
+                                                                 group)
+            identPass.doAdditionalCodeBlockHighlighting(result)
           }
-        }
-
-        val identPass = readAction {
-          createPass(newPsiFile, hostEditor, newEditor)
-        }
-        if (identPass != null) {
-          var infos = listOf<HighlightInfo>()
-          var result = EMPTY_RESULT
-          try {
-            result = identPass.doCollectInformation(project, visibleRange)
-            if (result == WRONG_DOCUMENT_VERSION) {
-              launch(Dispatchers.EDT + modalityState) {
-                updateHighlighted(project, hostEditor, coroutineScope)
-              }
-              return@launch
-            }
-            infos = readAction {
-              identPass.createHighlightInfos(result)
-            }
-          }
-          catch (_: IndexNotReadyException) {
-          }
-          launch(Dispatchers.EDT + modalityState) {
-            if (isEditorUpToDate(hostEditor, offsetBefore, newEditor, newPsiFile, documentModStampBefore, job)) {
-              val group = (IdentifierHighlightingManager.getInstance(project) as IdentifierHighlightingManagerImpl).getPassId()
-              UpdateHighlightersUtil.setHighlightersToSingleEditor(project, hostEditor, 0, hostDocument.textLength, infos, hostEditor.colorsScheme, group)
-              identPass.doAdditionalCodeBlockHighlighting(result)
-            }
-          }
-        }
-      }
-
-      val oldJob = (hostEditor as UserDataHolderEx).getAndUpdateUserData(BACKGROUND_TASK_KEY) {
-        job
-      }
-      oldJob?.cancel()
-      // clear user data only after the nested launches completed, since they assume the job is still in the editor user data, see isEditorUpToDate
-      job.invokeOnCompletion {
-        (hostEditor as UserDataHolderEx).getAndUpdateUserData(BACKGROUND_TASK_KEY) {
-          newJob -> if (newJob == job) null else newJob // remove my job, but don't touch the job if not mine because it might be the newest job
         }
       }
     }
+
+    val oldJob = (hostEditor as UserDataHolderEx).getAndUpdateUserData(BACKGROUND_TASK_KEY) {
+      job
+    }
+    oldJob?.cancel()
+    // clear user data only after the nested launches completed, since they assume the job is still in the editor user data, see isEditorUpToDate
+    job.invokeOnCompletion {
+      (hostEditor as UserDataHolderEx).getAndUpdateUserData(BACKGROUND_TASK_KEY) { newJob ->
+        if (newJob == job) null else newJob // remove my job, but don't touch the job if not mine because it might be the newest job
+      }
+    }
+  }
 
   @RequiresEdt
   private suspend fun isEditorUpToDate(
@@ -379,7 +386,8 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
         val project = newPsiFile.project
         val hostPsiFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(newPsiFile)
         // sometimes some crazy stuff is returned (EA-248725)
-        if (textLength != -1 && !hostEditor.isDisposed && IdentifierHighlighterPassFactory.shouldHighlightIdentifiers(newPsiFile, newEditor) && hostPsiFile != null) {
+        if (textLength != -1 && !hostEditor.isDisposed && IdentifierHighlighterPassFactory.shouldHighlightIdentifiers(newPsiFile,
+                                                                                                                      newEditor) && hostPsiFile != null) {
           val context = EditorContextManager.getEditorContext(newEditor, project)
           val pass = IdentifierHighlighterUpdater(newPsiFile, newEditor, context, hostPsiFile)
           return pass
@@ -389,6 +397,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     }
 
     private val BACKGROUND_TASK_KEY: Key<Job> = Key.create("BACKGROUND_TASK")
+
     @TestOnly
     @RequiresEdt
     fun waitForIdentifierHighlighting(editor: Editor) {
@@ -411,7 +420,7 @@ private val LOG: Logger = Logger.getInstance(BackgroundHighlighter::class.java)
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
-class BackgroundHighlighterPerProject(@JvmField val coroutineScope: CoroutineScope): Disposable.Default
+class BackgroundHighlighterPerProject(@JvmField val coroutineScope: CoroutineScope) : Disposable.Default
 
 @RequiresEdt
 private fun selectionRangeToFind(editor: Editor): TextRange? {
@@ -521,5 +530,7 @@ private fun removeSelectionHighlights(editor: Editor) {
 }
 
 private class SelectionHighlights(val text: String, val highlighters: Collection<RangeHighlighter>)
+
 private val SELECTION_HIGHLIGHTS = Key<SelectionHighlights>("SELECTION_HIGHLIGHTS")
+
 private class HighlightSelectionKey
