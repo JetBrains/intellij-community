@@ -63,7 +63,6 @@ import com.jetbrains.python.sdk.installSdkIfNeeded
 import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.sdk.suggestAssociatedSdkName

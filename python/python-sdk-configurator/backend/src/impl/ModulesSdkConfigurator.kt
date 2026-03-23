@@ -138,7 +138,7 @@ internal class ModulesSdkConfigurator private constructor(
    * Errors are logged.
    *
    */
-  suspend fun configureSdks(modulesOnly: Set<ModuleName>) = pythonSdkConfigurationMutex.withLock {
+  suspend fun configureSdks(modulesOnly: Set<ModuleName>) = project.pythonSdkConfigurationMutex.withLock {
     withContext(Dispatchers.Default) {
       val modulesMap = project.modules.associateBy { it.name }
       val modulesWithSameSdk = mutableMapOf<Module, Module>()
@@ -197,7 +197,7 @@ suspend fun configureSdkAutomatically(project: Project): Unit = withContext(Disp
   when (pythonModules.size) {
     0 -> return@withContext
     1 -> pythonModules.first().autoConfigureSdkIfNeeded()?.orLogException(logger)
-    else -> pythonSdkConfigurationMutex.withLock {
+    else -> project.pythonSdkConfigurationMutex.withLock {
       for (module in pythonModules) {
         if (module.findPythonSdk() != null) continue
         val sdkSuggestion = module.suggestSdk()
