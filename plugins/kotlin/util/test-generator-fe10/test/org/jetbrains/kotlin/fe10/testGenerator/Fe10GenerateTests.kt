@@ -1284,7 +1284,9 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model(
                 "loadJava/compiledKotlin",
                 excludedDirectories = listOf(
-                    "contextParameters", // K1 failure for K2 feature, see KTIJ-33144
+                    // K1 failure for K2 features, see KTIJ-33144
+                    "contextParameters",
+                    "companionBlocksAndExtensions",
                 ),
             )
         }
@@ -1294,7 +1296,9 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                 "loadJava/compiledKotlin",
                 testMethodName = "doTestCompiledKotlin",
                 excludedDirectories = listOf(
-                    "contextParameters", // K1 failure for K2 feature, see KTIJ-33144
+                    // K1 failure for K2 feature, see KTIJ-33144
+                    "contextParameters",
+                    "companionBlocksAndExtensions",
                 ),
             )
         }
