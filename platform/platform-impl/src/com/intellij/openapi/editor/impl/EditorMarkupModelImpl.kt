@@ -1255,7 +1255,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     override fun mouseWheelMoved(e: MouseWheelEvent) {
       if (editorFragmentRenderer.editorPreviewHint == null) {
         // process wheel event by the parent scroll pane if no code lens
-        MouseEventAdapter.redispatch(e, e.component.getParent())
+        MouseEventAdapter.redispatch(e, EditorImpl.getComponentToScroll(e.component))
         return
       }
       val units = e.unitsToScroll

@@ -1554,6 +1554,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     });
   }
+  
+  static @NotNull Component getComponentToScroll(@NotNull Component scrollEventSource) {
+    var parent = scrollEventSource.getParent();
+    if (parent instanceof PanelWithFloatingToolbar layeredPane) {
+      // likely just one, but we need to locate it anyway
+      for (Component componentInScrollPaneLayer : layeredPane.getComponentsInLayer(SCROLL_PANE_LAYER)) {
+        if (componentInScrollPaneLayer instanceof MyScrollPane) return componentInScrollPaneLayer;
+      }
+    }
+    return parent;
+  }
 
   private boolean mayShowToolbar() {
     return !isOneLineMode() && !DiffUtil.isDiffEditor(this) && isFileEditor();
