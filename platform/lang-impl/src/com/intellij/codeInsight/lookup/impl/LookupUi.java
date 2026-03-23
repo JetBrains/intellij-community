@@ -80,6 +80,9 @@ import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.MouseEvent;
 
+import static com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION;
+import static com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION;
+
 final class LookupUi {
   private static final Logger LOG = Logger.getInstance(LookupUi.class);
 
@@ -115,9 +118,15 @@ final class LookupUi {
     AnAction quickJavaDocAction = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC);
     if (quickJavaDocAction != null) {
       menuAction.add(new DelegatedAction(quickJavaDocAction) {
+        private boolean actionVisible() {
+          var lookupItem = lookup.getCurrentItem();
+          if (lookupItem != null && Boolean.TRUE.equals(lookupItem.getUserData(SUPPRESS_QUICK_DOCUMENTATION))) return false;
+          return !CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO;
+        }
+
         @Override
         public void update(@NotNull AnActionEvent e) {
-          e.getPresentation().setVisible(!CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO);
+          e.getPresentation().setVisible(actionVisible());
         }
 
         @Override
@@ -128,7 +137,23 @@ final class LookupUi {
     }
     AnAction quickImplementationsAction = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_IMPLEMENTATIONS);
     if (quickImplementationsAction != null) {
-      menuAction.add(new DelegatedAction(quickImplementationsAction));
+      menuAction.add(new DelegatedAction(quickImplementationsAction){
+        private boolean actionVisible() {
+          var lookupItem = lookup.getCurrentItem();
+          if (lookupItem != null && Boolean.TRUE.equals(lookupItem.getUserData(SUPPRESS_QUICK_DEFINITION))) return false;
+          return true;
+        }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setVisible(actionVisible());
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
+        }
+      });
     }
     menuAction.addSeparator();
     menuAction.add(new ShowCompletionSettingsAction());
