@@ -19,12 +19,14 @@ class JavaMethodReferenceElement extends LookupElement implements TypedLookupIte
   private final PsiElement myRefPlace;
   private final PsiType myType;
   private final Icon myIcon;
+  private final String myReferenceName;
 
   JavaMethodReferenceElement(PsiMethod method, PsiElement refPlace, @Nullable PsiType type) {
     myMethod = method;
     myRefPlace = refPlace;
     myType = type;
     myIcon = myMethod.getIcon(Iconable.ICON_FLAG_VISIBILITY);
+    myReferenceName = myMethod.isConstructor() ? "new" : myMethod.getName();
   }
 
   @Override
@@ -51,7 +53,7 @@ class JavaMethodReferenceElement extends LookupElement implements TypedLookupIte
 
   @Override
   public @NotNull String getLookupString() {
-    return myMethod.isConstructor() ? "new" : myMethod.getName();
+    return myReferenceName;
   }
 
   @Override
