@@ -17,10 +17,12 @@ import com.intellij.python.pyproject.model.PyProjectModelSettings
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ASK
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.OFF
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ON
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.BufferOverflow.DROP_LATEST
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.annotations.Nls
 
 private const val NOTIFICATION_GROUP_ID = "PyProject.toml"
@@ -59,7 +61,7 @@ private fun listenForPyprojectToml(project: Project, settings: PyProjectModelSet
   val disposable = Disposer.newDisposable("PyProjectModelStartupActivity")
   Disposer.register(settings, disposable)
 
-  val dumbModeExited = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
+  val dumbModeExited = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = DROP_LATEST)
 
   project.messageBus.connect(disposable).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
     override fun exitDumbMode() {
@@ -93,11 +95,14 @@ private fun showNotification(project: Project, settings: PyProjectModelSettings)
     .addAction(NotificationAction.createSimpleExpiring(PyProjectTomlBundle.message("pyproject.notification.configure")) {
       settings.usePyprojectToml = true
       settings.showConfigurationNotification = false
+      PyProjectTomlCollector.setupNotificationConfigureClicked()
     })
     .addAction(NotificationAction.createSimpleExpiring(PyProjectTomlBundle.message("pyproject.notification.dont.show.again")) {
       settings.showConfigurationNotification = false
+      PyProjectTomlCollector.setupNotificationDismissClicked()
     })
     .notify(project)
+  PyProjectTomlCollector.setupNotificationShown()
 }
 
 private class FullContentNotification(groupId: String, @Nls title: String, @Nls content: String, type: NotificationType) :

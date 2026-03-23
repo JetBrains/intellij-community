@@ -4,18 +4,22 @@ package com.intellij.python.pyproject.statistics
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.ProjectScope
+import com.intellij.python.common.tools.ToolId
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PY_PROJECT_TOML_BUILD_SYSTEM
 import com.intellij.python.pyproject.PY_PROJECT_TOML_DEPENDENCY_GROUPS
 import com.intellij.python.pyproject.PY_PROJECT_TOML_TOOL_PREFIX
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirementParser
+import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import org.jetbrains.annotations.ApiStatus
 import org.toml.lang.psi.TomlArray
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlLiteral
@@ -57,8 +61,10 @@ internal val TRACKED_DEPENDENCY_GROUPS = listOf(
 )
 internal const val DEPENDENCY_GROUP_OTHER = "other"
 
-private val GROUP = EventLogGroup("python.toml.stats", 3)
+private val GROUP = EventLogGroup("python.toml.stats", 6)
 private val PACKAGE_NAME_FIELD = EventFields.StringValidatedByDictionary("name", "python_packages.ndjson")
+private val TOOL_ID_FIELD = EventFields.String("toolId", PyProjectSdkConfigurationExtension.toolIds.map { it.id })
+private val CHECKBOX_VALUE = EventFields.Boolean("checked")
 
 internal val PYTHON_PYPROJECT_TOOLS = GROUP.registerEvent("python.pyproject.tools", PACKAGE_NAME_FIELD)
 
@@ -73,6 +79,19 @@ internal val PYTHON_PYPROJECT_DEPENDENCY_GROUP = GROUP.registerEvent(
 )
 
 internal val PYTHON_PYPROJECT_COUNT = GROUP.registerEvent("python.pyproject.count", EventFields.Int("count"))
+
+internal val PYTHON_WORKSPACE_SETUP_NOTIFICATION_SHOWN = GROUP.registerVarargEvent("python.workspace.setup.notification.shown")
+internal val PYTHON_WORKSPACE_SETUP_NOTIFICATION_CONFIGURE_CLICKED =
+  GROUP.registerVarargEvent("python.workspace.setup.notification.configure.clicked")
+internal val PYTHON_WORKSPACE_SETUP_NOTIFICATION_DISMISS_CLICKED =
+  GROUP.registerVarargEvent("python.workspace.setup.notification.dismiss.clicked")
+internal val PYTHON_PYPROJECT_BASED_MODEL_CHANGED: VarargEventId =
+  GROUP.registerVarargEvent("python.pyproject.based.model.changed", CHECKBOX_VALUE)
+
+internal val PYTHON_SDK_SETUP_AUTOMATICALLY: VarargEventId =
+  GROUP.registerVarargEvent("python.sdk.setup.automatically", TOOL_ID_FIELD)
+internal val PYTHON_SDK_SETUP_FROM_NOTIFICATION: VarargEventId =
+  GROUP.registerVarargEvent("python.sdk.setup.from.notification", TOOL_ID_FIELD)
 
 internal class PythonTomlStatsUsagesCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
@@ -115,7 +134,8 @@ internal class PythonTomlStatsUsagesCollector : ProjectUsagesCollector() {
   }
 }
 
-internal object PyProjectTomlCollector {
+@ApiStatus.Internal
+object PyProjectTomlCollector {
   fun findDeclaredTools(file: PsiFile): Set<String> {
     val declaredTools = file.children.mapNotNullTo(mutableSetOf()) { element ->
       val toolTomlKey = (element as? TomlTable)?.header?.key?.takeIf {
@@ -164,5 +184,35 @@ internal object PyProjectTomlCollector {
     }.distinct().map { it.takeIf { it in TRACKED_DEPENDENCY_GROUPS } ?: DEPENDENCY_GROUP_OTHER }.sorted()
 
     return dependencyGroups
+  }
+
+  fun setupNotificationShown() {
+    PYTHON_WORKSPACE_SETUP_NOTIFICATION_SHOWN.log()
+  }
+
+  fun setupNotificationConfigureClicked() {
+    PYTHON_WORKSPACE_SETUP_NOTIFICATION_CONFIGURE_CLICKED.log()
+  }
+
+  fun setupNotificationDismissClicked() {
+    PYTHON_WORKSPACE_SETUP_NOTIFICATION_DISMISS_CLICKED.log()
+  }
+
+  fun pyProjectBasedModelModeChanged(value: Boolean) {
+    PYTHON_PYPROJECT_BASED_MODEL_CHANGED.log(
+      CHECKBOX_VALUE.with(value)
+    )
+  }
+
+  fun sdkCreatedAutomatically(toolId: ToolId) {
+    PYTHON_SDK_SETUP_AUTOMATICALLY.log(
+      TOOL_ID_FIELD.with(toolId.id)
+    )
+  }
+
+  fun sdkCreatedFromNotification(toolId: ToolId) {
+    PYTHON_SDK_SETUP_FROM_NOTIFICATION.log(
+      TOOL_ID_FIELD.with(toolId.id)
+    )
   }
 }
