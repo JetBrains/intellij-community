@@ -37,7 +37,7 @@ import java.util.Map;
 public abstract class ProductionLightDaemonAnalyzerTestCase extends LightDaemonAnalyzerTestCase {
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    runTestInProduction(myDaemonCodeAnalyzer, () -> super.runTestRunnable(testRunnable));
+    runTestInProduction(isStressTest(), myDaemonCodeAnalyzer, () -> super.runTestRunnable(testRunnable));
   }
 
   @Override
@@ -45,13 +45,13 @@ public abstract class ProductionLightDaemonAnalyzerTestCase extends LightDaemonA
     return myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightInfoType.SYMBOL_TYPE_SEVERITY);
   }
 
-  public static void runTestInProduction(@NotNull DaemonCodeAnalyzerImpl codeAnalyzer, @NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+  public static void runTestInProduction(boolean isStressTest, @NotNull DaemonCodeAnalyzerImpl codeAnalyzer, @NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     boolean wasUpdateByTimerEnabled = codeAnalyzer.isUpdateByTimerEnabled();
     try {
       if (!wasUpdateByTimerEnabled) {
         codeAnalyzer.setUpdateByTimerEnabled(true);
       }
-      runWithDaemonLoggerTraceLevel(()->
+      runWithDaemonLoggerTraceLevel(isStressTest, ()->
       ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(()-> {
       DaemonProgressIndicator.runInDebugMode(() ->
       CodeInsightTestFixtureImpl.disableInstantiateAndRunIn(() ->
@@ -74,7 +74,7 @@ public abstract class ProductionLightDaemonAnalyzerTestCase extends LightDaemonA
     }
   }
   // set daemon loggers to TRACE log level, execute runnable, and restore the level to not freak out other tests
-  private static <T extends Throwable> void withLoggerTraceLevel(@NotNull List<String> classNames, @NotNull ThrowableRunnable<T> runnable) throws T {
+  private static <T extends Throwable> void withLoggerTraceLevel(boolean isStressTest, @NotNull List<String> classNames, @NotNull ThrowableRunnable<T> runnable) throws T {
     Map<JulLogger, LogLevel> oldLevels = ContainerUtil.map2Map(classNames, className -> {
       JulLogger logger;
       try {
@@ -85,7 +85,9 @@ public abstract class ProductionLightDaemonAnalyzerTestCase extends LightDaemonA
       }
       LogLevel oldLevel = logger.getLevel();
       Pair<JulLogger, LogLevel> pair = Pair.create(logger, oldLevel);
-      logger.setLevel(LogLevel.TRACE);
+      if (!isStressTest) {
+        logger.setLevel(LogLevel.TRACE);
+      }
       return pair;
     });
     try {
@@ -99,8 +101,8 @@ public abstract class ProductionLightDaemonAnalyzerTestCase extends LightDaemonA
       }
     }
   }
-  private static <T extends Throwable> void runWithDaemonLoggerTraceLevel(@NotNull ThrowableRunnable<T> runnable) throws T {
-    withLoggerTraceLevel(List.of(
+  private static <T extends Throwable> void runWithDaemonLoggerTraceLevel(boolean isStressTest, @NotNull ThrowableRunnable<T> runnable) throws T {
+    withLoggerTraceLevel(isStressTest, List.of(
       BackgroundUpdateHighlightersUtil.class.getName(),
       DaemonCodeAnalyzerImpl.class.getName(),
       DaemonProgressIndicator.class.getName(),

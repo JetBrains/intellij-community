@@ -22,7 +22,7 @@ import java.util.List;
 public abstract class ProductionDaemonAnalyzerTestCase extends DaemonAnalyzerTestCase {
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    ProductionLightDaemonAnalyzerTestCase.runTestInProduction(myDaemonCodeAnalyzer, () -> super.runTestRunnable(testRunnable));
+    ProductionLightDaemonAnalyzerTestCase.runTestInProduction(isStressTest(), myDaemonCodeAnalyzer, () -> super.runTestRunnable(testRunnable));
   }
   @Override
   protected final void configureByExistingFile(@NotNull VirtualFile virtualFile) {
