@@ -199,7 +199,7 @@ public class DaemonRespondToChangesPerfTest extends ProductionDaemonAnalyzerTest
     assertTrue(ave < 300);
   }
 
-  static void dumpThreadsToConsole() {
+  private static void dumpThreadsToConsole() {
     System.err.println("----all threads---");
     for (Thread thread : Thread.getAllStackTraces().keySet()) {
 

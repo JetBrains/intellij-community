@@ -484,12 +484,12 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
           // heuristic: when the incremental reparse support is poor, and a lot of PSI is invalidated unnecessarily on each typing,
           //  that PSI has a big chance to be recreated in that exact place later, when a (major) chunk of the file is reparsed, so we do not kill that highlighter, just recycle it to avoid annoying blinking
           // if however, that invalid PSI highlighter wasn't recycled after a short delay, kill it (runWithInvalidPsiRecycler()) to improve responsiveness to outdated infos
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("recycleInvalidPsiElements (predicate=" + toolIdPredicate + ") " + info.getHighlighter() +
-                      "; toolIdPredicate=" + toolIdPredicate +
-                      " for invalid " + debugPsiInfo(psiElement) +
-                      " " + session.getProgressIndicator());
-          }
+           if (LOG.isTraceEnabled()) {
+             LOG.trace("recycleInvalidPsiElements (predicate=" + toolIdPredicate + ") " + info.getHighlighter() +
+                       "; toolIdPredicate=" + toolIdPredicate +
+                       " for invalid " + debugPsiInfo(psiElement) +
+                       " " + session.getProgressIndicator());
+           }
            if (info.getHighlighter() != null) {
              invalidPsiRecycler.recycleHighlighter(psiElement, info);
            }
