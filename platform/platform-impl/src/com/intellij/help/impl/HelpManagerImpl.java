@@ -22,7 +22,7 @@ public class HelpManagerImpl extends HelpManager {
   @Override
   public void invokeHelp(@Nullable String id) {
     logWillOpenHelpId(id);
-    HelpUsageCollector.logOpened(null, id);
+    HelpUsageCollector.logOpened(id);
     var helpUrl = getHelpUrl(id);
     if (helpUrl != null) {
       BrowserUtil.browse(helpUrl);
