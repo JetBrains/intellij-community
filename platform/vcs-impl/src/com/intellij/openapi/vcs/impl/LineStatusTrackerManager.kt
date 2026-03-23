@@ -42,7 +42,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -106,6 +105,7 @@ import com.intellij.util.messages.Topic.ProjectLevel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.isNonModalCommit
 import com.intellij.vcsUtil.VcsUtil
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
@@ -1380,7 +1380,7 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
     val result: Result<T> = try {
       loadRequest(request)
     }
-    catch (e: ProcessCanceledException) {
+    catch (_: CancellationException) {
       Result.Canceled()
     }
     catch (e: Throwable) {
@@ -1423,7 +1423,7 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
       try {
         callback.run()
       }
-      catch (ignore: ProcessCanceledException) {
+      catch (_: CancellationException) {
       }
       catch (e: Throwable) {
         LOG.error(e)
