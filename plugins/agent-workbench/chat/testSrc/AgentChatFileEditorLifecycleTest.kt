@@ -20,7 +20,9 @@ import org.junit.jupiter.api.Test
 import java.awt.event.KeyEvent
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Proxy
-import java.util.ArrayDeque
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -481,12 +483,12 @@ private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
   private val mutableSessionState: MutableStateFlow<TerminalViewSessionState> = MutableStateFlow(TerminalViewSessionState.NotStarted)
   override val sessionState: StateFlow<TerminalViewSessionState> = mutableSessionState
   override val keyEventsFlow: Flow<TerminalKeyEvent> = emptyFlow()
-  var readinessResult: AgentChatTerminalInputReadiness = AgentChatTerminalInputReadiness.READY
-  private val postSendOutputQueue: ArrayDeque<String> = ArrayDeque()
-  private val emittedOutputChunks: MutableList<EmittedOutputChunk> = mutableListOf()
-  private var outputVersion: Long = 0
+  @Volatile var readinessResult: AgentChatTerminalInputReadiness = AgentChatTerminalInputReadiness.READY
+  private val postSendOutputQueue: ConcurrentLinkedDeque<String> = ConcurrentLinkedDeque()
+  private val emittedOutputChunks: CopyOnWriteArrayList<EmittedOutputChunk> = CopyOnWriteArrayList()
+  private val outputVersion: AtomicLong = AtomicLong()
 
-  @JvmField val sentTexts: MutableList<SentTerminalText> = mutableListOf()
+  @JvmField val sentTexts: CopyOnWriteArrayList<SentTerminalText> = CopyOnWriteArrayList()
 
   fun enqueuePostSendOutput(vararg outputs: String) {
     postSendOutputQueue.addAll(outputs.asList())
@@ -497,8 +499,8 @@ private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
     if (normalizedText.isEmpty()) {
       return
     }
-    outputVersion += 1
-    emittedOutputChunks += EmittedOutputChunk(version = outputVersion, text = normalizedText)
+    val nextVersion = outputVersion.incrementAndGet()
+    emittedOutputChunks += EmittedOutputChunk(version = nextVersion, text = normalizedText)
   }
 
   fun setSessionState(state: TerminalViewSessionState) {
@@ -506,9 +508,10 @@ private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
   }
 
   override suspend fun captureOutputCheckpoint(): AgentChatTerminalOutputCheckpoint {
+    val currentOutputVersion = outputVersion.get()
     return AgentChatTerminalOutputCheckpoint(
-      regularEndOffset = outputVersion,
-      alternativeEndOffset = outputVersion,
+      regularEndOffset = currentOutputVersion,
+      alternativeEndOffset = currentOutputVersion,
     )
   }
 
@@ -532,9 +535,7 @@ private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
 
   override fun sendText(text: String, shouldExecute: Boolean) {
     sentTexts += SentTerminalText(text, shouldExecute)
-    if (postSendOutputQueue.isNotEmpty()) {
-      emitMeaningfulOutput(postSendOutputQueue.removeFirst())
-    }
+    postSendOutputQueue.pollFirst()?.let(::emitMeaningfulOutput)
   }
 
   override suspend fun awaitInitialMessageReadiness(

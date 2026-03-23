@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
@@ -53,6 +54,8 @@ import kotlin.time.Duration.Companion.seconds
 @TestApplication
 class AgentChatEditorServiceTest {
   companion object {
+    private val CUSTOM_AGENT_CHAT_EDITOR_KEY: Key<Boolean> = Key.create("agent.workbench.chat.test.customEditor")
+
     @Volatile
     private var customFileEditorFactory: ((Project, AgentChatVirtualFile) -> FileEditor)? = null
   }
@@ -258,7 +261,9 @@ class AgentChatEditorServiceTest {
         tabSnapshotWriter = AgentChatTabSnapshotWriter { snapshot ->
           editorProject.service<AgentChatTabsService>().upsert(snapshot)
         },
-      )
+      ).also { editor ->
+        editor.putUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY, true)
+      }
     }
 
     openChatInModal(
@@ -273,7 +278,7 @@ class AgentChatEditorServiceTest {
     val editor = runInUi {
       FileEditorManager.getInstance(project).getAllEditors(file)
         .filterIsInstance<AgentChatFileEditor>()
-        .single()
+        .single { candidate -> candidate.getUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY) == true }
     }
     runInUi {
       editor.selectNotify()
