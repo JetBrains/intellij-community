@@ -9,10 +9,6 @@ val isFleetDebugMode: Boolean by lazy { fleetFlag("fleet.debug.mode") }
 // True means that Fleet is running in Web inside JCP context
 val isJcpMode: Boolean by lazy { fleetFlag("fleet.jcp") }
 
-// Enable auxiliary features to facilitate dev flow e.g. code reload etc. It means that we're running from sources.
-@Deprecated("most probably you want use FleetFromSourcesPaths.isRunningFromSources or FleetCommonSettingsKeys.kt#isInternalMode")
-val isFleetDevMode: Boolean by lazy { getFleetEnvironmentType() == FleetEnvironmentType.DEVELOPMENT }
-
 // Defined the default value for internal mode
 @Deprecated(
   "we still have usages due to lack of dependency injection, most probably you want use FleetCommonSettingsKeys.kt#isInternalMode")
