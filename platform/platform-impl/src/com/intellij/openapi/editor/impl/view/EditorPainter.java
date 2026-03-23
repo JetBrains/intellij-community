@@ -58,6 +58,7 @@ import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.CachingPainter;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.LinePainter2D;
@@ -1602,7 +1603,7 @@ public final class EditorPainter implements TextDrawingCallback {
 
       GeneralPath caretShape = new GeneralPath();
 
-      float radius = Math.min(w / 2, CARET_DIRECTION_MARK_SIZE);
+      float radius = IslandsState.Companion.isEnabled() ? Math.min(w / 2, CARET_DIRECTION_MARK_SIZE) : 0.0f;
 
       caretShape.moveTo(x, y + radius);
 

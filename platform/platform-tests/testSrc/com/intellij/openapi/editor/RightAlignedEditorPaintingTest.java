@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.ui.IslandsState;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
@@ -113,6 +114,7 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
 
   public void testSelectionInsideLine() throws Exception {
     Registry.get("editor.old.full.horizontal.selection.enabled").setValue(true);
+    IslandsState.Companion.setEnabled(false, false);
     initText("first line\nsecond line");
     getEditor().getSelectionModel().setSelection(6, 12);
     checkResult();
@@ -120,6 +122,7 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
 
   public void testSelectionInsideLineNewSelection() throws Exception {
     Registry.get("editor.old.full.horizontal.selection.enabled").setValue(false);
+    IslandsState.Companion.setEnabled(true, false);
     initText("first longer line\nsecond line");
     getEditor().getSelectionModel().setSelection(13, 19);
     checkResult();
@@ -127,6 +130,7 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
 
   public void testSelectionInsideLineNewSelection2() throws Exception {
     Registry.get("editor.old.full.horizontal.selection.enabled").setValue(false);
+    IslandsState.Companion.setEnabled(true, false);
 
     initText("first longer line\nsecond line");
     getEditor().getSelectionModel().setSelection(18, 21);

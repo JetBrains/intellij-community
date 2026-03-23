@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.ui.IslandsState;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +36,7 @@ import java.util.Collections;
 public class EditorPaintingTest extends EditorPaintingTestCase {
   private void setNewSelectionEnabled(boolean enabled) {
     Registry.get("editor.old.full.horizontal.selection.enabled").setValue(!enabled);
+    IslandsState.Companion.setEnabled(true, false);
   }
 
   public void testWholeLineHighlighterAtDocumentEnd() throws Exception {
