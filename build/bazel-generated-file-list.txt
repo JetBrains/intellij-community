@@ -102,7 +102,6 @@ android/design-plugin
 android/design-plugin/descriptor
 android/designer
 android/designer-perf-tests
-android/designer/customview
 android/designer/gradle
 android/device-explorer
 android/device-explorer-common
