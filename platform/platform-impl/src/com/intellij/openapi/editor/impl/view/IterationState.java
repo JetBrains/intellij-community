@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.IslandsState;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
@@ -175,7 +176,7 @@ public final class IterationState {
     if (editor instanceof EditorImpl impl) {
       myShouldUseNewSelection = impl.shouldUseNewSelection();
     } else {
-      myShouldUseNewSelection = !Registry.is("editor.old.full.horizontal.selection.enabled") && !myColumnMode;
+      myShouldUseNewSelection = !Registry.is("editor.old.full.horizontal.selection.enabled") && !myColumnMode && IslandsState.Companion.isEnabled();
     }
 
     advance();

@@ -169,6 +169,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.NewUI;
 import com.intellij.ui.components.JBLayeredPane;
@@ -5413,7 +5414,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @ApiStatus.Internal
   public boolean shouldUseNewSelection() {
-    return !Registry.is("editor.old.full.horizontal.selection.enabled") && !isColumnMode() && !hasBidiText();
+    return !Registry.is("editor.old.full.horizontal.selection.enabled")
+           && !isColumnMode()
+           && !hasBidiText()
+           && IslandsState.Companion.isEnabled();
   }
 
   @TestOnly
