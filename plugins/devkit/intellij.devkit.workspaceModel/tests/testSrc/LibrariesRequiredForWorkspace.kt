@@ -29,6 +29,7 @@ internal object LibrariesRequiredForWorkspace {
 
   private val rider = ModuleLibrary("intellij.rider")
   private val riderUnityPlugin = ModuleLibrary("intellij.rider.plugins.unity")
+  private val riderUnityPluginModel = ModuleLibrary("intellij.rider.plugins.unity.model")
   private val riderModelGenerated = ModuleLibrary("intellij.rider.model.generated")
   private val rdIdeModelGenerated = ModuleLibrary("intellij.rd.ide.model.generated")
   private val riderRdClient = ModuleLibrary("intellij.rider.rdclient.dotnet")
@@ -54,7 +55,7 @@ internal object LibrariesRequiredForWorkspace {
         listOf(intellijJava)
       }
       "intellij.rider.plugins.unity" -> {
-        listOf(riderUnityPlugin, rdCore, riderRdClient)
+        listOf(riderUnityPlugin, rdCore, riderRdClient, riderUnityPluginModel)
       }
       "intellij.rider" -> {
         listOf(riderRdClient)
