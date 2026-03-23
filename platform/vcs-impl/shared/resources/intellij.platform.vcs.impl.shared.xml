@@ -61,6 +61,9 @@
     <registryKey key="vcs.merge.conflict.iterative.resolution" defaultValue="false" restartRequired="false"
                  description="Enable iterative VCS conflict resolution flow"/>
 
+    <registryKey key="vcs.merge.conflict.file.suggestion" defaultValue="false" restartRequired="false"
+                 description="Automatically open the next file in the merge conflict"/>
+
     <projectService serviceInterface="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings"
                     serviceImplementation="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettingsImpl"/>
 

@@ -1,0 +1,11 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vcs.merge.registry
+
+import com.intellij.openapi.util.registry.Registry
+
+internal object MergeConflictFileSuggestion {
+  @JvmStatic
+  fun isEnabled(): Boolean {
+    return Registry.`is`("vcs.merge.conflict.file.suggestion")
+  }
+}

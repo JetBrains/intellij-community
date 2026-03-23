@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
+import com.intellij.openapi.vcs.changes.ui.ChangesComparator
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.NoneChangesGroupingFactory
@@ -46,6 +47,8 @@ import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.vcs.merge.flow.IterativeMergeFlowDelegate
 import com.intellij.openapi.vcs.merge.flow.MergeFlowDelegate
 import com.intellij.openapi.vcs.merge.flow.OneShotMergeFlowDelegate
+import com.intellij.openapi.vcs.merge.registry.MergeConflictFileSuggestion
+import com.intellij.openapi.vcs.merge.registry.MergeConflictIterativeResolution
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -241,7 +244,7 @@ open class MultipleFileMergeDialog(
     project: Project,
     iterativeDataHolder: MergeConflictIterativeDataHolder,
   ) {
-    val files = unresolvedFiles - iterativeDataHolder.getResolvedFiles()
+    val files = getUnresolvedFiles()
     if (files.isEmpty()) return
     if (!beforeResolve(files)) return
 
@@ -460,14 +463,17 @@ open class MultipleFileMergeDialog(
   @RequiresBlockingContext
   @RequiresEdt
   private fun showMergeDialog() {
-    val files = table.selectedFiles
+    val files = getFilesToOpen()
     if (files.isEmpty()) return
     if (!beforeResolve(files)) {
       return
     }
 
-    files.forEachWithErrorHandling { file ->
-      showMergeDialogForFile(file)
+    runWithErrorHandling {
+      for (file in files) {
+        val result = showMergeDialogForFile(file)
+        if (result == MergeResult.CANCEL) return@runWithErrorHandling
+      }
     }
 
     updateModelFromFiles()
@@ -475,8 +481,10 @@ open class MultipleFileMergeDialog(
 
   @RequiresBlockingContext
   @RequiresEdt
-  private fun showMergeDialogForFile(file: VirtualFile) {
+  private fun showMergeDialogForFile(file: VirtualFile): MergeResult {
+    var mergeResult: MergeResult? = null
     val request = createMergeRequests(listOf(file)) { result: MergeResult ->
+      mergeResult = result
       saveDocument(file)
       checkMarkModifiedProject(project, file)
       iterativeDataHolder?.getMergeConflictModel(file)?.markReviewed()
@@ -500,11 +508,30 @@ open class MultipleFileMergeDialog(
     }
 
     DiffManager.getInstance().showMerge(project, request)
+    return mergeResult!!
   }
 
-  private fun <T> List<T>.forEachWithErrorHandling(handler: (T) -> Unit) {
-    runWithErrorHandling { forEach(handler) }
+  private fun getFilesToOpen(): List<VirtualFile> {
+    if (!MergeConflictFileSuggestion.isEnabled()) return table.selectedFiles
+
+    val comparator = ChangesComparator.getVirtualFileComparator(!groupByDirectory)
+    // 1. Selected files (sorted)
+    val selected = table.selectedFiles.sortedWith(comparator)
+
+    // 2. Unresolved files (sorted)
+    val unresolved = getUnresolvedFiles().sortedWith(comparator)
+
+    // 3. Resolved but not reviewed files (sorted)
+    val resolvedNotReviewed = getResolvedFiles()
+      .filter { iterativeDataHolder?.isFileReviewed(it) == false }
+      .sortedWith(comparator)
+
+    // Combine and remove duplicates while preserving the order
+    return (selected + unresolved + resolvedNotReviewed).distinct()
   }
+
+  private fun getUnresolvedFiles(): List<VirtualFile> = unresolvedFiles - getResolvedFiles()
+  private fun getResolvedFiles(): Set<VirtualFile> = (iterativeDataHolder?.getResolvedFiles() ?: emptySet())
 
   private fun runWithErrorHandling(block: () -> Unit) {
     try {

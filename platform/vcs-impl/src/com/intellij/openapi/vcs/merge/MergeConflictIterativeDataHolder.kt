@@ -44,6 +44,12 @@ internal class MergeConflictIterativeDataHolder(
   }
 
   @RequiresEdt
+  fun isFileReviewed(file: VirtualFile): Boolean {
+    val mergeConflictModel = mergeConflictModels[file] ?: return false
+    return mergeConflictModel.wasReviewed
+  }
+
+  @RequiresEdt
   fun getResolvedFiles(): Set<VirtualFile> {
     return mergeConflictModels.filter { it.value.getUnresolvedChanges().isEmpty() }.keys
   }
