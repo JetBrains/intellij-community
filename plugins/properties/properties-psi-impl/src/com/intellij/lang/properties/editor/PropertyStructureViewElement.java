@@ -69,10 +69,9 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
     return myGrouped.getAsBoolean() ? myPresentableName : null;
   }
 
-  @RequiresReadLock
   @Override
   public IProperty getValue() {
-    return getProperty();
+    return ReadAction.computeBlocking(this::getProperty);
   }
 
   @Override
