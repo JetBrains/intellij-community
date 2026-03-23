@@ -9,6 +9,8 @@ import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
+import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.gradle.completion.FullStringInsertHandler
@@ -176,6 +178,8 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
           lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
           lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
           lookupElement.putUserData(StrictOrderWeigher.ORDER_KEY, index++)
+          lookupElement.putUserData(SUPPRESS_QUICK_DEFINITION, true)
+          lookupElement.putUserData(SUPPRESS_QUICK_DOCUMENTATION, true)
 
           // Store FUS metadata
           lookupElement.putUserData(BT_COMPLETION_IS_AUTO_POPUP, parameters.isAutoPopup)
@@ -240,6 +244,8 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
           .withInsertHandler(FullStringInsertHandler)
         lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
         lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
+        lookupElement.putUserData(SUPPRESS_QUICK_DEFINITION, true)
+        lookupElement.putUserData(SUPPRESS_QUICK_DOCUMENTATION, true)
 
         // Store FUS metadata
         lookupElement.putUserData(BT_COMPLETION_IS_AUTO_POPUP, parameters.isAutoPopup)

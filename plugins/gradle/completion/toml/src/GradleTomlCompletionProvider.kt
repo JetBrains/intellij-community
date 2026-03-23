@@ -4,6 +4,8 @@ package com.intellij.gradle.completion.toml
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
+import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.gradle.completion.FullStringInsertHandler
 import com.intellij.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
@@ -124,6 +126,8 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
     lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
     lookupElement.putUserData(BT_COMPLETION_IS_AUTO_POPUP, isAutoPopup)
     lookupElement.putUserData(GRADLE_TOML_LIBRARY_COMPLETION_POSITION_KEY, pos)
+    lookupElement.putUserData(SUPPRESS_QUICK_DEFINITION, true)
+    lookupElement.putUserData(SUPPRESS_QUICK_DOCUMENTATION, true)
 
     this.addElement(lookupElement)
   }
