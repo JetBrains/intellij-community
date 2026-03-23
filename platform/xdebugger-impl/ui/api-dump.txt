@@ -80,6 +80,9 @@ c:com.intellij.xdebugger.impl.actions.ViewBreakpointsAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.xdebugger.impl.breakpoints.BreakpointListUpdaterService
+- <init>(kotlinx.coroutines.CoroutineScope):V
+- f:getUpdateJob():kotlinx.coroutines.Job
 com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeWithDocumentDelegation
 - a:getDocumentForHighlighting(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.Document
 c:com.intellij.xdebugger.impl.breakpoints.XExpressionState

@@ -9,13 +9,14 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeNodeCache
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.ui.SizedIcon
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XDebuggerBundle.message
@@ -23,10 +24,15 @@ import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.PropertyKey
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 import javax.swing.JTree
+import kotlin.time.Duration.Companion.milliseconds
 
 internal class BreakpointListProvider(private val project: Project) : BookmarksListProvider {
   private data class GroupKey(val group: XBreakpointGroup, val parentKey: Any)
@@ -66,7 +72,6 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
     node?.value?.removed(project)
   }
 
-
   private class RootNode(project: Project, key: String) : Comparator<Any>, AbstractTreeNode<String>(project, key) {
     private val map = mutableMapOf<Any, Any>()
     private val valid = AtomicBoolean()
@@ -74,11 +79,13 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
     private val cache = AbstractTreeNodeCache<Any, AbstractTreeNode<*>>(this) {
       if (it is BreakpointItem) ItemNode(project, it) else if (it is GroupKey) GroupNode(project, it) else null
     }
+    private val service = project.service<BreakpointListUpdaterService>()
 
     init {
       XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).subscribeOnBreakpointsChanges(project) {
-        breakpointsUpdater.cancelAndRequest()
+        scheduleUpdate()
       }
+      scheduleUpdate()
     }
 
     fun hasVisibleBreakpoints() = valid.get()
@@ -103,58 +110,54 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
       presentation.presentableText = message(value)
     }
 
-    private val breakpointsUpdater = SingleAlarm.pooledThreadSingleAlarm(delay = 50, parentDisposable = project) {
-      if (project.isDisposed) {
-        return@pooledThreadSingleAlarm
-      }
+    private fun scheduleUpdate() {
+      service.updateJob?.cancel()
+      service.updateJob = service.cs.launch {
+        delay(50.milliseconds)
+        if (project.isDisposed) return@launch
+        val breakpoints = mutableMapOf<Any, Any>()
+        runReadActionBlocking {
+          val managerProxy = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
+          val items = managerProxy.getAllBreakpointItems()
 
-      val breakpoints = mutableMapOf<Any, Any>()
-      runReadActionBlocking {
-        val managerProxy = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
-        val items = managerProxy.getAllBreakpointItems()
+          val selectedRules = managerProxy.breakpointsDialogSettings?.selectedGroupingRules
+          val enabledRules = mutableListOf<XBreakpointGroupingRule<Any, XBreakpointGroup>>()
+            .apply { addAll(XBreakpointGroupingRule.EP.extensionList) }
+            .filter { it.isAlwaysEnabled || true == selectedRules?.contains(it.id) }
+            .toSortedSet(XBreakpointGroupingRule.PRIORITY_COMPARATOR)
 
-        val selectedRules = managerProxy.breakpointsDialogSettings?.selectedGroupingRules
-        val enabledRules = mutableListOf<XBreakpointGroupingRule<Any, XBreakpointGroup>>()
-          .apply { addAll(XBreakpointGroupingRule.EP.extensionList) }
-          .filter { it.isAlwaysEnabled || true == selectedRules?.contains(it.id) }
-          .toSortedSet(XBreakpointGroupingRule.PRIORITY_COMPARATOR)
-
-        for (item in items) {
-          if (item.canNavigate() || Registry.`is`("ide.bookmark.show.all.breakpoints", false)) {
-            var parentKey: Any = value  // root
-            for (rule in enabledRules) {  // descending priority: outermost groups first
-              val breakpoint = item.breakpoint ?: continue
-              rule.getGroup(breakpoint)?.let { group ->
-                val groupKey = GroupKey(group, parentKey)
-                breakpoints[groupKey] = parentKey
-                parentKey = groupKey
+          for (item in items) {
+            if (item.canNavigate() || Registry.`is`("ide.bookmark.show.all.breakpoints", false)) {
+              var parentKey: Any = value  // root
+              for (rule in enabledRules) {  // descending priority: outermost groups first
+                val breakpoint = item.breakpoint ?: continue
+                rule.getGroup(breakpoint)?.let { group ->
+                  val groupKey = GroupKey(group, parentKey)
+                  breakpoints[groupKey] = parentKey
+                  parentKey = groupKey
+                }
               }
+              breakpoints[item] = parentKey
             }
-            breakpoints[item] = parentKey
           }
         }
+        synchronized(map) {
+          map.clear()
+          map.putAll(breakpoints)
+        }
+        val newValid = breakpoints.any { it.value == value }
+        val oldValid = valid.getAndSet(newValid)
+        if (oldValid != newValid) {
+          // rebuild the whole tree to show/hide this root
+          project.messageBus.syncPublisher(BookmarksListener.TOPIC).structureChanged(null)
+        }
+        else if (newValid) {
+          // rebuild only the nodes under this root
+          project.messageBus.syncPublisher(BookmarksListener.TOPIC).structureChanged(this@RootNode)
+        }
       }
-      synchronized(map) {
-        map.clear()
-        map.putAll(breakpoints)
-      }
-      val newValid = breakpoints.any { it.value == value }
-      val oldValid = valid.getAndSet(newValid)
-      if (oldValid != newValid) {
-        // rebuild the whole tree to show/hide this root
-        project.messageBus.syncPublisher(BookmarksListener.TOPIC).structureChanged(null)
-      }
-      else if (newValid) {
-        // rebuild only the nodes under this root
-        project.messageBus.syncPublisher(BookmarksListener.TOPIC).structureChanged(this)
-      }
-    }
-
-    init {
-      breakpointsUpdater.cancelAndRequest()
     }
   }
-
 
   private class GroupNode(project: Project, value: GroupKey) : AbstractTreeNode<GroupKey>(project, value) {
     private val cache = AbstractTreeNodeCache<Any, AbstractTreeNode<*>>(this) {
@@ -194,4 +197,11 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
       if (!value.isEnabled) presentation.forcedTextForeground = NamedColorUtil.getInactiveTextColor()
     }
   }
+}
+
+@Service(Service.Level.PROJECT)
+class BreakpointListUpdaterService(internal val cs: CoroutineScope) {
+  @Volatile
+  var updateJob: Job? = null
+    internal set
 }
