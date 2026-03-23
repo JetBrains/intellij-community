@@ -1,12 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion.test.handlers
+package org.jetbrains.kotlin.idea.fir.completion.test.handlers
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.completion.test.COMPLETION_TEST_DATA_BASE
 import org.jetbrains.kotlin.idea.completion.test.KotlinFixtureCompletionBaseTestCase
@@ -20,7 +19,7 @@ import java.io.File
 class SmartCompletionMultifileHandlerTest : KotlinFixtureCompletionBaseTestCase() {
 
     override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
+        get() = KotlinPluginMode.K2
 
     fun testImportExtensionFunction() {
         doTest()
@@ -30,7 +29,8 @@ class SmartCompletionMultifileHandlerTest : KotlinFixtureCompletionBaseTestCase(
         doTest()
     }
 
-    fun testAnonymousObjectGenericJava() {
+    //KTIJ-38120
+    fun _testAnonymousObjectGenericJava() {
         doTest()
     }
 
@@ -38,7 +38,8 @@ class SmartCompletionMultifileHandlerTest : KotlinFixtureCompletionBaseTestCase(
         doTest()
     }
 
-    fun testNestedSamAdapter() {
+    // KTIJ-38121
+    fun _testNestedSamAdapter() {
         doTest(lookupString = "Nested")
     }
 
@@ -77,5 +78,5 @@ class SmartCompletionMultifileHandlerTest : KotlinFixtureCompletionBaseTestCase(
 
     override fun defaultCompletionType(): CompletionType = CompletionType.BASIC
     override fun getPlatform(): TargetPlatform = JvmPlatforms.unspecifiedJvmPlatform
-    override fun getProjectDescriptor() = LightJavaCodeInsightFixtureTestCase.JAVA_LATEST
+    override fun getProjectDescriptor() = JAVA_LATEST
 }

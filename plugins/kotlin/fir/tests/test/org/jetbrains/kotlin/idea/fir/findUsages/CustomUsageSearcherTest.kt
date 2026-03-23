@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.findUsages
+package org.jetbrains.kotlin.idea.fir.findUsages
 
 import com.intellij.find.findUsages.CustomUsageSearcher
 import com.intellij.find.findUsages.FindUsagesOptions
@@ -20,7 +20,7 @@ import org.junit.runner.RunWith
 class CustomUsageSearcherTest : KotlinLightCodeInsightFixtureTestCaseBase() {
 
     override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
+        get() = KotlinPluginMode.K2
 
     fun testAddCustomUsagesForKotlin() {
         val customUsageSearcher = object : CustomUsageSearcher() {

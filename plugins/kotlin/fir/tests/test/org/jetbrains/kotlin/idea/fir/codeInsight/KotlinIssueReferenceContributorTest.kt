@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.codeInsight
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.fir.codeInsight
 
 import com.intellij.codeInsight.highlighting.HyperlinkAnnotator
 import com.intellij.openapi.paths.WebReference
@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.junit.Assert
 import org.junit.Before
@@ -18,6 +19,8 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class KotlinIssueReferenceContributorTest : KotlinLightCodeInsightFixtureTestCase() {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+
     @Before
     fun setUpIssues() {
         IssueNavigationConfiguration.getInstance(myFixture.project).links = listOf(

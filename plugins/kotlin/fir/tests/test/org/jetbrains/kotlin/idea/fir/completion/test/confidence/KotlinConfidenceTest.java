@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion.test.confidence;
+package org.jetbrains.kotlin.idea.fir.completion.test.confidence;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.CompletionConfidence;
 import com.intellij.codeInsight.completion.CompletionConfidenceEP;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightCompletionTestCase;
+import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -20,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
@@ -40,7 +42,7 @@ import java.util.List;
 public class KotlinConfidenceTest extends LightCompletionTestCase implements ExpectedPluginModeProvider {
     @Override
     public @NotNull KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K1;
+        return KotlinPluginMode.K2;
     }
 
     private static final String TYPE_DIRECTIVE_PREFIX = "// TYPE:";
@@ -124,7 +126,9 @@ public class KotlinConfidenceTest extends LightCompletionTestCase implements Exp
                 return;
             }
             assertNotNull("You must type something, use // TYPE:", typeText);
-            type(typeText);
+
+            TestModeFlags.runWithFlag(CompletionAutoPopupHandler.ourTestingAutopopup, true, () -> type(typeText));
+
             checkResultByFile(getAfterFileName());
         }
         finally {
