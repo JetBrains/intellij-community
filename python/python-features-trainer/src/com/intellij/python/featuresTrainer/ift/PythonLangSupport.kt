@@ -91,7 +91,7 @@ internal class PythonLangSupport(private val errorSink: ErrorSink = ShowingMessa
   @Throws(NoSdkException::class)
   @RequiresEdt
   override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk = runWithModalProgressBlocking(project, "...") {
-    pythonSdkConfigurationMutex.withLock {
+    project.pythonSdkConfigurationMutex.withLock {
       when (val r = createVenvAndSdk(ModuleOrProject.ProjectOnly(project))) {
         is Result.Failure -> {
           errorSink.emit(r.error, project)

@@ -35,7 +35,7 @@ internal class PySdkFromEnvironmentVariableConfigurator(private val project: Pro
     }
   }
 
-  private suspend fun checkAndSetSdk(project: Project, pycharmPythonPathEnvVariable: String) = pythonSdkConfigurationMutex.withLock {
+  private suspend fun checkAndSetSdk(project: Project, pycharmPythonPathEnvVariable: String) = project.pythonSdkConfigurationMutex.withLock {
     withContext(Dispatchers.EDT) {
       val sdk = PySdkFromEnvironmentVariable.findOrCreateSdkByPath(pycharmPythonPathEnvVariable) ?: return@withContext
 

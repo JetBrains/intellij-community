@@ -160,7 +160,7 @@ private class CacheEvictingFix(
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class InterpreterFixExecutor(private val project: Project, internal val scope: CoroutineScope) : BusyGuardExecutor {
-  override val isBusy: StateFlow<Boolean> = pythonSdkConfigurationMutex.isLocked
+  override val isBusy: StateFlow<Boolean> = project.pythonSdkConfigurationMutex.isLocked
 
   init {
     scope.launch {
@@ -170,7 +170,7 @@ class InterpreterFixExecutor(private val project: Project, internal val scope: C
 
   override fun execute(action: suspend () -> Unit) {
     scope.launch {
-      pythonSdkConfigurationMutex.tryWithLock { action() }.orLogException(LOG)
+      project.pythonSdkConfigurationMutex.tryWithLock { action() }.orLogException(LOG)
     }
   }
 
