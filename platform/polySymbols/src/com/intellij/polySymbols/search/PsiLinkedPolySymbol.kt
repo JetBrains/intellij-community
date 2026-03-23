@@ -12,7 +12,7 @@ import com.intellij.polySymbols.utils.PolySymbolDeclaredInPsi
 import com.intellij.psi.PsiElement
 
 /**
- * This interface servers as a bridge between Symbol-based functionality and the old
+ * This interface serves as a bridge between Symbol-based functionality and the old
  * PSI-based functionality. Implementing this interface on a [PolySymbol] links it directly
  * to the [PsiElement] returned by the [linkedElement] property.
  *
@@ -24,12 +24,12 @@ import com.intellij.psi.PsiElement
  * dedicated declaration provider ([com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider]).
  *
  * When a [PsiElement] usages are being searched for, or the element is being renamed,
- * any references, which resolve to a [PolySymbolDeclaredInPsi], of which [linkedElement]
+ * any references, which resolve to a [PsiLinkedPolySymbol], of which [linkedElement]
  * property is equivalent to the [PsiElement], are recognized as references to the symbol
  * and are being returned as usages, or rename usages.
  *
  * It works the other way too, so if a usage search or rename is performed on a reference
- * to a [PolySymbolDeclaredInPsi], the usage search or rename is also run for [linkedElement].
+ * to a [PsiLinkedPolySymbol], the usage search or rename is also run for [linkedElement].
  *
  * The PolySymbol, which implements this interface, should not override [renameTarget] or
  * [searchTarget] properties, as the framework already handles this functionality.
