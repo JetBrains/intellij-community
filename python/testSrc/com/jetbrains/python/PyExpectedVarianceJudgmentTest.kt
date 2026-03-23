@@ -353,19 +353,31 @@ internal class PyExpectedVarianceJudgmentTest : PyTestCase() {
     }
   }
 
-  // Expect null to avoid variance compatibility inspection check
-
-  fun `test Type alias for generic class`() {
-    doTest("T2]", null, """
+  fun `test Type alias use for generic class invariant`() {
+    doTest("T2]", Variance.INVARIANT, """
       from typing import TypeVar, Generic
-      T1 = TypeVar("T1", covariant=True)
-      class Box(Generic[T1]):
-          pass
-      Box_TA = Box[T1]
+      T1 = TypeVar("T1")
+      class Box(Generic[T1]): ...
+      Box_TA: TypeAlias = Box[T1]
       T2 = TypeVar("T2", covariant=True)
       my_box: Box_TA[T2]
       """)
   }
+
+  fun `test Type alias use for generic class covariant`() {
+    doTest("T_co] #", Variance.COVARIANT, """
+      from typing import Generic, TypeVar, TypeAlias
+      T_co = TypeVar("T_co", covariant=True)
+      class ClassA(Generic[T_co]): ...
+      
+      T = TypeVar("T")
+      A_Alias_1: TypeAlias = ClassA[T]
+      
+      obj: A_Alias_1[T_co] #
+      """)
+  }
+
+  // Expect null to avoid variance compatibility inspection check
 
   fun `test Generic class dunder init special case`() {
     // actually bivariant
