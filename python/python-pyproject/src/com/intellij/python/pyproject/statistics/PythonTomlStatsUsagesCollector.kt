@@ -1,15 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pyproject.statistics
 
-import com.github.benmanes.caffeine.cache.Cache
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.FilenameIndex
@@ -27,11 +24,7 @@ import org.toml.lang.psi.TomlArray
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.TomlTable
-import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.io.path.pathString
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.toJavaDuration
 
 internal val PYTHON_TOOL_MARKERS: Map<String, Set<String>> = mapOf(
   "bandit" to setOf(".bandit"),
@@ -211,33 +204,15 @@ object PyProjectTomlCollector {
     )
   }
 
-  // Workaround for PY-88025, the caching should be removed once the race condition has been fixed. This cache is necessary so that the
-  // racing coroutines that are trying to create SDKs for the same root don't trigger multiple FUS events.
-  private val cache: Cache<String, Unit> =
-    Caffeine.newBuilder()
-      .expireAfterWrite(10.seconds.toJavaDuration())
-      .build()
-
-
-  fun sdkCreatedAutomatically(sdkDir: Path?, toolId: ToolId): Unit = whenNotCached(sdkDir) {
+  fun sdkCreatedAutomatically(toolId: ToolId) {
     PYTHON_SDK_SETUP_AUTOMATICALLY.log(
       TOOL_ID_FIELD.with(toolId.id)
     )
   }
 
-  fun sdkCreatedFromNotification(sdkDir: Path?, toolId: ToolId): Unit = whenNotCached(sdkDir) {
+  fun sdkCreatedFromNotification(toolId: ToolId) {
     PYTHON_SDK_SETUP_FROM_NOTIFICATION.log(
       TOOL_ID_FIELD.with(toolId.id)
     )
-  }
-
-  private fun whenNotCached(sdkDir: Path?, callback: () -> Unit) {
-    if (sdkDir == null || cache.getIfPresent(sdkDir.pathString) != null) {
-      return
-    }
-
-    cache.put(sdkDir.pathString, Unit)
-
-    callback()
   }
 }

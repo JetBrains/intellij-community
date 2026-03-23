@@ -183,7 +183,7 @@ private class UseProvidedInterpreterFix(
   override fun createActionLink(module: Module, project: Project, psiFile: PsiFile, executor: BusyGuardExecutor): ActionLink {
     return ActionLink(myCreateSdkInfo.createSdkInfo.intentionName) {
       executor.execute {
-        PyProjectTomlCollector.sdkCreatedFromNotification(modulePath, myCreateSdkInfo.toolId)
+        PyProjectTomlCollector.sdkCreatedFromNotification(myCreateSdkInfo.toolId)
         val lifetime = PyProjectSdkConfiguration.suppressTipAndInspectionsFor(module, myCreateSdkInfo.toolId.id)
         withBackgroundProgress(project, myCreateSdkInfo.createSdkInfo.intentionName, false) {
           lifetime.use { PyProjectSdkConfiguration.setSdkUsingCreateSdkInfo(module, myCreateSdkInfo) }
