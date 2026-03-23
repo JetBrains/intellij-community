@@ -130,7 +130,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       if (sessions.isEmpty() && filesYetToStartHighlighting.isEmpty()) {
         LOG.info("""
           Highlighting done,
-          Total opening time is : ${(System.nanoTime() - StartUpMeasurer.getStartTime()).nanoseconds.inWholeMilliseconds} ms
+          Total opening time is : ${(System.nanoTime() - StartUpMeasurer.getStartTime()).nanoseconds.inWholeMilliseconds}
          """)
         for (job in waitingJobs) {
           job.complete(Unit)
@@ -141,12 +141,8 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       else {
         //Printing additional information to get information why highlighting was stuck
         //TODO Temporary disable printStatistic(). AT-2276
-        LOG.info("""Highlighting still in progress. 
-                  Remaining sessions:
-                     ${sessions.keys.joinToString(separator = ";\n    ") { it.description }}
-                  Remaining files:
-                    ${filesYetToStartHighlighting.keys.joinToString(separator = ";\n    ") { it.name }}
-                  """)
+        LOG.info("Highlighting still in progress: ${sessions.keys.joinToString(separator = ",\n") { it.description }},\n" +
+                 "files ${filesYetToStartHighlighting.keys.joinToString(separator = ",\n") { it.name }}")
       }
     }
   }
@@ -354,6 +350,14 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
         }
       }
 
+      sessions.forEach {
+        val editor = it.key
+        LOG.info("Remaining session ${editor.description}; isHighlightingCompleted = ${
+          DaemonCodeAnalyzerImpl.isHighlightingCompleted(editor,
+                                                         project)
+        }")
+      }
+
       if (!filesYetToStartHighlighting.isEmpty()) {
         val fileEditorManager = FileEditorManager.getInstance(project)
         val filesIterator = filesYetToStartHighlighting.entries.iterator()
@@ -427,19 +431,20 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
   }
 
   override fun daemonStarting(fileEditors: Collection<FileEditor>) {
-    CodeAnalysisStateListener.LOG.info(""""Daemon starting, editors size = ${fileEditors.size}, editors:
-                                       ${fileEditors.joinToString(separator = "\n    ") { it.description }}
-                                       """)
+    CodeAnalysisStateListener.LOG.info("Daemon starting with ${fileEditors.size} unfiltered editors: " +
+                                       fileEditors.joinToString(separator = "\n") { it.description })
     project.service<CodeAnalysisStateListener>().registerDaemonStarted(fileEditors.getWorthy())
   }
 
   override fun daemonCanceled(reason: String, fileEditors: Collection<FileEditor>) {
     val traceId = UUID.randomUUID()
+    CodeAnalysisStateListener.LOG.info("Daemon canceled by the reason of '$reason', traceId = $traceId")
     daemonFinishedOrCancelled(fileEditors, true, traceId, reason)
   }
 
   override fun daemonFinished(fileEditors: Collection<FileEditor>) {
     val traceId = UUID.randomUUID()
+    CodeAnalysisStateListener.LOG.info("Daemon finished, traceId = $traceId")
     daemonFinishedOrCancelled(fileEditors, false, traceId)
   }
 
@@ -465,8 +470,8 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
 
   fun printFileEditors(fileEditors: Collection<FileEditor>, status: String, traceId: UUID, reason: String) {
     try {
-      val editorsMessage = fileEditors.map { fileEditor -> fileEditor.description }.joinToString(separator = "\n    ")
-      CodeAnalysisStateListener.LOG.info("Daemon analyzer status $status, editors size = ${fileEditors.size}, reason = $reason ,traceId = $traceId, editors = $editorsMessage")
+      val editorsMessage = fileEditors.map { fileEditor -> fileEditor.description }.joinToString(separator = "\n")
+      CodeAnalysisStateListener.LOG.info("Daemon analyzer was $status, editors size = ${fileEditors.size}, reason = $reason ,traceId = $traceId, editorsMessage = $editorsMessage")
     }
     catch (e: Exception) {
       CodeAnalysisStateListener.LOG.warn(e)

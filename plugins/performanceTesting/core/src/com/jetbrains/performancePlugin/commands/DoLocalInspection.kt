@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
@@ -27,14 +26,10 @@ import kotlin.time.Duration.Companion.seconds
  * Command runs local inspection.
  * Runs local inspection using DaemonCodeAnalyzer.
  */
-open class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
-
+class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX: String = CMD_PREFIX + "doLocalInspection"
     const val SPAN_NAME: String = "localInspections"
-
-    @JvmStatic
-    protected val LOG = logger<DoLocalInspection>()
   }
 
   @Suppress("TestOnlyProblems")
@@ -123,15 +118,13 @@ open class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutine
       }
     }
   }
-
-  protected fun String.parameter(name: String): String? {
+  private fun String.parameter(name: String): String? {
     val splitParams = this.split(" ")
     val keyIndex = splitParams.indexOf(name).takeIf { it >= 0 } ?: return null
     return splitParams.getOrNull(keyIndex + 1)
   }
 
-  protected fun isWarmupMode(): Boolean {
+  private fun isWarmupMode(): Boolean {
     return text.contains("WARMUP")
   }
-
 }
