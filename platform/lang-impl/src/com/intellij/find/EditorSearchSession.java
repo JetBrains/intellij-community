@@ -149,7 +149,11 @@ public class EditorSearchSession implements SearchSession,
       .addReplaceFieldActions(new PrevOccurrenceAction(false),
                               new NextOccurrenceAction(false))
       .withCloseAction(this::close)
-      .withReplaceAction(this::replaceCurrent)
+      .withReplaceAction(() -> {
+        WriteIntentReadAction.run(() -> {
+          replaceCurrent();
+        });
+      })
       .build();
 
     myComponent.addListener(this);
