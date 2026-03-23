@@ -20,7 +20,14 @@ common --incompatible_autoload_externally=
 startup:macos --output_user_root=~/Library/Caches/JetBrains/MonorepoBazel
 startup:linux --output_user_root=~/.cache/JetBrains/MonorepoBazel
 # MRI-4120: On Windows, we use a short `output_user_root` to mitigate long path issues
-# When using a custom disk drive setup (different disk label, etc.), configure `startup:windows --output_user_root=<YOUR PATH HERE>` in `%USERPROFILE%\.bazelrc`
+# When using a custom disk drive setup (different disk label, etc.), configure in `%USERPROFILE%\.bazelrc`:
+# ```
+# startup --output_user_root=<YOUR PATH HERE WITH / SLASHES>
+# startup:windows --output_user_root=<YOUR PATH HERE WITH / SLASHES>
+# ```
+# (both lines matter to match various Bazel configurations out there)
+# USE '/' slashes in your path, like W:/bazel
+#
 # See https://bazel.build/run/bazelrc for more details
 startup:windows --output_user_root=C:/ProgramData/_bazel
 
