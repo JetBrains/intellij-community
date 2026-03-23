@@ -2,7 +2,7 @@
 
 from _typeshed import Incomplete, ReadableBuffer
 from collections.abc import Iterable, Iterator, Mapping, Sequence
-from typing import Any, Protocol, TypeVar, overload
+from typing import Any, Protocol, TypeVar, overload, type_check_only
 from typing_extensions import TypeAlias
 from xml.etree.ElementTree import Element, ElementTree, QName, XMLParser, _FileRead
 
@@ -17,34 +17,52 @@ _T_co = TypeVar("_T_co", covariant=True)
 # Usually an Element() from either lxml or xml.etree (has a 'tag' element)
 # lxml.etree._Element
 # xml.etree.Element
+@type_check_only
 class _HasTag(Protocol):
     tag: str
 
+@type_check_only
 class _HasGet(Protocol[_T_co]):
     def get(self, value: str, /) -> _T_co | None: ...
 
+@type_check_only
 class _HasText(Protocol):
     text: str
 
+@type_check_only
 class _HasAttrib(Protocol):
     attrib: Iterable[Any]  # AnyOf[dict[str, str], Iterable[tuple[str, str]]]
 
+@type_check_only
 class _HasTagAndGet(_HasTag, _HasGet[_T_co], Protocol[_T_co]): ...  # noqa: Y046
+
+@type_check_only
 class _HasTagAndText(_HasTag, _HasText, Protocol): ...  # noqa: Y046
+
+@type_check_only
 class _HasTagAndTextAndAttrib(_HasTag, _HasText, _HasAttrib, Protocol): ...  # noqa: Y046
 
+@type_check_only
 class _SupportsFindChartLines(Protocol):
     def find(self, path: str, /) -> ChartLines | None: ...
 
+@type_check_only
 class _SupportsFindAndIterAndAttribAndText(  # noqa: Y046
     _SupportsFindChartLines, Iterable[Incomplete], _HasAttrib, _HasText, Protocol
 ): ...
+
+@type_check_only
 class _SupportsIterAndAttrib(Iterable[Incomplete], _HasAttrib, Protocol): ...  # noqa: Y046
+
+@type_check_only
 class _SupportsIterAndAttribAndTextAndTag(Iterable[Incomplete], _HasAttrib, _HasText, _HasTag, Protocol): ...  # noqa: Y046
+
+@type_check_only
 class _SupportsIterAndAttribAndTextAndGet(  # noqa: Y046
     Iterable[Incomplete], _HasAttrib, _HasText, _HasGet[Incomplete], Protocol
 ): ...
 
+@type_check_only
 class _ParentElement(Protocol[_T]):
     def makeelement(self, tag: str, attrib: dict[str, str], /) -> _T: ...
     def append(self, element: _T, /) -> object: ...

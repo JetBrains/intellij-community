@@ -241,13 +241,13 @@ class Enumerated(Integer):
     namedValues: namedval.NamedValues
 
 class SequenceOfAndSetOfBase(base.ConstructedAsn1Type):
-    componentType: namedtype.NamedTypes | None
+    componentType: base.Asn1Type | None
     tagSet: TagSet
     subtypeSpec: constraint.ConstraintsIntersection
     def __init__(
         self,
         *args,
-        componentType: namedtype.NamedTypes | None = ...,
+        componentType: base.Asn1Type | None = ...,
         tagSet: TagSet = ...,
         subtypeSpec: constraint.ConstraintsIntersection = ...,
     ) -> None: ...
