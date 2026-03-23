@@ -101,7 +101,10 @@ private class AsyncLog {
   }
 
   fun log(event: LogEvent) {
-    check(queue.trySend(event).isSuccess)
+    val result = queue.trySend(event)
+    check(result.isSuccess) {
+      result
+    }
   }
 
   fun awaitQueueProcessed() {
