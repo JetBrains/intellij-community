@@ -66,9 +66,6 @@ internal class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAw
         val newFile =
             KtPsiFactory(originalFile.project, eventSystemEnabled = true, markGenerated = false).createFile(originalFile.name, text)
         newFile.contextModule = originalFile.getKaModule(originalFile.project, useSiteModule = null)
-        if (originalFile.name.endsWith(".kts")) {
-            createCopyOfScript(originalFile, newFile)?.let { return it }
-        }
 
         val virtualFile = newFile.virtualFile
         val originalVirtualFile = originalFile.virtualFile
