@@ -1,19 +1,21 @@
 from collections.abc import Iterable
 from typing import Any
 
+from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models.lookups import Exact, GreaterThan, GreaterThanOrEqual, In, IsNull, LessThan, LessThanOrEqual
+from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
+from typing_extensions import override
 
 def get_normalized_value(value: Any, lhs: Any) -> tuple[Any, ...]: ...
 
 class RelatedIn(In):
-    bilateral_transforms: list[Any]
-    lhs: Any
-    rhs: Any
+    @override
     def get_prep_lookup(self) -> Iterable[Any]: ...
 
 class RelatedLookupMixin:
     rhs: Any
     def get_prep_lookup(self) -> Any: ...
+    def as_sql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...
 
 class RelatedExact(RelatedLookupMixin, Exact): ...
 class RelatedLessThan(RelatedLookupMixin, LessThan): ...

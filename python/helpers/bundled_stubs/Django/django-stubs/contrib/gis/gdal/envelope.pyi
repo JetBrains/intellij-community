@@ -1,10 +1,17 @@
 from ctypes import Structure
 from typing import Any
 
-class OGREnvelope(Structure): ...
+from typing_extensions import override
+
+class OGREnvelope(Structure):
+    MinX: float
+    MaxX: float
+    MinY: float
+    MaxY: float
 
 class Envelope:
     def __init__(self, *args: Any) -> None: ...
+    @override
     def __eq__(self, other: object) -> bool: ...
     def expand_to_include(self, *args: Any) -> None: ...
     @property

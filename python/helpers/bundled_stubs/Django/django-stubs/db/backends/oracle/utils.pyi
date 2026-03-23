@@ -1,7 +1,7 @@
 import datetime
 from typing import Any
 
-class InsertVar:
+class BoundVar:
     types: Any
     db_type: Any
     bound_param: Any
@@ -16,9 +16,11 @@ class Oracle_datetime(datetime.datetime):
 
 class BulkInsertMapper:
     BLOB: str
-    CLOB: str
     DATE: str
     INTERVAL: str
+    NCLOB: str
     NUMBER: str
     TIMESTAMP: str
     types: Any
+
+def dsn(settings_dict: dict[str, Any]) -> str: ...

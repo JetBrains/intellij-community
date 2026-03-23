@@ -1,6 +1,7 @@
-from typing import Any, Protocol
+from typing import Any, Protocol, type_check_only
 from uuid import UUID
 
+@type_check_only
 class _Converter(Protocol):
     regex: str
     def __init__(self) -> None: ...

@@ -7,6 +7,7 @@ class BaseDatabaseClient:
     executable_name: str | None
     connection: BaseDatabaseWrapper
     def __init__(self, connection: BaseDatabaseWrapper) -> None: ...
+    def __del__(self) -> None: ...
     @classmethod
     def settings_to_cmd_args_env(
         cls,

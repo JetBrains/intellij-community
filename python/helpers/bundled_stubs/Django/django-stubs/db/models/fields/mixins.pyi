@@ -3,13 +3,10 @@ from typing import Any
 from django.core.checks.messages import CheckMessage
 from django.db.models.base import Model
 from django.utils.functional import cached_property
-from typing_extensions import deprecated
 
 NOT_PROVIDED: Any
 
 class FieldCacheMixin:
-    @deprecated("get_cache_name() is deprecated and will be removed in Django 6.0. Use cache_name instead.")
-    def get_cache_name(self) -> str: ...
     @cached_property
     def cache_name(self) -> str: ...
     def get_cached_value(self, instance: Model, default: Any = ...) -> Model | None: ...

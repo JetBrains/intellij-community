@@ -4,6 +4,7 @@ from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.backends.mysql.base import DatabaseWrapper
 from django.db.models.base import Model
 from django.db.models.fields import Field
+from typing_extensions import override
 
 class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
     connection: DatabaseWrapper
@@ -19,10 +20,16 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
     sql_create_pk: str
     sql_delete_pk: str
     sql_create_index: str
+    sql_alter_column_comment: None  # type: ignore[assignment]
     @property
+    @override
     def sql_delete_check(self) -> str: ...  # type: ignore[override]
     @property
+    @override
     def sql_rename_column(self) -> str: ...  # type: ignore[override]
+    @override
     def quote_value(self, value: Any) -> str: ...
+    @override
     def skip_default(self, field: Field) -> bool: ...
+    @override
     def add_field(self, model: type[Model], field: Field) -> None: ...

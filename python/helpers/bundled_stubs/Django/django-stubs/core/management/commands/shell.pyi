@@ -1,10 +1,12 @@
 from typing import Any
 
 from django.core.management import BaseCommand
+from typing_extensions import override
 
 class Command(BaseCommand):
     shells: list[str]
 
+    @override
     def handle(self, **options: Any) -> None: ...
     def ipython(self, options: Any) -> None: ...
     def bpython(self, options: Any) -> None: ...

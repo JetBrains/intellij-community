@@ -1,8 +1,5 @@
-from collections.abc import Sequence
+from collections.abc import Collection, Mapping, Sequence
 from re import Pattern
-
-# This is defined here as a do-nothing function because we can't import
-# django.utils.translation -- that module depends on the settings.
 from typing import Any, Literal, Protocol, TypeAlias, TypedDict, type_check_only
 
 from django.utils.functional import _StrOrPromise
@@ -10,7 +7,13 @@ from typing_extensions import NotRequired
 
 from django_stubs_ext.settings import TemplatesSetting
 
-_Admins: TypeAlias = list[tuple[str, str]]
+# This is defined here as a do-nothing function because we can't import
+# django.utils.translation -- that module depends on the settings.
+def gettext_noop(s: str) -> str: ...
+
+# Note: the tuple element format for ADMINS or MANAGERS is deprecated. Use a
+# list of strings instead.
+_Admins: TypeAlias = list[str] | list[tuple[str, str]]
 
 ####################
 # CORE             #
@@ -130,11 +133,6 @@ TEMPLATES: list[TemplatesSetting]
 # Default form rendering class.
 FORM_RENDERER: str
 
-# RemovedInDjango60Warning: It's a transitional setting helpful in early
-# adoption of "https" as the new default value of forms.URLField.assume_scheme.
-# Set to True to assume "https" during the Django 5.x release cycle.
-FORMS_URLFIELD_ASSUME_HTTPS: bool
-
 # Default email address to use for various automated correspondence from
 # the site managers.
 DEFAULT_FROM_EMAIL: str
@@ -253,34 +251,34 @@ FILE_UPLOAD_DIRECTORY_PERMISSIONS: int | None
 FORMAT_MODULE_PATH: str | None
 
 # Default formatting for date objects. See all available format strings here:
-# https://docs.djangoproject.com/en/dev/ref/templates/builtins/#date
+# https://docs.djangoproject.com/en/stable/ref/templates/builtins/#date
 DATE_FORMAT: str
 
 # Default formatting for datetime objects. See all available format strings here:
-# https://docs.djangoproject.com/en/dev/ref/templates/builtins/#date
+# https://docs.djangoproject.com/en/stable/ref/templates/builtins/#date
 DATETIME_FORMAT: str
 
 # Default formatting for time objects. See all available format strings here:
-# https://docs.djangoproject.com/en/dev/ref/templates/builtins/#date
+# https://docs.djangoproject.com/en/stable/ref/templates/builtins/#date
 TIME_FORMAT: str
 
 # Default formatting for date objects when only the year and month are relevant.
 # See all available format strings here:
-# https://docs.djangoproject.com/en/dev/ref/templates/builtins/#date
+# https://docs.djangoproject.com/en/stable/ref/templates/builtins/#date
 YEAR_MONTH_FORMAT: str
 
 # Default formatting for date objects when only the month and day are relevant.
 # See all available format strings here:
-# https://docs.djangoproject.com/en/dev/ref/templates/builtins/#date
+# https://docs.djangoproject.com/en/stable/ref/templates/builtins/#date
 MONTH_DAY_FORMAT: str
 
 # Default short formatting for date objects. See all available format strings here:
-# https://docs.djangoproject.com/en/dev/ref/templates/builtins/#date
+# https://docs.djangoproject.com/en/stable/ref/templates/builtins/#date
 SHORT_DATE_FORMAT: str
 
 # Default short formatting for datetime objects.
 # See all available format strings here:
-# https://docs.djangoproject.com/en/dev/ref/templates/builtins/#date
+# https://docs.djangoproject.com/en/stable/ref/templates/builtins/#date
 SHORT_DATETIME_FORMAT: str
 
 # Default formats to be used when parsing dates from input boxes, in order
@@ -541,3 +539,19 @@ SECURE_REDIRECT_EXEMPT: list[str]
 SECURE_REFERRER_POLICY: str
 SECURE_SSL_HOST: str | None
 SECURE_SSL_REDIRECT: bool
+
+##################
+# CSP MIDDLEWARE #
+##################
+SECURE_CSP: Mapping[str, Collection[str] | str]
+SECURE_CSP_REPORT_ONLY: Mapping[str, Collection[str] | str]
+
+# RemovedInDjango70Warning: A transitional setting helpful in early adoption of
+# HTTPS as the default protocol in urlize and urlizetrunc when no protocol is
+# provided. Set to True to assume HTTPS during the Django 6.x release cycle.
+URLIZE_ASSUME_HTTPS: bool
+
+#########
+# TASKS #
+#########
+TASKS: dict[str, dict[str, Any]]

@@ -5,7 +5,7 @@ from weakref import WeakSet
 from django.apps.config import AppConfig
 from django.contrib.admin.models import LogEntry
 from django.contrib.admin.options import ModelAdmin
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.core.checks import CheckMessage
 from django.db.models.base import Model
 from django.db.models.query import QuerySet
@@ -27,6 +27,7 @@ class AdminSite:
     index_title: _StrOrPromise
     site_url: str | None
     login_form: type[AuthenticationForm] | None
+    password_change_form: type[PasswordChangeForm] | None
     index_template: str | None
     app_index_template: str | None
     login_template: str | None

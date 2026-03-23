@@ -3,11 +3,13 @@ from django.core.exceptions import ObjectDoesNotExist as ObjectDoesNotExist
 from . import lookups as lookups
 from . import signals as signals
 from .aggregates import Aggregate as Aggregate
+from .aggregates import AnyValue as AnyValue
 from .aggregates import Avg as Avg
 from .aggregates import Count as Count
 from .aggregates import Max as Max
 from .aggregates import Min as Min
 from .aggregates import StdDev as StdDev
+from .aggregates import StringAgg as StringAgg
 from .aggregates import Sum as Sum
 from .aggregates import Variance as Variance
 from .base import DEFERRED as DEFERRED
@@ -114,6 +116,7 @@ __all__ = [
     "SET_DEFAULT",
     "SET_NULL",
     "Aggregate",
+    "AnyValue",
     "AutoField",
     "Avg",
     "BaseConstraint",
@@ -185,6 +188,7 @@ __all__ = [
     "SmallAutoField",
     "SmallIntegerField",
     "StdDev",
+    "StringAgg",
     "Subquery",
     "Sum",
     "TextChoices",

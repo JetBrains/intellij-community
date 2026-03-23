@@ -3,6 +3,7 @@ from pathlib import Path, PosixPath
 from typing import Any, Protocol, type_check_only
 
 from django.contrib.auth.models import _User
+from django.utils.functional import cached_property
 
 @type_check_only
 class PasswordValidator(Protocol):
@@ -28,6 +29,8 @@ class MinimumLengthValidator:
     def get_help_text(self) -> str: ...
     def get_error_message(self) -> str: ...
 
+def exceeds_maximum_length_ratio(password: str, max_similarity: float, value: str) -> bool: ...
+
 class UserAttributeSimilarityValidator:
     DEFAULT_USER_ATTRIBUTES: Sequence[str]
     user_attributes: Sequence[str]
@@ -38,7 +41,8 @@ class UserAttributeSimilarityValidator:
     def get_error_message(self) -> str: ...
 
 class CommonPasswordValidator:
-    DEFAULT_PASSWORD_LIST_PATH: Path
+    @cached_property
+    def DEFAULT_PASSWORD_LIST_PATH(self) -> Path: ...
     passwords: set[str]
     def __init__(self, password_list_path: Path | PosixPath | str = ...) -> None: ...
     def validate(self, password: str, user: _User | None = ...) -> None: ...

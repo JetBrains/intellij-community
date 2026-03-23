@@ -4,6 +4,7 @@ from email.mime.base import MIMEBase
 from email.mime.message import MIMEMessage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.policy import Policy
 from email.utils import make_msgid as make_msgid
 from typing import Any, NamedTuple, TypeAlias, overload
 
@@ -58,7 +59,6 @@ class EmailAttachment(NamedTuple):
 
 class EmailMessage:
     content_subtype: str
-    mixed_subtype: str
     encoding: Any
     to: list[str]
     cc: list[Any]
@@ -76,6 +76,7 @@ class EmailMessage:
         body: _StrOrPromise | None = "",
         from_email: str | None = None,
         to: Sequence[str] | None = None,
+        *,
         bcc: Sequence[str] | None = None,
         connection: Any | None = None,
         attachments: Sequence[MIMEBase | _AttachmentTuple] | None = None,
@@ -85,7 +86,7 @@ class EmailMessage:
     ) -> None: ...
     def get_connection(self, fail_silently: bool = False) -> Any: ...
     # TODO: when typeshed gets more types for email.Message, move it to MIMEMessage, now it has too many false-positives
-    def message(self) -> Any: ...
+    def message(self, *, policy: Policy | None = ...) -> Any: ...
     def recipients(self) -> list[str]: ...
     def send(self, fail_silently: bool = False) -> int: ...
     @overload
@@ -103,7 +104,6 @@ class EmailMessage:
     def attach_file(self, path: str, mimetype: str | None = None) -> None: ...
 
 class EmailMultiAlternatives(EmailMessage):
-    alternative_subtype: str
     alternatives: list[tuple[_AttachmentContent, str]]
     def __init__(
         self,
@@ -111,6 +111,7 @@ class EmailMultiAlternatives(EmailMessage):
         body: _StrOrPromise | None = "",
         from_email: str | None = None,
         to: Sequence[str] | None = None,
+        *,
         bcc: Sequence[str] | None = None,
         connection: Any | None = None,
         attachments: Sequence[MIMEBase | _AttachmentTuple] | None = None,

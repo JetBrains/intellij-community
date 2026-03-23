@@ -1,4 +1,4 @@
-from io import IOBase
+from types import ModuleType
 from typing import Any
 
 from django.db.backends.base.base import BaseDatabaseWrapper
@@ -11,6 +11,8 @@ from .creation import DatabaseCreation
 from .features import DatabaseFeatures
 from .introspection import DatabaseIntrospection
 from .operations import DatabaseOperations
+
+TIMESTAMPTZ_OID: int
 
 def psycopg_version() -> tuple[int, int, int]: ...
 
@@ -27,15 +29,26 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     introspection_class: type[DatabaseIntrospection]
     ops_class: type[DatabaseOperations]
 
+    Database: ModuleType
     operators: dict[str, str]
     pattern_esc: str
     pattern_ops: dict[str, str]
 
     # PostgreSQL backend-specific attributes.
     _named_cursor_idx: int
+    @property
+    def pool(self) -> Any: ...
+    def close_pool(self) -> None: ...
+    def tzinfo_factory(self, offset: int) -> Any: ...
     @cached_property
     def pg_version(self) -> int: ...
 
+class CursorMixin:
+    def callproc(self, name: Any, args: Any = ...) -> Any: ...
+
+class ServerBindingCursor(CursorMixin): ...
+class Cursor(CursorMixin): ...
+class ServerSideCursor(CursorMixin): ...
+
 class CursorDebugWrapper(BaseCursorDebugWrapper):
-    def copy_expert(self, sql: _ExecuteQuery, file: IOBase, *args: Any) -> Any: ...
-    def copy_to(self, file: IOBase, table: str, *args: Any, **kwargs: Any) -> Any: ...
+    def copy(self, statement: _ExecuteQuery) -> Any: ...

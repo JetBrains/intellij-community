@@ -17,16 +17,19 @@ from django.forms.forms import BaseForm, Form
 from django.forms.formsets import BaseFormSet
 from django.http.request import HttpRequest
 from django.utils.datastructures import _IndexableCollection
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, override
 
 _T = TypeVar("_T")
+
+QUOTE_MAP: dict[int, str]
+UNQUOTE_MAP: dict[str, str]
 
 class FieldIsAForeignKeyColumnName(Exception): ...
 
 def lookup_spawns_duplicates(opts: Options, lookup_path: str) -> bool: ...
 def get_last_value_from_parameters(parameters: dict[str, list[str] | str], key: str) -> str | None: ...
 def prepare_lookup_value(
-    key: str, value: list[bool | datetime.datetime | str] | datetime.datetime | str, separator: str
+    key: str, value: list[bool | datetime.datetime | str] | datetime.datetime | str, separator: str = ...
 ) -> list[bool | datetime.datetime | str] | bool | datetime.datetime | str: ...
 def build_q_object_from_lookup_parameters(parameters: dict[str, list[str]]) -> Q: ...
 def quote(s: int | str | UUID) -> str: ...
@@ -45,6 +48,7 @@ class NestedObjects(Collector):
     protected: set[Model]
     model_objs: defaultdict[str, set[Model]]
     def add_edge(self, source: Model | None, target: Model) -> None: ...
+    @override
     def collect(  # type: ignore[override]
         self,
         objs: _IndexableCollection[Model | None],
@@ -57,6 +61,7 @@ class NestedObjects(Collector):
         keep_parents: bool = ...,
         fail_on_restricted: bool = ...,
     ) -> None: ...
+    @override
     def related_objects(
         self, related_model: type[Model], related_fields: Iterable[Field], objs: _IndexableCollection[Model]
     ) -> QuerySet[Model]: ...
@@ -64,6 +69,7 @@ class NestedObjects(Collector):
     def nested(self, format_callback: None = None) -> list[Model]: ...
     @overload
     def nested(self, format_callback: Callable[[Model], _T]) -> list[_T]: ...
+    @override
     def can_fast_delete(self, *args: Unused, **kwargs: Unused) -> Literal[False]: ...
 
 @type_check_only

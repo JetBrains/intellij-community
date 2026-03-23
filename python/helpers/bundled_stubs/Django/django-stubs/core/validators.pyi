@@ -6,6 +6,7 @@ from typing import Any, TypeAlias
 from django.core.files.base import File
 from django.utils.deconstruct import _Deconstructible
 from django.utils.functional import _StrOrPromise
+from typing_extensions import override
 
 EMPTY_VALUES: Any
 
@@ -41,12 +42,12 @@ class DomainNameValidator(RegexValidator):
     max_length: int
 
     def __init__(self, *, accept_idna: bool = True, **kwargs: Any) -> None: ...
+    @override
     def __call__(self, value: Any) -> None: ...
 
 validate_domain_name: DomainNameValidator
 
 class URLValidator(RegexValidator):
-    ul: str
     ipv4_re: str
     ipv6_re: str
     hostname_re: str
@@ -57,6 +58,7 @@ class URLValidator(RegexValidator):
     unsafe_chars: frozenset[str]
     max_length: int
     def __init__(self, schemes: Sequence[str] | None = None, **kwargs: Any) -> None: ...
+    @override
     def __call__(self, value: Any) -> None: ...
 
 integer_validator: RegexValidator
@@ -81,6 +83,7 @@ class EmailValidator(_Deconstructible):
     ) -> None: ...
     def __call__(self, value: str | None) -> None: ...
     def validate_domain_part(self, domain_part: str) -> bool: ...
+    @override
     def __eq__(self, other: object) -> bool: ...
 
 validate_email: EmailValidator
@@ -111,6 +114,7 @@ class BaseValidator(_Deconstructible):
     def __call__(self, value: Any) -> None: ...
     def compare(self, a: Any, b: Any) -> bool: ...
     def clean(self, x: Any) -> Any: ...
+    @override
     def __eq__(self, other: object) -> bool: ...
 
 class MaxValueValidator(BaseValidator): ...
@@ -123,9 +127,11 @@ class StepValueValidator(BaseValidator):
     ) -> None: ...
 
 class MinLengthValidator(BaseValidator):
+    @override
     def clean(self, x: Sized) -> int: ...
 
 class MaxLengthValidator(BaseValidator):
+    @override
     def clean(self, x: Sized) -> int: ...
 
 class DecimalValidator(_Deconstructible):
@@ -134,6 +140,7 @@ class DecimalValidator(_Deconstructible):
     decimal_places: int | None
     def __init__(self, max_digits: int | None, decimal_places: int | None) -> None: ...
     def __call__(self, value: Decimal) -> None: ...
+    @override
     def __eq__(self, other: object) -> bool: ...
 
 class FileExtensionValidator(_Deconstructible):
