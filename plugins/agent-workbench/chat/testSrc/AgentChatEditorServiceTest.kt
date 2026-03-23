@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -41,6 +42,13 @@ import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 class AgentChatEditorServiceTest {
+  companion object {
+    private val CUSTOM_AGENT_CHAT_EDITOR_KEY: Key<Boolean> = Key.create("agent.workbench.chat.test.customEditor")
+
+    @Volatile
+    private var customFileEditorFactory: ((Project, AgentChatVirtualFile) -> FileEditor)? = null
+  }
+
   private val projectFixture = projectFixture(openAfterCreation = true)
   private val project get() = projectFixture.get()
   private val fileEditorManagerFixture = projectFixture.fileEditorManagerFixture()
@@ -228,6 +236,62 @@ class AgentChatEditorServiceTest {
     assertThat(persisted.runtime.initialMessageDispatchStepIndex).isZero()
     assertThat(persisted.runtime.initialMessageToken).isEqualTo("existing-multi-step-token")
     assertThat(persisted.runtime.initialMessageSent).isFalse()
+  }
+
+  @Test
+  fun testExistingTabReuseFlushesInitialMessageToOpenEditor(): Unit = timeoutRunBlocking {
+    val terminalTabs = EditorServiceFakeAgentChatTerminalTabs()
+    customFileEditorFactory = { editorProject, file ->
+      AgentChatFileEditor(
+        project = editorProject,
+        file = file,
+        terminalTabs = terminalTabs,
+        tabSnapshotWriter = AgentChatTabSnapshotWriter { snapshot ->
+          editorProject.service<AgentChatTabsService>().upsert(snapshot)
+        },
+      ).also { editor ->
+        editor.putUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY, true)
+      }
+    }
+
+    openChatInModal(
+      threadIdentity = "CODEX:thread-existing-send",
+      shellCommand = codexCommand,
+      threadId = "thread-existing-send",
+      threadTitle = "Existing send thread",
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    val editor = runInUi {
+      FileEditorManager.getInstance(project).getAllEditors(file)
+        .filterIsInstance<AgentChatFileEditor>()
+        .single { candidate -> candidate.getUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY) == true }
+    }
+    runInUi {
+      editor.selectNotify()
+    }
+    assertThat(terminalTabs.createCalls).isEqualTo(1)
+    terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
+
+    openChatInModal(
+      threadIdentity = "CODEX:thread-existing-send",
+      shellCommand = codexCommand,
+      threadId = "thread-existing-send",
+      threadTitle = "Existing send thread",
+      subAgentId = null,
+      initialComposedMessage = "Send through already open editor",
+      initialMessageToken = "existing-send-token",
+    )
+
+    waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
+
+    assertThat(file.initialMessageSent).isTrue()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(EditorServiceSentTerminalText("Send through already open editor", shouldExecute = true))
+
+    val persisted = checkNotNull(service<AgentChatTabsService>().load(file.tabKey))
+    assertThat(persisted.runtime.initialMessageSent).isTrue()
   }
 
   @Test
