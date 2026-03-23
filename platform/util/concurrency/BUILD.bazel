@@ -43,17 +43,27 @@ exports_files([
 ### auto-generated section `iml intellij.platform.concurrency` end
 
 ### auto-generated section `build intellij.platform.concurrency.tests` start
+load("@rules_jvm//:jvm.bzl", "resourcegroup")
+
+resourcegroup(
+  name = "concurrency-tests_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "concurrency-tests",
   module_name = "intellij.platform.concurrency.tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/platform-tests:tests"]
 )
 
 jvm_library(
   name = "concurrency-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":concurrency-tests_test_resources"],
   associates = [
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
@@ -75,7 +85,10 @@ jvm_library(
     "@lib//:assert_j",
     "@lib//:junit5",
   ],
-  runtime_deps = [":concurrency-tests"]
+  runtime_deps = [
+    ":concurrency-tests",
+    "//platform/platform-tests:tests_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.concurrency.tests` end
 
