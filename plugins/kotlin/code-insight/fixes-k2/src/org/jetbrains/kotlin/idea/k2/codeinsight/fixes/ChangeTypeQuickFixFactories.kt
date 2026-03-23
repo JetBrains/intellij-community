@@ -7,7 +7,6 @@ import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -117,8 +116,8 @@ internal object ChangeTypeQuickFixFactories {
         getSuperCallableSymbol = { it.superVariable as KaPropertySymbol },
     )
 
-    context(session: KaSession)
     @OptIn(KaExperimentalApi::class)
+    context(session: KaSession)
     private fun getActualType(ktType: KaType, position: KtElement): KaType {
         return ktType.toFunctionType() ?: with(session) { ktType.approximateToDenotableSupertypeOrSelf(position) } ?: ktType
     }
@@ -218,12 +217,7 @@ internal object ChangeTypeQuickFixFactories {
 
         // Required type has to be recreated since 2.3
         val expression =
-            (element as? KtFunctionLiteral ?: PsiTreeUtil.getParentOfType(
-                element,
-                KtFunctionLiteral::class.java,
-                true,
-                KtFunction::class.java,
-            ))?.parent as? KtLambdaExpression
+            (element as? KtFunctionLiteral)?.parent as? KtLambdaExpression
 
         val enclosingDeclaration = expression?.parentOfType<KtDeclaration>()
         val lambdaDeclarationIsProperty = enclosingDeclaration is KtPropertyAccessor
