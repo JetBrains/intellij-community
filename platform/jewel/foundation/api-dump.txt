@@ -700,7 +700,8 @@ f:org.jetbrains.jewel.foundation.theme.JewelThemeKt
 f:org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.foundation.theme.ThemeColorPalette$Companion
-- <init>(java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.Map):V
+- b:<init>(java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.Map):V
+- <init>(java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.Map,Z):V
 - f:blue-vNxB06k(I):J
 - f:blueOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
 - equals(java.lang.Object):Z

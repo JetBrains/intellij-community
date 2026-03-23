@@ -4,8 +4,11 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
-private val colorKeyRegex: Regex
+private val nonIslandsColorKeyRegex: Regex
     get() = "([a-z]+)(\\d+)".toRegex(RegexOption.IGNORE_CASE)
+
+private val islandsColorKeyRegex: Regex
+    get() = "([a-z]+)-(\\d+)".toRegex(RegexOption.IGNORE_CASE)
 
 /**
  * A palette of colors provided by the theme.
@@ -39,7 +42,33 @@ public class ThemeColorPalette(
     public val purple: List<Color>,
     public val teal: List<Color>,
     public val rawMap: Map<String, Color>,
+    private val isIslands: Boolean,
 ) {
+    @Suppress("DEPRECATION")
+    @Deprecated("Use the constructor with isIslands parameter", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        gray: List<Color>,
+        blue: List<Color>,
+        green: List<Color>,
+        red: List<Color>,
+        yellow: List<Color>,
+        orange: List<Color>,
+        purple: List<Color>,
+        teal: List<Color>,
+        rawMap: Map<String, Color>,
+    ) : this(
+        gray = gray,
+        blue = blue,
+        green = green,
+        red = red,
+        yellow = yellow,
+        orange = orange,
+        purple = purple,
+        teal = teal,
+        rawMap = rawMap,
+        isIslands = false,
+    )
+
     /**
      * Retrieves a gray color from the palette by its index. Note that this function is not safe to use and can throw an
      * [IndexOutOfBoundsException] at runtime if the Look and Feel does not provide a full palette.
@@ -57,18 +86,20 @@ public class ThemeColorPalette(
         "This can throw exceptions if the LaF does not have a full palette, use grayOrNull() instead",
         ReplaceWith("grayOrNull(index)"),
     )
-    public fun gray(index: Int): Color = gray[index - 1]
+    @Suppress("UnsafeCallOnNullableType")
+    public fun gray(index: Int): Color = grayOrNull(index)!!
 
     /**
      * Retrieves a gray color from the palette by its index, or `null` if the index is out of bounds.
      *
-     * Palette indices start at 1; how many entries exist for a color depends on the Look and Feel. Some LaFs may only
-     * have a partial palette, or none at all.
+     * Palette indices start at 1 (or 10 for Islands themes); how many entries exist for a color depends on the Look and
+     * Feel. Some LaFs may only have a partial palette, or none at all.
      *
-     * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
+     * @param index The 1-based (or 10-based for Islands themes) index of the color to retrieve. Only values of 1 and
+     *   above are valid.
      * @return The [Color] at the specified index, or `null` if the index is out of bounds.
      */
-    public fun grayOrNull(index: Int): Color? = gray.getOrNull(index - 1)
+    public fun grayOrNull(index: Int): Color? = getByIndexOrNull(gray, index)
 
     /**
      * Retrieves a blue color from the palette by its index. Note that this function is not safe to use and can throw an
@@ -87,18 +118,20 @@ public class ThemeColorPalette(
         "This can throw exceptions if the LaF does not have a full palette, use blueOrNull() instead",
         ReplaceWith("blueOrNull(index)"),
     )
-    public fun blue(index: Int): Color = blue[index - 1]
+    @Suppress("UnsafeCallOnNullableType")
+    public fun blue(index: Int): Color = blueOrNull(index)!!
 
     /**
      * Retrieves a blue color from the palette by its index, or `null` if the index is out of bounds.
      *
-     * Palette indices start at 1; how many entries exist for a color depends on the Look and Feel. Some LaFs may only
-     * have a partial palette, or none at all.
+     * Palette indices start at 1 (or 10 for Islands themes); how many entries exist for a color depends on the Look and
+     * Feel. Some LaFs may only have a partial palette, or none at all.
      *
-     * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
+     * @param index The 1-based (or 10-based for Islands themes) index of the color to retrieve. Only values of 1 and
+     *   above are valid.
      * @return The [Color] at the specified index, or `null` if the index is out of bounds.
      */
-    public fun blueOrNull(index: Int): Color? = blue.getOrNull(index - 1)
+    public fun blueOrNull(index: Int): Color? = getByIndexOrNull(blue, index)
 
     /**
      * Retrieves a green color from the palette by its index. Note that this function is not safe to use and can throw
@@ -117,18 +150,20 @@ public class ThemeColorPalette(
         "This can throw exceptions if the LaF does not have a full palette, use greenOrNull() instead",
         ReplaceWith("greenOrNull(index)"),
     )
-    public fun green(index: Int): Color = green[index - 1]
+    @Suppress("UnsafeCallOnNullableType")
+    public fun green(index: Int): Color = greenOrNull(index)!!
 
     /**
      * Retrieves a green color from the palette by its index, or `null` if the index is out of bounds.
      *
-     * Palette indices start at 1; how many entries exist for a color depends on the Look and Feel. Some LaFs may only
-     * have a partial palette, or none at all.
+     * Palette indices start at 1 (or 10 for Islands themes); how many entries exist for a color depends on the Look and
+     * Feel. Some LaFs may only have a partial palette, or none at all.
      *
-     * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
+     * @param index The 1-based (or 10-based for Islands themes) index of the color to retrieve. Only values of 1 and
+     *   above are valid.
      * @return The [Color] at the specified index, or `null` if the index is out of bounds.
      */
-    public fun greenOrNull(index: Int): Color? = green.getOrNull(index - 1)
+    public fun greenOrNull(index: Int): Color? = getByIndexOrNull(green, index)
 
     /**
      * Retrieves a red color from the palette by its index. Note that this function is not safe to use and can throw an
@@ -147,18 +182,20 @@ public class ThemeColorPalette(
         "This can throw exceptions if the LaF does not have a full palette, use redOrNull() instead",
         ReplaceWith("redOrNull(index)"),
     )
-    public fun red(index: Int): Color = red[index - 1]
+    @Suppress("UnsafeCallOnNullableType")
+    public fun red(index: Int): Color = redOrNull(index)!!
 
     /**
      * Retrieves a red color from the palette by its index, or `null` if the index is out of bounds.
      *
-     * Palette indices start at 1; how many entries exist for a color depends on the Look and Feel. Some LaFs may only
-     * have a partial palette, or none at all.
+     * Palette indices start at 1 (or 10 for Islands themes); how many entries exist for a color depends on the Look and
+     * Feel. Some LaFs may only have a partial palette, or none at all.
      *
-     * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
+     * @param index The 1-based (or 10-based for Islands themes) index of the color to retrieve. Only values of 1 and
+     *   above are valid.
      * @return The [Color] at the specified index, or `null` if the index is out of bounds.
      */
-    public fun redOrNull(index: Int): Color? = red.getOrNull(index - 1)
+    public fun redOrNull(index: Int): Color? = getByIndexOrNull(red, index)
 
     /**
      * Retrieves a yellow color from the palette by its index. Note that this function is not safe to use and can throw
@@ -177,18 +214,20 @@ public class ThemeColorPalette(
         "This can throw exceptions if the LaF does not have a full palette, use yellowOrNull() instead",
         ReplaceWith("yellowOrNull(index)"),
     )
-    public fun yellow(index: Int): Color = yellow[index - 1]
+    @Suppress("UnsafeCallOnNullableType")
+    public fun yellow(index: Int): Color = yellowOrNull(index)!!
 
     /**
      * Retrieves a yellow color from the palette by its index, or `null` if the index is out of bounds.
      *
-     * Palette indices start at 1; how many entries exist for a color depends on the Look and Feel. Some LaFs may only
-     * have a partial palette, or none at all.
+     * Palette indices start at 1 (or 10 for Islands themes); how many entries exist for a color depends on the Look and
+     * Feel. Some LaFs may only have a partial palette, or none at all.
      *
-     * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
+     * @param index The 1-based (or 10-based for Islands themes) index of the color to retrieve. Only values of 1 and
+     *   above are valid.
      * @return The [Color] at the specified index, or `null` if the index is out of bounds.
      */
-    public fun yellowOrNull(index: Int): Color? = yellow.getOrNull(index - 1)
+    public fun yellowOrNull(index: Int): Color? = getByIndexOrNull(yellow, index)
 
     /**
      * Retrieves an orange color from the palette by its index. Note that this function is not safe to use and can throw
@@ -207,18 +246,20 @@ public class ThemeColorPalette(
         "This can throw exceptions if the LaF does not have a full palette, use orangeOrNull() instead",
         ReplaceWith("orangeOrNull(index)"),
     )
-    public fun orange(index: Int): Color = orange[index - 1]
+    @Suppress("UnsafeCallOnNullableType")
+    public fun orange(index: Int): Color = orangeOrNull(index)!!
 
     /**
      * Retrieves an orange color from the palette by its index, or `null` if the index is out of bounds.
      *
-     * Palette indices start at 1; how many entries exist for a color depends on the Look and Feel. Some LaFs may only
-     * have a partial palette, or none at all.
+     * Palette indices start at 1 (or 10 for Islands themes); how many entries exist for a color depends on the Look and
+     * Feel. Some LaFs may only have a partial palette, or none at all.
      *
-     * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
+     * @param index The 1-based (or 10-based for Islands themes) index of the color to retrieve. Only values of 1 and
+     *   above are valid.
      * @return The [Color] at the specified index, or `null` if the index is out of bounds.
      */
-    public fun orangeOrNull(index: Int): Color? = orange.getOrNull(index - 1)
+    public fun orangeOrNull(index: Int): Color? = getByIndexOrNull(orange, index)
 
     /**
      * Retrieves a purple color from the palette by its index. Note that this function is not safe to use and can throw
@@ -237,18 +278,20 @@ public class ThemeColorPalette(
         "This can throw exceptions if the LaF does not have a full palette, use purpleOrNull() instead",
         ReplaceWith("purpleOrNull(index)"),
     )
-    public fun purple(index: Int): Color = purple[index - 1]
+    @Suppress("UnsafeCallOnNullableType")
+    public fun purple(index: Int): Color = purpleOrNull(index)!!
 
     /**
      * Retrieves a purple color from the palette by its index, or `null` if the index is out of bounds.
      *
-     * Palette indices start at 1; how many entries exist for a color depends on the Look and Feel. Some LaFs may only
-     * have a partial palette, or none at all.
+     * Palette indices start at 1 (or 10 for Islands themes); how many entries exist for a color depends on the Look and
+     * Feel. Some LaFs may only have a partial palette, or none at all.
      *
-     * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
+     * @param index The 1-based (or 10-based for Islands themes) index of the color to retrieve. Only values of 1 and
+     *   above are valid.
      * @return The [Color] at the specified index, or `null` if the index is out of bounds.
      */
-    public fun purpleOrNull(index: Int): Color? = purple.getOrNull(index - 1)
+    public fun purpleOrNull(index: Int): Color? = getByIndexOrNull(purple, index)
 
     /**
      * Retrieves a teal color from the palette by its index. Note that this function is not safe to use and can throw an
@@ -267,18 +310,27 @@ public class ThemeColorPalette(
         "This can throw exceptions if the LaF does not have a full palette, use tealOrNull() instead",
         ReplaceWith("tealOrNull(index)"),
     )
-    public fun teal(index: Int): Color = teal[index - 1]
+    @Suppress("UnsafeCallOnNullableType")
+    public fun teal(index: Int): Color = tealOrNull(index)!!
 
     /**
      * Retrieves a teal color from the palette by its index, or `null` if the index is out of bounds.
      *
-     * Palette indices start at 1; how many entries exist for a color depends on the Look and Feel. Some LaFs may only
-     * have a partial palette, or none at all.
+     * Palette indices start at 1 (or 10 for Islands themes); how many entries exist for a color depends on the Look and
+     * Feel. Some LaFs may only have a partial palette, or none at all.
      *
-     * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
+     * @param index The 1-based (or 10-based for Islands themes) index of the color to retrieve. Only values of 1 and
+     *   above are valid.
      * @return The [Color] at the specified index, or `null` if the index is out of bounds.
      */
-    public fun tealOrNull(index: Int): Color? = teal.getOrNull(index - 1)
+    public fun tealOrNull(index: Int): Color? = getByIndexOrNull(teal, index)
+
+    private fun getByIndexOrNull(list: List<Color>, index: Int): Color? =
+        if (isIslands) {
+            if (index % 10 != 0) null else list.getOrNull(index / 10 - 1)
+        } else {
+            list.getOrNull(index - 1)
+        }
 
     /**
      * Looks up a color in the palette by its key. The key can be in the format "colorNameN" (e.g., "gray1", "blue12")
@@ -288,6 +340,7 @@ public class ThemeColorPalette(
      * @return The [Color] associated with the key, or `null` if the key is not found.
      */
     public fun lookup(colorKey: String): Color? {
+        val colorKeyRegex = if (isIslands) islandsColorKeyRegex else nonIslandsColorKeyRegex
         val result = colorKeyRegex.matchEntire(colorKey.trim())
         val colorGroup = result?.groupValues?.getOrNull(1)?.lowercase()
         val colorIndex = result?.groupValues?.getOrNull(2)?.toIntOrNull()
@@ -325,6 +378,7 @@ public class ThemeColorPalette(
         if (purple != other.purple) return false
         if (teal != other.teal) return false
         if (rawMap != other.rawMap) return false
+        if (isIslands != other.isIslands) return false
 
         return true
     }
@@ -339,6 +393,7 @@ public class ThemeColorPalette(
         result = 31 * result + purple.hashCode()
         result = 31 * result + teal.hashCode()
         result = 31 * result + rawMap.hashCode()
+        result = 31 * result + isIslands.hashCode()
         return result
     }
 
@@ -352,7 +407,8 @@ public class ThemeColorPalette(
             "orange=$orange, " +
             "purple=$purple, " +
             "teal=$teal, " +
-            "rawMap=$rawMap" +
+            "rawMap=$rawMap, " +
+            "isIslands=$isIslands" +
             ")"
     }
 
@@ -368,6 +424,7 @@ public class ThemeColorPalette(
                 purple = emptyList(),
                 teal = emptyList(),
                 rawMap = emptyMap(),
+                isIslands = false,
             )
     }
 }

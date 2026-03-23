@@ -35,7 +35,7 @@ repositories {
 dependencies {
     api(projects.ui) { exclude(group = "org.jetbrains.kotlinx") }
     intellijPlatform {
-        intellijIdea(libs.versions.idea)
+        intellijIdea(libs.versions.idea) { useInstaller = false }
         testFramework(TestFrameworkType.Platform)
 
         bundledPlugin("org.jetbrains.plugins.textmate")
