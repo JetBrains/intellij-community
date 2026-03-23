@@ -12,7 +12,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <agent.workbench.promptManualContextSource implementation="com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsCommitManualContextSource"/>
-    <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsLogSelectionContextContributor"/>
+    <agent.workbench.promptContextContributor id="agentWorkbenchPromptVcsContext" implementation="com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsLogSelectionContextContributor" order="after agentWorkbenchPromptEditorContext, before agentWorkbenchPromptProjectViewContext"/>
     <agent.workbench.promptContextRenderer implementation="com.intellij.agent.workbench.prompt.vcs.render.AgentPromptVcsCommitsContextRendererBridge"/>
   </extensions>
 </idea-plugin>

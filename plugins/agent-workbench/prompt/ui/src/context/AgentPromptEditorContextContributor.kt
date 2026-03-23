@@ -10,9 +10,6 @@ internal class AgentPromptEditorContextContributor : AgentPromptContextContribut
   override val phase: AgentPromptContextContributorPhase
     get() = AgentPromptContextContributorPhase.INVOCATION
 
-  override val order: Int
-    get() = 0
-
   override fun collect(invocationData: AgentPromptInvocationData): List<AgentPromptContextItem> {
     val snapshot = AgentPromptEditorContextSupport.buildSnapshotFromInvocation(invocationData) ?: return emptyList()
     return AgentPromptEditorContextSupport.buildContextItems(snapshot)

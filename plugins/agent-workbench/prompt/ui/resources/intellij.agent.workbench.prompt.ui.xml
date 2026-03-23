@@ -15,10 +15,10 @@
     <agent.workbench.promptManualContextSource implementation="com.intellij.agent.workbench.prompt.ui.context.uiPicker.AgentPromptUIContextManualContextSource"/>
     <agent.workbench.promptManualContextSource implementation="com.intellij.agent.workbench.prompt.ui.context.screenCapture.AgentPromptScreenCaptureManualContextSource"/>
     <customPasteProvider implementation="com.intellij.agent.workbench.prompt.ui.context.AgentPromptImagePasteProvider"/>
-    <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.ui.context.AgentPromptEditorContextContributor"/>
-    <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.ui.context.AgentPromptProjectViewSelectionContextContributor"/>
-    <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.ui.context.AgentPromptSelectedEditorFallbackContextContributor"/>
-    <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.ui.context.AgentPromptTreeSelectionContextContributor"/>
+    <agent.workbench.promptContextContributor id="agentWorkbenchPromptEditorContext" implementation="com.intellij.agent.workbench.prompt.ui.context.AgentPromptEditorContextContributor"/>
+    <agent.workbench.promptContextContributor id="agentWorkbenchPromptProjectViewContext" implementation="com.intellij.agent.workbench.prompt.ui.context.AgentPromptProjectViewSelectionContextContributor" order="after agentWorkbenchPromptVcsContext, before agentWorkbenchPromptTreeSelectionContext"/>
+    <agent.workbench.promptContextContributor id="agentWorkbenchPromptSelectedEditorFallbackContext" implementation="com.intellij.agent.workbench.prompt.ui.context.AgentPromptSelectedEditorFallbackContextContributor"/>
+    <agent.workbench.promptContextContributor id="agentWorkbenchPromptTreeSelectionContext" implementation="com.intellij.agent.workbench.prompt.ui.context.AgentPromptTreeSelectionContextContributor" order="after agentWorkbenchPromptProjectViewContext"/>
     <actionPromoter implementation="com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchPromptShortcutActionPromoter" order="last"/>
   </extensions>
 

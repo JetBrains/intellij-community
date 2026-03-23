@@ -28,7 +28,7 @@ Define project-view prompt context collection from selected files/directories, i
 ## Requirements
 - Contributor registration contract:
   - phase is `INVOCATION`,
-  - order is `100`.
+  - registration is ordered after the VCS contributor and before the tree-selection contributor via extension ordering.
 
 - Project-view contributor must collect selection from:
   - `CommonDataKeys.VIRTUAL_FILE_ARRAY` when present,
@@ -61,6 +61,7 @@ Define project-view prompt context collection from selected files/directories, i
   [@test] ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt
 
 - `paths` chip rendering shortens path previews (project-relative when under project root); `file:`/`dir:` prefix is stripped by the renderer.
+- Long `paths` chip previews are filename-biased middle-truncated after path normalization.
   [@test] ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt
 
 ## User Experience

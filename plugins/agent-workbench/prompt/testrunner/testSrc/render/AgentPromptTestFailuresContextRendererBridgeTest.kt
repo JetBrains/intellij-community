@@ -68,6 +68,35 @@ class AgentPromptTestFailuresContextRendererBridgeTest {
   }
 
   @Test
+  fun renderEnvelopeAppendsFocusedOutputBlockWhenPresent() {
+    val item = contextItem(
+      body = "",
+      payload = AgentPromptPayload.obj(
+        "entries" to AgentPromptPayload.arr(
+          AgentPromptPayload.obj(
+            "name" to AgentPromptPayload.str("testA"),
+            "locationUrl" to AgentPromptPayload.str("java:test://Suite.testA"),
+            "status" to AgentPromptPayload.str("failed"),
+          ),
+        ),
+        "focusedOutput" to AgentPromptPayload.str("AssertionError: boom\nat Suite.testA(Suite.kt:42)"),
+      )
+    )
+
+    val rendered = renderer.renderEnvelope(AgentPromptEnvelopeRenderInput(item = item, projectPath = null))
+
+    assertThat(rendered).isEqualTo(
+      "failed tests\n" +
+      "Suite#testA\n\n" +
+      "focused failure output:\n" +
+      "```text\n" +
+      "AssertionError: boom\n" +
+      "at Suite.testA(Suite.kt:42)\n" +
+      "```"
+    )
+  }
+
+  @Test
   fun renderEnvelopeFallsBackToBodyWhenPayloadIsMissing() {
     val item = contextItem(
       body = "failed: java:test://Suite.testA\n\npassed: java:test://Suite.testB\n",
@@ -105,6 +134,27 @@ class AgentPromptTestFailuresContextRendererBridgeTest {
     val chip = renderer.renderChip(AgentPromptChipRenderInput(item = item, projectBasePath = null))
 
     assertThat(chip.text).isEqualTo("failed tests: com.example.Suite#testA")
+  }
+
+  @Test
+  fun renderChipIgnoresFocusedOutput() {
+    val item = contextItem(
+      body = "",
+      payload = AgentPromptPayload.obj(
+        "entries" to AgentPromptPayload.arr(
+          AgentPromptPayload.obj(
+            "name" to AgentPromptPayload.str("testA"),
+            "locationUrl" to AgentPromptPayload.str("java:test://Suite.testA"),
+            "status" to AgentPromptPayload.str("failed"),
+          ),
+        ),
+        "focusedOutput" to AgentPromptPayload.str("AssertionError: boom"),
+      )
+    )
+
+    val chip = renderer.renderChip(AgentPromptChipRenderInput(item = item, projectBasePath = null))
+
+    assertThat(chip.text).isEqualTo("failed tests: Suite#testA")
   }
 
   private fun contextItem(

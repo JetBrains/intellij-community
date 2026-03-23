@@ -29,8 +29,8 @@ Define editor-driven prompt context behavior for both direct invocation and fall
 
 ## Requirements
 - Contributor registration contract:
-  - `AgentPromptEditorContextContributor` runs in `INVOCATION` phase with order `0`,
-  - `AgentPromptSelectedEditorFallbackContextContributor` runs in `FALLBACK` phase with order `0`.
+  - `AgentPromptEditorContextContributor` runs in `INVOCATION` phase and is registered after the test-runner contributor and before the VCS contributor via extension ordering,
+  - `AgentPromptSelectedEditorFallbackContextContributor` runs in `FALLBACK` phase.
 
 - Editor invocation contributor must return no items when invocation has no editor in data context.
   [@test] ../../prompt/testSrc/context/AgentPromptEditorContextContributorTest.kt
@@ -74,7 +74,8 @@ Define editor-driven prompt context behavior for both direct invocation and fall
   - `snippet` renders as descriptor line + fenced code block with optional language label.
 
 - Chip rendering contract for editor item types:
-  - `file` chip shows shortened path (project-relative when under project root),
+  - `file` chip shows shortened path only (project-relative when under project root), without a `File:` label,
+  - long `file` chip previews are filename-biased middle-truncated after path normalization,
   - `symbol` chip shows symbol name,
   - `snippet` chip shows title only (line range), no code preview.
   [@test] ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt

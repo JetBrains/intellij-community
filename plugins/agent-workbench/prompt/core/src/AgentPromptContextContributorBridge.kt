@@ -25,9 +25,6 @@ interface AgentPromptContextContributorBridge {
   val phase: AgentPromptContextContributorPhase
     get() = AgentPromptContextContributorPhase.INVOCATION
 
-  val order: Int
-    get() = 0
-
   fun collect(invocationData: AgentPromptInvocationData): List<AgentPromptContextItem>
 }
 
@@ -37,13 +34,6 @@ private val LOG = logger<AgentPromptContextContributorBridgeRegistryLog>()
 
 private val AGENT_PROMPT_CONTEXT_CONTRIBUTOR_BRIDGE_EP: ExtensionPointName<AgentPromptContextContributorBridge> =
   ExtensionPointName("com.intellij.agent.workbench.promptContextContributor")
-
-private val CONTRIBUTOR_ORDERING: Comparator<AgentPromptContextContributorBridge> =
-  compareBy(
-    { it.phase.ordinal },
-    { it.order },
-    { it::class.java.name },
-  )
 
 private data class AgentPromptContextContributorBridgeSnapshot(
   @JvmField val orderedContributors: List<AgentPromptContextContributorBridge>,
@@ -70,9 +60,7 @@ private fun buildAgentPromptContextContributorBridgeSnapshot(
   contributors: Iterable<AgentPromptContextContributorBridge>,
 ): AgentPromptContextContributorBridgeSnapshot {
   return AgentPromptContextContributorBridgeSnapshot(
-    orderedContributors = contributors
-      .toList()
-      .sortedWith(CONTRIBUTOR_ORDERING),
+    orderedContributors = contributors.toList(),
   )
 }
 

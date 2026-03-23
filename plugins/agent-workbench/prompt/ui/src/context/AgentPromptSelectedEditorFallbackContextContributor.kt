@@ -10,9 +10,6 @@ internal class AgentPromptSelectedEditorFallbackContextContributor : AgentPrompt
   override val phase: AgentPromptContextContributorPhase
     get() = AgentPromptContextContributorPhase.FALLBACK
 
-  override val order: Int
-    get() = 0
-
   override fun collect(invocationData: AgentPromptInvocationData): List<AgentPromptContextItem> {
     val snapshot = AgentPromptEditorContextSupport.buildSnapshotFromSelectedEditor(invocationData.project) ?: return emptyList()
     return AgentPromptEditorContextSupport.buildContextItems(snapshot)

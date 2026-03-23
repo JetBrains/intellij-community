@@ -8,7 +8,7 @@
   <resource-bundle>messages.AgentPromptTestRunnerBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.testrunner.context.AgentPromptTestSelectionContextContributor"/>
+    <agent.workbench.promptContextContributor id="agentWorkbenchPromptTestRunnerContext" implementation="com.intellij.agent.workbench.prompt.testrunner.context.AgentPromptTestSelectionContextContributor" order="before agentWorkbenchPromptEditorContext"/>
     <agent.workbench.promptContextRenderer implementation="com.intellij.agent.workbench.prompt.testrunner.render.AgentPromptTestFailuresContextRendererBridge"/>
   </extensions>
 </idea-plugin>
