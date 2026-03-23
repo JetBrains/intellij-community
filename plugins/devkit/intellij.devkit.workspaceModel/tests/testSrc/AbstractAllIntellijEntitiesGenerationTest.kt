@@ -10,7 +10,6 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaSourceRoots
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.IntelliJProjectUtil
@@ -28,7 +27,6 @@ import com.intellij.openapi.vfs.findDirectory
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -226,9 +224,6 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
 
     val isTestModule = ultimateSourceRoot.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID
     val libraries = LibrariesRequiredForWorkspace.getRelatedLibraries(ultimateModuleEntity.name)
-    if (ultimateModuleEntity.name == "intellij.javascript.backend") {
-      javascriptNodeModulesPackageExclusionFixForTests()
-    }
 
     val testProjectModule = project.modules[0]
     if (libraries.isNotEmpty()) {
@@ -372,14 +367,6 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
   internal object TestErrorReporter : ErrorReporter {
     override fun reportError(message: String, file: VirtualFileUrl) {
       throw AssertionFailedError("Failed to load ${file.url}: $message")
-    }
-  }
-
-  private fun javascriptNodeModulesPackageExclusionFixForTests() {
-    runWriteActionAndWait {
-      project.workspaceModel.updateProjectModel("remove node_modules exclusion in test") {
-        it.replaceBySource({ it !is JpsFileEntitySource }, MutableEntityStorage.create())
-      }
     }
   }
 
