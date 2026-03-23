@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -60,11 +61,11 @@ public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspec
         final PsiElement dataProviderMethod = dataProviderReference.resolve();
         final PsiElement element = dataProviderReference.getElement();
         final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
-        final PsiClass[] providerClasses = TestNGUtil.getProviderClasses(element, topLevelClass);
-        if (dataProviderMethod instanceof PsiMethod providerMethod && providerClasses.length > 0) {
-          if (!TestNGUtil.isVersionOrGreaterThan(holder.getProject(), ModuleUtilCore.findModuleForPsiElement(providerClasses[0]), 6, 9,
+        final List<PsiClass> providerClasses = TestNGUtil.getProviderClasses(element, topLevelClass);
+        if (dataProviderMethod instanceof PsiMethod providerMethod && !providerClasses.isEmpty()) {
+          if (!TestNGUtil.isVersionOrGreaterThan(holder.getProject(), ModuleUtilCore.findModuleForPsiElement(providerClasses.getFirst()), 6, 9,
                                                  13) &&
-              providerClasses[0] != topLevelClass &&
+              !providerClasses.contains(topLevelClass)  &&
               !providerMethod.hasModifierProperty(PsiModifier.STATIC)) {
             holder.registerProblem(provider, TestngBundle.message("inspection.testng.data.provider.need.to.be.static"));
           }
@@ -74,8 +75,8 @@ public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspec
           PsiClass containingClass = testMethod != null ? testMethod.getContainingClass() : null;
           if (containingClass != null && containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) return;
 
-          final LocalQuickFix[] fixes = (isOnTheFly && providerClasses.length > 0)
-                                        ? toArray(createMethodFix(provider, providerClasses[0], topLevelClass))
+          final LocalQuickFix[] fixes = (isOnTheFly && !providerClasses.isEmpty())
+                                        ? toArray(createMethodFix(provider, providerClasses.getFirst(), topLevelClass))
                                         : LocalQuickFix.EMPTY_ARRAY;
           holder.registerProblem(provider, TestngBundle.message("inspection.testng.data.provider.does.not.exist.problem"), fixes);
         }
@@ -163,13 +164,13 @@ public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspec
 
   private static @Nullable CreateMethodQuickFix createMethodFix(@NotNull PsiAnnotationMemberValue provider,
                                                                 @NotNull PsiClass providerClass,
-                                                                @NotNull PsiClass topLevelClass) {
+                                                                @Nullable PsiClass topLevelClass) {
     return createMethodFix(StringUtil.unquoteString(provider.getText()), providerClass, topLevelClass);
   }
 
   private static @Nullable CreateMethodQuickFix createMethodFix(@NotNull String name,
                                                                 @NotNull PsiClass providerClass,
-                                                                @NotNull PsiClass topLevelClass) {
+                                                                @Nullable PsiClass topLevelClass) {
     FileTemplateDescriptor templateDesc = new TestNGFramework().getParametersMethodFileTemplateDescriptor();
     assert templateDesc != null;
     final FileTemplate fileTemplate = FileTemplateManager.getInstance(providerClass.getProject())

@@ -455,24 +455,24 @@ public final class TestNGUtil {
     return false;
   }
 
-  public static PsiClass @NotNull [] getProviderClasses(@NotNull final PsiElement element, @Nullable final PsiClass topLevelClass) {
+  public static @NotNull List<PsiClass> getProviderClasses(@NotNull final PsiElement element, @Nullable final PsiClass topLevelClass) {
     final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(element, PsiAnnotation.class);
-    if (annotation == null) return topLevelClass != null ? new PsiClass[]{topLevelClass} : PsiClass.EMPTY_ARRAY;
+    if (annotation == null) return topLevelClass != null ? List.of(topLevelClass) : List.of();
     PsiAnnotationMemberValue value = extractDataProviderClass(annotation);
     List<PsiAnnotationMemberValue> values = (value == null)
                                             ? findDataProviderClasses(PsiTreeUtil.getParentOfType(element, PsiMethod.class))
                                             : List.of(value);
 
-    PsiClass[] result = values.stream()
+    List<PsiClass> result = values.stream()
       .filter(PsiClassObjectAccessExpression.class::isInstance)
       .map(PsiClassObjectAccessExpression.class::cast)
       .map(expression -> PsiUtil.resolveClassInType(expression.getOperand().getType()))
       .filter(Objects::nonNull)
-      .toArray(PsiClass[]::new);
+      .toList();
 
-    return result.length != 0
+    return !result.isEmpty()
            ? result
-           : topLevelClass != null ? new PsiClass[]{topLevelClass} : PsiClass.EMPTY_ARRAY;
+           : topLevelClass != null ? List.of(topLevelClass) : List.of();
   }
 
   public static @Nullable PsiAnnotationMemberValue extractDataProviderClass(@NotNull PsiAnnotation annotation) {
