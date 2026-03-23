@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.quarantine.execution.build;
 
 import com.intellij.execution.RunManager;
@@ -254,6 +254,48 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
 
     RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(getMyProject()).findConfigurationByName("MyApp");
     assertAppRunOutput(configurationSettings, "I'm from the provider!");
+  }
+
+  @Test
+  @TargetVersions("7.0+") // full JPMS support added by Gradle starting from Gradle 7.0
+  public void testJavaModuleRunConfigurationWithDisabledModulePath() throws Exception {
+    PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
+    @Language("Java") String appClass = """
+      package my;
+      public class App {
+          public static void main(String[] args) {
+              System.out.println("Named module: " + App.class.getModule().isNamed());
+          }
+      }
+      """;
+    createProjectSubFile("src/main/java/my/App.java", appClass);
+    createProjectSubFile("src/main/java/module-info.java", "module my {}");
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .withIdeaPlugin()
+        .withGradleIdeaExtPlugin()
+        .addImport("org.jetbrains.gradle.ext.*")
+        .addPostfix(
+          "idea {",
+          "  project.settings {",
+          "    runConfigurations {",
+          "       MyApp(Application) {",
+          "           mainClass = 'my.App'",
+          "           moduleName = 'moduleName.main'",
+          "       }",
+          "    }",
+          "  }",
+          "}")
+        .generate()
+    );
+
+    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(getMyProject()).findConfigurationByName("MyApp");
+    ApplicationConfiguration configuration = (ApplicationConfiguration)configurationSettings.getConfiguration();
+    configuration.setUseModulePath(false);
+    assertAppRunOutput(configurationSettings, "Named module: false");
   }
 
   @Test
