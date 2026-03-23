@@ -188,6 +188,12 @@ exports_files([
 ### auto-generated section `iml intellij.groovy` end
 
 ### auto-generated section `build intellij.groovy.tests` start
+resourcegroup(
+  name = "groovy-tests_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "groovy-tests",
   module_name = "intellij.groovy.tests",
@@ -200,6 +206,7 @@ jvm_library(
   name = "groovy-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":groovy-tests_test_resources"],
   associates = [
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
