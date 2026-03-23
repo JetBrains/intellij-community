@@ -39,10 +39,6 @@ import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.periodUntil
-import kotlinx.datetime.toKotlinInstant
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.buildJsonObject
@@ -64,6 +60,9 @@ import java.awt.Dimension
 import java.awt.Font
 import java.awt.Graphics
 import java.awt.event.ActionEvent
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import javax.swing.AbstractAction
 import javax.swing.BoxLayout
 import javax.swing.Icon
@@ -96,8 +95,10 @@ fun shouldCollectFeedbackResults(): Boolean {
     return false
   }
   val buildDate = ApplicationInfo.getInstance().buildDate
-  val buildToCurrentPeriod = buildDate.toInstant().toKotlinInstant().periodUntil(Clock.System.now(), TimeZone.currentSystemDefault())
-  return buildToCurrentPeriod.days <= TIME_SCOPE_FOR_RESULT_COLLECTION_IN_DAYS
+  val currentZoneId = ZoneId.systemDefault()
+  val buildLocalDate = buildDate.toInstant().atZone(currentZoneId).toLocalDate()
+  val daysSinceBuild = ChronoUnit.DAYS.between(buildLocalDate, LocalDate.now(currentZoneId))
+  return daysSinceBuild <= TIME_SCOPE_FOR_RESULT_COLLECTION_IN_DAYS
 }
 
 fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData: OnboardingFeedbackData) {

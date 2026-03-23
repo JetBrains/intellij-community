@@ -4,9 +4,7 @@ package com.intellij.platform.feedback.editor.smoothcaret
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
+import java.time.LocalDate
 
 /**
  * Tracks the first time a user runs the EAP by recording the date
@@ -19,7 +17,7 @@ internal class SmoothCaretFirstRunActivity : ProjectActivity {
       return
     }
 
-    val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+    val today = LocalDate.now()
     SmoothCaretUsageLocalStorage.getInstance().recordFirstRunIfNeeded(today.toString()) // ISO-8601: "2026-02-10"
   }
 }

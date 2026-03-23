@@ -404,7 +404,7 @@ final class TipPanel extends JPanel implements DoNotAskOption {
     if (myTipIdToLikenessState.containsKey(tipId)) {
       return myTipIdToLikenessState.get(tipId);
     }
-    return TipsFeedback.getInstance().getLikenessState(tipId);
+    return ApplicationManager.getApplication().getService(TipsFeedback.class).getLikenessState(tipId);
   }
 
   @Override

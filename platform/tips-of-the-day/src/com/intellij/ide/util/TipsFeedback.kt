@@ -9,18 +9,19 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.impl.FeedbackRequestData
 import com.intellij.platform.feedback.impl.FeedbackRequestType
 import com.intellij.platform.feedback.impl.submitFeedback
 import com.intellij.util.xmlb.annotations.XMap
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.periodUntil
-import kotlinx.datetime.toKotlinInstant
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
+
+private const val FEEDBACK_REPORT_ID = "tips_of_the_day"
+private const val FEEDBACK_FORMAT_VERSION = 1
 
 @Service
 @State(name = "TipsFeedback", storages = [Storage(value = "tips-feedback.xml", roamingType = RoamingType.DISABLED)])
@@ -48,8 +49,10 @@ internal class TipsFeedback : SimplePersistentStateComponent<TipsFeedback.State>
 
   fun scheduleFeedbackSending(tipId: String, likenessState: Boolean) {
     val buildDate = ApplicationInfo.getInstance().buildDate
-    val buildToCurrentPeriod = buildDate.toInstant().toKotlinInstant().periodUntil(Clock.System.now(), TimeZone.currentSystemDefault())
-    if (buildToCurrentPeriod.days > timeScopeForResultCollectionInDays) {
+    val currentZoneId = ZoneId.systemDefault()
+    val buildLocalDate = buildDate.toInstant().atZone(currentZoneId).toLocalDate()
+    val daysSinceBuild = ChronoUnit.DAYS.between(buildLocalDate, LocalDate.now(currentZoneId))
+    if (daysSinceBuild > timeScopeForResultCollectionInDays) {
       return
     }
 
@@ -61,10 +64,12 @@ internal class TipsFeedback : SimplePersistentStateComponent<TipsFeedback.State>
       put("ide_build", ApplicationInfo.getInstance().build.asStringWithoutProductCode())
     }
     val feedbackData = FeedbackRequestData(FEEDBACK_REPORT_ID, dataJsonObject)
-    submitFeedback(feedbackData = feedbackData,
-                   onDone = {},
-                   onError = {},
-                   feedbackRequestType = getFeedbackRequestType())
+    submitFeedback(
+      feedbackData = feedbackData,
+      onDone = {},
+      onError = {},
+      feedbackRequestType = getFeedbackRequestType(),
+    )
   }
 
   private fun getFeedbackRequestType(): FeedbackRequestType {
@@ -73,13 +78,5 @@ internal class TipsFeedback : SimplePersistentStateComponent<TipsFeedback.State>
       "staging" -> FeedbackRequestType.TEST_REQUEST
       else -> FeedbackRequestType.NO_REQUEST
     }
-  }
-
-  companion object {
-    private const val FEEDBACK_REPORT_ID = "tips_of_the_day"
-    private const val FEEDBACK_FORMAT_VERSION = 1
-
-    @JvmStatic
-    fun getInstance(): TipsFeedback = service()
   }
 }

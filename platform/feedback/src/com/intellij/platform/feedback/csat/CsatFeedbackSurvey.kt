@@ -20,7 +20,8 @@ import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.Month
+import kotlinx.datetime.toKotlinLocalDate
+import java.time.LocalDate as JavaLocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
@@ -40,7 +41,7 @@ private val LOG = Logger.getInstance(CsatFeedbackSurvey::class.java)
 internal class CsatFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
 
   override val surveyId: String = "csat_feedback"
-  override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2050, Month.JANUARY, 1)
+  override val lastDayOfFeedbackCollection: LocalDate = JavaLocalDate.of(2050, 1, 1).toKotlinLocalDate()
   override val requireIdeEAP: Boolean = false
   override val isIndefinite: Boolean = true
 
@@ -133,8 +134,8 @@ internal class CsatFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
   }
 }
 
-private fun getDaysHash(today: java.time.LocalDate, surveyPeriod: Int): Int {
-  return abs(ChronoUnit.DAYS.between(java.time.LocalDate.of(1970, 1, 1), today).toInt()) % surveyPeriod
+private fun getDaysHash(today: JavaLocalDate, surveyPeriod: Int): Int {
+  return abs(ChronoUnit.DAYS.between(JavaLocalDate.of(1970, 1, 1), today).toInt()) % surveyPeriod
 }
 
 private fun getProductHash(surveyPeriod: Int): Int {
@@ -143,7 +144,7 @@ private fun getProductHash(surveyPeriod: Int): Int {
 
 internal data class NextDate(
   val isNewUser: Boolean,
-  val date: java.time.LocalDate,
+  val date: JavaLocalDate
 )
 
 internal fun getNextCsatDay(): NextDate {
@@ -171,13 +172,13 @@ private fun getSurveyPeriod(isNewUser: Boolean): Int {
   return if (isNewUser) NEW_USER_SURVEY_PERIOD else EXISTING_USER_SURVEY_PERIOD
 }
 
-internal fun getCsatToday(): java.time.LocalDate {
+internal fun getCsatToday(): JavaLocalDate {
   Registry.stringValue("csat.survey.today")
     .takeIf { it.isNotBlank() }
     ?.let { tryParseDate(it) }
     ?.let { return it }
 
-  return java.time.LocalDate.now()
+  return JavaLocalDate.now()
 }
 
 internal fun flipACoin(productCode: String, newUser: Boolean): Boolean {
@@ -221,13 +222,13 @@ internal fun flipACoin(productCode: String, newUser: Boolean): Boolean {
   return Math.random() < probabilityPerProduct
 }
 
-internal fun isNewUser(today: java.time.LocalDate, userCreatedDate: java.time.LocalDate): Boolean {
+internal fun isNewUser(today: JavaLocalDate, userCreatedDate: JavaLocalDate): Boolean {
   return today.isBefore(userCreatedDate.plusDays(USER_CONSIDERED_NEW_DAYS.toLong()))
 }
 
-internal fun tryParseDate(it: String): java.time.LocalDate? {
+internal fun tryParseDate(it: String): JavaLocalDate? {
   return try {
-    java.time.LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE)
+    JavaLocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE)
   }
   catch (_: DateTimeParseException) {
     return null

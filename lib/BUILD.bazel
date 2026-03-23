@@ -9090,17 +9090,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlinx/kotlinx-datetime-jvm-0.6.2.jar_copy",
-    src = "@org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_6_2_http//file",
-    out = "org.jetbrains.kotlinx/kotlinx-datetime-jvm-0.6.2.jar",
+    name = "org.jetbrains.kotlinx/kotlinx-datetime-jvm-0.7.1.jar_copy",
+    src = "@org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_7_1_http//file",
+    out = "org.jetbrains.kotlinx/kotlinx-datetime-jvm-0.7.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlinx-datetime-jvm",
-    jar = "@org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_6_2_http//file",
-    source_jar = "@org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_6_2-sources_http//file",
+    jar = "@org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_7_1_http//file",
+    source_jar = "@org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_7_1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

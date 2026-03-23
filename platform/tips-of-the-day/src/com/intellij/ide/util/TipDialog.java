@@ -4,6 +4,7 @@ package com.intellij.ide.util;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TipsOfTheDayUsagesCollector;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -103,7 +104,7 @@ final class TipDialog extends DialogWrapper {
     for (Map.Entry<String, Boolean> pair : tipIdToLikenessState.entrySet()) {
       String tipId = pair.getKey();
       Boolean likenessState = pair.getValue();
-      TipsFeedback feedback = TipsFeedback.getInstance();
+      TipsFeedback feedback = ApplicationManager.getApplication().getService(TipsFeedback.class);
       feedback.setLikenessState(tipId, likenessState);
       if (likenessState != null) {
         feedback.scheduleFeedbackSending(tipId, likenessState);

@@ -13,12 +13,9 @@ import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.util.PlatformUtils
-import kotlinx.datetime.Clock
-import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.plus
-import kotlinx.datetime.todayIn
+import kotlinx.datetime.toKotlinLocalDate
+import java.time.LocalDate as JavaLocalDate
 
 class SmoothCaretFeedbackSurvey : FeedbackSurvey() {
   override val feedbackSurveyType: FeedbackSurveyType<*> = InIdeFeedbackSurveyType(SmoothCaretSurveyConfig)
@@ -32,7 +29,7 @@ object SmoothCaretSurveyConfig : InIdeFeedbackSurveyConfig, ActionBasedFeedbackC
   // Survey only during EAP period
   // EAP release: February 10, 2026
   // Actual IDE release: March 17, 2026
-  override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2026, 3, 17)
+  override val lastDayOfFeedbackCollection: LocalDate = JavaLocalDate.of(2026, 3, 17).toKotlinLocalDate()
 
   override val requireIdeEAP: Boolean = true
 
@@ -51,7 +48,7 @@ object SmoothCaretSurveyConfig : InIdeFeedbackSurveyConfig, ActionBasedFeedbackC
   override fun checkExtraConditionSatisfiedForNotification(project: Project): Boolean {
     val usageStorage = SmoothCaretUsageLocalStorage.getInstance()
     val editorSettings = EditorSettingsExternalizable.getInstance()
-    val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+    val today = JavaLocalDate.now()
 
     // Show notification only if:
     // 1. At least DAYS_AFTER_FIRST_RUN days have passed since user's first EAP run
@@ -59,7 +56,7 @@ object SmoothCaretSurveyConfig : InIdeFeedbackSurveyConfig, ActionBasedFeedbackC
     // 3. Animated caret feature is currently enabled
 
     val firstRunDate = getFirstEapRunDate() ?: return false
-    val targetDate = firstRunDate.plus(DatePeriod(days = DAYS_AFTER_FIRST_RUN))
+    val targetDate = firstRunDate.plusDays(DAYS_AFTER_FIRST_RUN.toLong())
 
     return today >= targetDate &&
            !usageStorage.state.feedbackNotificationShown &&
@@ -93,7 +90,7 @@ object SmoothCaretSurveyConfig : InIdeFeedbackSurveyConfig, ActionBasedFeedbackC
    *
    * @return LocalDate of first EAP run, or null if not yet recorded
    */
-  private fun getFirstEapRunDate(): LocalDate? {
+  private fun getFirstEapRunDate(): JavaLocalDate? {
     // Check registry override first (for testing)
     val registryOverride = Registry.stringValue("smooth.caret.survey.first.run.date")
     if (registryOverride.isNotBlank()) {
@@ -111,9 +108,9 @@ object SmoothCaretSurveyConfig : InIdeFeedbackSurveyConfig, ActionBasedFeedbackC
    * @param dateString ISO-8601 format: "2026-02-10"
    * @return LocalDate or null if parsing fails
    */
-  private fun tryParseDate(dateString: String): LocalDate? {
+  private fun tryParseDate(dateString: String): JavaLocalDate? {
     return try {
-      LocalDate.parse(dateString)
+      JavaLocalDate.parse(dateString)
     } catch (_: Exception) {
       null
     }
