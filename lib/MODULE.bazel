@@ -10031,6 +10031,34 @@ http_file(
 )
 
 http_file(
+  name = "io_netty-netty-buffer-4_2_10_Final_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-buffer/4.2.10.Final/netty-buffer-4.2.10.Final.jar",
+  sha256 = "a430cfedce93c171a56a86d1d27c8d829db4793f1c59c381c65e84e5bcd5bcaa",
+  downloaded_file_path = "netty-buffer-4.2.10.Final.jar"
+)
+
+http_file(
+  name = "io_netty-netty-common-4_2_10_Final_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-common/4.2.10.Final/netty-common-4.2.10.Final.jar",
+  sha256 = "ad7ff0989d76be928069176754deec42c6a0e3305013df21814b4ac46b1ace9a",
+  downloaded_file_path = "netty-common-4.2.10.Final.jar"
+)
+
+http_file(
+  name = "io_netty-netty-buffer-4_2_10_Final-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-buffer/4.2.10.Final/netty-buffer-4.2.10.Final-sources.jar",
+  sha256 = "d75039b6b5b89afd00bf57d2fb58527b0959d6776d7ee9765aea3b384b530f69",
+  downloaded_file_path = "netty-buffer-4.2.10.Final-sources.jar"
+)
+
+http_file(
+  name = "io_netty-netty-common-4_2_10_Final-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-common/4.2.10.Final/netty-common-4.2.10.Final-sources.jar",
+  sha256 = "0e4ff3b834a728705103cdbcb07a64583b636daff1b7dd33c221c42537ac4994",
+  downloaded_file_path = "netty-common-4.2.10.Final-sources.jar"
+)
+
+http_file(
   name = "io_netty-netty-codec-compression-4_2_10_Final_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-compression/4.2.10.Final/netty-codec-compression-4.2.10.Final.jar",
   sha256 = "6ed70c21d6b4eb237dfab29214dfc029e1e85e9804751cb94924fa04f36c04cd",
@@ -13759,34 +13787,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/mockito/kotlin/mockito-kotlin/6.0.0/mockito-kotlin-6.0.0-sources.jar",
   sha256 = "766d88d3fb0d2abc707f57ca6e15a5e337eff7e428631cd1c639f1b736b2c78f",
   downloaded_file_path = "mockito-kotlin-6.0.0-sources.jar"
-)
-
-http_file(
-  name = "io_netty-netty-buffer-4_2_10_Final_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-buffer/4.2.10.Final/netty-buffer-4.2.10.Final.jar",
-  sha256 = "a430cfedce93c171a56a86d1d27c8d829db4793f1c59c381c65e84e5bcd5bcaa",
-  downloaded_file_path = "netty-buffer-4.2.10.Final.jar"
-)
-
-http_file(
-  name = "io_netty-netty-common-4_2_10_Final_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-common/4.2.10.Final/netty-common-4.2.10.Final.jar",
-  sha256 = "ad7ff0989d76be928069176754deec42c6a0e3305013df21814b4ac46b1ace9a",
-  downloaded_file_path = "netty-common-4.2.10.Final.jar"
-)
-
-http_file(
-  name = "io_netty-netty-buffer-4_2_10_Final-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-buffer/4.2.10.Final/netty-buffer-4.2.10.Final-sources.jar",
-  sha256 = "d75039b6b5b89afd00bf57d2fb58527b0959d6776d7ee9765aea3b384b530f69",
-  downloaded_file_path = "netty-buffer-4.2.10.Final-sources.jar"
-)
-
-http_file(
-  name = "io_netty-netty-common-4_2_10_Final-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-common/4.2.10.Final/netty-common-4.2.10.Final-sources.jar",
-  sha256 = "0e4ff3b834a728705103cdbcb07a64583b636daff1b7dd33c221c42537ac4994",
-  downloaded_file_path = "netty-common-4.2.10.Final-sources.jar"
 )
 
 http_file(

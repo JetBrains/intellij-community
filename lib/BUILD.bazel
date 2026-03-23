@@ -12819,6 +12819,43 @@ jvm_import(
 )
 
 copy_file(
+  name = "io.netty/netty-buffer-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-buffer-4_2_10_Final_http//file",
+  out = "io.netty/netty-buffer-4.2.10.Final.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "io.netty/netty-common-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-common-4_2_10_Final_http//file",
+  out = "io.netty/netty-common-4.2.10.Final.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-netty-buffer-netty-buffer",
+  exports = [
+    ":io_netty-netty-buffer-4_2_10_Final_http_import",
+    ":io_netty-netty-common-4_2_10_Final_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "io_netty-netty-buffer-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-buffer-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-buffer-4_2_10_Final-sources_http//file"
+)
+
+jvm_import(
+  name = "io_netty-netty-common-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-common-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-common-4_2_10_Final-sources_http//file"
+)
+
+copy_file(
   name = "io.netty/netty-codec-compression-4.2.10.Final.jar_copy",
   src = "@io_netty-netty-codec-compression-4_2_10_Final_http//file",
   out = "io.netty/netty-codec-compression-4.2.10.Final.jar",
@@ -17602,43 +17639,6 @@ jvm_import(
   jar = "@org_mockito_kotlin-mockito-kotlin-6_0_0_http//file",
   source_jar = "@org_mockito_kotlin-mockito-kotlin-6_0_0-sources_http//file",
   visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "io.netty/netty-buffer-4.2.10.Final.jar_copy",
-  src = "@io_netty-netty-buffer-4_2_10_Final_http//file",
-  out = "io.netty/netty-buffer-4.2.10.Final.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "io.netty/netty-common-4.2.10.Final.jar_copy",
-  src = "@io_netty-netty-common-4_2_10_Final_http//file",
-  out = "io.netty/netty-common-4.2.10.Final.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "netty-buffer",
-  exports = [
-    ":io_netty-netty-buffer-4_2_10_Final_http_import",
-    ":io_netty-netty-common-4_2_10_Final_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "io_netty-netty-buffer-4_2_10_Final_http_import",
-  jar = "@io_netty-netty-buffer-4_2_10_Final_http//file",
-  source_jar = "@io_netty-netty-buffer-4_2_10_Final-sources_http//file"
-)
-
-jvm_import(
-  name = "io_netty-netty-common-4_2_10_Final_http_import",
-  jar = "@io_netty-netty-common-4_2_10_Final_http//file",
-  source_jar = "@io_netty-netty-common-4_2_10_Final-sources_http//file"
 )
 
 copy_file(
