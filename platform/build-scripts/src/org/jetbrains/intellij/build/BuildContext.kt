@@ -196,6 +196,9 @@ interface BuildContext : CompilationContext {
   suspend fun distributionState(): DistributionBuilderState
 }
 
+internal val BuildContext.isLanguageServer: Boolean
+  get() = productProperties.platformPrefix == "LanguageServer"
+
 suspend inline fun <T> CompilationContext.executeStep(
   spanBuilder: SpanBuilder,
   stepId: String,

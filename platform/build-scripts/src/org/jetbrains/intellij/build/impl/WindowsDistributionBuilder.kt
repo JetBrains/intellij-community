@@ -48,6 +48,7 @@ import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
 import org.jetbrains.intellij.build.io.transformFile
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.io.zipWithCompression
+import org.jetbrains.intellij.build.isLanguageServer
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -108,7 +109,7 @@ internal class WindowsDistributionBuilder(
 
       Files.writeString(distBinDir.resolve(PROPERTIES_FILE_NAME), StringUtilRt.convertLineSeparators(ideaProperties!!, "\r\n"))
 
-      if (context.options.isLanguageServer) {
+      if (context.isLanguageServer) {
         // no icon
       }
       else {
@@ -348,7 +349,7 @@ internal class WindowsDistributionBuilder(
       val executableBaseName = "${context.productProperties.baseFileName}64"
       val launcherPropertiesPath = context.paths.tempDir.resolve("launcher-${arch.dirName}.properties")
       val icoFile =
-        if (context.options.isLanguageServer) null
+        if (context.isLanguageServer) null
         else locateIcoFileForWindowsLauncher(customizer, context)
 
       val productVersion = context.buildNumber
@@ -524,7 +525,7 @@ private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture,
         additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
         mainClass = context.ideMainClassName,
         customCommands = when {
-          context.options.isLanguageServer -> listOf(
+          context.isLanguageServer -> listOf(
             generateLspServerLaunchData(context)
           )
           else -> listOfNotNull(

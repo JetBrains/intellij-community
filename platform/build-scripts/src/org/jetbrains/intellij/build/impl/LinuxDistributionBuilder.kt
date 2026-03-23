@@ -37,6 +37,7 @@ import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.io.moveFileToDir
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
+import org.jetbrains.intellij.build.isLanguageServer
 import org.jetbrains.intellij.build.isWindows
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -175,7 +176,7 @@ class LinuxDistributionBuilder(
   override fun writeVmOptions(distBinDir: Path): Path = writeLinuxVmOptions(distBinDir, context)
 
   private fun generateReadme(unixDistPath: Path) {
-    if (context.options.isLanguageServer) return
+    if (context.isLanguageServer) return
     val fullName = context.applicationInfo.fullProductName
     val sourceFile = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/Install-Linux-tar.txt")
     val targetFile = unixDistPath.resolve("Install-Linux-tar.txt")
@@ -389,7 +390,7 @@ class LinuxDistributionBuilder(
           mainClass = context.ideMainClassName,
           startupWmClass = getLinuxFrameClass(context),
           customCommands = when {
-            context.options.isLanguageServer -> listOf(
+            context.isLanguageServer -> listOf(
               generateLspServerLaunchData(context)
             )
             else -> listOfNotNull(

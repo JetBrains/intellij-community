@@ -62,6 +62,7 @@ import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.logFreeDiskSpace
 import org.jetbrains.intellij.build.io.writeNewFile
 import org.jetbrains.intellij.build.io.zipWithCompression
+import org.jetbrains.intellij.build.isLanguageServer
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
@@ -184,7 +185,7 @@ val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = listOf(
 
 fun createIdeaPropertyFile(context: BuildContext): CharSequence {
   val builder = StringBuilder(Files.readString(context.paths.communityHomeDir.resolve(when {
-    context.options.isLanguageServer -> "../language-server/building/idea.properties"
+    context.isLanguageServer -> "../language-server/building/idea.properties"
     else -> "bin/idea.properties"
   })))
   for (it in context.productProperties.additionalIDEPropertiesFilePaths) {
@@ -199,7 +200,7 @@ fun createIdeaPropertyFile(context: BuildContext): CharSequence {
   map["settings_dir"] = settingsDir
   builder.append(BuildUtils.replaceAll(temp, map, "@@"))
 
-  if (!context.options.isLanguageServer) {
+  if (!context.isLanguageServer) {
     builder.append(
       if (context.applicationInfo.isEAP) {
         "\n#-----------------------------------------------------------------------\n" +
