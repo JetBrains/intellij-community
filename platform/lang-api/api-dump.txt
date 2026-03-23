@@ -300,6 +300,8 @@ com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
 - a:list(kotlin.jvm.functions.Function1):V
 - a:text(java.lang.String,com.intellij.codeInsight.hints.declarative.InlayActionData):V
 - bs:text$default(com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder,java.lang.String,com.intellij.codeInsight.hints.declarative.InlayActionData,I,java.lang.Object):V
+f:com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler
+- handleClick(com.intellij.openapi.editor.event.EditorMouseEvent,com.intellij.codeInsight.hints.declarative.InlayActionPayload):V
 com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 - com.intellij.codeInsight.hints.declarative.InlayHintsCollector
 - a:collectFromElement(com.intellij.psi.PsiElement,com.intellij.codeInsight.hints.declarative.InlayTreeSink):V

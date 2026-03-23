@@ -46,8 +46,8 @@ class SpecifyTypeExplicitlyIntention @JvmOverloads constructor(private val useTe
         return element.typeReference == null && (element as? KtNamedFunction)?.hasBlockBody() != true
     }
 
-    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
     private fun skip(element: KtCallableDeclaration): Boolean =
         element.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             .any { diagnostic ->

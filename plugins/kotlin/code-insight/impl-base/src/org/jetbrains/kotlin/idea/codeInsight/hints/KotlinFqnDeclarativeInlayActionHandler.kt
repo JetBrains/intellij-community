@@ -4,16 +4,22 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 import com.intellij.codeInsight.hints.declarative.InlayActionHandler
 import com.intellij.codeInsight.hints.declarative.InlayActionPayload
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.util.module
 
-class KotlinFqnDeclarativeInlayActionHandler : InlayActionHandler {
+class KotlinFqnDeclarativeInlayActionHandler(private val cs: CoroutineScope) : InlayActionHandler {
     companion object {
         const val HANDLER_NAME: String = "kotlin.fqn.class"
 
@@ -32,8 +38,15 @@ class KotlinFqnDeclarativeInlayActionHandler : InlayActionHandler {
     override fun handleClick(e: EditorMouseEvent, payload: InlayActionPayload) {
         val editor = e.editor
         val project = editor.project ?: return
-        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
-        val navigatable = getNavigationElement(psiFile, payload) as? Navigatable
-        navigatable?.navigate(true)
+        cs.launch {
+            val navigatable = readAction {
+                val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return@readAction null
+                getNavigationElement(psiFile, payload) as? Navigatable
+            } ?: return@launch
+
+            withContext(Dispatchers.EDT) {
+                navigatable.navigate(true)
+            }
+        }
     }
 }
