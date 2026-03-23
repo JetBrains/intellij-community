@@ -29,7 +29,7 @@ import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyTypeParameterList
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyElementImpl
-import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.resolve.PyResolveUtil.resolveFullyQualifiedName
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableTypeImpl
@@ -87,10 +87,10 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
     // If we have a function name, this is a 'def' type - try to resolve to PyFunctionType
     val qualifiedFunctionName = functionName
     if (qualifiedFunctionName != null) {
-      val resolvedFunction = tryResolveFunction(qualifiedFunctionName, context)
+      val resolvedFunction = resolveFullyQualifiedName(qualifiedFunctionName, this, context)
 
       // If we resolved the function, create PyFunctionType with the signature from the representation
-      if (resolvedFunction != null) {
+      if (resolvedFunction is PyFunction) {
         // Create a custom PyFunctionType that uses our return type, not the function's definition
         return object : PyFunctionTypeImpl(resolvedFunction, callableParams) {
           override fun getReturnType(context: TypeEvalContext): PyType? = retType
@@ -134,7 +134,7 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
         is PySlashParameter -> PyCallableParameterImpl.psi(param)
         is PyNamedParameterTypeRepresentation -> {
           val paramType = param.typeExpression?.let { resolveTypeExpression(it, context, typeVarMap) }
-          PyCallableParameterImpl.psi(param, paramType)
+          PyCallableParameterImpl.nonPsi(param.name, paramType, param.defaultValue)
         }
         is PyStarExpression -> {
           // *args parameter
@@ -142,7 +142,7 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
           val namedParam = param.findChildByClass(PyNamedParameterTypeRepresentation::class.java)
           if (namedParam != null) {
             // *args: type
-            val paramName = namedParam.parameterName
+            val paramName = namedParam.name
             val paramType = namedParam.typeExpression?.let { resolveTypeExpression(it, context, typeVarMap) }
             PyCallableParameterImpl.positionalNonPsi(paramName, paramType)
           }
@@ -158,7 +158,7 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
           // Check if it contains a named parameter
           val namedParam = param.findChildByClass(PyNamedParameterTypeRepresentation::class.java)
           if (namedParam != null) {
-            val paramName = namedParam.parameterName
+            val paramName = namedParam.name
             val paramType = namedParam.typeExpression?.let {
               if (it is PyDoubleStarExpression)
               // Named kwargs unpacked: `**name: **type`
@@ -188,12 +188,6 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
       }
     }
   }
-
-  private fun tryResolveFunction(qualifiedFunctionName: QualifiedName, context: TypeEvalContext): PyFunction? = PyResolveUtil.resolveFullyQualifiedName(
-    qualifiedFunctionName,
-    this,
-    context
-  ) as? PyFunction
 
   private fun resolveTypeExpression(expr: PyExpression, context: TypeEvalContext, typeVarMap: Map<String, PyTypeVarType>): PyType? {
     // Check if this is a reference to a type parameter
