@@ -182,7 +182,7 @@ interface BaseKotlinConverter {
         is KtValueArgument -> unwrapElements(element.parent)
         is KtDeclarationModifierList -> unwrapElements(element.parent)
         is KtContainerNode -> unwrapElements(element.parent)
-        is KtSimpleNameStringTemplateEntry -> unwrapElements(element.parent)
+        is KtStringTemplateEntryWithExpression -> unwrapElements(element.parent)
         is PsiParameterList -> unwrapElements(element.parent)
         is KtTypeArgumentList -> unwrapElements(element.parent)
         is KtTypeProjection -> unwrapElements(element.parent)

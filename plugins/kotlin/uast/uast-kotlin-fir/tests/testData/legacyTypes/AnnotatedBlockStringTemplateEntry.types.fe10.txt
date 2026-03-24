@@ -1,0 +1,62 @@
+UFile (package = ) [public final class AnnotatedBlockStringTemplateEntryKt {...]
+    UClass (name = AnnotatedBlockStringTemplateEntryKt) [public final class AnnotatedBlockStringTemplateEntryKt {...}]
+        UMethod (name = test) [public static final fun test(@org.jetbrains.annotations.NotNull expr: java.lang.Object) : void {...}]
+            UParameter (name = expr) [@org.jetbrains.annotations.NotNull var expr: java.lang.Object]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UBlockExpression [{...}] : void
+                UDeclarationsExpression [var v1: java.lang.String = expr]
+                    ULocalVariable (name = v1) [var v1: java.lang.String = expr]
+                        UPolyadicExpression (operator = +) [expr] : java.lang.String
+                            USimpleNameReferenceExpression (identifier = expr) [expr] : java.lang.Object
+                                UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
+                UDeclarationsExpression [var v2: java.lang.String = expr]
+                    ULocalVariable (name = v2) [var v2: java.lang.String = expr]
+                        UPolyadicExpression (operator = +) [expr] : java.lang.String
+                            USimpleNameReferenceExpression (identifier = expr) [expr] : java.lang.Object
+                                UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "foo")]
+                                    UNamedExpression (name = names) [names = "foo"]
+                                        UPolyadicExpression (operator = +) ["foo"] : java.lang.String
+                                            ULiteralExpression (value = "foo") ["foo"] : java.lang.String
+                UDeclarationsExpression [var v3: java.lang.String = expr]
+                    ULocalVariable (name = v3) [var v3: java.lang.String = expr]
+                        UPolyadicExpression (operator = +) [expr] : java.lang.String
+                            UPolyadicExpression (operator = +) [expr] : java.lang.String
+                                UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "foo")]
+                                    UNamedExpression (name = names) [names = "foo"]
+                                        UPolyadicExpression (operator = +) ["foo"] : java.lang.String
+                                            ULiteralExpression (value = "foo") ["foo"] : java.lang.String
+                                USimpleNameReferenceExpression (identifier = expr) [expr] : java.lang.Object
+                                    UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "bar")]
+                                        UNamedExpression (name = names) [names = "bar"]
+                                            UPolyadicExpression (operator = +) ["bar"] : java.lang.String
+                                                ULiteralExpression (value = "bar") ["bar"] : java.lang.String
+                UDeclarationsExpression [var v4: java.lang.String = "Start " + expr + " end"]
+                    ULocalVariable (name = v4) [var v4: java.lang.String = "Start " + expr + " end"]
+                        UPolyadicExpression (operator = +) ["Start " + expr + " end"] : java.lang.String
+                            ULiteralExpression (value = "Start ") ["Start "] : java.lang.String
+                            USimpleNameReferenceExpression (identifier = expr) [expr] : java.lang.Object
+                                UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "foo")]
+                                    UNamedExpression (name = names) [names = "foo"]
+                                        UPolyadicExpression (operator = +) ["foo"] : java.lang.String
+                                            ULiteralExpression (value = "foo") ["foo"] : java.lang.String
+                            ULiteralExpression (value = " end") [" end"] : java.lang.String
+                UDeclarationsExpression [var v5: java.lang.String = "Start " + expr]
+                    ULocalVariable (name = v5) [var v5: java.lang.String = "Start " + expr]
+                        UPolyadicExpression (operator = +) ["Start " + expr] : java.lang.String
+                            ULiteralExpression (value = "Start ") ["Start "] : java.lang.String
+                            USimpleNameReferenceExpression (identifier = expr) [expr] : java.lang.Object
+                                UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "foo")]
+                                    UNamedExpression (name = names) [names = "foo"]
+                                        UPolyadicExpression (operator = +) ["foo"] : java.lang.String
+                                            ULiteralExpression (value = "foo") ["foo"] : java.lang.String
+                UDeclarationsExpression [var v6: java.lang.String = 1 + 2]
+                    ULocalVariable (name = v6) [var v6: java.lang.String = 1 + 2]
+                        UPolyadicExpression (operator = +) [1 + 2] : java.lang.String
+                            UBinaryExpression (operator = +) [1 + 2] : int
+                                ULiteralExpression (value = 1) [1] : int
+                                    UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
+                                ULiteralExpression (value = 2) [2] : int
+                UDeclarationsExpression [var v7: java.lang.String = UastEmptyExpression]
+                    ULocalVariable (name = v7) [var v7: java.lang.String = UastEmptyExpression]
+                        UPolyadicExpression (operator = +) [UastEmptyExpression] : java.lang.String
+                            UastEmptyExpression [UastEmptyExpression]

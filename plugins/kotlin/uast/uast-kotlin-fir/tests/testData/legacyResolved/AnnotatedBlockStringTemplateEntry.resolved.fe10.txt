@@ -1,0 +1,24 @@
+UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> Decompiled_Class: Object
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = expr) -> Kotlin_Light_Value_Parameter: expr
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = expr) -> Kotlin_Light_Value_Parameter: expr
+    UAnnotation (fqName = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = expr) -> Kotlin_Light_Value_Parameter: expr
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = expr) -> Kotlin_Light_Value_Parameter: expr
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = expr) -> Kotlin_Light_Value_Parameter: expr
+    UAnnotation (fqName = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = expr) -> Kotlin_Light_Value_Parameter: expr
+    UAnnotation (fqName = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = expr) -> Kotlin_Light_Value_Parameter: expr
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = expr) -> Kotlin_Light_Value_Parameter: expr
+    UAnnotation (fqName = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = expr) -> Kotlin_Light_Value_Parameter: expr
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = expr) -> Kotlin_Light_Value_Parameter: expr
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = expr) -> Kotlin_Light_Value_Parameter: expr
+    UAnnotation (fqName = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = expr) -> Kotlin_Light_Value_Parameter: expr
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = expr) -> Kotlin_Light_Value_Parameter: expr
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = expr) -> Kotlin_Light_Value_Parameter: expr
+    UAnnotation (fqName = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
+    UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = expr) -> Kotlin_Light_Value_Parameter: expr
+    UAnnotation (fqName = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> null: null
