@@ -199,6 +199,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.debugger.engine.DebuggerUtils.forEachSafe;
 import static com.intellij.debugger.engine.MethodInvokeUtilsKt.tryInvokeWithHelper;
+import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance(DebugProcessImpl.class);
@@ -266,8 +267,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   protected DebugProcessImpl(Project project) {
     this.project = project;
     CoroutineScope projectScope = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).getCoroutineScope();
-    myCoroutineScope = com.intellij.platform.util.coroutines.CoroutineScopeKt
-      .childScope(projectScope, "DebugProcessImpl", EmptyCoroutineContext.INSTANCE, true);
+    myCoroutineScope = childScope(projectScope, "DebugProcessImpl", EmptyCoroutineContext.INSTANCE, true);
     myDebuggerManagerThread = createManagerThread();
     myShowStatusManager = new ShowStatusManager(project, myCoroutineScope);
     myRunToCursorManager = new RunToCursorManager(this, myCoroutineScope);
@@ -1010,9 +1010,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return project;
   }
 
-  public @NotNull CoroutineScope childScope(@NotNull String name) {
-    return com.intellij.platform.util.coroutines.CoroutineScopeKt
-      .childScope(myCoroutineScope, name, EmptyCoroutineContext.INSTANCE, true);
+  @ApiStatus.Internal
+  public @NotNull CoroutineScope getChildScope(@NotNull String name) {
+    return childScope(myCoroutineScope, name, EmptyCoroutineContext.INSTANCE, true);
   }
 
   public boolean canRedefineClasses() {

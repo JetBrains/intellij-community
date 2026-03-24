@@ -83,7 +83,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
     addToCenter(ScrollPaneFactory.createScrollPane(myTable, true));
     TableUtil.setupCheckboxColumn(myTable.getColumnModel().getColumn(0));
 
-    myUpdateQueue = DebouncedUpdates.<OverheadProducer>forScope(process.childScope("OverheadView"), "OverheadView", 500)
+    myUpdateQueue = DebouncedUpdates.<OverheadProducer>forScope(process.getChildScope("OverheadView"), "OverheadView", 500)
       .withContext(CoroutinesKt.getEDT(Dispatchers.INSTANCE))
       .runBatched(producers -> {
         List<OverheadProducer> distinctProducers = new ArrayList<>(new LinkedHashSet<>(producers));
