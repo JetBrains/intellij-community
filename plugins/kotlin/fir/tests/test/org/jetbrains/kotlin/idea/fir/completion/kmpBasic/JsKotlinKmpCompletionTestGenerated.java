@@ -4314,6 +4314,11 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/PreferExceptionsInThrow.kt");
         }
 
+        @TestMetadata("PreferInstantiationOverAnonymousObject.kt")
+        public void testPreferInstantiationOverAnonymousObject() throws Exception {
+            runTest("../../completion/testData/basic/common/PreferInstantiationOverAnonymousObject.kt");
+        }
+
         @TestMetadata("PreferLessParameters.kt")
         public void testPreferLessParameters() throws Exception {
             runTest("../../completion/testData/basic/common/PreferLessParameters.kt");

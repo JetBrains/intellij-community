@@ -1663,6 +1663,11 @@ public abstract class K1JvmSmartCompletionTestGenerated extends AbstractK1JvmSma
             runTest("../testData/smart/ParameterWithDefaultValue.kt");
         }
 
+        @TestMetadata("PreferInstantiationOverAnonymousObject.kt")
+        public void testPreferInstantiationOverAnonymousObject() throws Exception {
+            runTest("../testData/smart/PreferInstantiationOverAnonymousObject.kt");
+        }
+
         @TestMetadata("PreviousArgError.kt")
         public void testPreviousArgError() throws Exception {
             runTest("../testData/smart/PreviousArgError.kt");
