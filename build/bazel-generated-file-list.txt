@@ -1615,8 +1615,6 @@ spellchecker
 spellchecker/xml
 tools/apiDump
 tools/apiDump/testData
-tools/devLauncher
-tools/devLauncher/tests
 tools/intellij.lambda.sampleTests
 tools/intellij.lambda.sampleTestsWithFixtures
 tools/intellij.lambda.sampleTestsWithFixtures/plugin
