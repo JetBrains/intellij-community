@@ -45,7 +45,7 @@ class EditorCellView(val cell: EditorCell) : EditorCellViewComponent() {
     }
   }
 
-  private fun ensureOutputsInitialized() {
+  fun ensureOutputsInitialized() {
     if (!outputsInitialized) {
       outputsInitialized = true
       cell.outputs.ensureOutputsLoaded()

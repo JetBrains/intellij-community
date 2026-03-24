@@ -84,6 +84,7 @@ class NotebookCellInlayManager private constructor(
   fun updateAllOutputs() {
     update {
       notebook.cells.forEach {
+        it.view?.ensureOutputsInitialized()
         it.updateOutputs()
       }
     }
@@ -116,9 +117,9 @@ class NotebookCellInlayManager private constructor(
   private fun updateCells(cells: List<EditorCell>, force: Boolean = false) {
     update(force) { ctx ->
       cells.forEach {
+        // foldings updated inside
         it.update(ctx)
       }
-      updateCellsFolding(cells)
     }
   }
 
@@ -308,12 +309,6 @@ class NotebookCellInlayManager private constructor(
           notebook.addCell(pointerFactory.create(interval))
         }
       }
-    }
-  }
-
-  private fun updateCellsFolding(editorCells: List<EditorCell>) = update { updateContext ->
-    editorCells.forEach { cell ->
-      cell.view?.updateCellFolding(updateContext)
     }
   }
 
