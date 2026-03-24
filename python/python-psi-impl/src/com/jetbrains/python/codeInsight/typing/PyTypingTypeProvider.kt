@@ -2241,6 +2241,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return null
     }
 
+    @JvmStatic
     @ApiStatus.Internal
     fun getTypeParameterTypeFromTypeParameter(
       typeParameter: PyTypeParameter,

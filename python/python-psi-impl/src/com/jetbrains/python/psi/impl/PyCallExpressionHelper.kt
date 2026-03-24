@@ -372,6 +372,7 @@ object PyCallExpressionHelper {
       }
 
       return PyCallableTypeImpl(
+        callableType.getTypeParameters(context),
         callableType.getParametersType(context),
         callableType.getCallType(context, callExpression),
         clarifiedResolved,

@@ -1682,6 +1682,7 @@ object PyTypeChecker {
       override fun visitPyCallableType(callableType: PyCallableType): PyType {
         val substitutedParams = clone<PyCallableParameterVariadicType?>(callableType.getParametersType(context))
         return PyCallableTypeImpl(
+          callableType.getTypeParameters(context),
           substitutedParams,
           clone(callableType.getReturnType(context)),
           callableType.callable,

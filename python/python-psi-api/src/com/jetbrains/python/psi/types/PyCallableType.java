@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,6 +22,11 @@ public interface PyCallableType extends PyType {
    */
   default boolean isCallable() {
     return true;
+  }
+
+  @ApiStatus.Experimental
+  default @Nullable List<PyTypeParameterType> getTypeParameters(TypeEvalContext context) {
+    return null;
   }
 
   /**

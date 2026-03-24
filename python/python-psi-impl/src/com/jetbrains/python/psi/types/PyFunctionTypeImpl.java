@@ -5,11 +5,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTypeParameter;
+import com.jetbrains.python.psi.PyTypeParameterList;
+import com.jetbrains.python.psi.PyTypeParameterListOwner;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -17,6 +21,7 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,6 +35,21 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   public PyFunctionTypeImpl(@NotNull PyCallable callable, @NotNull List<@NotNull PyCallableParameter> parameters) {
     myCallable = callable;
     myParameters = parameters;
+  }
+
+  @Override
+  public @Nullable List<PyTypeParameterType> getTypeParameters(TypeEvalContext context) {
+    if (!(myCallable instanceof PyTypeParameterListOwner owner)) return null;
+    PyTypeParameterList typeParameterList = owner.getTypeParameterList();
+    if (typeParameterList == null) return null;
+    List<PyTypeParameterType> result = new ArrayList<>();
+    for (PyTypeParameter typeParameter : typeParameterList.getTypeParameters()) {
+      var type = PyTypingTypeProvider.getTypeParameterTypeFromTypeParameter(typeParameter, context);
+      if (type != null) {
+        result.add(type);
+      }
+    }
+    return result.isEmpty() ? null : result;
   }
 
   @Override

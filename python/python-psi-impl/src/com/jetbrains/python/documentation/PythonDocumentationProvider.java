@@ -55,6 +55,7 @@ import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyTypeAliasStatement;
 import com.jetbrains.python.psi.PyTypeParameter;
+import com.jetbrains.python.psi.PyTypeParameterListOwner;
 import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
@@ -88,6 +89,7 @@ import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.hi
 import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.paramNameTextAttribute;
 import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.styledReference;
 import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.styledSpan;
+import static com.jetbrains.python.documentation.PyTypeRenderer.findReferenceOrTypeParameter;
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.types.PyInferredVarianceJudgment.isEffectivelyInvariant;
 
@@ -150,7 +152,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
       return describeExpression((PyExpression)element, referenceElement, context);
     }
     else if (element instanceof PyTypeParameter typeParameter) {
-      return PyPsiBundle.message("QDOC.type.parameter.name", describeTypeParameter(typeParameter, originalElement, true, context));
+      return PyPsiBundle.message("QDOC.type.parameter.name", describeTypeParameter(typeParameter, originalElement, context));
     }
     else if (element instanceof PyTypeAliasStatement typeAliasStatement) {
       return describeTypeAlias(typeAliasStatement, context).toString();
@@ -219,79 +221,29 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     return result.toFragment();
   }
 
+  static @NotNull HtmlChunk describeTypeParameterList(@NotNull PyTypeParameterListOwner typeParameterListOwner,
+                                                      boolean showVariance,
+                                                      @NotNull TypeEvalContext context) {
+    return new PyTypeRenderer.RichDocumentation(context, typeParameterListOwner).describeTypeParameterList(typeParameterListOwner,
+                                                                                                           showVariance,
+                                                                                                           PythonDocumentationProvider::formatTypeWithLinks,
+                                                                                                           context);
+  }
+
   static @NotNull HtmlChunk describeTypeParameter(@NotNull PyTypeParameter typeParameter,
-                                                  @Nullable PsiElement originalElement,
-                                                  boolean showKind,
+                                                  @NotNull PsiElement originalElement,
                                                   @NotNull TypeEvalContext context) {
-    HtmlBuilder result = new HtmlBuilder();
-    PsiElement refExpr = findReferenceOrTypeParameter(originalElement);
-    boolean effectivelyInvariant = isEffectivelyInvariant(refExpr, context);
-    PyTypeVarType.Variance variance = effectivelyInvariant
-                                      ? PyTypeVarType.Variance.INVARIANT
-                                      : PyInferredVarianceJudgment.getDeclaredOrInferredVariance(refExpr, context);
-    String varianceStr = switch (variance) {
-      case null -> null;
-      case INFER_VARIANCE -> null;
-      case COVARIANT -> "out "; //NON-NLS
-      case CONTRAVARIANT -> "in "; //NON-NLS
-      case INVARIANT -> "invariant "; //NON-NLS
-      case BIVARIANT -> "bivariant "; //NON-NLS
-    };
-    if (varianceStr != null) {
-      result.append(styledSpan(varianceStr, PyHighlighter.PY_KEYWORD));
-    }
-    result.append(styledSpan(StringUtil.notNullize(typeParameter.getName()), PyHighlighter.PY_TYPE_PARAMETER));
-    PyExpression boundExpression = typeParameter.getBoundExpression();
-    Ref<PyType> boundExprTR = boundExpression == null ? null : PyTypingTypeProvider.getType(boundExpression, context);
-    if (boundExprTR != null && boundExprTR.get() != null) {
-      result.append(styledSpan(": ", PyHighlighter.PY_OPERATION_SIGN));
-      result.append(styledSpan(formatTypeWithLinks(boundExprTR.get(), boundExpression, boundExpression, context),
-                               PyHighlighter.PY_ANNOTATION));
-    }
-    PyExpression defaultExpr = typeParameter.getDefaultExpression();
-    Ref<PyType> defaultExprTR = defaultExpr == null ? null : PyTypingTypeProvider.getType(defaultExpr, context);
-    if (defaultExprTR != null && defaultExprTR.get() != null) {
-      result.append(styledSpan(" = ", PyHighlighter.PY_OPERATION_SIGN));
-      result.append(styledSpan(formatTypeWithLinks(defaultExprTR.get(), defaultExpr, defaultExpr, context), PyHighlighter.PY_ANNOTATION));
-    }
-    if (showKind) {
-      result
-        .append(", ")
-        .append(PyPsiBundle.message("QDOC.type.parameter.kind"))
-        .append(" ")
-        .append(styledSpan(formatTypeWithLinks(context.getType(typeParameter), typeParameter, typeParameter, context),
-                           PyHighlighter.PY_ANNOTATION));
-    }
-    return result.toFragment();
+    return new PyTypeRenderer.RichDocumentation(context, originalElement).describeTypeParameter(typeParameter, originalElement,
+                                                                                                true, true,
+                                                                                                PythonDocumentationProvider::formatTypeWithLinks,
+                                                                                                context);
   }
-
-  private static @Nullable PsiElement findReferenceOrTypeParameter(@Nullable PsiElement originalElement) {
-    if (originalElement == null) return originalElement;
-    if (originalElement instanceof PyReferenceExpression refExpr) return refExpr;
-    if (originalElement.getParent() instanceof PyTypeParameter typeParam) return typeParam;
-    if (originalElement.getParent() instanceof PyReferenceExpression refExpr) return refExpr;
-    PsiElement prevElement = PsiTreeUtil.prevLeaf(originalElement, true);
-    if (prevElement == null) return originalElement;
-    if (prevElement.getParent() instanceof PyTypeParameter typeParam) return typeParam;
-    if (prevElement instanceof PyReferenceExpression refExpr) return refExpr;
-    if (prevElement.getParent() instanceof PyReferenceExpression refExpr) return refExpr;
-    return originalElement;
-  }
-
 
   static @NotNull HtmlChunk describeTypeAlias(@NotNull PyTypeAliasStatement typeAliasStatement, @NotNull TypeEvalContext context) {
     HtmlBuilder result = new HtmlBuilder();
     result.append(styledSpan("type ", PyHighlighter.PY_KEYWORD)); //NON-NLS
     result.append(styledSpan(StringUtil.notNullize(typeAliasStatement.getName()), DefaultLanguageHighlighterColors.IDENTIFIER));
-    if (typeAliasStatement.getTypeParameterList() != null) {
-      List<PyTypeParameter> typeParameters = typeAliasStatement.getTypeParameterList().getTypeParameters();
-      result.append(styledSpan("[", PyHighlighter.PY_BRACKETS));
-      result.append(StreamEx
-                      .of(typeParameters)
-                      .map(typeParameter -> describeTypeParameter(typeParameter, null, false, context))
-                      .collect(HtmlChunk.toFragment(styledSpan(", ", PyHighlighter.PY_COMMA))));
-      result.append(styledSpan("]", PyHighlighter.PY_BRACKETS));
-    }
+    result.append(describeTypeParameterList(typeAliasStatement, true, context));
     PyExpression typeExpression = typeAliasStatement.getTypeExpression();
     if (typeExpression != null) {
       result.append(styledSpan(" = ", PyHighlighter.PY_OPERATION_SIGN));
@@ -319,6 +271,10 @@ public class PythonDocumentationProvider implements DocumentationProvider {
 
     firstParamOffset += funcName.length();
     result.append(styledSpan(funcName, functionNameTextAttribute(function, funcName)));
+
+    var typeParameterListDescription = describeTypeParameterList(function, false, context);
+    result.append(typeParameterListDescription);
+    firstParamOffset += StringUtil.stripHtml(typeParameterListDescription.toString(), false).length();
 
     result.append(styledSpan("(", PyHighlighter.PY_PARENTHS));
     firstParamOffset++;
@@ -567,6 +523,8 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     final @NlsSafe String name = StringUtil.notNullize(cls.getName(), PyNames.UNNAMED_ELEMENT);
     result.append(styledSpan("class ", PyHighlighter.PY_KEYWORD)); //NON-NLS
     result.append(styledSpan(name, PyHighlighter.PY_CLASS_DEFINITION));
+
+    result.append(describeTypeParameterList(cls, true, context));
 
     final PyExpression[] superClasses = cls.getSuperClassExpressions();
     if (superClasses.length > 0) {

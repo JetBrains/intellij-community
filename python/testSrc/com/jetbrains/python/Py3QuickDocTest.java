@@ -479,6 +479,16 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
     checkHover();
   }
 
+  @TestFor(issues="PY-88621")
+  public void testHoverOverFunctionWithTypeParameters() {
+    checkHover();
+  }
+
+  @TestFor(issues="PY-88621")
+  public void testHoverOverClassWithTypeParameters() {
+    checkHover();
+  }
+
   // PY-29339
   public void testAsyncFunctionQuickDoc() {
     checkHTMLOnly();

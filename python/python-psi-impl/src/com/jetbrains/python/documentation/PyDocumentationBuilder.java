@@ -303,7 +303,7 @@ public final class PyDocumentationBuilder {
     }
     if (link != null && typeParamName != null) {
       myBody.appendRaw(PyPsiBundle.message("QDOC.type.parameter.name.of.link", HtmlChunk.text(typeParamName).bold(), link)).br();
-      myBody.append(PythonDocumentationProvider.describeTypeParameter(typeParameter, myOriginalElement, true, myContext));
+      myBody.append(PythonDocumentationProvider.describeTypeParameter(typeParameter, myOriginalElement, myContext));
     }
   }
 

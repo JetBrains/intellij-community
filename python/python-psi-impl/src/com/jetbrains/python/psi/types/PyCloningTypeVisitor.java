@@ -199,7 +199,9 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   @Override
   public PyType visitPyCallableType(@NotNull PyCallableType callableType) {
     PyCallableParameterVariadicType clonedParametersType = clone(callableType.getParametersType(myTypeEvalContext));
+    var typeParameters = callableType.getTypeParameters(myTypeEvalContext);
     return new PyCallableTypeImpl(
+      typeParameters != null ? ContainerUtil.map(typeParameters, this::clone) : null,
       clonedParametersType,
       clone(callableType.getReturnType(myTypeEvalContext)),
       callableType.getCallable(),

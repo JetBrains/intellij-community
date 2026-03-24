@@ -6016,6 +6016,23 @@ public class Py3TypeTest extends PyTestCase {
     ));
   }
 
+  public void testGenericFunction() {
+    doTest("[T: int = str, *Ts = *tuple[int], **P = [str]](t: T) -> T", """
+      def f[T: int = str, *Ts = *tuple[int], **P = [str]](t: T) -> T: ...
+      
+      expr = f
+      """);
+  }
+
+  public void testGenericCallable() {
+    doTest("[T: int = str, *Ts = *tuple[int], **P = [str]](t: T) -> T", """
+      def f[T: int = str, *Ts = *tuple[int], **P = [str]](t: T) -> T: ...
+      
+      # using a list to widen to a PyCallableType
+      expr = [f][0]
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
