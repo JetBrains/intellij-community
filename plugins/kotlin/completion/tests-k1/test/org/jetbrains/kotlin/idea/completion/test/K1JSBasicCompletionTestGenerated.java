@@ -4110,6 +4110,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/PreferExceptionsInThrow.kt");
             }
 
+            @TestMetadata("PreferInstantiationOverAnonymousObject.kt")
+            public void testPreferInstantiationOverAnonymousObject() throws Exception {
+                runTest("../testData/basic/common/PreferInstantiationOverAnonymousObject.kt");
+            }
+
             @TestMetadata("PreferLessParameters.kt")
             public void testPreferLessParameters() throws Exception {
                 runTest("../testData/basic/common/PreferLessParameters.kt");
