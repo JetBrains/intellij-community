@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -29,11 +29,10 @@ import java.util.Set;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class HeadlessPluginsInstaller implements ApplicationStarter {
   private static final Logger LOG = Logger.getInstance(HeadlessPluginsInstaller.class);
-  private static final String COMMAND_NAME = "installPlugins";
 
   @Override
+  @SuppressWarnings("MagicConstant") // workaround for IDEA-359236
   public int getRequiredModality() {
-    //noinspection MagicConstant (workaround for IDEA-359236)
     return NOT_IN_EDT;
   }
 
@@ -86,15 +85,14 @@ public class HeadlessPluginsInstaller implements ApplicationStarter {
   }
 
   private static void printUsageHint() {
-    System.out.printf(
-      """
-        Usage: %s pluginId* repository* (--for-project=<project-path>)* [--give-consent-to-use-third-party-plugins]
+    System.out.println("""
+      Usage: installPlugins pluginId* repository* (--for-project=<project-path>)* [--give-consent-to-use-third-party-plugins]
 
-        Installs plugins with `pluginId` from the Marketplace or provided `repository`-es.
-        If `--for-project` is specified, also installs the required plugins for a project located at <project-path>.
-        If `--give-consent-to-use-third-party-plugins` is specified, installed third-party plugins will be approved automatically.
-        Without this option, if a third-party plugin is installed, a user will be asked to approve it when the IDE starts.%n""",
-      COMMAND_NAME);
+      Installs plugins with `pluginId` from the Marketplace or provided `repository`-es.
+      If `--for-project` is specified, also installs the required plugins for a project located at <project-path>.
+      If `--give-consent-to-use-third-party-plugins` is specified, installed third-party plugins will be approved automatically.
+      Without this option, if a third-party plugin is installed, a user will be asked to approve it when the IDE starts."""
+    );
   }
 
   private static void collectProjectRequiredPlugins(Collection<PluginId> collector, List<Path> projectPaths) {
@@ -120,7 +118,7 @@ public class HeadlessPluginsInstaller implements ApplicationStarter {
     return installPlugins(pluginIds, false);
   }
     
-  private static @NotNull Collection<PluginNode> installPlugins(@NotNull Set<PluginId> pluginIds, boolean giveConsentToUseThirdPartyPlugins) {
+  private static Collection<PluginNode> installPlugins(Set<PluginId> pluginIds, boolean giveConsentToUseThirdPartyPlugins) {
     logInfo("looking up plugins: " + pluginIds);
     var plugins = RepositoryHelper.loadPlugins(pluginIds);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.script
 
 import com.intellij.ide.CliResult
@@ -32,8 +32,8 @@ internal class IdeScriptStarter : ApplicationStarterBase() {
     val filePaths = args.subList(1, args.size).map { Path.of(it) }
     val project = guessProject()
     val result = prepareScriptsAndEngines(filePaths)
-    runAllScriptsImpl(project = project, result = result,
-                      log = if (project == null) redirectStreamsAndGetLogger(result) else logger<IdeScriptStarter>())
+    val log = if (project == null) redirectStreamsAndGetLogger(result) else logger<IdeScriptStarter>()
+    runAllScriptsImpl(project, result, log)
     return CliResult.OK
   }
 }
@@ -48,8 +48,6 @@ private fun guessProject(): Project? {
   }
 }
 
-/** @noinspection UseOfSystemOutOrSystemErr
- */
 private fun redirectStreamsAndGetLogger(result: List<Pair<Path, IdeScriptEngine>>): Logger {
   for (pair in result) {
     pair.second.stdOut = OutputStreamWriter(System.out, Charset.defaultCharset())

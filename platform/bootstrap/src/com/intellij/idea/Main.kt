@@ -391,6 +391,5 @@ private fun runMarketplaceCommandsInActionScript() {
 // separate class for nicer presentation in dumps
 private class StartupAbortedExceptionHandler : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
   override fun handleException(context: CoroutineContext, exception: Throwable) = StartupErrorReporter.processException(exception)
-
   override fun toString() = "StartupAbortedExceptionHandler"
 }
