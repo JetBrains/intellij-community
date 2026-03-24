@@ -4,6 +4,7 @@ package com.jetbrains.python.run.target
 import com.intellij.execution.Platform
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.value.ConstantFun
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.openapi.util.io.FileUtil
@@ -17,7 +18,10 @@ import kotlin.io.path.absolutePathString
 data class PathMapping(val localPath: Path, val targetPathFun: TargetEnvironmentFunction<FullPathOnTarget>)
 
 @ApiStatus.Internal
-data class PythonHelpersMappings(val helpers: List<PathMapping>)
+data class PathPythonHelpersMapping(val localPath: Path, val targetPathFun: ConstantFun<FullPathOnTarget>)
+
+@ApiStatus.Internal
+data class PythonHelpersMappings(val helpers: List<PathPythonHelpersMapping>)
 
 /**
  * The target request for Python interpreter configured in PyCharm on a
@@ -43,8 +47,8 @@ fun getPythonHelpers(): List<Path> = PythonHelpersLocator.getHelpersRoots()
  * For example, when their contents are uploaded to the same directory on the SSH machine.
  */
 @ApiStatus.Internal
-fun singleDirectoryPythonHelpersMappings(targetPathFun: TargetEnvironmentFunction<FullPathOnTarget>): PythonHelpersMappings =
-  PythonHelpersMappings(getPythonHelpers().map { it to targetPathFun })
+fun singleDirectoryPythonHelpersMappings(targetPathFun: ConstantFun<FullPathOnTarget>): PythonHelpersMappings =
+  PythonHelpersMappings(getPythonHelpers().map { PathPythonHelpersMapping(it, targetPathFun) })
 
 
 @ApiStatus.Internal
