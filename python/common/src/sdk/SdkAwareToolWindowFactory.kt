@@ -11,7 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
-private val isAvailableAtStartup = Registry.`is`("python.toolwindows.available.at.startup")
+private val isAvailableAtStartup: Boolean get() = Registry.`is`("python.toolwindows.available.at.startup")
 
 @Internal
 abstract class SdkAwareToolWindowFactory : ToolWindowFactory {

@@ -144,10 +144,6 @@
   </applicationListeners>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="python.toolwindows.available.at.startup"
-                 defaultValue="false"
-                 restartRequired="false"
-                 description="Python tool windows are available at startup"/>
     <registryKey key="use.python.for.local.conda"
                  defaultValue="true"
                  restartRequired="false"

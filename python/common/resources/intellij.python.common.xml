@@ -4,5 +4,9 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.projectRemoteTopicListener implementation="com.intellij.python.common.sdk.PythonSdkAvailableTopicListener"/>
+    <registryKey key="python.toolwindows.available.at.startup"
+                 defaultValue="false"
+                 restartRequired="false"
+                 description="Python tool windows are available at startup"/>
   </extensions>
 </idea-plugin>
