@@ -107,6 +107,7 @@
     <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.inspections.RegistryImplicitPropertyUsageProvider"/>
 
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
+    <!--suppress PluginXmlValidity -->
     <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
     <registryKey key="devkit.web.based.plugin.generator.enabled"
                  description="Enables the new IDE Plugin module builder based on web backend"
@@ -665,6 +666,7 @@
     <stacktrace.fold substring="at com.intellij.testFramework.ExpectedHighlightingData"/>
     <stacktrace.fold substring="at com.intellij.testFramework.HeavyPlatformTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformCodeInsightTestCase"/>
+    <!--suppress DeprecatedClassUsageInspection -->
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformTestCase"/>
     <!--suppress DeprecatedClassUsageInspection -->
     <stacktrace.fold substring="at com.intellij.testFramework.PlatformTestCase"/>

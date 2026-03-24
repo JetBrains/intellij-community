@@ -21,22 +21,21 @@
     />
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <appStarter id="save" implementation="com.intellij.openapi.application.SaveStarter"/>
-    <appStarter id="exit" implementation="com.intellij.openapi.application.ExitStarter"/>
-    <appStarter id="dumpLaunchParameters" implementation="com.intellij.openapi.application.DumpLaunchParametersStarter"/>
-    <appStarter id="diff" implementation="com.intellij.diff.applications.DiffApplication"/>
-    <appStarter id="merge" implementation="com.intellij.diff.applications.MergeApplication"/>
-    <appStarter id="reopen" implementation="com.intellij.ui.win.RecentProjectApplication"/>
-    <appStarter id="update" implementation="com.intellij.ide.plugins.UpdatePluginsApp"/>
-    <appStarter id="keymap" implementation="com.intellij.help.impl.KeymapGenerator"/>
-    <appStarter id="intentions" implementation="com.intellij.help.impl.IntentionDump"/>
-    <appStarter id="inspections" implementation="com.intellij.help.impl.InspectionDump"/>
-    <appStarter id="listBundledPlugins" implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
-    <appStarter id="installPlugins" implementation="com.intellij.ide.plugins.HeadlessPluginsInstaller"/>
-    <appStarter id="generateEnvironmentKeysFile" implementation="com.intellij.ide.environment.impl.EnvironmentKeyStubGenerator"/>
-    <appStarter id="buildEventsScheme"
-                implementation="com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter"/>
-    <appStarter id="dumpActions" implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter"/>
+    <appStarter id="diff" implementation="com.intellij.diff.applications.DiffApplication" bundle="messages.IdeBundle" key="diff.help"/>
+    <appStarter id="merge" implementation="com.intellij.diff.applications.MergeApplication" bundle="messages.IdeBundle" key="merge.help"/>
+    <appStarter id="update" implementation="com.intellij.ide.plugins.UpdatePluginsApp" bundle="messages.IdeBundle" key="update.plugins.help"/>
+    <appStarter id="installPlugins" implementation="com.intellij.ide.plugins.HeadlessPluginsInstaller" bundle="messages.IdeBundle" key="install.plugins.help"/>
+    <appStarter id="save" implementation="com.intellij.openapi.application.SaveStarter" internal="true"/>
+    <appStarter id="exit" implementation="com.intellij.openapi.application.ExitStarter" internal="true"/>
+    <appStarter id="dumpLaunchParameters" implementation="com.intellij.openapi.application.DumpLaunchParametersStarter" internal="true"/>
+    <appStarter id="reopen" implementation="com.intellij.ui.win.RecentProjectApplication" internal="true"/>
+    <appStarter id="keymap" implementation="com.intellij.help.impl.KeymapGenerator" internal="true"/>
+    <appStarter id="intentions" implementation="com.intellij.help.impl.IntentionDump" internal="true"/>
+    <appStarter id="inspections" implementation="com.intellij.help.impl.InspectionDump" internal="true"/>
+    <appStarter id="listBundledPlugins" implementation="com.intellij.ide.plugins.BundledPluginsLister" internal="true"/>
+    <appStarter id="buildEventsScheme" implementation="com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter" internal="true"/>
+    <appStarter id="dumpActions" implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter" internal="true"/>
+    <appStarter id="generateEnvironmentKeysFile" implementation="com.intellij.ide.environment.impl.EnvironmentKeyStubGenerator" internal="true"/>
     <protocolHandler implementation="com.intellij.openapi.application.JBProtocolHandler"/>
     <protocolNavigationCommandProcessor implementation="com.intellij.navigation.MonolithProtocolNavigationProcessor" order="last"/>
 
