@@ -2,32 +2,26 @@
 package com.intellij.configurationStore
 
 import com.intellij.ide.GeneralSettings
-import com.intellij.openapi.application.ApplicationActivationListener
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
+import com.intellij.ide.IdleTracker
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.wm.IdeFrame
-import com.intellij.openapi.wm.StatusBar
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.ui.BalloonLayout
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
-import org.assertj.core.api.Assertions.assertThat
+import kotlinx.coroutines.launch
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.awt.Rectangle
 import java.nio.file.Files
-import javax.swing.JComponent
-import javax.swing.JPanel
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.milliseconds
@@ -35,9 +29,8 @@ import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 @RegistryKey(key = "vfs.background.refresh.interval", value = "1")
+@RegistryKey(key = "vfs.background.refresh.on.idle", value = "true")
 internal class SaveAndSyncHandlerBackgroundRefreshTest {
-  private val ideFrame = TestIdeFrame()
-
   @BeforeEach
   fun `set settings`() {
     GeneralSettings.getInstance().apply {
@@ -49,87 +42,75 @@ internal class SaveAndSyncHandlerBackgroundRefreshTest {
   }
 
   @Test
-  fun `sync is not blocked and no root is dirty does not refresh`(): Unit = timeoutRunBlocking(10.seconds) {
-    assertBackgroundRefresh(syncBlocked = false, dirtyRoots = false, expectRefresh = false, coroutineScope = this)
+  fun `idle refresh with dirty roots refreshes while frame stays active`(): Unit = timeoutRunBlocking(10.seconds) {
+    assertBackgroundRefresh(expectedRefreshCount = 1)
   }
 
   @Test
-  fun `sync is not blocked and dirty roots refreshes`(): Unit = timeoutRunBlocking(10.seconds) {
-    assertBackgroundRefresh(syncBlocked = false, dirtyRoots = true, expectRefresh = true, coroutineScope = this)
+  fun `idle refresh can happen 3 times while user stays inactive`(): Unit = timeoutRunBlocking(15.seconds) {
+    assertBackgroundRefresh(expectedRefreshCount = 3)
   }
 
   @Test
-  fun `sync is blocked and no root is dirty does not refresh`(): Unit = timeoutRunBlocking(10.seconds) {
-    assertBackgroundRefresh(syncBlocked = true, dirtyRoots = false, expectRefresh = false, coroutineScope = this)
+  fun `user activity prevents background vfs refresh`(): Unit = timeoutRunBlocking(10.seconds) {
+    val simulatedUserActivityJob = launch(CoroutineName("simulated user activity")) {
+      val idleTracker = serviceAsync<IdleTracker>()
+      while (true) {
+        delay(100.milliseconds)
+        idleTracker.restartIdleTimer()
+      }
+    }
+
+    assertBackgroundRefresh(expectedRefreshCount = 0)
+
+    simulatedUserActivityJob.cancelAndJoin()
   }
 
   @Test
-  fun `sync is blocked and dirty roots does not refresh`(): Unit = timeoutRunBlocking(10.seconds) {
-    assertBackgroundRefresh(syncBlocked = true, dirtyRoots = true, expectRefresh = false, coroutineScope = this)
+  fun `idle refresh is disabled by general settings`(): Unit = timeoutRunBlocking(10.seconds) {
+    GeneralSettings.getInstance().isBackgroundSync = false
+    assertBackgroundRefresh(expectedRefreshCount = 0)
   }
 
-  private suspend fun assertBackgroundRefresh(syncBlocked: Boolean, dirtyRoots: Boolean, expectRefresh: Boolean, coroutineScope: CoroutineScope) {
+  private suspend fun CoroutineScope.assertBackgroundRefresh(expectedRefreshCount: Int) {
     val dirtyFile = Files.createTempFile("background-refresh", ".txt")
     val virtualFile = VfsUtil.findFile(dirtyFile, true)
 
     @Suppress("RAW_SCOPE_CREATION")
-    val handlerCoroutineScope = CoroutineScope(coroutineScope.coroutineContext + SupervisorJob() + CoroutineName("SaveAndSyncHandlerBackgroundRefreshTest"))
-    val handler = SaveAndSyncHandlerImpl(handlerCoroutineScope, listenDelay = 0.seconds)
+    val handlerCoroutineScope = CoroutineScope(coroutineContext + SupervisorJob() + CoroutineName("SaveAndSyncHandlerBackgroundRefreshTest"))
+    SaveAndSyncHandlerImpl(handlerCoroutineScope, listenDelay = 0.seconds)
 
     try {
       delay(1.seconds) // wait for handler to start listening
       VfsTestUtil.syncRefresh()
-
-      if (syncBlocked) {
-        handler.blockSyncOnFrameActivation()
-      }
+      serviceAsync<IdleTracker>().restartIdleTimer()
 
       val virtualFileManager = VirtualFileManager.getInstance()
-      val initialModificationCount = virtualFileManager.modificationCount
+      var modificationCountBaseline = virtualFileManager.modificationCount
 
-      deactivateFrame()
+      if (expectedRefreshCount > 0) {
+        repeat(expectedRefreshCount) { refreshIndex ->
+          dirtyFile.writeText("after-$refreshIndex")
+          VfsUtil.markDirty(false, false, virtualFile)
 
-      if (dirtyRoots) {
-        dirtyFile.writeText("after")
-        VfsUtil.markDirty(false, false, virtualFile)
-      }
+          waitUntil("Background VFS refresh ${refreshIndex + 1} was not triggered", timeout = 5.seconds) {
+            virtualFileManager.modificationCount > modificationCountBaseline
+          }
 
-      if (expectRefresh) {
-        waitUntil("Background VFS refresh was not triggered", timeout = 5.seconds) {
-          virtualFileManager.modificationCount > initialModificationCount
+          modificationCountBaseline = virtualFileManager.modificationCount
         }
       }
       else {
-        delay(2500.milliseconds)
-        assertThat(virtualFileManager.modificationCount).isEqualTo(initialModificationCount)
+        dirtyFile.writeText("after")
+        VfsUtil.markDirty(false, false, virtualFile)
+
+        delay(3.seconds)
+        Assertions.assertThat(virtualFileManager.modificationCount).isEqualTo(modificationCountBaseline)
       }
     }
     finally {
-      if (syncBlocked) {
-        handler.unblockSyncOnFrameActivation()
-      }
       dirtyFile.deleteIfExists()
       handlerCoroutineScope.coroutineContext.job.cancelAndJoin()
-      activateFrame()
     }
   }
-
-  private fun deactivateFrame() {
-    ApplicationManager.getApplication().messageBus.syncPublisher(ApplicationActivationListener.TOPIC).applicationDeactivated(ideFrame)
-  }
-
-  private fun activateFrame() {
-    ApplicationManager.getApplication().messageBus.syncPublisher(ApplicationActivationListener.TOPIC).applicationActivated(ideFrame)
-  }
-}
-
-private class TestIdeFrame : IdeFrame {
-  private val component = JPanel()
-
-  override fun getStatusBar(): StatusBar? = null
-  override fun suggestChildFrameBounds(): Rectangle = Rectangle()
-  override fun getProject(): Project? = null
-  override fun setFrameTitle(title: String) = Unit
-  override fun getComponent(): JComponent = component
-  override fun getBalloonLayout(): BalloonLayout? = null
 }
