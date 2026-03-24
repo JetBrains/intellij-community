@@ -728,7 +728,7 @@ public final class IncProjectBuilder {
       LOG.info("Cleaned output directories in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - cleanStart) + " ms");
       if (cleanCaches) {
         try {
-          projectDescriptor.dataManager.clean(myAsyncTasks::add);
+          projectDescriptor.dataManager.clean();
         }
         catch (IOException e) {
           if (projectBuildException == null) {

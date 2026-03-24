@@ -1,9 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
-import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.tracing.Tracer;
@@ -360,7 +358,15 @@ public final class BuildDataManager {
     }
   }
 
+  /**
+   * @deprecated the passed asyncTaskCollector is no longer used. Use the {@link BuildDataManager#clean()} method instead
+   */
+  @Deprecated
   public void clean(@NotNull Consumer<Future<?>> asyncTaskCollector) throws IOException {
+    clean();
+  }
+
+  public void clean() throws IOException {
     if (myFileStampService != null) {
       try {
         myFileStampService.clean();
@@ -378,7 +384,7 @@ public final class BuildDataManager {
     }
 
     try {
-      allTargetStorages(asyncTaskCollector).clean();
+      allTargetStorages().clean();
       myTargetStorages.clear();
       if (newDataManager == null) {
         buildTargetToSourceToOutputMapping.clear();
@@ -676,7 +682,7 @@ public final class BuildDataManager {
     myRelativizer.reportUnhandledPaths();
   }
 
-  private @NotNull StorageOwner allTargetStorages(@NotNull Consumer<Future<?>> asyncTaskCollector) {
+  private @NotNull StorageOwner allTargetStorages() {
     return new CompositeStorageOwner() {
       @Override
       public void clean() throws IOException {
@@ -684,10 +690,7 @@ public final class BuildDataManager {
           close();
         }
         finally {
-          asyncTaskCollector.accept(ProcessIOExecutorService.INSTANCE.submit(() -> {
-            NioFiles.deleteRecursively(myDataPaths.getTargetsDataRoot());
-            return null;
-          }));
+          NioFiles.deleteRecursively(myDataPaths.getTargetsDataRoot());
         }
       }
 
@@ -699,10 +702,6 @@ public final class BuildDataManager {
         );
       }
     };
-  }
-
-  private @NotNull StorageOwner allTargetStorages() {
-    return allTargetStorages(f -> {});
   }
 
   private static final class SourceToOutputMappingWrapper implements SourceToOutputMapping {
