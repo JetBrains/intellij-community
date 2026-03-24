@@ -23,6 +23,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -33,6 +35,7 @@ import com.intellij.refactoring.util.RefactoringDescriptionLocation;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +48,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class SuperMethodWarningUtil {
-  public static final Key<PsiMethod[]> SIBLINGS = Key.create("MULTIPLE_INHERITANCE");
+  private static final Key<List<SmartPsiElementPointer<PsiMethod>>> SIBLINGS = Key.create("MULTIPLE_INHERITANCE");
   private SuperMethodWarningUtil() {}
 
   public static PsiMethod @NotNull [] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString) {
@@ -72,6 +75,7 @@ public final class SuperMethodWarningUtil {
     ThreadingAssertions.assertEventDispatchThread();
     PsiMethod[] methodTargetCandidates = getTargetMethodCandidates(method, ignore);
     if (methodTargetCandidates.length == 1 && methodTargetCandidates[0] == method) return methodTargetCandidates;
+    if (ApplicationManager.getApplication().isUnitTestMode()) return methodTargetCandidates;
 
     List<String> superClasses = new ArrayList<>();
     boolean superAbstract = false;
@@ -172,11 +176,11 @@ public final class SuperMethodWarningUtil {
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      putSiblings(superMethods, superMethods[0]);
       processor.execute(superMethods[0]);
       return;
     }
 
-    final PsiMethod[] methods = {superMethods[0], method};
     final String renameBase = JavaRefactoringBundle.message("refactor.base.method.choice", superMethods.length > 1 ? 0 : 1);
     final String renameCurrent = JavaRefactoringBundle.message("refactor.only.current.method.choice");
     String title;
@@ -196,19 +200,27 @@ public final class SuperMethodWarningUtil {
       .setRequestFocus(true)
       .setItemChosenCallback(value -> {
         if (value.equals(renameBase)) {
-          try {
-            methods[0].putUserData(SIBLINGS, superMethods);
-            processor.execute(methods[0]);
-          }
-          finally {
-            methods[0].putUserData(SIBLINGS, null);
-          }
+          putSiblings(superMethods, superMethods[0]);
+          processor.execute(superMethods[0]);
         }
         else {
-          processor.execute(methods[1]);
+          processor.execute(method);
         }
       })
       .createPopup().showInBestPositionFor(editor);
+  }
+  
+  public static void putSiblings(PsiMethod[] siblings, PsiMethod method) {
+    SmartPointerManager pointerManager = SmartPointerManager.getInstance(method.getProject());
+    List<SmartPsiElementPointer<PsiMethod>> pointers =
+      ContainerUtil.map(siblings, m -> pointerManager.createSmartPsiElementPointer(m));
+    method.putUserData(SIBLINGS, pointers);
+  }
+  
+  public static List<PsiMethod> getSiblings(PsiMethod method) {
+    List<SmartPsiElementPointer<PsiMethod>> siblings = method.getUserData(SIBLINGS);
+    if (siblings == null) return List.of(method);
+    return ContainerUtil.map(siblings, p -> p.getElement());
   }
 
   @Messages.YesNoCancelResult

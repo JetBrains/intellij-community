@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -284,11 +284,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
                               @NotNull Map<PsiElement, String> allRenames,
                               @NotNull SearchScope scope) {
     final PsiMethod method = (PsiMethod) element;
-    PsiMethod[] siblings = method.getUserData(SuperMethodWarningUtil.SIBLINGS);
-    if (siblings == null) {
-      siblings = new PsiMethod[] {method};
-    }
-    for (PsiMethod sibling : siblings) {
+
+    for (PsiMethod sibling : SuperMethodWarningUtil.getSiblings(method)) {
       //append all super methods
       if (sibling != method) {
         allRenames.put(sibling, newName);
@@ -349,7 +346,10 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     if (recordComponent != null) {
       return recordComponent;
     }
-    return SuperMethodWarningUtil.checkSuperMethod(psiMethod);
+    PsiMethod[] superMethods = SuperMethodWarningUtil.checkSuperMethods(psiMethod, RefactoringBundle.message("to.rename"));
+    if (superMethods.length == 0) return null;
+    SuperMethodWarningUtil.putSiblings(superMethods, superMethods[0]);
+    return superMethods[0];
   }
 
   @Override
