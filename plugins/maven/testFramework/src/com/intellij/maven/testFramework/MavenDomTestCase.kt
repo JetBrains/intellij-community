@@ -210,7 +210,11 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return readAction {
       val model = MavenDomUtil.getMavenDomModel(project, file, clazz)
       assertNotNull("Model is not of $clazz", model)
-      MavenDomUtil.findTag(model!!, path)!!
+      val tag = MavenDomUtil.findTag(model!!, path)
+      val xmlTag = model.xmlTag
+      assertNotNull("xmlTag is null for $path", xmlTag)
+      assertNotNull("Tag $path not found in \n${xmlTag!!.text}", tag)
+      tag!!
     }
   }
 
