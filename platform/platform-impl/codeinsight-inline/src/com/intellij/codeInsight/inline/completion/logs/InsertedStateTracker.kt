@@ -6,14 +6,10 @@ import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTrac
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.lang.Language
-import com.intellij.codeInsight.inline.completion.utils.EditorDisposableCoroutineScope
-import com.intellij.codeInsight.inline.completion.utils.storeInUserDataHolderByTheKey
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.text.EditDistance
@@ -28,7 +24,9 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class InsertedStateTracker(private val cs: CoroutineScope) {
+internal class InsertedStateTracker(
+  cs: CoroutineScope
+) : AbstractEditorTrackingService(cs, InsertedStateTracker::class.java.name) {
 
   @Deprecated("Replaced with trackV2")
   fun track(requestId: Long,
@@ -132,19 +130,4 @@ class InsertedStateTracker(private val cs: CoroutineScope) {
     }
   }
 
-  /**
-   * Reuses one editor-bound child scope for all delayed tracking jobs.
-   *
-   * The scope wrapper is stored in editor user data and canceled on editor disposal,
-   * so service-level coroutine scope does not retain editor references.
-   */
-  private fun getOrCreateEditorScope(editor: Editor): CoroutineScope {
-    return editor.storeInUserDataHolderByTheKey(EDITOR_TRACKER_SCOPE_KEY) {
-      EditorDisposableCoroutineScope(cs)
-    }.scope
-  }
-
-  private companion object {
-    private val EDITOR_TRACKER_SCOPE_KEY = Key.create<EditorDisposableCoroutineScope>("inline.completion.inserted.state.tracker.scope")
-  }
 }
