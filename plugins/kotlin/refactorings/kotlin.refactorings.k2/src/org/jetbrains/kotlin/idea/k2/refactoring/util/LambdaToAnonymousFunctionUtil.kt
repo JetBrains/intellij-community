@@ -28,6 +28,7 @@ object LambdaToAnonymousFunctionUtil {
      * Build function signature and body based on provided [lambda].
      * Returns null for function literals without body.
      *
+     * @param parameterNames fallback names to use when a parameter name is special (e.g. unnamed).
      * @param forceNonNullReturnType when `true`, the return type is rendered as non-nullable
      *   provided that no nullable expressions are returned anywhere in the lambda body.
      *
