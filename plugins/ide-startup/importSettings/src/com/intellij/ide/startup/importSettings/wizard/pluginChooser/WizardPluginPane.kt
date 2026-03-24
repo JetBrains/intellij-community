@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.wizard.pluginChooser
 
-import com.intellij.ide.plugins.newui.TagComponent
 import com.intellij.ide.startup.importSettings.data.WizardPlugin
+import com.intellij.ui.components.Badge
+import com.intellij.ui.components.Badge.ColorType
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.components.DslLabel
@@ -14,6 +16,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.FlowLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import javax.swing.Box
 import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -27,7 +30,7 @@ class WizardPluginPane(val plugin: WizardPlugin, changeHandler: () -> Unit) {
   }
 
   val selected: Boolean
-   get() = checkBox.isSelected
+    get() = checkBox.isSelected
 
   val pane: JPanel = JPanel(GridBagLayout()).apply {
     val c = GridBagConstraints()
@@ -54,7 +57,7 @@ class WizardPluginPane(val plugin: WizardPlugin, changeHandler: () -> Unit) {
       c.anchor = GridBagConstraints.SOUTHWEST
       c.weightx = 1.0
       c.fill = GridBagConstraints.HORIZONTAL
-      add(createNamePanel(plugin.name, plugin.tag), c)
+      add(createNamePanel(plugin.name, plugin.badge), c)
 
       c.gridx = 2
       c.gridy = 1
@@ -79,19 +82,19 @@ class WizardPluginPane(val plugin: WizardPlugin, changeHandler: () -> Unit) {
       c.gridy = 0
       c.weightx = 1.0
       c.fill = GridBagConstraints.HORIZONTAL
-      add(createNamePanel(plugin.name, plugin.tag), c)
+      add(createNamePanel(plugin.name, plugin.badge), c)
     }
   }.apply {
     isOpaque = false
     border = JBUI.Borders.empty(8, 20)
   }
 
-  private fun createNamePanel(name: @Nls String, tag: @Nls String?): JPanel {
+  private fun createNamePanel(name: @Nls String, badge: @Nls String?): JPanel {
     val panel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply { isOpaque = false }
     panel.add(createLabel().apply { text = name })
-    if (tag != null) {
-      panel.add(javax.swing.Box.createHorizontalStrut(JBUI.scale(10)))
-      panel.add(TagComponent(tag))
+    if (badge != null) {
+      panel.add(Box.createHorizontalStrut(JBUI.scale(6)))
+      panel.add(JBLabel(Badge(badge, ColorType.PURPLE_SECONDARY)))
     }
     return panel
   }

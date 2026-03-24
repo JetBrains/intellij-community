@@ -104,7 +104,7 @@ interface WizardPlugin {
   val icon: Icon
   val name: @Nls String
   val description: @Nls String?
-  val tag: @Nls String?
+  val badge: @Nls String?
 }
 
 interface KeymapService {
