@@ -1088,6 +1088,8 @@ jvm_library(
     "//platform/vcs-tests:vcs-tests-main_test_lib",
     "//java/java-tests:tests-main",
     "//java/java-tests:tests-main_test_lib",
+    "//plugins/groovy:groovy-tests-main",
+    "//plugins/groovy:groovy-tests-main_test_lib",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main.tests` end
