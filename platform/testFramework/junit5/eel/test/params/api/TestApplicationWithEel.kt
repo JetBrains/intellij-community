@@ -52,6 +52,10 @@ import org.junit.jupiter.api.extension.ExtendWith
  * For example, if [osesMayNotHaveRemoteEels] is empty
  * but [com.intellij.testFramework.junit5.eel.EelFixtureFilter.instance] prohibits running in WSL and Docker,
  * then WSL and Docker will not be used.
+ *
+ * [useLegacyTargets] creates targets configuration in [EelHolder.target] (special eel wrapper is used otherwise).
+ * This option is only needed to check code that depends on a particular target classes (by means of `is`).
+ * This is an old code with leaky abstraction. If you have no such code (you shouldn't), ignore this option.
  */
 @TestOnly
 @Target(AnnotationTarget.CLASS)
@@ -60,4 +64,4 @@ import org.junit.jupiter.api.extension.ExtendWith
 )
 @TestApplication
 @EelSource
-annotation class TestApplicationWithEel(vararg val osesMayNotHaveRemoteEels: OS)
+annotation class TestApplicationWithEel(val useLegacyTargets: Boolean = false, vararg val osesMayNotHaveRemoteEels: OS)

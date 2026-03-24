@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.params.impl.junit5
 
+import com.intellij.execution.target.EelTargetEnvironmentRequest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -30,7 +31,8 @@ import java.io.Closeable
  * Call [create] to get manager that looks for [EelHolder] in invocation context and "activate" it.
  * [close] is used to destroy it.
  */
-internal class EelsManager private constructor(private val eelHolders: List<EelHolder>, extensionContext: ExtensionContext) : java.lang.AutoCloseable {
+internal class EelsManager private constructor(private val eelHolders: List<EelHolder>, extensionContext: ExtensionContext) :
+  java.lang.AutoCloseable {
   // Autocloseable things might be closed by JUnit, hence need not be closed two times
   private var closed = false
   private val closeAfterTest: MutableList<Closeable> = mutableListOf<Closeable>()
@@ -43,6 +45,8 @@ internal class EelsManager private constructor(private val eelHolders: List<EelH
       return EelsManager(eelHolders, extensionContext)
     }
   }
+
+  private val useLegacyTargets = extensionContext.annotation.useLegacyTargets
 
   init {
     val testContext = extensionContext.parent.get()
@@ -78,12 +82,13 @@ internal class EelsManager private constructor(private val eelHolders: List<EelH
       for (eelHolder in eelHolders) {
         when (eelHolder) {
           is EelHolderImpl<*> -> {
-            val (eel, eelType, closable) = eelHolder.startIjentProvider(scope)
+            val (eel, eelType, legacyTarget, closable) = eelHolder.startIjentProvider(scope)
             closable?.let {
               closeAfterTest.add(it)
             }
             eelHolder.eel = eel
             eelHolder.type = eelType
+            eelHolder.target = if (useLegacyTargets) legacyTarget() else EelTargetEnvironmentRequest.Configuration(eel)
             testContext.store.put(REMOTE_EEL_EXECUTED, true)
           }
           LocalEelHolder -> Unit
@@ -149,6 +154,6 @@ private class EelTestService(val scope: CoroutineScope)
 internal val ExtensionContext.store: ExtensionContext.Store get() = getStore(ExtensionContext.Namespace.GLOBAL)
 private const val REMOTE_EEL_EXECUTED = "REMOTE_EEL_EXECUTED"
 
-private val ExtensionContext.atLeastOneRemoteEelRequired: Boolean
-  get() =
-    OS.current() !in AnnotationUtils.findAnnotation(testClass.get(), TestApplicationWithEel::class.java).get().osesMayNotHaveRemoteEels
+private val ExtensionContext.atLeastOneRemoteEelRequired: Boolean get() = OS.current() !in annotation.osesMayNotHaveRemoteEels
+
+private val ExtensionContext.annotation get() = AnnotationUtils.findAnnotation(testClass.get(), TestApplicationWithEel::class.java).get()
