@@ -128,14 +128,7 @@ class JdkDownload : SdkDownload {
   ): Pair<JdkItem, Path>? {
     val items = try {
       val extension = extension ?: object : JdkDownloaderDialogHostExtension {
-        override fun getEel(): EelApi? {
-          if (!Registry.`is`("java.home.finder.use.eel")) {
-            return null
-          }
-          else {
-            return (project?.getEelDescriptor() ?: LocalEelDescriptor).toEelApiBlocking()
-          }
-        }
+        override fun getEel(): EelApi = (project?.getEelDescriptor() ?: LocalEelDescriptor).toEelApiBlocking()
       }
       computeInBackground(project, ProjectBundle.message("progress.title.downloading.jdk.list")) {
 

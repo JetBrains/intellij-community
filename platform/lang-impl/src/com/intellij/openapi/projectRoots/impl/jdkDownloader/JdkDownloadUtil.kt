@@ -14,7 +14,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
@@ -31,12 +30,8 @@ object JdkDownloadUtil {
 
   suspend fun pickJdkItemAndPath(project: Project, filter: (JdkItem) -> Boolean): Pair<JdkItem, Path>? {
     val wsl = project.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
-    val eel = if (Registry.`is`("java.home.finder.use.eel")) project.getEelDescriptor().toEelApi() else null
-    val jdkPredicate = when {
-      eel != null -> JdkPredicate.forEel(eel)
-      wsl != null -> JdkPredicate.forWSL()
-      else -> JdkPredicate.default()
-    }
+    val eel = project.getEelDescriptor().toEelApi()
+    val jdkPredicate = JdkPredicate.forEel(eel)
     val jdkListDownloader = JdkListDownloader.getInstance()
     val jdkItems = jdkListDownloader.downloadModelForJdkInstaller(null, jdkPredicate)
     val jdkItem = jdkItems.firstOrNull(filter) ?: return null

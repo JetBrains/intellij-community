@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
@@ -197,7 +196,7 @@ class JdkUpdateNotification(val jdk: Sdk,
     val newJdkHome = try {
       val installer = JdkInstaller.getInstance()
 
-      val eel = if (Registry.`is`("java.home.finder.use.eel")) jdk.homePath?.let { Path.of(it).getEelDescriptor().toEelApi() } else null
+      val eel = jdk.homePath?.let { Path.of(it).getEelDescriptor().toEelApi() }
       val wsl = jdk.homePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
       val request = installer.prepareJdkInstallation(newItem, installer.defaultInstallDir(newItem, eel, wsl))
 

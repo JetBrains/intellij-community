@@ -26,7 +26,6 @@
                         serviceImplementation="com.intellij.openapi.roots.ui.configuration.SdkLookupImpl"/>
 
     <registryKey key="sdk.detector.enabled" defaultValue="true" description="Toggles SDK detection features"/>
-    <registryKey key="java.home.finder.use.eel" defaultValue="true" description="Use new API for OS abstraction in Project SDKs"/>
 
     <testSourcesFilter implementation="com.intellij.openapi.roots.ProjectRootTestSourcesFilter"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ProjectRootModificationTracker"

@@ -152,21 +152,11 @@ public abstract class JavaHomeFinder {
 
   @ApiStatus.Internal
   public static @NotNull JavaHomeFinderBasic getFinder(@NotNull EelDescriptor descriptor) {
-    if (Registry.is("java.home.finder.use.eel")) {
-      return javaHomeFinderEel(descriptor);
-    }
-
-    var systemInfoProvider = new SystemInfoProvider();
-    return switch (OS.CURRENT) {
-      case Windows -> new JavaHomeFinderWindows(true, true, systemInfoProvider);
-      case macOS -> new JavaHomeFinderMac(systemInfoProvider);
-      case Linux -> new JavaHomeFinderBasic(systemInfoProvider).checkSpecifiedPaths(DEFAULT_JAVA_LINUX_PATHS);
-      default -> new JavaHomeFinderBasic(systemInfoProvider);
-    };
+    return javaHomeFinderEel(descriptor);
   }
 
   public static @Nullable String defaultJavaLocation(@Nullable Path path) {
-    if (path != null && Registry.is("java.home.finder.use.eel")) {
+    if (path != null) {
       var location = defaultJavaLocationUsingEel(path);
       return location != null ? location.toString() : null;
     }
