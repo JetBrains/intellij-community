@@ -44,11 +44,11 @@ import javax.swing.JComponent
 import javax.swing.JLayeredPane
 import javax.swing.JPanel
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Duration.Companion.seconds
 
-private const val PANEL_MAX_WIDTH = 1000
+private const val PANEL_PREFERRED_WIDTH = 1000
 private const val SEARCH_MAX_WIDTH = 400
 private const val PANEL_NARROW_WIDTH = 850
-
 
 internal fun SettingsDialog.createEditorToolbar(actions: List<Action>): DialogPanel? {
   val actionGroup = getActionGroup("Back", "Forward")
@@ -113,8 +113,7 @@ internal fun SettingsDialog.createEditorToolbar(actions: List<Action>): DialogPa
       }
     }
   }
-  editorToolbar.maximumSize = JBUI.size(PANEL_MAX_WIDTH, editorToolbar.maximumSize.height)
-  editorToolbar.preferredSize = JBUI.size(PANEL_MAX_WIDTH, editorToolbar.preferredSize.height)
+  editorToolbar.preferredSize = JBUI.size(PANEL_PREFERRED_WIDTH, editorToolbar.preferredSize.height)
   editorToolbar.minimumSize = JBUI.size(10, editorToolbar.minimumSize.height)
   editorToolbar.border = JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBColor.border()),
                                                JBUI.Borders.customLineRight(JBColor.border()))
@@ -122,7 +121,7 @@ internal fun SettingsDialog.createEditorToolbar(actions: List<Action>): DialogPa
 
   return panel {
     row {
-      cell(editorToolbar).resizableColumn()
+      cell(editorToolbar).resizableColumn().align(AlignX.FILL)
     }
   }
 
@@ -166,11 +165,10 @@ internal fun SettingsEditor.paneWithCorner(panel: JPanel, helpButton: JButton): 
 
 internal fun SettingsEditor.createWrapperPanel(splitter: OnePixelSplitter) : DialogPanel {
   splitter.border = JBUI.Borders.customLineRight(JBColor.border())
-  splitter.preferredSize = JBUI.size(PANEL_MAX_WIDTH, splitter.preferredSize.height)
-  splitter.maximumSize = JBUI.size(PANEL_MAX_WIDTH, splitter.maximumSize.height)
+  splitter.preferredSize = JBUI.size(PANEL_PREFERRED_WIDTH, splitter.preferredSize.height)
   val panel = panel {
     row {
-      cell(splitter).resizableColumn().align(AlignY.FILL)
+      cell(splitter).resizableColumn().align(AlignX.FILL).align(AlignY.FILL)
     }.resizableRow()
   }
   return panel
@@ -198,7 +196,7 @@ internal class ResetConfigurableHandler(
       myCoroutineScope.launch {
         val job = this.coroutineContext[Job] ?: return@launch
         jobs.put(configurableId, job)?.cancel()
-        delay(System.getProperty("settings.editor.reset.delay.seconds", "60").toLong() * 1000)
+        delay((System.getProperty("settings.editor.reset.delay.seconds", "60").toLongOrNull() ?: 60).seconds)
         jobs.remove(configurableId, job)
         if (properties.getValue(SettingsEditor.SELECTED_CONFIGURABLE) != configurableId) {
           context.fireReset(configurable)
