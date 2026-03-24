@@ -59,11 +59,14 @@ import org.relaxng.datatype.DatatypeLibraryFactory;
 import org.relaxng.datatype.helpers.DatatypeLibraryLoader;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.StringReader;
 import java.util.concurrent.ConcurrentMap;
+
+import static com.thaiopensource.validate.ValidateProperty.ERROR_HANDLER;
 
 public final class RngParser {
   private static final Logger LOG = Logger.getInstance(RngParser.class);
@@ -181,9 +184,24 @@ public final class RngParser {
     if (value == null) {
       final CachedValueProvider<Schema> provider = () -> {
         final InputSource inputSource = makeInputSource(descriptorFile);
-
         try {
-          final Schema schema = new MySchemaReader(descriptorFile).createSchema(inputSource, EMPTY_PROPS);
+          final PropertyMapBuilder properties = new PropertyMapBuilder();
+          properties.put(ERROR_HANDLER, new ErrorHandler() {
+            @Override
+            public void warning(SAXParseException exception) { }
+
+            @Override
+            public void error(SAXParseException exception) throws SAXException {
+              throw exception;
+            }
+
+            @Override
+            public void fatalError(SAXParseException exception) throws SAXException {
+              throw exception;
+            }
+          });
+
+          final Schema schema = new MySchemaReader(descriptorFile).createSchema(inputSource, properties.toPropertyMap());
           final PsiElementProcessor.CollectElements<XmlFile> processor = new PsiElementProcessor.CollectElements<>();
           RelaxIncludeIndex.processForwardDependencies(descriptorFile, processor);
           if (!processor.getCollection().isEmpty()) {
