@@ -18,7 +18,6 @@ import javax.swing.JList
 internal class LcrSimpleColoredTextImpl(
   initParams: LcrTextInitParamsImpl, baselineAlign: Boolean, beforeGap: LcrRow.Gap,
   private val text: @Nls String,
-  private val selected: Boolean,
   private val rowForeground: Color,
 ) :
   LcrCellBaseImpl<LcrTextInitParamsImpl>(initParams, baselineAlign, beforeGap) {
@@ -34,14 +33,29 @@ internal class LcrSimpleColoredTextImpl(
     component.accessibleContext.accessibleName = initParams.accessibleName
     component.renderingHints = initParams.renderingHints
 
-    val baseAttributes = initParams.attributes ?: SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, initParams.foreground)
-    val attributes = when {
-      !enabled -> SimpleTextAttributes(baseAttributes.style, UIUtil.getLabelDisabledForeground())
-      selected -> SimpleTextAttributes(baseAttributes.style, rowForeground)
-      else -> baseAttributes
+    val attributes = calculateAttributes(enabled, isSelected)
+    applyText(list, component, attributes)
+  }
+
+  private fun calculateAttributes(enabled: Boolean, isSelected: Boolean): SimpleTextAttributes {
+    val paramAttributes = initParams.attributes
+    val baseAttributes = when {
+      paramAttributes == null ->
+        SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, initParams.foreground)
+
+      paramAttributes.fgColor == null ->
+        // Use the default foreground if missing
+        paramAttributes.derive(-1, initParams.foreground, null, null)
+
+      else ->
+        paramAttributes
     }
 
-    applyText(list, component, attributes)
+    return when {
+      !enabled -> SimpleTextAttributes(baseAttributes.style, UIUtil.getLabelDisabledForeground())
+      isSelected -> SimpleTextAttributes(baseAttributes.style, rowForeground)
+      else -> baseAttributes
+    }
   }
 
   private fun applyText(

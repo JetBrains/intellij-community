@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GroupHeaderSeparator
-import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.gridLayout.GridLayout
@@ -111,7 +110,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
       initParams.init()
     }
 
-    add(LcrSimpleColoredTextImpl(initParams, true, gap, text, selected, foreground))
+    add(LcrSimpleColoredTextImpl(initParams, true, gap, text, foreground))
   }
 
   override fun switch(isOn: Boolean, init: (LcrSwitchInitParams.() -> Unit)?) {
@@ -331,9 +330,6 @@ private class RendererPanel(key: RowKey) :
     cellsPanel.isOpaque = false
     selectablePanel.layout = BorderLayout()
     selectablePanel.add(cellsPanel, BorderLayout.CENTER)
-    
-    selectablePanel.foreground = JBColor.PanelForeground
-    cellsPanel.foreground = JBColor.PanelForeground
 
     val builder = RowsGridBuilder(cellsPanel)
     builder.resizableRow()
