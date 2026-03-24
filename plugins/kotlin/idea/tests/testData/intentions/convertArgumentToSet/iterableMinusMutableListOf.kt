@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// FIX: Convert argument to 'Set'
 // AFTER-WARNING: Variable 'c' is never used
 
 fun <T : CharSequence> foo(a: Iterable<T>) {

@@ -123,7 +123,6 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/usePropertyAccessSyntax", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertFunctionTypeParameterToReceiver", pattern = pattern)
             model("${idea}intentions/convertPrimaryConstructorToSecondary", pattern = pattern)
-            model("${idea}intentions/convertArgumentToSet", pattern = pattern, isIgnored = true)
             model("${idea}intentions/addAnnotationUseSiteTarget", pattern = pattern)
             model("${idea}intentions/convertEnumToSealedClass", pattern = pattern)
             model("${idea}intentions/convertToIndexedFunctionCall", pattern = pattern, isIgnored = true)

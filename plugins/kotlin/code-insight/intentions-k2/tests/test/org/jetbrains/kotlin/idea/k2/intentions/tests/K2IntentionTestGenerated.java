@@ -10485,8 +10485,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
-
-
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/addAnnotationUseSiteTarget")
     public abstract static class AddAnnotationUseSiteTarget extends AbstractK2IntentionTest {

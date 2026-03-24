@@ -52,6 +52,8 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_tests",
   deps = [
+    "//plugins/kotlin/plugin/k2",
+    "//plugins/kotlin/plugin/k2:k2_test_lib",
     "@lib//:kotlinc-analysis-api",
     "//java/java-indexing-api:indexing",
     "//java/java-indexing-api:indexing_test_lib",
@@ -63,6 +65,8 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
     "@lib//:kotlinc-analysis-api-platform-interface",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/code-insight/api:api_test_lib",
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/code-style-api:codeStyle",
@@ -89,8 +93,6 @@ jvm_library(
     "//platform/usageView:usageView_test_lib",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
-    "//plugins/kotlin/plugin/k2",
-    "//plugins/kotlin/plugin/k2:k2_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/analysis",
@@ -223,6 +225,10 @@ jvm_library(
     "//plugins/kotlin/kotlin.ide:kotlin.ide_test_lib",
     "//platform/vcs-impl/shared",
     "//platform/vcs-impl/shared:shared_test_lib",
+    "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections",
+    "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
   ],
   runtime_deps = [":tests"]
 )

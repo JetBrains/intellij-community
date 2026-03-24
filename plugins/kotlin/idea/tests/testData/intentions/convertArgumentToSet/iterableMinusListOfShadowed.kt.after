@@ -1,3 +1,4 @@
+// FIX: Convert argument to 'Set'
 // WITH_STDLIB
 // AFTER-WARNING: Variable 'c' is never used
 
