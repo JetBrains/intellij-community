@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.analysis.api.components.defaultType
 import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.isDenotable
 import org.jetbrains.kotlin.analysis.api.components.isStringType
+import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.components.memberScope
 import org.jetbrains.kotlin.analysis.api.components.packageScope
 import org.jetbrains.kotlin.analysis.api.components.render
@@ -906,7 +907,9 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             symbolFilter = { filter(it) },
         ).filter {
             // Check that the return type is correct, ignoring nullability
-            it.returnType.withNullability(false).semanticallyEquals(expectedType)
+            it.returnType.lowerBoundIfFlexible()
+                .withNullability(false)
+                .semanticallyEquals(expectedType)
         }.map { signature -> signature.symbol }
 
         createAndFilterMetadataForMemberCallables(availableCompanionObjectValues)
