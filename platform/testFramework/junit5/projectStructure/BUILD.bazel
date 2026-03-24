@@ -33,36 +33,100 @@ jvm_library(
 
 jvm_library(
   name = "projectStructure_test_lib",
+  module_name = "intellij.platform.testFramework.junit5.projectStructure",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":projectStructure"],
-  deps = [
-    "//platform/analysis-api:analysis",
-    "//platform/core-api:core",
-    "//jps/model-api:model",
-    "//platform/lang-core",
-    "//platform/projectModel-api:projectModel",
-    "//platform/testFramework/common",
-    "//platform/testFramework/junit5",
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":projectStructure",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/testFramework/common:common_test_lib",
     "//platform/testFramework/junit5:junit5_test_lib",
-    "//platform/lang-impl",
-    "//platform/ide-core",
-    "//platform/util-ex",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
     "@lib//:junit5",
-    "@lib//:kotlin-test",
-    "//platform/ide-core-impl",
-    "//platform/workspace/jps",
-    "@lib//:kotlin-stdlib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
     "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5.projectStructure` end
 
-### auto-generated section `test intellij.platform.testFramework.junit5.projectStructure` start
+### auto-generated section `iml intellij.platform.testFramework.junit5.projectStructure` start
+exports_files([
+  "intellij.platform.testFramework.junit5.projectStructure.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.testFramework.junit5.projectStructure` end
+
+### auto-generated section `build intellij.platform.testFramework.junit5.projectStructure.tests` start
+jvm_library(
+  name = "testFramework-junit5-projectStructure-tests",
+  module_name = "intellij.platform.testFramework.junit5.projectStructure.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "testFramework-junit5-projectStructure-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [
+    "//platform/testFramework/junit5/projectStructure",
+    "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
+  ],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/testFramework/common",
+    "//platform/testFramework/common:common_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/ide-core",
+    "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
+    "@lib//:junit5",
+    "@lib//:kotlin-test",
+    "//platform/ide-core-impl",
+    "//platform/workspace/jps",
+    "//platform/workspace/jps:jps_test_lib",
+    "@lib//:kotlin-stdlib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
+  ],
+  runtime_deps = [
+    ":testFramework-junit5-projectStructure-tests",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.testFramework.junit5.projectStructure.tests` end
+
+### auto-generated section `iml intellij.platform.testFramework.junit5.projectStructure.tests` start
+exports_files([
+  "intellij.platform.testFramework.junit5.projectStructure.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.testFramework.junit5.projectStructure.tests` end
+
+### auto-generated section `test intellij.platform.testFramework.junit5.projectStructure.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "projectStructure_test",
-  runtime_deps = [":projectStructure_test_lib"]
+  name = "testFramework-junit5-projectStructure-tests_test",
+  runtime_deps = [":testFramework-junit5-projectStructure-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.testFramework.junit5.projectStructure` end
+### auto-generated section `test intellij.platform.testFramework.junit5.projectStructure.tests` end

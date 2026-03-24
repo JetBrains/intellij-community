@@ -7,12 +7,6 @@ resourcegroup(
   strip_prefix = "resources"
 )
 
-resourcegroup(
-  name = "compose_test_resources",
-  srcs = glob(["testData/**/*"]),
-  strip_prefix = "testData"
-)
-
 jvm_library(
   name = "compose",
   module_name = "intellij.kotlin.projectWizard.compose",
@@ -39,39 +33,115 @@ jvm_library(
 
 jvm_library(
   name = "compose_test_lib",
+  module_name = "intellij.kotlin.projectWizard.compose",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = [":compose_test_resources"],
-  associates = [":compose"],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//platform/lang-core",
-    "//platform/projectModel-api:projectModel",
-    "//plugins/kotlin/base/frontend-agnostic",
-    "//plugins/kotlin/base/resources:kotlin-base-resources",
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":compose",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//java/idea-ui:ui",
-    "//platform/util",
-    "//platform/lang-impl",
-    "//platform/platform-impl:ide-impl",
-    "//platform/ide-core-impl",
-    "//platform/core-ui",
-    "//java/openapi:java",
+    "//java/idea-ui:ui_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//java/openapi:java_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//java/java-tests:tests",
     "//java/java-tests:tests_test_lib",
-    "//plugins/kotlin/project-wizard/core",
     "//plugins/kotlin/project-wizard/core:core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.projectWizard.compose` end
 
-### auto-generated section `test intellij.kotlin.projectWizard.compose` start
+### auto-generated section `iml intellij.kotlin.projectWizard.compose` start
+exports_files([
+  "intellij.kotlin.projectWizard.compose.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.projectWizard.compose` end
+
+### auto-generated section `build intellij.kotlin.projectWizard.compose.tests` start
+resourcegroup(
+  name = "kotlin-projectWizard-compose-tests_test_resources",
+  srcs = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_library(
+  name = "kotlin-projectWizard-compose-tests",
+  module_name = "intellij.kotlin.projectWizard.compose.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "kotlin-projectWizard-compose-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":kotlin-projectWizard-compose-tests_test_resources"],
+  associates = [
+    "//plugins/kotlin/project-wizard/compose",
+    "//plugins/kotlin/project-wizard/compose:compose_test_lib",
+  ],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/idea-ui:ui",
+    "//java/idea-ui:ui_test_lib",
+    "//platform/util",
+    "//platform/util:util_test_lib",
+    "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//java/openapi:java",
+    "//java/openapi:java_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//java/java-tests:tests",
+    "//java/java-tests:tests_test_lib",
+    "//plugins/kotlin/project-wizard/core",
+    "//plugins/kotlin/project-wizard/core:core_test_lib",
+  ],
+  runtime_deps = [
+    ":kotlin-projectWizard-compose-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.projectWizard.compose.tests` end
+
+### auto-generated section `iml intellij.kotlin.projectWizard.compose.tests` start
+exports_files([
+  "intellij.kotlin.projectWizard.compose.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.projectWizard.compose.tests` end
+
+### auto-generated section `test intellij.kotlin.projectWizard.compose.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "compose_test",
-  runtime_deps = [":compose_test_lib"]
+  name = "kotlin-projectWizard-compose-tests_test",
+  runtime_deps = [":kotlin-projectWizard-compose-tests_test_lib"]
 )
-### auto-generated section `test intellij.kotlin.projectWizard.compose` end
+### auto-generated section `test intellij.kotlin.projectWizard.compose.tests` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
@@ -21,18 +21,7 @@ import java.util.Comparator;
 import java.util.List;
 
 class MarkerCache {
-  static final Comparator<SelfElementInfo> INFO_COMPARATOR = (info1, info2) -> {
-    int o1 = info1.getPsiStartOffset();
-    int o2 = info2.getPsiStartOffset();
-    if (o1 < 0 || o2 < 0) return o1 >= 0 ? -1 : o2 >= 0 ? 1 : 0; // infos without range go after infos with range
-    if (o1 != o2) return o1 > o2 ? 1 : -1;
-
-    o1 = info1.getPsiEndOffset();
-    o2 = info2.getPsiEndOffset();
-    if (o1 != o2) return o1 > o2 ? 1 : -1;
-
-    return (info1.isGreedy() ? 1 : 0) - (info2.isGreedy() ? 1 : 0);
-  };
+  static final Comparator<SelfElementInfo> INFO_COMPARATOR = new SelfElementInfoComparator();
   private final SmartPointerTracker myPointers;
   private UpdatedRanges myUpdatedRanges;
 
@@ -92,10 +81,10 @@ class MarkerCache {
       FrozenDocument before = frozen;
       frozen = frozen.applyEvent(event, 0);
       DocumentEvent corrected = new DocumentEventImpl(frozen, event.getOffset(), event.getOldFragment(), event.getNewFragment(),
-                                                            event.getOldTimeStamp(), event.isWholeTextReplaced(),
-                                                            ((DocumentEventImpl)event).getInitialStartOffset(),
-                                                            ((DocumentEventImpl)event).getInitialOldLength(),
-                                                            event.getMoveOffset());
+                                                      event.getOldTimeStamp(), event.isWholeTextReplaced(),
+                                                      ((DocumentEventImpl)event).getInitialStartOffset(),
+                                                      ((DocumentEventImpl)event).getInitialOldLength(),
+                                                      event.getMoveOffset());
 
       int i = 0;
       while (i < resultMarkers.length) {
@@ -166,7 +155,7 @@ class MarkerCache {
     boolean greedy = info.isGreedy();
     int start = info.getPsiStartOffset();
     int end = info.getPsiEndOffset();
-    boolean surviveOnExternalChange = events.stream().anyMatch(event-> isWholeDocumentReplace(frozen, (DocumentEventImpl)event));
+    boolean surviveOnExternalChange = events.stream().anyMatch(event -> isWholeDocumentReplace(frozen, (DocumentEventImpl)event));
     ManualRangeMarker marker = new ManualRangeMarker(start, end, greedy, greedy, surviveOnExternalChange, null);
 
     UpdatedRanges ranges = new UpdatedRanges(0, frozen, infos, new ManualRangeMarker[]{marker});
@@ -204,6 +193,22 @@ class MarkerCache {
       myResultDocument = resultDocument;
       mySortedInfos = sortedInfos;
       myMarkers = markers;
+    }
+  }
+
+  private static class SelfElementInfoComparator implements Comparator<SelfElementInfo> {
+    @Override
+    public int compare(SelfElementInfo info1, SelfElementInfo info2) {
+      int o1 = info1.getPsiStartOffset();
+      int o2 = info2.getPsiStartOffset();
+      if (o1 < 0 || o2 < 0) return o1 >= 0 ? -1 : o2 >= 0 ? 1 : 0; // infos without range go after infos with range
+      if (o1 != o2) return o1 > o2 ? 1 : -1;
+
+      o1 = info1.getPsiEndOffset();
+      o2 = info2.getPsiEndOffset();
+      if (o1 != o2) return o1 > o2 ? 1 : -1;
+
+      return (info1.isGreedy() ? 1 : 0) - (info2.isGreedy() ? 1 : 0);
     }
   }
 }

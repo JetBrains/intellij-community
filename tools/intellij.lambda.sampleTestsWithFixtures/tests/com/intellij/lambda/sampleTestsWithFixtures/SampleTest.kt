@@ -22,15 +22,31 @@ class SampleTest {
   @TestTemplate
   fun `serialized test`(ide: IdeWithLambda) = runBlocking {
     ide {
+      val projectName = "Test"
       val toType = "//123"
       val editorName = "Foo.java"
+      // language=java
+      val editorContent = """
+        package com.example;
+
+        class Foo {
+          private boolean unboxedZ = false;
+          private byte unboxedB = 0;
+          private char unboxedC = 'a';
+          private double unboxedD = 0.0;
+          private float unboxedF = 0.0f;
+          private int unboxedI = 0;
+          private long unboxedJ = 0L;
+          private short unboxedS = 0;
+        }
+      """.trimIndent()
 
       runInBackend("Open project via fixture") {
-        codeInsightFixture.openNewProjectAndEditor("/src/com/example/$editorName")
+        codeInsightFixture(projectName).openNewProjectAndEditor("/src/com/example/$editorName", editorContent)
       }
 
       runInFrontend("Open File in Project") {
-        waitForExpectedSelectedFile(editorName, project = waitForProject("Test")).editorImplOrThrow.apply {
+        waitForExpectedSelectedFile(editorName, project = waitForProject(projectName)).editorImplOrThrow.apply {
           moveTo(2, 1)
           typeWithLatency(toType)
         }

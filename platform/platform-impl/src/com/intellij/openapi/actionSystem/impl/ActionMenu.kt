@@ -370,6 +370,7 @@ class ActionMenu constructor(
     }
   }
 
+  @Throws(MenuCancelledControlFlowException::class)
   override fun setPopupMenuVisible(value: Boolean) {
     isTryingToShowPopupMenu = value
     if (value && !(MacMenuSettings.isSystemMenu && ActionPlaces.MAIN_MENU == place)) {
@@ -386,6 +387,8 @@ class ActionMenu constructor(
       // 3. Open the menu again: it will have the wrong position
       // The position is calculated based on the old size, resetting size forces `getPopupMenuOrigin` method to use preferred size
       popupMenu.size = Dimension(0, 0)
+
+      repaint()
     }
 
     super.setPopupMenuVisible(value)
@@ -450,6 +453,7 @@ class ActionMenu constructor(
     return context
   }
 
+  @Throws(MenuCancelledControlFlowException::class)
   fun fillMenu() {
     val context = getDataContext()
     Utils.fillMenu(uiKind = ActualActionUiKind.Menu(this, isMainMenuPlace),

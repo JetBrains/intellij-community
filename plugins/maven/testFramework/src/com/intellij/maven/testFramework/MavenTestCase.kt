@@ -28,6 +28,7 @@ import com.intellij.openapi.util.io.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.platform.backend.observation.Observation
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
@@ -38,10 +39,12 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.utils.io.createFile
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
+import org.jdom.JDOMException
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenConstants
@@ -61,6 +64,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.*
 
 abstract class MavenTestCase : UsefulTestCase() {
@@ -320,7 +324,11 @@ abstract class MavenTestCase : UsefulTestCase() {
     return pathFromBasedir(myProjectRoot, relPath)
   }
 
-  protected fun createSettingsXml(@Language(value = "XML", prefix = "<settings>", suffix = "</settings>") innerContent: String): VirtualFile {
+  protected fun createSettingsXml(
+    @Language(value = "XML",
+              prefix = "<settings>",
+              suffix = "</settings>") innerContent: String,
+  ): VirtualFile {
     val content = createSettingsXmlContent(innerContent)
     val path = myDir.resolve("settings.xml")
     Files.writeString(path, content)
@@ -328,7 +336,11 @@ abstract class MavenTestCase : UsefulTestCase() {
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
   }
 
-  protected suspend fun updateSettingsXml(@Language(value = "XML", prefix = "<settings>", suffix = "</settings>") content: String): VirtualFile {
+  protected suspend fun updateSettingsXml(
+    @Language(value = "XML",
+              prefix = "<settings>",
+              suffix = "</settings>") content: String,
+  ): VirtualFile {
     return updateSettingsXmlFully(createSettingsXmlContent(content)).also {
       MavenSettingsCache.getInstance(project).reloadAsync()
     }
@@ -666,7 +678,8 @@ abstract class MavenTestCase : UsefulTestCase() {
     assertEquals(createFilePathSet(expected), createFilePathSet(actual))
   }
 
-  private fun createFilePathSet(expected: Collection<String>) = CollectionFactory.createFilePathSet(expected.map { FileUtil.toSystemIndependentName(it) })
+  private fun createFilePathSet(expected: Collection<String>) =
+    CollectionFactory.createFilePathSet(expected.map { FileUtil.toSystemIndependentName(it) })
 
   protected fun <T> assertUnorderedElementsAreEqual(actual: Array<T>, vararg expected: T) {
     assertUnorderedElementsAreEqual(actual.toList(), *expected)
@@ -766,9 +779,76 @@ abstract class MavenTestCase : UsefulTestCase() {
     refreshFiles(listOf(f))
   }
 
+  @RequiresBackgroundThread
+  protected suspend fun waitForImportWithinTimeout(action: suspend () -> Unit) {
+    MavenLog.LOG.warn("waitForImportWithinTimeout started")
+    val importStarted = AtomicBoolean(false)
+    val importFinished = AtomicBoolean(false)
+    val pluginResolutionFinished = AtomicBoolean(true)
+    val artifactDownloadingFinished = AtomicBoolean(true)
+    project.messageBus.connect(testRootDisposable)
+      .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
+        override fun importStarted() {
+          importStarted.set(true)
+        }
+
+        override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
+          if (importStarted.get()) {
+            importFinished.set(true)
+          }
+        }
+
+        override fun pluginResolutionStarted() {
+          pluginResolutionFinished.set(false)
+        }
+
+        override fun pluginResolutionFinished() {
+          pluginResolutionFinished.set(true)
+        }
+
+        override fun artifactDownloadingStarted() {
+          artifactDownloadingFinished.set(false)
+        }
+
+        override fun artifactDownloadingFinished() {
+          artifactDownloadingFinished.set(true)
+        }
+      })
+
+    action()
+
+    awaitConfiguration()
+
+    assertTrue("Import failed: start", importStarted.get())
+    assertTrue("Import failed: finish", importFinished.get())
+    assertTrue("Import failed: plugins", pluginResolutionFinished.get())
+    assertTrue("Import failed: artifacts", artifactDownloadingFinished.get())
+    MavenLog.LOG.warn("waitForImportWithinTimeout finished")
+  }
+
+  @RequiresBackgroundThread
+  protected suspend fun awaitConfiguration() {
+    val isEdt = ApplicationManager.getApplication().isDispatchThread
+    if (isEdt) {
+      MavenLog.LOG.warn("Calling awaitConfiguration() from EDT sometimes causes deadlocks, even though it shouldn't")
+    }
+    assertFalse("Call awaitConfiguration() from background thread", isEdt)
+    Observation.awaitConfiguration(project) { message ->
+      logConfigurationMessage(message)
+    }
+  }
+
+  private fun logConfigurationMessage(message: String) {
+    if (message.contains("scanning")) return
+    MavenLog.LOG.warn(message)
+  }
+
   companion object {
     @Language("XML")
-    fun createPomXml(modelVersion: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: @NonNls String?): @NonNls String {
+    fun createPomXml(
+      modelVersion: String,
+      @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: @NonNls String?,
+    ): @NonNls String {
       return """
              <?xml version="1.0"?>
              <project xmlns="http://maven.apache.org/POM/$modelVersion"
@@ -779,4 +859,5 @@ abstract class MavenTestCase : UsefulTestCase() {
              """.trimIndent() + xml + "</project>"
     }
   }
+
 }

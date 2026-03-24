@@ -17,6 +17,7 @@ package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.ProtectionLevel;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyNamedParameter;
@@ -29,8 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
-
-import static com.jetbrains.python.PyNamesKt.isPrivate;
 
 /**
  * Checks for anomalies in parameter lists of function declarations.
@@ -60,10 +59,10 @@ public class PyParameterListAnnotatorVisitor extends PyElementVisitor {
         @Override
         public void visitNamedParameter(PyNamedParameter parameter, boolean first, boolean last) {
           final var name = parameter.getName();
-          if (!hadKeyword && name != null && !parameter.isSelf() && !isPrivate(name)) {
+          if (!hadKeyword && name != null && !parameter.isSelf() && parameter.getProtectionLevel() != ProtectionLevel.PRIVATE) {
             hadKeyword = true;
           }
-          else if (hadKeyword && !hadPositionalContainer && !hadSingleStar && name != null && !hadSlash && isPrivate(name)) {
+          else if (hadKeyword && !hadPositionalContainer && !hadSingleStar && name != null && !hadSlash && parameter.getProtectionLevel() == ProtectionLevel.PRIVATE) {
             myHolder
               .newAnnotation(HighlightSeverity.WARNING, PyPsiBundle.message("ANN.positional.only.param.after.keyword"))
               .range(parameter)

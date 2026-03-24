@@ -9,8 +9,23 @@ resourcegroup(
 
 jvm_library(
   name = "intelliLang",
+  module_name = "intellij.devkit.intelliLang",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":intelliLang_resources"]
 )
+
+jvm_library(
+  name = "intelliLang_test_lib",
+  module_name = "intellij.devkit.intelliLang",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":intelliLang"]
+)
 ### auto-generated section `build intellij.devkit.intelliLang` end
+
+### auto-generated section `iml intellij.devkit.intelliLang` start
+exports_files([
+  "intellij.devkit.intelliLang.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.intelliLang` end

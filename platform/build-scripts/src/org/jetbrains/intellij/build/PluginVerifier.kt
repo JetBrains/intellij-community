@@ -59,27 +59,35 @@ class PluginVerifier internal constructor(
     outFile: Path? = null,
     runtimeDir: Path? = null,
     mute: List<String> = emptyList(),
+    offline: Boolean = true,
   ): Boolean = block("Checking compatibility of $plugin with $ide") {
     val java = JdkDownloader.getJavaExecutable(JdkDownloader.getJdkHomeAndLog(COMMUNITY_ROOT))
 
+    val args = mutableListOf(
+      java.pathString,
+      "-Xmx4g",
+      "-Dplugin.verifier.home.dir=${homeDir.pathString}",
+      "-jar",
+      verifierJar.pathString,
+      "check-plugin",
+      plugin.path.pathString,
+      ide.installationPath.pathString,
+      "-verification-reports-dir",
+      reportDir.pathString,
+    )
+    if (offline) {
+      args += "-offline"
+    }
+    args += listOf(
+      "-mute",
+      mute.joinToString(","),
+    )
+    if (runtimeDir != null) {
+      args += listOf("-runtime-dir", runtimeDir.pathString)
+    }
+
     runProcess(
-      args = listOf(
-        java.pathString,
-        "-Xmx4g",
-        "-Dplugin.verifier.home.dir=${homeDir.pathString}",
-        "-jar",
-        verifierJar.pathString,
-        "check-plugin",
-        plugin.path.pathString,
-        ide.installationPath.pathString,
-        "-verification-reports-dir",
-        reportDir.pathString,
-        "-offline",
-        "-mute",
-        mute.joinToString(","),
-      ).plus(
-        if (runtimeDir != null) listOf("-runtime-dir", runtimeDir.pathString) else emptyList()
-      ),
+      args = args,
       workingDir = reportDir,
       additionalEnvVariables = emptyMap(),
       inheritOut = outFile == null,

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.jvm.k1.scratch.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbService
@@ -52,6 +53,7 @@ class RunScratchAction : ScratchAction(
                         executor.execute()
                     }
                 } catch (ex: Throwable) {
+                    if (ex is ControlFlowException) return
                     executor.errorOccurs(KotlinJvmBundle.message("exception.occurs.during.run.scratch.action"), ex, true)
                 }
             }

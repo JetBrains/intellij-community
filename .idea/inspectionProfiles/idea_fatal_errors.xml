@@ -529,7 +529,7 @@
     </inspection_tool>
     <inspection_tool class="BooleanParameter" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="BooleanVariableAlwaysNegated" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="BoundFieldAssignment" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="BoundFieldAssignment" enabled="false" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="BoundedWildcard" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="BoxingBoxedValue" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="BpmnConfigDomInspection" enabled="false" level="ERROR" enabled_by_default="false" />
@@ -1904,6 +1904,7 @@
     <inspection_tool class="Java9RedundantRequiresStatement" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Java9ReflectionClassVisibility" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Java9UndeclaredServiceUsage" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="JavaApiUsageInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="JavaAnnotator" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="JavaCollectionsStaticMethod" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="JavaCollectionsStaticMethodOnImmutableList" enabled="false" level="WARNING" enabled_by_default="false" />

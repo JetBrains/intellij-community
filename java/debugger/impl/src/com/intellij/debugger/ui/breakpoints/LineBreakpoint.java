@@ -138,7 +138,8 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
       if (myXBreakpoint instanceof XBreakpointBase<?, ?, ?> xBreakpointBase && shouldInstrumentBreakpoint(xBreakpointBase)) {
         InstrumentationBreakpointState instrumentationBreakpointState = debugProcess.getRequestsManager().getInstrumentationInfo(this);
-        if (instrumentationBreakpointState != null && instrumentationBreakpointState.isInstrumentationModeEnabled()) {
+        if (instrumentationBreakpointState != null) {
+          instrumentationBreakpointState.updateInstrumentationModeEnabled(debugProcess.getRequestsManager(), true);
           return;
         }
       }

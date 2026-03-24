@@ -23,6 +23,14 @@ function buildUpdatePatch(filePath, lines, targetIndex, newLine) {
   return buildPatch(patchLines)
 }
 
+function assertSingleUpdatedWrite(result, calls, expectedPath, expectedText) {
+  strictEqual(result, 'Applied patch to 1 file.')
+  const writeCall = calls.find((call) => call.name === 'create_new_file')
+  strictEqual(writeCall.args.pathInProject, expectedPath)
+  strictEqual(writeCall.args.overwrite, true)
+  strictEqual(writeCall.args.text, expectedText)
+}
+
 describe('apply_patch handler (unit)', () => {
   const projectPath = '/project/root'
 
@@ -59,6 +67,181 @@ describe('apply_patch handler (unit)', () => {
         overwrite: false
       }
     })
+  })
+
+  it('updates file when hunk header uses unified-diff coordinates', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'alpha\nbeta\n'}),
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const patch = buildPatch([
+      '*** Begin Patch',
+      '*** Update File: file.txt',
+      '@@@ -1,2 +1,2 @@@',
+      ' alpha',
+      '-beta',
+      '+BETA',
+      '*** End Patch'
+    ])
+
+    const result = await handleApplyPatchTool({patch}, projectPath, callUpstreamTool)
+
+    assertSingleUpdatedWrite(result, calls, 'file.txt', 'alpha\nBETA\n')
+  })
+
+  it('applies hunks with @@ -N +N unified-diff style headers', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'alpha\nbeta\ngamma\n'}),
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const patch = buildPatch([
+      '*** Begin Patch',
+      '*** Update File: file.txt',
+      '@@ -1,3 +1,4 @@',
+      ' alpha',
+      '-beta',
+      '+BETA',
+      ' gamma',
+      '+delta',
+      '*** End Patch'
+    ])
+
+    const result = await handleApplyPatchTool({patch}, projectPath, callUpstreamTool)
+
+    assertSingleUpdatedWrite(result, calls, 'file.txt', 'alpha\nBETA\ngamma\ndelta\n')
+  })
+
+  it('preserves textual @@ header behavior', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'def sample()\nalpha\nbeta\n'}),
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const patch = buildPatch([
+      '*** Begin Patch',
+      '*** Update File: file.txt',
+      '@@ def sample()',
+      ' alpha',
+      '-beta',
+      '+BETA',
+      '*** End Patch'
+    ])
+
+    const result = await handleApplyPatchTool({patch}, projectPath, callUpstreamTool)
+
+    assertSingleUpdatedWrite(result, calls, 'file.txt', 'def sample()\nalpha\nBETA\n')
+  })
+
+  it('updates file from raw unified git diff', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'alpha\nbeta\n'}),
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const patch = buildPatch([
+      'diff --git a/file.txt b/file.txt',
+      'index 1111111..2222222 100644',
+      '--- a/file.txt',
+      '+++ b/file.txt',
+      '@@ -1,2 +1,2 @@',
+      ' alpha',
+      '-beta',
+      '+BETA'
+    ])
+
+    const result = await handleApplyPatchTool({patch}, projectPath, callUpstreamTool)
+
+    assertSingleUpdatedWrite(result, calls, 'file.txt', 'alpha\nBETA\n')
+  })
+
+  it('updates file from wrapped unified git diff', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'alpha\nbeta\n'}),
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const patch = buildPatch([
+      '*** Begin Patch',
+      'diff --git a/file.txt b/file.txt',
+      '--- a/file.txt',
+      '+++ b/file.txt',
+      '@@ -1,2 +1,2 @@',
+      ' alpha',
+      '-beta',
+      '+BETA',
+      '*** End Patch'
+    ])
+
+    const result = await handleApplyPatchTool({patch}, projectPath, callUpstreamTool)
+
+    assertSingleUpdatedWrite(result, calls, 'file.txt', 'alpha\nBETA\n')
+  })
+
+  it('supports strict @@ pair hunk blocks', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: '## Goals\n- old\n'}),
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const patch = buildPatch([
+      '*** Begin Patch',
+      '*** Update File: file.txt',
+      '@@',
+      '## Goals',
+      '- old',
+      '@@',
+      '## Goals',
+      '- new',
+      '*** End Patch'
+    ])
+
+    const result = await handleApplyPatchTool({patch}, projectPath, callUpstreamTool)
+
+    assertSingleUpdatedWrite(result, calls, 'file.txt', '## Goals\n- new\n')
+  })
+
+  it('preserves absence of trailing newline after patching', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'alpha\nbeta'}),
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const patch = buildPatch([
+      '*** Begin Patch',
+      '*** Update File: file.txt',
+      '@@',
+      ' alpha',
+      '-beta',
+      '+BETA',
+      '*** End Patch'
+    ])
+
+    const result = await handleApplyPatchTool({patch}, projectPath, callUpstreamTool)
+
+    assertSingleUpdatedWrite(result, calls, 'file.txt', 'alpha\nBETA')
+  })
+
+  it('preserves trailing newline after patching', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'alpha\nbeta\n'}),
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const patch = buildPatch([
+      '*** Begin Patch',
+      '*** Update File: file.txt',
+      '@@',
+      ' alpha',
+      '-beta',
+      '+BETA',
+      '*** End Patch'
+    ])
+
+    const result = await handleApplyPatchTool({patch}, projectPath, callUpstreamTool)
+
+    assertSingleUpdatedWrite(result, calls, 'file.txt', 'alpha\nBETA\n')
   })
 
   it('fuzz: updates a single line and writes back', async () => {

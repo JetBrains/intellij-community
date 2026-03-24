@@ -203,3 +203,6 @@ internal val KotlinComponent.sourceType
 
 internal val KotlinComponent.resourceType
     get() = if (isTestComponent) ExternalSystemSourceType.TEST_RESOURCE else ExternalSystemSourceType.RESOURCE
+
+internal val KotlinComponent.generatedSourceType
+    get() = if (isTestComponent) ExternalSystemSourceType.TEST_GENERATED else ExternalSystemSourceType.SOURCE_GENERATED

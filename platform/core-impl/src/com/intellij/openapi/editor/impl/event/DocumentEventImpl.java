@@ -122,7 +122,7 @@ public class DocumentEventImpl extends DocumentEvent {
   @Override
   public String toString() {
     return "DocumentEventImpl[myOffset=" + myOffset + ", myOldLength=" + myOldLength + ", myNewLength=" + myNewLength +
-           "]" + (isWholeTextReplaced() ? " Whole." : ".");
+           "]" + (isWholeTextReplaced() ? " Whole" : "");
   }
 
   @Override

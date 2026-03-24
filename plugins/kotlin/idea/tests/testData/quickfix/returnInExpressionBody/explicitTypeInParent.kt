@@ -1,4 +1,6 @@
 // "Specify 'Int' return type for enclosing function 'Derived.explicitFunReturnType'" "true"
+// K2_ERROR: Return type mismatch: expected 'Nothing', actual 'Int'.
+// K2_ERROR: Returns are prohibited in functions with expression body and without explicit return type. Use block body '{...}' or add an explicit return type.
 interface Base {
     fun explicitFunReturnType() : Int = 1
 }

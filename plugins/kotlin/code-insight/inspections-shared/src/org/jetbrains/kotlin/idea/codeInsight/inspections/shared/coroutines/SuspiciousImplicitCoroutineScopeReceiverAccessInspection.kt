@@ -22,8 +22,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -148,7 +150,15 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() :
                 // Resolve the outer call of the lambda
                 val parameterType = argumentSymbol.returnType
 
-                if (parameterType.isSuspendFunctionType && !isAllowedSuspendingFunction(functionSymbol)) {
+                val lambdaType = if (parameterType.isFunctionalInterface) {
+                    val samConstructor = parameterType.symbol?.samConstructor
+
+                    samConstructor?.samConstructorLambdaParameterType
+                } else {
+                    parameterType
+                } ?: continue
+
+                if (lambdaType.isSuspendFunctionType && !isAllowedSuspendingFunction(functionSymbol)) {
                     return true
                 }
             }
@@ -164,6 +174,9 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() :
 
         return false
     }
+
+    private val KaSamConstructorSymbol.samConstructorLambdaParameterType: KaType?
+        get() = valueParameters.singleOrNull()?.returnType
 
     /**
      * Checks if [functionSymbol] is considered to be safe to use implicit `CoroutineScope` receiver.

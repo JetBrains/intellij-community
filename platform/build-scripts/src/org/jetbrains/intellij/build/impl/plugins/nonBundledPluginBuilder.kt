@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.impl.plugins
 
-import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.NioFiles
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
@@ -53,9 +52,10 @@ import org.jetbrains.intellij.build.io.archiveDir
 import org.jetbrains.intellij.build.io.writeNewFile
 import org.jetbrains.intellij.build.io.writeNewZipWithoutIndex
 import org.jetbrains.intellij.build.io.zipWithCompression
-import org.jetbrains.intellij.build.productLayout.util.mapConcurrent
+import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import tools.jackson.jr.ob.JSON
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
@@ -121,6 +121,10 @@ private suspend fun buildNonBundledPlugins(
   val json: Lazy<JSON> = lazy { JSON.std.without(JSON.Feature.USE_FIELDS) }
   val pluginDirs = getOsSpecificNonBundledPluginsDirs(context)
   val mappings = pluginDirs.mapNotNull { (os, arch, targetDir) ->
+    if (os != null && arch != null && !context.shouldBuildDistributionForOS(os, arch)) {
+      return@mapNotNull null
+    }
+
     val filteredPlugins = pluginsToPublish.filter {
       satisfiesOsArchRestrictions(plugin = it, osFamily = os, arch = arch)
     }.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)

@@ -9,10 +9,27 @@ resourcegroup(
 
 jvm_library(
   name = "asm",
+  module_name = "intellij.libraries.asm",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":asm_resources"],
   exports = ["@lib//:libraries-asm-asm"],
   runtime_deps = ["@lib//:libraries-asm-asm"]
 )
+
+jvm_library(
+  name = "asm_test_lib",
+  module_name = "intellij.libraries.asm",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-asm-asm"],
+  runtime_deps = [":asm"]
+)
 ### auto-generated section `build intellij.libraries.asm` end
+
+### auto-generated section `iml intellij.libraries.asm` start
+exports_files([
+  "intellij.libraries.asm.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.asm` end

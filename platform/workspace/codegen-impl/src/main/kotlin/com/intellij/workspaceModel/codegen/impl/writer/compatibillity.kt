@@ -1,8 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer
 
-import com.intellij.workspaceModel.codegen.deft.meta.*
-import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
+import com.intellij.workspaceModel.codegen.deft.meta.ExtProperty
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.additionalAnnotations
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.allFields
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.allRefsFields
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.allSuperClasses
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.builderWithTypeParameter
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.compatibleJavaBuilderName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.defaultJavaBuilderName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.getRefType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.isRefType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.kotlinClassName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.requiresCompatibility
 import com.intellij.workspaceModel.codegen.impl.writer.fields.additionalAnnotations
 import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
 import java.util.Locale.getDefault
@@ -106,7 +120,7 @@ fun ObjClass<*>.compatibilityModifyCode(linesBuilder: LinesBuilder) {
   with(linesBuilder) {
     line(DEPRECATION)
     if (additionalAnnotations.isNotEmpty()) {
-      line(additionalAnnotations)
+      list(additionalAnnotations)
     }
     line("${generatedCodeVisibilityModifier}fun ${MutableEntityStorage}.modify$name(")
     line("  entity: $name,")
@@ -142,6 +156,16 @@ private val ValueType<*>.compatibilityJavaBuilderTypeWithGeneric: QualifiedName
     ValueType.Boolean -> "Boolean".toQualifiedName()
     ValueType.Int -> "Int".toQualifiedName()
     ValueType.String -> "String".toQualifiedName()
+    ValueType.Char -> "Char".toQualifiedName()
+    ValueType.Long -> "Long".toQualifiedName()
+    ValueType.Float -> "Float".toQualifiedName()
+    ValueType.Double -> "Double".toQualifiedName()
+    ValueType.Short -> "Short".toQualifiedName()
+    ValueType.Byte -> "Byte".toQualifiedName()
+    ValueType.UByte -> "UByte".toQualifiedName()
+    ValueType.UShort -> "UShort".toQualifiedName()
+    ValueType.UInt -> "UInt".toQualifiedName()
+    ValueType.ULong -> "ULong".toQualifiedName()
     is ValueType.List<*> -> "List".toQualifiedName().appendSuffix("<${elementType.compatibilityJavaBuilderTypeWithGeneric}>")
     is ValueType.Set<*> -> "Set".toQualifiedName().appendSuffix("<${elementType.compatibilityJavaBuilderTypeWithGeneric}>")
     is ValueType.Map<*, *> -> "Map".toQualifiedName().appendSuffix("<${keyType.compatibilityJavaBuilderTypeWithGeneric}, ${valueType.compatibilityJavaBuilderTypeWithGeneric}>")

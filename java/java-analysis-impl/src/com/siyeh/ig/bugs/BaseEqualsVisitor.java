@@ -35,7 +35,6 @@ import static com.intellij.psi.CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE;
 
 /**
  * @author Bas Leijdekkers
- * @author Tagir Valeev
  */
 abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
 

@@ -27,6 +27,8 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
+import com.intellij.python.community.services.systemPython.findMatchingPython
+import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.configurePythonSdk
@@ -133,14 +135,13 @@ private suspend fun findExistingVenv(
   }
 }
 
-private suspend fun getSystemPython(
+internal suspend fun getSystemPython(
   confirmInstallation: suspend () -> Boolean,
   pythonService: SystemPythonService,
+  versionSpecifiers: PyVersionSpecifiers = PyVersionSpecifiers.ANY_SUPPORTED,
 ): Result<SystemPython, MessageError> {
-
-
   // First, find the latest python according to strategy
-  var systemPythonBinary = pythonService.findSystemPythons(forceRefresh = true).firstOrNull()
+  var systemPythonBinary = pythonService.findSystemPythons(forceRefresh = true).findMatchingPython(versionSpecifiers)
 
   // No python found?
   if (systemPythonBinary == null) {
@@ -149,7 +150,7 @@ private suspend fun getSystemPython(
                     ?: return PyResult.localizedError(PyBundle.message("project.error.install.not.supported"))
     if (confirmInstallation()) {
       // Install
-      when (val r = installer.installLatestPython()) {
+      when (val r = installer.installLatestPython(versionSpecifiers)) {
         is Result.Failure -> {
           val error = r.error
           logger.warn("Python installation failed $error")
@@ -157,14 +158,14 @@ private suspend fun getSystemPython(
         }
         is Result.Success -> {
           // Find the latest python again, after installation
-          systemPythonBinary = pythonService.findSystemPythons(forceRefresh = true).firstOrNull()
+          systemPythonBinary = pythonService.findSystemPythons(forceRefresh = true).findMatchingPython(versionSpecifiers)
         }
       }
     }
   }
 
   return if (systemPythonBinary == null) {
-    return PyResult.localizedError(PyBundle.message("project.error.all.pythons.bad"))
+    PyResult.localizedError(PyBundle.message("project.error.all.pythons.bad"))
   }
   else {
     Result.Success(systemPythonBinary)

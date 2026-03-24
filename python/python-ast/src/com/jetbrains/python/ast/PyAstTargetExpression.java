@@ -26,7 +26,7 @@ import static com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValue
 
 
 @ApiStatus.Experimental
-public interface PyAstTargetExpression extends PyAstQualifiedExpression, PsiNamedElement, PsiNameIdentifierOwner, PyAstDocStringOwner,
+public interface PyAstTargetExpression extends PyAstQualifiedExpression, PsiNameIdentifierOwner, PyAstDocStringOwner,
                                                PyAstQualifiedNameOwner, PyAstReferenceOwner,
                                                PyAstPossibleClassMember, PyAstTypeCommentOwner, PyAstAnnotationOwner {
   PyAstTargetExpression[] EMPTY_ARRAY = new PyAstTargetExpression[0];

@@ -32,8 +32,8 @@ public interface ExternalAnnotatorBatchInspection extends PairedUnfairLocalInspe
     String shortName = getShortName();
     FileViewProvider viewProvider = file.getViewProvider();
 
-    for (PsiFile psiRoot : ReadAction.compute(() -> viewProvider.getAllFiles())) {
-      List<ExternalAnnotator<?,?>> externalAnnotators = ReadAction.compute(() -> ExternalLanguageAnnotators.allForFile(psiRoot.getLanguage(), psiRoot));
+    for (PsiFile psiRoot : ReadAction.computeBlocking(() -> viewProvider.getAllFiles())) {
+      List<ExternalAnnotator<?,?>> externalAnnotators = ReadAction.computeBlocking(() -> ExternalLanguageAnnotators.allForFile(psiRoot.getLanguage(), psiRoot));
       for (ExternalAnnotator<?,?> annotator : externalAnnotators) {
         if (shortName.equals(annotator.getPairedBatchInspectionShortName())) {
           return ExternalAnnotatorInspectionVisitor.checkFileWithExternalAnnotator(file, manager, false, annotator);

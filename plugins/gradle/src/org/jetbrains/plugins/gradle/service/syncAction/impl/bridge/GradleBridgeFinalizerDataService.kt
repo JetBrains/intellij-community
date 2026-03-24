@@ -59,11 +59,14 @@ class GradleBridgeFinalizerDataService : AbstractProjectDataService<GradleBridge
     currentStorage.entitiesBySource {
       sourceFilter(it, projectData.linkedExternalProjectPath)
     }.filter {
-      if (it is WorkspaceEntityWithSymbolicId) {
+      val originalEntity = if (it is WorkspaceEntityWithSymbolicId) {
         storageBeforeDataServices.resolve(it.symbolicId)
       } else {
         index[WorkspaceEntityForLookup(it)]
-      } == null
+      }
+      originalEntity == null ||
+        // Some data services may revert the data service entity source back to parent's one, so need to cover that case too
+        (originalEntity.entitySource == DataServiceEntitySource(projectData.linkedExternalProjectPath))
     }.forEach {
       currentStorage.modifyEntity(WorkspaceEntityBuilder::class.java, it) {
         entitySource = DataServiceEntitySource(projectData.linkedExternalProjectPath)

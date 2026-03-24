@@ -5,11 +5,11 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.ide.EssentialHighlightingMode
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -108,7 +108,7 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
       return
     }
 
-    ApplicationManager.getApplication().runReadAction {
+    runReadActionBlocking {
       val markup = editor.getMarkupModel() as EditorMarkupModel
       markup.setErrorPanelPopupHandler(DaemonEditorPopup(project, editor))
       markup.setErrorStripTooltipRendererProvider(DaemonTooltipRendererProvider(project, editor))

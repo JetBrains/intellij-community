@@ -65,6 +65,17 @@ public abstract class DataFlowInspectionTestCase extends LightJavaCodeInsightFix
     fixture.addClass(nullUnmarked);
   }
 
+  protected static void addJSpecifyNonNull(JavaCodeInsightTestFixture fixture) {
+    @Language("JAVA") String nonNull =
+      """
+        package org.jspecify.annotations;
+        import java.lang.annotation.*;
+        @Target(ElementType.TYPE_USE)
+        public @interface NonNull {
+        }""";
+    fixture.addClass(nonNull);
+  }
+
   public static void setupTypeUseAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {
    setupCustomAnnotations(pkg, "{ElementType.TYPE_USE}", fixture);
  }

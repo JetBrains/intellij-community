@@ -37,6 +37,7 @@ import static com.intellij.ui.ColorMixture.ENABLE_RUNTIME_COLOR_MIXTURE_WRAPPER_
 @SuppressWarnings("UseJBColor")
 public class JBColor extends Color implements PresentableColor, ComparableColor {
   public static final Color PanelBackground = new JBColor("Panel.background", new Color(0xffffff));
+  public static final Color PanelForeground = new JBColor("Panel.foreground", new Color(0x000000));
 
   // do not use method reference here - StartupUiUtil class should be loaded lazy
   private static final SynchronizedClearableLazy<Boolean> DARK = new SynchronizedClearableLazy<>(() -> StartupUiUtil.INSTANCE.isDarkTheme());

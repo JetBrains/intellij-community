@@ -1,4 +1,5 @@
 // "Cast expression 'x' to 'Foo<*>'" "true"
+// K2_ERROR: Smart cast to 'Foo<*>' is impossible, because 'x' is a property that has an open or custom getter.
 
 interface Foo<T: Number> {
     fun bar()

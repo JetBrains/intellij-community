@@ -12,4 +12,22 @@ jvm_library(
     "@lib//:jetbrains-annotations",
   ]
 )
+
+jvm_library(
+  name = "jdom_test_lib",
+  module_name = "intellij.platform.util.jdom",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":jdom",
+    "//libraries/jaxen:jaxen_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.util.jdom` end
+
+### auto-generated section `iml intellij.platform.util.jdom` start
+exports_files([
+  "intellij.platform.util.jdom.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.jdom` end

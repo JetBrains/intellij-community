@@ -33,6 +33,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 import java.util.Date
 
 interface GHPRTimelineReviewViewModel {
@@ -58,6 +59,7 @@ internal class UpdateableGHPRTimelineReviewViewModel internal constructor(
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
+  private val viewModelWithTextCompletion: GHViewModelWithTextCompletion,
   initialData: GHPullRequestReview
 ) : GHPRTimelineReviewViewModel,
     GHPRTimelineItem.Review {
@@ -76,7 +78,7 @@ internal class UpdateableGHPRTimelineReviewViewModel internal constructor(
     reviewData.createThreadsVmsFlow().stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
 
   override val bodyHtml: StateFlow<String> = dataState.map {
-    it.body.convertToHtml(project)
+    it.body.convertToHtml(project, dataContext.repositoryDataService.repositoryMapping.repository.serverPath)
   }.stateIn(cs, SharingStarted.Eagerly, "")
 
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy
@@ -116,7 +118,7 @@ internal class UpdateableGHPRTimelineReviewViewModel internal constructor(
     }
 
   private fun CoroutineScope.createThread(data: GHPullRequestReviewThread): UpdateableGHPRTimelineThreadViewModel {
-    val threadVm = UpdateableGHPRTimelineThreadViewModel(project, this, dataContext, dataProvider, data)
+    val threadVm = UpdateableGHPRTimelineThreadViewModel(project, this, dataContext, dataProvider, viewModelWithTextCompletion, data)
     launchNow {
       threadVm.showDiffRequests.collect(showDiffRequests)
     }

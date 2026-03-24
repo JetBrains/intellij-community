@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pipenv
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.errorProcessing.PyResult
@@ -9,6 +10,7 @@ import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.toPythonPackages
 
+import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
@@ -35,7 +37,7 @@ class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
     return runPipEnv(modulePath, "lock").mapSuccess { }
   }
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?): PyResult<Unit> {
     return when (installRequest) {
       is PythonPackageInstallRequest.ByLocation -> TODO("Not yet implemented")
       is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> {
@@ -51,7 +53,7 @@ class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
     return runPipEnv(modulePath, *args.toTypedArray()).mapSuccess { }
   }
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> {
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?): PyResult<Unit> {
     val args = listOf("uninstall") + pythonPackages.toList()
     return runPipEnv(modulePath, *args.toTypedArray()).mapSuccess { }
 

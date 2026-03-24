@@ -8,17 +8,18 @@ import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.CodeVisionMessageBundle
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.popup.CodeVisionPopup
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.ViewableMap
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-open class ProjectCodeVisionModel(val project: Project) {
+@Service(Service.Level.PROJECT)
+class ProjectCodeVisionModel(val project: Project) {
   companion object {
     fun getInstance(project: Project): ProjectCodeVisionModel = project.service()
     const val MORE_PROVIDER_ID: String = "!More"
@@ -45,8 +46,8 @@ open class ProjectCodeVisionModel(val project: Project) {
     showContextPopup(clickedEntry, anchorInlay)
   }
 
-  open fun handleLensExtraAction(editor: Editor, range: TextRange, entry: CodeVisionEntry, actionId: String) {
-    if (actionId == HIDE_PROVIDER_ID) {
+  fun handleLensExtraAction(editor: Editor, range: TextRange, entry: CodeVisionEntry, actionId: String) {
+    if (actionId == HIDE_PROVIDER_ID && !IdeProductMode.isFrontend) {
       val id = CodeVisionInitializer.getInstance(project).getCodeVisionHost().getProviderById(entry.providerId)?.groupId ?: entry.providerId
       CodeVisionSettings.getInstance().setProviderEnabled(id, false)
       CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProviderSignal.fire(
@@ -54,7 +55,7 @@ open class ProjectCodeVisionModel(val project: Project) {
       return
     }
 
-    if (actionId == HIDE_ALL) {
+    if (actionId == HIDE_ALL && !IdeProductMode.isFrontend) {
       CodeVisionSettings.getInstance().codeVisionEnabled = false
       CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProviderSignal.fire(
         CodeVisionHost.LensInvalidateSignal(null))

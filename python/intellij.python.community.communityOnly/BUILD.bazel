@@ -18,4 +18,21 @@ jvm_library(
     "//python:python-community-impl",
   ]
 )
+
+jvm_library(
+  name = "community-communityOnly_test_lib",
+  module_name = "intellij.python.community.communityOnly",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":community-communityOnly",
+    "//python:python-community-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.python.community.communityOnly` end
+
+### auto-generated section `iml intellij.python.community.communityOnly` start
+exports_files([
+  "intellij.python.community.communityOnly.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.community.communityOnly` end

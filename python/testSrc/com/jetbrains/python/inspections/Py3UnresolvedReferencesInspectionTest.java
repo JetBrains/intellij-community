@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -28,6 +29,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.Reference;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -541,7 +543,7 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                    
                    def f(e: Literal[1, 2]):
                        a: tuple | None = None
-                       _ = e <weak_warning descr="Member 'None' of 'tuple | None' does not have attribute '__contains__'">in</weak_warning> a
+                       _ = e <weak_warning descr="Member 'None' of 'tuple[Any, ...] | None' does not have attribute '__contains__'">in</weak_warning> a
                    """);
   }
 
@@ -565,5 +567,52 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
   // PY-76922
   public void testIntersectionMemberAttributeAccess() {
     doTest();
+  }
+
+  // PY-86608
+  public void testFromImportComprehensionVariableLeak() {
+    doMultiFileTest();
+  }
+
+  // PY-86608
+  public void testFromImportComprehensionVariableLeakUnstubbed() {
+    String testDir = getTestCaseDirectory() + "FromImportComprehensionVariableLeak";
+    myFixture.copyDirectoryToProject(testDir, "");
+    PsiFile cPy = myFixture.configureFromTempProjectFile("c.py");
+
+    FileASTNode cPyNode = cPy.getNode();
+    assertTrue(cPyNode.isParsed());
+
+    PsiFile aPy = myFixture.configureFromTempProjectFile("a.py");
+
+    configureInspection();
+
+    assertSdkRootsNotParsed(aPy);
+    Reference.reachabilityFence(cPyNode);
+  }
+
+  // PY-87343
+  public void testNewTypeUnion() {
+    doTestByText("""
+                   from typing import NewType
+                   
+                   MyId = NewType("MyId", int)
+                   
+                   val: MyId | None = None
+                   """);
+  }
+
+  // PY-40883
+  public void testStrictClassAttributes() {
+    doTest();
+  }
+
+  // PY-40883
+  public void testStrictClassAttributesOff() {
+    final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
+    inspection.strictClassAttributes = false;
+    myFixture.enableInspections(inspection);
+    myFixture.configureByFile(getTestCaseDirectory() + getTestName(true) + ".py");
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
   }
 }

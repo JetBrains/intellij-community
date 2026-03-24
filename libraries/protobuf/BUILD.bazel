@@ -9,10 +9,27 @@ resourcegroup(
 
 jvm_library(
   name = "protobuf",
+  module_name = "intellij.libraries.protobuf",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":protobuf_resources"],
   exports = ["@lib//:protobuf"],
   runtime_deps = ["@lib//:protobuf"]
 )
+
+jvm_library(
+  name = "protobuf_test_lib",
+  module_name = "intellij.libraries.protobuf",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:protobuf"],
+  runtime_deps = [":protobuf"]
+)
 ### auto-generated section `build intellij.libraries.protobuf` end
+
+### auto-generated section `iml intellij.libraries.protobuf` start
+exports_files([
+  "intellij.libraries.protobuf.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.protobuf` end

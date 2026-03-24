@@ -49,6 +49,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
+    <orderEntry type="module" module-name="intellij.platform.projectFrame" />
     <orderEntry type="module" module-name="intellij.libraries.jcef" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
@@ -76,5 +77,7 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.rpc" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="module" module-name="intellij.platform.locking.impl" />
   </component>
 </module>

@@ -36,7 +36,13 @@ interface FloatingToolbarProvider {
 
   val actionGroup: ActionGroup
 
+  @Deprecated("Use [isApplicableAsync] instead")
   fun isApplicable(dataContext: DataContext): Boolean = true
+
+  // Todo: rename to isApplicable
+  @Suppress("DEPRECATION")
+  suspend fun isApplicableAsync(dataContext: DataContext): Boolean =
+    isApplicable(dataContext)
 
   fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {}
 

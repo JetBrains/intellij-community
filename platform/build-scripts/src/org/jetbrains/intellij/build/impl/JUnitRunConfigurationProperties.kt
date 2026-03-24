@@ -48,8 +48,8 @@ class JUnitRunConfigurationProperties private constructor(
       val vmParameters = getVmParameters(options) + (if ("pattern" == testKind) listOf("-Dintellij.build.test.patterns.escaped=true") else emptyList())
       val envVariables = getEnv(configuration)
 
-      val scopeSerialized: String = configuration.getChild("TEST_SEARCH_SCOPE")?.getChild("value")?.getAttributeValue("defaultValue")
-                                    ?: TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized
+      val scopeSerialized: String = configuration.children("option").lastOrNull { it.getAttributeValue("name") == "TEST_SEARCH_SCOPE" }?.getChild("value")?.getAttributeValue("defaultName")
+                                    ?: TestSearchScope.SINGLE_MODULE.serialized
       val testSearchScope = TestSearchScope.entries.firstOrNull { it.serialized == scopeSerialized } ?: error(
         "TEST_SEARCH_SCOPE value '$scopeSerialized' must be one of ${TestSearchScope.entries.map { it.serialized }}")
 

@@ -87,7 +87,7 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
   MultiRoutingFileSystemBackend.EP_NAME.point.registerExtension(
     object : MultiRoutingFileSystemBackend {
       override fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem? =
-        if (sanitizedPath.startsWith(fakeRoot))
+        if (sanitizedPath.startsWith(fakeRoot.replace("\\", "/")))
           fakeLocalFileSystem
         else
           null

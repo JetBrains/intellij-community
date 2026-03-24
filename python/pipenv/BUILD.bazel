@@ -19,7 +19,27 @@ jvm_library(
     "//platform/core-api:core",
     "//python/python-sdk:sdk",
     "//platform/util",
-    "//python/python-process-output:processOutput",
+    "//python/python-process-output/common",
+  ]
+)
+
+jvm_library(
+  name = "pipenv_test_lib",
+  module_name = "intellij.python.community.impl.pipenv",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":pipenv",
+    "//platform/core-api:core_test_lib",
+    "//python/python-sdk:sdk_test_lib",
+    "//platform/util:util_test_lib",
+    "//python/python-process-output/common:common_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.community.impl.pipenv` end
+
+### auto-generated section `iml intellij.python.community.impl.pipenv` start
+exports_files([
+  "intellij.python.community.impl.pipenv.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.community.impl.pipenv` end

@@ -4,7 +4,7 @@ package org.jetbrains.builtInWebServer
 import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
@@ -47,7 +47,7 @@ class WebServerPathToFileManager(private val project: Project) {
     .build<String, List<SuitableRoot>>(CacheLoader { path ->
       val suitableRoots = SmartList<SuitableRoot>()
       var moduleQualifier: String? = null
-      val modules = runReadAction { ModuleManager.getInstance(project).modules }
+      val modules = runReadActionBlocking { ModuleManager.getInstance(project).modules }
       for (rootProvider in RootProvider.entries) {
         for (module in modules) {
           if (module.isDisposed) {

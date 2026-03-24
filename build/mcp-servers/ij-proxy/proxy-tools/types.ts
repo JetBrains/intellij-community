@@ -4,6 +4,8 @@ export type ToolArgs = Record<string, unknown>
 
 export type UpstreamToolCaller = (toolName: string, args: ToolArgs) => Promise<unknown>
 
+export type WorkaroundChecker = (key: import('../workarounds').WorkaroundKey) => boolean
+
 export interface ToolContentItem {
   text?: string
   [key: string]: unknown
@@ -43,6 +45,7 @@ export interface SearchCapabilities {
 
 export interface ReadCapabilities {
   hasReadFile: boolean
+  hasApplyPatch?: boolean
 }
 
 export interface ToolInputSchema {

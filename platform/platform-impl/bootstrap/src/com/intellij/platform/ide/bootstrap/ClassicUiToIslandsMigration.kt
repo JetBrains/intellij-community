@@ -7,9 +7,11 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.MainMenuDisplayMode
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.laf.isDefaultForTheme
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -40,7 +42,8 @@ private val LOG = logger<ClassicUiToIslandsMigration>()
 internal object ClassicUiToIslandsMigration {
 
   val isEnabledFeature: Boolean by lazy {
-    System.getProperty("disable.classic.ui.on.start.feature", "false").toBoolean()
+    AppMode.isMonolith() && !java.lang.Boolean.getBoolean("idea.is.unit.test") && !ApplicationManagerEx.isInIntegrationTest()
+    // System.getProperty("disable.classic.ui.on.start.feature", "false").toBoolean()
   }
 
   /**

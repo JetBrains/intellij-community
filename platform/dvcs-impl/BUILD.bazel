@@ -46,64 +46,177 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/dvcs-impl/shared",
     "//platform/kernel/backend",
+    "//jps/model-api:model",
+    "//platform/lang-core",
   ]
 )
 
 jvm_library(
   name = "vcs-dvcs-impl_test_lib",
+  module_name = "intellij.platform.vcs.dvcs.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":vcs-dvcs-impl"],
-  deps = [
-    "//platform/analysis-api:analysis",
-    "//platform/util/concurrency",
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":vcs-dvcs-impl",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/core-api:core",
-    "//platform/lang-api:lang",
-    "//platform/diff-api:diff",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/lvcs-api:lvcs",
-    "//platform/projectModel-api:projectModel",
-    "//platform/vcs-impl",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/diff-api:diff_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lvcs-api:lvcs_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//platform/vcs-impl:vcs-impl_test_lib",
-    "//platform/project/shared:project",
-    "//platform/vcs-impl/shared",
+    "//platform/project/shared:project_test_lib",
     "//platform/vcs-impl/shared:shared_test_lib",
-    "//platform/kernel/shared:kernel",
-    "//platform/core-impl",
-    "//platform/platform-impl:ide-impl",
-    "//platform/vcs-log/api:vcs-log",
-    "//platform/vcs-log/impl",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/vcs-log/api:vcs-log_test_lib",
     "//platform/vcs-log/impl:impl_test_lib",
-    "//platform/lang-impl",
-    "//platform/vcs-api:vcs",
-    "//platform/ide-core-impl",
-    "//platform/dvcs-api:vcs-dvcs",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/dvcs-api:vcs-dvcs_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//libraries/mockito",
+    "//libraries/mockito:mockito_test_lib",
     "//platform/vcs-tests:vcs-testFramework",
-    "//libraries/miglayout-swing",
-    "//libraries/stream",
-    "//platform/util/jdom",
-    "//platform/util:util-ui",
-    "//platform/core-ui",
-    "//platform/diff-impl",
-    "//platform/workspace/jps",
-    "//platform/backend/workspace",
-    "//platform/util/coroutines",
-    "//platform/workspace/storage",
-    "//platform/dvcs-impl/shared",
-    "//platform/kernel/backend",
+    "//platform/vcs-tests:vcs-testFramework_test_lib",
+    "//libraries/miglayout-swing:miglayout-swing_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/diff-impl:diff-impl_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/dvcs-impl/shared:shared_test_lib",
+    "//platform/kernel/backend:backend_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.dvcs.impl` end
 
-### auto-generated section `test intellij.platform.vcs.dvcs.impl` start
+### auto-generated section `iml intellij.platform.vcs.dvcs.impl` start
+exports_files([
+  "intellij.platform.vcs.dvcs.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.vcs.dvcs.impl` end
+
+### auto-generated section `build intellij.platform.vcs.dvcs.impl.tests` start
+jvm_library(
+  name = "vcs-dvcs-impl-tests",
+  module_name = "intellij.platform.vcs.dvcs.impl.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "vcs-dvcs-impl-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
+  ],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/diff-api:diff",
+    "//platform/diff-api:diff_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lvcs-api:lvcs",
+    "//platform/lvcs-api:lvcs_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/project/shared:project",
+    "//platform/project/shared:project_test_lib",
+    "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
+    "//platform/kernel/shared:kernel",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-log/api:vcs-log_test_lib",
+    "//platform/vcs-log/impl",
+    "//platform/vcs-log/impl:impl_test_lib",
+    "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/ide-core-impl",
+    "//platform/dvcs-api:vcs-dvcs",
+    "//platform/dvcs-api:vcs-dvcs_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//libraries/mockito",
+    "//libraries/mockito:mockito_test_lib",
+    "//platform/vcs-tests:vcs-testFramework",
+    "//platform/vcs-tests:vcs-testFramework_test_lib",
+    "//libraries/miglayout-swing",
+    "//libraries/miglayout-swing:miglayout-swing_test_lib",
+    "//libraries/stream",
+    "//libraries/stream:stream_test_lib",
+    "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/diff-impl",
+    "//platform/diff-impl:diff-impl_test_lib",
+    "//platform/workspace/jps",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/backend/workspace",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/util/coroutines",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/workspace/storage",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/dvcs-impl/shared",
+    "//platform/dvcs-impl/shared:shared_test_lib",
+    "//platform/kernel/backend",
+    "//platform/kernel/backend:backend_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
+  ],
+  runtime_deps = [
+    ":vcs-dvcs-impl-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.vcs.dvcs.impl.tests` end
+
+### auto-generated section `iml intellij.platform.vcs.dvcs.impl.tests` start
+exports_files([
+  "intellij.platform.vcs.dvcs.impl.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.vcs.dvcs.impl.tests` end
+
+### auto-generated section `test intellij.platform.vcs.dvcs.impl.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "vcs-dvcs-impl_test",
-  runtime_deps = [":vcs-dvcs-impl_test_lib"]
+  name = "vcs-dvcs-impl-tests_test",
+  runtime_deps = [":vcs-dvcs-impl-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.vcs.dvcs.impl` end
+### auto-generated section `test intellij.platform.vcs.dvcs.impl.tests` end

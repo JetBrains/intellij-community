@@ -1,4 +1,5 @@
 // "Import function 'Companion.foo'" "true"
+// K2_ERROR: Unresolved reference 'foo'.
 
 package import_intention
 

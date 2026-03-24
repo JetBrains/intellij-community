@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -11,6 +10,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ThrowableRunnable;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class MinimumSeverityHintTest extends DaemonAnalyzerTestCase {
     super.setUp();
     enableInspectionTool(new UnusedDeclarationInspection());
     UndoManager.getInstance(myProject);
-    DaemonCodeAnalyzer.getInstance(getProject()).setUpdateByTimerEnabled(true);
+    myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
   }
 
   @Override
@@ -69,7 +69,9 @@ public class MinimumSeverityHintTest extends DaemonAnalyzerTestCase {
 
   @NotNull
   private MainPassesRunner configureTestFile() {
-    configureByText(JavaFileType.INSTANCE, "class XXX {}");
+    @Language("JAVA")
+    String text = "class XXX {}";
+    configureByText(JavaFileType.INSTANCE, text);
     return new MainPassesRunner(getProject(), "hehe", null);
   }
 

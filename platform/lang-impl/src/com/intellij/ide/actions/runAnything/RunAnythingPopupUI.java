@@ -908,9 +908,7 @@ public final class RunAnythingPopupUI extends BigPopupUI implements UiDataProvid
       res.markElements(getVisibleGroups());
       ElementsChooser.ElementsMarkListener<RunAnythingGroup> listener = (element, isMarked) -> {
         RunAnythingCache.getInstance(myProject)
-          .saveGroupVisibilityKey(element instanceof RunAnythingCompletionGroup
-                                  ? ((RunAnythingCompletionGroup<?, ?>)element).getProvider().getClass().getCanonicalName()
-                                  : element.getTitle(), isMarked);
+          .saveGroupVisibilityKey(element, isMarked);
         rebuildList();
       };
       res.addElementsMarkListener(listener);

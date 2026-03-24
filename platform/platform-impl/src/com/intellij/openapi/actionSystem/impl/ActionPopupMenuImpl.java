@@ -116,7 +116,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     }
 
     @Override
-    public void show(@NotNull Component component, int x, int y) {
+    public void show(@NotNull Component component, int x, int y) throws MenuCancelledControlFlowException {
       if (!component.isShowing()) {
         throw new IllegalArgumentException("component must be shown on the screen (" + component + ")");
       }
@@ -167,7 +167,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       if (!b) ReflectionUtil.resetField(this, "invoker");
     }
 
-    private void updateChildren(@Nullable RelativePoint point) {
+    private void updateChildren(@Nullable RelativePoint point) throws MenuCancelledControlFlowException {
       removeAll();
       Utils.INSTANCE.fillPopupMenu(new ActualActionUiKind.Menu(this, false), myGroup, myPresentationFactory, myContext, myPlace, point);
     }
@@ -201,7 +201,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       }
 
       @Override
-      public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+      public void popupMenuWillBecomeVisible(PopupMenuEvent e) throws MenuCancelledControlFlowException {
         HelpTooltip.disableTooltip(targetComponent);
         if (getComponentCount() == 0) {
           updateChildren(null);

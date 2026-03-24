@@ -9,10 +9,27 @@ resourcegroup(
 
 jvm_library(
   name = "coverage-agent",
+  module_name = "intellij.platform.coverage.agent",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":coverage-agent_resources"],
   exports = ["@lib//:platform-coverage-agent-intellij-coverage"],
   runtime_deps = ["@lib//:platform-coverage-agent-intellij-coverage"]
 )
+
+jvm_library(
+  name = "coverage-agent_test_lib",
+  module_name = "intellij.platform.coverage.agent",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:platform-coverage-agent-intellij-coverage"],
+  runtime_deps = [":coverage-agent"]
+)
 ### auto-generated section `build intellij.platform.coverage.agent` end
+
+### auto-generated section `iml intellij.platform.coverage.agent` start
+exports_files([
+  "intellij.platform.coverage.agent.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.coverage.agent` end

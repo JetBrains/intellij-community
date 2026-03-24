@@ -23,6 +23,11 @@ import com.intellij.ide.starters.shared.LibraryLinkType
 import com.intellij.ide.starters.shared.StarterLanguage
 import com.intellij.ide.starters.shared.StarterProjectType
 import com.intellij.ide.starters.shared.hyperLink
+import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
@@ -65,7 +70,7 @@ internal open class IdePluginModuleWebBasedBuilder : WebStarterModuleBuilder() {
 
   override fun getBuilderId(): String = "ide-plugin-web-starter"
   override fun getWeight(): Int = JVM_WEIGHT + 1000
-  override fun getDefaultServerUrl(): String = "https://plugins.jetbrains.com/new"
+  override fun getDefaultServerUrl(): String = "https://plugins.jetbrains.com/generator"
   override fun getNodeIcon(): Icon = AllIcons.Nodes.Plugin
   override fun getPresentableName(): String = message("module.builder.title")
   override fun getDescription(): String = message("module.description")
@@ -80,11 +85,11 @@ internal open class IdePluginModuleWebBasedBuilder : WebStarterModuleBuilder() {
   private fun parsePacks(packs: ArrayNode): WebStarterServerOptions {
     val categories = mutableMapOf<String, PackCategory>()
     for (pack in packs) {
-      val info = pack["manifest"] as? ObjectNode ?: continue
-      val properties = info["properties"] as? ArrayNode
+      if (pack !is ObjectNode) continue
+      val properties = pack["properties"] as? ArrayNode
       if (isHiddenInWizard(properties)) continue
-      val category = parseAndGetOrCreateCategory(info, categories) ?: continue
-      category.extensions.add(createDependency(info))
+      val category = parseAndGetOrCreateCategory(pack, categories) ?: continue
+      category.extensions.add(createDependency(pack))
     }
     categories.values.forEach { it.extensions.sortBy(WebStarterDependency::title) }
     return WebStarterServerOptions(emptyList(), sortCategoriesByOrder(categories))
@@ -157,11 +162,19 @@ internal open class IdePluginModuleWebBasedBuilder : WebStarterModuleBuilder() {
     val url = composeGeneratorUrl(starterContext.serverUrl, starterContext)
     thisLogger().info("Loading project from ${url}")
 
-    val userAgent = getUserAgent()
     return HttpRequests
       .post(url.toExternalForm(), HttpRequests.JSON_CONTENT_TYPE)
-      .tuner { it.setRequestProperty("Client-Name", userAgent) }
-      .userAgent(userAgent)
+      .tuner {
+        MachineIdManager.getAnonymizedMachineId("ij-plugin-generator")?.let { userId ->
+          if (StatisticsUploadAssistant.isCollectAllowed()) {
+            MachineIdManager.getAnonymizedMachineId("ij-plugin-generator")?.let { userId ->
+              it.setRequestProperty("X-Machine-ID", userId)
+              it.setRequestProperty("X-JetBrains-Internal-User", EventLogMetadataSettingsPersistence.getInstance().isInternal.toString())
+            }
+          }
+        }
+      }
+      .userAgent(fullProductNameAndBuildVersion())
       .connectTimeout(10000)
       .isReadResponseOnError(true)
       .connect { request ->
@@ -184,6 +197,9 @@ internal open class IdePluginModuleWebBasedBuilder : WebStarterModuleBuilder() {
       }
     }
   }
+
+  private fun fullProductNameAndBuildVersion() =
+    "${ApplicationNamesInfo.getInstance().fullProductName}/${ApplicationInfo.getInstance().build.asStringWithoutProductCode()}"
 
   override fun composeGeneratorUrl(serverUrl: String, starterContext: WebStarterContext): Url {
     return Urls.newFromEncoded(starterContext.serverUrl + "/api/generate/download")

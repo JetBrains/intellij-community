@@ -18,7 +18,7 @@ object GraphQLListLoader {
     requestRefreshFlow: Flow<Unit>? = null,
     requestChangeFlow: Flow<Change<V>>? = null,
 
-    shouldTryToLoadAll: Boolean = false,
+    shouldTryToLoadAll: Boolean,
 
     performRequest: suspend (cursor: String?) -> GraphQLConnectionDTO<V>?,
   ): ReloadablePotentiallyInfiniteListLoader<V> {
@@ -34,7 +34,7 @@ object GraphQLListLoader {
 
 private class GraphQLListLoaderImpl<K, V>(
   extractKey: (V) -> K,
-  shouldTryToLoadAll: Boolean = false,
+  shouldTryToLoadAll: Boolean,
 
   private val performRequest: suspend (cursor: String?) -> GraphQLConnectionDTO<V>?,
 ) : PaginatedPotentiallyInfiniteListLoader<PageInfo, K, V>(PageInfo(), extractKey, shouldTryToLoadAll) {
@@ -48,11 +48,11 @@ private class GraphQLListLoaderImpl<K, V>(
 
   override suspend fun performRequestAndProcess(
     pageInfo: PageInfo,
-    f: (pageInfo: PageInfo?, results: List<V>?) -> Page<PageInfo, V>?,
+    createPage: (pageInfo: PageInfo?, results: List<V>?) -> Page<PageInfo, V>?,
   ): Page<PageInfo, V>? {
     val results = performRequest(pageInfo.cursor)
     val nextCursor = results?.pageInfo?.endCursor
 
-    return f(pageInfo.copy(nextCursor = nextCursor), results?.nodes)
+    return createPage(pageInfo.copy(nextCursor = nextCursor), results?.nodes)
   }
 }

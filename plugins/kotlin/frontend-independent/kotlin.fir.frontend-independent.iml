@@ -49,5 +49,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" />
   </component>
 </module>

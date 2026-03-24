@@ -254,13 +254,6 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     assertTrue(getLookupElementStrings().containsAll(Arrays.asList("io", "lang", "util")));
   }
 
-  @NeedsIndex.Full
-  public void testQualifyClassReferenceInPackageStatement() {
-    configureByFile(getTestName(false) + ".java");
-    myFixture.type("\n");
-    checkResultByFile(getTestName(false) + "_after.java");
-  }
-
   public void test_suggest_param_names() {
     myFixture.configureByText("a.java", """
       class Foo {

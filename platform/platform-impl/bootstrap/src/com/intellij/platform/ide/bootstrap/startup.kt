@@ -1,5 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
+@file:OptIn(LowLevelLocalMachineAccess::class)
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.BundleBase
@@ -45,6 +46,7 @@ import com.intellij.util.ShellEnvironmentReader
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.singleProduct.migrateCommunityToSingleProductIfNeeded
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.jetbrains.JBR
 import kotlinx.collections.immutable.toImmutableMap
@@ -120,7 +122,7 @@ fun startApplication(
   val appInfoDeferred = scope.async {
     mainClassLoaderDeferred?.await()
     coroutineScope {
-      // required for log essential info about IDE, Wayland app id
+      // required for logging essential info about the IDE
       async(CoroutineName("app name info")) {
         ApplicationNamesInfo.getInstance()
       }
@@ -238,7 +240,7 @@ fun startApplication(
   }
 
   configImportDeferred.invokeOnCompletion {
-    // after updating from a Community Edition to a single product we need to rename the macOS app bundle
+    // after updating from a Community Edition to a single product, we need to rename the macOS app bundle
     migrateCommunityToSingleProductIfNeeded(args)
   }
 
@@ -253,7 +255,7 @@ fun startApplication(
     // action.script and auto-update data are located in the system directory, it must be first locked before accessing
     lockSystemDirsJob.join()
     // command line starters should opt in to apply plugin updates
-    if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
+    if (!AppMode.isCommandLine() || System.getProperty(AppMode.FORCE_PLUGIN_UPDATES).toBoolean()) {
       span("run action.script") {
         // Consider following steps:
         // - user opens settings, and installs some plugins;
@@ -273,7 +275,7 @@ fun startApplication(
     PluginManagerCore.scheduleDescriptorLoading(coroutineScope = this, zipPoolDeferred, mainClassLoaderDeferred, logDeferred)
   }
 
-  val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
+  val isInternal = System.getProperty(ApplicationManagerEx.IS_INTERNAL_PROPERTY).toBoolean()
   if (isInternal) {
     scope.launch(CoroutineName("assert on missed keys enabling")) {
       BundleBase.assertOnMissedKeys(true)
@@ -581,7 +583,7 @@ private fun setupLogger(scope: CoroutineScope, consoleLoggerJob: Job, checkSyste
     val log = logger<AppStarter>()
     log.info(IDE_STARTED)
     ShutDownTracker.getInstance().registerShutdownTask { log.info(IDE_SHUTDOWN) }
-    if (java.lang.Boolean.parseBoolean(System.getProperty("intellij.log.stdout", "true"))) {
+    if (System.getProperty("intellij.log.stdout", "true").toBoolean()) {
       System.setOut(PrintStreamLogger("STDOUT", System.out))
       System.setErr(PrintStreamLogger("STDERR", System.err))
     }
@@ -611,9 +613,14 @@ fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<S
   log.info("args: ${args.joinToString(separator = " ")}")
   log.info("library path: ${System.getProperty("java.library.path")}")
   log.info("boot library path: ${System.getProperty("sun.boot.library.path")}")
-  logEnvVar(log, "_JAVA_OPTIONS")
-  logEnvVar(log, "JDK_JAVA_OPTIONS")
-  logEnvVar(log, "JAVA_TOOL_OPTIONS")
+  if (System.getProperty("ide.native.launcher").toBoolean()) {
+    logEnvVar(log, "IJ_JAVA_OPTIONS")
+  }
+  else {
+    logEnvVar(log, "_JAVA_OPTIONS")
+    logEnvVar(log, "JDK_JAVA_OPTIONS")
+    logEnvVar(log, "JAVA_TOOL_OPTIONS")
+  }
   @Suppress("SystemGetProperty")
   log.info(
     """locale=${Locale.getDefault()} JNU=${System.getProperty("sun.jnu.encoding")} file.encoding=${System.getProperty("file.encoding")}

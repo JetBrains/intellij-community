@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.impl;
 
@@ -16,12 +16,16 @@ import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.awt.Color;
 import java.util.Collection;
 import java.util.List;
+
 
 //@ApiStatus.Internal
 public final class SelectionModelImpl implements SelectionModel {
@@ -30,7 +34,8 @@ public final class SelectionModelImpl implements SelectionModel {
   private final List<SelectionListener> mySelectionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final EditorImpl myEditor;
 
-  private TextAttributes myTextAttributes;
+  private TextAttributes myActiveSelection;
+  private TextAttributes myInactiveSelection;
 
   @ApiStatus.Internal
   public SelectionModelImpl(EditorImpl editor) {
@@ -138,19 +143,50 @@ public final class SelectionModelImpl implements SelectionModel {
 
   @Override
   public TextAttributes getTextAttributes() {
-    if (myTextAttributes == null) {
-      TextAttributes textAttributes = new TextAttributes();
-      EditorColorsScheme scheme = myEditor.getColorsScheme();
-      textAttributes.setForegroundColor(scheme.getColor(EditorColors.SELECTION_FOREGROUND_COLOR));
-      textAttributes.setBackgroundColor(scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR));
-      myTextAttributes = textAttributes;
+    if (myActiveSelection == null || myInactiveSelection == null) {
+      myActiveSelection = createSelectionAttributes(true);
+      myInactiveSelection = createSelectionAttributes(false);
     }
-
-    return myTextAttributes;
+    boolean isActiveSelection = myEditor.isInFocus() && !myEditor.isStickyLinePainting();
+    return isActiveSelection ? myActiveSelection : myInactiveSelection;
   }
 
   @ApiStatus.Internal
   public void reinitSettings() {
-    myTextAttributes = null;
+    myActiveSelection = null;
+    myInactiveSelection = null;
+  }
+
+  private @NotNull TextAttributes createSelectionAttributes(boolean isActiveColor) {
+    EditorColorsScheme scheme = myEditor.getColorsScheme();
+    Color foreground = scheme.getColor(EditorColors.SELECTION_FOREGROUND_COLOR);
+    Color background = getSelectionBackground(scheme, isActiveColor);
+    TextAttributes textAttributes = new TextAttributes();
+    textAttributes.setForegroundColor(foreground);
+    textAttributes.setBackgroundColor(background);
+    return textAttributes;
+  }
+
+  private @Nullable Color getSelectionBackground(@NotNull EditorColorsScheme scheme, boolean isActiveColor) {
+    if (isActiveColor) {
+      return scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR);
+    }
+    Color inactiveColor = scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR_INACTIVE);
+    if (inactiveColor != null) {
+      return inactiveColor;
+    }
+    return getArtificialInactiveBackground(scheme);
+  }
+
+  private @Nullable Color getArtificialInactiveBackground(@NotNull EditorColorsScheme scheme) {
+    Color activeColor = scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR);
+    if (activeColor == null) {
+      return null;
+    }
+    return ColorUtil.mix(
+      myEditor.getBackgroundColor(),
+      ColorUtil.desaturate(activeColor, 2),
+      0.3
+    );
   }
 }

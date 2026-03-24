@@ -295,8 +295,7 @@ public final class ImageUtil {
   }
 
   public static @NotNull BufferedImage createRoundedImage(@NotNull BufferedImage image, double arc) {
-    int size = min(image.getWidth(), image.getHeight());
-    Area avatarOvalArea = new Area(new RoundRectangle2D.Double(0.0, 0.0, size, size, arc, arc));
+    Area avatarOvalArea = new Area(new RoundRectangle2D.Double(0.0, 0.0, image.getWidth(), image.getHeight(), arc, arc));
     return clipImage(image, avatarOvalArea);
   }
 

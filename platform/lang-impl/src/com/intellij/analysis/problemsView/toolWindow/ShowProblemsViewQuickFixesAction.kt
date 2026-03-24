@@ -38,7 +38,7 @@ internal class ShowProblemsViewQuickFixesAction : AnAction() {
     val problem = node?.problem
     with(event.presentation) {
       val project = event.project
-      isVisible = getApplication().isInternal || project != null && ProblemsView.getSelectedPanel(project) is HighlightingPanel
+      isVisible = getApplication().isInternal || project != null && event.getData(ProblemsViewPanel.DATA_KEY) is HighlightingPanel
       isEnabled = isVisible && when (problem) {
         is HighlightingProblem -> isEnabled(event, problem)
         else -> false
@@ -74,8 +74,7 @@ internal class ShowProblemsViewQuickFixesAction : AnAction() {
   private fun show(event: AnActionEvent, popup: JBPopup) {
     val mouse = event.inputEvent as? MouseEvent ?: return popup.showInBestPositionFor(event.dataContext)
     val point = mouse.locationOnScreen
-    val project = event.project
-    val panel = project?.let{ProblemsView.getSelectedPanel(project)}
+    val panel = event.getData(ProblemsViewPanel.DATA_KEY)
     val button = mouse.source as? ActionButton
     if (panel == null || button == null) {
       popup.show(RelativePoint.fromScreen(point))
@@ -116,10 +115,7 @@ internal class ShowProblemsViewQuickFixesAction : AnAction() {
 
   private fun getCachedIntentions(event: AnActionEvent, problem: HighlightingProblem, showEditor: Boolean): CachedIntentions? {
     val psi = event.getData(CommonDataKeys.PSI_FILE) ?: return null
-    val project = event.project ?: return null
-    val panel = ProblemsView.getSelectedPanel(project) ?: return null
-    if (!UIUtil.isShowing(panel)) return null
-    val editor = panel.preview ?: getEditor(psi, showEditor) ?: return null
+    val editor = event.getData(ProblemsViewPanel.PREVIEW_DATA_KEY) ?: getEditor(psi, showEditor) ?: return null
     val info = ShowIntentionsPass.IntentionsInfo()
     problem.info?.findRegisteredQuickFix { desc, _ ->
       info.intentionsToShow.add(desc)

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -25,7 +26,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -388,13 +388,14 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   @Override
   protected void addReferenceAtCaret(Collection<? super PsiReference> refs) {
-    final V variable = ApplicationManager.getApplication().runReadAction((Computable<V>)() -> getLocalVariable());
+    final V variable = ReadAction.computeBlocking(this::getLocalVariable);
     if (variable != null) {
       for (PsiReference reference : ReferencesSearch.search(variable).asIterable()) {
         ProgressManager.checkCanceled();
         refs.add(reference);
       }
-    } else {
+    }
+    else {
       refs.clear();
     }
   }

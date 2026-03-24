@@ -30,7 +30,7 @@ class KotlinCovariantEqualsInspection : AbstractKotlinInspection() {
             if (parameterType.isNullableAnyType()) return
 
             val hasOverrideEquals = classOrObject.declarations.any { declaration ->
-                declaration is KtNamedFunction && 
+                declaration is KtNamedFunction &&
                 (declaration.symbol as? KaNamedFunctionSymbol)?.isEqualsMethodSymbol() == true
             }
             if (hasOverrideEquals) return

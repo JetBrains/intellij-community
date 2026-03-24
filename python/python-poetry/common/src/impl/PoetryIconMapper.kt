@@ -2,9 +2,9 @@
 package com.intellij.python.community.impl.poetry.common.impl
 
 import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
-import com.intellij.python.processOutput.ProcessBinaryFileName
-import com.intellij.python.processOutput.ProcessIcon
-import com.intellij.python.processOutput.ProcessOutputIconMapping
+import com.intellij.python.processOutput.common.ProcessBinaryFileName
+import com.intellij.python.processOutput.common.ProcessIcon
+import com.intellij.python.processOutput.common.ProcessOutputIconMapping
 
 internal class PoetryIconMapping : ProcessOutputIconMapping() {
   override val mapping: Map<ProcessBinaryFileName, ProcessIcon> =

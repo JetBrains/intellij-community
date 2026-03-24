@@ -9,10 +9,27 @@ resourcegroup(
 
 jvm_library(
   name = "caffeine",
+  module_name = "intellij.libraries.caffeine",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":caffeine_resources"],
   exports = ["@lib//:caffeine"],
   runtime_deps = ["@lib//:caffeine"]
 )
+
+jvm_library(
+  name = "caffeine_test_lib",
+  module_name = "intellij.libraries.caffeine",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:caffeine"],
+  runtime_deps = [":caffeine"]
+)
 ### auto-generated section `build intellij.libraries.caffeine` end
+
+### auto-generated section `iml intellij.libraries.caffeine` start
+exports_files([
+  "intellij.libraries.caffeine.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.caffeine` end

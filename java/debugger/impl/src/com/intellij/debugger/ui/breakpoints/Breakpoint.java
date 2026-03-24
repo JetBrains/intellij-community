@@ -66,18 +66,23 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.BreakpointErrorData;
+import com.intellij.xdebugger.DapMode;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointActionsPanel;
 import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.Location;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
@@ -366,7 +371,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       runAction(evaluationContext, event);
     }
     catch (final EvaluateException ex) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ApplicationManager.getApplication().isUnitTestMode() && !DapMode.isDap()) {
         System.out.println(ex.getMessage());
         return false;
       }
@@ -414,21 +419,41 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         }
         catch (EvaluateException e) {
           JavaDebuggerEvaluatorStatisticsCollector.logEvaluationResult(myProject, evaluator, false, XEvaluationOrigin.BREAKPOINT_LOG);
-          buf.append(JavaDebuggerBundle.message("error.unable.to.evaluate.expression"))
-            .append(" \"").append(logMessage).append("\"")
-            .append(" : ").append(e.getMessage());
+          String errorMessage = JavaDebuggerBundle.message("error.unable.to.evaluate.expression") +
+                                " \"" + logMessage + "\"" +
+                                " : " + e.getMessage();
+          buf.append(errorMessage);
+
+          XDebugSession session = debugProcess.getSession().getXDebugSession();
+          if (session != null) {
+            XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(myProject);
+            debuggerManager.getBreakpointManager().fireBreakpointError(getXBreakpoint(),
+                                                                       session,
+                                                                       new BreakpointErrorData(JavaDebuggerBundle.message("title.error.evaluating.breakpoint.action"),
+                                                                                               errorMessage,
+                                                                                               e));
+          }
         }
         buf.append("\n");
       }
       if (!buf.isEmpty()) {
         var msg = buf.toString();
-        getBreakpointManager().multicastLogMessage(this, msg, debugProcess);
-        debugProcess.printToConsole(msg);
+        printLoggingBreakpointMessage(getBreakpointManager(), this, msg, debugProcess);
       }
     }
     if (isRemoveAfterHit()) {
       handleTemporaryBreakpointHit(debugProcess);
     }
+  }
+
+  protected static void printLoggingBreakpointMessage(@NotNull BreakpointManager manager,
+                                                      @Nullable Breakpoint<?> breakpoint,
+                                                      @NotNull String msg,
+                                                      @NotNull DebugProcessImpl debugProcess) {
+    if (breakpoint != null) {
+      manager.multicastLogMessage(breakpoint, msg, debugProcess);
+    }
+    debugProcess.printToConsole(msg);
   }
 
   /**

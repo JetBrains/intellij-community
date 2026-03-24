@@ -1,6 +1,7 @@
 // "Create function 'process'" "true"
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
 // IGNORE_K1
+// K2_ERROR: Unresolved reference 'process'.
 fun test(objects: List<Any>) {
     val strings = objects.filterIsInstance<String>()
     for (string in strings) {

@@ -30,6 +30,7 @@ This directory is the normative spec for product-dsl validation behavior. Each f
 | Duplicate plugin content modules | `PluginContentDuplicatesValidator` | `pluginContentDuplicateValidation` | [plugin-content-duplicates.md](plugin-content-duplicates.md) |
 | Test plugin descriptor ID conflicts | `PluginDescriptorIdConflictValidator` | `pluginDescriptorIdConflictValidation` | [plugin-descriptor-id-conflicts.md](plugin-descriptor-id-conflicts.md) |
 | Product module set validation | `ProductModuleSetValidator` | `productModuleSetValidation` | [product-module-set.md](product-module-set.md) |
+| Pluginized module-set reference validation | `PluginizedModuleSetReferenceValidator` | `pluginizedModuleSetReferenceValidation` | [pluginized-module-set-reference.md](pluginized-module-set-reference.md) |
 | Self-contained module set validation | `SelfContainedModuleSetValidator` | `selfContainedValidation` | [self-contained-module-set.md](self-contained-module-set.md) |
 | Library module replacement | `LibraryModuleValidator` | `libraryModuleValidation` | [library-module.md](library-module.md) |
 | Test library scope | `TestLibraryScopeValidator` | `testLibraryScopeValidation` | [test-library-scope.md](test-library-scope.md) |

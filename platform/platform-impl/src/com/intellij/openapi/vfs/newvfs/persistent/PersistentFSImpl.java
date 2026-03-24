@@ -73,7 +73,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.FileDeletedException;
+import com.intellij.openapi.vfs.newvfs.FileDeletedException;
 import com.intellij.openapi.vfs.newvfs.impl.FsRoot;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsData;
@@ -95,6 +95,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.Suppressions;
 import com.intellij.util.UriUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.MostlySingularMultiMap;
@@ -122,6 +123,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -861,6 +863,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
+  @RequiresWriteLock
   public @NotNull VirtualFile copyFile(Object requestor,
                                        @NotNull VirtualFile file,
                                        @NotNull VirtualFile parent,
@@ -877,6 +880,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return child;
   }
 
+  @RequiresWriteLock
   @Override
   public @NotNull VirtualFile createChildDirectory(Object requestor,
                                                    @NotNull VirtualFile parent,
@@ -899,6 +903,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
+  @RequiresWriteLock
   public @NotNull VirtualFile createChildFile(Object requestor,
                                               @NotNull VirtualFile parent,
                                               @NotNull String childName) throws IOException {
@@ -936,6 +941,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
+  @RequiresWriteLock
   public void deleteFile(Object requestor, @NotNull VirtualFile file) throws IOException {
     ThreadingAssertions.assertWriteAccess();
 
@@ -946,6 +952,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
+  @RequiresWriteLock
   @Override
   public void renameFile(Object requestor,
                          @NotNull VirtualFile file,
@@ -1246,10 +1253,17 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return data == vfsData;
   }
 
+  @RequiresWriteLock
   @Override
   public void moveFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) throws IOException {
+    long modCount = newParent.getModificationCount();
     fileSystemOf(file).moveFile(requestor, file, newParent);
-    processEvent(new VFileMoveEvent(requestor, file, newParent));
+    try {
+      processEvent(new VFileMoveEvent(requestor, file, newParent));
+    }
+    catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("newParent.modCount(Before): " + modCount, e);
+    }
   }
 
   private void processEvent(@NotNull VFileEvent event) {
@@ -1899,9 +1913,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                                        String rootUrl) {
     // avoid creating gazillions of roots which are not actual roots
     if (fs instanceof LocalFileSystem) {
-      String parentPath = PathUtil.getParentPath(rootPath);
-      if (!parentPath.isEmpty()) {
-        FileAttributes parentAttributes = loadAttributes(fs, parentPath);
+      Path parentPath = Path.of(rootPath).getParent();
+      if (parentPath != null) {
+        FileAttributes parentAttributes = loadAttributes(fs, parentPath.toString());
         if (parentAttributes != null) {
           throw new IllegalArgumentException(
             "Must pass FS root path, but got: '" + path + "' (url: '" + rootUrl + "'), " +

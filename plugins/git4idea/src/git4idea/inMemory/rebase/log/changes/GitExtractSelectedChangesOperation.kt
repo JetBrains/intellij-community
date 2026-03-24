@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.Hash
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.i18n.GitBundle
@@ -19,15 +19,15 @@ import org.jetbrains.annotations.NonNls
 
 internal class GitExtractSelectedChangesOperation(
   objectRepo: GitObjectRepository,
-  targetCommitMetadata: VcsCommitMetadata,
+  targetCommit: Hash,
   private val newMessage: String,
   private val changes: List<Change>,
-) : GitInMemoryCommitEditingOperation(objectRepo, targetCommitMetadata) {
+) : GitInMemoryCommitEditingOperation(objectRepo, targetCommit) {
   companion object {
     private val LOG = logger<GitExtractSelectedChangesOperation>()
   }
 
-  override val operationName: @Nls String = GitBundle.message("action.Git.InMemory.Extract.Selected.Changes.operation.name", targetCommitMetadata)
+  override val operationName: @Nls String = GitBundle.message("action.Git.InMemory.Extract.Selected.Changes.operation.name", targetCommit)
   override val failureTitle: @NonNls String = GitBundle.message("in.memory.rebase.log.changes.extract.failed.title")
 
   override suspend fun editCommits(): CommitEditingResult {

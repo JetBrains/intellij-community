@@ -37,6 +37,14 @@ public interface XLineBreakpoint<P extends XBreakpointProperties> extends XBreak
   @NotNull
   XLineBreakpointType<P> getType();
 
+  /**
+   * Returns the platform-managed placement of this breakpoint.
+   */
+  @ApiStatus.Internal
+  default @NotNull XLineBreakpointPlacement getPlacement() {
+    return XLineBreakpointPlacement.ON_LINE;
+  }
+
   boolean isTemporary();
 
   void setTemporary(boolean temporary);

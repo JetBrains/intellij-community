@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
@@ -9,7 +9,7 @@ import com.jetbrains.FontMetricsAccessor;
 import com.jetbrains.JBR;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import org.intellij.lang.annotations.JdkConstants;
+import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 import sun.font.CompositeGlyphMapper;
@@ -87,11 +87,15 @@ public final class FontInfo {
     }
   }
 
+  // Removed in commit: https://github.com/JetBrains/JetBrainsRuntime/commit/e0219c19f4de062612965fb493e56c4077541204
+  private static final int SLOTMASK =  0xff000000;
+  private static final int GLYPHMASK = 0x00ffffff;
+
   public static boolean canDisplay(@NotNull Font font, int codePoint, boolean disableFontFallback) {
     if (!Character.isValidCodePoint(codePoint)) return false;
     if (disableFontFallback && SystemInfo.isMac) {
       int glyphCode = font.createGlyphVector(DEFAULT_CONTEXT, new String(new int[]{codePoint}, 0, 1)).getGlyphCode(0);
-      return (glyphCode & CompositeGlyphMapper.GLYPHMASK) != 0 && (glyphCode & CompositeGlyphMapper.SLOTMASK) == 0;
+      return (glyphCode & GLYPHMASK) != 0 && (glyphCode & SLOTMASK) == 0;
     }
     else {
       return font.canDisplay(codePoint);

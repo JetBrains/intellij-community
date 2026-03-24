@@ -770,17 +770,19 @@ public final class DnDManagerImpl extends DnDManager {
 
     @Override
     public void dragOver(DropTargetDragEvent dtde) {
-      SmoothAutoScroller.getSharedListener().dragOver(dtde);
-      final DnDEventImpl event = updateCurrentEvent(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), dtde.getDropAction(),
-                                                    dtde.getCurrentDataFlavors(), dtde.getTransferable());
-      if (myCurrentEvent == null) {
-        if (event != null && event.isDropPossible()) {
-          dtde.acceptDrag(event.getAction().getActionId());
+      WriteIntentReadAction.run(() -> {
+        SmoothAutoScroller.getSharedListener().dragOver(dtde);
+        final DnDEventImpl event = updateCurrentEvent(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), dtde.getDropAction(),
+                                                      dtde.getCurrentDataFlavors(), dtde.getTransferable());
+        if (myCurrentEvent == null) {
+          if (event != null && event.isDropPossible()) {
+            dtde.acceptDrag(event.getAction().getActionId());
+          }
+          else {
+            dtde.rejectDrag();
+          }
         }
-        else {
-          dtde.rejectDrag();
-        }
-      }
+      });
     }
 
     @Override

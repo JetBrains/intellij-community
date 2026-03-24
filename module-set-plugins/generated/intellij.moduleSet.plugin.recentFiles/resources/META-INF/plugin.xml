@@ -1,0 +1,13 @@
+<!-- DO NOT EDIT: This file is auto-generated from moduleSet("recentFiles") -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<idea-plugin implementation-detail="true">
+  <id>com.intellij.moduleSet.recentFiles</id>
+  <name>Recent Files</name>
+  <description>Generated plugin wrapper for module set recentFiles.</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.recentFiles"/>
+    <module name="intellij.platform.recentFiles.backend"/>
+    <module name="intellij.platform.recentFiles.frontend"/>
+  </content>
+</idea-plugin>

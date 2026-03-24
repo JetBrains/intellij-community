@@ -16,7 +16,7 @@
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.3.10-RC-0.1/rpc-compiler-plugin-2.3.10-RC-0.1.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.3.20-0.1/rpc-compiler-plugin-2.3.20-0.1.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
@@ -29,9 +29,9 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/compatibilityResources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -49,12 +49,8 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.diff" />
-    <orderEntry type="module" module-name="intellij.platform.debugger.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lvcs" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
@@ -72,7 +68,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
-    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" />
@@ -89,5 +84,6 @@
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" />
     <orderEntry type="module" module-name="intellij.platform.rpc.topics" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
   </component>
 </module>

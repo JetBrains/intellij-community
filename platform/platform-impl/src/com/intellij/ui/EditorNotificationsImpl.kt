@@ -18,7 +18,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -195,7 +195,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
 
   override fun updateNotifications(file: VirtualFile) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      if (runReadAction { file.isValid }) {
+      if (runReadActionBlocking { file.isValid }) {
         val fileEditorManager = project.serviceAsync<FileEditorManager>()
         doUpdateNotifications(file, fileEditorManager)
       }
@@ -264,7 +264,19 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
         }
 
         try {
-          val provider = adapter.createInstance<EditorNotificationProvider>(project) ?: continue
+          val provider = try {
+            adapter.createInstance<EditorNotificationProvider>(project) ?: continue
+          }
+          catch (e: Exception) {
+            // some EditorNotificationProviders assume the project is active and register things on its disposables
+            // that could throw IncorrectOperationException/PluginException/etc when they are already disposed
+            if (project.isDisposed) {
+              return@launch
+            }
+            else {
+              throw e
+            }
+          }
           coroutineContext.ensureActive()
 
           val result = readAction {
@@ -301,7 +313,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
           }
         }
         catch (e: Exception) {
-          val pluginException = if (e is PluginException) e else PluginException(e, adapter.pluginDescriptor.pluginId)
+          val pluginException = e as? PluginException ?: PluginException(e, adapter.pluginDescriptor.pluginId)
           logger<EditorNotificationsImpl>().error(pluginException)
         }
       }

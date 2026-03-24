@@ -3507,6 +3507,7 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Unmodifiable'/>
   </item>
   <item name='java.util.List java.util.List&lt;E&gt; of(E)'>
     <annotation name="org.jetbrains.annotations.NotNull"/>

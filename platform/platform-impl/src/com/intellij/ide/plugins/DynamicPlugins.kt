@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.fasterxml.jackson.databind.type.TypeFactory
 import com.intellij.DynamicBundle.LanguageBundleEP
 import com.intellij.codeInsight.daemon.impl.InspectionVisitorOptimizer
 import com.intellij.configurationStore.jdomSerializer
@@ -677,7 +676,6 @@ object DynamicPlugins {
           jdomSerializer.clearSerializationCaches()
           clearPropertyCollectorCache()
           InspectionVisitorOptimizer.clearCache()
-          TypeFactory.defaultInstance().clearCache()
           TopHitCache.getInstance().clear()
           ActionToolbarImpl.resetAllToolbars()
           PresentationFactory.clearPresentationCaches()

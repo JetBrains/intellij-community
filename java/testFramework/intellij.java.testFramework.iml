@@ -63,6 +63,8 @@
     <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
     <orderEntry type="module" module-name="intellij.java.testFramework.backend" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
   </component>
   <component name="copyright">
     <Base>

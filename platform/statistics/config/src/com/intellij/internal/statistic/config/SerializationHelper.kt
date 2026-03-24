@@ -2,18 +2,18 @@
 package com.intellij.internal.statistic.config
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.core.exc.StreamReadException
-import com.fasterxml.jackson.core.util.DefaultIndenter
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
-import com.fasterxml.jackson.databind.DatabindException
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.MapperFeature
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.module.kotlin.kotlinModule
+import tools.jackson.core.JacksonException
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.StreamReadFeature
+import tools.jackson.core.exc.StreamReadException
+import tools.jackson.core.util.DefaultIndenter
+import tools.jackson.core.util.DefaultPrettyPrinter
+import tools.jackson.databind.DatabindException
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.MapperFeature
+import tools.jackson.databind.SerializationFeature
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.kotlinModule
 import java.io.Writer
 
 object SerializationHelper {
@@ -22,9 +22,10 @@ object SerializationHelper {
 
     JsonMapper
       .builder()
+      .addModule(kotlinModule())
       .enable(MapperFeature.REQUIRE_SETTERS_FOR_GETTERS)
       .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-      .serializationInclusion(JsonInclude.Include.NON_NULL)
+      .changeDefaultPropertyInclusion { it.withValueInclusion(JsonInclude.Include.NON_NULL) }
       .defaultPrettyPrinter(printer)
       .build()
   }
@@ -37,7 +38,7 @@ object SerializationHelper {
       .addModule(kotlinModule())
       .enable(MapperFeature.REQUIRE_SETTERS_FOR_GETTERS)
       .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-      .serializationInclusion(JsonInclude.Include.NON_NULL)
+      .changeDefaultPropertyInclusion { it.withValueInclusion(JsonInclude.Include.NON_NULL) }
       .defaultPrettyPrinter(printer)
       .build()
   }
@@ -48,7 +49,7 @@ object SerializationHelper {
       .addModule(kotlinModule())
       .enable(MapperFeature.REQUIRE_SETTERS_FOR_GETTERS)
       .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-      .serializationInclusion(JsonInclude.Include.NON_NULL)
+      .changeDefaultPropertyInclusion { it.withValueInclusion(JsonInclude.Include.NON_NULL) }
       .build()
   }
 
@@ -57,7 +58,7 @@ object SerializationHelper {
       .builder()
       .addModule(kotlinModule())
       .enable(DeserializationFeature.USE_LONG_FOR_INTS)
-      .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+      .enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
       .build()
   }
@@ -72,9 +73,9 @@ object SerializationHelper {
   /**
    * Method that can be used to serialize any Java value as a String.
    *
-   * @throws JsonProcessingException
+   * @throws JacksonException
    */
-  @Throws(JsonProcessingException::class)
+  @Throws(JacksonException::class)
   fun serialize(value: Any?): String {
     return SERIALIZATION_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(value)
   }
@@ -82,9 +83,9 @@ object SerializationHelper {
   /**
    * Method that can be used to serialize any Java value as a String to single line.
    *
-   * @throws JsonProcessingException
+   * @throws JacksonException
    */
-  @Throws(JsonProcessingException::class)
+  @Throws(JacksonException::class)
   fun serializeToSingleLine(value: Any?): String {
     return SERIALIZATION_TO_SINGLE_LINE_MAPPER.writeValueAsString(value)
   }
@@ -112,8 +113,8 @@ private class CustomPrettyPrinter : DefaultPrettyPrinter {
   constructor() : super()
   constructor(base: DefaultPrettyPrinter?) : super(base)
 
-  override fun writeObjectFieldValueSeparator(g: JsonGenerator) {
-    g.writeRaw(": ")
+  override fun writeObjectNameValueSeparator(g: JsonGenerator?) {
+    g?.writeRaw(": ")
   }
 
   override fun writeEndArray(g: JsonGenerator, nrOfValues: Int) {

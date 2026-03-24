@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.OrderedSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,7 @@ public final class FileNestingBuilder {
     final long modCount = fileNestingService.getModificationCount();
 
     if (myNestingRules == null || myBaseListModCount != modCount) {
-      myNestingRules = new HashSet<>();
+      myNestingRules = new OrderedSet<>();
       myBaseListModCount = modCount;
 
       final MultiMap<String, String> childToParentSuffix = new MultiMap<>();

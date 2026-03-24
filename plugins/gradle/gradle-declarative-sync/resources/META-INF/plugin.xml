@@ -9,6 +9,11 @@
   </description>
   <vendor>JetBrains</vendor>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.gradle"/>
+  </dependencies>
+  <!-- endregion -->
   <depends>com.intellij.java</depends>
   <depends>com.intellij.gradle</depends>
   <depends>org.jetbrains.idea.gradle.dsl</depends>

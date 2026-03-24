@@ -14,7 +14,6 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":kotlin-gradle-codeInsight-toml_resources"],
   deps = [
-    "//plugins/gradle/completion",
     "//plugins/toml/core",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/core-api:core",
@@ -28,6 +27,36 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//plugins/gradle/java",
     "//plugins/toml",
+    "//plugins/gradle/java/toml",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-gradle-codeInsight-toml_test_lib",
+  module_name = "intellij.kotlin.gradle.codeInsight.toml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":kotlin-gradle-codeInsight-toml",
+    "//plugins/toml/core:core_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//uast/uast-common:uast_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//plugins/gradle/java:java_test_lib",
+    "//plugins/toml:toml_test_lib",
+    "//plugins/gradle/java/toml:toml_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.toml` end
+
+### auto-generated section `iml intellij.kotlin.gradle.codeInsight.toml` start
+exports_files([
+  "intellij.kotlin.gradle.codeInsight.toml.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.gradle.codeInsight.toml` end

@@ -9,4 +9,19 @@ jvm_library(
   kotlinc_opts = "@community//:k11",
   deps = ["@lib//:jetbrains-annotations"]
 )
+
+jvm_library(
+  name = "build-launcher_test_lib",
+  module_name = "intellij.platform.jps.build.launcher",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [":build-launcher"]
+)
 ### auto-generated section `build intellij.platform.jps.build.launcher` end
+
+### auto-generated section `iml intellij.platform.jps.build.launcher` start
+exports_files([
+  "intellij.platform.jps.build.launcher.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jps.build.launcher` end

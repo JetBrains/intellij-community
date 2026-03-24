@@ -39,12 +39,98 @@
       "description": "Background of alert dialogs"
     },
     {
+      "key": "Badge.blueBackground",
+      "description": "Background color for blue primary badge (e.g. 'New')",
+      "source": "com.intellij.ui.components.Badge",
+      "since": "2026.2"
+    },
+    {
+      "key": "Badge.blueForeground",
+      "description": "Text color for blue primary badge",
+      "source": "com.intellij.ui.components.Badge",
+      "since": "2026.2"
+    },
+    {
+      "key": "Badge.blueSecondaryBackground",
+      "description": "Background color for blue secondary badge",
+      "source": "com.intellij.ui.components.Badge",
+      "since": "2026.2"
+    },
+    {
+      "key": "Badge.blueSecondaryForeground",
+      "description": "Text color for blue secondary badge",
+      "source": "com.intellij.ui.components.Badge",
+      "since": "2026.2"
+    },
+    {
+      "key": "Badge.disabledBackground",
+      "description": "Background color for disabled badge",
+      "source": "com.intellij.ui.components.Badge",
+      "since": "2026.2"
+    },
+    {
+      "key": "Badge.disabledForeground",
+      "description": "Text color for disabled badge",
+      "source": "com.intellij.ui.components.Badge",
+      "since": "2026.2"
+    },
+    {
+      "key": "Badge.graySecondaryBackground",
+      "description": "Background color for gray secondary badge",
+      "source": "com.intellij.ui.components.Badge",
+      "since": "2026.2"
+    },
+    {
+      "key": "Badge.graySecondaryForeground",
+      "description": "Text color for gray secondary badge",
+      "source": "com.intellij.ui.components.Badge",
+      "since": "2026.2"
+    },
+    {
+      "key": "Badge.greenBackground",
+      "description": "Background color for green primary badge",
+      "source": "com.intellij.ui.components.Badge",
+      "since": "2026.2"
+    },
+    {
+      "key": "Badge.greenForeground",
+      "description": "Text color for green primary badge",
+      "source": "com.intellij.ui.components.Badge",
+      "since": "2026.2"
+    },
+    {
       "key": "Badge.greenOutlineBorderColor",
-      "description": "Border color for green outline badge"
+      "description": "Border color for green outline badge",
+      "source": "com.intellij.ui.components.Badge"
     },
     {
       "key": "Badge.greenOutlineForeground",
-      "description": "Foreground color for green outline badge"
+      "description": "Foreground color for green outline badge",
+      "source": "com.intellij.ui.components.Badge"
+    },
+    {
+      "key": "Badge.greenSecondaryBackground",
+      "description": "Background color for green secondary badge",
+      "source": "com.intellij.ui.components.Badge",
+      "since": "2026.2"
+    },
+    {
+      "key": "Badge.greenSecondaryForeground",
+      "description": "Text color for green secondary badge",
+      "source": "com.intellij.ui.components.Badge",
+      "since": "2026.2"
+    },
+    {
+      "key": "Badge.purpleSecondaryBackground",
+      "description": "Background color for purple secondary badge",
+      "source": "com.intellij.ui.components.Badge",
+      "since": "2026.2"
+    },
+    {
+      "key": "Badge.purpleSecondaryForeground",
+      "description": "Text color for purple secondary badge",
+      "source": "com.intellij.ui.components.Badge",
+      "since": "2026.2"
     },
     {
       "key": "Banner.errorBackground"
@@ -606,7 +692,7 @@
       "description": "Editor inplace search/replace fields background color"
     },
     {
-      "key": "Editor.SearchField.bordercolor",
+      "key": "Editor.SearchField.borderColor",
       "description": "Editor inplace search/replace fields border color",
       "since": "2024.1"
     },
@@ -1409,6 +1495,21 @@
     {
       "key": "MainMenu.selectionForeground",
       "description": "Selection foreground color for main menu items"
+    },
+    {
+      "key": "MainMenu.Selection.fullScreenArc",
+      "description": "Selection arc diameter for the main menu in full screen (in the normal mode MainToolbar.Dropdown.arc is used)",
+      "since": "2026.1"
+    },
+    {
+      "key": "MainMenu.Selection.outerInsets",
+      "description": "Insets around main menu selection",
+      "since": "2026.1"
+    },
+    {
+      "key": "MainMenu.Selection.fullScreenOuterInsets",
+      "description": "Insets around main menu selection in full screen",
+      "since": "2026.1"
     },
     {
       "key": "MemoryIndicator.usedBackground",
@@ -3587,6 +3688,22 @@
       "key": "RecentProject.ColorN.Avatar.End",
       "description": "Avatar gradient end color of recent project",
       "since": "2025.3"
+    },
+    {
+      "key": "VersionControl.Merge.Badge.infoForeground",
+      "description": "Foreground color for the conflicts badge when there are no conflicts resolved"
+    },
+    {
+      "key": "VersionControl.Merge.Badge.infoBackground",
+      "description": "Background color for the conflicts badge when there are no conflicts resolved"
+    },
+    {
+      "key": "VersionControl.Merge.Badge.modifiedItemForeground",
+      "description": "Foreground color for the conflicts badge when there are some conflicts resolved"
+    },
+    {
+      "key": "VersionControl.Merge.Badge.modifiedItemBackground",
+      "description": "Background color for the conflicts badge when there are some conflicts resolved"
     }
   ]
 }

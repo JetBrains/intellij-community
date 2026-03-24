@@ -88,10 +88,15 @@ c:com.intellij.openapi.roots.impl.ProjectFileIndexFacade
 - a:getKind():com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 - a:getRoot():com.intellij.openapi.vfs.VirtualFile
 *:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+*:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetExclusionCondition
+- a:equals(java.lang.Object):Z
+- a:hashCode():I
+- a:shouldExclude(com.intellij.openapi.vfs.VirtualFile):Z
 *:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 - a:registerExcludedRoot(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.WorkspaceEntity):V
 - a:registerExcludedRoot(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind,com.intellij.platform.workspace.storage.WorkspaceEntity):V
-- a:registerExclusionCondition(com.intellij.platform.workspace.storage.url.VirtualFileUrl,kotlin.jvm.functions.Function1,com.intellij.platform.workspace.storage.WorkspaceEntity):V
+- a:registerExclusionCondition(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetExclusionCondition,com.intellij.platform.workspace.storage.WorkspaceEntity):V
+- registerExclusionCondition(com.intellij.platform.workspace.storage.url.VirtualFileUrl,kotlin.jvm.functions.Function1,com.intellij.platform.workspace.storage.WorkspaceEntity):V
 - a:registerExclusionPatterns(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.util.List,com.intellij.platform.workspace.storage.WorkspaceEntity):V
 - a:registerFileSet(com.intellij.openapi.vfs.VirtualFile,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind,com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData):V
 - a:registerFileSet(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind,com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData):V

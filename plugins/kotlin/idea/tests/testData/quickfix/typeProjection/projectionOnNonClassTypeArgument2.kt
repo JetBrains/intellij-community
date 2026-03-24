@@ -1,4 +1,5 @@
 // "Remove 'in' modifier" "true"
+// K2_ERROR: Projections are not allowed on type arguments of functions calls.
 class A<T> {}
 
 class B {

@@ -6,9 +6,9 @@
   <build number="IC-__BUILD__" date="__BUILD_DATE__"/>
   <logo  url="/idea_community_logo.png"/>
   <icon svg="/mps.svg" svg-small="/mps_16.svg"/>
-  <names product="MPS" fullname="JetBrains MPS" script="mps"/>
+  <names product="MPS" script="mps"/>
   <essential-plugin>com.intellij.java</essential-plugin>
   <essential-plugin>com.intellij.java.ide</essential-plugin>
 
-  <plugins url="https://plugins.jetbrains.com/" builtin-url="__BUILTIN_PLUGINS_URL__"/>
+  <plugins url="https://plugins.jetbrains.com/"/>
 </component>

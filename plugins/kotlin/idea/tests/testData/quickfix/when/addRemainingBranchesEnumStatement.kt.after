@@ -1,6 +1,7 @@
 // "Add remaining branches" "true"
 // ERROR: Unresolved reference: TODO
 // ERROR: Unresolved reference: TODO
+// K2_ERROR: 'when' expression must be exhaustive. Add the 'G', 'B' branches or an 'else' branch.
 enum class Color { R, G, B }
 fun use(c: Color) {
     when (c) {

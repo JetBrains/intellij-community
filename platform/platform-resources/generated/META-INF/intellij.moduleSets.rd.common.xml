@@ -7,5 +7,6 @@
     <module name="intellij.rd.ide.model.generated"/>
     <module name="intellij.rd.platform"/>
     <module name="intellij.rd.ui"/>
+    <module name="intellij.platform.split.protocol"/>
   </content>
 </idea-plugin>

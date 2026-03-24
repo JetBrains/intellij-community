@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests",
+  module_name = "intellij.textmate.core.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
@@ -18,16 +19,28 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:junit5",
     "//plugins/textmate/core",
+    "//plugins/textmate/core:core_test_lib",
     "//platform/util/xmlDom",
+    "//platform/util/xmlDom:xmlDom_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//libraries/kotlinx/coroutines/test",
+    "//libraries/kotlinx/coroutines/test:test_test_lib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "@lib//:kotlin-test-junit5",
   ],
   runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.textmate.core.tests` end
+
+### auto-generated section `iml intellij.textmate.core.tests` start
+exports_files([
+  "intellij.textmate.core.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.textmate.core.tests` end
 
 ### auto-generated section `test intellij.textmate.core.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

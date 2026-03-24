@@ -298,7 +298,7 @@ private fun checkKeymapPluginsAreBundledWithFrontend(
   val productModules = context.loadRawProductModules(jetBrainsClientMainModule, ProductMode.FRONTEND)
   val keymapPluginModulePrefix = "intellij.keymap."
   val keymapPluginsBundledWithFrontend = productModules.bundledPluginMainModules
-    .map { it.stringId }
+    .map { it.name }
     .filter { it.startsWith(keymapPluginModulePrefix) }
   val keymapPluginsBundledWithMonolith = context.getBundledPluginModules().filter { it.startsWith(keymapPluginModulePrefix) }
   softly.assertThat(keymapPluginsBundledWithFrontend)

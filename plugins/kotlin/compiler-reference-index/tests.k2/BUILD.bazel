@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "kotlin-compilerReferenceIndex-tests",
+  module_name = "intellij.kotlin.compilerReferenceIndex.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -20,26 +21,41 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/plugin/k2",
+    "//plugins/kotlin/plugin/k2:k2_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
+    "//java/java-tests:tests",
     "//java/java-tests:tests_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:junit4",
+    "//plugins/kotlin/tests-common:common-tests",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/code-insight/line-markers",
     "//plugins/kotlin/code-insight/line-markers:line-markers_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/test-framework",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/fir/tests",
     "//plugins/kotlin/fir/tests:tests_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ],
   runtime_deps = [":kotlin-compilerReferenceIndex-tests"]
 )
 ### auto-generated section `build intellij.kotlin.compilerReferenceIndex.tests` end
+
+### auto-generated section `iml intellij.kotlin.compilerReferenceIndex.tests` start
+exports_files([
+  "intellij.kotlin.compilerReferenceIndex.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.compilerReferenceIndex.tests` end
 
 ### auto-generated section `test intellij.kotlin.compilerReferenceIndex.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

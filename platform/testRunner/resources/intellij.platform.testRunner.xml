@@ -1,0 +1,24 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.diff.impl"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

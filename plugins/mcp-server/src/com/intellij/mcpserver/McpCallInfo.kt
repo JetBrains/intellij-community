@@ -2,6 +2,7 @@ package com.intellij.mcpserver
 
 import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpSessionHandler
 import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -23,6 +24,8 @@ class McpCallInfo(
   val mcpSessionOptions: McpServerService.McpSessionOptions,
   val headers: Map<String, List<String>> = emptyMap(),
 ) {
+  internal var sessionHandler: McpSessionHandler? = null
+
   override fun toString(): String {
     return "McpCallAdditionalData(id=$callId, clientInfo=$clientInfo, toolName=${mcpToolDescriptor.name}"
   }

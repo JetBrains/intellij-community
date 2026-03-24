@@ -43,12 +43,12 @@ public class MockFileIndexFacade extends FileIndexFacade {
 
   @Override
   public boolean isInLibraryClasses(@NotNull VirtualFile file) {
-    VirtualFile parent = file.getParent();
-    while (true) {
-      if (parent == null) return false;
-      if (myLibraryRoots.contains(parent)) return true;
-      parent = parent.getParent();
+    VirtualFile candidate = file;
+    while (candidate != null) {
+      if (myLibraryRoots.contains(candidate)) return true;
+      candidate = candidate.getParent();
     }
+    return false;
   }
 
   @Override

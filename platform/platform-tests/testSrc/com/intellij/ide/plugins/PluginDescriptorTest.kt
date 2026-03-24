@@ -5,10 +5,8 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
-import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.platform.testFramework.plugins.ContentModuleSpec
 import com.intellij.platform.testFramework.plugins.PluginPackagingConfig
@@ -31,7 +29,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.io.File
 import java.net.URL
-import java.net.URLClassLoader
 import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.Collections
@@ -534,36 +531,6 @@ class PluginDescriptorTest {
 
   // todo this is rather about plugin set loading, probably needs to be moved out
   @Test
-  fun `only one instance of a plugin is loaded if it's duplicated`() {
-    val urls = arrayOf(
-      Path.of(testDataPath, "duplicate1.jar").toUri().toURL(),
-      Path.of(testDataPath, "duplicate2.jar").toUri().toURL()
-    )
-    val loader = URLClassLoader(urls, null)
-    val pluginList = loadDescriptorsFromClassPathInTest(loader)
-    val buildNumber = BuildNumber.fromString("2042.42")!!
-    val initContext = PluginInitializationContext.buildForTest(
-      essentialPlugins = emptySet(),
-      disabledPlugins = emptySet(),
-      expiredPlugins = emptySet(),
-      brokenPluginVersions = emptyMap(),
-      getProductBuildNumber = { buildNumber },
-      requirePlatformAliasDependencyForLegacyPlugins = false,
-      checkEssentialPlugins = false,
-      explicitPluginSubsetToLoad = null,
-      disablePluginLoadingCompletely = false,
-      currentProductModeId = ProductMode.MONOLITH.id,
-    )
-    val result = PluginLoadingResult()
-    result.initAndAddAll(
-      descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(pluginList)),
-      initContext = initContext
-    )
-    assertThat(result.enabledPlugins).hasSize(1)
-  }
-
-  // todo this is rather about plugin set loading, probably needs to be moved out
-  @Test
   fun testUrlTolerance() {
     class EnumerationAdapter<T>(elements: List<T>) : Enumeration<T> {
       val it = elements.iterator()
@@ -581,9 +548,8 @@ class PluginDescriptorTest {
     assertThat(loadDescriptorsFromClassPathInTest(TestLoader("jar:", "/jar spaces.jar!/")).plugins).hasSize(1)
   }
 
-  // todo equals of IdeaPluginDescriptorImpl is also dependent on sub-descriptor location (depends optional)
   @Test
-  fun testEqualityById() {
+  fun testEqualityByIdentity() {
     val tempFile = rootPath.resolve(PluginManagerCore.PLUGIN_XML_PATH)
     tempFile.write("""
 <idea-plugin>
@@ -595,13 +561,15 @@ class PluginDescriptorTest {
     tempFile.write("""
 <idea-plugin>
   <id>ID</id>
-  <name>B</name>
+  <name>A</name>
 </idea-plugin>""")
     val impl2 = loadDescriptorInTest(rootPath)
 
-    assertEquals(impl1, impl2)
-    assertEquals(impl1.hashCode(), impl2.hashCode())
-    assertNotEquals(impl1.name, impl2.name)
+    assert(impl1 !== impl2)
+    assertNotEquals(impl1, impl2)
+    assertEquals(impl1.name, impl2.name)
+    assertEquals(impl1.pluginId, impl2.pluginId)
+    assertEquals(impl1.descriptorPath, impl2.descriptorPath)
   }
 
   companion object {

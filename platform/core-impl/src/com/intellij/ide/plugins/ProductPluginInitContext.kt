@@ -85,7 +85,7 @@ class ProductPluginInitContext(
       val backendJps = PluginModuleId("intellij.platform.jps.build", PluginModuleId.JETBRAINS_NAMESPACE)
       val backendJpsGraph = PluginModuleId("intellij.platform.jps.build.dependencyGraph", PluginModuleId.JETBRAINS_NAMESPACE)
 
-      for (moduleId in listOf(frontend, backend, frontendSplit)) {
+      for (moduleId in listOf(frontend, backend, frontendSplit, backendJps, backendJpsGraph)) {
         val isAvailable = when (productModeId) {
           /** intellij.platform.backend.split is currently available in 'monolith' mode because it's used as a backend in CodeWithMe */
           "monolith" -> moduleId != frontendSplit

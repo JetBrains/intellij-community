@@ -2,6 +2,7 @@
 package com.intellij.find.impl
 
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.UsageInfoAdapter
@@ -24,8 +25,20 @@ fun getUsageInfoAsFuture(adapters: List<UsageInfoAdapter>, project: Project): Co
 }
 
 @ApiStatus.Internal
+interface UsageInfoAdapterFilter {
+
+  companion object {
+    val EP_NAME: ExtensionPointName<UsageInfoAdapterFilter> = ExtensionPointName("com.intellij.usageInfoFilter")
+  }
+
+  fun shouldShowInPreview(usageAdapter: UsageInfoAdapter): Boolean
+}
+
+@ApiStatus.Internal
 suspend fun getUsageInfo(adapters: List<UsageInfoAdapter>): List<UsageInfo> {
   return readAction {
-    adapters.filter { it.isValid }.map { it.mergedInfos }.toTypedArray().flatMap { x -> x.toList() }
+    adapters
+      .filter { it.isValid && UsageInfoAdapterFilter.EP_NAME.extensionList.all { filter -> filter.shouldShowInPreview(it) } }
+      .flatMap { it.mergedInfos.toList() }
   }
 }

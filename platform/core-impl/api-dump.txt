@@ -30,6 +30,10 @@ com.intellij.lexer.FlexLexer
 - a:reset(java.lang.CharSequence,I,I,I):V
 - a:yybegin(I):V
 - a:yystate():I
+f:com.intellij.lexer.FuseMergingLexer
+- com.intellij.lexer.MergingLexerAdapterBase
+- <init>(com.intellij.lexer.Lexer,com.intellij.psi.tree.IElementType,com.intellij.psi.tree.TokenSet):V
+- getMergeFunction():com.intellij.lexer.MergeFunction
 com.intellij.openapi.application.ex.ApplicationEx
 - com.intellij.openapi.application.Application
 - sf:ELEVATE:I
@@ -191,6 +195,8 @@ com.intellij.psi.impl.PsiFileEx
 com.intellij.psi.impl.PsiTreeChangePreprocessor
 - sf:EP:com.intellij.openapi.extensions.ProjectExtensionPointName
 - a:treeChanged(com.intellij.psi.impl.PsiTreeChangeEventImpl):V
+c:com.intellij.psi.impl.file.PsiDirectoryImpl
+- findFile(java.lang.String,com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.PsiFile
 com.intellij.psi.impl.file.impl.FileManager
 - a:cleanupForNextTest():V
 - a:createFileViewProvider(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.psi.FileViewProvider

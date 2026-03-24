@@ -1,4 +1,3 @@
-com/fasterxml/jackson/core/JsonGenerator
 com/google/common/escape/Escaper
 com/google/gson/Gson
 com/google/gson/JsonElement

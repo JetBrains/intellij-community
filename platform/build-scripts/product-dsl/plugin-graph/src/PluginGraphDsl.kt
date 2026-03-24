@@ -184,6 +184,14 @@ value class GraphScope @PublishedApi internal constructor(
     return if (id >= 0) PluginNode(id) else null
   }
 
+  /** Iterate plugin nodes registered under the specified plugin ID. */
+  inline fun pluginsById(pluginId: PluginId, crossinline action: (PluginNode) -> Unit) {
+    store.forEachPluginNodeByPluginId(pluginId) { action(PluginNode(it)) }
+  }
+
+  /** Returns true if the specified plugin ID resolves to a synthetic alias plugin node. */
+  fun hasAliasPlugin(pluginId: PluginId): Boolean = store.hasAliasPlugin(pluginId)
+
   /** Get module node by name */
   fun contentModule(name: ContentModuleName): ContentModuleNode? {
     val id = store.nodeId(name.value, NODE_CONTENT_MODULE)
@@ -494,8 +502,17 @@ value class GraphScope @PublishedApi internal constructor(
   /** Plugin: does this node have a plugin ID? */
   val PluginNode.hasPluginId: Boolean get() = store.hasPluginId(id)
 
+  /** Plugin: is this a synthetic alias node? */
+  val PluginNode.isAlias: Boolean get() = store.isAliasPlugin(id)
+
   /** Plugin: is this DSL-defined (auto-computed dependencies)? */
   val PluginNode.isDslDefined: Boolean get() = store.isDslDefined(id)
+
+  /** Plugin: is this node a generated wrapper for a pluginized module set? */
+  val PluginNode.isModuleSetWrapper: Boolean get() = store.isModuleSetWrapper(id)
+
+  /** Plugin: does this node have a main target backing it? */
+  val PluginNode.hasMainTarget: Boolean get() = store.successorCount(EDGE_MAIN_TARGET, id) > 0
 
   /** Whether this module is a test descriptor (._test suffix) */
   val ContentModuleNode.isTestDescriptor: Boolean get() = store.isTestDescriptor(id)
@@ -562,7 +579,8 @@ value class GraphScope @PublishedApi internal constructor(
   /**
    * Invoke operator for PluginDependencyInvoker.
    * Passes [PluginDependency] to callback - use [PluginDependency.isOptional],
-   * [PluginDependency.hasLegacyFormat], and [PluginDependency.hasModernFormat] for flags.
+   * [PluginDependency.hasLegacyFormat], [PluginDependency.hasModernFormat],
+   * and [PluginDependency.hasConfigFile] for flags.
    */
   inline operator fun PluginDependencyInvoker.invoke(action: (PluginDependency) -> Unit) {
     store.forEachSuccessor(EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN, sourceId) { packedEntry ->

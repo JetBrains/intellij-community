@@ -1,5 +1,6 @@
 // "Create member property 'A.foo'" "true"
 // K2_ACTION: "Create property 'foo'" "true"
+// K2_ERROR: Unresolved reference 'foo'.
 
 class A<T>(val n: T)
 

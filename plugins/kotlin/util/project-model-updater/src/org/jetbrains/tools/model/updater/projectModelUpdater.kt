@@ -4,6 +4,7 @@ package org.jetbrains.tools.model.updater
 import org.jetbrains.tools.model.updater.impl.JpsLibrary
 import org.jetbrains.tools.model.updater.impl.JpsResolverSettings
 import org.jetbrains.tools.model.updater.impl.readJpsResolverSettings
+import org.jetbrains.tools.model.updater.impl.xml
 import java.nio.file.Path
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.listDirectoryEntries
@@ -27,17 +28,20 @@ internal fun updateProjectModel(preferences: GeneratorPreferences) {
 
     KotlinTestsDependenciesUtil.updateChecksum(isUpToDateCheck = false)
 
-    fun processRoot(root: Path, isCommunity: Boolean) {
+    fun processRoot(root: Path, libraries: List<JpsLibrary>) {
         println("Processing kotlinc libraries in '$root'...")
-        val libraries = generateKotlincLibraries(preferences, isCommunity)
-        regenerateProjectLibraries(root.resolve(".idea"), libraries, resolverSettings)
+        val dotIdea = root.resolve(".idea")
+        regenerateProjectLibraries(dotIdea, libraries, resolverSettings)
+        regenerateAnchorsXml(dotIdea, libraries)
     }
 
     if (monorepoRoot != null) {
-        processRoot(monorepoRoot, isCommunity = false)
+        processRoot(monorepoRoot, generateKotlincLibraries(preferences, isCommunity = false))
     }
 
-    processRoot(communityRoot, isCommunity = true)
+    val communityLibraries = generateKotlincLibraries(preferences, isCommunity = true)
+    processRoot(communityRoot, communityLibraries)
+    regenerateCompilerDependenciesIml(communityRoot, communityLibraries)
     updateLatestGradlePluginVersion(communityRoot, preferences.kotlinGradlePluginVersion)
     updateKGPVersionForKotlinNativeTests(communityRoot, preferences.kotlinGradlePluginVersion)
 
@@ -112,6 +116,56 @@ private fun updateKGPVersionForKotlinNativeTests(communityRoot: Path, kotlinGrad
         """private const val kotlinGradlePluginVersion: String =.*""",
         "private const val kotlinGradlePluginVersion: String = \"$kotlinGradlePluginVersion\"",
     )
+}
+
+private fun regenerateCompilerDependenciesIml(communityRoot: Path, libraries: List<JpsLibrary>) {
+    val imlFile = communityRoot.resolve(
+        "plugins/kotlin/util/compiler-dependencies/kotlin.util.compiler-dependencies.iml"
+    )
+    println("Rewriting '$imlFile'...")
+    imlFile.writeText(renderCompilerDependenciesIml(libraries))
+}
+
+private fun regenerateAnchorsXml(dotIdea: Path, libraries: List<JpsLibrary>) {
+    val anchorsFile = dotIdea.resolve("anchors.xml")
+    println("Rewriting '$anchorsFile'...")
+    anchorsFile.writeText(renderAnchorsXml(libraries))
+}
+
+internal fun renderAnchorsXml(libraries: List<JpsLibrary>): String {
+    val anchorModule = "kotlin.util.compiler-classpath"
+
+    // Some non-kotlinc libraries might require anchors as well
+    val hardcodedLibraries = listOf("kotlin-script-runtime")
+    val libraryNames = libraries.map { it.name } + hardcodedLibraries
+    return xml("project", "version" to "4") {
+        xml("component", "name" to "KotlinIdeAnchorService") {
+            xml("option", "name" to "moduleNameToAnchorName") {
+                xml("map") {
+                    for (name in libraryNames.sorted()) {
+                        xml("entry", "key" to name, "value" to anchorModule)
+                    }
+                }
+            }
+        }
+        xml("component", "name" to "LibraryToSourceAnalysisState") {
+            xml("option", "name" to "isEnabled", "value" to "true")
+        }
+    }.render(addXmlDeclaration = true)
+}
+
+internal fun renderCompilerDependenciesIml(libraries: List<JpsLibrary>): String {
+    return xml("module", "type" to "JAVA_MODULE", "version" to "4") {
+        xml("component", "name" to "NewModuleRootManager", "inherit-compiler-output" to "true") {
+            xml("exclude-output")
+            xml("content", "url" to $$"file://$MODULE_DIR$")
+            xml("orderEntry", "type" to "inheritedJdk")
+            xml("orderEntry", "type" to "sourceFolder", "forTests" to "false")
+            for (library in libraries) {
+                xml("orderEntry", "type" to "library", "scope" to "PROVIDED", "name" to library.name, "level" to "project")
+            }
+        }
+    }.render(addXmlDeclaration = true)
 }
 
 private fun updateFile(sourceFile: Path, regexp: String, replacement: String) {

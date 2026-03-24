@@ -545,12 +545,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     // - modal progress: `enterModal`;
     // - modal progress: schedule modal dialog to show after 300ms;
     // - modal progress: `pumpEventsForHierarchy`;
-    // - one of events runs `isConditionalModal() && !shouldStartInBackground()` task;
+    // - one of the events runs `isConditionalModal() && !shouldStartInBackground()` task;
     // - on EDT such tasks are executed synchronously;
     // - task starts nested `pumpEventsForHierarchy` without entering the modality;
-    // - nested `pumpEventsForHierarchy` shows scheduled modal progress dialog;
-    // - nested `pumpEventsForHierarchy` cannot finish because scheduled modal progress dialog runs nested event loop;
-    // - modal dialog cannot finish until task is finished because it's synchronous.
+    // - nested `pumpEventsForHierarchy` shows a scheduled modal progress dialog;
+    // - nested `pumpEventsForHierarchy` cannot finish because the scheduled modal progress dialog runs nested event loop;
+    // - modal dialog cannot finish until the task is finished because it's synchronous.
     //
     // Applying `ProgressRunner.modal()` only when `shouldShowModalWindow == true` is a correct solution,
     // but it forces the execution of non-modal synchronous tasks directly on the EDT
@@ -601,6 +601,10 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         runnable.run();
       }
       return;
+    }
+
+    if (isWriteAccessAllowed()) {
+      throw new IllegalStateException("Calling invokeAndWait from write-action leads to deadlock.");
     }
 
     if (holdsReadLock()) {

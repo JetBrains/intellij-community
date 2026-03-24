@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -60,7 +60,7 @@ public abstract class PsiDocumentManager {
    * @param document the document for which the PSI file is requested.
    * @return the PSI file instance, or {@code null} if there is currently no cached PSI tree for the file.
    */
-  public abstract @Nullable PsiFile getCachedPsiFile(@NotNull Document document) ;
+  public abstract @Nullable PsiFile getCachedPsiFile(@NotNull Document document);
 
   @ApiStatus.Experimental
   public abstract @Nullable PsiFile getCachedPsiFile(@NotNull Document document, @NotNull CodeInsightContext context);
@@ -220,7 +220,7 @@ public abstract class PsiDocumentManager {
     /**
      * Called when a file instance is created for a document.
      *
-     * @param psiFile     the created file instance.
+     * @param psiFile  the created file instance.
      * @param document the document for which the file was created.
      * @see PsiDocumentManager#getDocument(PsiFile)
      */

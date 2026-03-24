@@ -231,7 +231,7 @@ public class Matcher {
       };
 
       final ProgressIndicator progress = matchContext.getSink().getProgressIndicator();
-      ReadAction.run(() -> FileBasedIndex.getInstance().iterateIndexableFiles(ci, project, progress));
+      ReadAction.runBlocking(() -> FileBasedIndex.getInstance().iterateIndexableFiles(ci, project, progress));
       if (progress != null) progress.setText2("");
     }
     else {
@@ -501,10 +501,10 @@ public class Matcher {
     @Override
     protected @NotNull List<PsiElement> getPsiElementsToProcess() {
       assert project != null;
-      return ReadAction.compute(
+      return ReadAction.computeBlocking(
         () -> {
           if (!myFile.isValid()) {
-            // file may be been deleted since search started
+            // file may be deleted since search started
             return Collections.emptyList();
           }
           final PsiFile file = PsiManager.getInstance(project).findFile(myFile);

@@ -71,6 +71,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resumeWithException
@@ -90,6 +91,7 @@ private data class OutgoingRequest(
 
 private data class OngoingRequest(val request: OutgoingRequest)
 
+@ApiStatus.Internal
 fun rpcClient(
   transport: Transport,
   origin: UID,

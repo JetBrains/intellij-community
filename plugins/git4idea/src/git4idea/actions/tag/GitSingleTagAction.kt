@@ -7,5 +7,5 @@ import git4idea.actions.ref.GitSingleRefAction
 import java.util.function.Supplier
 
 internal abstract class GitSingleTagAction(dynamicText: Supplier<@NlsActions.ActionText String>) : GitSingleRefAction<GitTag>(dynamicText) {
-  override val refClass = GitTag::class
+  override val refClass = GitTag::class.java
 }

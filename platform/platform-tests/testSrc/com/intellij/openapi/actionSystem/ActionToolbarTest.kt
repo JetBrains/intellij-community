@@ -126,8 +126,48 @@ class ActionToolbarTest {
     }
   }
 
+  @Test
+  @RunMethodInEdt
+  fun testReplaceRightAlignedAction() {
+    class A(name: String) : AnAction(name, name, null) {
+      override fun actionPerformed(e: AnActionEvent) = Unit
+    }
+
+    class B(name: String) : AnAction(name, name, null), RightAlignedToolbarAction {
+      override fun actionPerformed(e: AnActionEvent) = Unit
+    }
+
+    var first = true
+    val group = object : ActionGroup() {
+      val actions = arrayOf(A("1"), B("4"), A("2"), A("3"))
+      override fun getActionUpdateThread() = ActionUpdateThread.EDT
+      override fun getChildren(e: AnActionEvent?) = if (first) actions else actions.copyOf().also { it[2] = A("22") }
+    }
+    val toolbar = ActionToolbarImpl("Test", group, false)
+    PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync())
+    toolbar.assertToolbarComponentsTexts("1", "2", "3", "4")
+    val oldButtons = toolbar.components
+
+    first = false
+    PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync())
+    toolbar.assertToolbarComponentsTexts("1", "22", "3", "4")
+    val newButtons = toolbar.components
+
+    for (i in listOf(0, 2, 3)) {
+      assertSame(oldButtons[i], newButtons[i], "The button must be reused! [$i]")
+    }
+  }
+
   private fun ActionToolbarImpl.assertToolbarTexts(vararg expected: String) {
+    assertToolbarActionsTexts(*expected)
+    assertToolbarComponentsTexts(*expected)
+  }
+
+  private fun ActionToolbarImpl.assertToolbarActionsTexts(vararg expected: String) {
     assertEquals(listOf(*expected), actions.map { it.templateText })
+  }
+
+  private fun ActionToolbarImpl.assertToolbarComponentsTexts(vararg expected: String) {
     assertEquals(listOf(*expected), components.map { (it as ActionButton).action }.map { it.templateText })
   }
 }

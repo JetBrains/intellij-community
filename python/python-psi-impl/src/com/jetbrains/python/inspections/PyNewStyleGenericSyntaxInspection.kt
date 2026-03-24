@@ -52,7 +52,7 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
               !(node is PyTupleExpression && node.parent === boundExpression)
           ) {
             if (node is PyExpression) {
-              if (!PyTypeHintsInspection.isValidTypeHint(node, myTypeEvalContext)) {
+              if (!PyTypeHintsInspection.Helper.isValidTypeHint(node, myTypeEvalContext)) {
                 registerProblem(
                   node,
                   PyPsiBundle.message("INSP.type.hints.invalid.type.expression"),

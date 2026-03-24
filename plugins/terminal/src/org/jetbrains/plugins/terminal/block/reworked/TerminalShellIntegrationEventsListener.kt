@@ -6,11 +6,11 @@ import java.util.EventListener
 
 @ApiStatus.Internal
 interface TerminalShellIntegrationEventsListener : EventListener {
-  fun initialized(currentDirectory: String) {}
+  fun initialized(currentDirectory: String?) {}
 
   fun commandStarted(command: String) {}
 
-  fun commandFinished(command: String, exitCode: Int, currentDirectory: String) {}
+  fun commandFinished(command: String, exitCode: Int, currentDirectory: String?) {}
 
   fun promptStarted() {}
 

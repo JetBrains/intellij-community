@@ -158,9 +158,6 @@ class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImpor
     @Test
     @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+") // applyHierarchyTemplate used
     fun testSimilarTargetsBamboo() {
-        if (flakyKgpImportKT82895()) {
-            throw AssumptionViolatedException("KT-82895")
-        }
         doTest {
             onlyCheckers(KotlinFacetSettingsChecker, OrderEntriesChecker)
             onlyFacetFields(IKotlinFacetSettings::targetPlatform)

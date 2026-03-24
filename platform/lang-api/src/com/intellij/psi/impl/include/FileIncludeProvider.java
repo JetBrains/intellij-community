@@ -2,6 +2,7 @@
 
 package com.intellij.psi.impl.include;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -9,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.Consumer;
 import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.IndexedFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,8 +18,27 @@ public abstract class FileIncludeProvider {
 
   public abstract @NotNull String getId();
 
-  public abstract boolean acceptFile(@NotNull VirtualFile file);
+  public boolean acceptFile(@NotNull IndexedFile indexedFile) {
+    if (indexedFile instanceof FileIncludeProviderIndexedFile) {
+      // Break recursion in the delegation chain between `acceptFile` overloads.
+      return false;
+    }
+    return acceptFile(indexedFile.getFile(), indexedFile.getProject());
+  }
 
+  /**
+   * @deprecated Use {@link #acceptFile(IndexedFile)} instead
+   */
+  @Deprecated
+  public boolean acceptFile(@NotNull VirtualFile file) {
+    PluginException.reportDeprecatedDefault(getClass(), "acceptFile", "`acceptFile(IndexedFile)` should be called");
+    return acceptFile(new FileIncludeProviderIndexedFile(file));
+  }
+
+  /**
+   * @deprecated Use {@link #acceptFile(IndexedFile)} instead
+   */
+  @Deprecated
   public boolean acceptFile(@NotNull VirtualFile file, Project project) {
     return acceptFile(file);
   }

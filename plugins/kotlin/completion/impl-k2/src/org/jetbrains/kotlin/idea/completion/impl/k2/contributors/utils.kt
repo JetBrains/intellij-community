@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.abbreviationOrSelf
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.buildClassTypeWithStarProjections
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.completion.KOTLIN_CAST_REQUIRED_COLOR
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.api.serialization.ensureSerializable
@@ -42,7 +43,6 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.util.KotlinK2CodeFragmentUtils
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
 import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -177,6 +177,12 @@ internal fun LookupElementBuilder.adaptToExplicitReceiver(
         typeText = typeText,
     )
 )
+
+@OptIn(KaExperimentalApi::class)
+internal fun isRuntimeTypeEvaluatorAvailable(context: K2CompletionSectionContext<*>) =
+    (context.parameters.originalFile as? KtCodeFragment)
+        ?.getCopyableUserData(KotlinK2CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR_K2) != null
+
 @OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
 context(kaSession: KaSession)
 internal fun KtExpression.evaluateRuntimeKaType(): KaType? {
@@ -194,18 +200,18 @@ internal fun KaType.replaceTypeParametersWithStarProjections(): KaType? =
 
 
 /**
- * Represents a [callableId] that is variadic in its parameters.
+ * Represents a [callableId] that has a variable number of generic parameters (variadic).
  * For completion, we want to group these as a single completion item to not clutter up the list
  * with often 25+ nearly identical results.
- * The [renderedParameters] is the string representation of the parameter list that will be used in rendering
- * rather than the rendered parameters of the callable.
- * We use the [lowestNumberOfArguments] as a performance measure to exactly show the completion item with this number of arguments,
- * all other callables with the same [callableId] but different number of arguments will be filtered out.
+ *
+ * We use the [representativeNumberOfValueArguments] as a performance measure to only show the completion item with
+ * this number of arguments. This callable will be shown with the [renderedParameters] instead of its original parameter list.
+ * All other callables with the same [callableId] but different number of arguments will be filtered out.
  */
 internal class VariadicCallable(
     val callableId: CallableId,
     val renderedParameters: String,
-    val lowestNumberOfArguments: Int,
+    val representativeNumberOfValueArguments: Int,
 )
 
 
@@ -214,9 +220,9 @@ internal class VariadicCallable(
  */
 private val variadicCallableIds: Map<CallableId, VariadicCallable> = listOf(
     VariadicCallable(
-        callableId = CallableId(FqName.topLevel(Name.identifier("kotlin")), Name.identifier("context")),
+        callableId = CallableId(StandardKotlinNames.context.parent(), StandardKotlinNames.context.shortName()),
         renderedParameters = "(a: A, ..., block: context(A, ...) () -> R)",
-        lowestNumberOfArguments = 2,
+        representativeNumberOfValueArguments = 2,
     )
 ).associateBy { it.callableId }
 
@@ -224,7 +230,20 @@ private val variadicCallableIds: Map<CallableId, VariadicCallable> = listOf(
  * Returns a [VariadicCallable] in case the signature represents a registered variadic callable
  * found within [variadicCallableIds], otherwise returns `null`.
  */
-internal fun KaCallableSignature<*>.getVariadicCallable(): VariadicCallable? {
+internal fun KaCallableSignature<*>.toMatchingVariadicCallableOrNull(): VariadicCallable? {
     val callableId = callableId ?: return null
     return variadicCallableIds[callableId]
+}
+
+/**
+ * Returns true if the [signature] belongs to a [VariadicCallable] that should be shown based on
+ * [VariadicCallable.representativeNumberOfValueArguments] (i.e., it does have the representative number of arguments).
+ * Returns true for non-variadic callables.
+ */
+context(_: KaSession)
+internal fun isRepresentativeOrNonVariadicCallable(signature: KaCallableSignature<*>): Boolean {
+    val variadicCallableId = signature.toMatchingVariadicCallableOrNull() ?: return true
+    val functionSymbol = signature.symbol as? KaNamedFunctionSymbol ?: return true
+
+    return variadicCallableId.representativeNumberOfValueArguments == functionSymbol.valueParameters.size
 }

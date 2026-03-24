@@ -1,6 +1,8 @@
 // "Annotate containing class with '@Parcelize'" "true"
-// ERROR: No 'Parcelable' supertype
 // WITH_STDLIB
+// ERROR: No 'Parcelable' supertype
+// K2_ERROR: Class 'Foo' must be annotated with '@Parcelize'.
+// K2_AFTER_ERROR: No 'Parcelable' supertype.
 
 package com.myapp.activity
 
@@ -14,3 +16,4 @@ object StringParceler : Parceler<String> {
 
 @Parcelize
 class Foo(@<caret>TypeParceler<String, StringParceler> val a: String)
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.AnnotateWithParcelizeQuickFix

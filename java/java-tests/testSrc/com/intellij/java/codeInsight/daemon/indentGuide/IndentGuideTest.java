@@ -1,9 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.indentGuide;
 
+import com.intellij.codeInsight.daemon.impl.indentGuide.IndentGuidePass;
+import com.intellij.codeInsight.daemon.impl.indentGuide.IndentGuidePassFilter;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.IndentGuideDescriptor;
 import com.intellij.openapi.editor.IndentsModel;
 import com.intellij.openapi.editor.impl.IndentsModelImpl;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
@@ -193,6 +201,49 @@ public class IndentGuideTest extends BaseIndentGuideTest {
         assertNull("Indent at lines " + start + "-" + end + " is present, but it shouldn't", descriptor2);
       }
     }
+  }
+
+  public void testIndexNotReadyDuringCollectDoesNotThrowOnApply() {
+    myFixture.configureByText(getTestName(false) + ".java", """
+      class C {
+        void m() {
+          if (true) {
+            int a;
+          }
+        }
+      }
+      """);
+
+    ExtensionPointName<IndentGuidePassFilter> epName = ExtensionPointName.create("com.intellij.daemon.indentGuidePassFilter");
+    ExtensionTestUtil.maskExtensions(epName, List.of(new IndentGuidePassFilter() {
+      @Override
+      public boolean shouldRunIndentsPass(@NotNull Editor editor) {
+        return true;
+      }
+
+      @Override
+      public boolean shouldShowIndentGuide(@NotNull Editor editor, @NotNull IndentGuideDescriptor descriptor) {
+        throw IndexNotReadyException.create();
+      }
+    }), getTestRootDisposable());
+
+    IndentGuidePass pass = ActionUtil.underModalProgress(getProject(), "", () ->
+      new IndentGuidePass(getProject(), myFixture.getEditor(), myFixture.getFile())
+    );
+
+    boolean indexNotReadyThrown = false;
+    try {
+      pass.doCollectInformation(new EmptyProgressIndicator());
+    }
+    catch (IndexNotReadyException ignored) {
+      indexNotReadyThrown = true;
+    }
+    assertTrue("collect should fail with IndexNotReadyException to emulate daemon behavior", indexNotReadyThrown);
+
+    pass.doApplyInformationToEditor();
+
+    IndentsModelImpl model = (IndentsModelImpl)myFixture.getEditor().getIndentsModel();
+    assertTrue("indents model should stay empty when collect fails with IndexNotReadyException", model.getIndents().isEmpty());
   }
 
   private void doTest(@NotNull String text) {

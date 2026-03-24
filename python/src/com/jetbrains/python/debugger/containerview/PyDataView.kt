@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.containerview
 
 import com.intellij.execution.process.ProcessHandler
@@ -22,9 +22,14 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
+import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.PydevConsoleCommunication
+import com.jetbrains.python.console.PythonConsoleToolWindow
+import com.jetbrains.python.console.PythonConsoleToolWindowFactory
+import com.jetbrains.python.console.pydevConsoleCommunicationKey
 import com.jetbrains.python.debugger.PyDebugProcess
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.PyFrameAccessor
@@ -38,6 +43,7 @@ class PyDataView(private val project: Project) : DumbAware {
   private val selectedInfos: MutableMap<ProcessHandler, Content> = ConcurrentHashMap()
 
   private lateinit var contentManager: ContentManager
+  private var isPythonConsoleListenerAttached = false
 
   fun init(toolWindow: ToolWindow) {
     toolWindow.helpId = HELP_ID
@@ -46,15 +52,15 @@ class PyDataView(private val project: Project) : DumbAware {
     contentManager = toolWindow.contentManager
 
     addEmptyContent()
+    attachPythonConsoleListenerIfAvailable(getPythonConsoleToolWindow(ToolWindowManager.getInstance(project)))
 
     project.messageBus.connect()
       .subscribe<ToolWindowManagerListener>(
         ToolWindowManagerListener.TOPIC,
         object : ToolWindowManagerListener {
           override fun stateChanged(toolWindowManager: ToolWindowManager) {
-            val window = toolWindowManager.getToolWindow(DATA_VIEWER_ID)
-            if (window == null) {
-              return
+            if (!isPythonConsoleListenerAttached) {
+              attachPythonConsoleListenerIfAvailable(getPythonConsoleToolWindow(toolWindowManager))
             }
             if (toolWindow.isAvailable && toolWindow.type == ToolWindowType.FLOATING && !toolWindow.isVisible) {
               toolWindow.isShowStripeButton = false
@@ -160,6 +166,27 @@ class PyDataView(private val project: Project) : DumbAware {
     return !accessor.isCommunicationClosed
   }
 
+  private fun attachPythonConsoleListenerIfAvailable(pythonConsole: ToolWindow?): Boolean {
+    if (isPythonConsoleListenerAttached) {
+      return true
+    }
+
+    val pythonConsoleContentManager = pythonConsole?.contentManagerIfCreated ?: return false
+    pythonConsoleContentManager.addContentManagerListener(PyDataContentManagerListener())
+    isPythonConsoleListenerAttached = true
+    return true
+  }
+
+
+  private fun getPythonConsoleToolWindow(toolWindowManager: ToolWindowManager): ToolWindow? =
+    toolWindowManager.getToolWindow(PythonConsoleToolWindowFactory.ID)
+
+  private fun addTabConnectedToSelectedConsole() {
+    val descriptor = PythonConsoleToolWindow.getInstance(project).selectedContentDescriptor ?: return
+    val communication = descriptor.processHandler?.getUserData(pydevConsoleCommunicationKey) ?: return
+    addTab(communication)
+  }
+
   private fun createEmptyContent() = panel {
     row {
       panel { row { text(PyBundle.message("debugger.data.view.empty.text")) } }
@@ -189,7 +216,7 @@ class PyDataView(private val project: Project) : DumbAware {
     if (window is ToolWindowEx) {
       window.setTabActions(NewViewerAction(frameAccessor))
     }
-    panel.addListener( PyDataViewerAbstractPanel.OnNameChangedListener {
+    panel.addListener(PyDataViewerAbstractPanel.OnNameChangedListener {
       content.displayName = it
     })
     Disposer.register(content, panel)
@@ -228,11 +255,25 @@ class PyDataView(private val project: Project) : DumbAware {
     return component as PyDataViewerPanel
   }
 
+  inner class PyDataContentManagerListener : ContentManagerListener {
+    override fun contentRemoved(event: ContentManagerEvent) {
+      closeDisconnectedFromConsoleTabs()
+    }
+
+    override fun selectionChanged(event: ContentManagerEvent) {
+      if (getVisibleTabs().isNotEmpty()) {
+        return
+      }
+      addTabConnectedToSelectedConsole()
+    }
+  }
+
   companion object {
     private const val DATA_VIEWER_ID = "SciView"
 
     const val COLORED_BY_DEFAULT: String = "datagrid.heatmap.switchedByDefault"
     const val AUTO_RESIZE: String = "python.debugger.dataView.autoresize"
+
     private const val HELP_ID = "reference.toolWindows.PyDataView"
 
     @JvmStatic

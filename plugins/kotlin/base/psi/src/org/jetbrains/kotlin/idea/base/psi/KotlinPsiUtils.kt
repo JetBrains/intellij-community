@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -429,4 +430,12 @@ fun KtSimpleNameExpression.canBeUsedInImport(): Boolean {
     if (parent is KtThisExpression || parent is KtSuperExpression) return false
 
     return true
+}
+
+/**
+ * Checks if this element is on the left-hand side of an assignment expression.
+ * Traverses parent hierarchy to handle cases like `(arr[i]) = value`.
+ */
+fun PsiElement.isAssignmentLHS(): Boolean = parents(withSelf = false).any {
+    KtPsiUtil.isAssignment(it) && (it as KtBinaryExpression).left == this
 }

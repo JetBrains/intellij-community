@@ -36,12 +36,19 @@ public class IntentionsUIImpl extends IntentionsUI {
   public void update(@NotNull CachedIntentions cachedIntentions, boolean actionsChanged) {
     Editor editor = cachedIntentions.getEditor();
     if (editor == null || editor instanceof ImaginaryEditor) {
+      if (DaemonCodeAnalyzerImpl.LOG.isDebugEnabled()) {
+        DaemonCodeAnalyzerImpl.LOG.debug("editor="+editor+"; editor instanceof ImaginaryEditor="+(editor != null));
+      }
       return;
     }
     if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().hasFocus()) {
+      if (DaemonCodeAnalyzerImpl.LOG.isDebugEnabled()) {
+        DaemonCodeAnalyzerImpl.LOG.debug("editor.getContentComponent().hasFocus()="+editor.getContentComponent().hasFocus());
+      }
       return;
     }
     if (!actionsChanged) {
+      DaemonCodeAnalyzerImpl.LOG.debug("actionsChanged=false");
       return;
     }
 
@@ -61,6 +68,19 @@ public class IntentionsUIImpl extends IntentionsUI {
         // do not show bulb when the user explicitly ESCaped it away
         && !DaemonCodeAnalyzerEx.getInstanceEx(project).isEscapeJustPressed()) {
       myLastIntentionHint = IntentionHintComponent.showIntentionHint(project, cachedIntentions.getFile(), editor, false, cachedIntentions);
+    }
+    else {
+      if (DaemonCodeAnalyzerImpl.LOG.isDebugEnabled()) {
+      DaemonCodeAnalyzerImpl.LOG.debug("IntentionsUIImpl.update() didn't show intention hint. " +
+        "HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false)="+HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false)+
+      "; visibleArea="+visibleArea+".contains(xy)="+visibleArea.contains(xy)+
+      "; editor.isViewer()="+editor.isViewer()+
+      "; editor.getSettings().isShowIntentionBulb()="+editor.getSettings().isShowIntentionBulb()+
+      "; editor.getCaretModel().getCaretCount()="+editor.getCaretModel().getCaretCount()+
+      "; cachedIntentions.showBulb()="+cachedIntentions.showBulb()+
+      "; cachedIntentions="+cachedIntentions+
+      "; isEscapeJustPressed()="+DaemonCodeAnalyzerEx.getInstanceEx(project).isEscapeJustPressed());
+      }
     }
   }
 

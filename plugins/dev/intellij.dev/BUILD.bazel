@@ -9,8 +9,23 @@ resourcegroup(
 
 jvm_library(
   name = "dev",
+  module_name = "intellij.dev",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":dev_resources"]
 )
+
+jvm_library(
+  name = "dev_test_lib",
+  module_name = "intellij.dev",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":dev"]
+)
 ### auto-generated section `build intellij.dev` end
+
+### auto-generated section `iml intellij.dev` start
+exports_files([
+  "intellij.dev.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.dev` end

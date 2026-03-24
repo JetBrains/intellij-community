@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "common",
+  module_name = "intellij.python.test.env.common",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = [
@@ -59,21 +60,30 @@ jvm_library(
     "//python/python-test-env/uv",
     "//python/python-test-env/uv:uv_test_lib",
     "//platform/execution",
+    "//platform/execution:execution_test_lib",
     "//python:python-community-impl",
+    "//python:python-community-impl_test_lib",
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "@lib//:kotlinx-coroutines-core",
     "//platform/remote-core",
+    "//platform/remote-core:remote-core_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
     "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
     "//platform/ide-core",
     "//python/services/system-python",
     "//python/services/system-python:system-python_test_lib",
     "//platform/platform-impl:ide-impl",
     "//platform/eel",
+    "//platform/eel:eel_test_lib",
     "//platform/eel-provider",
+    "//platform/eel-provider:eel-provider_test_lib",
   ],
   exports = [
     "//python/python-test-env/core",
@@ -85,9 +95,19 @@ jvm_library(
     "//python/python-test-env/uv",
     "//python/python-test-env/uv:uv_test_lib",
   ],
-  runtime_deps = [":common"]
+  runtime_deps = [
+    ":common",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.python.test.env.common` end
+
+### auto-generated section `iml intellij.python.test.env.common` start
+exports_files([
+  "intellij.python.test.env.common.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.test.env.common` end
 
 ### auto-generated section `test intellij.python.test.env.common` start
 load("@community//build:tests-options.bzl", "jps_test")

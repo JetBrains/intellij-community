@@ -32,9 +32,17 @@ object TracingConfigProperties {
   val schemaGenerationMode: Boolean by lazy { fusSchemaDir != null } //todo [MM] maybe rewrite to fleet.dock.impl.RunMode
   val ijPerfSpanPrefix: String? by lazy { fleetProperty("fleet.diagnostic.ijperf.span.prefix") }
 
-  val performanceTestMode: Boolean by lazy {
-    (ijPerfFile != null || fahrplanStartupFile != null) &&
-    !fleetProperty("fleet.diagnostic.suppress.quit", "false").toBoolean()
+  /**
+   * The set of checkpoint which application tracks and waits during the startup performance test.
+   * Empty set means no expecations.
+   *
+   * Some expectation may turn on some custom behaviour for testing like typing in editor or opening a terminal.
+   * When all checkpoints reached, application will quit.
+   *
+   * fleet.frontend.reporting.Checkpoint#name is used for referencing a checkpoint
+   */
+  val startupPerformanceCheckpointExpectations: Set<String> by lazy {
+    fleetProperty("fleet.startup.performance.checkpoints")?.split(',')?.map(String::trim)?.toSet() ?: emptySet()
   }
 
   //does a number of things to simplify FUS testing

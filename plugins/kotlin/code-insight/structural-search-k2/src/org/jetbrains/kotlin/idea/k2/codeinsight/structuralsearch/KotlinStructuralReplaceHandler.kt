@@ -21,6 +21,7 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsInElementForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.psi.addTypeParameter
 import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
@@ -85,7 +86,7 @@ internal class KotlinStructuralReplaceHandler(private val project: Project) : St
         if (affectedElement !is KtElement) return
         if (options.isToShortenFQN) {
             ReadAction.nonBlocking(Callable{
-                analyze(affectedElement) { collectPossibleReferenceShorteningsInElement(affectedElement) }
+                analyze(affectedElement) { collectPossibleReferenceShorteningsInElementForIde(affectedElement) }
             }).finishOnUiThread(ModalityState.nonModal()) {
                 WriteCommandAction.runWriteCommandAction(project, Computable { it.invokeShortening() })
             }.submit(AppExecutorUtil.getAppExecutorService())

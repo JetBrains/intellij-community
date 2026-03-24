@@ -4,12 +4,62 @@ bazel_dep(name = "bazel_features", version = "1.39.0")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_kotlin", version = "2.2.2")
+archive_override(
+    module_name = "rules_kotlin",
+    sha256 = "6c7550c333f10fd49c59a5c05714c2747802077906822be066bc738c10038324",
+    strip_prefix = "rules_kotlin-2f7b666442f78bfcb5fd6360a3150b2938233cef",
+    url = "https://github.com/JetBrains/rules_kotlin/archive/2f7b666442f78bfcb5fd6360a3150b2938233cef.zip",
+)
+
 bazel_dep(name = "rules_java", version = "9.3.0")
 bazel_dep(name = "rules_jvm", version = "0.0.1")
+bazel_dep(name = "protobuf", version = "33.4")
+single_version_override(
+    module_name = "protobuf",
+    patch_strip = 1,
+    patches = [
+        "//:build/jvm-rules/protobuf-33.4-reuse-win64-for-arm.patch",
+    ],
+    version = "33.4",
+)
+
+single_version_override(
+    module_name = "rules_jvm_external",
+    patches = [
+        "//:build/jvm-rules/rules-jvm-external-6.10-make-coursier-repo-targets-shell-free-and-hermetic.patch",
+        "//:build/jvm-rules/rules-jvm-external-6.10-default-to-maven-resolver.patch",
+    ],
+    version = "6.10",
+)
+
+single_version_override(
+    module_name = "rules_android",
+    patches = [
+        "//:build/jvm-rules/rules-android-0.7.1-pin-maven-installs.patch",
+    ],
+    version = "0.7.1",
+)
+
+single_version_override(
+    module_name = "bazel_worker_java",
+    patches = [
+        "//:build/jvm-rules/worker-java-0.0.9-pin-bazel-worker-maven.patch",
+    ],
+    version = "0.0.10",
+)
+
+bazel_dep(name = "xml.bzl", version = "0.2.3")
+
 bazel_dep(name = "lib")
 local_path_override(
     module_name = "lib",
     path = "lib",
+)
+
+bazel_dep(name = "jps_to_bazel")
+local_path_override(
+    module_name = "jps_to_bazel",
+    path = "platform/build-scripts/bazel",
 )
 
 local_path_override(
@@ -44,13 +94,14 @@ register_toolchains(
 bazel_dep(name = "rules_python", version = "1.7.0")
 
 kotlin_test_deps = use_repo_rule("//plugins/kotlin:kotlin_test_dependencies.bzl", "kotlin_test_deps")
+
 kotlin_test_deps(name = "kotlin_test_deps")
 
 http_file(
     name = "debugger_test_deps_debugger_agent",
     downloaded_file_path = "debugger-agent.jar",
-    sha256 = "e048fb4bf2e9e883681e3070996fe4baf317287b175e09bab31dac799d0f6466",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.136/debugger-agent-1.136.jar",
+    sha256 = "db27896a08eb46e46ec0f4af7471e915ad995aa61b92ae3684b53eb4791bc297",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.147/debugger-agent-1.147.jar",
 )
 
 jbr_toolchains = use_extension("@community//build:jbr-toolchains.bzl", "jbr_toolchains")

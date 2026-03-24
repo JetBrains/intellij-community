@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileIndexingStateWithExplanation;
@@ -115,6 +116,7 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
   }
 
   @Override
+  @RequiresBackgroundThread(generateAssertion = false)
   public <K, V> boolean processFilesContainingAnyKey(@NotNull ID<K, V> indexId,
                                                      @NotNull Collection<? extends K> dataKeys,
                                                      @NotNull GlobalSearchScope filter,

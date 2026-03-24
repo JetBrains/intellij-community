@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.searchComponents.ExtendableSearchTextField
 import com.intellij.util.ui.JBUI
@@ -26,7 +27,9 @@ open class SeTextField(private val initialText: String?, private val resultListA
 
     document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: javax.swing.event.DocumentEvent) {
-        onTextChanged(text)
+        val docText = text
+        SeLog.log(SeLog.PATTERN) { "Got a text change from SeTextField: ${text}" }
+        onTextChanged(docText)
         isInitialSearchPattern = false
       }
     })

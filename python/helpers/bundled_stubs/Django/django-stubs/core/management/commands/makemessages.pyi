@@ -3,6 +3,7 @@ from typing import Any
 
 from django.core.management.base import BaseCommand
 from django.utils.functional import cached_property
+from typing_extensions import override
 
 plural_forms_re: Pattern[str]
 STATUS_OK: int
@@ -13,9 +14,17 @@ def is_valid_locale(locale: str) -> Match[str] | None: ...
 
 class TranslatableFile:
     dirpath: str
-    file_name: str
-    locale_dir: str
+    file: str
+    locale_dir: str | None
     def __init__(self, dirpath: str, file_name: str, locale_dir: str | None) -> None: ...
+    @override
+    def __eq__(self, other: object) -> bool: ...
+    def __ge__(self, other: object) -> bool: ...
+    def __gt__(self, other: object) -> bool: ...
+    def __le__(self, other: object) -> bool: ...
+    def __lt__(self, other: object) -> bool: ...
+    @property
+    def path(self) -> str: ...
 
 class BuildFile:
     """

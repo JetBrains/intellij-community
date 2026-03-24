@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test.handlers;
 
@@ -175,14 +175,84 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
             runTest("../testData/handlers/smart/AnonymousObject3.kt");
         }
 
+        @TestMetadata("AnonymousObjectAbstractMixed.kt")
+        public void testAnonymousObjectAbstractMixed() throws Exception {
+            runTest("../testData/handlers/smart/AnonymousObjectAbstractMixed.kt");
+        }
+
+        @TestMetadata("AnonymousObjectElvis.kt")
+        public void testAnonymousObjectElvis() throws Exception {
+            runTest("../testData/handlers/smart/AnonymousObjectElvis.kt");
+        }
+
+        @TestMetadata("AnonymousObjectGenericInterface.kt")
+        public void testAnonymousObjectGenericInterface() throws Exception {
+            runTest("../testData/handlers/smart/AnonymousObjectGenericInterface.kt");
+        }
+
+        @TestMetadata("AnonymousObjectIf.kt")
+        public void testAnonymousObjectIf() throws Exception {
+            runTest("../testData/handlers/smart/AnonymousObjectIf.kt");
+        }
+
         @TestMetadata("AnonymousObjectInsertsImport.kt")
         public void testAnonymousObjectInsertsImport() throws Exception {
             runTest("../testData/handlers/smart/AnonymousObjectInsertsImport.kt");
         }
 
+        @TestMetadata("AnonymousObjectInterfaceProperty.kt")
+        public void testAnonymousObjectInterfaceProperty() throws Exception {
+            runTest("../testData/handlers/smart/AnonymousObjectInterfaceProperty.kt");
+        }
+
+        @TestMetadata("AnonymousObjectInterfaceWithDefaults.kt")
+        public void testAnonymousObjectInterfaceWithDefaults() throws Exception {
+            runTest("../testData/handlers/smart/AnonymousObjectInterfaceWithDefaults.kt");
+        }
+
+        @TestMetadata("AnonymousObjectLambda.kt")
+        public void testAnonymousObjectLambda() throws Exception {
+            runTest("../testData/handlers/smart/AnonymousObjectLambda.kt");
+        }
+
+        @TestMetadata("AnonymousObjectLazyProperty.kt")
+        public void testAnonymousObjectLazyProperty() throws Exception {
+            runTest("../testData/handlers/smart/AnonymousObjectLazyProperty.kt");
+        }
+
+        @TestMetadata("AnonymousObjectMap.kt")
+        public void testAnonymousObjectMap() throws Exception {
+            runTest("../testData/handlers/smart/AnonymousObjectMap.kt");
+        }
+
+        @TestMetadata("AnonymousObjectMultipleInterfaces.kt")
+        public void testAnonymousObjectMultipleInterfaces() throws Exception {
+            runTest("../testData/handlers/smart/AnonymousObjectMultipleInterfaces.kt");
+        }
+
+        @TestMetadata("AnonymousObjectNullableType.kt")
+        public void testAnonymousObjectNullableType() throws Exception {
+            runTest("../testData/handlers/smart/AnonymousObjectNullableType.kt");
+        }
+
+        @TestMetadata("AnonymousObjectOpenClass.kt")
+        public void testAnonymousObjectOpenClass() throws Exception {
+            runTest("../testData/handlers/smart/AnonymousObjectOpenClass.kt");
+        }
+
         @TestMetadata("AnonymousObjectUninferredTypeArgs.kt")
         public void testAnonymousObjectUninferredTypeArgs() throws Exception {
             runTest("../testData/handlers/smart/AnonymousObjectUninferredTypeArgs.kt");
+        }
+
+        @TestMetadata("AnonymousObjectVarReassignment.kt")
+        public void testAnonymousObjectVarReassignment() throws Exception {
+            runTest("../testData/handlers/smart/AnonymousObjectVarReassignment.kt");
+        }
+
+        @TestMetadata("AnonymousObjectWhen.kt")
+        public void testAnonymousObjectWhen() throws Exception {
+            runTest("../testData/handlers/smart/AnonymousObjectWhen.kt");
         }
 
         @TestMetadata("ArrayClassLiteral.kt")
@@ -600,6 +670,11 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
             runTest("../testData/handlers/smart/MultipleArgsIntoBrackets.kt");
         }
 
+        @TestMetadata("MultipleArgsIntoBracketsWithComma.kt")
+        public void testMultipleArgsIntoBracketsWithComma() throws Exception {
+            runTest("../testData/handlers/smart/MultipleArgsIntoBracketsWithComma.kt");
+        }
+
         @TestMetadata("MultipleArgsItem.kt")
         public void testMultipleArgsItem() throws Exception {
             runTest("../testData/handlers/smart/MultipleArgsItem.kt");
@@ -608,6 +683,26 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
         @TestMetadata("MultipleArgsItemByTab.kt")
         public void testMultipleArgsItemByTab() throws Exception {
             runTest("../testData/handlers/smart/MultipleArgsItemByTab.kt");
+        }
+
+        @TestMetadata("MultipleArgsWithComma.kt")
+        public void testMultipleArgsWithComma() throws Exception {
+            runTest("../testData/handlers/smart/MultipleArgsWithComma.kt");
+        }
+
+        @TestMetadata("MultipleArgsWithExistingBracket.kt")
+        public void testMultipleArgsWithExistingBracket() throws Exception {
+            runTest("../testData/handlers/smart/MultipleArgsWithExistingBracket.kt");
+        }
+
+        @TestMetadata("MultipleArgsWithExistingParen.kt")
+        public void testMultipleArgsWithExistingParen() throws Exception {
+            runTest("../testData/handlers/smart/MultipleArgsWithExistingParen.kt");
+        }
+
+        @TestMetadata("MultipleArgsWithTwoMatching.kt")
+        public void testMultipleArgsWithTwoMatching() throws Exception {
+            runTest("../testData/handlers/smart/MultipleArgsWithTwoMatching.kt");
         }
 
         @TestMetadata("NamedArgument1.kt")

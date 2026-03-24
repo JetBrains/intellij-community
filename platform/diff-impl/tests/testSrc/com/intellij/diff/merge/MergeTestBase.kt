@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ui.UIUtil
 
 abstract class MergeTestBase : HeavyDiffTestCase() {
@@ -66,6 +67,7 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     try {
       val toolbar = viewer.init()
       viewer.viewer.rediff()
+      viewer.viewer.waitWhileRediff()
       UIUtil.dispatchAllInvocationEvents()
 
       val builder = TestBuilder(viewer, toolbar.toolbarActions ?: emptyList())
@@ -75,6 +77,14 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     finally {
       Disposer.dispose(viewer)
     }
+  }
+
+  fun MergeThreesideViewer.waitWhileRediff() {
+    PlatformTestUtil.waitWithEventsDispatching(
+      "Rediff did not finish in time",
+      { isInitialRediffFinished },
+      2
+    )
   }
 
   inner class TestBuilder(val mergeViewer: TextMergeViewer, private val actions: List<AnAction>) {
@@ -125,7 +135,6 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
 
     fun command(affected: List<TextMergeChange>? = null, f: () -> Unit) {
       viewer.executeMergeCommand(null, affected, f)
-      UIUtil.dispatchAllInvocationEvents()
     }
 
     fun write(f: () -> Unit) {
@@ -153,6 +162,12 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     fun Int.canResolveConflict(): Boolean {
       val change = change(this)
       return viewer.model.canResolveChangeAutomatically(change.index, ThreeSide.BASE)
+    }
+
+    fun resetAll() {
+      command(changes) {
+        viewer.model.resetAllChanges()
+      }
     }
 
     //

@@ -65,9 +65,16 @@ class KtScratchExecutionSession(
         )
 
         val expressions = file.getExpressions()
-        if (!executor.checkForErrors(psiFile, expressions)) return
+        val result = try {
+            if (!executor.checkForErrors(psiFile, expressions)) return
+            runReadAction { KtScratchSourceFileProcessor().process(expressions) }
+        } catch (ex: Throwable) {
+            if (ex !is ControlFlowException) throw ex
+            callback()
+            return
+        }
 
-        when (val result = runReadAction { KtScratchSourceFileProcessor().process(expressions) }) {
+        when (result) {
             is Result.Error -> return executor.errorOccurs(result.message, isFatal = true)
             is Result.OK -> {
                 LOG.printDebugMessage("After processing by KtScratchSourceFileProcessor:\n ${result.code}")
@@ -118,7 +125,11 @@ class KtScratchExecutionSession(
     ) {
         val tempDir = DumbService.getInstance(project).runReadActionInSmartMode(Computable {
             compileFileToTempDir(modifiedScratchSourceFile, expressions)
-        }) ?: return
+        })
+        if (tempDir == null) {
+            callback()
+            return
+        }
 
         try {
             val (environmentRequest, commandLine) = createCommandLine(psiFile, file.currentModule, result.mainClassName, tempDir.path)

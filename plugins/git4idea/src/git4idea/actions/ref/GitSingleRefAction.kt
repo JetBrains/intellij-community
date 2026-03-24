@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
+import com.intellij.util.ReflectionUtil
 import com.intellij.vcs.git.actions.GitSingleRefActions
 import com.intellij.vcs.git.actions.branch.GitBranchActionToBeWrapped
 import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
@@ -29,7 +30,7 @@ abstract class GitSingleRefAction<T : GitReference>(
 ) : GitBranchActionToBeWrapped, DumbAwareAction(dynamicText) {
 
   @Suppress("UNCHECKED_CAST")
-  protected open val refClass: KClass<T> = GitReference::class as KClass<T>
+  protected open val refClass: Class<T> = GitReference::class.java as Class<T>
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
@@ -70,7 +71,7 @@ abstract class GitSingleRefAction<T : GitReference>(
       else -> null
     }
 
-    return refClass.safeCast(ref)
+    return if (refClass.isInstance(ref)) refClass.cast(ref) else null
   }
 
   private fun isEnabledAndVisible(project: Project?, repositories: List<GitRepository>?, ref: T?): Boolean =
@@ -104,5 +105,11 @@ abstract class GitSingleRefAction<T : GitReference>(
         repository.workingTreeHolder.getWorkingTrees()
       }
     }
+
+    internal fun getWorkingTreeWithRef(reference: GitReference, repositories: List<GitRepository>, skipCurrentWorkingTree: Boolean): GitWorkingTree? {
+      val repository = repositories.singleOrNull() ?: return null
+      return getWorkingTreeWithRef(reference, repository, skipCurrentWorkingTree)
+    }
   }
 }
+

@@ -47,7 +47,7 @@ internal sealed interface FileViewProviderCache {
   fun getAllProviders(vFile: VirtualFile): List<FileViewProvider>
 
   /**
-   * Removes all existing view providers of [file] and returns them.
+   * Removes all existing view providers of [file] and returns them. Returns null if there are no existing view providers.
    * @see [getAllProviders]
    */
   fun remove(file: VirtualFile): Iterable<FileViewProvider>?

@@ -39,8 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.filterTemplatesByPrefix;
-
 public final class LiveTemplateCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Key<Boolean> ourShowTemplatesInTests = Key.create("ShowTemplatesInTests");
 
@@ -79,7 +77,8 @@ public final class LiveTemplateCompletionContributor extends CompletionContribut
         Editor editor = parameters.getEditor();
         int offset = editor.getCaretModel().getOffset();
         List<TemplateImpl> availableTemplates = TemplateManagerImpl.listApplicableTemplates(TemplateActionContext.expanding(file, editor));
-        Map<TemplateImpl, String> templates = filterTemplatesByPrefix(availableTemplates, editor, offset, false, false);
+        Map<TemplateImpl, String> templates =
+          ListTemplatesHandler.filterTemplatesByPrefix(availableTemplates, editor.getDocument(), offset, false, false);
         boolean isAutopopup = parameters.getInvocationCount() == 0;
 
         AtomicBoolean templatesShown = new AtomicBoolean(false);
@@ -155,7 +154,8 @@ public final class LiveTemplateCompletionContributor extends CompletionContribut
   public static @Nullable TemplateImpl findFullMatchedApplicableTemplate(@NotNull Editor editor,
                                                                          int offset,
                                                                          @NotNull Collection<? extends TemplateImpl> availableTemplates) {
-    Map<TemplateImpl, String> templates = filterTemplatesByPrefix(availableTemplates, editor, offset, true, false);
+    Map<TemplateImpl, String> templates =
+      ListTemplatesHandler.filterTemplatesByPrefix(availableTemplates, editor.getDocument(), offset, true, false);
     if (templates.size() == 1) {
       TemplateImpl template = ContainerUtil.getFirstItem(templates.keySet());
       if (template != null) {

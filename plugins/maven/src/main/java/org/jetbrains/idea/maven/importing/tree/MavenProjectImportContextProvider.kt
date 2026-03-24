@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.tree
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.util.JDOMUtil
@@ -12,6 +13,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId.Companion.
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
+import org.jetbrains.idea.maven.buildtool.MavenSyncSession
 import org.jetbrains.idea.maven.importing.MavenImportUtil.MAIN_SUFFIX
 import org.jetbrains.idea.maven.importing.MavenImportUtil.TEST_SUFFIX
 import org.jetbrains.idea.maven.importing.MavenImportUtil.adjustLevelAndNotify
@@ -36,6 +38,7 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectModifications
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.project.SupportedRequestType
+import org.jetbrains.idea.maven.toolchains.*
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.*
@@ -45,13 +48,15 @@ private const val INITIAL_CAPACITY_TEST_DEPENDENCY_LIST: Int = 4
 private val IMPORTED_CLASSIFIERS = setOf("client")
 
 internal class MavenProjectImportContextProvider(
-  private val myProject: Project,
-  private val myProjectsTree: MavenProjectsTree,
   private val dependencyTypes: Set<String>,
   private val myMavenProjectToModuleName: Map<MavenProject, String>,
+  private val syncSession: MavenSyncSession
 ) {
-
-  fun getAllModules(projectsWithChanges: Map<MavenProject, MavenProjectModifications>): List<MavenTreeModuleImportData> {
+  private val myProject: Project = syncSession.project
+  private val myProjectsTree: MavenProjectsTree = syncSession.projectsTree
+  private val myToolchainSession = ToolchainResolverSession.forSession(syncSession)
+  private val toolchainFinder =ToolchainFinder()
+  suspend fun getAllModules(projectsWithChanges: Map<MavenProject, MavenProjectModifications>): List<MavenTreeModuleImportData> {
     val allModules: MutableList<MavenProjectImportData> = ArrayList<MavenProjectImportData>()
     val moduleImportDataByMavenId: MutableMap<MavenId, MavenProjectImportData> = TreeMap<MavenId, MavenProjectImportData>(
       Comparator.comparing(Function { obj: MavenId? -> obj!!.getKey() }))
@@ -83,7 +88,10 @@ internal class MavenProjectImportContextProvider(
     return allModuleDataWithDependencies
   }
 
-  private fun splitToModules(importData: MavenProjectImportData, moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>): List<MavenTreeModuleImportData> {
+  private fun splitToModules(
+    importData: MavenProjectImportData,
+    moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>,
+  ): List<MavenTreeModuleImportData> {
     val submodules = importData.submodules
     val project = importData.mavenProject
     val module = importData.module
@@ -126,18 +134,22 @@ internal class MavenProjectImportContextProvider(
 
     for (submodule in submodules) {
       val dependencies = when (submodule.type) {
-        StandardMavenModuleType.MAIN_ONLY -> mainDependencies
-        StandardMavenModuleType.MAIN_ONLY_ADDITIONAL -> mainDependencies + additionalMainDependencies
-        StandardMavenModuleType.TEST_ONLY -> testDependencies + mainDependencies
-        else -> null
-      } ?: continue
+                           StandardMavenModuleType.MAIN_ONLY -> mainDependencies
+                           StandardMavenModuleType.MAIN_ONLY_ADDITIONAL -> mainDependencies + additionalMainDependencies
+                           StandardMavenModuleType.TEST_ONLY -> testDependencies + mainDependencies
+                           else -> null
+                         } ?: continue
       result.add(MavenTreeModuleImportData(project, submodule, dependencies, changes))
     }
 
     return result
   }
 
-  private fun getDependency(moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>, artifact: MavenArtifact, mavenProject: MavenProject): List<MavenImportDependency<*>> {
+  private fun getDependency(
+    moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>,
+    artifact: MavenArtifact,
+    mavenProject: MavenProject,
+  ): List<MavenImportDependency<*>> {
     val dependencyType = artifact.type
     MavenLog.LOG.trace("Creating dependency from $mavenProject to $artifact, type $dependencyType")
 
@@ -238,9 +250,11 @@ internal class MavenProjectImportContextProvider(
     return submodule?.moduleName ?: data.module.moduleName
   }
 
-  private fun createAttachArtifactDependency(mavenProject: MavenProject,
-                                             scope: DependencyScope,
-                                             artifact: MavenArtifact): AttachedJarDependency? {
+  private fun createAttachArtifactDependency(
+    mavenProject: MavenProject,
+    scope: DependencyScope,
+    artifact: MavenArtifact,
+  ): AttachedJarDependency? {
     val buildHelperCfg = mavenProject.getPluginGoalConfiguration("org.codehaus.mojo", "build-helper-maven-plugin", "attach-artifact")
     if (buildHelperCfg == null) return null
 
@@ -307,9 +321,20 @@ internal class MavenProjectImportContextProvider(
       if (mainAndTestCompilerArgsDiffer(project)) return true
     }
 
+    if (`is`("maven.import.separate.main.and.test.modules.when.toolchains") && jdksAreDifferent(project)) return true
+
     if (getNonDefaultCompilerExecutions(project).isNotEmpty()) return true
 
     return false
+  }
+
+  private fun jdksAreDifferent(project: MavenProject): Boolean {
+    val plugin = project.findCompilerPlugin() ?: return false
+    val executions = plugin.executions
+    if (executions == null || executions.isEmpty()) return false
+    val compilerToolchain = executions.filter { isCompileExecution(it) }.firstNotNullOfOrNull { toolchainFinder.getToolchain(it) }
+    val testCompilerToolchain = executions.filter { isTestCompileExecution(it) }.firstNotNullOfOrNull { toolchainFinder.getToolchain(it) }
+    return testCompilerToolchain != compilerToolchain
   }
 
   private fun isCompilerTestSupport(mavenProject: MavenProject): Boolean {
@@ -346,7 +371,8 @@ internal class MavenProjectImportContextProvider(
     return this.configurationElement?.getChild("compilerArgs")
   }
 
-  private fun getModuleImportDataSingle(
+
+  private suspend fun getModuleImportDataSingle(
     project: MavenProject,
     moduleName: String,
     changes: MavenProjectModifications,
@@ -360,11 +386,13 @@ internal class MavenProjectImportContextProvider(
     }
 
     val sourceLevel = languageLevels.sourceLevel
-    val moduleData = ModuleData(moduleName, type, sourceLevel)
+    val toolchainRequirement = toolchainFinder.searchToolchainRequirementForMain(project)
+    val sdk = myToolchainSession.findOrInstallJdk(toolchainRequirement)
+    val moduleData = ModuleData(moduleName, type, sourceLevel, sdk?.name)
     return MavenProjectImportData(project, moduleData, changes, listOf())
   }
 
-  private fun getModuleImportDataCompound(
+  private suspend fun getModuleImportDataCompound(
     project: MavenProject,
     moduleName: String,
     changes: MavenProjectModifications,
@@ -372,25 +400,35 @@ internal class MavenProjectImportContextProvider(
   ): MavenProjectImportData {
     val sourceLevel = languageLevels.sourceLevel
     val testSourceLevel = languageLevels.testSourceLevel
-    val moduleData = ModuleData(moduleName, StandardMavenModuleType.COMPOUND_MODULE, sourceLevel)
+    val moduleData = ModuleData(moduleName, StandardMavenModuleType.COMPOUND_MODULE, sourceLevel, null)
 
     val moduleMainName = "$moduleName.$MAIN_SUFFIX"
-    val mainData = ModuleData(moduleMainName, StandardMavenModuleType.MAIN_ONLY, sourceLevel)
+    val projectToolchain = toolchainFinder.searchToolchainRequirementForMain(project)
+    val sdk = myToolchainSession.findOrInstallJdk(projectToolchain)
+    val mainData = ModuleData(moduleMainName, StandardMavenModuleType.MAIN_ONLY, sourceLevel, sdk?.name)
 
     val moduleTestName = "$moduleName.$TEST_SUFFIX"
-    val testData = ModuleData(moduleTestName, StandardMavenModuleType.TEST_ONLY, testSourceLevel)
+    val testToolchain = toolchainFinder.searchToolchainRequirementForTest(project)
+    val testSdk = myToolchainSession.findOrInstallJdk(testToolchain)
+    val testData = ModuleData(moduleTestName, StandardMavenModuleType.TEST_ONLY, testSourceLevel, testSdk?.name)
 
     val compileSourceRootModules = getNonDefaultCompilerExecutions(project).map {
       val suffix = escapeCompileSourceRootModuleSuffix(it)
       val sourceRootLevel = getSourceLanguageLevel(project, it)
-      ModuleData("$moduleName.$suffix", StandardMavenModuleType.MAIN_ONLY_ADDITIONAL, sourceRootLevel)
+      val toolchainRequirement = toolchainFinder.searchToolchainRequirementForExecution(project, it)
+      val sdk = myToolchainSession.findOrInstallJdk(toolchainRequirement)
+      ModuleData("$moduleName.$suffix", StandardMavenModuleType.MAIN_ONLY_ADDITIONAL, sourceRootLevel, sdk?.name)
     }
 
     val otherModules = listOf(mainData) + compileSourceRootModules + testData
     return MavenProjectImportData(project, moduleData, changes, otherModules)
   }
 
-  private fun getModuleImportData(project: MavenProject, moduleName: String, changes: MavenProjectModifications): MavenProjectImportData {
+  private suspend fun getModuleImportData(
+    project: MavenProject,
+    moduleName: String,
+    changes: MavenProjectModifications,
+  ): MavenProjectImportData {
     val languageLevels = getLanguageLevels(project)
 
     val needCreateCompoundModule = needCreateCompoundModule(project, languageLevels)
@@ -424,7 +462,8 @@ private class MavenProjectImportData(
 ) {
 
   val defaultMainSubmodule = submodules.firstOrNull { it.type == StandardMavenModuleType.MAIN_ONLY }
-  val mainSubmodules = submodules.filter { it.type == StandardMavenModuleType.MAIN_ONLY || it.type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL }
+  val mainSubmodules =
+    submodules.filter { it.type == StandardMavenModuleType.MAIN_ONLY || it.type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL }
   val testSubmodules = submodules.filter { it.type == StandardMavenModuleType.TEST_ONLY }
 
   override fun toString(): String {

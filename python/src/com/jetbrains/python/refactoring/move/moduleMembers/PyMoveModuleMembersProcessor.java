@@ -11,6 +11,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
@@ -30,6 +31,7 @@ import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -136,6 +138,25 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   @Override
   protected @NotNull String getCommandName() {
     return getRefactoringName();
+  }
+
+  @Override
+  protected @Nullable String getRefactoringId() {
+    return "refactoring.python.move.module.members";
+  }
+
+  @Override
+  protected @Nullable RefactoringEventData getBeforeData() {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElements(ContainerUtil.mapNotNull(myElements, SmartPsiElementPointer::getElement));
+    return data;
+  }
+
+  @Override
+  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElements(ContainerUtil.mapNotNull(myElements, SmartPsiElementPointer::getElement));
+    return data;
   }
 
   private static class MyUsageInfo extends UsageInfo {

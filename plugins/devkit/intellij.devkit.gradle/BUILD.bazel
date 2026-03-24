@@ -37,51 +37,158 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
     "//java/openapi:java",
+    "//platform/workspace/jps",
+    "//platform/workspace/storage",
+    "//platform/backend/workspace",
+    "//platform/projectModel-impl",
+    "//jps/model-api:model",
   ]
 )
 
 jvm_library(
   name = "gradle_test_lib",
+  module_name = "intellij.devkit.gradle",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":gradle"],
-  deps = [
-    "//java/idea-ui:ui",
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/execution-impl",
-    "//platform/external-system-impl:externalSystem-impl",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/ide-core",
-    "//platform/lang-core",
-    "//platform/ide-core-impl",
-    "//platform/projectModel-api:projectModel",
-    "//platform/analysis-api:analysis",
-    "//platform/execution",
-    "//platform/lang-api:lang",
-    "//plugins/gradle:gradle-common",
-    "//plugins/gradle/java",
-    "//platform/smRunner",
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":gradle",
+    "//java/idea-ui:ui_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/external-system-impl:externalSystem-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//plugins/gradle:gradle-common_test_lib",
+    "//plugins/gradle/java:java_test_lib",
     "//platform/smRunner:smRunner_test_lib",
-    "//plugins/devkit/devkit-core:core",
-    "//platform/util:util-ui",
-    "//java/java-psi-api:psi",
-    "//platform/platform-impl:ide-impl",
-    "//platform/core-ui",
+    "//plugins/devkit/devkit-core:core_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
-    "//java/openapi:java",
+    "//java/testFramework:testFramework_test_lib",
+    "//java/openapi:java_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//jps/model-api:model_test_lib",
   ]
 )
 ### auto-generated section `build intellij.devkit.gradle` end
 
-### auto-generated section `test intellij.devkit.gradle` start
+### auto-generated section `iml intellij.devkit.gradle` start
+exports_files([
+  "intellij.devkit.gradle.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.gradle` end
+
+### auto-generated section `build intellij.devkit.gradle.tests` start
+jvm_library(
+  name = "gradle-tests",
+  module_name = "intellij.devkit.gradle.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "gradle-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [
+    "//plugins/devkit/intellij.devkit.gradle:gradle",
+    "//plugins/devkit/intellij.devkit.gradle:gradle_test_lib",
+  ],
+  deps = [
+    "//java/idea-ui:ui",
+    "//java/idea-ui:ui_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/execution-impl",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/external-system-impl:externalSystem-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
+    "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/ide-core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/execution",
+    "//platform/execution:execution_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
+    "//plugins/gradle:gradle-common",
+    "//plugins/gradle:gradle-common_test_lib",
+    "//plugins/gradle/java",
+    "//plugins/gradle/java:java_test_lib",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
+    "//plugins/devkit/devkit-core:core",
+    "//plugins/devkit/devkit-core:core_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//java/openapi:java",
+    "//java/openapi:java_test_lib",
+    "//platform/workspace/jps",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/workspace/storage",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/backend/workspace",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/projectModel-impl",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+  ],
+  runtime_deps = [
+    ":gradle-tests",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.devkit.gradle.tests` end
+
+### auto-generated section `iml intellij.devkit.gradle.tests` start
+exports_files([
+  "intellij.devkit.gradle.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.gradle.tests` end
+
+### auto-generated section `test intellij.devkit.gradle.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "gradle_test",
-  runtime_deps = [":gradle_test_lib"]
+  name = "gradle-tests_test",
+  runtime_deps = [":gradle-tests_test_lib"]
 )
-### auto-generated section `test intellij.devkit.gradle` end
+### auto-generated section `test intellij.devkit.gradle.tests` end

@@ -273,7 +273,7 @@ public final class LeakHunter {
                                                        @Nullable Object backLink,
                                                        boolean detailedErrorDescription) {
     int hashCode = System.identityHashCode(leaked);
-    // please update together with com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath#isLeak
+    // please update together with com.intellij.tests.JUnit5TeamCityRunner#assertNoUnhandledExceptions_isLeak
     String result = "Found a leaked instance of "+leaked.getClass()
                     +"\nInstance: "+leaked
                     +"\nHashcode: "+hashCode;

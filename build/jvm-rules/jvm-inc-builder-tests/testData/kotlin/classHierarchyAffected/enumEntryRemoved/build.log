@@ -1,0 +1,27 @@
+================ Step #1 =================
+Cleaning output files:
+  Enum.class
+  META-INF/kotlin_classHierarchyAffected_enumEntryRemoved-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/enumEntryRemoved/a/Enum.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_enumEntryRemoved-a.kotlin_module
+  UseKt$WhenMappings.class
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/enumEntryRemoved/a/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_enumEntryRemoved-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/enumEntryRemoved/a/use.kt
+End of files
+------------------------------------------
+Exit code: OK

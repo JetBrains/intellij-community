@@ -22,7 +22,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
     <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
-    <postStartupActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler$MyStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsSchedulerProjectActivity"/>
 
     <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
                         serviceImplementation="com.intellij.ide.customization.java.JavaIdeLanguageCustomization"

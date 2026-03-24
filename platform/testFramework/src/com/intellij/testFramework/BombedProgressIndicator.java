@@ -21,8 +21,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
@@ -30,34 +32,43 @@ import java.util.concurrent.Future;
 import java.util.function.Predicate;
 
 /**
- * A progress indicator that starts throwing {@link ProcessCanceledException} after n {@link #checkCanceled()} attempts, where
- * n is specified in the constructor.
+ * A progress indicator that starts throwing {@link ProcessCanceledException} after
+ * <ol>
+ *   <li>Either N {@link #checkCanceled()} attempts, where N is specified in the constructor</li>
+ *   <li>Or by condition on stack frames.</li>
+ * </ol>
  */
 public class BombedProgressIndicator extends AbstractProgressIndicatorBase {
-  private final Predicate<? super StackTraceElement[]> myStackCondition;
-  private int myRemainingChecks;
-  private volatile Thread myThread;
+  private int remainingChecks;
+  private final @Nullable Predicate<? super StackTraceElement[]> onlyThrowCancellationIfStackCondition;
+
+  /**
+   * Memorize thread in which {@link #runBombed(Runnable)} was called, and only check remainingChecks in this thread,
+   * to avoid interference from some periodic {@link #checkCanceled()} from unrelated background threads.
+   */
+  private volatile Thread onlyThrowCancellationIfInThread;
+
 
   public BombedProgressIndicator(int checkCanceledCount) {
-    myRemainingChecks = checkCanceledCount;
-    myStackCondition = null;
+    remainingChecks = checkCanceledCount;
+    onlyThrowCancellationIfStackCondition = null;
   }
 
   private BombedProgressIndicator(@NotNull Predicate<? super StackTraceElement[]> stackCondition) {
-    myStackCondition = stackCondition;
-    myRemainingChecks = -1;
+    onlyThrowCancellationIfStackCondition = stackCondition;
+    remainingChecks = -1;
   }
 
   @Override
   public void checkCanceled() throws ProcessCanceledException {
-    if (myThread == Thread.currentThread()) { // to prevent CoreProgressManager future from interfering with its periodical checkCanceled
-      if (myStackCondition != null) {
-        if (myStackCondition.test(new Throwable().getStackTrace())) {
+    if (onlyThrowCancellationIfInThread == Thread.currentThread()) { // to prevent CoreProgressManager future from interfering with its periodical checkCanceled
+      if (onlyThrowCancellationIfStackCondition != null) {
+        if (onlyThrowCancellationIfStackCondition.test(new Throwable().getStackTrace())) {
           cancel();
         }
       } else {
-        if (myRemainingChecks > 0) {
-          myRemainingChecks--;
+        if (remainingChecks > 0) {
+          remainingChecks--;
         }
         else {
           cancel();
@@ -70,18 +81,18 @@ public class BombedProgressIndicator extends AbstractProgressIndicatorBase {
   /**
    * @return whether the indicator was canceled during runnable execution.
    */
-  public boolean runBombed(final Runnable runnable) {
-    myThread = Thread.currentThread();
-    final Semaphore canStart = new Semaphore();
+  public boolean runBombed(@NotNull Runnable runnable) {
+    onlyThrowCancellationIfInThread = Thread.currentThread();
+    Semaphore canStart = new Semaphore();
     canStart.down();
 
-    final Semaphore finished = new Semaphore();
+    Semaphore finished = new Semaphore();
     finished.down();
 
-    // ProgressManager invokes indicator.checkCanceled only when there's at least one canceled indicator. So we have to create a mock one
-    // on an unrelated thread and cancel it immediately.
+    // ProgressManager invokes the indicator.checkCanceled() only when there's at least one canceled indicator. So we have to create a
+    // mock one on an unrelated thread and cancel it immediately.
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final ProgressIndicatorBase mockIndicator = new ProgressIndicatorBase();
+      ProgressIndicatorBase mockIndicator = new ProgressIndicatorBase();
       ProgressManager.getInstance().runProcess(() -> {
         mockIndicator.cancel();
         canStart.up();
@@ -90,7 +101,7 @@ public class BombedProgressIndicator extends AbstractProgressIndicatorBase {
           ProgressManager.checkCanceled();
           TestCase.fail();
         }
-        catch (ProcessCanceledException ignored) {
+        catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException ignored) {
         }
       }, mockIndicator);
     });
@@ -100,7 +111,7 @@ public class BombedProgressIndicator extends AbstractProgressIndicatorBase {
       try {
         runnable.run();
       }
-      catch (ProcessCanceledException ignore) {
+      catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException ignore) {
       }
       finally {
         finished.up();
@@ -117,11 +128,11 @@ public class BombedProgressIndicator extends AbstractProgressIndicatorBase {
     return isCanceled();
   }
 
-  public static BombedProgressIndicator explodeOnStack(Predicate<? super StackTraceElement[]> stackCondition) {
+  public static BombedProgressIndicator explodeOnStack(@NotNull Predicate<? super StackTraceElement[]> stackCondition) {
     return new BombedProgressIndicator(stackCondition);
   }
 
-  public static BombedProgressIndicator explodeOnStackElement(Predicate<? super StackTraceElement> stackElementCondition) {
-    return explodeOnStack(stack -> Arrays.stream(stack).anyMatch(stackElementCondition));
+  public static BombedProgressIndicator explodeOnStackElement(@NotNull Predicate<? super StackTraceElement> stackElementCondition) {
+    return explodeOnStack(stack -> ContainerUtil.exists(stack, stackElementCondition::test));
   }
 }

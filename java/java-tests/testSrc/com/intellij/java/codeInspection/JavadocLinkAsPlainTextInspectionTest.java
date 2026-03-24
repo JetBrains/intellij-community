@@ -46,7 +46,7 @@ public class JavadocLinkAsPlainTextInspectionTest extends LightDaemonAnalyzerTes
     }
   }
 
-  public void testMarkdownLinks() {
+  public void testMarkdownElements() {
     doTest();
   }
 }

@@ -12,6 +12,7 @@ import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -123,7 +124,7 @@ public class PsiElement2UsageTargetAdapter
 
   @Override
   public PsiElement getElement() {
-    return myPointer.getElement();
+    return ReadAction.computeBlocking(() -> myPointer.getElement());
   }
 
   @Override
@@ -146,7 +147,7 @@ public class PsiElement2UsageTargetAdapter
 
   @Override
   public boolean isReadOnly() {
-    return isValid() && !getElement().isWritable();
+    return ReadAction.computeBlocking(() -> isValid() && !getElement().isWritable());
   }
 
   @Override

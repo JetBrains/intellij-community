@@ -14,3 +14,5 @@ fun combine() {
     operate(Operated() + OperandA())
     operate(Operated() <caret>+ OperandC())
 }
+
+// IGNORE_K2

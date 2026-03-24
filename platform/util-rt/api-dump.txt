@@ -109,8 +109,10 @@ f:com.intellij.openapi.util.Comparing
 - s:unorderedHashcode(java.util.Collection):I
 Fc:com.intellij.openapi.util.Couple
 - com.intellij.openapi.util.Pair
+- java.lang.Iterable
 - <init>(java.lang.Object,java.lang.Object):V
 - s:getEmpty():com.intellij.openapi.util.Couple
+- iterator():java.util.Iterator
 - s:of(java.lang.Object,java.lang.Object):com.intellij.openapi.util.Couple
 c:com.intellij.openapi.util.Pair
 - f:first:java.lang.Object

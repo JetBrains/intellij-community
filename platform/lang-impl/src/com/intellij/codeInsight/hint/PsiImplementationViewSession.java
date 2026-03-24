@@ -82,7 +82,7 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
   @Override
   public @NotNull List<ImplementationViewElement> getImplementationElements() {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      return ReadAction.compute(() -> ContainerUtil.map(myImpls, PsiImplementationViewElement::new));
+      return ReadAction.computeBlocking(() -> ContainerUtil.map(myImpls, PsiImplementationViewElement::new));
     }, ImplementationSearcher.getSearchingForImplementations(), true, myProject);
   }
 
@@ -129,7 +129,7 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
     // if the definition is the tree parent of the target element, filter out the target element
     for (int i = 1; i < targetElements.length; i++) {
       final PsiElement targetElement = targetElements[i];
-      if (ReadAction.compute(() -> PsiTreeUtil.isAncestor(targetElement, targetElements[0], true))) {
+      if (ReadAction.computeBlocking(() -> PsiTreeUtil.isAncestor(targetElement, targetElements[0], true))) {
         unique.remove(targetElements[0]);
         break;
       }
@@ -172,7 +172,7 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
     final PsiElement[] handlerImplementations = handler.searchImplementations(element, editor, includeSelfAlways, true);
     if (handlerImplementations.length > 0) return handlerImplementations;
 
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       PsiElement psiElement = element;
       PsiFile psiFile = psiElement.getContainingFile();
       if (psiFile == null) {
@@ -202,7 +202,7 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
 
         @Override
         protected void processElement(PsiElement element) {
-          if (!processor.process(ReadAction.compute(() -> new PsiImplementationViewElement(element)))) {
+          if (!processor.process(ReadAction.computeBlocking(() -> new PsiImplementationViewElement(element)))) {
             indicator.cancel();
           }
           indicator.checkCanceled();
@@ -220,7 +220,7 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
     else {
       psiElements = getSelfAndImplementations(myEditor, myElement, implementationSearcher);
     }
-    return ContainerUtil.map(psiElements, psiElement -> ReadAction.compute(() -> new PsiImplementationViewElement(psiElement)));
+    return ContainerUtil.map(psiElements, psiElement -> ReadAction.computeBlocking(() -> new PsiImplementationViewElement(psiElement)));
   }
 
   public static @Nullable Editor getEditor(@NotNull DataContext dataContext) {
@@ -294,8 +294,8 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
     }
 
     if (element != null) {
-      //1. get element from sources if target is located in library class file
-      //2. get original element if the element is synthetic (e.g. IDEA-224198)
+      //1. get element from sources if the target is located in a library class file
+      //2. get the original element if the element is synthetic (e.g., IDEA-224198)
       PsiElement navigationElement = element.getNavigationElement();
       if (navigationElement != null) {
         element = navigationElement;

@@ -14,13 +14,17 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiSnippetDocTag;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public final class JavadocSnippetEnterHandler implements EnterHandlerDelegate {
 
@@ -35,7 +39,7 @@ public final class JavadocSnippetEnterHandler implements EnterHandlerDelegate {
     if (docTag == null) return Result.Continue;
 
     if (PsiUtil.isInMarkdownDocComment(docTag)) {
-      // Markdown documentation has to be done in the preprocess, otherwise the file becomes invalid due to comment splitting
+      // Markdown documentation has to be done in the preprocess step, otherwise the file becomes invalid due to comment splitting
       final Editor hostEditor = ((EditorWindow)editor).getDelegate();
       final CaretModel caretModelHost = hostEditor.getCaretModel();
 
@@ -49,7 +53,13 @@ public final class JavadocSnippetEnterHandler implements EnterHandlerDelegate {
                                  @NotNull Editor editor,
                                  @NotNull DataContext dataContext) {
     final PsiSnippetDocTag host = getHost(file, editor);
-    if (host == null || PsiUtil.isInMarkdownDocComment(host)) return Result.Continue;
+    if (host == null) return Result.Continue;
+
+    if (PsiUtil.isInMarkdownDocComment(host)) {
+      adjustMarkdownStart(host, editor);
+      return Result.Continue;
+    }
+
 
     final Editor hostEditor = ((EditorWindow)editor).getDelegate();
     final Document hostDocument = hostEditor.getDocument();
@@ -78,6 +88,7 @@ public final class JavadocSnippetEnterHandler implements EnterHandlerDelegate {
     return ObjectUtils.tryCast(injectedLanguageManager.getInjectionHost(file), PsiSnippetDocTag.class);
   }
 
+  /// Return the prefix for a new line of Javadoc, indent included
   private static String calcPrefix(PsiSnippetDocTag host) {
     final PsiFile file = host.getContainingFile();
     final String text = file.getText();
@@ -93,6 +104,30 @@ public final class JavadocSnippetEnterHandler implements EnterHandlerDelegate {
     final JavaCodeStyleSettings settings = CodeStyle.getCustomSettings(file, JavaCodeStyleSettings.class);
 
     return (settings.JD_LEADING_ASTERISKS_ARE_ENABLED) ? whitespacesPrefix + "* " : whitespacesPrefix;
+  }
+
+  /// Adjust the document text to have the start of the comment line up with the rest
+  /// This method exist because the start of the line in Markdown is in the pre-process step instead of post process
+  private static void adjustMarkdownStart(PsiSnippetDocTag host, Editor editor) {
+    PsiDocComment comment = Objects.requireNonNull(PsiTreeUtil.getParentOfType(host, PsiDocComment.class));
+
+    final Editor hostEditor = ((EditorWindow) editor).getDelegate();
+    final Document hostDocument = hostEditor.getDocument();
+
+    int commentOffset = comment.getTextOffset();
+    int commentOffsetNoIndent = DocumentUtil.getLineStartOffset(commentOffset, hostDocument);
+    int commentIndent = commentOffset - commentOffsetNoIndent;
+
+    int caretOffset = hostEditor.getCaretModel().getOffset();
+    int lineStartOffset = DocumentUtil.getLineStartOffset(caretOffset, hostDocument);
+    int firstNonWsLineOffset = CharArrayUtil.shiftForward(hostDocument.getText(), lineStartOffset, " \t");
+    int lineIndent = firstNonWsLineOffset - lineStartOffset;
+
+    int indentDifference = lineIndent - commentIndent;
+    if (indentDifference > 0) {
+      hostDocument.replaceString(caretOffset, caretOffset, " ".repeat(indentDifference));
+      hostDocument.replaceString(lineStartOffset, lineStartOffset + indentDifference, "");
+    }
   }
 
 }

@@ -1,6 +1,7 @@
 package com.siyeh.igtest.dataflow.scope;
 
 import java.util.*;
+import java.io.*;
 
 public class TooBroadScope
 {
@@ -326,5 +327,16 @@ class MyList extends ArrayList {
     int size = size();
     clear();
     return size;
+  }
+}
+class FileAction {
+  
+  void check(String fileName) {
+    final long oldTimestamp = new File(fileName).lastModified();
+    try (var out = new FileOutputStream(fileName)) {
+      out.write(new byte[] {1, 2, 3});
+    } catch (IOException _) {
+    }
+    System.out.println(oldTimestamp);
   }
 }

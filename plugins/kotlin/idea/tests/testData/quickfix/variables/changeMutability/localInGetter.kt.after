@@ -1,4 +1,5 @@
 // "Change to 'var'" "true"
+// K2_ERROR: 'val' cannot be reassigned.
 
 val String.prop: Int
     get() {

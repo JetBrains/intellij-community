@@ -1,4 +1,5 @@
 // "Convert expression to 'Float'" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'Long', but 'Float' was expected.
 fun foo() {
     bar(1 + 3L<caret>)
 }

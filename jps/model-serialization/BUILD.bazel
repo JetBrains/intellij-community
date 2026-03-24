@@ -21,9 +21,32 @@ jvm_library(
     "//platform/util/jdom",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
+    "//libraries/kotlinx/coroutines/core",
+  ]
+)
+
+jvm_library(
+  name = "model-serialization_test_lib",
+  module_name = "intellij.platform.jps.model.serialization",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":model-serialization",
+    "//platform/util:util_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.jps.model.serialization` end
+
+### auto-generated section `iml intellij.platform.jps.model.serialization` start
+exports_files([
+  "intellij.platform.jps.model.serialization.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jps.model.serialization` end
 
 ### auto-generated section `build intellij.platform.jps.model.serialization.tests` start
 resourcegroup(
@@ -34,6 +57,7 @@ resourcegroup(
 
 jvm_library(
   name = "model-serialization-tests",
+  module_name = "intellij.platform.jps.model.serialization.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -51,21 +75,38 @@ jvm_library(
   resources = [":model-serialization-tests_test_resources"],
   deps = [
     "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//jps/model-serialization",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//jps/model-impl:model-tests",
     "//jps/model-impl:model-tests_test_lib",
     "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework/extensions:testExtensions_test_lib",
+    "@lib//:kotlin-stdlib",
     "@lib//:assert_j",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
     "//platform/projectModel-impl",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
     "//jps/model-test-framework:model-testFramework",
+    "//jps/model-test-framework:model-testFramework_test_lib",
   ],
-  runtime_deps = [":model-serialization-tests"]
+  runtime_deps = [
+    ":model-serialization-tests",
+    "//platform/workspace/jps:jps_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.jps.model.serialization.tests` end
+
+### auto-generated section `iml intellij.platform.jps.model.serialization.tests` start
+exports_files([
+  "intellij.platform.jps.model.serialization.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jps.model.serialization.tests` end
 
 ### auto-generated section `test intellij.platform.jps.model.serialization.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

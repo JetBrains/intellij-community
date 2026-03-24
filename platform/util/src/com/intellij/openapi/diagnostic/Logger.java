@@ -4,6 +4,7 @@ package com.intellij.openapi.diagnostic;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
 import org.apache.log4j.Level;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,8 @@ import java.util.function.Function;
  * </ul>
  */
 public abstract class Logger {
-  private static boolean isUnitTestMode;
+  private static volatile boolean isUnitTestMode;
+  private static volatile boolean isInStressTest;
 
   public interface Factory {
     @NotNull Logger getLoggerInstance(@NotNull String category);
@@ -58,17 +60,17 @@ public abstract class Logger {
 
   private static Factory ourFactory = new DefaultFactory();
 
-  public static void setFactory(@NotNull Class<? extends Factory> factory) {
+  public static void setFactory(@NotNull Class<? extends Factory> factoryClass) {
     if (isInitialized()) {
-      if (factory.isInstance(ourFactory)) {
+      if (factoryClass.isInstance(ourFactory)) {
         return;
       }
 
-      logFactoryChanged(factory);
+      logFactoryChanged(factoryClass);
     }
 
     try {
-      Constructor<? extends Factory> constructor = factory.getDeclaredConstructor();
+      Constructor<? extends Factory> constructor = factoryClass.getDeclaredConstructor();
       constructor.setAccessible(true);
       ourFactory = constructor.newInstance();
     }
@@ -512,6 +514,11 @@ public abstract class Logger {
   public static void setUnitTestMode() {
     isUnitTestMode = true;
   }
+  @TestOnly
+  @ApiStatus.Internal
+  public static void setInStressTest(boolean value) {
+    isInStressTest = value;
+  }
 
   /** {@link #warn(Throwable)} in production, {@link #error(Throwable)} in tests. */
   public void warnInProduction(@NotNull Throwable t) {
@@ -521,5 +528,11 @@ public abstract class Logger {
     else {
       warn(t);
     }
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  protected static boolean isInStressTest() {
+    return isInStressTest;
   }
 }

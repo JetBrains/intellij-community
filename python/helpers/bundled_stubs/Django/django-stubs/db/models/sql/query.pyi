@@ -12,6 +12,7 @@ from django.db.models.query_utils import PathInfo
 from django.db.models.sql.datastructures import BaseTable, Join
 from django.db.models.sql.where import WhereNode
 from django.utils.functional import cached_property
+from typing_extensions import override
 
 class JoinInfo(NamedTuple):
     final_field: Field
@@ -39,9 +40,6 @@ class RawQuery:
     def params_type(self) -> type[dict | tuple] | None: ...
 
 class Query(BaseExpression):
-    related_ids: list[int] | None
-    related_updates: dict[type[Model], list[tuple[Field, None, int | str]]]
-    values: list[Any]
     alias_prefix: str
     subq_aliases: frozenset[Any]
     compiler: str
@@ -81,9 +79,6 @@ class Query(BaseExpression):
     extra_tables: tuple
     extra_order_by: Sequence[_OrderByFieldName]
     deferred_loading: tuple[set[str] | frozenset[str], bool]
-    explain_query: bool
-    explain_format: str | None
-    explain_options: dict[str, int]
     high_mark: int | None
     low_mark: int
     extra: dict[str, Any]
@@ -92,6 +87,7 @@ class Query(BaseExpression):
     explain_info: Any | None
     def __init__(self, model: type[Model] | None, alias_cols: bool = True) -> None: ...
     @property
+    @override
     def output_field(self) -> Field: ...
     @property
     def has_select_fields(self) -> bool: ...
@@ -111,6 +107,7 @@ class Query(BaseExpression):
     def clone(self) -> Query: ...
     def chain(self, klass: type[Query] | None = None) -> Query: ...
     def get_count(self, using: str) -> int: ...
+    @override
     def get_group_by_cols(self, wrapper: Any | None = None) -> list[Any]: ...
     def has_filters(self) -> WhereNode: ...
     def get_external_cols(self) -> list[Any]: ...
@@ -130,6 +127,7 @@ class Query(BaseExpression):
     def bump_prefix(self, other_query: Query, exclude: Any | None = None) -> None: ...
     def get_initial_alias(self) -> str: ...
     def count_active_tables(self) -> int: ...
+    @override
     def resolve_expression(self, query: Query, *args: Any, **kwargs: Any) -> Query: ...  # type: ignore[override]
     def resolve_lookup_value(
         self, value: Any, can_reuse: set[str] | None, allow_joins: bool, summarize: bool = False

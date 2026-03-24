@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class PrepareFailedException extends Exception {
+public class PrepareFailedException extends RuntimeException {
   private final PsiFile myContainingFile;
   private final TextRange myTextRange;
 
@@ -19,7 +19,6 @@ public class PrepareFailedException extends Exception {
 
   @Override
   public @NotNull @NlsContexts.DialogMessage String getMessage() {
-    //noinspection HardCodedStringLiteral
     return super.getMessage();
   }
 

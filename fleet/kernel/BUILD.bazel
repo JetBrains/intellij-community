@@ -25,7 +25,7 @@ jvm_library(
   name = "kernel",
   module_name = "fleet.kernel",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True),
   resources = [":kernel_resources"],
   kotlinc_opts = ":custom_kernel",
   deps = [
@@ -38,4 +38,29 @@ jvm_library(
     "//fleet/rhizomedb.transactor.rebase",
   ]
 )
+
+jvm_library(
+  name = "kernel_test_lib",
+  module_name = "fleet.kernel",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kernel",
+  exports = [
+    "//fleet/rhizomedb.transactor",
+    "//fleet/rhizomedb.transactor:rhizomedb.transactor_test_lib",
+    "//fleet/rhizomedb.transactor.rebase",
+    "//fleet/rhizomedb.transactor.rebase:rhizomedb.transactor.rebase_test_lib",
+  ],
+  runtime_deps = [
+    ":kernel",
+    "//fleet/rhizomedb.transactor:rhizomedb.transactor_test_lib",
+    "//fleet/rhizomedb.transactor.rebase:rhizomedb.transactor.rebase_test_lib",
+  ]
+)
 ### auto-generated section `build fleet.kernel` end
+
+### auto-generated section `iml fleet.kernel` start
+exports_files([
+  "fleet.kernel.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.kernel` end

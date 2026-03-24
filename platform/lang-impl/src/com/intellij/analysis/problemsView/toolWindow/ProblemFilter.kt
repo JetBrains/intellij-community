@@ -30,9 +30,7 @@ internal class SeverityFiltersActionGroup : DumbAware, ActionGroup() {
     val severities = SeverityRegistrar.getSeverityRegistrar(project).allSeverities.reversed()
       .filter { it != HighlightSeverity.INFO && it > HighlightSeverity.INFORMATION && it < HighlightSeverity.ERROR }
     val (mainSeverities, otherSeverities) = severities.partition { it >= HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING }
-    val panel = event.updateSession.compute(this, "ProblemsView.getSelectedPanel", ActionUpdateThread.EDT) {
-      ProblemsView.getSelectedPanel(project) as? HighlightingPanel
-    } ?: return EMPTY_ARRAY
+    val panel = event.getData(ProblemsViewPanel.DATA_KEY) as? HighlightingPanel? ?: return EMPTY_ARRAY
     val actions = mainSeverities.mapTo(ArrayList<AnAction>()) {
       SeverityFilterAction(renderSeverity(it), it.myVal, panel)
     }
@@ -42,7 +40,7 @@ internal class SeverityFiltersActionGroup : DumbAware, ActionGroup() {
 }
 
 internal abstract class SeverityFilterActionBase(name: @Nls String, val panel: HighlightingPanel): DumbAwareToggleAction(name) {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   abstract fun updateState(selected: Boolean): Boolean
 

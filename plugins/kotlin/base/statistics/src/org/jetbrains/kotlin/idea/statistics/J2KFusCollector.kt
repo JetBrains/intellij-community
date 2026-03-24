@@ -10,13 +10,13 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 object J2KFusCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
-    private val GROUP = EventLogGroup("kotlin.ide.j2k", 2)
+    private val GROUP = EventLogGroup("kotlin.ide.j2k", 3)
 
-    private val sourceType = EventFields.String("source_type", ConversionType.values().map { it.text })
+    private val sourceType = EventFields.String("source_type", ConversionType.entries.map { it.text })
     private val isNewJ2K = EventFields.Boolean("is_new_j2k")
-    private val conversionTime = EventFields.Long("conversion_time")
-    private val linesCount = EventFields.Int("lines_count")
-    private val filesCount = EventFields.Int("files_count")
+    private val conversionTime = EventFields.Long("conversion_time_ms")
+    private val linesCount = EventFields.RoundedInt("lines_count")
+    private val filesCount = EventFields.RoundedInt("files_count")
     private val pluginInfo = EventFields.PluginInfo
 
     private val event = GROUP.registerVarargEvent(

@@ -6,6 +6,7 @@ import com.intellij.history.ActivityPresentationProvider
 import com.intellij.icons.AllIcons
 import com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons
 import icons.DvcsImplIcons
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -28,6 +29,7 @@ internal class GitActivityPresentationProvider : ActivityPresentationProvider {
   }
 }
 
+@ApiStatus.Internal
 object GitActivity {
   @JvmField
   val Checkout = createId("Checkout")

@@ -20,6 +20,9 @@ org.jetbrains.jps.dependency.BaseMaplet
 - a:flush():V
 - a:getKeys():java.lang.Iterable
 - a:remove(java.lang.Object):V
+org.jetbrains.jps.dependency.CloseableExt
+- java.io.Closeable
+- close(Z):V
 org.jetbrains.jps.dependency.ComparableTypeExternalizer
 - java.util.Comparator
 - org.jetbrains.jps.dependency.Externalizer
@@ -49,6 +52,8 @@ org.jetbrains.jps.dependency.DependencyGraph
 - a:createDelta(java.lang.Iterable,java.lang.Iterable,Z):org.jetbrains.jps.dependency.Delta
 - differentiate(org.jetbrains.jps.dependency.Delta,org.jetbrains.jps.dependency.DifferentiateParameters):org.jetbrains.jps.dependency.DifferentiateResult
 - a:differentiate(org.jetbrains.jps.dependency.Delta,org.jetbrains.jps.dependency.DifferentiateParameters,java.lang.Iterable):org.jetbrains.jps.dependency.DifferentiateResult
+- a:exportSnapshot(java.io.OutputStream):V
+- a:importSnapshot(java.io.InputStream):V
 - a:integrate(org.jetbrains.jps.dependency.DifferentiateResult):V
 org.jetbrains.jps.dependency.DifferentiateContext
 - a:affectNodeSource(org.jetbrains.jps.dependency.NodeSource):V
@@ -82,6 +87,12 @@ org.jetbrains.jps.dependency.DifferentiateResult
 org.jetbrains.jps.dependency.DifferentiateStrategy
 - a:differentiate(org.jetbrains.jps.dependency.DifferentiateContext,java.lang.Iterable,java.lang.Iterable,java.lang.Iterable):Z
 - isIncremental(org.jetbrains.jps.dependency.DifferentiateContext,org.jetbrains.jps.dependency.Node):Z
+org.jetbrains.jps.dependency.ElementInterner
+- sf:IDENTITY:org.jetbrains.jps.dependency.ElementInterner
+- a:clear():V
+- a:intern(java.lang.String):java.lang.String
+- a:intern(org.jetbrains.jps.dependency.ReferenceID):org.jetbrains.jps.dependency.ReferenceID
+- a:intern(org.jetbrains.jps.dependency.Usage):org.jetbrains.jps.dependency.Usage
 org.jetbrains.jps.dependency.Enumerator
 org.jetbrains.jps.dependency.ExternalizableGraphElement
 - a:write(org.jetbrains.jps.dependency.GraphDataOutput):V
@@ -102,9 +113,9 @@ org.jetbrains.jps.dependency.Graph
 - a:getSources():java.lang.Iterable
 - a:getSources(org.jetbrains.jps.dependency.ReferenceID):java.lang.Iterable
 org.jetbrains.jps.dependency.GraphConfiguration
-- s:create(org.jetbrains.jps.dependency.DependencyGraph,org.jetbrains.jps.dependency.NodeSourcePathMapper):org.jetbrains.jps.dependency.GraphConfiguration
 - a:getGraph():org.jetbrains.jps.dependency.DependencyGraph
 - a:getPathMapper():org.jetbrains.jps.dependency.NodeSourcePathMapper
+- isGraphUpdated():Z
 org.jetbrains.jps.dependency.GraphDataInput
 - java.io.DataInput
 - a:readGraphElement():org.jetbrains.jps.dependency.ExternalizableGraphElement

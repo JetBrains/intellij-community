@@ -18,6 +18,7 @@ object SearchEverywhereFeature {
   private const val RIDER_KEY = "search.everywhere.new.rider.enabled"
   private const val IDEA_KEY = "search.everywhere.new.idea.enabled"
   private const val PYCHARM_KEY = "search.everywhere.new.pycharm.enabled"
+  private const val CLION_KEY = "search.everywhere.new.clion.enabled"
 
   private const val ALLOW_AB_KEY = "search.everywhere.new.allow.ab"
 
@@ -27,6 +28,7 @@ object SearchEverywhereFeature {
       if (PlatformUtils.isRider()) RIDER_KEY
       else if (PlatformUtils.isIntelliJ()) IDEA_KEY
       else if (PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell()) PYCHARM_KEY
+      else if (PlatformUtils.isCLion()) CLION_KEY
       else PLATFORM_KEY
     }
     else PLATFORM_KEY
@@ -53,6 +55,7 @@ object SearchEverywhereFeature {
                            RIDER_KEY,
                            IDEA_KEY,
                            PYCHARM_KEY,
+                           CLION_KEY,
                            CWM_CLIENT_KEY,
                            ALLOW_AB_KEY)
 }

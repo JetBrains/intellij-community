@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/tests">
+      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.usageView.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.facet" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.psi.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.compose.ide.plugin.gradleTooling.rt" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.compose.ide.plugin.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.parser" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.indices" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.refactorings.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.testFramework" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.compose.ide.plugin.resources" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.compose.ide.plugin.resources" />
+</module>

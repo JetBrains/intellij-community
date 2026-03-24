@@ -1,4 +1,6 @@
 // "Apply all 'Add modifier' fixes in file" "true"
+// K2_ERROR: 'infix' modifier is required on 'fun foobar(i: Int): Unit'.
+// K2_ERROR: 'infix' modifier is required on 'fun xyzzy(i: Int): Unit'.
 class A {
     fun xyzzy(i: Int) {}
     fun foobar(i: Int) {}

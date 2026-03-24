@@ -1,0 +1,22 @@
+// FIR_IDENTICAL
+public class L : MyList<String>() {
+    override fun add(index: Int, element: Any?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun addGenerics(element: String?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return super.equals(other)
+    }
+
+    override fun hashCode(): Int {
+        return super.hashCode()
+    }
+
+    override fun toString(): String {
+        return super.toString()
+    }
+}

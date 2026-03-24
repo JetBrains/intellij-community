@@ -121,7 +121,7 @@ public final class FileTextFieldUtil {
       grandparentPrefix = null;
     }
 
-    return ReadAction.compute(new ThrowableComputable<>() {
+    return ReadAction.computeBlocking(new ThrowableComputable<>() {
       @Override
       public CompletionResult compute() throws RuntimeException {
         List<FileLookup.LookupFile> siblings = new ArrayList<>();

@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.EditorSettingsRefactoringOptionsProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -15,12 +15,12 @@ public abstract class AbstractInlineLocalDialog extends InlineOptionsDialog {
       setDoNotAskOption(new com.intellij.openapi.ui.DoNotAskOption() {
         @Override
         public boolean isToBeShown() {
-          return EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog();
+          return EditorSettingsRefactoringOptionsProvider.getInstance().isShowInlineLocalDialog();
         }
 
         @Override
         public void setToBeShown(boolean value, int exitCode) {
-          EditorSettingsExternalizable.getInstance().setShowInlineLocalDialog(value);
+          EditorSettingsRefactoringOptionsProvider.getInstance().setShowInlineLocalDialog(value);
         }
 
         @Override

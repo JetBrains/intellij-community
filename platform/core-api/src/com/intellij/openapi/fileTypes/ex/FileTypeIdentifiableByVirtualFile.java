@@ -13,6 +13,13 @@ import org.jetbrains.annotations.NotNull;
  * For example, a text file located in the "META-INF/services" directory should be treated as of SPI file type.
  * <p>
  * <p/>As an implementation example, see com.intellij.spi.SPIFileType
+ * <p>
+ * <i>
+ *   N.B. Please use with extreme caution.
+ *   Since this is a code-only approach to detecting a file type,
+ *   it's impossible to say upfront that exactly files are affected, and thus it's easy to break other file types.
+ *   If possible, pattern-match your file types via {@link com.intellij.openapi.fileTypes.FileTypeManager#associate} instead.
+ * </i>
  */
 public interface FileTypeIdentifiableByVirtualFile extends FileType {
   /**

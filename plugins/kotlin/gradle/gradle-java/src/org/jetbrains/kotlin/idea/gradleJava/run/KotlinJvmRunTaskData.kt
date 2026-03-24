@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.run
 
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -14,10 +14,14 @@ import org.jetbrains.kotlin.tooling.core.withClosure
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
-class KotlinJvmRunTaskData(val targetName: String, val taskName: String) {
+class KotlinJvmRunTaskData(
+    val targetName: String,
+    val taskName: String,
+    val isComposeGradlePluginConfigured: Boolean,
+) {
     companion object {
         private const val KOTLIN_KMP_JVM_RUN_CLASS_NAME = "org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmRun"
-        private const val KOTLIN_JVM_RUN_CLASS_NAME = "org.gradle.api.tasks.JavaExec"
+        private const val JAVA_EXEC_RUN_CLASS_NAME = "org.gradle.api.tasks.JavaExec"
 
         /**
          * Will return the *first* suitable KotlinJvmRun task that is suitable for this module.
@@ -29,31 +33,26 @@ class KotlinJvmRunTaskData(val targetName: String, val taskName: String) {
          * is omitted in order to keep it simple.
          */
         fun findSuitableKotlinJvmRunTask(module: Module): KotlinJvmRunTaskData? {
-            val mainModuleDataNode = CachedModuleDataFinder.findMainModuleData(module) ?: return null
+            val mainModuleDataNode = module.findMainModuleCachedData() ?: return null
 
             val kotlinGradlePluginType = KotlinGradlePluginType.getPluginType(mainModuleDataNode) ?: return null
-            val kotlinRunClassName = when (kotlinGradlePluginType) {
-                KotlinGradlePluginType.Jvm -> {
-                    KOTLIN_JVM_RUN_CLASS_NAME.takeIf {
-                        // For modules using jvm plugin, only continue if CMP plugin is also used,
-                        // since CMP plugin adds the required Gradle tasks
-                        getGradleExtensions(mainModuleDataNode)?.any {
-                            it.name == "compose" && it.typeFqn == "org.jetbrains.compose.ComposeExtension"
-                        } == true
-                    } ?: return null
-                }
-
-                KotlinGradlePluginType.Multiplatform -> KOTLIN_KMP_JVM_RUN_CLASS_NAME
+            val usesComposeGradlePlugin = usesComposeGradlePlugin(mainModuleDataNode)
+            val usesKmpPlugin = kotlinGradlePluginType == KotlinGradlePluginType.Multiplatform
+            val runClassName = when {
+                usesComposeGradlePlugin -> JAVA_EXEC_RUN_CLASS_NAME
+                usesKmpPlugin -> KOTLIN_KMP_JVM_RUN_CLASS_NAME
+                else -> return null
             }
 
             /* Find all run carrier tasks (tasks implementing KotlinJvmRun */
             val allKotlinJvmRunTasks = ExternalSystemApiUtil.findAll(mainModuleDataNode, ProjectKeys.TASK)
-                .filter { it.data.type == kotlinRunClassName }
+                .filter { it.data.type == runClassName }
                 .ifEmpty { return null }
 
-            return when (kotlinGradlePluginType) {
-                KotlinGradlePluginType.Multiplatform -> getKmpPluginRunTask(module, mainModuleDataNode, allKotlinJvmRunTasks)
-                KotlinGradlePluginType.Jvm -> getJvmPluginRunTask(allKotlinJvmRunTasks)
+            return when {
+                usesComposeGradlePlugin -> getCmpPluginRunTask(allKotlinJvmRunTasks)
+                usesKmpPlugin -> getKmpPluginRunTask(module, mainModuleDataNode, allKotlinJvmRunTasks)
+                else -> null
             }
 
         }
@@ -95,20 +94,22 @@ class KotlinJvmRunTaskData(val targetName: String, val taskName: String) {
             2) We ensure that the 'module' belongs to the target
             */
             return allKotlinJvmRunTasks.firstNotNullOfOrNull { runTask ->
-                val taskNameWithoutLocation = runTask.data.name.substringAfterLast(':')
+                val taskName = runTask.data.name.let { if (it.startsWith(':')) it else ":$it" }
+                val taskNameWithoutLocation = taskName.substringAfterLast(':')
                 val target = allKotlinTargetDataNodes
                     .filter { target -> taskNameWithoutLocation.equals("${target.data.externalName}Run", ignoreCase = true) }
                     .firstOrNull { target -> target.data.moduleIds.any { targetModuleId -> targetModuleId in sourceSetModuleIds } }
                     ?: return@firstNotNullOfOrNull null
-                KotlinJvmRunTaskData(target.data.externalName, taskNameWithoutLocation)
+                KotlinJvmRunTaskData(target.data.externalName, taskName, isComposeGradlePluginConfigured = false)
             }
         }
 
-        private fun getJvmPluginRunTask(allKotlinJvmRunTasks: List<DataNode<TaskData>>): KotlinJvmRunTaskData? =
+        private fun getCmpPluginRunTask(allKotlinJvmRunTasks: List<DataNode<TaskData>>): KotlinJvmRunTaskData? =
             allKotlinJvmRunTasks.firstNotNullOfOrNull { runTask ->
-                val taskNameWithoutLocation = runTask.data.name.substringAfterLast(':')
+                val taskName = runTask.data.name.let { if (it.startsWith(':')) it else ":$it" }
+                val taskNameWithoutLocation = taskName.substringAfterLast(':')
                 if (taskNameWithoutLocation != "run") return@firstNotNullOfOrNull null
-                return KotlinJvmRunTaskData("jvm", "run")
+                return KotlinJvmRunTaskData("jvm", taskName, isComposeGradlePluginConfigured = true)
             }
 
     }

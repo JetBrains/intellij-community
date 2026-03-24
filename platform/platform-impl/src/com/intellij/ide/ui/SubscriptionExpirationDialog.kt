@@ -23,7 +23,7 @@ import javax.swing.JComponent
  */
 @Internal
 class SubscriptionExpirationDialog(project: Project?, private val settings: SubscriptionExpirationSettings) :
-  LicenseExpirationDialog(project, getImagePath()) {
+  LicenseExpirationDialog(project, productDescriptor.imagePath) {
 
   private var selectionButton = 0
 
@@ -36,11 +36,9 @@ class SubscriptionExpirationDialog(project: Project?, private val settings: Subs
   }
 
   companion object {
-    private fun getImagePath(): String {
-      if (PlatformUtils.isPyCharm()) {
-        return "/images/PyCharmBannerLogo.png"
-      }
-      return "/images/IdeaBannerLogo.png"
+    private val productDescriptor by lazy {
+      if (PlatformUtils.isPyCharm()) ProductDescriptor.pyCharm
+      else ProductDescriptor.idea
     }
 
     @JvmStatic
@@ -78,20 +76,18 @@ class SubscriptionExpirationDialog(project: Project?, private val settings: Subs
 
   override fun createPanel(): JComponent {
     val panel = panel {
-      val platformName = getPlatformName()
-
       row {
         label(dialogTitle()).component.font = JBFont.h1()
       }
       row {
-        browserLink(IdeBundle.message("subscription.dialog.link", platformName), "https://www.jetbrains.com/products/compare/?product=idea&product=idea-ult")
+        browserLink(IdeBundle.message("subscription.dialog.link", productDescriptor.platformName), productDescriptor.promoUrl)
         bottomGap(BottomGap.MEDIUM)
       }
 
       buttonsGroup {
         val listener = ActionListener { e ->
           selectionButton = when (e.actionCommand) {
-            IdeBundle.message("subscription.dialog.activate.button", platformName) -> 0
+            IdeBundle.message("subscription.dialog.activate.button", productDescriptor.platformName) -> 0
             IdeBundle.message("subscription.dialog.promise.button") -> 1
             IdeBundle.message("subscription.dialog.extend.button") -> 2
             else -> 3
@@ -100,7 +96,7 @@ class SubscriptionExpirationDialog(project: Project?, private val settings: Subs
         }
 
         row {
-          radioButton(IdeBundle.message("subscription.dialog.activate.button", platformName), 0).component.addActionListener(listener)
+          radioButton(IdeBundle.message("subscription.dialog.activate.button", productDescriptor.platformName), 0).component.addActionListener(listener)
         }
         if (settings.showPromise) {
           row {
@@ -130,7 +126,7 @@ class SubscriptionExpirationDialog(project: Project?, private val settings: Subs
 
   override fun getOKActionText(): @Nls String {
     return when (selectionButton) {
-      0 -> IdeBundle.message("subscription.dialog.activate.ok.text", getPlatformName())
+      0 -> IdeBundle.message("subscription.dialog.activate.ok.text", productDescriptor.platformName)
       1 -> IdeBundle.message("subscription.dialog.promise.ok.text")
       2 -> IdeBundle.message("subscription.dialog.extend.ok.text")
       else -> IdeBundle.message("subscription.dialog.continue.ok.text")
@@ -139,14 +135,28 @@ class SubscriptionExpirationDialog(project: Project?, private val settings: Subs
 
   private fun dialogTitle(): @Nls String {
     val key = if (settings.isEvaluation) "subscription.dialog.title.evaluation" else "subscription.dialog.title.subscription"
-    return IdeBundle.message(key, getPlatformName())
+    return IdeBundle.message(key, productDescriptor.platformName)
   }
 
-  override fun getCancelActionText(): @Nls String = IdeBundle.message("subscription.dialog.cancel.button", getApplicationName())
+  override fun getCancelActionText(): @Nls String = IdeBundle.message("subscription.dialog.cancel.button", productDescriptor.applicationName)
+}
 
-  private fun getApplicationName(): @Nls String = IdeBundle.message(if (PlatformUtils.isPyCharm()) "subscription.dialog.pycharm" else "subscription.dialog.idea")
+private data class ProductDescriptor(val applicationName: String, val platformName: String, val promoUrl: String, val imagePath: String) {
+  companion object {
+    val idea = ProductDescriptor(
+      applicationName = IdeBundle.message("subscription.dialog.idea"),
+      platformName = IdeBundle.message("subscription.dialog.ultimate"),
+      promoUrl = "https://www.jetbrains.com/products/compare/?product=idea&product=idea-ult",
+      imagePath = "/images/IdeaBannerLogo.png",
+    )
 
-  private fun getPlatformName(): @Nls String = IdeBundle.message(if (PlatformUtils.isPyCharm()) "subscription.dialog.pro" else "subscription.dialog.ultimate")
+    val pyCharm = ProductDescriptor(
+      applicationName = IdeBundle.message("subscription.dialog.pycharm"),
+      platformName = IdeBundle.message("subscription.dialog.pro"),
+      promoUrl = "https://www.jetbrains.com/pycharm/editions",
+      imagePath = "/images/PyCharmBannerLogo.png",
+    )
+  }
 }
 
 @Internal

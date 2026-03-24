@@ -3,18 +3,21 @@ from typing import Any
 from django.template import Node
 from django.template.base import FilterExpression, NodeList, Parser, Token
 from django.template.context import Context
+from typing_extensions import override
 
 register: Any
 
 class GetAvailableLanguagesNode(Node):
     variable: str
     def __init__(self, variable: str) -> None: ...
+    @override
     def render(self, context: Context) -> str: ...
 
 class GetLanguageInfoNode(Node):
     lang_code: FilterExpression
     variable: str
     def __init__(self, lang_code: FilterExpression, variable: str) -> None: ...
+    @override
     def render(self, context: Context) -> str: ...
 
 class GetLanguageInfoListNode(Node):
@@ -22,16 +25,19 @@ class GetLanguageInfoListNode(Node):
     variable: str
     def __init__(self, languages: FilterExpression, variable: str) -> None: ...
     def get_language_info(self, language: Any) -> Any: ...
+    @override
     def render(self, context: Context) -> str: ...
 
 class GetCurrentLanguageNode(Node):
     variable: str
     def __init__(self, variable: str) -> None: ...
+    @override
     def render(self, context: Context) -> str: ...
 
 class GetCurrentLanguageBidiNode(Node):
     variable: str
     def __init__(self, variable: str) -> None: ...
+    @override
     def render(self, context: Context) -> str: ...
 
 class TranslateNode(Node):
@@ -46,6 +52,7 @@ class TranslateNode(Node):
         asvar: str | None = None,
         message_context: FilterExpression | None = None,
     ) -> None: ...
+    @override
     def render(self, context: Context) -> str: ...
 
 class BlockTranslateNode(Node):
@@ -70,12 +77,14 @@ class BlockTranslateNode(Node):
         tag_name: str = "blocktranslate",
     ) -> None: ...
     def render_token_list(self, tokens: list[Token]) -> tuple[str, list[str]]: ...
+    @override
     def render(self, context: Context, nested: bool = False) -> str: ...
 
 class LanguageNode(Node):
     nodelist: NodeList
     language: FilterExpression
     def __init__(self, nodelist: NodeList, language: FilterExpression) -> None: ...
+    @override
     def render(self, context: Context) -> str: ...
 
 def do_get_available_languages(parser: Parser, token: Token) -> GetAvailableLanguagesNode: ...

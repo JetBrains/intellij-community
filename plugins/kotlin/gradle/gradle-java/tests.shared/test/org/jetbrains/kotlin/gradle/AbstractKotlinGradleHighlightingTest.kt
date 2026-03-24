@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.gradle
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.AbstractKotlinGradleNavigationTest.Companion.GRADLE_KOTLIN_FIXTURE
 import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.TestRoot

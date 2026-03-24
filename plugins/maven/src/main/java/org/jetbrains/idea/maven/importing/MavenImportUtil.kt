@@ -64,8 +64,9 @@ object MavenImportUtil {
     "JDK_1_7" to LanguageLevel.JDK_1_7
   )
 
-  private const val COMPILER_PLUGIN_GROUP_ID = "org.apache.maven.plugins"
+  private const val APACHE_MAVEN_PLUGIN_GROUP_ID = "org.apache.maven.plugins"
   private const val COMPILER_PLUGIN_ARTIFACT_ID = "maven-compiler-plugin"
+  private const val TOOLCHAINS_PLUGIN_ARTIFACT_ID = "maven-toolchains-plugin"
 
   internal const val MAIN_SUFFIX: String = "main"
   internal const val TEST_SUFFIX: String = "test"
@@ -301,7 +302,7 @@ object MavenImportUtil {
       return level.getPreviewLevel() ?: level
     }
 
-    val compilerConfiguration = mavenProject.getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
+    val compilerConfiguration = mavenProject.getPluginConfiguration(APACHE_MAVEN_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
     if (compilerConfiguration != null) {
       val enablePreviewParameter = compilerConfiguration.getChildTextTrim("enablePreview")
       if (enablePreviewParameter.toBoolean()) {
@@ -366,20 +367,6 @@ object MavenImportUtil {
     }
   }
 
-  internal fun getModuleNames(project: Project, pomXml: VirtualFile): List<String> {
-    return getModuleEntities(project, pomXml)
-      .map { it.name }
-      .toList()
-  }
-
-  internal fun getModuleEntities(project: Project, pomXml: VirtualFile): List<ModuleEntity> {
-    val storage = project.workspaceModel.currentSnapshot
-    val pomXmlPath = pomXml.toNioPath()
-    return storage.entities<ModuleEntity>()
-      .filter { it.exModuleOptions?.linkedProjectId?.toNioPathOrNull() == pomXmlPath }
-      .toList()
-  }
-
   internal fun createPreviewModule(project: Project, contentRoot: VirtualFile): Module? {
     return WriteAction.compute<Module?, RuntimeException?>(ThrowableComputable {
       val modulePath = contentRoot.toNioPath().resolve(project.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION)
@@ -395,7 +382,7 @@ object MavenImportUtil {
 
   internal fun MavenProject.compilerConfigsForCompilePhase(): List<Element> {
     val result = ArrayList<Element>(1)
-    this.getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)?.let(result::add)
+    this.getPluginConfiguration(APACHE_MAVEN_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)?.let(result::add)
 
     this.findCompilerPlugin()
       ?.executions?.filter { it.isCompilePhase() }
@@ -418,7 +405,7 @@ object MavenImportUtil {
 
   private val MavenProject.pluginConfig: List<Element>
     get() {
-      val configuration: Element? = getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
+      val configuration: Element? = getPluginConfiguration(APACHE_MAVEN_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
       return ContainerUtil.createMaybeSingletonList(configuration)
     }
 
@@ -586,7 +573,7 @@ object MavenImportUtil {
 
   internal val MavenProject.procMode: ProcMode
     get() {
-      var compilerConfiguration: Element? = getPluginExecutionConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID,
+      var compilerConfiguration: Element? = getPluginExecutionConfiguration(APACHE_MAVEN_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID,
                                                                             "default-compile")
       if (compilerConfiguration == null) {
         compilerConfiguration = compilerConfig
@@ -665,13 +652,17 @@ object MavenImportUtil {
   private val MavenProject.compilerConfig: Element?
     get() {
       val executionConfiguration: Element? =
-        getPluginExecutionConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID, "default-compile")
+        getPluginExecutionConfiguration(APACHE_MAVEN_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID, "default-compile")
       if (executionConfiguration != null) return executionConfiguration
-      return getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
+      return getPluginConfiguration(APACHE_MAVEN_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
     }
 
   internal fun MavenProject.findCompilerPlugin(): MavenPlugin? {
-    return findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
+    return findPlugin(APACHE_MAVEN_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
+  }
+
+  internal fun MavenProject.findToolchainPlugin(): MavenPlugin? {
+    return findPlugin(APACHE_MAVEN_PLUGIN_GROUP_ID, TOOLCHAINS_PLUGIN_ARTIFACT_ID)
   }
 
   internal fun guessExistingEmbedderDir(project: Project, multiModuleProjectDirectory: String): String {

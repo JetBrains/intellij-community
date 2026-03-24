@@ -218,7 +218,7 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
     if (answer == null && rulesSuppressed) {
       val throwable = Throwable()
       AppExecutorUtil.getAppExecutorService().execute {
-        if (ReadAction.compute(ThrowableComputable { getData(dataId) }) != null) {
+        if (ReadAction.computeBlocking(ThrowableComputable { getData(dataId) }) != null) {
           LOG.warn("$dataId is not available on EDT. Code that depends on data rules and slow data providers " +
                    "must be run in background. For example, an action must use `ActionUpdateThread.BGT`.", throwable)
         }

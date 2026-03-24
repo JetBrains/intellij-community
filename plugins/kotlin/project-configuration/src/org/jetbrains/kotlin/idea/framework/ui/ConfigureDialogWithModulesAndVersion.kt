@@ -1,11 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.framework.ui
 
-import com.google.common.io.Closeables
-import com.google.gson.JsonParser
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.util.transform
@@ -15,26 +12,18 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.io.HttpRequests
-import com.intellij.util.net.HttpConfigurable
-import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout.standaloneCompilerVersion
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.ModuleName
 import org.jetbrains.kotlin.idea.configuration.TargetJvm
 import org.jetbrains.kotlin.idea.configuration.checkModuleJvmTargetCompatibility
 import org.jetbrains.kotlin.idea.configuration.getKotlinVersionsAndModules
-import org.jetbrains.kotlin.idea.configuration.getRepositoryForVersion
 import org.jetbrains.kotlin.idea.configuration.getRootModule
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle.message
 import org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupFUSCollector
+import org.jetbrains.kotlin.idea.versions.KotlinVersionsStorage
 import java.io.IOException
-import java.io.InputStreamReader
-import java.nio.charset.StandardCharsets
-import java.util.Collections
-import java.util.concurrent.TimeUnit
 import javax.swing.JComponent
 
 class ConfigureDialogWithModulesAndVersion(
@@ -142,18 +131,19 @@ class ConfigureDialogWithModulesAndVersion(
             .forEach {
                 val modules = versionsAndModules[it] ?: return@forEach
                 val modulesNames = modules.keys
-                val modulesEnumeration = java.lang.StringBuilder()
-                if (modulesNames.size > MODULES_TO_DISPLAY_SIZE) {
-                    modulesEnumeration.append(modulesNames.take(MODULES_TO_DISPLAY_SIZE).sorted().joinToString())
-                    modulesEnumeration.append(
-                        message(
-                            "configure.kotlin.version.and.modules.and.more", modulesNames.size - MODULES_TO_DISPLAY_SIZE
+                val modulesEnumeration = buildString {
+                    if (modulesNames.size > MODULES_TO_DISPLAY_SIZE) {
+                        append(modulesNames.take(MODULES_TO_DISPLAY_SIZE).sorted().joinToString())
+                        append(
+                            message(
+                                "configure.kotlin.version.and.modules.and.more", modulesNames.size - MODULES_TO_DISPLAY_SIZE
+                            )
                         )
-                    )
-                } else {
-                    modulesEnumeration.append(modulesNames.sorted().joinToString())
+                    } else {
+                        append(modulesNames.sorted().joinToString())
+                    }
                 }
-                message.append(message("configure.kotlin.version.and.modules", it, modulesEnumeration.toString()))
+                message.append(message("configure.kotlin.version.and.modules", it, modulesEnumeration))
             }
 
         message.append(message("configure.kotlin.choose.another.kotlin.version"))
@@ -214,12 +204,9 @@ class ConfigureDialogWithModulesAndVersion(
     }
 
     companion object {
-        @JvmStatic
-        private val LOG = Logger.getInstance(ConfigureDialogWithModulesAndVersion::class.java)
-
         private const val MODULES_TO_DISPLAY_SIZE = 2
 
-        internal const val DEFAULT_KOTLIN_VERSION = "2.3.10"
+        internal const val DEFAULT_KOTLIN_VERSION = "2.3.20"
 
         @JvmStatic
         val defaultKotlinVersion: IdeKotlinVersion
@@ -228,60 +215,10 @@ class ConfigureDialogWithModulesAndVersion(
 
         @Throws(IOException::class)
         @JvmStatic
-        fun loadVersions(minimumVersion: String?): Collection<String> {
-            val versions: MutableList<String> = ArrayList()
-            val kotlinCompilerVersion = standaloneCompilerVersion
-            val kotlinArtifactVersion = kotlinCompilerVersion.artifactVersion
-            val repositoryDescription = getRepositoryForVersion(kotlinCompilerVersion)
-            if (repositoryDescription?.bintrayUrl != null) {
-                val eapConnection =
-                    HttpConfigurable.getInstance().openHttpConnection(repositoryDescription.bintrayUrl + kotlinArtifactVersion)
-                try {
-                    val timeout = TimeUnit.SECONDS.toMillis(30).toInt()
-                    eapConnection.setConnectTimeout(timeout)
-                    eapConnection.setReadTimeout(timeout)
-                    if (eapConnection.getResponseCode() == 200) {
-                        versions.add(kotlinArtifactVersion)
-                    }
-                } finally {
-                    eapConnection.disconnect()
-                }
-            }
+        fun loadVersions(project: Project, minimumVersion: String?): Collection<String> {
             val url = Registry.stringValue("repo.with.kotlin.versions.url")
-            val urlConnection = HttpConfigurable.getInstance().openHttpConnection(url)
-            try {
-                val timeout = TimeUnit.SECONDS.toMillis(30).toInt()
-                urlConnection.setConnectTimeout(timeout)
-                urlConnection.setReadTimeout(timeout)
-                urlConnection.connect()
-                val streamReader = InputStreamReader(urlConnection.inputStream, StandardCharsets.UTF_8)
-                try {
-                    val rootElement = JsonParser.parseReader(streamReader)
-                    val docsElements = rootElement.getAsJsonObject()["response"].getAsJsonObject()["docs"].getAsJsonArray()
-                    for (element in docsElements) {
-                        val versionNumber = element.getAsJsonObject()["v"].asString
-                        if (VersionComparatorUtil.compare(minimumVersion, versionNumber) <= 0) {
-                            versions.add(versionNumber)
-                        }
-                    }
-                } finally {
-                    Closeables.closeQuietly(streamReader)
-                }
-            } catch (e: HttpRequests.HttpStatusException) {
-                LOG.warn("Cannot load data from ${url} (statusCode=${e.statusCode})", e)
-                throw e
-            } catch (e: Exception) {
-                LOG.warn("Error parsing Kotlin versions JSON data: ${e} (URL=${url})", e)
-                throw e
-            } finally {
-                urlConnection.disconnect()
-            }
-            Collections.sort(versions, VersionComparatorUtil.COMPARATOR.reversed())
-
-            // Handle the case when the new version has just been released and the Maven search index hasn't been updated yet
-            if (kotlinCompilerVersion.isRelease && !versions.contains(kotlinArtifactVersion)) {
-                versions.add(0, kotlinArtifactVersion)
-            }
+            val versions =
+                KotlinVersionsStorage.getOrFetchVersions(project, url, minimumVersion).toMutableList()
             return versions.mapNotNull {
                 val ideVersion = IdeKotlinVersion.parse(it).getOrNull() ?: return@mapNotNull null
                 ideVersion.rawVersion.takeIf { ideVersion.isRelease && !it.contains("-") }

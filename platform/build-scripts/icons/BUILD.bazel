@@ -41,44 +41,131 @@ jvm_library(
 
 jvm_library(
   name = "images-build_test_lib",
+  module_name = "intellij.platform.images.build",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  associates = [":images-build"],
-  deps = [
-    "//jps/model-api:model",
-    "//jps/model-impl",
-    "//platform/util:util-ui",
-    "//platform/util",
-    "//platform/util-ex",
-    "//platform/util/diff",
-    "//platform/util-class-loader:util-classLoader",
-    "//jps/model-serialization",
-    "//platform/build-scripts/downloader",
-    "@lib//:kotlin-stdlib",
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":images-build",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-impl:model-impl_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/util/diff:diff_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/build-scripts/downloader:downloader_test_lib",
     "@lib//:junit4",
-    "@lib//:opentelemetry",
-    "@lib//:opentelemetry-semconv",
-    "@lib//:okhttp",
-    "//build/tasks",
+    "//libraries/commons/imaging:imaging_test_lib",
+    "//platform/util/xmlDom",
+    "//platform/util/xmlDom:xmlDom_test_lib",
     "//build/tasks:tasks_test_lib",
-    "//platform/util/rt-java8",
-    "//libraries/gson",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/fastutil",
-    "//platform/util/zip",
-    "@lib//:platform-images-build-pngencoder",
-    "//libraries/hash4j",
-    "@lib//:jetbrains-intellij-deps-eclipse-jgit",
-    ":platform_util_xmlDom_provided",
+    "//platform/util/rt-java8:rt-java8_test_lib",
+    "//libraries/gson:gson_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/zip:zip_test_lib",
+    "//libraries/hash4j:hash4j_test_lib",
+    "//images:images-tests",
+    "//images:images-tests_test_lib",
+    "//RegExpSupport:regexp-tests",
+    "//RegExpSupport:regexp-tests_test_lib",
+    "//platform/xdebugger-impl:debugger-impl-tests",
+    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.images.build` end
 
-### auto-generated section `test intellij.platform.images.build` start
+### auto-generated section `iml intellij.platform.images.build` start
+exports_files([
+  "intellij.platform.images.build.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.images.build` end
+
+### auto-generated section `build intellij.platform.images.build.tests` start
+jvm_library(
+  name = "images-build-tests",
+  module_name = "intellij.platform.images.build.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//libraries/commons/imaging"]
+)
+
+jvm_library(
+  name = "images-build-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  associates = [
+    "//platform/build-scripts/icons:images-build",
+    "//platform/build-scripts/icons:images-build_test_lib",
+  ],
+  deps = [
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-impl",
+    "//jps/model-impl:model-impl_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
+    "//platform/util",
+    "//platform/util:util_test_lib",
+    "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/util/diff",
+    "//platform/util/diff:diff_test_lib",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//jps/model-serialization",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/build-scripts/downloader",
+    "//platform/build-scripts/downloader:downloader_test_lib",
+    "@lib//:kotlin-stdlib",
+    "@lib//:junit4",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/util/xmlDom",
+    "//platform/util/xmlDom:xmlDom_test_lib",
+    "@lib//:okhttp",
+    "//build/tasks",
+    "//build/tasks:tasks_test_lib",
+    "//platform/util/rt-java8",
+    "//platform/util/rt-java8:rt-java8_test_lib",
+    "//libraries/gson",
+    "//libraries/gson:gson_test_lib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/zip",
+    "//platform/util/zip:zip_test_lib",
+    "@lib//:platform-images-build-tests-pngencoder",
+    "//libraries/hash4j",
+    "//libraries/hash4j:hash4j_test_lib",
+    "@lib//:jetbrains-intellij-deps-eclipse-jgit",
+    "//images:images-tests",
+    "//images:images-tests_test_lib",
+    "//RegExpSupport:regexp-tests",
+    "//RegExpSupport:regexp-tests_test_lib",
+    "//platform/xdebugger-impl:debugger-impl-tests",
+    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+  ],
+  runtime_deps = [
+    ":images-build-tests",
+    "//libraries/commons/imaging:imaging_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.images.build.tests` end
+
+### auto-generated section `iml intellij.platform.images.build.tests` start
+exports_files([
+  "intellij.platform.images.build.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.images.build.tests` end
+
+### auto-generated section `test intellij.platform.images.build.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "images-build_test",
-  runtime_deps = [":images-build_test_lib"]
+  name = "images-build-tests_test",
+  runtime_deps = [":images-build-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.images.build` end
+### auto-generated section `test intellij.platform.images.build.tests` end

@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.assignment.k1">
   <dependencies>
     <module name="kotlin.base.scripting.k1"/>
+    <module name="kotlin.base.fe10.project-structure"/>
   </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <assignResolutionAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.assignment.k1.IdeAssignPluginResolutionAltererExtension"/>

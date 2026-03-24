@@ -33,40 +33,100 @@ jvm_library(
 
 jvm_library(
   name = "vcs-git-coverage_test_lib",
+  module_name = "intellij.vcs.git.coverage",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":vcs-git-coverage"],
-  deps = [
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":vcs-git-coverage",
     "@lib//:junit5",
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//platform/platform-api:ide",
-    "//platform/ide-core",
-    "//plugins/coverage-common:coverage",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//plugins/coverage-common:coverage_test_lib",
-    "//platform/projectModel-api:projectModel",
-    "//plugins/git4idea:vcs-git",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//plugins/git4idea:vcs-git_test_lib",
-    "//plugins/git4idea/shared",
-    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//plugins/git4idea/shared:shared_test_lib",
     "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
-    "//platform/vcs-log/api:vcs-log",
-    "//platform/vcs-log/impl",
+    "//platform/vcs-log/api:vcs-log_test_lib",
     "//platform/vcs-log/impl:impl_test_lib",
-    "//platform/vcs-log/graph:vcs-log-graph-impl",
     "//platform/vcs-log/graph:vcs-log-graph-impl_test_lib",
-    "//platform/vcs-api/shared",
-    "//platform/vcs-impl/shared",
+    "//platform/vcs-api/shared:shared_test_lib",
     "//platform/vcs-impl/shared:shared_test_lib",
   ]
 )
 ### auto-generated section `build intellij.vcs.git.coverage` end
 
-### auto-generated section `test intellij.vcs.git.coverage` start
+### auto-generated section `iml intellij.vcs.git.coverage` start
+exports_files([
+  "intellij.vcs.git.coverage.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.vcs.git.coverage` end
+
+### auto-generated section `build intellij.vcs.git.coverage.tests` start
+jvm_library(
+  name = "vcs-git-coverage-tests",
+  module_name = "intellij.vcs.git.coverage.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "vcs-git-coverage-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [
+    "//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage",
+    "//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage_test_lib",
+  ],
+  deps = [
+    "@lib//:junit5",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-api:ide",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/ide-core",
+    "//plugins/coverage-common:coverage",
+    "//plugins/coverage-common:coverage_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea:vcs-git_test_lib",
+    "//plugins/git4idea/shared",
+    "//plugins/git4idea/shared:shared_test_lib",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-log/api:vcs-log_test_lib",
+    "//platform/vcs-log/impl",
+    "//platform/vcs-log/impl:impl_test_lib",
+    "//platform/vcs-log/graph:vcs-log-graph-impl",
+    "//platform/vcs-log/graph:vcs-log-graph-impl_test_lib",
+    "//platform/vcs-api/shared",
+    "//platform/vcs-api/shared:shared_test_lib",
+    "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
+    "//platform/vcs-log/graph:vcs-log-graph-impl-tests",
+    "//platform/vcs-log/graph:vcs-log-graph-impl-tests_test_lib",
+  ],
+  runtime_deps = [
+    ":vcs-git-coverage-tests",
+    "//platform/ide-core:ide-core_test_lib",
+  ]
+)
+### auto-generated section `build intellij.vcs.git.coverage.tests` end
+
+### auto-generated section `iml intellij.vcs.git.coverage.tests` start
+exports_files([
+  "intellij.vcs.git.coverage.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.vcs.git.coverage.tests` end
+
+### auto-generated section `test intellij.vcs.git.coverage.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "vcs-git-coverage_test",
-  runtime_deps = [":vcs-git-coverage_test_lib"]
+  name = "vcs-git-coverage-tests_test",
+  runtime_deps = [":vcs-git-coverage-tests_test_lib"]
 )
-### auto-generated section `test intellij.vcs.git.coverage` end
+### auto-generated section `test intellij.vcs.git.coverage.tests` end

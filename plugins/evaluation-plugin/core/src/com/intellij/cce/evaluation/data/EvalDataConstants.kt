@@ -10,6 +10,8 @@ import com.intellij.cce.evaluable.AIA_CONTEXT_COLLECTION_DURATION_MS
 import com.intellij.cce.evaluable.AIA_CORRECT_ATTACHMENT
 import com.intellij.cce.evaluable.AIA_DESCRIPTION
 import com.intellij.cce.evaluable.AIA_ERASED_APIS
+import com.intellij.cce.evaluable.AIA_EVAL_ARTIFACT
+import com.intellij.cce.evaluable.AIA_EVAL_ARTIFACT_NAME
 import com.intellij.cce.evaluable.AIA_EXACT_MATCH
 import com.intellij.cce.evaluable.AIA_EXPECTED_FUNCTION_CALLS
 import com.intellij.cce.evaluable.AIA_EXTRACTED_CODE_SNIPPETS
@@ -263,6 +265,28 @@ object Execution {
     presentation = EvalDataPresentation(
       PresentationCategory.EXECUTION,
       DataRenderer.CodeCommentRanges
+    )
+  )
+
+  val ARTIFACT: TrivialEvalData<String> = EvalDataDescription(
+    name = "Artifact",
+    description = "Any content that can we saved to report. Specify artifact name using ARTIFACT_NAME data placement, otherwise the name will be generated",
+    placement = DataPlacement.AdditionalText(AIA_EVAL_ARTIFACT),
+    presentation = EvalDataPresentation(
+      PresentationCategory.EXECUTION,
+      DataRenderer.Text(),
+      ignoreMissingData = true,
+    )
+  )
+  
+  val ARTIFACT_NAME: TrivialEvalData<String> = EvalDataDescription(
+    name = "Artifact name",
+    description = "Specify artifact name using ARTIFACT_NAME data placement, otherwise the name will be generated",
+    placement = DataPlacement.AdditionalText(AIA_EVAL_ARTIFACT_NAME),
+    presentation = EvalDataPresentation(
+      PresentationCategory.EXECUTION,
+      DataRenderer.Text(),
+      ignoreMissingData = true,
     )
   )
 }

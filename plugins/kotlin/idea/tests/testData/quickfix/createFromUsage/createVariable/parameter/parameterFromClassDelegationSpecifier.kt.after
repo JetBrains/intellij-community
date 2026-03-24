@@ -1,4 +1,5 @@
 // "Create parameter 'b'" "true"
+// K2_ERROR: Unresolved reference 'b'.
 
 open class A(val a: Int) {
 

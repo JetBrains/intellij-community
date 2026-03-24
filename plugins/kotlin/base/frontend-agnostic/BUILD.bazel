@@ -3,7 +3,23 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "frontend-agnostic",
+  module_name = "kotlin.base.frontend-agnostic",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
+
+jvm_library(
+  name = "frontend-agnostic_test_lib",
+  module_name = "kotlin.base.frontend-agnostic",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [":frontend-agnostic"]
+)
 ### auto-generated section `build kotlin.base.frontend-agnostic` end
+
+### auto-generated section `iml kotlin.base.frontend-agnostic` start
+exports_files([
+  "kotlin.base.frontend-agnostic.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.base.frontend-agnostic` end

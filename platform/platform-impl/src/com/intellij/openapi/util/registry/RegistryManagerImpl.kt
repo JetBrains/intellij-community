@@ -100,8 +100,4 @@ internal class RegistryManagerImpl(coroutineScope: CoroutineScope) : PersistentS
   }
 
   fun getAll(): List<RegistryValue> = Registry.getAll()
-
-  override suspend fun awaitRegistryLoad() {
-    Registry.awaitLoad()
-  }
 }

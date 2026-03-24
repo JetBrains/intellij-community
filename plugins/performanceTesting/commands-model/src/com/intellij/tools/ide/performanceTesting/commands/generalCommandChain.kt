@@ -633,8 +633,13 @@ fun <T : CommandChain> T.selectText(startLine: Int, startColumn: Int, endLine: I
   addCommand("${CMD_PREFIX}selectText", startLine.toString(), startColumn.toString(), endLine.toString(), endColumn.toString())
 }
 
-fun <T : CommandChain> T.showFileStructureDialog(): T = apply {
-  addCommand("${CMD_PREFIX}showFileStructureDialog")
+fun <T : CommandChain> T.showFileStructureDialog(isSplitFileStructure: Boolean): T = apply {
+  if (!isSplitFileStructure) {
+    addCommand("${CMD_PREFIX}showFileStructureDialogClassic")
+  }
+  else {
+    addCommand("${CMD_PREFIX}showFileStructureDialogSplit")
+  }
 }
 
 fun <T : CommandChain> T.importMavenProject(): T = apply {
@@ -808,6 +813,10 @@ fun <T : CommandChain> T.setRegistry(registry: String, value: String): T = apply
 
 fun <T : CommandChain> T.setRegistrySelectedOption(registry: String, optionValue: String): T = apply {
   addCommand("${CMD_PREFIX}set $registry=[option]$optionValue")
+}
+
+fun <T : CommandChain> T.setRegistries(registries: List<String>, value: Boolean): T = apply {
+  registries.forEach { setRegistry(it, value) }
 }
 
 fun <T : CommandChain> T.validateGradleMatrixCompatibility(): T = apply {
@@ -1116,10 +1125,6 @@ fun <T : CommandChain> T.registerCompletionMockResponse(code: String, language: 
 
 fun <T : CommandChain> T.waitInlineCompletion(): T = apply {
   addCommand("${CMD_PREFIX}waitInlineCompletion")
-}
-
-fun <T : CommandChain> T.logInlineCompletion(): T = apply {
-  addCommand("${CMD_PREFIX}logInlineCompletion")
 }
 
 fun <T : CommandChain> T.waitInlineCompletionWarmup(): T = apply {

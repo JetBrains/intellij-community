@@ -24,6 +24,36 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
     "//platform/analysis-api:analysis",
     "//xml/dom-openapi:dom",
+    "//jps/model-api:model",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+  ]
+)
+
+jvm_library(
+  name = "ant_test_lib",
+  module_name = "intellij.groovy.ant",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":ant",
+    "//platform/core-api:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/groovy:groovy_test_lib",
+    "//plugins/ant:ant_test_lib",
+    "//platform/util:util_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//xml/dom-openapi:dom_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.groovy.ant` end
+
+### auto-generated section `iml intellij.groovy.ant` start
+exports_files([
+  "intellij.groovy.ant.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.groovy.ant` end

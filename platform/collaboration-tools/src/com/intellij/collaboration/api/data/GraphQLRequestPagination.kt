@@ -8,6 +8,8 @@ class GraphQLRequestPagination private constructor(
   val since: Date? = null,
   val pageSize: Int = DEFAULT_PAGE_SIZE
 ) {
+  constructor(pageSize: Int = DEFAULT_PAGE_SIZE) : this(null, null, pageSize)
+
   constructor(afterCursor: String? = null, pageSize: Int = DEFAULT_PAGE_SIZE) : this(afterCursor, null, pageSize)
 
   constructor(since: Date? = null, pageSize: Int = DEFAULT_PAGE_SIZE) : this(null, since, pageSize)
@@ -17,9 +19,9 @@ class GraphQLRequestPagination private constructor(
   }
 
   companion object {
-    private const val DEFAULT_PAGE_SIZE = 100
+    const val DEFAULT_PAGE_SIZE: Int = 100
 
-    val DEFAULT = GraphQLRequestPagination(afterCursor = null)
+    val DEFAULT: GraphQLRequestPagination = GraphQLRequestPagination(afterCursor = null)
   }
 }
 

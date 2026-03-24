@@ -6,7 +6,6 @@ import org.gradle.api.Project
 import org.gradle.api.file.Directory
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.provider.Provider
-import org.jetbrains.kotlin.idea.gradleTooling.getMethodOrNull
 import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
@@ -31,6 +30,8 @@ class ComposeResourcesExtension private constructor(extension: Any) {
   val isPublicResClass: Boolean by lazy { extension("getPublicResClass") as? Boolean ?: false }
 
   val nameOfResClass: String by lazy { extension("getNameOfResClass") as? String ?: "Res" }
+
+  val packageOfResClass: String by lazy { extension("getPackageOfResClass") as? String ?: "" }
 
   companion object {
     val Project.composeResourcesExtension: ComposeResourcesExtension?
@@ -57,6 +58,14 @@ class ComposeResourcesModelBuilder : ModelBuilderService {
       customComposeResourcesDirs = resourcesExtension.customComposeResourcesDirectories,
       isPublicResClass = resourcesExtension.isPublicResClass,
       nameOfResClass = resourcesExtension.nameOfResClass,
+      packageOfResClass = resourcesExtension.packageOfResClass
     )
   }
 }
+
+private fun Class<*>.getMethodOrNull(name: String, vararg parameterTypes: Class<*>) =
+  try {
+    getMethod(name, *parameterTypes)
+  } catch (e: Exception) {
+    null
+  }

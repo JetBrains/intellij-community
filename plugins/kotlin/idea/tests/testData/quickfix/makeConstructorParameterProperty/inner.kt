@@ -1,4 +1,5 @@
 // "Make constructor parameter a property in class 'B'" "true"
+// K2_ERROR: Unresolved reference 'bar'.
 
 class B(bar: String) {
 

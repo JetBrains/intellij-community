@@ -13,4 +13,22 @@ jvm_library(
     "@lib//:jetbrains-annotations",
   ]
 )
+
+jvm_library(
+  name = "lvcs_test_lib",
+  module_name = "intellij.platform.lvcs",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":lvcs",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.lvcs` end
+
+### auto-generated section `iml intellij.platform.lvcs` start
+exports_files([
+  "intellij.platform.lvcs.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.lvcs` end

@@ -157,7 +157,7 @@ internal class GHPRReviewFileEditorViewModelImpl(
       GHPRReviewFileEditorNewCommentViewModelImpl(it.position, it)
     }
   override val newComments: StateFlow<Collection<GHPRReviewFileEditorNewCommentViewModel>> =
-    newCommentsContainer.mappingState.mapState { it.values }
+    newCommentsContainer.mappedState
 
   init {
     cs.launchNow {

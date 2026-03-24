@@ -91,7 +91,7 @@ public final class ViewOfflineResultsAction extends AnAction {
                                                               new PerformAnalysisInBackgroundOption(project)) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        //for non project directories ensure refreshed directory
+        //for non-project directories ensure refreshed directory
         VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile);
         final VirtualFile[] files = virtualFile.isDirectory() ? virtualFile.getChildren() : new VirtualFile[] {virtualFile};
         try {
@@ -102,10 +102,10 @@ public final class ViewOfflineResultsAction extends AnAction {
             Path inspectionIoFile = inspectionFile.toNioPath();
             try {
               if (shortName.equals(InspectionsResultUtil.DESCRIPTIONS)) {
-                profileName[0] = ReadAction.compute(() -> OfflineViewParseUtil.parseProfileName(inspectionIoFile));
+                profileName[0] = ReadAction.computeBlocking(() -> OfflineViewParseUtil.parseProfileName(inspectionIoFile));
               }
               else if (StdFileTypes.XML.getDefaultExtension().equals(extension)) {
-                resMap.put(shortName, ReadAction.compute(() -> OfflineViewParseUtil.parse(inspectionIoFile)));
+                resMap.put(shortName, ReadAction.computeBlocking(() -> OfflineViewParseUtil.parse(inspectionIoFile)));
               }
             }
             catch (Exception e) {

@@ -20,7 +20,7 @@ import kotlin.time.Duration
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 31)
+  private val GROUP = EventLogGroup(GROUP_ID, 33)
 
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
@@ -82,7 +82,7 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   @JvmStatic
   fun triggerCommandStarted(project: Project, userCommandLine: String, isBlockTerminal: Boolean) {
     val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(userCommandLine)
-    commandStartedEvent.log(project, commandData?.command, commandData?.subCommand, isBlockTerminal)
+    commandStartedEvent.log(project, commandData.command, commandData.subCommand, isBlockTerminal)
   }
 
   @JvmStatic
@@ -94,8 +94,8 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
     val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(userCommandLine)
     commandFinishedEvent.log(
       project,
-      TerminalCommandUsageStatistics.commandExecutableField with commandData?.command,
-      TerminalCommandUsageStatistics.subCommandField with commandData?.subCommand,
+      TerminalCommandUsageStatistics.commandExecutableField with commandData.command,
+      TerminalCommandUsageStatistics.subCommandField with commandData.subCommand,
       EXIT_CODE_FIELD with exitCode,
       EXECUTION_TIME_FIELD with executionTime.inWholeMilliseconds
     )

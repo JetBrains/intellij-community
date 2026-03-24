@@ -12,7 +12,9 @@ import java.awt.MenuItem
 @ApiStatus.Internal
 interface MacDockMenuActions {
   /**
-   * This method is called once, and if it returns a non-null instance, the corresponding item is added to the dock menu on macOS.
+   * Called when the extension is registered (at startup or when a plugin is loaded dynamically).
+   * If it returns a non-null instance, the corresponding item is added to the dock menu on macOS.
+   * The item is automatically removed from the dock menu when the plugin is unloaded.
    */
   fun createMenuItem(): MenuItem?
 }

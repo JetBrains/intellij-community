@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "OVERRIDE_DEPRECATION", "ReplaceGetOrSet")
 
 package com.intellij.openapi.editor.impl
@@ -98,9 +98,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.ProperTextRange
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
@@ -141,7 +140,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.AWTEvent
 import java.awt.Adjustable
 import java.awt.AlphaComposite
 import java.awt.Color
@@ -361,7 +359,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
       val lineCount = editor.visibleLineCount
       var shift = 0
       if (visualLine >= lineCount - 1) {
-        val sequence = editor.document.charsSequence
+        val sequence = editor.uiDocument.charsSequence
         shift = if (sequence.isEmpty()) 0 else if (sequence.get(sequence.length - 1) == '\n') 1 else 0
       }
       return max(0, min(lineCount - shift, visualLine))
@@ -773,10 +771,11 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     val offset: Int
     var logicalPositionToScroll: LogicalPosition? = null
     val editorPreviewHint = editorFragmentRenderer.editorPreviewHint
+    val doc: Document = editor.uiDocument
     if (marker == null) {
       if (editorPreviewHint != null) {
         logicalPositionToScroll = editor.visualToLogicalPosition(VisualPosition(editorFragmentRenderer.startVisualLine, 0))
-        offset = editor.document.getLineStartOffset(logicalPositionToScroll.line)
+        offset = doc.getLineStartOffset(logicalPositionToScroll.line)
       }
       else {
         return
@@ -785,8 +784,6 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     else {
       offset = marker.getStartOffset()
     }
-
-    val doc: Document = editor.document
     if (doc.getLineCount() > 0 && editorPreviewHint == null) {
       // Necessary to expand folded block even if navigating just before one
       // Very useful when navigating to the first unused import statement.
@@ -973,7 +970,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     override fun isThumbTranslucent(): Boolean = true
 
     override fun getThumbOffset(value: Int): Int {
-      if (SystemInfoRt.isMac || `is`("editor.full.width.scrollbar")) {
+      if (SystemInfoRt.isMac || Registry.`is`("editor.full.width.scrollbar")) {
         return getMinMarkHeight() + scale(2)
       }
       @Suppress("DEPRECATION")
@@ -1080,7 +1077,8 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
       MarkupIterator.mergeIterators(
         (getEditor().getMarkupModel() as MarkupModelEx).overlappingErrorStripeIterator(startOffset, endOffset),
-        ((getEditor() as EditorEx).getFilteredDocumentMarkupModel() as EditorFilteringMarkupModelEx).getDelegate().overlappingErrorStripeIterator(startOffset, endOffset), RangeHighlighterEx.BY_AFFECTED_START_OFFSET)
+        ((getEditor() as EditorEx).getFilteredDocumentMarkupModel() as EditorFilteringMarkupModelEx).getDelegate()
+          .overlappingErrorStripeIterator(startOffset, endOffset), RangeHighlighterEx.BY_AFFECTED_START_OFFSET)
         .use { iterator ->
           for (highlighter in iterator) {
             if (!ErrorStripeMarkersModel.isErrorStripeHighlighter(highlighter, editor)) {
@@ -1257,7 +1255,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     override fun mouseWheelMoved(e: MouseWheelEvent) {
       if (editorFragmentRenderer.editorPreviewHint == null) {
         // process wheel event by the parent scroll pane if no code lens
-        MouseEventAdapter.redispatch(e, e.component.getParent())
+        MouseEventAdapter.redispatch(e, EditorImpl.getComponentToScroll(e.component))
         return
       }
       val units = e.unitsToScroll
@@ -1291,17 +1289,17 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
     fun closeHintOnMovingMouseAway(hint: LightweightHint) {
       val disposable = Disposer.newDisposable()
-      IdeEventQueue.getInstance().addDispatcher({ e: AWTEvent? ->
-        if (e!!.getID() == MouseEvent.MOUSE_PRESSED) {
-          myKeepHint = true
-          Disposer.dispose(disposable)
-        }
-        else if (e.getID() == MouseEvent.MOUSE_MOVED && !hint.isInsideHint(RelativePoint(e as MouseEvent))) {
-          hint.hide()
-          Disposer.dispose(disposable)
-        }
-        false
-      }, disposable)
+      IdeEventQueue.getInstance().addDispatcher({ e ->
+                                                  if (e.getID() == MouseEvent.MOUSE_PRESSED) {
+                                                    myKeepHint = true
+                                                    Disposer.dispose(disposable)
+                                                  }
+                                                  else if (e.getID() == MouseEvent.MOUSE_MOVED && !hint.isInsideHint(RelativePoint(e as MouseEvent))) {
+                                                    hint.hide()
+                                                    Disposer.dispose(disposable)
+                                                  }
+                                                  false
+                                                }, disposable)
     }
 
     override fun mouseDragged(e: MouseEvent) {
@@ -1338,7 +1336,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   }
 
   override fun addErrorMarkerListener(listener: ErrorStripeListener, parent: Disposable) {
-    val markupListener: MarkupModelListener = object: MarkupModelListener {
+    val markupListener: MarkupModelListener = object : MarkupModelListener {
       override fun afterAdded(highlighter: RangeHighlighterEx) {
         if (ErrorStripeMarkersModel.isErrorStripeHighlighter(highlighter, editor)) {
           listener.errorMarkerChanged(ErrorStripeEvent(editor, null, highlighter))
@@ -1351,7 +1349,12 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
         }
       }
 
-      override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean, fontStyleChanged: Boolean, foregroundColorChanged: Boolean) {
+      override fun attributesChanged(
+        highlighter: RangeHighlighterEx,
+        renderersChanged: Boolean,
+        fontStyleChanged: Boolean,
+        foregroundColorChanged: Boolean,
+      ) {
         if (ErrorStripeMarkersModel.isErrorStripeHighlighter(highlighter, editor)) {
           listener.errorMarkerChanged(ErrorStripeEvent(editor, null, highlighter))
         }
@@ -1432,7 +1435,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     if (!dimensionsAreValid) {
       recalcEditorDimensions()
     }
-    val document: Document = editor.document
+    val document: Document = editor.uiDocument
     val startLineNumber = if (end == -1) 0 else offsetToLine(start, document)
     val editorStartY = editor.visualLineToY(startLineNumber)
     val editorTargetHeight = max(0, myEditorTargetHeight)
@@ -1477,7 +1480,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     }
     val visual = editor.xyToVisualPosition(Point(0, editorY))
     val line = editor.visualToLogicalPosition(visual).line
-    val document: Document = editor.document
+    val document: Document = editor.uiDocument
     if (line < 0) {
       return 0
     }
@@ -1690,7 +1693,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
         override fun setUI(ui: LabelUI?) {
           super.setUI(ui)
 
-          if (!SystemInfo.isWindows) {
+          if (!SystemInfoRt.isWindows) {
             var font = getFont()
             // allow resetting the font by UI
             font = FontUIResource(font.deriveFont(font.getStyle(), (font.getSize() - scale(2)).toFloat()))
@@ -1706,7 +1709,8 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     }
 
     override fun paintComponent(graphics: Graphics?) {
-      val state = if (mousePressed) ActionButtonComponent.PUSHED else if (mouseHover) ActionButtonComponent.POPPED else ActionButtonComponent.NORMAL
+      val state =
+        if (mousePressed) ActionButtonComponent.PUSHED else if (mouseHover) ActionButtonComponent.POPPED else ActionButtonComponent.NORMAL
       buttonLook.paintBackground(graphics, this, state)
     }
 
@@ -1888,5 +1892,3 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   )
 
 }
-
-

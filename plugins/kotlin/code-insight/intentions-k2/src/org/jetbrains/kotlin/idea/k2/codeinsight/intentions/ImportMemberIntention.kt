@@ -8,7 +8,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.components.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -17,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.isTopLevel
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.ShortenCommandForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -35,7 +35,7 @@ internal class ImportMemberIntention :
 
     data class Context(
         val fqName: FqName,
-        val shortenCommand: ShortenCommand,
+        val shortenCommand: ShortenCommandForIde,
     )
 
     override fun getFamilyName(): String =

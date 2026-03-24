@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -52,14 +52,14 @@ object IndexableEntityProviderMethods {
   private fun getLibIteratorsByName(libraryTable: LibraryTable, name: String): List<IndexableFilesIterator>? =
     libraryTable.getLibraryByName(name)?.run { LibraryIndexableFilesIteratorImpl.createIteratorList(this) }
 
-  fun createLibraryIterators(name: String, project: Project): List<IndexableFilesIterator> = runReadAction {
+  fun createLibraryIterators(name: String, project: Project): List<IndexableFilesIterator> = runReadActionBlocking {
     val registrar = LibraryTablesRegistrar.getInstance()
-    getLibIteratorsByName(registrar.getGlobalLibraryTable(project), name)?.also { return@runReadAction it }
+    getLibIteratorsByName(registrar.getGlobalLibraryTable(project), name)?.also { return@runReadActionBlocking it }
     for (customLibraryTable in registrar.customLibraryTables) {
-      getLibIteratorsByName(customLibraryTable, name)?.also { return@runReadAction it }
+      getLibIteratorsByName(customLibraryTable, name)?.also { return@runReadActionBlocking it }
     }
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
-    return@runReadAction storage.entities(LibraryEntity::class.java).firstOrNull { it.name == name }?.let {
+    return@runReadActionBlocking storage.entities(LibraryEntity::class.java).firstOrNull { it.name == name }?.let {
       storage.libraryMap.getDataByEntity(it)
     }?.run {
       LibraryIndexableFilesIteratorImpl.createIteratorList(this)

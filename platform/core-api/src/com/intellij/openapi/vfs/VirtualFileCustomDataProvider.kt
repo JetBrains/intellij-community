@@ -34,6 +34,9 @@ interface VirtualFileCustomDataProvider<TData : Any> : VirtualFileCustomDataSync
         LOG.trace { "ignore LightVirtualFile: file=${virtualFile} project=${project} dataProvider=${this::class.java}" }
         return null
       }
+      if (!virtualFile.isValid) {
+        return null
+      }
 
       return PsiManager.getInstance(project).findFile(virtualFile)
     }

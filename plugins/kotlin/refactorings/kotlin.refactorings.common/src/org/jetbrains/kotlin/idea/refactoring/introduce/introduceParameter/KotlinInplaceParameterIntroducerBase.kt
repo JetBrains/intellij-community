@@ -178,7 +178,7 @@ abstract class KotlinInplaceParameterIntroducerBase<KotlinType, Descriptor>(
             defaultValueCheckBox.isSelected = descriptor.withDefaultValue
             defaultValueCheckBox.addActionListener {
                 descriptor = descriptor.copy(withDefaultValue = defaultValueCheckBox.isSelected)
-                runReadAction { updateTitle(variable ) }
+                updateTitle(runReadAction { variable })
             }
             addComponent(defaultValueCheckBox)
 

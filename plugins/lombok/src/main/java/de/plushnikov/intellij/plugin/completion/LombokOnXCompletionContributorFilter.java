@@ -1,9 +1,9 @@
 package de.plushnikov.intellij.plugin.completion;
 
-import com.intellij.codeInsight.completion.CompletionContributor;
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.java.completion.modcommand.AnnotationAttributeItemProvider;
+import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.ModCompletionItemFilter;
+import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
@@ -21,25 +21,23 @@ import java.util.Collection;
  * These default methods can/should be used only for old JDKs like 1.7 From 1.8 synthetic underscored methods should be used.
  * @see <a href="https://projectlombok.org/features/experimental/onX">Lombok onX-Documentation</a>
  */
-public final class LombokOnXCompletionContributorFilter extends CompletionContributor {
-
+public final class LombokOnXCompletionContributorFilter implements ModCompletionItemFilter {
   @Override
-  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    if (PsiUtil.getLanguageLevel(parameters.getPosition().getProject()).isLessThan(LanguageLevel.JDK_1_8)) {
-      return;
-    }
-
-    result.runRemainingContributors(parameters, completionResult -> {
-      LookupElement lookupElement = completionResult.getLookupElement();
-      if (shouldKeepItem(lookupElement)) {
-        result.passResult(completionResult);
-      }
-    });
+  public boolean isApplicableFor(@NotNull ModCompletionItemProvider provider) {
+    return provider instanceof AnnotationAttributeItemProvider;
   }
 
-  private static boolean shouldKeepItem(LookupElement item) {
-    if (ONX_PARAMETERS.contains(item.getLookupString())) {
-      if (item.getPsiElement() instanceof PsiMethod psiMethod) {
+  @Override
+  public boolean test(ModCompletionItemProvider.@NotNull CompletionContext context, @NotNull ModCompletionItem item) {
+    if (PsiUtil.getLanguageLevel(context.getPosition().getProject()).isLessThan(LanguageLevel.JDK_1_8)) {
+      return true;
+    }
+    return shouldKeepItem(item);
+  }
+
+  private static boolean shouldKeepItem(ModCompletionItem item) {
+    if (ONX_PARAMETERS.contains(item.mainLookupString())) {
+      if (item.contextObject() instanceof PsiMethod psiMethod) {
         final PsiClass containingClass = psiMethod.getContainingClass();
         if (null != containingClass && containingClass.isAnnotationType()) {
           if (ONXABLE_ANNOTATION_NAMES.contains(containingClass.getName())) {

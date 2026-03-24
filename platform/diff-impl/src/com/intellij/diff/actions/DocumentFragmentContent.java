@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions;
 
+import com.intellij.diff.actions.DocumentsSynchronizer.DocumentSynchronizerAssignmentTracker;
 import com.intellij.diff.contents.DiffContentBase;
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.impl.AssignmentTracker;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.LineCol;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,8 +34,7 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
   private final @NotNull RangeMarker myRangeMarker;
 
   private final @NotNull MyDocumentsSynchronizer mySynchronizer;
-
-  private int myAssignments = 0;
+  private final @NotNull AssignmentTracker myAssignmentTracker;
 
   public DocumentFragmentContent(@Nullable Project project, @NotNull DocumentContent original, @NotNull TextRange range) {
     this(project, original, createRangeMarker(original.getDocument(), range));
@@ -47,6 +48,7 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
     Document document2 = DocumentsSynchronizer.createFakeDocument(document1);
 
     mySynchronizer = new MyDocumentsSynchronizer(project, myRangeMarker, document1, document2);
+    myAssignmentTracker = new DocumentSynchronizerAssignmentTracker(mySynchronizer);
 
     IntUnaryOperator originalLineConvertor = original.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR);
     putUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR, value -> {
@@ -94,15 +96,7 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
 
   @Override
   public void onAssigned(boolean isAssigned) {
-    if (isAssigned) {
-      if (myAssignments == 0) mySynchronizer.startListen();
-      myAssignments++;
-    }
-    else {
-      myAssignments--;
-      if (myAssignments == 0) mySynchronizer.stopListen();
-    }
-    assert myAssignments >= 0;
+    myAssignmentTracker.onAssigned(isAssigned);
   }
 
   private static class MyDocumentsSynchronizer extends DocumentsSynchronizer {

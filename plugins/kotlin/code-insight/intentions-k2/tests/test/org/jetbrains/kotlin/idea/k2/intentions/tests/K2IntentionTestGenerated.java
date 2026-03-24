@@ -3224,6 +3224,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertToBlockBody/annotatedExprInParentheses.kt");
         }
 
+        @TestMetadata("annotatedExprIsExpression.kt")
+        public void testAnnotatedExprIsExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToBlockBody/annotatedExprIsExpression.kt");
+        }
+
         @TestMetadata("comment.kt")
         public void testComment() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToBlockBody/comment.kt");
@@ -3470,6 +3475,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("alreadyImportedClasses.kt")
+        public void testAlreadyImportedClasses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addWhenRemainingBranches/alreadyImportedClasses.kt");
+        }
+
+        @TestMetadata("alreadyImportedEnums.kt")
+        public void testAlreadyImportedEnums() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addWhenRemainingBranches/alreadyImportedEnums.kt");
         }
 
         @TestMetadata("emptyWhen.kt")
@@ -5039,6 +5054,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("returnFromNestedForLoop.kt")
             public void testReturnFromNestedForLoop() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/returnFromNestedForLoop.kt");
+            }
+
+            @TestMetadata("returnFromNestedLambda.kt")
+            public void testReturnFromNestedLambda() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/returnFromNestedLambda.kt");
             }
 
             @TestMetadata("simple.kt")
@@ -11221,7 +11241,124 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/samConversionToAnonymousObject")
+    public static class SamConversionToAnonymousObject extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("funInterface.kt")
+        public void testFunInterface() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/funInterface.kt");
+        }
+
+        @TestMetadata("labeledReturn.kt")
+        public void testLabeledReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/labeledReturn.kt");
+        }
+
+        @TestMetadata("nestedClass.kt")
+        public void testNestedClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/nestedClass.kt");
+        }
+
+        @TestMetadata("notJavaInterface.kt")
+        public void testNotJavaInterface() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/notJavaInterface.kt");
+        }
+
+        @TestMetadata("notSam.kt")
+        public void testNotSam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/notSam.kt");
+        }
+
+        @TestMetadata("nullableReturnType.kt")
+        public void testNullableReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/nullableReturnType.kt");
+        }
+
+        @TestMetadata("parameterError.kt")
+        public void testParameterError() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/parameterError.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/simple.kt");
+        }
+
+        @TestMetadata("simple2.kt")
+        public void testSimple2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/simple2.kt");
+        }
+
+        @TestMetadata("simple3.kt")
+        public void testSimple3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/simple3.kt");
+        }
+
+        @TestMetadata("typeArgument.kt")
+        public void testTypeArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/typeArgument.kt");
+        }
+
+        @TestMetadata("typeArgument2.kt")
+        public void testTypeArgument2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/typeArgument2.kt");
+        }
+
+        @TestMetadata("typeArgument3.kt")
+        public void testTypeArgument3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/typeArgument3.kt");
+        }
+
+        @TestMetadata("typeArgument4.kt")
+        public void testTypeArgument4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/typeArgument4.kt");
+        }
+
+        @TestMetadata("typeArgument5.kt")
+        public void testTypeArgument5() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/typeArgument5.kt");
+        }
+
+        @TestMetadata("typeArgument6.kt")
+        public void testTypeArgument6() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/typeArgument6.kt");
+        }
+
+        @TestMetadata("typeArgument7.kt")
+        public void testTypeArgument7() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/typeArgument7.kt");
+        }
+
+        @TestMetadata("underScoreParameters.kt")
+        public void testUnderScoreParameters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/underScoreParameters.kt");
+        }
+
+        @TestMetadata("underScoreParameters2.kt")
+        public void testUnderScoreParameters2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/underScoreParameters2.kt");
+        }
+
+        @TestMetadata("underScoreParameters3.kt")
+        public void testUnderScoreParameters3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/underScoreParameters3.kt");
+        }
+
+        @TestMetadata("usedSameFunction.kt")
+        public void testUsedSameFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/samConversionToAnonymousObject/usedSameFunction.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/convertFunctionTypeReceiverToParameter")
@@ -16103,6 +16240,224 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             public void testSingleParameter() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/singleParameter.kt");
             }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop")
+    public static class ReplaceRepeatWithForLoop extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("comments.kt")
+        public void testComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/comments.kt");
+        }
+
+        @TestMetadata("emptyReplace.kt")
+        public void testEmptyReplace() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/emptyReplace.kt");
+        }
+
+        @TestMetadata("explicitParameter.kt")
+        public void testExplicitParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/explicitParameter.kt");
+        }
+
+        @TestMetadata("expressionCount.kt")
+        public void testExpressionCount() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/expressionCount.kt");
+        }
+
+        @TestMetadata("itParameter.kt")
+        public void testItParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/itParameter.kt");
+        }
+
+        @TestMetadata("namedParameter.kt")
+        public void testNamedParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/namedParameter.kt");
+        }
+
+        @TestMetadata("nestedRepeat.kt")
+        public void testNestedRepeat() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/nestedRepeat.kt");
+        }
+
+        @TestMetadata("nonLocalReturn.kt")
+        public void testNonLocalReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/nonLocalReturn.kt");
+        }
+
+        @TestMetadata("qualifiedRepeat.kt")
+        public void testQualifiedRepeat() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/qualifiedRepeat.kt");
+        }
+
+        @TestMetadata("returnFromNestedForLoop.kt")
+        public void testReturnFromNestedForLoop() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/returnFromNestedForLoop.kt");
+        }
+
+        @TestMetadata("returnFromNestedLambda.kt")
+        public void testReturnFromNestedLambda() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/returnFromNestedLambda.kt");
+        }
+
+        @TestMetadata("shadowedIt.kt")
+        public void testShadowedIt() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/shadowedIt.kt");
+        }
+
+        @TestMetadata("simpleReplace.kt")
+        public void testSimpleReplace() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/simpleReplace.kt");
+        }
+
+        @TestMetadata("tripleNestedRepeat.kt")
+        public void testTripleNestedRepeat() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/tripleNestedRepeat.kt");
+        }
+
+        @TestMetadata("underscoredParameter.kt")
+        public void testUnderscoredParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/underscoredParameter.kt");
+        }
+
+        @TestMetadata("userDefinedRepeat.kt")
+        public void testUserDefinedRepeat() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/userDefinedRepeat.kt");
+        }
+
+        @TestMetadata("variableCount.kt")
+        public void testVariableCount() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/variableCount.kt");
+        }
+
+        @TestMetadata("withNestedReturn.kt")
+        public void testWithNestedReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/withNestedReturn.kt");
+        }
+
+        @TestMetadata("withReturn.kt")
+        public void testWithReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/withReturn.kt");
+        }
+
+        @TestMetadata("zero.kt")
+        public void testZero() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/zero.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat")
+    public static class ReplaceForLoopWithRepeat extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("continueFromNestedLambda.kt")
+        public void testContinueFromNestedLambda() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/continueFromNestedLambda.kt");
+        }
+
+        @TestMetadata("emptyReplace.kt")
+        public void testEmptyReplace() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/emptyReplace.kt");
+        }
+
+        @TestMetadata("expressionCount.kt")
+        public void testExpressionCount() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/expressionCount.kt");
+        }
+
+        @TestMetadata("itParameter.kt")
+        public void testItParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/itParameter.kt");
+        }
+
+        @TestMetadata("namedParameter.kt")
+        public void testNamedParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/namedParameter.kt");
+        }
+
+        @TestMetadata("nestedForLoop.kt")
+        public void testNestedForLoop() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/nestedForLoop.kt");
+        }
+
+        @TestMetadata("nonZeroStart.kt")
+        public void testNonZeroStart() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/nonZeroStart.kt");
+        }
+
+        @TestMetadata("rangeTo.kt")
+        public void testRangeTo() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/rangeTo.kt");
+        }
+
+        @TestMetadata("simpleReplace.kt")
+        public void testSimpleReplace() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/simpleReplace.kt");
+        }
+
+        @TestMetadata("tripleNestedContinue.kt")
+        public void testTripleNestedContinue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/tripleNestedContinue.kt");
+        }
+
+        @TestMetadata("tripleNestedLoop.kt")
+        public void testTripleNestedLoop() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/tripleNestedLoop.kt");
+        }
+
+        @TestMetadata("untilOperator.kt")
+        public void testUntilOperator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/untilOperator.kt");
+        }
+
+        @TestMetadata("variableCount.kt")
+        public void testVariableCount() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/variableCount.kt");
+        }
+
+        @TestMetadata("withBreak.kt")
+        public void testWithBreak() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/withBreak.kt");
+        }
+
+        @TestMetadata("withContinue.kt")
+        public void testWithContinue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/withContinue.kt");
+        }
+
+        @TestMetadata("withNestedContinue.kt")
+        public void testWithNestedContinue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/withNestedContinue.kt");
+        }
+
+        @TestMetadata("withoutBraces.kt")
+        public void testWithoutBraces() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/withoutBraces.kt");
+        }
+
+        @TestMetadata("zero.kt")
+        public void testZero() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceForLoopWithRepeat/zero.kt");
         }
     }
 }

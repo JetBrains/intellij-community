@@ -81,9 +81,8 @@
     <completion.contributor language="JAVA"
                             implementationClass="de.plushnikov.intellij.plugin.extension.LombokBuilderCompletionContributor" />
 
-    <completion.contributor language="JAVA"
-                            implementationClass="de.plushnikov.intellij.plugin.completion.LombokOnXCompletionContributorFilter"
-                            order="first"/>
+    <modcompletion.completionItemFilter language="JAVA"
+                            implementationClass="de.plushnikov.intellij.plugin.completion.LombokOnXCompletionContributorFilter"/>
     <lang.commenter language="Lombok.Config"
                     implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigCommentor"/>
     <fileBasedIndex implementation="de.plushnikov.intellij.plugin.lombokconfig.LombokConfigIndex"/>

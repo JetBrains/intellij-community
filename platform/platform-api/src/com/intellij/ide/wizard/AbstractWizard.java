@@ -3,7 +3,6 @@ package com.intellij.ide.wizard;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
@@ -12,20 +11,19 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.system.OS;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,23 +36,17 @@ import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.JRootPane;
 import javax.swing.KeyStroke;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
@@ -80,19 +72,19 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
   };
 
-  public AbstractWizard(@NlsContexts.DialogTitle String title, final Component dialogParent) {
+  public AbstractWizard(@NlsContexts.DialogTitle String title, Component dialogParent) {
     super(dialogParent, true);
     mySteps = new ArrayList<>();
     initWizard(title);
   }
 
-  public AbstractWizard(@NlsContexts.DialogTitle String title, final @Nullable Project project) {
+  public AbstractWizard(@NlsContexts.DialogTitle String title, @Nullable Project project) {
     super(project, true);
     mySteps = new ArrayList<>();
     initWizard(title);
   }
 
-  private void initWizard(final @NlsContexts.DialogTitle String title) {
+  private void initWizard(@NlsContexts.DialogTitle String title) {
     setTitle(title);
     myCurrentStep = 0;
     myPreviousButton = new JButton(IdeBundle.message("button.wizard.previous"));
@@ -103,26 +95,15 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     myIcon = new TallImageComponent(null);
 
-    JRootPane rootPane = getRootPane();
+    var rootPane = getRootPane();
     if (rootPane != null) {        // it will be null in headless mode, i.e. tests
       rootPane.registerKeyboardAction(
-        new ActionListener() {
-          @Override
-          public void actionPerformed(final ActionEvent e) {
-            helpAction();
-          }
-        },
+        e -> helpAction(),
         KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0),
         JComponent.WHEN_IN_FOCUSED_WINDOW
       );
-
       rootPane.registerKeyboardAction(
-        new ActionListener() {
-          @Override
-          public void actionPerformed(final ActionEvent e) {
-            helpAction();
-          }
-        },
+        e -> helpAction(),
         KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0),
         JComponent.WHEN_IN_FOCUSED_WINDOW
       );
@@ -135,32 +116,30 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       return super.createSouthPanel();
     }
 
-    JPanel panel = new JPanel(new BorderLayout());
+    var panel = new JPanel(new BorderLayout());
     if (getStyle() == DialogStyle.COMPACT) {
       panel.setBorder(BorderFactory.createEmptyBorder(4, 15, 4, 15));
     }
 
-    JPanel buttonPanel = new JPanel();
+    var buttonPanel = new JPanel();
 
-    if (SystemInfo.isMac) {
+    if (OS.CURRENT == OS.macOS) {
       panel.add(buttonPanel, BorderLayout.EAST);
       buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
 
-      if (!StartupUiUtil.isUnderDarcula()) {
+      if (!StartupUiUtil.INSTANCE.isDarkTheme()) {
         myHelpButton.putClientProperty("JButton.buttonType", "help");
       }
 
-      final List<JButton> touchbarButtons = new ArrayList<>();
-      JPanel leftPanel = new JPanel();
-      if (ApplicationInfo.contextHelpAvailable()) {
-        leftPanel.add(myHelpButton);
-        touchbarButtons.add(myHelpButton);
-      }
+      var touchbarButtons = new ArrayList<JButton>();
+      var leftPanel = new JPanel();
+      leftPanel.add(myHelpButton);
+      touchbarButtons.add(myHelpButton);
       leftPanel.add(myCancelButton);
       touchbarButtons.add(myCancelButton);
       panel.add(leftPanel, BorderLayout.WEST);
 
-      List<JButton> principalTouchbarButtons = new ArrayList<>();
+      var principalTouchbarButtons = new ArrayList<JButton>();
       if (mySteps.size() > 1) {
         buttonPanel.add(Box.createHorizontalStrut(5));
         buttonPanel.add(myPreviousButton);
@@ -174,27 +153,22 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
     else {
       panel.add(buttonPanel, BorderLayout.CENTER);
-      GroupLayout layout = new GroupLayout(buttonPanel);
+      var layout = new GroupLayout(buttonPanel);
       buttonPanel.setLayout(layout);
       layout.setAutoCreateGaps(true);
 
-      final GroupLayout.SequentialGroup hGroup = layout.createSequentialGroup();
-      final GroupLayout.ParallelGroup vGroup = layout.createParallelGroup();
-      final Collection<Component> buttons = new ArrayList<>(5);
-      final boolean helpAvailable = ApplicationInfo.contextHelpAvailable();
+      var hGroup = layout.createSequentialGroup();
+      var vGroup = layout.createParallelGroup();
+      var buttons = new ArrayList<Component>(5);
 
       add(hGroup, vGroup, null, Box.createHorizontalGlue());
       if (mySteps.size() > 1) {
         add(hGroup, vGroup, buttons, myPreviousButton);
       }
       add(hGroup, vGroup, buttons, myNextButton, myCancelButton);
-      if (helpAvailable) {
-        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        if (ApplicationInfo.contextHelpAvailable()) {
-          leftPanel.add(myHelpButton);
-          panel.add(leftPanel, BorderLayout.WEST);
-        }
-      }
+      var leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+      leftPanel.add(myHelpButton);
+      panel.add(leftPanel, BorderLayout.WEST);
 
       layout.setHorizontalGroup(hGroup);
       layout.setVerticalGroup(vGroup);
@@ -202,27 +176,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
 
     myPreviousButton.setEnabled(false);
-    myPreviousButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        doPreviousAction();
-      }
-    });
-    myNextButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        proceedToNextStep();
-      }
-    });
-
-    myCancelButton.addActionListener(
-      new ActionListener() {
-        @Override
-        public void actionPerformed(final ActionEvent e) {
-          doCancelAction();
-        }
-      }
-    );
+    myPreviousButton.addActionListener(e -> doPreviousAction());
+    myNextButton.addActionListener(e -> proceedToNextStep());
+    myCancelButton.addActionListener(e -> doCancelAction());
 
     return panel;
   }
@@ -244,7 +200,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
         doOKAction();
       }
       catch (CommitStepException exc) {
-        String message = exc.getMessage();
+        var message = exc.getMessage();
         Messages.showErrorDialog(myContentPanel, message);
       }
     }
@@ -257,11 +213,8 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return myContentPanel;
   }
 
-  private static void add(final GroupLayout.Group hGroup,
-                          final GroupLayout.Group vGroup,
-                          final @Nullable Collection<? super Component> collection,
-                          final Component... components) {
-    for (Component component : components) {
+  private static void add(GroupLayout.Group hGroup, GroupLayout.Group vGroup, @Nullable Collection<Component> collection, Component... components) {
+    for (var component : components) {
       hGroup.addComponent(component);
       vGroup.addComponent(component);
       if (collection != null) collection.add(component);
@@ -286,20 +239,21 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       if (icon == null) {
         return;
       }
-      final BufferedImage image = ImageUtil.createImage(g, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-      final Graphics2D gg = image.createGraphics();
+
+      var image = ImageUtil.createImage(g, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+      var gg = image.createGraphics();
       icon.paintIcon(this, gg, 0, 0);
 
-      final Rectangle bounds = g.getClipBounds();
-      int y = icon.getIconHeight() - 1;
+      var bounds = g.getClipBounds();
+      var y = icon.getIconHeight() - 1;
       while (y < bounds.y + bounds.height) {
-        g.drawImage(image,
-                    bounds.x, y, bounds.x + bounds.width, y + 1,
-                    0, icon.getIconHeight() - 1, bounds.width, icon.getIconHeight(), this);
-
+        g.drawImage(
+          image,
+          bounds.x, y, bounds.x + bounds.width, y + 1,
+          0, icon.getIconHeight() - 1, bounds.width, icon.getIconHeight(), this
+        );
         y++;
       }
-
 
       g.drawImage(image, 0, 0, this);
     }
@@ -323,7 +277,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
+    var panel = new JPanel(new BorderLayout());
     panel.add(myIcon, BorderLayout.WEST);
     panel.add(myContentPanel, BorderLayout.CENTER);
     return panel;
@@ -341,18 +295,18 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return mySteps.get(myCurrentStep);
   }
 
-  public void addStep(final @NotNull T step) {
+  public void addStep(@NotNull T step) {
     addStep(step, mySteps.size());
   }
 
-  public void addStep(final @NotNull T step, int index) {
+  public void addStep(@NotNull T step, int index) {
     mySteps.add(index, step);
 
     if (step instanceof StepAdapter) {
       ((StepAdapter)step).registerStepListener(myStepListener);
     }
     // card layout is used
-    final Component component = step.getComponent();
+    var component = step.getComponent();
     if (component != null) {
       addStepComponent(component);
     }
@@ -370,7 +324,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       ((JPanel)component).putClientProperty(DIALOG_CONTENT_PANEL_PROPERTY, true);
     }
 
-    String id = myComponentToIdMap.get(component);
+    var id = myComponentToIdMap.get(component);
     if (id == null) {
       id = Integer.toString(myComponentToIdMap.size());
       myComponentToIdMap.put(component, id);
@@ -379,8 +333,8 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return id;
   }
 
-  private void showStepComponent(final Component component) {
-    String id = myComponentToIdMap.get(component);
+  private void showStepComponent(Component component) {
+    var id = myComponentToIdMap.get(component);
     if (id == null) {
       id = addStepComponent(component);
       myContentPanel.revalidate();
@@ -391,16 +345,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   protected void doPreviousAction() {
     // Commit data of current step
-    final Step currentStep = mySteps.get(myCurrentStep);
+    var currentStep = mySteps.get(myCurrentStep);
     LOG.assertTrue(currentStep != null);
     try {
       currentStep._commit(false);
     }
-    catch (final CommitStepException exc) {
-      Messages.showErrorDialog(
-        myContentPanel,
-        exc.getMessage()
-      );
+    catch (CommitStepException exc) {
+      Messages.showErrorDialog(myContentPanel, exc.getMessage());
       return;
     }
 
@@ -422,17 +373,14 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   protected void doNextAction() {
     // Commit data of current step
-    final Step currentStep = mySteps.get(myCurrentStep);
+    var currentStep = mySteps.get(myCurrentStep);
     LOG.assertTrue(currentStep != null);
     LOG.assertTrue(!isLastStep(), "steps: " + mySteps + " current: " + currentStep);
     try {
       currentStep._commit(false);
     }
-    catch (final CommitStepException exc) {
-      Messages.showErrorDialog(
-        myContentPanel,
-        exc.getMessage()
-      );
+    catch (CommitStepException exc) {
+      Messages.showErrorDialog(myContentPanel, exc.getMessage());
       return;
     }
 
@@ -447,7 +395,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
    * @return the next step's index
    */
   protected int getNextStep(int step) {
-    final int stepCount = mySteps.size();
+    var stepCount = mySteps.size();
     if (++step >= stepCount) {
       step = stepCount - 1;
     }
@@ -459,7 +407,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   protected T getNextStepObject() {
-    int step = getNextStep();
+    var step = getNextStep();
     return mySteps.get(step);
   }
 
@@ -485,14 +433,14 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       return;
     }
 
-    final Step step = mySteps.get(myCurrentStep);
+    var step = mySteps.get(myCurrentStep);
     LOG.assertTrue(step != null);
     step._init();
     currentStepComponent = step.getComponent();
     LOG.assertTrue(currentStepComponent != null);
     showStepComponent(currentStepComponent);
 
-    Icon icon = step.getIcon();
+    var icon = step.getIcon();
     if (icon != null) {
       myIcon.setIcon(icon);
       myIcon.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
@@ -500,14 +448,12 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     updateButtons();
 
-    UiNotifyConnector.doWhenFirstShown(currentStepComponent, () -> {
-      requestFocusTo(getPreferredFocusedComponent());
-    });
+    UiNotifyConnector.doWhenFirstShown(currentStepComponent, () -> requestFocusTo(getPreferredFocusedComponent()));
   }
 
   @Override
   public @Nullable JComponent getPreferredFocusedComponent() {
-    T step = getCurrentStepObject();
+    var step = getCurrentStepObject();
     var component = step == null ? null : step.getPreferredFocusedComponent();
     return ObjectUtils.chooseNotNull(component, myNextButton);
   }
@@ -530,7 +476,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   protected void updateButtons() {
-    boolean lastStep = isLastStep();
+    var lastStep = isLastStep();
     updateButtons(lastStep, lastStep ? canFinish() : canGoNext(), isFirstStep());
   }
 
@@ -564,11 +510,8 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     myPreviousButton.setVisible(!firstStep);
   }
 
-  /**
-   * @deprecated new version of new project wizard cannot be disabled
-   */
-  @SuppressWarnings("unused") // Used externally
-  @Deprecated
+  /** @deprecated always {@code true} */
+  @Deprecated(forRemoval = true)
   public static boolean isNewWizard() {
     return true;
   }
@@ -610,7 +553,6 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     if (useDialogWrapperSouthPanel()) {
       throw new UnsupportedOperationException("Not implemented");
     }
-
     return super.createActions();
   }
 
@@ -625,9 +567,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   @ApiStatus.Internal
   public void setStepListener(Collection<T> steps) {
-    for (T step : steps) {
-      if (step instanceof StepAdapter) {
-        ((StepAdapter)step).registerStepListener(myStepListener);
+    for (var step : steps) {
+      if (step instanceof StepAdapter sa) {
+        sa.registerStepListener(myStepListener);
       }
     }
   }
@@ -637,11 +579,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return getHelpID();
   }
 
-  /**
-   * @deprecated use {@link #getHelpId()} instead
-   */
-  @Deprecated
-  protected @Nullable @NonNls String getHelpID() {
+  /** @deprecated use {@link #getHelpId()} instead */
+  @Deprecated(forRemoval = true)
+  protected @Nullable String getHelpID() {
     return null;
   }
 }

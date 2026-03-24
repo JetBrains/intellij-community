@@ -9,6 +9,7 @@ import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -831,7 +832,8 @@ public final class InheritanceToDelegationProcessor extends BaseRefactoringProce
             PsiMethod outerMethod = MethodSignatureUtil.findMethodBySignature(myClass, signature, false);
             if (outerMethod == null) {
               String visibility = checkOuterClassAbstractMethod(signature);
-              PsiMethod newOuterMethod = (PsiMethod)myClass.add(myMethod);
+              //todo fix IDEA-387050
+              PsiMethod newOuterMethod = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> (PsiMethod)myClass.add(myMethod));
               PsiUtil.setModifierProperty(newOuterMethod, visibility, true);
               if (containingClass.isInterface() &&
                   !innerClass.isInterface() &&

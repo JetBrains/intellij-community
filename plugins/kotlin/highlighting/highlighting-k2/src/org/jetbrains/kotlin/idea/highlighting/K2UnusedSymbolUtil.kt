@@ -9,7 +9,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.find.FindManager
-import com.intellij.find.impl.FindManagerImpl
+import com.intellij.find.impl.FindManagerBase
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
@@ -523,7 +523,7 @@ object K2UnusedSymbolUtil {
             }
         }
 
-        val handler = (FindManager.getInstance(project) as FindManagerImpl).findUsagesManager.getFindUsagesHandler(declaration, true)
+        val handler = (FindManager.getInstance(project) as FindManagerBase).findUsagesManager.getFindUsagesHandler(declaration, true)
         if (handler != null) {
             val options = handler.findUsagesOptions
             // effectively disable search for text occurrences for classes which are processed earlier but faster

@@ -45,7 +45,7 @@ public final class JsonSchemaObjectReadingUtils {
   /**
    * @deprecated Use {@link  com.jetbrains.jsonSchema.impl.light.JsonSchemaRefResolverKt#resolveRefSchema}
    */
-  @Deprecated()
+  @Deprecated(forRemoval = true)
   public static @Nullable JsonSchemaObject resolveRefSchema(@NotNull JsonSchemaObject schemaNode, @NotNull JsonSchemaService service) {
     final String ref = schemaNode.getRef();
     assert !StringUtil.isEmptyOrSpaces(ref);

@@ -137,7 +137,7 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
 
     DaemonProgressIndicator daemonProgressIndicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
     // in case the inspection is running in batch mode
-    HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, context, daemonProgressIndicator, visibleRange);
+    HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, daemonProgressIndicator, visibleRange);
 
     GeneralHighlightingPass ghp = new GeneralHighlightingPass(
       psiFile, document, startOffset, endOffset, true, visibleRange, null, runAnnotators, runVisitors, highlightErrorElements,

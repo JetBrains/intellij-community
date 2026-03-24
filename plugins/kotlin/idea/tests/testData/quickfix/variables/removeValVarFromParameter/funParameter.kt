@@ -1,4 +1,5 @@
 // "Remove 'val' from parameter" "true"
+// K2_ERROR: 'val' on function parameter is prohibited.
 fun f(<caret>val x: String) {
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveValVarFromParameterFix

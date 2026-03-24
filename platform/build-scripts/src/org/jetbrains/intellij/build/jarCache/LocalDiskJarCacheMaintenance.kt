@@ -10,13 +10,15 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.LocalDateTime
 import java.util.ArrayDeque
+import kotlin.random.Random
 import kotlin.time.Duration
 
 private const val cleanupCandidateQueueMaxSize = 200_000
 private const val cleanupCandidateBatchLimit = 50_000
-private const val cleanupShardScanBudget = 64
 private const val cleanupReservedScanCandidates = cleanupCandidateBatchLimit / 10
 private const val cleanupScanCursorSeparator = '|'
+private const val maxVersionsPerTarget = 3
+private const val recentTouchFailurePriorityAccessTime = Long.MAX_VALUE
 
 internal data class CleanupCandidate(
   @JvmField val entryStem: String,
@@ -34,6 +36,12 @@ private data class CleanupScanCursor(
 private data class EntryStemBatch(
   @JvmField val entryStems: List<String>,
   @JvmField val exhausted: Boolean,
+)
+
+private data class TargetRetentionCandidate(
+  @JvmField val cleanupCandidate: CleanupCandidate,
+  @JvmField val entryStem: String,
+  @JvmField val metadataAccessTime: Long,
 )
 
 internal class CleanupCandidateIndex(
@@ -93,13 +101,15 @@ internal class CleanupCandidateIndex(
 internal suspend fun cleanupLocalDiskJarCache(
   entriesDir: Path,
   lastCleanupMarkerFile: Path,
+  cleanupInterval: Duration,
   maxAccessTimeAge: Duration,
   cleanupCandidateIndex: CleanupCandidateIndex,
+  metadataTouchTracker: MetadataTouchTracker,
   withCacheEntryLock: suspend (Long, suspend () -> Unit) -> Unit,
 ) {
   withContext(Dispatchers.IO) {
     try {
-      if (!isTimeForCleanup(lastCleanupMarkerFile = lastCleanupMarkerFile)) {
+      if (!isTimeForCleanup(lastCleanupMarkerFile = lastCleanupMarkerFile, cleanupInterval = cleanupInterval)) {
         return@withContext
       }
 
@@ -108,6 +118,7 @@ internal suspend fun cleanupLocalDiskJarCache(
         currentTime = System.currentTimeMillis(),
         maxTimeMs = maxAccessTimeAge.inWholeMilliseconds,
         cleanupCandidateIndex = cleanupCandidateIndex,
+        metadataTouchTracker = metadataTouchTracker,
         withCacheEntryLock = withCacheEntryLock,
       )
       Files.writeString(lastCleanupMarkerFile, LocalDateTime.now().toString())
@@ -169,7 +180,7 @@ internal fun purgeLegacyCacheIfRequired(
   }
 }
 
-private fun isTimeForCleanup(lastCleanupMarkerFile: Path): Boolean {
+private fun isTimeForCleanup(lastCleanupMarkerFile: Path, cleanupInterval: Duration): Boolean {
   if (Files.notExists(lastCleanupMarkerFile)) {
     return true
   }
@@ -184,7 +195,7 @@ private fun isTimeForCleanup(lastCleanupMarkerFile: Path): Boolean {
     return true
   }
 
-  return lastCleanupTime < (System.currentTimeMillis() - cleanupEveryDuration.inWholeMilliseconds)
+  return lastCleanupTime < (System.currentTimeMillis() - cleanupInterval.inWholeMilliseconds)
 }
 
 private suspend fun cleanupEntries(
@@ -192,6 +203,7 @@ private suspend fun cleanupEntries(
   currentTime: Long,
   maxTimeMs: Long,
   cleanupCandidateIndex: CleanupCandidateIndex,
+  metadataTouchTracker: MetadataTouchTracker,
   withCacheEntryLock: suspend (Long, suspend () -> Unit) -> Unit,
 ) {
   withContext(Dispatchers.IO) {
@@ -201,6 +213,12 @@ private suspend fun cleanupEntries(
       entriesDir = entriesDir,
       scanCursorFile = scanCursorFile,
       cleanupCandidateIndex = cleanupCandidateIndex,
+    )
+    val overflowCandidates = collectOverflowCandidatesByTarget(
+      entriesDir = entriesDir,
+      candidates = candidates,
+      currentTime = currentTime,
+      metadataTouchTracker = metadataTouchTracker,
     )
     for (candidate in candidates) {
       val entryStem = candidate.entryStem
@@ -213,24 +231,97 @@ private suspend fun cleanupEntries(
         continue
       }
 
-      // Cleanup sees only persisted entry names. Recover lock slot from stored key prefix
-      // ("<lsb>-<msb>") to match computeIfAbsent slot selection.
-      val lockSlot = parseLockSlotFromKey(key)
-      if (lockSlot == null) {
+      // Cleanup sees only persisted entry names. Recover the lsb from stored key prefix
+      // ("<lsb>-<msb>") and feed it into StripedMutex.getLockByHash.
+      val lockHash = parseLeastSignificantBitsFromKey(key)
+      if (lockHash == null) {
         // Entries with malformed key prefix are unreachable by computeIfAbsent, so remove
         // them directly instead of keeping garbage forever.
         deleteEntryFiles(paths)
         continue
       }
 
-      if (!shouldInspectEntryUnderLock(paths = paths, staleThreshold = staleThreshold)) {
+      val isOverflowCandidate = overflowCandidates.contains(candidate.dedupKey)
+      if (!isOverflowCandidate && !shouldInspectEntryUnderLock(paths = paths, staleThreshold = staleThreshold)) {
         continue
       }
 
-      withCacheEntryLock(lockSlot) {
-        cleanupEntry(paths = paths, staleThreshold = staleThreshold)
+      withCacheEntryLock(lockHash) {
+        if (isOverflowCandidate) {
+          deleteEntryFiles(paths)
+          return@withCacheEntryLock
+        }
+
+        cleanupEntry(
+          paths = paths,
+          staleThreshold = staleThreshold,
+          currentTime = currentTime,
+          metadataTouchTracker = metadataTouchTracker,
+        )
       }
     }
+  }
+}
+
+private fun collectOverflowCandidatesByTarget(
+  entriesDir: Path,
+  candidates: List<CleanupCandidate>,
+  currentTime: Long,
+  metadataTouchTracker: MetadataTouchTracker,
+): Set<String> {
+  if (candidates.isEmpty()) {
+    return emptySet()
+  }
+
+  val byTargetName = HashMap<String, MutableList<TargetRetentionCandidate>>()
+  for (candidate in candidates) {
+    val entryStem = candidate.entryStem
+    val targetFileName = getTargetNameFromEntryStem(entryStem) ?: continue
+    val metadataAccessTime = if (metadataTouchTracker.hasRecentTouchFailure(entryStem, currentTime)) {
+      // Honor touch-failure grace: treat entry as freshest while grace is active.
+      recentTouchFailurePriorityAccessTime
+    }
+    else {
+      val metadataFile = entriesDir.resolve(candidate.shardDirName).resolve(entryStem + metadataFileSuffix)
+      readMetadataAccessTimeOrOldest(metadataFile)
+    }
+    byTargetName.computeIfAbsent(targetFileName) { mutableListOf() }
+      .add(
+        TargetRetentionCandidate(
+          cleanupCandidate = candidate,
+          entryStem = entryStem,
+          metadataAccessTime = metadataAccessTime,
+        ),
+      )
+  }
+
+  val overflow = HashSet<String>()
+  for (targetCandidates in byTargetName.values) {
+    if (targetCandidates.size <= maxVersionsPerTarget) {
+      continue
+    }
+
+    targetCandidates.sortWith(
+      compareByDescending<TargetRetentionCandidate> { it.metadataAccessTime }
+        .thenByDescending { it.entryStem }
+        .thenByDescending { it.cleanupCandidate.shardDirName },
+    )
+    for (index in maxVersionsPerTarget until targetCandidates.size) {
+      overflow.add(targetCandidates[index].cleanupCandidate.dedupKey)
+    }
+  }
+  return overflow
+}
+
+private fun readMetadataAccessTimeOrOldest(metadataFile: Path): Long {
+  return try {
+    Files.getLastModifiedTime(metadataFile).toMillis()
+  }
+  catch (_: NoSuchFileException) {
+    Long.MIN_VALUE
+  }
+  catch (_: IOException) {
+    Long.MIN_VALUE
   }
 }
 
@@ -240,7 +331,8 @@ private fun collectCandidatesForCleanup(
   cleanupCandidateIndex: CleanupCandidateIndex,
 ): List<CleanupCandidate> {
   // See README.md: "Cleanup Candidate Queue Plus Reserved Scan".
-  // Always reserve scan capacity so cold/misplaced entries are eventually discovered.
+  // Always reserve scan capacity so cold/misplaced entries are eventually discovered,
+  // then continue scanning until this cleanup run reaches the batch cap or exhausts shards.
   val reservedScanCount = cleanupReservedScanCandidates.coerceIn(1, cleanupCandidateBatchLimit)
   val queueDrainLimit = (cleanupCandidateBatchLimit - reservedScanCount).coerceAtLeast(0)
   val result = LinkedHashMap<String, CleanupCandidate>(cleanupCandidateBatchLimit)
@@ -282,7 +374,7 @@ private fun collectEntryStemsFromShardWindow(
   var index = startIndex
   var scannedShards = 0
   var nextCursor: CleanupScanCursor? = null
-  while (scannedShards < cleanupShardScanBudget && scannedShards < shardDirs.size && result.size < maxEntries) {
+  while (scannedShards < shardDirs.size && result.size < maxEntries) {
     val shardDir = shardDirs[index]
     val remaining = maxEntries - result.size
     val shardDirName = shardDir.fileName.toString()
@@ -382,16 +474,48 @@ private fun writeCleanupScanCursor(scanCursorFile: Path, cursor: CleanupScanCurs
   }
 
   try {
-    Files.writeString(
+    writeCleanupScanCursorAtomically(
       scanCursorFile,
       serializedCursor,
-      StandardOpenOption.CREATE,
-      StandardOpenOption.TRUNCATE_EXISTING,
-      StandardOpenOption.WRITE,
     )
   }
   catch (_: IOException) {
     // cleanup is best-effort
+  }
+}
+
+internal fun writeCleanupScanCursorAtomically(
+  scanCursorFile: Path,
+  serializedCursor: String,
+  tempFilePrefix: String = "cleanup-scan-cursor",
+  moveFile: (Path, Path) -> Unit = ::moveReplacing,
+) {
+  val tempFileName = buildTempSiblingFileName(
+    baseFileName = scanCursorFile.fileName.toString(),
+    tempFilePrefix = tempFilePrefix,
+    randomSuffix = Random.nextLong(),
+  )
+  val tempFile = scanCursorFile.resolveSibling(tempFileName)
+  var published = false
+  try {
+    Files.writeString(
+      tempFile,
+      serializedCursor,
+      StandardOpenOption.CREATE_NEW,
+      StandardOpenOption.WRITE,
+    )
+    moveFile(tempFile, scanCursorFile)
+    published = true
+  }
+  finally {
+    if (!published) {
+      try {
+        Files.deleteIfExists(tempFile)
+      }
+      catch (_: IOException) {
+        // cleanup is best-effort
+      }
+    }
   }
 }
 
@@ -477,7 +601,12 @@ private fun shouldInspectEntryUnderLock(paths: CacheEntryPaths, staleThreshold: 
   return true
 }
 
-private fun cleanupEntry(paths: CacheEntryPaths, staleThreshold: Long) {
+private fun cleanupEntry(
+  paths: CacheEntryPaths,
+  staleThreshold: Long,
+  currentTime: Long,
+  metadataTouchTracker: MetadataTouchTracker,
+) {
   val metadataFile = paths.metadataFile
   if (Files.notExists(metadataFile)) {
     deleteEntryFiles(paths)
@@ -500,6 +629,16 @@ private fun cleanupEntry(paths: CacheEntryPaths, staleThreshold: Long) {
   }
 
   val markFile = paths.markFile
+  if (metadataTouchTracker.hasRecentTouchFailure(paths.entryStem, currentTime)) {
+    try {
+      Files.deleteIfExists(markFile)
+    }
+    catch (_: IOException) {
+      // cleanup is best-effort
+    }
+    return
+  }
+
   if (lastAccessTime > staleThreshold) {
     try {
       Files.deleteIfExists(markFile)

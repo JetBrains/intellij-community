@@ -1,5 +1,6 @@
 // "Wrap element with 'listOf()' call" "true"
 // WITH_STDLIB
+// K2_ERROR: Null cannot be a value of a non-null type 'List<String?>'.
 
 fun foo() {
     bar(null<caret>)

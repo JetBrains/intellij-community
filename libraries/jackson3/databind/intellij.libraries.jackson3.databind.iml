@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="jackson3-databind" type="repository">
+        <properties maven-id="tools.jackson.core:jackson-databind:3.1.0-rc1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/core/jackson-databind/3.1.0-rc1/jackson-databind-3.1.0-rc1.jar">
+              <sha256sum>185921d5c012b6a40aa0296aae4f9ed99f02bf8ebff8860542efcd0396f5dd61</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="tools.jackson.core:jackson-core" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-annotations" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/core/jackson-databind/3.1.0-rc1/jackson-databind-3.1.0-rc1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/core/jackson-databind/3.1.0-rc1/jackson-databind-3.1.0-rc1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.jackson.annotations" exported="" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="RUNTIME" />
+  </component>
+</module>

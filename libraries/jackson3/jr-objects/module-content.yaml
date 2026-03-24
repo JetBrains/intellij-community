@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jackson3.jr.objects.jar
+  modules:
+  - name: intellij.libraries.jackson3.jr.objects
+    libraries:
+      jackson3-jr-objects:
+      - name: $MAVEN_REPOSITORY$/tools/jackson/jr/jackson-jr-objects/3/jackson-jr-objects-3.jar

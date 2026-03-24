@@ -5,9 +5,11 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.lookup.EqTailType;
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.CommonCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
+import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,13 +30,15 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.function.Consumer;
 
+/**
+ * A completion provider for annotation attributes like {@code @Anno(va|lue = true)}.
+ */
 @NotNullByDefault
-final class AnnotationAttributeItemProvider extends JavaModCompletionItemProvider {
+public final class AnnotationAttributeItemProvider extends JavaModCompletionItemProvider implements DumbAware {
 
   @Override
-  public void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink) {
+  public void provideItems(CompletionContext context, ModCompletionResult sink) {
     PsiElement position = context.getPosition();
     if (!context.isSmart() && position instanceof PsiIdentifier) {
       PsiAnnotation anno = JavaCompletionContributor.findAnnotationWhoseAttributeIsCompleted(position);
@@ -47,7 +51,12 @@ final class AnnotationAttributeItemProvider extends JavaModCompletionItemProvide
     }
   }
 
-  private static void completeAnnotationAttributeName(Consumer<ModCompletionItem> sink,
+  @Override
+  public boolean isEnabled() {
+    return true;
+  }
+
+  private static void completeAnnotationAttributeName(ModCompletionResult sink,
                                                       PsiElement position,
                                                       PsiAnnotation anno,
                                                       PsiClass annoClass) {

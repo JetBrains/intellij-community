@@ -4,6 +4,7 @@ package com.intellij.grazie.spellcheck.suggestion
 import com.intellij.codeInsight.completion.CompletionUtilCore
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.codeStyle.SuggestedNameInfo
 import com.intellij.refactoring.rename.NameSuggestionProvider
@@ -31,5 +32,9 @@ class SpellcheckingNameSuggestionProvider : NameSuggestionProvider {
     return SuggestedNameInfo.NULL_INFO
   }
 
-  private fun getName(element: PsiElement): String? = if (element is PsiNamedElement) element.name else null
+  private fun getName(element: PsiElement): String? = when (element) {
+    is PsiFile -> element.name.substringBefore('.').takeIf { it.isNotBlank() }
+    is PsiNamedElement -> element.name
+    else -> null
+  }
 }

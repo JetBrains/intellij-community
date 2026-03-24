@@ -5,7 +5,7 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -30,14 +30,14 @@ internal class NoInlineEditShownNotifier(private val project: Project, scope: Co
 
   @RequiresEdt
   fun notifyNoSuggestionIfNothingIsShown(editor: Editor) {
-    val initialEditorState = runReadAction { editor.getState() }
+    val initialEditorState = runReadActionBlocking { editor.getState() }
     hintRequestExecutor.switchRequest(onJobCreated = {}) {
       val result = InlineEditAwaiter.awaitAllInlineEdits(project, editor)
       when (result) {
         InlineEditAwaiter.Result.SuggestionProvided -> Unit
         InlineEditAwaiter.Result.NothingProvided -> {
           withContext(Dispatchers.EDT) {
-            val finalEditorState = runReadAction { editor.getState() }
+            val finalEditorState = runReadActionBlocking { editor.getState() }
             if (initialEditorState == finalEditorState) {
               coroutineToIndicator {
                 HintManager.getInstance().showInformationHint(editor, LangBundle.message("completion.no.suggestions"), HintManager.ABOVE)

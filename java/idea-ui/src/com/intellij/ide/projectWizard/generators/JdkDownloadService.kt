@@ -35,9 +35,9 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     }
   }
 
-  fun scheduleDownloadSdk(sdk: Sdk): CompletableFuture<Boolean> {
+  fun scheduleDownloadSdk(sdk: Sdk?): CompletableFuture<Boolean> {
     return coroutineScope.async {
-      if (!SdkDownloadTracker.getInstance().isDownloading(sdk)) return@async false
+      if (sdk == null || !SdkDownloadTracker.getInstance().isDownloading(sdk)) return@async false
       withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdk.name)) {
         JdkDownloadUtil.downloadSdk(sdk)
       }

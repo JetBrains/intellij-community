@@ -1,4 +1,5 @@
 // "Replace 'if' expression with elvis expression" "true"
+// K2_ERROR: Smart cast to 'String' is impossible, because 'x' is a mutable property that could be mutated concurrently.
 class Test {
     var x: Any? = null
 

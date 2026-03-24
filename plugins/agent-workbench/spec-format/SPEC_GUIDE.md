@@ -18,7 +18,7 @@ description: Requirements for the Agent Threads tool window and app-server integ
 targets:
   - ../sessions/src/*.kt
   - ../sessions/resources/intellij.agent.workbench.sessions.xml
-  - ../sessions/resources/messages/CodexSessionsBundle.properties
+  - ../sessions/resources/messages/AgentSessionsBundle.properties
 ---
 
 # Agent Threads Tool Window
@@ -37,7 +37,7 @@ Provide a concise description of the feature, scope, and intent.
 
 ## Requirements
 - Each requirement must be testable and specific.
-  [@test] ../sessions/testSrc/CodexSessionsToolWindowTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
 
 ## User Experience
 - Describe UI states and interactions.

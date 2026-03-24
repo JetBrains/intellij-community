@@ -393,6 +393,12 @@ public interface EditorEx extends Editor {
     return 0;
   }
 
+  @ApiStatus.Internal
+  @Override
+  default @NotNull DocumentEx getUiDocument() {
+    return getDocument();
+  }
+
   @Override
   default @NotNull ModNavigator asModNavigator() {
     return new ModNavigator() {

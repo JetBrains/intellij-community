@@ -1175,6 +1175,16 @@ class ASGILifespan(Setting):
     default: ClassVar[str]
     desc: ClassVar[str]
 
+class ASGIDisconnectGracePeriod(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_IntValidatorType]
+    type: ClassVar[type[int]]
+    default: ClassVar[int]
+    desc: ClassVar[str]
+
 class RootPath(Setting):
     name: ClassVar[str]
     section: ClassVar[str]
@@ -1273,3 +1283,31 @@ class DirtyWorkerExit(Setting):
     desc: ClassVar[str]
 
     def dirty_worker_exit(arbiter: Arbiter, worker: Worker) -> None: ...  # type: ignore[misc] # pyright: ignore[reportGeneralTypeIssues]
+
+class ControlSocket(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_StringValidatorType]
+    default: ClassVar[str]
+    desc: ClassVar[str]
+
+class ControlSocketMode(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_IntValidatorType]
+    type: ClassVar[Callable[[Any, str], int]]
+    default: ClassVar[int]
+    desc: ClassVar[str]
+
+class ControlSocketDisable(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    validator: ClassVar[_BoolValidatorType]
+    action: ClassVar[str]
+    default: ClassVar[bool]
+    desc: ClassVar[str]

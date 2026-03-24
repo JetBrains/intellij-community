@@ -54,6 +54,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   public static final Logger LOG = Logger.getInstance(ContributorsBasedGotoByModel.class);
 
   protected final Project myProject;
+
   private final List<ChooseByNameContributor> myContributors;
 
   protected ContributorsBasedGotoByModel(@NotNull Project project, ChooseByNameContributor @NotNull [] contributors) {
@@ -137,11 +138,11 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   protected void doProcessContributorNames(ChooseByNameContributor contributor,
                                            @NotNull FindSymbolParameters parameters,
                                            Processor<? super String> filterAdderProcessor) {
-    if (contributor instanceof ChooseByNameContributorEx2) {
-      ((ChooseByNameContributorEx2)contributor).processNames(filterAdderProcessor, parameters);
+    if (contributor instanceof ChooseByNameContributorEx2 ex2) {
+      ex2.processNames(filterAdderProcessor, parameters);
     }
-    else if (contributor instanceof ChooseByNameContributorEx) {
-      ((ChooseByNameContributorEx)contributor).processNames(filterAdderProcessor, parameters.getSearchScope(), parameters.getIdFilter());
+    else if (contributor instanceof ChooseByNameContributorEx ex) {
+      ex.processNames(filterAdderProcessor, parameters.getSearchScope(), parameters.getIdFilter());
     }
     else {
       String[] names = contributor.getNames(myProject, parameters.isSearchInLibraries());

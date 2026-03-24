@@ -9,16 +9,26 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.writeText
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.LanguageLevel.Companion.HIGHEST
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.testFramework.utils.vfs.createFile
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.jps.model.java.JavaResourceRootType
+import java.util.concurrent.ConcurrentHashMap
 
-abstract class JUnitMalformedDeclarationInspectionTestBase(protected vararg val versions: JUnitLibrary) : JvmInspectionTestBase() {
+abstract class JUnitMalformedDeclarationInspectionTestBase(protected vararg val versions: MavenTestLib) : JvmInspectionTestBase() {
   override val inspection: InspectionProfileEntry = JUnitMalformedDeclarationInspection()
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, *versions)
+
+  private data class ProjectDescriptorCacheKey(val languageLevel: LanguageLevel, val versions: Set<MavenTestLib>)
+
+  private val projectDescriptorCache = ConcurrentHashMap<ProjectDescriptorCacheKey, LightProjectDescriptor>()
+
+  override fun getProjectDescriptor(): LightProjectDescriptor =
+    projectDescriptorCache.computeIfAbsent(ProjectDescriptorCacheKey(HIGHEST, versions.toSet())) {
+      JUnitProjectDescriptor(it.languageLevel, *it.versions.toTypedArray())
+    }
 
   protected fun addAutomaticExtension(text: String) {
     val servicesDir = createServiceResourceDir()

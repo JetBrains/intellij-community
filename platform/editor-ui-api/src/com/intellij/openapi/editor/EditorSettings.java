@@ -138,7 +138,9 @@ public interface EditorSettings {
   void setFullLineHeightCursor(boolean fullLineHeightCursor);
 
   @ApiStatus.Experimental
-  boolean isAnimatedCaret();
+  boolean isSmoothCaretMovement();
+  @ApiStatus.Experimental
+  void setSmoothCaretMovement(boolean useSmoothCaretMovement);
 
   @ApiStatus.Experimental
   EditorSettings.CaretEasing getCaretEasing();

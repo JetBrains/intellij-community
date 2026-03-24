@@ -84,7 +84,7 @@ public final class CoverageDataAnnotationsManager implements Disposable {
     for (VirtualFile openFile : openFiles) {
       FileEditor[] allEditors = fileEditorManager.getAllEditors(openFile);
 
-      PsiFile psiFile = ReadAction.compute(() -> openFile.isValid() ? PsiManager.getInstance(myProject).findFile(openFile) : null);
+      PsiFile psiFile = ReadAction.computeBlocking(() -> openFile.isValid() ? PsiManager.getInstance(myProject).findFile(openFile) : null);
       if (psiFile == null || !psiFile.isPhysical()) return;
 
       for (FileEditor fileEditor : allEditors) {
@@ -152,7 +152,7 @@ public final class CoverageDataAnnotationsManager implements Disposable {
       CoverageDataAnnotationsManager manager = project.getServiceIfCreated(CoverageDataAnnotationsManager.class);
       if (manager == null) return;
 
-      PsiFile psiFile = ReadAction.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
+      PsiFile psiFile = ReadAction.computeBlocking(() -> PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
       if (psiFile == null || !psiFile.isPhysical()) return;
       manager.runTask(editor, () -> manager.show(editor, psiFile));
     }

@@ -1,4 +1,5 @@
 // "Create function 'foo'" "true"
+// K2_ERROR: Unresolved reference 'foo'.
 
 
 class A<T>(val t: T) {

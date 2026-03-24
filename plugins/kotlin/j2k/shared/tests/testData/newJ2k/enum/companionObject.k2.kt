@@ -4,7 +4,7 @@ enum class TestEnum {
 
     companion object {
         fun parse(): TestEnum {
-            return TestEnum.A
+            return A
         }
     }
 }

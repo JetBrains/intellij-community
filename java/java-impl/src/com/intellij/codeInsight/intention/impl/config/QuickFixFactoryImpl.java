@@ -1047,8 +1047,10 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createPushDownMethodFix() {
-    return new RunRefactoringAction(JavaRefactoringActionHandlerFactory.getInstance().createPushDownHandler(),
+  public @Nullable IntentionAction createPushDownMethodFix() {
+    JavaRefactoringActionHandlerFactory instance = JavaRefactoringActionHandlerFactory.getInstance();
+    if (instance == null) return null;
+    return new RunRefactoringAction(instance.createPushDownHandler(),
                                     JavaBundle.message("push.method.down.command.name")) {
       @Override
       public @NotNull Priority getPriority() {

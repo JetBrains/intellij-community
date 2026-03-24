@@ -1,0 +1,63 @@
+### auto-generated section `build intellij.gradle.settings` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "settings_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "settings",
+  module_name = "intellij.gradle.settings",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":settings_resources"],
+  deps = [
+    "@lib//:gradle",
+    "//libraries/commons/cli",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/platform-api:ide",
+    "//platform/ide-core",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/util/jdom",
+    "//platform/object-serializer:objectSerializer-annotations",
+    "//libraries/fastutil",
+  ]
+)
+
+jvm_library(
+  name = "settings_test_lib",
+  module_name = "intellij.gradle.settings",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":settings",
+    "//libraries/commons/cli:cli_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//platform/external-system-impl:externalSystem-impl_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/object-serializer:objectSerializer-annotations_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+  ]
+)
+### auto-generated section `build intellij.gradle.settings` end
+
+### auto-generated section `iml intellij.gradle.settings` start
+exports_files([
+  "intellij.gradle.settings.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.settings` end

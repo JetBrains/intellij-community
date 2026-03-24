@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 
-class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
+open class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 
     private val javaMethodProcessorInstance = RenameJavaMethodProcessor()
 
@@ -119,7 +119,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
             }
             else -> {
                 val declaration = element.unwrapped as? KtNamedFunction ?: return element
-                val chosenElements = checkSuperMethods(declaration, deepestSuperMethods)
+                val chosenElements = selectSuperMethods(declaration, deepestSuperMethods)
                 if (chosenElements.size > 1) FunctionWithSupersWrapper(declaration, chosenElements) else chosenElements.firstOrNull() ?: element
             }
         }
@@ -128,13 +128,25 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
             return substitutedJavaElement.kotlinOrigin as? KtNamedFunction
         }
 
-        val canRename = try {
-            PsiElementRenameHandler.canRename(element.project, editor, substitutedJavaElement)
-        } catch (_: CommonRefactoringUtil.RefactoringErrorHintException) {
-            false
-        }
+        return if (substitutedJavaElement != null && canRename(element.project, editor, substitutedJavaElement)) substitutedJavaElement else element
+    }
 
-        return if (canRename) substitutedJavaElement else element
+    /**
+     * Selects super methods that should be renamed.
+     * It is expected that [deepestSuperMethods] is not empty.
+     */
+    protected open fun selectSuperMethods(declaration: KtNamedFunction, deepestSuperMethods: List<PsiElement>): List<PsiElement> {
+        return checkSuperMethods(declaration, deepestSuperMethods)
+    }
+
+    protected open fun canRename(
+        project: Project,
+        editor: Editor?,
+        element: PsiElement
+    ): Boolean = try {
+        PsiElementRenameHandler.canRename(project, editor, element)
+    } catch (_: CommonRefactoringUtil.RefactoringErrorHintException) {
+        false
     }
 
     override fun substituteElementToRename(element: PsiElement, editor: Editor, renameCallback: Pass<in PsiElement>) {

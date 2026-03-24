@@ -24,6 +24,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkEx
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.service.execution.InvalidJavaHomeException
 import com.intellij.openapi.externalSystem.service.execution.InvalidSdkException
+import com.intellij.openapi.externalSystem.service.execution.getJavaHomeForEel
 import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -32,6 +33,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumbAware
 import com.intellij.openapi.project.Project
@@ -145,6 +147,7 @@ object MavenUtil {
   val SYSTEM_ID: ProjectSystemId = ProjectSystemId(MAVEN_NAME_UPCASE)
   const val MAVEN_NOTIFICATION_GROUP: String = MAVEN_NAME
   const val SETTINGS_XML: String = "settings.xml"
+  const val TOOLCHAINS_XML: String = "toolchains.xml"
   const val DOT_M2_DIR: String = ".m2"
   const val ENV_M2_HOME: String = "M2_HOME"
   const val M2_DIR: String = "m2"
@@ -224,7 +227,6 @@ object MavenUtil {
   }
 
 
-
   @JvmStatic
   fun invokeAndWaitWriteAction(p: Project, r: Runnable) {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
@@ -295,7 +297,8 @@ object MavenUtil {
   }
 
   fun groupByBasedir(projects: Collection<MavenProject>, tree: MavenProjectsTree): MultiMap<String, MavenProject> {
-    return ContainerUtil.groupBy<String, MavenProject>(projects, NullableFunction { getBaseDir(tree.findRootProject(it).directoryFile).toString() })
+    return ContainerUtil.groupBy<String, MavenProject>(projects,
+                                                       NullableFunction { getBaseDir(tree.findRootProject(it).directoryFile).toString() })
   }
 
 
@@ -1118,10 +1121,12 @@ object MavenUtil {
   }
 
   /**
-   * @param path any path pointing to an environment where the repository should be searched.
+   * @param descriptor EelDescriptor pointing to an environment where the repository should be searched.
    */
   @JvmStatic
-  fun resolveDefaultLocalRepository(descriptor: EelDescriptor?): Path {
+  @ApiStatus.Obsolete
+  //do not use it, used only in Path macros contributors, waits for IJPL-234144 to be rewrited
+  fun resolveDefaultLocalRepositoryForJpsMacros(descriptor: EelDescriptor?): Path {
     val mavenRepoLocal = System.getProperty(MAVEN_REPO_LOCAL)
 
     if (mavenRepoLocal != null) {
@@ -1140,7 +1145,11 @@ object MavenUtil {
     val settingsPath: Path = m2DirPath.resolve(SETTINGS_XML)
     val defaultRepo = m2DirPath.resolve(REPOSITORY_DIR)
 
-    val repoPath = getRepositoryFromSettings(settingsPath) ?: return defaultRepo
+    val repoPath = getRepositoryFromSettings(settingsPath, Properties())
+    if (repoPath == null ||
+        repoPath.contains($$"${")) { //no property resolution for JPS projects
+      return defaultRepo
+    }
     return api.fs.getPath(repoPath).asNioPath()
   }
 
@@ -1227,16 +1236,16 @@ object MavenUtil {
     return path
   }
 
-  internal fun doResolveLocalRepository(userSettingsFile: Path?, globalSettingsFile: Path?): Path? {
+  internal suspend fun doResolveLocalRepository(userSettingsFile: Path?, globalSettingsFile: Path?, properties: Properties?): Path? {
     if (userSettingsFile != null) {
-      val fromUserSettings: String? = getRepositoryFromSettings(userSettingsFile)
+      val fromUserSettings: String? = getRepositoryFromSettings(userSettingsFile, properties)
       if (!StringUtil.isEmpty(fromUserSettings)) {
         return Path.of(fromUserSettings)
       }
     }
 
     if (globalSettingsFile != null) {
-      val fromGlobalSettings: String? = getRepositoryFromSettings(globalSettingsFile)
+      val fromGlobalSettings: String? = getRepositoryFromSettings(globalSettingsFile, properties)
       if (!StringUtil.isEmpty(fromGlobalSettings)) {
         return Path.of(fromGlobalSettings)
       }
@@ -1246,18 +1255,34 @@ object MavenUtil {
   }
 
   @JvmStatic
-  fun getRepositoryFromSettings(file: Path): String? {
-    try {
-      val repository: Element? = getRepositoryElement(file)
+  fun getRepositoryFromSettings(file: Path, props: Properties?): String? {
+    val propertiesToResolve = props ?: MavenServerUtil.collectSystemProperties()
 
-      if (repository == null) {
-        return null
-      }
-      val text = repository.getText()
-      if (isEmptyOrSpaces(text)) {
-        return null
-      }
-      return expandProperties(text!!.trim { it <= ' ' })
+    val repository = try {
+      getRepositoryElement(file)
+    }
+    catch (e: IOException) {
+      MavenLog.LOG.debug("Cannot read file $file", e)
+      return null
+    }catch (e: JDOMException) {
+      MavenLog.LOG.warn("Cannot read file $file", e)
+      return null
+    }
+
+    if (repository == null) {
+      return null
+    }
+    val text = repository.getText()
+    if (isEmptyOrSpaces(text)) {
+      return null
+    }
+    return expandProperties(text!!.trim { it <= ' ' }, propertiesToResolve)
+  }
+
+  suspend fun getRepositoryFromSettings(file: Path): String? {
+    try {
+      val api = file.getEelDescriptor().toEelApi()
+      return getRepositoryFromSettings(file, MavenEelUtil.getMavenProperties(api))
     }
     catch (e: Exception) {
       return null
@@ -1641,7 +1666,8 @@ object MavenUtil {
   }
 
   @JvmStatic
-  fun getIdeaVersionToPassToMavenProcess(): String = ApplicationInfoImpl.getShadowInstance().getMajorVersion() + "." + ApplicationInfoImpl.getShadowInstance().getMinorVersion()
+  fun getIdeaVersionToPassToMavenProcess(): String =
+    ApplicationInfoImpl.getShadowInstance().getMajorVersion() + "." + ApplicationInfoImpl.getShadowInstance().getMinorVersion()
 
   @JvmStatic
   fun isPomFileName(fileName: String): Boolean {
@@ -1832,25 +1858,44 @@ object MavenUtil {
       if (res != null && res.getSdkType() is JavaSdkType) {
         return res
       }
-      return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk()
+      if (project.getEelDescriptor() != LocalEelDescriptor) {
+        return resolveJavaHomeSdk(project)
+      }
+      else {
+        return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk()
+      }
     }
 
     if (name == MavenRunnerSettings.USE_JAVA_HOME) {
-      val javaHome = ExternalSystemJdkUtil.getJavaHome()
-      if (StringUtil.isEmptyOrSpaces(javaHome)) {
-        throw InvalidJavaHomeException(javaHome)
-      }
-      try {
-        return JavaSdk.getInstance().createJdk("", javaHome!!)
-      }
-      catch (e: IllegalArgumentException) {
-        throw InvalidJavaHomeException(javaHome)
-      }
+      return resolveJavaHomeSdk(project)
     }
 
     val projectJdk: Sdk? = getSdkByExactName(name)
     if (projectJdk != null) return projectJdk
     throw InvalidSdkException(name)
+  }
+
+  /**
+   * Resolves JAVA_HOME for the project's environment (local or remote via EEL).
+   */
+  private fun resolveJavaHome(project: Project): String? {
+    val eelDescriptor = project.getEelDescriptor()
+    return runBlockingCancellable {
+      getJavaHomeForEel(eelDescriptor)
+    }?.toString()
+  }
+
+  private fun resolveJavaHomeSdk(project: Project): Sdk {
+    val javaHome = resolveJavaHome(project)
+    if (javaHome.isNullOrBlank()) {
+      throw InvalidJavaHomeException(javaHome)
+    }
+    try {
+      return JavaSdk.getInstance().createJdk("", javaHome)
+    }
+    catch (_: IllegalArgumentException) {
+      throw InvalidJavaHomeException(javaHome)
+    }
   }
 
   private fun getSdkByExactName(name: String): Sdk? {

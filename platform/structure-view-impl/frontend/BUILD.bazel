@@ -1,0 +1,74 @@
+### auto-generated section `build intellij.platform.structureView.frontend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "frontend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "frontend",
+  module_name = "intellij.platform.structureView.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":frontend_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/ide-core",
+    "//platform/analysis-api:analysis",
+    "//platform/util:util-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/statistics",
+    "//platform/lang-api:lang",
+    "//platform/core-api:core",
+    "//platform/util/concurrency",
+    "//platform/core-ui",
+    "//platform/platform-impl/concurrency",
+    "//platform/lang-core",
+    "//platform/lang-impl",
+    "//platform/util/coroutines",
+    "//platform/platform-impl/rpc",
+    "//platform/project/shared:project",
+    "//platform/kernel/shared:kernel",
+    "//platform/remote-topics/shared:rpc-topics",
+    "//platform/remote-topics/frontend",
+  ]
+)
+
+jvm_library(
+  name = "frontend_test_lib",
+  module_name = "intellij.platform.structureView.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":frontend",
+    "//platform/structure-view-impl:structureView-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-impl/concurrency:concurrency_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/remote-topics/shared:rpc-topics_test_lib",
+    "//platform/remote-topics/frontend:frontend_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.structureView.frontend` end
+
+### auto-generated section `iml intellij.platform.structureView.frontend` start
+exports_files([
+  "intellij.platform.structureView.frontend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.structureView.frontend` end

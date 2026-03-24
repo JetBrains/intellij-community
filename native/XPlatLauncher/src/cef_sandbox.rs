@@ -5,7 +5,7 @@ pub struct CefScopedSandboxInfo {
 }
 
 #[cfg(all(target_os = "windows", feature = "cef"))]
-extern "C" {
+unsafe extern "C" {
     pub fn cef_sandbox_info_create() -> *mut std::os::raw::c_void;
     pub fn cef_sandbox_info_destroy(sandbox_info: *mut std::os::raw::c_void);
 }

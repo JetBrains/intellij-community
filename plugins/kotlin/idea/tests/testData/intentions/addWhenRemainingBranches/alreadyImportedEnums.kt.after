@@ -1,0 +1,19 @@
+// SKIP_ERRORS_BEFORE
+// WITH_STDLIB
+package test
+
+import test.Entry.FOO
+import test.Entry.BAR
+// no import for BAZ
+
+enum class Entry {
+    FOO, BAR, BAZ
+}
+
+fun test(e: Entry) {
+    <caret>when (e) {
+        FOO -> TODO()
+        BAR -> TODO()
+        Entry.BAZ -> TODO()
+    }
+}

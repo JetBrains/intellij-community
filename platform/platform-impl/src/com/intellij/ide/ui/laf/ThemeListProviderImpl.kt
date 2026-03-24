@@ -62,6 +62,12 @@ internal class ThemeListProviderImpl : ThemeListProvider {
     }
 
     if (!islandsUiThemes.isEmpty()) {
+      val islandsDarcula = islandsUiThemes.find { it.id == "Islands Darcula" }
+      if (islandsDarcula != null) {
+        islandsUiThemes.remove(islandsDarcula)
+        islandsUiThemes.add(2, islandsDarcula)
+      }
+
       val darcula = uiThemeProviderListManager.findThemeById("Darcula")
       if (darcula != null) {
         newUiThemes.add(darcula)

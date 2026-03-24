@@ -17,4 +17,6 @@ interface GitFetchResult {
   fun showNotificationIfFailed(title: @NlsContexts.NotificationTitle String): Boolean
 
   fun throwExceptionIfFailed()
+
+  fun isSuccessful(): Boolean
 }

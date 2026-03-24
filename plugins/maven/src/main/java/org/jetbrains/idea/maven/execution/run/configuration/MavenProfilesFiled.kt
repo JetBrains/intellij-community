@@ -14,12 +14,14 @@ import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.NaturalComparator
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.execution.ParametersListUtil
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class MavenProfilesFiled(
   private val project: Project,
-  private val workingDirectoryField: WorkingDirectoryField,
+  private val workingDirectory: VirtualFile?,
   parentDisposable: Disposable
 ) : TextCompletionField<TextCompletionInfo>(project) {
 
@@ -28,7 +30,7 @@ class MavenProfilesFiled(
   var profiles by textProperty.transform(::decodeProfiles, ::encodeProfiles)
 
   override val completionCollector = TextCompletionCollector.async(parentDisposable) {
-    val profiles = getProfiles(project, workingDirectoryField)
+    val profiles = getProfiles(project, workingDirectory)
       .sortedWith(NaturalComparator.INSTANCE)
     val enableProfileCompletion = profiles.map { TextCompletionInfo(it) }
     val disableProfileCompletion = profiles.map { TextCompletionInfo("-$it") }
@@ -69,8 +71,9 @@ class MavenProfilesFiled(
     return parametersList.parametersString
   }
 
-  private suspend fun getProfiles(project: Project, workingDirectoryField: WorkingDirectoryField): Collection<String> {
-    return getGlobalProfiles(project) + getLocalProfiles(project, workingDirectoryField)
+  @VisibleForTesting
+  suspend fun getProfiles(project: Project, workingDirectory: VirtualFile?): Collection<String> {
+    return (getGlobalProfiles(project) + getLocalProfiles(project, workingDirectory)).distinct()
   }
 
   private suspend fun getGlobalProfiles(project: Project): Collection<String> {
@@ -78,9 +81,8 @@ class MavenProfilesFiled(
     return projectsManager.availableProfiles
   }
 
-  private suspend fun getLocalProfiles(project: Project, workingDirectoryField: WorkingDirectoryField): Collection<String> {
-    val projectDirectory = workingDirectoryField.getWorkingDirectoryVirtualFile()
-                           ?: return emptyList()
+  private suspend fun getLocalProfiles(project: Project, projectDirectory: VirtualFile?): Collection<String> {
+    if (projectDirectory == null) return emptyList()
     val projectsManager = MavenProjectsManager.getInstance(project)
     val mavenProject = readAction { projectsManager.findContainingProject(projectDirectory) }
                        ?: return emptyList()

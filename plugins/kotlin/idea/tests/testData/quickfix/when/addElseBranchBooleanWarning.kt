@@ -1,4 +1,5 @@
 // "Add else branch" "true"
+// K2_ERROR: 'when' expression must be exhaustive. Add an 'else' branch.
 fun foo(x: String?) {
     while (true) {
         x ?: when<caret> { true -> break }

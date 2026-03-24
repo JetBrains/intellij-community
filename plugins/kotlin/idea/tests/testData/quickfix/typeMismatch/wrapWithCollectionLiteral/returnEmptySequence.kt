@@ -1,5 +1,6 @@
 // "Replace with 'emptySequence()' call" "true"
 // WITH_STDLIB
+// K2_ERROR: Null cannot be a value of a non-null type 'Sequence<String>'.
 
 fun foo(a: String?): Sequence<String> {
     val w = a ?: return null<caret>

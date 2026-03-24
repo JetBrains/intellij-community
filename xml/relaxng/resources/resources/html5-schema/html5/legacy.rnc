@@ -219,6 +219,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			)+
 			& noframes.elem?
 		)
+	common.elem.flow |= frameset.elem
 
 ## Frame: <frame>
 
@@ -270,6 +271,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 			attribute scrolling {
 				string
 			}
+
+	common.elem.flow |= frame.elem
 
 ## Alternate no-frames content: <noframes>
 
@@ -1532,5 +1535,79 @@ datatypes w = "http://whattf.org/datatype-draft"
 		attribute manifest {
 			string
 		}
-
 	html.attrs &= html.attrs.manifest?
+
+## name attribute on a element
+  a.attrs.name =
+    attribute name {
+      common.data.id # XXX not what the spec says
+    }
+	a.attrs &= a.attrs.name?
+  a.nohref.attrs &= a.attrs.name?
+
+## type attribute on style element
+  style.attrs.type =
+    attribute type {
+      text
+    }
+  style.attrs &= style.attrs.type?
+
+## charset attribute on script element
+  script.attrs.charset =
+    attribute charset {
+      string
+    }
+  script.attrs &= script.attrs.charset?
+
+## border attribute on img element
+  img.attrs.border =
+    attribute border {
+      common.data.zero
+    }
+  shared-img.attrs &= img.attrs.border?
+
+## usemap attribute on object element
+  object.attrs.usemap =
+    attribute usemap {
+      common.data.hash-name
+    }
+  object.attrs &= object.attrs.usemap?
+
+## Object Initialization Parameters: <param>
+	param.elem =
+		element param { param.inner & param.attrs }
+	param.attrs =
+		(	common.attrs
+		&	param.attrs.name
+		&	param.attrs.value
+		)
+		param.attrs.name =
+			attribute name {
+				string
+			}
+		param.attrs.value =
+			attribute value {
+				string
+			}
+	param.inner =
+		( empty )
+
+  object.inner.flow |= (param.elem*)
+  object.inner.phrasing |= (param.elem*)
+
+## legacy area attributes
+  area.attrs &= shared-hyperlink.attrs.hreflang?
+  area.attrs &= shared-hyperlink.attrs.type?
+
+## Obsolete Ruby Text Container: <rtc>
+	rtc.elem =
+		element rtc { rtc.inner & rtc.attrs }
+	rtc.attrs =
+		(	common.attrs
+		&	common.attrs.aria?
+		)
+	rtc.inner =
+		(	common.inner.phrasing
+			|	rt.elem
+			|	rp.elem
+		)*

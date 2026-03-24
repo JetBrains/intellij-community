@@ -79,9 +79,9 @@ f:com.intellij.vcs.log.data.ContainingBranchesGetter
 - sf:Companion:com.intellij.vcs.log.data.ContainingBranchesGetter$Companion
 - f:addTaskCompletedListener(java.lang.Runnable):V
 - f:getContainedInCurrentBranchCondition(com.intellij.openapi.vfs.VirtualFile):java.util.function.Predicate
+- f:getContainingBranches(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash):java.util.List
 - f:getContainingBranchesFromCache(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash):java.util.List
 - f:getContainingBranchesQuickly(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash):java.util.List
-- f:getContainingBranchesSynchronously(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash):java.util.List
 - f:removeTaskCompletedListener(java.lang.Runnable):V
 - f:requestContainingBranches(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash):java.util.List
 f:com.intellij.vcs.log.data.ContainingBranchesGetter$Companion
@@ -625,9 +625,8 @@ a:com.intellij.vcs.log.ui.AbstractVcsLogUi
 - p:handleCommitNotFound(java.lang.Object,Z,java.util.function.BiFunction):V
 - jumpTo(java.lang.Object,java.util.function.BiFunction,com.google.common.util.concurrent.SettableFuture,Z,Z):V
 - pa:onVisiblePackUpdated(Z):V
-- requestMore(java.lang.Runnable):V
+- requestMore():V
 - setVisiblePack(com.intellij.vcs.log.visible.VisiblePack):V
-- tryJumpTo(java.lang.Object,java.util.function.BiFunction,com.google.common.util.concurrent.SettableFuture,Z):V
 com.intellij.vcs.log.ui.VcsLogColorManager
 - getLongName(com.intellij.openapi.vcs.FilePath):java.lang.String
 - getPathColor(com.intellij.openapi.vcs.FilePath):java.awt.Color
@@ -1191,14 +1190,14 @@ f:com.intellij.vcs.log.util.VcsLogUtil
 - s:getVcsDisplayName(java.util.Set):java.lang.String
 - s:getVisibleRoots(com.intellij.vcs.log.VcsLogUi):java.util.Set
 - s:groupRefsByRoot(java.util.Collection):java.util.Map
-- s:invokeOnChange(com.intellij.vcs.log.VcsLogUi,java.lang.Runnable):V
-- s:invokeOnChange(com.intellij.vcs.log.VcsLogUi,java.lang.Runnable,com.intellij.openapi.util.Condition):V
+- s:invokeOnceOnDataChange(com.intellij.vcs.log.VcsLogUi,java.lang.Runnable):V
+- s:invokeOnceOnDataChange(com.intellij.vcs.log.VcsLogUi,java.lang.Runnable,com.intellij.openapi.util.Condition):V
 - s:isFullHash(java.lang.String):Z
 - s:isMoreRequested(com.intellij.vcs.log.visible.VisiblePack):java.lang.Boolean
 - s:isProjectLog(com.intellij.openapi.project.Project,java.util.Map):Z
 - s:isProjectLogForVcs(com.intellij.openapi.project.Project,java.util.Collection,com.intellij.openapi.vcs.AbstractVcs):Z
 - s:isRegexp(java.lang.String):Z
-- s:requestToLoadMore(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.Runnable):V
+- s:requestToLoadMore(com.intellij.vcs.log.ui.VcsLogUiEx):V
 - s:runWhenVcsAndLogIsReady(com.intellij.openapi.project.Project,com.intellij.util.Consumer):V
 f:com.intellij.vcs.log.visible.CommitCountStage
 - sf:ALL:com.intellij.vcs.log.visible.CommitCountStage
@@ -1256,7 +1255,7 @@ com.intellij.vcs.log.visible.VisiblePackRefresher
 - com.intellij.openapi.Disposable
 - a:addVisiblePackChangeListener(com.intellij.vcs.log.visible.VisiblePackChangeListener):V
 - a:isValid():Z
-- a:moreCommitsNeeded(java.lang.Runnable):V
+- a:moreCommitsNeeded():V
 - a:onFiltersChange(com.intellij.vcs.log.VcsLogFilterCollection):V
 - a:onGraphOptionsChange(com.intellij.vcs.log.graph.PermanentGraph$Options):V
 - a:onRefresh():V
@@ -1270,7 +1269,7 @@ c:com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 - addVisiblePackChangeListener(com.intellij.vcs.log.visible.VisiblePackChangeListener):V
 - dispose():V
 - isValid():Z
-- moreCommitsNeeded(java.lang.Runnable):V
+- moreCommitsNeeded():V
 - onFiltersChange(com.intellij.vcs.log.VcsLogFilterCollection):V
 - onGraphOptionsChange(com.intellij.vcs.log.graph.PermanentGraph$Options):V
 - onRefresh():V

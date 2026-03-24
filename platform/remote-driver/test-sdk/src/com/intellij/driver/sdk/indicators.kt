@@ -2,7 +2,9 @@ package com.intellij.driver.sdk
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.service
+import com.intellij.openapi.diagnostic.logger
 import java.time.Instant
+import kotlin.collections.emptyList
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -11,6 +13,15 @@ fun Driver.getProgressIndicators(project: Project): List<StatusBar.TaskInfoPair>
     val ideFrame = service<WindowManager>().getIdeFrame(project)
     val statusBar = ideFrame?.getStatusBar() ?: return@withContext emptyList()
     statusBar.getBackgroundProcessModels()
+  }
+}
+
+private fun Driver.logProgressIndicators(project: Project) {
+  return withContext {
+    val ideFrame = service<WindowManager>().getIdeFrame(project)
+    val statusBar = ideFrame?.getStatusBar() ?: return@withContext
+    logger<Driver>().info("Running indicators were detected:\n" +
+                          "${statusBar.getBackgroundProcessModels().map { it.getFirst()?.getTitle() ?: "Task with no title" }}")
   }
 }
 
@@ -55,9 +66,17 @@ fun Driver.waitForIndicators(timeout: Duration, waitSmartLongEnough: Boolean = t
 internal fun Driver.waitForIndicators(projectGet: () -> Project?, timeout: Duration, waitSmartLongEnough: Boolean = true) {
   var smartLongEnoughStart: Instant? = null
 
-  waitFor("Indicators", timeout) {
+  waitFor("Indicators with waitSmartLongEnough=$waitSmartLongEnough", timeout) {
     val project = runCatching { projectGet.invoke() }.getOrNull()
-    if (project == null || !isProjectOpened(project) || areIndicatorsVisible(project)) {
+    val projectReady = (project != null && isProjectOpened(project))
+    val indicatorsVisible = projectReady && areIndicatorsVisible(project)
+    if (!projectReady) {
+      logger<Driver>().info("The project is not opened.")
+    }
+    if (indicatorsVisible) {
+      logProgressIndicators(project)
+    }
+    if (!projectReady || indicatorsVisible) {
       smartLongEnoughStart = null
       return@waitFor false
     }

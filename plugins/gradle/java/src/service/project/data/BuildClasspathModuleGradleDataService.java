@@ -75,7 +75,11 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
     final File gradleHomeDir = toImport.iterator().next().getData().getGradleHomeDir();
     final GradleLocalSettings gradleLocalSettings = GradleLocalSettings.getInstance(project);
     if (gradleHomeDir != null) {
-      gradleLocalSettings.setGradleHome(linkedExternalProjectPath, gradleHomeDir.getPath());
+      gradleLocalSettings.setGradleHome(
+        linkedExternalProjectPath,
+        gradleHomeDir.getPath(),
+        GradleInstallationManager.getGradleVersion(gradleHomeDir.toPath())
+      );
     }
     final GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedExternalProjectPath);
 

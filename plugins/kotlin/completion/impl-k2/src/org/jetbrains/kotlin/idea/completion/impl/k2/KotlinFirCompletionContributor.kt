@@ -21,6 +21,7 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.idea.completion.KDocTagCompletionProvider
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.K2SmartCompletionTailOffsetProviderImpl
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionEvent
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionSetupEvent
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.timeEvent
@@ -85,6 +86,9 @@ class KotlinFirCompletionContributor : CompletionContributor() {
         context.dummyIdentifier = identifierProviderService.provideDummyIdentifier(context)
 
         identifierProviderService.correctPositionForParameter(context)
+
+        // Mark replacement offsets for (smart) completion
+        K2SmartCompletionTailOffsetProviderImpl.calculateReplacementOffsets(context)
     }
 }
 

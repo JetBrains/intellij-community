@@ -25,10 +25,8 @@ import com.jediterm.terminal.model.hyperlinks.AsyncHyperlinkFilter
 import com.jediterm.terminal.model.hyperlinks.LinkInfo
 import com.jediterm.terminal.model.hyperlinks.LinkResult
 import com.jediterm.terminal.model.hyperlinks.LinkResultItem
-import com.jediterm.terminal.ui.TerminalAction
 import com.jediterm.terminal.ui.hyperlinks.LinkInfoEx
 import com.jediterm.terminal.ui.hyperlinks.LinkInfoEx.HoverConsumer
-import com.jediterm.terminal.ui.hyperlinks.LinkInfoEx.PopupMenuGroupProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -37,7 +35,6 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import java.awt.Rectangle
-import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
@@ -93,9 +90,7 @@ internal class JediTermHyperlinkFilterAdapter(
 
   private suspend fun runFiltersAndConvert(lineInfo: AsyncHyperlinkFilter.LineInfo): LinkResult? {
     val result = runFilters(lineInfo) ?: return null
-    return LinkResult(result.getResultItems().mapNotNull {
-      convertResultItem(it)
-    })
+    return convertLinkResult(result, project, widget)
   }
 
   private suspend fun runFilters(lineInfo: AsyncHyperlinkFilter.LineInfo): Filter.Result? {
@@ -112,48 +107,6 @@ internal class JediTermHyperlinkFilterAdapter(
     }
   }
 
-  private fun convertResultItem(item: ResultItem): LinkResultItem? {
-    val info = item.hyperlinkInfo ?: return null
-    return LinkResultItem(item.highlightStartOffset, item.highlightEndOffset, convertInfo(info))
-  }
-
-  private fun convertInfo(info: HyperlinkInfo): LinkInfo {
-    val builder = LinkInfoEx.Builder().setNavigateCallback(Runnable {
-      WriteIntentReadAction.run {
-        info.navigate(project)
-      }
-    })
-    if (info is HyperlinkWithPopupMenuInfo) {
-      builder.setPopupMenuGroupProvider(object : PopupMenuGroupProvider {
-        override fun getPopupMenuGroup(event: MouseEvent): List<TerminalAction> {
-          val group = info.getPopupMenuGroup(event)
-          val actions = expandGroup(group)
-          return actions.map { TerminalActionUtil.createTerminalAction(widget, it) }
-        }
-      })
-    }
-    if (info is HyperlinkWithHoverInfo) {
-      builder.setHoverConsumer(object : HoverConsumer {
-        override fun onMouseEntered(hostComponent: JComponent, linkBounds: Rectangle) {
-          info.onMouseEntered(hostComponent, linkBounds)
-        }
-
-        override fun onMouseExited() {
-          info.onMouseExited()
-        }
-      })
-    }
-    return builder.build()
-  }
-
-  private fun expandGroup(group: ActionGroup?): Array<AnAction> {
-    if (group == null) return AnAction.EMPTY_ARRAY
-    if (group is DefaultActionGroup) {
-      return group.getChildren(ActionManager.getInstance())
-    }
-    return group.getChildren(null)
-  }
-
   private class Request(val lineInfo: AsyncHyperlinkFilter.LineInfo, val future: CompletableFuture<LinkResult?>)
 }
 
@@ -163,3 +116,49 @@ private const val MAX_BUFFERED_REQUESTS = 10000
 
 @Service(Service.Level.PROJECT)
 private class CoroutineScopeService(val coroutineScope: CoroutineScope)
+
+internal fun convertLinkResult(result: Filter.Result, project: Project, widget: JBTerminalWidget): LinkResult {
+  return LinkResult(result.getResultItems().mapNotNull {
+    convertResultItem(it, project, widget)
+  })
+}
+
+private fun convertResultItem(item: ResultItem, project: Project, widget: JBTerminalWidget): LinkResultItem? {
+  val info = item.hyperlinkInfo ?: return null
+  return LinkResultItem(item.highlightStartOffset, item.highlightEndOffset, convertInfo(info, project, widget))
+}
+
+private fun convertInfo(info: HyperlinkInfo, project: Project, widget: JBTerminalWidget): LinkInfo {
+  val builder = LinkInfoEx.Builder().setNavigateCallback(Runnable {
+    WriteIntentReadAction.run {
+      info.navigate(project)
+    }
+  })
+  if (info is HyperlinkWithPopupMenuInfo) {
+    builder.setPopupMenuGroupProvider { event ->
+      val group = info.getPopupMenuGroup(event)
+      val actions = expandGroup(group)
+      actions.map { TerminalActionUtil.createTerminalAction(widget, it) }
+    }
+  }
+  if (info is HyperlinkWithHoverInfo) {
+    builder.setHoverConsumer(object : HoverConsumer {
+      override fun onMouseEntered(hostComponent: JComponent, linkBounds: Rectangle) {
+        info.onMouseEntered(hostComponent, linkBounds)
+      }
+
+      override fun onMouseExited() {
+        info.onMouseExited()
+      }
+    })
+  }
+  return builder.build()
+}
+
+private fun expandGroup(group: ActionGroup?): Array<AnAction> {
+  if (group == null) return AnAction.EMPTY_ARRAY
+  if (group is DefaultActionGroup) {
+    return group.getChildren(ActionManager.getInstance())
+  }
+  return group.getChildren(null)
+}

@@ -4,13 +4,13 @@ package com.intellij.internal.statistics.metadata.validator
 import com.intellij.internal.statistic.eventLog.EventLogBuild
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.validator.IGroupValidators
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
-import com.intellij.internal.statistic.eventLog.validator.emptyGroupValidators
+import com.jetbrains.fus.reporting.api.IGroupValidators
+import com.jetbrains.fus.reporting.api.ValidationResultType
+import com.jetbrains.fus.reporting.api.emptyGroupValidators
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomValidationRule
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.RecorderDataValidationRule
+import com.jetbrains.fus.reporting.api.RecorderDataValidationRule
 import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Disposer
@@ -663,8 +663,8 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
   internal inner class TestThirdPartyValidationRule : CustomValidationRule() {
     override fun getRuleId(): String = "third_party_rule"
 
-    override fun doValidate(data: String, context: EventContext): ValidationResultType {
-      return if (data == "FIRST") ValidationResultType.ACCEPTED else ValidationResultType.THIRD_PARTY
+    override fun doValidate(data: String, context: EventContext): com.intellij.internal.statistic.eventLog.validator.ValidationResultType {
+      return if (data == "FIRST") com.intellij.internal.statistic.eventLog.validator.ValidationResultType.ACCEPTED else com.intellij.internal.statistic.eventLog.validator.ValidationResultType.THIRD_PARTY
     }
   }
 }

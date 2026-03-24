@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions.declarations;
 
@@ -609,6 +609,11 @@ public abstract class JoinLinesTestGenerated extends AbstractK1JoinLinesTest {
         @TestMetadata("hasComment6.kt")
         public void testHasComment6() throws Exception {
             runTest("testData/joinLines/whenEntry/hasComment6.kt");
+        }
+
+        @TestMetadata("hasKDoc.kt")
+        public void testHasKDoc() throws Exception {
+            runTest("testData/joinLines/whenEntry/hasKDoc.kt");
         }
 
         @TestMetadata("in.kt")

@@ -23,4 +23,25 @@ jvm_library(
     "@lib//:jetbrains-annotations",
   ]
 )
+
+jvm_library(
+  name = "training_test_lib",
+  module_name = "intellij.java.ide.customization.training",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":training",
+    "//java/java-features-trainer:featuresTrainer_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//plugins/ide-features-trainer:featuresTrainer_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.java.ide.customization.training` end
+
+### auto-generated section `iml intellij.java.ide.customization.training` start
+exports_files([
+  "intellij.java.ide.customization.training.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.ide.customization.training` end

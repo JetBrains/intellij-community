@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
@@ -214,7 +215,7 @@ public abstract class InplaceRefactoring {
     SearchScope referencesSearchScope = getReferencesSearchScope(file);
 
     Collection<PsiReference> references = ProgressManager.getInstance().runProcessWithProgressSynchronously(() ->
-      ReadAction.compute(() -> {
+      ReadAction.computeBlocking(() -> {
         Collection<PsiReference> refs = collectRefs(referencesSearchScope);
 
         addReferenceAtCaret(refs);
@@ -1033,7 +1034,7 @@ public abstract class InplaceRefactoring {
         } else {
           performCleanup();
         }
-        moveOffsetAfter(!brokenOff);
+        WriteIntentReadAction.run(() -> moveOffsetAfter(!brokenOff));
       }
       finally {
         if (!bind) {

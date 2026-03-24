@@ -9,8 +9,23 @@ resourcegroup(
 
 jvm_library(
   name = "color-scheme-cobalt",
+  module_name = "intellij.color.scheme.cobalt",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":color-scheme-cobalt_resources"]
 )
+
+jvm_library(
+  name = "color-scheme-cobalt_test_lib",
+  module_name = "intellij.color.scheme.cobalt",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":color-scheme-cobalt"]
+)
 ### auto-generated section `build intellij.color.scheme.cobalt` end
+
+### auto-generated section `iml intellij.color.scheme.cobalt` start
+exports_files([
+  "intellij.color.scheme.cobalt.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.color.scheme.cobalt` end

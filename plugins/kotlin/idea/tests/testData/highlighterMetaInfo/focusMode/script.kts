@@ -2,14 +2,14 @@
 // FIR_IDENTICAL
 // CHECK_SYMBOL_NAMES
 // HIGHLIGHTER_ATTRIBUTES_KEY
-repositories {
-    mavenCentral()
-}
+import kotlin.reflect.full.declaredMembers
 
-dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-}
+val scriptArgs = args
 
-fun f() {
-    val q = 1<caret>
+println("Hello from simple.kts! Args=$scriptArgs")
+
+val ktsScriptClassMembers = this::class.declaredMembers
+
+fun foo() {
+    val value = 1
 }

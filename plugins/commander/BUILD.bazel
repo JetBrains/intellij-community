@@ -28,44 +28,119 @@ jvm_library(
     "//platform/structure-view-impl:structureView-impl",
     "//platform/util/jdom",
     "//platform/core-api:core",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
 jvm_library(
   name = "commander_test_lib",
+  module_name = "intellij.commander",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":commander"],
-  deps = [
-    "//java/java-impl:impl",
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":commander",
     "//java/java-impl:impl_test_lib",
-    "//platform/analysis-api:analysis",
-    "//platform/lang-api:lang",
-    "//platform/diff-api:diff",
-    "//platform/diff-impl",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/diff-api:diff_test_lib",
+    "//platform/diff-impl:diff-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "//plugins/ui-designer:java-guiForms-designer",
     "//plugins/ui-designer:java-guiForms-designer_test_lib",
-    "//platform/core-ui",
-    "//platform/lang-core",
-    "//platform/lvcs-api:lvcs",
-    "//platform/projectModel-api:projectModel",
-    "//platform/structure-view-impl:structureView-impl",
-    "//platform/util/jdom",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/lvcs-api:lvcs_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/structure-view-impl:structureView-impl_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.commander` end
 
-### auto-generated section `test intellij.commander` start
+### auto-generated section `iml intellij.commander` start
+exports_files([
+  "intellij.commander.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.commander` end
+
+### auto-generated section `build intellij.commander.tests` start
+jvm_library(
+  name = "commander-tests",
+  module_name = "intellij.commander.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "commander-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [
+    "//plugins/commander",
+    "//plugins/commander:commander_test_lib",
+  ],
+  deps = [
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/diff-api:diff",
+    "//platform/diff-api:diff_test_lib",
+    "//platform/diff-impl",
+    "//platform/diff-impl:diff-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//plugins/ui-designer:java-guiForms-designer",
+    "//plugins/ui-designer:java-guiForms-designer_test_lib",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/lvcs-api:lvcs",
+    "//platform/lvcs-api:lvcs_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/structure-view-impl:structureView-impl_test_lib",
+    "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+  ],
+  runtime_deps = [
+    ":commander-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.commander.tests` end
+
+### auto-generated section `iml intellij.commander.tests` start
+exports_files([
+  "intellij.commander.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.commander.tests` end
+
+### auto-generated section `test intellij.commander.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "commander_test",
-  runtime_deps = [":commander_test_lib"]
+  name = "commander-tests_test",
+  runtime_deps = [":commander-tests_test_lib"]
 )
-### auto-generated section `test intellij.commander` end
+### auto-generated section `test intellij.commander.tests` end

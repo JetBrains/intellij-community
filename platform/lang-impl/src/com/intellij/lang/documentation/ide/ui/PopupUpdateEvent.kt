@@ -13,6 +13,7 @@ sealed interface PopupUpdateEvent {
 
   enum class ContentUpdateKind {
     InfoMessage,
+    NoDocumentation,
     DocumentationPageOpened,
     DocumentationPageNavigated,
   }

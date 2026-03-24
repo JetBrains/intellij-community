@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.diagnostic.Dumpable;
@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LanguageLineWrapPositionStrategy;
 import com.intellij.openapi.editor.LineWrapPositionStrategy;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -70,6 +71,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
 
   private final SoftWrapsStorage myStorage;
   private final EditorImpl myEditor;
+  private final DocumentEx myDocument;
   private SoftWrapPainter myPainter;
   private final CachingSoftWrapDataMapper myDataMapper;
 
@@ -104,6 +106,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
   {
     myStorage = storage;
     myEditor = editor;
+    myDocument = editor.getUiDocument();
     myPainter = painter;
     myDataMapper = dataMapper;
     myWidthProvider = new DefaultVisibleAreaWidthProvider();
@@ -171,8 +174,8 @@ public final class SoftWrapApplianceManager implements Dumpable {
       for (Segment range : ranges) {
         int lastOffset = lastRecalculatedOffset[0];
         if (range.getEndOffset() > lastOffset) {
-          recalculateSoftWraps(new IncrementalCacheUpdateEvent(Math.max(range.getStartOffset(), lastOffset), range.getEndOffset(),
-                                                               myEditor));
+          recalculateSoftWraps(IncrementalCacheUpdateEvent.forVisualChange(Math.max(range.getStartOffset(), lastOffset),
+                                                                           range.getEndOffset(), myEditor));
         }
       }
     }
@@ -207,7 +210,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     }
     myIsDirty = false;
 
-    recalculateSoftWraps(new IncrementalCacheUpdateEvent(myEditor.getDocument()));
+    recalculateSoftWraps(IncrementalCacheUpdateEvent.forWholeDocument(myDocument));
 
     onRecalculationEnd();
 
@@ -230,7 +233,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     try {
       myEventBeingProcessed = event;
       notifyListenersOnCacheUpdateStart(event);
-      int endOffsetUpperEstimate = SoftWrapHelper.getEndOffsetUpperEstimate(myEditor, myEditor.getDocument(), event);
+      int endOffsetUpperEstimate = SoftWrapHelper.getEndOffsetUpperEstimate(myEditor, myDocument, event);
       if (myVisibleAreaWidth == QUICK_DUMMY_WRAPPING) {
         doRecalculateSoftWrapsRoughly(event);
       }
@@ -267,7 +270,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
   // this method generates soft-wraps at some places just to ensure visual lines have limited width, to avoid related performance problems
   // correct procedure is not used to speed up editor opening
   private void doRecalculateSoftWrapsRoughly(IncrementalCacheUpdateEvent event) {
-    Document document = myEditor.getDocument();
+    Document document = myDocument;
     int lineCount = document.getLineCount();
     int offset = event.getStartOffset();
     int line = document.getLineNumber(offset);
@@ -435,7 +438,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
 
   @ApiStatus.Internal
   public void beforeDocumentChange(DocumentEvent event) {
-    myDocumentChangedEvent = new IncrementalCacheUpdateEvent(event, myEditor);
+    myDocumentChangedEvent = IncrementalCacheUpdateEvent.forDocumentChange(event, myEditor);
   }
 
   @ApiStatus.Internal
@@ -445,7 +448,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     if (processAlsoLineEnd) {
       int lineEndOffset = DocumentUtil.getLineEndOffset(myDocumentChangedEvent.getMandatoryEndOffset(), event.getDocument());
       if (lineEndOffset > myDocumentChangedEvent.getActualEndOffset()) {
-        recalculate(new IncrementalCacheUpdateEvent(lineEndOffset, lineEndOffset, myEditor));
+        recalculate(IncrementalCacheUpdateEvent.forVisualChange(lineEndOffset, lineEndOffset, myEditor));
       }
     }
     myDocumentChangedEvent = null;

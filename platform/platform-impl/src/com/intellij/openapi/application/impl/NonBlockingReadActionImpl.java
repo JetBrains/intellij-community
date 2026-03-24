@@ -656,7 +656,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
             boolean couldRun = ThreadContext.installThreadContext(context, true, this::attemptComputation);
 
             if (!couldRun) {
-              blockUntilWriteActionIsDone(context);
+              blockUntilWriteActionIsDone(this, context);
             }
 
             if (isDone()) {
@@ -699,22 +699,29 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       }
     }
 
-    private static void blockUntilWriteActionIsDone(CoroutineContext context) {
+    private static void blockUntilWriteActionIsDone(Submission<?> submission, CoroutineContext context) {
       ThreadingAssertions.assertNoReadAccess();
       CompletableFuture<Unit> future = FutureKt.asCompletableFuture(JobKt.Job(context.get(Job.Key)));
       Objects.requireNonNull(ApplicationManager.getApplication().getThreadingSupport()).runWhenWriteActionIsCompleted(() -> {
         future.complete(Unit.INSTANCE);
         return Unit.INSTANCE;
       });
-      try {
-        future.get();
-      }
-      catch (InterruptedException e) {
-        throw new ProcessCanceledException(e);
-      }
-      catch (ExecutionException e) {
-        // should be impossible
-        throw new RuntimeException(e);
+      while (!future.isDone()) {
+        try {
+          future.get(10, TimeUnit.MILLISECONDS);
+        }
+        catch (InterruptedException e) {
+          throw new ProcessCanceledException(e);
+        }
+        catch (ExecutionException e) {
+          // should be impossible
+          throw new RuntimeException(e);
+        }
+        catch (TimeoutException e) {
+          if (submission.checkObsolete()) {
+            future.cancel(false);
+          }
+        }
       }
     }
 

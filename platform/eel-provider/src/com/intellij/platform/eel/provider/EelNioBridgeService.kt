@@ -1,16 +1,19 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Experimental
+
 package com.intellij.platform.eel.provider
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
+import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPathBoundDescriptor
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
-import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.provider.utils.WindowsPathUtils
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -62,7 +65,12 @@ fun EelPath.asNioPathOrNull(): @MultiRoutingFileSystemPath Path? {
   }
 
   @MultiRoutingFileSystemPath
-  val result = parts.fold(root, Path::resolve)
+  val result = when (descriptor.osFamily) {
+    EelOsFamily.Windows -> {
+      WindowsPathUtils.resolveEelPathOntoRoot(root, this)
+    }
+    EelOsFamily.Posix -> parts.fold(root, Path::resolve)
+  }
   LOG.trace {
     "asNioPathOrNull(): path=$this basePath=$root result=$result"
   }
@@ -95,21 +103,30 @@ fun Path.asEelPath(): EelPath {
 @Throws(EelPathException::class)
 @ApiStatus.Experimental
 fun Path.asEelPath(descriptor: EelDescriptor): EelPath {
-  when (descriptor) {
-    is LocalEelDescriptor -> return EelPath.parse(toString(), descriptor)
-    is EelPathBoundDescriptor if (descriptor.osFamily.isPosix) -> {
-      val root = descriptor.rootPath
-      val relative = root.relativize(this)
-      return relative.fold(EelPath.parse("/", descriptor)) { path, part ->
-        part.toString().takeIf { it.isNotEmpty() }?.let { path.getChild(it) } ?: path
-      }
+  if (descriptor is LocalEelDescriptor) {
+    return EelPath.parse(toString(), descriptor)
+  }
+
+  if (descriptor !is EelPathBoundDescriptor) {
+    throw NoSuchElementException("Cannot find a root for $this")
+  }
+
+  if ((fileSystem.provider() as? RoutingAwareFileSystemProvider)?.canHandleRouting(this) != true) {
+    // Supposing that there can never be more than one layer of path prefixing.
+    return EelPath.parse(toString(), descriptor)
+  }
+
+  val relative = descriptor.rootPath.relativize(this)
+  val (eelRoot, rest) = when (descriptor.osFamily) {
+    EelOsFamily.Posix -> {
+      "/" to relative
     }
-    is EelPathBoundDescriptor -> {
-      TODO() // on Windows, we need additional logic to guess the new root
+    EelOsFamily.Windows -> {
+      WindowsPathUtils.rootRelativeToEelPath(relative)
     }
-    else -> {
-      throw NoSuchElementException("Cannot find a root for $this")
-    }
+  }
+  return rest.fold(EelPath.parse(eelRoot, descriptor)) { path, part ->
+    part.toString().takeIf { it.isNotEmpty() }?.let { path.getChild(it) } ?: path
   }
 }
 

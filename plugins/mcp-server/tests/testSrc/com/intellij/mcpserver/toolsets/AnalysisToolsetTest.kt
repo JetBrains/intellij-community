@@ -7,16 +7,17 @@ import com.intellij.mcpserver.McpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.AnalysisToolset
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.openapi.extensions.PluginId
-import io.kotest.common.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
-import kotlin.test.assertTrue
 
 class AnalysisToolsetTest : McpToolsetTestBase() {
   @Test
-  fun get_file_problems() = runBlocking {
+  fun get_file_problems() = runBlocking(Dispatchers.Default) {
     // This test requires Java plugin to detect syntax errors in Java files
     assumeTrue(isJavaPluginInstalled(), "Java plugin is required for this test")
 
@@ -30,14 +31,14 @@ class AnalysisToolsetTest : McpToolsetTestBase() {
       },
     ) { result ->
       val text = result.textContent.text
-      assertTrue(text.contains(""""filePath":"src/Main.java""""), "Result should contain filePath")
-      assertTrue(text.contains(""""errors":[{"""), "Result should contain errors for invalid Java code")
+      assertThat(text).contains(""""filePath":"src/Main.java"""")
+      assertThat(text).contains(""""errors":[{"""")
     }
   }
 
   // tool is disabled now
   //@Test
-  fun build_project() = runBlocking {
+  fun build_project() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       AnalysisToolset::build_project.name,
       buildJsonObject {},
@@ -46,7 +47,7 @@ class AnalysisToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun get_project_modules() = runBlocking {
+  fun get_project_modules() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       AnalysisToolset::get_project_modules.name,
       buildJsonObject {},
@@ -55,7 +56,7 @@ class AnalysisToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun get_project_dependencies() = runBlocking {
+  fun get_project_dependencies() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       AnalysisToolset::get_project_dependencies.name,
       buildJsonObject {},

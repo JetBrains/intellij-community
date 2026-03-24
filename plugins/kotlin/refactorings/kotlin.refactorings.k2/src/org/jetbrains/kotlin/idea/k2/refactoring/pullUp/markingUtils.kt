@@ -5,13 +5,13 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
@@ -74,10 +74,7 @@ internal fun KaSession.markElements(
                     implicitThis.classKind == KaClassKind.COMPANION_OBJECT &&
                     sourceClass.isAncestor(implicitThisElement, strict = true)
                 ) {
-                    // Get the containing class FqName instead of the companion object's FqName.
-                    // This is a workaround until KT-64842 is fixed.
-                    val containingClass = implicitThis.containingDeclaration
-                    val qualifierFqName = containingClass?.importableFqName ?: return
+                    val qualifierFqName = implicitThis.importableFqName ?: return
 
                     expression.newFqName = FqName("${qualifierFqName.asString()}.${expression.getReferencedName()}")
                     affectedElements.add(expression)
@@ -120,7 +117,7 @@ internal fun applyMarking(
                     expression.replaceWithTargetThis = null
 
                     val newThisExpression = expression.replace(targetThis) as KtExpression
-                    shortenReferences(newThisExpression.getQualifiedExpressionForReceiverOrThis(), ShortenOptions.ALL_ENABLED)
+                    shortenReferences(newThisExpression.getQualifiedExpressionForReceiverOrThis(), ShortenOptionsForIde.ALL_ENABLED)
                 }
             }
 

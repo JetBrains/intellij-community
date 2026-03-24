@@ -1,76 +1,28 @@
 package com.intellij.mcpserver.impl
 
-import com.intellij.concurrency.currentThreadContext
-import com.intellij.mcpserver.ClientInfo
-import com.intellij.mcpserver.DirectoryCreatedEvent
-import com.intellij.mcpserver.DirectoryDeletedEvent
-import com.intellij.mcpserver.FileContentChangeEvent
-import com.intellij.mcpserver.FileCreatedEvent
-import com.intellij.mcpserver.FileDeletedEvent
-import com.intellij.mcpserver.FileMovedEvent
-import com.intellij.mcpserver.McpCallAdditionalDataElement
-import com.intellij.mcpserver.McpCallInfo
-import com.intellij.mcpserver.McpExpectedError
+import com.intellij.mcpserver.McpSessionInvocationMode
 import com.intellij.mcpserver.McpTool
-import com.intellij.mcpserver.McpToolCallResult
-import com.intellij.mcpserver.McpToolCallResultContent
 import com.intellij.mcpserver.McpToolFilter
-import com.intellij.mcpserver.McpToolSideEffectEvent
-import com.intellij.mcpserver.McpToolsProvider
-import com.intellij.mcpserver.McpToolset
-import com.intellij.mcpserver.ToolCallListener
+import com.intellij.mcpserver.McpToolFilterProvider
+import com.intellij.mcpserver.McpToolInvocationMode
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.impl.util.network.findFirstFreePort
-import com.intellij.mcpserver.impl.util.network.httpRequestOrNull
 import com.intellij.mcpserver.impl.util.network.installHostValidation
 import com.intellij.mcpserver.impl.util.network.installHttpRequestPropagation
 import com.intellij.mcpserver.impl.util.network.mcpPatched
-import com.intellij.mcpserver.impl.util.projectPathParameterName
-import com.intellij.mcpserver.mcpCallInfoOrNull
-import com.intellij.mcpserver.noSuitableProjectError
 import com.intellij.mcpserver.settings.McpServerSettings
-import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
+import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.stdio.IJ_MCP_ALLOWED_TOOLS
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
-import com.intellij.mcpserver.util.findMostRelevantProject
-import com.intellij.mcpserver.util.findMostRelevantProjectForRoots
+import com.intellij.mcpserver.toolsets.general.UniversalToolset
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.openapi.diagnostic.traceThrowable
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.extensions.ExtensionPointListener
-import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.AsyncFileListener
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
-import com.intellij.platform.diagnostic.telemetry.IJNoopTracer
-import com.intellij.platform.diagnostic.telemetry.IJTracer
-import com.intellij.platform.diagnostic.telemetry.Scope
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.TracerLevel
-import com.intellij.util.application
-import com.intellij.util.asDisposable
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.cio.CIO
@@ -78,60 +30,32 @@ import io.ktor.server.cio.CIOApplicationEngine
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.response.respond
-import io.ktor.util.toMap
-import io.modelcontextprotocol.kotlin.sdk.server.RegisteredTool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
-import io.modelcontextprotocol.kotlin.sdk.server.ServerSession
-import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
-import io.modelcontextprotocol.kotlin.sdk.types.EmptyJsonObject
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
-import io.modelcontextprotocol.kotlin.sdk.types.Method
-import io.modelcontextprotocol.kotlin.sdk.types.RootsListChangedNotification
 import io.modelcontextprotocol.kotlin.sdk.types.ServerCapabilities
-import io.modelcontextprotocol.kotlin.sdk.types.TextContent
-import io.modelcontextprotocol.kotlin.sdk.types.Tool
-import io.modelcontextprotocol.kotlin.sdk.types.ToolSchema
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.StatusCode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.json.JsonPrimitive
+import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.cancellation.CancellationException
-import kotlin.io.path.Path
+import kotlin.time.Duration.Companion.milliseconds
 
 
 private val logger = logger<McpServerService>()
-private val structuredToolOutputEnabled get() = Registry.`is`("mcp.server.structured.tool.output")
-private val IJ_MCP_AUTH_TOKEN: String = ::IJ_MCP_AUTH_TOKEN.name
-private val MCP_SERVER_TRACER_SCOPE = Scope("mcpServer")
+internal val IJ_MCP_AUTH_TOKEN: String = ::IJ_MCP_AUTH_TOKEN.name
 
-private fun getTracer(): IJTracer =
-  if (Registry.`is`("mcp.server.ot.trace"))
-    TelemetryManager.getInstance().getTracer(MCP_SERVER_TRACER_SCOPE)
-  else
-    IJNoopTracer
-
-@Service(Service.Level.APP)
-class McpServerService(val cs: CoroutineScope) {
+open class McpServerService(val cs: CoroutineScope) {
   enum class AskCommandExecutionMode {
     ASK,
     DONT_ASK,
@@ -143,27 +67,42 @@ class McpServerService(val cs: CoroutineScope) {
   }
   class McpSessionOptions(
     val commandExecutionMode: AskCommandExecutionMode,
-    val toolFilter: McpToolFilter = McpToolFilter.AllowAll
-  )
+    val toolFilter: McpToolFilter? = null,
+    val localAgentId: String? = null,
+    val invocationMode: McpSessionInvocationMode? = null,
+  ) {
+    @Deprecated("ABI compat with 261.22158 that doesn't have `localAgentId`", level = DeprecationLevel.HIDDEN)
+    constructor(
+      commandExecutionMode: AskCommandExecutionMode,
+      toolFilter: McpToolFilter = McpToolFilter.AllowAll,
+    ) : this(commandExecutionMode, toolFilter, null)
+  }
 
   companion object {
     fun getInstance(): McpServerService = service()
     suspend fun getInstanceAsync(): McpServerService = serviceAsync()
+
+    internal val callId = AtomicInteger(0)
   }
 
+  internal val toolsStateProvider = McpToolsListProvider(cs)
+  
   private val server = MutableStateFlow(startGlobalServerIfEnabled())
 
   private class ServerAndCount(var server: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>?, var userCount: Int)
 
   private val privateServer: ServerAndCount = ServerAndCount(null, 0)
   private val privateServerMutex = Mutex()
-  private val callId = AtomicInteger(0)
 
   private val activeAuthorizedSessions = ConcurrentHashMap<String, McpSessionOptions>()
-  internal val sessionRoots = ConcurrentHashMap<String, Set<String>>()
 
   val isRunning: Boolean
     get() = server.value != null
+
+  // For tests
+  val theOnlySession: McpSessionOptions?
+    @ApiStatus.Internal
+    get() = if (activeAuthorizedSessions.size == 1) activeAuthorizedSessions.values.firstOrNull() else null
 
   private val connectionAddressProvider: McpServerConnectionAddressProvider
     get() = service()
@@ -230,7 +169,7 @@ class McpServerService(val cs: CoroutineScope) {
             withContext(NonCancellable) {
               withContext(Dispatchers.IO) {
                 // timeout exception will be reported in the catch below
-                withTimeout(2000) {
+                withTimeout(2000.milliseconds) {
                   server.stopSuspend(gracePeriodMillis = 500, timeoutMillis = 1000)
                 }
               }
@@ -256,7 +195,7 @@ class McpServerService(val cs: CoroutineScope) {
            ?: McpSessionOptions(commandExecutionMode = AskCommandExecutionMode.RESPECT_GLOBAL_SETTINGS)
   }
 
-  val port: Int
+  open val port: Int
     get() = (server.value ?: error("MCP Server is not enabled")).engineConfig.connectors.first().port
 
   internal fun resolvedConnectorHost(): String? {
@@ -298,29 +237,8 @@ class McpServerService(val cs: CoroutineScope) {
   private fun startServer(desiredPort: Int, authCheck: Boolean): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration> {
     val freePort = findFirstFreePort(desiredPort)
 
-    val mcpTools = MutableStateFlow(getMcpTools())
-
-    McpToolsProvider.EP.addExtensionPointListener(cs, object : ExtensionPointListener<McpToolsProvider> {
-      override fun extensionAdded(extension: McpToolsProvider, pluginDescriptor: PluginDescriptor) {
-        mcpTools.tryEmit(getMcpTools())
-      }
-
-      override fun extensionRemoved(extension: McpToolsProvider, pluginDescriptor: PluginDescriptor) {
-        mcpTools.tryEmit(getMcpTools())
-      }
-    })
-
-    McpToolset.EP.addExtensionPointListener(cs, object : ExtensionPointListener<McpToolset> {
-      override fun extensionAdded(extension: McpToolset, pluginDescriptor: PluginDescriptor) {
-        mcpTools.tryEmit(getMcpTools())
-      }
-
-      override fun extensionRemoved(extension: McpToolset, pluginDescriptor: PluginDescriptor) {
-        mcpTools.tryEmit(getMcpTools())
-      }
-    })
-
     return cs.embeddedServer(CIO, host = "127.0.0.1", port = freePort) {
+      logger.trace { "Starting embedded MCP server on port $freePort, authCheck=$authCheck" }
       installHostValidation()
       installHttpRequestPropagation()
 
@@ -333,6 +251,8 @@ class McpServerService(val cs: CoroutineScope) {
           }
         }
       }) { applicationCall, transport ->
+        logger.trace { "Starting session" }
+
         // this is added because now a Kotlin MCP client doesn't support header adjusting for each request, only for initial one, see McpStdioRunner
         val projectPath = applicationCall.request.headers[IJ_MCP_SERVER_PROJECT_PATH]
         val authToken = if (authCheck) applicationCall.request.headers[IJ_MCP_AUTH_TOKEN] else null
@@ -346,9 +266,10 @@ class McpServerService(val cs: CoroutineScope) {
 
         // Merge filters: auth-based session options take precedence over header
         val baseSessionOptions = getSessionOptions(authToken)
+        val useFiltersFromEP = allowedToolsFromHeader.isNullOrEmpty()
         // if no header provided, use the existing filter from sessionOptions
         val sessionOptions = if (headerFilter != null) {
-          McpSessionOptions(baseSessionOptions.commandExecutionMode, headerFilter)
+          McpSessionOptions(baseSessionOptions.commandExecutionMode, headerFilter, baseSessionOptions.localAgentId)
         } else {
           baseSessionOptions
         }
@@ -369,366 +290,105 @@ class McpServerService(val cs: CoroutineScope) {
             )
           )
         )
-        val session = mcpServer.createSession(transport)
+
+        // Create session-specific MCP tools manager
+        val sessionToolsManager = McpSessionHandler(
+          parentScope = cs,
+          sessionOptions = sessionOptions,
+          mcpServerService = this@McpServerService,
+          mcpServer = mcpServer,
+          projectPathFromInitialRequest = projectPath,
+          useFiltersFromEP = useFiltersFromEP,
+        )
+
+        val session = sessionToolsManager.createAndInitializeSession(transport, this)
         //session.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(Method.Defined.LoggingSetLevel) { request, extra ->
         //  // Workaround inspector failure
         //  return@setRequestHandler EmptyRequestResult()
         //}
-        launch {
-          var previousTools: List<McpTool>? = null
-          mcpTools.collectLatest { updatedTools ->
-            // Apply session-specific filter
-            val filteredTools = updatedTools.filter { sessionOptions.toolFilter.shouldInclude(it.descriptor.name) }
-
-            previousTools?.forEach { previousTool ->
-              mcpServer.removeTool(previousTool.descriptor.name)
-            }
-            mcpServer.addTools(filteredTools.map { it.mcpToolToRegisteredTool(mcpServer, session, projectPath) })
-            previousTools = filteredTools
-          }
-
-        }
-
-        session.onInitialized {
-          val clientCapabilities = session.clientCapabilities
-          if (clientCapabilities?.roots != null) {
-            session.onClose {
-              logger.trace {
-                "Roots for session ${session.sessionId} cleared"
-              }
-              sessionRoots.remove(session.sessionId)
-            }
-            session.setNotificationHandler<RootsListChangedNotification>(Method.Defined.NotificationsRootsListChanged) {
-              async {
-                logger.trace {
-                  "Received roots list changed notification for session ${session.sessionId}: ${session.roots()} roots"
-                }
-                sessionRoots[session.sessionId] = session.roots()
-              }
-            }
-            launch {
-              logger.trace {
-                "Initialized roots for session ${session.sessionId}: ${session.roots()} roots"
-              }
-              sessionRoots[session.sessionId] = session.roots()
-            }
-          }
-        }
-
 
         return@mcpPatched session
       }
     }.start(wait = false)
   }
 
-  private fun getMcpTools(filter: McpToolFilter = McpToolFilter.AllowAll): List<McpTool> {
-    val allTools = McpToolsProvider.EP.extensionList.flatMap {
-      try {
-        it.getTools()
-      }
-      catch (e: Exception) {
-        logger.error("Cannot load tools for $it", e)
-        emptyList()
-      }
-    }
-    return allTools.filter { filter.shouldInclude(it.descriptor.name) }
+  internal fun getMcpTools(filter: McpToolFilter? = null, useFiltersFromEP: Boolean = true, clientInfo: Implementation? = null, sessionOptions: McpSessionOptions? = null, invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT): List<McpTool> {
+    return getMcpToolsFiltered(filter, useFiltersFromEP, excludeProviders = emptySet(), clientInfo = clientInfo, sessionOptions = sessionOptions, invocationMode = invocationMode)
+  }
+  
+  internal fun getAllMcpTools(): List<McpTool> {
+    return toolsStateProvider.allTools.value
   }
 
-  private fun McpTool.mcpToolToRegisteredTool(
-    server: Server,
-    session: ServerSession,
-    projectPathFromInitialRequest: String?,
-  ): RegisteredTool {
-    val tool = toSdkTool()
-    return RegisteredTool(tool) { request ->
-      val httpRequest = currentCoroutineContext().httpRequestOrNull
-      val projectPathFromHeaders =
-        httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH) ?: (request.meta?.get(IJ_MCP_SERVER_PROJECT_PATH) as? JsonPrimitive)?.content
-        ?: projectPathFromInitialRequest
-      val projectPathFromMcpRequest = (request.arguments?.get(projectPathParameterName) as? JsonPrimitive)?.content
-      val project = try {
-        val sessionRoots = sessionRoots[session.sessionId]
-        val projectFromRootList = sessionRoots?.let { findMostRelevantProjectForRoots(sessionRoots) }
-        logger.trace { "Locating project for session: ${session.sessionId}, roots: $sessionRoots, $projectPathParameterName: $projectPathFromMcpRequest, projectPathFromHeaders: $projectPathFromHeaders" }
-        if (projectFromRootList != null) {
-          logger.trace { "Project $projectFromRootList from roots list: $sessionRoots" }
-          // prefer project from list of roots
-          projectFromRootList
-        } else if (!projectPathFromMcpRequest.isNullOrBlank()) {
-          logger.trace { "Project path specified in MCP request: $projectPathFromMcpRequest" }
-          // project from mcp argument first (may hallucinate)
-          findMostRelevantProject(projectPathFromMcpRequest)
-          ?: throw noSuitableProjectError("`$projectPathParameterName`=`$projectPathFromMcpRequest` doesn't correspond to any open project.")
-        }
-        else if (!projectPathFromHeaders.isNullOrBlank()) {
-          logger.trace { "Project path specified in MCP request headers: $projectPathFromHeaders" }
-          // then from headers
-          findMostRelevantProject(projectPathFromHeaders)
-          ?: throw noSuitableProjectError("Project path specified via header variable `$IJ_MCP_SERVER_PROJECT_PATH`=`$projectPathFromHeaders` doesn't correspond to any open project.")
-        }
-        else {
-          null
-        }
-      }
-      catch (tce: TimeoutCancellationException) {
-        logger.trace { "Calling of tool '${descriptor.name}' has been timed out: ${tce.message}" }
-        return@RegisteredTool McpToolCallResult.error(errorMessage = "Calling of tool '${descriptor.name}' has been timed out: ${tce.message}")
-          .toSdkToolCallResult()
-      }
-      // handle it here because it incorrectly handled in the MCP SDK
-      catch (ce: CancellationException) {
-        //logger.trace { "Calling of tool '${descriptor.name}' has been cancelled: ${ce.message}" }
-        return@RegisteredTool McpToolCallResult.error(errorMessage = "Calling of tool '${descriptor.name}' has been cancelled: ${ce.message}")
-          .toSdkToolCallResult()
-      }
-      catch (mcpError: McpExpectedError) {
-        return@RegisteredTool McpToolCallResult.error(errorMessage = mcpError.mcpErrorText,
-                                                      structuredContent = mcpError.mcpErrorStructureContent).toSdkToolCallResult()
-      }
-      catch (e: Throwable) {
-        logger.error("Failed to determine project for MCP tool call by provided arguments", e)
-        return@RegisteredTool McpToolCallResult.error(errorMessage = e.message ?: "Unknown error", structuredContent = null)
-          .toSdkToolCallResult()
-      }
-
-      val authToken = httpRequest?.headers[IJ_MCP_AUTH_TOKEN]
-      val headersWithoutAuthToken = httpRequest?.headers?.toMap()?.let { it - IJ_MCP_AUTH_TOKEN }
-
-      val sessionOptions = getSessionOptions(authToken)
-
-      val vfsEvent = CopyOnWriteArrayList<VFileEvent>()
-      val initialDocumentContents = ConcurrentHashMap<Document, String>()
-      val clientVersion = session.clientVersion ?: Implementation("Unknown MCP client", "Unknown version")
-
-      val sessionId = session.sessionId
-      val additionalData = McpCallInfo(
-        callId = callId.getAndAdd(1),
-        clientInfo = ClientInfo(clientVersion.name, clientVersion.version),
-        project = project,
-        mcpToolDescriptor = descriptor,
-        rawArguments = request.arguments ?: EmptyJsonObject,
-        meta = request.meta?.json ?: EmptyJsonObject,
-        mcpSessionOptions = sessionOptions,
-        headers = headersWithoutAuthToken ?: emptyMap(),
-      )
-
-      val callResult = coroutineScope {
-
-        VirtualFileManager.getInstance().addAsyncFileListener(this, AsyncFileListener { events ->
-          val inHandlerInfo = currentThreadContext().mcpCallInfoOrNull
-          if (inHandlerInfo != null && inHandlerInfo.callId == additionalData.callId) {
-            logger.trace { "VFS changes detected for call: $inHandlerInfo" }
-            vfsEvent.addAll(events)
-          }
-          // probably we have to read initial contents here
-          // see comment below near `is VFileContentChangeEvent`
-          return@AsyncFileListener object : AsyncFileListener.ChangeApplier {}
-        })
-
-        val documentListener = object : DocumentListener {
-          // record content before any change
-          override fun beforeDocumentChange(event: DocumentEvent) {
-            val inHandlerInfo = currentThreadContext().mcpCallInfoOrNull
-            if (inHandlerInfo != null && inHandlerInfo.callId == additionalData.callId) {
-              logger.trace { "Document changes detected for call: $inHandlerInfo" }
-              initialDocumentContents.computeIfAbsent(event.document) { event.document.text }
-            }
-          }
-        }
-
-        EditorFactory.getInstance().eventMulticaster.addDocumentListener(documentListener, this.asDisposable())
-
-        withContext(
-          McpCallAdditionalDataElement(additionalData)
-        ) {
-          val span = getTracer().spanBuilder("mcp.tool.call", TracerLevel.DEFAULT)
-            .setAllAttributes(Attributes.builder()
-                                .put("mcp.tool.name", descriptor.name)
-                                .put("mcp.client.name", clientVersion.name)
-                                .put("mcp.client.version", clientVersion.version)
-                                .put("mcp.call.id", additionalData.callId.toLong())
-                                .put("mcp.session.id", sessionId)
-                                .build())
-            .startSpan()
-
-          try {
-            span.makeCurrent().use {
-              val sideEffectEvents = mutableListOf<McpToolSideEffectEvent>()
-              @Suppress("IncorrectCancellationExceptionHandling")
-              try {
-                application.messageBus.syncPublisher(ToolCallListener.TOPIC)
-                  .beforeMcpToolCall(this@mcpToolToRegisteredTool.descriptor, additionalData)
-
-                logger.trace { "Start calling tool '${this@mcpToolToRegisteredTool.descriptor.name}'. Arguments: ${request.arguments}" }
-
-                span.addEvent("mcp.tool.call.started",
-                              Attributes.of(
-                                AttributeKey.stringKey("arguments.size"),
-                                request.arguments?.size?.toString() ?: "0"
-                              ))
-
-                val result = this@mcpToolToRegisteredTool.call(request.arguments ?: EmptyJsonObject)
-
-                logger.trace {
-                  "Tool call successful '${this@mcpToolToRegisteredTool.descriptor.name}'. Result: ${
-                    result.content.joinToString("\n") { it.toString() }
-                  }"
-                }
-
-                span.addEvent("mcp.tool.call.completed",
-                              Attributes.of(
-                                AttributeKey.stringKey("result.content.count"),
-                                result.content.size.toString()
-                              ))
-                span.setStatus(StatusCode.OK)
-
-                try {
-                  val processedChangedFiles = mutableSetOf<VirtualFile>()
-
-                  for ((doc, oldContent) in initialDocumentContents) {
-                    val virtualFile = FileDocumentManager.getInstance().getFile(doc) ?: continue
-                    val newContent = readAction { doc.text }
-                    sideEffectEvents.add(FileContentChangeEvent(virtualFile, oldContent, newContent))
-                    processedChangedFiles.add(virtualFile)
-                  }
-
-                  for (event in vfsEvent) {
-                    when (event) {
-                      is VFileMoveEvent -> {
-                        sideEffectEvents.add(FileMovedEvent(event.file, event.oldParent, event.newParent))
-                      }
-                      is VFileCreateEvent -> {
-                        val virtualFile = event.file ?: continue
-                        if (event.isDirectory) {
-                          sideEffectEvents.add(DirectoryCreatedEvent(virtualFile))
-                        }
-                        else {
-                          val newContent = readAction { FileDocumentManager.getInstance().getDocument(virtualFile)?.text } ?: continue
-                          sideEffectEvents.add(FileCreatedEvent(virtualFile, newContent))
-                        }
-                      }
-                      is VFileDeleteEvent -> {
-                        val virtualFile = event.file
-                        if (virtualFile.isDirectory) {
-                          sideEffectEvents.add(DirectoryDeletedEvent(virtualFile))
-                        }
-                        else {
-                          val document = readAction { FileDocumentManager.getInstance().getDocument(virtualFile) } ?: continue
-                          val oldContent = initialDocumentContents[document]
-                          sideEffectEvents.add(FileDeletedEvent(virtualFile, oldContent))
-                        }
-                      }
-                      is VFileCopyEvent -> {
-                        val createdFile = event.findCreatedFile() ?: continue
-                        val newContent = readAction { FileDocumentManager.getInstance().getDocument(createdFile)?.text } ?: continue
-                        sideEffectEvents.add(FileCreatedEvent(createdFile, newContent))
-                      }
-                      is VFileContentChangeEvent -> {
-                        // reported in documents loop
-                        if (processedChangedFiles.contains(event.file)) continue
-                        val virtualFile = event.file
-                        val newContent = readAction { FileDocumentManager.getInstance().getDocument(virtualFile)?.text } ?: continue
-                        // Important: there may be a case when file is changed via low level change (like File.replaceText).
-                        // in this case we don't track the old content, because it may be heavy, it requires loading the file in
-                        // AsyncFileListener above and decoding with encoding etc. The file can be binary etc.
-                        sideEffectEvents.add(FileContentChangeEvent(virtualFile, oldContent = null, newContent = newContent))
-                      }
-                    }
-                  }
-
-                }
-                catch (ce: CancellationException) {
-                  throw ce
-                }
-                catch (t: Throwable) {
-                  logger.error("Failed to process changed documents after calling MCP tool ${this@mcpToolToRegisteredTool.descriptor.name}",
-                               t)
-                }
-                application.messageBus.syncPublisher(ToolCallListener.TOPIC)
-                  .afterMcpToolCall(this@mcpToolToRegisteredTool.descriptor, sideEffectEvents, null, additionalData)
-                result
-              }
-              catch (ce: CancellationException) {
-                val message = "MCP tool call has been cancelled likely by a user interaction: ${ce.message}"
-                logger.traceThrowable { CancellationException(message, ce) }
-                span.setStatus(StatusCode.ERROR, message)
-                application.messageBus.syncPublisher(ToolCallListener.TOPIC)
-                  .afterMcpToolCall(this@mcpToolToRegisteredTool.descriptor, sideEffectEvents, ce, additionalData)
-                McpToolCallResult.error(message)
-              }
-              catch (mcpException: McpExpectedError) {
-                logger.traceThrowable { mcpException }
-                span.setStatus(StatusCode.ERROR, "MCP expected error: ${mcpException.mcpErrorText}")
-                application.messageBus.syncPublisher(ToolCallListener.TOPIC)
-                  .afterMcpToolCall(this@mcpToolToRegisteredTool.descriptor, sideEffectEvents, mcpException, additionalData)
-                McpToolCallResult.error(mcpException.mcpErrorText, mcpException.mcpErrorStructureContent)
-              }
-              catch (t: Throwable) {
-                val errorMessage = "MCP tool call has been failed: ${t.message}"
-                logger.error(t)
-                span.setStatus(StatusCode.ERROR, errorMessage)
-                application.messageBus.syncPublisher(ToolCallListener.TOPIC)
-                  .afterMcpToolCall(this@mcpToolToRegisteredTool.descriptor, sideEffectEvents, t, additionalData)
-                McpToolCallResult.error(errorMessage)
-              }
-              finally {
-                if (sideEffectEvents.isNotEmpty()) {
-                  withContext(Dispatchers.EDT) {
-                    writeIntentReadAction {
-                      FileDocumentManager.getInstance().saveAllDocuments()
-                    }
-                  }
-                }
-                span.setAllAttributes(Attributes.builder()
-                                        .put("mcp.side_effects.vfs_events", vfsEvent.size.toLong())
-                                        .put("mcp.side_effects.document_changes", initialDocumentContents.size.toLong())
-                                        .build())
-                McpServerCounterUsagesCollector.reportMcpCall(descriptor)
-              }
-            }
-          }
-          finally {
-            span.end()
-          }
-        }
-      }
-
-      val callToolResult = callResult.toSdkToolCallResult()
-      return@RegisteredTool callToolResult
-    }
+  /**
+   * Checks if there are any active MCP tools available after applying the filter.
+   * 
+   * @param filter The filter to apply to the tools
+   * @return true if at least one MCP tool is available after filtering, false otherwise
+   */
+  fun hasActiveMcpTools(filter: McpToolFilter?, invocationMode: McpSessionInvocationMode?): Boolean {
+    return getMcpTools(filter = filter, invocationMode = when(invocationMode ?: McpToolFilterSettings.getInstance().invocationMode) {
+      McpSessionInvocationMode.DIRECT -> McpToolInvocationMode.DIRECT
+      McpSessionInvocationMode.VIA_ROUTER -> McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED
+    }).isNotEmpty()
   }
-}
-private suspend fun ServerSession.roots(): Set<String> {
-  return listRoots().roots.map { it.uri }.toSet()
-}
 
-private fun McpToolCallResult.toSdkToolCallResult(): CallToolResult {
-  val contents = content.map { content ->
-    when (content) {
-      is McpToolCallResultContent.Text -> TextContent(content.text)
+  /**
+   * Returns MCP tools filtered by all filter providers except those specified in [excludeProviders].
+   * This is useful for UI that needs to show tools filtered by some providers but not others
+   * (e.g., showing tools for disallow list configuration without applying the disallow-list filter itself).
+   */
+  internal fun getMcpToolsFiltered(
+    filter: McpToolFilter? = null,
+    useFiltersFromEP: Boolean = true,
+    excludeProviders: Set<Class<out McpToolFilterProvider>>,
+    clientInfo: Implementation? = null,
+    sessionOptions: McpSessionOptions? = null,
+    invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT,
+  ): List<McpTool> {
+    val allTools = getAllMcpTools()
+    val filterAdjusted = when(invocationMode) {
+      McpToolInvocationMode.DIRECT -> filter ?: McpToolFilter.AllowAll
+      McpToolInvocationMode.VIA_ROUTER -> McpToolFilter.AllowAll
+      McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED -> McpToolFilter.AlwaysIncluded
     }
-  }
-  val structuredContent = if (structuredToolOutputEnabled) structuredContent else null
-  val callToolResult = CallToolResult(content = contents, structuredContent = structuredContent, isError = isError)
-  return callToolResult
-}
 
-private fun McpTool.toSdkTool(): Tool {
-  val outputSchema = if (structuredToolOutputEnabled) {
-    descriptor.outputSchema?.let {
-      ToolSchema(
-        properties = it.propertiesSchema,
-        required = it.requiredProperties.toList())
+    val routerToolName = UniversalToolset::execute_tool.name
+    if (!useFiltersFromEP) {
+      return allTools.filter { tool ->
+        val isRouterTool = tool.descriptor.name == routerToolName
+        val shouldIncludeRouter = invocationMode == McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED
+        val shouldExcludeRouter = invocationMode == McpToolInvocationMode.DIRECT || invocationMode == McpToolInvocationMode.VIA_ROUTER
+        
+        when {
+          isRouterTool && shouldExcludeRouter -> false
+          isRouterTool && shouldIncludeRouter -> true
+          else -> filterAdjusted.shouldInclude(tool)
+        }
+      }
     }
+    val filterProviders = McpToolFilterProvider.EP.extensionList
+      .filter { provider -> excludeProviders.none { it.isInstance(provider) } }
+    // Start with all tools in ON_DEMAND state
+    val context = McpToolFilterProvider.McpToolFilterContext(allTools)
+    if (invocationMode == McpToolInvocationMode.DIRECT || invocationMode == McpToolInvocationMode.VIA_ROUTER) {
+      context.turnOff { it.descriptor.name == routerToolName }
+    }
+    else {
+      context.turnOn { it.descriptor.name == routerToolName }
+    }
+    
+    // Apply filter providers (can move ON_DEMAND → ON/OFF, or ON → OFF)
+    for (filterProvider in filterProviders) {
+      filterProvider.applyFilters(context, clientInfo, sessionOptions, invocationMode)
+    }
+    
+    // Apply the filter parameter ONLY to ON_DEMAND tools
+    // Tools that pass the filter are included, tools already in ON state are also included
+    val includedOnDemandTools = context.onDemandTools.filter { filterAdjusted.shouldInclude(it) }
+    
+    // Return tools that are either ON or ON_DEMAND and pass the filter
+    return (context.onTools + includedOnDemandTools).toList()
   }
-  else null
-  val tool = Tool(name = descriptor.name,
-                  title = null,
-                  description = descriptor.description,
-                  inputSchema = ToolSchema(
-                    properties = descriptor.inputSchema.propertiesSchema,
-                    required = descriptor.inputSchema.requiredProperties.toList()),
-                  outputSchema = outputSchema,
-                  annotations = null)
-  return tool
+
 }

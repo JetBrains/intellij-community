@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalScri
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalSourceOutOfBlockModificationEvent
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderService
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import javax.swing.JComponent
@@ -39,7 +38,6 @@ internal class InvalidateK2CachesInternalAction : AnAction() {
     @Suppress("TestOnlyProblems")
     private fun invalidateCaches(project: Project, invalidationMode: InvalidationMode) = runWriteAction {
         if (invalidationMode.invalidateSources) {
-            ProjectStructureProviderService.getInstance(project).incOutOfBlockModificationCount()
             project.publishGlobalSourceOutOfBlockModificationEvent()
             project.publishGlobalScriptModuleStateModificationEvent()
         }

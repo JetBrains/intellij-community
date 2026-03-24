@@ -282,7 +282,21 @@ public final class ExternalSystemJdkUtil {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Sdk lookup(@NotNull Project project, @NotNull Function<SdkLookupBuilder, SdkLookupBuilder> customizer) {
+  public static @Nullable Sdk lookupJdkByName(@NotNull Project project, @NotNull String sdkName) {
+    return lookup(project, builder -> {
+      return builder.withSdkName(sdkName);
+    });
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable Sdk lookupJdkByVersion(@NotNull Project project, @NotNull JavaVersion sdkVersion) {
+    return lookup(project, builder ->
+      builder.withVersionFilter(it -> matchJavaVersion(sdkVersion, it))
+    );
+  }
+
+  @ApiStatus.Internal
+  private static @Nullable Sdk lookup(@NotNull Project project, @NotNull Function<SdkLookupBuilder, SdkLookupBuilder> customizer) {
     return SdkLookupUtil.lookupSdkBlocking(((builder) -> {
       return customizer.apply(
         builder.withProject(project)

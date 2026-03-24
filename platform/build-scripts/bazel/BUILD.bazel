@@ -1,6 +1,44 @@
-load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_java//java:defs.bzl", "java_binary", "java_test", "java_import")
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
+load("@rules_java//toolchains:default_java_toolchain.bzl", "default_java_toolchain")
 load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+exports_files(["intellij.platform.buildScripts.bazel.iml"], visibility = ["//visibility:public"])
+
+# see usage in .bazelrc
+# this toolchain prevents dependency on C++ toolchain through proguard_allowlister tool
+default_java_toolchain(
+    name = "jps_to_bazel_toolchain_jdk_21",
+    source_version = "21",
+    target_version = "21",
+    java_runtime = "@rules_java//toolchains:remotejdk_25",
+    proguard_allowlister = ":noop_proguard_allowlister",
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "junit",
+  jars = ["@junit_http//file:junit.jar"],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "assertj-core",
+  jars = ["@assertj-core_http//file:assertj-core.jar"],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "byte-buddy",
+  jars = ["@byte-buddy_http//file:byte-buddy.jar"],
+  visibility = ["//visibility:public"],
+)
+
+native_binary(
+    name = "noop_proguard_allowlister",
+    src = "noop_proguard_allowlister.sh",
+)
 
 kt_compiler_plugin(
     name = "serialization_plugin",
@@ -25,20 +63,65 @@ kt_jvm_library(
     name = "jps_to_bazel-lib",
     srcs = glob(["src/**/*.kt"]),
     deps = [
+        "@j2b_maven//:com_intellij_platform_kotlinx_coroutines_core_jvm",
+        "@j2b_maven//:com_jetbrains_intellij_platform_jps_model",
         "@j2b_maven//:com_jetbrains_intellij_platform_jps_model_impl",
-        "@j2b_maven//:org_jetbrains_teamcity_serviceMessages",
-        "@j2b_maven//:com_jetbrains_intellij_platform_build_scripts_downloader",
         "@j2b_maven//:com_jetbrains_intellij_platform_jps_model_serialization",
+        "@j2b_maven//:com_jetbrains_intellij_platform_util",
+        "@j2b_maven//:com_jetbrains_intellij_platform_util_base",
+        "@j2b_maven//:com_jetbrains_intellij_platform_util_base_multiplatform",
+        "@j2b_maven//:com_jetbrains_intellij_platform_util_jdom",
+        "@j2b_maven//:com_jetbrains_intellij_platform_build_scripts_downloader",
         "@j2b_maven//:org_jetbrains_kotlin_kotlin_jps_plugin",
+        "@j2b_maven//:org_jetbrains_kotlin_kotlin_reflect",
+        "@j2b_maven//:org_jetbrains_kotlinx_kotlinx_serialization_json_jvm",
+        "@j2b_maven//:org_jetbrains_teamcity_serviceMessages",
         ":kotlin_serialization",
     ],
     runtime_deps = [],
+)
+
+kt_jvm_library(
+    name = "bazel-generator-integration-tests-lib",
+    srcs = ["test/org/jetbrains/intellij/build/bazel/BazelGeneratorIntegrationTests.kt"],
+    associates = [":jps_to_bazel-lib"],
+    deps = [
+        ":junit",
+        ":assertj-core",
+        ":byte-buddy",
+    ],
+)
+
+filegroup(
+    name = "bazel-generator-integration-test-data",
+    srcs = glob(["testData/integration/**"]),
+)
+
+java_test(
+    name = "bazel-generator-integration-tests",
+    test_class = "org.jetbrains.intellij.build.bazel.BazelGeneratorIntegrationTests",
+    data = [
+        ":bazel-generator-integration-test-data",
+        "testData/integration/marker.txt",
+    ],
+    env = {
+        "BAZEL_GENERATOR_INTEGRATION_TEST_DATA_MARKER": "$(rlocationpath testData/integration/marker.txt)",
+    },
+    runtime_deps = [":bazel-generator-integration-tests-lib"],
 )
 
 java_binary(
     name = "jps-to-bazel",
     runtime_deps = [ ":jps_to_bazel-lib" ],
     main_class = "org.jetbrains.intellij.build.bazel.JpsModuleToBazel",
+    jvm_flags = [],
+    visibility = ["//visibility:public"],
+)
+
+java_binary(
+    name = "jps-to-bazel-targets-only",
+    runtime_deps = [":jps_to_bazel-lib"],
+    main_class = "org.jetbrains.intellij.build.bazel.JpsModuleToBazelTargetsOnly",
     jvm_flags = [],
     visibility = ["//visibility:public"],
 )

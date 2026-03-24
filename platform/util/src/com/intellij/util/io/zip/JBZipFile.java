@@ -98,6 +98,7 @@ public final class JBZipFile implements Closeable {
   final boolean myIsReadonly;
 
   private boolean myIsZip64;
+  boolean isRemoteIo;
   private JBZipOutputStream myOutputStream;
   private long currentCfdOffset;
   private final long mySize;
@@ -131,6 +132,16 @@ public final class JBZipFile implements Closeable {
    */
   public JBZipFile(@NotNull Path file, boolean readonly) throws IOException {
     this(file, DEFAULT_CHARSET, readonly);
+  }
+
+  /**
+   * Opens the given file for reading with remote I/O optimization hints.
+   * When {@code isRemoteIo} is {@code true}, entry reading uses larger buffers to reduce network round-trips.
+   */
+  @ApiStatus.Internal
+  public JBZipFile(@NotNull Path file, boolean readonly, boolean isRemoteIo) throws IOException {
+    this(file, DEFAULT_CHARSET, readonly);
+    this.isRemoteIo = isRemoteIo;
   }
 
   /**

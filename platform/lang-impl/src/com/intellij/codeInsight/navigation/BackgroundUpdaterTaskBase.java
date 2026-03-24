@@ -105,7 +105,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   private boolean tryAppendUsage(@NotNull T element) {
     final UsageView view = myUsageView.get();
     if (view != null && !((UsageViewImpl)view).isDisposed()) {
-      return ReadAction.compute(() -> {
+      return ReadAction.computeBlocking(() -> {
         Usage usage = createUsage(element);
         if (usage == null) {
           return false;

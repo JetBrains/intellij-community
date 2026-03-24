@@ -2,6 +2,7 @@
   <extensionPoints>
     <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.java.definitions" interface="com.intellij.codeInsight.definition.AbstractBasicJavaDefinitionService" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.threadDumpItemFactory" interface="com.intellij.unscramble.ThreadDumpItemFactory" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -44,7 +45,8 @@
     <editorActionHandler action="EditorLineStartWithSelection" implementationClass="com.intellij.codeInsight.editorActions.JavadocLineStartWithSelectionHandler"/>
 
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterInTextBlockHandler"/>
-    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterAfterUnmatchedBraceHandler" order="before afterUnmatchedBrace"/>
+    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterAfterUnmatchedBraceHandler"
+                          order="before afterUnmatchedBrace" id="JavaEnterAfterUnmatchedBraceHandler"/>
 
     <notificationGroup id="Analyze thread dump" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false"
                        hideFromSettings="true"/>
@@ -94,6 +96,10 @@
                              implementationClass="com.intellij.codeInsight.hint.LambdaDeclarationRangeHandler"/>
     <declarationRangeHandler key="com.intellij.psi.PsiMethod"
                              implementationClass="com.intellij.codeInsight.hint.MethodDeclarationRangeHandler"/>
+
+    <codeInsight.completion.command.factory language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory" />
+
+    <completion.frontendFriendlyInsertHandler target="com.intellij.codeInsight.completion.FrontendFriendlyOverridableSpaceInsertHandler"/>
 
   </extensions>
 </idea-plugin>

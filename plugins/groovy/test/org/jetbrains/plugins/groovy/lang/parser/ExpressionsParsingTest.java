@@ -49,6 +49,10 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   public void testarithmetic$shift6() { doTest(); }
 
+  public void testarithmetic$newLineInsideParentheses() { doTest(); }
+
+  public void testarithmetic$newLineInsideIfStatement() { doTest(); }
+
   public void testarithmetic$un1() { doTest(); }
 
   public void testass1() { doTest(); }
@@ -330,6 +334,10 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testanonymous$anonymous17() { doTest(); }
 
   public void testanonymous$newlineBeforeBodyInCall() { doTest(); }
+
+  public void testanonymous$newLineInsideParentheses() { doTest(); }
+
+  public void testanonymous$newLineInsideIfStatement() { doTest(); }
 
   public void testnumbers() { doTest(); }
 

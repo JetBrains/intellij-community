@@ -1,5 +1,6 @@
 // "Convert too long character literal to string" "true"
 // ERROR: Unresolved reference: bar
+// K2_ERROR: Too many characters in a character literal.
 // K2_AFTER_ERROR: Unresolved reference 'bar'.
 
 fun foo() {

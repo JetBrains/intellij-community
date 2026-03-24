@@ -20,6 +20,32 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/analysis-impl",
     "//plugins/groovy/groovy-psi:psi",
+    "//libraries/fastutil",
+  ],
+  runtime_deps = ["//plugins/groovy"]
+)
+
+jvm_library(
+  name = "groovy-dev_test_lib",
+  module_name = "intellij.groovy.dev",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":groovy-dev",
+    "//plugins/dev/intellij.dev.codeInsight:codeInsight_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//plugins/groovy/groovy-psi:psi_test_lib",
+    "//plugins/groovy:groovy_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
   ]
 )
 ### auto-generated section `build intellij.groovy.dev` end
+
+### auto-generated section `iml intellij.groovy.dev` start
+exports_files([
+  "intellij.groovy.dev.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.groovy.dev` end

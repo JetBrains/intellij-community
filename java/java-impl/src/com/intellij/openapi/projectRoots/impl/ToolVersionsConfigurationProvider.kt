@@ -6,8 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
+import com.intellij.project.stateStore
 import org.jetbrains.jps.model.java.JdkVersionDetector
-import java.io.File
+import java.nio.file.Path
 
 private val LOG = logger<ToolVersionsConfigurationProvider>()
 
@@ -64,7 +65,9 @@ private val JAVA_PATTERN: Regex = Regex("^java (.*)$", RegexOption.MULTILINE)
 public class ToolVersionsConfigurationProvider : ExternalJavaConfigurationProvider<AsdfReleaseData> {
   override fun isConfigurationFile(fileName: String): Boolean = fileName == TOOL_VERSIONS
 
-  override fun getConfigurationFile(project: Project): File = File(project.basePath, TOOL_VERSIONS)
+  override fun getConfigurationFilePath(project: Project): Path {
+    return project.stateStore.projectBasePath.resolve(TOOL_VERSIONS)
+  }
 
   override fun getReleaseData(text: String): AsdfReleaseData? {
     val releaseDataText = text.lines()

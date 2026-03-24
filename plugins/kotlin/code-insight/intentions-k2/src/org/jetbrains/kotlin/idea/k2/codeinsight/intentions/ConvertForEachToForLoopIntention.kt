@@ -3,20 +3,18 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.components.targetSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.ImplicitReceiverInfo
-import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidPointers
 import org.jetbrains.kotlin.idea.codeinsight.utils.getImplicitReceiverInfo
+import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ForLoopUtils.computeReturnsToReplace
+import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ForLoopUtils.suggestLoopName
+import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ForLoopUtils.ReturnsToReplace
+import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ForLoopUtils.replaceReturnsWithContinue
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.CallableId
@@ -28,7 +26,6 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtLoopExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -38,13 +35,10 @@ import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
-import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.renderer.render
 
 private val FOR_EACH_NAME: Name = Name.identifier("forEach")
@@ -62,8 +56,6 @@ private val FOR_EACH_INDEXED_CALLABLE_IDS: Set<CallableId> = setOf(
     CallableId(StandardClassIds.BASE_KOTLIN_PACKAGE.child(Name.identifier("sequences")), FOR_EACH_INDEXED_NAME),
     CallableId(StandardClassIds.BASE_KOTLIN_PACKAGE.child(Name.identifier("text")), FOR_EACH_INDEXED_NAME),
 )
-
-private typealias ReturnsToReplace = List<SmartPsiElementPointer<KtReturnExpression>>
 
 internal class ConvertForEachToForLoopIntention
     : KotlinApplicableModCommandAction<KtCallExpression, ConvertForEachToForLoopIntention.Context>(KtCallExpression::class) {
@@ -98,7 +90,8 @@ internal class ConvertForEachToForLoopIntention
         if (!element.isForEachByAnalyze()) return null
         if (element.isUsedAsExpression) return null
 
-        val returnsToReplace = computeReturnsToReplace(element) ?: return null
+        val lambda = element.getSingleLambdaArgument() ?: return null
+        val returnsToReplace = lambda.computeReturnsToReplace()
 
         val receiver = element.getQualifiedExpressionForSelector()?.receiverExpression
         val implicitReceiverInfo = if (receiver == null) {
@@ -115,25 +108,11 @@ internal class ConvertForEachToForLoopIntention
         return callableId in FOR_EACH_CALLABLE_IDS || callableId in FOR_EACH_INDEXED_CALLABLE_IDS
     }
 
-    context(_: KaSession)
-    private fun computeReturnsToReplace(element: KtCallExpression): ReturnsToReplace? {
-        val lambda = element.getSingleLambdaArgument() ?: return null
-        val lambdaBody = lambda.bodyExpression ?: return null
-        val functionLiteralSymbol = lambda.functionLiteral.symbol
-        return buildList {
-            lambdaBody.forEachDescendantOfType<KtReturnExpression> { returnExpression ->
-                if (returnExpression.targetSymbol == functionLiteralSymbol) {
-                    add(returnExpression.createSmartPointer())
-                }
-            }
-        }
-    }
-
     override fun invoke(
-      actionContext: ActionContext,
-      element: KtCallExpression,
-      elementContext: Context,
-      updater: ModPsiUpdater,
+        actionContext: ActionContext,
+        element: KtCallExpression,
+        elementContext: Context,
+        updater: ModPsiUpdater,
     ) {
         val qualifiedExpression = element.getQualifiedExpressionForSelector()
         val receiverExpression = qualifiedExpression?.receiverExpression
@@ -166,17 +145,7 @@ internal class ConvertForEachToForLoopIntention
     ): KtExpression? {
         val factory = KtPsiFactory(lambda.project)
         val body = lambda.bodyExpression ?: return null
-        var needLoopLabel = false
-
-        for (returnExpr in context.returnsToReplace.dereferenceValidPointers()) {
-            val parentLoop = returnExpr.getStrictParentOfType<KtLoopExpression>()
-            if (parentLoop?.getStrictParentOfType<KtLambdaExpression>() == lambda) {
-                returnExpr.replace(factory.createExpression("continue@$loopLabelName"))
-                needLoopLabel = true
-            } else {
-                returnExpr.replace(factory.createExpression("continue"))
-            }
-        }
+        val needLoopLabel = replaceReturnsWithContinue(context.returnsToReplace, lambda, loopLabelName, factory)
 
         val loopRange = getLoopRange(receiver, context, factory) ?: return null
         val loopLabel = if (needLoopLabel) "$loopLabelName@ " else ""
@@ -188,12 +157,6 @@ internal class ConvertForEachToForLoopIntention
             loop
         }
     }
-
-    private fun suggestLoopName(lambda: KtLambdaExpression): String =
-        KotlinNameSuggester.suggestNameByName("loop") { candidate ->
-            val b = !lambda.anyDescendantOfType<KtLabeledExpression> { it.getLabelName() == candidate }
-            b
-        }
 
     private fun getLoopRange(receiver: KtExpression?, context: Context, factory: KtPsiFactory): KtExpression? {
         return if (receiver != null) {

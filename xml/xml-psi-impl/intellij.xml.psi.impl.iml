@@ -26,9 +26,9 @@
     <orderEntry type="library" name="xml-resolver" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
@@ -37,5 +37,7 @@
     <orderEntry type="module" module-name="intellij.platform.syntax.psi" />
     <orderEntry type="module" module-name="intellij.xml.syntax" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
   </component>
 </module>

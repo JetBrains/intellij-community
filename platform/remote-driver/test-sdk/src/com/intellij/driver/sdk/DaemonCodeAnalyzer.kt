@@ -50,6 +50,7 @@ interface HighlightInfoType {
 @Remote("com.intellij.openapi.editor.colors.TextAttributesKey")
 interface TextAttributesKey {
   fun compareTo(key: TextAttributesKey): Int
+  fun getExternalName(): String
 }
 
 @Remote("com.intellij.codeInsight.daemon.LineMarkerInfo")

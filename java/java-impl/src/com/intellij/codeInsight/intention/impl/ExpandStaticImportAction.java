@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
@@ -9,11 +9,10 @@ import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiImportStaticStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,30 +24,35 @@ import static com.intellij.psi.util.ImportsUtil.collectReferencesThrough;
 import static com.intellij.psi.util.ImportsUtil.expand;
 import static com.intellij.psi.util.ImportsUtil.replaceAllAndDeleteImport;
 
-public final class ExpandStaticImportAction extends PsiBasedModCommandAction<PsiIdentifier> {
+public final class ExpandStaticImportAction extends PsiBasedModCommandAction<PsiElement> {
   private final @NotNull ThreeState myExpandAll;
-  
+
   public ExpandStaticImportAction() {
-    super(PsiIdentifier.class);
+    super(PsiElement.class);
     myExpandAll = ThreeState.UNSURE;
   }
 
   private ExpandStaticImportAction(boolean expandAll) {
-    super(PsiIdentifier.class);
+    super(PsiElement.class);
     myExpandAll = ThreeState.fromBoolean(expandAll);
   }
-  
+
   @Override
   public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.expand.static.import");
   }
 
   @Override
-  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiIdentifier element) {
-    if (!PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, element) || !(element.getParent() instanceof PsiJavaCodeReferenceElement referenceElement)) {
+  protected boolean isElementApplicable(@NotNull PsiElement element, @NotNull ActionContext context) {
+    return getImportStaticStatement(element) != null;
+  }
+
+  @Override
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    if (!PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, element)) {
       return null;
     }
-    final PsiImportStaticStatement importStatement = getImportStaticStatement(referenceElement);
+    final PsiImportStaticStatement importStatement = getImportStaticStatement(element);
     if (importStatement == null) return null;
     final PsiClass targetClass = importStatement.resolveTargetClass();
     if (targetClass == null) return null;
@@ -60,33 +64,35 @@ public final class ExpandStaticImportAction extends PsiBasedModCommandAction<Psi
     return Presentation.of(message);
   }
 
-  private static PsiImportStaticStatement getImportStaticStatement(PsiJavaCodeReferenceElement referenceElement) {
-    PsiElement parent = referenceElement.getParent();
-    return parent instanceof PsiImportStaticStatement importStatic ? importStatic :
-           ObjectUtils.tryCast(referenceElement.advancedResolve(true).getCurrentFileResolveScope(), PsiImportStaticStatement.class);
+  private static PsiImportStaticStatement getImportStaticStatement(PsiElement element) {
+    if (element instanceof PsiImportStaticStatement st) return st;
+    if (element.getParent() instanceof PsiImportStaticStatement st) return st;
+    return element instanceof PsiJavaCodeReferenceElement ref
+           && ref.advancedResolve(true).getCurrentFileResolveScope() instanceof PsiImportStaticStatement st ? st : null;
   }
 
   @Override
-  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiIdentifier element) {
-    final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
-    ThreeState expandAll = myExpandAll == ThreeState.UNSURE && refExpr.getParent() instanceof PsiImportStaticStatement ? ThreeState.YES :
-                           myExpandAll;
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiElement element) {
+    PsiImportStaticStatement statement = PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class);
+    ThreeState expandAll = myExpandAll == ThreeState.UNSURE && statement != null ? ThreeState.YES : myExpandAll;
+    final PsiJavaCodeReferenceElement refExpr =
+      statement != null ? Objects.requireNonNull(statement.getImportReference()) : (PsiJavaCodeReferenceElement)element;
 
     return switch (expandAll) {
       case YES -> ModCommand.psiUpdate(refExpr, refExprCopy -> {
         PsiImportStaticStatement staticImport = getImportStaticStatement(refExprCopy);
-        List<PsiJavaCodeReferenceElement> expressionToExpand = collectReferencesThrough(
-          refExprCopy.getContainingFile(), refExprCopy, staticImport);
+        List<PsiJavaCodeReferenceElement> expressionToExpand = 
+          collectReferencesThrough(refExprCopy.getContainingFile(), refExprCopy, staticImport);
         replaceAllAndDeleteImport(expressionToExpand, refExprCopy, staticImport);
       });
       case NO -> ModCommand.psiUpdate(refExpr, refExprCopy -> {
-        PsiImportStaticStatement statement = getImportStaticStatement(refExprCopy);
-        PsiClass aClass = statement.resolveTargetClass();
+        PsiClass aClass = Objects.requireNonNull(getImportStaticStatement(refExprCopy)).resolveTargetClass();
         if (aClass == null) return;
         expand(refExprCopy, aClass);
       });
       case UNSURE -> {
-        final PsiImportStaticStatement staticImport = Objects.requireNonNull(getImportStaticStatement(refExpr));
+        assert !(element instanceof PsiImportStaticStatement);
+        final PsiImportStaticStatement staticImport = Objects.requireNonNull(getImportStaticStatement(element));
         List<PsiJavaCodeReferenceElement> expressionToExpand = collectReferencesThrough(context.file(), refExpr, staticImport);
 
         if (expressionToExpand.isEmpty()) {
@@ -95,8 +101,8 @@ public final class ExpandStaticImportAction extends PsiBasedModCommandAction<Psi
             PsiJavaCodeReferenceElement refExprCopy = updater.getWritable(refExpr);
             PsiClass aClass = staticImportCopy.resolveTargetClass();
             if (aClass == null) return;
-            expand(refExprCopy, aClass);
             staticImportCopy.delete();
+            expand(refExprCopy, aClass);
           });
         }
         yield ModCommand.chooseAction(JavaBundle.message("multiple.usages.of.static.import.found"),

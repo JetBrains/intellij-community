@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
-import com.intellij.junit.testFramework.JUnitLibrary
+import com.intellij.junit.testFramework.MavenTestLib
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
-abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalformedDeclarationInspectionTestBase(JUnitLibrary.JUNIT3, JUnitLibrary.JUNIT4, JUnitLibrary.JUNIT5) {
+abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalformedDeclarationInspectionTestBase(MavenTestLib.JUNIT3, MavenTestLib.JUNIT4, MavenTestLib.JUNIT5) {
   abstract val pluginVersion: String
 
   /* Malformed extensions */
@@ -64,6 +64,22 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
           @org.junit.jupiter.api.Test
           fun testFoo() { }
         }
+      }
+    """.trimIndent())
+  }
+
+  fun `test abstract class with inherited jupiter test no highlighting`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      abstract class AbstractTest {
+        @org.junit.jupiter.api.BeforeEach
+        fun setUp() {}
+
+        abstract fun testMethod()
+      }
+
+      class ConcreteTest : AbstractTest() {
+        @org.junit.jupiter.api.Test
+        override fun testMethod() {}
       }
     """.trimIndent())
   }
@@ -395,6 +411,29 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
       }
       """.trimIndent()
     )
+  }
+
+  fun `test malformed inherited parameterized class`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        abstract class ParentTest {
+        }
+        
+        @org.junit.jupiter.params.provider.ValueSource(strings = ["title"])
+        class OkChildTest: ParentTest() {
+          @org.junit.jupiter.params.Parameter
+          var value: String? = null
+        
+          @org.junit.jupiter.api.Test
+          fun test() { }
+        }
+        
+        class <error descr="No sources are provided, the suite would be empty">FailChildTest</error>: ParentTest() {
+          @org.junit.jupiter.api.Test
+          fun test() { }
+        }
+      """.trimIndent())
   }
 
   fun `test malformed parameterized class must specify a method name when using MethodSource`() {
@@ -2445,17 +2484,35 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
   }
 
   fun `test suite with selector no highlighting`() {
-    myFixture.testHighlighting(
-      JvmLanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.platform.suite.api.*
 
       @Suite
       @SelectClasses
       class MySuite1
-      
+
       @Suite
       @SelectPackages("com.example")
       class MySuite2
+
+      @Suite
+      abstract class MyAbstractSuite
+
+      @Suite
+      interface MyInterfaceSuite
+
+      @SelectPackages("com.example")
+      interface MySelector
+
+      @Suite
+      class MySuite3 : MySelector
+
+      @SelectPackages("com.example")
+      annotation class CustomSelector
+
+      @Suite
+      @CustomSelector
+      class MySuite4
     """.trimIndent())
   }
 
@@ -2471,6 +2528,6 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
 
       @Suite(failIfNoTests = false)
       class MySuite
-    """.trimIndent(), "Set failIfNoTests = false", testPreview = true)
+    """.trimIndent(), "Set 'failIfNoTests' to 'false'", testPreview = true)
   }
 }

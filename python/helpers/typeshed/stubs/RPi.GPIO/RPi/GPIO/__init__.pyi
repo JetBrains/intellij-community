@@ -1,7 +1,8 @@
 from collections.abc import Callable
-from typing import Final, Literal, TypedDict
+from typing import Final, Literal, TypedDict, type_check_only
 from typing_extensions import TypeAlias
 
+@type_check_only
 class _RPi_Info(TypedDict):
     P1_REVISION: int
     REVISION: str

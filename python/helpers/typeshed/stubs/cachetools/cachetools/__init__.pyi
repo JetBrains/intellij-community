@@ -2,7 +2,7 @@ from _typeshed import IdentityFunction, Unused
 from collections.abc import Callable, Iterator, MutableMapping, Sequence
 from contextlib import AbstractContextManager
 from threading import Condition
-from typing import Any, Generic, Literal, NamedTuple, TypeVar, overload
+from typing import Any, Generic, Literal, NamedTuple, TypeVar, overload, type_check_only
 from typing_extensions import Self, deprecated
 
 __all__ = ("Cache", "FIFOCache", "LFUCache", "LRUCache", "RRCache", "TLRUCache", "TTLCache", "cached", "cachedmethod")
@@ -106,10 +106,12 @@ class _CacheInfo(NamedTuple):
     maxsize: int | None
     currsize: int
 
+@type_check_only
 class _cached_wrapper(Generic[_R]):
     __wrapped__: Callable[..., _R]
     def __call__(self, /, *args: Any, **kwargs: Any) -> _R: ...
 
+@type_check_only
 class _cached_wrapper_info(_cached_wrapper[_R]):
     def cache_info(self) -> _CacheInfo: ...
     def cache_clear(self) -> None: ...

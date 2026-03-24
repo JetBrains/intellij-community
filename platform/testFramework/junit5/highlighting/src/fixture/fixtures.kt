@@ -46,11 +46,11 @@ private suspend fun configureEditorTracker(editor: Editor): suspend () -> Unit {
   val editorTracker = project.serviceAsync<EditorTracker>()
   val previousEditors = editorTracker.activeEditors
   withContext(Dispatchers.EDT) {
-    project.serviceAsync<EditorTracker>().activeEditors = previousEditors + editor
+    project.serviceAsync<EditorTracker>().setActiveEditorsInTests(previousEditors + editor)
   }
   return {
     withContext(Dispatchers.EDT) {
-      editorTracker.activeEditors = previousEditors
+      editorTracker.setActiveEditorsInTests(previousEditors)
     }
   }
 }
@@ -60,6 +60,7 @@ private suspend fun configureDaemonCodeAnalyzer(editor: Editor): Pair<DaemonCode
   val daemonCodeAnalyzer = project.serviceAsync<DaemonCodeAnalyzer>()
   // preloading emulation
   project.serviceAsync<TextEditorHighlightingPassRegistrar>()
+  val oldAutoReparseDelay = DaemonCodeAnalyzerSettings.getInstance().autoReparseDelay
   DaemonCodeAnalyzerSettings.getInstance().autoReparseDelay = 10
   val disposable = Disposer.newDisposable()
   val connection = project.messageBus.connect(disposable)
@@ -67,6 +68,7 @@ private suspend fun configureDaemonCodeAnalyzer(editor: Editor): Pair<DaemonCode
   connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, TestDaemonCodeAnalyzerListener(editor))
   return daemonCodeAnalyzer to {
     Disposer.dispose(disposable)
+    DaemonCodeAnalyzerSettings.getInstance().autoReparseDelay = oldAutoReparseDelay
   }
 }
 

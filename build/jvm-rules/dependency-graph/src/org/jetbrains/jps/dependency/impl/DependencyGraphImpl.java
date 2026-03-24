@@ -13,6 +13,8 @@ import org.jetbrains.jps.dependency.DifferentiateParameters;
 import org.jetbrains.jps.dependency.DifferentiateResult;
 import org.jetbrains.jps.dependency.DifferentiateStrategy;
 import org.jetbrains.jps.dependency.Graph;
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.MapletFactory;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.NodeSource;
@@ -23,7 +25,14 @@ import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy;
 import org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -44,7 +54,7 @@ import static org.jetbrains.jps.util.Iterators.isEmpty;
 import static org.jetbrains.jps.util.Iterators.map;
 import static org.jetbrains.jps.util.Iterators.unique;
 
-public final class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
+public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
 
   private static final List<DifferentiateStrategy> ourDifferentiateStrategies = List.of(new KotlinSourceOnlyDifferentiateStrategy(), new GeneralJvmDifferentiateStrategy());
 
@@ -272,7 +282,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       for (var node : flat(map(flat(inputSources, deleted), graphView::getNodes))) {
         Iterable<NodeSource> nodeSources = graphView.getSources(node.getReferenceID());
         if (count(nodeSources) > 1) {
-          List<NodeSource> filteredNodeSources = collect(filter(nodeSources, srcFilter::test), new ArrayList<>());
+          List<NodeSource> filteredNodeSources = collect(filter(nodeSources, srcFilter), new ArrayList<>());
           // all sources associated with the node should be either marked 'dirty' or deleted
           if (find(filteredNodeSources, s -> !inputSources.contains(s)) != null) {
             for (NodeSource s : filteredNodeSources) {
@@ -291,7 +301,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     if (!delta.isSourceOnly()) {
       // complete affected file set with source-delta dependencies
       Delta affectedSourceDelta = createDelta(
-        filter(affectedSources, params.belongsToCurrentCompilationChunk()::test),
+        filter(affectedSources, params.belongsToCurrentCompilationChunk()),
         Collections.emptyList(),
         true
       );
@@ -375,7 +385,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     }
     else {
       shadowedNodesIndices = new HashMap<>();
-      for (BackDependencyIndex index : getIndexFactory().createIndices(Containers.MEMORY_CONTAINER_FACTORY)) {
+      for (BackDependencyIndex index : getIndexFactory().createIndices(new MemoryMapletFactory())) {
         shadowedNodesIndices.put(index.getName(), index);
       }
     }
@@ -404,55 +414,84 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       myNodeToSourcesMap.update(nodeID, sourcesAfter, Difference::diff);
     }
 
-    for (NodeSource src : delta.getSources()) {
-      //noinspection unchecked
-      mySourceToNodesMap.update(src, delta.getNodes(src), (past, now) -> new Difference.Specifier<>() {
-        private final Difference.Specifier<Node, ?> diff = Difference.deepDiff(Graph.getNodesOfType(past, Node.class), Graph.getNodesOfType(now, Node.class));
+    for (NodeSource src : params.isCompiledWithErrors() || delta.isSourceOnly()? delta.getSources() : unique(flat(delta.getSources(), delta.getBaseSources()))) {
+      //noinspection unchecked,rawtypes
+      mySourceToNodesMap.update(src, delta.getNodes(src), (past, now) -> Difference.deepDiff((Iterable)past, (Iterable)now));
+    }
+    
+    try {
+      // ensure updates are commited to backing storages, in case they require explicit data commit
+      flush();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
-        @Override
-        public Iterable<Node<?, ?>> added() {
-          return map(diff.added(), n -> (Node<?, ?>)n);
+  @Override
+  public void importSnapshot(InputStream in) throws IOException {
+    ObjectEnumerator<String> enumerator = new ObjectEnumerator<>(List.of(), GraphElementInterner::intern);
+    DataInputStream dataIn = new DataInputStream(in);
+    GraphDataInput graphIn = GraphDataInputImpl.wrap(
+      dataIn,
+      enumerator::lookup,
+      o -> {
+        if (o instanceof Usage) {
+          return GraphElementInterner.intern((Usage)o);
         }
-
-        @Override
-        public Iterable<Node<?, ?>> removed() {
-          return map(diff.removed(), n -> (Node<?, ?>)n);
+        if (o instanceof ReferenceID) {
+          return GraphElementInterner.intern((ReferenceID)o);
         }
+        return o;
+      }
+    );
 
-        @Override
-        public Iterable<Difference.Change<Node<?, ?>, Difference>> changed() {
-          return map(diff.changed(), ch -> new DiffChangeAdapter(ch));
-        }
-
-        @Override
-        public boolean unchanged() {
-          return diff.unchanged();
+    int size = dataIn.readInt();
+    while (size-- > 0) {
+      int stringTableSize = dataIn.readInt();
+      while (stringTableSize-- > 0) {
+        enumerator.append(dataIn.readUTF());
+      }
+      PathSource src = graphIn.readGraphElement();
+      RW.readCollection(graphIn, graphIn::readGraphElement, (Consumer<Node<?, ?>>) node -> {
+        mySourceToNodesMap.appendValue(src, node);
+        myNodeToSourcesMap.appendValue(node.getReferenceID(), src);
+        for (BackDependencyIndex index : getIndices()) {
+          index.indexNode(node);
         }
       });
     }
   }
 
-  private static final class DiffChangeAdapter implements Difference.Change<Node<?, ?>, Difference> {
+  @Override
+  public void exportSnapshot(OutputStream out) throws IOException {
+    ObjectEnumerator<String> enumerator = new ObjectEnumerator<>();
+    List<Node<?, ?>> nodes = new ArrayList<>();
+    ByteArrayOutputStream buf = new ByteArrayOutputStream();
+    GraphDataOutput nodesOut = GraphDataOutputImpl.wrap(new DataOutputStream(buf), enumerator::toNumber);
 
-    private final Difference.Change<Node, ?> myDelegate;
-
-    DiffChangeAdapter(Difference.Change<Node, ?> delegate) {
-      myDelegate = delegate;
+    DataOutputStream dataOut = new DataOutputStream(out);
+    try {
+      Collection<NodeSource> allSources = ensureCollection(getSources());
+      dataOut.writeInt(allSources.size());
+      for (NodeSource src : allSources) {
+        buf.reset();
+        nodes.clear();
+        nodesOut.writeGraphElement(src);
+        RW.writeCollection(nodesOut, collect(getNodes(src), nodes), nodesOut::writeGraphElement);
+        dataOut.writeInt(enumerator.getUnsavedCount());
+        enumerator.drainUnsaved((__, str) -> dataOut.writeUTF(str));
+        buf.writeTo(dataOut);
+      }
     }
-
-    @Override
-    public Node<?, ?> getPast() {
-      return myDelegate.getPast();
-    }
-
-    @Override
-    public Node<?, ?> getNow() {
-      return myDelegate.getNow();
-    }
-
-    @Override
-    public Difference getDiff() {
-      return myDelegate.getDiff();
+    finally {
+      dataOut.flush();
     }
   }
+
+  private static <T> Collection<T> ensureCollection(Iterable<T> iterable) {
+    return iterable instanceof Collection? (Collection<T>) iterable : collect(iterable, new ArrayList<>());
+  }
+
+
 }

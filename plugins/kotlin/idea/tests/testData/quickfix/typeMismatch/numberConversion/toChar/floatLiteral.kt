@@ -1,4 +1,5 @@
 // "Convert expression to 'Char'" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'Float', but 'Char' was expected.
 fun char(x: Char) {}
 
 fun test() {

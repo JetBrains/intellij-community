@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.idea.TestFor
@@ -517,7 +517,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
   fun `test build output project using Daemon Jvm criteria`() {
     val jdkHome = requireJdkHome()
     val jdkVersion = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdkHome)!!.version.feature
-    createProjectSubFile("gradle.properties", "org.gradle.java.installations.paths=$jdkHome")
+    createProjectSubFile("gradle.properties", "org.gradle.java.installations.paths=${StringUtil.escapeBackSlashes(jdkHome)}")
     createProjectSubFile("gradle/gradle-daemon-jvm.properties", "toolchainVersion=$jdkVersion")
 
     overrideGradleUserHome(".gradle")
@@ -538,7 +538,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
   }
 
   @Test
-  @TargetVersions("8.14.1")
+  @TargetVersions("8.14.x")
   fun `test build output project using incompatible Daemon Jvm criteria`() {
     val jdkCandidate = requireJdkHome()
     createProjectSubFile("gradle.properties", "org.gradle.java.installations.paths=${StringUtil.escapeBackSlashes(jdkCandidate)}")

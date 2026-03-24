@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -26,7 +26,13 @@ enum class OsFamily(
   MACOS(osId = BuildOptions.OS_MAC, osName = "macOS", dirName = "mac", distSuffix = "mac", jbrArchiveSuffix = "osx"),
   LINUX(osId = BuildOptions.OS_LINUX, osName = "Linux", dirName = "linux", distSuffix = "unix", jbrArchiveSuffix = "linux");
 
-  val binaryExt: String get() = if (this == WINDOWS) ".exe" else ""
+  fun binaryName(baseName: String): String = if (this == WINDOWS) "${baseName}.exe" else baseName
+
+  fun libraryName(baseName: String): String = when (this) {
+    WINDOWS -> "${baseName}.dll"
+    MACOS -> "lib${baseName}.dylib"
+    LINUX -> "lib${baseName}.so"
+  }
 
   companion object {
     @JvmField

@@ -5,6 +5,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.Source
 import org.jetbrains.intellij.build.SourceAndCacheStrategy
@@ -16,8 +17,12 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val metadataTouchThrottleMaxEntries = 200_000
+private const val metadataPublishReconciliationAttempts = 3
+private const val metadataPublishReconciliationDelayMs = 20L
+private const val metadataTouchFailureGraceMinMs = 60 * 60 * 1000L
 
 internal fun tryUseCacheEntry(
   key: String,
@@ -136,7 +141,14 @@ internal suspend fun produceAndCache(
     )
   }
 
-  writeSourcesToMetadata(paths = paths, sources = sourceCacheItems, tempFilePrefix = tempFilePrefix)
+  try {
+    writeSourcesToMetadata(paths = paths, sources = sourceCacheItems, tempFilePrefix = tempFilePrefix)
+  }
+  catch (e: IOException) {
+    if (!reconcileMetadataPublishFailure(paths = paths, items = items, decodeNativeFiles = nativeFiles != null)) {
+      throw e
+    }
+  }
   metadataTouchTracker.recordTouch(paths.entryStem, System.currentTimeMillis())
   cleanupCandidateIndex.register(paths.entryStem, paths.entryShardDir.fileName.toString())
   notifyAboutMetadata(sources = sourceCacheItems, items = items, nativeFiles = nativeFiles, producer = producer)
@@ -146,6 +158,33 @@ internal suspend fun produceAndCache(
   }
 
   if (producer.useCacheAsTargetFile) paths.payloadFile else targetFile
+}
+
+private suspend fun reconcileMetadataPublishFailure(
+  paths: CacheEntryPaths,
+  items: List<SourceAndCacheStrategy>,
+  decodeNativeFiles: Boolean,
+): Boolean {
+  val sources = items.map { it.source }
+  repeat(metadataPublishReconciliationAttempts) { attempt ->
+    if (readValidCacheMetadata(
+        paths = paths,
+        sources = sources,
+        items = items,
+        decodeNativeFiles = decodeNativeFiles,
+        span = Span.getInvalid(),
+        onInvalidEntry = null,
+      ) != null
+    ) {
+      return true
+    }
+
+    if (attempt != metadataPublishReconciliationAttempts - 1) {
+      delay(metadataPublishReconciliationDelayMs.milliseconds)
+    }
+  }
+
+  return false
 }
 
 private fun createLinkOrCopy(targetFile: Path, cacheFile: Path) {
@@ -197,9 +236,12 @@ private fun clearMarkFileIfPresent(paths: CacheEntryPaths, span: Span) {
 internal class MetadataTouchTracker(
   minTouchIntervalMs: Long = metadataTouchMinInterval.inWholeMilliseconds,
   private val maxEntries: Int = metadataTouchThrottleMaxEntries,
+  touchFailureGracePeriodMs: Long = maxOf(minTouchIntervalMs.coerceAtLeast(0) * 2, metadataTouchFailureGraceMinMs),
 ) {
   private val touchIntervalMs = minTouchIntervalMs.coerceAtLeast(0)
+  private val touchFailureGracePeriod = touchFailureGracePeriodMs.coerceAtLeast(0)
   private val lastTouchByEntryStem = ConcurrentHashMap<String, Long>()
+  private val touchFailureByEntryStem = ConcurrentHashMap<String, Long>()
 
   fun shouldTouch(entryStem: String, now: Long): Boolean {
     var shouldTouch = false
@@ -218,14 +260,35 @@ internal class MetadataTouchTracker(
       lastTouchByEntryStem.clear()
     }
 
+    trimTouchFailureStateIfNeeded()
     return shouldTouch
   }
 
   fun recordTouch(entryStem: String, now: Long) {
     lastTouchByEntryStem[entryStem] = now
+    touchFailureByEntryStem.remove(entryStem)
+    trimTouchFailureStateIfNeeded()
   }
 
   fun onTouchFailure(entryStem: String, attemptedTouchTime: Long) {
     lastTouchByEntryStem.remove(entryStem, attemptedTouchTime)
+    touchFailureByEntryStem[entryStem] = attemptedTouchTime
+    trimTouchFailureStateIfNeeded()
+  }
+
+  fun hasRecentTouchFailure(entryStem: String, now: Long): Boolean {
+    val failedTouchTime = touchFailureByEntryStem[entryStem] ?: return false
+    if (now - failedTouchTime <= touchFailureGracePeriod) {
+      return true
+    }
+
+    touchFailureByEntryStem.remove(entryStem, failedTouchTime)
+    return false
+  }
+
+  private fun trimTouchFailureStateIfNeeded() {
+    if (touchFailureByEntryStem.size > maxEntries * 2) {
+      touchFailureByEntryStem.clear()
+    }
   }
 }

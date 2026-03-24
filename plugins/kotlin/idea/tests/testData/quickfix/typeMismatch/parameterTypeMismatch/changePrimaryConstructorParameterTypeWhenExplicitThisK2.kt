@@ -1,5 +1,6 @@
 // "Change parameter 'y' type of function 'foo' to 'T'" "true"
 // LANGUAGE_VERSION: 1.8
+// K2_ERROR: Argument type mismatch: actual type is 'T (of fun <T> Foo<T>.bar)', but 'T (of fun <T> Foo<T>.bar) & Any' was expected.
 class Foo<T>(val x: T) {
     fun foo(y: T & Any) {}
 }

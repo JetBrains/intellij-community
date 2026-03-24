@@ -9,13 +9,16 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.grazie.GrazieConfig;
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection;
+import com.intellij.grazie.ide.inspection.grammar.GrazieInspection.Companion.TextContentRelatedData;
 import com.intellij.grazie.jlanguage.Lang;
 import com.intellij.grazie.text.TextContent;
 import com.intellij.grazie.text.TextContent.TextDomain;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.ui.CommitMessage;
@@ -24,6 +27,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringOperation;
 import one.util.streamex.StreamEx;
@@ -39,6 +43,9 @@ import static com.intellij.grazie.text.TextExtractor.findAllTextContents;
 
 
 public final class HighlightingUtil {
+
+  private final static Logger LOGGER = Logger.getInstance(HighlightingUtil.class);
+  private static final Key<Object> LOCK = Key.create("grazie reliable language detection cache lock");
 
   public static final Comparator<TextContent> BY_TEXT_START = Comparator.comparing(tc -> tc.textOffsetToFile(0));
 
@@ -87,10 +94,16 @@ public final class HighlightingUtil {
   }
 
   public static List<TextContent> getAllFileTexts(FileViewProvider vp) {
-    return CachedValuesManager.getManager(vp.getManager().getProject()).getCachedValue(vp, () -> {
-      List<TextContent> contents = ContainerUtil.sorted(findAllTextContents(vp, TextDomain.ALL), BY_TEXT_START);
-      return CachedValueProvider.Result.create(contents, vp.getAllFiles().getFirst(), grazieConfigTracker());
-    });
+    Object lock = ConcurrencyUtil.computeIfAbsent(vp, LOCK, Object::new);
+    synchronized (lock) {
+      return CachedValuesManager.getManager(vp.getManager().getProject()).getCachedValue(vp, () -> {
+        List<TextContent> contents = ContainerUtil.sorted(findAllTextContents(vp, TextDomain.ALL), BY_TEXT_START);
+        PsiFile file = vp.getAllFiles().getFirst();
+        TextContentRelatedData contentRelatedData = new TextContentRelatedData(file, contents);
+        LOGGER.debug("Evaluating texts of:", contentRelatedData);
+        return CachedValueProvider.Result.create(contentRelatedData, file, grazieConfigTracker());
+      }).getContents();
+    }
   }
 
   public static boolean isSpace(Character symbol) {

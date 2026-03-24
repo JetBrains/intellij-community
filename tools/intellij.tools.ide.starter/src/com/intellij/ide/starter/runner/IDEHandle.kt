@@ -1,5 +1,6 @@
 package com.intellij.ide.starter.runner
 
+import com.intellij.execution.process.realDescendants
 import com.intellij.ide.starter.process.exec.ProcessExecutor.Companion.killProcessGracefully
 import com.intellij.ide.starter.utils.catchAll
 
@@ -19,7 +20,7 @@ class IDEProcessHandle(private val process: ProcessHandle) : IDEHandle {
     get() = process.isAlive
 
   override fun kill() {
-    process.descendants().forEach { catchAll { killProcessGracefully(it) } }
+    process.realDescendants().forEach { catchAll { killProcessGracefully(it) } }
     catchAll { killProcessGracefully(process) }
   }
 }

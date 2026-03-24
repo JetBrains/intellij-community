@@ -15,6 +15,7 @@ public final class InternalResourceProvider implements StandardResourceProvider 
 
     impl.addInternalResource(XmlUtil.XSLT_URI, "xslt-1_0.xsd", classLoader);
     impl.addInternalResource(XmlUtil.XSLT_URI, "2.0", "xslt-2_0.xsd", classLoader);
+    impl.addInternalResource(XmlUtil.XSLT_URI, "3.0", "xslt-3_0.xsd", classLoader);
     impl.addInternalResource(XmlUtil.XINCLUDE_URI, "xinclude.xsd", classLoader);
 
     impl.addInternalResource(XmlUtil.XML_SCHEMA_URI, "XMLSchema.xsd", classLoader);

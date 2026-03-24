@@ -150,6 +150,7 @@ public class ProjectSdksModel implements SdkModel {
       }
       catch (InvalidPathException ignored) {
         // Ignored.
+        return eelMachine == LocalEelMachine.INSTANCE;
       }
     }
     return false;
@@ -483,7 +484,7 @@ public class ProjectSdksModel implements SdkModel {
           else {
             Path pathToEnvironment = (project == null || project.getProjectFilePath() == null) ?
                                      Path.of(System.getProperty("user.home")) : Path.of(project.getProjectFilePath());
-            SdkConfigurationUtil.selectSdkHome(type, parent, pathToEnvironment, home -> addSdk(type, home, sdk -> callback.accept(sdk)));
+            SdkConfigurationUtil.selectSdkHome(type, parent, pathToEnvironment, project,home -> addSdk(type, home, sdk -> callback.accept(sdk)));
           }
         }
       };

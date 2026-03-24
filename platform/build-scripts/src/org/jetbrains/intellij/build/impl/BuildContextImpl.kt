@@ -1,10 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
-import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
@@ -19,7 +17,6 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -92,7 +89,6 @@ suspend fun createBuildContext(
     projectHome = projectHome,
     productProperties = productProperties,
     proprietaryBuildTools = proprietaryBuildTools,
-    scope = scope,
   )
   context.cleanupJarCache()
   return context
@@ -120,7 +116,6 @@ fun createBuildContext(
   projectHome: Path,
   productProperties: ProductProperties,
   proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-  scope: CoroutineScope? = null,
 ): BuildContextImpl {
   val projectHomeAsString = projectHome.invariantSeparatorsPathString
   val jarCacheManager = compilationContext.options.jarCacheDir?.let {
@@ -128,7 +123,6 @@ fun createBuildContext(
       cacheDir = it,
       productionClassOutDir = compilationContext.classesOutputDirectory.resolve("production"),
       maxAccessTimeAge = compilationContext.options.jarCacheMaxAccessAge,
-      scope = scope,
     )
   } ?: NonCachingJarCacheManager
   return BuildContextImpl(
@@ -300,7 +294,7 @@ class BuildContextImpl internal constructor(
   private val bundledPluginModulesForModularLoader by lazy {
     productProperties.rootModuleForModularLoader?.let { rootModule ->
       loadRawProductModules(rootModule, productProperties.productMode).bundledPluginMainModules.map {
-        it.stringId
+        it.name
       }
     }
   }
@@ -322,7 +316,7 @@ class BuildContextImpl internal constructor(
     compilationContext.notifyArtifactBuilt(artifactPath)
   }
 
-  private val _frontendModuleFilter by lazy {
+  private val _frontendModuleFilter = suspendingLazy("frontend module filter") {
     val rootModule = productProperties.embeddedFrontendRootModule
     if (rootModule != null && options.enableEmbeddedFrontend) {
       val productModules = loadRawProductModules(rootModule, ProductMode.FRONTEND)
@@ -333,7 +327,7 @@ class BuildContextImpl internal constructor(
     }
   }
 
-  override fun getFrontendModuleFilter(): FrontendModuleFilter = _frontendModuleFilter
+  override suspend fun getFrontendModuleFilter(): FrontendModuleFilter = _frontendModuleFilter.await()
 
   private val _contentModuleFilter by lazy { computeContentModuleFilter() }
 
@@ -466,13 +460,6 @@ class BuildContextImpl internal constructor(
       jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
     }
 
-    if (os == OsFamily.WINDOWS) {
-      jvmArgs.add("-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}=${useMultiRoutingFs}")
-      if (useMultiRoutingFs) {
-        jvmArgs.addAll(MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS)
-      }
-    }
-
     jvmArgs.addAll(productProperties.additionalIdeJvmArguments)
     jvmArgs.addAll(productProperties.getAdditionalContextDependentIdeJvmArguments(this))
 
@@ -512,7 +499,7 @@ class BuildContextImpl internal constructor(
                              ?: error("Cannot find product-modules.xml file in $rootModuleName")
     val resolver = object : ResourceFileResolver {
       override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
-        return findFileInModuleSources(findRequiredModule(moduleId.stringId), relativePath)?.inputStream()
+        return findFileInModuleSources(findRequiredModule(moduleId.name), relativePath)?.inputStream()
       }
 
       override fun toString(): String {
@@ -522,7 +509,7 @@ class BuildContextImpl internal constructor(
     return ProductModulesSerialization.readProductModulesAndMergeIncluded(productModulesFile.inputStream(), productModulesFile.pathString, resolver)
   }
 
-  private val devModeProductRunner = asyncLazy("dev mode product runner") {
+  private val devModeProductRunner = suspendingLazy("dev mode product runner") {
     createDevModeProductRunner(this@BuildContextImpl)
   }
 
@@ -555,7 +542,7 @@ class BuildContextImpl internal constructor(
     PluginAutoPublishList(this)
   }
 
-  private val distributionState: Deferred<DistributionBuilderState> = asyncLazy("Creating distribution state") {
+  private val distributionState = suspendingLazy("Creating distribution state") {
     createDistributionState(this@BuildContextImpl)
   }
 

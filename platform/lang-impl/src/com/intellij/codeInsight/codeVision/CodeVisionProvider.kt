@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
@@ -110,6 +110,16 @@ interface CodeVisionProvider<T> {
    * Internal ID.
    */
   val id: String
+
+
+  /**
+   * Whether only a single entry per line should be displayed for this provider.
+   *
+   * When `true`, if multiple entries from this provider appear on the same line,
+   * only the last one will be shown. When `false`, all entries are displayed.
+   */
+  val singleEntryPerLine: Boolean
+    get() = true
 
 
   /**

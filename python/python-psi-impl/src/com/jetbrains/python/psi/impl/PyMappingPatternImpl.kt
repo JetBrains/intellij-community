@@ -3,23 +3,22 @@ package com.jetbrains.python.psi.impl
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiListLikeElement
 import com.intellij.psi.util.findParentInFile
-import com.jetbrains.python.ast.findChildrenByClass
 import com.jetbrains.python.psi.PyDoubleStarPattern
 import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.PyKeyValuePattern
 import com.jetbrains.python.psi.PyMappingPattern
 import com.jetbrains.python.psi.PyPattern
 import com.jetbrains.python.psi.PyPsiFacade
-import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
 import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyLiteralType
-import com.jetbrains.python.psi.types.PyLiteralType.Companion.upcastLiteralToClass
 import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.PyTypeUtil.components
+import com.jetbrains.python.psi.types.PyTypeUtil.convertToType
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -50,8 +49,8 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
 
     val patternMappingType = wrapInMappingType(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes))
 
-    val filteredType = PyCaptureContext.getCaptureType(this, context).toList().filter { captureType: PyType? ->
-      val mappingType = PyTypeUtil.convertToType(captureType, "typing.Mapping", this, context) ?: return@filter false
+    val filteredType = PyCaptureContext.getCaptureType(this, context).components.filter { captureType: PyType? ->
+      val mappingType = captureType.convertToType("typing.Mapping", this, context) ?: return@filter false
       PyTypeChecker.match(mappingType, patternMappingType, context)
     }.let {
       PyUnionType.union(it)
@@ -63,7 +62,7 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
   override fun getCaptureTypeForChild(pattern: PyPattern, context: TypeEvalContext): PyType? {
     val sequenceMember = pattern.findParentInFile(withSelf = true) { this === it.parent }
     if (sequenceMember is PyDoubleStarPattern) {
-      val mappingType = PyTypeUtil.convertToType(context.getType(this), "typing.Mapping", pattern, context)
+      val mappingType = context.getType(this).convertToType("typing.Mapping", pattern, context)
       if (mappingType is PyCollectionType) {
         val dict = getInstance(pattern).getClass("dict") ?: return null
         return PyCollectionTypeImpl(dict, false, mappingType.getElementTypes())
@@ -73,14 +72,14 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
 
     if (sequenceMember !is PyKeyValuePattern) return null
 
-    return PyCaptureContext.getCaptureType(this, context).toList()
+    return PyCaptureContext.getCaptureType(this, context).components
       .map { possibleMapping -> possibleMapping.getValueType(sequenceMember, context) }
       .let { PyUnionType.union(it) }
   }
 
   private fun wrapInMappingType(keyType: PyType?, valueType: PyType?): PyType? {
     val sequence = PyPsiFacade.getInstance(getProject()).createClassByQName("typing.Mapping", this) ?: return null
-    return PyCollectionTypeImpl(sequence, false, listOf(keyType, valueType).map { upcastLiteralToClass(it) })
+    return PyCollectionTypeImpl(sequence, false, listOf(keyType, valueType).map { PyTypeUtil.widenLiteralAndNumeric(it) })
   }
 }
 
@@ -89,7 +88,7 @@ private fun PyType?.getValueType(sequenceMember: PyKeyValuePattern, context: Typ
     val key = sequenceMember.getKeyString(context)
     if (key != null) return getElementType(key)
   }
-  val mappingType = PyTypeUtil.convertToType(this, "typing.Mapping", sequenceMember, context)
+  val mappingType = this.convertToType("typing.Mapping", sequenceMember, context)
                     ?: return PyNeverType.NEVER
   if (mappingType is PyCollectionType) {
     return mappingType.elementTypes[1]
@@ -99,8 +98,8 @@ private fun PyType?.getValueType(sequenceMember: PyKeyValuePattern, context: Typ
 
 private fun PyKeyValuePattern.getKeyString(context: TypeEvalContext): String? {
   val keyType = context.getType(keyPattern)
-  if (keyType is PyLiteralType && keyType.expression is PyStringLiteralExpression) {
-    return keyType.expression.getStringValue()
+  if (keyType is PyLiteralType) {
+    return keyType.stringValue
   }
   return null
 }

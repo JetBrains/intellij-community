@@ -57,5 +57,6 @@
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.project-structure" />
   </component>
 </module>

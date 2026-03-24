@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInsight.completion.BaseCompletionService.LOOKUP_ELEMENT_CONTRIBUTOR;
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_CONTRIBUTOR;
 
 public class DefaultCompletionContributor extends CompletionContributor implements DumbAware {
 

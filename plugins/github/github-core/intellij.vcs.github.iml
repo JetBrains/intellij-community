@@ -28,8 +28,6 @@
       <sourceFolder url="file://$MODULE_DIR$/gen-resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/test-resources" type="java-test-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -137,5 +135,8 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
   </component>
 </module>

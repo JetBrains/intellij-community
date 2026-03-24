@@ -14,7 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.3.10-RC/kotlin-compose-compiler-plugin-2.3.10-RC.jar</args>
+              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.3.20/kotlin-compose-compiler-plugin-2.3.20.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -26,8 +26,6 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -37,6 +35,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.welcomeScreen.impl" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
@@ -89,5 +88,8 @@
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.python.externalIndex" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
   </component>
 </module>

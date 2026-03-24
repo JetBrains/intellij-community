@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -79,6 +80,8 @@ interface XBreakpointApi : RemoteApi<Unit> {
 data class XBreakpointDto(
   val id: XBreakpointId,
   val initialState: XBreakpointDtoState,
+  val initialCustomPresentation: XBreakpointCustomPresentationDto?,
+  val initialCurrentSessionCustomPresentation: XBreakpointCustomPresentationDto?,
   val state: RpcFlow<XBreakpointDtoState>,
   val editorsProviderDto: XDebuggerEditorsProviderDto?,
   val typeId: XBreakpointTypeId,
@@ -104,8 +107,6 @@ data class XBreakpointDtoState(
   val generalDescription: String,
   val tooltipDescription: String,
   val timestamp: Long,
-  val currentSessionCustomPresentation: XBreakpointCustomPresentationDto?,
-  val customPresentation: XBreakpointCustomPresentationDto?,
   val lineBreakpointInfo: XLineBreakpointInfo?,
   val requestId: Long,
 )
@@ -116,6 +117,7 @@ data class XLineBreakpointInfo(
     val isTemporary: Boolean,
     val line: Int,
     val fileUrl: String,
+    val placement: XLineBreakpointPlacement,
     val highlightingRange: TextRangeDto?,
     val file: VirtualFileId?,
 )
@@ -139,6 +141,7 @@ enum class XBreakpointTypeSerializableStandardPanels {
 @Serializable
 data class XLineBreakpointTypeInfo(
   val priority: Int,
+  val supportsInterLinePlacement: Boolean,
 )
 
 

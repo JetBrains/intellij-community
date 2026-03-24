@@ -31,6 +31,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.util.PathUtilRt
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
@@ -248,6 +249,7 @@ internal class ModifiableModuleModelBridgeImpl(
     newNameToModule.isNotEmpty() ||
     moduleGroupsAreModified
 
+  @RequiresWriteLock
   override fun commit() {
     val diff = collectChanges()
 
@@ -256,11 +258,13 @@ internal class ModifiableModuleModelBridgeImpl(
     }
   }
 
+  @RequiresWriteLock
   override fun prepareForCommit() {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     uncommittedModulesToDispose.forEach { module -> Disposer.dispose(module) }
   }
 
+  @RequiresWriteLock
   override fun collectChanges(): MutableEntityStorage {
     prepareForCommit()
     return diff

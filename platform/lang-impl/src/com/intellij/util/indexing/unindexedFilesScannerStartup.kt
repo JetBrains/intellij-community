@@ -4,6 +4,7 @@ package com.intellij.util.indexing
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -70,7 +71,7 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
                                           fullScanningType: ScanningType,
                                           partialScanningType: ScanningType,
                                           registeredIndexesWereCorrupted: Boolean,
-                                          sourceOfScanning: SourceOfScanning): Job {
+                                          sourceOfScanning: SourceOfScanning): Job? {
   val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
   fileBasedIndex.loadIndexes()
   val isFilterInvalidated = initialScanningLock.withLock {
@@ -81,7 +82,10 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
   val filterHolder = fileBasedIndex.indexableFilesFilterHolder
   val appCurrent = ApplicationManager.getApplication().getService(AppIndexingDependenciesService::class.java).getCurrent()
   val filterCheckState = FilterCheckState(project, filterHolder, isFilterInvalidated, appCurrent)
-  val filterUpToDateUnsatisfiedConditions = findFilterUpToDateUnsatisfiedConditions(filterCheckState, requireReadingIndexableFilesIndexFromDisk)
+  val filterUpToDateUnsatisfiedConditions = runReadActionBlocking {
+    if (project.isDisposed) null
+    else findFilterUpToDateUnsatisfiedConditions(filterCheckState, requireReadingIndexableFilesIndexFromDisk)
+  } ?: return null
 
   val notSeenIds = orphanQueue.getNotSeenIds(project, projectDirtyFilesQueue, orphanQueueDiscardReason)
   val scanningCheckState = SkippingScanningCheckState(allowSkippingFullScanning, filterUpToDateUnsatisfiedConditions, notSeenIds)
@@ -161,11 +165,15 @@ private fun scheduleFullScanning(
   }
   else CompletableDeferred(Unit)
   val parameters = CompletableDeferred(ScanningIterators(indexingReason, null, null, fullScanningType))
-  UnindexedFilesScanner(project, true, isFilterUpToDate,
-                        someDirtyFilesScheduledForIndexing.asCompletableFuture(),
-                        forceCheckingForOutdatedIndexesUsingFileModCount = notSeenIds !is AllNotSeenDirtyFileIds,
-                        scanningParameters = parameters)
-    .queue()
+  runReadActionBlocking {
+    if (!project.isDisposed) {
+      UnindexedFilesScanner(project, true, isFilterUpToDate,
+                            someDirtyFilesScheduledForIndexing.asCompletableFuture(),
+                            forceCheckingForOutdatedIndexesUsingFileModCount = notSeenIds !is AllNotSeenDirtyFileIds,
+                            scanningParameters = parameters)
+        .queue()
+    }
+  }
   return someDirtyFilesScheduledForIndexing
 }
 
@@ -189,12 +197,16 @@ private fun scheduleDirtyFilesScanning(
                          DirtyFilesIndexableFilesIterator(projectDirtyFilesFromOrphanQueue, true))
 
   val scanningIterators = CompletableDeferred(ScanningIterators(indexingReason, iterators, null, partialScanningType))
-  UnindexedFilesScanner(project,
-                        onProjectOpen = true,
-                        isIndexingFilesFilterUpToDate = true,
-                        startCondition = projectDirtyFiles.asCompletableFuture(),
-                        scanningParameters = scanningIterators)
-    .queue()
+  runReadActionBlocking {
+    if (!project.isDisposed) {
+      UnindexedFilesScanner(project,
+                            onProjectOpen = true,
+                            isIndexingFilesFilterUpToDate = true,
+                            startCondition = projectDirtyFiles.asCompletableFuture(),
+                            scanningParameters = scanningIterators)
+        .queue()
+    }
+  }
   return projectDirtyFiles
 }
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -454,6 +455,11 @@ public interface Editor extends UserDataHolder {
       int visibleEnd = logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
       return new ProperTextRange(visibleStart, Math.max(visibleEnd, visibleStart));
     });
+  }
+
+  @ApiStatus.Internal
+  default @NotNull Document getUiDocument() {
+    return getDocument();
   }
 
   /**

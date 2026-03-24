@@ -450,7 +450,7 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
 
     isRootVisible = false
     showsRootHandles = true
-    visibleRowCount = min(calculateTopLevelVisibleRows(), 20)
+    visibleRowCount = min(calculateTopLevelVisibleRows() + 1, 20)
 
     cellRenderer = renderer
 

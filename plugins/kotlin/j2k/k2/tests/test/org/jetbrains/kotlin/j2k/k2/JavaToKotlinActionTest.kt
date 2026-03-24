@@ -111,8 +111,8 @@ class JavaToKotlinActionTest : KotlinLightCodeInsightFixtureTestCase(), Expected
             )
 
             assertEquals(
-                "Built-in action in group should have 'Built-in' text",
-                "Built-in",
+                "Static Analysis action in group should have 'Static Analysis' text",
+                "Static Analysis",
                 builtInActionInGroup.templatePresentation.text
             )
         } finally {

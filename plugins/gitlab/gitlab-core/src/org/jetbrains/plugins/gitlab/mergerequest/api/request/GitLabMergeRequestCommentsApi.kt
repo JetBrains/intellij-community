@@ -12,41 +12,41 @@ import com.intellij.collaboration.util.resolveRelative
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabApiUriQueryBuilder
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.gitLabQuery
 import org.jetbrains.plugins.gitlab.api.loadList
-import org.jetbrains.plugins.gitlab.api.restApiUri
+import org.jetbrains.plugins.gitlab.api.projectApiUrl
 import org.jetbrains.plugins.gitlab.api.withErrorStats
 import org.jetbrains.plugins.gitlab.api.withQuery
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.LineRangeDTO
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
+import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import java.net.URI
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
 @SinceGitLab("10.6")
 suspend fun GitLabApi.Rest.loadMergeRequestDiscussions(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
 ): HttpResponse<out List<GitLabDiscussionRestDTO>> {
-  val uri = getMergeRequestDiscussionsUri(project, mrIid)
+  val uri = getMergeRequestDiscussionsUri(projectId, mrIid)
   return loadList(GitLabApiRequestName.REST_GET_MERGE_REQUEST_DISCUSSIONS, uri.toString())
 }
 
 
 @SinceGitLab("14.7")
 suspend fun GitLabApi.GraphQL.loadMergeRequestCommits(
-  project: GitLabProjectCoordinates,
+  projectPath: GitLabProjectPath,
   mrIid: String,
   pagination: GraphQLRequestPagination? = null
 ): GraphQLConnectionDTO<GitLabCommitDTO>? {
   val parameters = pagination.orDefault().asParameters() + mapOf(
-    "projectId" to project.projectPath.fullPath(),
+    "projectId" to projectPath.fullPath(),
     "mriid" to mrIid
   )
   val request = gitLabQuery(GitLabGQLQuery.GET_MERGE_REQUEST_COMMITS, parameters)
@@ -59,19 +59,19 @@ private class CommitConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<G
   : GraphQLConnectionDTO<GitLabCommitDTO>(pageInfo, nodes)
 
 @SinceGitLab("10.6")
-fun getMergeRequestDiscussionsUri(project: GitLabProjectCoordinates, mrIid: String): URI =
-  project.restApiUri
+fun GitLabApi.Rest.getMergeRequestDiscussionsUri(projectId: String, mrIid: String): URI =
+  projectApiUrl(projectId)
     .resolveRelative("merge_requests")
     .resolveRelative(mrIid)
     .resolveRelative("discussions")
 
 @SinceGitLab("10.6")
 suspend fun GitLabApi.Rest.addNote(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   body: String,
 ): HttpResponse<out GitLabDiscussionRestDTO> {
-  val uri = getMergeRequestDiscussionsUri(project, mrIid).withQuery {
+  val uri = getMergeRequestDiscussionsUri(projectId, mrIid).withQuery {
     "body" eq body
   }
   val request = request(uri).POST(HttpRequest.BodyPublishers.noBody()).build()
@@ -82,14 +82,15 @@ suspend fun GitLabApi.Rest.addNote(
 
 @SinceGitLab("13.2")
 suspend fun GitLabApi.Rest.addDiffNote(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   position: GitLabDiffPositionInput,
+  canPostPositionLineRange: Boolean,
   body: String,
 ): HttpResponse<out GitLabDiscussionRestDTO> {
-  val uri = getMergeRequestDiscussionsUri(project, mrIid).withQuery {
+  val uri = getMergeRequestDiscussionsUri(projectId, mrIid).withQuery {
     "body" eq body
-    addDiffPositionParameters(position)
+    addDiffPositionParameters(position, canPostPositionLineRange)
   }
   val request = request(uri).POST(HttpRequest.BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_CREATE_MERGE_REQUEST_DIFF_NOTE) {
@@ -99,12 +100,12 @@ suspend fun GitLabApi.Rest.addDiffNote(
 
 @SinceGitLab("10.6")
 suspend fun GitLabApi.Rest.createReplyNote(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   discussionId: String,
   body: String,
 ): HttpResponse<out GitLabNoteRestDTO> {
-  val uri = getMergeRequestDiscussionsUri(project, mrIid)
+  val uri = getMergeRequestDiscussionsUri(projectId, mrIid)
     .resolveRelative(discussionId)
     .resolveRelative("notes")
     .withQuery {
@@ -118,13 +119,13 @@ suspend fun GitLabApi.Rest.createReplyNote(
 
 @SinceGitLab("10.6")
 suspend fun GitLabApi.Rest.updateNote(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   discussionId: String,
   noteId: String,
   body: String,
 ): HttpResponse<out GitLabNoteRestDTO> {
-  val uri = getMergeRequestDiscussionsUri(project, mrIid)
+  val uri = getMergeRequestDiscussionsUri(projectId, mrIid)
     .resolveRelative(discussionId)
     .resolveRelative("notes")
     .resolveRelative(noteId)
@@ -139,12 +140,12 @@ suspend fun GitLabApi.Rest.updateNote(
 
 @SinceGitLab("10.6")
 suspend fun GitLabApi.Rest.deleteNote(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   discussionId: String,
   noteId: String,
 ): HttpResponse<out Unit> {
-  val uri = getMergeRequestDiscussionsUri(project, mrIid)
+  val uri = getMergeRequestDiscussionsUri(projectId, mrIid)
     .resolveRelative(discussionId)
     .resolveRelative("notes")
     .resolveRelative(noteId)
@@ -156,12 +157,12 @@ suspend fun GitLabApi.Rest.deleteNote(
 
 @SinceGitLab("10.8")
 suspend fun GitLabApi.Rest.changeMergeRequestDiscussionResolve(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   discussionId: String,
   resolved: Boolean,
 ): HttpResponse<out GitLabDiscussionRestDTO> {
-  val uri = getMergeRequestDiscussionsUri(project, mrIid)
+  val uri = getMergeRequestDiscussionsUri(projectId, mrIid)
     .resolveRelative(discussionId)
     .withQuery {
       "resolved" eq resolved
@@ -179,7 +180,8 @@ suspend fun GitLabApi.Rest.changeMergeRequestDiscussionResolve(
  * This function converts a [GitLabDiffPositionInput] to query parameters in the format
  * expected by GitLab REST API for creating notes and draft notes on diffs.
  */
-internal fun GitLabApiUriQueryBuilder.addDiffPositionParameters(position: GitLabDiffPositionInput) {
+internal fun GitLabApiUriQueryBuilder.addDiffPositionParameters(position: GitLabDiffPositionInput,
+                                                                canPostPositionLineRange: Boolean) {
   "position" {
     "base_sha" eq position.baseSha
     "head_sha" eq position.headSha
@@ -190,12 +192,16 @@ internal fun GitLabApiUriQueryBuilder.addDiffPositionParameters(position: GitLab
     "old_path" eq position.paths.oldPath
     "position_type" eq "text"
     position.lineRange?.let { lineRange ->
-      addLineRangeParameters(lineRange)
+      addLineRangeParameters(lineRange, canPostPositionLineRange)
     }
   }
 }
 
-internal fun GitLabApiUriQueryBuilder.addLineRangeParameters(lineRange: LineRangeDTO) {
+internal fun GitLabApiUriQueryBuilder.addLineRangeParameters(lineRange: LineRangeDTO,
+                                                             canPostPositionLineRange: Boolean) {
+  // providing line_range in API call will cause GitLab to return 400 Bad Request
+  // if the position is not supported by GitLab server, so we just omit it in this case
+  if (!canPostPositionLineRange) return
   "line_range" {
     "start" {
       "line_code" eq lineRange.start.lineCode
@@ -211,5 +217,3 @@ internal fun GitLabApiUriQueryBuilder.addLineRangeParameters(lineRange: LineRang
     }
   }
 }
-
-

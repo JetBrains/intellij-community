@@ -4,6 +4,7 @@ from typing import Any, Literal, Protocol, TypeAlias, type_check_only
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.migrations.state import StateApps
 from django.utils.datastructures import _ListOrTuple
+from typing_extensions import override
 
 from .base import Operation
 
@@ -34,6 +35,7 @@ class RunSQL(Operation):
         elidable: bool = False,
     ) -> None: ...
     @property
+    @override
     def reversible(self) -> bool: ...  # type: ignore[override]
 
 @type_check_only
@@ -55,4 +57,5 @@ class RunPython(Operation):
     @staticmethod
     def noop(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None: ...
     @property
+    @override
     def reversible(self) -> bool: ...  # type: ignore[override]

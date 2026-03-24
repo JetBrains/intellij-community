@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events.scheme
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -19,6 +19,7 @@ import kotlin.io.path.writeText
 import kotlin.system.exitProcess
 
 private const val descriptionDirParameter = "--descriptionDir="
+private const val requireDescriptionsParameter = "--requireDescriptions="
 private const val outputFileParameter = "--outputFile="
 private const val pluginsFileParameter = "--pluginsFile="
 private const val pluginIdParameter = "--pluginId="
@@ -32,6 +33,7 @@ private val LOG: Logger
 internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
   override fun main(args: List<String>) {
     var descriptionDir: Path? = null
+    var requireDescriptions = false
     var outputFile: Path? = null
     var pluginsFile: Path? = null
     var pluginId: String? = null
@@ -42,6 +44,9 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
     for (arg in args) {
       if (arg.startsWith(descriptionDirParameter)) {
         descriptionDir = Path(arg.substringAfter(descriptionDirParameter))
+      }
+      else if (arg.startsWith(requireDescriptionsParameter)) {
+        requireDescriptions = arg.substringAfter(requireDescriptionsParameter).toBoolean()
       }
       else if (arg.startsWith(outputFileParameter)) {
         outputFile = Path(arg.substringAfter(outputFileParameter))
@@ -87,6 +92,25 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
       val errorListString = errorList.joinToString("\n")
       LOG.error(IllegalStateException(errorListString))
       errorsFile?.createParentDirectories()?.writeText(errorListString)
+    }
+
+    if (descriptionDir != null && requireDescriptions) {
+      val errorList = mutableListOf<String>()
+      groups.forEach { group ->
+        if (group.description == null) {
+          errorList.add("Group description missing: file=${descriptionDir.resolve(group.recorder)}.properties key=${group.id}")
+        }
+        group.schema.forEach { event ->
+          if (event.description == null) {
+            errorList.add("Event description missing: file=${descriptionDir.resolve(group.recorder)}.properties key=${group.id}.${event.event}")
+          }
+        }
+      }
+      if (errorList.isNotEmpty()) {
+        val errorListString = errorList.joinToString("\n")
+        LOG.error(IllegalStateException(errorListString))
+        errorsFile?.createParentDirectories()?.writeText(errorListString)
+      }
     }
 
     val text = if (!testEventsScheme) {

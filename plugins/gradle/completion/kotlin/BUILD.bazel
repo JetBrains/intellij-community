@@ -1,0 +1,64 @@
+### auto-generated section `build intellij.gradle.completion.kotlin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "kotlin_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin",
+  module_name = "intellij.gradle.completion.kotlin",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/analysis-api:analysis",
+    "//plugins/repository-search/completion",
+    "//plugins/gradle/completion",
+    "//plugins/gradle",
+    "//platform/analysis-impl",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/workspace/jps",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "//java/java-psi-api:psi",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+  ]
+)
+
+jvm_library(
+  name = "kotlin_test_lib",
+  module_name = "intellij.gradle.completion.kotlin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":kotlin",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//plugins/repository-search/completion:completion_test_lib",
+    "//plugins/gradle/completion:completion_test_lib",
+    "//plugins/gradle:gradle_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "//java/java-psi-api:psi_test_lib",
+    "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.gradle.completion.kotlin` end
+
+### auto-generated section `iml intellij.gradle.completion.kotlin` start
+exports_files([
+  "intellij.gradle.completion.kotlin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.completion.kotlin` end

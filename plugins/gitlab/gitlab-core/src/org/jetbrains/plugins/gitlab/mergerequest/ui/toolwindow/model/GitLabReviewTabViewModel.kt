@@ -45,7 +45,7 @@ internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
   ) : GitLabReviewTabViewModel, Disposable {
     private val cs = parentCs.childScope(this::class).cancelledWith(this)
 
-    private val projectPath = projectData.projectMapping.repository.projectPath.fullPath()
+    private val projectPath = projectData.projectCoordinates.projectPath
     override val displayName: String = GitLabBundle.message("merge.request.create.tab.title", projectPath)
 
     val createVm = GitLabMergeRequestCreateViewModelImpl(

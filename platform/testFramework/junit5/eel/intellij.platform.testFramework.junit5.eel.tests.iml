@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/test">
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" packagePrefix="com.intellij.platform.testFramework.junit5.eel" />
+    </content>
+    <content url="file://$MODULE_DIR$/testResources">
+      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Jupiter" level="project" />
+    <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.pioneer" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.nio.fs" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.eel.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ijent" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" />
+    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.platform.testFramework.junit5.eel" />
+</module>

@@ -337,9 +337,7 @@ public final class ListPluginComponent extends JPanel {
     else {
       if (myPlugin.isDeleted()) {
         if (installationState.getStatus() == PluginStatus.UNINSTALLED_WITHOUT_RESTART) {
-          myLayout.addButtonComponent(myInstallButton = createInstallButton());
-          myInstallButton.setVisible(true);
-          myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
+          addInstalledStatusButton("plugins.configurable.uninstalled");
           myAfterUpdate = true;
         }
         else {
@@ -352,6 +350,9 @@ public final class ListPluginComponent extends JPanel {
         if (installationState.getStatus() == PluginStatus.INSTALLED_AND_REQUIRED_RESTART ||
             installationState.getStatus() == PluginStatus.UPDATED_WITH_RESTART) {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myModelFacade));
+        }
+        else if (installedModel == null && installationState.getStatus() == PluginStatus.INSTALLED_WITHOUT_RESTART) {
+          addInstalledStatusButton("plugins.configurable.installed");
         }
         else {
           createEnableDisableButton(this::getPluginModel);
@@ -454,13 +455,13 @@ public final class ListPluginComponent extends JPanel {
         myRating = createRatingLabel(myMetricsPanel, rating, AllIcons.Plugins.Rating);
       }
       String version = myInstalledDescriptorForMarketplace == null ? "" : myInstalledDescriptorForMarketplace.getVersion();
-      myVersion = createRatingLabel(myMetricsPanel, version, null);
+      myVersion = createVersionLabel(myMetricsPanel, version, false);
       myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
     }
     else {
       String version = myPlugin.getVersion();
       if (!StringUtil.isEmptyOrSpaces(version)) {
-        myVersion = createRatingLabel(myMetricsPanel, version, myPlugin.isBundledUpdate() ? AllIcons.Plugins.Updated : null);
+        myVersion = createVersionLabel(myMetricsPanel, version, myPlugin.isBundledUpdate());
       }
     }
 
@@ -607,7 +608,7 @@ public final class ListPluginComponent extends JPanel {
 
     if (myUpdateDescriptor == null) {
       if (myVersion != null) {
-        myVersion.setText(plugin.getVersion());
+        setVersionLabelState(myVersion, plugin.getVersion(), plugin.isBundledUpdate());
       }
       if (myUpdateLicensePanel != null) {
         myLayout.removeLineComponent(myUpdateLicensePanel);
@@ -622,7 +623,7 @@ public final class ListPluginComponent extends JPanel {
     }
     else {
       if (myVersion != null) {
-        myVersion.setText(plugin.getVersion());
+        setVersionLabelState(myVersion, plugin.getVersion(), plugin.isBundledUpdate());
       }
       if (plugin.getProductCode() == null && myUpdateDescriptor.getProductCode() != null &&
           !plugin.isBundled() && !LicensePanel.isEA2Product(myUpdateDescriptor.getProductCode()) &&
@@ -645,7 +646,7 @@ public final class ListPluginComponent extends JPanel {
         myUpdateButton.addActionListener(
           e -> updatePlugin(plugin));
       }
-      else {
+      else if (!succesefullyFinishedOnce) {
         myUpdateButton.setEnabled(true);
         myUpdateButton.setVisible(true);
       }
@@ -654,7 +655,7 @@ public final class ListPluginComponent extends JPanel {
       }
     }
 
-    doLayout();
+    fullRepaint();
   }
 
   public void setListeners(@NotNull EventHandler eventHandler) {
@@ -842,7 +843,7 @@ public final class ListPluginComponent extends JPanel {
               if (myMarketplace) {
                 myInstallButton.setVisible(false);
                 myEnableDisableButton.setVisible(true);
-                myVersion.setText(myInstalledDescriptorForMarketplace.getVersion());
+                setVersionLabelState(myVersion, myInstalledDescriptorForMarketplace.getVersion(), myInstalledDescriptorForMarketplace.isBundledUpdate());
                 myVersion.setVisible(true);
                 updateEnabledStateUI();
                 fullRepaint();
@@ -861,6 +862,9 @@ public final class ListPluginComponent extends JPanel {
           myUpdateButton.setText(IdeBundle.message("plugin.status.installed"));
           myAfterUpdate = true;
         }
+        if (myInstallButton == null && myUpdateButton == null) {
+          addInstalledStatusButton("plugins.configurable.installed");
+        }
         if (myEnableDisableButton != null) {
           myLayout.removeButtonComponent(myEnableDisableButton);
           myEnableDisableButton = null;
@@ -873,6 +877,15 @@ public final class ListPluginComponent extends JPanel {
     }
 
     fullRepaint();
+  }
+
+  private void addInstalledStatusButton(String key) {
+    if (myRestartButton != null && myRestartButton.isVisible()) {
+      return;
+    }
+    myLayout.addButtonComponent(myInstallButton = createInstallButton());
+    myInstallButton.setVisible(true);
+    myInstallButton.setEnabled(false, IdeBundle.message(key));
   }
 
   public void clearProgress() {
@@ -965,10 +978,13 @@ public final class ListPluginComponent extends JPanel {
     updateColors(mySelection);
     removeButtons(needRestartForUninstall);
 
-    if (!needRestartForUninstall && pluginInstallationState.getStatus() == PluginStatus.UNINSTALLED_WITHOUT_RESTART) {
+    if (!needRestartForUninstall &&
+        pluginInstallationState.getStatus() == PluginStatus.UNINSTALLED_WITHOUT_RESTART &&
+        (myRestartButton == null || !myRestartButton.isVisible())) {
       myLayout.addButtonComponent(myInstallButton = createInstallButton());
       myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
     }
+    fullRepaint();
   }
 
   public void updatePlugin() {
@@ -1316,13 +1332,48 @@ public final class ListPluginComponent extends JPanel {
     });
   }
 
+  @NotNull CoroutineScope getCoroutineScope() {
+    return myCoroutineScope;
+  }
+
+  @NotNull PluginModelFacade getModelFacade() {
+    return myModelFacade;
+  }
+
+  @Nullable PluginManagerCustomizer getCustomizer() {
+    return myCustomizer;
+  }
+
   static @NotNull JLabel createRatingLabel(@NotNull JPanel panel, @NotNull @Nls String text, @Nullable Icon icon) {
     return createRatingLabel(panel, null, text, icon, null, true);
   }
 
+  static @NotNull JLabel createVersionLabel(@NotNull JPanel panel,
+                                            @Nullable @Nls String text,
+                                            boolean isBundledUpdate) {
+    var label = createRatingLabel(panel, null, null, null, null, true);
+    setVersionLabelState(label, text, isBundledUpdate);
+    return label;
+  }
+
+  static void setVersionLabelState(@NotNull JLabel versionLabel, @Nullable @Nls String text, boolean isBundledUpdate) {
+    if (isBundledUpdate) {
+      if (versionLabel.getToolTipText() == null) {
+        versionLabel.setToolTipText(IdeBundle.message("plugin.status.is.updated.bundled.plugin.tooltip"));
+      }
+      if (versionLabel.getIcon() != AllIcons.Plugins.Updated) {
+        versionLabel.setIcon(AllIcons.Plugins.Updated);
+      }
+    } else {
+      versionLabel.setToolTipText(null);
+      versionLabel.setIcon(null);
+    }
+    versionLabel.setText(text);
+  }
+
   static @NotNull JLabel createRatingLabel(@NotNull JPanel panel,
                                            @Nullable Object constraints,
-                                           @NotNull @Nls String text,
+                                           @Nullable @Nls String text,
                                            @Nullable Icon icon,
                                            @Nullable Color color,
                                            boolean tiny) {

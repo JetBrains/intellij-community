@@ -11,6 +11,6 @@ internal fun switchToBootstrapKotlinCompiler(preferences: GeneratorPreferences) 
         modifications = listOf(
             preferences::kotlincArtifactsMode.modify(GeneratorPreferences.ArtifactMode.BOOTSTRAP),
         ),
-        commitTitle = "[kotlin] $ticket restore cooperative development",
+        commitTitle = "$ticket [kotlin] restore cooperative development",
     )
 }

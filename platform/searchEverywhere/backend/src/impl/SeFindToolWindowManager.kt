@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.backend.impl
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
@@ -7,9 +7,11 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.toPsi
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.TooManyUsagesStatus
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
@@ -25,12 +27,12 @@ import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.usageView.UsageInfo
-import com.intellij.usageView.UsageViewBundle
 import com.intellij.usages.Usage
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageLimitUtil
 import com.intellij.usages.UsageTarget
 import com.intellij.usages.UsageViewManager
+import com.intellij.usages.UsageViewManagerWithUsageViewFactoryCallback
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.impl.UsageViewManagerImpl
 import com.intellij.util.containers.toArray
@@ -40,6 +42,8 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+
+private val LOG = logger<SeFindToolWindowManager>()
 
 @ApiStatus.Internal
 class SeFindToolWindowManager(private val project: Project) {
@@ -58,9 +62,11 @@ class SeFindToolWindowManager(private val project: Project) {
     presentation.codeUsagesString = tabCaptionText
     presentation.targetsNodeText = IdeBundle.message("searcheverywhere.found.targets.title", params.inputQuery, contributorsString)
     presentation.tabText = tabCaptionText
+    presentation.searchString = params.inputQuery
 
     val usages = mutableListOf<Usage>()
     val targets = mutableListOf<PsiElement>()
+    val untilShowDoneDisposable = Disposer.newDisposable()
 
     val indicator = ProgressIndicatorBase()
     val tooManyUsagesStatus = TooManyUsagesStatus.createFor(indicator)
@@ -68,7 +74,7 @@ class SeFindToolWindowManager(private val project: Project) {
       withModalProgress(ModalTaskOwner.project(project), tabCaptionText, TaskCancellation.cancellable()) {
         indicator.start()
         providerIds.forEach { providerId ->
-          providersHolder.get(providerId, isAllTab)?.getRawItems(params)?.collect { item ->
+          providersHolder.get(providerId, isAllTab)?.getRawItemsWithOperationLifetime(params, untilShowDoneDisposable)?.collect { item ->
             indicator.checkCanceled()
 
             val element = when (item) {
@@ -96,19 +102,15 @@ class SeFindToolWindowManager(private val project: Project) {
             }
 
             tooManyUsagesStatus.pauseProcessingIfTooManyUsages()
-            if (usages.size + targets.size >= UsageLimitUtil.USAGES_LIMIT && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
-              UsageViewManagerImpl.showTooManyUsagesWarningLater(project,
-                                                                 tooManyUsagesStatus,
-                                                                 indicator,
-                                                                 null,
-                                                                 { UsageViewBundle.message("find.excessive.usage.count.prompt") },
-                                                                 null)
+            if (usages.size + targets.size >= UsageLimitUtil.getSearchResultLimit() && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
+              UsageViewManagerImpl.showTooManyUsagesWarningLater(project, tooManyUsagesStatus, indicator, null, null, null)
             }
           }
         }
       }
     }
     catch (e: CancellationException) {
+      Disposer.dispose(untilShowDoneDisposable)
       if (!currentCoroutineContext().isActive) {
         throw e
       }
@@ -129,7 +131,19 @@ class SeFindToolWindowManager(private val project: Project) {
     val usagesArray = usages.toArray(Usage.EMPTY_ARRAY)
 
     withContext(Dispatchers.EDT) {
-      UsageViewManager.getInstance(projectId.findProject()).showUsages(targetsArray, usagesArray, presentation)
+      val instance = UsageViewManager.getInstance(projectId.findProject())
+      if (instance !is UsageViewManagerWithUsageViewFactoryCallback) {
+        LOG.warn("Rider show in find usages won't work!")
+        try {
+          instance.showUsages(targetsArray, usagesArray, presentation)
+        }
+        finally {
+          Disposer.dispose(untilShowDoneDisposable)
+        }
+        return@withContext
+      }
+
+      instance.showUsages(targetsArray, usagesArray, presentation, null, Runnable { Disposer.dispose(untilShowDoneDisposable) })
     }
   }
 }

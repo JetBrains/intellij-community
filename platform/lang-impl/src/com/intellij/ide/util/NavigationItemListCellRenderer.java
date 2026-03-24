@@ -126,7 +126,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
             item +
             ", class " +
             item.getClass().getName();
-          name = ReadAction.compute(() -> presentation.getPresentableText());
+          name = ReadAction.computeBlocking(() -> presentation.getPresentableText());
           assert name != null :
             "PSI elements displayed in choose by name lists must return a non-null value from getPresentation().getPresentableName: element " +
             item +
@@ -149,8 +149,8 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
             color = status.getColor();
           }
 
-          textAttributes = ReadAction.compute(() -> NodeRenderer.getSimpleTextAttributes(presentation).toTextAttributes());
-          icon = ReadAction.compute(() -> presentation.getIcon(false));
+          textAttributes = ReadAction.computeBlocking(() -> NodeRenderer.getSimpleTextAttributes(presentation).toTextAttributes());
+          icon = ReadAction.computeBlocking(() -> presentation.getIcon(false));
         }
 
         if (isProblemFile) {
@@ -163,7 +163,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
         setIcon(icon);
 
         if (myRenderLocation) {
-          String containerText = ReadAction.compute(() -> presentation.getLocationString());
+          String containerText = ReadAction.computeBlocking(() -> presentation.getLocationString());
 
           if (containerText != null && !containerText.isEmpty()) {
             append(" " + containerText, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));

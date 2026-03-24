@@ -4,7 +4,9 @@ package com.intellij.polySymbols.query
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 
-interface PolySymbolNameConversionRulesProvider : ModificationTracker {
+interface PolySymbolNameConversionRulesProvider {
+
+  val modificationTracker: ModificationTracker
 
   fun getNameConversionRules(): PolySymbolNameConversionRules
 

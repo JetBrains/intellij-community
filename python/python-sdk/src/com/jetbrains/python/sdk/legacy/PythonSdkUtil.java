@@ -85,7 +85,9 @@ public final class PythonSdkUtil {
    * @return PyCharm with Pro mode disabled
    */
   public static boolean isFreeTier() {
-    return PlatformUtils.isPyCharm() && (!PlatformUtils.isDataSpell()) && PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID);
+    return PlatformUtils.isPyCharm() &&
+           (!PlatformUtils.isDataSpell()) &&
+           PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID);
   }
 
   public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks() {
@@ -96,11 +98,15 @@ public final class PythonSdkUtil {
     return ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(), sdk -> isPythonSdk(sdk, allowRemoteInFreeTier));
   }
 
+  /**
+   * Consider to use suspended {@link com.jetbrains.python.sdk.ModuleExKt#findPythonSdk} instead, it waits for project model to be ready
+   */
+  @ApiStatus.Obsolete
   public static @Nullable Sdk findPythonSdk(@Nullable Module module) {
     if (module == null || module.isDisposed()) {
       return null;
     }
-    var sdk = PyModuleService.getInstance().findPythonSdk(module);
+    var sdk = PyModuleService.getInstance(module.getProject()).findPythonSdk(module);
     if (sdk != null && isPythonSdk(sdk)) {
       return sdk;
     }

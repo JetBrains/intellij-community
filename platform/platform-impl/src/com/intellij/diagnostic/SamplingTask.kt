@@ -19,9 +19,7 @@ import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(DelicateCoroutinesApi::class)
-internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDurationMs: Int, coroutineScope: CoroutineScope) {
-  private val maxDumps: Int = maxDurationMs / dumpInterval
-
+internal open class SamplingTask(@JvmField internal val dumpInterval: Int, private val maxDurationMs: Int, coroutineScope: CoroutineScope) {
   var threadInfos: UList<Array<ThreadInfo>> = UList()
     private set
 
@@ -45,8 +43,11 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDu
 
   private suspend fun dumpThreadsLoop() {
     val delayDuration = dumpInterval.milliseconds
-    while (threadInfos.size < maxDumps) {
+    while (true) {
       dumpThreads()
+      if (totalTime + dumpInterval > maxDurationMs) {
+        break
+      }
       delay(delayDuration)
     }
   }
@@ -57,9 +58,12 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDu
     val infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false)
     coroutineContext.ensureActive()
 
-    threadInfos = threadInfos.add(infos)
-
+    storeThreadInfos(infos)
     processDumpedThreads(infos)
+  }
+
+  protected open fun storeThreadInfos(infos: Array<ThreadInfo>) {
+    threadInfos = threadInfos.add(infos)
   }
 
   protected open suspend fun processDumpedThreads(infos: Array<ThreadInfo>) {}

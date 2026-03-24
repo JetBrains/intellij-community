@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import junit.framework.TestCase
+import junit.framework.TestCase.assertEquals
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -164,7 +165,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("6.0.1") // Gradle 4.9 isn't able to import 1.4 KGP
+    @TargetVersions("6.0.x") // Gradle 4.9 isn't able to import 1.4 KGP
     fun testJpsCompilerMultiModule() {
         configureByFiles()
         importProject()
@@ -414,7 +415,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
 
     @Ignore
     @Test
-    @TargetVersions("4.9")
+    @TargetVersions("4.9.x")
     fun testCommonImportByPlatformPlugin() {
         configureByFiles()
         importProject()
@@ -766,14 +767,14 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         assertAllModulesConfigured()
     }
 
+    // kotlin-2js plugin
     @Test
     fun testStableModuleNameWhileUsingGradleJS() {
         configureByFiles()
         importProject()
 
-        checkStableModuleName("project.main", "project", JsPlatforms.defaultJsPlatform, isProduction = true)
-        // Note "_test" suffix: this is current behavior of K2JS Compiler
-        checkStableModuleName("project.test", "project_test", JsPlatforms.defaultJsPlatform, isProduction = false)
+        checkStableModuleName("project.main", "project.main", JsPlatforms.defaultJsPlatform, isProduction = true)
+        checkStableModuleName("project.test", "project.test", JsPlatforms.defaultJsPlatform, isProduction = false)
 
         assertAllModulesConfigured()
     }

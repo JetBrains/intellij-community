@@ -37,6 +37,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ExperimentalUI;
@@ -480,7 +481,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (UISettings.isIdeHelpTooltipEnabled()) {
       HelpTooltip ht = myPresentation.getClientProperty(CUSTOM_HELP_TOOLTIP);
       if ((Strings.isNotEmpty(text) || Strings.isNotEmpty(description)) && ht == null) {
-        ht = new HelpTooltip().setTitle(text).setShortcut(getShortcutText());
+        ht = new HelpTooltip().setPlainTextTitle(text).setShortcut(getShortcutText());
         if (myAction instanceof TooltipLinkProvider) {
           TooltipLinkProvider.TooltipLink link = ((TooltipLinkProvider)myAction).getTooltipLink(this);
           if (link != null) {
@@ -488,8 +489,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
           }
         }
         String id = ActionManager.getInstance().getId(myAction);
-        if (!Objects.equals(text, description) && ((id != null && WHITE_LIST.contains(id)) || myAction instanceof TooltipDescriptionProvider)) {
-          ht.setDescription(description);
+        if (description != null && !Objects.equals(text, description) && ((id != null && WHITE_LIST.contains(id)) || myAction instanceof TooltipDescriptionProvider)) {
+          ht.setDescription(HtmlChunk.raw(description));
         }
       }
       if (ht != null) {

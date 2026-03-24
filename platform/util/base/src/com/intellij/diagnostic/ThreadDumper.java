@@ -38,6 +38,17 @@ public final class ThreadDumper {
     return writer.toString();
   }
 
+  /**
+   * Returns a printed stack trace of the EDT
+   */
+  public static @Nullable String dumpEdtToString() {
+    ThreadInfo edtThreadInfo = getEdtThreadInfo(ManagementFactory.getThreadMXBean());
+    if (edtThreadInfo == null) return null;
+    StringWriter writer = new StringWriter();
+    dumpThreadInfos(new ThreadInfo[]{edtThreadInfo}, writer);
+    return writer.toString();
+  }
+
   @ApiStatus.Internal
   public static @NotNull ThreadInfo @NotNull [] getThreadInfos() {
     return getThreadInfos(ManagementFactory.getThreadMXBean(), true);
@@ -63,6 +74,17 @@ public final class ThreadDumper {
       writer.write(coroutineDump);
     }
     return new ThreadDump(writer.toString(), edtStack, threadInfos);
+  }
+
+  private static @Nullable ThreadInfo getEdtThreadInfo(@NotNull ThreadMXBean threadMXBean) {
+    long[] threadIds = threadMXBean.getAllThreadIds();
+    for (long threadId : threadIds) {
+      ThreadInfo info = threadMXBean.getThreadInfo(threadId); // capturing ThreadInfo without stacktrace for speed
+      if (info != null && isEDT(info)) {
+        return threadMXBean.getThreadInfo(threadId, Integer.MAX_VALUE); // now let's capture the stacktrace
+      }
+    }
+    return null;
   }
 
   @ApiStatus.Internal

@@ -62,7 +62,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   @Override
   public boolean isValid() {
     if (isDeleted()) return false;
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       if (getRefManager().getProject().isDisposed()) return false;
 
       //no need to check resolve in offline mode

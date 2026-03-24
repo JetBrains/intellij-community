@@ -14,7 +14,7 @@ abstract class AbstractCoroutineViewJobHierarchyTest : KotlinDescriptorTestCaseW
                 val coroutineCache = coroutineDebugProxy.dumpCoroutines()
                 if (coroutineCache.isOk()) {
                     val cache = coroutineCache.cache
-                    val isHierarchyBuilt = coroutineDebugProxy.fetchAndSetJobsAndParentsForCoroutines(cache)
+                    val isHierarchyBuilt = coroutineDebugProxy.fetchAndSetJobNamesAndJobUniqueIds(cache)
                     if (isHierarchyBuilt) {
                         printCoroutinesJobHierarchy(cache)
                     } else {
@@ -33,27 +33,21 @@ abstract class AbstractCoroutineViewJobHierarchyTest : KotlinDescriptorTestCaseW
         }
     }
 
-    private fun printCoroutinesJobHierarchy(infos: List<CoroutineInfoData>) {
-        val parentJobToChildCoroutineInfos = infos.groupBy { it.parentJob }
-        val jobToCoroutineInfo = infos.associateBy { it.job }
-        val rootJobs = infos.filter { it.parentJob == null }.mapNotNull { it.job }
+    private fun printCoroutinesJobHierarchy(coroutines: List<CoroutineInfoData>) {
+        val rootCoroutines = coroutines.filter { it.parentJobId == null }
+        val parentIdToChildCoroutines = coroutines.filter { it.parentJobId != null }.groupBy { it.parentJobId!! }
 
         out(0, "==== Hierarchy of coroutines =====")
-        for (root in rootJobs) {
-            val rootCoroutineInfo = jobToCoroutineInfo[root]
-            if (rootCoroutineInfo == null) {
-                out(0, root)
-            } else {
-                printInfo(rootCoroutineInfo, parentJobToChildCoroutineInfos, 0)
-            }
+        for (rootCoroutine in rootCoroutines) {
+            printInfo(rootCoroutine, parentIdToChildCoroutines, 0)
         }
     }
 
-    private fun printInfo(info: CoroutineInfoData, jobToChildCoroutineInfos: Map<String?, List<CoroutineInfoData>>, indent: Int) {
+    private fun printInfo(info: CoroutineInfoData, parentIdToChildCoroutines: Map<Long, List<CoroutineInfoData>>, indent: Int) {
         out(indent, info.name)
-        val children = jobToChildCoroutineInfos[info.job] ?: emptyList()
+        val children = parentIdToChildCoroutines[info.jobId] ?: emptyList()
         for (child in children) {
-            printInfo(child, jobToChildCoroutineInfos, indent + 1)
+            printInfo(child, parentIdToChildCoroutines, indent + 1)
         }
     }
 }

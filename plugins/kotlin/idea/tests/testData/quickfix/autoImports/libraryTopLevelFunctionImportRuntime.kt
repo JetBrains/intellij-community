@@ -1,5 +1,6 @@
 // "Import function 'measureNanoTime'" "true"
 // WITH_STDLIB
+// K2_ERROR: Unresolved reference 'measureNanoTime'.
 package some
 
 fun testFun() {

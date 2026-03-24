@@ -63,9 +63,8 @@ public class StringUtil {
   public static final String NON_BREAK_SPACE = "\u00A0";
 
   private static final class HtmlPatterns {
-    // "(?>" removes backtraces; this is not just important for matching speed, but also to stop stack overflows
-    private static final Pattern HTML_PATTERN = Pattern.compile("(?><[^>]*>)", Pattern.MULTILINE);
-    private static final Pattern BREAKS_PATTERN = Pattern.compile("(?><[bB][rR](?>\\s*)/?\\s*>)");
+    private static final Pattern HTML_PATTERN = Pattern.compile("<[^>]*+>", Pattern.MULTILINE);
+    private static final Pattern BREAKS_PATTERN = Pattern.compile("<br\\s*+/?\\s*+>", Pattern.CASE_INSENSITIVE);
   }
 
   private static final class Splitters {
@@ -1776,6 +1775,17 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
+  public static boolean endsWithIgnoreWhitespaces(@NotNull CharSequence text, @NotNull CharSequence suffix) {
+    int i = text.length();
+    for (; i > 0; i--) {
+      if (!Strings.isWhiteSpace(text.charAt(i - 1))) {
+        break;
+      }
+    }
+    return endsWith(text, 0, i, suffix);
+  }
+
+  @Contract(pure = true)
   public static @NotNull String commonPrefix(@NotNull String s1, @NotNull String s2) {
     return s1.substring(0, commonPrefixLength(s1, s2));
   }
@@ -3330,5 +3340,81 @@ public class StringUtil {
   @Contract(pure = true)
   public static int rankForFileSize(long fileSize) {
     return StringUtilRt.rankForFileSize(fileSize);
+  }
+  private static final String SPACES = repeat(" ", 64);
+
+  /**
+   * Appends the given character sequence to the {@link StringBuilder}, right-padded with spaces
+   * if necessary so that the resulting appended text has at least {@code minWidth} characters.
+   * <p>
+   * If the sequence length exceeds {@code maxWidth}, the leftmost {@code maxWidth} characters
+   * are appended (i.e. the sequence is truncated from the right).
+   * <p>
+   *
+   * <pre>
+   * padRight(sb, "INFO", 6, Integer.MAX_VALUE) -> "INFO  "
+   * padRight(sb, "VeryLongName", 0, 4)         -> "Very"
+   * </pre>
+   *
+   * @param dest the destination {@link StringBuilder}
+   * @param s the character sequence to append
+   * @param minWidth the minimum width of the resulting field; spaces are added to the right
+   *                 if {@code s.length() < minWidth}
+   * @param maxWidth the maximum width of the field; if {@code s.length() > maxWidth},
+   *                 the sequence is truncated from the right
+   */
+  public static void padRight(@NotNull StringBuilder dest, @NotNull CharSequence s, int minWidth, int maxWidth) {
+    assert minWidth >= 0 && maxWidth >= 0 : minWidth +", "+maxWidth;
+    int len = Math.min(s.length(), maxWidth);
+
+    dest.append(s, 0, len);
+
+    int pad = minWidth - len;
+    while (pad > 0) {
+      int n = Math.min(pad, SPACES.length());
+      dest.append(SPACES, 0, n);
+      pad -= n;
+    }
+  }
+
+  /**
+   * Appends the given character sequence to the {@link StringBuilder}, left-padded with spaces
+   * if necessary so that the resulting appended text has at least {@code minWidth} characters.
+   * <p>
+   * If the sequence length exceeds {@code maxWidth}, the rightmost {@code maxWidth} characters
+   * are appended (i.e. the sequence is truncated from the left).
+   * <p>
+   *
+   * <pre>
+   * padLeft(sb, "INFO", 6, Integer.MAX_VALUE) -> "  INFO"
+   * padLeft(sb, "VeryLongName", 0, 4)         -> "Name"
+   * </pre>
+   *
+   * @param dest the destination {@link StringBuilder}
+   * @param s the character sequence to append
+   * @param minWidth the minimum width of the resulting field; spaces are added to the left
+   *                 if {@code s.length() < minWidth}
+   * @param maxWidth the maximum width of the field; if {@code s.length() > maxWidth},
+   *                 the sequence is truncated from the left
+   */
+  public static void padLeft(@NotNull StringBuilder dest, @NotNull CharSequence s, int minWidth, int maxWidth) {
+    assert minWidth >= 0 && maxWidth >= 0 : minWidth +", "+maxWidth;
+    int len = s.length();
+    int start;
+    if (len > maxWidth) {
+      // truncate if needed
+      start = len - maxWidth;
+      len = maxWidth;
+    }
+    else {
+      start = 0;
+    }
+    int pad = minWidth - len;
+    while (pad > 0) {
+      int n = Math.min(pad, SPACES.length());
+      dest.append(SPACES, 0, n);
+      pad -= n;
+    }
+    dest.append(s, start, start + len);
   }
 }

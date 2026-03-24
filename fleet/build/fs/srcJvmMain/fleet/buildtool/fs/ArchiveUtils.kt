@@ -355,6 +355,15 @@ fun zip(
   reproducibilityMode: ReproducibilityMode,
 ) = compress(source, outputFile, withTopLevelFolder, ArchiveType.ZIP, compressorName = "", reproducibilityMode, temporaryDir, logger)
 
+fun tar(
+  source: Path,
+  outputFile: Path,
+  withTopLevelFolder: Boolean,
+  temporaryDir: Path,
+  logger: Logger,
+  reproducibilityMode: ReproducibilityMode,
+) = compress(source, outputFile, withTopLevelFolder, ArchiveType.TAR, compressorName = null, reproducibilityMode, temporaryDir, logger)
+
 fun tarGz(
   source: Path,
   outputFile: Path,
@@ -389,7 +398,7 @@ private fun compress(
   outputFile: Path,
   withTopLevelFolder: Boolean,
   archiveType: ArchiveType,
-  compressorName: String,
+  compressorName: String?,
   reproducibilityMode: ReproducibilityMode,
   temporaryDir: Path,
   logger: Logger,
@@ -407,6 +416,7 @@ private fun compress(
       ArchiveType.TAR -> when (compressorName) {
         CompressorStreamFactory.ZSTANDARD -> ZstdCompressorOutputStream(bufferedOutputStream)
         CompressorStreamFactory.XZ -> XZCompressorOutputStream(bufferedOutputStream)
+        null -> bufferedOutputStream
         else -> CompressorStreamFactory().createCompressorOutputStream(compressorName, bufferedOutputStream)
       }
     }

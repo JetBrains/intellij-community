@@ -52,6 +52,7 @@ internal data class CopyOptionsImpl2(
 
 internal data class TimeSinceEpochImpl(override val seconds: ULong, override val nanoseconds: UInt) : TimeSinceEpoch
 
+@Deprecated("Use generated builder instead")
 internal data class ChangeAttributesOptionsImpl2(
   override var accessTime: TimeSinceEpoch? = null,
   override var modificationTime: TimeSinceEpoch? = null,

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic.dump.paths
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.FilePropertyPusher
 import com.intellij.openapi.util.io.FileTooBigException
@@ -26,14 +26,14 @@ object IndexedFilePaths {
       null
     }
     else {
-      runReadAction {
+      runReadActionBlocking {
         SubstitutedFileType.substituteFileType(fileOrDir, fileOrDir.fileType, project).name.takeIf { it != fileType }
       }
     }
     val (contentHash, indexedHash) = try {
       val fileContent = FileContentImpl.createByFile(fileOrDir) as FileContentImpl
       val encoder = Base64.getEncoder()
-      runReadAction {
+      runReadActionBlocking {
         val contentHash = IndexedHashesSupport.getBinaryContentHash(fileContent.content)
         val indexedHash = IndexedHashesSupport.calculateIndexedHash(fileContent, contentHash)
         encoder.encodeToString(contentHash) to encoder.encodeToString(indexedHash)
@@ -49,7 +49,7 @@ object IndexedFilePaths {
 
     val fileSize = if (fileOrDir.isDirectory) null else fileOrDir.length
     val portableFilePath = PortableFilePaths.getPortableFilePath(fileOrDir, project)
-    val allPusherValues = runReadAction {
+    val allPusherValues = runReadActionBlocking {
       dumpFilePropertyPusherValues(fileOrDir, project).mapValues { it.value?.toString() ?: "<null-value>" }
     }
     return IndexedFilePath(

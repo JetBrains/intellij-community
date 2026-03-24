@@ -1,5 +1,6 @@
 // "Change parameter 'x' type of primary constructor of class 'Foo' to 'T & Any'" "true"
 // LANGUAGE_VERSION: 1.8
+// K2_ERROR: Argument type mismatch: actual type is 'T (of class Foo<T>)', but 'T (of class Foo<T>) & Any' was expected.
 
 class Foo<T>(x: T) {
     init {

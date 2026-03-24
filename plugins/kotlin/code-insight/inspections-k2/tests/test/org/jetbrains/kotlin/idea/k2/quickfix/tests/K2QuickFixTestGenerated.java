@@ -341,6 +341,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/addNothingReturnType.kt");
         }
 
+        @TestMetadata("addParameterGenericFunction.kt")
+        public void testAddParameterGenericFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addParameterGenericFunction.kt");
+        }
+
         @TestMetadata("addParameterNotAvailableForBuiltins.kt")
         public void testAddParameterNotAvailableForBuiltins() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/addParameterNotAvailableForBuiltins.kt");
@@ -2312,6 +2317,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/AnnotationAllUseSiteTarget_2_2.kt");
         }
 
+        @TestMetadata("AnnotationAllUseSiteTarget_2_2_Increase_Version.kt")
+        public void testAnnotationAllUseSiteTarget_2_2_Increase_Version() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/AnnotationAllUseSiteTarget_2_2_Increase_Version.kt");
+        }
+
         @TestMetadata("BreakContinueInInlineLambdas_2_0.kt")
         public void testBreakContinueInInlineLambdas_2_0() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/BreakContinueInInlineLambdas_2_0.kt");
@@ -2355,6 +2365,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         @TestMetadata("MultiDollarInterpolation_2_1.kt")
         public void testMultiDollarInterpolation_2_1() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/MultiDollarInterpolation_2_1.kt");
+        }
+
+        @TestMetadata("MultiDollarInterpolation_2_1_Increase_Version.kt")
+        public void testMultiDollarInterpolation_2_1_Increase_Version() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/MultiDollarInterpolation_2_1_Increase_Version.kt");
         }
 
         @TestMetadata("MultiDollarInterpolation_2_2.kt")

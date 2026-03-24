@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -276,11 +276,14 @@ public final class EditorFragmentComponent extends JPanel {
     final Color old = editorEx.getBackgroundColor();
     Color backColor = getBackgroundColor(editor, useCaretRowBackground);
     editorEx.setBackgroundColor(backColor);
-    EditorFragmentComponent fragmentComponent = new EditorFragmentComponent(editorEx, startLine, endLine, showFolding, showGutter);
-    fragmentComponent.setBackground(backColor);
-
-    editorEx.setBackgroundColor(old);
-    return fragmentComponent;
+    try {
+      EditorFragmentComponent fragmentComponent = new EditorFragmentComponent(editorEx, startLine, endLine, showFolding, showGutter);
+      fragmentComponent.setBackground(backColor);
+      return fragmentComponent;
+    }
+    finally {
+      editorEx.setBackgroundColor(old);
+    }
   }
 
   public static @Nullable LightweightHint showEditorFragmentHint(Editor editor, TextRange range, boolean showFolding, boolean hideByAnyKey){

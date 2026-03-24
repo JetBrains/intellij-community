@@ -15,13 +15,13 @@ import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
 internal class GitInOutStateHolder(private val project: Project, cs: CoroutineScope) {
-  private var state: GitInOutProjectState = GitInOutProjectState(emptyMap(), emptyMap())
+  private var state: GitInOutProjectState = GitInOutProjectState.EMPTY
 
   init {
     cs.launch {
       durable {
         GitIncomingOutgoingStateApi.getInstance().syncState(project.projectId()).collect {
-          LOG.debug("Received new state - in ${it.incoming.size} repos, out ${it.outgoing.size} repos")
+          LOG.debug("Received new state - in ${it.incoming.size} repos, out ${it.outgoing.size} repos, lastFetchTime ${it.lastFetchTime}")
           state = it
         }
       }
@@ -45,6 +45,12 @@ internal class GitInOutStateHolder(private val project: Project, cs: CoroutineSc
 
     return if (reposState.isEmpty()) GitInOutCountersInProject.EMPTY else GitInOutCountersInProject(reposState)
   }
+
+  /**
+   * @return the timestamp of the last successful fetch, or null if no fetch has been performed yet
+   */
+  val lastFetchTime: java.time.Instant?
+    get() = state.lastFetchTime
 
   companion object {
     private val LOG = Logger.getInstance(GitInOutStateHolder::class.java)

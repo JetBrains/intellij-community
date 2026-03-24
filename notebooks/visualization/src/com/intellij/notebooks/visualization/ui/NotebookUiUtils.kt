@@ -3,6 +3,7 @@ package com.intellij.notebooks.visualization.ui
 
 import com.intellij.openapi.editor.impl.EditorImpl
 import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 
@@ -19,5 +20,10 @@ object NotebookUiUtils {
     if (editorImpl.gutterComponentEx.contains(pointOnGutter)) return pointOnGutter
 
     return null
+  }
+
+  fun Rectangle.intersectsEvenIfEmpty(other: Rectangle): Boolean {
+    return this.intersects(other) || (this.isEmpty && other.contains(Point(x, y))) || (other.isEmpty && this.contains(Point(other.x,
+                                                                                                                            other.y)))
   }
 }

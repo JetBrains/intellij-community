@@ -1,1 +1,1 @@
-y = (<error descr="Can't use starred expression here">*()</error> for _ in ())
+y = (<error descr="Cannot use starred expression here">*()</error> for _ in ())

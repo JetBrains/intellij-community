@@ -4,6 +4,7 @@ package com.intellij.openapi.application.impl
 import com.intellij.concurrency.JobLauncher
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
+import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -32,11 +33,15 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
+import com.intellij.platform.util.progress.reportProgress
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -68,6 +73,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.Callable
@@ -547,6 +553,7 @@ class PlatformUtilitiesTest {
 
   @Test
   fun `JobLauncher can be canceled on termination of the context job`(): Unit = concurrencyTest {
+    ProgressManager.getInstance()
     val j1 = Job(coroutineContext.job)
     val j2 = Job(coroutineContext.job)
     val job = launch(Dispatchers.Default) {
@@ -556,7 +563,10 @@ class PlatformUtilitiesTest {
           j2.asCompletableFuture().join()
         }
         if (num == 2) {
-          fail<Nothing>("should not be reached")
+          j2.asCompletableFuture().join()
+          // checkCanceled might not throw here,
+          // as cancellation machinery on another thread can work in parallel to the processing of this element.
+          // but the indicator should be canceled here anyway, so we assert exactly thatc          assertThat { ProgressManager.getGlobalProgressIndicator().isCanceled }
         }
         true
       })
@@ -565,5 +575,35 @@ class PlatformUtilitiesTest {
     job.cancel()
     j2.complete()
     job.join()
+  }
+
+  @Test
+  fun `runProcess cannot resurrect canceled indicator`(): Unit = timeoutRunBlocking {
+    launch {
+      coroutineToIndicator {
+        val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
+        currentThreadContext().job.cancel()
+        indicator.stop()
+        ProgressManager.getInstance().runProcess({
+          Assertions.assertTrue(indicator.isCanceled, "indicator should be canceled")
+                                                 }, indicator)
+      }
+    }.join()
+  }
+
+  @Test
+  fun `runProcess cannot resurrect raw progress reporting indicator`(): Unit = timeoutRunBlocking {
+    launch {
+      reportProgress {
+        coroutineToIndicator {
+          val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
+          currentThreadContext().job.cancel()
+          indicator.stop()
+          ProgressManager.getInstance().runProcess({
+                                                     Assertions.assertTrue(indicator.isCanceled, "indicator should be canceled")
+                                                   }, indicator)
+        }
+      }
+    }.join()
   }
 }

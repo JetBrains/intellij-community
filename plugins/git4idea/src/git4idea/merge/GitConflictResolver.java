@@ -66,7 +66,7 @@ public class GitConflictResolver {
     public Params() {
       myMergeDialogCustomizer = new MergeDialogCustomizer() {
         @Override
-        public @NotNull String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+        public @NotNull @NlsContexts.Label String getMultipleFileMergeDescription(@NotNull Collection<? extends @NotNull VirtualFile> files) {
           return myMergeDescription;
         }
       };
@@ -75,7 +75,7 @@ public class GitConflictResolver {
     public Params(Project project) {
       myMergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(project) {
         @Override
-        public @NotNull @NlsContexts.Label String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+        public @NotNull @NlsContexts.Label String getMultipleFileMergeDescription(@NotNull Collection<? extends @NotNull VirtualFile> files) {
           if (!StringUtil.isEmpty(myMergeDescription)) {
             return myMergeDescription;
           }

@@ -8,4 +8,19 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k11"
 )
+
+jvm_library(
+  name = "nanoxml_test_lib",
+  module_name = "intellij.platform.util.nanoxml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [":nanoxml"]
+)
 ### auto-generated section `build intellij.platform.util.nanoxml` end
+
+### auto-generated section `iml intellij.platform.util.nanoxml` start
+exports_files([
+  "intellij.platform.util.nanoxml.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.nanoxml` end

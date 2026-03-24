@@ -27,6 +27,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -98,7 +99,7 @@ public final class APIWrappers {
     }
 
     Iterable<Processor> wrapProcessors(Iterable<? extends Processor> processors) {
-      return myAllProcessors = Iterators.map(processors, proc -> wrap(Processor.class, new ProcessorWrapper(proc, this)));
+      return myAllProcessors = Iterators.collect(Iterators.map(processors, proc -> wrap(Processor.class, new ProcessorWrapper(proc, this))), new ArrayList<>());
     }
 
     @Nullable

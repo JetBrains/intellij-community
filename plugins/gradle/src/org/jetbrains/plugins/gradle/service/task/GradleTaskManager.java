@@ -417,7 +417,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   /**
    * @deprecated Use {@link ExternalSystemUtil#runTask(TaskExecutionSpec)} directly.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void runCustomTaskScript(@NotNull Project project,
                                    @NotNull @Nls String executionName,
                                    @NotNull String projectPath,
@@ -445,7 +445,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   /**
    * @deprecated Use {@link ExternalSystemUtil#runTask(TaskExecutionSpec)} directly.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void runCustomTask(@NotNull Project project,
                                    @NotNull @Nls String executionName,
                                    @NotNull Class<? extends Task> taskClass,
@@ -467,7 +467,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   /**
    * @deprecated Use {@link ExternalSystemUtil#runTask(TaskExecutionSpec)} directly.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void runCustomTask(@NotNull Project project,
                                    @NotNull @Nls String executionName,
                                    @NotNull Class<? extends Task> taskClass,

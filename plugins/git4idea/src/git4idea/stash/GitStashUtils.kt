@@ -349,7 +349,7 @@ private class UnstashConflictResolver(project: Project, private val stashInfo: S
 }
 
 private class UnstashMergeDialogCustomizer(private val stashInfo: StashInfo) : MergeDialogCustomizer() {
-  override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): String {
+  override fun getMultipleFileMergeDescription(files: Collection<VirtualFile>): String {
     return XmlStringUtil.wrapInHtml(
       GitBundle.message("unstash.conflict.dialog.description.label.text",
                         XmlStringUtil.wrapInHtmlTag("${stashInfo.stash}\"${stashInfo.message}\"", "code"))

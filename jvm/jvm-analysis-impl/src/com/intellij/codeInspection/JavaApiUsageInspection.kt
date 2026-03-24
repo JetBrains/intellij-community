@@ -14,7 +14,6 @@ import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.options.OptionController
 import com.intellij.java.JavaBundle
 import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil
-import com.intellij.lang.Language
 import com.intellij.openapi.module.JdkApiCompatibilityService
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
@@ -53,11 +52,9 @@ import org.jetbrains.uast.textRange
 private const val EFFECTIVE_LL = "effectiveLL"
 
 /**
- * In order to add the support for new API in the most recent JDK execute:
- * <ol>
- *   <li>Generate apiXXX.txt by running [com.intellij.codeInspection.tests.JavaApiUsageGenerator#testCollectSinceApiUsages]</li>
- *   <li>Put the generated text file under community/java/java-analysis-api/src/com/intellij/openapi/module</li>
- * </ol>
+ * To add the support for new API in the most recent JDK execute:
+ * - Generate apiXXX.txt by running [com.intellij.codeInspection.tests.JavaApiUsageGenerator#testCollectSinceApiUsages]
+ * - Put the generated text file under community/java/java-analysis-api/src/com/intellij/openapi/module
  */
 class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.ERROR
@@ -141,18 +138,19 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
         checkImplicitCallOfSuperEmptyConstructor(node)
       }
       else {
-        processMethodOverriding(node, node.javaPsi.findSuperMethods(true))
+        processMethodOverriding(node)
       }
       return true
     }
 
-    private fun processMethodOverriding(method: UMethod, overriddenMethods: Array<PsiMethod>) {
+    private fun processMethodOverriding(method: UMethod) {
       val overrideAnnotation = method.findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE)
-      val hasOverrideModifier = overrideModifierLanguages.any { method.sourcePsi?.language != Language.findLanguageByID(it) }
+      val hasOverrideModifier = overrideModifierLanguages.contains(method.sourcePsi?.language?.id)
       if (overrideAnnotation == null && !hasOverrideModifier) return
       val sourcePsi = method.sourcePsi ?: return
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
       val languageLevel = getEffectiveLanguageLevel(module)
+      val overriddenMethods = method.javaPsi.findSuperMethods(true)
       val firstCompatibleLanguageLevel = overriddenMethods.mapNotNull { overriddenMethod ->
         JdkApiCompatibilityService.getInstance().firstCompatibleLanguageLevel(overriddenMethod, languageLevel)
       }.minOrNull() ?: return

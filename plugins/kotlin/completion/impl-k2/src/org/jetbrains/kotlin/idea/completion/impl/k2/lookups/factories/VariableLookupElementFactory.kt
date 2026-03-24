@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
+import com.intellij.ui.LayeredIcon
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -16,18 +17,26 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.MultipleArgumentsInsertHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.Tail
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CompletionShortNamesRenderer.renderVariable
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.KotlinCallableLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.QuotedNamesAwareInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TailTextProvider.getTailTextForVariableCall
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher.matchesExpectedType
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.addImportIfRequired
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.updateLookupElementBuilderToInsertTypeQualifierOnSuper
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.withCallableSignatureInfo
@@ -102,6 +111,30 @@ internal object VariableLookupElementFactory {
     }
 
     context(_: KaSession)
+    fun createMultipleArgumentsLookupElement(
+        variableSymbols: List<KaNamedSymbol>,
+        tail: Tail?
+    ): LookupElement {
+        val names = variableSymbols.map { it.name }
+        val renderedText = names.joinToString(", ") { it.render() }
+
+        val compoundIcon = LayeredIcon(2)
+        val firstIcon = getIconFor(variableSymbols.first()) ?: KotlinIcons.PARAMETER
+        val lastIcon = getIconFor(variableSymbols.last()) ?: KotlinIcons.PARAMETER
+        compoundIcon.setIcon(lastIcon, 0, 2 * firstIcon.iconWidth / 5, 0)
+        compoundIcon.setIcon(firstIcon, 1, 0, 0)
+
+        val lookupObject = MultipleArgumentsLookupObject(names.first(), renderedText, tail)
+        val lookupElement = LookupElementBuilder.create(lookupObject, renderedText)
+            .withIcon(compoundIcon)
+            .withInsertHandler(MultipleArgumentsInsertHandler())
+
+        lookupElement.matchesExpectedType = ExpectedTypeWeigher.MatchesExpectedType.MATCHES_PREFERRED
+
+        return lookupElement
+    }
+
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun markIfSyntheticJavaProperty(
         lookupElementBuilder: LookupElementBuilder,
@@ -130,6 +163,13 @@ internal data class VariableLookupObject(
     override val options: CallableInsertionOptions,
     override val renderedDeclaration: String,
 ) : KotlinCallableLookupObject()
+
+@Serializable
+internal data class MultipleArgumentsLookupObject(
+    @Serializable(with = KotlinNameSerializer::class) override val shortName: Name,
+    val renderedDeclaration: String,
+    val tail: Tail?,
+) : KotlinLookupObject
 
 @Serializable
 internal object VariableInsertionHandler : CallableIdentifierInsertionHandler()

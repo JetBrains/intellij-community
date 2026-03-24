@@ -64,7 +64,6 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
-
 @Suppress("OVERRIDE_DEPRECATION")
 internal class ProjectsTabFactory : WelcomeTabFactory {
   override fun createWelcomeTab(parentDisposable: Disposable): WelcomeScreenTab = ProjectsTab(parentDisposable)

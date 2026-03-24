@@ -52,54 +52,137 @@ jvm_library(
 
 jvm_library(
   name = "settings-local_test_lib",
+  module_name = "intellij.platform.settings.local",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_settings-local",
+  runtime_deps = [
+    ":settings-local",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/settings:settings_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//libraries/kotlinx/serialization/protobuf:protobuf_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//libraries/mvstore:mvstore_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/util/xmlDom:xmlDom_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/object-serializer:object-serializer_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//libraries/aalto-xml:aalto-xml_test_lib",
+    "//libraries/kotlinx/serialization/cbor:cbor_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.settings.local` end
+
+### auto-generated section `iml intellij.platform.settings.local` start
+exports_files([
+  "intellij.platform.settings.local.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.settings.local` end
+
+### auto-generated section `build intellij.platform.settings.local.tests` start
+create_kotlinc_options(
+  name = "custom_settings-local-tests",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "com.intellij.util.xmlb.SettingsInternalApi",
+  ]
+)
+
+jvm_library(
+  name = "settings-local-tests",
+  module_name = "intellij.platform.settings.local.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "settings-local-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_settings-local",
-  associates = [":settings-local"],
+  kotlinc_opts = ":custom_settings-local-tests",
+  associates = [
+    "//platform/settings-local",
+    "//platform/settings-local:settings-local_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
     "@lib//:junit5",
     "@lib//:assert_j",
     "//platform/extensions",
+    "//platform/extensions:extensions_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/settings",
+    "//platform/settings:settings_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
     "//platform/projectModel-impl",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
     "//platform/ide-core",
     "//libraries/kotlinx/serialization/protobuf",
+    "//libraries/kotlinx/serialization/protobuf:protobuf_test_lib",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//libraries/mvstore",
+    "//libraries/mvstore:mvstore_test_lib",
     "//libraries/jackson/jackson",
+    "//libraries/jackson/jackson:jackson_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/core-impl",
-    "@lib//:platform-settings-local-jackson-dataformat-cbor",
+    "//platform/core-impl:core-impl_test_lib",
+    "@lib//:platform-settings-local-tests-jackson-dataformat-cbor",
     "//libraries/jackson/databind",
+    "//libraries/jackson/databind:databind_test_lib",
     "//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml",
+    "//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml_test_lib",
     "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
     "//platform/util/xmlDom",
+    "//platform/util/xmlDom:xmlDom_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//platform/object-serializer",
     "//platform/object-serializer:object-serializer_test_lib",
     "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
     "//libraries/aalto-xml",
-    "//community-resources:customization",
+    "//libraries/aalto-xml:aalto-xml_test_lib",
     "//platform/testFramework/core",
+    "//platform/testFramework/core:core_test_lib",
     "//libraries/kotlinx/serialization/cbor",
+    "//libraries/kotlinx/serialization/cbor:cbor_test_lib",
+  ],
+  runtime_deps = [
+    ":settings-local-tests",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
-### auto-generated section `build intellij.platform.settings.local` end
+### auto-generated section `build intellij.platform.settings.local.tests` end
 
-### auto-generated section `test intellij.platform.settings.local` start
+### auto-generated section `iml intellij.platform.settings.local.tests` start
+exports_files([
+  "intellij.platform.settings.local.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.settings.local.tests` end
+
+### auto-generated section `test intellij.platform.settings.local.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "settings-local_test",
-  runtime_deps = [":settings-local_test_lib"]
+  name = "settings-local-tests_test",
+  runtime_deps = [":settings-local-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.settings.local` end
+### auto-generated section `test intellij.platform.settings.local.tests` end

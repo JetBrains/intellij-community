@@ -59,9 +59,70 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+  ]
+)
+
+jvm_library(
+  name = "externalSystem-impl_test_lib",
+  module_name = "intellij.platform.externalSystem.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":externalSystem-impl",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/lvcs-api:lvcs_test_lib",
+    "//platform/macro:macro_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/observable:observable_test_lib",
+    "//platform/testRunner:testRunner_test_lib",
+    "//platform/configuration-store-impl:configurationStore-impl_test_lib",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//platform/object-serializer:object-serializer_test_lib",
+    "//platform/platform-impl/concurrency:concurrency_test_lib",
+    "//platform/object-serializer:objectSerializer-annotations_test_lib",
+    "//platform/xdebugger-api:debugger_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/commons/cli:cli_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-util-io-impl:ide-util-io-impl_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//platform/backend/observation:observation_test_lib",
+    "//platform/settings:settings_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//platform/eel-provider:eel-provider_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.externalSystem.impl` end
+
+### auto-generated section `iml intellij.platform.externalSystem.impl` start
+exports_files([
+  "intellij.platform.externalSystem.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.externalSystem.impl` end
 
 ### auto-generated section `build intellij.platform.externalSystem.tests` start
 resourcegroup(
@@ -72,6 +133,7 @@ resourcegroup(
 
 jvm_library(
   name = "externalSystem-tests",
+  module_name = "intellij.platform.externalSystem.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["//platform/lang-impl:lang-tests"],
@@ -92,52 +154,92 @@ jvm_library(
   resources = [":externalSystem-tests_test_resources"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/external-system-api:externalSystem",
+    "//platform/external-system-api:externalSystem_test_lib",
     "//platform/external-system-impl:externalSystem-impl",
+    "//platform/external-system-impl:externalSystem-impl_test_lib",
     "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
     "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/object-serializer",
     "//platform/object-serializer:object-serializer_test_lib",
     "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework/extensions:testExtensions_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "//platform/observable",
+    "//platform/configuration-store-impl:configurationStore-tests",
     "//platform/configuration-store-impl:configurationStore-tests_test_lib",
+    "//java/compiler:compiler-tests",
     "//java/compiler:compiler-tests_test_lib",
     "//java/compiler/impl",
+    "//java/compiler/impl:impl_test_lib",
     "//libraries/kotlin/reflect",
+    "//libraries/kotlin/reflect:reflect_test_lib",
     "//java/openapi:java",
+    "//java/openapi:java_test_lib",
     "@lib//:junit4",
     "@lib//:assert_j",
     "//libraries/mockito",
+    "//libraries/mockito:mockito_test_lib",
     "@lib//:mockito-kotlin",
+    "//platform/lang-impl:lang-tests",
     "//platform/lang-impl:lang-tests_test_lib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
     "//platform/workspace/storage",
+    "//platform/workspace/storage:storage_test_lib",
     "//platform/platform-util-io:ide-util-io",
     "//platform/external-system-api/testFramework",
+    "//platform/external-system-api/testFramework:testFramework_test_lib",
     "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/workspace/jps",
+    "//platform/workspace/jps:jps_test_lib",
     "//platform/backend/workspace",
+    "//platform/backend/workspace:workspace_test_lib",
     "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
     "//plugins/gradle",
+    "//plugins/gradle:gradle_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/execution",
+    "//platform/execution:execution_test_lib",
     "//platform/forms_rt:java-guiForms-rt",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
   ],
-  exports = ["//platform/lang-impl:lang-tests_test_lib"],
-  runtime_deps = [":externalSystem-tests"]
+  exports = [
+    "//platform/lang-impl:lang-tests",
+    "//platform/lang-impl:lang-tests_test_lib",
+  ],
+  runtime_deps = [
+    ":externalSystem-tests",
+    "//platform/observable:observable_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.externalSystem.tests` end
+
+### auto-generated section `iml intellij.platform.externalSystem.tests` start
+exports_files([
+  "intellij.platform.externalSystem.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.externalSystem.tests` end
 
 ### auto-generated section `test intellij.platform.externalSystem.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

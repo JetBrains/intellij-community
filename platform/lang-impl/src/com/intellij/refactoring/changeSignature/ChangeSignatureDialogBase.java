@@ -195,7 +195,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
     if (table != null && table.getRowCount() > 0) {
       if (table.getColumnModel().getSelectedColumnCount() == 0) {
-        final int selectedIdx = ReadAction.compute(() -> getSelectedIdx());
+        final int selectedIdx = ReadAction.computeBlocking(() -> getSelectedIdx());
         table.getSelectionModel().setSelectionInterval(selectedIdx, selectedIdx);
         table.getColumnModel().getSelectionModel().setSelectionInterval(0, 0);
       }
@@ -620,6 +620,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   private void doUpdateSignature() {
     LOG.assertTrue(!PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments());
     ReadAction.nonBlocking(() -> calculateSignature())
+      .expireWhen(() -> myProject.isDisposed() || !myMethod.getMethod().isValid())
       .finishOnUiThread(ModalityState.current(), signature -> mySignatureArea.setSignature(signature))
       .submit(AppExecutorUtil.getAppExecutorService());
   }

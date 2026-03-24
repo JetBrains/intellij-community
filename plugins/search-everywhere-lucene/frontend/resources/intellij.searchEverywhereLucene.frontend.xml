@@ -1,0 +1,17 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.searchEverywhere"/>
+    <module name="intellij.platform.searchEverywhere.frontend"/>
+    <module name="intellij.searchEverywhereLucene.common"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <searchEverywhere.tabFactory implementation="com.intellij.searchEverywhereLucene.frontend.tabs.SearchEverywhereLuceneFilesTabFactory"/>
+  </extensions>
+
+  <resource-bundle>messages.searchEverywhereLuceneFrontendBundle</resource-bundle>
+
+</idea-plugin>

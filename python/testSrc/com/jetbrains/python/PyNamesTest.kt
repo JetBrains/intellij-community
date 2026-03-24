@@ -4,6 +4,11 @@ package com.jetbrains.python
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.jetbrains.python.PyNames.isProtected
+import com.jetbrains.python.PyNames.isPrivate
+import com.jetbrains.python.PyNames.isSunder
+import com.jetbrains.python.PyNames.isDunder
+
 
 class PyNamesTest {
   @Test

@@ -277,7 +277,7 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
   override fun updateToolTipText() {
     @Suppress("DialogTitleCapitalization")
     HelpTooltip()
-      .setTitle(toolWindow.stripeTitleProvider)
+      .setPlainTextTitle(toolWindow.stripeTitleProvider)
       .setLocation(getAlignment(toolWindow.anchor, toolWindow.isSplitMode))
       .setShortcut(ActionManager.getInstance().getKeyboardShortcut(ActivateToolWindowAction.Manager.getActionIdForToolWindow(toolWindow.id)))
       .setInitialDelay(0)

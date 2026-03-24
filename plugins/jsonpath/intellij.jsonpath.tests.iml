@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/test">
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jsonpath" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.json.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.langInjection" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.jsonpath" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.jsonpath" />
+</module>

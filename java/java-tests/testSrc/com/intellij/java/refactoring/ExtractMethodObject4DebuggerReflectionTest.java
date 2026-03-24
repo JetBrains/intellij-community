@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -25,39 +25,39 @@ public class ExtractMethodObject4DebuggerReflectionTest extends LightJavaCodeIns
     return IdeaTestUtil.getMockJdk21();
   }
 
-  public void testAccessField() throws PrepareFailedException {
+  public void testAccessField() {
     doTest("System.out.println(instance.field)");
   }
 
-  public void testUpdateField() throws PrepareFailedException {
+  public void testUpdateField() {
     doTest("instance.field = 50");
   }
 
-  public void testAccessConstructor() throws PrepareFailedException {
+  public void testAccessConstructor() {
     doTest("new WithReflectionAccess(50)");
   }
 
-  public void testAccessMethod() throws PrepareFailedException {
+  public void testAccessMethod() {
     doTest("method()");
   }
 
-  public void testAccessMethodReference() throws PrepareFailedException {
+  public void testAccessMethodReference() {
     doTest("apply(WithReflectionAccess::method)");
   }
 
-  public void testTwiceAccessToTheSameField() throws PrepareFailedException {
+  public void testTwiceAccessToTheSameField() {
     doTest("instance.field + instance.field");
   }
 
-  public void testMethodWithParameter() throws PrepareFailedException {
+  public void testMethodWithParameter() {
     doTest("instance.method(instance)");
   }
 
-  public void testMethodWithPrimitiveParameter() throws PrepareFailedException {
+  public void testMethodWithPrimitiveParameter() {
     doTest("instance.method(42)");
   }
 
-  public void testCallDefaultConstructor() throws PrepareFailedException {
+  public void testCallDefaultConstructor() {
     doTest("new Inner()");
   }
 
@@ -99,7 +99,6 @@ public class ExtractMethodObject4DebuggerReflectionTest extends LightJavaCodeIns
     String actualText = "call text: " + extractedData.getGeneratedCallText() + "\n" +
                         "class: " + "\n" +
                         extractedData.getGeneratedInnerClass().getText();
-    UsefulTestCase
-      .assertSameLinesWithFile(getTestDataPath() + "/outs/" + testName + ".out", actualText, true);
+    UsefulTestCase.assertSameLinesWithFile(getTestDataPath() + "/outs/" + testName + ".out", actualText, true);
   }
 }

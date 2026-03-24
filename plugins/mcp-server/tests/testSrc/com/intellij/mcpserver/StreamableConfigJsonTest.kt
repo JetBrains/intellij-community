@@ -3,11 +3,8 @@ package com.intellij.mcpserver
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import kotlin.test.assertContains
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class StreamableConfigJsonTest {
   @Test
@@ -16,10 +13,10 @@ class StreamableConfigJsonTest {
     val json = createStreamableServerJsonEntry(port = port, projectBasePath = null)
     val headers = json["headers"]!!.jsonObject
 
-    assertFalse(headers.containsKey(IJ_MCP_SERVER_PROJECT_PATH))
-    assertEquals("streamable-http", json["type"]!!.jsonPrimitive.content)
+    assertThat(headers).doesNotContainKey(IJ_MCP_SERVER_PROJECT_PATH)
+    assertThat(json["type"]!!.jsonPrimitive.content).isEqualTo("streamable-http")
     val expectedUrls = setOf("http://localhost:$port/stream", "http://127.0.0.1:$port/stream")
-    assertContains(expectedUrls, json["url"]!!.jsonPrimitive.content)
+    assertThat(expectedUrls).contains(json["url"]!!.jsonPrimitive.content)
   }
 
   @Test
@@ -27,7 +24,7 @@ class StreamableConfigJsonTest {
     val json = createStreamableServerJsonEntry(port = 64343, projectBasePath = "/project")
     val headers = json["headers"]!!.jsonObject
 
-    assertTrue(headers.containsKey(IJ_MCP_SERVER_PROJECT_PATH))
-    assertEquals("/project", headers[IJ_MCP_SERVER_PROJECT_PATH]!!.jsonPrimitive.content)
+    assertThat(headers).containsKey(IJ_MCP_SERVER_PROJECT_PATH)
+    assertThat(headers[IJ_MCP_SERVER_PROJECT_PATH]!!.jsonPrimitive.content).isEqualTo("/project")
   }
 }

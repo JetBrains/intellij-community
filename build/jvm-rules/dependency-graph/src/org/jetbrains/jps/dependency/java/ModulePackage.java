@@ -5,19 +5,24 @@ import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.impl.GraphElementInterner;
 import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.jps.util.Iterators;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.map;
 
 public final class ModulePackage extends Proto implements DiffCapable<ModulePackage, ModulePackage.Diff> {
 
   private final Iterable<String> myModules;
 
   public ModulePackage(String name, Iterable<String> modules) {
-    super(JVMFlags.EMPTY, "", name, Collections.emptyList());
-    myModules = modules;
+    super(JVMFlags.EMPTY, null, name, Collections.emptyList());
+    myModules = collect(map(modules, GraphElementInterner::intern), new ArrayList<>());
   }
 
   public ModulePackage(GraphDataInput in) throws IOException {

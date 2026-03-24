@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.classes.cannotModify
 import org.jetbrains.kotlin.asJava.elements.KtLightAbstractAnnotation
-import org.jetbrains.kotlin.asJava.elements.KtLightEmptyAnnotationParameterList
 import org.jetbrains.kotlin.psi.KtCallElement
 
 @ApiStatus.Internal

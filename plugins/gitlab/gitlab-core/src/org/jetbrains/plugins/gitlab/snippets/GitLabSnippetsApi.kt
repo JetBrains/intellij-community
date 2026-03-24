@@ -12,7 +12,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
-import org.jetbrains.plugins.gitlab.api.data.GitLabVisibilityLevel
+import org.jetbrains.plugins.gitlab.api.dto.GitLabVisibilityLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectsForSnippetsDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction

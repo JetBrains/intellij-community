@@ -2,6 +2,7 @@
 package com.intellij.ide
 
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.isCoroutineDumpEnabled
 import com.intellij.openapi.application.ApplicationManager
@@ -124,7 +125,6 @@ internal fun cancelAndTryJoin(project: ProjectImpl) {
   LOG.trace { "$debugString: trying to join scope" }
   val containerJob = containerScope.coroutineContext.job
   val start = System.nanoTime()
-
   containerJob.cancel()
   if (containerJob.isCompleted) {
     LOG.trace { "$debugString: already completed" }
@@ -150,9 +150,12 @@ internal fun cancelAndTryJoin(project: ProjectImpl) {
   applicationScope.launch(@OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class) blockingDispatcher) {
     val dumpJob = launch {
       delay(delayUntilCoroutineDump)
+      val attachments = listOfNotNull(
+        dumpCoroutines(scope = containerScope)?.let { Attachment("coroutineDump.txt", it) },
+        ThreadDumper.dumpEdtToString()?.let { Attachment("EDT.txt", it) }).toTypedArray()
       LOG.error(
         "$debugString: scope was not completed in $delayUntilCoroutineDump",
-        Attachment("coroutineDump.txt", dumpCoroutines(scope = containerScope)!!),
+        *attachments
       )
     }
     try {
@@ -167,3 +170,4 @@ internal fun cancelAndTryJoin(project: ProjectImpl) {
     }
   }
 }
+

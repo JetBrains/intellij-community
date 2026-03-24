@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
 import com.intellij.platform.ijent.IjentApi
@@ -21,5 +21,5 @@ interface IjentDeployingStrategy {
    * Creates a new IJent session in the target environment.
    * This method should be called exactly once.
    */
-  suspend fun <T : IjentApi> createIjentSession(): IjentSession<T>
+  suspend fun createIjentSession(): IjentSession
 }

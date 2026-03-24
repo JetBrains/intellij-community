@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -53,7 +54,14 @@ internal class RedundantLabeledReturnOnLastExpressionInLambdaInspection :
         return listOfNotNull(labelRange)
     }
 
-    override fun KaSession.prepareContext(element: KtReturnExpression) {
+    override fun KaSession.prepareContext(element: KtReturnExpression): Unit? {
+        val block = element.getStrictParentOfType<KtBlockExpression>() ?: return null
+        val lambdaExpr = block.getStrictParentOfType<KtLambdaExpression>() ?: return null
+        val lambdaBody = lambdaExpr.bodyExpression ?: return null
+
+        // Only report as redundant if return is directly in the lambda body
+        if (block != lambdaBody) return null
+        return Unit
     }
 
     override fun createQuickFix(

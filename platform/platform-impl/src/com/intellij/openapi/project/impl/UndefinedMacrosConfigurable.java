@@ -5,10 +5,13 @@ import com.intellij.application.options.pathMacros.PathMacroConfigurable;
 import com.intellij.application.options.pathMacros.PathMacroListEditor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -24,7 +27,19 @@ public final class UndefinedMacrosConfigurable implements Configurable{
   private final @NlsContexts.Label String myText;
   private final Collection<String> myUndefinedMacroNames;
 
+  @NotNull private final Project myProject;
+
+  /**
+   * @deprecated Use {@link #UndefinedMacrosConfigurable(Project,String, Collection)}.
+   * Always pass the project explicitly for the file chooser to work correctly in container environments (WSL/Docker).
+   */
+  @Deprecated
   public UndefinedMacrosConfigurable(@NlsContexts.Label String text, Collection<String> undefinedMacroNames) {
+    this(ProjectManager.getInstance().getDefaultProject(), text, undefinedMacroNames);
+  }
+
+  public UndefinedMacrosConfigurable(@NotNull Project project, @NlsContexts.Label String text, Collection<String> undefinedMacroNames) {
+    myProject = project;
     myText = text;
     myUndefinedMacroNames = undefinedMacroNames;
   }
@@ -43,7 +58,7 @@ public final class UndefinedMacrosConfigurable implements Configurable{
   public JComponent createComponent() {
     final JPanel mainPanel = new JPanel(new BorderLayout());
     // important: do not allow to remove or change macro name for already defined macros befor project is loaded
-    myEditor = new PathMacroListEditor(myUndefinedMacroNames);
+    myEditor = new PathMacroListEditor(myProject, myUndefinedMacroNames);
     final JComponent editorPanel = myEditor.getPanel();
 
     mainPanel.add(editorPanel, BorderLayout.CENTER);

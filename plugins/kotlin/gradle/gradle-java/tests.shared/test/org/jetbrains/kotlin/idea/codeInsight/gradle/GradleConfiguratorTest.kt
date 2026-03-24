@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
@@ -142,7 +142,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("6.0 <=> 7.6")
+    @TargetVersions("6.0 <=> 7.6.x")
     fun testProjectWithSubmodule() {
         importProjectFromTestData()
         runInEdtAndWait {
@@ -155,7 +155,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("6.0 <=> 7.6")
+    @TargetVersions("6.0 <=> 7.6.x")
     fun testProjectWithSubmoduleKts() {
         importProjectFromTestData()
         runInEdtAndWait {
@@ -608,7 +608,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("7.6")
+    @TargetVersions("7.6.x")
     fun testConfigureKotlinJvmToolchainOnlySourceCompat() {
         runJvmToolchainTest()
     }
@@ -620,7 +620,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("7.6")
+    @TargetVersions("7.6.x")
     fun testConfigureKotlinJvmToolchainSourceCompatWithDot() {
         runJvmToolchainTest()
     }
@@ -638,19 +638,19 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("7.6")
+    @TargetVersions("7.6.x")
     fun testConfigureKotlinJvmToolchainMultipleTarget() {
         runJvmToolchainTest()
     }
 
     @Test
-    @TargetVersions("7.6")
+    @TargetVersions("7.6.x")
     fun testConfigureKotlinJvmToolchainOnlyTargetCompat() {
         runJvmToolchainTest()
     }
 
     @Test
-    @TargetVersions("7.6")
+    @TargetVersions("7.6.x")
     fun testTargetCompatibilityDefinedViaJavaDot() {
         runJvmToolchainTest()
     }
@@ -707,13 +707,13 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("7.6")
+    @TargetVersions("7.6.x")
     fun testConfigureKotlinVersionPluginManagementGradleProperties() {
         runJvmToolchainTest()
     }
 
     @Test
-    @TargetVersions("7.6")
+    @TargetVersions("7.6.x")
     fun testConfigureKotlinVersionPluginManagementGradlePropertiesKts() {
         runJvmToolchainTest()
     }
@@ -1146,7 +1146,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.7 <=> 7.6")
+    @TargetVersions("4.7 <=> 7.6.x")
     fun testChangeFeatureSupportWithXFlag() = testChangeFeatureSupport()
 
     @Test
@@ -1166,7 +1166,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.7 <=> 7.6")
+    @TargetVersions("4.7 <=> 7.6.x")
     fun testDisableFeatureSupportWithXFlag() = testDisableFeatureSupport()
 
     @Test
@@ -1190,7 +1190,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.7 <=> 7.6")
+    @TargetVersions("4.7 <=> 7.6.x")
     @JvmName("testEnableFeatureSupportWithXFlag")
     fun testEnableFeatureSupportWithXFlag() = testEnableFeatureSupport()
 
@@ -1280,7 +1280,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.7 <=> 7.6")
+    @TargetVersions("4.7 <=> 7.6.x")
     fun testEnableFeatureSupportToExistentArgumentsWithXFlag() = testEnableFeatureSupportToExistentArguments()
 
     @Test
@@ -1299,7 +1299,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.7 <=> 7.6")
+    @TargetVersions("4.7 <=> 7.6.x")
     fun testChangeFeatureSupportGSKWithXFlag() = testChangeFeatureSupportGSK()
 
     @Test
@@ -1318,7 +1318,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.7 <=> 7.6")
+    @TargetVersions("4.7 <=> 7.6.x")
     fun testDisableFeatureSupportGSKWithXFlag() = testDisableFeatureSupportGSK()
 
     @Test
@@ -1337,7 +1337,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.7 <=> 7.6")
+    @TargetVersions("4.7 <=> 7.6.x")
     fun testEnableFeatureSupportGSKWithXFlag() = testEnableFeatureSupportGSK()
 
     @Test
@@ -1345,15 +1345,15 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     fun testEnableFeatureSupportGSKWithXFlagModernKotlinSyntax() = testEnableFeatureSupportGSK()
 
     @Test
-    @TargetVersions("4.7 <=> 7.6")
+    @TargetVersions("4.7 <=> 7.6.x")
     fun testEnableFeatureSupportGSKWithNotInfixVersionCallAndXFlag() = testEnableFeatureSupportGSK()
 
     @Test
-    @TargetVersions("4.7 <=> 7.6")
+    @TargetVersions("4.7 <=> 7.6.x")
     fun testEnableFeatureSupportGSKWithSpecifyingPluginThroughIdAndXFlag() = testEnableFeatureSupportGSK()
 
     @Test
-    @TargetVersions("7.6")
+    @TargetVersions("7.6.x")
     fun testAddToolchainAndFoojayKts() {
         val files = importProjectFromTestData()
 
@@ -1399,7 +1399,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("7.6")
+    @TargetVersions("7.6.x")
     fun testAddToolchainAndFoojayGroovy() {
         val files = importProjectFromTestData()
 
@@ -1445,7 +1445,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("7.6")
+    @TargetVersions("7.6.x")
     fun testDontAddFoojayIfItsAlreadyAddedKts() {
         val files = importProjectFromTestData()
 
@@ -1468,7 +1468,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("7.6")
+    @TargetVersions("7.6.x")
     fun testDontAddFoojayIfItsAlreadyAddedGroovy() {
         val files = importProjectFromTestData()
 
@@ -1491,7 +1491,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("7.6")
+    @TargetVersions("7.6.x")
     fun testDontAddToolchainIfJvmTargetCompatibilityIs6() {
         val files = importProjectFromTestData()
 

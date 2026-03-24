@@ -1,0 +1,7 @@
+fun Int.fibu(): Int =
+    if (this <= 2) 1 else (this - 2).fibu() + (this - 1).fibu()
+
+fun test() {
+    5.fibu()
+}
+// IGNORE_K1

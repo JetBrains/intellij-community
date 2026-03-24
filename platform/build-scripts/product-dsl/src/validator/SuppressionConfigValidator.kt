@@ -64,10 +64,23 @@ internal object SuppressionConfigValidator : PipelineNode {
     val invalidPluginKeys = model.suppressionConfig.plugins.keys
       .filterNotTo(HashSet()) { TargetName(it.value) in existingPlugins }
     if (invalidContentModuleKeys.isNotEmpty() || invalidPluginKeys.isNotEmpty()) {
+      // Check if invalid keys are misplaced (in wrong section)
+      val misplacedInPlugins = pluginGraph.query {
+        invalidPluginKeys.filterTo(HashSet()) { key ->
+          nodeId(key.value, NODE_CONTENT_MODULE) >= 0
+        }
+      }
+      val misplacedInContentModules = pluginGraph.query {
+        invalidContentModuleKeys.filterTo(HashSet()) { key ->
+          plugin(key.value) != null
+        }
+      }
       ctx.emitError(InvalidSuppressionConfigKeyError(
         context = "suppressions.json",
         invalidContentModuleKeys = invalidContentModuleKeys,
         invalidPluginKeys = invalidPluginKeys,
+        misplacedInPlugins = misplacedInPlugins,
+        misplacedInContentModules = misplacedInContentModules,
       ))
     }
   }

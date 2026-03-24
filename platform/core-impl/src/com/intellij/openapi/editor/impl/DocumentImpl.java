@@ -1,10 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.core.CoreBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
@@ -55,6 +56,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
+import com.intellij.util.ui.EDT;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -437,7 +439,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @ApiStatus.Internal
-  public void setReadonlyFragmentModificationHandler(ReadonlyFragmentModificationHandler readonlyFragmentModificationHandler) {
+  public void setReadonlyFragmentModificationHandler(@Nullable ReadonlyFragmentModificationHandler readonlyFragmentModificationHandler) {
     myReadonlyFragmentModificationHandler = readonlyFragmentModificationHandler;
   }
 
@@ -1020,7 +1022,10 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public @NotNull String getText() {
-    return ReadAction.compute(this::doGetText);
+    if (EditorLockFreeTyping.isEnabled() && EDT.isCurrentThreadEdt()) {
+      return doGetText();
+    }
+    return ReadAction.computeBlocking(this::doGetText);
   }
 
   private @NotNull String doGetText() {
@@ -1033,8 +1038,9 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public @NotNull String getText(@NotNull TextRange range) {
-    return ReadAction
-      .compute(() -> myText.subSequence(range.getStartOffset(), range.getEndOffset()).toString());
+    return ReadAction.computeBlocking(
+      () -> myText.subSequence(range.getStartOffset(), range.getEndOffset()).toString()
+    );
   }
 
   @Override

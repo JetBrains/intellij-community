@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
 import org.jetbrains.jps.model.module.JpsModule
@@ -52,8 +52,9 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "org.jetbrains.vuejs",
         iconDirectory = "icons",
       )
-      "intellij.platform.split" -> IntellijIconClassGeneratorModuleConfig(
-        packageName = "com.jetbrains.rd.platform.codeWithMe.icons",
+      "intellij.remoteDev.icons" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.remoteDev.icons",
+        className = "JetBrainsClientIcons"
       )
       "intellij.properties.psi" -> IntellijIconClassGeneratorModuleConfig(
         className = "PropertiesIcons",
@@ -166,6 +167,11 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "org.jetbrains.plugins.github"
       )
 
+      "intellij.vcs.perforce" -> IntellijIconClassGeneratorModuleConfig(
+        className = "PerforceIcons",
+        packageName = "org.jetbrains.idea.perforce",
+      )
+
       "intellij.javaee.jpabuddy.jpabuddy" -> IntellijIconClassGeneratorModuleConfig(
         className = "JpbIcons",
         packageName = "com.intellij.jpb"
@@ -212,6 +218,12 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
       "intellij.r.psi" -> IntellijIconClassGeneratorModuleConfig(
         className = "RIcons",
         packageName = "com.intellij.r.psi.icons",
+      )
+
+      "intellij.platform.debugger.impl" -> IntellijIconClassGeneratorModuleConfig(
+        className = "PlatformDebuggerImplIcons",
+        packageName = "icons",
+        iconDirectory = "icons"
       )
 
       else -> super.getConfigForModule(moduleName)

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
@@ -194,8 +195,8 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     return Runnable {
       // delay calling event.getFile() until background to avoid expensive VFileCreateEvent.getFile() in EDT
       val dir = getFile(event)
-      val fileIndex = ReadAction.compute<ProjectFileIndex, RuntimeException> { ProjectFileIndex.getInstance(myProject) }
-      if (dir != null && ReadAction.compute<Boolean, RuntimeException> { fileIndex.isInContent(dir) } && !isProjectOrWorkspaceFile(dir)) {
+      val fileIndex = ReadAction.computeBlocking<ProjectFileIndex, RuntimeException> { ProjectFileIndex.getInstance(myProject) }
+      if (dir != null && ReadAction.computeBlocking<Boolean, RuntimeException> { fileIndex.isInContent(dir) } && !isProjectOrWorkspaceFile(dir)) {
         doPushRecursively(pushers, scanners, ProjectIndexableFilesIteratorImpl(dir))
       }
     }
@@ -317,8 +318,8 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
       fileOrDir.children // outside read action to avoid freezes
     }
 
-    ReadAction.run<RuntimeException> {
-      if (!fileOrDir.isValid || fileOrDir !is VirtualFileWithId) return@run
+    runReadActionBlocking {
+      if (!fileOrDir.isValid || fileOrDir !is VirtualFileWithId) return@runReadActionBlocking
       doApplyPushersToFile(fileOrDir, pushers, moduleValues)
     }
   }
@@ -468,7 +469,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
 
     private fun generateScanTasks(project: Project,
                                   iteratorProducer: Function<in Module, out ContentIteratorEx>): List<Runnable> {
-      val modulesSequence = ReadAction.compute<Sequence<ModuleEntity>, RuntimeException> {
+      val modulesSequence = runReadActionBlocking {
         WorkspaceModel.getInstance(project).currentSnapshot.entities(
           ModuleEntity::class.java)
       }
@@ -476,11 +477,11 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
       val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
 
       return moduleEntities.flatMap { moduleEntity: ModuleEntity ->
-        ReadAction.compute<List<Runnable>, RuntimeException> {
+        ReadAction.computeBlocking<List<Runnable>, RuntimeException> {
           val storage: EntityStorage = WorkspaceModel.getInstance(project).currentSnapshot
           val module: Module? = moduleEntity.findModule(storage)
           if (module == null) {
-            return@compute emptyList()
+            return@computeBlocking emptyList()
           }
           ProgressManager.checkCanceled()
           createIterators(moduleEntity, storage, project).map { it: IndexableFilesIterator ->

@@ -1,9 +1,15 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.backend"/>
-    <module name="intellij.platform.pluginManager.shared"/>
     <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.pluginManager.shared"/>
+    <module name="intellij.platform.projectModel"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.pluginManager.backend.rpc.PluginManagerApiProvider"/>
   </extensions>

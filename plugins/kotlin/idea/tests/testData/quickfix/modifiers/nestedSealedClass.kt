@@ -3,6 +3,7 @@
 // ACTION: Create test
 // ACTION: Implement sealed class
 // ERROR: Class is not allowed here
+// K2_ERROR: 'Class' is prohibited here.
 // K2_AFTER_ERROR: 'Class' is prohibited here.
 class A() {
     inner class B() {

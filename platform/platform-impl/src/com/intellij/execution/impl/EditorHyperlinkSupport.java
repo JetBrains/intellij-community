@@ -505,12 +505,17 @@ public final class EditorHyperlinkSupport {
       HyperlinkInfoTextAttributes attrs = highlighter.getUserData(HYPERLINK);
       return attrs == null ? null : attrs.hoveredHyperlinkAttributes();
     }
+
+    @Override
+    public boolean isInvisibleLink(@NotNull RangeHighlighterEx highlighter) {
+      return false;
+    }
   }
 
   /**
    * @deprecated use {@link EditorHyperlinkSupport#getNextOccurrence(int, Consumer)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable OccurenceNavigator.OccurenceInfo getNextOccurrence(@NotNull Editor editor,
                                                                              int delta,
                                                                              @NotNull com.intellij.util.Consumer<? super RangeHighlighter> action) {

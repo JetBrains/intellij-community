@@ -1260,7 +1260,6 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                 <scope>main</scope>
             </source>
             <source>
-                <module>mod</module>
                 <scope>test</scope>
             </source>
         </sources>
@@ -1291,5 +1290,26 @@ class FoldersImportingTest : FoldersImportingTestCase() {
       """);
     assertModules("project")
     assertSources("project", projectRoot.toNioPath().relativize(dir).toString())
+  }
+
+  @Test
+  fun testImportingSourcesTagWithModule() = runBlocking {
+    assumeMaven4()
+    useModel410()
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>
+        <sources>
+            <source>
+               <module>org.example.data</module>
+            </source>
+        </sources>
+      </build>
+      """);
+    assertModules("project")
+    assertSources("project", "src/org.example.data/main/java")
+
   }
 }

@@ -14,6 +14,8 @@ import com.intellij.ui.Gray
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.plaf.beg.IdeaMenuUI
+import com.intellij.ide.IdeEventQueue
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -21,6 +23,8 @@ import kotlinx.coroutines.CoroutineScope
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import java.awt.geom.AffineTransform
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -140,6 +144,12 @@ open class IdeJMenuBar internal constructor(@JvmField internal val coroutineScop
   override fun menuSelectionChanged(isIncluded: Boolean) {
     menuBarHelper.flavor.jMenuSelectionChanged(isIncluded)
     super.menuSelectionChanged(isIncluded)
+    if (isIncluded) {
+      val event = IdeEventQueue.getInstance().trueCurrentEvent
+      if (event is KeyEvent && event.id == KeyEvent.KEY_PRESSED && event.modifiersEx and InputEvent.ALT_DOWN_MASK != 0) {
+        MainMenuCollector.logOpenedByMnemonic(event, ActionPlaces.KEYBOARD_SHORTCUT)
+      }
+    }
   }
 
   internal val isActivated: Boolean

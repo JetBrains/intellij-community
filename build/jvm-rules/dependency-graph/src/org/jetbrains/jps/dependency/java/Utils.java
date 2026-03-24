@@ -16,8 +16,10 @@ import org.jetbrains.jps.dependency.impl.Containers;
 import org.jetbrains.jps.util.Iterators;
 import org.jetbrains.jps.util.Pair;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -59,7 +61,7 @@ public final class Utils {
   /**
    * Use this constructor for traversal during differentiate operation
    * @param context differentiate context
-   * @param isDelta false, if new nodes in Delta should be taken into account, false otherwise
+   * @param isDelta true, if new nodes in Delta should be taken into account, false otherwise
    */
   public Utils(@NotNull DifferentiateContext context, boolean isDelta) {
     this(context.getGraph(), isDelta? context.getDelta() : null, context.getParams().scopeFilter(), context::isDeleted);
@@ -353,7 +355,7 @@ public final class Utils {
   }
 
   public boolean hasOverriddenMethods(JvmClass cls, JvmMethod method) {
-    return !isEmpty(getOverriddenMethods(cls, method::isSameByJavaRules)) || inheritsFromLibraryClass(cls) /*assume the method can override some method from the library*/;
+    return !isEmpty(getOverriddenMethods(cls, method::isSameByJavaRules)) || inheritsFromUnknownClass(cls) /*assume the method can override some method from the library*/;
   }
 
   boolean isFieldVisible(final JvmClass cls, final JvmField field) {
@@ -386,16 +388,21 @@ public final class Utils {
     return find(recurseDepth(who, cl -> flat(map(who.getSuperTypes(), this::getClassesByName)), true), cl -> cl.getReferenceID().equals(whom.getReferenceID())) != null;
   }
 
-  public boolean inheritsFromLibraryClass(JvmClass cls) {
-    for (String st : cls.getSuperTypes()) {
-      Iterator<JvmClass> classes = getClassesByName(st).iterator();
-      if (!classes.hasNext()) {
-        // the supertype is not present in the graph (not compiled yet?), assuming this is a library class
-        return true;
-      }
-      while (classes.hasNext()) {
-        if (inheritsFromLibraryClass(classes.next())) {
+  public boolean inheritsFromUnknownClass(JvmClass aClass) {
+    Deque<JvmClass> classesToCheck = new ArrayDeque<>(List.of(aClass));
+    Set<String> visited = new HashSet<>();
+    for (JvmClass cls = classesToCheck.pollFirst(); cls != null; cls = classesToCheck.pollFirst()) {
+      for (String superTypeName : cls.getSuperTypes()) {
+        if (!visited.add(superTypeName)) {
+          continue;
+        }
+        Iterator<JvmClass> superTypes = getClassesByName(superTypeName).iterator();
+        if (!superTypes.hasNext()) {
+          // the supertype is not present in the graph (not compiled yet?), assuming this is a class from some external library
           return true;
+        }
+        while (superTypes.hasNext()) {
+          classesToCheck.addLast(superTypes.next());
         }
       }
     }

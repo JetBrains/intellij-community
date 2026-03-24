@@ -16,8 +16,5 @@ public interface EntityIndexingService {
     return ApplicationManager.getApplication().getService(EntityIndexingService.class);
   }
 
-  @NotNull
-  BuildableRootsChangeRescanningInfo createBuildableInfoBuilder();
-
   boolean isFromWorkspaceOnly(@NotNull List<? extends RootsChangeRescanningInfo> indexingInfos);
 }

@@ -1,0 +1,11 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_simpleClassDependency-a.kotlin_module
+  test/Foo$Boo.class
+  test/Foo.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/simpleClassDependency/a/Foo.kt
+End of files
+------------------------------------------
+Exit code: OK

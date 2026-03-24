@@ -13,6 +13,8 @@ import com.jetbrains.python.testing.PythonTestConfigurationType
 
 class PyAutoDetectionConfigurationFactory(private val type: PythonTestConfigurationType) : PyAbstractTestFactory<PyAutoDetectTestConfiguration>(
   type) {
+
+  override val isExplicitChoice: Boolean get() = false
   internal companion object {
     val factoriesExcludingThis: Collection<PyAbstractTestFactory<*>>
       get() =

@@ -1,3 +1,7 @@
+f:com.intellij.ide.impl.StructureViewWrapperImpl
+- com.intellij.ide.structureView.StructureViewWrapper
+- com.intellij.openapi.Disposable
+- *sf:STRUCTURE_VIEW_TARGET_FILE_KEY:com.intellij.openapi.actionSystem.DataKey
 *:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
 - *sf:Companion:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider$Companion
 - a:getElements(java.lang.Object):java.util.List
@@ -41,3 +45,16 @@
 - hashCode():I
 *f:com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel$Companion
 - f:getInstance(com.intellij.openapi.project.Project,java.lang.Object):com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
+*:com.intellij.platform.structureView.impl.StructurePopup
+- com.intellij.ide.structureView.newStructureView.TreeActionsOwner
+- com.intellij.openapi.Disposable
+- a:setTitle(java.lang.String):V
+- a:show():V
+*:com.intellij.platform.structureView.impl.TreeActionsOwnerEx
+- com.intellij.ide.structureView.newStructureView.TreeActionsOwner
+- a:isActionActive(com.intellij.ide.util.treeView.smartTree.TreeAction):Z
+- a:setActionActive(com.intellij.ide.util.treeView.smartTree.TreeAction,Z):V
+*f:com.intellij.platform.structureView.impl.commands.ViewStructureCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+- <init>():V
+- supportNewLineCompletion():Z

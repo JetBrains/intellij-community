@@ -30,6 +30,22 @@ class PluginDependenciesValidationOptions(
   val minimumNumberOfModulesToBeChecked: Int,
 
   /**
+   * Set of pairs corresponding to dependencies used for compilation only, the validator will ignore such dependencies if they have 'provided' scope.
+   * The second element of a pair is the name of the target module.
+   * The first element of a pair is either the name of the module that has the dependency, or `*` if dependencies on the target module in all modules should be treated as compile-only.
+   *
+   * It's supposed that elements from the target module are either not referenced from class-files at all, or the source module is used outside the IDE process where these classes
+   * are present in the classpath.
+   */
+  val compileOnlyDependencies: List<Pair<String, String>> = compileOnlyDependenciesInCommunity,
+
+  /**
+   * Set to `true` to enable reporting problems if target module is not included in distribution.
+   * This flag is temporarily added to enable this check for some tests only, it'll be removed when the check is enabled for all tests.
+   */
+  val reportProblemIfTargetModuleIsNotIncludedInDistribution: Boolean = false,
+
+  /**
    * Specifies variants of plugins enabled via a system property.
    * Such variants won't be checked, but this information will be used to determine modules which are loaded by separate classloaders in such a variant, and therefore shouldn't be
    * treated as loaded by the plugin descriptor's classloader.

@@ -15,10 +15,11 @@ import java.net.http.HttpResponse
 object ApiPageUtil {
   fun <T> createGQLPagesFlow(
     reversed: Boolean = false,
+    startPage: GraphQLRequestPagination = GraphQLRequestPagination.DEFAULT,
     loader: suspend (GraphQLRequestPagination) -> GraphQLPagedResponseDataDTO<T>?,
   ): Flow<GraphQLPagedResponseDataDTO<T>> =
     flow {
-      var pagination: GraphQLRequestPagination? = GraphQLRequestPagination.DEFAULT
+      var pagination: GraphQLRequestPagination? = startPage
       while (pagination != null) {
         val response: GraphQLPagedResponseDataDTO<T> = loader(pagination) ?: break
         emit(response)

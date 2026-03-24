@@ -176,7 +176,7 @@ public final class PsiCopyPasteManager {
     }
 
     public PsiElement[] getElements() {
-      return ReadAction.compute(() -> {
+      return ReadAction.computeBlocking(() -> {
         List<PsiElement> result = new ArrayList<>();
         for (SmartPsiElementPointer<?> pointer : pointers) {
           PsiElement element = pointer.getElement();

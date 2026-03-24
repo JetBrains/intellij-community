@@ -1,4 +1,6 @@
 // "Create property 'foo' as constructor parameter" "true"
+// K2_ERROR: Unresolved reference 'foo'.
+// K2_ERROR: Unresolved reference 'foo'.
 
 class A {
     class B(var foo: Int) {

@@ -1,10 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.util
 
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesException
 import com.intellij.platform.eel.EelExecApiHelpers
 import com.intellij.platform.eel.EelPathBoundDescriptor
@@ -22,19 +28,36 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.spawnProcess
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
+import com.intellij.util.ui.EDT
+import com.jediterm.terminal.TtyConnector
 import com.pty4j.PtyProcess
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
+import org.jetbrains.plugins.terminal.original
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @RequiresReadLockAbsence
 @RequiresBackgroundThread
 internal fun hasRunningCommandsBlocking(shellEelProcess: ShellEelProcess): Boolean {
+  if (EDT.isCurrentThreadEdt()) {
+    val project = guessContextProject()
+    return runWithModalProgressBlocking(project, "") {
+      try {
+        hasRunningCommands(shellEelProcess)
+      }
+      catch (e: IllegalStateException) {
+        LOG.warn("Cannot determine running commands, assuming none ($shellEelProcess)", e)
+        false
+      }
+    }
+  }
   return runBlockingMaybeCancellable {
     try {
       hasRunningCommands(shellEelProcess)
@@ -43,6 +66,21 @@ internal fun hasRunningCommandsBlocking(shellEelProcess: ShellEelProcess): Boole
       LOG.warn("Cannot determine running commands, assuming none ($shellEelProcess)", e)
       false
     }
+  }
+}
+
+private fun guessContextProject(): Project {
+  val focusedComponent = IdeFocusManager.findInstance().focusOwner
+  if (focusedComponent != null) {
+    val dataContext = DataManager.getInstance().getDataContext(focusedComponent)
+    CommonDataKeys.PROJECT.getData(dataContext)?.let {
+      return it
+    }
+  }
+  val openProjects = ProjectManager.getInstance().openProjects
+  return openProjects.singleOrNull() ?: run {
+    LOG.warn("No project detected (open projects: ${openProjects.size}), using the default project to show the progress")
+    ProjectManager.getInstance().defaultProject
   }
 }
 
@@ -164,6 +202,10 @@ class ShellEelProcess(val eelProcess: EelProcess, val eelApi: EelApi, val proces
     return "descriptor=${eelApi.descriptor}$root, platform=${eelApi.platform}, process=${process::class.java.name})"
   }
 }
+
+val TtyConnector.eelDescriptor: EelDescriptor?
+  @ApiStatus.Internal
+  get() = (this.original as? LocalTerminalTtyConnector)?.eelDescriptor
 
 private val LOG: Logger = fileLogger()
 

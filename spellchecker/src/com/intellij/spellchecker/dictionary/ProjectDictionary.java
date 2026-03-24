@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Absent;
 import static com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Alien;
 import static com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present;
 
@@ -38,10 +39,10 @@ public final class ProjectDictionary implements EditableDictionary {
   }
 
   @Override
-  public @Nullable Boolean contains(@NotNull String word) {
+  public @NotNull LookupStatus lookup(@NotNull String word) {
     if (dictionaries == null) {
       // still ("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
-      return null;
+      return Alien;
     }
 
     int errors = 0;
@@ -51,15 +52,15 @@ public final class ProjectDictionary implements EditableDictionary {
         errors++;
       }
       else if (status == Present) {
-        return true;
+        return Present;
       }
     }
 
     //("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
     if (errors == dictionaries.size()) {
-      return null;
+      return Alien;
     }
-    return false;
+    return Absent;
   }
 
   @Override

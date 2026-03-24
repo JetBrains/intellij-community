@@ -149,7 +149,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
             if (isUnitTestMode() ||
                 !isPropertyOfDataClass ||
-                psiElement.getDisableComponentAndDestructionSearch(resetSingleFind = false)
+                runReadAction { psiElement.getDisableComponentAndDestructionSearch(resetSingleFind = false) }
             ) return super.processElementUsages(element, processor, options)
 
             val indicator = ProgressManager.getInstance().progressIndicator
@@ -267,7 +267,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             val kotlinOptions = options as KotlinPropertyFindUsagesOptions
 
             val disabledComponentsAndOperatorsSearch =
-                !forHighlight && psiElement.getDisableComponentAndDestructionSearch(resetSingleFind = true)
+                !forHighlight && runReadAction { psiElement.getDisableComponentAndDestructionSearch(resetSingleFind = true) }
 
             return KotlinReferencesSearchOptions(
                 acceptCallableOverrides = true,

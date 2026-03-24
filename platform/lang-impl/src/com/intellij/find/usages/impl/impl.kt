@@ -121,7 +121,8 @@ fun buildQuery(
   return SearchService.getInstance().merge(queries)
 }
 
-private class DefaultUsageSearchParameters(
+@ApiStatus.Experimental
+class DefaultUsageSearchParameters(
   private val project: Project,
   target: SearchTarget,
   override val searchScope: SearchScope

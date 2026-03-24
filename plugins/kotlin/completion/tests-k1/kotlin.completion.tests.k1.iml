@@ -35,7 +35,7 @@
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-tests" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
@@ -58,5 +58,7 @@
     <orderEntry type="module" module-name="intellij.turboComplete.languages.kotlin.k1" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ml.impl" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
   </component>
 </module>

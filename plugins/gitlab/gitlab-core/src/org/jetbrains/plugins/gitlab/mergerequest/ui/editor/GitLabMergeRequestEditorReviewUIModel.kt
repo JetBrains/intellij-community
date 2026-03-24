@@ -7,13 +7,14 @@ import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.async.transformConsecutiveSuccesses
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel.Ranged.Adjustable.AdjustmentDisabledReason
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
-import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.editor.MutableCodeReviewEditorGutterChangesModel
 import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
 import com.intellij.collaboration.ui.codereview.editor.asLst
@@ -120,7 +121,12 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     fileVm.requestNewDiscussion(location, true)
   }
 
-  override fun canCreateComment(lineRange: LineRange) = true
+  override fun canCreateComment(lineRange: LineRange): Boolean {
+    if (!fileVm.canAddMultilinePositionalNotes) return false
+    val gutterControls = gutterControlsState.value ?: return false
+    return gutterControls.isLineCommentable(lineRange.start) &&
+           gutterControls.isLineCommentable(lineRange.end)
+  }
 
   override fun toggleComments(lineIdx: Int) {
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
@@ -239,7 +245,8 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
     override val range: StateFlow<LineRange?> = vm.location.shiftLineRange()
     override val line: StateFlow<Int?> = range.mapState { it?.end }
-    override val adjustmentDisabledReason = MutableStateFlow(null)
+    override val adjustmentDisabledReason =
+      MutableStateFlow(AdjustmentDisabledReason.UNSUPPORTED_VERSION.takeIf { !vm.isMultilinePositionSupported })
     override fun adjustRange(newStart: Int?, newEnd: Int?) {
       if (newStart == null && newEnd == null) return
       val ranges = postReviewRanges.value ?: emptyList()

@@ -8,7 +8,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabEdition
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffRefs
-import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelGQLDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestPermissionsDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabPipelineDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
@@ -42,7 +42,16 @@ class GitLabMergeRequestDTO(
   val targetProject: GitLabProjectDTO,
   val sourceProject: GitLabProjectDTO?, // Is null when the source project is a private fork or is unavailable
   val userPermissions: GitLabMergeRequestPermissionsDTO,
+  val squash: Boolean, // property set on the MR
+  val squashOnMerge: Boolean, // [squash] can be overridden by project settings, and this is the final value after override
+  @SinceGitLab("17.10") val squashReadOnly: Boolean?, // if [squash] can be changed for this MR
+  val defaultSquashCommitMessage: String?,
+  val defaultMergeCommitMessage: String?,
+  // set after the merge is triggered, ignore for our purposes
+  // fetched purely to avoid confusion with [forceRemoveSourceBranch]
   val shouldRemoveSourceBranch: Boolean?,
+  // if it was set during MR creation at all, basically false if null
+  val forceRemoveSourceBranch: Boolean?,
   val shouldBeRebased: Boolean,
   val rebaseInProgress: Boolean,
   @SinceGitLab("13.5") approvedBy: UserCoreConnection,
@@ -60,7 +69,7 @@ class GitLabMergeRequestDTO(
   @SinceGitLab("14.7")
   val commits: List<GitLabCommitDTO>? = commits?.nodes
 
-  val labels: List<GitLabLabelDTO> = labels.nodes
+  val labels: List<GitLabLabelGQLDTO> = labels.nodes
 
   @SinceGitLab("13.5")
   class UserCoreConnection(
@@ -89,6 +98,6 @@ class GitLabMergeRequestDTO(
   @SinceGitLab("12.4")
   class LabelConnection(
     pageInfo: GraphQLCursorPageInfoDTO,
-    nodes: List<GitLabLabelDTO>
-  ) : GraphQLConnectionDTO<GitLabLabelDTO>(pageInfo, nodes)
+    nodes: List<GitLabLabelGQLDTO>
+  ) : GraphQLConnectionDTO<GitLabLabelGQLDTO>(pageInfo, nodes)
 }

@@ -12,7 +12,7 @@ import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorFromXmlStr
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.pluginSystem.parser.impl.consume
 import com.intellij.platform.pluginSystem.parser.impl.elements.DependenciesElement
-import com.intellij.platform.runtime.product.IncludedRuntimeModule
+import com.intellij.platform.runtime.repository.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import java.nio.file.Path
 
@@ -88,7 +88,7 @@ internal class ModuleBasedPluginXmlPathResolver(
       val inputStream = module.moduleDescriptor.readFile(path)
       if (inputStream != null) {
         val bytes = inputStream.use { it.readBytes() }
-        return LoadedXIncludeReference(bytes, module.moduleDescriptor.moduleId.stringId)
+        return LoadedXIncludeReference(bytes, module.moduleDescriptor.moduleId.presentableName)
       }
     }
     return null

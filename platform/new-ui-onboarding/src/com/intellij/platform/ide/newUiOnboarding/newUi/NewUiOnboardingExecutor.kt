@@ -7,8 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingStatistics.OnboardingStopReason
@@ -115,7 +113,5 @@ internal class NewUiOnboardingExecutor(private val project: Project,
 
   private fun finishOnboarding() {
     Disposer.dispose(disposable)
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MEET_NEW_UI)
-    toolWindow?.activate(null)
   }
 }

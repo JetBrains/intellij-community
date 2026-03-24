@@ -43,7 +43,7 @@ internal fun advanceCompilerVersion(preferences: GeneratorPreferences) {
             preferences::kotlincArtifactsMode.modify(GeneratorPreferences.ArtifactMode.MAVEN),
             preferences::kotlincVersion.modify(newVersion),
         ),
-        commitTitle = "[kotlin] $ticket advance kotlinc version for analyzer to $newVersion",
+        commitTitle = "$ticket [kotlin] advance kotlinc version for analyzer to $newVersion",
         commitDescription = changesDescription,
     )
 }

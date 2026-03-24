@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.Gray;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -36,7 +37,7 @@ import java.awt.Point;
 
 public class EditorEmptyTextPainter {
   public void paintEmptyText(@NotNull JComponent splitters, @NotNull Graphics g) {
-    if (JBUI.getInt("Islands", 0) != 1) {
+    if (!IslandsState.Companion.isEnabled()) {
       JRootPane rootPane = splitters.getRootPane();
       if (rootPane.getGlassPane() == splitters) {
         EditorsSplitters editorArea = UIUtil.findComponentOfType((JComponent)rootPane.getContentPane(), EditorsSplitters.class);

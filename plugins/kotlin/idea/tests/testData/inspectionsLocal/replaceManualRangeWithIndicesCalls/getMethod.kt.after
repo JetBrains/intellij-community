@@ -1,0 +1,7 @@
+// WITH_STDLIB
+// FIX: Replace with loop over elements
+fun test(args: Array<String>) {
+    for (element in args) {
+        val out = element
+    }
+}

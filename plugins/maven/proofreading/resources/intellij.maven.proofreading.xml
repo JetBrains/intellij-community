@@ -1,0 +1,10 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="tanvd.grazi"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij.grazie">
+    <problemFilter language="" implementationClass="com.intellij.maven.proofreading.MavenProblemFilter"/>
+  </extensions>
+</idea-plugin>

@@ -160,6 +160,9 @@
     <registryKey key="idea.test.graceful.shutdown.timeout.seconds"
                  defaultValue="600"
                  description="Timeout in seconds for the test runner to terminate gracefully after receiving a shutdown signal. A negative value disables the timeout, allowing unlimited wait."/>
+    <registryKey key="junit.version.detection.scope"
+                 defaultValue="[runtime|module|testsWithDependents|withLibraries|withDependenciesAndLibraries*]"
+                 description="Scope used to detect the JUnit version in a module."/>
   </extensions>
 
   <extensionPoints>

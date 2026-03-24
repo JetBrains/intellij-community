@@ -9,12 +9,14 @@ import com.intellij.ide.starter.project.LocalProjectInfo
 import com.intellij.ide.starter.project.ProjectInfoSpec
 import com.intellij.ide.starter.project.RemoteArchiveProjectInfo
 import com.intellij.tools.ide.performanceTesting.commands.MarshallableCommand
+import com.intellij.tools.ide.performanceTesting.commands.SdkObject
 
 data class TestCase<T : ProjectInfoSpec>(
   val ideInfo: IdeInfo,
   val projectInfo: T,
   val commands: Iterable<MarshallableCommand> = listOf(),
-  val useInMemoryFileSystem: Boolean = false
+  val useInMemoryFileSystem: Boolean = false,
+  val sdk: SdkObject? = null,
 ) {
 
   fun withProject(projectInfo: T): TestCase<T> = copy(projectInfo = projectInfo)

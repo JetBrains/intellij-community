@@ -26,7 +26,7 @@ def create_model(
 
 
 def create_model(*args: Any, **kwargs: Any) -> Any:
-    ...
+    raise NotImplementedError
 
 
 @create_model(kw_only=False, order=False)

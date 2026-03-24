@@ -73,6 +73,8 @@ interface PluginUiModel {
 
   val isImplementationDetail: Boolean
 
+  val isEssential: Boolean
+
   var source: PluginSource?
 
   @get:NlsSafe
@@ -299,4 +301,10 @@ fun PluginSource?.addSource(pluginSource: PluginSource?): PluginSource? {
   else {
     return PluginSource.BOTH
   }
+}
+
+@ApiStatus.Internal
+fun PluginSource?.includes(pluginSource: PluginSource?): Boolean {
+  if (this == null || pluginSource == null) return false
+  return this == pluginSource || this == PluginSource.BOTH
 }

@@ -1,6 +1,7 @@
 // "class org.jetbrains.kotlin.idea.quickfix.ImportConstructorReferenceFix" "false"
 // K2_ACTION: "class org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix" "false"
 // ERROR: Unresolved reference: ItsInner
+// K2_ERROR: Unresolved reference 'ItsInner'.
 // K2_AFTER_ERROR: Unresolved reference 'ItsInner'.
 
 

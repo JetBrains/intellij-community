@@ -3,9 +3,11 @@ package com.intellij.grazie.text;
 import ai.grazie.nlp.langs.Language;
 import com.intellij.grazie.GrazieConfig;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -30,7 +32,9 @@ public abstract class TextChecker {
    * @deprecated Implement and use {@link #check(ProofreadingContext)} instead.
    */
   @Deprecated(forRemoval = true)
-  public abstract @NotNull Collection<? extends TextProblem> check(@NotNull TextContent extracted);
+  public @NotNull Collection<? extends TextProblem> check(@NotNull TextContent extracted) {
+    throw new UnsupportedOperationException("Implement and use #check(ProofreadingContext) instead");
+  }
 
   /**
    * Perform the checks on the given context.
@@ -38,6 +42,24 @@ public abstract class TextChecker {
    */
   public @NotNull Collection<? extends TextProblem> check(@NotNull ProofreadingContext context) {
     return check(context.getText());
+  }
+
+  /**
+   * Perform the checks on the given contexts.
+   * The implementations should check {@link GrazieConfig.State} for enabled/disabled rules.
+   * <p>
+   * The difference between this method and {@link #check(ProofreadingContext)} is that this method
+   * is capable of finding additional problems that are not present in the single context check.
+   * <p>
+   * The default implementation is provided only to preserve backward compatibility.
+   */
+  public @NotNull Collection<? extends TextProblem> check(@NotNull List<ProofreadingContext> contexts) {
+    Collection<TextProblem> problems = new ArrayList<>();
+    for (ProofreadingContext context : contexts) {
+      problems.addAll(check(context));
+      ProgressManager.checkCanceled();
+    }
+    return problems;
   }
 
   @ApiStatus.Experimental

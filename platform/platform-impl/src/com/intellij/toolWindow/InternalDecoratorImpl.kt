@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.accessibility.AccessibilityUtils
@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.Divider
@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.InternalDecorator
 import com.intellij.openapi.wm.impl.ToolWindowExternalDecorator
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.openapi.wm.impl.isInternal
 import com.intellij.ui.ClientProperty
@@ -55,7 +56,6 @@ import com.intellij.util.animation.AlphaAnimated
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.intellij.lang.annotations.MagicConstant
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.AWTEvent
 import java.awt.BorderLayout
@@ -87,7 +87,9 @@ import javax.swing.border.Border
 import javax.swing.plaf.UIResource
 import javax.swing.text.JTextComponent
 
-@ApiStatus.Internal
+private val LOG = logger<ToolWindowManagerImpl>()
+
+@Internal
 class InternalDecoratorImpl internal constructor(
   @JvmField internal val toolWindow: ToolWindowImpl,
   private val contentUi: ToolWindowContentUi,
@@ -205,7 +207,8 @@ class InternalDecoratorImpl internal constructor(
       component.putClientProperty(PREVENT_RECURSIVE_BACKGROUND_CHANGE, true)
     }
 
-    private fun isRecursiveBackgroundUpdateDisabled(component: Component): Boolean {
+    @JvmStatic
+    fun isRecursiveBackgroundUpdateDisabled(component: Component): Boolean {
       val preventRecoloring = (component as? JComponent)?.getClientProperty(PREVENT_RECURSIVE_BACKGROUND_CHANGE) ?: return false
 
       return preventRecoloring == true
@@ -596,8 +599,8 @@ class InternalDecoratorImpl internal constructor(
   fun applyWindowInfo(info: WindowInfo) {
     if (info.type == ToolWindowType.SLIDING) {
       val anchor = info.anchor
-      if (log().isDebugEnabled) {
-        log().debug("The sliding window ${info.id} anchor is now $anchor")
+      if (LOG.isDebugEnabled) {
+        LOG.debug("The sliding window ${info.id} anchor is now $anchor")
       }
       val divider = initDivider()
       divider.invalidate()
@@ -610,8 +613,8 @@ class InternalDecoratorImpl internal constructor(
       divider.preferredSize = Dimension(0, 0)
     }
     else if (divider != null) {
-      if (log().isDebugEnabled) {
-        log().debug("Removing divider of the non-sliding (${info.type}) window ${info.id}")
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Removing divider of the non-sliding (${info.type}) window ${info.id}")
       }
       // docked and floating windows don't have divider
       divider!!.parent?.remove(divider)
@@ -959,8 +962,8 @@ class InternalDecoratorImpl internal constructor(
     }
 
   override fun addNotify() {
-    if (log().isTraceEnabled) {
-      log().trace(Throwable("Tool window $toolWindowId shown"))
+    if (LOG.isTraceEnabled) {
+      LOG.trace(Throwable("Tool window $toolWindowId shown"))
     }
     super.addNotify()
 
@@ -987,8 +990,8 @@ class InternalDecoratorImpl internal constructor(
   }
 
   override fun removeNotify() {
-    if (log().isTraceEnabled) {
-      log().trace(Throwable("Tool window $toolWindowId hidden"))
+    if (LOG.isTraceEnabled) {
+      LOG.trace(Throwable("Tool window $toolWindowId hidden"))
     }
     super.removeNotify()
 
@@ -1168,6 +1171,4 @@ class InternalDecoratorImpl internal constructor(
     TOP_TOOL_WINDOW_EDGE,
     BOTTOM_TOOL_WINDOW_EDGE,
   }
-
-  private fun log(): Logger = toolWindow.toolWindowManager.log()
 }

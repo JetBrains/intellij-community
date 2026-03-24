@@ -76,8 +76,11 @@ final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
   void doUpdate() {
     myWidthInPixels = myRenderer.calcWidthInPixels(this);
     if (myWidthInPixels <= 0) {
-      throw PluginException.createByClass("Positive width should be defined for an inline element by " + myRenderer, null,
-                                          myRenderer.getClass());
+      throw PluginException.createByClass(
+        "Positive width should be defined for an inline element by " + myRenderer +
+        " (class=" + myRenderer.getClass().getName() + ", valid=" + isValid() + ", myWidthInPixels=" + myWidthInPixels + ")",
+        null, myRenderer.getClass()
+      );
     }
   }
 

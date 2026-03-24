@@ -2,8 +2,8 @@
 package com.intellij.execution.junit.kotlin.codeInspection
 
 import com.intellij.junit.testFramework.JUnit3SuperTearDownInspectionTestBase
-import com.intellij.junit.testFramework.JUnitLibrary
 import com.intellij.junit.testFramework.JUnitProjectDescriptor
+import com.intellij.junit.testFramework.MavenTestLib
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
@@ -19,17 +19,21 @@ import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 abstract class KotlinJUnit3SuperTearDownInspectionTest : JUnit3SuperTearDownInspectionTestBase(), ExpectedPluginModeProvider {
 
-  protected open class KotlinJUnitProjectDescriptor : JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT3) {
+  protected open class KotlinJUnitProjectDescriptor : JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT3) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
       ConfigLibraryUtil.addLibrary(model, "KotlinJavaRuntime") {
-        addRoot(KotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
-        addRoot(KotlinArtifacts.kotlinStdlibSources, OrderRootType.SOURCES)
+        addRoot(KotlinArtifacts.kotlinStdlibPath, OrderRootType.CLASSES)
+        addRoot(KotlinArtifacts.kotlinStdlibSourcesPath, OrderRootType.SOURCES)
       }
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = KotlinJUnitProjectDescriptor()
+  companion object {
+    private val descriptor = KotlinJUnitProjectDescriptor()
+  }
+
+  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
 
   override fun setUp() {
     setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }

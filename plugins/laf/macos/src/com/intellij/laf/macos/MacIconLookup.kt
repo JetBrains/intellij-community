@@ -16,19 +16,22 @@ private object MacDirProvider : DirProvider() {
 object MacIconLookup {
   @JvmStatic
   @JvmOverloads
-  fun getIcon(name: String,
-              selected: Boolean = false,
-              focused: Boolean = false,
-              enabled: Boolean = true,
-              editable: Boolean = false,
-              pressed: Boolean = false): Icon {
-
-    return LafIconLookup.findIcon(name,
-                                  selected = selected,
-                                  focused = focused,
-                                  enabled = enabled,
-                                  editable = editable,
-                                  pressed = pressed,
-                                  dirProvider = MacDirProvider) ?: AllIcons.Actions.Stub
+  fun getIcon(
+    name: String,
+    selected: Boolean = false,
+    focused: Boolean = false,
+    enabled: Boolean = true,
+    editable: Boolean = false,
+    pressed: Boolean = false,
+  ): Icon {
+    return LafIconLookup.findIcon(
+      name = name,
+      selected = selected,
+      focused = focused,
+      enabled = enabled,
+      editable = editable,
+      pressed = pressed,
+      dirProvider = MacDirProvider,
+    ) ?: AllIcons.Actions.Stub
   }
 }

@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "uv",
+  module_name = "intellij.python.test.env.uv",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -44,21 +45,38 @@ jvm_library(
     "//python/openapi:community_test_lib",
     "@lib//:kotlin-stdlib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "@lib//:kotlinx-coroutines-core",
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
     "//python:python-community-impl",
+    "//python:python-community-impl_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
     "//platform/ide-core",
     "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
     "//python/testFramework",
+    "//python/testFramework:testFramework_test_lib",
   ],
-  runtime_deps = [":uv"]
+  runtime_deps = [
+    ":uv",
+    "//platform/ide-core:ide-core_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.python.test.env.uv` end
+
+### auto-generated section `iml intellij.python.test.env.uv` start
+exports_files([
+  "intellij.python.test.env.uv.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.test.env.uv` end
 
 ### auto-generated section `test intellij.python.test.env.uv` start
 load("@community//build:tests-options.bzl", "jps_test")

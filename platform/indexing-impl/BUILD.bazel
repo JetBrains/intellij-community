@@ -13,6 +13,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
+    "//platform/project-frame",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
     "//libraries/stream",
@@ -33,6 +34,50 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/util/storages",
     "//platform/util",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//jps/model-api:model",
+  ]
+)
+
+jvm_library(
+  name = "indexing-impl_test_lib",
+  module_name = "intellij.platform.indexing.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":indexing-impl",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/project-frame:project-frame_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//libraries/hdr-histogram:hdr-histogram_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//platform/util/nanoxml:nanoxml_test_lib",
+    "//libraries/aalto-xml:aalto-xml_test_lib",
+    "//platform/util/xmlDom:xmlDom_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/util/storages:storages_test_lib",
+    "//platform/util:util_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//jps/model-api:model_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.indexing.impl` end
+
+### auto-generated section `iml intellij.platform.indexing.impl` start
+exports_files([
+  "intellij.platform.indexing.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.indexing.impl` end

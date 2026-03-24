@@ -19,5 +19,9 @@
     <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndexImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.multiverse.EditorContextManager"
                     serviceImplementation="com.intellij.codeInsight.multiverse.EditorContextManagerImpl"/>
+
+    <applicationService serviceInterface="com.intellij.codeInsight.TailTypeFactory"
+                        serviceImplementation="com.intellij.codeInsight.completion.FrontendFriendlyTailTypeFactory"/>
+
   </extensions>
 </idea-plugin>

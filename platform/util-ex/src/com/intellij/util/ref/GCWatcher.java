@@ -26,6 +26,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.LockSupport;
 
+import static java.util.stream.Collectors.joining;
+
 /**
  * A utility to garbage-collect specified objects in tests. Create a GCWatcher using {@link #tracking} or {@link #fromClearedRef}
  * and then call {@link #ensureCollected()}. Please ensure that your test doesn't hold references to objects passed to {@link #tracking},
@@ -154,7 +156,7 @@ public final class GCWatcher {
     LowMemoryWatcher.runWithNotificationsSuppressed(() -> {
       try {
         GCUtil.allocateTonsOfMemory(log, runWhileWaiting,
-                                    () -> isEverythingCollected() || System.currentTimeMillis() < timeoutDeadline);
+                                    () -> isEverythingCollected() || System.currentTimeMillis() > timeoutDeadline);
       }
       catch (OutOfMemoryError e) {
         // IDEA-310426
@@ -240,8 +242,10 @@ public final class GCWatcher {
   }
 
   private void throwISE(String log) {
-    String message = "Couldn't garbage-collect some objects, they might still be reachable from GC roots: " +
-                     ContainerUtil.mapNotNull(myReferences, SoftReference::dereference);
+    String message = myReferences.stream().map(SoftReference::dereference)
+      .filter(obj -> obj != null)
+      .map(obj -> "'" + obj + "' (class: " + obj.getClass().getName() + ")")
+      .collect(joining("\n\t", "Couldn't garbage-collect some objects, they might still be reachable from GC roots: \n\t", ""));
 
     try {
       if (generateHeapDump) {
@@ -251,6 +255,7 @@ public final class GCWatcher {
         message += "\nMemory snapshot is available at " + path + "\n";
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println("##teamcity[publishArtifacts '" + path + "']");
+        //noinspection UseOfSystemOutOrSystemErr
         System.out.println("##teamcity[testMetadata testName='gcwatcher' key='my log' value='" + path + "' type='artifact']");
       }
     }

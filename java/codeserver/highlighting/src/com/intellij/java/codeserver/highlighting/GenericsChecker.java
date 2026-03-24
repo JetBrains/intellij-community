@@ -6,6 +6,7 @@ import com.intellij.java.codeserver.core.JavaPsiEnumUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -66,6 +67,7 @@ import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.JavaClassSupers;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -93,6 +95,7 @@ import java.util.Set;
 import static java.util.Objects.requireNonNull;
 
 final class GenericsChecker {
+  private static final Logger LOG = Logger.getInstance(GenericsChecker.class);
   private final @NotNull JavaErrorVisitor myVisitor;
   private final Set<PsiClass> myOverrideEquivalentMethodsVisitedClasses = new HashSet<>();
   // stored "clashing signatures" errors for the method (if the key is a PsiModifierList of the method), or the class (if the key is a PsiModifierList of the class)
@@ -421,13 +424,6 @@ final class GenericsChecker {
                                                 @NotNull PsiTypeElement typeElement2Highlight,
                                                 @Nullable PsiReferenceParameterList referenceParameterList) {
     PsiClass referenceClass = type instanceof PsiClassType classType ? classType.resolve() : null;
-    PsiType psiType = substitutor.substitute(classParameter);
-    if (psiType instanceof PsiClassType && !(PsiUtil.resolveClassInType(psiType) instanceof PsiTypeParameter)) {
-      if (GenericsUtil.checkNotInBounds(type, psiType, referenceParameterList)) {
-        myVisitor.report(JavaErrorKinds.TYPE_PARAMETER_ACTUAL_INFERRED_MISMATCH.create(typeElement2Highlight));
-        return;
-      }
-    }
 
     PsiClassType[] bounds = classParameter.getSuperTypes();
     for (PsiType bound : bounds) {
@@ -639,7 +635,21 @@ final class GenericsChecker {
         if (psiClass.findMethodsBySignature(method, false).length > 0) continue;
         PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) continue;
-        PsiSubstitutor containingClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, psiClass, PsiSubstitutor.EMPTY);
+        PsiSubstitutor containingClassSubstitutor =
+          TypeConversionUtil.getMaybeSuperClassSubstitutor(containingClass, psiClass, PsiSubstitutor.EMPTY);
+        if (containingClassSubstitutor == null) {
+          LOG.error("Inconsistent hierarchy:\n"
+                    + "psiClass = " + psiClass + "; " + psiClass.getContainingFile().getVirtualFile() + "\n"
+                    + "\\- resolveScope = " + psiClass.getResolveScope() + "\n"
+                    + "superClass = " + superClass + "; " + superClass.getContainingFile().getVirtualFile() + "\n"
+                    + "\\- resolveScope = " + superClass.getResolveScope() + "\n"
+                    + "method = " + method.getName() + "; " + hms + "\n"
+                    + "containingClass = " + containingClass + "; " + containingClass.getContainingFile().getVirtualFile() + "\n"
+                    + "\\- resolveScope = " + containingClass.getResolveScope() + "\n");
+          JavaClassSupers.getInstance().reportHierarchyInconsistency(containingClass, psiClass);
+          JavaClassSupers.getInstance().reportHierarchyInconsistency(containingClass, superClass);
+          containingClassSubstitutor = PsiSubstitutor.EMPTY;
+        }
         PsiSubstitutor finalSubstitutor = PsiSuperMethodUtil
           .obtainFinalSubstitutor(containingClass, containingClassSubstitutor, hms.getSubstitutor(), false);
         MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, finalSubstitutor, false);

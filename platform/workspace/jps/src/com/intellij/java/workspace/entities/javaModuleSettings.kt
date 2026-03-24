@@ -12,6 +12,11 @@ import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
+/**
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
+ */
 interface JavaModuleSettingsEntity: WorkspaceEntity {
   @Parent
   val module: ModuleEntity
@@ -21,7 +26,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
   val compilerOutput: VirtualFileUrl?
   val compilerOutputForTests: VirtualFileUrl?
   val languageLevelId: @NonNls String?
-  val manifestAttributes: Map<String, String>
+  val manifestAttributes: Map<String, String> // todo: this property is lost on restart. It has to be moved to a separate entity IDEA-386090
   @Default get() = emptyMap()
 
   //region generated code

@@ -6,7 +6,7 @@ import java.net.InetAddress
 class DriverOptions(
   host: InetAddress = InetAddress.getLoopbackAddress(),
   internal val port: Int = getAvailablePort(proposedPort = 7777),
-  webServerPort: Int = getAvailablePort(proposedPort = 63000),
+  internal val webServerPort: Int = getAvailablePort(proposedPort = 11111),
   additionalProperties: Map<String, String> = emptyMap()
 ) {
 
@@ -30,4 +30,10 @@ class DriverOptions(
       "platform.experiment.ab.manual.option" to "control.option",
       "rpc.port" to webServerPort.toString()
     ) + additionalProperties
+
+  /**
+   * Returns all ports used by this driver configuration.
+   * This is useful for waiting for port release after the IDE process is killed.
+   */
+  fun getUsedPorts(): List<Int> = listOf(port, webServerPort)
 }

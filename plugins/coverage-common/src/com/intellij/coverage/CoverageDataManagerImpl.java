@@ -15,6 +15,7 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -389,7 +390,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     synchronized (myLock) {
       if (myIsProjectClosing) return null;
     }
-    return ApplicationManager.getApplication().runReadAction(computation);
+    return ReadAction.computeBlocking(computation::compute);
   }
 
   @Override

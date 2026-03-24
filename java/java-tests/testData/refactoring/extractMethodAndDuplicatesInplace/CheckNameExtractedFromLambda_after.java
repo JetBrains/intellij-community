@@ -15,11 +15,11 @@ class Child extends Parent {
     public boolean test(Collection<File> files) {
         return files.stream().allMatch(file -> {
             String name = file.getName();
-            return isABoolean(name);
+            return isBoolean(name);
         });
     }
 
-    private static boolean isABoolean(String name) {
+    private static boolean isBoolean(String name) {
         return name.endsWith("jar") || name.endsWith("tar");
     }
 }

@@ -35,6 +35,7 @@ data class TerminalHyperlinkInfoDto(
   val style: TerminalTextAttributesDto?,
   val followedStyle: TerminalTextAttributesDto?,
   val hoveredStyle: TerminalTextAttributesDto?,
+  val isInvisibleLink: Boolean,
   val layer: Int,
 ) : TerminalFilterResultInfoDto()
 
@@ -96,6 +97,7 @@ fun TerminalFilterResultInfo.toDto(): TerminalFilterResultInfoDto =
       style = style?.toDto(),
       followedStyle = followedStyle?.toDto(),
       hoveredStyle = hoveredStyle?.toDto(),
+      isInvisibleLink = isInvisibleLink,
       layer = layer,
     )
     is TerminalHighlightingInfo -> TerminalHighlightingInfoDto(
@@ -139,6 +141,7 @@ fun TerminalFilterResultInfoDto.toFilterResultInfo(): TerminalFilterResultInfo =
       style = style?.toTextAttributes(),
       followedStyle = followedStyle?.toTextAttributes(),
       hoveredStyle = hoveredStyle?.toTextAttributes(),
+      isInvisibleLink = isInvisibleLink,
       layer = layer,
     )
     is TerminalHighlightingInfoDto -> TerminalHighlightingInfo(

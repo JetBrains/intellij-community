@@ -49,6 +49,7 @@ import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.branch.LinkedBranchDataImpl
 import com.intellij.vcs.git.branch.GitBranchesMatcherWrapper
 import com.intellij.vcs.git.branch.calcTooltip
+import git4idea.branch.GitBranchIncomingOutgoingManager
 import com.intellij.vcs.git.branch.tree.GitBranchesTreeUtil
 import com.intellij.vcs.git.ui.GitBranchesTreeIconProvider
 import com.intellij.vcs.git.ui.GitIncomingOutgoingUi
@@ -94,7 +95,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     initDnD()
   }
 
-  private inner class BranchTreeCellRenderer(project: Project) : ColoredTreeCellRenderer() {
+  private inner class BranchTreeCellRenderer(private val project: Project) : ColoredTreeCellRenderer() {
     private val repositoryManager = GitRepositoryManager.getInstance(project)
     private val settings = GitVcsSettings.getInstance(project)
 
@@ -148,7 +149,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
         val fontMetrics = incomingLabel.getFontMetrics(incomingLabel.font)
         incomingLabel.size = Dimension(fontMetrics.stringWidth(incomingLabel.text) + JBUI.scale(1) + incomingLabel.icon.iconWidth, fontMetrics.height)
         outgoingLabel.size = Dimension(fontMetrics.stringWidth(outgoingLabel.text) + JBUI.scale(1) + outgoingLabel.icon.iconWidth, fontMetrics.height)
-        tree.toolTipText = incomingOutgoingState.calcTooltip()
+        tree.toolTipText = incomingOutgoingState.calcTooltip(GitBranchIncomingOutgoingManager.getInstance(project).lastFetchTime)
       }
       else {
         incomingLabel.isVisible = false

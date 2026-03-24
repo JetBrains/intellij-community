@@ -5,12 +5,14 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTex
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 
 class GHPRNewCommentViewModel(
   override val project: Project,
   parentCs: CoroutineScope,
-  private val commentsDataProvider: GHPRCommentsDataProvider
-) : CodeReviewSubmittableTextViewModelBase(project, parentCs, "") {
+  private val commentsDataProvider: GHPRCommentsDataProvider,
+  viewModelWithTextCompletion: GHViewModelWithTextCompletion,
+) : CodeReviewSubmittableTextViewModelBase(project, parentCs, ""), GHViewModelWithTextCompletion by viewModelWithTextCompletion {
   fun submit() = submit {
     commentsDataProvider.addComment(it)
     text.value = ""

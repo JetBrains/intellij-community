@@ -38,6 +38,10 @@ import org.jacoco.core.analysis.IClassCoverage;
 import org.jacoco.core.analysis.ICounter;
 import org.jacoco.core.analysis.ILine;
 import org.jacoco.core.analysis.IMethodCoverage;
+import org.jacoco.core.data.ExecutionData;
+import org.jacoco.core.data.ExecutionDataReader;
+import org.jacoco.core.data.IExecutionDataVisitor;
+import org.jacoco.core.data.SessionInfoStore;
 import org.jacoco.core.tools.ExecFileLoader;
 import org.jacoco.report.DirectorySourceFileLocator;
 import org.jacoco.report.FileMultiReportOutput;
@@ -47,8 +51,11 @@ import org.jacoco.report.html.HTMLFormatter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -63,6 +70,11 @@ import java.util.HashSet;
 
 public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(JaCoCoCoverageRunner.class);
+  private static final IExecutionDataVisitor NO_OP_VISITOR = new IExecutionDataVisitor() {
+    @Override
+    public void visitClassExecution(ExecutionData data) {
+    }
+  };
 
   @Override
   public @NotNull CoverageLoadingResult loadCoverageData(
@@ -359,6 +371,24 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   @Override
   public @NotNull String getId() {
     return "jacoco";
+  }
+
+  @Override
+  public boolean canBeLoaded(@NotNull File candidate) {
+    try {
+      try (InputStream stream = new BufferedInputStream(new FileInputStream(candidate))) {
+        final ExecutionDataReader reader = new ExecutionDataReader(stream);
+        var sessionInfoStore = new SessionInfoStore();
+        reader.setSessionInfoVisitor(sessionInfoStore);
+        reader.setExecutionDataVisitor(NO_OP_VISITOR);
+        reader.read();
+        return !sessionInfoStore.isEmpty();
+      }
+    }
+    catch (IOException e) {
+      LOG.debug(e);
+      return false;
+    }
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -21,7 +21,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.impl.PsiDocumentManagerEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +28,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * Tracks a regular PSI element inside a file via an {@link Identikit} (element type + optional anchor)
+ * and text offsets. Offsets are kept in sync with document edits through {@link SmartPointerTracker}.
+ * The main workhorse of the hierarchy.
+ */
 @ApiStatus.Internal
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
@@ -39,8 +43,6 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   private final boolean myForInjected;
   private int myStartOffset;
   private int myEndOffset;
-
-  // todo IJPL-339 layout of the object got bigger +8bytes
 
   SelfElementInfo(@Nullable ProperTextRange range,
                   @NotNull Identikit identikit,
@@ -153,7 +155,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   PsiFile restoreFile(@NotNull SmartPointerManagerEx manager) {
     Language language = myIdentikit.getFileLanguage();
     if (language == null) return null;
-    return restoreFileFromVirtual(getVirtualFile(), getContext() ,manager.getProject(), language);
+    return restoreFileFromVirtual(getVirtualFile(), getContext(), manager.getProject(), language);
   }
 
   @Override
@@ -165,7 +167,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
                                                          @NotNull CodeInsightContext context,
                                                          @NotNull Project project,
                                                          @NotNull Language language) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       if (project.isDisposed()) return null;
       VirtualFile child = restoreVFile(virtualFile);
       if (child == null || !child.isValid()) return null;
@@ -179,7 +181,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   public static @Nullable PsiDirectory restoreDirectoryFromVirtual(@NotNull VirtualFile virtualFile, @NotNull Project project) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       if (project.isDisposed()) return null;
       VirtualFile child = restoreVFile(virtualFile);
       if (child == null || !child.isValid()) return null;
@@ -214,7 +216,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
       SelfElementInfo otherInfo = (SelfElementInfo)other;
       if (!getVirtualFile().equals(other.getVirtualFile()) || myIdentikit != otherInfo.myIdentikit) return false;
 
-      return ReadAction.compute(() -> {
+      return ReadAction.computeBlocking(() -> {
         Segment range1 = getPsiRange(manager);
         Segment range2 = otherInfo.getPsiRange(manager);
         return range1 != null && range2 != null
@@ -254,17 +256,24 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     return "psi:range=" + calcPsiRange() + ",type=" + myIdentikit;
   }
 
-  public static Segment calcActualRangeAfterDocumentEvents(@NotNull PsiFile containingFile, @NotNull Document document, @NotNull Segment segment, boolean isSegmentGreedy) {
+  public static @Nullable Segment calcActualRangeAfterDocumentEvents(@NotNull PsiFile containingFile,
+                                                                     @NotNull Document document,
+                                                                     @NotNull Segment segment,
+                                                                     boolean isSegmentGreedy) {
     Project project = containingFile.getProject();
     PsiDocumentManagerEx documentManager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(project);
     List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
-    if (!events.isEmpty()) {
-      SmartPointerManagerEx pointerManager = (SmartPointerManagerEx)SmartPointerManager.getInstance(project);
-      SmartPointerTracker tracker = pointerManager.getTracker(containingFile.getViewProvider().getVirtualFile());
-      if (tracker != null) {
-        return tracker.getUpdatedRange(containingFile, segment, isSegmentGreedy, (FrozenDocument)documentManager.getLastCommittedDocument(document), events);
-      }
+    if (events.isEmpty()) {
+      return null;
     }
-    return null;
+
+    SmartPointerManagerEx pointerManager = SmartPointerManagerEx.getInstanceEx(project);
+    SmartPointerTracker tracker = pointerManager.getTracker(containingFile.getViewProvider().getVirtualFile());
+    if (tracker == null) {
+      return null;
+    }
+
+    return tracker.getUpdatedRange(containingFile, segment, isSegmentGreedy,
+                                   (FrozenDocument)documentManager.getLastCommittedDocument(document), events);
   }
 }

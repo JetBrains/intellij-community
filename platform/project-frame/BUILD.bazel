@@ -1,0 +1,52 @@
+### auto-generated section `build intellij.platform.projectFrame` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "project-frame_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "project-frame",
+  module_name = "intellij.platform.projectFrame",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":project-frame_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/core-api:core",
+    "//platform/extensions",
+    "//platform/ide-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/util/base",
+    "//platform/util:util-ui",
+  ]
+)
+
+jvm_library(
+  name = "project-frame_test_lib",
+  module_name = "intellij.platform.projectFrame",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":project-frame",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util/base:base_test_lib",
+    "//platform/util:util-ui_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.projectFrame` end
+
+### auto-generated section `iml intellij.platform.projectFrame` start
+exports_files([
+  "intellij.platform.projectFrame.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.projectFrame` end

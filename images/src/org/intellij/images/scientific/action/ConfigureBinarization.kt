@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.scientific.action
 
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -59,14 +58,6 @@ class ConfigureBinarization : DumbAwareAction() {
       title = ImagesBundle.message("image.binarize.dialog.title")
       isResizable = true
       init()
-    }
-
-    override fun doOKAction() {
-      super.doOKAction()
-      val actionGroup = ActionManager.getInstance().getAction("Images.ImageOperationsGroup")
-      if (actionGroup is ImageOperationsActionGroup) {
-        actionGroup.updateSelectedMode(ImageOperationMode.BINARIZE_IMAGE)
-      }
     }
 
     override fun createCenterPanel(): JComponent {

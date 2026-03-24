@@ -66,6 +66,7 @@ interface UiPluginManagerController {
   suspend fun getCustomRepoTags(): Set<String>
 
   fun enablePlugins(sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?): SetEnabledStateResult
+  fun markPluginsAsDisabled(pluginIds: List<PluginId>)
   fun setEnableStateForDependencies(sessionId: String, descriptorIds: Set<PluginId>, enable: Boolean): SetEnabledStateResult
   fun setPluginStatus(sessionId: String, pluginIds: List<PluginId>, enable: Boolean)
   fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean

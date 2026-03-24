@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
 import com.intellij.diagnostic.LoadingState
@@ -207,7 +207,7 @@ object StartupUiUtil {
   @JvmStatic
   fun getFontWithFallback(
     familyName: String?,
-    @Suppress("DEPRECATION") @org.intellij.lang.annotations.JdkConstants.FontStyle style: Int,
+    @JdkConstants.FontStyle style: Int,
     size: Float,
   ): FontUIResource {
     // on macOS, font fallback is implemented in JRE by default
@@ -404,6 +404,6 @@ object StartupUiUtil {
 @Deprecated(level = DeprecationLevel.ERROR, message = "Please use StartupUiUtil.getFontWithFallback instead")
 fun getFontWithFallback(
   familyName: String?,
-  @Suppress("DEPRECATION") @org.intellij.lang.annotations.JdkConstants.FontStyle style: Int,
+  @JdkConstants.FontStyle style: Int,
   size: Float,
 ): FontUIResource = StartupUiUtil.getFontWithFallback(familyName, style, size)

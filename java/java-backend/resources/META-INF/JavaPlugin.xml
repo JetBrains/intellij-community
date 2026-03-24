@@ -1,14 +1,14 @@
 <!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="public">
 
+  <!--todo move to modules?-->
   <xi:include href="/META-INF/RegistryKeys.xml"/>
 
   <xi:include href="/META-INF/Intentions.xml"/>
 
   <xi:include href="/META-INF/JavaActions.xml"/>
 
-
-  <xi:include href="/META-INF/JavaAnalysisPlugin.xml"/>
+  <xi:include href="/META-INF/GlobalInspections.xml"/>
   <xi:include href="/META-INF/IntentionPowerPack.xml"/>
   <xi:include href="/META-INF/InspectionGadgets.xml"/>
   <xi:include href="/META-INF/Inspections.xml"/>
@@ -595,7 +595,7 @@
 
     <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
                             implementationClass="com.intellij.compiler.chainsSearch.completion.MethodChainCompletionContributor"/>
-    <weigher order="after mostUsed" key="completion" id="methodChains"
+    <weigher order="after stats" key="completion" id="methodChains"
              implementationClass="com.intellij.compiler.chainsSearch.completion.MethodChainWeigher"/>
 
     <projectTemplate projectType="JAVA_MODULE" templatePath="resources/projectTemplates/Java/Command_Line_App.zip"/>
@@ -737,7 +737,8 @@
     <testFinder implementation="com.intellij.testIntegration.JavaTestFinder"/>
     <filePasteProvider implementation="com.intellij.ide.JavaFilePasteProvider" order="before fileList"/>
     <enterHandlerDelegate implementation="com.intellij.javadoc.EnterInJavadocParamDescriptionHandler"/>
-    <enterHandlerDelegate implementation="com.intellij.javadoc.JavadocSnippetEnterHandler" order="before EnterBetweenBracesHandler, before EnterInPropertiesFileHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.javadoc.JavadocSnippetEnterHandler"
+                          order="before JavaEnterAfterUnmatchedBraceHandler, before EnterBetweenBracesHandler, before EnterInPropertiesFileHandler"/>
     <enterHandlerDelegate implementation="com.intellij.javadoc.JavaDocMarkdownEnterHandler" order="after EnterInLineCommentHandler" />
     <editorNavigation implementation="com.intellij.javadoc.JavadocNavigationDelegate"/>
     <methodImplementor implementation="com.intellij.codeInsight.javadoc.SnippetDocTagMethodImplementor"/>
@@ -1187,13 +1188,12 @@
                                               converter="com.intellij.codeInsight.completion.MethodCallRegistrationHandler$Converter"
                                               descriptor="com.intellij.codeInsight.completion.NoOpFrontendFriendlyInsertHandler"/>
 
-    <codeInsight.completion.command.factory language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory" />
     <codeInsight.completion.intention.skipper language="JAVA"
-                                              implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory$JavaIntentionCommandSkipper"/>
+                                              implementationClass="com.intellij.codeInsight.completion.commands.JavaIntentionCommandSkipper"/>
     <codeInsight.completion.intention.skipper language="JAVA"
                                               implementationClass="com.intellij.codeInsight.intention.impl.JavaRefactoringIntentionCommandSkipper"/>
     <codeInsight.completion.intention.offset.provider language="JAVA"
-                                                      implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory$JavaIntentionCommandOffsetProvider"/>
+                                                      implementationClass="com.intellij.codeInsight.completion.commands.JavaIntentionCommandOffsetProvider"/>
     <!--<codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.SimpleRunMarkerCommandProvider" />-->
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGenerateCommandCompletion" />
@@ -1231,10 +1231,11 @@
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGenerateConstructorCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaSurroundWithCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaSafeDeleteCompletionCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.ViewStructureCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.platform.structureView.impl.commands.ViewStructureCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaParameterInfoCompletionCommand" order="last"/>
+    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.InsertLiveTemplateCompletionCommandProvider" order="last"/>
 
-    <weigher implementationClass="com.intellij.codeInsight.completion.LoggerWeigher" key="completion" id="logger"/>
+    <weigher order="after stats" implementationClass="com.intellij.codeInsight.completion.LoggerWeigher" key="completion" id="logger"/>
 
     <completion.confidence language="JAVA"
                            implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionConfidence"
@@ -1384,6 +1385,79 @@
 
     <virtualFileCustomDataProvider implementation="com.intellij.ide.JavaCodeStyleSettingsCustomDataSynchronizer"/>
     <consoleFilterProvider implementation="com.intellij.java.impl.nullaway.NullAwayFilterProvider"/>
+
+    <!--from JavaAnalaysisPlugin.xml for java.analysis.impl-->
+    <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.JavaTextBlockIndentPassFactory"/>
+    <deadCode implementation="com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint"/>
+    <lang.inspectionSuppressor language="JAVA" implementationClass="com.intellij.codeInspection.JavaInspectionSuppressor"/>
+    <projectService serviceImplementation="com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis"/>
+    <generatedSourcesFilter implementation="com.intellij.openapi.roots.JavaGeneratedSourcesFilter"/>
+    <applicationService serviceImplementation="org.jetbrains.java.generate.GenerateToStringContext"/>
+    <applicationService serviceInterface="com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService"
+                        serviceImplementation="com.intellij.openapi.roots.impl.InternalPersistentJavaLanguageLevelReaderServiceImpl"
+                        overrides="true"/>
+    <java.errorFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.DefaultJavaErrorFixProvider"/>
+    <filePropertyPusher implementation="com.intellij.openapi.roots.impl.JavaLanguageLevelPusher"/>
+    <projectService serviceInterface="com.intellij.psi.impl.file.impl.JavaFileManager"
+                    serviceImplementation="com.intellij.psi.impl.file.impl.JavaFileManagerImpl"/>
+    <java.elementFinder implementation="com.intellij.psi.impl.PackagePrefixElementFinder"/>
+    <daemon.changeLocalityDetector implementation="com.intellij.codeInsight.daemon.impl.JavaChangeLocalityDetector"/>
+    <customScopesProvider implementation="com.intellij.analysis.PackagesScopesProvider" order="first,after default"/>
+    <applicationService serviceInterface="com.intellij.codeInspection.BatchSuppressManager"
+                        serviceImplementation="com.intellij.codeInspection.BatchSuppressManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInspection.SuppressManager"
+                        serviceImplementation="com.intellij.codeInspection.SuppressManagerImpl"/>
+    <annotator language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaDocAnnotator"/>
+    <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.actions.SuppressWarningsFoldingBuilder" />
+    <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
+    <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaNamesHighlightVisitor"/>
+    <lang.inferredAnnotationProvider implementation="com.intellij.codeInsight.DefaultInferredAnnotationProvider"/>
+    <lang.inferredAnnotationProvider implementation="com.intellij.codeInsight.ProtobufInferredAnnotationProvider"/>
+    <projectService serviceInterface="com.intellij.codeInsight.guess.GuessManager"
+                    serviceImplementation="com.intellij.codeInsight.guess.impl.GuessManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInspection.reference.RefJavaUtil"
+                        serviceImplementation="com.intellij.codeInspection.reference.RefJavaUtilImpl"/>
+    <applicationService serviceInterface="com.intellij.java.analysis.bytecode.JvmBytecodeAnalysis"
+                        serviceImplementation="com.intellij.java.analysis.impl.bytecode.JvmBytecodeAnalysisImpl"/>
+    <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
+    <!--Microservices Url-->
+    <microservices.urlInlayLanguagesProvider implementation="com.intellij.microservices.jvm.url.UastUrlPathInlayLanguagesProvider"/>
+    <completion.contributor language="UAST"
+                            implementationClass="com.intellij.microservices.jvm.url.RenameableSemElementCompletionContributor"/>
+    <nameSuggestionProvider implementation="com.intellij.microservices.jvm.url.RenameableSemElementNameSuggestionProvider"/>
+    <referenceInjector implementation="com.intellij.microservices.jvm.url.HttpUrlReferenceInjector"/>
+    <referenceInjector implementation="com.intellij.microservices.jvm.url.WSUrlReferenceInjector"/>
+    <referenceInjector implementation="com.intellij.microservices.jvm.url.HttpMethodReferenceInjector"/>
+
+    <java.expressionTypeNullabilityPatcher implementation="com.intellij.psi.impl.StreamNullabilityPatcher"/>
+
+    <!--from JavaAnalaysisPlugin.xml for java.analysis-->
+    <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
+    <notificationGroup id="FileSystemIssue" displayType="BALLOON" bundle="messages.JavaAnalysisBundle" key="notification.file.system.issue"/>
+
+    <!--  from JavaAnalysisPlugin.xml for java.impl-->
+    <applicationService serviceInterface="org.jetbrains.java.generate.GenerateToStringActionHandler"
+                        serviceImplementation="org.jetbrains.java.generate.GenerateToStringActionHandlerImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.intention.QuickFixFactory"
+                        serviceImplementation="com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.execution.filters.ExceptionAnalysisProvider"
+                    serviceImplementation="com.intellij.slicer.DataflowExceptionAnalysisProvider"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider
+      implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaFutureKeywordUseFixProvider"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider
+      implementation="com.intellij.codeInsight.daemon.impl.analysis.SealedClassUnresolvedReferenceFixProvider"/>
+    <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.JSpecifyAnnotationSupport"/>
+    <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.JetBrainsAnnotationSupport"/>
+    <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.CheckerFrameworkSupport"/>
+    <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.EclipseAnnotationSupport"/>
+    <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.FindBugsAnnotationSupport"/>
+    <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.JakartaAnnotationSupport" id="jakarta"/>
+    <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.Jsr305Support"/>
+    <projectService serviceInterface="com.intellij.java.analysis.OuterModelsModificationTrackerManager"
+                    serviceImplementation="com.intellij.lang.OuterModelsModificationTrackerManagerImpl"/>
+    <optionController implementation="com.intellij.codeInsight.NullableNotNullManagerImpl$Provider"/>
+    <lang.jvm.annotations.marker.suppressor implementation="com.intellij.java.JavaNonCodeAnnotationsMarkerSuppressor"/>
+    <scratchLanguageFilter implementation="com.intellij.ui.JshellScratchFileTypeFilter"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

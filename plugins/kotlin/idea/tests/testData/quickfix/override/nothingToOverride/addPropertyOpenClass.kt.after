@@ -1,4 +1,5 @@
 // "Add 'open val hoge: Int' to 'Foo'" "true"
+// K2_ERROR: 'hoge' overrides nothing.
 open class Foo {
     open val hoge: Int = 3
 }

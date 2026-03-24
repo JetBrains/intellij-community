@@ -18,8 +18,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.PsiCodeFragmentImpl;
+import com.intellij.psi.impl.source.PsiExpressionCodeFragmentImpl;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -123,8 +130,31 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
   }
 
   @Override
-  public @NotNull PsiFile preCheck(final @NotNull PsiFile copyFile, final @NotNull Editor realEditor, final int currentOffset) {
+  public @NotNull PsiFile preCheck(@NotNull PsiFile copyFile, final @NotNull Editor realEditor, final int currentOffset) {
     Document document = copyFile.getFileDocument();
+    PsiFile originalFile = copyFile.getOriginalFile();
+    if (originalFile instanceof PsiCodeFragmentImpl codeFragment
+        && !(copyFile instanceof PsiCodeFragment)) {
+      JavaCodeFragment copyFragmentFile = null;
+      if (codeFragment.getContentElementType() == JavaElementType.STATEMENTS) {
+        copyFragmentFile = JavaCodeFragmentFactory.getInstance(originalFile.getProject())
+          .createCodeBlockCodeFragment(document.getText(), originalFile.getContext(), copyFile.isPhysical());
+      }
+      else if (codeFragment.getContentElementType() == JavaElementType.EXPRESSION_TEXT &&
+               codeFragment instanceof PsiExpressionCodeFragmentImpl expressionCodeFragment) {
+        copyFragmentFile = JavaCodeFragmentFactory.getInstance(originalFile.getProject())
+          .createExpressionCodeFragment(document.getText(), originalFile.getContext(), expressionCodeFragment.getExpectedType(),
+                                        copyFile.isPhysical());
+      }
+      if (copyFragmentFile == null) {
+        return copyFile;
+      }
+      copyFragmentFile.addImportsFromString(codeFragment.importsToString());
+      if (copyFragmentFile instanceof PsiFileImpl fileImpl) {
+        fileImpl.setOriginalFile(originalFile);
+      }
+      copyFile = copyFragmentFile;
+    }
     CharSequence sequence = document.getCharsSequence();
     StringBuilder fileContentWithSemicolon = new StringBuilder(sequence);
     if (isSemicolonNeeded(copyFile, realEditor)) {

@@ -1,4 +1,5 @@
 // "Remove function body" "true"
+// K2_ERROR: Function 'foo' with a body cannot be abstract.
 abstract class A() {
     <caret>abstract fun foo() {}
 }

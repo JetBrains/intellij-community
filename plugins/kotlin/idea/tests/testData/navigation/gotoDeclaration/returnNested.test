@@ -1,0 +1,34 @@
+// FILE: before.kt
+// IGNORE_K1
+inline fun outer(f: () -> Unit) {
+    f()
+}
+
+inline fun inner(f: () -> Unit) {
+    f()
+}
+
+fun main() {
+    outer {
+        inner {
+            <caret>return@outer
+        }
+    }
+}
+// FILE: after.kt
+// IGNORE_K1
+inline fun outer(f: () -> Unit) {
+    f()
+}
+
+inline fun inner(f: () -> Unit) {
+    f()
+}
+
+fun main() {
+    outer <caret>{
+        inner {
+            return@outer
+        }
+    }
+}

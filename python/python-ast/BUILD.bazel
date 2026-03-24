@@ -20,6 +20,29 @@ jvm_library(
     "//python/python-parser:parser",
     "//platform/core-impl",
     "//libraries/stream",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+  ]
+)
+
+jvm_library(
+  name = "ast_test_lib",
+  module_name = "intellij.python.ast",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":ast",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//python/python-parser:parser_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.ast` end
+
+### auto-generated section `iml intellij.python.ast` start
+exports_files([
+  "intellij.python.ast.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.ast` end

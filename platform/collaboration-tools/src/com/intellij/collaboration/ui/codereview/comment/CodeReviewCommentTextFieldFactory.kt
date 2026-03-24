@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.ui.JBColor
 import com.intellij.util.asSafely
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -116,8 +117,11 @@ object CodeReviewCommentTextFieldFactory {
     val inputField = CollaborationToolsUIUtil.wrapWithProgressOverlay(editorComponent, busyValue).let {
       if (icon != null) {
         CommentTextFieldFactory.wrapWithLeftIcon(icon, it) {
-          val borderInsets = editor.component.border.getBorderInsets(editor.component)
-          editor.lineHeight + borderInsets.top + borderInsets.bottom
+          val outerBorderInsets = editor.component.border.getBorderInsets(editor.component)
+          val innerBorderInsets = editor.asSafely<EditorEx>()?.let { editor ->
+            editor.scrollPane.border.getBorderInsets(editor.scrollPane)
+          } ?: JBInsets.emptyInsets()
+          editor.lineHeight + outerBorderInsets.top + outerBorderInsets.bottom + innerBorderInsets.top + innerBorderInsets.bottom
         }
       }
       else {

@@ -4,6 +4,7 @@
  */
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
+import com.intellij.codeInsight.completion.CompletionType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
@@ -48,6 +49,7 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
         val callElement = valueArgumentList.parent as? KtCallElement ?: return
 
         if (valueArgument.getArgumentName() != null) return
+        val completionType = context.completionContext.parameters.completionType
 
         // with `analyze` invoked on `fakeKtFile`:
         // - use-site is `fakeKtFile`;
@@ -76,7 +78,10 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
             buildList {
                 for ((name, indexedTypes) in namedArgumentInfos) {
                     with(KotlinFirLookupElementFactory) {
-                        add(createNamedArgumentLookupElement(name, indexedTypes))
+                        if (completionType != CompletionType.SMART) {
+                            // For smart completion, we do not want to show incomplete named argument items
+                            add(createNamedArgumentLookupElement(name, indexedTypes))
+                        }
 
                         // suggest default values only for types from parameters with matching positions to not clutter completion
                         val typesAtCurrentPosition = indexedTypes.filter { it.index == currentArgumentIndex }

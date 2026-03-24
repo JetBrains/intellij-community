@@ -1,5 +1,6 @@
 // "Add remaining branches" "true"
 // ERROR: Unresolved reference: TODO
+// K2_ERROR: 'when' expression must be exhaustive. Add the 'true' branch or an 'else' branch.
 fun test(b: Boolean) = wh<caret>en(b) {
     false -> 0
 }

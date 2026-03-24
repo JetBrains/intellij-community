@@ -31,6 +31,7 @@ import com.jediterm.terminal.SubstringFinder;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TerminalExecutorServiceManager;
 import com.jediterm.terminal.TtyConnector;
+import com.jediterm.terminal.model.JediTerminal;
 import com.jediterm.terminal.model.SelectionUtil;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalSelection;
@@ -85,6 +86,9 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
     myProject = project;
     myHyperlinkFilter = new JediTermHyperlinkFilterAdapter(project, console, this);
     addAsyncHyperlinkFilter(myHyperlinkFilter);
+    if (getTerminal() instanceof JediTerminal jediTerminal) {
+      jediTerminal.setUrlHyperlinkFilter(new Osc8UrlHyperlinkFilter(project, this));
+    }
     Disposer.register(parent, this);
     Disposer.register(this, myBridge);
     setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {

@@ -473,13 +473,14 @@ Most likely there was an uncaught exception in asynchronous execution that resul
 
   protected final void invokeSetUp() throws Exception {
     long setupStart = System.nanoTime();
-    setUp();
+    TestLoggerFactory.fixtureInitialization(false, ()->setUp());
     long setupCost = (System.nanoTime() - setupStart) / 1000000;
     logPerClassCost((int)setupCost, TOTAL_SETUP_COST_MILLIS, TOTAL_SETUP_COUNT);
   }
 
   protected void invokeTearDown() throws Exception {
     long teardownStart = System.nanoTime();
+    TestLoggerFactory.onFixturesDisposeStart(false);
     tearDown();
     long teardownCost = (System.nanoTime() - teardownStart) / 1000000;
     logPerClassCost((int)teardownCost, TOTAL_TEARDOWN_COST_MILLIS, TOTAL_TEARDOWN_COUNT);
@@ -556,7 +557,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
     Description testDescription = Description.createTestDescription(getClass(), getName());
     return () -> {
       boolean success = false;
-      TestLoggerFactory.onTestStarted();
+      TestLoggerFactory.onTestStarted(getClass());
       try {
         recordErrorsLoggedInTheCurrentThreadAndReportThemAsFailures(testRunnable);
         success = true;

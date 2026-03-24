@@ -3,7 +3,7 @@ package com.intellij.openapi.project
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.impl.ProgressSuspender
+import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.CoroutineScope
@@ -81,8 +81,8 @@ class DumbServiceScanningListenerTest {
         try {
           dumbTaskStarted.countDown()
           while (cs.isActive) {
-            val suspender = ProgressSuspender.getSuspender(indicator)
-            isPaused.set(suspender.isSuspended)
+            val suspender = requireNotNull(TaskSuspender.getContextSuspender())
+            isPaused.set(suspender.isPaused())
           }
         }
         catch (t: Throwable) {

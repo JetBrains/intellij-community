@@ -51,7 +51,7 @@ To migrate a product to programmatic content:
 Content modules (have .xml descriptors):
 ```bash
 # Check if module has a descriptor
-find_files_by_glob("**/moduleName.xml")
+search_file(q: "**/moduleName.xml")
 
 # Or look in resources directory
 ls community/modulePath/resources/*.xml
@@ -187,7 +187,7 @@ Before committing changes:
 
 3. **Verify tests pass**
    ```bash
-   bazel test //platform/build-scripts/tests/testSrc/org/jetbrains/intellij/build:UltimatePluginModelTest
+   ./tests.cmd -Dintellij.build.test.patterns=com.intellij.idea.ultimate.build.smokeTests.IdeaUltimatePackagingTest
    ```
 
 4. **Use MCP to analyze transitive dependencies**

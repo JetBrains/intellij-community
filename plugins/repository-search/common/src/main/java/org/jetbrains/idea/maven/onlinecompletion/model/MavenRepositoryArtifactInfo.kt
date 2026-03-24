@@ -3,14 +3,15 @@ package org.jetbrains.idea.maven.onlinecompletion.model
 
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.idea.maven.model.MavenCoordinate
+import org.jetbrains.idea.maven.model.MavenDependencyCompletionItem
+import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 
 class MavenRepositoryArtifactInfo(
-  private val groupId: String,
-  private val artifactId: String,
-  val items: Array<MavenDependencyCompletionItem>
-) : MavenCoordinate, RepositoryArtifactData {
+  groupId: String,
+  artifactId: String,
+  items: Array<MavenDependencyCompletionItem>
+) : MavenRepoArtifactInfo(groupId, artifactId, items), RepositoryArtifactData {
 
   constructor(
     groupId: String,
@@ -23,13 +24,13 @@ class MavenRepositoryArtifactInfo(
   )
 
   @NlsSafe
-  override fun getGroupId() = groupId
+  override fun getGroupId() = super.getGroupId()
 
   @NlsSafe
-  override fun getArtifactId() = artifactId
+  override fun getArtifactId() = super.getArtifactId()
 
   @NlsSafe
-  override fun getVersion() = items.firstOrNull()?.version
+  override fun getVersion() = super.getVersion()
 
   @NlsSafe
   override fun getKey() = "$groupId:$artifactId"

@@ -1,5 +1,6 @@
 // "Import property 'asserter'" "true"
 // RUNTIME_WITH_KOTLIN_TEST
+// K2_ERROR: Unresolved reference 'asserter'.
 
 package test
 

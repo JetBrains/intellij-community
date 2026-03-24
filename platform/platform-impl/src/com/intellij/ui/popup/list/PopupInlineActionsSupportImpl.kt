@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl.ActionItem
@@ -36,7 +37,7 @@ internal class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupI
   override fun getToolTipText(element: Any?, index: Int): String? = when {
     element !is ActionItem -> null
     isMoreButton(element, index) -> IdeBundle.message("inline.actions.more.actions.text")
-    else -> myStep.getInlineItems(element)[index]?.text
+    else -> myStep.getInlineItems(element)[index]?.text?.let { StringUtil.escapeXmlEntities(it) }
   }
 
   override fun getKeepPopupOnPerform(element: Any?, index: Int): KeepPopupOnPerform = when {

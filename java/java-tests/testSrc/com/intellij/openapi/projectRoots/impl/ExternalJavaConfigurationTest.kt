@@ -26,8 +26,8 @@ abstract class ExternalJavaConfigurationTest: HeavyPlatformTestCase() {
     configFileContent: String,
     expectedVersionString: String,
   ) {
-    val file = configProvider.getConfigurationFile(project)
-    createFile(getOrCreateProjectBaseDir(), file.name, configFileContent)
+    val file = configProvider.getConfigurationFilePath(project)
+    createFile(getOrCreateProjectBaseDir(), file.fileName.toString(), configFileContent)
     val suggestion = runBlocking { watcher.getReleaseData(configProvider) }
     assert(suggestion != null)
 

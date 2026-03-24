@@ -7,6 +7,8 @@ class Problem<caret> {
   private final @NotNull String code;
   private final int myColumn;
 
+  // Notice 1: the names of parameters differs from declaration order of instance fields
+  // Notice 2: the order of parameters differs from declaration order of instance fields
   Problem(int line, int column, @NotNull String code) {
     myLine = line;
     this.code = code;

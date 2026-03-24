@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsStatusComponentFactory
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.ui.ScrollPaneFactory
@@ -14,9 +15,11 @@ import git4idea.remote.hosting.ui.ResolveConflictsLocallyDialogComponentFactory.
 import git4idea.remote.hosting.ui.ResolveConflictsLocallyViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRebaseAction
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRemoveReviewerAction
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestStatusViewModel
@@ -43,8 +46,9 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
       add(CodeReviewDetailsStatusComponentFactory.createCiComponent(scope, statusVm))
       add(createConflictsStatusComponentIn(scope, statusVm.resolveConflictsVm))
       add(CodeReviewDetailsStatusComponentFactory.createRequiredResolveConversationsComponent(
-        scope, statusVm.requiredConversationsResolved
+        scope, statusVm.hasUnresolvedDiscussionsBlockingMerge
       ))
+      add(createMustRebasedComponentIn(scope, statusVm.shouldBeRebasedBeforeMerging, reviewFlowVm))
       add(CodeReviewDetailsStatusComponentFactory.createNeedReviewerComponent(scope, reviewFlowVm.reviewerReviews))
       add(CodeReviewDetailsStatusComponentFactory.createReviewersReviewStateComponent(
         scope, reviewFlowVm.reviewerReviews,
@@ -77,6 +81,19 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
         }
       })
     }
+  }
+
+  private fun createMustRebasedComponentIn(
+    cs: CoroutineScope,
+    shouldBeRebasedBeforeMerging: StateFlow<Boolean>,
+    reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
+  ): JComponent {
+    val message = GitLabBundle.message("merge.request.details.status.requires.rebase")
+    val rebaseAction = GitLabMergeRequestRebaseAction(cs, reviewFlowVm)
+    return CodeReviewDetailsStatusComponentFactory.createErrorComponent(message, rebaseAction)
+      .apply {
+        bindVisibilityIn(cs, shouldBeRebasedBeforeMerging)
+      }
   }
 
   private fun createConflictsStatusComponentIn(

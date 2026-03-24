@@ -194,7 +194,7 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
         impl.runWithInvalidPsiRecycler(getHighlightingSession(), HighlightInfoUpdaterImpl.WhatTool.INSPECTION, withRecycler);
       }
       else {
-        ManagedHighlighterRecycler.runWithRecycler(getHighlightingSession(), withRecycler);
+        ManagedHighlighterRecycler.runWithRecycler(getHighlightingSession(), "LIP", withRecycler);
       }
     }
 

@@ -2,16 +2,20 @@ package com.intellij.lambda.testFramework.starter
 
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.splitMode
+import com.intellij.ide.starter.coroutine.CommonScope.testSuiteSupervisorScope
 import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
+import com.intellij.ide.starter.utils.PortUtil
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.lambda.testFramework.junit.IdeRunMode
 import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.lambda.testFramework.utils.runIdeWithLambda
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.tools.ide.starter.bus.EventsBus
+import com.intellij.tools.ide.util.common.logOutput
+import kotlinx.coroutines.runBlocking
 
 data class RunContext(var frontendContext: IDERunContext, var backendContext: IDERunContext? = null)
 
@@ -91,13 +95,65 @@ object IdeInstance {
 
   fun stopIde(): Unit = synchronized(this) {
     if (isStarted()) {
-      LOG.info("Stopping IDE with current ide mode: $currentIdeMode")
+      LOG.info("Killing IDE with current ide mode: $currentIdeMode")
+
+      // Extract ports that were actually used before killing the IDE
+      val portsToWait: Set<Int> = if (this::runContext.isInitialized) {
+        extractUsedPorts(runContext)
+      }
+      else {
+        emptySet()
+      }
+
       catchAll { _ide?.forceKill() }
       _ide = null
+
+      // Wait for ports to be released after killing the IDE to avoid port conflicts when starting the next IDE
+      if (portsToWait.isNotEmpty()) {
+        runBlocking(testSuiteSupervisorScope.coroutineContext) {
+          PortUtil.waitForPortsRelease(ports = portsToWait)
+        }
+      }
     }
     else {
-      LOG.info("IDE wasn't started. Skipping stopping it.")
+      LOG.info("IDE wasn't started. Skipping killing it.")
     }
+  }
+
+  /**
+   * Extracts the ports that were actually used by the IDE from the run context's VM options.
+   * This includes JMX port (com.sun.management.jmxremote.port) and RPC port (rpc.port).
+   */
+  private fun extractUsedPorts(runContext: RunContext): Set<Int> {
+    val ports = mutableSetOf<Int>()
+
+    ports.addAll(extractPortsFromContext(runContext.frontendContext))
+    runContext.backendContext?.let { ports.addAll(extractPortsFromContext(it)) }
+
+    if (ports.isNotEmpty()) {
+      logOutput("Will wait for these ports to be released: ${ports.sorted().joinToString(", ")}")
+    }
+
+    return ports
+  }
+
+  private fun extractPortsFromContext(context: IDERunContext): Set<Int> {
+    val vmOptions = context.calculateVmOptions().data()
+    val ports = mutableSetOf<Int>()
+
+    // Extract JMX port
+    vmOptions.find { it.startsWith("-Dcom.sun.management.jmxremote.port=") }
+      ?.substringAfter("=")
+      ?.toIntOrNull()
+      ?.let { ports.add(it) }
+
+    // Extract RPC port
+    vmOptions.find { it.startsWith("-Drpc.port=") }
+      ?.substringAfter("=")
+      ?.toIntOrNull()
+      ?.let { ports.add(it) }
+
+    return ports
   }
 
   fun publishArtifacts(): Unit = synchronized(this) {

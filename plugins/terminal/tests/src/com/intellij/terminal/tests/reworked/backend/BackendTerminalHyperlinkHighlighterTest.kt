@@ -8,6 +8,7 @@ import com.intellij.execution.impl.InlayProvider
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
@@ -33,6 +34,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigationInterceptor
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalFilterResultInfo
 import org.jetbrains.plugins.terminal.session.impl.TerminalHighlightingInfo
@@ -108,6 +110,43 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       inlay(at(1, "link_inlay12")),
     )
     assertHighlightings()
+  }
+
+  @Test
+  fun `handled hyperlink interceptor skips default navigation`() = withFixture {
+    ExtensionTestUtil.maskExtensions(
+      TerminalHyperlinkNavigationInterceptor.EP_NAME,
+      listOf(object : TerminalHyperlinkNavigationInterceptor {
+        override suspend fun intercept(project: Project, hyperlinkInfo: HyperlinkInfo, mouseEvent: EditorMouseEvent?): Boolean = true
+      }),
+      testRootDisposable,
+    )
+    updateModel(0L, "0: line0 link0")
+
+    click(at(0, "link0"))
+
+    assertClickedLinks()
+  }
+
+  @Test
+  fun `fallthrough hyperlink interceptor keeps default navigation`() = withFixture {
+    var interceptorCalls = 0
+    ExtensionTestUtil.maskExtensions(
+      TerminalHyperlinkNavigationInterceptor.EP_NAME,
+      listOf(object : TerminalHyperlinkNavigationInterceptor {
+        override suspend fun intercept(project: Project, hyperlinkInfo: HyperlinkInfo, mouseEvent: EditorMouseEvent?): Boolean {
+          interceptorCalls++
+          return false
+        }
+      }),
+      testRootDisposable,
+    )
+    updateModel(0L, "0: line0 link0")
+
+    click(at(0, "link0"))
+
+    assertThat(interceptorCalls).isEqualTo(1)
+    assertClickedLinks("link0")
   }
 
   @Test
@@ -481,7 +520,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     suspend fun run(test: suspend Fixture.() -> Unit) {
       coroutineScope {
         val hyperlinkScope = childScope("BackendTerminalHyperlinkHighlighterTest hyperlink scope")
-        backendFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, outputModel, false)
+        backendFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, outputModel, false, null)
 
         // Do what StateAwareTerminalSession does, but with less infrastructure around.
         // Note: do NOT use MutableSharedFlow with UNDISPATCHED,
@@ -528,11 +567,18 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
 
     suspend fun assertLinks(vararg expectedLinks: Link) {
       awaitEventProcessing()
-      val actualLinks = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalHyperlinkInfo>().map { link ->
-        ActualLinkWrapper(
-          outputModel.getText(TerminalOffset.of(link.absoluteStartOffset), TerminalOffset.of(link.absoluteEndOffset)).toString(),
-          link,
-        )
+      val actualLinks = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalHyperlinkInfo>().mapNotNull { link ->
+        val start = TerminalOffset.of(link.absoluteStartOffset)
+        val end = TerminalOffset.of(link.absoluteEndOffset)
+        if (start < outputModel.startOffset && end >= outputModel.startOffset) {
+          null // partially trimmed links are allowed
+        }
+        else {
+          ActualLinkWrapper(
+            outputModel.getText(start, end).toString(),
+            link,
+          )
+        }
       }
       assertThat(actualLinks).hasSameSizeAs(expectedLinks)
       for (i in actualLinks.indices) {
@@ -610,12 +656,20 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     }
 
     suspend fun assertClicks(vararg clicks: LinkLocator) {
+      click(*clicks)
+      assertClickedLinks(*clicks.map { it.substring }.toTypedArray())
+    }
+
+    suspend fun click(vararg clicks: LinkLocator) {
       awaitEventProcessing()
       for (click in clicks) {
         backendFacade.hyperlinkClicked(click.locateLink(outputModel, backendFacade).id, null)
       }
       awaitEventProcessing()
-      assertThat(clickedLinks).containsExactlyElementsOf(clicks.map { it.substring })
+    }
+
+    fun assertClickedLinks(vararg expectedLinks: String) {
+      assertThat(clickedLinks).containsExactly(*expectedLinks)
     }
 
     fun link(

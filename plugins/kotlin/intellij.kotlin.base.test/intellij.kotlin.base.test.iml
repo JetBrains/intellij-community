@@ -84,5 +84,8 @@
     <orderEntry type="module" module-name="intellij.java.compiler.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.indexing" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin.tests" scope="TEST" />
   </component>
 </module>

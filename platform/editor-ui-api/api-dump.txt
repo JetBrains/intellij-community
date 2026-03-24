@@ -81,7 +81,9 @@ c:com.intellij.ide.projectView.PresentationData
 - f:setChanged(Z):V
 - f:setForcedTextForeground(java.awt.Color):V
 - f:setIcon(javax.swing.Icon):V
+- f:setLocationPrefix(java.lang.String):V
 - f:setLocationString(java.lang.String):V
+- f:setLocationSuffix(java.lang.String):V
 - f:setPresentableText(java.lang.String):V
 - f:setSeparatorAbove(Z):V
 - f:setTooltip(java.lang.String):V
@@ -2405,6 +2407,7 @@ com.intellij.openapi.fileTypes.EditorHighlighterProvider
 f:com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders
 - com.intellij.openapi.fileTypes.FileTypeExtension
 - sf:INSTANCE:com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders
+- forFileType(com.intellij.openapi.fileTypes.FileType):com.intellij.openapi.fileTypes.EditorHighlighterProvider
 - s:getInstance():com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders
 f:com.intellij.openapi.fileTypes.LanguageSyntaxHighlighters
 - com.intellij.lang.LanguageExtension

@@ -7,7 +7,7 @@ import com.intellij.polySymbols.html.HTML_ATTRIBUTE_VALUES
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue.Type
 import com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolDescriptor
-import com.intellij.polySymbols.html.htmlAttributeValue
+import com.intellij.polySymbols.html.getHtmlAttributeValue
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
 import com.intellij.polySymbols.utils.asSingleSymbol
@@ -25,7 +25,7 @@ class HtmlAttributeValueSymbolReferenceProvider : PsiPolySymbolReferenceProvider
   override fun getReferencedSymbol(psiElement: XmlAttributeValue): PolySymbol? {
     val attribute = psiElement.parentOfType<XmlAttribute>()
     val attributeDescriptor = attribute?.descriptor?.asSafely<HtmlAttributeSymbolDescriptor>() ?: return null
-    val type = attributeDescriptor.symbol.htmlAttributeValue
+    val type = attributeDescriptor.symbol.getHtmlAttributeValue(psiElement)
                  ?.takeIf { it.kind == null || it.kind == PolySymbolHtmlAttributeValue.Kind.PLAIN }
                  ?.type?.takeIf { it == Type.ENUM || it == Type.SYMBOL }
                ?: return null

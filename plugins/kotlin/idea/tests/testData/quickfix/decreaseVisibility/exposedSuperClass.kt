@@ -7,6 +7,7 @@
 // ACTION: Make 'Data' protected
 // ACTION: Make 'Data' public
 // ACTION: Make 'First' private
+// K2_ERROR: 'protected (in Outer)' subclass exposes its 'private-in-class' supertype 'Data'.
 
 class Outer {
     private open class Data(val x: Int)

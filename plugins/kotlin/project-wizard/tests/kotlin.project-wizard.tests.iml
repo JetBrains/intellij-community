@@ -9,7 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-tests" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
@@ -38,7 +38,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.common" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
@@ -70,5 +69,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.statistics" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin.tests" scope="TEST" />
   </component>
 </module>

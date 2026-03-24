@@ -45,7 +45,7 @@ internal class EditorConfigTrailingSpacesOptionsProvider : TrailingSpacesOptions
     }
   }
 
-  private fun getBooleanValue(properties: ResourceProperties, key: String): Boolean? {
+  private fun getBooleanValue(properties: Map<String, String>, key: String): Boolean? {
     val rawValue = properties.configValueForKey(key)
     return when {
       "false".equals(rawValue, ignoreCase = true) -> false

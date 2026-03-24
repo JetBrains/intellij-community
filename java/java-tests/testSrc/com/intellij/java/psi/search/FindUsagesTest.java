@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.ModuleManager;
@@ -146,7 +147,8 @@ public class FindUsagesTest extends JavaPsiTestCase {
 
   public void testLibraryClassUsageFromDecompiledSource() {
     PsiElement decompiled =
-      ((PsiCompiledElement)myJavaFacade.findClass("javax.swing.JLabel", GlobalSearchScope.allScope(myProject))).getMirror();
+      BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() ->
+        ((PsiCompiledElement)myJavaFacade.findClass("javax.swing.JLabel", GlobalSearchScope.allScope(myProject))).getMirror());
     assertEquals(2, ReferencesSearch.search(decompiled, GlobalSearchScope.projectScope(myProject)).findAll().size());
   }
   

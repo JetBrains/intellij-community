@@ -23,6 +23,8 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.analysis" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
   </component>
   <component name="copyright">
     <Base>

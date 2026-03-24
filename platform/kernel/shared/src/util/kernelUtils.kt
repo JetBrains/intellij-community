@@ -40,8 +40,10 @@ suspend fun <T> withKernel(middleware: TransactorMiddleware, body: suspend Corou
 }
 
 fun handleEntityTypes(transactor: Transactor, coroutineScope: CoroutineScope) {
+  //in analyzer extensions are not available inside transaction
+  val entityTypeProviders = EntityTypeProvider.EP_NAME.extensionList
   transactor.changeAsync {
-    for (extension in EntityTypeProvider.EP_NAME.extensionList) {
+    for (extension in entityTypeProviders) {
       for (entityType in extension.entityTypes()) {
         register(entityType)
       }

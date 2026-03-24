@@ -34,5 +34,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="kotlin.base.scripting.k1" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.project-structure" />
   </component>
 </module>

@@ -379,7 +379,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   }
 
   private static @NotNull Function0<List<String>> moduleOutputPathsProvider(@NotNull Module module) {
-    return () -> ReadAction.compute(() -> {
+    return () -> ReadAction.computeBlocking(() -> {
       return JBIterable.of(OrderEnumerator.orderEntries(module).withoutSdk().withoutLibraries().getClassesRoots())
         .filterMap(file -> file.isDirectory() && !file.getFileSystem().isReadOnly() ? file.getPath() : null)
         .toList();

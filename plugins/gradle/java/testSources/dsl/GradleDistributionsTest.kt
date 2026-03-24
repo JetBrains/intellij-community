@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
+import com.intellij.gradle.java.groovy.service.resolve.GradleDomainObjectProperty
+import com.intellij.gradle.java.groovy.service.resolve.GradleExtensionProperty
 import com.intellij.psi.PsiMethod
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_DISTRIBUTION
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_FILE_COPY_SPEC
-import org.jetbrains.plugins.gradle.service.resolve.GradleDomainObjectProperty
-import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionProperty
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource

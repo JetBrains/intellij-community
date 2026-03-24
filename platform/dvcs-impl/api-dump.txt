@@ -177,7 +177,7 @@ f:com.intellij.dvcs.cherrypick.VcsCherryPickManager
 a:com.intellij.dvcs.commit.AmendCommitService
 - com.intellij.vcs.commit.AmendCommitAware
 - <init>(com.intellij.openapi.project.Project):V
-- getAmendCommitDetails(com.intellij.openapi.vfs.VirtualFile):org.jetbrains.concurrency.CancellablePromise
+- getAmendCommitDetails(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.commit.CommitToAmend):org.jetbrains.concurrency.CancellablePromise
 - pf:getProject():com.intellij.openapi.project.Project
 f:com.intellij.dvcs.commit.CommitAndPushExecutorKt
 - sf:getCommitAndPushActionName(com.intellij.vcs.commit.CommitWorkflowHandlerState):java.lang.String
@@ -415,6 +415,8 @@ c:com.intellij.dvcs.repo.RepoStateException
 - java.lang.Exception
 - <init>(java.lang.String):V
 - <init>(java.lang.String,java.lang.Throwable):V
+f:com.intellij.dvcs.repo.RepositoryExtKt
+- sf:isHead(com.intellij.dvcs.repo.Repository,com.intellij.vcs.log.Hash):Z
 a:com.intellij.dvcs.repo.RepositoryImpl
 - com.intellij.dvcs.repo.Repository
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V

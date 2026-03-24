@@ -53,15 +53,19 @@ fun <T> JpsModule.processProductionOutput(processor: (outputRoot: Path) -> T): T
 val JpsModule.productionOutputPaths: List<Path>
   get() {
     val archivedCompiledClassesMapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
-    val outputJarPath = archivedCompiledClassesMapping?.get("production/$name")
-    return outputJarPath?.let { listOf(Path(it)) } ?: listOf(JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, false)
-                                                             ?: error("Output directory is not specified for '$name'"))
+    if (archivedCompiledClassesMapping != null) {
+      val outputJarPath = archivedCompiledClassesMapping["production/$name"]
+      return outputJarPath?.let { listOf(Path(it)) } ?: emptyList()
+    }
+    return listOf(JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, false) ?: error("Output directory is not specified for '$name'"))
   }
 
 val JpsModule.testOutputPaths: List<Path>
   get() {
     val archivedCompiledClassesMapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
-    val outputJarPath = archivedCompiledClassesMapping?.get("test/$name")
-    return outputJarPath?.let { listOf(Path(it)) } ?: listOf(JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, true)
-                                                             ?: error("Test output directory is not specified for '$name'"))
+    if (archivedCompiledClassesMapping != null) {
+      val outputJarPath = archivedCompiledClassesMapping["test/$name"]
+      return outputJarPath?.let { listOf(Path(it)) } ?: emptyList()
+    }
+    return listOf(JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, true) ?: error("Test output directory is not specified for '$name'"))
   }

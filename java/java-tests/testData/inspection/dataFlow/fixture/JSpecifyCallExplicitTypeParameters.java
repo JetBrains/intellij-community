@@ -15,7 +15,7 @@ class Demo {
   }
 
   void test() {
-    Test.<@NotNull String>test(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    Test.<@NotNull String>test(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     Test.<@Nullable String>test(null);
   }
 }

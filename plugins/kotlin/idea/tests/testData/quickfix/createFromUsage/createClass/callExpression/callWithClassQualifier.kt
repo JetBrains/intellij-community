@@ -6,6 +6,7 @@
 // K2_ACTIONS_LIST: Create interface 'Foo'
 // K2_ACTIONS_LIST: Create extension function 'A.Companion.Foo'
 // K2_ACTIONS_LIST: Create member function 'A.Companion.Foo'
+// K2_ERROR: Unresolved reference 'Foo'.
 class A<T>(val n: T) {
 
 }

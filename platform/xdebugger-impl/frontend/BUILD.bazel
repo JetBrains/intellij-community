@@ -16,14 +16,15 @@ jvm_library(
   deps = [
     "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlin-stdlib",
+    "//platform/code-style-api:codeStyle",
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-ex:editor-ex",
     "//platform/platform-api:ide",
     "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
     "//platform/kernel/shared:kernel",
-    "//platform/xdebugger-impl:debugger-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/lang-api:lang",
@@ -48,53 +49,146 @@ jvm_library(
 
 jvm_library(
   name = "frontend_test_lib",
+  module_name = "intellij.platform.debugger.impl.frontend",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  associates = [":frontend"],
-  deps = [
-    "//libraries/kotlinx/coroutines/core",
-    "@lib//:kotlin-stdlib",
-    "//platform/analysis-api:analysis",
-    "//platform/util/concurrency",
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":frontend",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/platform-api:ide",
-    "//platform/projectModel-api:projectModel",
-    "//platform/util:util-ui",
-    "//platform/kernel/shared:kernel",
-    "//platform/xdebugger-impl:debugger-impl",
-    "//platform/xdebugger-impl:debugger-impl_test_lib",
-    "//platform/platform-impl:ide-impl",
-    "//platform/xdebugger-api:debugger",
-    "//platform/lang-api:lang",
-    "//platform/lang-impl",
-    "//platform/platform-impl/rpc",
-    "//platform/execution",
-    "//platform/core-ui",
-    "//platform/util/coroutines",
-    "//platform/core-api:core",
-    "//platform/project/shared:project",
-    "//platform/platform-frontend:frontend",
-    "//platform/execution-impl",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/execution-impl/frontend",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/testFramework/extensions:testExtensions",
-    "//platform/xdebugger-impl/shared",
-    "//platform/xdebugger-impl/rpc",
-    "//platform/xdebugger-impl/ui",
-    "//platform/remote-topics/shared:rpc-topics",
-    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/xdebugger-api:debugger_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/platform-frontend:frontend_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/execution-impl/frontend:frontend_test_lib",
+    "//platform/xdebugger-impl/shared:shared_test_lib",
+    "//platform/xdebugger-impl/rpc:rpc_test_lib",
+    "//platform/xdebugger-impl/ui:ui_test_lib",
+    "//platform/remote-topics/shared:rpc-topics_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.frontend` end
 
-### auto-generated section `test intellij.platform.debugger.impl.frontend` start
+### auto-generated section `iml intellij.platform.debugger.impl.frontend` start
+exports_files([
+  "intellij.platform.debugger.impl.frontend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.debugger.impl.frontend` end
+
+### auto-generated section `build intellij.platform.debugger.impl.frontend.tests` start
+jvm_library(
+  name = "debugger-impl-frontend-tests",
+  module_name = "intellij.platform.debugger.impl.frontend.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "debugger-impl-frontend-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  associates = [
+    "//platform/xdebugger-impl/frontend",
+    "//platform/xdebugger-impl/frontend:frontend_test_lib",
+  ],
+  deps = [
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "@lib//:kotlin-stdlib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-api:ide",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
+    "//platform/kernel/shared:kernel",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-api:debugger_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/platform-impl/rpc",
+    "//platform/execution",
+    "//platform/execution:execution_test_lib",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util/coroutines",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/project/shared:project",
+    "//platform/project/shared:project_test_lib",
+    "//platform/platform-frontend:frontend",
+    "//platform/platform-frontend:frontend_test_lib",
+    "//platform/execution-impl",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/execution-impl/frontend",
+    "//platform/execution-impl/frontend:frontend_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework/extensions:testExtensions_test_lib",
+    "//platform/xdebugger-impl/shared",
+    "//platform/xdebugger-impl/shared:shared_test_lib",
+    "//platform/xdebugger-impl/rpc",
+    "//platform/xdebugger-impl/rpc:rpc_test_lib",
+    "//platform/xdebugger-impl/ui",
+    "//platform/xdebugger-impl/ui:ui_test_lib",
+    "//platform/remote-topics/shared:rpc-topics",
+    "//platform/remote-topics/shared:rpc-topics_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
+  ],
+  runtime_deps = [
+    ":debugger-impl-frontend-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.debugger.impl.frontend.tests` end
+
+### auto-generated section `iml intellij.platform.debugger.impl.frontend.tests` start
+exports_files([
+  "intellij.platform.debugger.impl.frontend.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.debugger.impl.frontend.tests` end
+
+### auto-generated section `test intellij.platform.debugger.impl.frontend.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "frontend_test",
-  runtime_deps = [":frontend_test_lib"]
+  name = "debugger-impl-frontend-tests_test",
+  runtime_deps = [":debugger-impl-frontend-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.debugger.impl.frontend` end
+### auto-generated section `test intellij.platform.debugger.impl.frontend.tests` end

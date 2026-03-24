@@ -9,8 +9,23 @@ resourcegroup(
 
 jvm_library(
   name = "copyright",
+  module_name = "intellij.properties.copyright",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":copyright_resources"]
 )
+
+jvm_library(
+  name = "copyright_test_lib",
+  module_name = "intellij.properties.copyright",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":copyright"]
+)
 ### auto-generated section `build intellij.properties.copyright` end
+
+### auto-generated section `iml intellij.properties.copyright` start
+exports_files([
+  "intellij.properties.copyright.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.properties.copyright` end

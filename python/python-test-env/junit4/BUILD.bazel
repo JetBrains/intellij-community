@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "junit4",
+  module_name = "intellij.python.test.env.junit4",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -30,11 +31,18 @@ jvm_library(
     "//python/python-test-env/core",
     "//python/python-test-env/core:core_test_lib",
     "@lib//:kotlin-stdlib",
+    "//python/python-test-env/common",
     "//python/python-test-env/common:common_test_lib",
   ],
   runtime_deps = [":junit4"]
 )
 ### auto-generated section `build intellij.python.test.env.junit4` end
+
+### auto-generated section `iml intellij.python.test.env.junit4` start
+exports_files([
+  "intellij.python.test.env.junit4.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.test.env.junit4` end
 
 ### auto-generated section `test intellij.python.test.env.junit4` start
 load("@community//build:tests-options.bzl", "jps_test")

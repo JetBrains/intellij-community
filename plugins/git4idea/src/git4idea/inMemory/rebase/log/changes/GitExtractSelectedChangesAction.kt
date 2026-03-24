@@ -56,7 +56,7 @@ internal class GitExtractSelectedChangesAction : GitSingleCommitEditingAction() 
       scope.launch {
         val operationResult = withBackgroundProgress(project, GitBundle.message("in.memory.rebase.log.change.extract.action.progress.indicator.title")) {
           val objectRepo = GitObjectRepository(repository)
-          GitExtractSelectedChangesOperation(objectRepo, commit, newMessage, changes).execute()
+          GitExtractSelectedChangesOperation(objectRepo, commit.id, newMessage, changes).execute()
         }
         if (operationResult is GitCommitEditingOperationResult.Complete) {
           ui?.focusCommitWhenReady(repository, operationResult.commitToFocus)

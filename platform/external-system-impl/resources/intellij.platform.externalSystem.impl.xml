@@ -4,6 +4,7 @@
     <module name="intellij.libraries.commons.cli"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.platform.analysis"/>
@@ -11,6 +12,9 @@
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.impl"/>
@@ -19,6 +23,8 @@
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.testRunner"/>
   </dependencies>
   <!-- endregion -->
 

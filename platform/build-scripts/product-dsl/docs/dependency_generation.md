@@ -28,7 +28,7 @@ All dependency generation and validation must use **PluginGraph** as the single 
 - For JPS **library** dependencies, resolve library name -> library module via `ModuleSetGenerationConfig.projectLibraryToModuleMap` (built from JPS library modules), not by scanning `.idea` libraries or module libraries.
 - The graph already encodes product/module-set aliases and pseudo-core plugins; do not build parallel maps.
 - Keep generator and validator in sync: if validation expects a dependency to be present, generator must be able to emit it (or mark it implicit/suppressed) so a second run is clean.
-- Suppression config is a contract: if a JPS-derived dep is suppressed, it is intentionally omitted from XML and must not produce validation errors. Existing XML-only deps are removed unless explicitly suppressed. Validation should only consider deps represented in the graph after filtering/suppression.
+- Suppression config is a contract: if a JPS-derived dep is suppressed, it is intentionally omitted from XML and must not produce validation errors. Existing XML-only deps are removed unless explicitly suppressed or graph semantics require preserving them (for example, manual alias-backed plugin deps). Validation should only consider deps represented in the graph after filtering/suppression.
 
 ### Graph Completeness During DSL Test Plugin Expansion
 
@@ -145,13 +145,28 @@ A specialized validation rule ensures content modules properly declare plugin de
 
 This handles many-to-many content module → plugin relationships directly from the graph.
 
-**Suppressing Known Issues**: Use `contentModuleAllowedMissingPluginDeps` in `ModuleSetGenerationConfig`:
+**Suppressing Known Issues**:
+- DSL-defined test plugin modules: use `allowedMissingPluginIds` in test plugin DSL.
+- Non-DSL content modules: use `suppressions.json` (`contentModules.<module>.suppressPlugins`).
+
 ```kotlin
-ModuleSetGenerationConfig(
-  contentModuleAllowedMissingPluginDeps = mapOf(
-    "intellij.react.ultimate" to setOf("com.intellij.css"),
-  ),
-)
+testPlugin(
+  pluginId = "intellij.some.tests.plugin",
+  name = "Some Tests Plugin",
+  pluginXmlPath = "path/to/testResources/META-INF/plugin.xml",
+) {
+  module("intellij.some.tests.module", allowedMissingPluginIds = listOf("com.intellij.css"))
+}
+```
+
+```json
+{
+  "contentModules": {
+    "intellij.react.ultimate": {
+      "suppressPlugins": ["com.intellij.css"]
+    }
+  }
+}
 ```
 
 See [docs/validators/plugin-content-dependency.md](validators/plugin-content-dependency.md) for details.
@@ -238,10 +253,12 @@ The generator computes **both** production and test dependencies for each conten
 
 | Edge Type | JPS Scopes Included | Written to XML | Use Case |
 |-----------|---------------------|----------------|----------|
-| `EDGE_CONTENT_MODULE_DEPENDS_ON` | COMPILE, RUNTIME | Yes | Production validation |
+| `EDGE_CONTENT_MODULE_DEPENDS_ON` | COMPILE, RUNTIME (and TEST for test-runtime-only modules) | Yes | Production validation |
 | `EDGE_CONTENT_MODULE_DEPENDS_ON_TEST` | COMPILE, RUNTIME, TEST | No | Test plugin validation |
 
-**Key insight**: Content modules are production code with intrinsic dependencies. A content module's production deps are the same regardless of which plugin includes it.
+For written XML, test scope is also included when a module runs only in test runtime (test descriptor `._test` modules and modules that only have test-plugin content sources). For these test-runtime-only modules, `libraryModuleFilter` is bypassed for both written and test dependency sets, so required test libraries are preserved.
+
+**Key insight**: Content modules are production code with intrinsic dependencies. Scope filtering is based on where the module is sourced (production vs test-only), not on ad-hoc XML state.
 
 ### Example
 
@@ -288,7 +305,7 @@ content is read only to preserve manual entries and xi:include content.
 
 Dependencies are generated from production-scope JPS edges. A dependency can be omitted from XML in two cases:
 
-1. The target module is **globally embedded** and the dependency is coming from a content module that belongs only to a plugin (see [Globally Embedded Module Filtering](#globally-embedded-module-filtering)).
+1. The target module is **globally embedded** and the dependency is coming from a plugin-only content module, unless the source and target are sibling content modules of the same plugin (see [Globally Embedded Module Filtering](#globally-embedded-module-filtering)).
 2. The dependency is explicitly suppressed via `suppressions.json` (or allowlists).
 
 **Implicit dependencies** are JPS production deps missing from XML (`JPS deps - XML deps`). Validators treat these as auto-inferred JPS deps and still validate them unless they are suppressed or allowlisted.
@@ -297,39 +314,49 @@ See [errors.md](errors.md) for error handling details.
 
 ## Globally Embedded Module Filtering
 
-Modules that are **globally embedded** are automatically skipped when generating dependencies. This reduces XML bloat and eliminates the need for manual suppressions.
+Dependencies to globally embedded modules are automatically skipped when generating dependencies, except for same-plugin sibling content-module deps. This reduces XML bloat without dropping structural dependencies that must stay explicit.
 
 ### Definition
 
-A module is **globally embedded** if ALL of these conditions are true:
-1. The module **is contained** by at least one product or module set (non-plugin content source)
-2. The module has **EMBEDDED loading** in ALL product/module-set sources
+A dependency target is skipped only if ALL of these conditions are true:
+1. In every product from the dependency's embedded-check scope, the target is reachable via non-plugin source(s).
+2. In every matching source in that scope, target loading mode is `EMBEDDED`.
+3. For content module descriptors, the source and target are not sibling content modules of the same owning plugin in the descriptor scope being planned.
 
-Plugin content sources do not disqualify a module from being globally embedded.
+Embedded-check scope depends on dependency origin:
+- Plugin XML dependency: products where the plugin is bundled; fallback to all discovered real products for non-bundled plugins.
+- Content module dependency (plugin-only source module): products where owner plugins are bundled; fallback to all discovered real products for non-bundled owners.
+- DSL test plugin dependency: only the owning DSL test plugin product.
+
+"Discovered real products" means `GenerationModel.discovery.products` (synthetic test product specs are excluded).
+
+Embedded-check scope excludes analysis-only products that do not define runtime embedding guarantees for plugin dependencies (currently `CodeServer`).
 
 ### Why Skip Globally Embedded Modules?
 
-Globally embedded modules are **always loaded** with the product. They're part of the core platform and don't need explicit XML dependencies because:
+If a target is embedded in every product from the embedded-check scope, it is always loaded at runtime and doesn't need explicit XML dependency declarations because:
 - They're available at runtime without declaring a dependency
 - They can't be disabled or unloaded
 - Declaring them adds no value but creates maintenance burden
 
 ### Examples
 
-| Module | Plugin Source? | Loading Mode | Globally Embedded? |
-|--------|----------------|--------------|-------------------|
-| `intellij.platform.core` | No | EMBEDDED in `essential` | ✓ Yes - skip |
-| `intellij.libraries.ktor.client` | No | EMBEDDED in `essential.minimal` | ✓ Yes - skip |
-| `intellij.vcs.impl` | Yes (`vcs` plugin) | - | ✗ No - keep |
-| `intellij.platform.optional` | No | REQUIRED in `optional.set` | ✗ No - keep |
+| Target module | Plugin source present? | Embedded in embedded-check scope? | Skip? |
+|---------------|------------------------|----------------------------------|-------|
+| `intellij.platform.core` | No | Yes | ✓ Yes |
+| `intellij.platform.frontend.split` | No | No (embedded only in JetBrainsClient while plugin is bundled in Idea + JetBrainsClient) | ✗ No |
+| `intellij.platform.core` | Yes | Yes | ✓ Yes |
+| `intellij.sh.core` from `intellij.sh.markdown` in `intellij.sh.plugin` | Yes (same plugin sibling) | Yes | ✗ No |
 
 ### Scope
 
 This filtering applies to:
 - **Plugin XML dependencies** (`<dependencies><module>` in plugin.xml)
 - **Content module dependencies** (only for content modules **in plugins**, not directly in products)
+- **DSL test plugin dependency planning**
 
-Content modules directly in products (via module sets) do NOT skip embedded deps because they're not "inside a plugin" - they're at the product level where the embedment relationship is defined. If a module is present both in a plugin and a module set, treat it as product content and do not skip embedded deps.
+Content modules directly in products (via module sets) do NOT skip embedded deps because they're not "inside a plugin" - they're at the product level where the embedding relationship is defined.
+Same-plugin sibling content-module deps also stay explicit so generated descriptors and validation graph edges preserve the plugin's internal loading relationships.
 
 ### Implementation
 
@@ -337,14 +364,15 @@ The filtering is implemented in:
 - `EmbeddedModuleUtils.kt` - shared utility functions
 - `collectPluginGraphDeps()` + `filterPluginDependencies()` (PluginDependencyPlanner) - plugin.xml filtering
 - `ContentModuleDependencyPlanner.computeJpsDeps()` - content module filtering
+- `TestPluginDependencyPlanner` - DSL test plugin filtering
 
 **Key functions:**
 ```kotlin
 // Check if module has any plugin as content source
 fun GraphScope.hasPluginSource(moduleId: Int): Boolean
 
-// Check if module is globally embedded
-fun GraphScope.isGloballyEmbedded(moduleId: Int): Boolean
+// Check if target is globally embedded across all real products
+fun GraphScope.shouldSkipEmbeddedPluginDependency(depModuleId: Int, allRealProductNames: Set<String>): Boolean
 ```
 
 ## Skipping Dependency Generation for Module Set Modules
@@ -409,6 +437,8 @@ For DSL-defined test plugins, the generator can **automatically add** JPS module
 
 **Key Principle**: Only add **unresolvable** modules - those not available in the same product (module sets + bundled production plugins; other test plugins excluded).
 
+DSL test plugins also support a test-descriptor fallback for JPS targets: when dependency target `X` has no `X.xml` descriptor but has `X._test.xml`, dependency planning treats it as content module `X._test`.
+
 ```
 JPS Dependencies (.iml)
         │
@@ -429,6 +459,8 @@ explicit content modules. Project library dependencies resolve via `ModuleSetGen
 (built from JPS library modules, not graph targets), and `libraryModuleFilter` is ignored for DSL test plugins
 because the test plugin must be a complete container in dev mode. Auto-added modules are written into the
 generated test plugin content (the `<!-- region additional -->` block), so repeat runs are clean.
+
+This fallback is scoped to **DSL test plugin auto-add** and does not change global content-module dependency generation/classification.
 
 **Why this design**: Module sets are just convenience for avoiding duplication - they're NOT special. The auto-add logic respects them naturally without special handling.
 
@@ -485,8 +517,11 @@ Dependencies are written within region markers:
 
 **Region types:**
 - `WRAPS_ENTIRE_SECTION` - module descriptors (region wraps whole `<dependencies>`)
-- `INSIDE_SECTION` - plugin.xml (region inside, preserves manual entries)
+- `INSIDE_SECTION` - real `META-INF/plugin.xml` descriptors only (region inside, preserves manual entries)
 - `NONE` - legacy files without markers
+
+If a non-plugin descriptor has region markers inside `<dependencies>`, generation normalizes it to `WRAPS_ENTIRE_SECTION`
+behavior (manual entries outside the generated region are not implicitly preserved unless covered by suppression rules).
 
 ## Validation
 
@@ -542,6 +577,9 @@ bazel run //platform/buildScripts:plugin-model-tool -- --update-suppressions
 # Review and commit suppressions changes
 git diff platform/buildScripts/suppressions.json
 ```
+
+`--update-suppressions` reports non-DSL cases as warnings and updates their suppression entries in `suppressions.json`.
+DSL test plugin allowlists (`allowedMissingPluginIds`) remain in code and are not serialized into `suppressions.json`.
 
 **Key principle:** The generator should produce ZERO changes when run twice.
 

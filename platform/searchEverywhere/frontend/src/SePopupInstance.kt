@@ -8,11 +8,13 @@ import com.intellij.ide.actions.searcheverywhere.SplitSearchListener
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import javax.swing.text.Document
 
@@ -70,13 +72,37 @@ class SePopupInstance(private val popupVm: SePopupVm,
 
   @ApiStatus.Internal
   override fun changeScope(processor: (ScopeDescriptor, List<ScopeDescriptor>) -> ScopeDescriptor?) {
-    TODO("Not yet implemented")
+    SeLog.warn("Changing scope is not supported in the split implementation.")
   }
 
   @ApiStatus.Internal
   @TestOnly
   override fun findElementsForPattern(pattern: String): Future<List<Any>> {
-    TODO("Not yet implemented")
+    val future = CompletableFuture<List<Any>>()
+
+    ApplicationManager.getApplication().invokeLater {
+      var listenerToRemove: SplitSearchListener? = null
+      val listener = object: SplitSearchListener {
+        override fun searchStarted(pattern: String, tabId: String) {}
+        override fun elementsAdded(uuidToElement: Map<String, Any>) {}
+
+        override fun searchFinished(count: Int) {
+          if (count < 0) return
+
+          listenerToRemove?.let { combinedListener.removeListener(it) }
+          val results = popupContentPane.currentResultsInList.mapNotNull { it.fetchItemIfExists()?.rawObject }
+          future.complete(results)
+        }
+      }
+
+      listenerToRemove = listener
+      combinedListener.addListener(listener)
+
+      popupContentPane.searchFieldDocument.remove(0, popupContentPane.searchFieldDocument.length)
+      popupContentPane.searchFieldDocument.insertString(0, pattern, null)
+    }
+
+    return future
   }
 
   fun saveSearchText() {

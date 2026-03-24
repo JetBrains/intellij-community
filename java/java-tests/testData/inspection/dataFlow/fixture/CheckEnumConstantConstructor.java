@@ -2,8 +2,8 @@ import org.jetbrains.annotations.*;
 
 enum NotNullEnum {
   ONE("One"),
-  TWO(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>),
-  THREE(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>) {};
+  TWO(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>),
+  THREE(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>) {};
 
   private final @NotNull String param;
   NotNullEnum(@NotNull String param) {

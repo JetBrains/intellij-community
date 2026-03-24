@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
@@ -45,7 +46,7 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
     return PyResult.success(Unit)
   }
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?): PyResult<Unit> {
     if (installRequest !is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications) {
       return PyResult.localizedError("Test Manager supports only simple repository package specification")
     }
@@ -65,7 +66,7 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
     return PyResult.success(Unit)
   }
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> {
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?): PyResult<Unit> {
     pythonPackages.forEach { pyPackage ->
       val packageToRemove = findPackageByName(pyPackage)
                             ?: return PyResult.localizedError(PACKAGE_UNINSTALL_FAILURE_MESSAGE)
@@ -122,13 +123,11 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
       val pyFile = PsiManager.getInstance(project).findFile(file) as? PyFile ?: return@readAction null
       SetupPyHelpers.parseSetupPy(pyFile)
     } ?: return null
-    return PyResult.success(requirements.mapNotNull { requirement -> requirement.toPythonPackage() })
+    return PyResult.success(requirements.map { requirement -> requirement.toPythonPackage() })
   }
 
   private suspend fun extractFromEnvironmentYml(file: VirtualFile): PyResult<List<PythonPackage>>? {
-    val requirements = readAction {
-      CondaEnvironmentYmlParser.fromFile(file)
-    } ?: return null
+    val requirements = CondaEnvironmentYmlParser.fromFile(file) ?: return null
     return PyResult.success(requirements.toPythonPackages())
   }
 

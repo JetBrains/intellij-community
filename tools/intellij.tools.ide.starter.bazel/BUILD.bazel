@@ -24,4 +24,27 @@ jvm_library(
     "//platform/build-scripts/downloader",
   ]
 )
+
+jvm_library(
+  name = "ide-starter-bazel_test_lib",
+  module_name = "intellij.tools.ide.starter.bazel",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_ide-starter-bazel",
+  runtime_deps = [
+    ":ide-starter-bazel",
+    "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
+    "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/testFramework/common:common_test_lib",
+    "//platform/build-scripts/downloader:downloader_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.tools.ide.starter.bazel` end
+
+### auto-generated section `iml intellij.tools.ide.starter.bazel` start
+exports_files([
+  "intellij.tools.ide.starter.bazel.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.tools.ide.starter.bazel` end

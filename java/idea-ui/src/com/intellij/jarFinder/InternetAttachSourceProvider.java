@@ -8,6 +8,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -19,13 +20,18 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
+import com.intellij.workspaceModel.ide.legacyBridge.LibraryBridgesKt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,33 +86,56 @@ public final class InternetAttachSourceProvider extends AbstractAttachSourceProv
     return parseName(jar);
   }
 
-  @Override
-  public @NotNull Collection<? extends AttachSourcesAction> getActions(@NotNull List<? extends LibraryOrderEntry> orderEntries,
-                                                                       @NotNull PsiFile psiFile) {
-    final VirtualFile jar = getJarByPsiFile(psiFile);
+  private static @NotNull Collection<? extends AttachSourcesAction> getActionsForLibraries(@NotNull PsiFile psiFile,
+                                                                                           @NotNull Set<Library> libraries) {
+    if (libraries.isEmpty()) return List.of();
+
+    VirtualFile jar = getJarByPsiFile(psiFile);
     if (jar == null) return List.of();
 
-    final String jarName = jar.getNameWithoutExtension();
-    int index = jarName.lastIndexOf('-');
-    if (index == -1) return List.of();
+    String jarName = jar.getNameWithoutExtension();
+    if (jarName.lastIndexOf('-') == -1) return List.of();
 
     MavenCoords mavenCoords = parse(jar);
-    if (null == mavenCoords) return List.of();
+    if (mavenCoords == null) return List.of();
 
     String artifactId = mavenCoords.artifactId();
     String version = mavenCoords.version();
-
     if (!ARTIFACT_IDENTIFIER.matcher(version).matches() || !ARTIFACT_IDENTIFIER.matcher(artifactId).matches()) {
       return List.of();
     }
 
+    return getActionsInternal(psiFile, jarName, libraries, artifactId, version, jar);
+  }
+
+  @Override
+  public @NotNull Collection<? extends AttachSourcesAction> getActions(@NotNull List<? extends LibraryOrderEntry> orderEntries,
+                                                                       @NotNull PsiFile psiFile) {
     final Set<Library> libraries = new HashSet<>();
     for (LibraryOrderEntry orderEntry : orderEntries) {
       ContainerUtil.addIfNotNull(libraries, orderEntry.getLibrary());
     }
 
-    if (libraries.isEmpty()) return List.of();
+    return getActionsForLibraries(psiFile, libraries);
+  }
 
+  @Override
+  public @NotNull @Unmodifiable Collection<? extends AttachSourcesAction> getLibrariesActions(@NotNull Collection<LibraryEntity> libraryEntities,
+                                                                                              @NotNull PsiFile psiFile) {
+    ImmutableEntityStorage snapshot = WorkspaceModel.getInstance(psiFile.getProject()).getCurrentSnapshot();
+
+    final Set<Library> libraries = ContainerUtil.map2SetNotNull(libraryEntities, library ->
+      LibraryBridgesKt.findLibraryBridge(library, snapshot));
+
+    return getActionsForLibraries(psiFile, libraries);
+  }
+
+  private static @NotNull List<? extends AttachSourcesAction> getActionsInternal(@NotNull PsiFile psiFile,
+                                                                                 String jarName,
+                                                                                 Set<Library> libraries,
+                                                                                 String artifactId,
+                                                                                 String version,
+                                                                                 VirtualFile jar) {
     final String sourceFileName = jarName + "-sources.jar";
 
     for (Library library : libraries) {
@@ -141,6 +170,12 @@ public final class InternetAttachSourceProvider extends AbstractAttachSourceProv
           attachSourceJar(sourceFile, libraries);
           return ActionCallback.DONE;
         }
+
+        @Override
+        public @NotNull ActionCallback perform(@NotNull Collection<LibraryEntity> libraryEntities, @NotNull Project project) {
+          attachSourceJar(sourceFile, libraries);
+          return ActionCallback.DONE;
+        }
       });
     }
 
@@ -157,7 +192,22 @@ public final class InternetAttachSourceProvider extends AbstractAttachSourceProv
 
       @Override
       public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
-        final Task task = new Task.Modal(psiFile.getProject(), JavaUiBundle.message("progress.title.searching.source"), true) {
+        final Task task = getTask();
+        task.queue();
+
+        return ActionCallback.DONE;
+      }
+
+      @Override
+      public @NotNull ActionCallback perform(@NotNull Collection<LibraryEntity> libraryEntities, @NotNull Project project) {
+        final Task task = getTask();
+        task.queue();
+
+        return ActionCallback.DONE;
+      }
+
+      private @NotNull Task getTask() {
+        return new Task.Modal(psiFile.getProject(), JavaUiBundle.message("progress.title.searching.source"), true) {
           @Override
           public void run(final @NotNull ProgressIndicator indicator) {
             String artifactUrl = null;
@@ -217,10 +267,6 @@ public final class InternetAttachSourceProvider extends AbstractAttachSourceProv
             new Notification("Source searcher", title, message, notificationType).notify(getProject());
           }
         };
-
-        task.queue();
-
-        return ActionCallback.DONE;
       }
     });
   }

@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.productLayout.dependency
 
+import com.fasterxml.aalto.WFCException
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.baseModuleName
 import com.intellij.platform.pluginGraph.toDescriptorFileName
@@ -34,7 +35,6 @@ import java.nio.file.Path
  */
 internal class ModuleDescriptorCache(
   private val outputProvider: ModuleOutputProvider,
-  scope: CoroutineScope,
 ) {
   data class DescriptorInfo(
     @JvmField val descriptorPath: Path,
@@ -54,7 +54,7 @@ internal class ModuleDescriptorCache(
     @JvmField val suppressibleError: UnsuppressedPipelineError? = null,
   )
 
-  private val cache = AsyncCache<String, DescriptorInfo?>(scope)
+  private val cache = AsyncCache<String, DescriptorInfo?>()
 
   /**
    * Gets cached descriptor info or analyzes the module if not yet cached.
@@ -102,7 +102,12 @@ internal class ModuleDescriptorCache(
     val skipDependencyGeneration = content.contains("@skip-dependency-generation")
 
     // Use platform parser to extract existing dependencies (xi:include aware)
-    val parseResult = parseContentAndXIncludes(input = content.toByteArray(), locationSource = null)
+    val parseResult = try {
+      parseContentAndXIncludes(input = content.toByteArray(), locationSource = null)
+    }
+    catch (e: WFCException) {
+      throw IllegalStateException("Failed to parse descriptor for module $moduleName", e)
+    }
 
     // Detect non-standard XML root: parser returns empty but file has dependency elements.
     // This indicates <dependencies> root instead of <idea-plugin> - parser can't extract from such files.

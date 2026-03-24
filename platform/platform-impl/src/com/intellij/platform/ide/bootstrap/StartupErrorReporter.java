@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap;
 
+import com.intellij.diagnostic.ITNProxy;
 import com.intellij.diagnostic.ImplementationConflictException;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.logsUploader.LogUploader;
 import com.intellij.ide.plugins.EssentialPluginMissingException;
 import com.intellij.ide.plugins.PluginConflictReporter;
@@ -22,17 +22,17 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.ExceptionsKt;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.io.Compressor;
-import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -44,7 +44,6 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import java.awt.AWTError;
 import java.awt.BorderLayout;
@@ -63,16 +62,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.ExecutionException;
 
+import static com.intellij.ide.BootstrapBundle.message;
 import static java.util.Objects.requireNonNullElse;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 @ApiStatus.Internal
+@NullMarked
 public final class StartupErrorReporter {
   private static final String SUPPORT_URL_PROPERTY = "ij.startup.error.support.url";
-  private static final String REPORT_URL_PROPERTY = "ij.startup.error.report.url";
 
   private static boolean hasGraphics = !ApplicationManagerEx.isInIntegrationTest();
 
@@ -81,7 +80,8 @@ public final class StartupErrorReporter {
       "Plugin Installation Problem",
       "The IDE failed to install or update some plugins.\n" +
       "Please try again, and if the problem persists, report it to the support.\n\n" +
-      "The cause: " + t.toString());
+      "The cause: " + t
+    );
   }
 
   /** <strong>Note:</strong> warnings should be hardcoded because it's too early to try loading localization plugins. */
@@ -101,23 +101,23 @@ public final class StartupErrorReporter {
     }
   }
 
-  public static void showError(@NotNull @Nls(capitalization = Title) String title, @NotNull Throwable t) {
+  public static void showError(@Nls(capitalization = Title) String title, Throwable t) {
     var message = new StringWriter();
 
     var awtError = findCause(t, AWTError.class);
     if (awtError != null) {
-      message.append(BootstrapBundle.message("bootstrap.error.prefix.graphics"));
+      message.append(message("bootstrap.error.prefix.graphics"));
       hasGraphics = false;
       t = awtError;
     }
     else {
-      message.append(BootstrapBundle.message("bootstrap.error.prefix.other"));
+      message.append(message("bootstrap.error.prefix.other"));
     }
 
     message.append("\n\n");
     t.printStackTrace(new PrintWriter(message));
 
-    message.append("\n-----\n").append(BootstrapBundle.message("bootstrap.error.appendix.jre", jreDetails()));
+    message.append("\n-----\n").append(message("bootstrap.error.appendix.jre", jreDetails()));
 
     showError(title, message.toString(), t); //NON-NLS
   }
@@ -158,10 +158,10 @@ public final class StartupErrorReporter {
 
     try {
       var messageObj = prepareMessage(message);
-      var close = BootstrapBundle.message("bootstrap.error.option.close");
+      var close = message("bootstrap.error.option.close");
       var iconUrl = StartupErrorReporter.class.getResource("/images/questionSign.png");
       var learnMore = iconUrl != null ? new JLabel(new ImageIcon(iconUrl)) : new JLabel("?");
-      learnMore.setToolTipText(BootstrapBundle.message("bootstrap.error.option.support"));
+      learnMore.setToolTipText(message("bootstrap.error.option.support"));
       learnMore.setCursor(new Cursor(Cursor.HAND_CURSOR));
       learnMore.addMouseListener(new MouseAdapter() {
         @Override
@@ -170,13 +170,13 @@ public final class StartupErrorReporter {
         }
       });
       if (error != null) {
-        var options = new Object[]{close, BootstrapBundle.message("bootstrap.error.option.reset"), BootstrapBundle.message("bootstrap.error.option.report"), learnMore};
+        var options = new Object[]{close, message("bootstrap.error.option.reset"), message("bootstrap.error.option.report"), learnMore};
         var choice = JOptionPane.showOptionDialog(
           JOptionPane.getRootFrame(), messageObj, title, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, options, options[0]
         );
         switch (choice) {
           case 1 -> cleanStart();
-          case 2 -> reportProblem(title, message, error);
+          case 2 -> reportProblem(error);
         }
       }
       else {
@@ -188,7 +188,7 @@ public final class StartupErrorReporter {
     }
     catch (Throwable t) {
       System.err.println("\n-----");
-      System.err.println(BootstrapBundle.message("bootstrap.error.appendix.graphics"));
+      System.err.println(message("bootstrap.error.appendix.graphics"));
       t.printStackTrace(System.err);
     }
   }
@@ -203,78 +203,45 @@ public final class StartupErrorReporter {
     }
   }
 
-  private static void reportProblem(String title, String description, @Nullable Throwable error) {
-    if (error != null) {
-      title += " (" + error.getClass().getSimpleName() + ": " + shorten(error.getMessage()) + ')';
-    }
-
-    var uploadId = (String)null;
-    if (error instanceof ExceptionWithAttachments ewa) {
-      var message = prepareMessage(BootstrapBundle.message("bootstrap.error.message.confirm"));
-      var ok = JOptionPane.showConfirmDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.option.report"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
+  private static void reportProblem(Throwable error) {
+    if (error instanceof ExceptionWithAttachments) {
+      var message = prepareMessage(message("bootstrap.error.message.confirm"));
+      var ok = JOptionPane.showConfirmDialog(JOptionPane.getRootFrame(), message, message("bootstrap.error.option.report"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
       if (ok != JOptionPane.OK_OPTION) return;
-
-      try {
-        uploadId = uploadLogs(ewa);
-      }
-      catch (Throwable t) {
-        var buf = new StringWriter();
-        t.printStackTrace(new PrintWriter(buf));
-        message = prepareMessage(BootstrapBundle.message("bootstrap.error.message.no.logs", buf));
-        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.no.logs"), JOptionPane.ERROR_MESSAGE);
-        return;
-      }
-    }
-    if (uploadId != null) {
-      description += "\n\n-----\n[Upload ID: " + uploadId + ']';
     }
 
-    try {
-      var url = System.getProperty(REPORT_URL_PROPERTY, "https://youtrack.jetbrains.com/newissue?project=IJPL&clearDraft=true&summary=$TITLE$&description=$DESCR$&c=$SUBSYSTEM$")
-        .replace("$TITLE$", URLUtil.encodeURIComponent(title))
-        .replace("$DESCR$", URLUtil.encodeURIComponent(description))
-        .replace("$SUBSYSTEM$", URLUtil.encodeURIComponent("Subsystem: IDE. Startup"));
-      Desktop.getDesktop().browse(new URI(url));
-    }
-    catch (Throwable t) {
-      showBrowserError(t);
-    }
-  }
-
-  private static String shorten(String message) {
-    if (message.length() <= 200) return message;
-    int p = message.indexOf('\n', 200);
-    if (p < 0 || p >= 250) p = message.indexOf(". ", 200);
-    if (p < 0 || p >= 250) p = message.indexOf(' ', 200);
-    if (p < 0 || p >= 250) p = 200;
-    message = message.substring(0, p);
-    return message + (message.endsWith(".") ? ".." : "...");
-  }
-
-  private static @Nullable String uploadLogs(ExceptionWithAttachments error) throws ExecutionException, InterruptedException {
     var progressBar = new JProgressBar();
     progressBar.setIndeterminate(true);
-    var label = new JLabel(BootstrapBundle.message("bootstrap.error.message.logs"));
+    var label = new JLabel(message("bootstrap.error.message.submitting"));
     var panel = new JPanel(new BorderLayout(5, 5));
     panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     panel.add(label, BorderLayout.NORTH);
     panel.add(progressBar, BorderLayout.CENTER);
-    var progressDialog = new JDialog(JOptionPane.getRootFrame(), BootstrapBundle.message("bootstrap.error.title.logs"), true);
+    var progressDialog = new JDialog(JOptionPane.getRootFrame(), message("bootstrap.error.title.submitting"), true);
     progressDialog.add(panel);
     progressDialog.setSize(300, 100);
     progressDialog.setLocationRelativeTo(null);
 
-    @SuppressWarnings("SSBasedInspection")
-    var worker = new SwingWorker<String, Void>() {
+    @SuppressWarnings({"SSBasedInspection", "UnnecessaryFullyQualifiedName"})
+    var worker = new javax.swing.SwingWorker<String, Void>() {
       @Override
       protected String doInBackground() throws Exception {
-        var logs = collectLogs(error);
-        try {
-          return LogUploader.uploadFile(logs);
+        var comment = "Startup error";
+
+        if (error instanceof ExceptionWithAttachments ewa) {
+          var logs = collectLogs(ewa);
+          try {
+            var uploadId = LogUploader.uploadFile(logs);
+            comment += "\n\nLogs upload ID: " + uploadId;
+          }
+          finally {
+            NioFiles.deleteQuietly(logs);
+          }
         }
-        finally {
-          NioFiles.deleteQuietly(logs);
-        }
+
+        var id = ITNProxy.sendError(new IdeaLoggingEvent(comment, error));
+
+        return String.valueOf(id);
       }
 
       @Override
@@ -287,7 +254,17 @@ public final class StartupErrorReporter {
     worker.execute();
     progressDialog.setVisible(true);
 
-    return worker.get();
+    try {
+      var reportId = worker.get();
+      var message = message("bootstrap.error.message.submitted", reportId);
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, message("bootstrap.error.title.submitted"), JOptionPane.INFORMATION_MESSAGE);
+    }
+    catch (Throwable t) {
+      var buf = new StringWriter();
+      t.printStackTrace(new PrintWriter(buf));
+      var message = prepareMessage(message("bootstrap.error.message.no.report", buf));
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, message("bootstrap.error.title.no.report"), JOptionPane.ERROR_MESSAGE);
+    }
   }
 
   private static Path collectLogs(ExceptionWithAttachments error) throws IOException {
@@ -320,30 +297,30 @@ public final class StartupErrorReporter {
     try {
       var backupPath = ConfigBackup.Companion.getNextBackupPath(PathManager.getConfigDir());
       CustomConfigMigrationOption.StartWithCleanConfig.INSTANCE.writeConfigMarkerFile();
-      var message = BootstrapBundle.message("bootstrap.error.message.reset", backupPath);
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.reset"), JOptionPane.INFORMATION_MESSAGE);
+      var message = message("bootstrap.error.message.reset", backupPath);
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, message("bootstrap.error.title.reset"), JOptionPane.INFORMATION_MESSAGE);
     }
     catch (Throwable t) {
-      var message = BootstrapBundle.message("bootstrap.error.message.reset.failed", t);
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.reset"), JOptionPane.ERROR_MESSAGE);
+      var message = message("bootstrap.error.message.reset.failed", t);
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, message("bootstrap.error.title.reset"), JOptionPane.ERROR_MESSAGE);
     }
   }
 
   private static void showBrowserError(Throwable t) {
-    var message = prepareMessage(BootstrapBundle.message("bootstrap.error.message.browser", t));
-    JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.browser"), JOptionPane.ERROR_MESSAGE);
+    var message = prepareMessage(message("bootstrap.error.message.browser", t));
+    JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, message("bootstrap.error.title.browser"), JOptionPane.ERROR_MESSAGE);
   }
 
   @SuppressWarnings({"UndesirableClassUsage", "HardCodedStringLiteral"})
   private static JScrollPane prepareMessage(String message) {
     var textPane = new JTextPane();
     textPane.setEditable(false);
-    textPane.setText(message.replaceAll("\t", "    "));
+    textPane.setText(message.replace("\t", "    "));
     textPane.setBackground(UIManager.getColor("Panel.background"));
     textPane.setCaretPosition(0);
 
     var scrollPane = new JScrollPane(textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setBorder(null);
+    scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
     var maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height / 2;
     var maxWidth = Toolkit.getDefaultToolkit().getScreenSize().width / 2;
@@ -354,7 +331,7 @@ public final class StartupErrorReporter {
     return scrollPane;
   }
 
-  public static void processException(@NotNull Throwable t) {
+  public static void processException(Throwable t) {
     if (LoadingState.COMPONENTS_LOADED.isOccurred() && !(t instanceof StartupAbortedException)) {
       if (!(t instanceof ControlFlowException)) {
         PluginManagerCore.getLogger().error(t);
@@ -367,8 +344,9 @@ public final class StartupErrorReporter {
     if (essentialPluginMissingException != null) {
       var pluginIds = essentialPluginMissingException.pluginIds;
       showError(
-        BootstrapBundle.message("bootstrap.error.title.corrupted"),
-        BootstrapBundle.message("bootstrap.error.essential.plugins", pluginIds.size(), "  " + String.join("\n  ", pluginIds) + "\n\n"));
+        message("bootstrap.error.title.corrupted"),
+        message("bootstrap.error.essential.plugins", pluginIds.size(), "  " + String.join("\n  ", pluginIds) + "\n\n")
+      );
       System.exit(AppExitCodes.INSTALLATION_CORRUPTED);
     }
 
@@ -398,20 +376,20 @@ public final class StartupErrorReporter {
       PluginManagerCore.disablePlugin(pluginId);
 
       var message = new StringWriter();
-      message.append(BootstrapBundle.message("bootstrap.error.message.plugin.failed", pluginId.getIdString()));
+      message.append(message("bootstrap.error.message.plugin.failed", pluginId.getIdString()));
       message.append("\n\n");
       requireNonNullElse(pluginException.getCause(), pluginException).printStackTrace(new PrintWriter(message));
 
-      showError(BootstrapBundle.message("bootstrap.error.title.plugin.init"), message.toString()); //NON-NLS
+      showError(message("bootstrap.error.title.plugin.init"), message.toString()); //NON-NLS
       System.exit(AppExitCodes.PLUGIN_ERROR);
     }
     else {
-      showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), t);
+      showError(message("bootstrap.error.title.start.failed"), t);
       System.exit(AppExitCodes.STARTUP_EXCEPTION);
     }
   }
 
-  private static <T extends Throwable> T findCause(Throwable t, Class<T> clazz) {
+  private static <T extends Throwable> @Nullable T findCause(Throwable t, Class<T> clazz) {
     while (t != null) {
       if (clazz.isInstance(t)) {
         return clazz.cast(t);

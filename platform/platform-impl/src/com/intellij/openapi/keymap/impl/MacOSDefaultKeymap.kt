@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.extensions.PluginDescriptor
-import org.intellij.lang.annotations.JdkConstants
+import com.intellij.util.ui.JdkConstants
 import java.awt.event.InputEvent
 import javax.swing.KeyStroke
 

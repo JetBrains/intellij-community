@@ -219,9 +219,16 @@ public class PluginUpdatesService {
     }
   }
 
+  @ApiStatus.Internal
+  public void refreshCallbacks() {
+    reapplyFilter();
+  }
+
   public void dispose() {
     synchronized (ourLock) {
       dispose(this);
+      myCountCallback = null;
+      myUpdateCallbacks = null;
       if (mySetFilter) {
         setOurFilter(DEFAULT_FILTER);
         mySetFilter = false;

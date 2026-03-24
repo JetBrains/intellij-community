@@ -10,6 +10,13 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 
+/**
+ * Co-routine friendly warpper over [ExternalSystemUtil.runTask]
+ *
+ * Simplifies error result handling
+ * Throws [java.util.concurrent.CancellationException] on external task cancellation
+ * Re-throws underlying exception in case of external task failure
+ */
 @ApiStatus.Experimental
 object TaskExecutionUtil {
 

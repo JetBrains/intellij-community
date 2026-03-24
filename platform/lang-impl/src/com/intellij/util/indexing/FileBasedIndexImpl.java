@@ -74,6 +74,7 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SmartHashSet;
@@ -1246,6 +1247,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Override
+  @RequiresBackgroundThread(generateAssertion = false)
   public <K, V> boolean processFilesContainingAnyKey(@NotNull ID<K, V> indexId,
                                                      @NotNull Collection<? extends K> dataKeys,
                                                      @NotNull GlobalSearchScope filter,
@@ -1442,7 +1444,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         if (proj != null && !proj.equals(project)) {
           continue; // skip this set as associated with a different project
         }
-        if (ReadAction.compute(() -> set.first.isInSet(indexingRequest.getFile()))) {
+        if (ReadAction.computeBlocking(() -> set.first.isInSet(indexingRequest.getFile()))) {
           return true;
         }
       }

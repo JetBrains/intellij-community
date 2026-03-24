@@ -28,15 +28,19 @@ Special handling applies to the directories below. If a file you touch lives und
   - Bazel: do not run Bazel build and tests here.
 - **AI Assistant activation** (`plugins/llm/activation/`):
   - Activation: follow `plugins/llm/activation/.ai/guidelines.md` before edits or reviews.
+- **Toolbox** (`toolbox/`):
+  - Tests: never use `./tests.cmd`; see `toolbox/.ai/index.md` for Gradle/Bazel test commands.
+  - Build: use `./bazel.cmd build //toolbox/...` instead of `./bazel-build-all.cmd`.
 
 ## Mandatory Rules
 
 ### After Code Changes
 
-- **Full Bazel compilation after code changes:** run `./bazel-build-all.cmd` via terminal command tool (not JetBrains MCP terminal). Skip if only `.js`, `.mjs`, `.md`, `.txt`, or `.json` files are modified.
+- **Run affected tests:** `./tests.cmd -Dintellij.build.test.patterns=<FQN or wildcard>` (**FQN required; simple class names do not match**), or `node --test <file>` for `*.test.mjs`.
+  `tests.cmd` performs Bazel compilation internally, so a separate `bazel build` step is not needed when tests will be run.
+  Module-specific rules may override the runner. Skip if plugin has no tests. See [TESTING](./.agents/skills/testing/SKILL.md).
+- **Bazel compilation without tests:** when only verifying compilation (no tests to run), use `bazel build <target>` for affected modules. Skip if only `.js`, `.mjs`, `.md`, `.txt`, or `.json` files are modified.
 - After modifying `*.iml`, `BUILD.bazel`, or `.idea/` files: run `./build/jpsModelToBazel.cmd`.
-- Run affected tests: `./tests.cmd -Dintellij.build.test.patterns=<FQN or wildcard>` (**FQN required; simple class names do not match**), or `node --test <file>` for `*.test.mjs`.
-  Module-specific rules may override the runner. Skip if plugin has no tests. See [TESTING-internals](./.agents/skills/testing-internals/SKILL.md).
 
 ### After Writing Code
 
@@ -50,12 +54,13 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 - add comments
 - auto-format
 - normalize (structure or whitespace)
+- add a trailing newline at end of file
 - prune (remove) empty tags
 - reorder elements or attributes
 
 ## Tools (use in this order)
 
-### ijproxy (required when available)
+### ijproxy (required)
 
 - Read: `mcp__ijproxy__read_file`
 - Edit/Write: `mcp__ijproxy__apply_patch`
@@ -64,18 +69,6 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 - Search text: `mcp__ijproxy__search_text`
 - Search regex: `mcp__ijproxy__search_regex`
 - List dir: `mcp__ijproxy__list_dir`
-
-### jetbrains MCP (fallback)
-Direct JetBrains MCP connection. Use when ijproxy unavailable.
-
-- Read: `get_file_text_by_path`
-- Edit: `replace_text_in_file`
-- Write: `create_new_file`
-- Find by glob: `find_files_by_glob`
-- Find by name: `find_files_by_name_keyword`
-- Search text: `search_in_files_by_text`
-- Search regex: `search_in_files_by_regex`
-- List dir: `list_directory_tree`
 
 ### Client fallback (no MCP)
 
@@ -89,7 +82,7 @@ Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid
 - Refactors: `rename` (ijproxy) / `rename_refactoring` (JetBrains MCP); use for renames and avoid manual search/replace.
 - Formatting: `reformat_file`
 - Concurrency checks: `find_threading_requirements_usages`, `find_lock_requirements_usages`
-- Project structure: `get_project_modules`, `get_project_dependencies`, `get_repositories`
+- Project structure & VCS: `get_project_modules`, `get_project_dependencies`, `get_repositories`, `git_status`
 - Run configs: `get_run_configurations`, `execute_run_configuration`
 
 ### Tooling rules
@@ -100,7 +93,7 @@ Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid
 
 - Never shell for file ops (`cat`, `sed`, `find`, `grep`) on repo paths, except the client fallback (`./tools/fd.cmd`, `./tools/rg.cmd`) when no MCP is available.
 
-- Shell OK for: git, build/test.
+- Shell OK for: git (prefer `git_status` if the tool is available), build/test.
 - Outside repo: native shell permitted.
 
 ## Individual Preferences

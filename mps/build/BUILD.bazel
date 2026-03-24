@@ -17,4 +17,24 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
   ]
 )
+
+jvm_library(
+  name = "build_test_lib",
+  module_name = "intellij.mps.build",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":build",
+    "//build:build_test_lib",
+    "//java/java-runtime:rt_test_lib",
+    "//jps/standalone-builder:tools-jps-build-standalone_test_lib",
+    "//platform/build-scripts/downloader:downloader_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.mps.build` end
+
+### auto-generated section `iml intellij.mps.build` start
+exports_files([
+  "intellij.mps.build.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.mps.build` end

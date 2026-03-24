@@ -55,8 +55,6 @@ Note that some tests require extra setup steps to install the required dependenc
   <td>Linux / macOS / WSL</td>
   <td>
 
-  On Linux and macOS, you will be able to run the full test suite on Python
-  3.9-3.12.
   To install the necessary requirements, run the following commands from a
   terminal window:
 

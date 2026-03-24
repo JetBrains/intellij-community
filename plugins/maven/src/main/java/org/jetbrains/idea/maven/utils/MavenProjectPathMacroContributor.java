@@ -25,7 +25,7 @@ final class MavenProjectPathMacroContributor implements ProjectWidePathMacroCont
 
   static @NotNull String getPathToDefaultMavenLocalRepositoryOnSpecificEnv(@NotNull @SystemIndependent String projectFilePath) {
     Path projectFile = Path.of(projectFilePath);
-    return MavenUtil.resolveDefaultLocalRepository(EelProviderUtil.getEelDescriptor(projectFile)).toAbsolutePath().toString();
+    return MavenUtil.resolveDefaultLocalRepositoryForJpsMacros(EelProviderUtil.getEelDescriptor(projectFile)).toAbsolutePath().toString();
   }
 
 }

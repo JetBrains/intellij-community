@@ -13,7 +13,7 @@ class Test {
       return <warning descr="'null' is returned by the method which is not declared as @Nullable"><weak_warning descr="Value 'foo' is always 'null'">foo</weak_warning></warning>;
     }
     if (bar == null) {
-      test2(<warning descr="Passing 'null' argument to parameter annotated as @NotNull"><weak_warning descr="Value 'bar' is always 'null'">bar</weak_warning></warning>);
+      test2(<warning descr="Passing 'null' argument to parameter annotated as non-null"><weak_warning descr="Value 'bar' is always 'null'">bar</weak_warning></warning>);
     }
     return foo;
   }

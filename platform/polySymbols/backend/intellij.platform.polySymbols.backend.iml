@@ -7,6 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" />

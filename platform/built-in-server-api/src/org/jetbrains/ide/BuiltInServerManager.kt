@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.intellij.openapi.Disposable
@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.util.Url
 import io.netty.bootstrap.Bootstrap
 import org.jetbrains.annotations.ApiStatus
+import java.net.InetAddress
 import java.net.URLConnection
 
 abstract class BuiltInServerManager {
@@ -13,6 +14,8 @@ abstract class BuiltInServerManager {
     @JvmStatic
     fun getInstance(): BuiltInServerManager = service()
   }
+
+  abstract val address: InetAddress
 
   abstract val port: Int
 

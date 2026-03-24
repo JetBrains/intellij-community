@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests",
+  module_name = "intellij.kotlin.native.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -23,21 +24,34 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/native",
+    "//plugins/kotlin/native:native_test_lib",
     "@lib//:kotlinc-kotlin-jps-common",
+    "//plugins/kotlin/tests-common:common-tests",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
     "//java/idea-ui:ui",
+    "//java/idea-ui:ui_test_lib",
   ],
   runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.native.tests` end
+
+### auto-generated section `iml intellij.kotlin.native.tests` start
+exports_files([
+  "intellij.kotlin.native.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.native.tests` end
 
 ### auto-generated section `test intellij.kotlin.native.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

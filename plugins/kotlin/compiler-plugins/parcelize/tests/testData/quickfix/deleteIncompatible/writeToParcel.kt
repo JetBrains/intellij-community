@@ -1,6 +1,9 @@
 // "Remove custom 'writeToParcel()' function" "true"
-// ERROR: 'CREATOR' definition is not allowed. Use 'Parceler' companion object instead
 // WITH_STDLIB
+// ERROR: 'CREATOR' definition is not allowed. Use 'Parceler' companion object instead
+// K2_ERROR: 'CREATOR' definition is not allowed. Use 'Parceler' companion object instead.
+// K2_ERROR: Overriding 'writeToParcel' is not allowed. Use 'Parceler' companion object instead.
+// K2_AFTER_ERROR: 'CREATOR' definition is not allowed. Use 'Parceler' companion object instead.
 
 package com.myapp.activity
 
@@ -31,3 +34,4 @@ class Foo(val a: String) : Parcelable {
     }
 
 }
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelRemoveCustomWriteToParcel

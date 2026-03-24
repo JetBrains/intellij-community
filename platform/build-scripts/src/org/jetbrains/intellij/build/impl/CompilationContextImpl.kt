@@ -223,7 +223,7 @@ class CompilationContextImpl internal constructor(
     return jdkHome
   }
 
-  private val originalModuleRepository = asyncLazy("Build original module repository") {
+  private val originalModuleRepository = suspendingLazy("Build original module repository") {
     buildOriginalModuleRepository(this@CompilationContextImpl)
   }
   

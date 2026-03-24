@@ -7,8 +7,8 @@
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.platform.testFramework.junit5.projectStructure"/>
     <module name="intellij.platform.testFramework.junit5.codeInsight"/>
-    <module name="intellij.platform.testFramework.junit5._test"/>
-    <module name="intellij.platform.testFramework.junit5.eel._test"/>
+    <module name="intellij.platform.testFramework.junit5.tests"/>
+    <module name="intellij.platform.testFramework.junit5.eel.tests"/>
     <module name="intellij.platform.testFramework.junit5.wsl._test"/>
   </content>
 </idea-plugin>

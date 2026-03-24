@@ -19,9 +19,9 @@ import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaReference;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiPolyVariantReference;import com.intellij.psi.PsiReference;
 import com.intellij.psi.augment.PsiAugmentProvider;
-import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.JavaResolveTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,6 +68,9 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
     configureDependency();
 
     PsiReference ref = configure();
+    if (ref instanceof PsiMultiReference polyRef) {
+      ref = polyRef.getReferences()[0];
+    }
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     assertNotNull(target);
     assertNotSame(unrelated, ModuleUtilCore.findModuleForPsiElement(target));
@@ -153,7 +156,6 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
     expect(mock.findClass(anyObject(), anyObject())).andReturn(null).anyTimes();
     expect(mock.findClasses(anyObject(), anyObject())).andReturn(PsiClass.EMPTY_ARRAY).anyTimes();
     expect(mock.findPackage(eq("foo"))).andReturn(null);
-    expect(mock.getSubPackages(rootPackage(), anyObject())).andReturn(PsiPackage.EMPTY_ARRAY);
     replay(mock);
     return mock;
   }

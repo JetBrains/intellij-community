@@ -75,6 +75,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import git4idea.GitUtil
 import git4idea.i18n.GitBundle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.BasicStroke
@@ -315,10 +316,12 @@ class GitStageLineStatusTracker(
     }
   }
 
+  @ApiStatus.Internal
   override fun addListener(listener: LineStatusTrackerListener) {
     listeners.addListener(listener)
   }
 
+  @ApiStatus.Internal
   override fun removeListener(listener: LineStatusTrackerListener) {
     listeners.removeListener(listener)
   }

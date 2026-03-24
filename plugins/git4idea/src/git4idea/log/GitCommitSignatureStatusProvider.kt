@@ -4,7 +4,6 @@ package git4idea.log
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.VirtualFile
@@ -98,8 +97,7 @@ internal class GitCommitSignatureStatusProvider : VcsCommitExternalStatusProvide
 @Service(Service.Level.APP)
 internal class GitCommitSignatureColumnService(override val scope: CoroutineScope) : VcsLogExternalStatusColumnService<GitCommitSignature>() {
   override fun getDataLoader(project: Project): VcsCommitsDataLoader<GitCommitSignature> {
-    val loader = if (SystemInfo.isWindows) NonCancellableGitCommitSignatureLoader(project)
-    else SimpleGitCommitSignatureLoader(project)
+    val loader = SuspendingGitCommitSignatureLoader(project, scope)
     return service<GitCommitSignatureLoaderSharedCache>().wrapWithCaching(loader)
   }
 }

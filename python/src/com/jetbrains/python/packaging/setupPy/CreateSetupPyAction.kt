@@ -84,58 +84,59 @@ class CreateSetupPyAction : CreateFromTemplateAction(
     }
   }
 
+
   companion object {
     private const val AUTHOR_PROPERTY = "python.packaging.author"
     private const val EMAIL_PROPERTY = "python.packaging.author.email"
     const val SETUP_SCRIPT_TEMPLATE_NAME: String = "Setup Script"
+  }
+}
 
-    private val visibleNames: MutableMap<String?, String?>
-      get() {
-        val attributeToName = HashMap<String?, String?>()
-        attributeToName.put("Package_name", PyBundle.message("python.packaging.create.setup.package.name"))
-        attributeToName.put("Version", PyBundle.message("python.packaging.create.setup.version"))
-        attributeToName.put("URL", PyBundle.message("python.packaging.create.setup.url"))
-        attributeToName.put("License", PyBundle.message("python.packaging.create.setup.license"))
-        attributeToName.put("Author", PyBundle.message("python.packaging.create.setup.author"))
-        attributeToName.put("Author_Email", PyBundle.message("python.packaging.create.setup.author.email"))
-        attributeToName.put("Description", PyBundle.message("python.packaging.create.setup.description"))
-        return attributeToName
+private val visibleNames: MutableMap<String?, String?>
+  get() {
+    val attributeToName = HashMap<String?, String?>()
+    attributeToName.put("Package_name", PyBundle.message("python.packaging.create.setup.package.name"))
+    attributeToName.put("Version", PyBundle.message("python.packaging.create.setup.version"))
+    attributeToName.put("URL", PyBundle.message("python.packaging.create.setup.url"))
+    attributeToName.put("License", PyBundle.message("python.packaging.create.setup.license"))
+    attributeToName.put("Author", PyBundle.message("python.packaging.create.setup.author"))
+    attributeToName.put("Author_Email", PyBundle.message("python.packaging.create.setup.author.email"))
+    attributeToName.put("Description", PyBundle.message("python.packaging.create.setup.description"))
+    return attributeToName
+  }
+
+private fun getSetupImport(dataContext: DataContext): String {
+  val module = PlatformCoreDataKeys.MODULE.getData(dataContext)
+  return if (hasSetuptoolsPackage(module)) "from setuptools import setup" else "from distutils.core import setup"
+}
+
+private val SETUPTOOLS_MARKER = PackageAvailabilitySpec("setuptools", "setuptools.setup")
+
+private fun hasSetuptoolsPackage(module: Module?): Boolean {
+  if (module == null) return false
+  return isPackageAvailable(module, SETUPTOOLS_MARKER)
+}
+
+private fun getPackageList(dataContext: DataContext): String {
+  val module = PlatformCoreDataKeys.MODULE.getData(dataContext)
+  if (module != null) {
+    return "['" + StringUtil.join(PyPackageUtil.getPackageNames(module), "', '") + "']"
+  }
+  return "[]"
+}
+
+private fun getPackageDirs(dataContext: DataContext): String {
+  val module = PlatformCoreDataKeys.MODULE.getData(dataContext)
+  if (module != null) {
+    val sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots()
+    for (sourceRoot in sourceRoots) {
+      // TODO notify if we have multiple source roots and can't build mapping automatically
+      val contentRoot = ProjectFileIndex.getInstance(module.getProject()).getContentRootForFile(sourceRoot)
+      if (contentRoot != null && !Comparing.equal<VirtualFile?>(contentRoot, sourceRoot)) {
+        val relativePath: String = VfsUtilCore.getRelativePath(sourceRoot, contentRoot, '/')!!
+        return "\n    package_dir={'': '" + relativePath + "'},"
       }
-
-    private fun getSetupImport(dataContext: DataContext): String {
-      val module = PlatformCoreDataKeys.MODULE.getData(dataContext)
-      return if (hasSetuptoolsPackage(module)) "from setuptools import setup" else "from distutils.core import setup"
-    }
-
-    private val SETUPTOOLS_MARKER = PackageAvailabilitySpec("setuptools", "setuptools.setup")
-
-    private fun hasSetuptoolsPackage(module: Module?): Boolean {
-      if (module == null) return false
-      return isPackageAvailable(module, SETUPTOOLS_MARKER)
-    }
-
-    private fun getPackageList(dataContext: DataContext): String {
-      val module = PlatformCoreDataKeys.MODULE.getData(dataContext)
-      if (module != null) {
-        return "['" + StringUtil.join(PyPackageUtil.getPackageNames(module), "', '") + "']"
-      }
-      return "[]"
-    }
-
-    private fun getPackageDirs(dataContext: DataContext): String {
-      val module = PlatformCoreDataKeys.MODULE.getData(dataContext)
-      if (module != null) {
-        val sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots()
-        for (sourceRoot in sourceRoots) {
-          // TODO notify if we have multiple source roots and can't build mapping automatically
-          val contentRoot = ProjectFileIndex.getInstance(module.getProject()).getContentRootForFile(sourceRoot)
-          if (contentRoot != null && !Comparing.equal<VirtualFile?>(contentRoot, sourceRoot)) {
-            val relativePath: String = VfsUtilCore.getRelativePath(sourceRoot, contentRoot, '/')!!
-            return "\n    package_dir={'': '" + relativePath + "'},"
-          }
-        }
-      }
-      return ""
     }
   }
+  return ""
 }

@@ -6,12 +6,12 @@ import lombok.experimental.Accessors;
 //IDEA-292093 @NonNullApi does not work on Lombok methods
 public class SpringNonNullApiOnPackage {
   public void test() {
-    // These trigger the "Passing 'null' argument to parameter annotated as @NotNull" inspection
-    var a = new Explicit(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>).setNn(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    // These trigger the "Passing 'null' argument to parameter annotated as non-null" inspection
+    var a = new Explicit(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>).setNn(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     var b = <warning descr="Condition 'a == null' is always 'false'">a == null</warning>;
 
     // These do not
-    var c = new Lombok(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>).setNn(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    var c = new Lombok(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>).setNn(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     var d = <warning descr="Condition 'c == null' is always 'false'">c == null</warning>;
   }
 }

@@ -1148,9 +1148,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         myFixture.checkResult(
             """
         |class Foo() {
-        |    constructor(param0: Int) : this() {
-        |
-        |    }
+        |    constructor(param0: Int) : this()
         |}
         """.trim().trimMargin(), true
         )

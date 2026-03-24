@@ -120,12 +120,15 @@ fun <T> commitExecutorProperty(key: Key<T>, defaultValue: T): ReadWriteProperty<
 
 val CommitInfo.isPostCommitCheck: Boolean get() = this is PostCommitInfo
 
-private val IS_AMEND_COMMIT_MODE_KEY = Key.create<Boolean>("Vcs.Commit.IsAmendCommitMode")
-var CommitContext.isAmendCommitMode: Boolean by commitProperty(IS_AMEND_COMMIT_MODE_KEY)
-  internal set
-
 private val IS_CLEANUP_COMMIT_MESSAGE_KEY = Key.create<Boolean>("Vcs.Commit.IsCleanupCommitMessage")
 var CommitContext.isCleanupCommitMessage: Boolean by commitExecutorProperty(IS_CLEANUP_COMMIT_MESSAGE_KEY)
+
+private val COMMIT_TO_AMEND_KEY = Key.create<CommitToAmend>("Vcs.Commit.CommitToAmend")
+var CommitContext.commitToAmend: CommitToAmend by commitProperty(COMMIT_TO_AMEND_KEY, CommitToAmend.None)
+
+@Deprecated("Use commitToAmend property instead")
+val CommitContext.isAmendCommitMode: Boolean
+  get() = commitToAmend is CommitToAmend.Last
 
 interface CommitWorkflowListener : EventListener {
   fun vcsesChanged() = Unit

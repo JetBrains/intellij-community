@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.util.PathUtil
 import com.intellij.util.PathsList
@@ -262,9 +263,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     val commandLineWrapperClass = commandLineWrapperClass()
 
     if (dynamicClasspath) {
-      val cs = StandardCharsets.UTF_8 // todo detect JNU charset from VM options?
       if (javaParameters.isArgFile) {
-        setArgFileParams(javaParameters, vmParameters, dynamicVMOptions, dynamicParameters, cs)
+        setArgFileParams(javaParameters, vmParameters, dynamicVMOptions, dynamicParameters)
         dynamicMainClass = dynamicParameters
       }
       else if (!vmParameters.isExplicitClassPath() && javaParameters.jarPath == null && commandLineWrapperClass != null) {
@@ -273,7 +273,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
                                 dynamicVMOptions, dynamicParameters)
         }
         else if (javaParameters.isClasspathFile) {
-          setCommandLineWrapperParams(javaParameters, vmParameters, commandLineWrapperClass, dynamicVMOptions, dynamicParameters, cs)
+          setCommandLineWrapperParams(javaParameters, vmParameters, commandLineWrapperClass, dynamicVMOptions, dynamicParameters)
         }
       }
       else {
@@ -322,9 +322,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
   private fun setArgFileParams(
     javaParameters: SimpleJavaParameters, vmParameters: ParametersList,
     dynamicVMOptions: Boolean, dynamicParameters: Boolean,
-    cs: Charset,
   ) {
-
+    val cs = if (request is LocalTargetEnvironmentRequest) CharsetToolkit.getPlatformCharset() else StandardCharsets.UTF_8
     try {
       val argFile = ArgFile(dynamicVMOptions, cs, platform)
       commandLine.addFileToDeleteOnTermination(argFile.file)
@@ -439,8 +438,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     commandLineWrapper: Class<*>,
     dynamicVMOptions: Boolean,
     dynamicParameters: Boolean,
-    cs: Charset,
   ) {
+    val cs = StandardCharsets.UTF_8
     try {
       val pseudoUniquePrefix = Random().nextInt(Int.MAX_VALUE)
 

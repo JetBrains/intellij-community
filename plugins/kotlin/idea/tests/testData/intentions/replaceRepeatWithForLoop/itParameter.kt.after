@@ -1,0 +1,8 @@
+// WITH_STDLIB
+fun foo() {
+    val i = 0
+    for (i1 in 0..<5) {
+        println(i)
+        println(i1)
+    }
+}

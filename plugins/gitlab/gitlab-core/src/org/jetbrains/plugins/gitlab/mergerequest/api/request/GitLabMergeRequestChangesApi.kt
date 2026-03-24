@@ -5,13 +5,12 @@ import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDetailedRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
 import org.jetbrains.plugins.gitlab.api.getMetadataOrNull
-import org.jetbrains.plugins.gitlab.api.restApiUri
+import org.jetbrains.plugins.gitlab.api.projectApiUrl
 import org.jetbrains.plugins.gitlab.api.withErrorStats
 import org.jetbrains.plugins.gitlab.api.withQuery
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
@@ -19,8 +18,8 @@ import java.net.URI
 import java.net.http.HttpResponse
 
 @SinceGitLab("9.0", note = "Not an exact version")
-suspend fun GitLabApi.getMergeRequestCommitsURI(project: GitLabProjectCoordinates, mrIid: String): URI {
-  return project.restApiUri
+fun GitLabApi.Rest.getMergeRequestCommitsURI(projectId: String, mrIid: String): URI {
+  return projectApiUrl(projectId)
     .resolveRelative("merge_requests")
     .resolveRelative(mrIid)
     .resolveRelative("commits")
@@ -48,11 +47,11 @@ suspend fun GitLabApi.Rest.loadMergeRequestChanges(uri: URI): HttpResponse<out G
 }
 
 @SinceGitLab("9.0", deprecatedIn = "15.7", note = "Deprecated in favour of /diffs")
-suspend fun GitLabApi.getMergeRequestChangesURI(project: GitLabProjectCoordinates, mrIid: String): URI {
+suspend fun GitLabApi.Rest.getMergeRequestChangesURI(projectId: String, mrIid: String): URI {
   val metadata = getMetadataOrNull()
   requireNotNull(metadata)
 
-  return project.restApiUri
+  return projectApiUrl(projectId)
     .resolveRelative("merge_requests")
     .resolveRelative(mrIid)
     .resolveRelative("changes")
@@ -67,11 +66,11 @@ suspend fun GitLabApi.Rest.loadMergeRequestDiffs(uri: URI): HttpResponse<out Lis
 }
 
 @SinceGitLab("15.7")
-suspend fun GitLabApi.getMergeRequestDiffsURI(project: GitLabProjectCoordinates, mrIid: String, page: Int): URI {
+suspend fun GitLabApi.Rest.getMergeRequestDiffsURI(projectId: String, mrIid: String, page: Int): URI {
   val metadata = getMetadataOrNull()
   requireNotNull(metadata)
 
-  return project.restApiUri
+  return projectApiUrl(projectId)
     .resolveRelative("merge_requests")
     .resolveRelative(mrIid)
     .resolveRelative("diffs")
@@ -89,8 +88,8 @@ suspend fun GitLabApi.Rest.loadCommitDiffs(uri: URI): HttpResponse<out List<GitL
 }
 
 @SinceGitLab("7.0")
-fun getCommitDiffsURI(project: GitLabProjectCoordinates, commitSha: String): URI =
-  project.restApiUri
+fun GitLabApi.Rest.getCommitDiffsURI(projectId: String, commitSha: String): URI =
+  projectApiUrl(projectId)
     .resolveRelative("repository")
     .resolveRelative("commits")
     .resolveRelative(commitSha)
@@ -98,10 +97,10 @@ fun getCommitDiffsURI(project: GitLabProjectCoordinates, commitSha: String): URI
 
 @SinceGitLab("7.0")
 suspend fun GitLabApi.Rest.loadCommit(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   commitSha: String,
 ): HttpResponse<out GitLabCommitDetailedRestDTO> {
-  val uri = project.restApiUri
+  val uri = projectApiUrl(projectId)
     .resolveRelative("repository")
     .resolveRelative("commits")
     .resolveRelative(commitSha)

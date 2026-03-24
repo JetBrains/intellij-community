@@ -1,5 +1,6 @@
 // "Remove @JvmOverloads annotation" "true"
 // WITH_STDLIB
+// K2_ERROR: '@JvmOverloads' annotation cannot be used on interface methods.
 
 interface T {
     @kotlin.jvm.<caret>JvmOverloads fun foo(s: String = "OK")

@@ -65,7 +65,7 @@ class GitLabNoteViewModelImpl(
   override val author: GitLabUserDTO = note.author
   override val createdAt: Date? = note.createdAt
   override val isDraft: Boolean = note is GitLabMergeRequestDraftNote
-  override val serverUrl: URL = projectData.projectMapping.repository.serverPath.toURL()
+  override val serverUrl: URL = projectData.projectCoordinates.serverPath.toURL()
 
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
     if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, projectData, note) else null

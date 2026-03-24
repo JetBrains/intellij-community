@@ -10,6 +10,6 @@ UFile (package = test.pkg) [package test.pkg...]
                         USimpleNameReferenceExpression (identifier = DeprecationLevel) [DeprecationLevel]
                         USimpleNameReferenceExpression (identifier = HIDDEN) [HIDDEN] : @org.jetbrains.annotations.NotNull() kotlin.DeprecationLevel
                 UNamedExpression (name = message) [message = "nothing"]
-                    UPolyadicExpression (operator = +) ["nothing"] : java.lang.String
+                    UPolyadicExpression (operator = +) ["nothing"] : @org.jetbrains.annotations.NotNull() java.lang.String
                         ULiteralExpression (value = "nothing") ["nothing"] : java.lang.String
             UBlockExpression [{...}] : void

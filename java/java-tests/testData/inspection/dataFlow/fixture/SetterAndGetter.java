@@ -62,11 +62,11 @@ class Test {
   }
   
   void useNullity(NullityTest nullityTest) {
-    nullityTest.setS(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    nullityTest.setS(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     nullityTest.setS2(null);
-    nullityTest.setNs(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    nullityTest.setNs(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     nullityTest.setNs2(null);
-    nullityTest.setNns(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    nullityTest.setNns(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     nullityTest.setNns2(null);
   }
 }

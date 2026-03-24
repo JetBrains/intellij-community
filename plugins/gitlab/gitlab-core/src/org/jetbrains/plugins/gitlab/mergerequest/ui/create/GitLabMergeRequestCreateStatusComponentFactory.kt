@@ -75,10 +75,7 @@ internal object GitLabMergeRequestCreateStatusComponentFactory {
       JLabelUtil.setTrimOverflow(this, true)
     }
     val linkLabel = ActionLink(GitLabBundle.message("merge.request.create.status.already.exists.view")) {
-      cs.launch {
-        val mrIid = createVm.existingMergeRequest.first() ?: error("Merge Request on current branch was not found")
-        createVm.openReviewTabAction(mrIid)
-      }
+      createVm.openExistingReview()
     }
 
     return HorizontalListPanel(gap = 4).apply {

@@ -42,13 +42,49 @@ jvm_library(
     "//libraries/commons/io",
     "//libraries/guava",
     "//platform/util/trove",
+    "@lib//:org-codehaus-groovy-groovy-provided",
+    "@lib//:org-codehaus-groovy-groovy-ant-provided",
   ],
   exports = [
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
   ]
 )
+
+jvm_library(
+  name = "toolingExtension-impl_test_lib",
+  module_name = "intellij.gradle.toolingExtension.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_toolingExtension-impl",
+  exports = [
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+  ],
+  runtime_deps = [
+    ":toolingExtension-impl",
+    "//platform/external-system-rt:externalSystem-rt_test_lib",
+    "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
+    "//libraries/gson:gson_test_lib",
+    "//platform/object-serializer:objectSerializer-annotations_test_lib",
+    "//libraries/ion:ion_test_lib",
+    "//platform/util-rt:util-rt_test_lib",
+    "//platform/diagnostic/telemetry/rt:rt_test_lib",
+    "//libraries/commons/lang3:lang3_test_lib",
+    "//libraries/commons/io:io_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//platform/util/trove:trove_test_lib",
+    "@lib//:org-codehaus-groovy-groovy-provided",
+    "@lib//:org-codehaus-groovy-groovy-ant-provided",
+  ]
+)
 ### auto-generated section `build intellij.gradle.toolingExtension.impl` end
+
+### auto-generated section `iml intellij.gradle.toolingExtension.impl` start
+exports_files([
+  "intellij.gradle.toolingExtension.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.toolingExtension.impl` end
 
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` start
 resourcegroup(
@@ -59,6 +95,7 @@ resourcegroup(
 
 jvm_library(
   name = "toolingExtension-tests",
+  module_name = "intellij.gradle.toolingExtension.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
@@ -72,29 +109,52 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
     "//plugins/gradle:gradle-common",
+    "//plugins/gradle:gradle-common_test_lib",
+    "//plugins/gradle/plugin",
+    "//plugins/gradle/plugin:plugin_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "@lib//:assert_j",
     "@lib//:gradle-tooling_extension-tests-io-github-classgraph-classgraph-4-8-87",
     "@lib//:gradle-tooling_extension-tests-org-jeasy-easy-random-core-4-2-0",
     "//libraries/ion",
+    "//libraries/ion:ion_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/execution",
+    "//platform/execution:execution_test_lib",
     "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/openapi:java",
+    "//java/openapi:java_test_lib",
     "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
     "//platform/boot",
+    "//platform/boot:boot_test_lib",
     "//plugins/gradle",
+    "//plugins/gradle:gradle_test_lib",
     "//libraries/guava",
+    "//libraries/guava:guava_test_lib",
     "//platform/util/trove",
+    "//platform/util/trove:trove_test_lib",
     "//libraries/commons/lang3",
+    "//libraries/commons/lang3:lang3_test_lib",
   ],
   runtime_deps = [":toolingExtension-tests"]
 )
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` end
+
+### auto-generated section `iml intellij.gradle.toolingExtension.tests` start
+exports_files([
+  "intellij.gradle.toolingExtension.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.toolingExtension.tests` end
 
 ### auto-generated section `test intellij.gradle.toolingExtension.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

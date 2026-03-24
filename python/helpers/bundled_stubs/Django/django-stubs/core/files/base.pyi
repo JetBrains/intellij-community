@@ -4,7 +4,7 @@ from typing import IO, AnyStr, type_check_only
 
 from django.core.files.utils import FileProxyMixin
 from django.utils.functional import cached_property
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 class File(FileProxyMixin[AnyStr], IO[AnyStr]):
     DEFAULT_CHUNK_SIZE: int
@@ -18,8 +18,11 @@ class File(FileProxyMixin[AnyStr], IO[AnyStr]):
     def size(self) -> int: ...
     def chunks(self, chunk_size: int | None = None) -> Iterator[AnyStr]: ...
     def multiple_chunks(self, chunk_size: int | None = None) -> bool | None: ...
+    @override
     def __iter__(self) -> Iterator[AnyStr]: ...
+    @override
     def __enter__(self) -> Self: ...
+    @override
     def __exit__(
         self,
         exc_type: type[BaseException] | None,
@@ -36,16 +39,22 @@ class File(FileProxyMixin[AnyStr], IO[AnyStr]):
         closefd: bool = True,
         opener: Callable[[str, int], int] | None = None,
     ) -> Self: ...
+    @override
     def close(self) -> None: ...
     @type_check_only
+    @override
     def __next__(self) -> AnyStr: ...
 
 class ContentFile(File[AnyStr]):
     file: IO[AnyStr]
     def __init__(self, content: AnyStr, name: str | None = None) -> None: ...
+    @override
     def __bool__(self) -> bool: ...
+    @override
     def open(self, mode: str | None = None) -> Self: ...  # type: ignore[override]
+    @override
     def close(self) -> None: ...
+    @override
     def write(self, data: AnyStr) -> int: ...
 
 def endswith_cr(line: bytes | str) -> bool: ...

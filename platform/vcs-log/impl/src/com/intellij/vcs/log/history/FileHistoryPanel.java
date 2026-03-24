@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -120,7 +119,7 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
 
     GraphTableModel graphTableModel = new GraphTableModel(
       logData,
-      () -> logUi.requestMore(EmptyRunnable.INSTANCE),
+      () -> logUi.requestMore(),
       logUi.getProperties()
     );
     myGraphTable = new VcsLogGraphTable(logUi.getId(), graphTableModel, logUi.getProperties(), colorManager,

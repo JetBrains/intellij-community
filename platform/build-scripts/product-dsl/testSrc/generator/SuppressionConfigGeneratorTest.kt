@@ -2,13 +2,31 @@
 package org.jetbrains.intellij.build.productLayout.generator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
+import com.intellij.platform.pluginGraph.PluginId
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
 import org.jetbrains.intellij.build.productLayout.config.ContentModuleSuppression
+import org.jetbrains.intellij.build.productLayout.config.PluginSuppression
+import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.dependency.pluginGraph
+import org.jetbrains.intellij.build.productLayout.dependency.testGenerationModel
+import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlan
+import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlanOutput
+import org.jetbrains.intellij.build.productLayout.deps.PluginDependencyPlan
+import org.jetbrains.intellij.build.productLayout.deps.PluginDependencyPlanOutput
+import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContextImpl
+import org.jetbrains.intellij.build.productLayout.pipeline.ErrorSlot
+import org.jetbrains.intellij.build.productLayout.pipeline.NodeIds
+import org.jetbrains.intellij.build.productLayout.pipeline.ProductModuleDepsOutput
+import org.jetbrains.intellij.build.productLayout.pipeline.Slots
+import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
+import java.nio.file.Path
 
 /**
  * Tests for [SuppressionConfigGenerator] merge logic.
@@ -21,6 +39,152 @@ import org.junit.jupiter.api.extension.ExtendWith
  */
 @ExtendWith(TestFailureLogger::class)
 class SuppressionConfigGeneratorTest {
+
+  @Test
+  fun `update suppressions defers file writes until pipeline output stage`(@TempDir tempDir: Path): Unit = runBlocking {
+    val suppressionsPath = tempDir.resolve("suppressions.json")
+    val existingConfig = SuppressionConfig(
+      contentModules = mapOf(
+        ContentModuleName("owner.content") to ContentModuleSuppression(
+          suppressPlugins = setOf(PluginId("dep.plugin")),
+        )
+      )
+    )
+    val existingContent = SuppressionConfig.serializeToString(existingConfig)
+    Files.writeString(suppressionsPath, existingContent)
+
+    val model = testGenerationModel(
+      pluginGraph = pluginGraph {
+        plugin("owner.plugin") {
+          content("owner.content")
+        }
+      },
+      fileUpdater = DeferredFileUpdater(tempDir),
+      suppressionConfig = existingConfig,
+      updateSuppressions = true,
+      suppressionConfigPath = suppressionsPath,
+    )
+
+    val ctx = ComputeContextImpl(model)
+    ctx.initSlot(Slots.PRODUCT_MODULE_DEPS)
+    ctx.publish(Slots.PRODUCT_MODULE_DEPS, ProductModuleDepsOutput(files = emptyList()))
+    ctx.initSlot(Slots.CONTENT_MODULE_PLAN)
+    ctx.publish(Slots.CONTENT_MODULE_PLAN, ContentModuleDependencyPlanOutput(plans = emptyList()))
+    ctx.initSlot(Slots.PLUGIN_DEPENDENCY_PLAN)
+    ctx.publish(Slots.PLUGIN_DEPENDENCY_PLAN, PluginDependencyPlanOutput(plans = emptyList()))
+    ctx.initSlot(Slots.LIBRARY_SUPPRESSIONS)
+    ctx.publish(Slots.LIBRARY_SUPPRESSIONS, emptyList())
+    ctx.initSlot(Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS)
+    ctx.publish(Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS, emptyList())
+
+    val contentModuleDepsErrorSlot = ErrorSlot(NodeIds.CONTENT_MODULE_DEPS)
+    ctx.initSlot(contentModuleDepsErrorSlot)
+    ctx.publish(contentModuleDepsErrorSlot, emptyList())
+    val pluginXmlDepsErrorSlot = ErrorSlot(NodeIds.PLUGIN_XML_DEPS)
+    ctx.initSlot(pluginXmlDepsErrorSlot)
+    ctx.publish(pluginXmlDepsErrorSlot, emptyList())
+
+    ctx.initSlot(Slots.SUPPRESSION_CONFIG)
+    val nodeCtx = ctx.forNode(SuppressionConfigGenerator.id)
+    SuppressionConfigGenerator.execute(nodeCtx)
+    ctx.finalizeNodeErrors(SuppressionConfigGenerator.id)
+
+    assertThat(Files.readString(suppressionsPath))
+      .describedAs("SuppressionConfigGenerator should not write directly during node execution")
+      .isEqualTo(existingContent)
+    assertThat(model.fileUpdater.getDiffs())
+      .describedAs("Changes should be deferred for pipeline commit stage")
+      .hasSize(1)
+  }
+
+  @Test
+  fun `plugin xml alias suppressions become stale when alias dependency is preserved`(@TempDir tempDir: Path): Unit = runBlocking {
+    val aliasId = PluginId("com.intellij.modules.java")
+    val existingConfig = SuppressionConfig(
+      plugins = mapOf(
+        ContentModuleName("owner.plugin") to PluginSuppression(
+          suppressPlugins = setOf(aliasId),
+        )
+      )
+    )
+
+    val (output, diffs) = runSuppressionConfigGenerator(
+      tempDir = tempDir,
+      graph = pluginGraph {
+        plugin("owner.plugin") {
+          content("owner.content")
+        }
+      },
+      existingConfig = existingConfig,
+      pluginPlans = listOf(
+        PluginDependencyPlan(
+          pluginContentModuleName = ContentModuleName("owner.plugin"),
+          pluginXmlPath = tempDir.resolve("owner/plugin/resources/META-INF/plugin.xml"),
+          pluginXmlContent = "<idea-plugin/>",
+          moduleDependencies = emptyList(),
+          pluginDependencies = emptyList(),
+          legacyPluginDependencies = emptyList(),
+          xiIncludeModuleDeps = emptySet(),
+          xiIncludePluginDeps = emptySet(),
+          existingXmlModuleDependencies = emptySet(),
+          existingXmlPluginDependencies = setOf(aliasId),
+          preserveExistingModuleDependencies = emptySet(),
+          preserveExistingPluginDependencies = setOf(aliasId),
+          suppressionUsages = emptyList(),
+        )
+      ),
+    )
+
+    assertThat(output.staleCount).isEqualTo(1)
+    assertThat(output.configModified).isTrue()
+    assertThat(diffs.single().expectedContent)
+      .doesNotContain(aliasId.value)
+  }
+
+  @Test
+  fun `content module alias suppressions become stale when alias dependency is preserved`(@TempDir tempDir: Path): Unit = runBlocking {
+    val aliasId = PluginId("com.intellij.modules.java")
+    val existingConfig = SuppressionConfig(
+      contentModules = mapOf(
+        ContentModuleName("owner.content") to ContentModuleSuppression(
+          suppressPlugins = setOf(aliasId),
+        )
+      )
+    )
+
+    val (output, diffs) = runSuppressionConfigGenerator(
+      tempDir = tempDir,
+      graph = pluginGraph {
+        plugin("owner.plugin") {
+          content("owner.content")
+        }
+      },
+      existingConfig = existingConfig,
+      contentPlans = listOf(
+        ContentModuleDependencyPlan(
+          contentModuleName = ContentModuleName("owner.content"),
+          descriptorPath = tempDir.resolve("owner/content/resources/META-INF/owner.content.xml"),
+          descriptorContent = "<idea-plugin/>",
+          moduleDependencies = emptyList(),
+          pluginDependencies = emptyList(),
+          testDependencies = emptyList(),
+          existingXmlModuleDependencies = emptySet(),
+          existingXmlPluginDependencies = setOf(aliasId),
+          preserveExistingPluginDependencies = setOf(aliasId),
+          writtenPluginDependencies = listOf(aliasId),
+          allJpsPluginDependencies = emptySet(),
+          suppressedModules = emptySet(),
+          suppressedPlugins = emptySet(),
+          suppressionUsages = emptyList(),
+        )
+      ),
+    )
+
+    assertThat(output.staleCount).isEqualTo(1)
+    assertThat(output.configModified).isTrue()
+    assertThat(diffs.single().expectedContent)
+      .doesNotContain(aliasId.value)
+  }
 
   @Nested
   inner class InvalidKeyHandlingTest {
@@ -185,4 +349,49 @@ class SuppressionConfigGeneratorTest {
       // 2. Remove intellij.dsl.test.plugin suppressions (isDslDefined=true)
     }
   }
+}
+
+private suspend fun runSuppressionConfigGenerator(
+  tempDir: Path,
+  graph: com.intellij.platform.pluginGraph.PluginGraph,
+  existingConfig: SuppressionConfig,
+  contentPlans: List<ContentModuleDependencyPlan> = emptyList(),
+  pluginPlans: List<PluginDependencyPlan> = emptyList(),
+): Pair<org.jetbrains.intellij.build.productLayout.pipeline.SuppressionConfigOutput, List<org.jetbrains.intellij.build.productLayout.model.error.FileDiff>> {
+  val suppressionsPath = tempDir.resolve("suppressions.json")
+  Files.writeString(suppressionsPath, SuppressionConfig.serializeToString(existingConfig))
+  val fileUpdater = DeferredFileUpdater(tempDir)
+  val model = testGenerationModel(
+    pluginGraph = graph,
+    fileUpdater = fileUpdater,
+    suppressionConfig = existingConfig,
+    updateSuppressions = true,
+    suppressionConfigPath = suppressionsPath,
+  )
+
+  val ctx = ComputeContextImpl(model)
+  ctx.initSlot(Slots.PRODUCT_MODULE_DEPS)
+  ctx.publish(Slots.PRODUCT_MODULE_DEPS, ProductModuleDepsOutput(files = emptyList()))
+  ctx.initSlot(Slots.CONTENT_MODULE_PLAN)
+  ctx.publish(Slots.CONTENT_MODULE_PLAN, ContentModuleDependencyPlanOutput(plans = contentPlans))
+  ctx.initSlot(Slots.PLUGIN_DEPENDENCY_PLAN)
+  ctx.publish(Slots.PLUGIN_DEPENDENCY_PLAN, PluginDependencyPlanOutput(plans = pluginPlans))
+  ctx.initSlot(Slots.LIBRARY_SUPPRESSIONS)
+  ctx.publish(Slots.LIBRARY_SUPPRESSIONS, emptyList())
+  ctx.initSlot(Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS)
+  ctx.publish(Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS, emptyList())
+
+  val contentModuleDepsErrorSlot = ErrorSlot(NodeIds.CONTENT_MODULE_DEPS)
+  ctx.initSlot(contentModuleDepsErrorSlot)
+  ctx.publish(contentModuleDepsErrorSlot, emptyList())
+  val pluginXmlDepsErrorSlot = ErrorSlot(NodeIds.PLUGIN_XML_DEPS)
+  ctx.initSlot(pluginXmlDepsErrorSlot)
+  ctx.publish(pluginXmlDepsErrorSlot, emptyList())
+
+  ctx.initSlot(Slots.SUPPRESSION_CONFIG)
+  val nodeCtx = ctx.forNode(SuppressionConfigGenerator.id)
+  SuppressionConfigGenerator.execute(nodeCtx)
+  ctx.finalizeNodeErrors(SuppressionConfigGenerator.id)
+
+  return ctx.get(Slots.SUPPRESSION_CONFIG) to model.fileUpdater.getDiffs()
 }

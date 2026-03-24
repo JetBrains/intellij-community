@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/test">
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" packagePrefix="com.intellij.configurationScript" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.json.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.yaml.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.objectSerializer" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.serviceContainer" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.snakeyaml.engine" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.configurationScript" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.configurationScript" />
+</module>

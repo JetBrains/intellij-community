@@ -1,13 +1,14 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.groovy">
   <dependencies>
     <plugin id="org.intellij.groovy"/>
-    <plugin id="com.intellij.gradle"/>
-    <module name="intellij.kotlin.base.externalSystem"/>
     <module name="intellij.kotlin.gradle.tooling"/>
-    <module name="intellij.kotlin.gradle.gradle"/>
-    <module name="intellij.kotlin.gradle.codeInsight.common"/>
     <module name="intellij.kotlin.projectWizard.idea"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.kotlin.base.externalSystem"/>
+    <module name="intellij.kotlin.gradle.codeInsight.common"/>
+    <module name="intellij.kotlin.gradle.gradle"/>
     <module name="kotlin.gradle.gradle-java"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

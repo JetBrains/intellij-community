@@ -56,12 +56,13 @@ public final class ListTemplatesHandler implements CodeInsightActionHandler {
   public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile psiFile) {
     EditorUtil.fillVirtualSpaceUntilCaret(editor);
 
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    Document document = editor.getDocument();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
     int offset = editor.getCaretModel().getOffset();
     List<TemplateImpl> applicableTemplates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(
       TemplateActionContext.expanding(psiFile, editor));
 
-    Map<TemplateImpl, String> matchingTemplates = filterTemplatesByPrefix(applicableTemplates, editor, offset, false, true);
+    Map<TemplateImpl, String> matchingTemplates = filterTemplatesByPrefix(applicableTemplates, document, offset, false, true);
     MultiMap<String, CustomLiveTemplateLookupElement> customTemplatesLookupElements = getCustomTemplatesLookupItems(editor, psiFile, offset);
 
     if (matchingTemplates.isEmpty()) {
@@ -81,17 +82,16 @@ public final class ListTemplatesHandler implements CodeInsightActionHandler {
   }
 
   public static @NotNull Map<TemplateImpl, String> filterTemplatesByPrefix(@NotNull Collection<? extends TemplateImpl> templates,
-                                                                           @NotNull Editor editor,
-                                                                           int offset,
+                                                                           @NotNull Document document, int offset,
                                                                            boolean fullMatch,
                                                                            boolean searchInDescription) {
-    if (offset > editor.getDocument().getTextLength()) {
+    if (offset > document.getTextLength()) {
       LOG.error("Cannot filter templates, index out of bounds. Offset: " + offset,
-                CoreAttachmentFactory.createAttachment(editor.getDocument()));
+                CoreAttachmentFactory.createAttachment(document));
     }
-    CharSequence documentText = editor.getDocument().getCharsSequence().subSequence(0, offset);
+    CharSequence documentText = document.getCharsSequence().subSequence(0, offset);
 
-    String prefixWithoutDots = computeDescriptionMatchingPrefix(editor.getDocument(), offset);
+    String prefixWithoutDots = computeDescriptionMatchingPrefix(document, offset);
     Pattern prefixSearchPattern = Pattern.compile(".*\\b" + prefixWithoutDots + ".*");
 
     Map<TemplateImpl, String> matchingTemplates = new TreeMap<>(TemplateListPanel.TEMPLATE_COMPARATOR);

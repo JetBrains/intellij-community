@@ -79,6 +79,7 @@ import com.intellij.psi.PsiSwitchExpression;
 import com.intellij.psi.PsiSwitchStatement;
 import com.intellij.psi.PsiSynchronizedStatement;
 import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiThrowStatement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.psi.PsiTypeElement;
@@ -310,6 +311,9 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     PsiElement callParent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
     if (callParent instanceof PsiReturnStatement || callParent instanceof PsiLambdaExpression) {
       return TailCallType.Return;
+    }
+    if (callParent instanceof PsiThrowStatement) {
+      return TailCallType.Throw;
     }
     if (callParent instanceof PsiExpression expression && BoolUtils.isNegation(expression)) {
       PsiElement negationParent = PsiUtil.skipParenthesizedExprUp(callParent.getParent());
@@ -1010,6 +1014,15 @@ public final class InlineUtil implements CommonJavaInlineUtil {
         if (value != null) {
           CommentTracker ct = new CommentTracker();
           ct.replaceAndRestoreComments(value, BoolUtils.getNegatedExpressionText(value, ct));
+        }
+      }
+      return null;
+    }),
+    Throw((methodCopy, callSite, returnType) -> {
+      for (PsiReturnStatement statement : PsiUtil.findReturnStatements(methodCopy)) {
+        PsiExpression value = statement.getReturnValue();
+        if (value != null) {
+          new CommentTracker().replace(statement, "throw " + value.getText() + " ;");
         }
       }
       return null;

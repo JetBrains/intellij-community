@@ -41,51 +41,137 @@ jvm_library(
 
 jvm_library(
   name = "tasks_test_lib",
+  module_name = "intellij.idea.community.build.tasks",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":tasks",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//platform/util/zip:zip_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/jackson/jr-objects:libraries-jackson-jr-objects_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/util/rt-java8:rt-java8_test_lib",
+    "//java/java-runtime:rt_test_lib",
+    "//platform/util-rt:util-rt_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/diagnostic/telemetry.exporters:telemetry.exporters_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//libraries/bouncy-castle-provider:bouncy-castle-provider_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework/extensions:testExtensions_test_lib",
+    "@lib//:assert_j",
+    "@lib//:memoryfilesystem",
+    "@lib//:junit5",
+    "//platform/build-scripts/downloader:downloader_test_lib",
+    "//platform/util/base:base_test_lib",
+    "//libraries/hash4j:hash4j_test_lib",
+    "@community//build:zip_test_lib",
+  ]
+)
+### auto-generated section `build intellij.idea.community.build.tasks` end
+
+### auto-generated section `iml intellij.idea.community.build.tasks` start
+exports_files([
+  "intellij.idea.community.build.tasks.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.idea.community.build.tasks` end
+
+### auto-generated section `build intellij.idea.community.build.tasks.tests` start
+jvm_library(
+  name = "tasks-tests",
+  module_name = "intellij.idea.community.build.tasks.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "//libraries/bouncy-castle-provider",
+  ]
+)
+
+jvm_library(
+  name = "tasks-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":tasks"],
+  associates = [
+    "//build/tasks",
+    "//build/tasks:tasks_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
     "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
     "//platform/util/zip",
+    "//platform/util/zip:zip_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//libraries/jackson/jr-objects:libraries-jackson-jr-objects",
+    "//libraries/jackson/jr-objects:libraries-jackson-jr-objects_test_lib",
     "//libraries/jackson/jackson",
+    "//libraries/jackson/jackson:jackson_test_lib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/util/rt-java8",
+    "//platform/util/rt-java8:rt-java8_test_lib",
     "//java/java-runtime:rt",
+    "//java/java-runtime:rt_test_lib",
     "//platform/util-rt",
     "//platform/util-rt:util-rt_test_lib",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/diagnostic/telemetry.exporters",
+    "//platform/diagnostic/telemetry.exporters:telemetry.exporters_test_lib",
     "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework/extensions:testExtensions_test_lib",
     "@lib//:assert_j",
     "@lib//:memoryfilesystem",
     "@lib//:junit5",
     "//platform/build-scripts/downloader",
+    "//platform/build-scripts/downloader:downloader_test_lib",
     "@lib//:jetbrains-annotations",
     "//platform/util/base",
+    "//platform/util/base:base_test_lib",
     "//libraries/hash4j",
+    "//libraries/hash4j:hash4j_test_lib",
     "@lib//:tc_service_messages",
     "@lib//:opentelemetry-extension-kotlin",
     "@community//build:zip",
+    "@community//build:zip_test_lib",
+  ],
+  runtime_deps = [
+    ":tasks-tests",
+    "//libraries/bouncy-castle-provider:bouncy-castle-provider_test_lib",
   ]
 )
-### auto-generated section `build intellij.idea.community.build.tasks` end
+### auto-generated section `build intellij.idea.community.build.tasks.tests` end
 
-### auto-generated section `test intellij.idea.community.build.tasks` start
+### auto-generated section `iml intellij.idea.community.build.tasks.tests` start
+exports_files([
+  "intellij.idea.community.build.tasks.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.idea.community.build.tasks.tests` end
+
+### auto-generated section `test intellij.idea.community.build.tasks.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "tasks_test",
-  runtime_deps = [":tasks_test_lib"]
+  name = "tasks-tests_test",
+  runtime_deps = [":tasks-tests_test_lib"]
 )
-### auto-generated section `test intellij.idea.community.build.tasks` end
+### auto-generated section `test intellij.idea.community.build.tasks.tests` end

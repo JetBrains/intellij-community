@@ -207,8 +207,8 @@ class HighlightVisitorRunner {
           }
           if (!failed) {
             GeneralHighlightingPass.LOG.error("In file: " + psiFile.getViewProvider().getVirtualFile(), e);
+            failed = true;
           }
-          failed = true;
         }
         for (int j = oldSize; j < holder.size(); j++) {
           HighlightInfo info = holder.get(j);

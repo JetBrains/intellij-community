@@ -56,7 +56,56 @@ jvm_library(
     "//java/java-runtime:rt",
   ]
 )
+
+jvm_library(
+  name = "build_test_lib",
+  module_name = "intellij.platform.jps.build",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":build",
+    "//platform/util:util_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//java/compiler/forms-compiler:java-guiForms-compiler_test_lib",
+    "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
+    "//java/compiler/instrumentation-util-8:java-compiler-instrumentationUtil-java8_test_lib",
+    "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
+    "//libraries/asm:asm_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/util/nanoxml:nanoxml_test_lib",
+    "//libraries/jgoodies/forms:forms_test_lib",
+    "//libraries/protobuf:protobuf_test_lib",
+    "//java/java-runtime:rt_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//jps/model-impl:model-impl_test_lib",
+    "//libraries/javax/annotation:annotation_test_lib",
+    "//libraries/gson:gson_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "@community//build:build-javac-rt_test_lib",
+    "//platform/tracing:tracing-rt_test_lib",
+    "//platform/util/zip:zip_test_lib",
+    "@community//build:dependency-graph_test_lib",
+    "//libraries/caffeine:caffeine_test_lib",
+    "@lib//:kotlin-stdlib-provided",
+    "//libraries/hash4j:hash4j_test_lib",
+    "//libraries/mvstore:mvstore_test_lib",
+    "//libraries/http-client:http-client_test_lib",
+    "//libraries/maven-resolver-provider:maven-resolver-provider_test_lib",
+    "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+    "//libraries/netty/buffer:buffer_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/eel:eel_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.jps.build` end
+
+### auto-generated section `iml intellij.platform.jps.build` start
+exports_files([
+  "intellij.platform.jps.build.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jps.build` end
 
 ### auto-generated section `build intellij.platform.jps.build.tests` start
 resourcegroup(
@@ -67,6 +116,7 @@ resourcegroup(
 
 jvm_library(
   name = "build-tests",
+  module_name = "intellij.platform.jps.build.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -84,34 +134,60 @@ jvm_library(
   resources = [":build-tests_test_resources"],
   deps = [
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//jps/jps-builders:build",
+    "//jps/jps-builders:build_test_lib",
     "@community//build:dependency-graph",
+    "@community//build:dependency-graph_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
     "//jps/model-serialization",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//jps/model-impl:model-tests",
     "//jps/model-impl:model-tests_test_lib",
+    "//jps/model-serialization:model-serialization-tests",
     "//jps/model-serialization:model-serialization-tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/compiler/instrumentation-util",
+    "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
     "@lib//:eclipse",
     "@lib//:kotlin-stdlib",
     "//libraries/asm",
+    "//libraries/asm:asm_test_lib",
     "//jps/model-impl",
+    "//jps/model-impl:model-impl_test_lib",
     "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
     "//libraries/gson",
+    "//libraries/gson:gson_test_lib",
     "@community//build:build-javac-rt",
+    "@community//build:build-javac-rt_test_lib",
     "//platform/platform-util-io:ide-util-io",
     "@lib//:assert_j",
     "//libraries/hash4j",
+    "//libraries/hash4j:hash4j_test_lib",
     "@lib//:platform-jps-build-tests-jqwik",
     "//libraries/mvstore",
+    "//libraries/mvstore:mvstore_test_lib",
     "@lib//:memoryfilesystem",
     "//jps/model-test-framework:model-testFramework",
+    "//jps/model-test-framework:model-testFramework_test_lib",
   ],
-  runtime_deps = [":build-tests"]
+  runtime_deps = [
+    ":build-tests",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.jps.build.tests` end
+
+### auto-generated section `iml intellij.platform.jps.build.tests` start
+exports_files([
+  "intellij.platform.jps.build.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jps.build.tests` end
 
 ### auto-generated section `test intellij.platform.jps.build.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

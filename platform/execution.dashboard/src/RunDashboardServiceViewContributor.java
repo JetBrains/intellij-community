@@ -81,7 +81,6 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.execution.RunContentDescriptorIdImplKt.RUN_CONTENT_DESCRIPTOR_ID;
-import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.SELECTED_DASHBOARD_SERVICE_ID;
 import static com.intellij.ide.ui.icons.IconIdKt.icon;
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER;
 import static com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper.scheduleDropRunConfigurationNodeOnFolderNode;
@@ -419,7 +418,6 @@ public final class RunDashboardServiceViewContributor
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
       sink.set(CommonDataKeys.PROJECT,  myNode.getProject());
-      sink.set(SELECTED_DASHBOARD_SERVICE_ID, myNode.getValue().getRunDashboardServiceDto().getUuid());
       sink.set(RUN_CONTENT_DESCRIPTOR_ID, myNode.getValue().getRunDashboardServiceDto().getContentId());
       sink.set(TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER, true);
 

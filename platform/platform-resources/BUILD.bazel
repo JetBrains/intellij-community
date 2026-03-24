@@ -15,6 +15,7 @@ resourcegroup(
 
 jvm_library(
   name = "resources",
+  module_name = "intellij.platform.resources",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [
@@ -23,4 +24,21 @@ jvm_library(
   ],
   runtime_deps = ["//platform/platform-impl/concurrency"]
 )
+
+jvm_library(
+  name = "resources_test_lib",
+  module_name = "intellij.platform.resources",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":resources",
+    "//platform/platform-impl/concurrency:concurrency_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.resources` end
+
+### auto-generated section `iml intellij.platform.resources` start
+exports_files([
+  "intellij.platform.resources.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.resources` end

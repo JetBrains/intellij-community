@@ -1,6 +1,6 @@
 ### auto-generated section `build fleet.util.modules` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_modules",
@@ -11,11 +11,18 @@ create_kotlinc_options(
   x_lambdas = "class"
 )
 
+resourcegroup(
+  name = "modules_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
 jvm_library(
   name = "modules",
   module_name = "fleet.util.modules",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":modules_resources"],
   kotlinc_opts = ":custom_modules",
   deps = [
     "@lib//:fleet-util-modules-jetbrains-intellij-platform-util-zip-squashed",
@@ -23,4 +30,20 @@ jvm_library(
   ],
   exports = ["@lib//:fleet-util-modules-jetbrains-intellij-platform-util-zip-squashed"]
 )
+
+jvm_library(
+  name = "modules_test_lib",
+  module_name = "fleet.util.modules",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_modules",
+  exports = ["@lib//:fleet-util-modules-jetbrains-intellij-platform-util-zip-squashed"],
+  runtime_deps = [":modules"]
+)
 ### auto-generated section `build fleet.util.modules` end
+
+### auto-generated section `iml fleet.util.modules` start
+exports_files([
+  "fleet.util.modules.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.util.modules` end

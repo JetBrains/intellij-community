@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting
 
 import com.intellij.application.options.editor.EditorOptionsListener
@@ -45,6 +45,7 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
+import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -499,7 +500,7 @@ private fun highlightSelection(project: Project, editor: Editor, executor: Execu
         }
 
         highlighters.add(markupModel.addRangeHighlighter(EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES, startOffset, endOffset,
-                                                         HighlightManagerImpl.OCCURRENCE_LAYER,
+                                                         HighlighterLayer.ELEMENT_UNDER_CARET,
                                                          HighlighterTargetArea.EXACT_RANGE))
       }
       editor.putUserData(SELECTION_HIGHLIGHTS, SelectionHighlights(toFind, highlighters))

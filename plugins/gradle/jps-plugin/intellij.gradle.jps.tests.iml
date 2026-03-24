@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/testSrc">
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="Gradle" level="project" />
+    <orderEntry type="module-library" scope="TEST">
+      <library name="ant" type="repository">
+        <properties maven-id="org.apache.ant:ant:1.10.15">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/ant/ant/1.10.15/ant-1.10.15.jar">
+              <sha256sum>763acda4a69588c9ea8817a952851ff0c2fc4bffa1d081c2565dc407f29d5794</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/ant/ant/1.10.15/ant-1.10.15.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/ant/ant/1.10.15/ant-1.10.15-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.gson" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.jps" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.gradle.jps" />
+</module>

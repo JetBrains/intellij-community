@@ -52,7 +52,7 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
   public void indexNode(@NotNull Node<?, ?> node) {
     ReferenceID nodeID = node.getReferenceID();
     for (ReferenceID referentId : getIndexedDependencies(node)) {
-      myMap.appendValue(referentId, nodeID);
+      myMap.appendValue(GraphElementInterner.intern(referentId), nodeID);
     }
   }
 

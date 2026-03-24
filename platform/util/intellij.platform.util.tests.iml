@@ -12,6 +12,8 @@
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="library" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
@@ -21,7 +23,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="jna" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" scope="TEST" />
@@ -52,5 +53,9 @@
     <orderEntry type="library" scope="TEST" name="jimfs" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ijent.community.buildConstants" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.monorepo" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel.tests" scope="TEST" />
   </component>
 </module>

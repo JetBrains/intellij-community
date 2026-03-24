@@ -3,6 +3,7 @@
 // ACTION: Add 'toString()' call
 // ACTION: Change parameter 'a' type of function 'bar' to 'Any?'
 // ACTION: Create function 'bar'
+// K2_ERROR: Argument type mismatch: actual type is 'Any?', but 'String' was expected.
 
 fun foo() {
     bar(null as Any?<caret>)

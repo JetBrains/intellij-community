@@ -11,6 +11,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.generateProductXml
 import org.jetbrains.intellij.build.productLayout.model.error.FileDiff
 import org.jetbrains.intellij.build.productLayout.model.error.ValidationError
@@ -181,10 +182,12 @@ internal suspend fun generateAllProductXmlFiles(
 
         val pluginXmlPath = projectRoot.resolve(pluginXmlRelativePath)
 
-        // Extract ProductProperties class name (works with both ProductProperties and null)
+        // Extract ProductProperties class name for the source comment.
+        // Use the declaring class of `getProductContentDescriptor` method.
         val productPropertiesClass = when (val props = discovered.properties) {
           null -> "test-product"
-          else -> props.javaClass.name
+          else -> (props.javaClass.methods.firstOrNull { it.name == "getProductContentDescriptor" }?.declaringClass
+                   ?: props.javaClass).name
         }
 
         generateProductXml(
@@ -233,5 +236,10 @@ suspend fun generateAllModuleSetsWithProducts(
   commitChanges: Boolean = true,
   updateSuppressions: Boolean = false,
 ): GenerationResult {
+  val validationFilterValue = config.validationFilter?.sorted()?.joinToString(separator = ",") ?: "<all>"
+  debug("missingDeps") {
+    "generateAllModuleSetsWithProducts outputProvider=${config.outputProvider::class.java.name} " +
+    "commitChanges=$commitChanges updateSuppressions=$updateSuppressions validationFilter=$validationFilterValue"
+  }
   return GenerationPipeline.default().execute(config = config, commitChanges = commitChanges, updateSuppressions = updateSuppressions, validationFilter = config.validationFilter)
 }

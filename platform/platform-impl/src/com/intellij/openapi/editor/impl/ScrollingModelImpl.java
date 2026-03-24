@@ -68,7 +68,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   private final DocumentListener documentListener = new DocumentListener() {
     @Override
     public void beforeDocumentChange(@NotNull DocumentEvent e) {
-      if (!supplier.getEditor().getDocument().isInBulkUpdate()) {
+      if (!supplier.getEditor().getUiDocument().isInBulkUpdate()) {
         cancelAnimatedScrolling(true);
       }
     }
@@ -88,7 +88,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
 
   void initListeners() {
     supplier.getScrollPane().getViewport().addChangeListener(viewportChangeListener);
-    supplier.getEditor().getDocument().addDocumentListener(documentListener);
+    supplier.getEditor().getUiDocument().addDocumentListener(documentListener);
   }
 
   /**
@@ -102,7 +102,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     // and the requested position is located somewhere around.
     // We don't want to position the viewport in a way that most of its area is used to represent that virtual empty space.
     // So, we tweak vertical offset if necessary.
-    int maxY = Math.max(editor.getLineHeight(), editor.getDocument().getLineCount() * editor.getLineHeight());
+    int maxY = Math.max(editor.getLineHeight(), editor.getUiDocument().getLineCount() * editor.getLineHeight());
     int minPreferredY = maxY - getVisibleArea().height * 2 / 3;
     final int currentOffset = getVerticalScrollOffset();
     int offsetToUse = Math.min(minPreferredY, currentOffset);
@@ -353,7 +353,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
 
   @ApiStatus.Internal
   public void dispose() {
-    supplier.getEditor().getDocument().removeDocumentListener(documentListener);
+    supplier.getEditor().getUiDocument().removeDocumentListener(documentListener);
     supplier.getScrollPane().getViewport().removeChangeListener(viewportChangeListener);
   }
 

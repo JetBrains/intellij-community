@@ -1,14 +1,18 @@
-from collections.abc import Awaitable, Callable
-from typing import Any, ClassVar, Protocol, TypeAlias, type_check_only
+from collections.abc import Awaitable, Callable, Sequence
+from typing import Any, ClassVar, Protocol, TypeAlias, TypeVar, type_check_only
 
 from django.http.request import HttpRequest
 from django.http.response import HttpResponseBase
 
-class RemovedInDjango60Warning(DeprecationWarning): ...
-class RemovedInDjango61Warning(PendingDeprecationWarning): ...
+_C = TypeVar("_C", bound=Callable[..., Any])
 
-RemovedInNextVersionWarning: TypeAlias = RemovedInDjango60Warning
-RemovedAfterNextVersionWarning: TypeAlias = RemovedInDjango61Warning
+def django_file_prefixes() -> tuple[str, ...]: ...
+
+class RemovedInDjango61Warning(DeprecationWarning): ...
+class RemovedInDjango70Warning(PendingDeprecationWarning): ...
+
+RemovedInNextVersionWarning: TypeAlias = RemovedInDjango61Warning
+RemovedAfterNextVersionWarning: TypeAlias = RemovedInDjango70Warning
 
 class warn_about_renamed_method:
     class_name: str
@@ -23,6 +27,8 @@ class warn_about_renamed_method:
 class RenameMethodsBase(type):
     renamed_methods: Any
     def __new__(cls, name: Any, bases: Any, attrs: Any) -> type: ...
+
+def deprecate_posargs(deprecation_warning: type[Warning], remappable_names: Sequence[str], /) -> Callable[[_C], _C]: ...
 
 @type_check_only
 class _GetResponseCallable(Protocol):

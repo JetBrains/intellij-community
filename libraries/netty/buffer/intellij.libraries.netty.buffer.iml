@@ -7,6 +7,28 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="netty-buffer" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="netty-buffer" type="repository">
+        <properties maven-id="io.netty:netty-buffer:4.2.10.Final">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.10.Final/netty-buffer-4.2.10.Final.jar">
+              <sha256sum>a430cfedce93c171a56a86d1d27c8d829db4793f1c59c381c65e84e5bcd5bcaa</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.10.Final/netty-common-4.2.10.Final.jar">
+              <sha256sum>ad7ff0989d76be928069176754deec42c6a0e3305013df21814b4ac46b1ace9a</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.10.Final/netty-buffer-4.2.10.Final.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.10.Final/netty-common-4.2.10.Final.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.10.Final/netty-buffer-4.2.10.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.10.Final/netty-common-4.2.10.Final-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

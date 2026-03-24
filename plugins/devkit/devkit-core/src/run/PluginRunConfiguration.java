@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -207,7 +207,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
             if (versionString != null) {
               Version version = Version.parseVersion(versionString);
               if (version != null && version.isOrGreaterThan(221)) {
-                vm.defineProperty(JUnitDevKitPatcher.SYSTEM_CL_PROPERTY, "com.intellij.util.lang.PathClassLoader");
+                vm.defineProperty(DevKitPatcherHelper.SYSTEM_CL_PROPERTY, "com.intellij.util.lang.PathClassLoader");
               }
             }
           }

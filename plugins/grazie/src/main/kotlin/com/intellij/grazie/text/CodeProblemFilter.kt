@@ -1,7 +1,8 @@
 package com.intellij.grazie.text
 
+import ai.grazie.rules.code.CodeDetector
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
-import com.intellij.grazie.utils.Text.looksLikeCode
+import com.intellij.grazie.utils.treeRange
 import com.intellij.openapi.util.TextRange
 
 /**
@@ -15,11 +16,14 @@ import com.intellij.openapi.util.TextRange
  * @see InDocumentation
  */
 open class CodeProblemFilter : ProblemFilter() {
+  private val functionCall = Regex("[a-zA-Z_$][a-zA-Z0-9_$]*\\(.*\\)")
 
   override fun shouldIgnore(problem: TextProblem): Boolean {
-    return problem.shouldSuppressInCodeLikeFragments() &&
-           shouldSuppressInText(problem.text) &&
-           problem.highlightRanges.any { textAround(problem.text, it).looksLikeCode() }
+    if (!problem.shouldSuppressInCodeLikeFragments() || !shouldSuppressInText(problem.text)) return false
+    val codeFragments = CodeDetector.findCodeFragments(problem.text)
+    return problem.highlightRanges.any {
+      range -> codeFragments.any { it.containsInclusive(range.treeRange()) } || looksLikeFunctionCall(problem.text, range)
+    }
   }
 
   override fun shouldIgnoreTypo(problem: TextProblem): Boolean {
@@ -34,6 +38,8 @@ open class CodeProblemFilter : ProblemFilter() {
   private fun textAround(text: CharSequence, range: TextRange): CharSequence {
     return text.subSequence((range.startOffset - 20).coerceAtLeast(0), (range.endOffset + 20).coerceAtMost(text.length))
   }
+
+  private fun looksLikeFunctionCall(text: CharSequence, range: TextRange) = functionCall.find(textAround(text, range)) != null
 
   /** A variant of [CodeProblemFilter] that suppresses problems in code-like fragments in [TextContent.TextDomain.PLAIN_TEXT] */
   class InPlainText: CodeProblemFilter() {

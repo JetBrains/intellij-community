@@ -2,18 +2,18 @@
 package com.intellij.openapi.application
 
 import com.intellij.ide.plugins.DiscoveredPluginsList
-import com.intellij.ide.plugins.PluginDescriptorLoadingResult
 import com.intellij.ide.plugins.PluginInstaller
-import com.intellij.ide.plugins.PluginLoadingResult
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNonLoadReason
 import com.intellij.ide.plugins.PluginSetBuilder
+import com.intellij.ide.plugins.PluginVersionIsSuperseded
 import com.intellij.ide.plugins.PluginsSourceContext
 import com.intellij.ide.plugins.ProductPluginInitContext
 import com.intellij.ide.plugins.isBrokenPlugin
 import com.intellij.ide.plugins.loadDescriptorFromArtifact
 import com.intellij.ide.plugins.loadDescriptors
+import com.intellij.ide.plugins.selectPluginsToLoad
 import com.intellij.openapi.application.PluginAutoUpdateRepository.PluginUpdateInfo
 import com.intellij.openapi.application.PluginAutoUpdateRepository.clearUpdates
 import com.intellij.openapi.application.PluginAutoUpdateRepository.getAutoUpdateDirPath
@@ -85,7 +85,7 @@ object PluginAutoUpdater {
         loadDescriptors(
           zipPoolDeferred = CompletableDeferred(pool),
           mainClassLoaderDeferred = CompletableDeferred(PluginAutoUpdateRepository::class.java.classLoader),
-        ).second.discoveredPlugins
+        ).second.pluginLists
       }
     }
     // shadowing intended
@@ -143,15 +143,17 @@ object PluginAutoUpdater {
   ): UpdateCheckResult {
     val updatesToApply = mutableSetOf<PluginId>()
     val rejectedUpdates = mutableMapOf<PluginId, String>()
-    val loadingResult = PluginLoadingResult().apply {
-      val compoundLoadingResult = PluginDescriptorLoadingResult.build(
-        discoveredPlugins + DiscoveredPluginsList(updates.values.toList(), PluginsSourceContext.Custom)
-      )
-      initAndAddAll(compoundLoadingResult, initContext)
+    val exclusionReasons = mutableMapOf<PluginMainDescriptor, PluginNonLoadReason>()
+    val pluginsToLoad = initContext.selectPluginsToLoad(
+      discoveredPlugins + DiscoveredPluginsList(updates.values.toList(), PluginsSourceContext.Custom)
+    ) { plugin, reason ->
+      if (reason !is PluginVersionIsSuperseded) {
+        exclusionReasons[plugin] = reason
+      }
     }
     val nonLoadReasonsCollector = ArrayList<PluginNonLoadReason>()
-    val pluginSet = PluginSetBuilder(loadingResult.getPluginsToAttemptLoading())
-      .createPluginSetWithEnabledModulesMap(loadingResult.getIncompleteIdMap().values, nonLoadReasonsCollector)
+    val pluginSet = PluginSetBuilder(pluginsToLoad.plugins.toSet())
+      .createPluginSetWithEnabledModulesMap(exclusionReasons.keys, nonLoadReasonsCollector)
     // checks mostly duplicate what is written in com.intellij.ide.plugins.PluginInstaller.installFromDisk. FIXME, I guess
     for ((id, updateDesc) in updates) {
       // no third-party plugin check, settings are not available at this point; that check must be done when downloading the updates

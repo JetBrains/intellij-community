@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
 import org.jetbrains.annotations.ApiStatus
@@ -6,10 +6,10 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object ApplicationStartArguments {
   @JvmField
-  val DISABLE_NON_BUNDLED_PLUGINS: WellKnownArgument = WellKnownArgument("disableNonBundledPlugins", isCaseSensitive = false)
+  val DISABLE_NON_BUNDLED_PLUGINS: WellKnownArgument = WellKnownArgument("disableNonBundledPlugins", ignoreCase = true)
 
   @JvmField
-  val DONT_REOPEN_PROJECTS: WellKnownArgument = WellKnownArgument("dontReopenProjects", isCaseSensitive = false)
+  val DONT_REOPEN_PROJECTS: WellKnownArgument = WellKnownArgument("dontReopenProjects", ignoreCase = true)
 
   @JvmField
   val SPLASH: WellKnownArgument = WellKnownArgument("splash")
@@ -25,14 +25,11 @@ object ApplicationStartArguments {
   )
 
   @JvmStatic
-  fun stripKnownArguments(args: List<String>): List<String> {
-    return args.filter { arg -> allArguments.none { it.matchArgument(arg) } }
-  }
+  fun stripKnownArguments(args: List<String>): List<String> = args.filterNot { arg -> allArguments.any { it.matchArgument(arg) } }
 }
 
 @ApiStatus.Internal
-class WellKnownArgument(val argument: String, val isCaseSensitive: Boolean = true) {
+class WellKnownArgument(val argument: String, val ignoreCase: Boolean = false) {
   fun isSet(args: List<String>): Boolean = args.any { matchArgument(it) }
-
-  internal fun matchArgument(arg: String): Boolean = arg.equals(argument, ignoreCase = !isCaseSensitive)
+  internal fun matchArgument(arg: String): Boolean = arg.equals(argument, ignoreCase)
 }

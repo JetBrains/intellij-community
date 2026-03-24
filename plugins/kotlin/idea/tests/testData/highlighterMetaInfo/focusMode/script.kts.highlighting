@@ -2,14 +2,14 @@
 // FIR_IDENTICAL
 // CHECK_SYMBOL_NAMES
 // HIGHLIGHTER_ATTRIBUTES_KEY
-repositories {
-    mavenCentral()
-}
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_KEYWORD'")!>import<!> kotlin.reflect.full.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_PROPERTY'")!>declaredMembers<!>
 
-dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-}
+val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>scriptArgs<!> = <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>args<!>
 
-fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>f<!>() {
-    val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>q<!> = 1
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>println<!>("Hello from simple.kts! Args=$<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>scriptArgs<!>")
+
+val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>ktsScriptClassMembers<!> = this::class.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_PROPERTY'")!>declaredMembers<!>
+
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>() {
+    val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>value<!> = 1
 }

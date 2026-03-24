@@ -1,4 +1,5 @@
 // "Surround with null check" "true"
+// K2_ERROR: Assignment type mismatch: actual type is 'String?', but 'String' was expected.
 
 fun foo(s: String?) {
     var ss: String = ""

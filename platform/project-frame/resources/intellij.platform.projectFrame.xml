@@ -1,0 +1,17 @@
+<!--suppress PluginXmlDynamicPlugin -->
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint name="projectFrameCapabilitiesProvider" interface="com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider"/>
+    <extensionPoint name="projectFrameActionExclusion" beanClass="com.intellij.openapi.wm.ex.ProjectFrameActionExclusionBean"/>
+  </extensionPoints>
+</idea-plugin>

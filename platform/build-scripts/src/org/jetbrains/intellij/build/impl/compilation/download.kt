@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl.compilation
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeout
@@ -45,7 +46,7 @@ internal suspend fun downloadCompilationCache(
 ) {
   checkMirrorAndConnect(initialServerUri = serverUrl, client = client) { connection, urlPathPrefix ->
     val zstdDecompressContextPool = ZstdDecompressContextPool()
-    toDownload.forEachConcurrent(downloadParallelism) { item ->
+    toDownload.forEachConcurrent(concurrency = downloadParallelism, workerDispatcher = Dispatchers.IO) { item ->
       val urlPath = "$urlPathPrefix/${item.name}/${item.file.fileName}"
       spanBuilder("download").setAttribute("name", item.name).setAttribute("urlPath", urlPath).use { span ->
         try {

@@ -23,11 +23,12 @@ import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
-import com.jetbrains.python.packaging.toolwindow.model.ErrorNode
 import com.jetbrains.python.packaging.toolwindow.model.ExpandResultNode
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.toolwindow.model.LoadingNode
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
+import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PackageNameCellRenderer
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PackageVersionCellRenderer
 import com.jetbrains.python.sdk.isReadOnly
@@ -154,7 +155,8 @@ class PyPackagesTreeTable(
       is InstalledPackage -> controller.packageSelected(pkg)
       is InstallablePackage -> controller.packageSelected(pkg)
       is RequirementPackage -> controller.packageSelected(pkg)
-      is ErrorNode -> controller.setEmpty()
+      is WorkspaceMember -> controller.packageSelected(pkg)
+      is LoadingNode -> {}
       is ExpandResultNode -> controller.setEmpty()
     }
   }
@@ -239,13 +241,14 @@ class PyPackagesTreeTable(
       val node = table.getValueAt(row, 0) as? DisplayablePackage ?: return
 
       if (shouldShowPopupForNode(node)) {
+        handlePackageSelection(node)
         createAndShowPopupMenu(comp, x, y, actionGroup)
       }
     }
 
     private fun shouldShowPopupForNode(node: DisplayablePackage): Boolean = when (node) {
       is InstallablePackage, is InstalledPackage -> true
-      is RequirementPackage, is ExpandResultNode, is ErrorNode -> false
+      is RequirementPackage, is ExpandResultNode, is WorkspaceMember, is LoadingNode -> false
     }
 
     private fun createAndShowPopupMenu(comp: Component?, x: Int, y: Int, actionGroup: ActionGroup) {
@@ -303,8 +306,8 @@ class PyPackagesTreeTable(
   override fun isCopyVisible(dataContext: DataContext): Boolean = true
 
   private fun getTextForCopy(): String? = when (val pkg = selectedItem()) {
-    is InstalledPackage, is InstallablePackage, is RequirementPackage -> pkg.name
-    is ErrorNode, is ExpandResultNode, null -> null
+    is InstalledPackage, is InstallablePackage, is RequirementPackage, is WorkspaceMember -> pkg.name
+    is ExpandResultNode, is LoadingNode, null -> null
   }
 }
 

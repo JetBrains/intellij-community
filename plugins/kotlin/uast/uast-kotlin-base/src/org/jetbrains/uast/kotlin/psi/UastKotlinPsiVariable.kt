@@ -11,8 +11,8 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeElement
 import com.intellij.psi.impl.light.LightTypeElement
+import com.intellij.psi.impl.light.LightVariableBuilder
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.asJava.elements.LightVariableBuilder
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
@@ -40,7 +40,7 @@ class UastKotlinPsiVariable private constructor(
     psiParentProducer: () -> PsiElement?,
     val containingElement: UElement,
     val ktElement: KtElement
-) : LightVariableBuilder(
+) : LightVariableBuilder<UastKotlinPsiVariable>(
     manager,
     name,
     UastErrorType, // Type is calculated lazily

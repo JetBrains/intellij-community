@@ -1,10 +1,18 @@
 ### auto-generated section `build fleet.compiler.plugins` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "compiler-plugins_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "compiler-plugins",
+  module_name = "fleet.compiler.plugins",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
+  resources = [":compiler-plugins_resources"],
   runtime_deps = [
     "@lib//:expects-compiler-plugin",
     "@lib//:noria-compiler-plugin",
@@ -13,4 +21,18 @@ jvm_library(
     "@lib//:jetbrains-kotlin-compose-compiler-plugin",
   ]
 )
+
+jvm_library(
+  name = "compiler-plugins_test_lib",
+  module_name = "fleet.compiler.plugins",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":compiler-plugins"]
+)
 ### auto-generated section `build fleet.compiler.plugins` end
+
+### auto-generated section `iml fleet.compiler.plugins` start
+exports_files([
+  "fleet.compiler.plugins.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.compiler.plugins` end

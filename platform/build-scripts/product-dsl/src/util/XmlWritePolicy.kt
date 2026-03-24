@@ -7,15 +7,15 @@ import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
 import java.nio.file.Path
 
 /**
- * Global write policy for XML artifacts.
+ * Global write policy for generated repo artifacts.
  *
- * Decides whether XML updates are written, diffed, or skipped based on [GenerationMode].
+ * Decides whether generated artifact updates are written, diffed, or skipped based on [GenerationMode].
  *
  * - NORMAL: allow updates (diffs recorded via [FileUpdateStrategy])
  * - VALIDATE_ONLY: diff-only (no commit even if commitChanges is true)
- * - UPDATE_SUPPRESSIONS: no XML writes and no diffs
+ * - UPDATE_SUPPRESSIONS: no generated artifact writes and no diffs
  */
-internal class XmlWritePolicy(
+internal class GeneratedArtifactWritePolicy(
   private val mode: GenerationMode,
   private val delegate: FileUpdateStrategy,
 ) : FileUpdateStrategy {

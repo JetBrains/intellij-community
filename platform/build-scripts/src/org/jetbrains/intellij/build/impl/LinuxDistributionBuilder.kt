@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.NioFiles
@@ -20,8 +20,9 @@ import org.jetbrains.intellij.build.NativeBinaryDownloader
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
-import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
+import org.jetbrains.intellij.build.impl.client.getAdditionalEmbeddedClientVmOptions
+import org.jetbrains.intellij.build.impl.languageServer.generateLspServerLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.generateEmbeddedFrontendLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
@@ -30,7 +31,7 @@ import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
 import org.jetbrains.intellij.build.impl.productInfo.writeProductInfoJson
 import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import org.jetbrains.intellij.build.impl.stdioMcpRunner.generateStdioMcpRunnerLaunchData
-import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
+import org.jetbrains.intellij.build.impl.support.generateInstallationIntegrityManifest
 import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.io.moveFileToDir
@@ -43,6 +44,7 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.io.path.readText
@@ -65,13 +67,29 @@ class LinuxDistributionBuilder(
     get() = OsFamily.LINUX
 
   override suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
-    spanBuilder("copy files for os distribution").setAttribute("os", targetOs.osName).setAttribute("arch", arch.name).setAttribute("targetLibcImpl", targetLibcImpl.name).use {
+    spanBuilder("copy files for os distribution")
+      .setAttribute("os", targetOs.osName)
+      .setAttribute("arch", arch.name)
+      .setAttribute("targetLibcImpl", targetLibcImpl.name).use {
       withContext(Dispatchers.IO) {
-        val distBinDir = targetPath.resolve("bin")
-        val sourceBinDir = context.paths.communityHomeDir.resolve("bin/linux")
+        val distBinDir = targetPath.resolve("bin").createDirectories()
+        writeVmOptions(distBinDir)
+
+        context.executeStep(spanBuilder("copy product bin files"), BuildOptions.PRODUCT_BIN_DIR_STEP) {
+          val sourceBinDir = context.paths.communityHomeDir.resolve("bin/linux")
+
+          copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.LINUX, arch), distBinDir)
+          copyFileToDir(sourceBinDir.resolve("${arch.dirName}/fsnotifier"), distBinDir)
+
+          createFrontendContextForLaunchers(context)?.let { clientContext ->
+            writeLinuxVmOptions(distBinDir, clientContext)
+            generateLauncherScript(
+              distBinDir, arch, getAdditionalEmbeddedClientVmOptions(OsFamily.LINUX, context), targetLibcImpl, clientContext
+            )
+          }
+          generateScripts(distBinDir, arch, targetLibcImpl, context)
+        }
         addNativeLauncher(distBinDir, targetPath, arch, context)
-        copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.LINUX, arch), distBinDir)
-        copyFileToDir(sourceBinDir.resolve("${arch.dirName}/fsnotifier"), distBinDir)
         generateBuildTxt(targetPath, context)
         copyDistFiles(targetPath, OsFamily.LINUX, arch, targetLibcImpl, context)
 
@@ -81,14 +99,6 @@ class LinuxDistributionBuilder(
 
         if (iconPngPath != null) {
           Files.copy(iconPngPath, distBinDir.resolve("${context.productProperties.baseFileName}.png"), StandardCopyOption.REPLACE_EXISTING)
-        }
-        writeVmOptions(distBinDir)
-        generateScripts(distBinDir, arch, targetLibcImpl, context)
-        createFrontendContextForLaunchers(context)?.let { clientContext ->
-          writeLinuxVmOptions(distBinDir, clientContext)
-          generateLauncherScript(
-            distBinDir, arch, ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS, targetLibcImpl, clientContext
-          )
         }
         generateReadme(targetPath)
         generateVersionMarker(targetPath, context)
@@ -150,7 +160,7 @@ class LinuxDistributionBuilder(
           val tempTar = Files.createTempDirectory(context.paths.tempDir, "tar-")
           try {
             unTar(tarGzPath, tempTar)
-            RepairUtilityBuilder.generateManifest(unpackedDistribution = tempTar.resolve(rootDirectoryName), os = OsFamily.LINUX, arch = arch, context = context)
+            generateInstallationIntegrityManifest(unpackedDistribution = tempTar.resolve(rootDirectoryName), os = OsFamily.LINUX, arch = arch, context = context)
           }
           finally {
             NioFiles.deleteRecursively(tempTar)
@@ -165,6 +175,7 @@ class LinuxDistributionBuilder(
   override fun writeVmOptions(distBinDir: Path): Path = writeLinuxVmOptions(distBinDir, context)
 
   private fun generateReadme(unixDistPath: Path) {
+    if (context.options.isLanguageServer) return
     val fullName = context.applicationInfo.fullProductName
     val sourceFile = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/Install-Linux-tar.txt")
     val targetFile = unixDistPath.resolve("Install-Linux-tar.txt")
@@ -363,11 +374,6 @@ class LinuxDistributionBuilder(
   override fun isRuntimeBundled(file: Path): Boolean = !file.name.contains(NO_RUNTIME_SUFFIX)
 
   private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture, withRuntime: Boolean = true): Path {
-    val embeddedFrontendLaunchData = generateEmbeddedFrontendLaunchData(arch, OsFamily.LINUX, context) {
-      "bin/${it.productProperties.baseFileName}64.vmoptions"
-    }
-    val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.LINUX)
-    val stdioMcpRunnerLaunchData = generateStdioMcpRunnerLaunchData(context)
     val json = generateProductInfoJson(
       relativePathToBin = "bin",
       builtinModules = context.builtinModule,
@@ -382,7 +388,18 @@ class LinuxDistributionBuilder(
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch),
           mainClass = context.ideMainClassName,
           startupWmClass = getLinuxFrameClass(context),
-          customCommands = listOfNotNull(embeddedFrontendLaunchData, qodanaCustomLaunchData, stdioMcpRunnerLaunchData)
+          customCommands = when {
+            context.options.isLanguageServer -> listOf(
+              generateLspServerLaunchData(context)
+            )
+            else -> listOfNotNull(
+              generateEmbeddedFrontendLaunchData(arch, OsFamily.LINUX, context) {
+                "bin/${it.productProperties.baseFileName}64.vmoptions"
+              },
+              generateQodanaLaunchData(context, arch, OsFamily.LINUX),
+              generateStdioMcpRunnerLaunchData(context, OsFamily.LINUX)
+            )
+          }
         )
       ),
       context
@@ -418,9 +435,10 @@ private fun generateScripts(distBinDir: Path, arch: JvmArchitecture, targetLibcI
 }
 
 private suspend fun addNativeLauncher(distBinDir: Path, targetPath: Path, arch: JvmArchitecture, context: BuildContext) {
-  val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.LINUX, arch)
+  val (execPath, licensePath, gcExtLibPath) = NativeBinaryDownloader.getLauncher(context, OsFamily.LINUX, arch)
   copyFile(execPath, distBinDir.resolve(context.productProperties.baseFileName))
   copyFile(licensePath, targetPath.resolve("license/launcher-third-party-libraries.html"))
+  gcExtLibPath?.let { copyFileToDir(it, distBinDir) }
 }
 
 private fun generateLauncherScript(distBinDir: Path, arch: JvmArchitecture, nonCustomizableJvmArgs: List<String>, targetLibcImpl: LinuxLibcImpl, context: BuildContext) {
@@ -483,19 +501,22 @@ private fun copyScript(sourceFile: Path, targetFile: Path, additionalTemplateVal
 
 private fun writeLinuxVmOptions(distBinDir: Path, context: BuildContext): Path {
   val vmOptionsPath = distBinDir.resolve("${context.productProperties.baseFileName}64.vmoptions")
-  val waylandOptions = when (context.productProperties.platformPrefix) {
-    "JetBrainsClient" -> emptySequence() // Wayland auto-detection is disabled for JetBrains Client until rem-dev specific compatibility issues are resolved (IJPL-231136)
-    "Gateway" -> emptySequence() // and for Gateway until system tray will be supported in Wayland toolkit in JBR (IJPL-231661/JBR-9966)
-    else -> sequenceOf("-Dawt.toolkit.name=auto")
-  }
-  val vmOptions = generateVmOptions(context).asSequence() + sequenceOf("-Dsun.tools.attach.tmp.only=true", "-Dawt.lock.fair=true") + waylandOptions
+  val vmOptions = generateVmOptions(
+    context, listOfNotNull(
+      "-Dsun.tools.attach.tmp.only=true",
+      "-Dawt.lock.fair=true",
+      when (context.productProperties.platformPrefix) {
+        "JetBrainsClient" -> null // Wayland auto-detection is disabled for JetBrains Client until rem-dev specific compatibility issues are resolved (IJPL-231136)
+        "Gateway" -> null // and for Gateway until system tray will be supported in Wayland toolkit in JBR (IJPL-231661/JBR-9966)
+        else -> "-Dawt.toolkit.name=auto"
+      }
+    )
+  )
   writeVmOptions(vmOptionsPath, vmOptions, separator = "\n")
   return vmOptionsPath
 }
 
-private fun suffix(arch: JvmArchitecture, targetLibcImpl: LinuxLibcImpl): String {
-  return suffix(arch) + if (targetLibcImpl == LinuxLibcImpl.MUSL) "-musl" else ""
-}
+private fun suffix(arch: JvmArchitecture, targetLibcImpl: LinuxLibcImpl): String = suffix(arch) + if (targetLibcImpl == LinuxLibcImpl.MUSL) "-musl" else ""
 
 private fun getSnapArchName(arch: JvmArchitecture) = when (arch) {
   JvmArchitecture.x64 -> "amd64"

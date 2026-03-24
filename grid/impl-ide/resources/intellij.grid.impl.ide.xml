@@ -1,10 +1,21 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.grid.core.impl"/>
     <module name="intellij.grid.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.statistics"/>
   </dependencies>
+  <!-- endregion -->
   <applicationListeners>
     <listener class="com.intellij.grid.impl.ide.CsvDataModeEditUsageListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
+  <projectListeners>
+    <listener class="com.intellij.grid.impl.ide.CsvDataModeEditUsageListener"
+              topic="com.intellij.database.datagrid.DataGridListener"/>
+  </projectListeners>
 </idea-plugin>

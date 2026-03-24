@@ -2935,6 +2935,10 @@
       "codeQualityCategory": "Code Style"
     },
     {
+      "id": "MathClampMigration",
+      "codeQualityCategory": "Sanity"
+    },
+    {
       "id": "SimpleDateFormatWithoutLocale",
       "codeQualityCategory": "Reliability"
     },

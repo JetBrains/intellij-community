@@ -3,9 +3,8 @@ Tests interactions between Literal types and other typing features.
 """
 
 # Specification: https://typing.readthedocs.io/en/latest/spec/literal.html#interactions-with-other-types-and-features
-
 from enum import Enum
-from typing import IO, Any, Final, Generic, Literal, TypeVar, assert_type, overload
+from typing import IO, Any, Final, Generic, Literal, TypeVar, LiteralString, assert_type, overload
 
 
 def func1(v: tuple[int, str, list[bool]], a: Literal[0], b: Literal[5], c: Literal[-5]):
@@ -43,7 +42,7 @@ def open(path: _PathType, mode: str) -> IO[Any]:
 
 
 def open(path: _PathType, mode: Any) -> Any:
-    pass
+    raise NotImplementedError
 
 
 assert_type(open("path", "r"), IO[str])
@@ -93,6 +92,12 @@ def parse_status1(s: str | Status) -> None:
         assert_type(s, str)
 
 
+# > Type checkers may optionally perform additional analysis for both
+# > enum and non-enum Literal types beyond what is described in the section above.
+#
+# > For example, it may be useful to perform narrowing based on things
+# > like containment or equality checks:
+
 def expects_bad_status(status: Literal["MALFORMED", "ABORTED"]):
     ...
 
@@ -101,12 +106,34 @@ def expects_pending_status(status: Literal["PENDING"]):
     ...
 
 
-def parse_status2(status: str) -> None:
+def parse_status2(status: LiteralString) -> None:
+    if status == "MALFORMED":
+        expects_bad_status(status)  # E? narrowing the type here is sound, but optional per the spec
+    elif status == "ABORTED":
+        expects_bad_status(status)  # E? narrowing the type here is sound, but optional per the spec
+
     if status in ("MALFORMED", "ABORTED"):
-        return expects_bad_status(status)
+        expects_bad_status(status)  # E? narrowing the type here is sound, but optional per the spec
 
     if status == "PENDING":
-        expects_pending_status(status)
+        expects_pending_status(status)  # E? narrowing the type here is sound, but optional per the spec
+
+
+# Narrowing `str` to `Literal` strings is unsound given the possiblity of
+# user-defined `str` subclasses that could have custom equality semantics,
+# but is explicitly listed by the spec as optional analysis that type checkers
+# may perform.
+def parse_status3(status: str) -> None:
+    if status == "MALFORMED":
+        expects_bad_status(status)  # E? narrowing the type here is unsound, but allowed per the spec
+    elif status == "ABORTED":
+        expects_bad_status(status)  # E? narrowing the type here is unsound, but allowed per the spec
+
+    if status in ("MALFORMED", "ABORTED"):
+        expects_bad_status(status)  # E? narrowing the type here is unsound, but allowed per the spec
+
+    if status == "PENDING":
+        expects_pending_status(status)  # E? narrowing the type here is unsound, but allowed per the spec
 
 
 final_val1: Final = 3

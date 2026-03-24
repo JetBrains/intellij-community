@@ -897,12 +897,12 @@ class ExternalSystemStorageTest {
     FileUtil.copyDir(originalExpectedDir.toFile(), expectedDir.toFile())
 
     val projectDir = project.stateStore.directoryStorePath!!.parent
-    projectDir.toFile().assertMatches(directoryContentOf(expectedDir.resolve("project"), originalExpectedDir.resolve("project")))
+    projectDir.toFile().assertMatches(directoryContentOf(expectedDir.resolve("project"), originalExpectedDir.resolve("project")), FileTextMatcher.ignoreLineSeparators())
 
     val expectedCacheDir = expectedDir.resolve("cache")
     if (Files.exists(expectedCacheDir)) {
       cacheDir.toFile().assertMatches(directoryContentOf(expectedCacheDir, originalExpectedDir.resolve("cache")),
-                                      FileTextMatcher.ignoreBlankLines())
+                                      FileTextMatcher.ignoreBlankLines()) // ignoreBlankLines ignores separators too
     }
     else {
       assertTrue("$cacheDir doesn't exist", !Files.exists(cacheDir) || isFolderWithoutFiles(cacheDir.toFile()))

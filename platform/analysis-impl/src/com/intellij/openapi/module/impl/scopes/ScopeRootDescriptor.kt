@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ScopeRootDescriptors")
 
 package com.intellij.openapi.module.impl.scopes
@@ -18,25 +18,22 @@ import com.intellij.openapi.roots.impl.LibraryRootDescriptor
 import com.intellij.openapi.roots.impl.ModuleRootDescriptor
 import com.intellij.openapi.roots.impl.RootDescriptor
 import com.intellij.openapi.roots.impl.SdkRootDescriptor
-import com.intellij.openapi.vfs.VirtualFile
 
 internal fun ScopeRootDescriptor(
-  root: VirtualFile,
   orderEntry: OrderEntry,
   orderIndex: Int, // used to check which dependency has higher priority
 ): ScopeRootDescriptor = when (orderEntry) {
-  is LibraryOrderEntry -> LibScopeDescriptor(root, orderEntry, orderIndex)
-  is ModuleOrderEntry -> ModuleScopeDescriptor(root, orderEntry, orderIndex)
-  is ModuleSourceOrderEntry -> ModuleSourceScopeDescriptor(root, orderEntry, orderIndex)
-  is JdkOrderEntry -> SdkScopeDescriptor(root, orderEntry, orderIndex)
+  is LibraryOrderEntry -> LibScopeDescriptor(orderEntry, orderIndex)
+  is ModuleOrderEntry -> ModuleScopeDescriptor(orderEntry, orderIndex)
+  is ModuleSourceOrderEntry -> ModuleSourceScopeDescriptor(orderEntry, orderIndex)
+  is JdkOrderEntry -> SdkScopeDescriptor(orderEntry, orderIndex)
   else -> {
     log.error("Unexpected order entry: $orderEntry")
-    InvalidScopeDescriptor(root, orderEntry, orderIndex)
+    InvalidScopeDescriptor(orderEntry, orderIndex)
   }
 }
 
 internal sealed interface ScopeRootDescriptor {
-  val root: VirtualFile
   val orderEntry: OrderEntry
 
   /** used to check which dependency has higher priority */
@@ -46,10 +43,9 @@ internal sealed interface ScopeRootDescriptor {
 }
 
 private class LibScopeDescriptor(
-  root: VirtualFile,
   orderEntry: LibraryOrderEntry,
   orderIndex: Int,
-) : ScopeRootDescriptorBase<LibraryOrderEntry>(root, orderEntry, orderIndex) {
+) : ScopeRootDescriptorBase<LibraryOrderEntry>(orderEntry, orderIndex) {
   override fun correspondTo(rootDescriptor: RootDescriptor): Boolean {
     if (rootDescriptor is LibraryRootDescriptor) {
       val library = orderEntry.library ?: return false
@@ -60,10 +56,9 @@ private class LibScopeDescriptor(
 }
 
 private class ModuleScopeDescriptor(
-  root: VirtualFile,
   orderEntry: ModuleOrderEntry,
   orderIndex: Int,
-) : ScopeRootDescriptorBase<ModuleOrderEntry>(root, orderEntry, orderIndex) {
+) : ScopeRootDescriptorBase<ModuleOrderEntry>(orderEntry, orderIndex) {
   override fun correspondTo(rootDescriptor: RootDescriptor): Boolean {
     if (rootDescriptor is ModuleRootDescriptor) {
       val module = orderEntry.module
@@ -74,10 +69,9 @@ private class ModuleScopeDescriptor(
 }
 
 private class ModuleSourceScopeDescriptor(
-  root: VirtualFile,
   orderEntry: ModuleSourceOrderEntry,
   orderIndex: Int,
-) : ScopeRootDescriptorBase<ModuleSourceOrderEntry>(root, orderEntry, orderIndex) {
+) : ScopeRootDescriptorBase<ModuleSourceOrderEntry>(orderEntry, orderIndex) {
   override fun correspondTo(rootDescriptor: RootDescriptor): Boolean {
     if (rootDescriptor is ModuleRootDescriptor) {
       val module = orderEntry.rootModel.module
@@ -88,20 +82,27 @@ private class ModuleSourceScopeDescriptor(
 }
 
 private class SdkScopeDescriptor(
-  root: VirtualFile,
   orderEntry: JdkOrderEntry,
   orderIndex: Int,
-) : ScopeRootDescriptorBase<JdkOrderEntry>(root, orderEntry, orderIndex) {
-  private val sdk: Sdk? by lazy { orderEntry.jdk }
+) : ScopeRootDescriptorBase<JdkOrderEntry>(orderEntry, orderIndex) {
+  @Volatile
+  private var cachedSdk: Any? = null
 
   override fun correspondTo(rootDescriptor: RootDescriptor): Boolean {
     if (rootDescriptor is SdkRootDescriptor) {
-      val orderEntrySdk = sdk ?: return false
+      val orderEntrySdk = inferSdk() ?: return false
       val rootDescriptorSdk = rootDescriptor.sdk
       return orderEntrySdk == rootDescriptorSdk ||
              isEqualBackup(orderEntrySdk, rootDescriptorSdk)
     }
     return super.correspondTo(rootDescriptor)
+  }
+
+  private fun inferSdk(): Sdk? {
+    if (cachedSdk == null) {
+      cachedSdk = orderEntry.jdk ?: NullSdkMarker
+    }
+    return cachedSdk as? Sdk
   }
 
   // todo IJPL-339 get rid of this method
@@ -126,27 +127,24 @@ private class SdkScopeDescriptor(
 }
 
 private class InvalidScopeDescriptor(
-  root: VirtualFile,
   orderEntry: OrderEntry,
   orderIndex: Int,
-) : ScopeRootDescriptorBase<OrderEntry>(root, orderEntry, orderIndex)
+) : ScopeRootDescriptorBase<OrderEntry>(orderEntry, orderIndex)
 
 private abstract class ScopeRootDescriptorBase<Entry : OrderEntry>(
-  override val root: VirtualFile,
   override val orderEntry: Entry,
   override val orderIndex: Int, // used to check which dependency has higher priority
 ) : ScopeRootDescriptor {
   override fun correspondTo(rootDescriptor: RootDescriptor): Boolean {
     if (rootDescriptor !is DummyRootDescriptor) return false
-    // todo not sure if this is correct, please investigate further
-    val result = this.root == rootDescriptor.root
 
-    if (result) {
-      log.debug { "DummyRootDescriptor corresponds to scopeRootDescriptor $rootDescriptor, $this" }
-    }
+    // root equality is guaranteed by the map lookup in MultiverseRootContainer.getRootDescriptor
+    log.debug { "DummyRootDescriptor corresponds to scopeRootDescriptor $rootDescriptor, $this" }
 
-    return result
+    return true
   }
 }
 
 private val log = logger<SdkRootDescriptor>()
+
+private object NullSdkMarker

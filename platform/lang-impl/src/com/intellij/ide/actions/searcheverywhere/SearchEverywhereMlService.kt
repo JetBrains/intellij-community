@@ -5,10 +5,8 @@ import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.ui.components.JBList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
-import javax.swing.ListCellRenderer
 
 @ApiStatus.Internal
 interface SearchEverywhereMlService {
@@ -45,29 +43,26 @@ interface SearchEverywhereMlService {
                              priority: Int,
                              correction: SearchEverywhereSpellCheckResult): SearchEverywhereFoundElementInfo
 
-  fun onSearchRestart(tabId: String, reason: SearchRestartReason,
-                      keysTyped: Int, backspacesTyped: Int, searchQuery: String,
-                      searchResults: List<SearchEverywhereFoundElementInfo>,
-                      searchScope: ScopeDescriptor?, isSearchEverywhere: Boolean)
+  fun onStateStarted(tabId: String,
+                     reason: SearchRestartReason,
+                     searchQuery: String,
+                     searchScope: ScopeDescriptor?,
+                     isSearchEverywhere: Boolean)
+
+  fun onStateFinished(results: List<SearchEverywhereFoundElementInfo>)
 
   fun onItemSelected(tabId: String,
                      indexes: IntArray, selectedItems: List<Any>,
                      searchResults: List<SearchEverywhereFoundElementInfo>,
                      query: String)
 
-  fun onSearchFinished(searchResults: List<SearchEverywhereFoundElementInfo>)
+  fun onSessionFinished()
 
   fun notifySearchResultsUpdated()
 
   fun onDialogClose()
 
-  fun wrapRenderer(renderer: ListCellRenderer<Any>, listModel: SearchListModel): ListCellRenderer<Any>
-
-  fun buildListener(listModel: SearchListModel, resultsList: JBList<Any>, selectionTracker: SEListSelectionTracker): SearchListener?
-
   fun getExperimentVersion(): Int
 
   fun getExperimentGroup(): Int
-
-  fun addBufferedTimestamp(item: SearchEverywhereFoundElementInfo, timestamp: Long)
 }

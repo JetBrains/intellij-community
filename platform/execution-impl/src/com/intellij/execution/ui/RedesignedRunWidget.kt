@@ -52,6 +52,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.WindowManager
@@ -70,6 +71,7 @@ import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -82,6 +84,7 @@ import java.awt.Insets
 import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.util.function.Predicate
+import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
@@ -127,7 +130,13 @@ private fun createRunActionToolbar(): ActionToolbar {
   toolbar.setMinimumButtonSize {
     JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
   }
-  toolbar.setActionButtonBorder(JBUI.CurrentTheme.RunWidget::toolbarBorderDirectionalGap, JBUI.CurrentTheme.RunWidget::toolbarBorderHeight)
+  val insetsSupplier: Supplier<Insets> = Supplier {
+    val horizontal = JBUI.CurrentTheme.RunWidget.toolbarBorderDirectionalGap()
+    val mainToolbarInsets = (JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets() as JBInsets).unscaled
+    @Suppress("UseDPIAwareInsets") // the supplier must provide unscaled values
+    Insets(mainToolbarInsets.top, horizontal, mainToolbarInsets.bottom, horizontal)
+  }
+  toolbar.setActionButtonBorder(JBEmptyBorder(JBInsets.create(insetsSupplier, insetsSupplier.get())))
   toolbar.setCustomButtonLook(RunWidgetButtonLook())
   return toolbar
 }
@@ -489,7 +498,7 @@ open class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCompo
     val configurationName = e.project?.let { RunManager.getInstanceIfCreated(it) }?.selectedConfiguration?.name
     if (configurationName?.length?.let { it > CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH } == true) {
       e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description.long",
-                                                                   configurationName))
+                                                                   StringUtil.escapeXmlEntities(configurationName)))
     }
     else {
       e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description"))

@@ -1,5 +1,6 @@
 // "Create class 'Foo'" "true"
-// IGNORE_K2
+// K2_ERROR: Unresolved reference 'Foo'.
+
 class A<T>(val n: T) {
 
 }

@@ -47,12 +47,14 @@
     <backgroundPostStartupActivity implementation="com.intellij.platform.feedback.csat.CsatNewUserTracker"/>
 
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.editor.smoothcaret.SmoothCaretFeedbackSurvey"/>
+    <backgroundPostStartupActivity implementation="com.intellij.platform.feedback.editor.smoothcaret.SmoothCaretFirstRunActivity"/>
     <applicationService serviceImplementation="com.intellij.platform.feedback.editor.smoothcaret.SmoothCaretUsageLocalStorage"/>
 
     <registryKey key="csat.survey.enabled" defaultValue="true" description="Enables periodic CSAT survey"/>
     <registryKey key="csat.survey.today" defaultValue="" description="ISO Formatted today date such as 2011-12-03"/>
     <registryKey key="csat.survey.user.created.date" defaultValue="" description="ISO Formatted date when user created such as 2011-12-03"/>
     <registryKey key="csat.survey.show.probability" defaultValue="" description="Override probability of survey, double value from 0 to 1"/>
+    <registryKey key="smooth.caret.survey.first.run.date" defaultValue="" description="ISO Formatted first EAP run date such as 2026-02-10 (for testing)"/>
   </extensions>
 
   <actions>

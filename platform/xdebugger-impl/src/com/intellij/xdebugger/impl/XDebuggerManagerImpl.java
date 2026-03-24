@@ -18,13 +18,11 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.idea.AppMode;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -70,10 +68,10 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSessionStartedResult;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.settings.ShowBreakpointsOverLineNumbersAction;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.flow.MutableStateFlow;
@@ -99,19 +97,14 @@ import static com.intellij.platform.debugger.impl.shared.CoroutineUtilsKt.create
 @ApiStatus.Internal
 @State(name = "XDebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class XDebuggerManagerImpl extends XDebuggerManager implements PersistentStateComponent<XDebuggerState>, Disposable {
-  public static final DataKey<Integer> ACTIVE_LINE_NUMBER = DataKey.create("active.line.number");
   private static final ExecutorService EXECUTION_POINT_ICON_EXECUTOR =
     AppExecutorUtil.createBoundedApplicationPoolExecutor("Execution point icon updater", 1);
 
   private final Project myProject;
   private final CoroutineScope myCoroutineScope;
   private final XBreakpointManagerImpl myBreakpointManager;
-  private final XDebuggerWatchesManager myWatchesManager;
-  private final XDebuggerPinToTopManager myPinToTopManager;
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions = Collections.synchronizedMap(new LinkedHashMap<>());
   private final MutableStateFlow<@Nullable XDebugSessionImpl> myActiveSession = createMutableStateFlow(null);
-
-  private XDebuggerState myState = new XDebuggerState();
 
   private InlayRunToCursorEditorListener myNewRunToCursorListener = null;
 
@@ -127,8 +120,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     SimpleMessageBusConnection messageBusConnection = project.getMessageBus().connect(coroutineScope);
 
     myBreakpointManager = new XBreakpointManagerImpl(project, this, messageBusConnection, coroutineScope);
-    myWatchesManager = new XDebuggerWatchesManagerImpl(project, coroutineScope);
-    myPinToTopManager = new XDebuggerPinToTopManager(coroutineScope);
+    XDebuggerWatchesManagerImpl.getInstance(project);
 
     if (!SplitDebuggerMode.isSplitDebugger() || AppMode.isRemoteDevHost()) {
       startContentSelectionListening(messageBusConnection);
@@ -203,11 +195,11 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   }
 
   public XDebuggerWatchesManager getWatchesManager() {
-    return myWatchesManager;
+    return XDebuggerWatchesManagerImpl.getInstance(myProject);
   }
 
   public @NotNull XDebuggerPinToTopManager getPinToTopManager() {
-    return myPinToTopManager;
+    return XDebuggerPinToTopManager.getInstance(myProject);
   }
 
   public Project getProject() {
@@ -355,11 +347,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   private void onActiveSessionChanged(@Nullable XDebugSession previousSession, @Nullable XDebugSession currentSession) {
     myBreakpointManager.getLineBreakpointManager().queueAllBreakpointsUpdate();
-    if (!DapMode.isDap()) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        ValueLookupManagerController.getInstance(myProject).hideHint();
-      }, myProject.getDisposed());
-    }
     if (!myProject.isDisposed()) {
       myProject.getMessageBus().syncPublisher(TOPIC).currentSessionChanged(previousSession, currentSession);
       if (currentSession != null && previousSession != null) {
@@ -411,19 +398,18 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   @Override
   public XDebuggerState getState() {
-    XDebuggerState state = myState;
+    XDebuggerState state = new XDebuggerState();
     myBreakpointManager.saveState(state.getBreakpointManagerState());
-    ((XDebuggerWatchesManagerImpl)myWatchesManager).saveState(state.getWatchesManagerState());
-    myPinToTopManager.saveState(state.getPinToTopManagerState());
+    ((XDebuggerWatchesManagerImpl)getWatchesManager()).saveState(state.getWatchesManagerState());
+    getPinToTopManager().saveState(state.getPinToTopManagerState());
     return state;
   }
 
   @Override
   public void loadState(@NotNull XDebuggerState state) {
-    myState = state;
     myBreakpointManager.loadState(state.getBreakpointManagerState());
-    ((XDebuggerWatchesManagerImpl)myWatchesManager).loadState(state.getWatchesManagerState());
-    myPinToTopManager.loadState(state.getPinToTopManagerState());
+    ((XDebuggerWatchesManagerImpl)getWatchesManager()).loadState(state.getWatchesManagerState());
+    getPinToTopManager().loadState(state.getPinToTopManagerState());
   }
 
   @Override
@@ -443,7 +429,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   }
 
   public static @NotNull NotificationGroup getNotificationGroup() {
-    return NotificationGroupManager.getInstance().getNotificationGroup("Debugger messages");
+    return DebuggerUIUtil.getNotificationGroup();
   }
 
   private final class GutterUiRunToCursorEditorListener implements EditorMouseMotionListener, EditorMouseListener {

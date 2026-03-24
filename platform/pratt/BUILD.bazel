@@ -19,6 +19,27 @@ jvm_library(
     "//platform/util",
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+  ]
+)
+
+jvm_library(
+  name = "pratt_test_lib",
+  module_name = "intellij.platform.pratt",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":pratt",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.pratt` end
+
+### auto-generated section `iml intellij.platform.pratt` start
+exports_files([
+  "intellij.platform.pratt.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.pratt` end

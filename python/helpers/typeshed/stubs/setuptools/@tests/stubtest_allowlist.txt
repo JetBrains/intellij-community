@@ -70,16 +70,16 @@ setuptools._distutils.command.install_headers
 setuptools._distutils.compat.numpy
 setuptools._distutils.compat.py39
 setuptools._distutils.core
-setuptools._distutils.cygwinccompiler
 setuptools._distutils.debug
 setuptools._distutils.dir_util
 setuptools._distutils.fancy_getopt
 setuptools._distutils.file_util
 setuptools._distutils.log
 setuptools._distutils.text_file
-setuptools._distutils.version
+setuptools._distutils.version.Version._cmp # abstract method
+setuptools._distutils.version.Version.parse # abstract method
+setuptools._distutils.version.suppress_known_deprecation
 setuptools._distutils.versionpredicate
-setuptools._distutils.zosccompiler
 
 # Reexported from setuptools._distutils; problems should be fixed there
 distutils\..+

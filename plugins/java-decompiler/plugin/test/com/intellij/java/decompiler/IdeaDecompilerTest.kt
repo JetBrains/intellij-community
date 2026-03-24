@@ -18,6 +18,7 @@ import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -66,7 +67,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testSimple() {
     val file = getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang/String.class")
-    val decompiled = IdeaDecompiler().getText(file).toString()
+    val decompiled = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation { IdeaDecompiler().getText(file).toString() }
     assertTrue(decompiled, decompiled.startsWith("${IDEA_DECOMPILER_BANNER}package java.lang;\n"))
     assertTrue(decompiled, decompiled.contains("public final class String"))
     assertTrue(decompiled, decompiled.contains("@deprecated"))
@@ -83,7 +84,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     try {
       AdvancedSettings.setInt(advancedSetting, 5)
       val file = getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang/String.class")
-      val decompiled = IdeaDecompiler().getText(file).toString()
+      val decompiled = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation { IdeaDecompiler().getText(file).toString() }
       assertTrue(decompiled, decompiled.contains("Limits for direct nodes are exceeded"))
       //small methods are decompiled normally
       assertTrue(decompiled, decompiled.contains("""
@@ -102,7 +103,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     try {
       AdvancedSettings.setInt(advancedSetting, 5)
       val file = getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang/String.class")
-      val decompiled = IdeaDecompiler().getText(file).toString()
+      val decompiled = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation { IdeaDecompiler().getText(file).toString() }
       assertTrue(decompiled, decompiled.contains("Limits for variable nodes are exceeded"))
       //small methods are decompiled normally
       assertTrue(decompiled, decompiled.contains(
@@ -122,7 +123,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     val visitor = MyFileVisitor(psiManager)
     Registry.get("decompiler.dump.original.lines").withValue(true) {
       VfsUtilCore.visitChildrenRecursively(getTestFile("${JavaTestUtil.getJavaTestDataPath()}/psi/cls/mirror"), visitor)
-      VfsUtilCore.visitChildrenRecursively(getTestFile("${PluginPathManager.getPluginHomePath("java-decompiler")}/engine/testData/classes"),
+      VfsUtilCore.visitChildrenRecursively(getTestFile("${PluginPathManager.getPluginHomePath("java-decompiler")}/engine/testData/manual/classes"),
                                            visitor)
       VfsUtilCore.visitChildrenRecursively(getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang"), visitor)
     }
@@ -163,7 +164,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     IdeaDecompilerSettings.getInstance().loadState(state)
 
     val file = getTestFile("UnicodeTest.class")
-    val decompiled = IdeaDecompiler().getText(file).toString()
+    val decompiled = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation { IdeaDecompiler().getText(file).toString() }
     assertTrue(decompiled, decompiled.contains("你好"))
     assertFalse(decompiled, decompiled.contains("\\u4f60"))
   }
@@ -282,7 +283,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
         IdeaDecompilerSettings.getInstance().loadState(state)
         assertNull(file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY))
 
-        IdeaDecompiler().getText(file)
+        BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation { IdeaDecompiler().getText(file) }
 
         val mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY)!!
         assertion(mapping)
@@ -337,7 +338,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
   private fun getTestFile(name: String): VirtualFile {
     val path = if (FileUtil.isAbsolute(name)) name else "${myFixture.testDataPath}/${name}"
     val fs = if (path.contains(URLUtil.JAR_SEPARATOR)) StandardFileSystems.jar() else StandardFileSystems.local()
-    val file = fs.refreshAndFindFileByPath(path)!!
+    val file = fs.refreshAndFindFileByPath(path) ?: error("File not found: $path")
     if (file.isDirectory) file.refresh(false, true)
     return file
   }
@@ -366,7 +367,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
           return true
         }
 
-        val decompiled = psiFile.mirror.text
+        val decompiled = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation { psiFile.mirror.text }
         assertTrue(file.path, decompiled.startsWith(IDEA_DECOMPILER_BANNER) || file.name.endsWith("-info.class"))
 
         // check that no mapped line number is on an empty line

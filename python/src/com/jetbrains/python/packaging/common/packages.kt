@@ -15,7 +15,12 @@ import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import kotlin.collections.emptyList
 
-open class PythonPackage(name: String, val version: String, val isEditableMode: Boolean) {
+@ApiStatus.Internal
+@JvmInline
+value class PyDependencyGroupName(val name: String)
+
+@ApiStatus.Internal
+open class PythonPackage @JvmOverloads constructor(name: String, val version: String, val isEditableMode: Boolean, val dependencyGroup: PyDependencyGroupName? = null) {
   companion object {
     private const val HASH_MULTIPLIER = 31
   }
@@ -36,13 +41,14 @@ open class PythonPackage(name: String, val version: String, val isEditableMode: 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is PythonPackage) return false
-    return this@PythonPackage.name == other.name && version == other.version && isEditableMode == other.isEditableMode
+    return this@PythonPackage.name == other.name && version == other.version && isEditableMode == other.isEditableMode && dependencyGroup == other.dependencyGroup
   }
 
   override fun hashCode(): Int {
     var result = this@PythonPackage.name.hashCode()
     result = HASH_MULTIPLIER * result + version.hashCode()
     result = HASH_MULTIPLIER * result + isEditableMode.hashCode()
+    result = HASH_MULTIPLIER * result + (dependencyGroup?.hashCode() ?: 0)
     return result
   }
 

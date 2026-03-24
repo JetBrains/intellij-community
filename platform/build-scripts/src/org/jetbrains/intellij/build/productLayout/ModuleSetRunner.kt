@@ -80,6 +80,7 @@ suspend fun runModuleSetMain(
   withoutTracer {
     val options = parseGeneratorOptions(args)
     setProductDslLogFilter(options.logFilter)
+
     coroutineScope {
       val outputProvider = createModuleOutputProvider(projectRoot = projectRoot, scope = this)
       if (options.jsonFilter != null) {

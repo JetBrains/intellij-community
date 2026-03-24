@@ -1,5 +1,6 @@
 // "Add 'toString()' call" "true"
 // PRIORITY: LOW
+// K2_ERROR: Argument type mismatch: actual type is 'Any', but 'String' was expected.
 
 fun foo() {
     bar(Any().toString()<caret>)

@@ -207,7 +207,7 @@ open class HighlightingNecromancer(
     }
     val markupModel = DocumentMarkupModel.forDocument(document, project, false)
     if (markupModel != null) {
-      val zombies = markupModel.allHighlighters.filter { isZombieMarkup(it) }.toList()
+      val zombies = markupModel.allHighlighters.filter { it.isValid && isZombieMarkup(it) }.toList()
       for (highlighter in zombies) {
         highlighter.dispose()
       }

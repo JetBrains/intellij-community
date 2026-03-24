@@ -419,8 +419,6 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
         }
 
         override fun createPointer(): Pointer<out PolySymbolScope> = Pointer.hardPointer(this)
-
-        override fun getModificationCount(): Long = 0
       }, null, testRootDisposable)
     doTest("html/elements/bar-bar", "vue", true, "nested-pattern")
   }

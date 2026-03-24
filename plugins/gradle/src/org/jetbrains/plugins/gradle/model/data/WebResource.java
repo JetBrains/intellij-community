@@ -24,12 +24,11 @@ public class WebResource implements Serializable {
    * @deprecated use {@link #WebResource(WarDirectory, String, Path)} instead.
    */
   @Deprecated
-  @PropertyMapping({"warDirectory", "warRelativePath", "file"})
   public WebResource(@NotNull WarDirectory warDirectory, @NotNull String warRelativePath, @NotNull File file) {
     this(warDirectory, warRelativePath, file.toPath());
   }
 
-  @PropertyMapping({"warDirectory", "warRelativePath", "file"})
+  @PropertyMapping({"warDirectory", "warRelativePath", "filePath"})
   public WebResource(@NotNull WarDirectory warDirectory, @NotNull String warRelativePath, @NotNull Path filePath) {
     this.warDirectory = warDirectory;
     this.warRelativePath = getAdjustedPath(warRelativePath);

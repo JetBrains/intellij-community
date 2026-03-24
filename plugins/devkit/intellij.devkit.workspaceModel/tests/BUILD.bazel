@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests",
+  module_name = "intellij.devkit.workspaceModel.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -26,48 +27,81 @@ jvm_library(
   deps = [
     "@lib//:junit5",
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "//java/openapi:java",
+    "//java/openapi:java_test_lib",
     "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+    "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel_test_lib",
     "//platform/workspace/storage",
+    "//platform/workspace/storage:storage_test_lib",
+    "//plugins/kotlin/test-framework",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/formatter",
+    "//plugins/kotlin/formatter:formatter_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/workspace/jps",
+    "//platform/workspace/jps:jps_test_lib",
     "//platform/workspace/jps/tests",
     "//platform/workspace/jps/tests:tests_test_lib",
     "@lib//:workspace-model-codegen",
     "//platform/backend/workspace",
+    "//platform/backend/workspace:workspace_test_lib",
     "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/facet:facet_test_lib",
     "@lib//:kotlinc-kotlin-jps-common-provided",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
     "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
     "//plugins/kotlin/tests-common:common-tests",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//libraries/rd/core",
+    "//libraries/rd/core:core_test_lib",
     "//libraries/rd/framework",
+    "//libraries/rd/framework:framework_test_lib",
     "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
     "@lib//:kotlinc-kotlin-scripting-common",
     "//plugins/editorconfig/backend",
     "//plugins/editorconfig/backend:backend_test_lib",
     "//plugins/editorconfig:editorconfig-plugin",
+    "//plugins/editorconfig:editorconfig-plugin_test_lib",
     "@lib//:studio-platform",
+    "//plugins/copyright",
+    "//plugins/copyright:copyright_test_lib",
   ],
-  runtime_deps = [":tests"]
+  runtime_deps = [
+    ":tests",
+    "//plugins/devkit:devkit_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.devkit.workspaceModel.tests` end
+
+### auto-generated section `iml intellij.devkit.workspaceModel.tests` start
+exports_files([
+  "intellij.devkit.workspaceModel.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.devkit.workspaceModel.tests` end
 
 ### auto-generated section `test intellij.devkit.workspaceModel.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

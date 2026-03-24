@@ -10,7 +10,6 @@ import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter;
 import com.intellij.ide.plugins.newui.PluginUiModelBuilderFactory;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,7 +54,7 @@ public final class RepositoryHelper {
 
   /** Duplicates VmOptionsGenerator.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY */
   private static final String CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url";
-  @SuppressWarnings("SpellCheckingInspection") private static final String PLUGIN_LIST_FILE = "availables.xml";
+  private static final String PLUGIN_LIST_FILE = "availables.xml";
 
   /**
    * Returns a list of configured custom plugin repository hosts.
@@ -70,12 +69,7 @@ public final class RepositoryHelper {
 
     hosts.addAll(UpdateSettingsProvider.getRepositoriesFromProviders());
 
-    @SuppressWarnings("deprecation") var pluginsUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();
-    if (pluginsUrl != null && !"__BUILTIN_PLUGINS_URL__".equals(pluginsUrl)) {
-      hosts.add(pluginsUrl);
-    }
-
-    pluginsUrl = System.getProperty(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY);
+    var pluginsUrl = System.getProperty(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY);
     if (pluginsUrl != null) {
       hosts.addAll(Arrays.asList(pluginsUrl.split(",")));
     }
@@ -197,7 +191,9 @@ public final class RepositoryHelper {
 
       if (model.getName() == null) {
         var url = model.getDownloadUrl();
-        model.setName(FileUtilRt.getNameWithoutExtension(url.substring(url.lastIndexOf('/') + 1)));
+        if (url != null) {
+          model.setName(FileUtilRt.getNameWithoutExtension(url.substring(url.lastIndexOf('/') + 1)));
+        }
       }
 
       var previous = result.get(pluginId);
@@ -235,6 +231,7 @@ public final class RepositoryHelper {
 
   @ApiStatus.Internal
   @Deprecated(forRemoval = true)
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public static @NotNull Collection<PluginNode> mergePluginsFromRepositories(
     @NotNull List<PluginNode> marketplacePlugins,
     @NotNull List<PluginNode> customPlugins,
@@ -305,7 +302,7 @@ public final class RepositoryHelper {
    * Looks for the given plugins in the Marketplace and custom repositories. Only compatible plugins are returned.
    */
   public static @NotNull Collection<PluginNode> loadPlugins(@NotNull Set<PluginId> pluginIds) {
-    var mpPlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds);
+    @SuppressWarnings("deprecation") var mpPlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds);
     var customPlugins = loadPluginsFromCustomRepositories(null).stream().filter(p -> pluginIds.contains(p.getPluginId())).toList();
     return mergePluginsFromRepositories(mpPlugins, customPlugins, true);
   }

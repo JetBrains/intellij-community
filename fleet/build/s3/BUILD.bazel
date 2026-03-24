@@ -1,6 +1,6 @@
 ### auto-generated section `build fleet.build.s3` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_s3",
@@ -14,11 +14,18 @@ create_kotlinc_options(
   x_lambdas = "class"
 )
 
+resourcegroup(
+  name = "s3_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
 jvm_library(
   name = "s3",
   module_name = "fleet.build.s3",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
+  resources = [":s3_resources"],
   kotlinc_opts = ":custom_s3",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -33,22 +40,30 @@ jvm_library(
 jvm_library(
   name = "s3_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcJvmTest/**/*.kt", "srcJvmTest/**/*.java", "srcJvmTest/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcJvmTest/**/*.kt", "srcJvmTest/**/*.java", "srcJvmTest/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_s3",
   associates = [":s3"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//fleet/build/platform",
+    "//fleet/build/platform:platform_test_lib",
     "//fleet/build/fs",
     "//fleet/build/fs:fs_test_lib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:fleet-aws-sdk-kotlin-s3-jvm",
     "@lib//:slf4j-api",
     "//fleet/test-runtime",
+    "//fleet/test-runtime:test-runtime_test_lib",
     "@lib//:kotlinx-coroutines-test",
   ]
 )
 ### auto-generated section `build fleet.build.s3` end
+
+### auto-generated section `iml fleet.build.s3` start
+exports_files([
+  "fleet.build.s3.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.build.s3` end
 
 ### auto-generated section `test fleet.build.s3` start
 load("@community//build:tests-options.bzl", "jps_test")

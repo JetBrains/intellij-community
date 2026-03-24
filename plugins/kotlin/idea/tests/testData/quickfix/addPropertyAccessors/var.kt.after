@@ -1,5 +1,6 @@
 // "Add getter and setter" "true"
 // WITH_STDLIB
+// K2_ERROR: Property must be initialized or be abstract.
 class Test {
     var x: Int
         get() {

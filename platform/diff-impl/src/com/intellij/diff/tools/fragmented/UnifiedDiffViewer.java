@@ -242,6 +242,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   protected void onDispose() {
     super.onDispose();
     EditorFactory.getInstance().releaseEditor(myEditor);
+    EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(myDocument, null);
   }
 
   @Override
@@ -285,7 +286,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(myDocument, new MyReadonlyFragmentModificationHandler());
     myDocument.putUserData(UndoManager.ORIGINAL_DOCUMENT, getDocument(myMasterSide)); // use undo of master document
 
-    myDocument.addDocumentListener(new MyOnesideDocumentListener());
+    myDocument.addDocumentListener(new MyOnesideDocumentListener(), this);
   }
 
   @Override

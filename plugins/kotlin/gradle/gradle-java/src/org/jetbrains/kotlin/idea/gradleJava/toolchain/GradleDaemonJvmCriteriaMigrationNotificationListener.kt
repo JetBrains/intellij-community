@@ -5,6 +5,8 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.util.registry.Registry
+import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -19,7 +21,7 @@ class GradleDaemonJvmCriteriaMigrationNotificationListener: ExternalSystemTaskNo
         val project = id.findProject() ?: return
         val settings = GradleSettings.getInstance(project)
         val projectSettings = settings.getLinkedProjectSettings(projectPath) ?: return
-        val gradleVersion = projectSettings.resolveGradleVersion()
+        val gradleVersion = GradleInstallationManager.guessGradleVersion(projectSettings) ?: GradleVersion.current()
         if (GradleDaemonJvmHelper.isDaemonJvmCriteriaSupported(gradleVersion)) {
             if (!GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(Path.of(projectPath), gradleVersion)) {
                 GradleDaemonJvmCriteriaMigrationNotification.show(project, projectPath)

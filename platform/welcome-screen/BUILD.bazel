@@ -1,0 +1,48 @@
+### auto-generated section `build intellij.platform.welcomeScreen` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "welcome-screen_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "welcome-screen",
+  module_name = "intellij.platform.welcomeScreen",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":welcome-screen_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/extensions",
+    "//platform/ide-core",
+    "//platform/project-frame",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+  ]
+)
+
+jvm_library(
+  name = "welcome-screen_test_lib",
+  module_name = "intellij.platform.welcomeScreen",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":welcome-screen",
+    "//platform/core-api:core_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/project-frame:project-frame_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.welcomeScreen` end
+
+### auto-generated section `iml intellij.platform.welcomeScreen` start
+exports_files([
+  "intellij.platform.welcomeScreen.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.welcomeScreen` end

@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -10,7 +9,6 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import org.jetbrains.annotations.SystemIndependent
@@ -45,19 +43,14 @@ internal data class ToolCommandExecutor(
     return detectToolExecutable(eel)
   }
 
-  suspend fun <T> runTool(dirPath: Path?, vararg args: String, transformer: ProcessOutputTransformer<T>): PyResult<T> {
+  suspend fun <T> runTool(dirPath: Path?, vararg args: String, env: Map<String, String> = emptyMap(), transformer: ProcessOutputTransformer<T>): PyResult<T> {
     val executable = getToolExecutable(dirPath?.getEelDescriptor()?.toEelApi() ?: localEel)
                      ?: return PyResult.localizedError(PySdkBundle.message("cannot.find.executable", toolName, localEel.descriptor.name))
-    return runExecutableWithProgress(executable, dirPath, 10.minutes, args = args, transformer = transformer)
+    return runExecutableWithProgress(executable, dirPath, 10.minutes, env = env, args = args, transformer = transformer)
   }
 }
 
-@RequiresBackgroundThread
-internal fun ToolCommandExecutor.detectToolExecutableOrNull(eel: EelApi): Path? {
-  return runBlockingCancellable { detectToolExecutable(eel) }
-}
-
-internal suspend fun ToolCommandExecutor.runTool(dirPath: Path?, vararg args: String): PyResult<String> =
-  runTool(dirPath, args = args, transformer = ZeroCodeStdoutTransformer)
+internal suspend fun ToolCommandExecutor.runTool(dirPath: Path?, vararg args: String, env: Map<String, String> = emptyMap()): PyResult<String> =
+  runTool(dirPath, args = args, env = env, transformer = ZeroCodeStdoutTransformer)
 
 

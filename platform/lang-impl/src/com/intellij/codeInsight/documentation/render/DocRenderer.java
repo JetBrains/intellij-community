@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorCssFontResolver;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -185,6 +186,9 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     Color currentBgColor = textAttributes.getBackgroundColor();
     Color bgColor = currentBgColor == null ? defaultBgColor
                                            : ColorUtil.mix(defaultBgColor, textAttributes.getBackgroundColor(), .5);
+    if (myPane != null) {
+      myPane.setSelectionColor(editor.getSelectionModel().getTextAttributes().getBackgroundColor());
+    }
     if (currentBgColor != null) {
       g.setColor(bgColor);
       int arcDiameter = ARC_RADIUS * 2;
@@ -353,7 +357,6 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     pane.setForeground(textColor);
     pane.setBackground(backgroundColor != null ? backgroundColor : ((EditorEx)editor).getBackgroundColor());
     pane.setSelectedTextColor(textColor);
-    pane.setSelectionColor(editor.getSelectionModel().getTextAttributes().getBackgroundColor());
     UIUtil.enableEagerSoftWrapping(pane);
     pane.setText(text);
     pane.addHyperlinkListener(e -> {
@@ -365,6 +368,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     if (CachingAdaptiveImageManagerService.isEnabled()) {
       pane.getDocument().putProperty(AdaptiveImageView.ADAPTIVE_IMAGES_MANAGER_PROPERTY, CachingAdaptiveImageManagerService.getInstance());
     }
+    EditorUtil.disposeWithEditor(editor, pane);
     return pane;
   }
 
@@ -375,7 +379,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     }
   }
 
-  void dispose() {
+  public void dispose() {
     clearCachedComponent();
   }
 

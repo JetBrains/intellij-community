@@ -30,7 +30,7 @@ import javax.management.AttributeNotFoundException
 import javax.management.InstanceNotFoundException
 import kotlin.reflect.KClass
 
-open class DriverImpl(host: JmxHost, override val isRemDevMode: Boolean) : Driver {
+open class DriverImpl(host: JmxHost, override val isRemDevMode: Boolean, override val beforeCall: (Driver.() -> Unit)? = null) : Driver {
   private val invoker: Invoker = JmxCallHandler.jmx(Invoker::class.java, host)
   private val sessionHolder = ThreadLocal<Session>()
 
@@ -232,7 +232,18 @@ open class DriverImpl(host: JmxHost, override val isRemDevMode: Boolean) : Drive
     }
   }
 
+  private val isInsideBeforeCall: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
+
   private fun makeCall(call: RemoteCall): RemoteCallResult {
+    if (!isInsideBeforeCall.get()) {
+      isInsideBeforeCall.set(true)
+      try {
+        beforeCall?.invoke(this)
+      }
+      finally {
+        isInsideBeforeCall.set(false)
+      }
+    }
     return try {
       invoker.invoke(call)
     }

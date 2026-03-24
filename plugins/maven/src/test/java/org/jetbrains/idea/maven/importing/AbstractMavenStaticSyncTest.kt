@@ -6,6 +6,8 @@ import com.intellij.maven.testFramework.utils.RealMavenPreventionFixture
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.common.runAll
+import org.jetbrains.idea.maven.buildtool.MavenSyncSession
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
 import org.jetbrains.idea.maven.project.preimport.SimpleStructureProjectVisitor
 
@@ -30,7 +32,15 @@ abstract class AbstractMavenStaticSyncTest : MavenMultiVersionImportingTestCase(
     val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(project)
     try {
       val result = MavenProjectStaticImporter.getInstance(project)
-        .syncStatic(files, null, mavenImporterSettings, mavenGeneralSettings, true, SimpleStructureProjectVisitor(), activity, true)
+        .syncStatic(MavenSyncSession(project, MavenSyncSpec.incremental("test"), projectsManager.projectsTree),
+                    files,
+                    null,
+                    mavenImporterSettings,
+                    mavenGeneralSettings,
+                    true,
+                    SimpleStructureProjectVisitor(),
+                    activity,
+                    true)
       projectsManager.initForTests()
       projectsManager.projectsTree.updater().copyFrom(result.projectTree)
     }

@@ -18,7 +18,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppJavaExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -37,7 +37,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Consumer;
 
-@ApiStatus.Internal
+@Internal
 public final class EclipseProjectDetector extends ProjectDetector {
   private static final Logger LOG = Logger.getInstance(EclipseProjectDetector.class);
 

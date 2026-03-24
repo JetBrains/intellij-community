@@ -137,8 +137,8 @@ class KotlinScriptHighlightingVisitor : HighlightVisitor {
     }
 
     private fun drainScriptReports(file: KtFile): List<ScriptDiagnostic> {
-        val virtualFile = file.originalFile.virtualFile
-        val diagnostics = virtualFile?.scriptDiagnostics  ?: emptyList()
+        val virtualFile = file.originalFile.virtualFile ?: return emptyList()
+        val diagnostics = virtualFile.scriptDiagnostics ?: emptyList()
         virtualFile.scriptDiagnostics = emptyList()
 
         return diagnostics

@@ -208,12 +208,12 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
         impl.runWithInvalidPsiRecycler(getHighlightingSession(), HighlightInfoUpdaterImpl.WhatTool.ANNOTATOR_OR_VISITOR, recyclerConsumer);
       }
       else {
-        ManagedHighlighterRecycler.runWithRecycler(getHighlightingSession(), recyclerConsumer);
+        ManagedHighlighterRecycler.runWithRecycler(getHighlightingSession(), "GHP", recyclerConsumer);
       }
     });
     if (LOG.isTraceEnabled()) {
       List<HighlightInfo> errors = ContainerUtil.filter(myHighlights, h -> h.getSeverity() == HighlightSeverity.ERROR);
-      LOG.trace("GHP finished: progress=" + progress+ " myHasErrorElement=" + myHasErrorElement + "; highlights:" + myHighlights.size() + "; errors:" + errors.size() + ": " +
+      LOG.trace("GHP finished: progress=" + progress+ " myHasErrorElement=" + myHasErrorElement + "; highlights:" + myHighlights.size() + "; errors:" + errors.size() + ":\n" +
                 StringUtil.join(ContainerUtil.getFirstItems(errors, 20), "\n"));
     }
   }
@@ -265,7 +265,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
 
   private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress, @NotNull Project project, @NotNull String reason) throws ProcessCanceledException {
     RESTART_REQUESTS.incrementAndGet();
-    progress.cancel();
+    ((DaemonProgressIndicator)progress).cancel(reason);
     int delay = ApplicationManager.getApplication().isUnitTestMode() ? 0 : RESTART_DAEMON_RANDOM.nextInt(100);
     EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
       RESTART_REQUESTS.set(0);

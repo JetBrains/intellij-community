@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
@@ -16,7 +17,9 @@ import java.util.function.Function;
 public abstract class PredefinedConfigurationsTestCase extends StructuralSearchTestCase {
 
   protected void doTest(Configuration template, String source, LanguageFileType fileType, String... results) {
-    doTest(template, source, fileType, e -> StructuralSearchUtil.getPresentableElement(e).getText(), results);
+    doTest(template, source, fileType,
+           e -> BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> StructuralSearchUtil.getPresentableElement(e).getText()),
+           results);
   }
 
   protected void doTest(Configuration template,
@@ -30,6 +33,6 @@ public abstract class PredefinedConfigurationsTestCase extends StructuralSearchT
     final Matcher matcher = new Matcher(getProject(), options);
     final List<MatchResult> matches = matcher.testFindMatches(source, true, fileType, false);
     final List<String> actualResults = ContainerUtil.map(matches, result -> resultConverter.apply(result.getMatch()));
-    assertEquals(template.getName() , List.of(expectedResults), actualResults);
+    assertEquals(template.getName(), List.of(expectedResults), actualResults);
   }
 }

@@ -42,7 +42,7 @@ import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.acceptOpeningBrace
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.getVariadicCallable
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.toMatchingVariadicCallableOrNull
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.insertStringAndInvokeCompletion
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.TrailingLambdaInsertionHandler
@@ -79,7 +79,7 @@ internal object FunctionLookupElementFactory {
         val valueParameters = signature.valueParameters
 
         // Check if the signature represents a variadic callable
-        val variadicCallable = signature.getVariadicCallable()
+        val variadicCallable = signature.toMatchingVariadicCallableOrNull()
         val renderedParameters =
             variadicCallable?.renderedParameters ?: CompletionShortNamesRenderer.renderFunctionParameters(valueParameters)
 
@@ -428,16 +428,11 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
                     caretModel.moveToOffset(openingBracketOffset + additionalOffset)
                 }
 
-                context.laterRunnable = if (insertLambda) Runnable {
-                    // We schedule auto-popup after moving the caret into the lambda.
-                    // It needs to be auto-popup rather than invoking completion manually,
-                    // otherwise pressing space will cause completion to insert the item, which is
-                    // not always wanted, see: KTIJ-36825
-                    AutoPopupController.getInstance(project)
-                        .scheduleAutoPopup(editor)
-                } else Runnable {
-                    AutoPopupController.getInstance(project)
-                        .autoPopupParameterInfo(editor, offsetElement)
+                if (!insertLambda) {
+                    context.laterRunnable = Runnable {
+                        AutoPopupController.getInstance(project)
+                            .autoPopupParameterInfo(editor, offsetElement)
+                    }
                 }
             } else {
                 caretModel.moveToOffset(closeBracketOffset + 1)

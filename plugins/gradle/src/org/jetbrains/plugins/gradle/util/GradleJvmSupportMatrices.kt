@@ -9,6 +9,7 @@ import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
@@ -49,7 +50,7 @@ private fun getDefaultGradleVersion(): GradleVersion? {
 private fun Project.getLinkedGradleVersions(): List<GradleVersion> {
   val settings = GradleSettings.getInstance(this)
   return settings.linkedProjectsSettings
-    .mapNotNull { it.resolveGradleVersion() }
+    .map { GradleInstallationManager.guessGradleVersion(it) ?: GradleVersion.current() }
     .sorted()
 }
 

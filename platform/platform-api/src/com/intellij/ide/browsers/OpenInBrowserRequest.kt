@@ -2,7 +2,7 @@
 package com.intellij.ide.browsers
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
@@ -43,7 +43,7 @@ enum class ReloadMode(@param:PropertyKey(resourceBundle = IdeBundle.BUNDLE) priv
 }
 
 fun createOpenInBrowserRequest(element: PsiElement, isForceFileUrlIfNoUrlProvider: Boolean = false): OpenInBrowserRequest? {
-  val psiFile = runReadAction {
+  val psiFile = runReadActionBlocking {
     if (element.isValid) {
       element.containingFile?.let { if (it.virtualFile == null) null else it }
     }

@@ -216,6 +216,6 @@ object McpClientDetector {
       val parent = path.parent
       parent != null && parent.exists() && parent.toFile().isDirectory()
     }?.let { return it }
-    return candidates.first()
+    return null
   }
 }

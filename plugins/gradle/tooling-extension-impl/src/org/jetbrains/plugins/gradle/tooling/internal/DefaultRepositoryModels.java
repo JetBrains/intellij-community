@@ -35,6 +35,7 @@ public class DefaultRepositoryModels implements RepositoryModels {
 
     DefaultRepositoryModels model = (DefaultRepositoryModels)o;
     if (myRepositoriesHashCode != model.myRepositoriesHashCode) return false;
+    if (!myRepositories.equals(model.myRepositories)) return false;
     return true;
   }
 

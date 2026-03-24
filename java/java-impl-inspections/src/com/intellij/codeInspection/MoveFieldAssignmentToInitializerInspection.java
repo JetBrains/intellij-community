@@ -56,9 +56,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Tagir Valeev
- */
 public final class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

@@ -25,7 +25,7 @@ internal class RemoteDevInvoker(private val localInvoker: InvokerMBean, remoteJm
     val originalClassLoader = Thread.currentThread().getContextClassLoader()
     try {
       Thread.currentThread().setContextClassLoader(this::class.java.getClassLoader())
-      driver = Driver.create(JmxHost(null, null, remoteJmxAddress)) as DriverImpl
+      driver = DriverImpl(JmxHost(null, null, remoteJmxAddress), isRemDevMode = false)
     }
     finally {
       Thread.currentThread().setContextClassLoader(originalClassLoader)

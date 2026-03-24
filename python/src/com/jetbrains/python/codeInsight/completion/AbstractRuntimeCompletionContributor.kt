@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -33,7 +34,7 @@ abstract class AbstractRuntimeCompletionContributor : CompletionContributor(), D
     fillCompletionVariantsFromRuntime(project, service, parameters, result)
   }
 
-  abstract fun getRuntimeEnvService(project: Project): PyRuntime
+  abstract fun getRuntimeEnvService(project: Project, editor: Editor?): PyRuntime?
 
   abstract fun getCompletionRetrievalService(project: Project): PyRuntimeCompletionRetrievalService
 
@@ -44,10 +45,11 @@ abstract class AbstractRuntimeCompletionContributor : CompletionContributor(), D
     result: CompletionResultSet,
   ) {
 
-    val runtimeResults: MutableMap<String, RuntimeLookupElement> =
-      PyRuntimeCompletionUtils.createCompletionResultSet(service, getRuntimeEnvService(project), parameters)
-        .associateByTo(hashMapOf(), { it.lookupString },
-                       { RuntimeLookupElement(it, createCustomMatcher(parameters, result)) })
+    val runtimeService = getRuntimeEnvService(project, parameters.editor) ?: return
+    val runtimeResults: MutableMap<String, RuntimeLookupElement> = PyRuntimeCompletionUtils
+      .createCompletionResultSet(service, runtimeService, parameters)
+      .associateByTo(hashMapOf(), { it.lookupString },
+                     { RuntimeLookupElement(it, createCustomMatcher(parameters, result)) })
 
     if (runtimeResults.isEmpty()) {
       val remoteFileResults = project.service<RemoteFilePathRetrievalService>().retrieveRemoteFileLookupElements(parameters)

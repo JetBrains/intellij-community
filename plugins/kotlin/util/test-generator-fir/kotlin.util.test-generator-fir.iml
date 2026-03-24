@@ -18,7 +18,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.plugin.k2" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.analysis.platform" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.analysis.platform.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.util.test-generator-api" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.maven.tests" scope="TEST" />
@@ -61,5 +61,17 @@
     <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectStructure.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.lineMarkers.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.liveTemplates.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.postfixTemplates.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.highlighting.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.move.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.rename.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.tests" scope="TEST" />
   </component>
 </module>

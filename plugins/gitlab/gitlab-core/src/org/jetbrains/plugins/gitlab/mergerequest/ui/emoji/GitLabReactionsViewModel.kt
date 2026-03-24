@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gitlab.api.data.GitLabAwardEmoji
+import org.jetbrains.plugins.gitlab.data.GitLabAwardEmojiDetails
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
@@ -51,7 +51,7 @@ class GitLabReactionsViewModelImpl(
     }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
 
   override val reactionsWithInfo: StateFlow<Map<GitLabReaction, ReactionInfo>> = note.awardEmojis.mapState(cs) { data ->
-    val reactionToUsers = data.groupBy({ dto -> GitLabReactionImpl(dto) }, GitLabAwardEmoji::user)
+    val reactionToUsers = data.groupBy({ dto -> GitLabReactionImpl(dto) }, GitLabAwardEmojiDetails::user)
     reactionToUsers.mapValues { (_, users) ->
       ReactionInfo(users, users.map(GitLabUserDTO::id).contains(currentUser.id))
     }

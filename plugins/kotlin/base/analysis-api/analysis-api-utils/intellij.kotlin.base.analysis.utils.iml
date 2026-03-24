@@ -41,5 +41,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis" />
     <orderEntry type="module" module-name="intellij.kotlin.formatter" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" />
   </component>
 </module>

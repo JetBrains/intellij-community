@@ -174,7 +174,7 @@ class PsiElementDocumentationTarget private constructor(
     })
 
     val imageResolver: DocumentationImageResolver = DocumentationImageResolver { url ->
-      ReadAction.compute<Image?, Throwable> {
+      ReadAction.computeBlocking<Image?, Throwable> {
         dereference()?.targetElement?.let { targetElement ->
           DocumentationManager.getElementImage(targetElement, url)
         }

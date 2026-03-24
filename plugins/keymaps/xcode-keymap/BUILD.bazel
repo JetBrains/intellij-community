@@ -9,8 +9,23 @@ resourcegroup(
 
 jvm_library(
   name = "keymap-xcode",
+  module_name = "intellij.keymap.xcode",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":keymap-xcode_resources"]
 )
+
+jvm_library(
+  name = "keymap-xcode_test_lib",
+  module_name = "intellij.keymap.xcode",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":keymap-xcode"]
+)
 ### auto-generated section `build intellij.keymap.xcode` end
+
+### auto-generated section `iml intellij.keymap.xcode` start
+exports_files([
+  "intellij.keymap.xcode.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.keymap.xcode` end

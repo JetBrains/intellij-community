@@ -9,10 +9,27 @@ resourcegroup(
 
 jvm_library(
   name = "hash4j",
+  module_name = "intellij.libraries.hash4j",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":hash4j_resources"],
   exports = ["@lib//:libraries-hash4j-hash4j"],
   runtime_deps = ["@lib//:libraries-hash4j-hash4j"]
 )
+
+jvm_library(
+  name = "hash4j_test_lib",
+  module_name = "intellij.libraries.hash4j",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-hash4j-hash4j"],
+  runtime_deps = [":hash4j"]
+)
 ### auto-generated section `build intellij.libraries.hash4j` end
+
+### auto-generated section `iml intellij.libraries.hash4j` start
+exports_files([
+  "intellij.libraries.hash4j.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.hash4j` end

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import org.junit.Test
@@ -123,6 +124,48 @@ class EnabledVisibleTest {
     checkBoxRow.component.isSelected = true
     assertTrue(label.isEnabled)
     textField.assertEnabled(true)
+  }
+
+  @Test
+  fun testIJPL_239632() {
+    lateinit var rows: RowsRange
+
+    val panel = panel {
+      rows = rowsRange {
+        row(JLabel("rowLabel")) {
+          textField()
+        }
+
+        row {
+          textField().label(JLabel("leftLabel"), LabelPosition.LEFT)
+        }
+
+        row {
+          textField().label(JLabel("topLabel"), LabelPosition.TOP)
+        }
+      }.visible(false)
+        .enabled(false)
+    }
+
+    assertEquals(6, panel.components.size)
+
+    assertState(panel, false, false)
+
+    rows.visible(true)
+    rows.enabled(true)
+    assertState(panel, true, true)
+
+    // Second time can be broken
+    rows.visible(true)
+    rows.enabled(true)
+    assertState(panel, true, true)
+  }
+
+  private fun assertState(panel: DialogPanel, visible: Boolean, enabled: Boolean) {
+    for (component in panel.components) {
+      assertEquals(visible, component.isVisible)
+      assertEquals(enabled, component.isEnabled)
+    }
   }
 
   private fun Cell<JBTextField>.assertVisible(visible: Boolean) {

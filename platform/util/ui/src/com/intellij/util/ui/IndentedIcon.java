@@ -2,13 +2,17 @@
 
 package com.intellij.util.ui;
 
+import com.intellij.ui.RetrievableIcon;
+import com.intellij.ui.icons.IconReplacer;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.Icon;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Insets;
 
 
-public final class IndentedIcon implements Icon {
+public final class IndentedIcon implements Icon, RetrievableIcon {
   private final Icon baseIcon;
   private final Insets insets;
 
@@ -34,5 +38,21 @@ public final class IndentedIcon implements Icon {
   @Override
   public int getIconHeight() {
     return insets.top + insets.bottom + baseIcon.getIconHeight();
+  }
+
+  @Override
+  public @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
+    Icon replaced = replacer.replaceIcon(baseIcon);
+    return new IndentedIcon(replaced, insets);
+  }
+
+  @Override
+  public @NotNull Icon retrieveIcon() {
+    return baseIcon;
+  }
+
+  @Override
+  public String toString() {
+    return "IndentedIcon for " + baseIcon;
   }
 }

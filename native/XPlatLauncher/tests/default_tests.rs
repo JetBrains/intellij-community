@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 pub mod utils;
 
@@ -32,9 +32,9 @@ mod tests {
             if result.exit_status.success() {
                 let dump = result.dump();
                 let classpath = &dump.systemProperties["java.class.path"];
-                assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
+                assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {classpath}");
                 let os_specific_jar = format!("boot-{}.jar", env::consts::OS);
-                assert!(classpath.contains(&os_specific_jar), "{} is not present in classpath: {}", os_specific_jar, classpath);
+                assert!(classpath.contains(&os_specific_jar), "{os_specific_jar} is not present in classpath: {classpath}");
             } else {
                 assert_startup_error(&result, "Cannot convert VM option string");
             }
@@ -65,20 +65,20 @@ mod tests {
     fn classpath_test_impl(test: &TestEnvironment) {
         let dump = run_launcher_ext(test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
         let classpath = &dump.systemProperties["java.class.path"];
-        assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
+        assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {classpath}");
         let os_specific_jar = format!("boot-{}.jar", env::consts::OS);
-        assert!(classpath.contains(&os_specific_jar), "{} is not present in classpath: {}", os_specific_jar, classpath);
+        assert!(classpath.contains(&os_specific_jar), "{os_specific_jar} is not present in classpath: {classpath}");
         let separators = classpath.chars().filter(|c| *c == '/' || *c == '\\').collect::<HashSet<char>>();
-        assert_eq!(separators, HashSet::from([MAIN_SEPARATOR]), "Unexpected directory separators in {}", classpath);
+        assert_eq!(separators, HashSet::from([MAIN_SEPARATOR]), "Unexpected directory separators in {classpath}");
     }
 
     fn assert_startup_error(result: &LauncherRunResult, message: &str) {
         let header = "Cannot start the IDE";
         let header_present = result.stderr.find(header);
-        assert!(header_present.is_some(), "Error header ('{}') is missing: {:?}", header, result);
+        assert!(header_present.is_some(), "Error header ('{header}') is missing: {result:?}");
         let message_present = result.stderr.find(message);
-        assert!(message_present.is_some(), "JVM error message ('{}') is missing: {:?}", message, result);
-        assert!(header_present.unwrap() < message_present.unwrap(), "JVM error message wasn't captured: {:?}", result);
+        assert!(message_present.is_some(), "JVM error message ('{message}') is missing: {result:?}");
+        assert!(header_present.unwrap() < message_present.unwrap(), "JVM error message wasn't captured: {result:?}");
     }
 
     #[test]
@@ -119,7 +119,8 @@ mod tests {
         let test = prepare_test_env(LauncherLocation::Standard);
         let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
 
-        assert_vm_option_presence(&dump, format!("-Djcef.sandbox.cefVersion={}", env!("CEF_VERSION")).as_ref());
+        let cef_version = env::var("CEF_VERSION").expect("'CEF_VERSION' not set; is the 'cef' feature enabled?");
+        assert_vm_option_presence(&dump, format!("-Djcef.sandbox.cefVersion={cef_version}").as_ref());
         dump.vmOptions.iter().find(|s| s.starts_with("-Djcef.sandbox.ptr="))
             .unwrap_or_else(|| panic!("'-Djcef.sandbox.ptr=' is not in {:?}", dump.vmOptions));
     }
@@ -150,19 +151,18 @@ mod tests {
     }
 
     #[test]
-    fn missing_standard_vm_options_failure_test() {
+    fn missing_standard_vm_options_tolerance_test() {
         let test = prepare_test_env(LauncherLocation::Standard);
 
         let bin_dir = test.dist_root.join("bin");
-        for entry in fs::read_dir(&bin_dir).unwrap_or_else(|_| panic!("Cannot list: {:?}", bin_dir)).flatten() {
+        for entry in fs::read_dir(&bin_dir).unwrap_or_else(|_| panic!("Cannot list: {bin_dir:?}")).flatten() {
             if entry.file_name().to_str().unwrap().ends_with(".vmoptions") {
                 fs::remove_file(entry.path()).unwrap_or_else(|_| panic!("Cannot delete: {:?}", entry.path()));
                 break;
             }
         }
 
-        let result = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump());
-        assert!(!result.exit_status.success(), "Expected to fail: {:?}", result);
+        run_launcher_ext(&test, LauncherRunSpec::standard().assert_status());
     }
 
     #[test]
@@ -178,6 +178,20 @@ mod tests {
         assert_vm_option_presence(&dump, "-Dsun.io.useCanonCaches=false");
         assert_vm_option_presence(&dump, "-Didea.vendor.name=JetBrains");
         assert_vm_option_presence(&dump, &jvm_property!("jb.vmOptionsFile", temp_file.to_str().unwrap()));
+    }
+
+    #[test]
+    fn launcher_env_vm_options_loading_test() {
+        let test = prepare_test_env(LauncherLocation::Standard);
+        let env = HashMap::from([("IJ_JAVA_OPTIONS", "-Done.user.option=whatever '-Done.more.user.option=what ever'")]);
+
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().with_env(&env).assert_status()).dump();
+
+        assert_vm_option_presence(&dump, "-Done.user.option=whatever");
+        assert_vm_option_presence(&dump, "-Done.more.user.option=what ever");
+        assert_vm_option_presence(&dump, "-XX:+UseG1GC");
+        assert_vm_option_presence(&dump, "-Dsun.io.useCanonCaches=false");
+        assert_vm_option_presence(&dump, "-Didea.vendor.name=JetBrains");
     }
 
     #[test]
@@ -275,7 +289,7 @@ mod tests {
     #[test]
     fn selecting_custom_launch_info() {
         let result = run_launcher(LauncherRunSpec::standard().with_args(&["custom-command"]).assert_status());
-        assert!(result.stdout.contains("Custom command: product.property=product.value, custom.property=null"), "Custom system property is not set: {:?}", result);
+        assert!(result.stdout.contains("Custom command: product.property=product.value, custom.property=null"), "Custom system property is not set: {result:?}");
     }
 
     #[test]
@@ -327,18 +341,19 @@ mod tests {
     #[test]
     fn exit_code_passing() {
         let result = run_launcher(LauncherRunSpec::standard().with_args(&["exit-code", "42"]));
-        assert_eq!(result.exit_status.code(), Some(42), "The exit code of the launcher is unexpected: {:?}", result);
+        assert_eq!(result.exit_status.code(), Some(42), "The exit code of the launcher is unexpected: {result:?}");
     }
 
     #[test]
     fn exception_handling() {
         let result = run_launcher(LauncherRunSpec::standard().with_args(&["exception"]));
 
-        assert!(!result.exit_status.success(), "Expected to fail: {:?}", result);
+        assert!(!result.exit_status.success(), "Expected to fail: {result:?}");
 
         let exception = "java.lang.UnsupportedOperationException: aw, snap";
-        assert!(result.stderr.contains(exception), "Exception message ('{}') is missing: {:?}", exception, result);
-        assert!(result.stderr.contains("at com.intellij.idea.TestMain.exception"), "Stacktrace is missing: {:?}", result);
+        assert!(result.stderr.contains(exception), "Exception message ('{exception}') is missing: {result:?}");
+        assert!(result.stderr.contains("at com.intellij.idea.TestMain.exception"), "Stacktrace is missing: {result:?}");
+        assert!(result.stderr.contains("Caused by:"), "'caused by' is missing: {result:?}");
     }
 
     #[test]
@@ -347,7 +362,7 @@ mod tests {
         test.create_toolbox_vm_options("-XX:+UseG1GC\n-XX:+UseZGC\n");
 
         let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
-        assert!(!result.exit_status.success(), "Expected to fail:{:?}", result);
+        assert!(!result.exit_status.success(), "Expected to fail:{result:?}");
         assert_startup_error(&result, "Conflicting collector combinations in option list");
     }
 
@@ -357,7 +372,7 @@ mod tests {
         test.create_toolbox_vm_options("-Xms2g\n-Xmx1g\n");
 
         let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
-        assert!(!result.exit_status.success(), "Expected to fail:{:?}", result);
+        assert!(!result.exit_status.success(), "Expected to fail:{result:?}");
         assert_startup_error(&result, "Initial heap size set to a larger value than the maximum heap size");
     }
 
@@ -416,6 +431,19 @@ mod tests {
         let result = run_launcher_ext(&test, LauncherRunSpec::standard().with_args(&["main-class"]));
 
         let expected = "main.class=com.intellij.idea.TestMain";
-        assert!(result.stdout.contains(expected), "'{}' is not in the output:\n{:?}", expected, result)
+        assert!(result.stdout.contains(expected), "'{expected}' is not in the output:\n{result:?}")
+    }
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn windows_acp_properties() {
+        let test = prepare_test_env(LauncherLocation::Standard);
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
+
+        let acp = &dump.systemProperties["sun.jnu.encoding"];
+        if acp == "UTF-8" {
+            let sys_acp = &dump.systemProperties["sun.jnu.encoding.sys"];
+            assert!(sys_acp.starts_with("windows-"), "Unexpected system ACP value: {sys_acp}");
+        }
     }
 }

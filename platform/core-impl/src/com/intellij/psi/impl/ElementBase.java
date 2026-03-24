@@ -92,7 +92,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       if (baseIcon == null) {
         return null;
       }
-      ElementIconRequest param = ReadAction.compute(() -> new ElementIconRequest(psiElement, psiElement.getProject(), flags));
+      ElementIconRequest param = ReadAction.computeBlocking(() -> new ElementIconRequest(psiElement, psiElement.getProject(), flags));
       return IconManager.getInstance().createDeferredIcon(baseIcon, param, ICON_COMPUTE);
     }
 

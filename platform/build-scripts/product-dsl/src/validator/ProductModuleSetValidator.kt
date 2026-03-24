@@ -9,9 +9,12 @@ import com.intellij.platform.pluginGraph.ProductNode
 import org.jetbrains.intellij.build.productLayout.model.error.DuplicateModulesError
 import org.jetbrains.intellij.build.productLayout.model.error.MissingDependenciesError
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
+import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
 import org.jetbrains.intellij.build.productLayout.pipeline.GenerationModel
 import org.jetbrains.intellij.build.productLayout.pipeline.NodeIds
 import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
+import org.jetbrains.intellij.build.productLayout.pipeline.Slots
+import org.jetbrains.intellij.build.productLayout.debug
 
 /**
  * Product module set validation.
@@ -26,6 +29,7 @@ import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
  */
 internal object ProductModuleSetValidator : PipelineNode {
   override val id get() = NodeIds.PRODUCT_MODULE_SET_VALIDATION
+  override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
 
   override suspend fun execute(ctx: ComputeContext) {
     val model = ctx.model
@@ -46,6 +50,10 @@ private fun GraphScope.validateProductModuleSet(
   val modules = collectProductModules(product)
   val duplicateModules = modules.duplicateModules
 
+  debug("missingDeps") {
+    "validate product=$productName modulesToValidate=${modules.modulesToValidate.size} duplicateModules=${duplicateModules.size}"
+  }
+
   // Emit structural errors
   if (duplicateModules.isNotEmpty()) {
     val sortedDuplicates = sortedMapOf<ContentModuleName, Int>(compareBy { it.value })
@@ -54,14 +62,32 @@ private fun GraphScope.validateProductModuleSet(
   }
 
   if (modules.modulesToValidate.isEmpty()) {
+    debug("missingDeps") { "validate product=$productName skipped reason=noModulesToValidate" }
     return
   }
 
   // === PHASE 2: Check transitive deps ===
   val missingDeps = collectMissingModuleDependencies(
-    productId = product.id,
+    product = product,
     modulesToValidate = modules.modulesToValidate,
   )
+
+  debug("missingDeps") {
+    val missingSample = missingDeps.entries
+      .asSequence()
+      .sortedBy { it.key.value }
+      .take(3)
+      .joinToString(separator = "; ") { (dep, requesters) ->
+        val requesterSample = requesters
+          .asSequence()
+          .map { it.value }
+          .sorted()
+          .take(3)
+          .joinToString(separator = ",")
+        "${dep.value}<-$requesterSample"
+      }
+    "validate product=$productName missingDeps=${missingDeps.size} sample=${missingSample.ifEmpty { "<none>" }}"
+  }
 
   if (missingDeps.isNotEmpty()) {
     ctx.emitError(

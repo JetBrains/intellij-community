@@ -12,22 +12,58 @@ jvm_library(
 
 jvm_library(
   name = "util-rt_test_lib",
+  module_name = "intellij.platform.util.rt",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  associates = [":util-rt"],
-  deps = [
-    "@lib//:jetbrains-annotations",
+  runtime_deps = [
+    ":util-rt",
     "@lib//:junit4",
   ]
 )
 ### auto-generated section `build intellij.platform.util.rt` end
 
-### auto-generated section `test intellij.platform.util.rt` start
+### auto-generated section `iml intellij.platform.util.rt` start
+exports_files([
+  "intellij.platform.util.rt.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.rt` end
+
+### auto-generated section `build intellij.platform.util.rt.tests` start
+jvm_library(
+  name = "util-rt-tests",
+  module_name = "intellij.platform.util.rt.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "util-rt-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [
+    "//platform/util-rt",
+    "//platform/util-rt:util-rt_test_lib",
+  ],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:junit4",
+  ],
+  runtime_deps = [":util-rt-tests"]
+)
+### auto-generated section `build intellij.platform.util.rt.tests` end
+
+### auto-generated section `iml intellij.platform.util.rt.tests` start
+exports_files([
+  "intellij.platform.util.rt.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.rt.tests` end
+
+### auto-generated section `test intellij.platform.util.rt.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "util-rt_test",
-  runtime_deps = [":util-rt_test_lib"]
+  name = "util-rt-tests_test",
+  runtime_deps = [":util-rt-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.util.rt` end
+### auto-generated section `test intellij.platform.util.rt.tests` end

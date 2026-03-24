@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "cbor",
+  module_name = "intellij.libraries.kotlinx.serialization.cbor",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":cbor_resources"],
@@ -18,4 +19,23 @@ jvm_library(
     "@lib//:libraries-kotlinx-serialization-cbor-kotlinx-serialization-cbor",
   ]
 )
+
+jvm_library(
+  name = "cbor_test_lib",
+  module_name = "intellij.libraries.kotlinx.serialization.cbor",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-kotlinx-serialization-cbor-kotlinx-serialization-cbor"],
+  runtime_deps = [
+    ":cbor",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.kotlinx.serialization.cbor` end
+
+### auto-generated section `iml intellij.libraries.kotlinx.serialization.cbor` start
+exports_files([
+  "intellij.libraries.kotlinx.serialization.cbor.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.kotlinx.serialization.cbor` end

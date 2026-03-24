@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.featureStatistics.FeatureUsageTracker
@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.BitUtil.isSet
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
@@ -32,6 +33,10 @@ internal class ShowSwitcherForwardAction : BaseSwitcherAction(true)
 internal class ShowSwitcherBackwardAction : BaseSwitcherAction(false)
 @ApiStatus.Internal
 abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
+  init {
+    templatePresentation.isRWLockRequired = shouldUseFallbackSwitcher()
+  }
+
   private fun isControlTab(event: KeyEvent?) = event?.run { isControlDown && keyCode == KeyEvent.VK_TAB } ?: false
   private fun isControlTabDisabled(event: AnActionEvent) = ScreenReader.isActive() && isControlTab(event.inputEvent as? KeyEvent)
 
@@ -45,7 +50,7 @@ abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
     event.presentation.isVisible = forward == null
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
@@ -64,6 +69,10 @@ abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
 internal class ShowRecentFilesAction : LightEditCompatible, BaseRecentFilesAction(false)
 internal class ShowRecentlyEditedFilesAction : BaseRecentFilesAction(true)
 internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boolean) : DumbAwareAction() {
+  init {
+    templatePresentation.isRWLockRequired = shouldUseFallbackSwitcher()
+  }
+
   override fun update(event: AnActionEvent) {
     if (!shouldUseFallbackSwitcher()) {
       event.presentation.isEnabledAndVisible = false
@@ -74,7 +83,7 @@ internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boole
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -86,6 +95,10 @@ internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boole
 
 
 internal class SwitcherIterateThroughItemsAction : DumbAwareAction() {
+  init {
+    templatePresentation.isRWLockRequired = shouldUseFallbackSwitcher()
+  }
+
   override fun update(event: AnActionEvent) {
     if (!shouldUseFallbackSwitcher()) {
       event.presentation.isEnabledAndVisible = false
@@ -96,7 +109,7 @@ internal class SwitcherIterateThroughItemsAction : DumbAwareAction() {
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -106,6 +119,10 @@ internal class SwitcherIterateThroughItemsAction : DumbAwareAction() {
 
 
 internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
+  init {
+    templatePresentation.isRWLockRequired = shouldUseFallbackSwitcher()
+  }
+
   private fun getCheckBox(event: AnActionEvent) =
     Switcher.SWITCHER_KEY.get(event.project)?.cbShowOnlyEditedFiles
 
@@ -119,7 +136,7 @@ internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction(), Ac
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+    return ActionUpdateThread.BGT
   }
 
   override fun isSelected(event: AnActionEvent): Boolean = getCheckBox(event)?.isSelected ?: false
@@ -132,6 +149,10 @@ internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction(), Ac
 internal class SwitcherNextProblemAction : SwitcherProblemAction(true)
 internal class SwitcherPreviousProblemAction : SwitcherProblemAction(false)
 internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareAction() {
+  init {
+    templatePresentation.isRWLockRequired = shouldUseFallbackSwitcher()
+  }
+
   private fun getFileList(event: AnActionEvent) =
     Switcher.SWITCHER_KEY.get(event.project)?.let { if (it.pinned) it.files else null }
 
@@ -164,7 +185,7 @@ internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareA
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(event: AnActionEvent) {

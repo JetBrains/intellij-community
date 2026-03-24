@@ -62,6 +62,7 @@ private val highPreset: Map<String, String> = basePreset + mapOf(
   IFernflowerPreferences.CONVERT_RECORD_PATTERN to "1",
   IFernflowerPreferences.CONVERT_PATTERN_SWITCH to "1",
   IFernflowerPreferences.HIDE_RECORD_CONSTRUCTOR_AND_GETTERS to "1",
+  IFernflowerPreferences.PARENTHESES_FOR_BITWISE_OPERATIONS to "1",
 )
 
 private val mediumPreset: Map<String, String> = basePreset + mapOf(
@@ -90,7 +91,8 @@ private val mediumPreset: Map<String, String> = basePreset + mapOf(
   IFernflowerPreferences.CONVERT_RECORD_PATTERN to "1",
   IFernflowerPreferences.CONVERT_PATTERN_SWITCH to "1",
   IFernflowerPreferences.HIDE_RECORD_CONSTRUCTOR_AND_GETTERS to "0",
-)
+  IFernflowerPreferences.PARENTHESES_FOR_BITWISE_OPERATIONS to "0",
+  )
 
 private val lowPreset: Map<String, String> = basePreset + mapOf(
   IFernflowerPreferences.REMOVE_BRIDGE to "0",
@@ -118,4 +120,5 @@ private val lowPreset: Map<String, String> = basePreset + mapOf(
   IFernflowerPreferences.CONVERT_RECORD_PATTERN to "0",
   IFernflowerPreferences.CONVERT_PATTERN_SWITCH to "0",
   IFernflowerPreferences.HIDE_RECORD_CONSTRUCTOR_AND_GETTERS to "0",
-)
+  IFernflowerPreferences.PARENTHESES_FOR_BITWISE_OPERATIONS to "0",
+  )

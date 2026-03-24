@@ -21,7 +21,7 @@ import git4idea.history.GitLogUtil
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 
-class GitLogCommandFilterer(private val project: Project,
+internal class GitLogCommandFilterer(private val project: Project,
                             private val storage: VcsLogStorage,
                             private val progress: VcsLogProgress) : VcsLogFilterer, Disposable {
 

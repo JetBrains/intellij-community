@@ -39,6 +39,8 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate implements 
 
   @Override
   public boolean isApplicable(@NotNull PsiElement element, @NotNull Document copyDocument, int newOffset) {
+    if (JavaPostfixTemplatesUtils.isInExpressionFile(element)) return false;
+
     if (!PsiUtil.isAvailable(JavaFeature.TRY_WITH_RESOURCES, element)) return false;
 
     PsiExpression initializer = JavaPostfixTemplatesUtils.getTopmostExpression(element);

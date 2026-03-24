@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_syntheticMethodRemoved-a.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/syntheticMethodRemoved/a/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_syntheticMethodRemoved-a.kotlin_module
+  foo/AChild.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/syntheticMethodRemoved/a/AChild.kt
+End of files
+------------------------------------------
+Exit code: ERROR

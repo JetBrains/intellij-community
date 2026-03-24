@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
@@ -45,7 +45,8 @@ public final class ChangeUtil {
       try {
         handler.encodeInformation(element, original, state);
       }
-      catch (IndexNotReadyException ignore) { }
+      catch (IndexNotReadyException ignore) {
+      }
     }
 
     if (original instanceof CompositeElement) {
@@ -104,11 +105,11 @@ public final class ChangeUtil {
   }
 
   private static void saveIndentationToCopy(@Nullable TreeElement original, @Nullable TreeElement element) {
-    if(original == null || element == null || CodeEditUtil.isNodeGenerated(original)) return;
+    if (original == null || element == null || CodeEditUtil.isNodeGenerated(original)) return;
     int indentation = CodeEditUtil.getOldIndentation(original);
-    if(indentation < 0) CodeEditUtil.saveWhitespacesInfo(original);
+    if (indentation < 0) CodeEditUtil.saveWhitespacesInfo(original);
     CodeEditUtil.setOldIndentation(element, CodeEditUtil.getOldIndentation(original));
-    if(indentation < 0) CodeEditUtil.setOldIndentation(original, -1);
+    if (indentation < 0) CodeEditUtil.setOldIndentation(original, -1);
   }
 
   public static @NotNull TreeElement copyToElement(@NotNull PsiElement original) {
@@ -127,7 +128,9 @@ public final class ChangeUtil {
     return treeElement;
   }
 
-  public static @Nullable TreeElement generateTreeElement(@Nullable PsiElement original, @NotNull CharTable table, @NotNull PsiManager manager) {
+  public static @Nullable TreeElement generateTreeElement(@Nullable PsiElement original,
+                                                          @NotNull CharTable table,
+                                                          @NotNull PsiManager manager) {
     if (original == null) return null;
     PsiUtilCore.ensureValid(original);
     if (SourceTreeToPsiMap.hasTreeElement(original)) {
@@ -138,7 +141,7 @@ public final class ChangeUtil {
       .filter(Predicates.nonNull()).findFirst().orElse(null);
   }
 
-  public static void prepareAndRunChangeAction(@NotNull ChangeAction action, @NotNull TreeElement changedElement){
+  public static void prepareAndRunChangeAction(@NotNull ChangeAction action, @NotNull TreeElement changedElement) {
     FileElement changedFile = TreeUtil.getFileElement(changedElement);
     PsiManager manager = changedFile.getManager();
     PomModel model = PomManager.getModel(manager.getProject());
@@ -151,7 +154,7 @@ public final class ChangeUtil {
 
         changedElement.clearCaches();
         if (changedElement instanceof CompositeElement) {
-          ((CompositeElement) changedElement).subtreeChanged();
+          ((CompositeElement)changedElement).subtreeChanged();
         }
         return event;
       }
@@ -159,7 +162,7 @@ public final class ChangeUtil {
   }
 
   @FunctionalInterface
-  public interface ChangeAction{
+  public interface ChangeAction {
     void makeChange(@NotNull TreeChangeEvent destinationTreeChange);
   }
 }

@@ -1,5 +1,6 @@
 // "Make 'x' public explicitly" "true"
 // PRIORITY: HIGH
+// K2_ERROR: Cannot access 'val x: Int': it is protected in 'First'.
 
 open class Base(protected open val x: Int)
 

@@ -1,9 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge
 
+import com.intellij.diff.InvalidDiffRequestException
 import com.intellij.diff.comparison.ComparisonMergeUtil
+import com.intellij.diff.comparison.DiffTooBigException
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.fragments.MergeLineFragment
+import com.intellij.diff.tools.util.base.IgnorePolicy
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.MergeConflictResolutionStrategy
@@ -11,51 +14,122 @@ import com.intellij.diff.util.MergeConflictType
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.ReadOnlyModificationException
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.LineTokenizer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import it.unimi.dsi.fastutil.ints.IntList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.EventListener
 
 /**
  * Handles all merge-related stuff
  * Doesn't know anything about the UI, merge viewer, editors, etc.
+ *
+ * Should call [rediff] after construction in order to be properly initialized
  */
 @ApiStatus.Internal
 class MergeConflictModel(
-  project: Project?,
+  private val project: Project?,
   private val mergeRequest: TextMergeRequest,
+  val conflictResolver: LangSpecificMergeConflictResolverWrapper,
 ) : Disposable {
   private var mergeChanges: List<TextMergeChange> = emptyList()
 
   private val resultModel: MergeModelBase<TextMergeChange.State> = MergeModelImpl(project)
 
-  private val textAutoResolver: TextAutoResolver = TextAutoResolver(mergeRequest)
+  private val textAutoResolver = TextAutoResolver(mergeRequest)
+  private val mergeDiffBuilder = MergeDiffBuilder(project, mergeRequest, conflictResolver)
 
   private val dispatcher: EventDispatcher<MergeModelEventListener> = EventDispatcher.create(MergeModelEventListener::class.java)
 
-  fun addListener(listener: MergeModelEventListener, parentDisposable: Disposable): Unit = dispatcher.addListener(listener, parentDisposable)
+  var precalculatedData: MergeDiffData? = null
+    private set
 
-  fun initWithData(changesDatas: List<InitChangeData>) {
-    clear()
+  var contentModified: Boolean = false
+  var wasReviewed: Boolean = false
+    private set
 
-    val lineRanges = buildResultLineRanges(changesDatas)
+  @RequiresBlockingContext
+  @Throws(DiffTooBigException::class, InvalidDiffRequestException::class)
+  fun rediffBlocking(
+    ignorePolicy: IgnorePolicy,
+    isAutoResolveImportConflicts: Boolean,
+  ): MergeDiffData = runBlockingCancellable {
+    rediff(ignorePolicy, isAutoResolveImportConflicts)
+  }
+
+  @Throws(DiffTooBigException::class, InvalidDiffRequestException::class)
+  suspend fun rediff(
+    ignorePolicy: IgnorePolicy,
+    isAutoResolveImportConflicts: Boolean,
+  ): MergeDiffData = withContext(Dispatchers.UiWithModelAccess) {
+    val precalculated = precalculatedData
+    if (precalculated != null &&
+        precalculated.ignorePolicy == ignorePolicy &&
+        precalculated.isAutoResolveImportConflicts == isAutoResolveImportConflicts) {
+      return@withContext precalculated
+    }
+
+    precalculatedData = null
+    mergeDiffBuilder.rediff(
+      ignorePolicy = ignorePolicy,
+      isAutoResolveImportConflicts = isAutoResolveImportConflicts).also { mergeDiffData ->
+      val document = mergeRequest.getOutputContent().getDocument()
+      val success = setInitialOutputContent(document, ThreeSide.BASE.select(mergeRequest.contents).document.immutableCharSequence)
+
+      if (!success) {
+        throw InvalidDiffRequestException(ReadOnlyModificationException(document, null))
+      }
+      else {
+        contentModified = false
+        precalculatedData = mergeDiffData
+        initWithData(mergeDiffData)
+      }
+    }
+  }
+
+  @RequiresEdt
+  private suspend fun setInitialOutputContent(document: Document, content: CharSequence): Boolean = edtWriteAction {
+    DiffUtil.executeWriteCommand(document, project, DiffBundle.message("message.init.merge.content.command")) {
+      document.setText(content)
+      DiffUtil.putNonundoableOperation(project, document)
+    }
+  }
+
+  fun addListener(listener: MergeModelEventListener, parentDisposable: Disposable): Unit =
+    dispatcher.addListener(listener, parentDisposable)
+
+  private fun initWithData(mergeDiffData: MergeDiffData) {
+    val changeData = mergeDiffData.fragmentsWithMetadata.fragments.mapIndexed { i, fragment ->
+      InitChangeData(fragment = fragment,
+                     conflictType = mergeDiffData.conflictTypes[i],
+                     isInImport = mergeDiffData.fragmentsWithMetadata.isIndexInImportRange(i))
+    }
+    val lineRanges = buildResultLineRanges(changeData)
     resultModel.setChanges(lineRanges)
 
-    mergeChanges = buildMergeChanges(changesDatas, resultModel)
+    mergeChanges = buildMergeChanges(changeData, resultModel)
   }
 
   fun getAllChanges(): List<TextMergeChange> = mergeChanges.toList()
   fun getUnresolvedChanges(): List<TextMergeChange> = mergeChanges.filterNot { it.isResolved }
+  fun getResolvedChanges(): List<TextMergeChange> = mergeChanges.filter { it.isResolved }
   fun getAutoResolvableChanges(): List<TextMergeChange> = mergeChanges.filter { canResolveChangeAutomatically(it.index, ThreeSide.BASE) }
   fun getImportChanges(): List<TextMergeChange> = mergeChanges.filter { it.isImportChange }
   fun getSemanticallyResolvableChanges(): List<TextMergeChange> = getAutoResolvableChanges()
@@ -67,11 +141,6 @@ class MergeConflictModel(
 
   fun hasAutoResolvableConflictedChanges(): Boolean = mergeChanges.any { change: TextMergeChange ->
     canResolveChangeAutomatically(change.index, ThreeSide.BASE)
-  }
-
-  fun clear() {
-    mergeChanges = emptyList()
-    resultModel.setChanges(emptyList())
   }
 
   @RequiresEdt
@@ -86,25 +155,41 @@ class MergeConflictModel(
   }
 
   @RequiresWriteLock
+  fun resolveAllChangesAutomatically() {
+    val allChanges = getAutoResolvableChanges()
+    if (allChanges.isEmpty()) return
+    allChanges.forEach { change: TextMergeChange -> resolveChangeAutomatically(change.index, ThreeSide.BASE) }
+    wasReviewed = false
+    contentModified = true
+  }
+
+  fun markReviewed() {
+    wasReviewed = true
+  }
+
+  @RequiresWriteLock
   fun resolveChangeAutomatically(index: Int, side: ThreeSide): LineRange? {
     val change = getByIndex(index)
 
     if (!canResolveChangeAutomatically(change.index, side)) return null
 
-    if (change.isConflict) {
-      val resolutionStrategy = change.conflictType.resolutionStrategy ?: return null
-
-      return when (resolutionStrategy) {
+    return if (change.isConflict) {
+      when (change.conflictType.resolutionStrategy) {
         MergeConflictResolutionStrategy.TEXT -> {
           val newContent = textAutoResolver.resolve(change) ?: return null
-          return replaceWithNewContent(change.index, newContent)
+          replaceWithNewContent(change.index, newContent)
+        }
+        MergeConflictResolutionStrategy.SEMANTIC -> {
+          val newContent = conflictResolver.getResolvedConflictContent(change.index) ?: return null
+          replaceWithNewContent(change.index, newContent)
         }
         else -> null
       }
     }
-
-    val masterSide: Side = side.select(Side.LEFT, if (change.isChange(Side.LEFT)) Side.LEFT else Side.RIGHT, Side.RIGHT)
-    return replaceChange(change.index, masterSide, false)
+    else {
+      val masterSide: Side = side.select(Side.LEFT, if (change.isChange(Side.LEFT)) Side.LEFT else Side.RIGHT, Side.RIGHT)
+      replaceChange(change.index, masterSide, false)
+    }
   }
 
   @RequiresWriteLock
@@ -113,16 +198,24 @@ class MergeConflictModel(
     if (change.isResolved) return null
 
     resultModel.replaceChange(change.index, newContentLines)
-    //myAggregator.wasResolvedByAi(change.index)
     change.markChangeResolvedWithAI()
     markChangeResolved(change.index)
     return LineRange(resultModel.getLineStart(change.index), resultModel.getLineEnd(change.index))
   }
 
+  /**
+   * Resets the resolved state of a specific change by restoring its base content
+   * and invalidating the change in the result model. This action ensures the
+   * change is marked as unresolved and its state is reverted to the original.
+   *
+   * @param index The index of the change to reset.
+   * @param force If true, resets the change regardless of its resolved state. If false,
+   *              only resets the change if it is already marked as resolved.
+   */
   @RequiresWriteLock
-  fun resetResolvedChange(index: Int) {
+  fun resetResolvedChange(index: Int, force: Boolean = false) {
     val change = getByIndex(index)
-    if (!change.isResolved) return
+    if (!force && !change.isResolved) return
     val changeFragment = change.fragment
     val startLine = changeFragment.getStartLine(ThreeSide.BASE)
     val endLine = changeFragment.getEndLine(ThreeSide.BASE)
@@ -131,12 +224,8 @@ class MergeConflictModel(
     val baseContent = DiffUtil.getLines(content, startLine, endLine)
 
     resultModel.replaceChange(change.index, baseContent)
-
+    fireChangeReset(change)
     change.resetState()
-    //if (change.isResolvedWithAI) {
-    //  myAggregator.wasRolLEDBackAfterAI(change.index)
-    //}
-    markChangeResolved(change.index)
     resultModel.invalidateChange(change.index)
   }
 
@@ -195,6 +284,22 @@ class MergeConflictModel(
     return LineRange(newLineStart, newLineEnd)
   }
 
+  @RequiresWriteLock
+  fun resetAllChanges() {
+    getAllChanges().forEach { change: TextMergeChange -> resetResolvedChange(change.index, force = true) }
+    mergeRequest.resetOutputContent()
+  }
+
+  @RequiresWriteLock
+  fun replaceAllChanges(side: Side) {
+    getAllChanges().forEach { change: TextMergeChange -> replaceChange(change.index, side, true) }
+  }
+
+  @RequiresWriteLock
+  fun markAllChangesResolved() {
+    getAllChanges().forEach { change: TextMergeChange -> markChangeResolved(change.index) }
+  }
+
   @RequiresEdt
   private fun markChangeResolved(change: TextMergeChange, side: Side) {
     if (change.isResolved) return
@@ -218,17 +323,24 @@ class MergeConflictModel(
 
   fun canResolveChangeAutomatically(changeIndex: Int, side: ThreeSide): Boolean {
     val change = getByIndex(changeIndex)
-    
-    if (change.isConflict) {
-      return side == ThreeSide.BASE &&
-             change.conflictType.canBeResolved() &&
-             !change.isResolved(Side.LEFT) && !change.isResolved(Side.RIGHT) &&
-             (change.conflictType.resolutionStrategy !== MergeConflictResolutionStrategy.TEXT || !isChangeRangeModified(change))
+
+    return if (change.isConflict) {
+      side == ThreeSide.BASE &&
+      change.conflictType.canBeResolved() &&
+      !change.isResolved(Side.LEFT) &&
+      !change.isResolved(Side.RIGHT) &&
+      (change.conflictType.resolutionStrategy !== MergeConflictResolutionStrategy.TEXT || !isChangeRangeModified(change))
     }
+    else {
+      !change.isResolved &&
+      change.isChange(side) &&
+      !isChangeRangeModified(change)
+    }
+  }
 
-    return !change.isResolved &&
-           change.isChange(side) && !isChangeRangeModified(change)
-
+  private fun TextMergeRequest.resetOutputContent() {
+    val text = ThreeSide.BASE.select(contents).document.text
+    outputContent.document.setText(text)
   }
 
   private fun isChangeRangeModified(change: TextMergeChange): Boolean {
@@ -250,19 +362,38 @@ class MergeConflictModel(
     Disposer.dispose(resultModel)
   }
 
-  fun executeMergeCommand(commandName: @NlsContexts.Command String?, string: String?, undoPolicy: UndoConfirmationPolicy, bulkUpdate: Boolean, affectedIndexes: IntList?, task: Runnable): Boolean {
-    return executeMergeCommand(commandName, string, undoPolicy, bulkUpdate, affectedIndexes, task::run)
+  fun executeMergeCommand(
+    commandName: @NlsContexts.Command String?,
+    commandGroupId: String?,
+    undoPolicy: UndoConfirmationPolicy,
+    bulkUpdate: Boolean,
+    affectedIndexes: IntList?,
+    task: Runnable,
+  ): Boolean {
+    return executeMergeCommand(commandName, commandGroupId, undoPolicy, bulkUpdate, affectedIndexes, task::run)
   }
 
-  fun executeMergeCommand(commandName: @NlsContexts.Command String?, string: String?, undoConfirmationPolicy: UndoConfirmationPolicy, bulkUpdate: Boolean, affectedIndexes: IntList?, task: () -> Unit): Boolean {
-    return resultModel.executeMergeCommand(commandName, string, undoConfirmationPolicy, bulkUpdate, affectedIndexes, task)
+  fun executeMergeCommand(
+    commandName: @NlsContexts.Command String?,
+    commandGroupId: String?,
+    undoConfirmationPolicy: UndoConfirmationPolicy,
+    bulkUpdate: Boolean,
+    affectedIndexes: IntList?,
+    task: () -> Unit,
+  ): Boolean {
+    return resultModel.executeMergeCommand(commandName, commandGroupId, undoConfirmationPolicy, bulkUpdate, affectedIndexes, task).also {
+      if (it) {
+        contentModified = true
+      }
+    }
   }
 
   private fun getByIndex(index: Int): TextMergeChange {
     return mergeChanges[index]
   }
 
-  private inner class MergeModelImpl(project: Project?) : MergeModelBase<TextMergeChange.State>(project, mergeRequest.outputContent.document) {
+  private inner class MergeModelImpl(project: Project?) :
+    MergeModelBase<TextMergeChange.State>(project, mergeRequest.outputContent.document) {
     override fun onChangeUpdated(index: Int) = fireChangeProcessed(getByIndex(index))
     override fun onBulkUpdateFinished() = fireBulkProcessingFinished()
 
@@ -291,10 +422,11 @@ class MergeConflictModel(
   }
 
   private fun fireEvent(event: MergeEvent) = dispatcher.multicaster.onMergeEvent(event)
-  private fun fireChangeSideResolved(change: TextMergeChange, side: Side) = fireEvent(ChangeSideResolved(change, side))
-  private fun fireChangeResolved(change: TextMergeChange) = fireEvent(ChangeResolved(change))
-  private fun fireChangeProcessed(change: TextMergeChange) = fireEvent(ChangeProcessed(change))
-  private fun fireBulkProcessingFinished() = fireEvent(BulkProcessingFinished)
+  private fun fireChangeSideResolved(change: TextMergeChange, side: Side) = fireEvent(MergeEvent.ChangeSideResolved(change, side))
+  private fun fireChangeResolved(change: TextMergeChange) = fireEvent(MergeEvent.ChangeResolved(change))
+  private fun fireChangeProcessed(change: TextMergeChange) = fireEvent(MergeEvent.ChangeProcessed(change))
+  private fun fireBulkProcessingFinished() = fireEvent(MergeEvent.BulkProcessingFinished)
+  private fun fireChangeReset(change: TextMergeChange) = fireEvent(MergeEvent.ChangeReset(change))
 }
 
 @ApiStatus.Internal
@@ -310,19 +442,22 @@ fun interface MergeModelEventListener : EventListener {
 }
 
 @ApiStatus.Internal
-sealed class MergeEvent()
+sealed class MergeEvent {
+  @ApiStatus.Internal
+  class ChangeResolved(val change: TextMergeChange) : MergeEvent()
 
-@ApiStatus.Internal
-class ChangeResolved(val change: TextMergeChange) : MergeEvent()
+  @ApiStatus.Internal
+  class ChangeSideResolved(val change: TextMergeChange, val side: Side) : MergeEvent()
 
-@ApiStatus.Internal
-class ChangeSideResolved(val change: TextMergeChange, val side: Side) : MergeEvent()
+  @ApiStatus.Internal
+  class ChangeReset(val change: TextMergeChange) : MergeEvent()
 
-@ApiStatus.Internal
-class ChangeProcessed(val change: TextMergeChange) : MergeEvent()
+  @ApiStatus.Internal
+  class ChangeProcessed(val change: TextMergeChange) : MergeEvent()
 
-@ApiStatus.Internal
-object BulkProcessingFinished : MergeEvent()
+  @ApiStatus.Internal
+  object BulkProcessingFinished : MergeEvent()
+}
 
 private class TextAutoResolver(private val mergeRequest: TextMergeRequest) {
 

@@ -76,7 +76,7 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
-    return new IntentionPreviewInfo.Html(JavaBundle.message("intention.text.create.a.class.in.package.preview", myPackageName));
+    return new IntentionPreviewInfo.Html(JavaBundle.message("intention.text.create.a.class.in.package.preview", StringUtil.escapeXmlEntities(myPackageName)));
   }
 
   @Override

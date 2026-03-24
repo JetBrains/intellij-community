@@ -2,9 +2,15 @@ package com.intellij.workspaceModel.codegen.impl.writer.fields
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.EntityStorage
-import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.getRefType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.hasSetter
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.isOverride
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.isRefType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.kotlinClassName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.refsFields
+import com.intellij.workspaceModel.codegen.impl.writer.toQualifiedName
 
 val ObjProperty<*, *>.implWsEntityFieldCode: String
   get() = buildString {
@@ -23,14 +29,8 @@ private val ObjProperty<*, *>.implWsBlockingCode: String
 
 internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, optionalSuffix: String = ""): String {
   return when (fieldType) {
-    ValueType.Int -> """
-      override val $name: ${fieldType.javaType}
-      get() {
-      readField("$name")
-      return dataSource.$name
-      }
-      """.trimIndent()
-    ValueType.Boolean -> """
+    ValueType.Int, ValueType.Boolean, ValueType.Char, ValueType.Long, ValueType.Float, ValueType.Double,
+    ValueType.Short, ValueType.Byte, ValueType.UByte, ValueType.UShort, ValueType.UInt, ValueType.ULong -> """
       override val $name: ${fieldType.javaType}
       get() {
       readField("$name")
@@ -100,7 +100,8 @@ internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: St
       }
       """
     is ValueType.Optional<*> -> when (fieldType.type) {
-      ValueType.Int, ValueType.Boolean -> """
+      ValueType.Int, ValueType.Boolean, ValueType.Char, ValueType.Long, ValueType.Float, ValueType.Double,
+      ValueType.Short, ValueType.Byte, ValueType.UByte, ValueType.UShort, ValueType.UInt, ValueType.ULong -> """
         override val $name: ${fieldType.javaType}
         get() {
         readField("$name")

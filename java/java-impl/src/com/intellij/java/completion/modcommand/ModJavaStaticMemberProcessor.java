@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.BaseCompletionParameters;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,7 +44,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 
 class ModJavaStaticMemberProcessor {
   private final PsiElement myOriginalPosition;
@@ -201,7 +201,7 @@ class ModJavaStaticMemberProcessor {
     myStaticImportedMembers.add(member);
   }
 
-  public void processStaticMethodsGlobally(@NotNull PrefixMatcher matcher, @NotNull Consumer<? super ModCompletionItem> consumer) {
+  public void processStaticMethodsGlobally(@NotNull PrefixMatcher matcher, @NotNull ModCompletionResult consumer) {
     GlobalSearchScope scope = myPosition.getResolveScope();
     Collection<String> memberNames = JavaStaticMemberNameIndex.getInstance().getAllKeys(myProject);
     for (String memberName : matcher.sortMatching(memberNames)) {
@@ -212,7 +212,7 @@ class ModJavaStaticMemberProcessor {
     }
   }
 
-  protected void processStaticMember(@NotNull Consumer<? super ModCompletionItem> consumer, PsiMember member, Set<PsiClass> classesToSkip) {
+  protected void processStaticMember(@NotNull ModCompletionResult consumer, PsiMember member, Set<PsiClass> classesToSkip) {
     if (isStaticallyImportable(member)) {
       PsiClass containingClass = member.getContainingClass();
       assert containingClass != null : member.getName() + "; " + member + "; " + member.getClass();

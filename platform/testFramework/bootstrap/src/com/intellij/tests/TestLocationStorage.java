@@ -43,14 +43,14 @@ import java.util.logging.Logger;
  * <h2>Integration Points</h2>
  * <p>This class works together with the build-time artifact generators and test owner resolver:</p>
  * <ul>
- *   <li>{@link TestsPaths} - Generates file location mappings at build time</li>
+ *   <li>{@link FileLocationsPaths} - Generates file location mappings at build time</li>
  *   <li>{@link ModulePaths} - Generates module path mappings at build time</li>
  *   <li>{@link CodeOwners} - Generates code ownership index at build time</li>
  *   <li>{@link ResolveTestOwners} - Consumes this output to determine test owners</li>
  * </ul>
  *
  * @see ResolveTestOwners
- * @see TestsPaths
+ * @see FileLocationsPaths
  * @see ModulePaths
  * @see CodeOwners
  */
@@ -166,7 +166,8 @@ public final class TestLocationStorage {
    * Extracts module name from META-INF/*.kotlin_module file in the JAR containing the test class.
    */
   private static String getModuleNameFromKotlinModule(Class<?> testClass) {
-    URL classUrl = testClass.getResource(testClass.getSimpleName() + ".class");
+    String fileName = testClass.getName().substring(testClass.getName().lastIndexOf('.') + 1) + ".class";
+    URL classUrl = testClass.getResource(fileName);
     if (classUrl == null || !"jar".equals(classUrl.getProtocol())) {
       return null;
     }

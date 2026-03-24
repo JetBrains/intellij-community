@@ -1,8 +1,27 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.rpc"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.navbar.frontend"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint name="backendServiceViewNavigatableProvider"
                     interface="com.intellij.platform.execution.serviceView.BackendServiceViewNavigatableProvider"

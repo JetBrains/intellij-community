@@ -50,9 +50,10 @@ internal suspend fun Project.generateAccessorsFrom(changedComposeResourcesDirs: 
       findResourcesDir(moduleName, "$sourceSetName$RESOURCES_ACCESSORS_SUFFIX")
       ?: findResourcesDir(moduleName, "$sourceSetName$RESOURCES_COLLECTORS_SUFFIX")
     } ?: return
-    val packageName = changedComposeResourcesDir.getResourcePackageName(this)
-    val moduleDir = resourcesAccessorsDir.findFileByRelativePath(packageName.replace('.', '/')) ?: return
     val composeResourcesConfig = this.service<ComposeResourcesManager>().composeResourcesByModulePath[moduleName] ?: return
+    val packageOfResClass = composeResourcesConfig.packageOfResClass
+    val packageName = changedComposeResourcesDir.getResourcePackageName(this, packageOfResClass)
+    val moduleDir = resourcesAccessorsDir.findFileByRelativePath(packageName.replace('.', '/')) ?: return
     val isPublicResClass = composeResourcesConfig.isPublicResClass
     val nameOfResClass = composeResourcesConfig.nameOfResClass
     getAccessorsSpecs(
@@ -70,12 +71,13 @@ private fun Project.findResourcesDir(moduleName: String, name: String): VirtualF
   //TODO use .processFilesByName() to get the first matching file without collecting/resolving all them first
   FilenameIndex.getVirtualFilesByName(name, GlobalSearchScope.allScope(this)).firstOrNull { it.path.contains(moduleName) }
 
-private fun ComposeResourcesDir.getResourcePackageName(project: Project): String {
-  val groupName = project.name.lowercase().asUnderscoredIdentifier()
-  val moduleName = moduleName.lowercase().asUnderscoredIdentifier()
-  val id = if (groupName.isNotEmpty()) "$groupName.$moduleName" else moduleName
-  return "$id.generated.resources"
-}
+private fun ComposeResourcesDir.getResourcePackageName(project: Project, packageOfResClass: String): String =
+  packageOfResClass.ifEmpty {
+    val groupName = project.name.lowercase().asUnderscoredIdentifier()
+    val moduleName = moduleName.lowercase().asUnderscoredIdentifier()
+    val id = if (groupName.isNotEmpty()) "$groupName.$moduleName" else moduleName
+    "$id.generated.resources"
+  }
 
 private fun getItemRecord(node: Node): ValueResourceRecord {
   val type = ResourceType.fromString(node.nodeName)

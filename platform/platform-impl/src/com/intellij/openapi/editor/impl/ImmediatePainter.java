@@ -34,13 +34,15 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import sun.awt.image.SunVolatileImage;
+
+import java.awt.geom.GeneralPath;
+import java.util.function.Consumer;
 
 import javax.swing.JComponent;
 import java.awt.Color;
@@ -57,7 +59,6 @@ import java.awt.Shape;
 import java.awt.Toolkit;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.VolatileImage;
 import java.util.ArrayList;
@@ -120,7 +121,6 @@ public final class ImmediatePainter {
     final Document document = editor.getDocument();
 
     return document instanceof DocumentImpl &&
-           !editor.getSettings().isAnimatedCaret() &&
            editor.getHighlighter() instanceof LexerEditorHighlighter &&
            !(editor.getComponent().getParent() instanceof EditorTextField) &&
            editor.myView.getTopOverhang() <= 0 && editor.myView.getBottomOverhang() <= 0 &&
@@ -153,11 +153,12 @@ public final class ImmediatePainter {
 
   private void paintImmediately(final Graphics2D g, final int offset, final char c2) {
     final EditorImpl editor = myEditor;
-    final Document document = editor.getDocument();
+    final Document document = editor.getUiDocument();
     final LexerEditorHighlighter highlighter = (LexerEditorHighlighter)myEditor.getHighlighter();
 
     final EditorSettings settings = editor.getSettings();
     final boolean isBlockCursor = editor.isInsertMode() == settings.isBlockCursor();
+    final boolean isSmoothCaretMovement = editor.getSettings().isSmoothCaretMovement();
     final int lineHeight = editor.getLineHeight();
     final int caretHeight = editor.myView.getCaretHeight();
     final int ascent = editor.getAscent();
@@ -207,6 +208,14 @@ public final class ImmediatePainter {
     final Rectangle2D rectangle1 = new Rectangle2D.Float(p2x - width1, p2y, width1, lineHeight);
     final Rectangle2D rectangle2 = new Rectangle2D.Float(rectangle2Start, p2y, rectangle2End - rectangle2Start, lineHeight);
 
+    final Consumer<Graphics2D> paintCaret = graphics -> {
+      if (isBlockCursor) {
+        fillRect(graphics, caretRectangle, getCaretColor(editor));
+      } else {
+        paintCaretBar(graphics, caretRectangle, getCaretColor(editor));
+      }
+    };
+
     final Consumer<Graphics2D> painter = graphics -> {
       EditorUIUtil.setupAntialiasing(graphics);
       graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
@@ -214,11 +223,7 @@ public final class ImmediatePainter {
       EditorPainter.fillRectExact(graphics, rectangle2, attributes2.getBackgroundColor());
       drawChar(graphics, c2, p2x, p2y + ascent, font2, attributes2.getForegroundColor());
 
-      if (isBlockCursor) {
-        fillRect(graphics, caretRectangle, getCaretColor(editor));
-      } else {
-        paintCaretBar(graphics, caretRectangle, getCaretColor(editor));
-      }
+      if (!isSmoothCaretMovement) paintCaret.accept(graphics);
 
       EditorPainter.fillRectExact(graphics, rectangle1, attributes1.getBackgroundColor());
       drawChar(graphics, c1, p2x - width1, p2y + ascent, font1, attributes1.getForegroundColor());
@@ -242,7 +247,7 @@ public final class ImmediatePainter {
       paintWithDoubleBuffering(g, painter);
     }
     else {
-      painter.consume(g);
+      painter.accept(g);
     }
 
     g.setClip(originalClip);
@@ -267,7 +272,7 @@ public final class ImmediatePainter {
 
     useSafely(myImage.getGraphics(), imageGraphics -> {
       imageGraphics.translate(-bounds.x, -bounds.y);
-      painter.consume(imageGraphics);
+      painter.accept(imageGraphics);
     });
 
     StartupUiUtil.drawImage(graphics, myImage, bounds.x, bounds.y, null);
@@ -311,12 +316,28 @@ public final class ImmediatePainter {
   }
 
   private void paintCaretBar(final Graphics2D g, final Rectangle2D r, final Color color) {
-    double w = r.getWidth();
+    double w = r.getWidth(), h = r.getHeight();
+    double x = r.getX(), y = r.getY();
 
     var old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setColor(color);
-    g.fill(new RoundRectangle2D.Double(r.getX(), r.getY(), w, r.getHeight(), w, w));
+
+    var caretShape = new GeneralPath();
+    float radius = (float)(r.getWidth() / 2);
+
+    caretShape.moveTo(r.getX(), r.getY() + radius);
+    caretShape.quadTo(x, y, x + radius, y);
+    caretShape.lineTo(x + w - radius, y);
+    caretShape.quadTo(x + w, y, x + w, y + radius);
+    caretShape.lineTo(x + w, y + h - radius);
+    caretShape.quadTo(x + w, y + h, x + w - radius, y + h);
+    caretShape.lineTo(x + radius, y + h);
+    caretShape.quadTo(x, y + h, x, y + h - radius);
+
+    caretShape.closePath();
+    g.fill(caretShape);
+
     if (old != null) {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
     }

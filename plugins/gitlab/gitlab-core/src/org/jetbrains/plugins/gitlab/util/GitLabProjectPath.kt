@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gitlab.util
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.text.nullize
-import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitHostingUrlUtil
 import kotlinx.serialization.Serializable
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
@@ -17,13 +16,17 @@ data class GitLabProjectPath(val owner: @NlsSafe String, val name: @NlsSafe Stri
   override fun toString(): String = "$owner/$name"
 
   companion object {
-    fun create(server: GitLabServerPath, remote: GitRemoteUrlCoordinates): GitLabProjectPath? {
+    fun create(server: GitLabServerPath, gitRemoteUrl: String): GitLabProjectPath? {
       val serverPath = server.toURI().path
-      val remotePath = GitHostingUrlUtil.getUriFromRemoteUrl(remote.url)?.path ?: return null
+      val remotePath = GitHostingUrlUtil.getUriFromRemoteUrl(gitRemoteUrl)?.path ?: return null
 
       if (!remotePath.startsWith(serverPath)) return null
       val repositoryPath = remotePath.removePrefix(serverPath).removePrefix("/")
 
+      return extractProjectPath(repositoryPath)
+    }
+
+    fun extractProjectPath(repositoryPath: String): GitLabProjectPath? {
       val lastSlashIdx = repositoryPath.lastIndexOf('/')
       if (lastSlashIdx < 0) return null
 

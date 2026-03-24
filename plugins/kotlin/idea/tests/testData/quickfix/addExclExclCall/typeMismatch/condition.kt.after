@@ -1,4 +1,5 @@
 // "Add non-null asserted (foo?.bar()!!) call" "true"
+// K2_ERROR: Condition type mismatch: inferred type is 'Boolean?' but 'Boolean' was expected.
 class Foo {
     fun bar() = true
 }

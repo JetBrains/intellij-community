@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "dev-noJava-plugin-main",
+  module_name = "intellij.dev.noJava.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -18,13 +19,26 @@ jvm_library(
   module_name = "intellij.dev.noJava.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [":dev-noJava-plugin-main"]
+  runtime_deps = [
+    ":dev-noJava-plugin-main",
+    "//plugins/dev/intellij.dev:dev_test_lib",
+    "//plugins/dev/intellij.dev.codeInsight:codeInsight_test_lib",
+    "//plugins/dev/intellij.dev.psiViewer:psiViewer_test_lib",
+    "//platform/statistics/devkit:devkit_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.dev.noJava.plugin.main` end
+
+### auto-generated section `iml intellij.dev.noJava.plugin.main` start
+exports_files([
+  "intellij.dev.noJava.plugin.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.dev.noJava.plugin.main` end
 
 ### auto-generated section `build intellij.dev.plugin.main` start
 jvm_library(
   name = "dev-plugin-main",
+  module_name = "intellij.dev.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -40,6 +54,18 @@ jvm_library(
   module_name = "intellij.dev.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [":dev-plugin-main"]
+  runtime_deps = [
+    ":dev-plugin-main",
+    "//plugins/dev:dev-noJava-plugin-main_test_lib",
+    "//plugins/dev/intellij.java.dev:java-dev_test_lib",
+    "//plugins/dev/intellij.groovy.dev:groovy-dev_test_lib",
+    "//plugins/dev/intellij.kotlin.dev:kotlin-dev_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.dev.plugin.main` end
+
+### auto-generated section `iml intellij.dev.plugin.main` start
+exports_files([
+  "intellij.dev.plugin.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.dev.plugin.main` end

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.searchEverywhere.SeItemDataKeys
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
+import com.intellij.platform.searchEverywhere.frontend.ui.asPropertyBeans
 import com.intellij.platform.searchEverywhere.frontend.ui.weightTextIfEnabled
 import com.intellij.platform.searchEverywhere.presentations.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeOptionActionItemPresentation
@@ -44,6 +45,7 @@ import javax.swing.border.Border
 class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultListRow>) {
   fun get(listFont: Font = StartupUiUtil.labelFont, patternProvider: () -> String): ListCellRenderer<SeResultListRow> = listCellRenderer {
     val presentation = (value as SeResultListItemRow).item.presentation as SeActionItemPresentation
+    uiInspectorContext = presentation.uiInspectorInfo.asPropertyBeans()
 
     val showIcon = UISettings.getInstance().showIconsInMenus
     val commonData = presentation.commonData

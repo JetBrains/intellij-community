@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
 import com.google.common.collect.HashMultiset
@@ -29,6 +29,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitOperationsCollector.REMOTE_CHECK_STRATEGY
 import git4idea.branch.GitBranchUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -57,7 +58,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
 internal class GitStatisticsCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("git.configuration", 23)
+  private val GROUP = EventLogGroup("git.configuration", 24)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -76,6 +77,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     addIfDiffers(set, settings, defaultSettings, { it.syncSetting }, REPO_SYNC, REPO_SYNC_VALUE)
     addIfDiffers(set, settings, defaultSettings, { it.updateMethod }, UPDATE_TYPE, UPDATE_TYPE_VALUE)
     addIfDiffers(set, settings, defaultSettings, { it.saveChangesPolicy }, SAVE_POLICY, SAVE_POLICY_VALUE)
+    addIfDiffers(set, settings, defaultSettings, { it.incomingCommitsCheckStrategy }, INCOMING_COMMITS_CHECK_STRATEGY, GitOperationsCollector.REMOTE_CHECK_STRATEGY)
 
     addBoolIfDiffers(set, settings, defaultSettings, { it.autoUpdateIfPushRejected() }, PUSH_AUTO_UPDATE)
     addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutCrlf() }, WARN_CRLF)
@@ -230,6 +232,8 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
 
   private val SAVE_POLICY_VALUE = EventFields.Enum("value", GitSaveChangesPolicy::class.java) { it.name.lowercase() }
   private val SAVE_POLICY = GROUP.registerVarargEvent("save.policy", SAVE_POLICY_VALUE)
+
+  private val INCOMING_COMMITS_CHECK_STRATEGY = GROUP.registerVarargEvent("incoming_commits_check_strategy", REMOTE_CHECK_STRATEGY)
 
   private val PUSH_AUTO_UPDATE = GROUP.registerVarargEvent("push.autoupdate", EventFields.Enabled)
 

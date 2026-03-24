@@ -23,9 +23,9 @@ import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils.createImmediatelyUpdatedToolbar
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
@@ -46,7 +46,6 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiManager
 import com.intellij.ui.ColorUtil
@@ -356,9 +355,9 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     toolbarImpl.setBorder(null)
     toolbarImpl.setOpaque(false)
     toolbarImpl.setCustomButtonLook(InlayPopupButtonLook {
-      ApplicationManager.getApplication().runReadAction(Computable {
+      runReadActionBlocking {
         calculateEffectiveHoverColorAndStroke(needShowOnGutter, editor, lineNumber)
-      })
+      }
     })
     val justPanel: JPanel = NonOpaquePanel()
     justPanel.preferredSize = JBDimension((2 * ACTION_BUTTON_GAP + ACTION_BUTTON_SIZE) * group.childrenCount, ACTION_BUTTON_SIZE)

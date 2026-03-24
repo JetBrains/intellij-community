@@ -219,7 +219,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
 
         val newPropertyName = if (element is KtLightMethod) propertyNameByAccessor(newName, element) else newName
 
-        val (getterJvmName, setterJvmName) = getJvmNames(namedUnwrappedElement)
+        val (getterJvmName, setterJvmName) = runReadAction { getJvmNames(namedUnwrappedElement) }
 
         val getter = propertyMethods.getter as? KtLightMethod
         val setter = propertyMethods.setter as? KtLightMethod

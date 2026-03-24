@@ -105,7 +105,7 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
       null
     }
 
-  override val serverUrl: URL = mergeRequest.glProject.serverPath.toURL()
+  override val serverUrl: URL = mergeRequest.serverPath.toURL()
 
   private val _diffRequests = MutableSharedFlow<ChangesSelection.Precise>()
   val diffRequests: Flow<ChangesSelection.Precise> = _diffRequests.asSharedFlow()

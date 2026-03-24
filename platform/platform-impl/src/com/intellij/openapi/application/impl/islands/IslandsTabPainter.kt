@@ -26,6 +26,7 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
+import javax.swing.JComponent
 import kotlin.math.floor
 
 internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, var isEnabled: Boolean) : TabPainterAdapter {
@@ -47,7 +48,7 @@ internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, v
     val info = label.info
     val selected = info == tabs.selectedInfo
     val active = tabs.isActiveTabs(info)
-    val hovered = tabs.isHoveredTab(label)
+    val hovered = tabs.isHoveredOrWithPopup(label)
 
     val tabLabelWidth = calcTabLabelWidth(label)
     val rect = Rectangle(tabLabelWidth, label.height)
@@ -189,6 +190,29 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
 
     g.color = draw
     RectanglePainter2D.DRAW.paint(g, x, y, width, height, arc)
+  }
+
+  /**
+   * Calculates the composed background color for editor tabs. The resulting color is not transparent,
+   * see [paintTab] for details.
+   */
+  fun getEditorTabComposedBgColor(
+    component: JComponent,
+    tabColor: Color?,
+    active: Boolean,
+    hovered: Boolean,
+    selected: Boolean,
+  ): Color {
+    var result = if (myFillBackground) getBackgroundColor() else UIUtil.getBgFillColor(component)
+
+    if (tabColor != null) {
+      result = ColorUtil.alphaBlending(ColorUtil.withAlpha(tabColor, 0.9), result)
+    }
+
+    val (fill, _) = getColors(active, hovered, selected)
+    result = ColorUtil.alphaBlending(fill, result)
+
+    return result
   }
 
   private val hoverBackground = JBColor("EditorTabs.hoverBackground", JBColor(Color(0xE5, 0xEE, 0xFF, 0x80), Color(0x34, 0x3E, 0x51, 0x80)))

@@ -1,6 +1,7 @@
 // "Remove '.java'" "true"
 // PRIORITY: HIGH
 // WITH_STDLIB
+// K2_ERROR: Initializer type mismatch: expected 'KClass<Foo>', actual 'Class<Foo>'.
 fun foo() {
     val clazz: kotlin.reflect.KClass<Foo> = Foo::class.java<caret>
 }

@@ -341,6 +341,7 @@ public class FormatBasedGridCellEditor extends GridCellEditor.Adapter implements
 
     @Override
     public final void actionPerformed(ActionEvent e) {
+      if (!myComponent.isShowing()) return;
       if (myPopup != null) {
         closePopup();
       }

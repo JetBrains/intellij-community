@@ -87,6 +87,23 @@ public interface ModCommandAction extends CommonIntentionAction, PossiblyDumbAwa
     return ModCommandService.getInstance().wrap(this);
   }
 
+  /**
+   * @return false if it doesn't make sense to run this action non-interactively (e.g., when applying a quick-fix in a batch).
+   * <p>
+   * This method can be used to suppress displaying this action in UI.
+   * <p>
+   * Most of the actions can still be available for batch execution, even if they normally display UI.
+   * For example, if the action displays a conflict view (via {@link ModShowConflicts}), it could be ignored in batch mode,
+   * but if the action displays a chooser (via {@link ModChooseAction}), the first option could be selected automatically when running in batch.
+   * <p>
+   * One possible reason for returning true is when the action modifies options via {@link ModUpdateSystemOptions}
+   * @see com.intellij.codeInspection.LocalQuickFix#availableInBatchMode
+   * @see ModCommandExecutor#executeInBatch
+   */
+  default boolean availableInBatchMode() {
+    return true;
+  }
+
   @Override
   default @NotNull ModCommandAction asModCommandAction() {
     return this;

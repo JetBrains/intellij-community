@@ -103,4 +103,32 @@ class GradleProjectTaskRunnerTest : GradleProjectTaskRunnerTestCase() {
       }
     }
   }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test GradleProjectTaskRunner#run returns FAILURE when build task fails`(
+    gradleVersion: GradleVersion,
+  ) {
+    testJavaProject(gradleVersion) {
+      runBlocking {
+        setupGradleDelegationMode(delegatedBuild = true, delegatedRun = false, asDisposable())
+
+        mockGradleConnectionService(asDisposable()) {
+          throw RuntimeException("Simulated Gradle build failure")
+        }
+
+        val projectTaskRunner = ProjectTaskRunner.EP_NAME.findExtensionOrFail(GradleProjectTaskRunner::class.java)
+
+        val buildTask = ModuleBuildTaskImpl(module)
+        val buildTaskContext = ProjectTaskContext()
+
+        val buildPromise = projectTaskRunner.run(project, buildTaskContext, buildTask)
+        val buildResult = withContext(NonCancellable) {
+          buildPromise.awaitPromise(DEFAULT_SYNC_TIMEOUT)
+        }
+
+        Assertions.assertEquals(TaskRunnerResults.FAILURE, buildResult)
+      }
+    }
+  }
 }

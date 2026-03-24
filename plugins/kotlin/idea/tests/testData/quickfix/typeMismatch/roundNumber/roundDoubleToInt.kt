@@ -1,6 +1,7 @@
 // "Round using roundToInt()" "true"
 // PRIORITY: LOW
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'Double', but 'Int' was expected.
 fun test(d: Double) {
     foo(d<caret>)
 }

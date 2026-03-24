@@ -754,9 +754,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     public void processInputMethodEvent(InputMethodEvent e) {
       mySearchField.processInputMethodEvent(e);
       if (e.isConsumed()) {
-        updateLastPattern();
-        String s = mySearchField.getText();
-        updateSelection(findElement(s), s);
+        WriteIntentReadAction.run(() -> {
+          updateLastPattern();
+          String s = mySearchField.getText();
+          updateSelection(findElement(s), s);
+        });
       }
     }
 

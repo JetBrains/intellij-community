@@ -18,6 +18,7 @@ import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
@@ -60,7 +61,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
   @Override
   public boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
-    Pair<List<VirtualFile>, List<VirtualFile>> rootsPair = ReadAction.compute(() -> {
+    Pair<List<VirtualFile>, List<VirtualFile>> rootsPair = ReadAction.computeBlocking(() -> {
       Set<VirtualFile> allRecursiveRoots = new LinkedHashSet<>();
       List<VirtualFile> allNonRecursiveRoots = new ArrayList<>();
       List<VirtualFile> allRecursiveNonIndexableRoots = new ArrayList<>();
@@ -249,6 +250,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return myWorkspaceFileIndex.isInContent(fileOrDir);
   }
 
+  @Override
   public @Nullable VirtualFile getModuleSourceOrLibraryClassesRoot(@NotNull VirtualFile file) {
     WorkspaceFileInternalInfo info = myWorkspaceFileIndex.getFileInfo(file, true, true, true, true, false, false, false);
     WorkspaceFileSetWithCustomData<?> fileSet = info.findFileSet(it -> {
@@ -258,6 +260,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return fileSet != null ? fileSet.getRoot() : null;
   }
 
+  @Override
   public @NotNull Collection<RootDescriptor> getModuleSourceOrLibraryClassesRoots(@NotNull VirtualFile file) {
     WorkspaceFileInternalInfo info = myWorkspaceFileIndex.getFileInfo(file, true, true, true, true, false, false, false);
     List<WorkspaceFileSetWithCustomData<?>> fileSets = info.findFileSets(it -> {
@@ -315,6 +318,11 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     WorkspaceFileSetWithCustomData<UnloadedModuleContentRootData> fileSet =
       myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, false, true, true, false, false, false, false, UnloadedModuleContentRootData.class);
     return fileSet != null ? fileSet.getData().getModuleName() : null;
+  }
+
+  @Override
+  public @Nullable VirtualFile getWorkspaceContentFileSetRoot(@NotNull VirtualFile fileOrDir) {
+    return WorkspaceFileIndex.getInstance(myProject).getContentFileSetRoot(fileOrDir, true);
   }
 
   @Override

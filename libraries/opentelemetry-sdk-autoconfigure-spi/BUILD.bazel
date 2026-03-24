@@ -9,10 +9,26 @@ resourcegroup(
 
 jvm_library(
   name = "opentelemetry-sdk-autoconfigure-spi",
+  module_name = "intellij.libraries.opentelemetry.sdk.autoconfigure.spi",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":opentelemetry-sdk-autoconfigure-spi_resources"],
   exports = ["@lib//:libraries-opentelemetry-sdk-autoconfigure-spi-opentelemetry-sdk-autoconfigure-spi"],
   runtime_deps = ["@lib//:libraries-opentelemetry-sdk-autoconfigure-spi-opentelemetry-sdk-autoconfigure-spi"]
 )
+
+jvm_library(
+  name = "opentelemetry-sdk-autoconfigure-spi_test_lib",
+  module_name = "intellij.libraries.opentelemetry.sdk.autoconfigure.spi",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:libraries-opentelemetry-sdk-autoconfigure-spi-opentelemetry-sdk-autoconfigure-spi"],
+  runtime_deps = [":opentelemetry-sdk-autoconfigure-spi"]
+)
 ### auto-generated section `build intellij.libraries.opentelemetry.sdk.autoconfigure.spi` end
+
+### auto-generated section `iml intellij.libraries.opentelemetry.sdk.autoconfigure.spi` start
+exports_files([
+  "intellij.libraries.opentelemetry.sdk.autoconfigure.spi.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.opentelemetry.sdk.autoconfigure.spi` end

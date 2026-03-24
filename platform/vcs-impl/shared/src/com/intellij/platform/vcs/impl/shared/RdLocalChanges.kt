@@ -20,12 +20,6 @@ object RdLocalChanges {
   @JvmStatic
   fun isEnabled(): Boolean {
     val registryValue = Registry.get(REGISTRY_KEY)
-    return if (registryValue.isChangedFromDefault()) {
-      registryValue.asBoolean()
-    } else {
-      !AppMode.isMonolith()
-        // Temporary disable in UI tests until AT-3942 is resolved
-        && !ApplicationManagerEx.isInIntegrationTest()
-    }
+    return if (registryValue.isChangedFromDefault()) registryValue.asBoolean() else !AppMode.isMonolith()
   }
 }

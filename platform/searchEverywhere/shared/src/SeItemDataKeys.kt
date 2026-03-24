@@ -9,4 +9,5 @@ object SeItemDataKeys {
   const val PSI_LANGUAGE_ID: String = "SeItemDataKeys.PsiLanguage"
   const val REPORTABLE_PROVIDER_ID: String = "SeItemDataKeys.ReportableProviderId"
   const val IS_COMMAND: String = "SeItemDataKeys.IsCommand"
+  const val PROVIDER_SORT_WEIGHT: String = "SeItemDataKeys.ProviderSortWeight"
 }

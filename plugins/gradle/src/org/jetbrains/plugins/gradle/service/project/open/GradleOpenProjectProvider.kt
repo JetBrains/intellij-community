@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.updateGradleJvm
 import org.jetbrains.plugins.gradle.util.validateJavaHome
@@ -35,8 +37,9 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
     }
 
     val settings = createLinkSettings(projectPath, project)
+    val gradleVersion = GradleInstallationManager.guessGradleVersion(settings) ?: GradleVersion.current()
 
-    validateJavaHome(project, projectPath, settings.resolveGradleVersion())
+    validateJavaHome(project, projectPath, gradleVersion)
 
     ExternalSystemUtil.linkExternalProject(settings, ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
       .withCallback { isSuccess ->

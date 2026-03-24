@@ -4,7 +4,7 @@ from typing import ClassVar
 class C:
     x: int
     y: int = 0
-    z: int = 'foo'  # False negative!
+    z: int = <warning descr="Expected type 'int', got 'str' instead">'foo'</warning>
     class_var: ClassVar[int]
 
     def f(self):

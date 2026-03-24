@@ -2,11 +2,27 @@
 package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.pluginGraph.ContentModuleName
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
 import org.jetbrains.intellij.build.productLayout.xml.containsOverriddenNestedSet
 import org.jetbrains.intellij.build.productLayout.xml.findOverriddenNestedSetNames
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
+import java.nio.file.Path
+
+@Suppress("unused")
+internal object ModuleSetGenerationTestSource {
+  fun regularSet(): ModuleSet = moduleSet("regular") {
+    module("intellij.regular.module")
+  }
+
+  fun pluginizedSet(): ModuleSet = plugin("pluginized") {
+    module("intellij.pluginized.module")
+  }
+}
 
 /**
  * Tests for generator.kt helper functions.
@@ -162,5 +178,45 @@ class ProductDslGeneratorTest {
 
     // Should be in order of traversal
     assertThat(result).containsExactly(ModuleSetName("nested1"), ModuleSetName("nested2"), ModuleSetName("nested3"))
+  }
+
+  @Test
+  fun `doGenerateAllModuleSetsInternal skips pluginized module set xml files`(@TempDir tempDir: Path): Unit = runBlocking {
+    val strategy = DeferredFileUpdater(tempDir)
+
+    val result = doGenerateAllModuleSetsInternal(
+      obj = ModuleSetGenerationTestSource,
+      outputDir = tempDir,
+      label = "test",
+      strategy = strategy,
+    )
+
+    assertThat(result.files.map { it.fileName })
+      .containsExactly("intellij.moduleSets.regular.xml")
+    assertThat(result.trackingMap[tempDir])
+      .containsExactly("intellij.moduleSets.regular.xml")
+    assertThat(strategy.getDiffs().map { it.path.fileName.toString() })
+      .containsExactly("intellij.moduleSets.regular.xml")
+  }
+
+  @Test
+  fun `cleanupOrphanedModuleSetFiles deletes stale pluginized module set xml files`(@TempDir tempDir: Path): Unit = runBlocking {
+    val regularFile = tempDir.resolve("intellij.moduleSets.regular.xml")
+    val pluginizedFile = tempDir.resolve("intellij.moduleSets.pluginized.xml")
+    Files.writeString(regularFile, "<idea-plugin/>")
+    Files.writeString(pluginizedFile, "<idea-plugin/>")
+
+    val strategy = DeferredFileUpdater(tempDir)
+    val result = doGenerateAllModuleSetsInternal(
+      obj = ModuleSetGenerationTestSource,
+      outputDir = tempDir,
+      label = "test",
+      strategy = strategy,
+    )
+
+    val deleted = cleanupOrphanedModuleSetFiles(result.trackingMap, strategy)
+
+    assertThat(deleted.map { it.fileName })
+      .containsExactly("intellij.moduleSets.pluginized.xml")
   }
 }

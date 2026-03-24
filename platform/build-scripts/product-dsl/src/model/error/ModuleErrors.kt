@@ -7,6 +7,7 @@ import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginGraph
 import org.jetbrains.intellij.build.productLayout.model.ModuleSourceInfo
 import org.jetbrains.intellij.build.productLayout.model.getModuleSourceInfo
+import org.jetbrains.intellij.build.productLayout.moduleSetPluginModuleName
 import org.jetbrains.intellij.build.productLayout.stats.AnsiStyle
 
 data class SelfContainedValidationError(
@@ -29,6 +30,110 @@ data class SelfContainedValidationError(
     appendLine("${s.yellow}To fix:${s.reset}")
     appendLine("1. Add the missing modules/sets to '${context}' to make it truly self-contained")
     appendLine("2. Or remove selfContained=true if this set is designed to compose with other sets")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+data class ModuleSetPluginizationError(
+  override val context: String,
+  @JvmField val embeddedModules: Set<ContentModuleName> = emptySet(),
+  @JvmField val nestedPluginizedSets: Set<String> = emptySet(),
+  override val ruleName: String = "ModuleSetPluginizationValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.MODULE_SET_PLUGINIZATION
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Module set '$context' cannot be materialized as a plugin${s.reset}")
+    if (embeddedModules.isNotEmpty()) {
+      appendLine()
+      appendLine("  ${s.red}*${s.reset} Contains embedded modules in transitive closure:")
+      for (module in embeddedModules.sortedBy { it.value }) {
+        appendLine("    - ${module.value}")
+      }
+    }
+    if (nestedPluginizedSets.isNotEmpty()) {
+      appendLine()
+      appendLine("  ${s.red}*${s.reset} Contains nested pluginized module sets:")
+      for (setName in nestedPluginizedSets.sorted()) {
+        appendLine("    - $setName")
+      }
+    }
+    appendLine()
+    appendLine("${s.yellow}Fix:${s.reset} keep pluginized module sets free of embedded modules and nested pluginized sets")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+data class PluginizedModuleSetReferenceError(
+  override val context: String,
+  @JvmField val pluginizedModuleSetName: String,
+  @JvmField val ownerKind: OwnerKind,
+  override val ruleName: String = "PluginizedModuleSetReferenceValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.MODULE_SET_PLUGINIZATION
+
+  enum class OwnerKind {
+    PRODUCT,
+    MODULE_SET,
+  }
+
+  override fun format(s: AnsiStyle): String = buildString {
+    when (ownerKind) {
+      OwnerKind.PRODUCT -> appendLine(
+        "${s.red}${s.bold}Product '$context' references pluginized module set '$pluginizedModuleSetName' as a regular module set${s.reset}"
+      )
+      OwnerKind.MODULE_SET -> appendLine(
+        "${s.red}${s.bold}Module set '$context' nests pluginized module set '$pluginizedModuleSetName' as a regular module set${s.reset}"
+      )
+    }
+    appendLine()
+    appendLine(
+      "  ${s.red}*${s.reset} Pluginized module sets are standalone bundled plugin wrappers and are not inlined through moduleSet(...) references"
+    )
+    appendLine()
+    appendLine("${s.yellow}Fix:${s.reset}")
+    appendLine("1. Remove the moduleSet(...) reference to '$pluginizedModuleSetName'")
+    appendLine("2. Bundle '${moduleSetPluginModuleName(pluginizedModuleSetName).value}' in products that should ship it")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+data class DuplicateModuleSetPluginWrapperError(
+  override val context: String,
+  override val ruleName: String = "ModuleSetPluginizationValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.MODULE_SET_PLUGINIZATION
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Module-set plugin wrapper '$context' is defined in multiple registries${s.reset}")
+    appendLine()
+    appendLine("  ${s.red}*${s.reset} Community and ultimate module sets resolve to the same wrapper module name")
+    appendLine()
+    appendLine("${s.yellow}Fix:${s.reset} keep pluginized module set names unique across community and ultimate registries")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+data class UltimateModuleSetMainModuleError(
+  override val context: String,
+  override val ruleName: String = "ModuleSetPluginizationValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.MODULE_SET_PLUGINIZATION
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Ultimate module set '$context' cannot be added to intellij.moduleSet.plugin.main${s.reset}")
+    appendLine()
+    appendLine("  ${s.red}*${s.reset} addToMainModule=true is only supported for community wrappers while intellij.moduleSet.plugin.main remains community-only")
+    appendLine()
+    appendLine("${s.yellow}Fix:${s.reset} set addToMainModule=false for ultimate pluginized module sets")
     appendLine()
     appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
     appendLine()

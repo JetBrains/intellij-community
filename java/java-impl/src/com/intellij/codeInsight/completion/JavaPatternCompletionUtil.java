@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailTypes;
@@ -115,7 +115,7 @@ public final class JavaPatternCompletionUtil {
     }
     if (type instanceof PsiPrimitiveType) {
       LookupElement lookupItem = BasicExpressionCompletionContributor.createKeywordLookupItem(currentPosition, type.getCanonicalText());
-      result.accept(new JavaKeywordCompletion.OverridableSpace(lookupItem, TailTypes.spaceType()));
+      result.accept(OverridableSpace.create(lookupItem, TailTypes.spaceType()));
     }
   }
 
@@ -158,7 +158,7 @@ public final class JavaPatternCompletionUtil {
       if (TypeConversionUtil.areTypesConvertible(fromType, primitiveType)) {
         LookupElement lookupItem =
           BasicExpressionCompletionContributor.createKeywordLookupItem(currentPosition, primitiveType.getCanonicalText());
-        result.accept(new JavaKeywordCompletion.OverridableSpace(lookupItem, TailTypes.spaceType()));
+        result.accept(OverridableSpace.create(lookupItem, TailTypes.spaceType()));
       }
     }
   }

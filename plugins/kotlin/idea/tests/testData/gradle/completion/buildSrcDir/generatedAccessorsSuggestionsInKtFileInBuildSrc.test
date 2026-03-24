@@ -1,0 +1,15 @@
+// FILE: buildSrc/src/main/kotlin/MyTask.kt
+// "NO-EXPECTED-SUGGESTIONS"
+// "UNEXPECTED-SUGGESTION": "runtimeClasspath"
+// "UNEXPECTED-SUGGESTION": "runtimeElements"
+// "UNEXPECTED-SUGGESTION": "testRuntimeElements"
+// "UNEXPECTED-SUGGESTION": "runtimeOnly"
+// "UNEXPECTED-SUGGESTION": "testRuntimeOnly"
+import org.gradle.api.DefaultTask
+
+abstract class MyTask : DefaultTask() {
+  init {
+    val runtimeClassPath = project.configurations.named("runtimeClasspath")
+    project.configurations.runtime<caret>
+  }
+}

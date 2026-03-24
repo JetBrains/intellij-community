@@ -33,6 +33,8 @@ import org.jetbrains.annotations.ApiStatus
  * @param rootDir Root of the repository (parent directory of '.git' file/directory).
  * @param gitDir  '.git' directory location. For worktrees - location of the 'main_repo/.git/worktrees/worktree_name/'.
  */
+@ApiStatus.ScheduledForRemoval // Should become internal
+@Deprecated("Use GitRepository instead")
 class GitRepositoryImpl private constructor(
   project: Project,
   rootDir: VirtualFile,
@@ -98,6 +100,7 @@ class GitRepositoryImpl private constructor(
     return untrackedFilesHolder
   }
 
+  @ApiStatus.Internal
   override fun getResolvedConflictsFilesHolder(): GitResolvedMergeConflictsFilesHolder {
     return resolvedFilesHolder
   }

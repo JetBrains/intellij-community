@@ -4,23 +4,22 @@ package org.jetbrains.kotlin.idea.base.codeInsight
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
 interface ShortenReferencesFacility {
-    fun shorten(file: KtFile, range: TextRange, shortenOptions: ShortenOptions)
-    fun shorten(element: KtElement, shortenOptions: ShortenOptions): PsiElement?
+    fun shorten(file: KtFile, range: TextRange, shortenOptions: ShortenOptionsForIde)
+    fun shorten(element: KtElement, shortenOptions: ShortenOptionsForIde): PsiElement?
 
     /* ---------------------------------------------------------------------- */
     //region Default overloads for Java callees
 
     fun shorten(file: KtFile, range: TextRange) {
-        shorten(file, range, ShortenOptions.DEFAULT)
+        shorten(file, range, ShortenOptionsForIde.DEFAULT)
     }
 
     fun shorten(element: KtElement): PsiElement? {
-        return shorten(element, ShortenOptions.DEFAULT)
+        return shorten(element, ShortenOptionsForIde.DEFAULT)
     }
 
     companion object {

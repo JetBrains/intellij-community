@@ -22,6 +22,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.isKotlinScratch
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputHandler
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchToolWindowHandlerKeeper
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.KtScratchFileEditorProvider
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.ScratchFileEditorWithPreview
 
@@ -71,8 +73,11 @@ private class K2ScratchFileEditorWithPreview(
 
     override fun dispose() {
         kotlinScratchFile.executor.stop()
+        ScratchToolWindowHandlerKeeper.releaseOutputHandler(toolWindowHandler)
         super.dispose()
     }
 
     override fun createToolbar(): ActionToolbar = ScratchTopPanelK2(kotlinScratchFile).actionsToolbar
+
+    override fun requestOutputHandler(): ScratchOutputHandler = ScratchToolWindowHandlerKeeper.requestOutputHandler()
 }

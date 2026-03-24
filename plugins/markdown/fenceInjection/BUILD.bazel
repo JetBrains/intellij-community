@@ -21,6 +21,30 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/core-impl",
     "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+  ]
+)
+
+jvm_library(
+  name = "fenceInjection_test_lib",
+  module_name = "intellij.markdown.fenceInjection",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":fenceInjection",
+    "//plugins/markdown/core:markdown_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/IntelliLang:langInjection_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.markdown.fenceInjection` end
+
+### auto-generated section `iml intellij.markdown.fenceInjection` start
+exports_files([
+  "intellij.markdown.fenceInjection.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.markdown.fenceInjection` end

@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.target.TargetEnvironmentRequest;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -36,43 +34,21 @@ import static com.intellij.openapi.projectRoots.JavaNameKt.getJavaFileName;
 
 public final class JdkUtil {
   public static final Key<Map<String, String>> COMMAND_LINE_CONTENT = Key.create("command.line.content");
-
   public static final Key<String> AGENT_RUNTIME_CLASSPATH = Key.create("command.line.agent.classpath");
 
-  /**
-   * The VM property is needed to workaround incorrect escaped URLs handling in WebSphere,
-   * see <a href="https://youtrack.jetbrains.com/issue/IDEA-126859#comment=27-778948">IDEA-126859</a> for additional details
-   */
+  /// The VM property is needed to workaround incorrect escaped URLs handling in WebSphere,
+  /// see [IDEA-126859](https://youtrack.jetbrains.com/issue/IDEA-126859#comment=27-778948) for additional details
   public static final String PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL = "idea.do.not.escape.classpath.url";
 
   private JdkUtil() { }
 
-  /** @deprecated outdated, please use {@link JdkVersionDetector} instead */
-  @Deprecated
-  public static @Nullable String getJdkMainAttribute(@NotNull Sdk jdk, @NotNull Attributes.Name attribute) {
-    String homePath = jdk.getHomePath();
-    if (homePath != null) {
-      File signatureJar = FileUtil.findFirstThatExist(
-        homePath + "/jre/lib/rt.jar",
-        homePath + "/lib/rt.jar",
-        homePath + "/lib/jrt-fs.jar",
-        homePath + "/jre/lib/vm.jar",
-        homePath + "/../Classes/classes.jar");
-      if (signatureJar != null) {
-        return JarUtil.getJarAttribute(signatureJar, attribute);
-      }
-    }
-
-    return null;
-  }
-
   public static @Nullable String suggestJdkName(@Nullable String versionString) {
-    JavaVersion version = JavaVersion.tryParse(versionString);
+    var version = JavaVersion.tryParse(versionString);
     return version == null ? null : suggestJdkName(version, null);
   }
 
   public static @NotNull String suggestJdkName(@NotNull JavaVersion version, @Nullable String vendorPrefix) {
-    StringBuilder suggested = new StringBuilder();
+    var suggested = new StringBuilder();
     if (vendorPrefix != null) suggested.append(vendorPrefix).append('-');
     if (version.feature < 9) suggested.append("1.");
     suggested.append(version.feature);
@@ -80,75 +56,40 @@ public final class JdkUtil {
     return suggested.toString();
   }
 
-  /**
-   * @deprecated use {@link #checkForJdk(Path)}
-   */
-  @Deprecated
-  @RequiresBackgroundThread(generateAssertion = false)
-  public static boolean checkForJdk(@NotNull String homePath) {
-    try {
-      return checkForJdk(Path.of(homePath));
-    }
-    catch (InvalidPathException e) {
-      return false;
-    }
-  }
-
-  /**
-   * Check the JDK bundle.
-   *
-   * @param homePath path to a directory with JDK.
-   * @return if the JDK can be run on this machine and contains all the necessary components for an execution.
-   */
+  /// Check the JDK bundle.
+  ///
+  /// @param homePath path to a directory with JDK.
+  /// @return if the JDK can be run on this machine and contains all the necessary components for an execution.
   @RequiresBackgroundThread(generateAssertion = false)
   public static boolean checkForJdk(@NotNull Path homePath) {
-    return (checkForJdkOrJre(homePath, CheckFor.JDK) &&
-            (
-              isModularRuntime(homePath) ||                               // Jigsaw JDK/JRE
-              Files.exists(homePath.resolve("jre/lib/rt.jar")) ||         // pre-modular JDK
-              Files.isDirectory(homePath.resolve("classes")) ||           // custom build
-              Files.exists(homePath.resolve("jre/lib/vm.jar")) ||         // IBM JDK
-              Files.exists(homePath.resolve("../Classes/classes.jar"))  // Apple JDK
-            ));
+    return checkForJdkOrJre(homePath, CheckFor.JDK) && (
+      isModularRuntime(homePath) ||                             // Jigsaw JDK/JRE
+      Files.exists(homePath.resolve("jre/lib/rt.jar")) ||       // pre-modular JDK
+      Files.isDirectory(homePath.resolve("classes")) ||         // custom build
+      Files.exists(homePath.resolve("jre/lib/vm.jar")) ||       // IBM JDK
+      Files.exists(homePath.resolve("../Classes/classes.jar"))  // Apple JDK
+    );
   }
 
-
-  /**
-   * Check compatibility between a Project and a JDK.
-   *
-   * @return if the JDK can be run on this machine.
-   */
+  /// Check compatibility between a Project and a JDK.
+  ///
+  /// @return if the JDK can be run on this machine.
   public static boolean isCompatible(@NotNull Sdk sdk, @NotNull Project project) {
-    String sdkHome = sdk.getHomePath();
-    if (sdkHome == null) {
-      return false;
-    }
-    Path sdkHomePath = Path.of(sdkHome);
+    var sdkHome = sdk.getHomePath();
+    if (sdkHome == null) return false;
+    var sdkHomePath = Path.of(sdkHome);
     return isCompatible(sdkHomePath, project);
   }
 
-  /**
-   * Check compatibility between a Project and a JDK located on the path.
-   *
-   * @param jdkHomePath path to a directory with JDK.
-   * @return if the JDK can be run on this machine.
-   */
+  /// Check compatibility between a Project and a JDK located on the path.
+  ///
+  /// @param jdkHomePath path to a directory with JDK.
+  /// @return if the JDK can be run on this machine.
   public static boolean isCompatible(@NotNull Path jdkHomePath, @NotNull Project project) {
     return EelProviderUtil.getEelMachine(project).ownsPath(jdkHomePath);
   }
 
-  /**
-   * @deprecated use {@link #checkForJre(Path)}
-   */
-  @RequiresBackgroundThread(generateAssertion = false)
-  @Deprecated
-  public static boolean checkForJre(@NotNull String homePath) {
-    return checkForJre(Path.of(homePath));
-  }
-
-  /**
-   * Ensures this <code>JAVA_HOME</code> has jre
-   */
+  /// Returns `true` if the given directory hosts a JRE.
   @RequiresBackgroundThread(generateAssertion = false)
   public static boolean checkForJre(@NotNull Path homePath) {
     return checkForJdkOrJre(homePath, CheckFor.JRE);
@@ -167,19 +108,19 @@ public final class JdkUtil {
   }
 
   @ApiStatus.Internal
-  public static @NotNull TargetedCommandLineBuilder setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters,
-                                                                        @NotNull TargetEnvironmentRequest request)
-    throws CantRunException {
-
-    JdkCommandLineSetup setup = new JdkCommandLineSetup(request);
+  public static @NotNull TargetedCommandLineBuilder setupJVMCommandLine(
+    @NotNull SimpleJavaParameters javaParameters,
+    @NotNull TargetEnvironmentRequest request
+  ) throws CantRunException {
+    var setup = new JdkCommandLineSetup(request);
     setup.setupJavaExePath(javaParameters);
     setup.setupCommandLine(javaParameters);
     return setup.getCommandLine();
   }
 
   public static @NotNull GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
-    LocalTargetEnvironmentRequest request = new LocalTargetEnvironmentRequest();
-    TargetedCommandLineBuilder builder = setupJVMCommandLine(javaParameters, request);
+    var request = new LocalTargetEnvironmentRequest();
+    var builder = setupJVMCommandLine(javaParameters, request);
     LocalTargetEnvironment environment;
     try {
       environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
@@ -191,7 +132,7 @@ public final class JdkUtil {
   }
 
   public static boolean useDynamicClasspath(@Nullable Project project) {
-    boolean hasDynamicProperty = Boolean.parseBoolean(System.getProperty("idea.dynamic.classpath", "false"));
+    var hasDynamicProperty = Boolean.parseBoolean(System.getProperty("idea.dynamic.classpath", "false"));
     return project != null
            ? PropertiesComponent.getInstance(project).getBoolean(ExecutionUtil.PROPERTY_DYNAMIC_CLASSPATH, hasDynamicProperty)
            : hasDynamicProperty;
@@ -213,24 +154,44 @@ public final class JdkUtil {
   private static boolean checkForJdkOrJre(@NotNull Path homePath, @NotNull CheckFor checkFor) {
     return Files.exists(homePath.resolve("bin").resolve(getJavaFileName(homePath, checkFor)));
   }
+
   //<editor-fold desc="Deprecated stuff.">
+  /// @deprecated outdated, please use [JdkVersionDetector] instead
+  @Deprecated(forRemoval = true)
+  public static @Nullable String getJdkMainAttribute(@NotNull Sdk jdk, @NotNull Attributes.Name attribute) {
+    var homePath = jdk.getHomePath();
+    if (homePath != null) {
+      var signatureJar = FileUtil.findFirstThatExist(
+        homePath + "/jre/lib/rt.jar",
+        homePath + "/lib/rt.jar",
+        homePath + "/lib/jrt-fs.jar",
+        homePath + "/jre/lib/vm.jar",
+        homePath + "/../Classes/classes.jar");
+      if (signatureJar != null) {
+        return JarUtil.getJarAttribute(signatureJar, attribute);
+      }
+    }
 
-  private static void setupCommandLine(GeneralCommandLine commandLine, SimpleJavaParameters javaParameters) throws CantRunException {
-    LocalTargetEnvironmentRequest request = new LocalTargetEnvironmentRequest();
-    JdkCommandLineSetup setup = new JdkCommandLineSetup(request);
-    setup.setupCommandLine(javaParameters);
+    return null;
+  }
 
-    LocalTargetEnvironment environment;
+  /// @deprecated use [#checkForJdk(Path)]
+  @Deprecated(forRemoval = true)
+  @RequiresBackgroundThread(generateAssertion = false)
+  public static boolean checkForJdk(@NotNull String homePath) {
     try {
-      environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
+      return checkForJdk(Path.of(homePath));
     }
-    catch (ExecutionException e) {
-      throw new CantRunException(e.getMessage(), e);
+    catch (InvalidPathException e) {
+      return false;
     }
-    GeneralCommandLine generalCommandLine = environment.createGeneralCommandLine(setup.getCommandLine().build());
-    commandLine.withParentEnvironmentType(javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
-    commandLine.getParametersList().addAll(generalCommandLine.getParametersList().getList());
-    commandLine.getEnvironment().putAll(generalCommandLine.getEnvironment());
+  }
+
+  /// @deprecated use [#checkForJre(Path)]
+  @RequiresBackgroundThread(generateAssertion = false)
+  @Deprecated(forRemoval = true)
+  public static boolean checkForJre(@NotNull String homePath) {
+    return checkForJre(Path.of(homePath));
   }
   //</editor-fold>
 }

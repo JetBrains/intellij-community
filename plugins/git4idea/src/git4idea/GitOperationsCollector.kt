@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import git4idea.actions.workingTree.GitWorkingTreeDialogData
 import git4idea.branch.GitRebaseParams
 import git4idea.commands.GitCommandResult
+import git4idea.config.GitIncomingRemoteCheckStrategy
 import git4idea.inMemory.rebase.InMemoryRebaseResult
 import git4idea.merge.GitMergeOption
 import git4idea.pull.GitPullOption
@@ -17,13 +18,13 @@ import git4idea.push.GitPushRepoResult
 import git4idea.push.GitPushTargetType
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseOption
-import git4idea.rebase.interactive.CantRebaseUsingLogException
+import git4idea.rebase.log.GetEntriesUsingLogResult
 import git4idea.repo.GitRepository
 
 internal object GitOperationsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup(id = "git.operations", version = 9)
+  private val GROUP: EventLogGroup = EventLogGroup(id = "git.operations", version = 11)
 
   internal val UPDATE_FORCE_PUSHED_BRANCH_ACTIVITY = GROUP.registerIdeActivity("update.force.pushed")
 
@@ -58,7 +59,7 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
                                                                                 finishEventAdditionalFields = arrayOf(
                                                                                   IN_MEMORY_REBASE_RESULT))
 
-  private val CANT_REBASE_USING_LOG_REASON = EventFields.Enum<CantRebaseUsingLogException.Reason>("cant_rebase_using_log_reason")
+  private val CANT_REBASE_USING_LOG_REASON = EventFields.Enum<GetEntriesUsingLogResult.FailureReason>("cant_rebase_using_log_reason")
   private val CANT_REBASE_USING_LOG_EVENT = GROUP.registerEvent("cant.rebase.using.log",
                                                                 CANT_REBASE_USING_LOG_REASON)
 
@@ -131,7 +132,7 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
     }
   }
 
-  fun logCantRebaseUsingLog(project: Project, reason: CantRebaseUsingLogException.Reason) {
+  fun logCantRebaseUsingLog(project: Project, reason: GetEntriesUsingLogResult.FailureReason) {
     CANT_REBASE_USING_LOG_EVENT.log(project, reason)
   }
 
@@ -312,5 +313,13 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
     val trackedBranch = repository.getBranchTrackInfo(currentBranch.name)?.remoteBranch ?: return false
     return trackedBranch == selectedBranch
   }
-  //endregion
+
+  internal val REMOTE_CHECK_STRATEGY = EventFields.Enum<GitIncomingRemoteCheckStrategy>("remoteCheckStrategy")
+  private val REMOTE_INFO_SUCCESS = EventFields.Boolean("success")
+  private val REMOTE_INFO_REQUEST_EVENT = GROUP.registerVarargEvent("remote.info.request", REMOTE_CHECK_STRATEGY, REMOTE_INFO_SUCCESS)
+
+  @JvmStatic
+  fun logRemoteInfoRequest(project: Project, strategy: GitIncomingRemoteCheckStrategy, success: Boolean) {
+    REMOTE_INFO_REQUEST_EVENT.log(project, REMOTE_CHECK_STRATEGY.with(strategy), REMOTE_INFO_SUCCESS.with(success))
+  }
 }

@@ -129,6 +129,12 @@ internal object JewelMavenArtifacts {
         "org.jetbrains.compose.components" -> {
           add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
         }
+        "net.java.dev.jna" -> {
+          // Add it only to Jewel Standalone INT UI modules, as it's unnecessary for other modules
+          if (module.name == "intellij.platform.jewel.intUi.standalone") {
+            add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
+          }
+        }
 
         // else -> ignore the dependency, as it comes through transitively, usually from Compose.
 

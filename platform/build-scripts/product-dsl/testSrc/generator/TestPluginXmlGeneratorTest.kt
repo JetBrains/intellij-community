@@ -145,6 +145,78 @@ class TestPluginXmlGeneratorTest {
   }
 
   @Test
+  fun `keeps module dependency when target is not globally embedded across products`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+    val graph = pluginGraph {
+      product("Idea") {
+      }
+      product("JetBrainsClient") {
+        includesModuleSet("client.set")
+      }
+      moduleSet("client.set") {
+        module("intellij.platform.frontend.split", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
+      }
+      testPlugin("intellij.consumer.test.plugin") {
+        pluginId("intellij.consumer.test.plugin")
+        content("intellij.consumer.module")
+      }
+      target("intellij.consumer.test.plugin") {
+        dependsOn("intellij.platform.frontend.split")
+      }
+      linkPluginMainTarget("intellij.consumer.test.plugin")
+    }
+
+    val spec = TestPluginSpec(
+      pluginId = PluginId("intellij.consumer.test.plugin"),
+      name = "Consumer Test Plugin",
+      pluginXmlPath = "test-plugin/META-INF/plugin.xml",
+      spec = productModules {
+        requiredModule("intellij.consumer.module")
+      }
+    )
+
+    val fileUpdater = DeferredFileUpdater(tempDir)
+    val baseModel = testGenerationModel(graph, fileUpdater = fileUpdater)
+    val discovery = baseModel.discovery.copy(
+      products = listOf(
+        DiscoveredProduct(
+          name = "Idea",
+          config = ProductConfiguration(modules = emptyList(), className = "Idea"),
+          properties = null,
+          spec = null,
+          pluginXmlPath = null,
+        ),
+        DiscoveredProduct(
+          name = "JetBrainsClient",
+          config = ProductConfiguration(modules = emptyList(), className = "JetBrainsClient"),
+          properties = null,
+          spec = null,
+          pluginXmlPath = null,
+        ),
+      )
+    )
+    val model = baseModel.copy(
+      discovery = discovery,
+      projectRoot = tempDir,
+      fileUpdater = fileUpdater,
+      dslTestPluginsByProduct = mapOf("Idea" to listOf(spec)),
+    )
+
+    val ctx = ComputeContextImpl(model)
+    runPlannerAndGenerator(ctx)
+
+    val diffs = fileUpdater.getDiffs()
+    assertThat(diffs).hasSize(1)
+    val xml = diffs.single().expectedContent
+    assertThat(xml).contains("<dependencies>")
+    assertThat(xml).contains("<module name=\"intellij.platform.frontend.split\"/>")
+
+    val errors = ctx.getNodeErrors(TestPluginXmlGenerator.id)
+    assertThat(errors).isEmpty()
+    }
+  }
+
+  @Test
   fun `library content dependencies stay module dependencies in DSL test plugin`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {

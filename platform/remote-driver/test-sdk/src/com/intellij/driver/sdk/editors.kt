@@ -5,7 +5,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RdTarget
-import com.intellij.driver.sdk.remoteDev.GuestNavigationService
+import com.intellij.driver.sdk.remoteDev.FrontendGuestNavigationService
 import com.intellij.driver.sdk.ui.remote.ColorRef
 import java.awt.Point
 import java.awt.Rectangle
@@ -44,6 +44,7 @@ interface RangeHighlighter {
   fun getStartOffset(): Int
   fun getEndOffset(): Int
   fun getTextAttributes(): TextAttributes?
+  fun getTextAttributesKey(): TextAttributesKey?
 }
 
 @Remote("com.intellij.openapi.editor.VisualPosition")
@@ -99,6 +100,7 @@ interface InlayModel {
   fun getInlineElementsInRange(startOffset: Int, endOffset: Int): List<Inlay>
   fun getBlockElementsInRange(startOffset: Int, endOffset: Int): List<Inlay>
   fun getAfterLineEndElementsForLogicalLine(logicalLine: Int): List<Inlay>
+  fun getAfterLineEndElementsInRange(startOffset: Int, endOffset: Int): List<Inlay>
 }
 
 @Remote("com.intellij.openapi.editor.Inlay")
@@ -121,6 +123,14 @@ interface EditorCustomElementRenderer {
 @Remote("com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRenderer")
 interface DeclarativeInlayRenderer {
   fun getPresentationList(): InlayPresentationList
+}
+
+@Remote("com.intellij.ui.SimpleColoredText")
+interface SimpleColoredText
+
+@Remote("com.intellij.xdebugger.impl.inline.InlineDebugRenderer")
+interface InlineDebugRenderer {
+  fun getPresentation(): SimpleColoredText?
 }
 
 @Remote("com.intellij.codeInsight.daemon.impl.HintRenderer")
@@ -194,7 +204,9 @@ interface TextAttributes {
 }
 
 @Remote("com.intellij.openapi.editor.markup.EffectType")
-interface EffectType
+interface EffectType {
+  fun name(): String
+}
 
 fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEditor> {
   return withContext(OnDispatcher.EDT) {
@@ -205,15 +217,20 @@ fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEd
 fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true, isTextEditor: Boolean = true) {
   step("Open file $relativePath") {
     val openedFile = if (!isRemDevMode) {
-      val fileToOpen = findFile(relativePath = relativePath, project = project)
-      if (fileToOpen == null) {
-        throw IllegalArgumentException("Fail to find file $relativePath")
-      }
-      openEditor(fileToOpen, project)
+      val fileToOpen = waitFor(message = "File is opened: $relativePath",
+                               errorMessage = { "Fail to find file $relativePath" },
+                               timeout = 10.seconds,
+                               getter = { findFile(relativePath = relativePath, project = project) },
+                               checker = { virtualFile ->
+                                 virtualFile != null &&
+                                 Path.of(virtualFile.getPath()).endsWith(Path.of(relativePath))
+                               })
+
+      openEditor(fileToOpen!!, project)
       fileToOpen
     }
     else {
-      val service = service(GuestNavigationService::class, project)
+      val service = service(FrontendGuestNavigationService::class, project)
       withContext(OnDispatcher.EDT) {
         service.navigateViaBackend(relativePath, 0)
         waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,

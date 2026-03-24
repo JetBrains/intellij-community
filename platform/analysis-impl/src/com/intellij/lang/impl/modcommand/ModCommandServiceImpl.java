@@ -32,6 +32,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
+import com.intellij.psi.util.ReadActionCache;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -59,11 +60,6 @@ public final class ModCommandServiceImpl implements ModCommandService {
   @Override
   public @NotNull LocalQuickFix wrapToQuickFix(@NotNull ModCommandAction action) {
     return new ModCommandActionQuickFixWrapper(action);
-  }
-
-  @Override
-  public @NotNull LocalQuickFix wrapToQuickFix(@NotNull ModCommandAction action, boolean availableInBatchMode) {
-    return new ModCommandActionQuickFixWrapper(action, availableInBatchMode);
   }
 
   @Override
@@ -136,6 +132,8 @@ public final class ModCommandServiceImpl implements ModCommandService {
     Project project = hostFile.getProject();
     ThrowableComputable<ModCommandWithContext, RuntimeException> computable =
       () -> ReadAction.nonBlocking(() -> {
+          ReadActionCache.getInstance().disable(); // this read action in fact modifies Document, do not try to cache its results
+
           ActionContext context = chooseContextForAction(hostFile, hostEditor, commandAction, fixOffset);
           if (context == null) {
             return new ModCommandWithContext(ActionContext.from(null, hostFile), ModCommand.nop());

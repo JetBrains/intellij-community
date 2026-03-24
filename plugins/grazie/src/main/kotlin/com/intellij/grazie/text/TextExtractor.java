@@ -49,6 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
+import static com.intellij.grazie.utils.GrazieUtilsKt.EXTRACTOR_SOURCE;
 import static com.intellij.util.containers.ContainerUtil.createConcurrentWeakKeyWeakValueMap;
 
 /**
@@ -182,6 +183,7 @@ public abstract class TextExtractor {
       }
 
       if (!contents.isEmpty()) {
+        contents.forEach(content -> content.putUserData(EXTRACTOR_SOURCE, psi));
         return ContainerUtil.filter(
           contents,
           c -> Boolean.FALSE.equals(c.getUserData(IGNORED)) && allowedDomains.contains(c.getDomain()) && c.intersectsRange(psiRange)

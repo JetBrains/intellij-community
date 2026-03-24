@@ -13,6 +13,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 internal interface EditorHyperlinkEffectSupplier {
   fun getFollowedHyperlinkAttributes(highlighter: RangeHighlighterEx): TextAttributes?
   fun getHoveredHyperlinkAttributes(highlighter: RangeHighlighterEx): TextAttributes?
+  fun isInvisibleLink(highlighter: RangeHighlighterEx): Boolean
 }
 
 internal class EditorHyperlinkEffectSupport(

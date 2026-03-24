@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.even
 import org.gradle.tooling.events.OperationDescriptor;
 import org.gradle.tooling.events.test.JvmTestKind;
 import org.gradle.tooling.events.test.JvmTestOperationDescriptor;
+import org.gradle.tooling.events.test.source.TestSource;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
@@ -13,20 +14,23 @@ public class InternalJvmTestOperationDescriptor extends InternalTestOperationDes
   private final String suiteName;
   private final String className;
   private final String methodName;
+  private final TestSource testSource;
 
   public InternalJvmTestOperationDescriptor(Object id,
                                             String name,
                                             String displayName,
                                             OperationDescriptor parent,
-                                            JvmTestKind kind,
+                                            JvmTestKind jvmTestKind,
                                             String suiteName,
                                             String className,
-                                            String methodName) {
+                                            String methodName,
+                                            TestSource testSource) {
     super(id, name, displayName, parent);
-    jvmTestKind = kind;
+    this.jvmTestKind = jvmTestKind;
     this.suiteName = suiteName;
     this.className = className;
     this.methodName = methodName;
+    this.testSource = testSource;
   }
 
   @Override
@@ -47,5 +51,10 @@ public class InternalJvmTestOperationDescriptor extends InternalTestOperationDes
   @Override
   public String getMethodName() {
     return methodName;
+  }
+
+  @Override
+  public TestSource getSource() {
+    return testSource;
   }
 }

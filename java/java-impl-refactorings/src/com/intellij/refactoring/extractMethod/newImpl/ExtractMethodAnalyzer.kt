@@ -38,6 +38,7 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.containerNullability
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findRequiredTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getExpressionType
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getReturnedExpression
@@ -239,21 +240,24 @@ private fun PsiModifierListOwner?.hasNullabilityAnnotation(): Boolean {
   return AnnotationUtil.isAnnotated(this, nullabilityAnnotations, AnnotationUtil.CHECK_TYPE)
 }
 
-internal fun updateMethodAnnotations(method: PsiMethod, inputParameters: List<InputParameter>) {
+internal fun updateMethodAnnotations(method: PsiMethod, inputParameters: List<InputParameter>, targetClass: PsiClass) {
   if (method.returnType !is PsiPrimitiveType) {
     //TODO use dataoutput.nullability instead
     val returnedExpressions = PsiUtil.findReturnStatements(method).mapNotNull(PsiReturnStatement::getReturnValue)
     val resultNullability = CodeFragmentAnalyzer.inferNullability(returnedExpressions)
-    ExtractMethodHelper.addNullabilityAnnotation(method, resultNullability)
+    ExtractMethodHelper.addNullabilityAnnotation(method, resultNullability, targetClass)
     GenerateMembersUtil.sortModifiers(method, null)
   }
   val parameters = method.parameterList.parameters
   inputParameters
-    .filter { ((it.references.first() as? PsiReferenceExpression)?.resolve() as? PsiModifierListOwner).hasNullabilityAnnotation() }
+    .filter {
+      val reference = (it.references.first() as? PsiReferenceExpression)?.resolve() as? PsiModifierListOwner
+      reference.hasNullabilityAnnotation() || containerNullability(targetClass) == Nullability.NOT_NULL
+    }
     .forEach { inputParameter ->
       val parameterNullability = CodeFragmentAnalyzer.inferNullability(inputParameter.references)
       val parameter = parameters.find { it.name == inputParameter.name }
-      if (parameter != null) ExtractMethodHelper.addNullabilityAnnotation(parameter, parameterNullability)
+      if (parameter != null) ExtractMethodHelper.addNullabilityAnnotation(parameter, parameterNullability, targetClass)
     }
 }
 

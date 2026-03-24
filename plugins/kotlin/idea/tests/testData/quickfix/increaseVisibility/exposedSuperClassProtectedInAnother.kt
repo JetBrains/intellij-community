@@ -5,6 +5,7 @@
 // ACTION: Introduce import alias
 // ACTION: Make 'Data' public
 // ACTION: Make 'First' private
+// K2_ERROR: 'protected (in Another)' subclass exposes its 'internal' supertype 'Data'.
 
 class Other {
     internal open class Data(val x: Int)

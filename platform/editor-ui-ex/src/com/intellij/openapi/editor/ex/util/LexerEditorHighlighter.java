@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.lexer.FlexAdapter;
@@ -6,11 +6,13 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.RestartableLexer;
 import com.intellij.lexer.TokenIterator;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -102,6 +104,9 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   protected final @Nullable Document getDocument() {
+    if (EditorLockFreeTyping.isEnabled() && myEditor instanceof Editor editor) {
+      return editor.getUiDocument();
+    }
     return myEditor != null ? myEditor.getDocument() : null;
   }
 
@@ -608,9 +613,33 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return Arrays.asList(tokenType1, tokenType2);
   }
 
+  /**
+   * Computes highlighting fragments for text inserted at {@code offset}.
+   */
   @ApiStatus.Internal
   public synchronized @NotNull List<Pair<TextRange, TextAttributes>> getAttributesFor(@NotNull Document document, int offset, @NotNull CharSequence s) {
-    var lexerWrapper = getLexerWrapper(StringUtil.replaceSubSequence(document.getImmutableCharSequence(), offset, offset, s), offset);
+    return getAttributesFor(document, offset, offset, s);
+  }
+
+  /**
+   * Computes highlighting fragments for a synthetic document produced by replacing {@code [replaceStartOffset, replaceEndOffset)}
+   * with {@code s}.
+   * <p>
+   * The lexer runs on the temporary post-replacement text, but the result contains only token fragments that overlap the replacement
+   * span in that text. Each returned range is expressed in offsets of the synthetic post-replacement text and clipped to
+   * {@code [replaceStartOffset, replaceStartOffset + s.length()]}.
+   */
+  @ApiStatus.Internal
+  public synchronized @NotNull List<Pair<TextRange, TextAttributes>> getAttributesFor(
+    @NotNull Document document,
+    int replaceStartOffset,
+    int replaceEndOffset,
+    @NotNull CharSequence s
+  ) {
+    var lexerWrapper = getLexerWrapper(
+      StringUtil.replaceSubSequence(document.getImmutableCharSequence(), replaceStartOffset, replaceEndOffset, s),
+      replaceStartOffset
+    );
     int data;
 
     List<Pair<TextRange, TextAttributes>> result = new ArrayList<>();
@@ -618,13 +647,13 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     while (lexerWrapper.getTokenType() != null) {
       int lexerState = lexerWrapper.getState();
       data = mySegments.packData(lexerWrapper.getTokenType(), lexerState, canRestart(lexerState));
-      if (lexerWrapper.getTokenEnd() > offset) {
-        int start = Math.max(offset, lexerWrapper.getTokenStart());
-        int end = Math.min(lexerWrapper.getTokenEnd(), offset + s.length());
+      if (lexerWrapper.getTokenEnd() > replaceStartOffset) {
+        int start = Math.max(replaceStartOffset, lexerWrapper.getTokenStart());
+        int end = Math.min(lexerWrapper.getTokenEnd(), replaceStartOffset + s.length());
         TextAttributes attributes = getAttributes(mySegments.unpackTokenFromData(data));
         result.add(Pair.create(TextRange.create(start, end), attributes));
       }
-      if (lexerWrapper.getTokenEnd() >= offset + s.length()) break;
+      if (lexerWrapper.getTokenEnd() >= replaceStartOffset + s.length()) break;
       lexerWrapper.advance();
     }
 

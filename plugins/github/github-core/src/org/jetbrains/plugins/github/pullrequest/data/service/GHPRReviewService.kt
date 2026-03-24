@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.diff.util.Side
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReviewDTO
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
@@ -42,4 +44,6 @@ interface GHPRReviewService {
   suspend fun resolveThread(pullRequestId: GHPRIdentifier, id: String): GHPullRequestReviewThread
 
   suspend fun unresolveThread(pullRequestId: GHPRIdentifier, id: String): GHPullRequestReviewThread
+
+  fun getReviewParticipantsBatchesFlow(pullRequestId: GHPRIdentifier): Flow<List<GHUser>>
 }

@@ -1,5 +1,7 @@
 // "Create secondary constructor" "true"
+// K2_ACTION: "Add secondary constructor to 'CtorSecondary'" "true"
 // ERROR: Primary constructor call expected
+// K2_ERROR: None of the following candidates is applicable:<br><br>constructor(): CtorSecondary:<br>  Too many arguments for 'constructor(): CtorSecondary'.<br>  Too many arguments for 'constructor(): CtorSecondary'.<br><br>constructor(p: Int): CtorSecondary:<br>  Too many arguments for 'constructor(p: Int): CtorSecondary'.
 
 class CtorSecondary() {
     constructor(p: Int) : this()
@@ -10,3 +12,4 @@ fun construct() {
     val vA = <caret>CtorSecondary(2, 3)
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.AddConstructorFix

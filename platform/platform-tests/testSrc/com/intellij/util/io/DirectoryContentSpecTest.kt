@@ -1,6 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
+import com.intellij.util.io.impl.DirectorySpecBase
+import com.intellij.util.io.impl.JarSpec
+import com.intellij.util.io.impl.ZipSpec
+import com.intellij.util.io.impl.drop
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -279,6 +283,65 @@ class DirectoryContentSpecTest {
       it.manifest
     }
     assertThat(manifest.mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION)).isEqualTo("1.0")
+  }
+
+  @Test
+  fun `drop removes files not matching filter`() {
+    val spec = directoryContent {
+      file("a.txt")
+      file("b.xml")
+    } as DirectorySpecBase
+    val filtered = spec.drop(dropEmptyDirectories = false) { it.endsWith(".txt") }
+    assertThat(filtered.getChildren().keys).containsExactlyInAnyOrder("a.txt")
+  }
+
+  @Test
+  fun `drop with dropEmptyDirectories=true removes empty directories`() {
+    val spec = directoryContent {
+      dir("subdir") {
+        file("a.xml")
+      }
+      file("b.txt")
+    } as DirectorySpecBase
+    val filtered = spec.drop(dropEmptyDirectories = true) { it.endsWith(".txt") }
+    assertThat(filtered.getChildren().keys).containsExactlyInAnyOrder("b.txt")
+  }
+
+  @Test
+  fun `drop preserves ZipSpec type and level`() {
+    val spec = zipFile {
+      file("a.txt")
+    } as ZipSpec
+    val filtered = spec.drop(dropEmptyDirectories = false) { true } as ZipSpec
+    assertThat(filtered).isInstanceOf(ZipSpec::class.java)
+    assertThat(filtered.level).isEqualTo(spec.level)
+  }
+
+  @Test
+  fun `drop preserves JarSpec type`() {
+    val spec = jarFile {
+      file("a.txt")
+    } as DirectorySpecBase
+    val filtered = spec.drop(dropEmptyDirectories = false) { true }
+    assertThat(filtered).isInstanceOf(JarSpec::class.java)
+  }
+
+  @Test
+  fun `drop filters nested directories recursively`() {
+    val spec = directoryContent {
+      dir("outer") {
+        dir("inner") {
+          file("a.txt")
+          file("b.xml")
+        }
+        file("c.xml")
+      }
+    } as DirectorySpecBase
+    val filtered = spec.drop(dropEmptyDirectories = false) { it.endsWith(".txt") }
+    val outer = filtered.getChildren()["outer"] as DirectorySpecBase
+    val inner = outer.getChildren()["inner"] as DirectorySpecBase
+    assertThat(inner.getChildren().keys).containsExactlyInAnyOrder("a.txt")
+    assertThat(outer.getChildren().keys).containsExactlyInAnyOrder("inner")
   }
 
   @Test

@@ -1,10 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.extensions
 
-import com.intellij.workspaceModel.codegen.deft.meta.*
-import com.intellij.workspaceModel.codegen.impl.writer.*
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
+import com.intellij.workspaceModel.codegen.impl.writer.Internal
+import com.intellij.workspaceModel.codegen.impl.writer.K1Deprecation
+import com.intellij.workspaceModel.codegen.impl.writer.QualifiedName
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntity
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityWithSymbolicId
+import com.intellij.workspaceModel.codegen.impl.writer.fqn
 
 private val compatibilityModules = setOf(
   "com.intellij.platform.workspace.jps.entities",
@@ -67,10 +72,15 @@ internal val ObjClass<*>.allFieldsWithComputable: List<OwnProperty<*, *>>
     return fieldsByName.values.toList()
   }
 
-internal val ObjClass<*>.additionalAnnotations: String
+internal val ObjClass<*>.additionalAnnotations: List<String>
   get() {
-    val hasInternalAnnotation = annotations.any { it.fqName == Internal.decoded }
-    return if (hasInternalAnnotation) "@${Internal}" else ""
+    return annotations.mapNotNull {
+      when (it.fqName) {
+          Internal.decoded -> "@${Internal}"
+          K1Deprecation.decoded -> "@${K1Deprecation}"
+          else -> null
+      }
+    }
   }
 
 private fun collectFields(objClass: ObjClass<*>, fieldsByName: MutableMap<String, OwnProperty<*, *>>, withComputable: Boolean) {

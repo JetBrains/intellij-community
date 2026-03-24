@@ -48,6 +48,11 @@ interface TestContainer {
     fun applyDefaultVMOptions(context: IDETestContext): IDETestContext {
       return when (context.testCase.ideInfo == IdeProductProvider.AI) {
         true -> context
+          .addProjectToTrustedLocations()
+          .disableFusSendingOnIdeClose()
+          .disableReportingStatisticsToProduction()
+          .disableReportingStatisticToJetStat()
+          .disableMigrationNotification()
           .applyVMOptionsPatch {
             overrideDirectories(context.paths)
             withEnv("STUDIO_VM_OPTIONS", context.ide.patchedVMOptionsFile.toString())

@@ -1,0 +1,11 @@
+<idea-plugin visibility="internal">
+  <extensionPoints>
+    <extensionPoint
+      qualifiedName="com.intellij.python.processOutput.common.processOutputIconMapping"
+      interface="com.intellij.python.processOutput.common.ProcessOutputIconMapping"
+    />
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.applicationRemoteTopicListener implementation="com.intellij.python.processOutput.common.ProcessOutputTopicListener"/>
+  </extensions>
+</idea-plugin>

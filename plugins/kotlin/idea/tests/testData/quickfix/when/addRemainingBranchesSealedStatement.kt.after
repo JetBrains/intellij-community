@@ -2,6 +2,7 @@
 // ERROR: Unresolved reference: TODO
 // ERROR: Unresolved reference: TODO
 // ERROR: Unresolved reference: TODO
+// K2_ERROR: 'when' expression must be exhaustive. Add the 'Another', 'is Something', 'null' branches or an 'else' branch.
 sealed class Variant {
     object Singleton : Variant()
 

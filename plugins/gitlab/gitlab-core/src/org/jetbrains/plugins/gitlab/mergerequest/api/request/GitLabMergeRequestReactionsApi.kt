@@ -4,10 +4,9 @@ package org.jetbrains.plugins.gitlab.mergerequest.api.request
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabAwardEmojiRestDTO
-import org.jetbrains.plugins.gitlab.api.restApiUri
+import org.jetbrains.plugins.gitlab.api.projectApiUrl
 import org.jetbrains.plugins.gitlab.api.withErrorStats
 import org.jetbrains.plugins.gitlab.api.withQuery
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
@@ -16,8 +15,8 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
 @SinceGitLab("8.9")
-fun getMRNotesAwardEmojiUri(project: GitLabProjectCoordinates, mrIid: String, noteId: String): URI =
-  project.restApiUri
+fun GitLabApi.Rest.getMRNotesAwardEmojiUri(projectId: String, mrIid: String, noteId: String): URI =
+  projectApiUrl(projectId)
     .resolveRelative("merge_requests")
     .resolveRelative(mrIid)
     .resolveRelative("notes")
@@ -26,12 +25,12 @@ fun getMRNotesAwardEmojiUri(project: GitLabProjectCoordinates, mrIid: String, no
 
 @SinceGitLab("8.9")
 suspend fun GitLabApi.Rest.addAwardEmoji(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   noteId: String,
   name: String,
 ): HttpResponse<out GitLabAwardEmojiRestDTO> {
-  val uri = getMRNotesAwardEmojiUri(project, mrIid, noteId).withQuery {
+  val uri = getMRNotesAwardEmojiUri(projectId, mrIid, noteId).withQuery {
     "name" eq name
   }
   val request = request(uri).POST(HttpRequest.BodyPublishers.noBody()).build()
@@ -42,12 +41,12 @@ suspend fun GitLabApi.Rest.addAwardEmoji(
 
 @SinceGitLab("8.9")
 suspend fun GitLabApi.Rest.deleteAwardEmoji(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   noteId: String,
   awardId: String,
 ): HttpResponse<out Unit> {
-  val uri = getMRNotesAwardEmojiUri(project, mrIid, noteId)
+  val uri = getMRNotesAwardEmojiUri(projectId, mrIid, noteId)
     .resolveRelative(awardId)
   val request = request(uri).DELETE().build()
   return withErrorStats(GitLabApiRequestName.REST_DELETE_NOTE_AWARD_EMOJI) {

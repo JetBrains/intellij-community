@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
+import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksHeartbeatEvent
@@ -61,23 +62,24 @@ internal class BackendTerminalHyperlinkHighlighter(
   coroutineScope: CoroutineScope,
   private val outputModel: TerminalOutputModel,
   private val isInAlternateBuffer: Boolean,
+  filterContext: TerminalHyperlinkFilterContext?,
 ) {
 
   private val hyperlinkId = AtomicLong()
-  private val filterWrapper = CompositeFilterWrapper(project, coroutineScope)
+  private val filterWrapper = CompositeFilterWrapper(project, coroutineScope, filterContext)
 
   // The state is only modified from the model coroutine but can be read concurrently.
   private val currentTaskState = MutableStateFlow(TaskState(null, null))
   
   // Could've used update { ... } for flows, but let's use plain assignment to highlight that there are no concurrent updates.
   
-  private var currentTaskRunner: HighlightTaskRunner?
+  private var currentTaskRunner: TaskRunner?
     get() = currentTaskState.value.currentTaskRunner
     set(value) {
       currentTaskState.value = currentTaskState.value.copy(currentTaskRunner = value)
     }
 
-  private var pendingTask: HighlightTask?
+  private var pendingTask: Task?
     get() = currentTaskState.value.pendingTask
     set(value) {
       currentTaskState.value = currentTaskState.value.copy(pendingTask = value)
@@ -125,14 +127,22 @@ internal class BackendTerminalHyperlinkHighlighter(
         val model = event.model
         val startOffset = event.offset
         val existingPendingTask = pendingTask
-        val startLine = if (event.isTrimming) model.firstLineIndex else model.getLineByOffset(startOffset)
-        val dirtyRegionStart = if (existingPendingTask == null) {
-          startLine
+        val startLine = if (event.isTrimming) null else model.getLineByOffset(startOffset)
+        val dirtyRegionStart = when {
+          startLine != null && existingPendingTask !is HighlightTask -> { // a new not-just-trimming task
+            startLine
+          }
+          startLine == null && existingPendingTask is HighlightTask -> { // trim the existing task
+            TerminalLineIndex.of(existingPendingTask.startAbsoluteLine).coerceAtLeast(model.firstLineIndex)
+          }
+          startLine != null && existingPendingTask is HighlightTask -> { // possibly update the existing task
+            min(TerminalLineIndex.of(existingPendingTask.startAbsoluteLine), startLine).coerceAtLeast(model.firstLineIndex)
+          }
+          else -> { // startLine == null && existingPendingTask == null or is TrimTask => update the trimming task or start a new one
+            null
+          }
         }
-        else {
-          min(TerminalLineIndex.of(existingPendingTask.startAbsoluteLine), startLine).coerceAtLeast(model.firstLineIndex)
-        }
-        val newPendingTask = newHighlightTask(model, dirtyRegionStart)
+        val newPendingTask = newTask(model, dirtyRegionStart)
         LOG.debug {
           "The model " +
           if (event.isTrimming) {
@@ -166,7 +176,7 @@ internal class BackendTerminalHyperlinkHighlighter(
     if (currentTaskRunner.filter !== currentFilter) return false
     if (TerminalOffset.of(taskResult.absoluteStartOffset) < outputModel.startOffset) return false // trimmed
     val pendingTask = pendingTask
-    return if (pendingTask == null) {
+    return if (pendingTask !is HighlightTask) {
       true // No updates since the current task started, therefore, all results are valid
     }
     else {
@@ -199,16 +209,28 @@ internal class BackendTerminalHyperlinkHighlighter(
     }
     if (lastUsedFilter !== currentFilter) {
       LOG.debug { "The new task will process everything because of a filter change: $lastUsedFilter -> $currentFilter" }
-      pendingTask = newHighlightTask(outputModel, outputModel.firstLineIndex)
+      pendingTask = newTask(outputModel, outputModel.firstLineIndex)
     }
-    val newTaskRunner = HighlightTaskRunner(
-      hyperlinkId = hyperlinkId,
-      isInAlternateBuffer = isInAlternateBuffer,
-      task = pendingTask,
-      filter = currentFilter,
-      outputModel = outputModel.takeSnapshot(),
-      continueCondition = { makesSenseToContinue(it) },
-    )
+    val newTaskRunner = when (pendingTask) {
+      is TrimTask -> {
+        TrimTaskRunner(
+          isInAlternateBuffer = isInAlternateBuffer,
+          task = pendingTask,
+          filter = currentFilter,
+          outputModel = outputModel.takeSnapshot(),
+        )
+      }
+      is HighlightTask -> {
+        HighlightTaskRunner(
+          hyperlinkId = hyperlinkId,
+          isInAlternateBuffer = isInAlternateBuffer,
+          task = pendingTask,
+          filter = currentFilter,
+          outputModel = outputModel.takeSnapshot(),
+          continueCondition = { makesSenseToContinue(it) },
+        )
+      }
+    }
     currentTaskState.value = TaskState(currentTaskRunner = newTaskRunner, pendingTask = null)
     lastUsedFilter = currentFilter
   }
@@ -221,7 +243,9 @@ internal class BackendTerminalHyperlinkHighlighter(
       return false
     }
     val pendingTask = pendingTask
-    if (pendingTask == null) {
+    // Now check whether there's a new task with an overlapping dirty region.
+    // If it's just a trim task, then there can be no overlap with a highlighting task.
+    if (pendingTask !is HighlightTask) {
       return true
     }
     val ourLine = runner.currentAbsoluteLine
@@ -246,16 +270,18 @@ internal class BackendTerminalHyperlinkHighlighter(
 }
 
 private data class TaskState(
-  val currentTaskRunner: HighlightTaskRunner?,
-  val pendingTask: HighlightTask?,
+  val currentTaskRunner: TaskRunner?,
+  val pendingTask: Task?,
 ) {
   fun mayHaveWorkToDo(): Boolean = currentTaskRunner != null || pendingTask != null
 }
 
-private fun newHighlightTask(
+private fun newTask(
   outputModel: TerminalOutputModel,
-  startLine: TerminalLineIndex,
-): HighlightTask {
+  startLine: TerminalLineIndex?,
+): Task {
+  // Trimming is almost always followed by an actual change, so this trimming task is almost never actually executed.
+  if (startLine == null) return TrimTask(outputModel.startOffset)
   val endLineInclusive: TerminalLineIndex = outputModel.lastLineIndex
   val startOffset: TerminalOffset = outputModel.getStartOfLine(startLine)
   return HighlightTask(
@@ -265,12 +291,21 @@ private fun newHighlightTask(
   )
 }
 
+private sealed class Task {
+  abstract fun hasWorkToDo(): Boolean
+}
+
+private data class TrimTask(val trimToOffset: TerminalOffset) : Task() {
+  override fun hasWorkToDo(): Boolean = true // trimming always makes sense
+}
+
 private data class HighlightTask(
   val startAbsoluteLine: Long,
   val startAbsoluteOffset: Long,
   val endAbsoluteLineInclusive: Long,
-) {
-  fun hasWorkToDo(): Boolean = endAbsoluteLineInclusive >= startAbsoluteLine
+) : Task() {
+  override fun hasWorkToDo(): Boolean = endAbsoluteLineInclusive >= startAbsoluteLine
+
   override fun toString(): String =
     "HighlightTask(" +
     "startLine=${TerminalLineIndex.of(startAbsoluteLine)}," +
@@ -294,14 +329,48 @@ private fun describe(outputModel: TerminalOutputModelSnapshot) = buildString {
 
 private typealias TaskResult = TerminalFilterResultInfoDto
 
+private sealed class TaskRunner {
+  abstract val task: Task
+  abstract val filter: CompositeFilter
+  abstract suspend fun run()
+  abstract fun isRunning(): Boolean
+  abstract fun getNextOutputEvent(predicate: (TaskResult) -> Boolean): TerminalHyperlinksChangedEvent?
+  abstract fun resultsCount(): Int
+}
+
+private class TrimTaskRunner(
+  private val isInAlternateBuffer: Boolean,
+  override val task: TrimTask,
+  private val outputModel: TerminalOutputModelSnapshot,
+  override val filter: CompositeFilter,
+) : TaskRunner() {
+
+  override suspend fun run() { } // nothing to actually "do"
+
+  override fun isRunning(): Boolean = false
+
+  override fun resultsCount(): Int = 0
+
+  override fun getNextOutputEvent(predicate: (TaskResult) -> Boolean): TerminalHyperlinksChangedEvent {
+    // An event with non-null removeFromOffset means "remove trimmed at the start and from this offset at the end,"
+    // so we specify the end-of-document offset to indicate that only the trimming should be done.
+    return TerminalHyperlinksChangedEvent(
+      isInAlternateBuffer = isInAlternateBuffer,
+      documentModificationStamp = outputModel.modificationStamp,
+      removeFromOffset = outputModel.endOffset.toAbsolute(),
+      emptyList(),
+    )
+  }
+}
+
 private class HighlightTaskRunner(
   hyperlinkId: AtomicLong,
   private val isInAlternateBuffer: Boolean,
-  val task: HighlightTask,
+  override val task: HighlightTask,
   private val outputModel: TerminalOutputModelSnapshot,
-  val filter: CompositeFilter,
+  override val filter: CompositeFilter,
   private val continueCondition: (HighlightTaskRunner) -> Boolean,
-) {
+) : TaskRunner() {
   private val isRunning = AtomicBoolean(true)
   private var isFirstEvent = true
 
@@ -319,9 +388,9 @@ private class HighlightTaskRunner(
 
   var currentAbsoluteLine: Long = topStartLine.toAbsolute()
 
-  fun isRunning(): Boolean = isRunning.get()
+  override fun isRunning(): Boolean = isRunning.get()
 
-  fun resultsCount(): Int = topResults.size + bottomResults.size
+  override fun resultsCount(): Int = topResults.size + bottomResults.size
 
   private fun firstLine() = outputModel.firstLineIndex
   private fun lastLine() = outputModel.lastLineIndex
@@ -329,7 +398,7 @@ private class HighlightTaskRunner(
   private operator fun TerminalLineIndex.plus(count: Int) = TerminalLineIndex.of(toAbsolute() + count)
   private operator fun TerminalLineIndex.minus(count: Int) = TerminalLineIndex.of(toAbsolute() - count)
 
-  suspend fun run() {
+  override suspend fun run() {
     try {
       LOG.debug {
         "Started the task ${task} " +
@@ -368,7 +437,7 @@ private class HighlightTaskRunner(
     }
   }
 
-  fun getNextOutputEvent(predicate: (TaskResult) -> Boolean): TerminalHyperlinksChangedEvent? {
+  override fun getNextOutputEvent(predicate: (TaskResult) -> Boolean): TerminalHyperlinksChangedEvent? {
     return createEvent(collectResults(predicate))
   }
 
@@ -496,6 +565,7 @@ private class HyperlinkProcessor(
         style = highlightAttributes?.toDto(),
         followedStyle = resultItem.followedHyperlinkAttributes?.toDto(),
         hoveredStyle = resultItem.hoveredHyperlinkAttributes?.toDto(),
+        isInvisibleLink = resultItem.isInvisibleLink,
         layer = resultItem.highlighterLayer,
       )
       highlightAttributes != null -> TerminalHighlightingInfoDto(

@@ -1,6 +1,6 @@
 actual interface ExpIFoo {
-    actual val ib<caret>ar: String
-    actual fun foo()
+    actual val ibar: String
+    actual fun fo<caret>o()
 }
 
 class Abc : ExpIFoo {
@@ -8,4 +8,7 @@ class Abc : ExpIFoo {
     override val ibar: String = "bar"
 }
 
-// REF: [testModule_JS] (in Abc).ibar
+// REF: [testModule_JS] (in Abc).foo()
+
+// K2_REF: [testModule_JS] (in Abc).foo()
+// K2_REF: [testModule_Common] (in Abc).foo()

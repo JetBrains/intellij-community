@@ -73,7 +73,6 @@ reportlab.lib.abag.ABag.__setattr__
 reportlab.lib.styles.PropertySet.__setattr__
 
 # *-imports that cause a mess we don't want to propagate
-reportlab.graphics.charts.lineplots.pi
 reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.EVEN_ODD
 reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.FILL_EVEN_ODD
 reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.FILL_NON_ZERO

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.ShowHideIntentionIconLookupAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.lookup.LookupBottomPanelAdvertiserCustomizer;
 import com.intellij.codeInsight.lookup.LookupBottomPanelProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupPositionStrategy;
@@ -89,9 +90,11 @@ final class LookupUi {
   private final AsyncProcessIcon processIcon = new AsyncProcessIcon("Completion progress");
   private final JComponent myMenuButton;
   private final JComponent hintButton;
+  private @NotNull JComponent myBottomPanelLeftComponent;
   private final @Nullable JComponent myBottomPanel;
 
   private int myMaximumHeight = Integer.MAX_VALUE;
+  private int myPreventShrinkMinHeight = 0;
   private Boolean myPositionedAbove = null;
 
   LookupUi(@NotNull LookupImpl lookup, Advertiser advertiser, JBList<?> list, boolean showBottomPanel) {
@@ -100,6 +103,7 @@ final class LookupUi {
     this.lookup = lookup;
     myAdvertiser = advertiser;
     myList = list;
+    myBottomPanelLeftComponent = myAdvertiser.getAdComponent();
 
     processIcon.setVisible(false);
     this.lookup.resort(false);
@@ -140,6 +144,7 @@ final class LookupUi {
         myBottomPanel = customPanel;
       }
       else {
+        myBottomPanelLeftComponent = getDefaultBottomPanelLeftComponent();
         myBottomPanel = createDefaultBottomPanel();
       }
       layeredPane.mainPanel.add(myBottomPanel, BorderLayout.SOUTH);
@@ -170,7 +175,7 @@ final class LookupUi {
 
   private @NotNull JComponent createDefaultBottomPanel() {
     var panel = new JPanel(new LookupBottomLayout());
-    panel.add(myAdvertiser.getAdComponent());
+    panel.add(myBottomPanelLeftComponent);
     panel.add(processIcon);
     panel.add(hintButton);
     panel.add(myMenuButton);
@@ -182,6 +187,12 @@ final class LookupUi {
       panel.setOpaque(false);
     }
     return panel;
+  }
+
+  private @NotNull JComponent getDefaultBottomPanelLeftComponent() {
+    JComponent advertiserComponent = myAdvertiser.getAdComponent();
+    JComponent customComponent = LookupBottomPanelAdvertiserCustomizer.getAdvertiserComponent(lookup, advertiserComponent);
+    return customComponent != null ? customComponent : advertiserComponent;
   }
 
   private void addListeners() {
@@ -208,7 +219,7 @@ final class LookupUi {
     }
 
     LookupElement item = lookup.getCurrentItem();
-    if (item != null && ReadAction.compute(() -> item.isValid())) {
+    if (item != null && ReadAction.computeBlocking(() -> item.isValid())) {
       ReadAction.nonBlocking(() -> lookup.getActionsFor(item))
         .expireWhen(() -> !item.isValid() || hintAlarm.isDisposed())
         .finishOnUiThread(modalityState, actions -> {
@@ -256,21 +267,32 @@ final class LookupUi {
       return;
     }
 
-    if (lookup.myResizePending || itemsChanged) {
-      myMaximumHeight = Integer.MAX_VALUE;
+    // Check if we should prevent shrinking for this refresh cycle
+    if (LookupShrinkSuppressor.takePreventShrinkOnce(lookup) && lookup.getComponent().isShowing()) {
+      myPreventShrinkMinHeight = lookup.getComponent().getHeight();
     }
-    Rectangle rectangle = calculatePosition();
-    myMaximumHeight = rectangle.height;
 
-    if (lookup.myResizePending || itemsChanged) {
-      lookup.myResizePending = false;
-      lookup.pack();
-      rectangle = calculatePosition();
+    try {
+      if (lookup.myResizePending || itemsChanged) {
+        myMaximumHeight = Integer.MAX_VALUE;
+      }
+      Rectangle rectangle = calculatePosition();
+      myMaximumHeight = rectangle.height;
+
+      if (lookup.myResizePending || itemsChanged) {
+        lookup.myResizePending = false;
+        lookup.pack();
+        rectangle = calculatePosition();
+      }
+      lookup.updateLocation(rectangle.getLocation());
+
+      if (reused || selectionVisible || onExplicitAction) {
+        lookup.ensureSelectionVisible(false);
+      }
     }
-    lookup.updateLocation(rectangle.getLocation());
-
-    if (reused || selectionVisible || onExplicitAction) {
-      lookup.ensureSelectionVisible(false);
+    finally {
+      // Reset the minimum height after the refresh cycle (one-shot)
+      myPreventShrinkMinHeight = 0;
     }
   }
 
@@ -436,6 +458,8 @@ final class LookupUi {
           int width = Math.max(listWidth, bottomPanelSize.width);
           width = Math.min(width, Registry.intValue("ide.completion.max.width"));
           int height = Math.min(panelHeight, myMaximumHeight);
+          // Apply minimum height to prevent shrinking when the flag is set
+          height = Math.max(height, myPreventShrinkMinHeight);
 
           return new Dimension(width, height);
         }
@@ -545,7 +569,7 @@ final class LookupUi {
     @Override
     public Dimension preferredLayoutSize(Container parent) {
       Insets insets = parent.getInsets();
-      Dimension adSize = myAdvertiser.getAdComponent().getPreferredSize();
+      Dimension adSize = myBottomPanelLeftComponent.getPreferredSize();
       Dimension hintButtonSize = hintButton.getPreferredSize();
       Dimension menuButtonSize = myMenuButton.getPreferredSize();
 
@@ -556,7 +580,7 @@ final class LookupUi {
     @Override
     public Dimension minimumLayoutSize(Container parent) {
       Insets insets = parent.getInsets();
-      Dimension adSize = myAdvertiser.getAdComponent().getMinimumSize();
+      Dimension adSize = myBottomPanelLeftComponent.getMinimumSize();
       Dimension hintButtonSize = hintButton.getMinimumSize();
       Dimension menuButtonSize = myMenuButton.getMinimumSize();
 
@@ -595,9 +619,9 @@ final class LookupUi {
         throw new IllegalStateException("Can't show both process icon and hint button");
       }
 
-      Dimension adSize = myAdvertiser.getAdComponent().getPreferredSize();
+      Dimension adSize = myBottomPanelLeftComponent.getPreferredSize();
       y = (innerHeight - adSize.height) / 2;
-      myAdvertiser.getAdComponent().setBounds(insets.left, y + insets.top, x - insets.left, adSize.height);
+      myBottomPanelLeftComponent.setBounds(insets.left, y + insets.top, x - insets.left, adSize.height);
     }
   }
 }

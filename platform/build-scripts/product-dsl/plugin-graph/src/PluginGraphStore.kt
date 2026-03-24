@@ -113,6 +113,36 @@ class PluginGraphStore internal constructor(
     nameIndex[kind].forEachValue(action)
   }
 
+  /** Iterate plugin node IDs registered under the specified plugin ID. */
+  fun forEachPluginNodeByPluginId(pluginId: PluginId, action: (Int) -> Unit) {
+    pluginIds.forEach { nodeId, value ->
+      if (value != pluginId.value) {
+        return@forEach
+      }
+      if ((kinds[nodeId] and NODE_KIND_MASK) != NODE_PLUGIN) {
+        return@forEach
+      }
+      action(nodeId)
+    }
+  }
+
+  /** Returns true if the specified plugin ID has a synthetic alias plugin node. */
+  fun hasAliasPlugin(pluginId: PluginId): Boolean {
+    var found = false
+    pluginIds.forEach { nodeId, value ->
+      if (found || value != pluginId.value) {
+        return@forEach
+      }
+      if ((kinds[nodeId] and NODE_KIND_MASK) != NODE_PLUGIN) {
+        return@forEach
+      }
+      if ((kinds[nodeId] and NODE_FLAG_IS_ALIAS) != 0) {
+        found = true
+      }
+    }
+    return found
+  }
+
   // endregion
 
   // region Property Accessors
@@ -128,6 +158,12 @@ class PluginGraphStore internal constructor(
 
   /** Check if plugin is DSL-defined (auto-computed dependencies) */
   fun isDslDefined(nodeId: Int): Boolean = (kinds[nodeId] and NODE_FLAG_IS_DSL_DEFINED) != 0
+
+  /** Check if plugin is a generated wrapper for a pluginized module set */
+  fun isModuleSetWrapper(nodeId: Int): Boolean = (kinds[nodeId] and NODE_FLAG_IS_MODULE_SET_WRAPPER) != 0
+
+  /** Check if plugin node is a synthetic alias target. */
+  fun isAliasPlugin(nodeId: Int): Boolean = (kinds[nodeId] and NODE_FLAG_IS_ALIAS) != 0
 
   /** Get plugin ID (from <id> element) */
   fun pluginId(nodeId: Int): PluginId {
@@ -414,7 +450,12 @@ private fun buildReverseCsrFromOut(
       val targetId = unpackNodeId(entry)
       val reverseEntry = when (edgeType) {
         EDGE_TARGET_DEPENDS_ON -> packTargetDependencyEntry(sourceId, unpackTargetDependencyScope(entry))
-        EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN -> packPluginDepEntry(sourceId, unpackPluginDepOptional(entry), unpackPluginDepFormats(entry))
+        EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN -> packPluginDepEntry(
+          sourceId,
+          unpackPluginDepOptional(entry),
+          unpackPluginDepFormats(entry),
+          unpackPluginDepHasConfigFile(entry),
+        )
         EDGE_CONTAINS_CONTENT, EDGE_CONTAINS_CONTENT_TEST, EDGE_CONTAINS_MODULE -> packEdgeEntry(sourceId, unpackLoadingMode(entry))
         else -> sourceId
       }

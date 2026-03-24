@@ -657,7 +657,11 @@ public final class VfsData implements Closeable {
     //          or during indexes lookups -- so we'll rarely/never actually use this VirtualDirectory.children.
     volatile @NotNull ChildrenIds children = ChildrenIds.EMPTY;
 
-    /** assigned under lock(this) only; accessed/modified map contents under lock(adoptedNames) */
+    /**
+     * Children's names known to be absent -- i.e., names that were looked up and not found.
+     * Memorize them, to not repeat the same lookup again. Clear the memorized set on refresh.
+     * Collection is assigned under lock(this) only; accessed/modified set content under lock(adoptedNames).
+     */
     private volatile Set<CharSequence> adoptedNames;
 
     /**

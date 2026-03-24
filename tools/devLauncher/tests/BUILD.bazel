@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests",
+  module_name = "intellij.tools.devLauncher.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["@lib//:kotlin-stdlib"]
@@ -15,6 +16,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//tools/devLauncher",
+    "//tools/devLauncher:devLauncher_test_lib",
     "@lib//:kotlin-stdlib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
@@ -25,6 +27,12 @@ jvm_library(
   runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.tools.devLauncher.tests` end
+
+### auto-generated section `iml intellij.tools.devLauncher.tests` start
+exports_files([
+  "intellij.tools.devLauncher.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.tools.devLauncher.tests` end
 
 ### auto-generated section `test intellij.tools.devLauncher.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

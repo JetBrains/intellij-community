@@ -1,5 +1,6 @@
 // "Add 'toString()' call" "true"
 // PRIORITY: LOW
+// K2_ERROR: Initializer type mismatch: expected 'String', actual 'Int'.
 
 val s: String = (1 + 2 * 3).toString()<caret>
 

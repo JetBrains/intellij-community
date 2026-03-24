@@ -42,6 +42,7 @@
     <orderEntry type="module" module-name="intellij.platform.debugger" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" scope="TEST" />
@@ -53,5 +54,8 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.ide.metrics.collector" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
   </component>
 </module>

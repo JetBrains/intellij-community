@@ -1,4 +1,5 @@
 // "Create local variable 'foo'" "true"
+// K2_ERROR: Unresolved reference 'foo'.
 class A {
     val t: Int get() = <caret>foo
 }

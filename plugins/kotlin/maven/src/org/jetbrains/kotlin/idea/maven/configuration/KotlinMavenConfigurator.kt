@@ -245,12 +245,12 @@ abstract class KotlinMavenConfigurator protected constructor(
             error("Virtual file should exists for psi file " + file.name)
         }
 
-        val domModel = MavenDomUtil.getMavenDomProjectModel(project, virtualFile) ?: run {
+        MavenDomUtil.getMavenDomProjectModel(project, virtualFile) ?: run {
             KotlinProjectSetupFUSCollector.logConfigureKtFailed(
                 project,
                 KotlinProjectConfigurationError.DOM_MODEL_DOESNT_EXIST
             )
-            showErrorMessage(project, null)
+            showErrorMessage(project)
             return false
         }
 
@@ -290,7 +290,7 @@ abstract class KotlinMavenConfigurator protected constructor(
             pom.addPluginRepository(repositoryDescription)
         }
 
-        val plugin = pom.addPlugin(MavenId(GROUP_ID, MAVEN_PLUGIN_ID, "\${$KOTLIN_VERSION_PROPERTY}"))
+        val plugin = pom.addKotlinPlugin(version.kotlinVersion.toString(), usePlaceholderVersion = true)
         createExecutions(pom, plugin, module)
 
         configurePlugin(pom, plugin, module, version)
@@ -450,13 +450,13 @@ abstract class KotlinMavenConfigurator protected constructor(
             return WritingAccessProvider.isPotentiallyWritable(file.virtualFile, null)
         }
 
-        private fun showErrorMessage(project: Project, @NlsContexts.DialogMessage message: String?) {
+        private fun showErrorMessage(project: Project) {
             val cantConfigureAutomatically = KotlinMavenBundle.message("error.cant.configure.maven.automatically")
             val seeInstructions = KotlinMavenBundle.message("error.see.installation.instructions")
 
             Messages.showErrorDialog(
                 project,
-                "<html>$cantConfigureAutomatically<br/>${if (message != null) "$message</br>" else ""}$seeInstructions</html>",
+                "<html>$cantConfigureAutomatically<br/>$seeInstructions</html>",
                 KotlinMavenBundle.message("configure.title")
             )
         }

@@ -5,11 +5,13 @@
 <idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.ui"/>

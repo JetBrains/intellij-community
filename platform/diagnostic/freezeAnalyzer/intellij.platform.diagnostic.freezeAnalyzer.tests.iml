@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/testData">
+      <sourceFolder url="file://$MODULE_DIR$/testData" type="java-test-resource" />
+    </content>
+    <content url="file://$MODULE_DIR$/testSrc">
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.threadDumpParser" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTestAssertionsCoreJvm" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.freezeAnalyzer" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.platform.diagnostic.freezeAnalyzer" />
+</module>

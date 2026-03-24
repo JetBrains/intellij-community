@@ -40,7 +40,7 @@ import java.util.Objects;
  * Implementation of the markup element for the editor and document.
  */
 @ApiStatus.Internal
-public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
+sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   permits PersistentRangeHighlighterImpl {
   private static final Logger LOG = Logger.getInstance(RangeHighlighterImpl.class);
   @SuppressWarnings({"InspectionUsingGrayColors", "UseJBColor"})
@@ -95,7 +95,9 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
 
     registerInTree((DocumentEx)model.getDocument(), start, end, greedyToLeft, greedyToRight, layer);
     if (LOG.isTraceEnabled()) {
-      LOG.trace("RangeHighlighterImpl: create " + this+"; "+getId()+(ProgressIndicatorProvider.getGlobalProgressIndicator() == null ? "" : "; progress=" +ProgressIndicatorProvider.getGlobalProgressIndicator()));
+      ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
+      LOG.trace("RangeHighlighterImpl: create " + this + "; " + getId() +
+                (progress == null || progress instanceof NonCancelableIndicator ? "" : "; progress=" + progress));
     }
   }
 
@@ -490,10 +492,10 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   public @NonNls String toString() {
     return "RangeHighlighter: " +
            (isValid() ? "" : "(invalid)")
-           +"("+getStartOffset()+","+getEndOffset()+")"
-           +"; layer:"+getLayer()
-           +(getErrorStripeTooltip() == null ? "" : "; tooltip: "+getErrorStripeTooltip())
-           +(getTextAttributesKey() == null ? "" : "; textAttributeKey: "+getTextAttributesKey())
+           + debugOffsets()
+           + "; layer:" + getLayer()
+           + (getErrorStripeTooltip() == null ? "" : "; tooltip: "+getErrorStripeTooltip())
+           + (getTextAttributesKey() == null ? "" : "; textAttributeKey: "+getTextAttributesKey())
       ;
   }
 }

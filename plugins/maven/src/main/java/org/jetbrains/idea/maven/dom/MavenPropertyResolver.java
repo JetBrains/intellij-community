@@ -56,7 +56,7 @@ public final class MavenPropertyResolver {
   /**
    * @deprecated use {@link MavenPropertyResolver#collectPropertyMapFromDOM(MavenProject, MavenDomProjectModel)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static Properties collectPropertiesFromDOM(@Nullable MavenProject project, MavenDomProjectModel projectDom) {
     var result = new Properties();
 

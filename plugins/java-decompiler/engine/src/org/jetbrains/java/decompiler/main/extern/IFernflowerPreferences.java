@@ -63,6 +63,8 @@ public interface IFernflowerPreferences {
 
   String SKIP_EXTRA_FILES = "sef";
 
+  String PARENTHESES_FOR_BITWISE_OPERATIONS = "pbo";
+
   String MAX_DIRECT_NODES_COUNT = "mdnc";
   String MAX_DIRECT_VARIABLE_NODE_COUNT = "mdvnc";
 
@@ -117,6 +119,8 @@ public interface IFernflowerPreferences {
     defaults.put(USE_JAD_VARNAMING, "0");
     defaults.put(USE_JAD_PARAMETER_RENAMING, "0");
     defaults.put(SKIP_EXTRA_FILES, "0");
+
+    defaults.put(PARENTHESES_FOR_BITWISE_OPERATIONS, "0");
 
     return Collections.unmodifiableMap(defaults);
   }

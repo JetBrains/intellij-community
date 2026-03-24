@@ -38,7 +38,7 @@ import javax.swing.event.ListSelectionListener
 internal class PyPackagesSdkController(private val project: Project) : Disposable.Default {
 
   private val packagingScope: CoroutineScope = PyPackageCoroutine.getScope(project)
-    .childScope("Packages SDK Controller", TraceContext(PyBundle.message("tracecontext.packages.sdk.controller"), null)).also {
+    .childScope("Packages SDK Controller", TraceContext(PyBundle.message("trace.context.packages.sdk.controller"), null)).also {
       Disposer.register(this, it.asDisposable())
     }
 
@@ -55,10 +55,12 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
     }
   }
 
+  private val selectionListener = createSelectionListener()
+
   private val sdkList: JBList<Sdk> = JBList(allSdks).apply {
     selectionMode = ListSelectionModel.SINGLE_SELECTION
     cellRenderer = sdkListRenderer
-    addListSelectionListener(createSelectionListener())
+    addListSelectionListener(selectionListener)
   }
 
   val mainScrollPane: JScrollPane = ScrollPaneFactory.createScrollPane(sdkList, true)
@@ -98,6 +100,22 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
     packagingScope.launch(Dispatchers.EDT) {
       val index = (sdkList.model as DefaultListModel<Sdk>).indexOf(sdk)
       sdkList.selectionModel.setSelectionInterval(index, index)
+    }
+  }
+
+  internal fun refreshAndSyncSelection(sdk: Sdk?) {
+    sdkList.removeListSelectionListener(selectionListener)
+    try {
+      refreshModuleList()
+      if (sdk != null) {
+        val index = (sdkList.model as DefaultListModel<Sdk>).indexOf(sdk)
+        if (index >= 0) {
+          sdkList.selectionModel.setSelectionInterval(index, index)
+        }
+      }
+    }
+    finally {
+      sdkList.addListSelectionListener(selectionListener)
     }
   }
 

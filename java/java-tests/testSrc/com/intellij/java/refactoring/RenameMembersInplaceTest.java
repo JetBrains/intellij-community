@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -38,15 +38,15 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
   public void testInnerClass() {
     doTestInplaceRename("NEW_NAME");
   }
-  
+
   public void testClassWithConstructorReferenceInside() {
     doTestInplaceRename("NewName");
   }
-  
+
   public void testIncomplete() {
     doTestInplaceRename("Klazz");
   }
-  
+
   public void testConstructor() {
     doTestInplaceRename("Bar");
   }
@@ -58,11 +58,11 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
   public void testUnresolvedMethod() {
     doTestInplaceRename("second");
   }
-  
+
   public void testSuperMethodAnonymousInheritor() {
     doTestInplaceRename("xxx");
   }
-  
+
   public void testDefaultConstructor() {
     doTestInplaceRename("HeadlessHorseman");
   }
@@ -78,11 +78,11 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
   public void testTypeParameterUsedInJavadoc() {
     doTestInplaceRename("K");
   }
-  
+
   public void testMethodWithJavadocRef() {
     doTestInplaceRename("bar");
   }
-  
+
   public void testMethodWithJavadocRef2() {
     doTestInplaceRename("set");
   }
@@ -94,7 +94,7 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
   public void testMethodWithJavadocRef4() {
     doTestInplaceRename("set");
   }
-  
+
   public void testEnumConstructor() {
     doTestInplaceRename("Bar");
   }
@@ -102,7 +102,7 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
   public void testMethodWithMethodRef() {
     doTestInplaceRename("bar");
   }
-  
+
   public void testRecordImplementsInterface() {
     doTestInplaceRename("newValue");
   }
@@ -118,10 +118,10 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
     assertNotNull(element);
 
     TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    
+
     int start = getEditor().getSelectionModel().getSelectionStart();
     int end = getEditor().getSelectionModel().getSelectionEnd();
-    
+
     new MemberInplaceRenameHandler().doRename(element, getEditor(), DataManager.getInstance().getDataContext(getEditor().getComponent()));
     TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
     assertNotNull(state);
@@ -195,7 +195,7 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
   public void testNearParameterHint() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     int originalCaretPosition = getEditor().getCaretModel().getOffset();
-    Inlay inlay = EditorTestUtil.addInlay(getEditor(), originalCaretPosition);
+    Inlay<?> inlay = EditorTestUtil.addInlay(getEditor(), originalCaretPosition);
     VisualPosition inlayPosition = inlay.getVisualPosition();
     // make sure caret is to the right of inlay initially
     getEditor().getCaretModel().moveToVisualPosition(new VisualPosition(inlayPosition.line, inlayPosition.column + 1));
@@ -212,7 +212,7 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
     assertEquals(new VisualPosition(inlayPosition.line, inlayPosition.column + 1), getEditor().getCaretModel().getVisualPosition());
   }
 
-  private void doTestInplaceRename(final String newName) {
+  private void doTestInplaceRename(String newName) {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
 
     PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.getInstance().getAllAccepted());

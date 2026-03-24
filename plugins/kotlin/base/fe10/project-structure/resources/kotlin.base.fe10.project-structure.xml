@@ -1,4 +1,8 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.base.fe10.projectStructure">
+<idea-plugin package="org.jetbrains.kotlin.idea.base.fe10.projectStructure" visibility="public">
+  <dependencies>
+    <module name="intellij.java"/>
+  </dependencies>
+
   <projectListeners>
     <listener class="org.jetbrains.kotlin.idea.base.fe10.projectStructure.Fe10WorkspaceModelChangeListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>

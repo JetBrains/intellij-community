@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.KotlinGradleModel
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinGradleModelBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinTaskPropertiesBySourceSet
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
+import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
 import org.jetbrains.kotlin.idea.statistics.KotlinIDEGradleActionsFUSCollector
 import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
@@ -358,28 +359,71 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
                         gradleModel.kotlinTaskProperties.filter { (k, _) -> gradleSourceSetNode.data.id == "$moduleNamePrefix:$k" }
                             .toList().singleOrNull()
                     gradleSourceSetNode.children.forEach { dataNode ->
-                        val data = dataNode.data as? ContentRootData
-                        if (data != null) {
-                            /**
-                             * Code snippet for setting in content root properties
-                             * if (propertiesForSourceSet?.second?.pureKotlinSourceFolders?.contains(File(data.rootPath)) == true) {
-                             *     @Suppress("UNCHECKED_CAST")
-                             *     (dataNode as DataNode<ContentRootData>).isPureKotlinSourceFolder = true
-                             * }
-                             */
-                            val packagePrefix = propertiesForSourceSet?.second?.packagePrefix
-                            if (packagePrefix != null) {
-                                ExternalSystemSourceType.values().filter { !(it.isResource || it.isGenerated) }.forEach { type ->
-                                    val paths = data.getPaths(type)
-                                    val newPaths = paths.map { ContentRootData.SourceRoot(it.path, packagePrefix) }
-                                    paths.clear()
-                                    paths.addAll(newPaths)
-                                }
-                            }
+                        dataNode.markGeneratedSourceRoots(gradleModel.generatedSourcesRoots)
+                        dataNode.updateSourceRootPackagePrefix(propertiesForSourceSet)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun DataNode<*>.markGeneratedSourceRoots(
+        generatedSources: List<String>
+    ) {
+        visitData { contentRootData ->
+            if (contentRootData == null ||
+                generatedSources.isEmpty() ||
+                contentRootData as? ContentRootData == null
+            ) return@visitData contentRootData
+
+            // it is already marked as generated or contains other types in which we are not interested in
+            if (contentRootData.getPaths(ExternalSystemSourceType.SOURCE).isEmpty() &&
+                contentRootData.getPaths(ExternalSystemSourceType.TEST).isEmpty()
+            ) return@visitData contentRootData
+
+            val newDataNode = ContentRootData(contentRootData.owner, contentRootData.rootPath)
+            ExternalSystemSourceType.entries.forEach { type ->
+                contentRootData.getPaths(type).forEach { sourceRoot ->
+                    when (type) {
+                        ExternalSystemSourceType.SOURCE if sourceRoot.path in generatedSources -> {
+                            newDataNode.storePath(ExternalSystemSourceType.SOURCE_GENERATED, sourceRoot.path, sourceRoot.packagePrefix)
+                        }
+                        ExternalSystemSourceType.TEST if sourceRoot.path in generatedSources -> {
+                            newDataNode.storePath(ExternalSystemSourceType.TEST_GENERATED, sourceRoot.path, sourceRoot.packagePrefix)
+                        }
+                        else -> {
+                            newDataNode.storePath(type, sourceRoot.path, sourceRoot.packagePrefix)
                         }
                     }
                 }
             }
+            return@visitData newDataNode
+        }
+    }
+
+    private fun DataNode<*>.updateSourceRootPackagePrefix(
+        propertiesForSourceSet: Pair<String, KotlinTaskProperties>?,
+    ) {
+        visitData { contentRootData ->
+            if (contentRootData == null ||
+                propertiesForSourceSet == null ||
+                contentRootData as? ContentRootData == null
+            ) return@visitData contentRootData
+
+            val packagePrefix = propertiesForSourceSet.second.packagePrefix ?: return@visitData contentRootData
+
+            val newDataNode = ContentRootData(contentRootData.owner, contentRootData.rootPath)
+            ExternalSystemSourceType.entries
+                .forEach { type ->
+                    contentRootData.getPaths(type).forEach { path ->
+                        if (type.isResource || type.isGenerated) {
+                            newDataNode.storePath(type, path.path, path.packagePrefix)
+                        } else {
+                            newDataNode.storePath(type, path.path, packagePrefix)
+                        }
+                    }
+                }
+            newDataNode
         }
     }
 

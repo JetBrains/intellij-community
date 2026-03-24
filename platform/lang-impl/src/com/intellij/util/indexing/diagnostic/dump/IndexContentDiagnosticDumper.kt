@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic.dump
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -15,6 +13,8 @@ import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePath
 import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePaths
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
+import tools.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.module.kotlin.readValue
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger

@@ -114,5 +114,14 @@
                  description="Show 'Create java compact file' separately from all other classes"/>
     <registryKey key="compiler.external.javac.keep.alive.timeout" defaultValue="300000"
                  description="If not used for the specified period of time or longer, the IDE will shut down the cached javac compilation process"/>
+    <registryKey key="java.annotations.inference.aggressive.hardcoded.purity" defaultValue="true" restartRequired="true"
+                 description="Assume any implementation of methods like Object.toString() or Iterable.iterator() to be pure during bytecode inference. This assumption might lead to false-positives in some inspections, though it's believed to uncover more bugs."/>
+    <registryKey key="batch.inspections.ignored.jvm.languages" defaultValue="Groovy,Scala"
+                 description="Disable UAST processing for JVM languages; a comma separated list of UAST capable language ids."/>
+    <!--used with DataFlowInspection-->
+    <registryKey key="ide.dfa.report.imprecise" defaultValue="false"
+                 description="Whether to report methods for which data flow analysis was imprecise"/>
+    <!--used together with DeprecationInspection-->
+    <registryKey key="kotlin.deprecation.inspection.enabled" defaultValue="false"/>
   </extensions>
 </idea-plugin>

@@ -77,7 +77,6 @@
     <orderEntry type="library" name="netty-codec-protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
-    <orderEntry type="module" module-name="intellij.java.testFramework.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
   </component>

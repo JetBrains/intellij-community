@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
@@ -114,7 +114,8 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
 
       ids.addAll(ContainerUtil.filter(keys, s ->
         !StringUtil.startsWith(s, PLUGIN_ID_KEY_PREFIX) &&
-        !StringUtil.startsWith(s, FILENAME_KEY_PREFIX)));
+        !StringUtil.startsWith(s, FILENAME_KEY_PREFIX) &&
+        !StringUtil.startsWith(s, CONTENT_KEY_PREFIX)));
     }
     return ids;
   }

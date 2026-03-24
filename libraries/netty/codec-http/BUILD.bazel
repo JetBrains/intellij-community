@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "libraries-netty-codec-http",
+  module_name = "intellij.libraries.netty.codec.http",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":libraries-netty-codec-http_resources"],
@@ -18,4 +19,23 @@ jvm_library(
     "//libraries/netty/buffer",
   ]
 )
+
+jvm_library(
+  name = "libraries-netty-codec-http_test_lib",
+  module_name = "intellij.libraries.netty.codec.http",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:netty-codec-http"],
+  runtime_deps = [
+    ":libraries-netty-codec-http",
+    "//libraries/netty/buffer:buffer_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.netty.codec.http` end
+
+### auto-generated section `iml intellij.libraries.netty.codec.http` start
+exports_files([
+  "intellij.libraries.netty.codec.http.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.netty.codec.http` end

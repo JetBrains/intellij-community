@@ -499,7 +499,7 @@ public final class RunConfigurationStorageUi {
                  super.isFileSelectable(file) &&
                  !file.getPath().endsWith("/.idea") &&
                  !file.getPath().contains("/.idea/") &&
-                 ReadAction.compute(() -> ProjectFileIndex.getInstance(project).isInContent(file));
+                 ReadAction.computeBlocking(() -> ProjectFileIndex.getInstance(project).isInContent(file));
         }
       };
 

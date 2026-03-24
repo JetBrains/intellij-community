@@ -18,6 +18,11 @@ import java.util.function.Predicate
 
 interface HtmlFrameworkSymbolsSupport {
 
+  /**
+   * Provides id of the Symbol's framework, e.g. vue, angular, react, etc.
+   */
+  object HtmlFrameworkIdProperty : PolySymbolProperty<FrameworkId>("html-framework-id", FrameworkId::class.java)
+
   fun createHtmlAttributeDescriptor(info: HtmlAttributeSymbolInfo, tag: XmlTag?): HtmlAttributeSymbolDescriptor =
     HtmlAttributeSymbolDescriptor(info, tag)
 
@@ -49,12 +54,6 @@ interface HtmlFrameworkSymbolsSupport {
   ): Boolean = info.acceptsValue && !info.acceptsNoValue
 
   companion object {
-    /**
-     * Provides id of the Symbol's framework, e.g. vue, angular, react, etc.
-     */
-    @JvmField
-    val PROP_HTML_FRAMEWORK_ID: PolySymbolProperty<FrameworkId> = PolySymbolProperty["html-framework-id"]
-
     @JvmStatic
     fun get(symbol: PolySymbol): HtmlFrameworkSymbolsSupport =
       PolySymbolFramework.get(symbol.framework ?: "") as? HtmlFrameworkSymbolsSupport

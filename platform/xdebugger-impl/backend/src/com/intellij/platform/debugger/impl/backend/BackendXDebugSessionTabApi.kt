@@ -11,7 +11,6 @@ import com.intellij.platform.debugger.impl.rpc.XDebugTabLayouterId
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabEvent
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabDto
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfoCallback
-import com.intellij.xdebugger.impl.findValue
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.Dispatchers
@@ -36,6 +35,13 @@ internal class BackendXDebugSessionTabApi : XDebugSessionTabApi {
   override suspend fun additionalTabEvents(tabComponentsManagerId: XDebugSessionAdditionalTabComponentManagerId): Flow<XDebuggerSessionAdditionalTabEvent> {
     val manager = tabComponentsManagerId.findValue() ?: return emptyFlow()
     return manager.tabComponentEvents
+  }
+
+  override suspend fun updateTabSelection(tabLayouterId: XDebugTabLayouterId, contentUniqueId: Int, isSelected: Boolean) {
+    val layouterModel = tabLayouterId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      layouterModel.setSelection(contentUniqueId, isSelected)
+    }
   }
 
   override suspend fun tabLayouterEvents(tabLayouterId: XDebugTabLayouterId): Flow<XDebugTabLayouterEvent> {

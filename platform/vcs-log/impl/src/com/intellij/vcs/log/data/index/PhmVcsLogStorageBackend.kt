@@ -198,7 +198,9 @@ internal class PhmVcsLogStorageBackend(
         if (details.author != details.committer) {
           committers.put(commitId, users.getUserId(details.committer))
         }
-        messages.put(commitId, details.fullMessage)
+        synchronized(messages) {
+          messages.put(commitId, details.fullMessage)
+        }
       }
 
       private fun force() {
@@ -209,7 +211,9 @@ internal class PhmVcsLogStorageBackend(
           trigrams.flush()
           users.flush()
           paths.flush()
-          messages.force()
+          synchronized(messages) {
+            messages.force()
+          }
         }
         catch (e: IOException) {
           errorHandler.handleError(VcsLogErrorHandler.Source.Index, e)
@@ -227,8 +231,10 @@ internal class PhmVcsLogStorageBackend(
 
   override fun markCorrupted() {
     try {
-      messages.markCorrupted()
-      messages.force()
+      synchronized(messages) {
+        messages.markCorrupted()
+        messages.force()
+      }
     }
     catch (t: Throwable) {
       LOG.warn(t)

@@ -5,6 +5,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "testFramework",
+  module_name = "intellij.kotlin.jvm.debugger.test.parcelize.testFramework",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
@@ -18,17 +19,32 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//java/openapi:java",
+    "//java/openapi:java_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/tests-common:common-tests",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/jvm-debugger/test/k2/testFramework",
     "//plugins/kotlin/jvm-debugger/test/k2/testFramework:testFramework_test_lib",
     "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/jvm-debugger/testFramework",
     "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
   ],
   runtime_deps = [":testFramework"]
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test.parcelize.testFramework` end
+
+### auto-generated section `iml intellij.kotlin.jvm.debugger.test.parcelize.testFramework` start
+exports_files([
+  "intellij.kotlin.jvm.debugger.test.parcelize.testFramework.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.jvm.debugger.test.parcelize.testFramework` end

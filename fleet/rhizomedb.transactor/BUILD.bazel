@@ -25,7 +25,7 @@ jvm_library(
   name = "rhizomedb.transactor",
   module_name = "fleet.rhizomedb.transactor",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True),
   resources = [":rhizomedb.transactor_resources"],
   kotlinc_opts = ":custom_rhizomedb.transactor",
   deps = [
@@ -49,4 +49,37 @@ jvm_library(
     "//fleet/rpc",
   ]
 )
+
+jvm_library(
+  name = "rhizomedb.transactor_test_lib",
+  module_name = "fleet.rhizomedb.transactor",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_rhizomedb.transactor",
+  exports = [
+    "//fleet/rhizomedb",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
+    "//fleet/util/core",
+    "//fleet/util/core:core_test_lib",
+    "//fleet/rpc",
+    "//fleet/rpc:rpc_test_lib",
+  ],
+  runtime_deps = [
+    ":rhizomedb.transactor",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
+    "//fleet/util/core:core_test_lib",
+    "//fleet/rpc:rpc_test_lib",
+    "//fleet/reporting/api:api_test_lib",
+    "//fleet/reporting/shared:shared_test_lib",
+    "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
+    "//fleet/bifurcan:bifurcan_test_lib",
+    "//fleet/fastutil:fastutil_test_lib",
+  ]
+)
 ### auto-generated section `build fleet.rhizomedb.transactor` end
+
+### auto-generated section `iml fleet.rhizomedb.transactor` start
+exports_files([
+  "fleet.rhizomedb.transactor.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.rhizomedb.transactor` end

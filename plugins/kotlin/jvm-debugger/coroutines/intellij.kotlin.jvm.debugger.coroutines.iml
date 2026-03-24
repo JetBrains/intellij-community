@@ -55,6 +55,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />

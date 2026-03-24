@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "tests",
+  module_name = "intellij.mcpserver.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
@@ -18,33 +19,71 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   resources = [":tests_test_resources"],
-  associates = ["//plugins/mcp-server:mcpserver"],
+  associates = [
+    "//plugins/mcp-server:mcpserver",
+    "//plugins/mcp-server:mcpserver_test_lib",
+  ],
   deps = [
     "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
     "//libraries/junit5-params",
-    "//libraries/kotlin/test:libraries-kotlinTest",
+    "//libraries/junit5-params:junit5-params_test_lib",
     "//libraries/assertj-core",
+    "//libraries/assertj-core:assertj-core_test_lib",
     "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
+    "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
     "//libraries/io",
+    "//libraries/io:io_test_lib",
     "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
     "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
     "//libraries/ktor/client",
+    "//libraries/ktor/client:client_test_lib",
     "//plugins/mcp-server/mcpserver.stdio",
+    "//plugins/mcp-server/mcpserver.stdio:mcpserver.stdio_test_lib",
+    "//plugins/mcp-server/tests/plugin",
+    "//plugins/mcp-server/tests/plugin:plugin_test_lib",
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/platform-util-io:ide-util-io",
     "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//plugins/terminal",
+    "//plugins/terminal:terminal_test_lib",
+    "//images:images-tests",
+    "//images:images-tests_test_lib",
+    "//RegExpSupport:regexp-tests",
+    "//RegExpSupport:regexp-tests_test_lib",
+    "//platform/xdebugger-impl:debugger-impl-tests",
+    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+    "//platform/execution",
+    "//platform/execution:execution_test_lib",
+    "//platform/execution-impl",
+    "//platform/execution-impl:execution-impl_test_lib",
   ],
-  runtime_deps = [":tests"]
+  runtime_deps = [
+    ":tests",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.mcpserver.tests` end
+
+### auto-generated section `iml intellij.mcpserver.tests` start
+exports_files([
+  "intellij.mcpserver.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.mcpserver.tests` end
 
 ### auto-generated section `test intellij.mcpserver.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.annotations.JdkConstants;
+import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

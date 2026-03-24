@@ -93,6 +93,10 @@ class FilteredIcon(private val baseIcon: Icon, private val filterSupplier: RgbIm
       return super.replaceIcon(icon)
     }
   }
+
+  override fun toString(): String {
+    return "FilteredIcon for $baseIcon"
+  }
 }
 
 // this replacer plays a visitor role

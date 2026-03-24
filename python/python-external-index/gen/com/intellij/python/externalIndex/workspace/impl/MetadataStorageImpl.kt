@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.externalIndex.workspace.impl
 
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -14,28 +15,41 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
     var typeMetadata: StorageTypeMetadata
 
-    typeMetadata = FinalClassMetadata.ObjectMetadata(
-      fqName = "com.intellij.python.externalIndex.workspace.PyExternalIndexedFileEntitySource", properties = listOf(
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl",
-                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true,
-                                                                                typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                  fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                            withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+    typeMetadata =
+      FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.python.externalIndex.workspace.PyExternalIndexedFileEntitySource",
+                                        properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                                isKey = false,
+                                                                                isOpen = false,
+                                                                                name = "virtualFileUrl",
+                                                                                valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                  isNullable = true,
+                                                                                  typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                                withDefault = false)),
+                                        supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
 
     addMetadata(typeMetadata)
 
     typeMetadata = EntityMetadata(fqName = "com.intellij.python.externalIndex.workspace.PyExternalIndexedFileEntity",
                                   entityDataFqName = "com.intellij.python.externalIndex.workspace.impl.PyExternalIndexedFileEntityData",
-                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource",
-                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                  fqName = "com.intellij.platform.workspace.storage.EntitySource")),
-                            withDefault = false), OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "file",
-                                                                      valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                        isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(
-                                                                          fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                                                                      withDefault = false)), extProperties = listOf(), isAbstract = false)
+                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
+                                  properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "entitySource",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "file",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                          withDefault = false)),
+                                  extProperties = listOf(),
+                                  isAbstract = false)
 
     addMetadata(typeMetadata)
   }
@@ -45,5 +59,4 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1058015871)
     addMetadataHash(typeFqn = "com.intellij.python.externalIndex.workspace.PyExternalIndexedFileEntitySource", metadataHash = -247347603)
   }
-
 }

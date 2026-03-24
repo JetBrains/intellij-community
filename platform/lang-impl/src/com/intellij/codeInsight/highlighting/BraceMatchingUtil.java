@@ -76,14 +76,15 @@ public final class BraceMatchingUtil {
     CharSequence text = editor.getDocument().getCharsSequence();
 
     HighlighterIterator iterator = highlighter.createIterator(offset);
-    FileType fileType = iterator.atEnd() ? null : ReadAction.compute(() -> psiFile.isValid() ? getFileType(psiFile, iterator.getStart()) : null);
+    FileType fileType = iterator.atEnd() ? null : ReadAction.computeBlocking(() -> psiFile.isValid() ? getFileType(psiFile, iterator.getStart()) : null);
 
     boolean isBeforeOrInsideLeftBrace = fileType != null && isLBraceToken(iterator, text, fileType);
     boolean isBeforeOrInsideRightBrace = fileType != null && !isBeforeOrInsideLeftBrace && isRBraceToken(iterator, text, fileType);
     boolean isInsideBrace = (isBeforeOrInsideLeftBrace || isBeforeOrInsideRightBrace) && iterator.getStart() < offset;
 
     HighlighterIterator preOffsetIterator = offset > 0 && !isInsideBrace ? highlighter.createIterator(offset - 1) : null;
-    FileType preOffsetFileType = preOffsetIterator == null ? null : ReadAction.compute(() -> psiFile.isValid() ? getFileType(psiFile, preOffsetIterator.getStart()) : null);
+    var preOffsetFileType = preOffsetIterator == null ? null :
+                            ReadAction.computeBlocking(() -> psiFile.isValid() ? getFileType(psiFile, preOffsetIterator.getStart()) : null);
 
     boolean isAfterLeftBrace = preOffsetIterator != null && preOffsetFileType != null &&
                                isLBraceToken(preOffsetIterator, text, preOffsetFileType);

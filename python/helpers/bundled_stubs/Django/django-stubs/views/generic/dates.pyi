@@ -3,13 +3,14 @@ from collections.abc import Sequence
 from typing import Any, TypeAlias, TypeVar
 
 from django.db import models
-from django.db.models.query import QuerySet
+from django.db.models.query import QuerySet, _OrderByFieldName
 from django.http import HttpRequest, HttpResponse
 from django.utils.datastructures import _IndexableCollection
 from django.utils.functional import _Getter
 from django.views.generic.base import View
 from django.views.generic.detail import BaseDetailView, SingleObjectTemplateResponseMixin
 from django.views.generic.list import MultipleObjectMixin, MultipleObjectTemplateResponseMixin
+from typing_extensions import override
 
 _M = TypeVar("_M", bound=models.Model)
 _DatedItems: TypeAlias = tuple[_IndexableCollection[datetime.date] | None, _IndexableCollection[_M], dict[str, Any]]
@@ -57,7 +58,8 @@ class BaseDateListView(MultipleObjectMixin[_M], DateMixin, View):
     date_list_period: str
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse: ...
     def get_dated_items(self) -> _DatedItems: ...
-    def get_ordering(self) -> str | Sequence[str]: ...
+    @override
+    def get_ordering(self) -> str | Sequence[_OrderByFieldName]: ...
     def get_dated_queryset(self, **lookup: Any) -> models.query.QuerySet[_M]: ...
     def get_date_list_period(self) -> str: ...
     def get_date_list(
@@ -66,6 +68,7 @@ class BaseDateListView(MultipleObjectMixin[_M], DateMixin, View):
 
 class BaseArchiveIndexView(BaseDateListView[_M]):
     context_object_name: str
+    @override
     def get_dated_items(self) -> _DatedItems[_M]: ...
 
 class ArchiveIndexView(MultipleObjectTemplateResponseMixin, BaseArchiveIndexView):
@@ -74,6 +77,7 @@ class ArchiveIndexView(MultipleObjectTemplateResponseMixin, BaseArchiveIndexView
 class BaseYearArchiveView(YearMixin, BaseDateListView[_M]):
     date_list_period: str
     make_object_list: bool
+    @override
     def get_dated_items(self) -> _DatedItems[_M]: ...
     def get_make_object_list(self) -> bool: ...
 
@@ -82,30 +86,35 @@ class YearArchiveView(MultipleObjectTemplateResponseMixin, BaseYearArchiveView):
 
 class BaseMonthArchiveView(YearMixin, MonthMixin, BaseDateListView[_M]):
     date_list_period: str
+    @override
     def get_dated_items(self) -> _DatedItems[_M]: ...
 
 class MonthArchiveView(MultipleObjectTemplateResponseMixin, BaseMonthArchiveView):
     template_name_suffix: str
 
 class BaseWeekArchiveView(YearMixin, WeekMixin, BaseDateListView[_M]):
+    @override
     def get_dated_items(self) -> _DatedItems[_M]: ...
 
 class WeekArchiveView(MultipleObjectTemplateResponseMixin, BaseWeekArchiveView):
     template_name_suffix: str
 
 class BaseDayArchiveView(YearMixin, MonthMixin, DayMixin, BaseDateListView[_M]):
+    @override
     def get_dated_items(self) -> _DatedItems[_M]: ...
 
 class DayArchiveView(MultipleObjectTemplateResponseMixin, BaseDayArchiveView):
     template_name_suffix: str
 
 class BaseTodayArchiveView(BaseDayArchiveView[_M]):
+    @override
     def get_dated_items(self) -> _DatedItems[_M]: ...
 
 class TodayArchiveView(MultipleObjectTemplateResponseMixin, BaseTodayArchiveView):
     template_name_suffix: str
 
 class BaseDateDetailView(YearMixin, MonthMixin, DayMixin, DateMixin, BaseDetailView[_M]):
+    @override
     def get_object(self, queryset: QuerySet[_M] | None = ...) -> _M: ...
 
 class DateDetailView(SingleObjectTemplateResponseMixin, BaseDateDetailView):

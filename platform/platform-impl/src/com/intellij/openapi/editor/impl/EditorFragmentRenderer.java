@@ -272,7 +272,7 @@ final class EditorFragmentRenderer {
           s = StringUtil.unescapeXmlEntities(s);
 
           LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(hEndOffset);
-          int endOfLineOffset = myEditor.getDocument().getLineEndOffset(logicalPosition.line);
+          int endOfLineOffset = myEditor.getUiDocument().getLineEndOffset(logicalPosition.line);
           logicalPosition = myEditor.offsetToLogicalPosition(endOfLineOffset);
           Point placeToShow = myEditor.logicalPositionToXY(logicalPosition);
           logicalPosition = myEditor.xyToLogicalPosition(placeToShow);//wraps&foldings workaround

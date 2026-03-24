@@ -43,6 +43,9 @@ c:com.intellij.execution.process.KillableProcessHandler
 - com.intellij.execution.KillableProcess
 - com.intellij.execution.process.SoftlyKillableProcessHandler
 - *:setShouldKillProcessSoftlyWithWinP(Z):V
+*f:com.intellij.execution.process.OSProcessUtilEx
+- *sf:realDescendants(java.lang.Process):java.util.stream.Stream
+- *sf:realDescendants(java.lang.ProcessHandle):java.util.stream.Stream
 com.intellij.execution.process.SelfKiller
 - *:tryDestroyGracefully():Z
 *:com.intellij.execution.process.SoftlyKillableProcessHandler

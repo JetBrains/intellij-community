@@ -1,4 +1,6 @@
 // "Specify 'String?' return type for enclosing function 'test'" "true"
+// K2_ERROR: Null cannot be a value of a non-null type 'Unit'.
+// K2_ERROR: Return type mismatch: expected 'Unit', actual 'String'.
 fun test(): String? {
     if (true) return "foo"<caret>
     return null

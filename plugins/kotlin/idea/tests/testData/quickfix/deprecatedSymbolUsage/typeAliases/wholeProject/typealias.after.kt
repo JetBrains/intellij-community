@@ -1,4 +1,5 @@
 // "Replace usages of 'typealias OldAlias = A<Int>' in whole project" "true"
+// K2_ACTION: "Replace usages of 'OldAlias = A<Int>' in whole project" "true"
 
 package test
 

@@ -96,8 +96,10 @@ public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> imp
   @Override
   public boolean equals(final Object obj) {
     if (!(obj instanceof PsiElementUsageGroupBase<?> group)) return false;
-    return ReadAction.compute(()->isValid() && group.isValid() && getElement().getManager().areElementsEquivalent(getElement(), group.getElement())
-                                  || myName.equals(group.myName));
+    return ReadAction.computeBlocking(
+      () -> isValid() && group.isValid() && getElement().getManager().areElementsEquivalent(getElement(), group.getElement())
+            || myName.equals(group.myName)
+    );
   }
 
   @Override

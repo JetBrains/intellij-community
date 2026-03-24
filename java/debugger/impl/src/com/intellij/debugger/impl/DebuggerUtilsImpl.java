@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -72,6 +72,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.NetUtils;
+import com.intellij.xdebugger.DapMode;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -730,6 +731,9 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
 
   @ApiStatus.Internal
   public static boolean askAboutPauseOnException(Project project, String displayName, String exceptionMessage, @NotNull @NlsContexts.DialogTitle String title) {
+    if (DapMode.isDap()) {
+      return false; // Don't stop — continue execution, error is printed to console by the caller
+    }
     final boolean[] considerRequestHit = new boolean[]{true};
     DebuggerInvocationUtil.invokeAndWait(project, () -> {
       final String message = JavaDebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", displayName, exceptionMessage);

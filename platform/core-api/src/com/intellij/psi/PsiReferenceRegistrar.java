@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
  * {@link PsiReferenceProvider#getReferencesByElement(PsiElement, com.intellij.util.ProcessingContext)}.
  */
 public abstract class PsiReferenceRegistrar implements UserDataHolder {
-
   public static final double DEFAULT_PRIORITY = 0.0;
   public static final double HIGHER_PRIORITY = 100.0;
   public static final double LOWER_PRIORITY = -100.0;
@@ -27,7 +26,8 @@ public abstract class PsiReferenceRegistrar implements UserDataHolder {
   /**
    * Register reference provider with default priority ({@link #DEFAULT_PRIORITY}).
    *
-   * @param pattern  reference place description. See {@link com.intellij.patterns.StandardPatterns}, {@link com.intellij.patterns.PlatformPatterns} and their extenders.
+   * @param pattern  reference place description. See {@link com.intellij.patterns.StandardPatterns},
+   *                 {@link com.intellij.patterns.PlatformPatterns} and their extenders.
    * @param provider provider to be registered
    */
   public void registerReferenceProvider(@NotNull ElementPattern<? extends PsiElement> pattern, @NotNull PsiReferenceProvider provider) {
@@ -37,13 +37,16 @@ public abstract class PsiReferenceRegistrar implements UserDataHolder {
   /**
    * Register reference provider with custom priority.
    *
-   * @param pattern  reference place description. See {@link com.intellij.patterns.StandardPatterns}, {@link com.intellij.patterns.PlatformPatterns} and their extenders.
+   * @param pattern  reference place description. See {@link com.intellij.patterns.StandardPatterns},
+   *                 {@link com.intellij.patterns.PlatformPatterns} and their extenders.
    * @param provider provider to be registered
    * @param priority see {@link #DEFAULT_PRIORITY), {@link #HIGHER_PRIORITY}, {@link #LOWER_PRIORITY}
    */
-  public abstract <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern,
-                                                                        @NotNull PsiReferenceProvider provider,
-                                                                        double priority);
+  public abstract <T extends PsiElement> void registerReferenceProvider(
+    @NotNull ElementPattern<T> pattern,
+    @NotNull PsiReferenceProvider provider,
+    double priority
+  );
 
   @Override
   public <T> @Nullable T getUserData(@NotNull Key<T> key) {

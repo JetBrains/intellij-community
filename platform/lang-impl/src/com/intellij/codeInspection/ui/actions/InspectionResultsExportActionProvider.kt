@@ -9,7 +9,7 @@ import com.intellij.codeInspection.ui.InspectionTree
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -71,7 +71,7 @@ abstract class InspectionResultsExportActionProvider(
     ProgressManager.getInstance().run(object: Backgroundable(view.project, progressTitle) {
       override fun run(indicator: ProgressIndicator) {
         try {
-          runReadAction {
+          runReadActionBlocking {
             if (view.currentProfile == null) throw NullPointerException("Failed to export inspection results.")
             writeResults(view.tree,
                          view.currentProfile!!,

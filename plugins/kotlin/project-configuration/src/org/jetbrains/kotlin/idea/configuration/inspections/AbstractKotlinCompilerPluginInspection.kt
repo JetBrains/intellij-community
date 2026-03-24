@@ -35,8 +35,8 @@ import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompilerPluginId: String): LocalInspectionTool() {
-    protected fun compilerPluginProjectConfigurators(): List<KotlinCompilerPluginProjectConfigurator> =
-        compilerPluginProjectConfigurators(kotlinCompilerPluginId)
+    protected fun compilerPluginProjectConfigurators(module: Module): List<KotlinCompilerPluginProjectConfigurator> =
+        compilerPluginProjectConfigurators(kotlinCompilerPluginId,module)
 
     final override fun isAvailableForFile(file: PsiFile): Boolean =
         isAvailableForFile(file) { file, module -> isAvailableForFileInModule(file, module) }
@@ -111,12 +111,14 @@ abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompil
                 scope.hasKotlinJvmRuntime(module.project)
             })
 
-            return hasKotlinJvmRuntime && isAvailableForFileInModule(ktFile, module)
+            if (!hasKotlinJvmRuntime) return false
+
+            return isAvailableForFileInModule(ktFile, module)
         }
 
         fun configureCompilerPlugin(project: Project, module: Module, kotlinCompilerPluginId: String) {
             val configurators =
-                compilerPluginProjectConfigurators(kotlinCompilerPluginId).ifEmpty { return }
+                compilerPluginProjectConfigurators(kotlinCompilerPluginId, module).ifEmpty { return }
 
             val configurationResultBuilder = ConfigurationResultBuilder()
             val configurationService = KotlinProjectConfigurationService.getInstance(project)
@@ -130,8 +132,11 @@ abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompil
                             configurator.configureModule(module, configurationResultBuilder)
                         }
                     }
+                    val result = configurationResultBuilder.build()
+                    if (result.configuredModules.isNotEmpty()) {
+                        configurationService.queueSyncIfPossible()
+                    }
                 }
-                configurationService.queueSyncIfPossible()
             }
         }
     }

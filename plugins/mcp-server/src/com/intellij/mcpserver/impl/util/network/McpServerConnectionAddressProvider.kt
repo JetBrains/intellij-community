@@ -6,8 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
 import java.net.InetAddress
 
-@Service(Service.Level.APP)
-class McpServerConnectionAddressProvider {
+open class McpServerConnectionAddressProvider {
 
   private val loopbackHost: String = InetAddress.getLoopbackAddress().hostAddress
 
@@ -20,10 +19,10 @@ class McpServerConnectionAddressProvider {
   val currentPort: Int
     get() = serverService.port
 
-  val serverStreamUrl: String
+  open val serverStreamUrl: String
     get() = httpUrl("/stream")
 
-  val serverSseUrl: String
+  open val serverSseUrl: String
     get() = httpUrl("/sse")
 
   fun httpUrl(path: String, portOverride: Int? = null, hostOverride: String? = null): String {

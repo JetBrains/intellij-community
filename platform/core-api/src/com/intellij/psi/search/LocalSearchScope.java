@@ -255,7 +255,7 @@ public class LocalSearchScope extends SearchScope {
     if (scope == EMPTY) {
       return EMPTY;
     }
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       PsiElement[] elements = scope.getScope();
       List<PsiElement> result = new ArrayList<>(elements.length);
       for (PsiElement element : elements) {
@@ -276,7 +276,7 @@ public class LocalSearchScope extends SearchScope {
     if (scope == EMPTY) {
       return EMPTY;
     }
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       List<? extends PsiElement> result = ContainerUtil.filter(
         scope.getScope(),
         element -> matcher.matchesLanguage(element.getContainingFile().getLanguage())

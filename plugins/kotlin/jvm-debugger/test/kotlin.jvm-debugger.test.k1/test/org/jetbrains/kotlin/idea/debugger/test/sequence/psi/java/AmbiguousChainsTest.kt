@@ -1,11 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.test.sequence.psi.java
 
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class AmbiguousChainsTest : PositiveJavaStreamTest("ambiguous") {
+class AmbiguousChainsTest : PositiveJavaStreamTest("ambiguous"), ExpectedPluginModeProvider {
+    override val pluginMode = KotlinPluginMode.K1
+
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
+
     fun testSimpleExpression() = doTest(2)
 
     fun testNestedExpression() = doTest(3)

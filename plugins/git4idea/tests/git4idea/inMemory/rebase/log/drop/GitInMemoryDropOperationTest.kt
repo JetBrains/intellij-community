@@ -4,6 +4,7 @@ package git4idea.inMemory.rebase.log.drop
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.GitDisposable
 import git4idea.inMemory.rebase.log.InMemoryRebaseOperations
+import git4idea.inMemory.rebase.log.RebaseEntriesSource
 import git4idea.log.createLogDataIn
 import git4idea.log.refreshAndWait
 import git4idea.rebase.log.GitCommitEditingOperationResult
@@ -16,7 +17,7 @@ internal class GitInMemoryDropOperationTest : GitDropOperationTestBase() {
       val testCs = GitDisposable.getInstance(project).coroutineScope
       val logData = createLogDataIn(testCs, repo, logProvider)
       logData.refreshAndWait(repo, true)
-      InMemoryRebaseOperations.drop(repo, logData, commitsToDrop)
+      InMemoryRebaseOperations.drop(repo, commitsToDrop, RebaseEntriesSource.LogData(logData))
     }
   }
 }

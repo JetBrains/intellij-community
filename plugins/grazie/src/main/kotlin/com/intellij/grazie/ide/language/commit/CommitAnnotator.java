@@ -10,6 +10,7 @@ import com.intellij.grazie.text.CheckerRunner;
 import com.intellij.grazie.text.TextContent;
 import com.intellij.grazie.text.TextExtractor;
 import com.intellij.grazie.text.TextProblem;
+import com.intellij.grazie.text.TextProblemAggregator;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -28,6 +29,7 @@ import static com.intellij.grazie.ide.TextProblemSeverities.GRAMMAR_ERROR;
 import static com.intellij.grazie.ide.TextProblemSeverities.GRAMMAR_ERROR_ATTRIBUTES;
 import static com.intellij.grazie.ide.TextProblemSeverities.STYLE_SUGGESTION;
 import static com.intellij.grazie.ide.TextProblemSeverities.STYLE_SUGGESTION_ATTRIBUTES;
+import static com.intellij.grazie.utils.GrazieUtilsKt.EXTRACTOR_SOURCE;
 import static com.intellij.spellchecker.SpellCheckerSeveritiesProvider.TYPO;
 import static com.intellij.spellchecker.SpellCheckerSeveritiesProvider.TYPO_KEY;
 
@@ -39,13 +41,14 @@ final class CommitAnnotator implements Annotator {
     }
 
     for (TextContent text : TextExtractor.findTextsAt(element, EnumSet.of(TextContent.TextDomain.PLAIN_TEXT))) {
+      assert text.getUserData(EXTRACTOR_SOURCE) != null;
       checkText(holder, text);
     }
   }
 
   private static void checkText(AnnotationHolder holder, TextContent text) {
     CheckerRunner runner = new CheckerRunner(text);
-    runner.run().forEach(problem -> {
+    TextProblemAggregator.INSTANCE.aggregate(text.toString(), runner.run()).forEach(problem -> {
       List<ProblemDescriptor> descriptors = runner.toProblemDescriptors(problem, true);
       if (descriptors.isEmpty()) return;
 

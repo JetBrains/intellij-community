@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  JavaClass$Inner$InnerInner.class
+  JavaClass$Inner.class
+  JavaClass.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/constantPropertyChanged/a/JavaClass.java
+End of files
+Cleaning output files:
+  KotlinUsageClass.class
+  META-INF/kotlin_withJava_javaUsedInKotlin_constantPropertyChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/constantPropertyChanged/a/KotlinUsageClass.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -113,7 +113,7 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
    */
   @RequiresEdt
   protected fun createInstallFix(errorSink: ErrorSink): ActionLink {
-    return ActionLink(message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
+    return ActionLink(message("sdk.create.custom.venv.install.fix.title.using.pip", name)) {
       PythonSdkFlavor.clearExecutablesCache()
       installExecutable(errorSink)
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {
@@ -153,7 +153,7 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
     val pythonExecutablePath = installedSdk?.homePath ?: model.state.baseInterpreter.get()?.homePath
     val pythonExecutable = pythonExecutablePath?.let { model.fileSystem.getBinaryToExec(it) } ?: return
 
-    runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
+    runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title.using.pip", name)) {
       val versionArgs: List<String> = installationVersion?.let { listOf("-v", it) } ?: emptyList()
       when (val r = installExecutableViaPythonScript(pythonExecutable, "-n", name, *versionArgs.toTypedArray())) {
         is Result.Success -> {

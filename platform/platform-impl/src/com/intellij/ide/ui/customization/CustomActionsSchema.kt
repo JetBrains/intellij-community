@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "RemoveRedundantQualifierName")
 
 package com.intellij.ide.ui.customization
@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.with
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.CoroutineScope
@@ -144,6 +145,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     }
 
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstance(): CustomActionsSchema = service<CustomActionsSchema>()
 
     suspend fun getInstanceAsync(): CustomActionsSchema = serviceAsync<CustomActionsSchema>()

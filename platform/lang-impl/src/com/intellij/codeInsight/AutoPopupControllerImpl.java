@@ -152,48 +152,50 @@ class AutoPopupControllerImpl extends AutoPopupController {
   }
 
   @Override
-  public void autoPopupParameterInfo(@NotNull Editor editor, @Nullable PsiElement highlightedMethod) {
+  public void autoPopupParameterInfo(@NotNull Editor editor, @Nullable PsiElement highlightedElement) {
     if (PowerSaveMode.isEnabled()) return;
 
     ThreadingAssertions.assertEventDispatchThread();
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    if (settings.AUTO_POPUP_PARAMETER_INFO) {
-      AtomicInteger offset = new AtomicInteger(-1);
-      ReadAction.nonBlocking(() -> {
-          offset.set(editor.getCaretModel().getOffset());
-          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-          PsiFile file = documentManager.getPsiFile(editor.getDocument());
+    if (!settings.AUTO_POPUP_PARAMETER_INFO) {
+      return;
+    }
+
+    AtomicInteger offset = new AtomicInteger(-1);
+    ReadAction.nonBlocking(() -> {
+        offset.set(editor.getCaretModel().getOffset());
+        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+        PsiFile file = documentManager.getPsiFile(editor.getDocument());
+        if (file == null) return;
+
+        if (!documentManager.isUncommited(editor.getDocument())) {
+          file = documentManager.getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file).getDocument());
           if (file == null) return;
+        }
 
-          if (!documentManager.isUncommited(editor.getDocument())) {
-            file = documentManager.getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file).getDocument());
-            if (file == null) return;
-          }
-
-          Runnable request = () -> {
-            if (!myProject.isDisposed() && !editor.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
-              int lbraceOffset = offset.get() - 1;
-              try {
-                PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-                if (file1 != null) {
-                  ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false,
-                                                  true, null);
-                }
-              }
-              catch (IndexNotReadyException ignored) { //anything can happen on alarm
+        Runnable request = () -> {
+          if (!myProject.isDisposed() && !editor.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
+            int lbraceOffset = offset.get() - 1;
+            try {
+              PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+              if (file1 != null) {
+                ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedElement, false,
+                                                true, null);
               }
             }
-          };
+            catch (IndexNotReadyException ignored) { //anything can happen on alarm
+            }
+          }
+        };
 
-          myAlarm.addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
-        }).expireWith(myAlarm)
-        .coalesceBy(this, editor)
-        .expireWhen(() -> {
-          int initialOffset = offset.get();
-          return editor.isDisposed() || initialOffset != -1 && editor.getCaretModel().getOffset() != initialOffset;
-        })
-        .submit(AppExecutorUtil.getAppExecutorService());
-    }
+        myAlarm.addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
+      }).expireWith(myAlarm)
+      .coalesceBy(this, editor)
+      .expireWhen(() -> {
+        int initialOffset = offset.get();
+        return editor.isDisposed() || initialOffset != -1 && editor.getCaretModel().getOffset() != initialOffset;
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Override

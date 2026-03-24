@@ -50,5 +50,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet" />
     <orderEntry type="module" module-name="kotlin.base.frontend-agnostic" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
   </component>
 </module>

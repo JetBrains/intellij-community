@@ -5,12 +5,21 @@ import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.Cancellation;
+import com.intellij.openapi.progress.CeProcessCanceledException;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbModeStatisticsCollector.IndexingFinishType;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.platform.util.progress.RawProgressReporter;
+import kotlin.Unit;
+import kotlin.jvm.Volatile;
+import kotlinx.coroutines.Job;
+import kotlinx.coroutines.JobKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +30,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicLong;
 
 @ApiStatus.Internal
@@ -61,7 +71,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
   private final List<@NotNull T> myTasksQueue = new ArrayList<>();
 
   //includes running tasks too
-  private final Map<T, ProgressIndicatorBase> myProgresses = new HashMap<>();
+  private final Map<T, Job> myJobs = new HashMap<>();
   private final AtomicLong mySubmittedTasksCount = new AtomicLong();
 
   /**
@@ -69,18 +79,18 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
    */
   public void disposePendingTasks() {
     List<T> disposeQueue;
-    List<ProgressIndicatorEx> indicatorsQueue;
+    List<Job> jobQueue;
     synchronized (myLock) {
       //running task is not included, we must not dispose it if it is (probably) running
       disposeQueue = new ArrayList<>(myTasksQueue);
       // the keys also include a running task(s)
-      indicatorsQueue = new ArrayList<>(myProgresses.values());
+      jobQueue = new ArrayList<>(myJobs.values());
 
       myTasksQueue.clear();
-      myProgresses.clear();
+      myJobs.clear();
     }
 
-    cancelIndicatorSafe(indicatorsQueue);
+    cancelIndicatorSafe(jobQueue);
     disposeSafe(disposeQueue);
   }
 
@@ -88,24 +98,24 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
   // Use methods from appropriate executor instead (e.g. MergingQueueGuiExecutor#cancelAllTasks)
   @VisibleForTesting
   public void cancelAllTasks() {
-    List<ProgressIndicatorEx> tasks;
+    List<Job> tasks;
     synchronized (myLock) {
-      tasks = new ArrayList<>(myProgresses.values());
+      tasks = new ArrayList<>(myJobs.values());
     }
 
-    for (ProgressIndicatorEx indicator : tasks) {
-      indicator.cancel();
+    for (Job job : tasks) {
+      job.cancel(new CancellationException());
     }
   }
 
   public void cancelTask(@NotNull T task) {
-    ProgressIndicatorEx indicator;
+    Job job;
     synchronized (myLock) {
-      indicator = myProgresses.get(task);
+      job = myJobs.get(task);
     }
 
-    if (indicator != null) {
-      indicator.cancel();
+    if (job != null) {
+      job.cancel(new CancellationException());
     }
   }
 
@@ -124,9 +134,9 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     synchronized (myLock) {
       for (int i = myTasksQueue.size() - 1; i >= 0; i--) {
         T oldTask = myTasksQueue.get(i);
-        ProgressIndicatorBase indicator = myProgresses.get(oldTask);
+        Job job = myJobs.get(oldTask);
         //dispose cancelled tasks
-        if (indicator == null || indicator.isCanceled()) {
+        if (job == null || job.isCancelled()) {
           myTasksQueue.remove(i);
           disposeQueue.add(oldTask);
           continue;
@@ -167,14 +177,14 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       if (taskToAdd != null) {
         myTasksQueue.add(taskToAdd);
         mySubmittedTasksCount.incrementAndGet();
-        ProgressIndicatorBase progress = new ProgressIndicatorBase();
-        myProgresses.put(taskToAdd, progress);
+        Job job = JobKt.Job(null);
+        myJobs.put(taskToAdd, job);
         Disposer.register(taskToAdd, () -> {
           //a removed progress means the task would be ignored on queue processing
           synchronized (myLock) {
-            myProgresses.remove(taskToAdd);
+            myJobs.remove(taskToAdd);
           }
-          progress.cancel();
+          job.cancel(new CancellationException());
         });
       }
 
@@ -205,13 +215,13 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
           T task = myTasksQueue.remove(0);
 
-          ProgressIndicatorBase indicator = myProgresses.get(task);
+          Job job = myJobs.get(task);
           //a disposed task is just ignored here
-          if (indicator == null || indicator.isCanceled()) {
+          if (job == null || job.isCancelled()) {
             disposeQueue.add(task);
             continue;
           }
-          return wrapTask(task, indicator);
+          return wrapTask(task, job);
         }
       }
     }
@@ -220,8 +230,8 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
   }
 
-  protected MergingTaskQueue.QueuedTask<T> wrapTask(T task, ProgressIndicatorBase indicator) {
-    return new QueuedTask<>(task, indicator);
+  protected MergingTaskQueue.QueuedTask<T> wrapTask(T task, Job taskJob) {
+    return new QueuedTask<>(task, taskJob);
   }
 
   public boolean isEmpty() {
@@ -249,15 +259,15 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
   }
 
-  private static void cancelIndicatorSafe(@NotNull List<? extends ProgressIndicatorEx> indicators) {
-    for (ProgressIndicatorEx indicator : indicators) {
-      cancelIndicatorSafe(indicator);
+  private static void cancelIndicatorSafe(@NotNull List<Job> jobs) {
+    for (Job job : jobs) {
+      cancelIndicatorSafe(job);
     }
   }
 
-  private static void cancelIndicatorSafe(@NotNull ProgressIndicatorEx indicator) {
+  private static void cancelIndicatorSafe(@NotNull Job job) {
     try {
-      indicator.cancel();
+      job.cancel(new CancellationException());
     }
     catch (Throwable t) {
       if (!(t instanceof ControlFlowException)) {
@@ -268,11 +278,11 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
   public static class QueuedTask<T extends MergeableQueueTask<T>> implements AutoCloseable {
     private final T task;
-    private final ProgressIndicatorEx indicator;
+    private final Job taskJob;
 
-    QueuedTask(@NotNull T task, @NotNull ProgressIndicatorEx progress) {
+    QueuedTask(@NotNull T task, Job taskJob) {
       this.task = task;
-      indicator = progress;
+      this.taskJob = taskJob;
     }
 
     @Override
@@ -280,24 +290,73 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       Disposer.dispose(task);
     }
 
-    public @NotNull ProgressIndicatorEx getIndicator() {
-      return indicator;
-    }
-
-    public void executeTask() {
-      executeTask(null);
-    }
-
-    public void executeTask(@Nullable ProgressIndicator customIndicator) {
+    public void executeTask(@NotNull RawProgressReporter reporter) {
       // this is the cancellation check
-      indicator.checkCanceled();
-      indicator.setIndeterminate(true);
-
-      ProgressIndicator indicator = customIndicator == null ? this.indicator : customIndicator;
-      indicator.checkCanceled();
+      try {
+        JobKt.ensureActive(taskJob);
+      } catch (CancellationException e) {
+        throw new CeProcessCanceledException(e);
+      }
 
       beforeTask();
-      task.perform(indicator);
+      ProgressIndicator indicator = new EmptyProgressIndicator() {
+        // this indicator is returned from CoreProgressManager.getCurrentIndicators()
+        // so let's save text for those who are interested in running indicators
+        @NlsSafe @Volatile private String text;
+        @NlsSafe @Volatile private String text2;
+
+        @Override
+        public void setText(String text) {
+          this.text = text;
+          reporter.text(text);
+        }
+
+        @Override
+        public void setText2(String text) {
+          this.text2 = text;
+          reporter.details(text);
+        }
+
+        @Override
+        public String getText() {
+          return text;
+        }
+
+        @Override
+        public String getText2() {
+          return text2;
+        }
+
+        @Override
+        public void setFraction(double fraction) {
+          reporter.fraction(fraction);
+        }
+      };
+      taskJob.invokeOnCompletion(true, true, e -> cancelIndicator(indicator, e));
+      Job contextJob = Cancellation.currentJob();
+      if (contextJob != null) {
+        // this branch handles completion caused by cancellation of the container where dumb tasks are running
+        contextJob.invokeOnCompletion(true, true, e -> cancelIndicator(indicator, e));
+      }
+
+      try {
+        ProgressManager.getInstance().runProcess(() -> task.perform(indicator), indicator);
+      } catch (ProcessCanceledException e) {
+        throw e;
+      } catch (Throwable e) {
+        if (indicator.isCanceled()) {
+          LOG.warn("Exception during cancellation of Dumb Task: " + e.getMessage(), e);
+          indicator.checkCanceled();
+        }
+        throw e;
+      }
+    }
+
+    private static @NotNull Unit cancelIndicator(@NotNull ProgressIndicator indicator, @Nullable Throwable exception) {
+      if (exception instanceof CancellationException) {
+        indicator.cancel();
+      }
+      return Unit.INSTANCE;
     }
 
     String getInfoString() {

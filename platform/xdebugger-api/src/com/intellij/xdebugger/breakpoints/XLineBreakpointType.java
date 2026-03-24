@@ -36,7 +36,7 @@ import java.util.List;
  * &nbsp;&nbsp;&lt;xdebugger.breakpointType implementation="qualified-class-name"/&gt;<br>
  * &lt;/extensions&gt;
  * <p>
- * In order to support actually setting breakpoints in a debugging process,
+ * To support actually setting breakpoints in a debugging process,
  * create a {@link XBreakpointHandler} implementation
  * and return it from {@link com.intellij.xdebugger.XDebugProcess#getBreakpointHandlers()}.
  */
@@ -92,8 +92,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
    * </ul>
    */
   public int getColumn(XLineBreakpoint<P> breakpoint) {
-
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> { // todo non-cancellable RA leads to freezes!
       var range = breakpoint.getType().getHighlightRange(breakpoint);
       if (range == null) return 0; // full line breakpoint
       var offset = range.getStartOffset();
@@ -110,7 +109,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
 
   /**
    * Laconic breakpoint variant description with specification of its kind (type of target).
-   * Primarily used for tooltip in the editor, when exact target is obvious but overall semantics might be unclear.
+   * Primarily used for tooltip in the editor, when the exact target is clear but overall semantics might be unclear.
    * E.g.: "Line breakpoint", "Lambda breakpoint", "Field breakpoint".
    *
    * @see XBreakpointType#getGeneralDescription(XBreakpoint)
@@ -165,6 +164,16 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
    * For example, a Java method breakpoint can be hit on any method overriding the one specified.
    */
   public boolean canBeHitInOtherPlaces() {
+    return false;
+  }
+
+  /**
+   * Return {@code true} if new breakpoints of this type may use {@link XLineBreakpointPlacement#INTER_LINE}.
+   * When this returns {@code false}, inter-line creation is disabled.
+   * The actual placement of a created breakpoint is stored on the breakpoint entity itself.
+   */
+  @ApiStatus.Internal
+  public boolean supportsInterLinePlacement() {
     return false;
   }
 
@@ -234,7 +243,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     }
 
     /**
-     * @return true iff this variant corresponds to breakpoint hitting at all line locations
+     * @return true if this variant corresponds to breakpoint hitting at all line locations
      *         (i.e., "all", "line and all lambdas")
      */
     public boolean isMultiVariant() {
@@ -243,7 +252,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
 
     public boolean shouldUseAsInlineVariant() {
       // No need to show "all" variant in case of the inline breakpoints approach,
-      // it's useful only for the popup based one.
+      // it's useful only for the popup-based one.
       return !isMultiVariant();
     }
 

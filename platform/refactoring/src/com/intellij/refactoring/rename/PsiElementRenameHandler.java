@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiWritableMetaData;
@@ -28,6 +27,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.UiInterceptors;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,7 +134,7 @@ public class PsiElementRenameHandler implements RenameHandler {
 
   public static boolean canRename(@NotNull Project project, Editor editor, PsiElement element) {
     if (element == null) return false;
-    String message = getErrorMessage(project, editor, element);
+    String message = getRenameErrorMessage(project, editor, element);
     if (message != null) {
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message),
                                           RefactoringBundle.message("rename.title"), null);
@@ -144,7 +144,10 @@ public class PsiElementRenameHandler implements RenameHandler {
     return true;
   }
 
-  private static @Nullable @NlsContexts.DialogMessage String getErrorMessage(@NotNull Project project, Editor editor, PsiElement element) {
+  /**
+   * Computes the error for the element if it can't be renamed due to general reasons like a file not being writable.
+   */
+  public static @Nullable @NlsContexts.DialogMessage String getRenameErrorMessage(@NotNull Project project, Editor editor, PsiElement element) {
     boolean hasRenameProcessor =
       !(RenamePsiElementProcessorBase.forPsiElement(element) instanceof RenamePsiElementProcessorBase.DefaultRenamePsiElementProcessor);
     boolean hasWritableMetaData = element instanceof PsiMetaOwner o && o.getMetaData() instanceof PsiWritableMetaData;
@@ -235,15 +238,8 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   public static boolean isVetoed(PsiElement element) {
-    if (element == null ||
-       element instanceof SyntheticElement ||
-       element instanceof PsiNamedElement namedElement && namedElement.getName() == null) {
-      return true;
-    }
-    for (Condition<? super PsiElement> condition: VETO_RENAME_CONDITION_EP.getExtensionList()) {
-      if (condition.value(element)) return true;
-    }
-    return false;
+    if (element == null || element instanceof PsiNamedElement namedElement && namedElement.getName() == null) return true;
+    return ContainerUtil.exists(VETO_RENAME_CONDITION_EP.getExtensionList(), vetoed -> vetoed.value(element));
   }
 
   public static @Nullable PsiElement getElement(@NotNull DataContext dataContext) {

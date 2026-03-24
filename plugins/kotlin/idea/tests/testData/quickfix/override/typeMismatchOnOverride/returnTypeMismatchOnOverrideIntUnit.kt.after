@@ -1,4 +1,5 @@
 // "Specify 'Int' return type" "true"
+// K2_ERROR: Return type of 'fun foo(): Unit' is not a subtype of the return type of the overridden member 'fun foo(): Int' defined in 'A'.
 abstract class A {
     abstract fun foo() : Int;
 }

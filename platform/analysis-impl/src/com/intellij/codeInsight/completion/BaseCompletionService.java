@@ -27,21 +27,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_CONTRIBUTOR;
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS;
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_RESULT_SET_ORDER;
+
 public class BaseCompletionService extends CompletionService {
   private static final Logger LOG = Logger.getInstance(BaseCompletionService.class);
 
   protected @Nullable CompletionProcess apiCompletionProcess;
-
-  @ApiStatus.Internal
-  public static final Key<CompletionContributor> LOOKUP_ELEMENT_CONTRIBUTOR = Key.create("lookup element contributor");
-  /**
-   * Timestamp when a lookup item was added to the {@link CompletionResultSet}
-   */
-  public static final Key<Long> LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS = Key.create("lookup element add time");
-  /**
-   * The order in which the element was added to the {@link CompletionResultSet}
-   */
-  public static final Key<Integer> LOOKUP_ELEMENT_RESULT_SET_ORDER = Key.create("lookup element result set order");
 
   public static final Key<Boolean> FORBID_WORD_COMPLETION = new Key<>("ForbidWordCompletion");
 

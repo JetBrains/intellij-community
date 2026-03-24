@@ -2,18 +2,17 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.withCurrentThreadCoroutineScope
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.ui.Messages
-import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.psi.PsiJavaFile
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
+import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
 import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
@@ -91,30 +90,21 @@ internal object J2KKotlinConfigurationHelper {
         convertFunction: (List<PsiJavaFile>, Project, Module) -> Unit,
         javaFiles: List<PsiJavaFile>
     ) {
-        val configuredModules = configurator.configureAndGetConfiguredModules(project, excludeModules = emptyList())
-        CoroutineScopeService.getCoroutineScope(project).launch {
-            withBackgroundProgress(project, KotlinNJ2KBundle.message("converter.kotlin.wait.for.sync.to.be.finished")) {
-                configurator.queueSyncAndWaitForProjectToBeConfigured(project)
-            }
-            if (configuredModules.contains(module) ||
-                /*
-                * This is needed because, when configuring Kotlin with Gradle, we receive a source root module like `myModule.main` but we need
-                * just the base module `myModule` because the configurator itself returns a collection of configured base modules.
-                */
-                configuredModules.contains(module.toModuleGroup().baseModule)
-            ) {
-                withContext(Dispatchers.EDT) {
+        val configurationService = KotlinProjectConfigurationService.getInstance(module.project)
+        val coroutineScope = configurationService.coroutineScope
+        coroutineScope.launchTracked(Dispatchers.Default) {
+            val autoConfigured = configurationService.autoConfigure(module)
+
+            withContext(Dispatchers.EDT) {
+                if (!autoConfigured) {
+                    val excludeModules = project.modules.asList().filter { it != module }
+                    configurator.configureAndGetConfiguredModules(project, excludeModules)
+                    configurator.queueSyncAndWaitForProjectToBeConfigured(project)
+                }
+
+                withCurrentThreadCoroutineScope {
                     convertFunction(javaFiles, project, module)
                 }
-            }
-        }
-    }
-
-    @Service(Service.Level.PROJECT)
-    private class CoroutineScopeService(val coroutineScope: CoroutineScope) {
-        companion object {
-            fun getCoroutineScope(project: Project): CoroutineScope {
-                return project.service<CoroutineScopeService>().coroutineScope
             }
         }
     }

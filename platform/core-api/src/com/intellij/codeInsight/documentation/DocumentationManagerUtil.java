@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 
 public final class DocumentationManagerUtil {
 
@@ -45,6 +46,7 @@ public final class DocumentationManagerUtil {
   /**
    * @deprecated use {@link #createHyperlink(StringBuilder, String, String, boolean)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static void createHyperlink(
     StringBuilder buffer,

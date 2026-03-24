@@ -1,5 +1,6 @@
 // "Make '<init>' public" "true"
 // PRIORITY: HIGH
+// K2_ERROR: Cannot access 'constructor(): Marker': it is private in 'Marker'.
 
 private class Marker
 

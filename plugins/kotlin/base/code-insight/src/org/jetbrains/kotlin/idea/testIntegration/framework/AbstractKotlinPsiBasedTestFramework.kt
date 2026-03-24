@@ -1,9 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
 import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.java.library.JavaLibraryUtil
-import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
@@ -181,7 +181,7 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             if (clazz != null && MetaAnnotationUtil.isMetaAnnotated(clazz, fqNames)) return annotationEntry
 
             for (fq in findFqNameCandidates(file, fqName)) {
-                val classes = JavaFullClassNameIndex.getInstance().getClasses(fq, element.project, element.resolveScope)
+                val classes = JavaPsiFacade.getInstance(element.project).findClasses(fq, element.resolveScope)
                 for (cls in classes) {
                     if (MetaAnnotationUtil.isMetaAnnotated(cls, fqNames)) {
                         return annotationEntry

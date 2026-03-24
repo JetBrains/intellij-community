@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_kotlinUsedInJava_changeSignature-a.kotlin_module
+  test/FunKt.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/changeSignature/a/fun.kt
+End of files
+Cleaning output files:
+  Usage.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/changeSignature/a/Usage.java
+End of files
+------------------------------------------
+Exit code: OK

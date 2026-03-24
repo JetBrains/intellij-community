@@ -164,7 +164,7 @@ public final class ConsoleTokenUtil {
     MarkupModel model = DocumentMarkupModel.forDocument(editor.getDocument(), project, false);
     for (RangeHighlighter tokenMarker : model.getAllHighlighters()) {
       ConsoleViewContentType contentType = getTokenType(tokenMarker);
-      if (contentType != null && contentType.getAttributesKey() == null && tokenMarker instanceof RangeHighlighterEx) {
+      if (tokenMarker.isValid() && contentType != null && contentType.getAttributesKey() == null && tokenMarker instanceof RangeHighlighterEx) {
         ((RangeHighlighterEx)tokenMarker).setTextAttributes(contentType.getAttributes());
       }
     }

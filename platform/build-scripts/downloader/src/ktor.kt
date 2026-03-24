@@ -20,9 +20,7 @@ import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.request.get
 import io.ktor.client.request.head
-import io.ktor.client.request.post
 import io.ktor.client.request.prepareGet
-import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
@@ -42,6 +40,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
@@ -183,12 +182,6 @@ suspend fun lastModifiedFromHeadRequest(url: String): String? = spanBuilder("las
   }
 }
 
-suspend fun postData(url: String, data: ByteArray): Unit = withContext(Dispatchers.IO) {
-  httpClient.value.post(url) {
-    setBody(data)
-  }
-}
-
 suspend fun downloadAsText(url: String): String {
   return spanBuilder("download").setAttribute("url", url).useWithScope {
     withContext(Dispatchers.IO) {
@@ -198,12 +191,12 @@ suspend fun downloadAsText(url: String): String {
 }
 
 fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
-  return runBlocking(Dispatchers.IO) {
+  return runBlocking {
     downloadFileToCacheLocation(url, communityRoot)
   }
 }
 
-fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot, credentialsProvider: () -> Credentials): Path = runBlocking(Dispatchers.IO) {
+fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot, credentialsProvider: () -> Credentials): Path = runBlocking {
   downloadFileToCacheLocation(url, communityRoot, credentialsProvider)
 }
 
@@ -257,20 +250,18 @@ private suspend fun downloadFileToCacheLocation(
   url: String,
   communityRoot: BuildDependenciesCommunityRoot,
   authConfigSettings: (AuthConfig.() -> Unit)?,
-): Path {
+): Path = withContext(Dispatchers.IO) {
   BuildDependenciesDownloader.cleanUpIfRequired(communityRoot)
 
   val target = BuildDependenciesDownloader.getTargetFile(communityRoot, url)
   val targetPath = target.toString()
-  val lock = fileLocks.getLock(targetPath)
-  lock.lock()
-  try {
+  fileLocks.getLock(targetPath).withLock {
     if (Files.exists(target)) {
       Span.current().addEvent(
         "use asset from cache", Attributes.of(
-        AttributeKey.stringKey("url"), url,
-        AttributeKey.stringKey("target"), targetPath,
-      )
+          AttributeKey.stringKey("url"), url,
+          AttributeKey.stringKey("target"), targetPath,
+        )
       )
 
       // update file modification time to maintain FIFO caches, i.e., in a persistent cache dir on TeamCity agent
@@ -280,12 +271,12 @@ private suspend fun downloadFileToCacheLocation(
       catch (e: IOException) {
         Span.current().addEvent("update asset file modification time failed: $e")
       }
-      return target
+      return@withLock target
     }
 
-    println(" * Downloading $url")
+    System.err.println(" * Downloading $url")
 
-    return spanBuilder("download").setAttribute("url", url).setAttribute("target", targetPath).useWithScope {
+    spanBuilder("download").setAttribute("url", url).setAttribute("target", targetPath).useWithScope {
       retryWithExponentialBackOff(isRetryAllowed = { e -> downloadFileIsRetryAllowed(e) }) {
         // save to the same disk to ensure that move will be atomic and not as a copy
         val tempFile = target.parent.resolve("${target.fileName}-${(Instant.now().epochSecond - 1634886185).toString(36)}-${Instant.now().nano.toString(36)}".take(255))
@@ -360,9 +351,6 @@ private suspend fun downloadFileToCacheLocation(
 
       target
     }
-  }
-  finally {
-    lock.unlock()
   }
 }
 

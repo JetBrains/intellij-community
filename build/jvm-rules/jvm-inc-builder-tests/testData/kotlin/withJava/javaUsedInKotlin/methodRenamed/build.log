@@ -1,0 +1,28 @@
+================ Step #1 =================
+Cleaning output files:
+  JavaClass.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/methodRenamed/a/JavaClass.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_javaUsedInKotlin_methodRenamed-a.kotlin_module
+  WillBeResolvedToOtherKt.class
+  WillBeUnresolvedKt.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/methodRenamed/a/willBeResolvedToOther.kt
+  kotlin/withJava/javaUsedInKotlin/methodRenamed/a/willBeUnresolved.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_javaUsedInKotlin_methodRenamed-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/methodRenamed/a/willBeResolvedToOther.kt
+  kotlin/withJava/javaUsedInKotlin/methodRenamed/a/willBeUnresolved.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -115,7 +115,7 @@ public final class PyDocstringTypesInspection extends PyInspection {
         return type.getName();
       }
       else {
-        return PyNames.UNKNOWN_TYPE;
+        return PyNames.ANY_TYPE;
       }
     }
 

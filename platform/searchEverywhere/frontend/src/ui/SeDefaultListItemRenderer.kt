@@ -23,6 +23,8 @@ class SeDefaultListItemRenderer {
       is SeResultListItemRow -> {
         when (val presentation = value.item.presentation) {
           is SeBasicItemPresentationImpl -> {
+            uiInspectorContext = presentation.uiInspectorInfo.asPropertyBeans()
+
             presentation.iconId?.icon()?.let { icon(it) }
 
             if (selected) {

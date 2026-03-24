@@ -69,7 +69,7 @@
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
-    <orderEntry type="module" module-name="intellij.gradle.common" />
+    <orderEntry type="module" module-name="intellij.gradle" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet" />

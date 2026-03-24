@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.PlaceProvider
 import com.intellij.ui.SimpleColoredText
@@ -104,8 +105,12 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
 
   val coloredText: SimpleColoredText = SimpleColoredText()
 
-  var tooltipText: @NlsContexts.Tooltip String? = null
+  var tooltipHtmlText: HtmlChunk? = null
     private set
+
+  @Deprecated("Use tooltipHtmlText instead")
+  val tooltipText: @NlsContexts.Tooltip String?
+    get() = tooltipHtmlText?.toString()
 
   private var defaultStyle = -1
 
@@ -347,11 +352,27 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
     update()
   }
 
+  /**
+   * Tooltip text is allowed to contain HTML markup. Construct the text using [HtmlChunk].
+   * If your text doesn't suppose to contain HTML markup,
+   * prefer using [HtmlChunk.text] to avoid accidental HTML injections.
+   */
+  fun setTooltipText(html: HtmlChunk?): TabInfo {
+    val old = tooltipHtmlText
+    if (old != html) {
+      tooltipHtmlText = html
+      changeSupport.firePropertyChange(TEXT, old, tooltipHtmlText)
+    }
+    return this
+  }
+
+  @Deprecated("Use setTooltipText(HtmlChunk) to avoid accidental HTML injections")
   fun setTooltipText(text: @NlsContexts.Tooltip String?): TabInfo {
-    val old = tooltipText
-    if (old != text) {
-      tooltipText = text
-      changeSupport.firePropertyChange(TEXT, old, tooltipText)
+    val old = tooltipHtmlText
+    val new = text?.let { HtmlChunk.raw(it) }
+    if (old != new) {
+      tooltipHtmlText = new
+      changeSupport.firePropertyChange(TEXT, old, new)
     }
     return this
   }

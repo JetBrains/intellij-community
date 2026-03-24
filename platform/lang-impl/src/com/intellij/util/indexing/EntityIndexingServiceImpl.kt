@@ -8,10 +8,6 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 internal class EntityIndexingServiceImpl : EntityIndexingServiceEx {
 
-  override fun createBuildableInfoBuilder(): BuildableRootsChangeRescanningInfo {
-    return BuildableRootsChangeRescanningInfoImpl()
-  }
-
   override fun createWorkspaceChangedEventInfo(changes: List<EntityChange<*>>): RootsChangeRescanningInfo {
     return WorkspaceEventRescanningInfo(changes)
   }

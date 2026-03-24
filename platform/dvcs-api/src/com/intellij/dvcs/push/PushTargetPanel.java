@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push;
 
 import com.intellij.dvcs.push.ui.PushTargetEditorListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.Nls;
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JPanel;
 
-public abstract class PushTargetPanel<T extends PushTarget> extends JPanel {
+public abstract class PushTargetPanel<T extends PushTarget> extends JPanel implements Disposable {
 
   /**
    * @param isActive true if appropriate repository changes will be pushed, a.e. if repository checked
@@ -42,5 +43,9 @@ public abstract class PushTargetPanel<T extends PushTarget> extends JPanel {
 
   public boolean showSourceWhenEditing() {
     return true;
+  }
+
+  @Override
+  public void dispose() {
   }
 }

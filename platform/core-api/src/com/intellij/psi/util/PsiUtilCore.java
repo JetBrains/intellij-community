@@ -635,7 +635,7 @@ public class PsiUtilCore {
   }
 
   public static @NotNull Project getProjectInReadAction(@NotNull PsiElement element) {
-    return ReadAction.compute(() -> element.getProject());
+    return ReadAction.computeBlocking(() -> element.getProject());
   }
 
   @Contract("null -> null;!null -> !null")

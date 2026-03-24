@@ -1,0 +1,11 @@
+- name: dist.all/lib/intellij.libraries.jsch.agent.proxy.jar
+  modules:
+  - name: intellij.libraries.jsch.agent.proxy
+    libraries:
+      jsch-agent-proxy:
+      - name: $MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.connector-factory/0/jsch.agentproxy.connector-factory-0.jar
+      - name: $MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.core/0/jsch.agentproxy.core-0.jar
+      - name: $MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.usocket-jna/0/jsch.agentproxy.usocket-jna-0.jar
+      - name: $MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.usocket-nc/0/jsch.agentproxy.usocket-nc-0.jar
+      - name: $MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.sshagent/0/jsch.agentproxy.sshagent-0.jar
+      - name: $MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.pageant/0/jsch.agentproxy.pageant-0.jar

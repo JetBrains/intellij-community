@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -136,7 +136,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   @Override
   public boolean handlesElement(PsiElement element) {
-    return element instanceof PsiClass || 
+    return element instanceof PsiClass ||
            element instanceof PsiMethod ||
            element instanceof PsiRecordComponent ||
            element instanceof PsiField ||
@@ -326,7 +326,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       PsiClass recordClass = component.getContainingClass();
       assert recordClass != null;
       PsiMethod constructor = JavaPsiRecordUtil.findCanonicalConstructor(recordClass);
-      if (constructor == null || constructor instanceof SyntheticElement) return additional; 
+      if (constructor == null || constructor instanceof SyntheticElement) return additional;
       PsiRecordHeader header = recordClass.getRecordHeader();
       assert header != null;
       int index = ArrayUtil.indexOf(header.getRecordComponents(), component);
@@ -493,7 +493,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     }
 
     if (!delegatingParams.isEmpty()) {
-      SafeDeleteParameterCallHierarchyUsageInfo parameterHierarchyUsageInfo = delegatingParams.get(0);
+      SafeDeleteParameterCallHierarchyUsageInfo parameterHierarchyUsageInfo = delegatingParams.getFirst();
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         result.addAll(delegatingParams);
       }
@@ -533,7 +533,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         result.addAll(calleesSafeToDelete);
       }
       else {
-        PsiMember member = calleesSafeToDelete.get(0).getCallerMember();
+        PsiMember member = calleesSafeToDelete.getFirst().getCallerMember();
         List<UsageInfo> list = new ArrayList<>();
         SafeDeleteJavaCalleeChooser chooser = new SafeDeleteJavaCalleeChooser(member, project, list) {
           @Override
@@ -1013,7 +1013,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   private static SafeDeleteParameterCallHierarchyUsageInfo createParameterCallHierarchyUsageInfo(PsiMethod called,
                                                                                                  PsiParameter calledParameter,
-                                                                                                 PsiMethod caller, 
+                                                                                                 PsiMethod caller,
                                                                                                  PsiParameter parameterInCaller) {
     return ApplicationManager.getApplication().isUnitTestMode()
            ? new SafeDeleteParameterCallHierarchyUsageInfo(caller, parameterInCaller, caller, parameterInCaller)
@@ -1135,9 +1135,11 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
                                             PsiParameter parameter) {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass != null) {
-      int parameterIndex = method.getParameterList().getParameterIndex(parameter);
       PsiMethod methodCopy = (PsiMethod)method.copy();
-      methodCopy.getParameterList().getParameters()[parameterIndex].delete();
+      if (!containingClass.isRecord() || !JavaPsiRecordUtil.isCompactConstructor(method)) {
+        int parameterIndex = method.getParameterList().getParameterIndex(parameter);
+        methodCopy.getParameterList().getParameters()[parameterIndex].delete();
+      }
       ConflictsUtil.checkMethodConflicts(containingClass, method, methodCopy, conflicts);
     }
   }

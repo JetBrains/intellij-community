@@ -70,8 +70,8 @@ public final class VelocityWrapper {
       ri.setProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_PACKAGES, INTROSPECTOR_RESTRICT_PACKAGES);
       ri.setProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_CLASSES, INTROSPECTOR_RESTRICT_CLASSES);
 
-      ri.setProperty(RuntimeConstants.RESOURCE_LOADER, "includes");
-      ri.setProperty("includes.resource.loader.instance", new ResourceLoader() {
+      ri.setProperty(RuntimeConstants.RESOURCE_LOADERS, "includes");
+      ri.setProperty("resource.loader.includes.instance", new ResourceLoader() {
         @Override
         public void init(ExtProperties configuration) {
         }

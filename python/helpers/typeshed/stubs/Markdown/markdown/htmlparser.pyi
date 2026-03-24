@@ -7,7 +7,6 @@ from markdown import Markdown
 
 spec: ModuleSpec
 commentclose: re.Pattern[str]
-commentabruptclose: re.Pattern[str]
 blank_line_re: re.Pattern[str]
 
 class HTMLExtractor(htmlparser.HTMLParser):

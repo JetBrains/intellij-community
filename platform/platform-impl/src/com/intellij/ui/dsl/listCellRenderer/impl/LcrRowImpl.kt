@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GroupHeaderSeparator
+import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.gridLayout.GridLayout
@@ -67,6 +68,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   private var separator: LcrSeparatorImpl? = null
   private var gap = LcrRow.Gap.DEFAULT
 
+  @Deprecated("Will be removed because we want to get rid of swing dependency for RemDev")
   override val list: JList<out T>
     get() = listCellRendererParams!!.list
   override val value: T
@@ -81,9 +83,10 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   override var background: Color? = null
   override var selectionColor: Color? = null
   override var toolTipText: @NlsContexts.Tooltip String? = null
-  override var rowHeight: Int? = JBUI.CurrentTheme.List.rowHeight()
+  override var rowHeight: Int? = null
   override var rowWidth: Int? = null
   override var uiInspectorContext: List<PropertyBean>? = null
+  override var selectable: Boolean = true
 
   private var foreground: Color = JBUI.CurrentTheme.List.FOREGROUND
 
@@ -141,7 +144,9 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     cells.clear()
     separator = null
     gap = LcrRow.Gap.DEFAULT
+    selectable = true
     listCellRendererParams = ListCellRendererParams(list, value, index, isSelected, cellHasFocus)
+    rowHeight = JBUI.CurrentTheme.List.rowHeight()
 
     val renderingType = getRenderingType(list, index)
     // The list is not focused when isSwingPopup = false
@@ -189,6 +194,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     result.applySeparator(listSeparator, index == 0, list)
     result.setToolTipText(toolTipText)
     result.providerUiInspectorContext = uiInspectorContext
+    result.selectable = selectable
 
     var minHeight = 0
 
@@ -210,6 +216,9 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     }
 
     applyRowStyle(result, renderingType, rowHeight ?: (minHeight + JBUIScale.scale(2)), rowWidth, roundSelectionTop, roundSelectionBottom)
+
+    // Free references
+    listCellRendererParams = null
 
     return result
   }
@@ -299,7 +308,8 @@ private class RendererCache {
   }
 }
 
-private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRendererComponent, UiInspectorContextProvider {
+private class RendererPanel(key: RowKey) :
+  JPanel(BorderLayout()), KotlinUIDslRendererComponent, UiInspectorContextProvider, ComboBox.SelectableItem {
 
   private val cellsLayout = GridLayout()
 
@@ -311,8 +321,8 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
   private val selectablePanel = SelectablePanel()
   private val separator = GroupHeaderSeparator(if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Popup.separatorLabelInsets()
                                                else JBUI.insets(UIUtil.getListCellVPadding(), UIUtil.getListCellHPadding()))
-
   var providerUiInspectorContext: List<PropertyBean>? = null
+  var selectable: Boolean = true
 
   init {
     add(separator, BorderLayout.NORTH)
@@ -321,6 +331,9 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     cellsPanel.isOpaque = false
     selectablePanel.layout = BorderLayout()
     selectablePanel.add(cellsPanel, BorderLayout.CENTER)
+    
+    selectablePanel.foreground = JBColor.PanelForeground
+    cellsPanel.foreground = JBColor.PanelForeground
 
     val builder = RowsGridBuilder(cellsPanel)
     builder.resizableRow()
@@ -331,6 +344,10 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
 
   override fun getUiInspectorContext(): List<PropertyBean?> {
     return providerUiInspectorContext ?: emptyList()
+  }
+
+  override fun isSelectable(): Boolean {
+    return selectable
   }
 
   override var listSeparator: ListSeparator? = null

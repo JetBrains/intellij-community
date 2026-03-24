@@ -82,7 +82,9 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   protected void unregisterInTree() {
     RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
-    if (!isValid()) return;
+    if (!isValid(node)) {
+      return;
+    }
     IntervalTreeImpl<?> tree = node.getTree();
     tree.checkMax(true);
     DocumentEx document = getCachedDocument();
@@ -91,7 +93,10 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       myNode = null;
     }
     else {
-      document.removeRangeMarker(this);
+      boolean removed = document.removeRangeMarker(this);
+      if (!removed && LOG.isDebugEnabled()) {
+        LOG.debug("RMI.unregisterInTree: removeRangeMarker=false for "+this);
+      }
     }
     tree.checkMax(true);
   }

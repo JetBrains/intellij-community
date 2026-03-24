@@ -2,7 +2,12 @@
 
 import org.jetbrains.annotations.NotNull;
 
-record Problem(int myLine, int myColumn, @NotNull String code) {
+record Problem(int myLine, @NotNull String code, int myColumn) {
+    // Notice 1: the names of parameters differs from declaration order of instance fields
+    // Notice 2: the order of parameters differs from declaration order of instance fields
+    Problem(int line, int column, @NotNull String code) {
+        this(line, code, column);
+    }
 
     static Problem make() {
         int lineArg = 0;

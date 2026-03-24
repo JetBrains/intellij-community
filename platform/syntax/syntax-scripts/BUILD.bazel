@@ -11,4 +11,18 @@ jvm_library(
     "@lib//:jetbrains-annotations",
   ]
 )
+
+jvm_library(
+  name = "scripts_test_lib",
+  module_name = "intellij.platform.syntax.scripts",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":scripts"]
+)
 ### auto-generated section `build intellij.platform.syntax.scripts` end
+
+### auto-generated section `iml intellij.platform.syntax.scripts` start
+exports_files([
+  "intellij.platform.syntax.scripts.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.syntax.scripts` end

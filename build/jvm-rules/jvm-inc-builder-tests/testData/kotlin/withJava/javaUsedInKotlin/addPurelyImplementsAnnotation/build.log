@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  SmartList.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/addPurelyImplementsAnnotation/a/SmartList.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_javaUsedInKotlin_addPurelyImplementsAnnotation-a.kotlin_module
+  TestClassKt.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/addPurelyImplementsAnnotation/a/TestClass.kt
+End of files
+------------------------------------------
+Exit code: ERROR

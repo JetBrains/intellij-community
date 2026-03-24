@@ -260,6 +260,7 @@ c:com.intellij.usages.UsageInfoToUsageConverter$TargetElementsDescriptor
 f:com.intellij.usages.UsageLimitUtil
 - sf:USAGES_LIMIT:I
 - <init>():V
+- s:getSearchResultLimit():I
 - s:showTooManyUsagesWarning(com.intellij.openapi.project.Project,java.lang.String):com.intellij.usages.UsageLimitUtil$Result
 e:com.intellij.usages.UsageLimitUtil$Result
 - java.lang.Enum
@@ -550,6 +551,7 @@ com.intellij.usages.rules.UsageFilteringRule
 - isVisible(com.intellij.usages.Usage):Z
 - isVisible(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):Z
 com.intellij.usages.rules.UsageFilteringRuleProvider
+- sf:RULES_CHANGED:com.intellij.util.messages.Topic
 - createFilteringActions(com.intellij.usages.UsageView):com.intellij.openapi.actionSystem.AnAction[]
 - getActiveRules(com.intellij.openapi.project.Project):com.intellij.usages.rules.UsageFilteringRule[]
 - getApplicableRules(com.intellij.openapi.project.Project):java.util.Collection

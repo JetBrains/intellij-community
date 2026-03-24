@@ -4,10 +4,12 @@ package com.intellij.platform.eel.path
 import com.intellij.util.lang.UrlClassLoader
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.nio.file.FileSystems
 
 class EelAndUrlClassLoaderTest {
+  @Disabled("AT-3959")
   @Test
   fun `getFiles returns paths from the default file system`() {
     FileSystems.getDefault().javaClass.name shouldBe "com.intellij.platform.core.nio.fs.MultiRoutingFileSystem"

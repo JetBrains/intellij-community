@@ -96,14 +96,14 @@ public class LanguageTextField extends EditorTextField {
       final PsiFileFactory factory = PsiFileFactory.getInstance(notNullProject);
 
       long stamp = LocalTimeCounter.currentTime();
-      PsiFile psiFile = ReadAction.compute(
+      PsiFile psiFile = ReadAction.computeBlocking(
         () -> factory.createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, value, stamp, true, false));
       documentCreator.customizePsiFile(psiFile);
 
       // No need to guess project in getDocument - we already know it
       Document document;
       try (AccessToken ignored = ProjectLocator.withPreferredProject(psiFile.getVirtualFile(), notNullProject)) {
-        document = ReadAction.compute(() -> PsiDocumentManager.getInstance(notNullProject).getDocument(psiFile));
+        document = ReadAction.computeBlocking(() -> PsiDocumentManager.getInstance(notNullProject).getDocument(psiFile));
       }
       assert document != null;
       return document;

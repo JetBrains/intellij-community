@@ -4,6 +4,7 @@ package com.intellij.python.hatch.impl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.hatch.icons.PythonHatchIcons
+import com.intellij.python.pyproject.model.internal.pyProjectToml.TomlDependencySpecification
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
@@ -26,5 +27,10 @@ internal class HatchTool : Tool {
 
   override suspend fun getProjectName(projectToml: TomlTable): @NlsSafe String? = null
 
-  override suspend fun getProjectStructure(entries: Map<ProjectName, PyProjectTomlProject>, rootIndex: Map<Directory, ProjectName>): ProjectStructureInfo? = null
+  override suspend fun getProjectStructure(
+    entries: Map<ProjectName, PyProjectTomlProject>,
+    rootIndex: Map<Directory, ProjectName>,
+  ): ProjectStructureInfo? = null
+
+  override fun getTomlDependencySpecifications(): List<TomlDependencySpecification> = emptyList()
 }

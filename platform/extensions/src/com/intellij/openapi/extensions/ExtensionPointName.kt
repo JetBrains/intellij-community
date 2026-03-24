@@ -39,6 +39,7 @@ import kotlin.streams.asStream
  */
 class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName<T>(name) {
   companion object {
+    // deprecated - use constructor instead.
     @JvmStatic
     fun <T : Any> create(name: @NonNls String): ExtensionPointName<T> = ExtensionPointName(name)
   }

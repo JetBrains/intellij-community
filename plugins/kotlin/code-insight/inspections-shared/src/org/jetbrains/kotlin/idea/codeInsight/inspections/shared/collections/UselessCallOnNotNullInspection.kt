@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections
 
+import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -27,59 +29,84 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 //  Once it is fixed, it should be used for both K1 and K2.
 //  See: KT-65376
 class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
-    override val uselessFqNames: Map<CallableId, Conversion> = mapOf(
-        topLevelCallableId("kotlin.collections", "orEmpty") to Conversion.Delete,
-        topLevelCallableId("kotlin.sequences", "orEmpty") to Conversion.Delete,
-        topLevelCallableId("kotlin.text", "orEmpty") to Conversion.Delete,
-        topLevelCallableId("kotlin.text", "isNullOrEmpty") to Conversion.Replace("isEmpty"),
-        topLevelCallableId("kotlin.text", "isNullOrBlank") to Conversion.Replace("isBlank"),
-        topLevelCallableId("kotlin.collections", "isNullOrEmpty") to Conversion.Replace("isEmpty")
+    override val conversions: List<QualifiedFunctionCallConversion> = listOf(
+        UselessOrEmptyConversion(topLevelCallableId("kotlin.collections", "orEmpty")),
+        UselessOrEmptyConversion(topLevelCallableId("kotlin.sequences", "orEmpty")),
+        UselessOrEmptyConversion(topLevelCallableId("kotlin.text", "orEmpty")),
+
+        UselessIsNullOrEmptyConversion(topLevelCallableId("kotlin.text", "isNullOrEmpty"), replacementName = "isEmpty"),
+        UselessIsNullOrEmptyConversion(topLevelCallableId("kotlin.text", "isNullOrBlank"), replacementName = "isBlank"),
+        UselessIsNullOrEmptyConversion(topLevelCallableId("kotlin.collections", "isNullOrEmpty"), replacementName = "isEmpty")
     )
 
-    override val uselessNames = uselessFqNames.keys.toShortNames()
+    private inner class UselessOrEmptyConversion(
+        override val targetCallableId: CallableId,
+    ) : QualifiedFunctionCallConversion {
+        context(_: KaSession)
+        override fun createProblemDescriptor(
+            manager: InspectionManager,
+            expression: KtQualifiedExpression,
+            calleeExpression: KtExpression,
+            isOnTheFly: Boolean
+        ): ProblemDescriptor? {
+            val safeExpression = expression as? KtSafeQualifiedExpression
+            val notNullType = expression.receiverExpression.isDefinitelyNotNull
+            val defaultRange =
+                TextRange(expression.operationTokenNode.startOffset, calleeExpression.endOffset).shiftRight(-expression.startOffset)
+            return if (notNullType) {
+                manager.createProblemDescriptor(
+                    expression,
+                    defaultRange,
+                    KotlinBundle.message("redundant.call.on.not.null.type"),
+                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                    isOnTheFly,
+                    RemoveUselessCallFix()
+                )
+            } else if (safeExpression != null) {
+                manager.createProblemDescriptor(
+                    safeExpression.operationTokenNode.psi,
+                    KotlinBundle.message("this.call.is.redundant.with"),
+                    ReplaceWithDotCallFix(safeExpression).asQuickFix(),
+                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                    isOnTheFly,
+                )
+            } else {
+                null
+            }
+        }
+    }
 
-    context(_: KaSession)
-    override fun QualifiedExpressionVisitor.suggestConversionIfNeeded(
-        expression: KtQualifiedExpression,
-        calleeExpression: KtExpression,
-        conversion: Conversion
-    ) {
-        val newName = (conversion as? Conversion.Replace)?.replacementName
+    private inner class UselessIsNullOrEmptyConversion(
+        override val targetCallableId: CallableId,
+        val replacementName: String,
+    ) : QualifiedFunctionCallConversion {
+        context(_: KaSession)
+        override fun createProblemDescriptor(
+            manager: InspectionManager,
+            expression: KtQualifiedExpression,
+            calleeExpression: KtExpression,
+            isOnTheFly: Boolean
+        ): ProblemDescriptor? {
+            val safeExpression = expression as? KtSafeQualifiedExpression
+            val notNullType = expression.receiverExpression.isDefinitelyNotNull
+            val defaultRange =
+                TextRange(expression.operationTokenNode.startOffset, calleeExpression.endOffset).shiftRight(-expression.startOffset)
 
-        val safeExpression = expression as? KtSafeQualifiedExpression
-        val notNullType = expression.receiverExpression.isDefinitelyNotNull
-        val defaultRange =
-            TextRange(expression.operationTokenNode.startOffset, calleeExpression.endOffset).shiftRight(-expression.startOffset)
-        if (newName != null && (notNullType || safeExpression != null)) {
+            if (!notNullType && safeExpression == null) {
+                return null
+            }
+
             val fixes = listOfNotNull(
-                createRenameUselessCallFix(expression, newName),
+                createRenameUselessCallFix(expression, replacementName),
                 safeExpression?.let { LocalQuickFix.from(ReplaceWithDotCallFix(safeExpression)) }
             )
-            val descriptor = holder.manager.createProblemDescriptor(
+            return manager.createProblemDescriptor(
                 expression,
                 defaultRange,
                 KotlinBundle.message("call.on.not.null.type.may.be.reduced"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                 isOnTheFly,
                 *fixes.toTypedArray()
-            )
-            holder.registerProblem(descriptor)
-        } else if (notNullType) {
-            val descriptor = holder.manager.createProblemDescriptor(
-                expression,
-                defaultRange,
-                KotlinBundle.message("redundant.call.on.not.null.type"),
-                ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                isOnTheFly,
-                RemoveUselessCallFix()
-            )
-            holder.registerProblem(descriptor)
-        } else if (safeExpression != null) {
-            holder.registerProblem(
-              safeExpression.operationTokenNode.psi,
-              KotlinBundle.message("this.call.is.redundant.with"),
-              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-              ReplaceWithDotCallFix(safeExpression).asQuickFix(),
             )
         }
     }

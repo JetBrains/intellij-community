@@ -11,8 +11,8 @@ class JvmOverloadsFunctions {
         foo(a.getClass(), a);
 
         // Before KT-28556 is fixed the second not-nullable parameter wasn't marked as it shoud, so there were no warnings on it
-        foo(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>, <warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>, true, <warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
-        foo(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>, <warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>, true);
-        foo(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>, <warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+        foo(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>, <warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>, true, <warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
+        foo(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>, <warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>, true);
+        foo(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>, <warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     }
 }

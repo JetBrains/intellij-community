@@ -70,6 +70,9 @@
     <registryKey defaultValue="5" description="Request polling attempts" key="gitlab.request.polling.attempts"/>
     <registryKey defaultValue="62" description="Days until an entry in the viewed/not viewed state store is considered stale"
                  key="gitlab.viewed.state.stale.timeout"/>
+    <registryKey key="gitlab.merge.requests.load.project.with.rest" defaultValue="true"
+                 description="Load the project details purely with REST API"/>
+
     <registryKey defaultValue="0" description="The number of merge requests at the top of the list to pre-emptively load and cache"
                  key="gitlab.merge.requests.cached.from.list"/>
 

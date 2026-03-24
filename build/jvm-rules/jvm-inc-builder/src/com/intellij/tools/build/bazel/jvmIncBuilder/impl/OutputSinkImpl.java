@@ -35,11 +35,13 @@ public class OutputSinkImpl implements OutputSink {
   private final Set<NodeSource> mySourcesWithImplicitTypes = new HashSet<>();
   private final List<BuilderWithSources> myBuilders = new ArrayList<>();
   private final List<NodeWithSources> myNodes = new ArrayList<>();
+  private boolean myKeepSelfLookupUsages;
 
   public OutputSinkImpl(StorageManager sm) throws IOException {
     myOut = sm.getOutputBuilder();
     ZipOutputBuilderImpl abiOut = sm.getAbiOutputBuilder();
     myJavaAbiOut = abiOut != null? new JavaAbiFilter(abiOut) : null;
+    myKeepSelfLookupUsages = sm.getContext().getKotlinCriStoragePath() != null;
   }
 
   @Override
@@ -101,12 +103,10 @@ public class OutputSinkImpl implements OutputSink {
   @Override
   public Iterable<NodeWithSources> getNodes() {
     Map<NodeSource, Set<Usage>> fileLocalUsages = new HashMap<>();
-    Set<NodeSource> registeredSources = new HashSet<>();
 
     for (BuilderWithSources bs : myBuilders) {
       JvmClassNodeBuilder builder = bs.builder();
       Iterable<NodeSource> sources = bs.sources();
-      Iterators.collect(sources, registeredSources);
       if (Iterators.find(sources, mySourcesWithImplicitTypes::contains) != null) {
         builder.setHasImplicitTypes();
       }
@@ -127,34 +127,37 @@ public class OutputSinkImpl implements OutputSink {
 
       var node = builder.getResult();
 
-      Iterable<LookupNameUsage> lookups = Iterators.flat(Iterators.map(node.getMetadata(KotlinMeta.class), meta -> {
-        KmDeclarationContainer container = meta.getDeclarationContainer();
-        final JvmNodeReferenceID owner;
-        LookupNameUsage clsUsage = null;
-        if (container instanceof KmPackage) {
-          owner = new JvmNodeReferenceID(JvmClass.getPackageName(node.getName()));
-        }
-        else if (container instanceof KmClass) {
-          owner = new JvmNodeReferenceID(((KmClass)container).getName());
-          String ownerName = owner.getNodeName();
-          String scopeName = JvmClass.getPackageName(ownerName);
-          String symbolName = scopeName.isEmpty()? ownerName : ownerName.substring(scopeName.length() + 1);
-          clsUsage = new LookupNameUsage(scopeName, symbolName);
-        }
-        else {
-          owner = null;
-        }
-        if (owner == null) {
-          return Collections.emptyList();
-        }
-        Iterable<LookupNameUsage> memberLookups =
-          Iterators.map(Iterators.unique(Iterators.flat(Iterators.map(container.getFunctions(), KmFunction::getName), Iterators.map(container.getProperties(), KmProperty::getName))), name -> new LookupNameUsage(owner, name));
-        return clsUsage == null? memberLookups : Iterators.flat(Iterators.asIterable(clsUsage), memberLookups);
-      }));
+      if (!myKeepSelfLookupUsages) {
+        // collect self-lookups for later filtering
+        Iterable<LookupNameUsage> lookups = Iterators.flat(Iterators.map(node.getMetadata(KotlinMeta.class), meta -> {
+          KmDeclarationContainer container = meta.getDeclarationContainer();
+          final JvmNodeReferenceID owner;
+          LookupNameUsage clsUsage = null;
+          if (container instanceof KmPackage) {
+            owner = new JvmNodeReferenceID(JvmClass.getPackageName(node.getName()));
+          }
+          else if (container instanceof KmClass) {
+            owner = new JvmNodeReferenceID(((KmClass)container).getName());
+            String ownerName = owner.getNodeName();
+            String scopeName = JvmClass.getPackageName(ownerName);
+            String symbolName = scopeName.isEmpty()? ownerName : ownerName.substring(scopeName.length() + 1);
+            clsUsage = new LookupNameUsage(scopeName, symbolName);
+          }
+          else {
+            owner = null;
+          }
+          if (owner == null) {
+            return Collections.emptyList();
+          }
+          Iterable<LookupNameUsage> memberLookups =
+            Iterators.map(Iterators.unique(Iterators.flat(Iterators.map(container.getFunctions(), KmFunction::getName), Iterators.map(container.getProperties(), KmProperty::getName))), name -> new LookupNameUsage(owner, name));
+          return clsUsage == null? memberLookups : Iterators.flat(Iterators.asIterable(clsUsage), memberLookups);
+        }));
 
-      for (LookupNameUsage lookup : lookups) {
-        for (NodeSource src : sources) {
-          fileLocalUsages.computeIfAbsent(src, s -> new HashSet<>()).add(lookup);
+        for (LookupNameUsage lookup : lookups) {
+          for (NodeSource src : sources) {
+            fileLocalUsages.computeIfAbsent(src, s -> new HashSet<>()).add(lookup);
+          }
         }
       }
 
@@ -165,10 +168,6 @@ public class OutputSinkImpl implements OutputSink {
 
     for (Map.Entry<NodeSource, Set<Usage>> entry : myPerSourceAdditionalUsages.entrySet()) {
       NodeSource src = entry.getKey();
-      if (!registeredSources.contains(src)) {
-        // create synthetic FileNode instances for those sources only, that have at least one compiled ClassNode associated
-        continue;
-      }
       Set<Usage> usages = entry.getValue();
       Set<Usage> selfUsages = fileLocalUsages.get(src);
       if (selfUsages != null) {

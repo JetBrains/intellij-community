@@ -18,6 +18,7 @@ from django.db.models.expressions import Combinable, Expression
 from django.db.models.fields import NOT_PROVIDED, Field, _ErrorMessagesMapping
 from django.utils.choices import _Choices
 from django.utils.functional import _StrOrPromise
+from typing_extensions import override
 
 # __set__ value type
 _ST = TypeVar("_ST")
@@ -41,9 +42,9 @@ class BaseSpatialField(Field[_ST, _GT]):
     srid: int
     def __init__(
         self,
-        verbose_name: _StrOrPromise | None = ...,
-        srid: int = ...,
-        spatial_index: bool = ...,
+        verbose_name: _StrOrPromise | None = None,
+        srid: int = 4326,
+        spatial_index: bool = True,
         *,
         name: str | None = ...,
         primary_key: bool = ...,
@@ -68,6 +69,7 @@ class BaseSpatialField(Field[_ST, _GT]):
         validators: Iterable[_ValidatorCallable] = ...,
         error_messages: _ErrorMessagesMapping | None = ...,
     ) -> None: ...
+    @override
     def db_type(self, connection: Any) -> Any: ...
     def spheroid(self, connection: Any) -> Any: ...
     def units(self, connection: Any) -> Any: ...
@@ -75,22 +77,24 @@ class BaseSpatialField(Field[_ST, _GT]):
     def geodetic(self, connection: Any) -> Any: ...
     def get_placeholder(self, value: Any, compiler: Any, connection: Any) -> Any: ...
     def get_srid(self, obj: Any) -> Any: ...
+    @override
     def get_db_prep_value(self, value: Any, connection: Any, *args: Any, **kwargs: Any) -> Any: ...
     def get_raster_prep_value(self, value: Any, is_candidate: Any) -> Any: ...
+    @override
     def get_prep_value(self, value: Any) -> Any: ...
 
 class GeometryField(BaseSpatialField[_ST, _GT]):
     dim: int
     def __init__(
         self,
-        verbose_name: _StrOrPromise | None = ...,
-        dim: int = ...,
-        geography: bool = ...,
+        verbose_name: _StrOrPromise | None = None,
+        dim: int = 2,
+        geography: bool = False,
         *,
         extent: tuple[float, float, float, float] = ...,
-        tolerance: float = ...,
-        srid: int = ...,
-        spatial_index: bool = ...,
+        tolerance: float = 0.05,
+        srid: int = 4326,
+        spatial_index: bool = True,
         name: str | None = ...,
         primary_key: bool = ...,
         max_length: int | None = ...,
@@ -114,6 +118,9 @@ class GeometryField(BaseSpatialField[_ST, _GT]):
         validators: Iterable[_ValidatorCallable] = ...,
         error_messages: _ErrorMessagesMapping | None = ...,
     ) -> None: ...
+    @override
+    def contribute_to_class(self, cls: type[Model], name: str, **kwargs: Any) -> None: ...  # type: ignore[override]
+    @override
     def formfield(  # type: ignore[override]
         self,
         *,
@@ -122,7 +129,6 @@ class GeometryField(BaseSpatialField[_ST, _GT]):
         srid: Any = ...,
         **kwargs: Any,
     ) -> forms.GeometryField: ...
-    def contribute_to_class(self, cls: type[Model], name: str, **kwargs: Any) -> None: ...  # type: ignore[override]
 
 class PointField(GeometryField[_ST, _GT]):
     _pyi_private_set_type: Point | Combinable
@@ -180,11 +186,15 @@ class GeometryCollectionField(GeometryField[_ST, _GT]):
     geom_class: type[GeometryCollection]
     form_class: type[forms.GeometryCollectionField]
 
-class ExtentField(Field):
-    def get_internal_type(self) -> Any: ...
+class ExtentField(Field[Any, Any]):
+    @override
+    def get_internal_type(self) -> str: ...
 
 class RasterField(BaseSpatialField):
+    @override
     def db_type(self, connection: Any) -> Any: ...
     def from_db_value(self, value: Any, expression: Any, connection: Any) -> Any: ...
+    @override
     def contribute_to_class(self, cls: type[Model], name: str, **kwargs: Any) -> None: ...  # type: ignore[override]
+    @override
     def get_transform(self, name: Any) -> Any: ...

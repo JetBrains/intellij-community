@@ -33,7 +33,8 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" name="kotlinc.low-level-api-fir" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-tests" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
@@ -92,5 +93,26 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.completion.impl.shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.analysis.platform.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectStructure.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.lineMarkers.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.liveTemplates.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.postfixTemplates.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.highlighting.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.move.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.rename.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.psi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.formatter" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.ide" scope="TEST" />
   </component>
 </module>

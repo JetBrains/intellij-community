@@ -332,15 +332,22 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
 
   private fun getElementName(element: Any): String? {
     SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(element)?.let { psiElement ->
-      return when (psiElement) {
-        is PsiFileSystemItem -> psiElement.virtualFile.nameWithoutExtension
-        is PsiNamedElement -> psiElement.name
-        else -> null
+      return ReadAction.computeBlocking<String?, Nothing> {
+        try {
+          when (psiElement) {
+            is PsiFileSystemItem -> psiElement.virtualFile.nameWithoutExtension
+            is PsiNamedElement -> psiElement.name
+            else -> null
+          }
+        }
+        catch (_: PsiInvalidElementAccessException) {
+          null
+        }
       }
     }
 
     if (element is NavigationItem) {
-      return element.name
+      return ReadAction.computeBlocking<String?, Nothing> { element.name }
     }
 
     return null

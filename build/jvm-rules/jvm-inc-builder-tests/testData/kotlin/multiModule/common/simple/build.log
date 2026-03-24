@@ -1,0 +1,35 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_simple-module1.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/simple/module1/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_simple-module2.kotlin_module
+  foo/AChild.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/simple/module2/AChild.kt
+  kotlin/multiModule/common/simple/module2/importA.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_simple-module1.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/simple/module1/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_simple-module2.kotlin_module
+End of files
+Compiling files:
+  kotlin/multiModule/common/simple/module2/AChild.kt
+  kotlin/multiModule/common/simple/module2/importA.kt
+End of files
+------------------------------------------
+Exit code: OK

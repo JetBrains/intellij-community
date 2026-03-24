@@ -11,9 +11,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileOperationsHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
-import com.intellij.util.ThrowableConsumer
-import java.io.File
-import java.io.IOException
 import java.util.function.Function
 
 /**
@@ -58,15 +55,13 @@ internal class LocalHistoryFilesDeletionHandler(
 
   override fun move(file: VirtualFile, toDir: VirtualFile): Boolean = false
 
-  override fun copy(file: VirtualFile, toDir: VirtualFile, copyName: String): File? = null
+  override fun copyFile(file: VirtualFile, toDir: VirtualFile, copyName: String): Boolean = false
 
   override fun rename(file: VirtualFile, newName: String): Boolean = false
 
   override fun createFile(dir: VirtualFile, name: String): Boolean = false
 
   override fun createDirectory(dir: VirtualFile, name: String): Boolean = false
-
-  override fun afterDone(invoker: ThrowableConsumer<in LocalFileOperationsHandler, out IOException>) {}
 
   companion object {
     private val LOG = logger<LocalHistoryFilesDeletionHandler>()

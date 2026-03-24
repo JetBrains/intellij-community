@@ -1,4 +1,5 @@
 // "Make 'A' 'abstract'" "true"
+// K2_ERROR: Class 'A' is not abstract and does not implement abstract member:<br>fun foo(): Unit
 interface I {
     fun foo()
 }

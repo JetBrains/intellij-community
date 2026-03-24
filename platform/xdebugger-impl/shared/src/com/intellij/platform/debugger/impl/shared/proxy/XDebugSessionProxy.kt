@@ -62,6 +62,7 @@ interface XDebugSessionProxy {
   val isStepOverActionAllowed: Boolean
   val isStepOutActionAllowed: Boolean
   val isRunToCursorActionAllowed: Boolean
+  val isForceStepIntoActionAllowed: Boolean
   val isLibraryFrameFilterSupported: Boolean
   val isValuesCustomSorted: Boolean
 

@@ -1,0 +1,62 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+
+java_binary(
+  name = "generate",
+  visibility = ["//visibility:public"],
+  runtime_deps = [":codeowners"],
+  main_class = "com.intellij.codeowners.scripts.Generate",
+)
+
+java_binary(
+  name = "validate",
+  visibility = ["//visibility:public"],
+  runtime_deps = [":codeowners"],
+  main_class = "com.intellij.codeowners.scripts.Validate",
+)
+
+### auto-generated section `build intellij.codeowners` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "codeowners_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "codeowners",
+  module_name = "intellij.codeowners",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":codeowners_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kaml",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "@lib//:codeowners-ownership-okio",
+    "@lib//:jetbrains-intellij-deps-eclipse-jgit",
+    "@lib//:slf4j-api",
+    "@lib//:tc_service_messages",
+    "@lib//:codeowners-ownership-java-diff-utils",
+  ]
+)
+
+jvm_library(
+  name = "codeowners_test_lib",
+  module_name = "intellij.codeowners",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":codeowners",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+  ]
+)
+### auto-generated section `build intellij.codeowners` end
+
+### auto-generated section `iml intellij.codeowners` start
+exports_files([
+  "intellij.codeowners.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.codeowners` end

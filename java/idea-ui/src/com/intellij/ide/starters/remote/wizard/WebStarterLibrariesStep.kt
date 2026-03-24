@@ -25,6 +25,7 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.AbstractWizard
 import com.intellij.ide.wizard.withVisualPadding
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
@@ -47,15 +48,15 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.ModalityUiUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
 import com.intellij.util.ui.UIUtil.DEFAULT_VGAP
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.ui.update.DebouncedUpdates
+import com.intellij.util.ui.update.UpdateQueue
+import kotlinx.coroutines.Dispatchers
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.GridBagLayout
@@ -70,6 +71,7 @@ import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeSelectionModel
+import kotlin.time.Duration.Companion.milliseconds
 
 open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) : ModuleWizardStep() {
   protected val moduleBuilder: WebStarterModuleBuilder = contextProvider.moduleBuilder
@@ -92,8 +94,10 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
   private val selectedDependencies: MutableSet<WebStarterDependency> = mutableSetOf()
 
   private var currentSearchString: String = ""
-  private val searchMergingUpdateQueue: MergingUpdateQueue by lazy {
-    MergingUpdateQueue("SearchLibs_" + moduleBuilder.builderId, 250, true, topLevelPanel, parentDisposable)
+  private val searchMergingUpdateQueue: UpdateQueue<Unit> by lazy {
+    DebouncedUpdates.forComponent<Unit>(topLevelPanel, "SearchLibs_" + moduleBuilder.builderId, 250.milliseconds)
+      .withContext(Dispatchers.EDT)
+      .runLatest { performSearch() }
   }
 
   override fun getComponent(): JComponent = topLevelPanel
@@ -338,16 +342,16 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
     val textField = LibrariesSearchTextField()
     textField.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
-        searchMergingUpdateQueue.queue(Update.create("", Runnable {
-          ModalityUiUtil.invokeLaterIfNeeded(getModalityState(), Runnable {
-            currentSearchString = textField.text
-            loadLibrariesList()
-            librariesList.repaint()
-          })
-        }))
+        currentSearchString = textField.text
+        searchMergingUpdateQueue.queue(Unit)
       }
     })
     return textField
+  }
+
+  private fun performSearch() {
+    loadLibrariesList()
+    librariesList.repaint()
   }
 
   protected open fun getModalityState(): ModalityState {

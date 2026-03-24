@@ -123,6 +123,122 @@ public class PyMethodOverridingInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-87372
+  public void testIncompatibleTypeInSignature() {
+    doTestByText("""
+                   class Base():
+                       def method(self, arg1: int):
+                           pass
+                   
+                   class Child(Base):
+                       def method<warning descr="Signature of method 'Child.method()' does not match signature of the base method in class 'Base'">(self, arg1: str)</warning>:
+                           pass
+                   """);
+  }
+
+  // PY-87372
+  public void testIncompatibleReturnType() {
+    doTestByText("""
+                   class Base():
+                       def method(self, arg1: int) -> float:
+                           pass
+                   
+                   class Child(Base):
+                       def method(self, arg1: int) -> <warning descr="Return type of method 'Child.method()' does not match return type the base method in class 'Base'">str</warning>:
+                           pass
+                   
+                   class Child1(Base):
+                       def method(self, arg1: int) -> int:
+                           pass
+                   """);
+  }
+
+  // PY-87372
+  public void testIncompatiblePosContainer() {
+    doTestByText("""
+                   class Base():
+                       def method(self, *args: int):
+                           pass
+                   
+                   class Child(Base):
+                       def method<warning descr="Signature of method 'Child.method()' does not match signature of the base method in class 'Base'">(self, *args: str)</warning>:
+                           pass
+                   """);
+  }
+
+  // PY-87372
+  public void testOptionalVsNonOptionalParamType() {
+    doTestByText("""
+                   class Base():
+                       def method(self, a: int | None):
+                           pass
+                   
+                   class Child(Base):
+                       def method<warning descr="Signature of method 'Child.method()' does not match signature of the base method in class 'Base'">(self, a: int)</warning>:
+                           pass
+                   """);
+  }
+
+  // PY-87372
+  public void testParamWithDefaultValue() {
+    doTestByText("""
+                   class Base:
+                       def foo(self, x: int):
+                           pass
+                   
+                   class Derived(Base):
+                       def foo(self, x: int = 1):
+                           pass
+                   
+                   class Base1:
+                       def foo(self, x: int = 1):
+                           pass
+                   
+                   class Derived1(Base1):
+                       def foo<warning descr="Signature of method 'Derived1.foo()' does not match signature of the base method in class 'Base1'">(self, x: int)</warning>:
+                           pass
+                   """);
+  }
+
+  // PY-87372
+  public void testCovariantReturnType() {
+    doTestByText("""
+                   class Base():
+                       def method(self) -> "Base":
+                           pass
+                   
+                   class Child(Base):
+                       def method(self) -> "Child":
+                           pass
+                   """);
+  }
+
+  // PY-87372
+  public void testClassmethodIncompatibility() {
+    doTestByText("""
+                   class Base():
+                       @classmethod
+                       def method(cls, x: int):
+                           pass
+                   
+                   class Child(Base):
+                       @classmethod
+                       def method<warning descr="Signature of method 'Child.method()' does not match signature of the base method in class 'Base'">(cls, x: str)</warning>:
+                           pass
+                   """);
+  }
+
+  // PY-87372
+  public void testNoReturnTypeAnnotationNotReported() {
+    doTestByText("""
+                   class Base():
+                       def method(self, x: int): ...
+                   
+                   class Child(Base):
+                       def method(self, x: int) -> str: ...
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -65,6 +65,7 @@ class HeavyPlatformUtilitiesTest {
 
   fun `PsiSearchHelperImpl cancellation test`(scope: SearchScope): Unit = timeoutRunBlocking {
     val prj = project.get()
+    IndexingTestUtil.waitUntilIndexesAreReady(prj)
     val j1 = Job(coroutineContext.job)
     val j2 = Job(coroutineContext.job)
     val counter = AtomicInteger(0)

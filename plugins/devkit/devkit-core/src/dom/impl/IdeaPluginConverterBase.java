@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,7 +32,7 @@ public abstract class IdeaPluginConverterBase extends ResolvingConverter<IdeaPlu
     if (pluginId == null) return null;
 
     return LookupElementBuilder.create(pluginId)
-      .withPsiElement(plugin.getXmlElement())
+      .withPsiElement(DomUtil.getFile(plugin))
       .withTailText(" " + StringUtil.notNullize(plugin.getName().getValue()))
       .withIcon(ElementPresentationManager.getIcon(plugin));
   }

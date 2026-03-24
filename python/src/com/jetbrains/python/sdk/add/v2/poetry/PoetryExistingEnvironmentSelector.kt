@@ -5,10 +5,11 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.impl.poetry.common.POETRY_UI_INFO
 import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -26,7 +27,6 @@ import com.jetbrains.python.sdk.poetry.createPoetrySdk
 import com.jetbrains.python.sdk.poetry.detectPoetryEnvs
 import com.jetbrains.python.sdk.poetry.isPoetry
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.statistics.version
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
@@ -56,11 +56,10 @@ internal class PoetryExistingEnvironmentSelector<P : PathHolder>(model: PythonMu
   }
 
   override suspend fun detectEnvironments(modulePath: Path): List<DetectedSelectableInterpreter<P>> {
-    val existingEnvs = detectPoetryEnvs(null, null, modulePath.pathString).mapNotNull { env ->
-      env.homePath?.let { path ->
-        model.fileSystem.parsePath(path).successOrNull?.let { fsPath ->
-          DetectedSelectableInterpreter(fsPath, PythonInfo(env.version), false, POETRY_UI_INFO)
-        }
+    val existingEnvs = detectPoetryEnvs(modulePath).mapNotNull { pythonBinary ->
+      val pythonInfo = ExecService().validatePythonAndGetInfo(pythonBinary).successOrNull ?: return@mapNotNull null
+      model.fileSystem.parsePath(pythonBinary.pathString).successOrNull?.let { fsPath ->
+        DetectedSelectableInterpreter(fsPath, pythonInfo, false, POETRY_UI_INFO)
       }
     }
     return existingEnvs

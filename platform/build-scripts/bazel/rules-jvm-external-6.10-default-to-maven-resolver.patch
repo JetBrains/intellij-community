@@ -1,0 +1,12 @@
+diff --git private/extensions/maven.bzl private/extensions/maven.bzl
+--- private/extensions/maven.bzl
++++ private/extensions/maven.bzl
+@@ -23,7 +23,7 @@ DEFAULT_REPOSITORIES = [
+ 
+ DEFAULT_NAME = "maven"
+ 
+-_DEFAULT_RESOLVER = "coursier"
++_DEFAULT_RESOLVER = "maven"
+ 
+ artifact = tag_class(
+     doc = "Used to define a single artifact where the simple coordinates are insufficient. Will be added to the other artifacts declared by tags with the same `name` attribute.",

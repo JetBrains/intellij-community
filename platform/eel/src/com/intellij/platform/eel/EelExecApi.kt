@@ -112,6 +112,11 @@ sealed interface EelExecApi {
     val exe: String
   }
 
+  @Suppress("FunctionName")
+  @ApiStatus.Internal
+  @ApiStatus.Obsolete
+  fun `_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`(): Boolean = false
+
   /**
    * Use [environmentVariables] instead.
    *
@@ -122,6 +127,11 @@ sealed interface EelExecApi {
   @ApiStatus.Experimental
   @ApiStatus.Obsolete
   suspend fun fetchLoginShellEnvVariables(): Map<String, String> {
+    if (`_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`()) {
+      @Suppress("checkedExceptions")
+      return environmentVariables().eelIt().await()
+    }
+
     return when (this) {
       is EelExecPosixApi -> {
         if (this is LocalEelExecApi) {

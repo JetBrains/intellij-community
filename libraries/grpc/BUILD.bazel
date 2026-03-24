@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "grpc",
+  module_name = "intellij.libraries.grpc",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":grpc_resources"],
@@ -25,4 +26,24 @@ jvm_library(
     "@lib//:grpc-protobuf",
   ]
 )
+
+jvm_library(
+  name = "grpc_test_lib",
+  module_name = "intellij.libraries.grpc",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:grpc-core",
+    "@lib//:grpc-stub",
+    "@lib//:grpc-kotlin-stub",
+    "@lib//:grpc-protobuf",
+  ],
+  runtime_deps = [":grpc"]
+)
 ### auto-generated section `build intellij.libraries.grpc` end
+
+### auto-generated section `iml intellij.libraries.grpc` start
+exports_files([
+  "intellij.libraries.grpc.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.grpc` end

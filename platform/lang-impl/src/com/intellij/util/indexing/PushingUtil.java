@@ -35,7 +35,7 @@ final class PushingUtil {
     if (origin instanceof ModuleContentOrigin && !((ModuleContentOrigin)origin).getModule().isDisposed()) {
       pushers = FilePropertyPusher.EP_NAME.getExtensionList();
       pusherExs = null;
-      moduleValues = ReadAction.compute(() -> {
+      moduleValues = ReadAction.computeBlocking(() -> {
         if (((ModuleContentOrigin)origin).getModule().isDisposed()) return null;
         return getModuleImmediateValues(pushers, ((ModuleContentOrigin)origin).getModule());
       });
@@ -55,7 +55,7 @@ final class PushingUtil {
       }
       else {
         pusherExs = extendedPushers;
-        moduleValues = ReadAction.compute(() -> getImmediateValuesEx(extendedPushers, origin));
+        moduleValues = ReadAction.computeBlocking(() -> getImmediateValuesEx(extendedPushers, origin));
       }
       mayBeUsed = true;
     }

@@ -1,5 +1,6 @@
 // "Replace with safe (?.) call" "true"
 // WITH_STDLIB
+// K2_ERROR: Operator call is prohibited on a nullable receiver of type 'Int?'. Use '?.'-qualified call instead.
 
 fun foo(bar: Int?) {
     bar +<caret> 1

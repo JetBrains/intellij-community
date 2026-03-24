@@ -172,6 +172,7 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
       val providerInfos = availableProviders.map { it.providerInfo }
       comboBox(model = DefaultComboBoxModel(providerInfos.toTypedArray()))
         .enabled(availableProviders.size > 1)
+        .applyIfEnabled()
         .bindItem(settings::previewPanelProviderInfo.toNullableProperty())
         .widthGroup(comboBoxWidthGroup)
     }

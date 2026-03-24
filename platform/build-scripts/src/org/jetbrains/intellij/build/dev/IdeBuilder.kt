@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dev
 
 import com.dynatrace.hash4j.hashing.HashFunnel
@@ -55,6 +55,7 @@ import org.jetbrains.intellij.build.impl.generateRuntimeModuleRepositoryForDevBu
 import org.jetbrains.intellij.build.impl.getOsDistributionBuilder
 import org.jetbrains.intellij.build.impl.layoutPlatformDistribution
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.toBazelIfNeeded
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
@@ -72,6 +73,7 @@ import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.moveTo
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 
 data class BuildRequest(
   @JvmField val platformPrefix: String,
@@ -138,7 +140,12 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     "JetBrainsClient" -> "${request.baseIdePlatformPrefixForFrontend ?: ""}${request.platformPrefix}"
     else -> request.platformPrefix
   }
-  val productDirName = (productDirNameWithoutClassifier + (if (System.getProperty("intellij.build.minimal").toBoolean()) "-ij-void" else "") + classifier).takeLast(255)
+  val productDirSuffix = when {
+    System.getProperty("intellij.build.minimal").toBoolean() -> "-ij-void"
+    request.scrambleTool != null -> "-scrambled"
+    else -> ""
+  }
+  val productDirName = (productDirNameWithoutClassifier + productDirSuffix + classifier).takeLast(255)
 
   val buildDir = withContext(Dispatchers.IO.limitedParallelism(4)) {
     val buildDir = rootDir.resolve(productDirName)
@@ -261,16 +268,6 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         request.platformClassPathConsumer?.invoke(context.ideMainClassName, classPath, runDir)
       }
 
-      if (context.generateRuntimeModuleRepository) {
-        launch(CoroutineName("generate runtime repository")) {
-          val allDistributionEntries = platformLayoutResultDeferred.await().distributionEntries.asSequence() +
-                                       pluginDistributionEntriesDeferred.await().pluginEntries.asSequence().flatMap { it.distribution }
-          spanBuilder("generate runtime repository").use(Dispatchers.IO) {
-            generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context = context)
-          }
-        }
-      }
-
       launch(CoroutineName("compute IDE fingerprint")) {
         computeIdeFingerprint(
           platformDistributionEntriesDeferred = platformLayoutResultDeferred,
@@ -294,7 +291,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
           }
         }
 
-        launch {
+        val pluginClasspathJob = launch {
           val (pluginEntries, additionalEntries) = pluginDistributionEntries
           val cachedDescriptorContainer = platformLayout.descriptorCacheContainer
           spanBuilder("generate plugin classpath").use(Dispatchers.IO) {
@@ -324,13 +321,32 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
             Files.write(runDir.resolve(PLUGIN_CLASSPATH), byteOut.toByteArray())
           }
         }
+        if (context.generateRuntimeModuleRepository) {
+          launch(CoroutineName("generate runtime repository")) {
+            val contentReport = ContentReport(
+              platform = platformFileEntries,
+              bundledPlugins = pluginDistributionEntries.pluginEntries,
+              nonBundledPlugins = emptyList()
+            )
+            pluginClasspathJob.join() //this is necessary to have full data in DescriptorCacheContainer
+
+            spanBuilder("generate runtime repository").use(Dispatchers.IO) {
+              generateRuntimeModuleRepositoryForDevBuild(
+                contentReport = contentReport,
+                targetDirectory = runDir,
+                context = context,
+                platformLayout = platformLayout,
+              )
+            }
+          }
+        }
 
         withContext(Dispatchers.IO) {
           copyDistFiles(
             newDir = runDir,
             os = request.os,
             arch = JvmArchitecture.currentJvmArch,
-            libcImpl = LibcImpl.current(OsFamily.currentOs),
+            libcImpl = LibcImpl.current(request.os),
             context = context,
           )
         }
@@ -496,7 +512,7 @@ private suspend fun createBuildContext(
       productionClassOutDir = classOutDir.resolve("production"),
       maxAccessTimeAge = buildOptionsTemplate?.jarCacheMaxAccessAge
                          ?: (System.getProperty(BuildOptions.JAR_CACHE_MAX_ACCESS_AGE_DAYS_PROPERTY)?.toLong()?.days ?: 3.days),
-      scope = scope,
+      cleanupInterval = 1.hours,
     )
     launch(Dispatchers.IO + CoroutineName("cleanup jar cache")) {
       jarCacheManager.cleanup()

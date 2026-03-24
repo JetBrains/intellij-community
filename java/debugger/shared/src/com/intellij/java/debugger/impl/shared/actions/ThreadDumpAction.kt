@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.debugger.impl.shared.actions
 
 import com.intellij.execution.filters.Filter
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
+import com.intellij.ide.ui.colors.attributes
 import com.intellij.ide.ui.icons.icon
 import com.intellij.java.debugger.impl.shared.SharedDebuggerUtils
 import com.intellij.java.debugger.impl.shared.SharedJavaDebuggerSession
@@ -18,7 +19,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.debugger.impl.rpc.toSimpleTextAttributes
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.ui.SimpleTextAttributes
@@ -102,9 +102,11 @@ private fun threadDumpData(dto: JavaThreadDumpDto): ThreadDumpData {
 
 private fun ThreadDumpWithAwaitingDependencies.toDumpItems(): List<DumpItem> {
   val iconsCache = icons.map { it.icon() }
-  val attributesCache = attributes.map { it.toSimpleTextAttributes() }
+  val attributesCache = attributes.map { it.attributes() }
 
-  val feDumpItems = items.map { FrontendDumpItem(it, iconsCache, attributesCache, stackTraces, stateDescriptions, iconToolTips) }
+  val feDumpItems = items.map {
+    FrontendDumpItem(it, iconsCache, attributesCache, stackTraces, exportedStackTraces, stateDescriptions, iconToolTips)
+  }
   for ((index, awaitingIndices) in awaitingDependencies) {
     val awaitingItems = awaitingIndices.map { feDumpItems[it] }.toHashSet()
     feDumpItems[index].setAwaitingItems(awaitingItems)
@@ -117,6 +119,7 @@ private class FrontendDumpItem(
   private val iconsCache: List<Icon>,
   private val attributesCache: List<SimpleTextAttributes>,
   private val stackTracesCache: List<@NlsSafe String>,
+  private val exportedStackTracesCache: List<@NlsSafe String>,
   private val stateDescriptionsCache: List<@NlsSafe String>,
   private val iconToolTipsCache: List<@Nls String?>,
 ) : DumpItem {
@@ -125,14 +128,22 @@ private class FrontendDumpItem(
   override val name: @NlsSafe String get() = itemDto.name
   override val stateDesc: @NlsSafe String get() = stateDescriptionsCache[itemDto.stateDescriptionIndex]
   override val stackTrace: @NlsSafe String get() = "${itemDto.firstLine}\n${stackTracesCache[itemDto.stackTraceIndex]}"
+  override val exportedStackTrace: @NlsSafe String get() = exportedStackTracesCache[itemDto.exportedStackTraceIndex]
   override val iconToolTip: @Nls String? get() = iconToolTipsCache[itemDto.iconToolTipIndex.toUInt().toInt()]
   override val interestLevel: Int get() = itemDto.interestLevel
   override val icon: Icon get() = iconsCache[itemDto.iconIndex.toUInt().toInt()]
   override val attributes: SimpleTextAttributes get() = attributesCache[itemDto.attributesIndex.toInt().toUInt().toInt()]
   override val isDeadLocked: Boolean get() = itemDto.isDeadLocked
   override val awaitingDumpItems: Set<DumpItem> get() = internalAwaitingItems
+  override val treeId: Long? get() = itemDto.treeId
+  override val parentTreeId: Long? get() = itemDto.parentTreeId
+  override val isContainer: Boolean get() = itemDto.isContainer
+  override val canBeHidden: Boolean get() = itemDto.canBeHidden
 
   fun setAwaitingItems(items: Set<DumpItem>) {
     internalAwaitingItems = items
   }
+
+  override fun toString(): String =
+    "FrontendDumpItem(name=$name)"
 }

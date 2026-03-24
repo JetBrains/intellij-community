@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradle.statistics.v2.flow
 
 import org.jetbrains.kotlin.idea.gradle.statistics.GradleStatisticsEventGroups
@@ -41,12 +41,19 @@ val kotlinBuildToolsFusEvenList = listOf(
     FusFlowSendingStep(
         GradleStatisticsEventGroups.JS, listOf(
             KotlinBuildToolFusMetricName.JS_GENERATE_EXTERNALS,
+            KotlinBuildToolFusMetricName.JS_SOURCE_MAP,
+            KotlinBuildToolFusMetricName.JS_IR_INCREMENTAL,
+            KotlinBuildToolFusMetricName.JS_GENERATE_DTS,
+            KotlinBuildToolFusMetricName.JS_LONG_AS_BIGINT,
+            KotlinBuildToolFusMetricName.JS_COMPILER_MODE,
             KotlinBuildToolFusMetricName.JS_GENERATE_EXECUTABLE_DEFAULT,
             KotlinBuildToolFusMetricName.JS_TARGET_MODE,
-            KotlinBuildToolFusMetricName.JS_SOURCE_MAP,
-            KotlinBuildToolFusMetricName.JS_PROPERTY_LAZY_INITIALIZATION,
             KotlinBuildToolFusMetricName.JS_OUTPUT_GRANULARITY,
-            KotlinBuildToolFusMetricName.JS_IR_INCREMENTAL,
+            KotlinBuildToolFusMetricName.JS_BINARY_TYPE,
+            KotlinBuildToolFusMetricName.JS_ES_TARGET,
+            KotlinBuildToolFusMetricName.JS_MODULE_SYSTEM,
+            KotlinBuildToolFusMetricName.NPM_PUBLISH_PLUGIN_ENABLED,
+            KotlinBuildToolFusMetricName.ENABLED_COMPILER_PLUGIN_JS_PLAIN_OBJECTS,
             KotlinBuildToolFusMetricName.WASM_IR_INCREMENTAL,
         )
     ),

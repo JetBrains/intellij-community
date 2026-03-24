@@ -198,7 +198,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
         VirtualFile guessedProjectDir = ProjectUtil.guessProjectDir(project);
         String basePath = guessedProjectDir == null ? project.getBasePath() : guessedProjectDir.getCanonicalPath();
         if (basePath != null) {
-          File file = new File(basePath);
+          Path file = Path.of(basePath);
           FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(file);
           return sensitivity.toBooleanWithDefault(SystemInfo.isFileSystemCaseSensitive);
         }

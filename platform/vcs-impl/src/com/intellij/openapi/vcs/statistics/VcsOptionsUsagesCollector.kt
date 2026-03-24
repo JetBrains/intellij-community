@@ -11,7 +11,6 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.ASKED_ADD_EXTERNAL_FILES_PROPERTY
 import com.intellij.openapi.vcs.ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY
 import com.intellij.openapi.vcs.SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -60,7 +59,6 @@ internal class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
     addBoolIfDiffers(set, conf, confDefault, { it.INCLUDE_TEXT_INTO_SHELF }, INCLUDE_TEXT_INTO_SHELF)
     addBoolIfDiffers(set, conf, confDefault, { it.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND }, CHECK_CONFLICTS_IN_BACKGROUND)
 
-    addExternalFilesActionsStatistics(project, set, conf, confDefault)
     addProjectConfigurationFilesActionsStatistics(project, set)
     addIgnoredToExcludeSynchronizerActionsStatistics(project, set)
 
@@ -80,16 +78,6 @@ internal class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
                                        SHARE_PROJECT_CONFIGURATION_FILES)) {
         set.add(ASKED_SHARE_PROJECT_CONFIGURATION_FILES.metric(askedToShare))
       }
-    }
-  }
-
-  private fun addExternalFilesActionsStatistics(project: Project,
-                                                set: HashSet<MetricEvent>,
-                                                conf: VcsConfiguration,
-                                                confDefault: VcsConfiguration) {
-    addBoolIfDiffers(set, conf, confDefault, { it.ADD_EXTERNAL_FILES_SILENTLY }, ADD_EXTERNAL_FILES_SILENTLY)
-    if (!conf.ADD_EXTERNAL_FILES_SILENTLY) {
-      addBooleanPropertyIfDiffers(project, set, ASKED_ADD_EXTERNAL_FILES_PROPERTY, false, ASKED_ADD_EXTERNAL_FILES)
     }
   }
 

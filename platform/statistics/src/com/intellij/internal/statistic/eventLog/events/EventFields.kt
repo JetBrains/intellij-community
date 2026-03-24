@@ -115,6 +115,24 @@ object EventFields {
   @JvmStatic
   fun String(@NonNls @EventFieldName name: String, allowedValues: List<String>): StringEventField = String(name, allowedValues, null)
 
+  /**
+   * Creates a field that allows only a specific list of values
+   * @param name  name of the field
+   * @param allowedValues list of allowed values, e.g [ "bool", "int", "float"]
+   * @param description optional description of the field
+   * @param required field whether the field is required
+   * @param defaultValue optional default value for the field
+   */
+  @JvmStatic
+  fun String(
+    @NonNls @EventFieldName name: String,
+    allowedValues: List<String>,
+    @NonNls description: String? = null,
+    required: Boolean? = null,
+    defaultValue: String? = null,
+  ): StringEventField =
+    StringEventField.ValidatedByAllowedValuesExtended(name, allowedValues, description, required, defaultValue)
+
   @JvmStatic
   fun Int(@NonNls @EventFieldName name: String, @NonNls description: String?): IntEventField = IntEventField(name, description)
 

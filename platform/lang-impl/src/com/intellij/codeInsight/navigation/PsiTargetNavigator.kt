@@ -197,6 +197,6 @@ abstract class TargetUpdaterTask(project: Project, @NlsContexts.ProgressTitle ti
 
   fun updateComponent(psiElement: PsiElement): Boolean {
     return updateComponent(
-      ReadAction.compute<ItemWithPresentation, Throwable> { createItem(psiElement, Function { targetPresentation(psiElement) }) })
+      ReadAction.computeBlocking<ItemWithPresentation, Throwable> { createItem(psiElement, Function { targetPresentation(psiElement) }) })
   }
 }

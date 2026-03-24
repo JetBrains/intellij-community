@@ -5,5 +5,3 @@ fun bar(b: String, a: Int, c: String) {
 }
 
 // EXIST: "a, b, c"
-
-// IGNORE_K2

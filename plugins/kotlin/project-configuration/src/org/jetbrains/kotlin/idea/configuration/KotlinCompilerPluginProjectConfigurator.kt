@@ -11,6 +11,8 @@ interface KotlinCompilerPluginProjectConfigurator {
 
     val kotlinCompilerPluginId: String
 
+    fun isApplicable(module: Module): Boolean = true
+
     @RequiresWriteLock
     fun configureModule(module: Module, configurationResultBuilder: ConfigurationResultBuilder)
 
@@ -22,6 +24,10 @@ interface KotlinCompilerPluginProjectConfigurator {
         fun compilerPluginProjectConfigurators(kotlinCompilerPluginId: String): List<KotlinCompilerPluginProjectConfigurator> =
             KotlinCompilerPluginProjectConfigurator.EP_NAME.extensionList
                 .filter { it.kotlinCompilerPluginId == kotlinCompilerPluginId }
+
+        @ApiStatus.Internal
+        fun compilerPluginProjectConfigurators(kotlinCompilerPluginId: String, module: Module): List<KotlinCompilerPluginProjectConfigurator> =
+            compilerPluginProjectConfigurators(kotlinCompilerPluginId).filter { it.isApplicable(module) }
     }
 
 }

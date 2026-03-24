@@ -3,51 +3,86 @@
 
 package org.jetbrains.intellij.build.productLayout.util
 
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.launch
+import org.jetbrains.intellij.build.checkRecursiveSingleFlightAwait
+import org.jetbrains.intellij.build.singleFlightComputationContext
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Thread-safe async cache that deduplicates concurrent requests for the same key.
  *
- * **Important**: Both successful values AND failures are cached permanently.
- * If a loader throws an exception, that failed computation is cached, and all later
- * calls for the same key will receive the same exception without retrying.
+ * **Important**: Successful values and non-cancellation failures are cached permanently.
+ * If a loader throws a non-cancellation exception, that failed computation is cached,
+ * and all later calls for the same key will receive the same exception without retrying.
+ *
+ * Cancellation is treated as an aborted attempt rather than a cacheable result.
+ * If the owning caller is canceled, the in-flight entry is evicted and the next lookup retries.
  *
  * This prevents expensive repeated computations and thundering herd scenarios when
  * operations fail.
  */
-class AsyncCache<K : Any, V>(private val scope: CoroutineScope) {
+class AsyncCache<K : Any, V> {
   private val cache = ConcurrentHashMap<K, Any>()
 
   @Suppress("UNCHECKED_CAST")
   suspend fun getOrPut(key: K, loader: suspend () -> V): V {
+    val currentContext = currentCoroutineContext()
     while (true) {
       when (val existing = cache.get(key)) {
         is CachedValue<*> -> {
           return existing.value as V
         }
-        is Deferred<*> -> {
-          return (existing as Deferred<V>).await()
+        is CacheEntry<*> -> {
+          val entry = existing as CacheEntry<V>
+          if (entry.result.isCompleted && entry.result.getCompletionExceptionOrNull() is CancellationException) {
+            cache.remove(key, entry)
+            continue
+          }
+          checkRecursiveSingleFlightAwait(
+            currentContext = currentContext,
+            owner = entry.owner,
+            operationName = "AsyncCache entry for key '$key'",
+            deferred = entry.result,
+          )
+          return entry.result.await()
         }
         else -> {
-          lateinit var deferred: Deferred<V>
-          // Use LAZY start to prevent race condition with lateinit
-          deferred = scope.async(start = CoroutineStart.LAZY) {
-            val value = loader()
-            // only replace it if OUR deferred is still in cache (atomic, prevents overwriting winner's result)
-            cache.replace(key, deferred, CachedValue(value))
-            value
-          }
+          val owner = Any()
+          val result = CompletableDeferred<V>()
+          lateinit var entry: CacheEntry<V>
+          @Suppress("RAW_SCOPE_CREATION")
+          entry = CacheEntry(
+            result = result,
+            owner = owner,
+            computation = CoroutineScope(currentContext + singleFlightComputationContext(currentContext, owner))
+              .launch(start = CoroutineStart.LAZY) {
+                try {
+                  val value = loader()
+                  result.complete(value)
+                  cache.replace(key, entry, CachedValue(value))
+                }
+                catch (e: Throwable) {
+                  if (e is CancellationException) {
+                    cache.remove(key, entry)
+                  }
+                  result.completeExceptionally(e)
+                }
+              },
+          )
 
-          val winner = cache.putIfAbsent(key, deferred)
-          if (winner == null) {
-            return deferred.await()
+          if (cache.putIfAbsent(key, entry) == null) {
+            entry.computation.start()
+            return entry.result.await()
           }
           else {
-            deferred.cancel()
+            entry.computation.cancel()
+            result.cancel()
           }
         }
       }
@@ -65,23 +100,31 @@ class AsyncCache<K : Any, V>(private val scope: CoroutineScope) {
       val key = iterator.next()
       when (val entry = cache.remove(key)) {
         is CachedValue<*> -> action(entry.value as V)
-        is Deferred<*> -> entry.cancel()
+        is CacheEntry<*> -> processPendingEntry(entry as CacheEntry<V>, action)
       }
     }
   }
-
-  /**
-   * Iterates over all completed cache entries (key-value pairs).
-   * Skips entries that are still computing (Deferred not yet completed).
-   */
-  @Suppress("UNCHECKED_CAST")
-  fun forEachCompleted(action: (key: K, value: V) -> Unit) {
-    for ((key, entry) in cache) {
-      if (entry is CachedValue<*>) {
-        action(key, entry.value as V)
-      }
-    }
-  }
-
-  private class CachedValue<V>(@JvmField val value: V)
 }
+
+private inline fun <V> processPendingEntry(entry: CacheEntry<V>, action: (V) -> Unit) {
+  if (!processCompletedEntry(entry, action)) {
+    entry.computation.cancel()
+    entry.result.cancel()
+  }
+}
+
+private inline fun <V> processCompletedEntry(entry: CacheEntry<V>, action: (V) -> Unit): Boolean {
+  if (entry.result.isCompleted && entry.result.getCompletionExceptionOrNull() == null) {
+    action(entry.result.getCompleted())
+    return true
+  }
+  return false
+}
+
+private class CacheEntry<V>(
+  @JvmField val result: CompletableDeferred<V>,
+  @JvmField val owner: Any,
+  @JvmField val computation: Job,
+)
+
+private class CachedValue<V>(@JvmField val value: V)

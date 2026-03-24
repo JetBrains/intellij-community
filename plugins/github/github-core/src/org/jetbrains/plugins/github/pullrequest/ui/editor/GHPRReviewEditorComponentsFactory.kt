@@ -40,6 +40,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThre
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel.CommentItem
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
@@ -168,7 +169,9 @@ internal object GHPRReviewEditorComponentsFactory {
     val itemType = CodeReviewChatItemUIUtil.ComponentType.COMPACT
     val icon = CommentTextFieldFactory.IconConfig.of(itemType, vm.avatarIconsProvider, vm.currentUser.avatarUrl)
 
-    val editor = CodeReviewCommentTextFieldFactory.createIn(cs, vm, actions, icon).apply {
+    val editor = CodeReviewCommentTextFieldFactory.createIn(cs, vm, actions, icon) { editor ->
+      editor.putUserData(GHViewModelWithTextCompletion.MENTIONS_COMPLETION_KEY, vm)
+    }.apply {
       border = JBUI.Borders.empty(itemType.inputPaddingInsets)
     }
 

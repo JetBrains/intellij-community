@@ -6,6 +6,8 @@
 // ACTION: Create secondary constructor
 // ACTION: Introduce import alias
 // LANGUAGE_VERSION: 1.7
+// K2_ERROR: Argument type mismatch: actual type is 'Class<Enum<*>>', but 'Class<CapturedType(*)>' was expected.
+// K2_AFTER_ERROR: Argument type mismatch: actual type is 'Class<Enum<*>>', but 'Class<CapturedType(*)>' was expected.
 
 class Test
 

@@ -6,6 +6,7 @@
 // K2_ACTIONS_LIST: Create enum 'Foo'
 // K2_ACTIONS_LIST: Create interface 'Foo'
 // K2_ACTIONS_LIST: Create function 'Foo'
+// K2_ERROR: Unresolved reference 'Foo'.
 fun test() = <caret>Foo(2, "2")
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromUsageFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction

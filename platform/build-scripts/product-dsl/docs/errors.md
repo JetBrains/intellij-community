@@ -14,6 +14,7 @@ Complete reference of validation errors, their causes, and fixes.
 | [PluginDependencyNotBundledError](#plugin-to-plugin-dependency-error) | Error | No | Plugin depends on another plugin not bundled in same product |
 | [XIncludeResolutionError](#xinclude-resolution-error) | Error | No | xi:include path cannot be resolved |
 | [MissingModuleSetsError](#missing-module-sets) | Error | No | Referenced module set not found |
+| [PluginizedModuleSetReferenceError](#pluginized-module-set-reference) | Error | No | Pluginized module set used through `moduleSet()` |
 | [Structural Violations](#structural-loading-violations) | Error | Yes* | Loading mode constraint violations |
 | [MissingContentModulePluginDep](#missing-content-module-plugin-dependency) | Error | No | Content module missing plugin dep |
 | [MissingTestPluginPluginDep](#missing-test-plugin-plugin-dependency) | Error | No | Test plugin missing plugin dep |
@@ -233,6 +234,24 @@ Emitted by `PluginContentStructureValidator` (ruleName `pluginContentStructureVa
 
 ---
 
+## Pluginized Module-Set Reference
+
+```
+❌ Product 'IDEA' references pluginized module set 'debugger.streams' as a regular module set
+
+  * Pluginized module sets are standalone bundled plugin wrappers and are not inlined through moduleSet(...) references
+
+Fix:
+1. Remove the moduleSet(...) reference to 'debugger.streams'
+2. Bundle 'intellij.moduleSet.plugin.debugger.streams' in products that should ship it
+```
+
+**Cause**: A module set created via `plugin(...)` is still being used through `moduleSet(...)` in a product spec or nested under a regular module set.
+
+**Fix**: Remove the `moduleSet()` reference and bundle the generated wrapper plugin module instead.
+
+---
+
 ## DSL Constraint Errors
 
 ### Invalid Loading Overrides
@@ -358,8 +377,9 @@ Run 'Generate Product Layouts' to fix automatically.
 
 💡 Fix: Add <plugin id="com.intellij.css"/> to the content module's XML descriptor
 
-Or suppress temporarily: Add to contentModuleAllowedMissingPluginDeps in ModuleSetGenerationConfig:
-       "intellij.react.ultimate" to setOf("com.intellij.css"),
+Or suppress temporarily:
+  - DSL-defined test plugin modules: add module-level allowedMissingPluginIds in the testPlugin DSL
+  - Non-DSL content modules: add suppressPlugins entry to platform/buildScripts/suppressions.json
 ```
 
 **Cause**: Content module has compile dependency in `.iml` on a plugin's main module, but the module's XML descriptor doesn't declare the plugin dependency.
@@ -369,9 +389,13 @@ Or suppress temporarily: Add to contentModuleAllowedMissingPluginDeps in ModuleS
 **Fixes**:
 1. **Add XML declaration** (preferred): Add `<plugin id="..."/>` to the content module's descriptor
 2. **Remove IML dependency**: If the dependency isn't actually needed
-3. **Suppress temporarily**: Add to `contentModuleAllowedMissingPluginDeps` config
+3. **Suppress temporarily**:
+   - DSL-defined test plugin modules: use `allowedMissingPluginIds`
+   - Non-DSL content modules: use `suppressions.json` (`contentModules.<module>.suppressPlugins`)
 
-**Note**: The error message includes copy-paste Kotlin code for the suppression config.
+**Note**:
+- In `--update-suppressions` mode, non-DSL cases are reported as warnings and their suppressions are updated in `suppressions.json`.
+- DSL test-plugin allowlists remain in code (`allowedMissingPluginIds`) and are not written to `suppressions.json`.
 
 ---
 
@@ -380,10 +404,10 @@ Or suppress temporarily: Add to contentModuleAllowedMissingPluginDeps in ModuleS
 ```
 ❌ Test plugin 'intellij.rider.tests' is missing plugin dependencies required by its content modules
 
-  ✗ Missing: com.jetbrains.codeWithMe
+  ✗ Missing: com.jetbrains.remoteDevelopment
     Needed by: intellij.rider.test.cases.rdct.distributed._test
 
-💡 Fix: Add <plugin id="com.jetbrains.codeWithMe"/> to the test plugin's plugin.xml
+💡 Fix: Add <plugin id="com.jetbrains.remoteDevelopment"/> to the test plugin's plugin.xml
 ```
 
 **Cause**: A DSL-defined test plugin has content modules whose JPS dependencies include modules

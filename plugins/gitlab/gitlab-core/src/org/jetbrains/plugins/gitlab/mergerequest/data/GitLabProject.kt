@@ -8,48 +8,41 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.containers.nullize
+import git4idea.remote.GitRemoteUrlCoordinates
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.transformWhile
 import org.jetbrains.plugins.gitlab.api.GitLabApi
+import org.jetbrains.plugins.gitlab.api.GitLabGidData
 import org.jetbrains.plugins.gitlab.api.GitLabGraphQLMutationException
-import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
-import org.jetbrains.plugins.gitlab.api.data.GitLabPlan
-import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabPlan
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabWorkItemDTO.GitLabWidgetDTO.WorkItemWidgetAssignees
 import org.jetbrains.plugins.gitlab.api.dto.GitLabWorkItemDTO.WorkItemType
-import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.api.request.createAllProjectLabelsFlow
 import org.jetbrains.plugins.gitlab.api.request.createAllWorkItemsFlow
-import org.jetbrains.plugins.gitlab.api.request.createMergeRequest
 import org.jetbrains.plugins.gitlab.api.request.getProjectNamespace
 import org.jetbrains.plugins.gitlab.api.request.getProjectUsers
 import org.jetbrains.plugins.gitlab.api.request.getProjectUsersURI
+import org.jetbrains.plugins.gitlab.data.GitLabProjectDetails
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.createMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.mergeRequestSetReviewers
 import org.jetbrains.plugins.gitlab.upload.markdownUploadFile
-import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabRegistry
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.awt.image.BufferedImage
@@ -64,18 +57,23 @@ private val LOG = logger<GitLabProject>()
 
 @CodeReviewDomainEntity
 interface GitLabProject {
-  val projectMapping: GitLabProjectMapping
+  val projectCoordinates: GitLabProjectCoordinates
+  val gitRemote: GitRemoteUrlCoordinates
+  val projectId: String
 
   val dataReloadSignal: SharedFlow<Unit>
   val mergeRequests: GitLabProjectMergeRequestsStore
 
   suspend fun getEmojis(): List<GitLabReaction>
 
-  fun getLabelsBatches(): Flow<List<GitLabLabelDTO>>
+  fun getLabelsBatches(): Flow<List<GitLabLabel>>
   fun getMembersBatches(): Flow<List<GitLabUserDTO>>
 
   val defaultBranch: String?
-  val gitLabProjectId: GitLabId
+  val removeMergeRequestSourceBranch: Boolean
+  val squashMergeRequestBeforeMerge: Boolean
+  val squashMergeRequestBeforeMergeReadOnly: Boolean
+  suspend fun isMultipleAssigneesAllowed(): Boolean
   suspend fun isMultipleReviewersAllowed(): Boolean
 
   /**
@@ -83,9 +81,22 @@ interface GitLabProject {
    * once the merge request was successfully initialized on server.
    * The reason for this wait is that GitLab might take a few moments to process the merge request
    * before returning one that can be displayed in the IDE in a useful way.
+   *
+   * @param reviewers List of reviewer user DTOs to assign to the merge request
+   * Note: this parameter has different behavior depending on [isMultipleReviewersAllowed] -
+   * either sets only one reviewer from the list (the last one) or sets all reviewers from the list
    */
-  suspend fun createMergeRequestAndAwaitCompletion(sourceBranch: String, targetBranch: String, title: String, description: String?): GitLabMergeRequestDTO
-  suspend fun adjustReviewers(mrIid: String, reviewers: List<GitLabUserDTO>): GitLabMergeRequestDTO
+  suspend fun createMergeRequestAndAwaitCompletion(
+    sourceBranch: String,
+    targetBranch: String,
+    title: String,
+    description: String?,
+    reviewers: List<GitLabUserDTO> = emptyList(),
+    assignees: List<GitLabUserDTO> = emptyList(),
+    labels: List<GitLabLabel> = emptyList(),
+    squashBeforeMerge: Boolean? = null,
+    removeSourceBranch: Boolean? = null,
+  ): GitLabMergeRequestDTO
 
   fun reloadData()
 
@@ -95,20 +106,21 @@ interface GitLabProject {
 }
 
 @CodeReviewDomainEntity
-class GitLabLazyProject(
+internal class GitLabProjectImpl(
   private val project: Project,
   parentCs: CoroutineScope,
   private val api: GitLabApi,
   private val glMetadata: GitLabServerMetadata?,
-  override val projectMapping: GitLabProjectMapping,
-  private val initialData: GitLabProjectDTO,
+  private val details: GitLabProjectDetails,
   private val currentUser: GitLabUserDTO,
   private val tokenRefreshFlow: Flow<Unit>,
+  override val projectCoordinates: GitLabProjectCoordinates,
+  override val gitRemote: GitRemoteUrlCoordinates,
 ) : GitLabProject {
 
   private val cs = parentCs.childScope(javaClass.name)
 
-  private val projectCoordinates: GitLabProjectCoordinates = projectMapping.repository
+  override val projectId: String = details.id
 
   private val _dataReloadSignal = MutableSharedFlow<Unit>(replay = 1)
   override val dataReloadSignal: SharedFlow<Unit> = _dataReloadSignal.asSharedFlow()
@@ -116,32 +128,49 @@ class GitLabLazyProject(
   private val emojisRequest = cs.async(start = CoroutineStart.LAZY) {
     serviceAsync<GitLabEmojiService>().emojis.await().map { GitLabReactionImpl(it) }  }
 
-  private val multipleReviewersAllowedRequest = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-    loadMultipleReviewersAllowed(initialData)
-  }
-  override val gitLabProjectId: GitLabId = initialData.id
-
-  override val mergeRequests by lazy {
-    CachingGitLabProjectMergeRequestsStore(project, cs, api, glMetadata, projectMapping, currentUser, tokenRefreshFlow)
+  private val multipleAssigneesAllowedFallbackRequest = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+    loadMultipleAssigneesAllowedFallback()
   }
 
-  private val labelsLoader = BatchesLoader(cs, api.graphQL.createAllProjectLabelsFlow(projectMapping.repository))
+  override val mergeRequests: GitLabProjectMergeRequestsStore by lazy {
+    CachingGitLabProjectMergeRequestsStore(project, cs, api, glMetadata, currentUser,
+                                           tokenRefreshFlow, projectCoordinates, projectId, gitRemote)
+  }
+
+  private val labelsLoader = BatchesLoader(cs,
+                                           api.graphQL.createAllProjectLabelsFlow(projectCoordinates.projectPath).map { labels ->
+                                             labels.map {
+                                               GitLabLabel(it.title, it.color)
+                                             }
+                                           })
   private val membersLoader = BatchesLoader(cs,
-                                            ApiPageUtil.createPagesFlowByLinkHeader(getProjectUsersURI(projectMapping.repository)) {
+                                            ApiPageUtil.createPagesFlowByLinkHeader(api.rest.getProjectUsersURI(projectId)) {
                                               api.rest.getProjectUsers(it)
                                             }.map { response -> response.body().map(GitLabUserDTO::fromRestDTO) })
 
   override suspend fun getEmojis(): List<GitLabReaction> = emojisRequest.await()
-  override val defaultBranch: String? = initialData.repository?.rootRef
-  override suspend fun isMultipleReviewersAllowed(): Boolean = multipleReviewersAllowedRequest.await()
-  override fun getLabelsBatches(): Flow<List<GitLabLabelDTO>> = labelsLoader.getBatches()
+  override val defaultBranch: String? = details.defaultBranch
+
+  override val removeMergeRequestSourceBranch: Boolean = details.removeSourceBranchAfterMerge ?: false
+  override val squashMergeRequestBeforeMerge: Boolean = details.squashBeforeMergeDefault ?: false
+  override val squashMergeRequestBeforeMergeReadOnly: Boolean = details.squashBeforeMergeReadOnly
+
+  override suspend fun isMultipleAssigneesAllowed(): Boolean {
+    return details.allowsMultipleMergeRequestAssignees
+           ?: multipleAssigneesAllowedFallbackRequest.await()
+           ?: false
+  }
+
+  override suspend fun isMultipleReviewersAllowed(): Boolean {
+    return details.allowsMultipleMergeRequestReviewers
+           ?: multipleAssigneesAllowedFallbackRequest.await()
+           ?: false
+  }
+
+  override fun getLabelsBatches(): Flow<List<GitLabLabel>> = labelsLoader.getBatches()
   override fun getMembersBatches(): Flow<List<GitLabUserDTO>> = membersLoader.getBatches()
 
-  private suspend fun loadMultipleReviewersAllowed(project: GitLabProjectDTO): Boolean {
-    if (project.allowsMultipleMergeRequestReviewers != null) {
-      return project.allowsMultipleMergeRequestReviewers
-    }
-
+  private suspend fun loadMultipleAssigneesAllowedFallback(): Boolean? {
     val fromPlan = getAllowsMultipleAssigneesPropertyFromNamespacePlan()
     if (fromPlan != null) {
       return fromPlan
@@ -151,39 +180,46 @@ class GitLabLazyProject(
       return getAllowsMultipleAssigneesPropertyFromIssueWidget()
     }
 
-    return false
+    return null
   }
 
   @Throws(GitLabGraphQLMutationException::class)
-  override suspend fun createMergeRequestAndAwaitCompletion(sourceBranch: String, targetBranch: String, title: String, description: String?): GitLabMergeRequestDTO {
+  override suspend fun createMergeRequestAndAwaitCompletion(
+    sourceBranch: String,
+    targetBranch: String,
+    title: String,
+    description: String?,
+    reviewers: List<GitLabUserDTO>,
+    assignees: List<GitLabUserDTO>,
+    labels: List<GitLabLabel>,
+    squashBeforeMerge: Boolean?,
+    removeSourceBranch: Boolean?,
+  ): GitLabMergeRequestDTO {
     return cs.async(Dispatchers.IO) {
-      var data: GitLabMergeRequestDTO = api.graphQL.createMergeRequest(projectCoordinates, sourceBranch, targetBranch, title, description).getResultOrThrow()
-      val iid = data.iid
-      var attempts = 1
-      while (attempts++ < GitLabRegistry.getRequestPollingAttempts()) {
-        val updatedMr = api.graphQL.loadMergeRequest(projectCoordinates, iid).body()
-        requireNotNull(updatedMr)
-
-        data = updatedMr
-
-        if (data.diffRefs != null) break
-
+      val reviewerIds = reviewers.nullize()?.map { GitLabGidData(it.id).guessRestId() }
+      val assigneeIds = assignees.nullize()?.map { GitLabGidData(it.id).guessRestId() }
+      val labelTitles = labels.nullize()?.map { it.title }
+      val iid = api.rest.createMergeRequest(
+        projectId,
+        sourceBranch,
+        targetBranch,
+        title,
+        description,
+        reviewerIds,
+        assigneeIds,
+        labelTitles,
+        squashBeforeMerge,
+        removeSourceBranch
+      ).body().iid
+      val attempts = GitLabRegistry.getRequestPollingAttempts()
+      repeat(attempts) {
+        val data = api.graphQL.loadMergeRequest(projectCoordinates.projectPath, iid).body()
+        if (data?.diffRefs != null) {
+          return@async data
+        }
         delay(GitLabRegistry.getRequestPollingIntervalMillis().toLong())
       }
-      data
-    }.await()
-  }
-
-  @Throws(GitLabGraphQLMutationException::class, IllegalStateException::class)
-  override suspend fun adjustReviewers(mrIid: String, reviewers: List<GitLabUserDTO>): GitLabMergeRequestDTO {
-    return cs.async(Dispatchers.IO) {
-      if (GitLabVersion(15, 3) <= api.getMetadata().version) {
-        api.graphQL.mergeRequestSetReviewers(projectCoordinates, mrIid, reviewers).getResultOrThrow()
-      }
-      else {
-        api.rest.mergeRequestSetReviewers(projectCoordinates, mrIid, reviewers).body()
-        api.graphQL.loadMergeRequest(projectCoordinates, mrIid).body() ?: error("Merge request could not be loaded")
-      }
+      error("Merge request $iid was created but the data was not loaded within $attempts attempts.")
     }.await()
   }
 
@@ -198,7 +234,7 @@ class GitLabLazyProject(
       val filename = path.fileName.toString()
       val mimeType = Files.probeContentType(path) ?: "application/octet-stream"
       Files.newInputStream(path).use {
-        api.rest.markdownUploadFile(projectCoordinates, filename, mimeType, it).body()
+        api.rest.markdownUploadFile(projectId, filename, mimeType, it).body()
       }
     }.await()
     GitLabStatistics.logFileUploadActionExecuted(project)
@@ -212,7 +248,7 @@ class GitLabLazyProject(
         outputStream.toByteArray()
       }
       ByteArrayInputStream(byteArray).use {
-        api.rest.markdownUploadFile(projectCoordinates, "image.png", "image/png", it).body()
+        api.rest.markdownUploadFile(projectId, "image.png", "image/png", it).body()
       }
     }.await()
     GitLabStatistics.logFileUploadActionExecuted(project)
@@ -224,10 +260,10 @@ class GitLabLazyProject(
   }
 
   private suspend fun getAllowsMultipleAssigneesPropertyFromNamespacePlan() = try {
-    api.rest.getProjectNamespace(projectMapping.repository.projectPath.owner).body()?.plan?.let {
+    api.rest.getProjectNamespace(projectCoordinates.projectPath.owner).body()?.plan?.let {
       it != GitLabPlan.FREE
     } ?: run {
-      LOG.warn("Failed to find namespace for project ${projectMapping.repository}")
+      LOG.warn("Failed to find namespace for project ${projectCoordinates.projectPath.fullPath()}")
       null
     }
   }
@@ -235,13 +271,13 @@ class GitLabLazyProject(
     throw ce
   }
   catch (e: Exception) {
-    LOG.warn("Failed to load namespace for project ${projectMapping.repository}", e)
+    LOG.warn("Failed to load namespace for project ${projectCoordinates.projectPath.fullPath()}", e)
     null
   }
 
   private suspend fun getAllowsMultipleAssigneesPropertyFromIssueWidget(): Boolean {
     val widgetAssignees: WorkItemWidgetAssignees? = try {
-      api.graphQL.createAllWorkItemsFlow(projectMapping.repository)
+      api.graphQL.createAllWorkItemsFlow(projectCoordinates.projectPath)
         .transformWhile { workItems ->
           val widget = workItems.find { workItem -> workItem.workItemType.name == WorkItemType.ISSUE_TYPE }
             ?.widgets
@@ -262,7 +298,7 @@ class GitLabLazyProject(
       throw ce
     }
     catch (e: Exception) {
-      LOG.warn("Failed to load work item widgets for project ${projectMapping.repository}", e)
+      LOG.warn("Failed to load work item widgets for project ${projectCoordinates.projectPath}", e)
       return false
     }
     return widgetAssignees?.allowsMultipleAssignees ?: false

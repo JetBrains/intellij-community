@@ -1,7 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.JavaTailTypes;
@@ -10,9 +9,7 @@ import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.EqTailType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
@@ -21,7 +18,6 @@ import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
-import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
@@ -58,8 +54,6 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiAnnotationMemberValue;
-import com.intellij.psi.PsiAnnotationMethod;
 import com.intellij.psi.PsiAnnotationParameterList;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiArrayType;
@@ -103,7 +97,6 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNameHelper;
-import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiPackageAccessibilityStatement;
@@ -128,7 +121,6 @@ import com.intellij.psi.PsiUsesStatement;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementExtractorFilter;
@@ -150,7 +142,6 @@ import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
-import com.intellij.psi.impl.source.PsiLabelReference;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.ElementClassFilter;
@@ -167,14 +158,12 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.JavaDeprecationUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
@@ -595,16 +584,9 @@ public final class JavaCompletionContributor extends CompletionContributor imple
           PsiClass annoClass = anno.resolveAnnotationType();
           mayCompleteReference = mayCompleteValueExpression(position, annoClass);
           if (annoClass != null) {
-            completeAnnotationAttributeName(result, position, anno, annoClass);
             JavaKeywordCompletion.addPrimitiveTypes(result, position, session);
           }
         }
-      }
-
-      PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
-      if (ref instanceof PsiLabelReference labelRef) {
-        session.registerBatchItems(processLabelReference(labelRef));
-        result.stopHere();
       }
 
       List<LookupElement> refSuggestions = Collections.emptyList();
@@ -978,7 +960,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       if (forcedTail != null && !(element instanceof JavaPsiClassReferenceElement)) {
         element = new TailTypeDecorator<>(element) {
           @Override
-          protected TailType computeTailType(InsertionContext context) {
+          protected TailType computeTailType(@NotNull InsertionContext context) {
             if (context.getCompletionChar() == ':' && forcedTail == JavaTailTypes.CASE_ARROW) {
               return TailTypes.caseColonType();
             }
@@ -1009,10 +991,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       items.add(element);
 
       ContainerUtil.addIfNotNull(items, ArrayMemberAccess.accessFirstElement(position, element));
-    }
-
-    if (parameters.getInvocationCount() > 0) {
-      items.addAll(getInnerScopeVariables(position));
     }
 
     if (ref.getQualifier() instanceof PsiExpression qualifierExpression &&
@@ -1060,14 +1038,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     return null;
   }
 
-  private static @Unmodifiable Collection<LookupElement> getInnerScopeVariables(PsiElement position) {
-    List<PsiLocalVariable> list = BringVariableIntoScopeFix.findInnerScopeVariables(position);
-    return ContainerUtil.map(list, variable -> 
-      new VariableLookupItem(
-        variable, JavaBundle.message("completion.inner.scope.tail.text", BringVariableIntoScopeFix.getVariableDeclarationPlace(variable)))
-        .setPriority(-1));
-  }
-
   private static @NotNull List<LookupElement> completePermitsListReference(@NotNull CompletionParameters parameters,
                                                                            @NotNull PsiJavaCodeReferenceElement referenceElement,
                                                                            @NotNull PrefixMatcher prefixMatcher) {
@@ -1093,11 +1063,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   static boolean shouldInsertSemicolon(PsiElement position) {
     return position.getParent() instanceof PsiMethodReferenceExpression &&
            JavaFrontendCompletionUtil.insertSemicolon(position.getParent().getParent());
-  }
-
-  private static @Unmodifiable List<LookupElement> processLabelReference(PsiLabelReference reference) {
-    return ContainerUtil.map(reference.getVariants(), s -> TailTypeDecorator.withTail(LookupElementBuilder.create(s),
-                                                                                      TailTypes.semicolonType()));
   }
 
   static boolean isClassNamePossible(CompletionParameters parameters) {
@@ -1140,86 +1105,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
   public static boolean mayStartClassName(CompletionResultSet result) {
     return InternalCompletionSettings.getInstance().mayStartClassNameCompletion(result);
-  }
-
-  private static void completeAnnotationAttributeName(@NotNull CompletionResultSet result,
-                                                      @NotNull PsiElement position,
-                                                      @NotNull PsiAnnotation anno,
-                                                      @NotNull PsiClass annoClass) {
-    PsiNameValuePair[] existingPairs = anno.getParameterList().getAttributes();
-
-    methods: for (PsiMethod method : annoClass.getMethods()) {
-      if (!(method instanceof PsiAnnotationMethod)) continue;
-
-      String attrName = method.getName();
-      for (PsiNameValuePair existingAttr : existingPairs) {
-        if (PsiTreeUtil.isAncestor(existingAttr, position, false)) break;
-        if (Objects.equals(existingAttr.getName(), attrName) ||
-            PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(attrName) && existingAttr.getName() == null) continue methods;
-      }
-
-      PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)method).getDefaultValue();
-      String defText = defaultValue == null ? null : defaultValue.getText();
-      if (JavaKeywords.TRUE.equals(defText) || JavaKeywords.FALSE.equals(defText)) {
-        result.addElement(createAnnotationAttributeElement(method,
-                                                           JavaKeywords.TRUE.equals(defText) ? JavaKeywords.FALSE : JavaKeywords.TRUE,
-                                                           position));
-        result.addElement(PrioritizedLookupElement.withPriority(createAnnotationAttributeElement(method, defText, position)
-                                                                  .withTailText(" (default)", true), -1));
-      } else {
-        LookupElementBuilder element = createAnnotationAttributeElement(method, null, position);
-        if (defText != null) {
-          element = element.withTailText(" default " + defText, true);
-        }
-        result.addElement(element);
-      }
-    }
-  }
-
-  private static @NotNull LookupElementBuilder createAnnotationAttributeElement(@NotNull PsiMethod annoMethod,
-                                                                                @Nullable String value,
-                                                                                @NotNull PsiElement position) {
-    CommonCodeStyleSettings styleSettings = CodeStyle.getLanguageSettings(annoMethod.getContainingFile());
-    String space = ReferenceExpressionCompletionContributor.getSpace(styleSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
-    String lookupString = annoMethod.getName() + (value == null ? "" : space + "=" + space + value);
-    return LookupElementBuilder.create(annoMethod, lookupString).withIcon(annoMethod.getIcon(0))
-      .withStrikeoutness(JavaDeprecationUtils.isDeprecated(annoMethod, position))
-      .withInsertHandler((context, item) -> {
-        Editor editor = context.getEditor();
-        if (value == null) {
-          EqTailType.INSTANCE.processTail(editor, editor.getCaretModel().getOffset());
-        }
-        context.setAddCompletionChar(false);
-
-        context.commitDocument();
-        PsiAnnotationParameterList paramList =
-          PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiAnnotationParameterList.class, false);
-        Document document = context.getDocument();
-        if (paramList != null && paramList.getAttributes().length > 0 && paramList.getAttributes()[0].getName() == null) {
-          int valueOffset = paramList.getAttributes()[0].getTextRange().getStartOffset();
-          document.insertString(valueOffset, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
-          EqTailType.INSTANCE.processTail(editor, valueOffset + PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.length());
-        }
-        int offset = editor.getCaretModel().getOffset();
-        CharSequence sequence = document.getCharsSequence();
-        if (hasAttributeNameAt(sequence, offset)) {
-          document.insertString(offset, styleSettings.SPACE_AFTER_COMMA ? ", " : ",");
-        }
-      });
-  }
-
-  private static boolean hasAttributeNameAt(@NotNull CharSequence sequence, int offset) {
-    int length = sequence.length();
-    if (length <= offset) return false;
-    char nextChar = sequence.charAt(offset);
-    if (!StringUtil.isJavaIdentifierStart(nextChar)) return false;
-    while (offset < length - 1 && StringUtil.isJavaIdentifierPart(sequence.charAt(offset + 1))) {
-      offset++;
-    }
-    while (offset < length - 1 && StringUtil.isWhiteSpace(sequence.charAt(offset + 1))) {
-      offset++;
-    }
-    return offset < length - 1 && sequence.charAt(offset + 1) == '=';
   }
 
   @Override

@@ -11,7 +11,7 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.Utils
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Comparing
@@ -149,7 +149,7 @@ internal class DataContextDialog(
     for (key in DataKey.allKeys()) {
       val specialKey = isSpecialContextComponentOnlyKey(key)
       if (specialKey && component !== componentList.first()) continue
-      val data = runReadAction {
+      val data = runReadActionBlocking {
         context.getData(key)
       }
       val parentData = if (specialKey) null else parentContext.getData(key)

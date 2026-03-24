@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="21" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
+          </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+            </arrayArg>
+          </arrayArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/testSrc">
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.rd.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.rd.framework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="jna" level="project" />
+    <orderEntry type="library" scope="TEST" name="download-pgp-verifier" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.bouncy.castle.pgp" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.rd.community" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="rd-gen" level="project" />
+    <orderEntry type="library" scope="TEST" name="opentelemetry" level="project" />
+    <orderEntry type="library" scope="TEST" name="opentelemetry-semconv" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.exporters" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.bootstrap" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.welcomeScreen.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.repository" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.product" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.remoteDev.util" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.remoteDev.util" />
+</module>

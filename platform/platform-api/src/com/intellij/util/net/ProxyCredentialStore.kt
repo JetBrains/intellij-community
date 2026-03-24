@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
 import com.intellij.credentialStore.Credentials
@@ -23,8 +23,8 @@ interface ProxyCredentialStore {
 
   /**
    * Stores credentials for the proxy located at the specified host and port.
-   * @param credentials null to clear the associated credentials from the persistence
-   * @param remember whether to persist the credentials to be reused in future sessions. Has no effect if [credentials] is null
+   * @param credentials `null` to clear the associated credentials from the persistence
+   * @param remember whether to persist the credentials to be reused in future sessions. Has no effect if [credentials] is `null`
    */
   fun setCredentials(host: String, port: Int, credentials: Credentials?, remember: Boolean)
 

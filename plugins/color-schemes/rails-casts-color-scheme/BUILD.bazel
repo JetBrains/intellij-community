@@ -9,8 +9,23 @@ resourcegroup(
 
 jvm_library(
   name = "color-scheme-rails_casts",
+  module_name = "intellij.color.scheme.rails_casts",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":color-scheme-rails_casts_resources"]
 )
+
+jvm_library(
+  name = "color-scheme-rails_casts_test_lib",
+  module_name = "intellij.color.scheme.rails_casts",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":color-scheme-rails_casts"]
+)
 ### auto-generated section `build intellij.color.scheme.rails_casts` end
+
+### auto-generated section `iml intellij.color.scheme.rails_casts` start
+exports_files([
+  "intellij.color.scheme.rails_casts.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.color.scheme.rails_casts` end

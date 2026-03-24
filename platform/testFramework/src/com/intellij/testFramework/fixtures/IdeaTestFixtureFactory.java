@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.IdeaTestFixtureFactoryImpl;
@@ -55,4 +56,7 @@ public abstract class IdeaTestFixtureFactory {
   public abstract @NotNull TempDirTestFixture createTempDirTestFixture();
 
   public abstract @NotNull BareTestFixture createBareFixture();
+
+  public abstract @NotNull CodeInsightTestFixture createCodeInsightFixtureForExistingProject(@NotNull Project project);
+
 }

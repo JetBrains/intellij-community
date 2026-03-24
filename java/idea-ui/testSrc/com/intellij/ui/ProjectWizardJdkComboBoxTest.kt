@@ -4,6 +4,7 @@ package com.intellij.ui
 import com.intellij.ide.projectWizard.ProjectWizardJdkComboBox
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -17,6 +18,8 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.utils.io.deleteRecursively
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
@@ -31,15 +34,19 @@ class ProjectWizardJdkComboBoxTest {
     val localSdk = createLocalSdk(disposable)
     val eelSdk = createEelSdk(disposable)
 
-    val comboBox = ProjectWizardJdkComboBox(null, disposable)
+    withContext(Dispatchers.EDT) {
+      val comboBox = ProjectWizardJdkComboBox(null, disposable)
 
-    comboBox.refreshJdks(LocalEelDescriptor)
-    Assertions.assertTrue(comboBox.contains(localSdk))
-    Assertions.assertFalse(comboBox.contains(eelSdk))
+      comboBox.refreshJdks(LocalEelDescriptor)
+      comboBox.loadWorkspaceModelJob?.join()
+      Assertions.assertTrue(comboBox.contains(localSdk))
+      Assertions.assertFalse(comboBox.contains(eelSdk))
 
-    comboBox.refreshJdks(eelFixture.get().eelDescriptor)
-    Assertions.assertFalse(comboBox.contains(localSdk))
-    Assertions.assertTrue(comboBox.contains(eelSdk))
+      comboBox.refreshJdks(eelFixture.get().eelDescriptor)
+      comboBox.loadWorkspaceModelJob?.join()
+      Assertions.assertFalse(comboBox.contains(localSdk))
+      Assertions.assertTrue(comboBox.contains(eelSdk))
+    }
   }
 
 

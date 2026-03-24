@@ -44,7 +44,7 @@ import java.util.ArrayList;
 
 @ApiStatus.Internal
 public final class TypingEventsLogger extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 11);
+  private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 12);
 
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
   private static final StringEventField TOOL_WINDOW =
@@ -57,9 +57,11 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
   private static final VarargEventId SELECTION_DELETED =
     GROUP.registerVarargEvent("selection.deleted", EDITOR_KIND, EventFields.Language, SELECTION_LENGTH, DELETE_ACTION);
   private static final EventId TOO_MANY_EVENTS = GROUP.registerEvent("too.many.events");
+  private static final IntEventField LATENCY_NUMBER_EVENTS = EventFields.Int("number_of_events");
   private static final IntEventField LATENCY_MAX = EventFields.Int("latency_max_ms");
   private static final IntEventField LATENCY_90 = EventFields.Int("latency_90_ms");
-  private static final EventId3<Integer, Integer, FileType> LATENCY = GROUP.registerEvent("latency", LATENCY_MAX, LATENCY_90, EventFields.FileType);
+  private static final IntEventField LATENCY_50 = EventFields.Int("latency_50_ms");
+  private static final VarargEventId LATENCY = GROUP.registerVarargEvent("latency", LATENCY_MAX, LATENCY_90, LATENCY_50, LATENCY_NUMBER_EVENTS, EventFields.FileType);
   private static final EventId2<Language, Language> TYPED_IN_INJECTED = GROUP.registerEvent(
     "typed.in.injected.language",
     EventFields.Language("original_lang"), EventFields.Language("injected_lang")
@@ -197,8 +199,11 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
 
     private void logCurrentLatency() {
       if (myLatencyRecord != null && myLatencyRecord.getTotalLatency().getTotalLatency() > 0) {
-        LATENCY.log(myLatencyRecord.getTotalLatency().getMaxLatency(), myLatencyRecord.getTotalLatency().percentile(90),
-                    myCurrentFile.getFileType());
+        LATENCY.log(LATENCY_MAX.with(myLatencyRecord.getTotalLatency().getMaxLatency()),
+                    LATENCY_90.with(myLatencyRecord.getTotalLatency().percentile(90)),
+                    LATENCY_50.with(myLatencyRecord.getTotalLatency().percentile(50)),
+                    LATENCY_NUMBER_EVENTS.with(myLatencyRecord.getTotalLatency().getSamples().size()),
+                    EventFields.FileType.with(myCurrentFile.getFileType()));
       }
     }
 

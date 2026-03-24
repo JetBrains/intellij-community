@@ -1,11 +1,11 @@
-Index: platform/core-api/src/com/intellij/util/SlowOperations.java
+Index: community/platform/core-api/src/com/intellij/util/SlowOperations.java
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
-diff --git a/platform/core-api/src/com/intellij/util/SlowOperations.java b/platform/core-api/src/com/intellij/util/SlowOperations.java
---- a/platform/core-api/src/com/intellij/util/SlowOperations.java	(revision 8a1a672da13308f30ce9e532de7abb50bb48a0f7)
-+++ b/platform/core-api/src/com/intellij/util/SlowOperations.java	(date 1742823108696)
+diff --git a/community/platform/core-api/src/com/intellij/util/SlowOperations.java b/community/platform/core-api/src/com/intellij/util/SlowOperations.java
+--- a/community/platform/core-api/src/com/intellij/util/SlowOperations.java	(revision 8a1a672da13308f30ce9e532de7abb50bb48a0f7)
++++ b/community/platform/core-api/src/com/intellij/util/SlowOperations.java	(date 1742823108696)
 @@ -188,6 +188,7 @@
      boolean result = System.getenv("TEAMCITY_VERSION") != null ||
                       application.isUnitTestMode() ||

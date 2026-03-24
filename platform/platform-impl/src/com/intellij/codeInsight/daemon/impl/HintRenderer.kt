@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment
@@ -22,7 +22,7 @@ import com.intellij.ui.paint.EffectPainter
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
-import org.intellij.lang.annotations.JdkConstants
+import com.intellij.util.ui.JdkConstants
 import java.awt.Color
 import java.awt.Font
 import java.awt.FontMetrics

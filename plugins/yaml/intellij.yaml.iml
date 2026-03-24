@@ -28,7 +28,6 @@
       <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" packagePrefix="org.jetbrains.yaml" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="org.jetbrains.yaml" />
-      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" packagePrefix="org.jetbrains.yaml" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -54,5 +53,6 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
   </component>
 </module>

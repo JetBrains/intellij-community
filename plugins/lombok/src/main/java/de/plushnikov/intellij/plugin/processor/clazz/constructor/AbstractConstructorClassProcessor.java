@@ -431,13 +431,24 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     if (psiClass.hasTypeParameters()) {
       final PsiTypeParameter[] classTypeParameters = psiClass.getTypeParameters();
 
-      // need to create new type parameters
+      // Need to create new type parameters
+      // and update the bounds of the new type parameters using the substitutor
       for (int index = 0; index < classTypeParameters.length; index++) {
         final PsiTypeParameter classTypeParameter = classTypeParameters[index];
-        final LightTypeParameterBuilder methodTypeParameter = createTypeParameter(methodBuilder, index, classTypeParameter);
+
+        final LightTypeParameterBuilder methodTypeParameter =
+          new LightTypeParameterBuilder(StringUtil.notNullize(classTypeParameter.getName()), methodBuilder, index);
         methodBuilder.withTypeParameter(methodTypeParameter);
 
-        substitutor = substitutor.put(classTypeParameter, PsiSubstitutor.EMPTY.substitute(methodTypeParameter));
+        final LightReferenceListBuilder methodExtendsList = methodTypeParameter.getExtendsList();
+        for (PsiClassType classReferencedType : classTypeParameter.getExtendsList().getReferencedTypes()) {
+          final PsiType substitutedType = substitutor.substitute(classReferencedType);
+
+          if (substitutedType instanceof PsiClassType psiClassSubstitutedType &&
+              Arrays.binarySearch(methodExtendsList.getReferencedTypes(), psiClassSubstitutedType) < 0) {
+            methodExtendsList.addReference(psiClassSubstitutedType);
+          }
+        }
       }
     }
 
@@ -462,19 +473,6 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     LombokAddNullAnnotations.createRelevantNonNullAnnotation(psiClass, methodBuilder);
 
     return methodBuilder;
-  }
-
-  private static @NotNull LightTypeParameterBuilder createTypeParameter(LombokLightMethodBuilder method,
-                                                                        int index,
-                                                                        PsiTypeParameter psiClassTypeParameter) {
-    final String nameOfTypeParameter = StringUtil.notNullize(psiClassTypeParameter.getName());
-
-    final LightTypeParameterBuilder result = new LightTypeParameterBuilder(nameOfTypeParameter, method, index);
-    final LightReferenceListBuilder resultExtendsList = result.getExtendsList();
-    for (PsiClassType referencedType : psiClassTypeParameter.getExtendsList().getReferencedTypes()) {
-      resultExtendsList.addReference(referencedType);
-    }
-    return result;
   }
 
   private static @NotNull String createStaticCodeBlockText(@NotNull PsiType psiType,

@@ -9,8 +9,23 @@ resourcegroup(
 
 jvm_library(
   name = "keymap-visualAssist",
+  module_name = "intellij.keymap.visualAssist",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":keymap-visualAssist_resources"]
 )
+
+jvm_library(
+  name = "keymap-visualAssist_test_lib",
+  module_name = "intellij.keymap.visualAssist",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":keymap-visualAssist"]
+)
 ### auto-generated section `build intellij.keymap.visualAssist` end
+
+### auto-generated section `iml intellij.keymap.visualAssist` start
+exports_files([
+  "intellij.keymap.visualAssist.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.keymap.visualAssist` end

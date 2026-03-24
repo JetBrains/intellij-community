@@ -59,6 +59,7 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler> @ApiStatus.
   private val coroutineScope: CoroutineScope?
 ) {
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use constructor with scriptBody")
   constructor(scriptNamePrefix: String, scriptMainClass: Class<out ExternalApp>) :
     this(scriptNamePrefix, scriptMainClass, null, emptyList(), null)

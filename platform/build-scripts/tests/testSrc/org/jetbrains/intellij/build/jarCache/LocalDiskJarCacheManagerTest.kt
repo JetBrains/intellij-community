@@ -239,7 +239,6 @@ internal class LocalDiskJarCacheManagerTest {
         cacheDir = cacheDir,
         productionClassOutDir = tempDir.resolve("classes/production"),
         maxAccessTimeAge = 30.days,
-        scope = this,
       )
       val produceCalls = AtomicInteger()
       val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)

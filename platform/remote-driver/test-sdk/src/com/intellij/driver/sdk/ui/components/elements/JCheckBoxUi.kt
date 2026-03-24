@@ -39,7 +39,7 @@ class JCheckBoxUi(data: ComponentData) : UiComponent(data) {
     }
   }
 
-  fun isSelected() = checkboxComponent.isSelected()
+  fun isSelected(): Boolean = checkboxComponent.isSelected()
 }
 
 fun JCheckBoxUi.waitSelected(selected: Boolean, timeout: Duration = 5.seconds) {

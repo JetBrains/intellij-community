@@ -7,6 +7,7 @@ from django.forms.renderers import BaseRenderer
 from django.forms.utils import ErrorList, RenderableFormMixin, _DataT, _FilesT
 from django.forms.widgets import Media, MediaDefiningClass, Widget
 from django.utils.functional import cached_property
+from typing_extensions import override
 
 TOTAL_FORM_COUNT: str
 INITIAL_FORM_COUNT: str
@@ -22,7 +23,7 @@ _F = TypeVar("_F", bound=BaseForm)
 
 class ManagementForm(Form):
     cleaned_data: dict[str, int | None]
-    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    @override
     def clean(self) -> dict[str, int | None]: ...
 
 class BaseFormSet(Sized, RenderableFormMixin, Generic[_F]):
@@ -62,11 +63,10 @@ class BaseFormSet(Sized, RenderableFormMixin, Generic[_F]):
         error_class: type[ErrorList] = ...,
         form_kwargs: dict[str, Any] | None = None,
         error_messages: Mapping[str, str] | None = None,
-        form_renderer: BaseRenderer = ...,
-        renderer: BaseRenderer = ...,
     ) -> None: ...
     def __iter__(self) -> Iterator[_F]: ...
     def __getitem__(self, index: int) -> _F: ...
+    @override
     def __len__(self) -> int: ...
     def __bool__(self) -> bool: ...
     @cached_property
@@ -109,6 +109,8 @@ class BaseFormSet(Sized, RenderableFormMixin, Generic[_F]):
     def media(self) -> Media: ...
     @property
     def template_name(self) -> str: ...
+    @override
+    def get_context(self) -> dict[str, Any]: ...
 
 def formset_factory(
     form: type[_F],
@@ -122,6 +124,7 @@ def formset_factory(
     validate_min: bool = False,
     absolute_max: int | None = None,
     can_delete_extra: bool = True,
+    renderer: BaseRenderer | None = None,
 ) -> type[BaseFormSet[_F]]: ...
 def all_valid(formsets: Sequence[BaseFormSet[_F]]) -> bool: ...
 

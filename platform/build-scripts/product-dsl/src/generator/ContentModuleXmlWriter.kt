@@ -4,6 +4,8 @@
 package org.jetbrains.intellij.build.productLayout.generator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
+import com.intellij.platform.pluginGraph.ContentSourceKind
+import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
 import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlan
 import org.jetbrains.intellij.build.productLayout.model.error.ErrorCategory
@@ -16,7 +18,7 @@ import org.jetbrains.intellij.build.productLayout.pipeline.Slots
 import org.jetbrains.intellij.build.productLayout.stats.DependencyFileResult
 import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
 import org.jetbrains.intellij.build.productLayout.util.FileUpdateStrategy
-import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
+import org.jetbrains.intellij.build.productLayout.xml.buildUpdatedXmlDependenciesContent
 
 /**
  * Writes content module dependency XML files from precomputed plans.
@@ -35,14 +37,18 @@ internal object ContentModuleXmlWriter : PipelineNode {
     }
 
     val results = plans.map { plan ->
-      writeContentModuleXml(plan, model.xmlWritePolicy)
+      writeContentModuleXml(plan, model.generatedArtifactWritePolicy, model.pluginGraph)
     }
 
     ctx.publish(Slots.CONTENT_MODULE, ContentModuleOutput(files = results))
   }
 }
 
-private fun writeContentModuleXml(plan: ContentModuleDependencyPlan, policy: FileUpdateStrategy): DependencyFileResult {
+private fun writeContentModuleXml(
+  plan: ContentModuleDependencyPlan,
+  policy: FileUpdateStrategy,
+  pluginGraph: PluginGraph,
+): DependencyFileResult {
   if (plan.suppressibleError?.category == ErrorCategory.NON_STANDARD_DESCRIPTOR_ROOT) {
     return DependencyFileResult(
       contentModuleName = plan.contentModuleName,
@@ -57,15 +63,21 @@ private fun writeContentModuleXml(plan: ContentModuleDependencyPlan, policy: Fil
     )
   }
 
-  val status = updateXmlDependencies(
-    path = plan.descriptorPath,
+  val dependencyUpdatedContent = buildUpdatedXmlDependenciesContent(
     content = plan.descriptorContent,
     moduleDependencies = plan.moduleDependencies.map { it.value },
     pluginDependencies = plan.pluginDependencies.map { it.value },
     preserveExistingModule = { moduleName -> plan.suppressedModules.contains(ContentModuleName(moduleName)) },
-    preserveExistingPlugin = { pluginName -> plan.suppressedPlugins.contains(PluginId(pluginName)) },
-    strategy = policy,
-  )
+    preserveExistingPlugin = { pluginName -> plan.preserveExistingPluginDependencies.contains(PluginId(pluginName)) },
+    allowInsideSectionRegion = false,
+  ) ?: plan.descriptorContent
+  val updatedContent = if (needsQualifiedExtensionPointNames(plan.contentModuleName, pluginGraph)) {
+    qualifyModuleSetExtensionPoints(dependencyUpdatedContent)
+  }
+  else {
+    dependencyUpdatedContent
+  }
+  val status = policy.writeIfChanged(plan.descriptorPath, plan.descriptorContent, updatedContent)
 
   return DependencyFileResult(
     contentModuleName = plan.contentModuleName,
@@ -78,4 +90,27 @@ private fun writeContentModuleXml(plan: ContentModuleDependencyPlan, policy: Fil
     allJpsPluginDependencies = plan.allJpsPluginDependencies,
     suppressionUsages = plan.suppressionUsages,
   )
+}
+
+private fun needsQualifiedExtensionPointNames(contentModuleName: ContentModuleName, pluginGraph: PluginGraph): Boolean {
+  return pluginGraph.query {
+    val contentModule = contentModule(contentModuleName) ?: return@query false
+    var hasModuleSetWrapperSource = false
+    contentModule.contentProductionSources { source ->
+      if (source.kind == ContentSourceKind.PLUGIN && source.plugin().isModuleSetWrapper) {
+        hasModuleSetWrapperSource = true
+      }
+    }
+    hasModuleSetWrapperSource
+  }
+}
+
+private val EXTENSION_POINT_NAME_PATTERN = Regex("""(<extensionPoint\b[^>]*?)\bname="([^"]+)"""")
+
+internal fun qualifyModuleSetExtensionPoints(content: String, namespace: String = "com.intellij"): String {
+  return EXTENSION_POINT_NAME_PATTERN.replace(content) { match ->
+    val pointName = match.groupValues[2]
+    val qualifiedName = if (pointName.startsWith("$namespace.")) pointName else "$namespace.$pointName"
+    "${match.groupValues[1]}qualifiedName=\"$qualifiedName\""
+  }
 }

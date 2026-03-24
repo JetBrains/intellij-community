@@ -140,7 +140,7 @@ public final class InspectionTree extends Tree {
             expandPath(new TreePath(myModel.getRoot()));
             SmartExpander.installOn(InspectionTree.this);
             if (!myView.isDisposed()) {
-              ReadAction.run(() -> myView.syncRightPanel());
+              ReadAction.runBlocking(() -> myView.syncRightPanel());
             }
           });
         }

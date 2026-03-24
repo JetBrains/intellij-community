@@ -569,6 +569,16 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../../completion/testData/weighers/basic/DoNotLiftShorter.kt");
         }
 
+        @TestMetadata("DoNotLiftShorterMatchingParameterName.kt")
+        public void testDoNotLiftShorterMatchingParameterName() throws Exception {
+            runTest("../../completion/testData/weighers/basic/DoNotLiftShorterMatchingParameterName.kt");
+        }
+
+        @TestMetadata("DoNotLiftShorterMatchingTypeName.kt")
+        public void testDoNotLiftShorterMatchingTypeName() throws Exception {
+            runTest("../../completion/testData/weighers/basic/DoNotLiftShorterMatchingTypeName.kt");
+        }
+
         @TestMetadata("DoNotPreferNullForNonNullable.kt")
         public void testDoNotPreferNullForNonNullable() throws Exception {
             runTest("../../completion/testData/weighers/basic/DoNotPreferNullForNonNullable.kt");

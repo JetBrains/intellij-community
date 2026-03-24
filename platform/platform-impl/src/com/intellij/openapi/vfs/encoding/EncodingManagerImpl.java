@@ -164,7 +164,7 @@ public final class EncodingManagerImpl extends EncodingManager implements Persis
     }
 
     final Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       Charset charsetFromContent = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getImmutableCharSequence());
       if (charsetFromContent != null) {
         setCachedCharsetFromContent(charsetFromContent, null, document);

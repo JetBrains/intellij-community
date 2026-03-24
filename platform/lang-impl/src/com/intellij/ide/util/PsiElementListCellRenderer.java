@@ -362,7 +362,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   public @NotNull Comparable getComparingObject(T element) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       String elementText = getElementText(element);
       String containerText = getContainerText(element, elementText);
       TextWithIcon moduleTextWithIcon = getModuleTextWithIcon(element);

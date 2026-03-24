@@ -277,7 +277,7 @@ fun effect(f: ChangeScope.() -> Unit) {
 context(cs: ChangeScope)
 fun <E : Entity> EntityType<E>.new(builder: EntityBuilder<E> = EntityBuilder {}): E = let { entityType ->
   require(entity(entityType.eid) != null) {
-    "Entity type '${entityType.entityTypeIdent}' is not registered.\nDid you export package to rhizomedb?\nIt should be registered automatically, report and use ChangeScope.register as mitigation"
+    "Entity type '${entityType.entityTypeIdent}' is not registered.\nRegister it in your Plugin implementation, or use ChangeScope.register as mitigation"
   }
   val eid = cs.context.impl.createEntity(pipeline = cs.context,
                                       entityTypeEid = entityType.eid,

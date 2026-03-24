@@ -10,3 +10,4 @@ import kotlinx.parcelize.Parcelize
 class Test : Parcelable {
     val <caret>a = 5
 }
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelizeAddIgnoreOnParcelAnnotationQuickFix

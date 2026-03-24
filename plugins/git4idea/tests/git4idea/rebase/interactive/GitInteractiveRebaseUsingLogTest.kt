@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase.interactive
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -13,6 +14,8 @@ import git4idea.rebase.GitInteractiveRebaseEditorHandler
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseUtils
 import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
+import git4idea.rebase.log.GetEntriesUsingLogResult
+import git4idea.rebase.log.GitInteractiveRebaseEntriesProvider
 import git4idea.test.GitSingleRepoTest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -116,7 +119,7 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
         8()
       }
     }
-    assertExceptionDuringEntriesGeneration(commit0, CantRebaseUsingLogException.Reason.MERGE) {
+    assertFailureDuringEntriesGeneration(commit0, GetEntriesUsingLogResult.FailureReason.MERGE) {
       "We shouldn't generate entries if merge commit between HEAD and Rebase Base. Generated entries: $it"
     }
   }
@@ -132,7 +135,7 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
         4(commitMessage = "commit3")
       }
     }
-    assertExceptionDuringEntriesGeneration(commit0, CantRebaseUsingLogException.Reason.FIXUP_SQUASH) {
+    assertFailureDuringEntriesGeneration(commit0, GetEntriesUsingLogResult.FailureReason.FIXUP_SQUASH) {
       "We shouldn't generate entries if squash!/fixup! prefix used. Generated entries: $it"
     }
   }
@@ -176,7 +179,10 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
 
   private fun checkEntriesGeneration(commit: VcsCommitMetadata) {
     logData.refreshAndWait(repo, true)
-    val entriesGeneratedUsingLog = getEntriesUsingLog(repo, commit, logData)
+    val entriesGeneratedUsingLog = runBlocking {
+      repo.project.service<GitInteractiveRebaseEntriesProvider>()
+        .tryGetEntriesForDialog(repo, commit, logData)
+    } ?: error("Failed to get entries")
     val entriesGeneratedUsingGit = getRebaseEntriesUsingGit(commit)
     assertTrue(entriesGeneratedUsingGit.isNotEmpty() && entriesGeneratedUsingLog.isNotEmpty())
     entriesGeneratedUsingLog.forEachIndexed { i, generatedEntry ->
@@ -190,18 +196,19 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
     checkEntriesGeneration(commit)
   }
 
-  private fun assertExceptionDuringEntriesGeneration(
+  private fun assertFailureDuringEntriesGeneration(
     commit: VcsCommitMetadata,
-    reason: CantRebaseUsingLogException.Reason,
+    reason: GetEntriesUsingLogResult.FailureReason,
     failMessage: (entries: List<GitRebaseEntry>) -> String,
   ) {
     logData.refreshAndWait(repo, true)
-    try {
-      val entries = getEntriesUsingLog(repo, commit, logData)
-      fail(failMessage(entries))
+    val result = runBlocking {
+      repo.project.service<GitInteractiveRebaseEntriesProvider>().getEntriesForDialog(repo, commit, logData)
     }
-    catch (e: CantRebaseUsingLogException) {
-      assertEquals(reason, e.reason)
+
+    when (result) {
+      is GetEntriesUsingLogResult.Failure -> assertEquals(reason, result.reason)
+      is GetEntriesUsingLogResult.Success -> fail(failMessage(result.entries))
     }
   }
 }

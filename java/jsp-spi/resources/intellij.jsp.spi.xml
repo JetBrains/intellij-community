@@ -1,14 +1,12 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
-
-    <module name="intellij.jsp"/>
-    <module name="intellij.java"/>
-    <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.core"/>
-    <module name="intellij.platform.projectModel"/>
-    <module name="intellij.xml.psi"/>
-    <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.java"/>
+    <module name="intellij.jsp"/>
+    <module name="intellij.platform.backend"/>
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>

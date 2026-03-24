@@ -4,15 +4,16 @@ package com.intellij.openapi.project
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.project.MergingQueueGuiExecutor.ExecutorStateListener
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.project.MergingTaskQueueTest.LoggingTask
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.Semaphore
 import junit.framework.TestCase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -204,6 +205,7 @@ class MergingQueueGuiExecutorTest {
     val performLog = mutableListOf<Int>()
     val disposeLog = mutableListOf<Int>()
     val firstTaskPhaser = Phaser(2)
+    val firstTaskSemaphore = Semaphore(1)
     val exceptionRef = AtomicReference<Throwable>()
     val listener = ValidatingListener(exceptionRef)
     val queue = MergingTaskQueue<LoggingTask>()
@@ -217,9 +219,10 @@ class MergingQueueGuiExecutorTest {
           super.perform(indicator) // let performLog know that tge task has started
           firstTaskPhaser.arriveAndAwaitAdvanceWithTimeout() // 1
           firstTaskPhaser.arriveAndAwaitAdvanceWithTimeout() // 2 progress suspended
-          assertTrue(ProgressSuspender.getSuspender(ProgressManager.getGlobalProgressIndicator()).isSuspended,
+          val suspender = TaskSuspender.getContextSuspender()
+          assertTrue(requireNotNull(suspender).isPaused(),
                      "Progress indicator should now be suspended")
-
+          firstTaskSemaphore.waitFor()
           ProgressManager.checkCanceled() // this will suspend, and (unfortunately) will not throw PCE when unpause
           ProgressManager.checkCanceled() // this will throw
           fail("Should throw PCE")
@@ -241,6 +244,7 @@ class MergingQueueGuiExecutorTest {
 
       queue.cancelAllTasks()
       executor.guiSuspender().resumeProgressIfPossible()
+      firstTaskSemaphore.up()
       waitForExecutorToCompleteSubmittedTasks(executor, 3)
 
       assertEquals(1, performLog.size, "first task should start, second should not")

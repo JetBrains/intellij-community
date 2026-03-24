@@ -37,31 +37,6 @@ import com.jetbrains.python.psi.PyWithStatement
 
 class PyBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
-  companion object {
-    private val LANGUAGES = arrayOf(PythonLanguage.getInstance())
-    private val HELPERS = listOf<Helper<*>>(
-      LambdaHelper,
-      SimpleHelper(PyTryPart::class.java, "try"),
-      ExceptHelper,
-      SimpleHelper(PyFinallyPart::class.java, "finally"),
-      SimpleHelper(PyElsePart::class.java, "else"),
-      IfHelper,
-      ForHelper,
-      WhileHelper,
-      WithHelper,
-      ClassHelper,
-      FunctionHelper,
-      KeyValueHelper
-    )
-    private val STICKY_HELPERS = listOf<Helper<*>>(
-      // exclude if/else, try/except, etc. IDEA-344895
-      LambdaHelper,
-      WithHelper,
-      ClassHelper,
-      FunctionHelper,
-    )
-  }
-
   override fun isShownByDefault(): Boolean = false
 
   override fun getLanguages(): Array<PythonLanguage> = LANGUAGES
@@ -82,95 +57,118 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsProvider {
     return helpers.firstOrNull { it.type.isInstance(e) } as Helper<in PyElement>?
   }
 
-  private abstract class Helper<T : PyElement>(val type: Class<T>) {
-    fun elementInfo(e: T): String = getTruncatedPresentation(e, 32)
-    fun elementTooltip(e: T): String = getTruncatedPresentation(e, 96)
+}
 
-    abstract fun getPresentation(e: T): String
+private val LANGUAGES = arrayOf(PythonLanguage.getInstance())
+private val HELPERS = listOf(
+  LambdaHelper,
+  SimpleHelper(PyTryPart::class.java, "try"),
+  ExceptHelper,
+  SimpleHelper(PyFinallyPart::class.java, "finally"),
+  SimpleHelper(PyElsePart::class.java, "else"),
+  IfHelper,
+  ForHelper,
+  WhileHelper,
+  WithHelper,
+  ClassHelper,
+  FunctionHelper,
+  KeyValueHelper
+)
+private val STICKY_HELPERS = listOf(
+  // exclude if/else, try/except, etc. IDEA-344895
+  LambdaHelper,
+  WithHelper,
+  ClassHelper,
+  FunctionHelper,
+)
 
-    private fun getTruncatedPresentation(e: T, maxLength: Int) = StringUtil.shortenTextWithEllipsis(getPresentation(e), maxLength, 0, true)
-  }
+private abstract class Helper<T : PyElement>(val type: Class<T>) {
+  fun elementInfo(e: T): String = getTruncatedPresentation(e, 32)
+  fun elementTooltip(e: T): String = getTruncatedPresentation(e, 96)
 
-  private class SimpleHelper<T : PyElement>(type: Class<T>, val representation: String) : Helper<T>(type) {
-    override fun getPresentation(e: T) = representation
-  }
+  abstract fun getPresentation(e: T): String
 
-  private object LambdaHelper : Helper<PyLambdaExpression>(PyLambdaExpression::class.java) {
-    override fun getPresentation(e: PyLambdaExpression) = "lambda ${e.parameterList.getPresentableText(false)}"
-  }
+  private fun getTruncatedPresentation(e: T, maxLength: Int) = StringUtil.shortenTextWithEllipsis(getPresentation(e), maxLength, 0, true)
+}
 
-  private object ExceptHelper : Helper<PyExceptPart>(PyExceptPart::class.java) {
-    override fun getPresentation(e: PyExceptPart): String {
-      val exceptClass = e.exceptClass ?: return "except"
-      val target = e.target ?: return "except ${exceptClass.text}"
+private class SimpleHelper<T : PyElement>(type: Class<T>, val representation: String) : Helper<T>(type) {
+  override fun getPresentation(e: T) = representation
+}
 
-      return "except ${exceptClass.text} as ${target.text}"
-    }
-  }
+private object LambdaHelper : Helper<PyLambdaExpression>(PyLambdaExpression::class.java) {
+  override fun getPresentation(e: PyLambdaExpression) = "lambda ${e.parameterList.getPresentableText(false)}"
+}
 
-  private object IfHelper : Helper<PyIfPart>(PyIfPart::class.java) {
-    override fun getPresentation(e: PyIfPart): String {
-      val prefix = if (e.isElif) "elif" else "if"
-      val condition = e.condition ?: return prefix
+private object ExceptHelper : Helper<PyExceptPart>(PyExceptPart::class.java) {
+  override fun getPresentation(e: PyExceptPart): String {
+    val exceptClass = e.exceptClass ?: return "except"
+    val target = e.target ?: return "except ${exceptClass.text}"
 
-      return "$prefix ${condition.text}"
-    }
-  }
-
-  private object ForHelper : Helper<PyForPart>(PyForPart::class.java) {
-    override fun getPresentation(e: PyForPart): String {
-      val parent = e.parent
-      val prefix = if (parent is PyForStatement && parent.isAsync) "async for" else "for"
-
-      val target = e.target ?: return prefix
-      val source = e.source ?: return prefix
-
-      return "$prefix ${target.text} in ${source.text}"
-    }
-  }
-
-  private object WhileHelper : Helper<PyWhilePart>(PyWhilePart::class.java) {
-    override fun getPresentation(e: PyWhilePart): String {
-      val condition = e.condition ?: return "while"
-
-      return "while ${condition.text}"
-    }
-  }
-
-  private object WithHelper : Helper<PyWithStatement>(PyWithStatement::class.java) {
-    override fun getPresentation(e: PyWithStatement): String {
-      val getItemPresentation = fun(item: PyWithItem): String? {
-        val expression = item.expression
-        val target = item.target ?: return expression.text
-        return "${expression.text} as ${target.text}"
-      }
-
-      val prefix = if (e.isAsync) "async with " else "with "
-
-      return e.withItems
-        .orEmpty()
-        .asSequence()
-        .map(getItemPresentation)
-        .filterNotNull()
-        .joinToString(prefix = prefix)
-    }
-  }
-
-  private object ClassHelper : Helper<PyClass>(PyClass::class.java) {
-    override fun getPresentation(e: PyClass) = e.name ?: "class"
-  }
-
-  private object FunctionHelper : Helper<PyFunction>(PyFunction::class.java) {
-    override fun getPresentation(e: PyFunction): String {
-      val prefix = if (e.isAsync) "async " else ""
-      val name = e.name ?: return "function"
-
-      return "$prefix$name()"
-    }
-  }
-
-  private object KeyValueHelper : Helper<PyKeyValueExpression>(PyKeyValueExpression::class.java) {
-    override fun getPresentation(e: PyKeyValueExpression): String = e.key.text ?: "key"
+    return "except ${exceptClass.text} as ${target.text}"
   }
 }
 
+private object IfHelper : Helper<PyIfPart>(PyIfPart::class.java) {
+  override fun getPresentation(e: PyIfPart): String {
+    val prefix = if (e.isElif) "elif" else "if"
+    val condition = e.condition ?: return prefix
+
+    return "$prefix ${condition.text}"
+  }
+}
+
+private object ForHelper : Helper<PyForPart>(PyForPart::class.java) {
+  override fun getPresentation(e: PyForPart): String {
+    val parent = e.parent
+    val prefix = if (parent is PyForStatement && parent.isAsync) "async for" else "for"
+
+    val target = e.target ?: return prefix
+    val source = e.source ?: return prefix
+
+    return "$prefix ${target.text} in ${source.text}"
+  }
+}
+
+private object WhileHelper : Helper<PyWhilePart>(PyWhilePart::class.java) {
+  override fun getPresentation(e: PyWhilePart): String {
+    val condition = e.condition ?: return "while"
+
+    return "while ${condition.text}"
+  }
+}
+
+private object WithHelper : Helper<PyWithStatement>(PyWithStatement::class.java) {
+  override fun getPresentation(e: PyWithStatement): String {
+    val getItemPresentation = fun(item: PyWithItem): String? {
+      val expression = item.expression
+      val target = item.target ?: return expression.text
+      return "${expression.text} as ${target.text}"
+    }
+
+    val prefix = if (e.isAsync) "async with " else "with "
+
+    return e.withItems
+      .orEmpty()
+      .asSequence()
+      .map(getItemPresentation)
+      .filterNotNull()
+      .joinToString(prefix = prefix)
+  }
+}
+
+private object ClassHelper : Helper<PyClass>(PyClass::class.java) {
+  override fun getPresentation(e: PyClass) = e.name ?: "class"
+}
+
+private object FunctionHelper : Helper<PyFunction>(PyFunction::class.java) {
+  override fun getPresentation(e: PyFunction): String {
+    val prefix = if (e.isAsync) "async " else ""
+    val name = e.name ?: return "function"
+
+    return "$prefix$name()"
+  }
+}
+
+private object KeyValueHelper : Helper<PyKeyValueExpression>(PyKeyValueExpression::class.java) {
+  override fun getPresentation(e: PyKeyValueExpression): String = e.key.text ?: "key"
+}

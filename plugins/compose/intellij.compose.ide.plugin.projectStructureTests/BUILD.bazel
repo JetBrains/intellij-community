@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "ide-plugin-projectStructureTests",
+  module_name = "intellij.compose.ide.plugin.projectStructureTests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
@@ -17,13 +18,21 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:junit4",
     "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ],
   runtime_deps = [":ide-plugin-projectStructureTests"]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.projectStructureTests` end
+
+### auto-generated section `iml intellij.compose.ide.plugin.projectStructureTests` start
+exports_files([
+  "intellij.compose.ide.plugin.projectStructureTests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.compose.ide.plugin.projectStructureTests` end
 
 ### auto-generated section `test intellij.compose.ide.plugin.projectStructureTests` start
 load("@community//build:tests-options.bzl", "jps_test")

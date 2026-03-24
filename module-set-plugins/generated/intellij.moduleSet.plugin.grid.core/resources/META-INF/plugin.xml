@@ -1,0 +1,16 @@
+<!-- DO NOT EDIT: This file is auto-generated from moduleSet("grid.core") -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<idea-plugin implementation-detail="true">
+  <id>com.intellij.moduleSet.grid.core</id>
+  <name>Grid Core</name>
+  <description>Generated plugin wrapper for module set grid.core.</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.grid"/>
+    <module name="intellij.grid.core.impl"/>
+    <module name="intellij.grid.csv.core.impl"/>
+    <module name="intellij.grid.impl"/>
+    <module name="intellij.grid.impl.ide"/>
+    <module name="intellij.grid.types"/>
+  </content>
+</idea-plugin>

@@ -105,6 +105,7 @@ common.attrs =
 	&	common.attrs.i18n
 	&	common.attrs.present
 	&	common.attrs.other
+	&	aria.global?
 	)
 
 common.attrs.basic =
@@ -494,7 +495,6 @@ common.attrs.aria.role.checkbox = ( notAllowed )
 common.attrs.aria.role.combobox = ( notAllowed )
 common.attrs.aria.role.complementary = ( notAllowed )
 common.attrs.aria.role.dialog = ( notAllowed )
-common.attrs.aria.role.directory = ( notAllowed )
 common.attrs.aria.role.document = ( notAllowed )
 common.attrs.aria.role.feed |= ( notAllowed )
 common.attrs.aria.role.figure |= ( notAllowed )

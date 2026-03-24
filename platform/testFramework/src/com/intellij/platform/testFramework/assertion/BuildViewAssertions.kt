@@ -7,6 +7,7 @@ import com.intellij.build.SUCCESSFUL_STEPS_FILTER
 import com.intellij.build.WARNINGS_FILTER
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.ui.ExecutionConsole
+import com.intellij.execution.ui.unwrapDelegate
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.platform.testFramework.assertion.treeAssertion.buildTree
 import com.intellij.testFramework.PlatformTestUtil
@@ -54,7 +55,7 @@ object BuildViewAssertions {
 
   fun assertBuildViewNodeConsoleText(buildView: BuildView, nodeText: String, assert: (String) -> Unit) {
     assertBuildViewNodeConsole(buildView, nodeText) {
-      assert((it as ConsoleViewImpl).text)
+      assert((it.unwrapDelegate() as ConsoleViewImpl).text)
     }
   }
 

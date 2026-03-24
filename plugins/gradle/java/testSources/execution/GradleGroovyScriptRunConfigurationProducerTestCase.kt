@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution
 
+import com.intellij.gradle.java.groovy.execution.GradleGroovyRunnerUtil
+import com.intellij.gradle.java.groovy.execution.GradleGroovyScriptRunConfigurationProducer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.tree.LeafPsiElement

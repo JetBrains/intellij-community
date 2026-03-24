@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.navigation.impl.AsyncNavigatable
 import com.intellij.pom.NavigatableWithText
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -37,7 +38,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSettings?)
-  : BasePsiNode<PsiFile>(project, value, viewSettings), NavigatableWithText, PathElementIdProvider {
+  : BasePsiNode<PsiFile>(project, value, viewSettings), NavigatableWithText, PathElementIdProvider, AsyncNavigatable {
   public override fun getChildrenImpl(): Collection<AbstractTreeNode<*>>? {
     val project = project
     val jarRoot = jarRoot
@@ -111,7 +112,7 @@ open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSett
     super<BasePsiNode>.navigate(requestFocus)
   }
 
-  internal suspend fun navigateAsync(requestFocus: Boolean) {
+  override suspend fun navigateAsync(requestFocus: Boolean) {
     val jarRoot = jarRoot
     val project = project
     if (requestFocus && jarRoot != null && project != null) {

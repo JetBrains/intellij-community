@@ -9,6 +9,7 @@ import com.intellij.platform.eel.channels.sendWholeBuffer
 import com.intellij.platform.eel.getAcceptorForRemotePort
 import com.intellij.platform.eel.getConnectionToRemotePort
 import com.intellij.platform.eel.listenOnUnixSocket
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.consumeAsInputStream
@@ -49,6 +50,11 @@ class EelLocalTunnelApiTest {
       serverExecutor = JavaMainClassExecutor(EelHelper::class.java, EelHelper.HelperMode.NETWORK_SERVER.name) // helper is CLIENT (we are the server)
       clientExecutor = JavaMainClassExecutor(EelHelper::class.java, EelHelper.HelperMode.NETWORK_CLIENT.name)
     }
+  }
+
+  @Test
+  fun testDescriptor() {
+    Assertions.assertEquals(LocalEelDescriptor, localEel.tunnels.descriptor)
   }
 
   @Test

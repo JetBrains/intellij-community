@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.workingTrees
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.ui.components.Badge
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil.isWorkingTreesFeatureEnabled
 import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil.NUMBER_OF_PROJECTS_WITH_GIT_KEY
@@ -33,7 +33,7 @@ internal object GitWorkingTreesNewBadgeUtil {
 
   fun addLabelNewIfNeeded(presentation: com.intellij.openapi.actionSystem.Presentation) {
     if (shouldShowBadgeNew()) {
-      presentation.putClientProperty(ActionUtil.SECONDARY_ICON, AllIcons.General.New_badge)
+      presentation.putClientProperty(ActionUtil.SECONDARY_ICON, Badge.new)
     }
   }
 

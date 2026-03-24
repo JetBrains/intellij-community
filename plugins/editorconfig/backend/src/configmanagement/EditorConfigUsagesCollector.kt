@@ -28,8 +28,8 @@ object EditorConfigUsagesCollector : CounterUsagesCollector() {
                         Enum("property", OptionType::class.java),
                         EventFields.Count)
 
-  fun logEditorConfigUsed(file: PsiFile, properties: ResourceProperties) {
-    properties.properties.keys
+  fun logEditorConfigUsed(file: PsiFile, properties: Map<String, String>) {
+    properties.keys
       .groupingBy { getOptionType(it) }
       .eachCount()
       .forEach { (optionType, count) -> EDITOR_CONFIG_USED.log(file.project, file.fileType, optionType, count) }

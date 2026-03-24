@@ -52,18 +52,18 @@ public final class EmptyDirectoryInspection extends GlobalInspectionTool {
                             @NotNull ProblemDescriptionsProcessor processor) {
     final Project project = context.getProject();
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    final SearchScope searchScope = ReadAction.compute(() -> scope.toSearchScope());
+    SearchScope searchScope = ReadAction.computeBlocking(() -> scope.toSearchScope());
     if (!(searchScope instanceof GlobalSearchScope globalSearchScope)) {
       return;
     }
     index.iterateContent(file -> {
-      if (onlyReportDirectoriesUnderSourceRoots && ReadAction.compute(() -> !index.isInSourceContent(file))) {
+      if (onlyReportDirectoriesUnderSourceRoots && ReadAction.computeBlocking(() -> !index.isInSourceContent(file))) {
         return true;
       }
       if (!file.isDirectory() || file.getChildren().length != 0) {
         return true;
       }
-      final PsiDirectory directory = ReadAction.compute(() -> PsiManager.getInstance(project).findDirectory(file));
+      PsiDirectory directory = ReadAction.computeBlocking(() -> PsiManager.getInstance(project).findDirectory(file));
       final RefElement refDirectory = context.getRefManager().getReference(directory);
       if (refDirectory == null || context.shouldCheck(refDirectory, this)) {
         return true;

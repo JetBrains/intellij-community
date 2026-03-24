@@ -38,6 +38,7 @@ import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiQualifiedReferenceElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiVariable;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
@@ -314,6 +315,9 @@ public final class AnnotationDocGenerator {
   }
 
   public static List<AnnotationDocGenerator> getAnnotationsToShow(@NotNull PsiAnnotationOwner owner, @NotNull PsiElement context) {
+    if (owner instanceof PsiTypeParameter typeParameter) {
+      return getAnnotationsToShow(typeParameter);
+    }
     if (owner instanceof PsiModifierList modifierList) {
       return getAnnotationsToShow(((PsiModifierListOwner)modifierList.getParent()));
     }

@@ -14,7 +14,7 @@ import com.intellij.util.lazyPub
 inline fun <T> lazySynchronousResolve(@NlsContexts.ProgressTitle statusMessage: String, crossinline provider: () -> T): Lazy<T> = lazyPub {
   if (ApplicationManager.getApplication().isDispatchThread) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously<T, Exception>(ThrowableComputable {
-      ReadAction.compute(ThrowableComputable<T, Exception> { CancellationCheck.runWithCancellationCheck { provider.invoke() } })
+      ReadAction.computeBlocking(ThrowableComputable<T, Exception> { CancellationCheck.runWithCancellationCheck { provider.invoke() } })
     }, statusMessage, true, null)
   }
   else provider.invoke()

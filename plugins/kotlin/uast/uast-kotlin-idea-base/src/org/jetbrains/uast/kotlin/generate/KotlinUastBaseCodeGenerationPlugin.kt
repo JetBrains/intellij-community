@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateBody
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -43,6 +44,7 @@ import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
@@ -203,7 +205,8 @@ abstract class KotlinUastBaseCodeGenerationPlugin : UastCodeGenerationPlugin {
             }
         }
 
-        val body = (sourcePsi as? KtDeclarationWithBody)?.bodyBlockExpression ?: return null
+        val body = (sourcePsi as? KtDeclarationWithBody)?.bodyBlockExpression
+            ?: (sourcePsi as? KtSecondaryConstructor)?.getOrCreateBody() ?: return null
         val ktPsiFactory = KtPsiFactory(sourcePsi.project, true)
         val assignmentExpression = ktPsiFactory.buildExpression {
             if (uField.name == uParameter.name) {
@@ -352,8 +355,9 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
     }
 
     private fun KtPsiFactory.getAnalyzableMethodCall(methodCall: KtCallExpression, context: KtElement): KtCallExpression {
-        val analyzableElement = ((createExpressionCodeFragment("(null)", context).copy() as KtExpressionCodeFragment)
-            .getContentElement()!! as KtParenthesizedExpression).expression!!
+        // call .copy() to get non-physical code fragment which allows modifications without WA
+        val nonPhysicalCodeFragment = createExpressionCodeFragment("(null)", context).copy() as KtExpressionCodeFragment
+        val analyzableElement = (nonPhysicalCodeFragment.getContentElement()!! as KtParenthesizedExpression).expression!!
 
         val isQualified = methodCall.parent is KtQualifiedExpression
         return if (isQualified) {

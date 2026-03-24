@@ -9,7 +9,6 @@ class SecurityMiddleware(MiddlewareMixin):
     sts_include_subdomains: bool
     sts_preload: bool
     content_type_nosniff: bool
-    xss_filter: bool
     redirect: bool
     redirect_host: str | None
     redirect_exempt: list[Any]

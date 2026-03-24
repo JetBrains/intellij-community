@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "codeOptimizer",
+  module_name = "intellij.platform.buildScripts.codeOptimizer",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
@@ -26,6 +27,12 @@ jvm_library(
   runtime_deps = [":codeOptimizer"]
 )
 ### auto-generated section `build intellij.platform.buildScripts.codeOptimizer` end
+
+### auto-generated section `iml intellij.platform.buildScripts.codeOptimizer` start
+exports_files([
+  "intellij.platform.buildScripts.codeOptimizer.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.buildScripts.codeOptimizer` end
 
 ### auto-generated section `test intellij.platform.buildScripts.codeOptimizer` start
 load("@community//build:tests-options.bzl", "jps_test")

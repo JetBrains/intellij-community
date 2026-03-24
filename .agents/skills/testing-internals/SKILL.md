@@ -169,11 +169,10 @@ Then attach debugger to port 5005.
                     ▼                               ▼
 ┌───────────────────────────────────┐ ┌───────────────────────────────────────┐
 │  8a. JUNIT 5 TESTS                │ │  8b. JUNIT 3/4 TESTS (Legacy)         │
-│  JUnit5TeamCityRunnerFor-         │ │  JUnit5TeamCityRunnerFor-             │
-│  TestsOnClasspath.main()          │ │  TestAllSuite.main()                  │
-│  - Uses JUnit Platform Launcher   │ │  - Wraps legacy tests in JUnit 5     │
-│  - ClassNameFilter                │ │  - BootstrapTests.suite()             │
-│  - PostDiscoveryFilter            │ │  - TestAll.run()                      │
+│  JUnit5TeamCityRunner.main()      │ │  JUnit5TeamCityRunner.main()          │
+│  - Uses JUnit Platform Launcher   │ │  - Uses JUnit Platform Launcher       │
+│  - ClassNameFilter                │ │  - ClassNameFilter                    │
+│  - PostDiscoveryFilter            │ │  - PostDiscoveryFilter                │
 └───────────────────────────────────┘ └───────────────────────────────────────┘
                     │                               │
                     └───────────────┬───────────────┘
@@ -217,7 +216,6 @@ Then attach debugger to port 5005.
 
 | Class | Purpose |
 |-------|---------|
-| `JUnit5TeamCityRunnerForTestsOnClasspath` | Runs JUnit 5 tests, uses `Launcher` API |
 | `JUnit5TeamCityRunner` | Runs JUnit 3/4 tests using the JUnit Vintage test engine, or JUnit5 tests using the JUnit Jupiter test engine |
 | `TCExecutionListener` | Reports test results to TeamCity via service messages |
 
@@ -227,7 +225,6 @@ Then attach debugger to port 5005.
 |-------|---------|
 | `TestCaseLoader` | Discovers and filters test classes |
 | `TestAll` | JUnit 3 test suite, collects all tests |
-| `BootstrapTests` | Bootstrap suite for JUnit 3/4 tests |
 | `TestClassesFilter` | Pattern/group-based test filtering |
 
 #### Bucketing & Distribution
@@ -237,7 +234,6 @@ Then attach debugger to port 5005.
 | `BucketingScheme` | Interface for test distribution |
 | `HashingBucketingScheme` | Default: hash-based distribution |
 | `TestsDurationBucketingScheme` | Duration-aware distribution |
-| `NastradamusBucketingScheme` | AI-powered test distribution |
 
 ## Test Module Hierarchy
 
@@ -246,7 +242,7 @@ Then attach debugger to port 5005.
 | Product | Entry Point | Default mainModule | Source |
 |---------|-------------|-------------------|--------|
 | IDEA Ultimate | `IdeaUltimateRunTestsBuildTarget` | `intellij.idea.ultimate.tests.main` | `build/src/` |
-| Community | `CommunityRunTestsBuildTarget` | `intellij.idea.community.main` | `community/build/src/` |
+| Community | `CommunityRunTestsBuildTarget` | `intellij.idea.community.main.tests` | `community/build/src/` |
 | RustRover | `RustRoverRunTestsBuildTarget` | `intellij.idea.ultimate.tests.main` | `rustrover/build/src/` |
 | RubyMine | `RubyRunTestsBuildTarget` | `intellij.idea.ultimate.tests.main` | `ruby/build/src/` |
 | CLion | `CLionRunTestsBuildTarget` | `intellij.idea.ultimate.tests.main` | `CIDR/clion-build/src/` |
@@ -260,12 +256,12 @@ From `intellij-teamcity-config/.teamcity/src/ijplatform/KnownModules.kt`:
 | CI Constant | Module Name |
 |-------------|-------------|
 | `ULTIMATE_TESTS` | `intellij.idea.ultimate.tests.main` |
-| `COMMUNITY_MAIN` | `intellij.idea.community.main` |
+| `COMMUNITY_MAIN` | `intellij.idea.community.main.tests` |
 | `GOLAND_TESTS` | `intellij.goland.tests` |
 | `PYTHON_TESTS` | `intellij.python.tests` |
-| `PHPSTORM_MAIN` | `intellij.phpstorm.main` |
-| `CLION_MAIN` | `intellij.clion.main` |
-| `RUSTROVER_MAIN` | `intellij.rustrover.main` |
+| `PHPSTORM_MAIN` | `intellij.phpstorm.main.tests` |
+| `CLION_MAIN` | `intellij.clion.main.tests` |
+| `RUSTROVER_MAIN` | `intellij.rustrover.main.tests` |
 | `KOTLIN_K2_TESTS` | `kotlin.fir-all-tests` |
 | `KOTLIN_ULTIMATE_ALL_TESTS` | `intellij.kotlin-ultimate.all-tests` |
 | `DATABASE_TESTS` | `intellij.database.tests` |
@@ -275,7 +271,7 @@ From `intellij-teamcity-config/.teamcity/src/ijplatform/KnownModules.kt`:
 
 Default mainModule is set in:
 - `UltimateProjectTestingOptions.kt:36` - Ultimate: `intellij.idea.ultimate.tests.main`
-- `CommunityRunTestsBuildTarget.kt:28` - Community: `intellij.idea.community.main`
+- `CommunityRunTestsBuildTarget.kt:28` - Community: `intellij.idea.community.main.tests`
 
 ### Ultimate Test Module Tree (Simplified)
 
@@ -308,7 +304,6 @@ testGroups          // -Dintellij.build.test.groups=<group>
 
 // Test execution
 mainModule          // -Dintellij.build.test.main.module=<module>
-bootstrapSuite      // -Dintellij.build.test.bootstrap.suite=<class>
 attemptCount        // -Dintellij.build.test.attempt.count=<n>
 
 // JVM configuration
@@ -359,8 +354,6 @@ java_binary(
 "idea.config.path"   → tempDir/config
 "idea.system.path"   → tempDir/system
 "java.io.tmpdir"     → tempDir
-"classpath.file"     → path to file with test classpath
-"bootstrap.testcases" → "com.intellij.AllTests" (or custom suite)
 
 // JVM options:
 "-XX:+HeapDumpOnOutOfMemoryError"

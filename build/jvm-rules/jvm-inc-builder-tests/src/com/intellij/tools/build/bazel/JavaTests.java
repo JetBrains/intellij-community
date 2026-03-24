@@ -1,13 +1,23 @@
 package com.intellij.tools.build.bazel;
 
 import com.intellij.tools.build.bazel.impl.BazelIncBuildTest;
+import com.intellij.tools.build.bazel.impl.OutputConsumer;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.time.Duration;
 
 // Migrated from JPS-based test engine
 public class JavaTests extends BazelIncBuildTest {
   @Test
   public void testInner() throws Exception {
     performTest("java/common/inner").assertFailure();
+  }
+
+  @Test
+  public void testMoveInnerClassToTopLevel() throws Exception {
+    performTest("java/common/moveInnerClassToTopLevel").assertSuccessful();
   }
 
   @Test
@@ -1389,9 +1399,25 @@ public class JavaTests extends BazelIncBuildTest {
 
   // changeName tests
 
+  private static final String JAVA_CHANGE_CASE_TEST_PATH = "java/changeName/changeCaseOfName";
+
   @Test
   public void testChangeCaseOfName() throws Exception {
-    performTest("java/changeName/changeCaseOfName").assertSuccessful();
+    performTest(JAVA_CHANGE_CASE_TEST_PATH).assertSuccessful();
+  }
+  
+  @Override
+  protected void modify(Path testDataDir, Path testWorkDir, int stage) throws IOException {
+    if (stage == 0 && testDataDir.endsWith(JAVA_CHANGE_CASE_TEST_PATH)) {
+      // shutdown to ensure bazel re-reads paths with their original case
+      try {
+        runBazelCommand(OutputConsumer.allLinesConsumer(), Duration.ofMinutes(1), "shutdown").assertSuccessful();
+      }
+      catch (Exception e) {
+        throw new IOException(e);
+      }
+    }
+    super.modify(testDataDir, testWorkDir, stage);
   }
 
   @Test

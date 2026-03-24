@@ -54,6 +54,7 @@ import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -558,9 +559,13 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
     @Override
     public void visitElement(final @NotNull PsiElement element) {
-      if (myLineRange.intersects(element.getTextRange())) {
+      if (doesIntersect(element)) {
         super.visitElement(element);
       }
+    }
+
+    private boolean doesIntersect(@NotNull PsiElement element) {
+      return myLineRange.intersects(element.getTextRange());
     }
 
     @Override
@@ -576,7 +581,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
     @Override
     public void visitReferenceExpression(final @NotNull PsiReferenceExpression reference) {
-      if (myLineRange.intersects(reference.getTextRange()) && reference.resolve() instanceof PsiVariable var) {
+      if (doesIntersect(reference) && reference.resolve() instanceof PsiVariable var) {
         if (var instanceof PsiField) {
           if (myCollectExpressions && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(reference, myVisibleLocals)) {
             /*
@@ -641,7 +646,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     private void processVariable(final PsiVariable variable) {
-      if (myLineRange.intersects(variable.getTextRange()) && myVisibleLocals.contains(variable.getName())) {
+      if (doesIntersect(variable) && myVisibleLocals.contains(variable.getName())) {
         myVars.add(variable.getName());
       }
     }
@@ -649,6 +654,25 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     @Override
     public void visitClass(final @NotNull PsiClass aClass) {
       // Do not step in to local and anonymous classes...
+    }
+
+    @Override
+    public void visitLambdaExpression(final @NotNull PsiLambdaExpression expression) {
+      if (!doesIntersect(expression)) {
+        return;
+      }
+      // If any lambda parameter is in the visible locals, we're inside the lambda.
+      // Otherwise, don't step in to it.
+      var insideLambda = false;
+      for (PsiParameter parameter : expression.getParameterList().getParameters()) {
+        if (myVisibleLocals.contains(parameter.getName())) {
+          insideLambda = true;
+          break;
+        }
+      }
+      if (insideLambda) {
+        super.visitLambdaExpression(expression);
+      }
     }
   }
 

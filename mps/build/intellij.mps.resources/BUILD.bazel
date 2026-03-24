@@ -9,8 +9,23 @@ resourcegroup(
 
 jvm_library(
   name = "mps-resources",
+  module_name = "intellij.mps.resources",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":mps-resources_resources"]
 )
+
+jvm_library(
+  name = "mps-resources_test_lib",
+  module_name = "intellij.mps.resources",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":mps-resources"]
+)
 ### auto-generated section `build intellij.mps.resources` end
+
+### auto-generated section `iml intellij.mps.resources` start
+exports_files([
+  "intellij.mps.resources.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.mps.resources` end

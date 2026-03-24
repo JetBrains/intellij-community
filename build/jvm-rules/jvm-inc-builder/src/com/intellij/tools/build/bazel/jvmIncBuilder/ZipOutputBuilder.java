@@ -3,6 +3,7 @@ package com.intellij.tools.build.bazel.jvmIncBuilder;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.dependency.CloseableExt;
 
 import java.io.IOException;
 import java.nio.file.Path;

@@ -110,8 +110,7 @@
     <applicationService serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
 
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportLocationHelper"
-                        serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportLocationHelper"
-                        open="true"/>
+                        serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportLocationHelper"/>
 
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyStdReferenceContributor" language="Python"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.docstrings.DocStringReferenceContributor"
@@ -194,6 +193,8 @@
 
     <daemon.changeLocalityDetector implementation="com.jetbrains.python.inspections.PyChangeLocalityDetector"/>
 
+    <statistics.applicationUsagesCollector implementation="com.jetbrains.python.psi.types.PyTypeEvaluationAggregatesCollector"/>
+
     <localInspection language="Python" shortName="PyUnusedLocalInspection" suppressId="PyUnusedLocal" bundle="messages.PyPsiBundle" key="INSP.NAME.unused" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection"/>
     <localInspection language="Python" shortName="PyRedundantParenthesesInspection" suppressId="PyRedundantParentheses" bundle="messages.PyPsiBundle" key="INSP.NAME.redundant.parentheses" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyRedundantParenthesesInspection"/>
     <localInspection language="Python" shortName="PySimplifyBooleanCheckInspection" suppressId="PySimplifyBooleanCheck" bundle="messages.PyPsiBundle" key="INSP.NAME.check.can.be.simplified" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PySimplifyBooleanCheckInspection"/>
@@ -206,6 +207,11 @@
     <localInspection language="Python" shortName="PyBroadExceptionInspection" suppressId="PyBroadException" bundle="messages.PyPsiBundle" key="INSP.NAME.too.broad.exception.clauses" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyBroadExceptionInspection"/>
     <localInspection language="Python" shortName="PyByteLiteralInspection" suppressId="PyByteLiteral" bundle="messages.PyPsiBundle" key="INSP.NAME.byte.literal" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyByteLiteralInspection"/>
     <localInspection language="Python" shortName="PyCallingNonCallableInspection" suppressId="PyCallingNonCallable" bundle="messages.PyPsiBundle" key="INSP.NAME.calling.non.callable" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyCallingNonCallableInspection"/>
+    <localInspection language="Python" shortName="PyStringConversionWithoutDunderMethodInspection"
+                     suppressId="PyStringConversionWithoutDunderMethod" bundle="messages.PyPsiBundle"
+                     key="INSP.NAME.string.conversion.without.dunder" groupKey="INSP.GROUP.python" enabledByDefault="true"
+                     level="WEAK WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PyStringConversionWithoutDunderMethodInspection"/>
     <localInspection language="Python" shortName="PyComparisonWithNoneInspection" suppressId="PyComparisonWithNone" bundle="messages.PyPsiBundle" key="INSP.NAME.comparison.with.none" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyComparisonWithNoneInspection"/>
     <localInspection language="Python" shortName="PyDataclassInspection" suppressId="PyDataclass" bundle="messages.PyPsiBundle" key="INSP.NAME.dataclass.definition.and.usages" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDataclassInspection"/>
     <localInspection language="Python" shortName="PyDictCreationInspection" suppressId="PyDictCreation" bundle="messages.PyPsiBundle" key="INSP.NAME.dict.creation" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyDictCreationInspection"/>
@@ -224,6 +230,7 @@
     <localInspection language="Python" shortName="PyNamedTupleInspection" suppressId="PyNamedTuple" bundle="messages.PyPsiBundle" key="INSP.named.tuple" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyNamedTupleInspection"/>
     <localInspection language="Python" shortName="PyArgumentListInspection" suppressId="PyArgumentList" bundle="messages.PyPsiBundle" key="INSP.NAME.incorrect.call.arguments" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyArgumentListInspection"/>
     <localInspection language="Python" shortName="PyRedeclarationInspection" suppressId="PyRedeclaration" bundle="messages.PyPsiBundle" key="INSP.NAME.redeclaration" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyRedeclarationInspection"/>
+    <localInspection language="Python" shortName="PyGlobalVariableRedeclarationInNotebookInspection" suppressId="PyGlobalVariableRedeclarationInNotebook" bundle="messages.PyPsiBundle" key="INSP.NAME.global.variable.redeclaration.in.notebook" groupKey="INSP.GROUP.python" enabledByDefault="false" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyGlobalVariableRedeclarationInNotebookInspection"/>
     <localInspection language="Python" shortName="PyTypeAliasRedeclarationInspection" suppressId="PyTypeAliasRedeclaration" bundle="messages.PyPsiBundle" key="INSP.NAME.type.alias.redeclaration" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTypeAliasRedeclarationInspection"/>
     <localInspection language="Python" shortName="PyMethodParametersInspection" suppressId="PyMethodParameters" bundle="messages.PyPsiBundle" key="INSP.NAME.problematic.first.parameter" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMethodParametersInspection"/>
     <localInspection language="Python" shortName="PyUnreachableCodeInspection" suppressId="PyUnreachableCode" bundle="messages.PyPsiBundle" key="INSP.NAME.unreachable.code" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" implementationClass="com.jetbrains.python.inspections.PyUnreachableCodeInspection"/>
@@ -279,7 +286,11 @@
     <localInspection language="Python" shortName="PyNewTypeInspection" suppressId="PyNewType" bundle="messages.PyPsiBundle" key="INSP.NAME.new.type" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyNewTypeInspection"/>
     <localInspection language="Python" shortName="PyInvalidEscapeSequenceInspection" suppressId="PyInvalidEscapeSequence" bundle="messages.PyPsiBundle" key="INSP.NAME.invalid.escape.sequence" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyInvalidEscapeSequenceInspection"/>
     <localInspection language="Python" shortName="PyPatternInspection" suppressId="PyPattern" bundle="messages.PyPsiBundle" key="INSP.NAME.patterns" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyPatternInspection"/>
-
+    <localInspection language="Python" shortName="PySuspiciousBooleanConditionInspection" suppressId="PySuspiciousBooleanCondition"
+                     bundle="messages.PyPsiBundle" key="INSP.NAME.suspicious.boolean.condition" groupKey="INSP.GROUP.python"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PySuspiciousBooleanConditionInspection"/>
+    <localInspection language="Python" shortName="PyVarianceInspection" suppressId="PyVariance" bundle="messages.PyPsiBundle" key="INSP.NAME.variance.checker" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyVarianceInspection"/>
     <intentionAction>
       <language>Python</language>
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertMethodToPropertyIntention</className>
@@ -539,7 +550,7 @@
       <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
-    <registryKey defaultValue="false"
+    <registryKey defaultValue="true"
                  description="Enable experimental better handling of recursive cases in type inference"
                  key="python.use.better.control.flow.type.inference"/>
     <registryKey defaultValue="true"
@@ -566,6 +577,10 @@
                  description="Enable soft-key caching for TypeEvalContext"/>
     <registryKey key="python.typing.weak.keys.type.eval.context" defaultValue="true"
                  description="Enable weak-key caching for TypeEvalContext"/>
+    <registryKey key="python.numeric.tower.type" defaultValue="true"
+                 description="Enable specialized class type representing Python's numeric tower (int -> float -> complex)"/>
+    <registryKey key="python.type.any" defaultValue="false"
+                 description="Enable Any and Unknown support"/>
 
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
   </extensions>
@@ -675,6 +690,7 @@
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibOverridingModuleMembersProvider"/>
     <typeCheckerExtension implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassInstanceProtocolTypeCheckerExtension"/>
+    <typeCheckerExtension implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassInitVarTypeCheckerExtension"/>
 
     <implicitAsyncContext implementation="com.jetbrains.python.validation.PyDevConsoleAsyncContextProvider"/>
 
@@ -683,6 +699,16 @@
     <pyModuleMembersProvider implementation="com.jetbrains.python.tensorFlow.PyTensorFlowModuleMembersProvider"/>
     <pyiStubSuppressor implementation="com.jetbrains.python.tensorFlow.TensorflowPyiStubsSuppressor"/>
   </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="Python.Internal" displayType="BALLOON" isLogByDefault="true" hideFromSettings="true"/>
+  </extensions>
 
-
+  <actions resource-bundle="messages.PyPsiBundle">
+    <group id="PythonPsiInternalGroup" internal="true" popup="true">
+      <add-to-group group-id="Internal" anchor="last"/>
+      <action id="PyTypeBenchmarkAction"
+              class="com.jetbrains.python.actions.internal.PyTypeBenchmarkAction"
+              internal="true"/>
+    </group>
+  </actions>
 </idea-plugin>

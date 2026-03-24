@@ -21,6 +21,7 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.gradle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
@@ -31,6 +32,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.java.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.indexing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
@@ -69,7 +71,10 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.java.testFramework.backend" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5Pioneer" level="project" />
-    <orderEntry type="module" module-name="intellij.repository.search.common" />
+    <orderEntry type="module" module-name="intellij.repository.search.completion" />
     <orderEntry type="module" module-name="intellij.gradle.completion" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy.tests" scope="TEST" />
   </component>
 </module>

@@ -22,7 +22,6 @@
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -45,5 +44,10 @@
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.common" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
   </component>
 </module>

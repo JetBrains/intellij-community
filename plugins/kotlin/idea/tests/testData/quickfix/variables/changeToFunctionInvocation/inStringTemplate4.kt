@@ -1,4 +1,5 @@
 // "Change to function invocation" "true"
+// K2_ERROR: Function invocation 'foo()' expected.
 fun foo() {}
 
 fun test(){

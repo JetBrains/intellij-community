@@ -71,6 +71,7 @@ object KotlinHighlightInfoTypeSemanticNames {
     val SMART_CONSTANT: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.SMART_CONSTANT)
     val SMART_CAST_RECEIVER: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.SMART_CAST_RECEIVER)
     val LABEL: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.LABEL)
+    val CONTEXT_ARGUMENT: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.CONTEXT_ARGUMENT)
     val NAMED_ARGUMENT: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.NAMED_ARGUMENT)
     val ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES: HighlightInfoType =
         createSymbolTypeInfo(KotlinHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)

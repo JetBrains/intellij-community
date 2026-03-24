@@ -12,6 +12,7 @@ import com.intellij.platform.runtime.repository.MalformedRepositoryException;
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
+import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.stream.XMLStreamException;
@@ -107,7 +108,7 @@ public final class ProductModulesSerialization {
       RuntimeModuleId includedId = includedFromData.getFromModule();
       InputStream inputStream = resolver.readResourceFile(includedId, "META-INF/" + includedId.getStringId() + "/product-modules.xml");
       if (inputStream == null) {
-        throw new MalformedRepositoryException("'" + includedId.getStringId() + "' included in " +
+        throw new MalformedRepositoryException("'" + includedId.getPresentableName() + "' included in " +
                                                debugName + " doesn't contain product-modules.xml");
       }
       RawProductModules includedModules = ProductModulesXmlSerializer.parseModuleXml(inputStream);

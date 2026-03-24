@@ -11,7 +11,6 @@ import com.intellij.codeInsight.completion.impl.CompletionServiceImpl.Companion.
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -77,7 +76,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   val indicator: CompletionProgressIndicator?
 ) : Disposable {
 
-  abstract fun newCompletionStarted(time: Int, repeated: Boolean): Int
+  abstract fun newCompletionStarted(invocationCount: Int, repeated: Boolean): Int
 
   override fun dispose() {}
 
@@ -159,8 +158,8 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       myState = Success
     }
 
-    override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
-      return time
+    override fun newCompletionStarted(invocationCount: Int, repeated: Boolean): Int {
+      return invocationCount
     }
 
     override fun dispose() {
@@ -314,11 +313,27 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
         LOG.trace { "Starting completion phase :: completionEditor=$completionEditor" }
 
         phase.requestCompleted()
-        val time = phase.indicator?.invocationCount ?: 0
 
-        val customId = completionEditor.getUserData(CUSTOM_CODE_COMPLETION_ACTION_ID) ?: IdeActions.ACTION_CODE_COMPLETION
-        val handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false, customId)
-        handler.invokeCompletion(project, completionEditor, time, false)
+        doInvokeCompletionOnCommittedDocument(completionType, autopopup, project, completionEditor, phase.indicator?.invocationCount ?: 0)
+      }
+
+      @RequiresEdt
+      private fun doInvokeCompletionOnCommittedDocument(
+        completionType: CompletionType,
+        isAutopopup: Boolean,
+        project: Project,
+        editor: Editor,
+        invocationCount: Int,
+      ) {
+
+        // todo we can set up backend completion session right away without doing round trip to frontend
+        if (NewRdCompletionSupport.getInstance().scheduleAutopopupOnFrontend(project, editor, completionType)) {
+          CompletionServiceImpl.setCompletionPhase(NoCompletion)
+          return
+        }
+
+        val handler = CodeCompletionHandlerBase.createHandler(completionType, false, isAutopopup, false)
+        handler.invokeCompletion(project, editor, invocationCount, false)
       }
 
       @RequiresEdt
@@ -388,10 +403,10 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
 
   /** see doc of [CompletionPhase] */
   class Synchronous internal constructor(indicator: CompletionProgressIndicator) : CompletionPhase(indicator) {
-    override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
+    override fun newCompletionStarted(invocationCount: Int, repeated: Boolean): Int {
       assertPhase(NoCompletion.javaClass) // will fail and log valuable info
       CompletionServiceImpl.setCompletionPhase(NoCompletion)
-      return time
+      return invocationCount
     }
   }
 
@@ -450,17 +465,17 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       }
     }
 
-    override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
+    override fun newCompletionStarted(invocationCount: Int, repeated: Boolean): Int {
       indicator!!.closeAndFinish(false)
-      return indicator.nextInvocationCount(time, repeated)
+      return indicator.nextInvocationCount(invocationCount, repeated)
     }
   }
 
   /** see doc of [CompletionPhase] */
   class ItemsCalculated internal constructor(indicator: CompletionProgressIndicator) : CompletionPhase(indicator) {
-    override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
+    override fun newCompletionStarted(invocationCount: Int, repeated: Boolean): Int {
       requireNotNull(indicator) { "`ItemsCalculated#indicator` is not-null as its constructor accepts not-null `indicator`" }.closeAndFinish(false)
-      return indicator.nextInvocationCount(time, repeated)
+      return indicator.nextInvocationCount(invocationCount, repeated)
     }
   }
 
@@ -494,12 +509,12 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       expireOnAnyEditorChange(indicator.editor)
     }
 
-    override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
+    override fun newCompletionStarted(invocationCount: Int, repeated: Boolean): Int {
       CompletionServiceImpl.setCompletionPhase(NoCompletion)
       if (repeated) {
         indicator!!.restorePrefix(restorePrefix)
       }
-      return indicator!!.nextInvocationCount(time, repeated)
+      return indicator!!.nextInvocationCount(invocationCount, repeated)
     }
   }
 
@@ -514,9 +529,9 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       }
     }
 
-    override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
+    override fun newCompletionStarted(invocationCount: Int, repeated: Boolean): Int {
       CompletionServiceImpl.setCompletionPhase(NoCompletion)
-      return indicator!!.nextInvocationCount(time, repeated)
+      return indicator!!.nextInvocationCount(invocationCount, repeated)
     }
   }
 
@@ -536,16 +551,16 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       return false
     }
 
-    override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
+    override fun newCompletionStarted(invocationCount: Int, repeated: Boolean): Int {
       CompletionServiceImpl.setCompletionPhase(NoCompletion)
-      return time
+      return invocationCount
     }
   }
 
   /** see doc of [CompletionPhase] */
   private object NoCompletionImpl: CompletionPhase(null) {
-    override fun newCompletionStarted(time: Int, repeated: Boolean): Int {
-      return time
+    override fun newCompletionStarted(invocationCount: Int, repeated: Boolean): Int {
+      return invocationCount
     }
 
     override fun toString(): String {
@@ -558,10 +573,6 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
     @ApiStatus.Internal
     @JvmField
     internal val AUTO_POPUP_TYPED_EVENT: Key<TypedEvent> = Key.create("AutoPopupTypedEvent")
-
-    @ApiStatus.Internal
-    @JvmField
-    val CUSTOM_CODE_COMPLETION_ACTION_ID: Key<String> = Key.create("CodeCompletionActionID")
 
     @JvmField
     val NoCompletion: CompletionPhase = NoCompletionImpl

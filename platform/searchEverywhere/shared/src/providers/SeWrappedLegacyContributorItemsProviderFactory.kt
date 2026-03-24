@@ -14,4 +14,7 @@ interface SeWrappedLegacyContributorItemsProviderFactory: SeItemsProviderFactory
     throw UnsupportedOperationException("Shouldn't be called")
 
   suspend fun getItemsProvider(project: Project?, legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider?
+
+  suspend fun getItemsProvider(project: Project?, legacyContributor: SearchEverywhereContributor<Any>, isAllTab: Boolean): SeItemsProvider? =
+    getItemsProvider(project, legacyContributor)
 }

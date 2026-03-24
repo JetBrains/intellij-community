@@ -7,7 +7,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -34,7 +33,6 @@ import com.intellij.ui.content.ContentManager
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
-import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.ui.initOnShow
 import com.jediterm.core.util.TermSize
 import fleet.rpc.client.durable
@@ -68,7 +66,8 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
-import org.jetbrains.plugins.terminal.util.fireListenersAndLogAllExceptions
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.createDefaultTabName
 import java.lang.ref.WeakReference
 import kotlin.time.Duration.Companion.seconds
 
@@ -80,8 +79,6 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   override val tabs: List<TerminalToolWindowTab>
     get() = mutableTabs.toList()
-
-  private val listeners = DisposableWrapperList<TerminalTabsManagerListener>()
 
   private var tabsRestoredDeferred: Deferred<Unit> = CompletableDeferred(Unit)
 
@@ -103,7 +100,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   override fun closeTab(tab: TerminalToolWindowTab) {
     val manager = tab.content.manager ?: return
-    manager.removeContent(tab.content, true, true, true)
+    manager.removeContent(/* content = */ tab.content, /* dispose = */ true, /* requestFocus = */ true, /* forcedFocus = */ true)
   }
 
   override fun detachTab(tab: TerminalToolWindowTab): TerminalView {
@@ -116,6 +113,8 @@ internal class TerminalToolWindowTabsManagerImpl(
     if (toolWindow.contentManager.isEmpty) {
       toolWindow.hide()
     }
+
+    project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).tabDetached(tab)
     return tab.view
   }
 
@@ -126,8 +125,9 @@ internal class TerminalToolWindowTabsManagerImpl(
     return tab
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun addListener(parentDisposable: Disposable, listener: TerminalTabsManagerListener) {
-    listeners.add(listener, parentDisposable)
+    project.messageBus.connect(parentDisposable).subscribe(TerminalTabsManagerListener.TOPIC, listener)
   }
 
   private suspend fun createNewTabIfEmpty(toolWindow: ToolWindow) {
@@ -166,7 +166,8 @@ internal class TerminalToolWindowTabsManagerImpl(
     TerminalTabCloseListenerImpl.install(content, project, parentDisposable = content)
 
     val tabScope = coroutineScope.childScope("TerminalToolWindowTab")
-    updateTabNameOnTitleChange(terminal.title, content, tabScope.childScope("Tab name updating"))
+    content.displayName = terminal.getTitleText()
+    updateTabNameOnTitleChange(terminal, content, tabScope.childScope("Tab name updating"))
 
     // Terminate the session if the tab was closed.
     // But if the tab was detached, leave the session alive.
@@ -230,9 +231,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       selectTab()
     }
 
-    fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling tab created event: $tab") {
-      it.tabAdded(tab)
-    }
+    project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).tabAdded(tab)
   }
 
   private fun addToTabsList(tab: TerminalToolWindowTab) {
@@ -244,9 +243,18 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   private fun createTerminalViewAndStartSession(builder: TerminalToolWindowTabBuilderImpl): TerminalView {
     val terminal = createTerminalView(builder.startupFusInfo)
-    val tabName = builder.tabName ?: createDefaultTabName(getToolWindow())
-    terminal.title.change { defaultTitle = tabName }
+    terminal.title.change {
+      if (builder.isUserDefinedName) {
+        userDefinedTitle = builder.tabName
+      }
+      else {
+        defaultTitle = builder.tabName ?: createDefaultTabName(getToolWindow())
+      }
+    }
+
     createBackendTabAndStartSession(terminal, builder)
+
+    project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).terminalViewCreated(terminal)
     return terminal
   }
 
@@ -259,7 +267,7 @@ internal class TerminalToolWindowTabsManagerImpl(
   private fun createBackendTabAndStartSession(
     terminal: TerminalViewImpl,
     builder: TerminalToolWindowTabBuilderImpl,
-  ) = terminal.coroutineScope.launch(Dispatchers.IO) {
+  ) = terminal.coroutineScope.launch {
     val backendTabId = builder.backendTabId ?: durable {
       // todo: worth making it idempotent to avoid creating multiple tabs because of network issues
       TerminalTabsManagerApi.getInstance().createNewTerminalTab(project.projectId()).id
@@ -274,7 +282,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       val isProjectClosing = getToolWindow().contentManager.isDisposed
       if (!isProjectClosing) {
         // Do not block frontend terminal scope cancellation by backend session termination request.
-        coroutineScope.launch(Dispatchers.IO) {
+        coroutineScope.launch {
           durable {
             TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), backendTabId)
           }
@@ -284,7 +292,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     // Ideally, the backend tab should be under the tab scope, but now it has the lifecycle of the terminal scope
     updateBackendTabNameOnTitleChange(
-      terminal.title,
+      terminal,
       backendTabId,
       project,
       scope = terminal.coroutineScope.childScope("Backend tab name updating")
@@ -316,7 +324,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     builder: TerminalToolWindowTabBuilderImpl,
     backendTabId: Int,
     calculateSizeFromComponent: Boolean,
-  ) = terminal.coroutineScope.launch(Dispatchers.IO) {
+  ) = terminal.coroutineScope.launch {
     if (builder.sessionId != null) {
       // Session is already started for this tab, reuse it
       connectSessionToTerminal(terminal, builder.sessionId!!, builder.portForwardingId)
@@ -340,6 +348,8 @@ internal class TerminalToolWindowTabsManagerImpl(
     val baseOptions = ShellStartupOptions.Builder()
       .shellCommand(builder.shellCommand)
       .workingDirectory(builder.workingDirectory)
+      .envVariables(builder.envVariables)
+      .processType(builder.processType)
 
     return if (calculateSizeFromComponent) {
       withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
@@ -402,7 +412,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     }
 
     private fun scheduleTabsRestoring(manager: TerminalToolWindowTabsManagerImpl) {
-      manager.tabsRestoredDeferred = manager.coroutineScope.async(Dispatchers.IO) {
+      manager.tabsRestoredDeferred = manager.coroutineScope.async {
         val tabs: List<TerminalSessionTab> = durable {
           TerminalTabsManagerApi.getInstance().getTerminalTabs(manager.project.projectId())
         }
@@ -418,6 +428,8 @@ internal class TerminalToolWindowTabsManagerImpl(
         with(builder) {
           shellCommand(tab.shellCommand)
           workingDirectory(tab.workingDirectory)
+          envVariables(tab.envVariables ?: emptyMap())
+          processType(tab.processType ?: TerminalProcessType.SHELL)
           tabName(tab.name)
           userDefinedName(tab.isUserDefinedName)
           backendTabId(tab.id)
@@ -442,6 +454,10 @@ internal class TerminalToolWindowTabsManagerImpl(
     var workingDirectory: String? = null
       private set
     var shellCommand: List<String>? = null
+      private set
+    var envVariables: Map<String, String> = emptyMap()
+      private set
+    var processType: TerminalProcessType = TerminalProcessType.SHELL
       private set
     var tabName: String? = null
       private set
@@ -472,6 +488,16 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     override fun shellCommand(command: List<String>?): TerminalToolWindowTabBuilder {
       shellCommand = command
+      return this
+    }
+
+    override fun envVariables(envs: Map<String, String>): TerminalToolWindowTabBuilder {
+      envVariables = envs
+      return this
+    }
+
+    override fun processType(processType: TerminalProcessType): TerminalToolWindowTabBuilder {
+      this.processType = processType
       return this
     }
 
@@ -532,7 +558,5 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   companion object {
     val TAB_DETACHED_KEY = Key.create<Unit>("TerminalTabsManager.TabWasDetached")
-
-    private val LOG = logger<TerminalToolWindowTabsManagerImpl>()
   }
 }

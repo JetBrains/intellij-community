@@ -8,6 +8,6 @@ class X {
   }
   
   void call() {
-    test(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    test(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
   }
 }

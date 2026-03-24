@@ -484,7 +484,9 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             FirErrors.CAST_NEVER_SUCCEEDS,
             FirErrors.SENSELESS_NULL_IN_WHEN,
             FirErrors.SENSELESS_COMPARISON,
-            FirErrors.USELESS_IS_CHECK
+            FirErrors.USELESS_IS_CHECK,
+            FirErrors.IMPOSSIBLE_IS_CHECK.warningFactory,
+            FirErrors.IMPOSSIBLE_IS_CHECK.errorFactory,
         ).map { it.name }
 
         @OptIn(KaExperimentalApi::class)

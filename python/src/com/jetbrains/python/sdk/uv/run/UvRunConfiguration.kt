@@ -18,7 +18,7 @@ import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
+import com.jetbrains.python.sdk.uv.uvFlavorData
 import com.jetbrains.python.venvReader.tryResolvePath
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -45,7 +45,7 @@ data class UvRunConfigurationOptions(
     get() = uvSdkKey?.let { PythonSdkUtil.findSdkByKey(it)}
 
   val workingDirectory: Path?
-    get() = (uvSdk?.sdkAdditionalData as? UvSdkAdditionalData)?.uvWorkingDirectory
+    get() = uvSdk?.uvFlavorData?.uvWorkingDirectory
       ?: tryResolvePath(uvSdk?.associatedModulePath)
 }
 

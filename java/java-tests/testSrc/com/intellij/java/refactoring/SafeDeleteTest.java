@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -451,6 +451,17 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testRecordComponent() {
     IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_16, getTestRootDisposable());
     doSingleFileTest();
+  }
+
+  public void testRecordComponentCompactConstructor() {
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_16, getTestRootDisposable());
+    try {
+      doSingleFileTest();
+      fail();
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Usage of record component <b><code>z</code></b> that is not safe to delete.", e.getMessage());
+    }
   }
 
   public void testRecordComponentConflict() {

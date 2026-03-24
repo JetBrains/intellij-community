@@ -78,7 +78,7 @@ public final class TestProxyPrinterProvider {
     }
 
     private void printLine(@NotNull String line, @NotNull ConsoleViewContentType contentType) {
-      Filter.Result result = ReadAction.compute(() -> {
+      Filter.Result result = ReadAction.computeBlocking(() -> {
         try {
           return myFilter.applyFilter(line, line.length());
         }

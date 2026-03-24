@@ -2,9 +2,6 @@
 package com.intellij.internal.statistic.eventLog.uploader
 
 import com.fasterxml.jackson.annotation.JsonView
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo
 import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
@@ -42,6 +39,7 @@ import com.intellij.internal.statistic.uploader.events.ExternalEventsLogger
 import com.intellij.internal.statistic.uploader.events.ExternalSystemErrorEvent
 import com.intellij.internal.statistic.uploader.events.ExternalSystemEvent
 import com.intellij.internal.statistic.uploader.events.ExternalUploadFinishedEvent
+import com.intellij.internal.statistic.config.StatisticsStringUtil
 import com.intellij.internal.statistic.uploader.events.ExternalUploadSendEvent
 import com.intellij.internal.statistic.uploader.events.ExternalUploadStartedEvent
 import com.intellij.internal.statistic.uploader.util.ExtraHTTPHeadersParser
@@ -54,6 +52,9 @@ import com.jetbrains.fus.reporting.MetadataStorage
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.NotNull
+import tools.jackson.core.JsonParser
+import tools.jackson.databind.JsonNode
+import tools.jackson.module.kotlin.KotlinFeature
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -154,9 +155,10 @@ object EventLogExternalUploader {
       findLibraryByClass(IllegalCallableAccessException::class.java), // add kotlin-reflect
       findLibraryByClass(EventGroupsFilterRules::class.java), // validation library
       findLibraryByClass(StatsConnectionSettings::class.java), // com.jetbrains.fus.reporting.model
-      findLibraryByClass(MetadataStorage::class.java), // com.jetbrains.fus.reporting.api
+      findLibraryByClass(MetadataStorage::class.java), // com.jetbrains.fus.reporting.fus-api
       findLibraryByClass(Json::class.java), // kotlinx.serialization.json
-      findLibraryByClass(StringFormat::class.java) // kotlinx.serialization
+      findLibraryByClass(StringFormat::class.java), // kotlinx.serialization
+      findLibraryByClass(StatisticsStringUtil::class.java) // statistics config (IJPL-238623 extracted to separate jar)
     )
     val classpath = joinAsClasspath(libPaths.toList(), uploader)
 

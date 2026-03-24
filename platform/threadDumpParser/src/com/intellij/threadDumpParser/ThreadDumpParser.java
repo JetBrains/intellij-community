@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.threadDumpParser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.diagnostic.EventCountDumper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -13,6 +10,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,26 +60,26 @@ public final class ThreadDumpParser {
     try {
       tree = new ObjectMapper().readTree(threadDump);
     }
-    catch (JsonProcessingException e) {
+    catch (JacksonException e) {
       return null;
     }
 
     // Try to parse the output of jcmd's Thread.dump_to_file -format=json.
     List<ThreadState> result = new ArrayList<>();
     var containers = tree.path("threadDump").path("threadContainers");
-    containers.elements().forEachRemaining(container -> {
-      container.path("threads").elements().forEachRemaining(thread -> {
-        var name = thread.path("name").asText();
+    for (JsonNode container : containers.values()) {
+      for (JsonNode thread : container.path("threads").values()) {
+        var name = thread.path("name").asString();
         var threadState = new ThreadState(name, "unknown");
 
         var rawStackTrace = new StringBuilder();
-        thread.path("stack").elements().forEachRemaining(ste -> {
-          var text = ste.asText();
+        for (JsonNode ste : thread.path("stack").values()) {
+          var text = ste.asString();
           if (!text.isEmpty()) {
             rawStackTrace.append("\n      ");
             rawStackTrace.append(text);
           }
-        });
+        }
         var emptyStackTrace = rawStackTrace.isEmpty();
 
         // No information in JSON dump, so we have some heuristics here: either check stack trace or
@@ -90,7 +90,7 @@ public final class ThreadDumpParser {
           threadState.setVirtual(true);
         }
 
-        var tid = thread.path("tid").asText();
+        var tid = thread.path("tid").asString();
 
         var stackTrace = new StringBuilder();
         stackTrace.append("#").append(tid);
@@ -103,8 +103,8 @@ public final class ThreadDumpParser {
         threadState.setStackTrace(stackTrace.toString(), emptyStackTrace);
 
         result.add(threadState);
-      });
-    });
+      }
+    }
     return new ParsingResult(result, null);
   }
 

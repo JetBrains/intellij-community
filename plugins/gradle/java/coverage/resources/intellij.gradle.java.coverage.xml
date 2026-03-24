@@ -1,0 +1,11 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="Coverage"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <javaCoverageEngineExtension implementation="com.intellij.gradle.java.coverage.GradleCoverageExtension"/>
+  </extensions>
+</idea-plugin>

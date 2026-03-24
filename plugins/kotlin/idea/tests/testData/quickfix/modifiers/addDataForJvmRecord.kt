@@ -1,6 +1,7 @@
 // "Add 'data' modifier" "true"
 // JVM_TARGET: 16
 // WITH_STDLIB
+// K2_ERROR: Only data classes are allowed to be marked as '@JvmRecord'.
 // K2_AFTER_ERROR: Cannot access 'java.lang.Record' which is a supertype of 'Rec'. Check your module classpath for missing or conflicting dependencies.
 // K2_AFTER_ERROR: Cannot access 'java.lang.Record' which is a supertype of 'Rec'. Check your module classpath for missing or conflicting dependencies.
 // K2_AFTER_ERROR: Cannot access 'java.lang.Record' which is a supertype of 'Rec'. Check your module classpath for missing or conflicting dependencies.

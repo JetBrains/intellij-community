@@ -1,0 +1,176 @@
+Compilation failed: error: exception while generating code for:
+CONSTRUCTOR visibility:public returnType:<root>.DestructuringDecls [primary]
+  VALUE_PARAMETER SCRIPT_CALL_PARAMETER kind:Regular name:args index:0 type:kotlin.Array<out kotlin.String>
+  VALUE_PARAMETER SCRIPT_CALL_PARAMETER kind:Regular name:$$explain index:1 type:kotlin.collections.Map
+  BLOCK_BODY
+    DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> (vararg args: kotlin.String) [primary] declared in org.jetbrains.kotlin.idea.core.script.scratch.definition.KotlinScratchScript'
+      ARG args: GET_VAR 'args: kotlin.Array<out kotlin.String> declared in <root>.DestructuringDecls.<init>' type=kotlin.Array<out kotlin.String> origin=null
+    SET_FIELD 'FIELD SCRIPT_CALL_PARAMETER name:args type:kotlin.Array<out kotlin.String> visibility:local [final] declared in <root>.DestructuringDecls' type=kotlin.Unit origin=null
+      receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=null
+      value: GET_VAR 'args: kotlin.Array<out kotlin.String> declared in <root>.DestructuringDecls.<init>' type=kotlin.Array<out kotlin.String> origin=null
+    SET_FIELD 'FIELD SCRIPT_CALL_PARAMETER name:$$explain type:kotlin.collections.Map visibility:local [final] declared in <root>.DestructuringDecls' type=kotlin.Unit origin=null
+      receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=null
+      value: GET_VAR '$$explain: kotlin.collections.Map declared in <root>.DestructuringDecls.<init>' type=kotlin.collections.Map origin=null
+    BLOCK type=kotlin.Unit origin=null
+      BLOCK type=kotlin.Unit origin=SYNTHESIZED_INIT_BLOCK
+        BLOCK type=kotlin.Unit origin=null
+          VAR IR_TEMPORARY_VARIABLE name:tmp0_PowerAssertSynthesized type:kotlin.Unit [val]
+            COMPOSITE type=kotlin.Unit origin=DESTRUCTURING_DECLARATION
+              VAR IR_TEMPORARY_VARIABLE name:<destruct> type:kotlin.Pair<kotlin.Int, kotlin.String> [val]
+                CALL 'public final fun to <A, B> (<this>: A of kotlin.TuplesKt.to, that: B of kotlin.TuplesKt.to): kotlin.Pair<A of kotlin.TuplesKt.to, B of kotlin.TuplesKt.to> [infix] declared in kotlin.TuplesKt' type=kotlin.Pair<kotlin.Int, kotlin.String> origin=null
+                  TYPE_ARG A: kotlin.Int
+                  TYPE_ARG B: kotlin.String
+                  ARG <this>: CONST Int type=kotlin.Int value=1
+                  ARG that: CONST String type=kotlin.String value="2"
+              SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:foo type:kotlin.Int visibility:private [final]' type=kotlin.Unit origin=null
+                receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=null
+                value: CALL 'public final fun component1 (): A of kotlin.Pair [operator] declared in kotlin.Pair' type=kotlin.Int origin=COMPONENT_N(index=1)
+                  ARG <this>: GET_VAR 'val <destruct>: kotlin.Pair<kotlin.Int, kotlin.String> [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Pair<kotlin.Int, kotlin.String> origin=null
+              SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:bar type:kotlin.String visibility:private [final]' type=kotlin.Unit origin=null
+                receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=null
+                value: CALL 'public final fun component2 (): B of kotlin.Pair [operator] declared in kotlin.Pair' type=kotlin.String origin=COMPONENT_N(index=2)
+                  ARG <this>: GET_VAR 'val <destruct>: kotlin.Pair<kotlin.Int, kotlin.String> [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Pair<kotlin.Int, kotlin.String> origin=null
+          CALL 'public abstract fun put (key: K of kotlin.collections.MutableMap, value: V of kotlin.collections.MutableMap): V of kotlin.collections.MutableMap? declared in kotlin.collections.MutableMap' type=V of kotlin.collections.MutableMap? origin=null
+            ARG <this>: GET_VAR '$$explain: kotlin.collections.Map declared in <root>.DestructuringDecls.<init>' type=kotlin.collections.Map origin=null
+            ARG key: CONST String type=kotlin.String value="(0, 25)"
+            ARG value: GET_VAR 'val tmp0_PowerAssertSynthesized: kotlin.Unit [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Unit origin=null
+          GET_VAR 'val tmp0_PowerAssertSynthesized: kotlin.Unit [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Unit origin=null
+      BLOCK type=kotlin.Unit origin=SYNTHESIZED_INIT_BLOCK
+        BLOCK type=kotlin.Int origin=null
+          VAR IR_TEMPORARY_VARIABLE name:tmp1_PowerAssertSynthesized type:kotlin.Int [val]
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:foo type:kotlin.Int visibility:private [final]' type=kotlin.Int origin=null
+              receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=GET_PROPERTY
+          CALL 'public abstract fun put (key: K of kotlin.collections.MutableMap, value: V of kotlin.collections.MutableMap): V of kotlin.collections.MutableMap? declared in kotlin.collections.MutableMap' type=V of kotlin.collections.MutableMap? origin=null
+            ARG <this>: GET_VAR '$$explain: kotlin.collections.Map declared in <root>.DestructuringDecls.<init>' type=kotlin.collections.Map origin=null
+            ARG key: CONST String type=kotlin.String value="(26, 29)"
+            ARG value: GET_VAR 'val tmp1_PowerAssertSynthesized: kotlin.Int [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Int origin=null
+          GET_VAR 'val tmp1_PowerAssertSynthesized: kotlin.Int [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Int origin=null
+      BLOCK type=kotlin.Unit origin=SYNTHESIZED_INIT_BLOCK
+        BLOCK type=kotlin.String origin=null
+          VAR IR_TEMPORARY_VARIABLE name:tmp2_PowerAssertSynthesized type:kotlin.String [val]
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:bar type:kotlin.String visibility:private [final]' type=kotlin.String origin=null
+              receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=GET_PROPERTY
+          CALL 'public abstract fun put (key: K of kotlin.collections.MutableMap, value: V of kotlin.collections.MutableMap): V of kotlin.collections.MutableMap? declared in kotlin.collections.MutableMap' type=V of kotlin.collections.MutableMap? origin=null
+            ARG <this>: GET_VAR '$$explain: kotlin.collections.Map declared in <root>.DestructuringDecls.<init>' type=kotlin.collections.Map origin=null
+            ARG key: CONST String type=kotlin.String value="(30, 33)"
+            ARG value: GET_VAR 'val tmp2_PowerAssertSynthesized: kotlin.String [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.String origin=null
+          GET_VAR 'val tmp2_PowerAssertSynthesized: kotlin.String [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.String origin=null
+      BLOCK type=kotlin.Unit origin=SYNTHESIZED_INIT_BLOCK
+        BLOCK type=kotlin.Unit origin=null
+          VAR IR_TEMPORARY_VARIABLE name:tmp3_PowerAssertSynthesized type:kotlin.Unit [val]
+            COMPOSITE type=kotlin.Unit origin=DESTRUCTURING_DECLARATION
+              VAR IR_TEMPORARY_VARIABLE name:<destruct> type:kotlin.Pair<kotlin.Int, kotlin.String> [val]
+                CALL 'public final fun to <A, B> (<this>: A of kotlin.TuplesKt.to, that: B of kotlin.TuplesKt.to): kotlin.Pair<A of kotlin.TuplesKt.to, B of kotlin.TuplesKt.to> [infix] declared in kotlin.TuplesKt' type=kotlin.Pair<kotlin.Int, kotlin.String> origin=null
+                  TYPE_ARG A: kotlin.Int
+                  TYPE_ARG B: kotlin.String
+                  ARG <this>: CONST Int type=kotlin.Int value=3
+                  ARG that: CONST String type=kotlin.String value="4"
+              SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:baz type:kotlin.String visibility:private [final]' type=kotlin.Unit origin=null
+                receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=null
+                value: CALL 'public final fun component2 (): B of kotlin.Pair [operator] declared in kotlin.Pair' type=kotlin.String origin=COMPONENT_N(index=2)
+                  ARG <this>: GET_VAR 'val <destruct>: kotlin.Pair<kotlin.Int, kotlin.String> [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Pair<kotlin.Int, kotlin.String> origin=null
+          CALL 'public abstract fun put (key: K of kotlin.collections.MutableMap, value: V of kotlin.collections.MutableMap): V of kotlin.collections.MutableMap? declared in kotlin.collections.MutableMap' type=V of kotlin.collections.MutableMap? origin=null
+            ARG <this>: GET_VAR '$$explain: kotlin.collections.Map declared in <root>.DestructuringDecls.<init>' type=kotlin.collections.Map origin=null
+            ARG key: CONST String type=kotlin.String value="(34, 57)"
+            ARG value: GET_VAR 'val tmp3_PowerAssertSynthesized: kotlin.Unit [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Unit origin=null
+          GET_VAR 'val tmp3_PowerAssertSynthesized: kotlin.Unit [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Unit origin=null
+      SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$$result type:kotlin.String visibility:public [final]' type=kotlin.Unit origin=INITIALIZE_FIELD
+        receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=null
+        value: BLOCK type=kotlin.String origin=null
+          VAR IR_TEMPORARY_VARIABLE name:tmp4_PowerAssertSynthesized type:kotlin.String [val]
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:baz type:kotlin.String visibility:private [final]' type=kotlin.String origin=null
+              receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=GET_PROPERTY
+          CALL 'public abstract fun put (key: K of kotlin.collections.MutableMap, value: V of kotlin.collections.MutableMap): V of kotlin.collections.MutableMap? declared in kotlin.collections.MutableMap' type=V of kotlin.collections.MutableMap? origin=null
+            ARG <this>: GET_FIELD 'FIELD SCRIPT_CALL_PARAMETER name:$$explain type:kotlin.collections.Map visibility:local [final] declared in <root>.DestructuringDecls' type=kotlin.collections.Map origin=null
+              receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=null
+            ARG key: CONST String type=kotlin.String value="$$result(58, 61)"
+            ARG value: GET_VAR 'val tmp4_PowerAssertSynthesized: kotlin.String [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.String origin=null
+          GET_VAR 'val tmp4_PowerAssertSynthesized: kotlin.String [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.String origin=null
+ (destructuringDecls.kts): java.lang.RuntimeException: Exception while generating code for:
+CONSTRUCTOR visibility:public returnType:<root>.DestructuringDecls [primary]
+  VALUE_PARAMETER SCRIPT_CALL_PARAMETER kind:Regular name:args index:0 type:kotlin.Array<out kotlin.String>
+  VALUE_PARAMETER SCRIPT_CALL_PARAMETER kind:Regular name:$$explain index:1 type:kotlin.collections.Map
+  BLOCK_BODY
+    DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> (vararg args: kotlin.String) [primary] declared in org.jetbrains.kotlin.idea.core.script.scratch.definition.KotlinScratchScript'
+      ARG args: GET_VAR 'args: kotlin.Array<out kotlin.String> declared in <root>.DestructuringDecls.<init>' type=kotlin.Array<out kotlin.String> origin=null
+    SET_FIELD 'FIELD SCRIPT_CALL_PARAMETER name:args type:kotlin.Array<out kotlin.String> visibility:local [final] declared in <root>.DestructuringDecls' type=kotlin.Unit origin=null
+      receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=null
+      value: GET_VAR 'args: kotlin.Array<out kotlin.String> declared in <root>.DestructuringDecls.<init>' type=kotlin.Array<out kotlin.String> origin=null
+    SET_FIELD 'FIELD SCRIPT_CALL_PARAMETER name:$$explain type:kotlin.collections.Map visibility:local [final] declared in <root>.DestructuringDecls' type=kotlin.Unit origin=null
+      receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=null
+      value: GET_VAR '$$explain: kotlin.collections.Map declared in <root>.DestructuringDecls.<init>' type=kotlin.collections.Map origin=null
+    BLOCK type=kotlin.Unit origin=null
+      BLOCK type=kotlin.Unit origin=SYNTHESIZED_INIT_BLOCK
+        BLOCK type=kotlin.Unit origin=null
+          VAR IR_TEMPORARY_VARIABLE name:tmp0_PowerAssertSynthesized type:kotlin.Unit [val]
+            COMPOSITE type=kotlin.Unit origin=DESTRUCTURING_DECLARATION
+              VAR IR_TEMPORARY_VARIABLE name:<destruct> type:kotlin.Pair<kotlin.Int, kotlin.String> [val]
+                CALL 'public final fun to <A, B> (<this>: A of kotlin.TuplesKt.to, that: B of kotlin.TuplesKt.to): kotlin.Pair<A of kotlin.TuplesKt.to, B of kotlin.TuplesKt.to> [infix] declared in kotlin.TuplesKt' type=kotlin.Pair<kotlin.Int, kotlin.String> origin=null
+                  TYPE_ARG A: kotlin.Int
+                  TYPE_ARG B: kotlin.String
+                  ARG <this>: CONST Int type=kotlin.Int value=1
+                  ARG that: CONST String type=kotlin.String value="2"
+              SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:foo type:kotlin.Int visibility:private [final]' type=kotlin.Unit origin=null
+                receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=null
+                value: CALL 'public final fun component1 (): A of kotlin.Pair [operator] declared in kotlin.Pair' type=kotlin.Int origin=COMPONENT_N(index=1)
+                  ARG <this>: GET_VAR 'val <destruct>: kotlin.Pair<kotlin.Int, kotlin.String> [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Pair<kotlin.Int, kotlin.String> origin=null
+              SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:bar type:kotlin.String visibility:private [final]' type=kotlin.Unit origin=null
+                receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=null
+                value: CALL 'public final fun component2 (): B of kotlin.Pair [operator] declared in kotlin.Pair' type=kotlin.String origin=COMPONENT_N(index=2)
+                  ARG <this>: GET_VAR 'val <destruct>: kotlin.Pair<kotlin.Int, kotlin.String> [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Pair<kotlin.Int, kotlin.String> origin=null
+          CALL 'public abstract fun put (key: K of kotlin.collections.MutableMap, value: V of kotlin.collections.MutableMap): V of kotlin.collections.MutableMap? declared in kotlin.collections.MutableMap' type=V of kotlin.collections.MutableMap? origin=null
+            ARG <this>: GET_VAR '$$explain: kotlin.collections.Map declared in <root>.DestructuringDecls.<init>' type=kotlin.collections.Map origin=null
+            ARG key: CONST String type=kotlin.String value="(0, 25)"
+            ARG value: GET_VAR 'val tmp0_PowerAssertSynthesized: kotlin.Unit [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Unit origin=null
+          GET_VAR 'val tmp0_PowerAssertSynthesized: kotlin.Unit [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Unit origin=null
+      BLOCK type=kotlin.Unit origin=SYNTHESIZED_INIT_BLOCK
+        BLOCK type=kotlin.Int origin=null
+          VAR IR_TEMPORARY_VARIABLE name:tmp1_PowerAssertSynthesized type:kotlin.Int [val]
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:foo type:kotlin.Int visibility:private [final]' type=kotlin.Int origin=null
+              receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=GET_PROPERTY
+          CALL 'public abstract fun put (key: K of kotlin.collections.MutableMap, value: V of kotlin.collections.MutableMap): V of kotlin.collections.MutableMap? declared in kotlin.collections.MutableMap' type=V of kotlin.collections.MutableMap? origin=null
+            ARG <this>: GET_VAR '$$explain: kotlin.collections.Map declared in <root>.DestructuringDecls.<init>' type=kotlin.collections.Map origin=null
+            ARG key: CONST String type=kotlin.String value="(26, 29)"
+            ARG value: GET_VAR 'val tmp1_PowerAssertSynthesized: kotlin.Int [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Int origin=null
+          GET_VAR 'val tmp1_PowerAssertSynthesized: kotlin.Int [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Int origin=null
+      BLOCK type=kotlin.Unit origin=SYNTHESIZED_INIT_BLOCK
+        BLOCK type=kotlin.String origin=null
+          VAR IR_TEMPORARY_VARIABLE name:tmp2_PowerAssertSynthesized type:kotlin.String [val]
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:bar type:kotlin.String visibility:private [final]' type=kotlin.String origin=null
+              receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=GET_PROPERTY
+          CALL 'public abstract fun put (key: K of kotlin.collections.MutableMap, value: V of kotlin.collections.MutableMap): V of kotlin.collections.MutableMap? declared in kotlin.collections.MutableMap' type=V of kotlin.collections.MutableMap? origin=null
+            ARG <this>: GET_VAR '$$explain: kotlin.collections.Map declared in <root>.DestructuringDecls.<init>' type=kotlin.collections.Map origin=null
+            ARG key: CONST String type=kotlin.String value="(30, 33)"
+            ARG value: GET_VAR 'val tmp2_PowerAssertSynthesized: kotlin.String [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.String origin=null
+          GET_VAR 'val tmp2_PowerAssertSynthesized: kotlin.String [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.String origin=null
+      BLOCK type=kotlin.Unit origin=SYNTHESIZED_INIT_BLOCK
+        BLOCK type=kotlin.Unit origin=null
+          VAR IR_TEMPORARY_VARIABLE name:tmp3_PowerAssertSynthesized type:kotlin.Unit [val]
+            COMPOSITE type=kotlin.Unit origin=DESTRUCTURING_DECLARATION
+              VAR IR_TEMPORARY_VARIABLE name:<destruct> type:kotlin.Pair<kotlin.Int, kotlin.String> [val]
+                CALL 'public final fun to <A, B> (<this>: A of kotlin.TuplesKt.to, that: B of kotlin.TuplesKt.to): kotlin.Pair<A of kotlin.TuplesKt.to, B of kotlin.TuplesKt.to> [infix] declared in kotlin.TuplesKt' type=kotlin.Pair<kotlin.Int, kotlin.String> origin=null
+                  TYPE_ARG A: kotlin.Int
+                  TYPE_ARG B: kotlin.String
+                  ARG <this>: CONST Int type=kotlin.Int value=3
+                  ARG that: CONST String type=kotlin.String value="4"
+              SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:baz type:kotlin.String visibility:private [final]' type=kotlin.Unit origin=null
+                receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=null
+                value: CALL 'public final fun component2 (): B of kotlin.Pair [operator] declared in kotlin.Pair' type=kotlin.String origin=COMPONENT_N(index=2)
+                  ARG <this>: GET_VAR 'val <destruct>: kotlin.Pair<kotlin.Int, kotlin.String> [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Pair<kotlin.Int, kotlin.String> origin=null
+          CALL 'public abstract fun put (key: K of kotlin.collections.MutableMap, value: V of kotlin.collections.MutableMap): V of kotlin.collections.MutableMap? declared in kotlin.collections.MutableMap' type=V of kotlin.collections.MutableMap? origin=null
+            ARG <this>: GET_VAR '$$explain: kotlin.collections.Map declared in <root>.DestructuringDecls.<init>' type=kotlin.collections.Map origin=null
+            ARG key: CONST String type=kotlin.String value="(34, 57)"
+            ARG value: GET_VAR 'val tmp3_PowerAssertSynthesized: kotlin.Unit [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Unit origin=null
+          GET_VAR 'val tmp3_PowerAssertSynthesized: kotlin.Unit [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.Unit origin=null
+      SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$$result type:kotlin.String visibility:public [final]' type=kotlin.Unit origin=INITIALIZE_FIELD
+        receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=null
+        value: BLOCK type=kotlin.String origin=null
+          VAR IR_TEMPORARY_VARIABLE name:tmp4_PowerAssertSynthesized type:kotlin.String [val]
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:baz type:kotlin.String visibility:private [final]' type=kotlin.String origin=null
+              receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=GET_PROPERTY
+          CALL 'public abstract fun put (key: K of kotlin.collections.MutableMap, value: V of kotlin.collections.MutableMap): V of kotlin.collections.MutableMap? declared in kotlin.collections.MutableMap' type=V of kotlin.collections.MutableMap? origin=null
+            ARG <this>: GET_FIELD 'FIELD SCRIPT_CALL_PARAMETER name:$$explain type:kotlin.collections.Map visibility:local [final] declared in <root>.DestructuringDecls' type=kotlin.collections.Map origin=null
+              receiver: GET_VAR '<this>: <root>.DestructuringDecls declared in <root>.DestructuringDecls' type=<root>.DestructuringDecls origin=null
+            ARG key: CONST String type=kotlin.String value="$$result(58, 61)"
+            ARG value: GET_VAR 'val tmp4_PowerAssertSynthesized: kotlin.String [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.String origin=null
+          GET_VAR 'val tmp4_PowerAssertSynthesized: kotlin.String [val] declared in <root>.DestructuringDecls.<init>' type=kotlin.String origin=null

@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from typing import Any, TypeAlias, TypeVar, overload
 
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 _SD = TypeVar("_SD", bound=SafeData)
 
@@ -10,8 +10,10 @@ class SafeData:
 
 class SafeString(str, SafeData):
     @overload
+    @override
     def __add__(self, rhs: SafeString) -> SafeString: ...
     @overload
+    @override
     def __add__(self, rhs: str) -> str: ...
 
 SafeText: TypeAlias = SafeString

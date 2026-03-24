@@ -46,7 +46,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
         return ProgressManager.getInstance()
           .runProcessWithProgressSynchronously<List<String>, RuntimeException>(
             {
-              branchesGetter.getContainingBranchesSynchronously(root, hash)
+              branchesGetter.getContainingBranches(root, hash)
             },
             GitBundle.message("rebase.log.commit.editing.action.progress.containing.branches.title"),
             true,

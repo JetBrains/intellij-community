@@ -2,13 +2,24 @@ package com.intellij.python.pyproject.model.api
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.guessModuleDir
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.pyproject.model.internal.suggestSdkImpl
+import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.findPythonVirtualEnvironments
+import com.jetbrains.python.sdk.configuration.getSdkCreator
+import com.jetbrains.python.sdk.findPythonSdk
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
+import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.venvReader.Directory
+import org.jetbrains.annotations.ApiStatus
 
 
 sealed interface SuggestedSdk {
@@ -33,22 +44,36 @@ suspend fun Module.suggestSdk(): SuggestedSdk? = suggestSdkImpl(this)
 
 
 /**
- * For multiple calls, pull [configuratorsByTool] up not to create it each time
+ * Suggests an [ModuleCreateInfo] for this module, or returns `null` if the module
+ * already has a Python SDK or is not a Python module.
+ *
+ * Suspends until the project model is fully loaded (via [findPythonSdk]) before checking,
+ * so it is safe to call during startup without risking a false positive from a stale SDK table.
+ *
+ * For multiple calls, pull [configuratorsByTool] up not to create it each time.
  */
 suspend fun Module.getModuleInfo(
   configuratorsByTool: Map<ToolId, PyProjectSdkConfigurationExtension> = PyProjectSdkConfigurationExtension.createMap(),
 ): ModuleCreateInfo? { // Save on module level
+  findPythonSdk()?.let { return null }
+
   val venvsInModule = findPythonVirtualEnvironments()
+  val bestProposalFromTools = PyProjectSdkConfigurationExtension.findAllSortedForModule(this, venvsInModule).firstOrNull()
 
   val suggestedByPyProjectToml = when (val suggestedSdk = suggestSdk()) {
     is SuggestedSdk.PyProjectIndependent -> {
-      configuratorsByTool
-        .filter { it.key in suggestedSdk.preferTools }
-        .firstNotNullOfOrNull { (toolId, extension) ->
-          extension.asPyProjectTomlSdkConfigurationExtension()?.createSdkWithoutPyProjectTomlChecks(this, venvsInModule)?.let {
-            CreateSdkInfoWithTool(it, toolId).asDTO(suggestedSdk.moduleDir)
-          }
+      when (bestProposalFromTools?.createSdkInfo) {
+        is CreateSdkInfo.ExistingEnv -> bestProposalFromTools.asDTO(suggestedSdk.moduleDir)
+        is CreateSdkInfo.WillCreateEnv, is CreateSdkInfo.WillInstallTool, null -> {
+          configuratorsByTool
+            .filter { it.key in suggestedSdk.preferTools }
+            .firstNotNullOfOrNull { (toolId, extension) ->
+              extension.asPyProjectTomlSdkConfigurationExtension()?.createSdkWithoutPyProjectTomlChecks(this, venvsInModule)?.let {
+                CreateSdkInfoWithTool(it, toolId).asDTO(suggestedSdk.moduleDir)
+              }
+            }
         }
+      }
     }
     is SuggestedSdk.SameAs -> {
       ModuleCreateInfo.SameAs(suggestedSdk.parentModule)
@@ -58,8 +83,6 @@ suspend fun Module.getModuleInfo(
   suggestedByPyProjectToml?.let { return it }
 
   // No tools or not pyproject.toml at all? Use EP as a fallback
-  val bestProposalFromTools = PyProjectSdkConfigurationExtension.findAllSortedForModule(this, venvsInModule).firstOrNull()
-
   return bestProposalFromTools?.let {
     CreateSdkInfoWithTool(it.createSdkInfo, it.toolId).asDTO(guessModuleDir()?.toNioPath())
   }
@@ -72,3 +95,38 @@ sealed interface ModuleCreateInfo {
 
 private fun CreateSdkInfoWithTool.asDTO(moduleDir: Directory?): ModuleCreateInfo =
   ModuleCreateInfo.CreateSdkInfoWrapper(createSdkInfo, toolId, moduleDir)
+
+
+/**
+ * Auto-configures a Python SDK for the module if one doesn't already exist.
+ *
+ * Waits for the SDK table to load (to avoid overwriting a persisted SDK that hasn't resolved yet),
+ * then detects the best SDK using [getModuleInfo] and assigns it to the module.
+ *
+ * Returns the configured SDK, or `null` if no SDK could be configured.
+ */
+@ApiStatus.Internal
+suspend fun Module.autoConfigureSdkIfNeeded(): PyResult<Sdk>? = project.pythonSdkConfigurationMutex.withLock {
+  val moduleInfo = getModuleInfo() ?: return@withLock null
+
+  when (moduleInfo) {
+    is ModuleCreateInfo.CreateSdkInfoWrapper -> {
+      when (moduleInfo.createSdkInfo) {
+        is CreateSdkInfo.ExistingEnv -> {
+          moduleInfo.createSdkInfo.getSdkCreator(this).createSdk().onSuccess {sdk ->
+            pythonSdk = sdk
+            sdk.setAssociationToModule(this)
+            PyProjectTomlCollector.sdkCreatedAutomatically(moduleInfo.toolId)
+          }
+        }
+        is CreateSdkInfo.WillCreateEnv, is CreateSdkInfo.WillInstallTool -> null
+      }
+    }
+    is ModuleCreateInfo.SameAs -> {
+      moduleInfo.parentModule.findPythonSdk()?.let { parentSdk ->
+        pythonSdk = parentSdk
+        PyResult.success(parentSdk)
+      }
+    }
+  }
+}

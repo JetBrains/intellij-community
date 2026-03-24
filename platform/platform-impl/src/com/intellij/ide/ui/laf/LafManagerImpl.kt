@@ -964,6 +964,11 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     return result
   }
 
+  @Internal
+  override fun getPreferredDarkThemeId(): String? {
+    return preferredDarkThemeId
+  }
+
   override fun setPreferredDarkLaf(value: UIThemeLookAndFeelInfo) {
     preferredDarkThemeId = value.id
   }

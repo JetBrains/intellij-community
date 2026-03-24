@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/testResources">
+      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
+    </content>
+    <content url="file://$MODULE_DIR$/testSources">
+      <sourceFolder url="file://$MODULE_DIR$/testSources" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.debugger" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.testng.rt" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.jsp" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.testng" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.indexing" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.smRunner" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.typeMigration" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.impl.refactorings" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jgoodies.forms" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.testng" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.testng" />
+  <component name="copyright">
+    <Base>
+      <setting name="state" value="1" />
+    </Base>
+  </component>
+</module>

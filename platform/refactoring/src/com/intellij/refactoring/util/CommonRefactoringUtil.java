@@ -147,10 +147,12 @@ public final class CommonRefactoringUtil {
     Collection<VirtualFile> failed = new HashSet<>();  // those located in read-only filesystem
 
     boolean seenNonWritablePsiFilesWithoutVirtualFile =
-      ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(() -> ReadAction.compute(() -> checkReadOnlyStatus(flat, false, readonly, failed) || checkReadOnlyStatus(recursive, true, readonly, failed)),
-                                             RefactoringBundle.message("progress.title.collect.read.only.files"),
-                                             false, project);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> ReadAction.computeBlocking(
+          () -> checkReadOnlyStatus(flat, false, readonly, failed) || checkReadOnlyStatus(recursive, true, readonly, failed)),
+        RefactoringBundle.message("progress.title.collect.read.only.files"),
+        false, project
+      );
 
     ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readonly);
     ContainerUtil.addAll(failed, status.getReadonlyFiles());

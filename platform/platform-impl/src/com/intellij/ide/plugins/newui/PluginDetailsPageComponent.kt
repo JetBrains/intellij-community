@@ -1027,8 +1027,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
 
     if (myVersion1 != null) {
-      myVersion1!!.icon = descriptorForActions.let { if (it.isBundledUpdate) AllIcons.Plugins.Updated else null }
-      myVersion1!!.text = version
+      ListPluginComponent.setVersionLabelState(myVersion1!!, version, descriptorForActions.isBundledUpdate)
       myVersion1!!.isVisible = isVersion
     }
 
@@ -1568,8 +1567,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
               installedDescriptorForMarketplace = installedPlugin
               installedDescriptorForMarketplace?.let { descriptorForMarketplace ->
                 installButton.setVisible(false)
-                myVersion1!!.icon = installedPlugin?.let { if (it.isBundledUpdate) AllIcons.Plugins.Updated else null }
-                myVersion1!!.text = descriptorForMarketplace.version
+                ListPluginComponent.setVersionLabelState(myVersion1!!, descriptorForMarketplace.version, installedPlugin?.isBundledUpdate ?: false)
                 myVersion1!!.isVisible = true
                 updateEnabledState()
                 return

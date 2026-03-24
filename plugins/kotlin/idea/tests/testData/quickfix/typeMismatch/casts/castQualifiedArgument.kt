@@ -1,5 +1,6 @@
 // "Cast expression 'a.foo().single()' to 'Int'" "true"
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'Any', but 'Int' was expected.
 class A {
     fun foo(): List<Any> = listOf()
 

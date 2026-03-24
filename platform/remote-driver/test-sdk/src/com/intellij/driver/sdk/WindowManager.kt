@@ -25,7 +25,7 @@ interface StatusBar {
   fun getBackgroundProcessModels(): List<TaskInfoPair>
   fun isProcessWindowOpen(): Boolean
 
-  @Remote("com.intellij.openapi.util.Pair")
+  @Remote("kotlin.Pair")
   interface TaskInfoPair {
     fun getFirst(): TaskInfo?
     fun getSecond(): ProgressModel?

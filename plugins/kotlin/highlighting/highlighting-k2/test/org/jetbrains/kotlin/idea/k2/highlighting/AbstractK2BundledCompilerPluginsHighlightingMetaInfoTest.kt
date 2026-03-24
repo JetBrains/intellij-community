@@ -45,7 +45,7 @@ abstract class AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest : Abstra
  * We reuse a single instance of project descriptor so that the module and project configuration can
  * be effectively cached and reused between tests by the test infrastructure.
  */
-internal object ProjectDescriptorWithStdlibSourcesAndExtraLibraries : ProjectDescriptorWithStdlibSources() {
+object ProjectDescriptorWithStdlibSourcesAndExtraLibraries : ProjectDescriptorWithStdlibSources() {
 
     private val extraMavenLibraries: List<String> = listOf(
         // annotations for lombok plugin

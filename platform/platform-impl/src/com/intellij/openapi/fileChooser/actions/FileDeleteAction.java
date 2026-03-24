@@ -66,21 +66,21 @@ public final class FileDeleteAction extends FileChooserAction {
     try {
       var progress = IdeBundle.message("progress.deleting");
       panel.reloadAfter(() -> ProgressManager.getInstance().run(new Task.WithResult<Path, IOException>(project, panel.getComponent(), progress, true) {
+        private int counter = 0;
+
         @Override
         protected Path compute(@NotNull ProgressIndicator indicator) throws IOException {
-          indicator.setIndeterminate(false);
-          var i = 0;
+          indicator.setIndeterminate(true);
           for (var path : paths) {
-            if (indicator.isCanceled()) break;
-            indicator.setText(path.toString());
-            indicator.setFraction((double)i++ / paths.size());
+            indicator.checkCanceled();
             if (toBin && TrashBin.canMoveToTrash(path)) {
               TrashBin.moveToTrash(path);
             }
             else {
               NioFiles.deleteRecursively(path, p -> {
                 indicator.checkCanceled();
-                indicator.setText2(path.relativize(p).toString());
+                indicator.setText(IdeBundle.message("progress.already.deleted", counter));
+                counter++;
               });
             }
           }

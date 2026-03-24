@@ -1,0 +1,73 @@
+### auto-generated section `build intellij.gradle.java.groovy.toml` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "toml_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "toml",
+  module_name = "intellij.gradle.java.groovy.toml",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":toml_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//plugins/toml/core",
+    "//platform/util/multiplatform",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/util",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/usageView",
+    "//plugins/gradle/java",
+    "//java/java-psi-api:psi",
+    "//platform/refactoring",
+    "//plugins/groovy/groovy-psi:psi",
+    "//plugins/gradle/java/toml",
+    "//uast/uast-common:uast",
+    "//plugins/gradle/java/groovy",
+  ]
+)
+
+jvm_library(
+  name = "toml_test_lib",
+  module_name = "intellij.gradle.java.groovy.toml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":toml",
+    "//plugins/toml/core:core_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/usageView:usageView_test_lib",
+    "//plugins/gradle/java:java_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//plugins/groovy/groovy-psi:psi_test_lib",
+    "//plugins/gradle/java/toml:toml_test_lib",
+    "//uast/uast-common:uast_test_lib",
+    "//plugins/gradle/java/groovy:groovy_test_lib",
+  ]
+)
+### auto-generated section `build intellij.gradle.java.groovy.toml` end
+
+### auto-generated section `iml intellij.gradle.java.groovy.toml` start
+exports_files([
+  "intellij.gradle.java.groovy.toml.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.java.groovy.toml` end

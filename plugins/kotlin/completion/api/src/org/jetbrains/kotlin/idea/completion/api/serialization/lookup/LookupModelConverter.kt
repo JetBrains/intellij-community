@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.api.serialization.lookup
 
-import com.intellij.codeInsight.completion.BaseCompletionService.LOOKUP_ELEMENT_CONTRIBUTOR
+import com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_CONTRIBUTOR
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.command.CommandCompletionLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
@@ -129,6 +129,7 @@ object LookupModelConverter {
                 put(
                     keyName,
                     when (value) {
+                        is Unit -> UserDataValueModel.UnitModel
                         is Boolean -> UserDataValueModel.BooleanModel(value)
                         is String -> UserDataValueModel.StringModel(value)
                         is Enum<*> -> UserDataValueModel.EnumModel(value.ordinal, value::class.java.name)
@@ -170,6 +171,7 @@ object LookupModelConverter {
         for ((k, v) in data) {
             val key = Key.findKeyByName(k) as Key<Any>
             val value = when (v) {
+                is UserDataValueModel.UnitModel -> Unit
                 is UserDataValueModel.BooleanModel -> v.value
                 is UserDataValueModel.StringModel -> v.value
                 is UserDataValueModel.EnumModel -> Class.forName(v.enumClass).enumConstants[v.ordinal]

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations
 
@@ -48,10 +48,6 @@ internal class KotlinForwardDeclarationsFileSystemImpl : KotlinForwardDeclaratio
 
     override fun findFileByPathIfCached(path: @NonNls String): VirtualFile? {
         return findFileByPath(path)
-    }
-
-    override fun getRank(): Int {
-        return 1
     }
 
     override fun copyFile(

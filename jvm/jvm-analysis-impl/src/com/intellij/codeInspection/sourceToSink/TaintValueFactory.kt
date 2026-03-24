@@ -170,8 +170,7 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
       if (allowSecond) {
         info = context.secondaryItems().asSequence()
                  .flatMap { listOf(fromElementInner(CustomContext(it, context.place, null), false), fromAnnotationOwner(it.modifierList)) }
-                 .filter { it != null && it !== TaintValue.UNKNOWN }
-                 .firstOrNull() ?: info
+                 .firstOrNull { it != null && it !== TaintValue.UNKNOWN } ?: info
       }
     }
     if (info == TaintValue.UNKNOWN) {
@@ -196,10 +195,7 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
     }
     val annotationsManager = ExternalAnnotationsManager.getInstance(owner.project)
     val annotations = annotationsManager.findExternalAnnotations(owner)
-    return annotations.asSequence()
-             .map { fromAnnotation(it) }
-             .filterNotNull()
-             .firstOrNull() ?: TaintValue.UNKNOWN
+    return annotations.asSequence().firstNotNullOfOrNull { fromAnnotation(it) } ?: TaintValue.UNKNOWN
   }
 
   private fun of(annotationOwner: PsiModifierListOwner): TaintValue {
@@ -305,8 +301,7 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
     val target = context.target
     if (target is PsiMethod) {
       val result = customReturnFactories.asSequence()
-        .map { it.invoke(target, context.targetClass) }
-        .filterNotNull()
+        .mapNotNull { it.invoke(target, context.targetClass) }
         .reduceOrNull { acc, returnFactoriesResult -> acc.reduce(returnFactoriesResult) }
       if (result?.taintValue != null) {
         return result.taintValue

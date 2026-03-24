@@ -1,5 +1,7 @@
 // IGNORE_K1
 // "Remove annotation" "true"
+// K2_ERROR: '@ConsistentCopyVisibility' and '@ExposedCopyVisibility' are incompatible.
+// K2_ERROR: '@ConsistentCopyVisibility' and '@ExposedCopyVisibility' are incompatible.
 @ConsistentCopyVisibility<caret>
 @ExposedCopyVisibility
 data class Foo private constructor(val x: Int)

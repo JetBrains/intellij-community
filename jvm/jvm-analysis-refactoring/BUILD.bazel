@@ -22,4 +22,25 @@ jvm_library(
     "//platform/core-api:core",
   ]
 )
+
+jvm_library(
+  name = "analysis-refactoring_test_lib",
+  module_name = "intellij.jvm.analysis.refactoring",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":analysis-refactoring",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util:util_test_lib",
+    "//uast/uast-common:uast_test_lib",
+    "//jvm/jvm-analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.jvm.analysis.refactoring` end
+
+### auto-generated section `iml intellij.jvm.analysis.refactoring` start
+exports_files([
+  "intellij.jvm.analysis.refactoring.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.jvm.analysis.refactoring` end

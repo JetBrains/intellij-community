@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -18,22 +17,24 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
+
 public final class GlobalSearchScopeUtil {
   public static @NotNull GlobalSearchScope toGlobalSearchScope(@NotNull SearchScope scope, @NotNull Project project) {
     if (scope instanceof GlobalSearchScope) {
       return (GlobalSearchScope)scope;
     }
-    return ReadAction.compute(() -> GlobalSearchScope.filesScope(project, getLocalScopeFiles((LocalSearchScope)scope)));
+    return ReadAction.computeBlocking(() -> GlobalSearchScope.filesScope(project, getLocalScopeFiles((LocalSearchScope)scope)));
   }
 
   public static @NotNull @Unmodifiable Set<VirtualFile> getLocalScopeFiles(@NotNull LocalSearchScope scope) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       Set<VirtualFile> files = new LinkedHashSet<>();
       for (PsiElement element : scope.getScope()) {
         PsiFile file = element.getContainingFile();
         if (file != null) {
-          ContainerUtil.addIfNotNull(files, file.getVirtualFile());
-          ContainerUtil.addIfNotNull(files, file.getNavigationElement().getContainingFile().getVirtualFile());
+          addIfNotNull(files, file.getVirtualFile());
+          addIfNotNull(files, file.getNavigationElement().getContainingFile().getVirtualFile());
         }
       }
       return files;

@@ -83,78 +83,76 @@ class K2MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
     }
 
     private fun canBePrivate(declaration: KtNamedDeclaration): Boolean {
-        analyze(declaration){
-        if (declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) || declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
-        if (KotlinPsiHeuristics.hasNonSuppressAnnotations(declaration)) return false
+        analyze(declaration) {
+            if (declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) || declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
+            if (KotlinPsiHeuristics.hasNonSuppressAnnotations(declaration)) return false
 
-        val containingClassOrObject = declaration.containingClassOrObject ?: return false
-        val inheritable = containingClassOrObject is KtClass && containingClassOrObject.isInheritable()
-        if (!inheritable && declaration.hasModifier(KtTokens.PROTECTED_KEYWORD)) return false //reported by ProtectedInFinalInspection
-        if (declaration.isOverridable()) return false
-        if (declaration.hasModifier(KtTokens.EXTERNAL_KEYWORD)) return false
+            val containingClassOrObject = declaration.containingClassOrObject ?: return false
+            val inheritable = containingClassOrObject is KtClass && containingClassOrObject.isInheritable()
+            if (!inheritable && declaration.hasModifier(KtTokens.PROTECTED_KEYWORD)) return false //reported by ProtectedInFinalInspection
+            if (declaration.isOverridable()) return false
+            if (declaration.hasModifier(KtTokens.EXTERNAL_KEYWORD)) return false
 
-        if (isSemiEffectivePrivateOrLocal(declaration)) return false
+            if (isSemiEffectivePrivateOrLocal(declaration)) return false
 
-        val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase
-        if (K2UnusedSymbolUtil.checkAnnotatedUsingPatterns(
-                declaration,
-                with(entryPointsManager) {
-                    additionalAnnotations + ADDITIONAL_ANNOTATIONS
+            val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase
+            if (K2UnusedSymbolUtil.checkAnnotatedUsingPatterns(
+                    declaration,
+                    with(entryPointsManager) {
+                        additionalAnnotations + ADDITIONAL_ANNOTATIONS
+                    }
+                )
+            ) return false
+
+            if (!declaration.canBePrivate()) return false
+
+            val psiSearchHelper = PsiSearchHelper.getInstance(declaration.project)
+            val useScope = declaration.useScope
+            val name = declaration.name ?: return false
+            val restrictedScope = if (useScope is GlobalSearchScope) {
+                when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope)) {
+                    PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES -> return false
+                    PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES -> return false
+                    PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES ->
+                        KotlinSourceFilterScope.projectSourcesAndResources(useScope, declaration.project)
                 }
-            )
-        ) return false
+            } else useScope
 
-        if (!declaration.canBePrivate()) return false
+            var otherUsageFound = false
+            var inClassUsageFound = false
+            ReferencesSearch.search(declaration, restrictedScope).forEach(Processor {
+                val usage = it.element
+                if (usage.isOutside(containingClassOrObject)) {
+                    otherUsageFound = true
+                    return@Processor false
+                }
+                val receiverType = ((usage as? KtElement)?.resolveToCall()
+                    ?.successfulCallOrNull<KaCall>() as? KaCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.dispatchReceiver?.type?.expandedSymbol?.psi
+                if (receiverType != null && receiverType != containingClassOrObject) {
+                    otherUsageFound = true
+                    return@Processor false
+                }
+                // Do not privatize functions referenced by callable references
+                if (usage.getStrictParentOfType<KtCallableReferenceExpression>() != null) {
+                    // Consider the reference is used outside of the class,
+                    // as KFunction#call would fail even on references inside that same class
+                    otherUsageFound = true
+                    return@Processor false
+                }
+                val function = usage.getParentOfTypesAndPredicate<KtDeclarationWithBody>(
+                    true, KtNamedFunction::class.java, KtPropertyAccessor::class.java
+                ) { true }
+                val insideInlineFun = function.insideInline() || (function as? KtPropertyAccessor)?.property.insideInline()
+                if (insideInlineFun) {
+                    otherUsageFound = true
+                    false
+                } else {
+                    inClassUsageFound = true
+                    true
+                }
+            })
 
-        // properties can be referred by component1/component2, which is too expensive to search, don't analyze them
-        //if (declaration is KtParameter && declaration.dataClassComponentFunction() != null) return false
-
-        val psiSearchHelper = PsiSearchHelper.getInstance(declaration.project)
-        val useScope = declaration.useScope
-        val name = declaration.name ?: return false
-        val restrictedScope = if (useScope is GlobalSearchScope) {
-            when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope)) {
-                PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES -> return false
-                PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES -> return false
-                PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES -> KotlinSourceFilterScope.Companion.projectSourcesAndResources(useScope, declaration.project)
-            }
-        } else useScope
-
-        var otherUsageFound = false
-        var inClassUsageFound = false
-        ReferencesSearch.search(declaration, restrictedScope).forEach(Processor {
-            val usage = it.element
-            if (usage.isOutside(containingClassOrObject)) {
-                otherUsageFound = true
-                return@Processor false
-            }
-            val receiverType = ((usage as? KtElement)?.resolveToCall()?.successfulCallOrNull<KaCall>() as? KaCallableMemberCall<*,*>)?.partiallyAppliedSymbol?.dispatchReceiver?.type?.expandedSymbol?.psi
-            if (receiverType != null && receiverType != containingClassOrObject) {
-                otherUsageFound = true
-                return@Processor false
-            }
-            // Do not privatize functions referenced by callable references
-            if (usage.getStrictParentOfType<KtCallableReferenceExpression>() != null) {
-                // Consider the reference is used outside of the class,
-                // as KFunction#call would fail even on references inside that same class
-                otherUsageFound = true
-                return@Processor false
-            }
-            val function = usage.getParentOfTypesAndPredicate<KtDeclarationWithBody>(
-                true, KtNamedFunction::class.java, KtPropertyAccessor::class.java
-            ) { true }
-            val insideInlineFun = function.insideInline() || (function as? KtPropertyAccessor)?.property.insideInline()
-            if (insideInlineFun) {
-                otherUsageFound = true
-                false
-            }
-            else {
-                inClassUsageFound = true
-                true
-            }
-        })
-
-        return inClassUsageFound && !otherUsageFound
+            return inClassUsageFound && !otherUsageFound
 
         }
     }
@@ -166,9 +164,10 @@ class K2MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
             if (Visibilities.isPrivate(visibility)
                 || visibility == Visibilities.Local
                 || d is KtClass && d.isLocal
-                || d is KtObjectDeclaration && d.isObjectLiteral()) {
+                || d is KtObjectDeclaration && d.isObjectLiteral()
+            ) {
                 return true
-            };
+            }
             d = d.containingClassOrObject ?: return false
         }
         return false

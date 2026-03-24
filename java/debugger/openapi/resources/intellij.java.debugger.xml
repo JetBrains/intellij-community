@@ -1,19 +1,19 @@
-<idea-plugin visibility="public">
+<!--
+  This file contains only v2 dependencies.
+  All new extensions, actions, services, extension points, etc. should go to intellij.java.debugger.content.xml
+-->
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <plugin id="com.intellij.modules.java-capable"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.xml.psi"/>
     <module name="intellij.java.execution"/>
     <module name="intellij.jsp"/>
-    <module name="intellij.java.psi"/>
-    <module name="intellij.java.resources.en"/>
-    <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.core"/>
-    <module name="intellij.platform.ide"/>
-    <module name="intellij.platform.lang"/>
-    <module name="intellij.platform.debugger"/>
-    <module name="intellij.platform.core.ui"/>
-    <module name="intellij.xml.psi"/>
-
     <module name="intellij.platform.backend"/>
-    <plugin id="com.intellij.modules.java-capable"/>
-
   </dependencies>
+  <!-- endregion -->
+
+  <xi:include href="intellij.java.debugger.content.xml"/>
 </idea-plugin>

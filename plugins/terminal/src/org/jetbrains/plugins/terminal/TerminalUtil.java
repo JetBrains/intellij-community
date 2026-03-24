@@ -2,16 +2,13 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.process.UnixProcessManager;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.RemoteSshProcess;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
@@ -24,7 +21,6 @@ import com.jediterm.terminal.TtyConnector;
 import com.pty4j.unix.UnixPtyProcess;
 import com.pty4j.windows.conpty.WinConPtyProcess;
 import com.pty4j.windows.winpty.WinPtyProcess;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.util.TerminalEelProcessesKt;
@@ -163,33 +159,5 @@ public final class TerminalUtil {
   @Deprecated
   public static boolean hasRunningCommands(@NotNull ProcessTtyConnector connector) throws IllegalStateException {
     return hasRunningCommands((TtyConnector)connector);
-  }
-
-  /**
-   * @return whether the New Terminal (Gen1) option should be visible to user. In the settings, menus and other places.
-   */
-  @ApiStatus.Internal
-  public static boolean isGenOneTerminalOptionVisible() {
-    return ExperimentalUI.isNewUI() && getGenOneTerminalVisibilityValue() == Boolean.TRUE
-           || Registry.is("terminal.new.ui.option.visible", false);
-  }
-
-  /**
-   * Internal helper setting to control whether Gen1 terminal options should be visible or not.
-   */
-  private static final String GEN_ONE_OPTION_VISIBLE_PROPERTY = "terminal.gen.one.option.visible";
-
-  @ApiStatus.Internal
-  public static @Nullable Boolean getGenOneTerminalVisibilityValue() {
-    String value = PropertiesComponent.getInstance().getValue(GEN_ONE_OPTION_VISIBLE_PROPERTY);
-    if (value != null) {
-      return Boolean.parseBoolean(value);
-    }
-    return null;
-  }
-
-  @ApiStatus.Internal
-  public static void setGenOneTerminalVisibilityValue(boolean isVisible) {
-    PropertiesComponent.getInstance().setValue(GEN_ONE_OPTION_VISIBLE_PROPERTY, Boolean.toString(isVisible));
   }
 }

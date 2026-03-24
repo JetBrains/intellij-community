@@ -64,7 +64,7 @@ public abstract class PluginsTab {
     searchTextField.setTextIgnoreEvents(query);
     IdeFocusManager.getGlobalInstance()
       .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(searchTextField, true));
-    searchPanel.setEmpty();
+    searchPanel.setEmptyQuery();
     showSearchPanel(query);
   };
 
@@ -232,7 +232,7 @@ public abstract class PluginsTab {
   protected abstract @NotNull SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
 
   public @Nullable String getSearchQuery() {
-    if (searchPanel == null || searchPanel.isEmpty()) {
+    if (searchPanel == null || searchPanel.isQueryEmpty()) {
       return null;
     }
     String query = searchPanel.getQuery();
@@ -250,7 +250,7 @@ public abstract class PluginsTab {
   }
 
   public void showSearchPanel(@NotNull String query) {
-    if (searchPanel.isEmpty()) {
+    if (searchPanel.isQueryEmpty()) {
       cardPanel.select(SEARCH_PANEL, true);
       detailsPage.showPlugin(null);
     }
@@ -259,7 +259,7 @@ public abstract class PluginsTab {
   }
 
   public void hideSearchPanel() {
-    if (!searchPanel.isEmpty()) {
+    if (!searchPanel.isQueryEmpty()) {
       onSearchReset();
       cardPanel.select(DEFAULT_PANEL, true);
       searchPanel.setQuery("");

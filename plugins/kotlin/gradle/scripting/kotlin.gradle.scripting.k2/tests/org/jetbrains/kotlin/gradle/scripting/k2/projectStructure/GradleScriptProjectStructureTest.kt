@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.gradle.scripting.k2.projectStructure
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.AbstractKotlinGradleNavigationTest.Companion.GRADLE_KOTLIN_FIXTURE
+import org.jetbrains.kotlin.gradle.GRADLE_KOTLIN_FIXTURE
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.junit.jupiter.params.ParameterizedTest

@@ -93,5 +93,7 @@
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test.k1.testFramework" />
+    <orderEntry type="module" module-name="intellij.java.debugger.streams.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin.tests" scope="TEST" />
   </component>
 </module>

@@ -1,7 +1,15 @@
 <idea-plugin visibility="public">
   <module value="com.intellij.modules.scriptDebugger.backend"/>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.scriptDebugger.protocolReaderRuntime"/>
+    <module name="intellij.platform.util.ex"/>
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
@@ -49,6 +49,7 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -411,6 +412,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     }
   }
 
+  @ApiStatus.Internal
   public final void markPossiblyInvalidated() {
     invalidateCachedPsi();
     for (AbstractFileViewProvider copy : getKnownCopies()) {

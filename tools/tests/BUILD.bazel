@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests",
+  module_name = "intellij.tools.cmd.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
@@ -16,12 +17,19 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:junit5",
     "//libraries/assertj-core",
+    "//libraries/assertj-core:assertj-core_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ],
   runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.tools.cmd.tests` end
+
+### auto-generated section `iml intellij.tools.cmd.tests` start
+exports_files([
+  "intellij.tools.cmd.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.tools.cmd.tests` end
 
 ### auto-generated section `test intellij.tools.cmd.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

@@ -7,20 +7,27 @@
       "productionJars": [
         "out/bazel-out/jvm-fastbuild/bin/module/module.jar"
       ],
-      "testTargets": [],
-      "testJars": [],
+      "testTargets": [
+        "@community//module:module_test_lib.jar"
+      ],
+      "testJars": [
+        "out/bazel-out/jvm-fastbuild/bin/module/module_test_lib.jar"
+      ],
       "exports": [],
       "moduleLibraries": {}
     }
   },
+  "imlTargets": [
+    "@community//module:module.iml"
+  ],
   "projectLibraries": {
     "dokka": {
       "target": "@lib//:dokka-core-1-4-10-2-dev-52-snapshot",
       "jars": [
-        "external/lib+/snapshots/dokka-core-1.4.10.2-dev-52-SNAPSHOT-9f86d081884c7d659a2f.jar"
+        "external/lib+/snapshots/dokka-core-1.4.10.2-dev-52-SNAPSHOT.jar"
       ],
       "jarTargets": [
-        "@lib//snapshots:dokka-core-1.4.10.2-dev-52-SNAPSHOT-9f86d081884c7d659a2f.jar"
+        "@lib//snapshots:dokka-core-1.4.10.2-dev-52-SNAPSHOT.jar"
       ],
       "sourceJars": []
     }

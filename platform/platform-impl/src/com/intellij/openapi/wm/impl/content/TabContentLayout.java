@@ -397,13 +397,13 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
       if (toDrawTabs == TabsDrawMode.PAINT_ALL) {
+        boolean isActive = ui.window.isActive() && ui.isActive();
+        boolean isHovered = each.isHovered() || ui.isPopupOpenedForContent(each.getContent());
         if (each.isSelected()) {
-          tabPainter.paintSelectedTab(getTabsPosition(), g2d, r, borderThickness, each.getTabColor(),
-                                      ui.window.isActive() && ui.isActive(), each.isHovered());
+          tabPainter.paintSelectedTab(getTabsPosition(), g2d, r, borderThickness, each.getTabColor(), isActive, isHovered);
         }
         else {
-          tabPainter.paintTab(getTabsPosition(), g2d, r, borderThickness, each.getTabColor(),
-                              ui.window.isActive(), each.isHovered());
+          tabPainter.paintTab(getTabsPosition(), g2d, r, borderThickness, each.getTabColor(), isActive, isHovered);
         }
       }
     }

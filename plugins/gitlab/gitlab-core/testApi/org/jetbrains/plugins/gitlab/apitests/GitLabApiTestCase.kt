@@ -14,7 +14,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelGQLDTO
 import org.jetbrains.plugins.gitlab.apitests.GitLabApiTestCase.Companion.IDEA_TEST_GITLAB_API_DATA_PATH
 import org.jetbrains.plugins.gitlab.apitests.GitLabApiTestCase.Companion.IDEA_TEST_GITLAB_API_EDITION
 import org.jetbrains.plugins.gitlab.apitests.GitLabApiTestCase.Companion.IDEA_TEST_GITLAB_API_TOKEN
@@ -61,27 +61,27 @@ abstract class GitLabApiTestCase {
   class GitLabDataConstants {
     val rootUsername = "root"
 
-    val testsGroupLabel1 = GitLabLabelDTO("grouplabel1")
-    val testsGroupLabel2 = GitLabLabelDTO("grouplabel2")
+    val testsGroupLabel1 = GitLabLabelGQLDTO("grouplabel1", "#FFFFFF")
+    val testsGroupLabel2 = GitLabLabelGQLDTO("grouplabel2", "#FFFFFF")
 
     val glTests2Project = GitLabProjectPath("tests", "gl-tests-2")
     val glTests2Coordinates = GitLabProjectCoordinates(server, glTests2Project)
-    val glTests2Label1 = GitLabLabelDTO("label1")
-    val glTests2Label2 = GitLabLabelDTO("label2")
+    val glTests2Label1 = GitLabLabelGQLDTO("label1", "#FFFFFF")
+    val glTests2Label2 = GitLabLabelGQLDTO("label2", "#FFFFFF")
+    val glTests2ProjectId = "6"
 
     val glTest1Project = GitLabProjectPath("root", "gl-test-1")
     val glTest1Coordinates = GitLabProjectCoordinates(server, glTest1Project)
+    val glTest1ProjectId = "2"
 
     val glTest1Mr2Iid = "2"
     val glTest1Mr2CommitShas = listOf("6a7d70b5df2d77ad792bca08c6fb14e29ae4ad04")
     val glTest1Mr2CommitShortShas = listOf("6a7d70b5")
     val glTest1Mr2ChangedFiles = listOf("a/important.txt")
 
-    val volatileProject = GitLabProjectPath("volatile", "volatile-project")
-    val volatileProjectCoordinates = GitLabProjectCoordinates(server, volatileProject)
     val volatileProjectMr1Iid = "1"
-    val volatileProjectMr1Gid = "gid://gitlab/MergeRequest/5"
     val volatileProjectMr2Iid = "2"
+    val volatileProjectId = "4"
   }
 
   companion object {

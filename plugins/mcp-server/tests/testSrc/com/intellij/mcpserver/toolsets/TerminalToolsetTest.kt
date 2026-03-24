@@ -6,7 +6,8 @@ import com.intellij.mcpserver.McpToolsetTestBase
 import com.intellij.mcpserver.toolsets.terminal.TerminalToolset
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
-import io.kotest.common.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
@@ -22,7 +23,7 @@ class TerminalToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun execute_terminal_command() = runBlocking {
+  fun execute_terminal_command() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       TerminalToolset::execute_terminal_command.name,
       buildJsonObject {

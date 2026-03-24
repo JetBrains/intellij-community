@@ -1,32 +1,33 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.browsers.actions.WebPreviewFileType
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.JS_FUNCTION_NAME
-import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Request.Companion.html
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightVirtualFile
-import com.intellij.ui.jcef.JBCefApp
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.io.InputStream
 import java.net.URI
 
 class HTMLEditorProvider : FileEditorProvider, DumbAware {
   @Suppress("CompanionObjectInExtension")
   companion object {
-    private val REQUEST_KEY: Key<Request> = Key.create("html.editor.request.key")
-    private val EDITOR_KEY: Key<FileEditor> = Key.create("html.editor.component.key")
-
     const val JS_FUNCTION_NAME: String = "jbCefQuery"
 
     @JvmStatic
@@ -46,9 +47,55 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
 
     @JvmStatic
     fun openEditor(project: Project, @DialogTitle title: String, request: Request, fileType: FileType): FileEditor? {
+      return openEditor(project, title, request, fileType, ignoreJcef = false)
+    }
+
+    @TestOnly
+    @ApiStatus.Internal
+    @JvmStatic
+    fun openEditorWithoutJcef(project: Project, @DialogTitle title: String, request: Request, fileType: FileType): FileEditor? {
+      return openEditor(project, title, request, fileType, ignoreJcef = true)
+    }
+
+    /**
+     * Opens an HTML page in the editor in a suspending way
+     */
+    @ApiStatus.Experimental
+    suspend fun openEditorAsync(project: Project, @DialogTitle title: String, request: Request): FileEditor? {
+      val file = HTMLVirtualFile.createFile(project, title, request, WebPreviewFileType.INSTANCE, ignoreJcef = false)
+      val fileEditorManager = FileEditorManager.getInstance(project)
+      val fileEditors = if (fileEditorManager is FileEditorManagerEx) {
+        fileEditorManager.openFile(file, FileEditorOpenOptions(requestFocus = true, waitForCompositeOpen = false))
+          .allEditorsWithProviders
+          .map { it.fileEditor }
+      } else {
+        withContext(Dispatchers.EDT) {
+          FileEditorManager.getInstance(project).openFile(file, true).toList()
+        }
+      }
+      return fileEditors.find { it is HTMLFileEditor }
+    }
+
+    /**
+     * Sends a request for opening an HTML page some time later. Does not block EDT.
+     * This is intended for usage in Java and non-suspend Kotlin.
+     */
+    @ApiStatus.Experimental
+    @JvmStatic
+    fun openEditorWithoutBlocking(project: Project, @DialogTitle title: String, request: Request) {
+      project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch { openEditorAsync(project, title, request) }
+    }
+
+    @JvmStatic
+    private fun openEditor(
+      project: Project,
+      title: @DialogTitle String,
+      request: Request,
+      fileType: FileType,
+      ignoreJcef: Boolean,
+    ): FileEditor? {
       logger<HTMLEditorProvider>().info(if (request.url == null) "HTML (${request.html!!.length} chars)" else "URL=${request.url}")
-      val file = LightVirtualFile(title, fileType, "")
-      REQUEST_KEY.set(file, request)
+      val file = HTMLVirtualFile.createFile(project, title, request, fileType, ignoreJcef)
       return FileEditorManager.getInstance(project)
         .openFile(file, true)
         .find { it is HTMLFileEditor }
@@ -57,24 +104,23 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
 
   @ApiStatus.Internal
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    return file.getUserData(EDITOR_KEY)
-           ?: HTMLFileEditor(project, file as LightVirtualFile, REQUEST_KEY.get(file)!!).also { file.putUserData(EDITOR_KEY, it) }
-  }
-
-  @ApiStatus.Internal
-  override fun disposeEditor(editor: FileEditor) {
-    try {
-      editor.file?.let { file ->
-        file.putUserData(EDITOR_KEY, null)
-        file.putUserData(REQUEST_KEY, null)
-      }
+    require(file is HTMLVirtualFile) {
+      "cannot create html editor for non-html file, actual $file"
     }
-    finally {
-      super.disposeEditor(editor)
+    require(!file.isDisposed()) {
+      "html request is already disposed"
+    }
+    return if (file.shouldUseMockEditor()) {
+      HTMLFileEditorMock(file)
+    }
+    else {
+      HTMLFileEditorImpl(project, file, file.htmlRequest)
     }
   }
 
-  override fun accept(project: Project, file: VirtualFile): Boolean = JBCefApp.isSupported() && file.getUserData(REQUEST_KEY) != null
+  override fun accept(project: Project, file: VirtualFile): Boolean {
+    return file is HTMLVirtualFile && !file.isDisposed() && file.isJcefSupported()
+  }
 
   override fun acceptRequiresReadAction(): Boolean = false
 
@@ -83,11 +129,14 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 
   class Request private constructor(@JvmField internal val html: String?, @JvmField internal val url: String?) {
+    internal var currentUrl: String? = url
     internal var timeoutHtml: String? = null
       private set
     internal var queryHandler: JsQueryHandler? = null
       private set
     internal var requestHandler: ResourceHandler? = null; private set
+    internal var onUrlChanged: (String?, String) -> Unit = { _, _ -> }
+      private set
 
     companion object {
       @JvmOverloads
@@ -122,6 +171,12 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
       this.requestHandler = requestHandler
       return this
     }
+
+    @ApiStatus.Internal
+    fun withOnUrlChanged(onUrlChanged: (String?, String) -> Unit): Request {
+      this.onUrlChanged = onUrlChanged
+      return this
+    }
   }
 
   /**
@@ -147,6 +202,9 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
   interface JsQueryHandler {
     suspend fun query(id: Long, request: String): String
   }
+
+  @ApiStatus.Internal
+  interface HTMLFileEditor : FileEditor
 
   @ApiStatus.Internal
   interface ResourceHandler {

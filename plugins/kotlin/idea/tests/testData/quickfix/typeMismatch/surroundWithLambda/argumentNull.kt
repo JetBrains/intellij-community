@@ -3,6 +3,7 @@
 // ACTION: Add 'block =' to argument
 // ACTION: Change parameter 'block' type of function 'str' to '(() -> String)?'
 // ACTION: Do not show hints for current method
+// K2_ERROR: Null cannot be a value of a non-null type '() -> String'.
 // K2_AFTER_ERROR: Null cannot be a value of a non-null type '() -> String'.
 fun nullFn() {
     str(<caret>null)

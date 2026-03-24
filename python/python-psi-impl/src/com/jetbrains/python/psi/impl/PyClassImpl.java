@@ -91,6 +91,7 @@ import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -148,7 +149,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     if (PyTypingTypeProvider.ANY.equals(getQualifiedName())) {
-      return null;
+      return PyAnyType.getAny();
     }
     return new PyClassTypeImpl(this, true);
   }
@@ -370,7 +371,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     PyDataclassParameters dcParams = parseDataclassParameters(this, context);
     if (dcParams != null && dcParams.getSlots()) {
       List<String> result = new ArrayList<>();
-      var initVars = PyDataclassTypeProvider.Companion.getInitVars(this, dcParams, context);
+      var initVars = PyDataclassTypeProvider.Helper.getInitVars(this, dcParams, context);
       var initVarTargets = initVars == null ? emptySet() : ContainerUtil.map2Set(initVars, iv -> iv.getTargetExpression());
       var attributes = getClassAttributes();
 

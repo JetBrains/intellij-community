@@ -66,7 +66,7 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
   open val state: AddInterpreterState<P> = AddInterpreterState(propertyGraph)
 
   val condaViewModel: CondaViewModel<P> = CondaViewModel(fileSystem, propertyGraph, projectPathFlows)
-  val uvViewModel: UvViewModel<P> = UvViewModel(fileSystem, propertyGraph)
+  val uvViewModel: UvViewModel<P> = UvViewModel(fileSystem, propertyGraph, projectPathFlows)
   val pipenvViewModel: PipenvViewModel<P> = PipenvViewModel(fileSystem, propertyGraph)
   val poetryViewModel: PoetryViewModel<P> = PoetryViewModel(fileSystem, propertyGraph)
   val hatchViewModel: HatchViewModel<P> = HatchViewModel(fileSystem, propertyGraph, projectPathFlows)
@@ -104,7 +104,7 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
       modificationCounter.updateAndGet { it + 1 }
     }.launchIn(scope + Dispatchers.EDT)
 
-    scope.launch(TraceContext(message("tracecontext.loading.interpreter.list"), scope) + Dispatchers.EDT) {
+    scope.launch(TraceContext(message("trace.context.loading.interpreter.list"), scope) + Dispatchers.EDT) {
       installable = fileSystem.getInstallableInterpreters()
       val projectPathPrefix = projectPathFlows.projectPathWithDefault.first()
       val existingSelectableInterpreters = fileSystem.getExistingSelectableInterpreters(projectPathPrefix)

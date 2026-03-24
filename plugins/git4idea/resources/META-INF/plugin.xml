@@ -14,6 +14,18 @@
     <p>To configure, open <b>Settings / Preferences</b> and go to <b>Version Control | Git</b>.</p>
   ]]></description>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.lvcs.impl"/>
+    <module name="intellij.platform.vcs.dvcs.impl"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.log.impl"/>
+  </dependencies>
+  <!-- endregion -->
   <depends optional="true" config-file="git-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
   <!--Included and not module to preserve compatibility (plugin classes/action must be available externally-->

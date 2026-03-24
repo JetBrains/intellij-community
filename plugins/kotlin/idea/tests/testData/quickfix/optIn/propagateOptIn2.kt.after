@@ -1,5 +1,7 @@
 // "Propagate 'UnstableApi' opt-in requirement to containing class 'Derived'" "true"
 // PRIORITY: HIGH
+// K2_ERROR: Base declaration of supertype 'Base' needs opt-in. The declaration override must be annotated with '@UnstableApi' or '@OptIn(UnstableApi::class)'
+// K2_ERROR: This class or interface requires opt-in to be implemented. Its usage must be marked with '@UnstableApi', '@OptIn(UnstableApi::class)' or '@SubclassOptInRequired(UnstableApi::class)'
 @file:OptIn(ExperimentalSubclassOptIn::class)
 
 @RequiresOptIn

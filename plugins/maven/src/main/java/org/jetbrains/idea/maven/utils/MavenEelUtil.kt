@@ -34,12 +34,17 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesException
 import com.intellij.platform.eel.LocalEelApi
+import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.EelPathUtils.getActualPath
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
@@ -50,6 +55,7 @@ import com.intellij.platform.util.progress.withProgressText
 import com.intellij.ui.navigation.Place
 import com.intellij.util.SystemProperties
 import com.intellij.util.text.VersionComparatorUtil
+import com.intellij.util.text.nullize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -65,6 +71,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType
 import org.jetbrains.idea.maven.project.staticOrBundled
 import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.server.MavenServerUtil
 import org.jetbrains.idea.maven.utils.MavenUtil.CONF_DIR
 import org.jetbrains.idea.maven.utils.MavenUtil.DOT_M2_DIR
 import org.jetbrains.idea.maven.utils.MavenUtil.ENV_M2_HOME
@@ -82,6 +89,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil.resolveGlobalSettingsFile
 import org.jetbrains.idea.maven.utils.MavenUtil.resolveUserSettingsPath
 import java.io.IOException
 import java.nio.file.Path
+import java.util.Properties
 import javax.swing.event.HyperlinkEvent
 
 object MavenEelUtil {
@@ -151,18 +159,19 @@ object MavenEelUtil {
     }
   }
 
-  @JvmStatic
-  fun EelApi.resolveRepository(
+  suspend fun EelApi.resolveRepository(
     overriddenRepository: String?,
     mavenHome: StaticResolvedMavenHomeType,
     overriddenUserSettingsFile: String?,
+    properties: Properties?,
   ): Path {
     if (overriddenRepository != null && !isEmptyOrSpaces(overriddenRepository)) {
       return Path.of(overriddenRepository)
     }
     return doResolveLocalRepository(
       this.resolveUserSettingsFile(overriddenUserSettingsFile),
-      this.resolveGlobalSettingsFile(mavenHome)
+      this.resolveGlobalSettingsFile(mavenHome),
+      properties
     ) ?: resolveM2Dir().resolve(REPOSITORY_DIR)
   }
 
@@ -218,9 +227,64 @@ object MavenEelUtil {
     if (mavenSettingsFile.isNullOrBlank()) {
       settingPath = mavenConfig?.getFilePath(MavenConfigSettings.ALTERNATE_USER_SETTINGS) ?: ""
     }
+    val properties = mavenConfig?.toProperties() ?: Properties()
+    enrichProperties(properties, project?.getEelDescriptor()?.toEelApi() ?: localEel)
+    val path = resolveUsingEel(project,
+                               {
+                                 resolveLocalRepositoryAsync(project,
+                                                             overriddenLocalRepository,
+                                                             mavenHome,
+                                                             settingPath,
+                                                             properties)
+                               },
+                               {
+                                 if (it is LocalEelApi) null
+                                 else it.resolveRepository(overriddenLocalRepository,
+                                                           mavenHome,
+                                                           settingPath,
+                                                           properties)
+                               })
+    return mavenConfig?.getAbsolutePath(path) ?: path
+  }
+
+
+  private suspend fun enrichProperties(properties: Properties, eelApi: EelApi) {
+    try {
+      val envMap = if (eelApi is LocalEelApi) {
+        System.getenv()
+      }
+      else {
+        eelApi.exec.environmentVariables().eelIt().await()
+      }
+      val envProperties = MavenServerUtil.mavenPropsFromEnvironment(envMap, eelApi.platform.isWindows)
+      envProperties.forEach { (k, v) ->
+        if (k is String) {
+          properties.setProperty(k, envProperties.getProperty(k))
+        }
+      }
+    }
+    catch (e: EnvironmentVariablesException) {
+      MavenLog.LOG.warn(e)
+      throw RuntimeException(e)
+    }
+  }
+
+  suspend fun getToolchainsFile(
+    project: Project?,
+    overridenToolchainsPathString: String?,
+    config: MavenConfig?,
+  ): Path {
+    val toolchainsPath = (overridenToolchainsPathString ?: config?.getOptionValue(MavenConfigSettings.ALTERNATE_TOOLCHAINS_SETTINGS))
+      .nullize(true)
     return resolveUsingEel(project,
-                           { resolveLocalRepositoryAsync(project, overriddenLocalRepository, mavenHome, settingPath) },
-                           { if (it is LocalEelApi) null else it.resolveRepository(overriddenLocalRepository, mavenHome, settingPath) })
+                           {
+                             toolchainsPath?.let { Path.of(it) } ?: Path.of(SystemProperties.getUserHome())
+                               .resolve(DOT_M2_DIR)
+                               .resolve(MavenUtil.TOOLCHAINS_XML)
+                           },
+                           { api ->
+                             toolchainsPath?.let { api.fs.getPath(it).asNioPath() } ?: api.resolveM2Dir().resolve(MavenUtil.TOOLCHAINS_XML)
+                           })
   }
 
   @JvmStatic
@@ -230,7 +294,13 @@ object MavenEelUtil {
     mavenHomeType: StaticResolvedMavenHomeType,
     overriddenUserSettingsFile: String?,
   ): Path {
-    return runBlockingMaybeCancellable { resolveLocalRepositoryAsync(project, overriddenLocalRepository, mavenHomeType, overriddenUserSettingsFile) }
+    return runBlockingMaybeCancellable {
+      resolveLocalRepositoryAsync(project,
+                                  overriddenLocalRepository,
+                                  mavenHomeType,
+                                  overriddenUserSettingsFile,
+                                  null)
+    }
   }
 
   suspend fun resolveUserSettingsPathAsync(overriddenUserSettingsFile: String?, project: Project?): Path {
@@ -251,6 +321,7 @@ object MavenEelUtil {
     overriddenLocalRepository: String?,
     mavenHomeType: StaticResolvedMavenHomeType,
     overriddenUserSettingsFile: String?,
+    properties: Properties?,
   ): Path {
     val forcedM2Home = System.getProperty(PROP_FORCED_M2_HOME)
     if (forcedM2Home != null) {
@@ -268,9 +339,12 @@ object MavenEelUtil {
         return Path.of(localRepoHome)
       }
       else {
+
+        val api = project.resolveM2DirAsync().getEelDescriptor().toEelApi()
         doResolveLocalRepository(
           resolveUserSettingsPathAsync(overriddenUserSettingsFile, project),
-          resolveGlobalSettingsFile(mavenHomeType)
+          resolveGlobalSettingsFile(mavenHomeType),
+          properties
         ) ?: project.resolveM2DirAsync().resolve(REPOSITORY_DIR)
       }
     }
@@ -280,6 +354,17 @@ object MavenEelUtil {
     }
     catch (e: IOException) {
       result
+    }
+  }
+
+  suspend fun getMavenProperties(api: EelApi): Properties {
+    try {
+      return MavenServerUtil.mavenPropsFromEnvironment(api.exec.environmentVariables().eelIt().await(), api.descriptor.osFamily.isWindows)
+
+    }
+    catch (err: EelExecApi.EnvironmentVariablesException) {
+      MavenLog.LOG.warn("Cannot extract env parameters:", err)
+      return Properties()
     }
   }
 

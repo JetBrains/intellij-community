@@ -10,7 +10,7 @@ private val logger = logger<ReflectionToolsProvider>()
 
 class ReflectionToolsProvider : McpToolsProvider {
   override fun getTools(): List<McpTool> {
-    return McpToolset.EP.extensionList.flatMap { toolset ->
+    return McpToolset.enabledToolsets.flatMap { toolset ->
       try {
         toolset.asTools()
       }

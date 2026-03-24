@@ -2,16 +2,15 @@
 
 package org.jetbrains.kotlin.idea.jvmDecompiler
 
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem
+import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.highlighter.isKotlinDecompiledFile
 import org.jetbrains.kotlin.idea.jvm.shared.internal.DecompileFailedException
@@ -51,23 +50,16 @@ class KotlinBytecodeDecompilerTask(private val file: KtFile) : Task.Backgroundab
 
     fun generateDecompiledVirtualFile(decompiledText: String): VirtualFile {
         val virtualFile: VirtualFile = runWriteAction {
-            val root: VirtualFile = getOrCreateDummyRoot()
             val decompiledFileName = FileUtil.getNameWithoutExtension(file.name) + ".decompiled.java"
-            val result = DummyFileSystem.getInstance().createChildFile(null, root, decompiledFileName)
-            VfsUtil.saveText(result, decompiledText)
+            val result = object: LightVirtualFile(decompiledFileName, JavaFileType.INSTANCE, decompiledText) {
+                override fun shouldSkipEventSystem(): Boolean {
+                    return true
+                }
+            }
             result
         }
 
         virtualFile.isKotlinDecompiledFile = true
         return virtualFile
-    }
-
-    private fun getOrCreateDummyRoot(): VirtualFile =
-        VirtualFileManager.getInstance().refreshAndFindFileByUrl(KOTLIN_DECOMPILED_ROOT)
-            ?: DummyFileSystem.getInstance().createRoot(KOTLIN_DECOMPILED_FOLDER)
-
-    companion object {
-        const val KOTLIN_DECOMPILED_FOLDER = "kotlinDecompiled"
-        const val KOTLIN_DECOMPILED_ROOT = "dummy://$KOTLIN_DECOMPILED_FOLDER"
     }
 }

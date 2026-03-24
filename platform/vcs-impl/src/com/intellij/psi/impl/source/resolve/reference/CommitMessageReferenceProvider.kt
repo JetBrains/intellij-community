@@ -5,6 +5,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
 import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
@@ -16,8 +17,8 @@ import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbol.TextAttributesKeyProperty
 import com.intellij.polySymbols.PolySymbolKind
-import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
@@ -56,11 +57,9 @@ internal class CommitMessageReferenceProvider : PsiPolySymbolReferenceProvider<P
     override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
       IssueDocumentationTargetProvider.getIssueDocumentationTarget(project, name, linkMatch.targetUrl)
 
-    override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
-      when (property) {
-        PolySymbol.PROP_IJ_TEXT_ATTRIBUTES_KEY -> property.tryCast(EditorColors.REFERENCE_HYPERLINK_COLOR.externalName)
-        else -> null
-      }
+    @PolySymbol.Property(TextAttributesKeyProperty::class)
+    private val textAttributesKey: TextAttributesKey
+      get() = EditorColors.REFERENCE_HYPERLINK_COLOR
 
     override val presentation: TargetPresentation
       get() = TargetPresentation.builder(name).presentation()

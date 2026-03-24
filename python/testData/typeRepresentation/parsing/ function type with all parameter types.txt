@@ -8,7 +8,7 @@ TypeRepresentation:a.pythonTypeRepresentation
       PsiElement(Py:IDENTIFIER)('f')
     PyParameterListRepresentation
       PsiElement(Py:LPAR)('(')
-      PyNamedParameterTypeRepresentation
+      PyNamedParameterTypeRepresentation('pos')
         PsiElement(Py:IDENTIFIER)('pos')
         PsiElement(Py:COLON)(':')
         PsiWhiteSpace(' ')
@@ -20,7 +20,7 @@ TypeRepresentation:a.pythonTypeRepresentation
         PsiElement(Py:DIV)('/')
       PsiElement(Py:COMMA)(',')
       PsiWhiteSpace(' ')
-      PyNamedParameterTypeRepresentation
+      PyNamedParameterTypeRepresentation('normal')
         PsiElement(Py:IDENTIFIER)('normal')
         PsiElement(Py:COLON)(':')
         PsiWhiteSpace(' ')
@@ -30,7 +30,7 @@ TypeRepresentation:a.pythonTypeRepresentation
       PsiWhiteSpace(' ')
       PyStarExpression
         PsiElement(Py:MULT)('*')
-        PyNamedParameterTypeRepresentation
+        PyNamedParameterTypeRepresentation('args')
           PsiElement(Py:IDENTIFIER)('args')
           PsiElement(Py:COLON)(':')
           PsiWhiteSpace(' ')
@@ -38,7 +38,7 @@ TypeRepresentation:a.pythonTypeRepresentation
             PsiElement(Py:IDENTIFIER)('float')
       PsiElement(Py:COMMA)(',')
       PsiWhiteSpace(' ')
-      PyNamedParameterTypeRepresentation
+      PyNamedParameterTypeRepresentation('kw')
         PsiElement(Py:IDENTIFIER)('kw')
         PsiElement(Py:COLON)(':')
         PsiWhiteSpace(' ')
@@ -48,7 +48,7 @@ TypeRepresentation:a.pythonTypeRepresentation
       PsiWhiteSpace(' ')
       PyDoubleStarExpression
         PsiElement(Py:EXP)('**')
-        PyNamedParameterTypeRepresentation
+        PyNamedParameterTypeRepresentation('kwargs')
           PsiElement(Py:IDENTIFIER)('kwargs')
           PsiElement(Py:COLON)(':')
           PsiWhiteSpace(' ')

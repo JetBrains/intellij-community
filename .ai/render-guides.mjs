@@ -23,9 +23,7 @@ const validEditions = new Set(["ULTIMATE", "COMMUNITY"]);
  * @property {string} [template]
  * @property {string} [templatePath]
  * @property {string} output
- * @property {string} [runContext]
  * @property {string} [forbiddenToolsSuffix]
- * @property {boolean} [usesCompilationRule]
  * @property {string} [generatedHeader]
  * @property {string} [generatedHeaderPosition]
  * @property {string} [edition]
@@ -39,9 +37,7 @@ const outputs = [
     tool: "CODEX",
     template: "guide.md",
     output: "AGENTS.md",
-    runContext: "via terminal command tool (not JetBrains MCP terminal)",
     forbiddenToolsSuffix: "",
-    usesCompilationRule: true,
     generatedHeader: generatedGuideHeader,
     generatedHeaderPosition: "after-frontmatter",
   },
@@ -50,9 +46,7 @@ const outputs = [
     tool: "CODEX",
     template: "guide.md",
     output: "community/AGENTS.md",
-    runContext: "via terminal command tool (not JetBrains MCP terminal)",
     forbiddenToolsSuffix: "",
-    usesCompilationRule: true,
     generatedHeader: generatedGuideHeader,
     generatedHeaderPosition: "after-frontmatter",
     edition: "COMMUNITY",
@@ -63,9 +57,7 @@ const outputs = [
     tool: "CLAUDE",
     template: "guide.md",
     output: "CLAUDE.md",
-    runContext: "from the shell/CLI",
     forbiddenToolsSuffix: "",
-    usesCompilationRule: true,
     generatedHeader: generatedGuideHeader,
     generatedHeaderPosition: "after-frontmatter",
     edition: "ULTIMATE",
@@ -77,14 +69,6 @@ function normalize(text) {
   const normalized = text.replace(/\r\n/g, "\n");
   const collapsed = normalized.replace(/\n{3,}/g, "\n\n");
   return collapsed.trimEnd() + "\n";
-}
-
-function renderCompilationRule(template, runContext) {
-  const rendered = template.replace("{{RUN_CONTEXT}}", runContext).trim();
-  if (rendered.includes("{{RUN_CONTEXT}}")) {
-    throw new Error("Compilation template still contains {{RUN_CONTEXT}} placeholder.");
-  }
-  return rendered;
 }
 
 function replaceAll(text, token, value) {
@@ -275,7 +259,6 @@ async function detectEdition() {
   }
 }
 
-const compilationTemplatePath = join(templatesDir, "compilation.md");
 const mcpConfigPath = join(repoRoot, ".mcp.json");
 const opencodeConfigPath = join(repoRoot, "opencode.json");
 const codexSkillsDir = join(repoRoot, ".codex", "skills");
@@ -306,12 +289,11 @@ function buildPartialsForTarget(basePartials, target, outputPath) {
 }
 
 async function loadRenderContext() {
-  const [basePartials, defaultEdition, compilationTemplate] = await Promise.all([
+  const [basePartials, defaultEdition] = await Promise.all([
     loadPartials(),
     detectEdition(),
-    readFile(compilationTemplatePath, "utf8"),
   ]);
-  return {basePartials, defaultEdition, compilationTemplate};
+  return {basePartials, defaultEdition};
 }
 
 function toOpenCodeServer(name, server) {
@@ -605,7 +587,7 @@ export async function renderSkills(options = {}) {
 }
 
 async function main() {
-  const {basePartials, defaultEdition, compilationTemplate} = await loadRenderContext();
+  const {basePartials, defaultEdition} = await loadRenderContext();
 
   for (const target of outputs) {
     if (!shouldRenderTarget(target, defaultEdition)) {
@@ -618,14 +600,6 @@ async function main() {
       : join(templatesDir, target.template);
     const templateText = await readFile(templatePath, "utf8");
     const rewrittenTemplateText = rewriteMarkdownLinks(templateText, templatePath, outputPath);
-    const usesCompilationRule = target.usesCompilationRule !== false;
-    if (usesCompilationRule) {
-      if (!templateText.includes("{{COMPILATION_RULE}}")) {
-        throw new Error(`${target.name} template is missing {{COMPILATION_RULE}} placeholder.`);
-      }
-    } else if (templateText.includes("{{COMPILATION_RULE}}")) {
-      throw new Error(`${target.name} template includes {{COMPILATION_RULE}} but usesCompilationRule is false.`);
-    }
 
     const partials = buildPartialsForTarget(basePartials, target, outputPath);
     const withPartials = applyPartials(rewrittenTemplateText, partials);
@@ -642,20 +616,10 @@ async function main() {
       throw new Error(`${target.name} rendered output still has {{FORBIDDEN_TOOLS_SUFFIX}} placeholder.`);
     }
 
-    let renderedText = withForbiddenTools;
-    if (usesCompilationRule) {
-      const compilationRule = renderCompilationRule(compilationTemplate, target.runContext);
-      renderedText = replaceAll(withForbiddenTools, "{{COMPILATION_RULE}}", compilationRule);
-    }
-
-    const withToolBlocks = applyToolBlocks(renderedText, target.tool);
+    const withToolBlocks = applyToolBlocks(withForbiddenTools, target.tool);
     const withEditionBlocks = applyEditionBlocks(withToolBlocks, edition);
     const withoutTemplateBlocks = stripTemplateBlocks(withEditionBlocks);
     assertNoUnresolvedTemplateDirectives(withoutTemplateBlocks, target.name);
-
-    if (withoutTemplateBlocks.includes("{{COMPILATION_RULE}}")) {
-      throw new Error(`${target.name} rendered output still has {{COMPILATION_RULE}} placeholder.`);
-    }
 
     let finalText = withoutTemplateBlocks;
     if (target.generatedHeader && !finalText.includes(target.generatedHeader)) {

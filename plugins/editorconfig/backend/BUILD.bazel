@@ -24,6 +24,7 @@ jvm_library(
   ],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/backend",
     "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-impl",
@@ -41,7 +42,6 @@ jvm_library(
     "//platform/refactoring",
     "//libraries/kotlin/reflect",
     "//libraries/gson",
-    "//spellchecker",
     "//platform/indexing-impl",
     "//libraries/automaton",
     "//platform/core-ui",
@@ -53,65 +53,169 @@ jvm_library(
     "//platform/settings",
     "//libraries/kotlinx/serialization/core",
     "//plugins/editorconfig/common",
-    "//platform/backend",
     "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 
 jvm_library(
   name = "backend_test_lib",
+  module_name = "intellij.editorconfig.backend",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":backend"],
-  deps = [
-    "//platform/analysis-api:analysis",
-    "//platform/code-style-api:codeStyle",
-    "//platform/util/concurrency",
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":backend",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/core-impl",
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/platform-api:ide",
-    "//platform/platform-impl:ide-impl",
-    "//platform/indexing-api:indexing",
-    "//jps/model-api:model",
-    "//platform/lang-api:lang",
-    "//platform/lang-core",
-    "//platform/lang-impl",
-    "//platform/ide-core-impl",
-    "//platform/projectModel-api:projectModel",
-    "//platform/refactoring",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/structure-view-impl:structureView-impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//libraries/kotlin/reflect",
-    "//libraries/gson",
-    "//spellchecker",
-    "//spellchecker:spellchecker_test_lib",
-    "//platform/indexing-impl",
-    "//libraries/automaton",
-    "//platform/core-ui",
-    "//platform/code-style-impl:codeStyle-impl",
-    "//platform/util/jdom",
-    "//platform/statistics",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//libraries/gson:gson_test_lib",
+    "//platform/indexing-impl:indexing-impl_test_lib",
+    "//libraries/automaton:automaton_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/code-style-impl:codeStyle-impl_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
     "//platform/statistics:statistics_test_lib",
-    "//libraries/kotlinx/coroutines/core",
-    "@lib//:ec4j-core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-    "//platform/settings",
-    "//libraries/kotlinx/serialization/core",
-    "//plugins/editorconfig/common",
-    "//platform/backend",
-    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/settings:settings_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//plugins/editorconfig/common:common_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.editorconfig.backend` end
 
-### auto-generated section `test intellij.editorconfig.backend` start
+### auto-generated section `iml intellij.editorconfig.backend` start
+exports_files([
+  "intellij.editorconfig.backend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.editorconfig.backend` end
+
+### auto-generated section `build intellij.editorconfig.backend.tests` start
+jvm_library(
+  name = "backend-tests",
+  module_name = "intellij.editorconfig.backend.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "backend-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [
+    "//plugins/editorconfig/backend",
+    "//plugins/editorconfig/backend:backend_test_lib",
+  ],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/backend",
+    "//platform/backend:backend_test_lib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-api:ide",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/indexing-api:indexing_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/ide-core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/refactoring",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/structure-view-impl:structureView-impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//libraries/kotlin/reflect",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//libraries/gson",
+    "//libraries/gson:gson_test_lib",
+    "//platform/indexing-impl",
+    "//platform/indexing-impl:indexing-impl_test_lib",
+    "//libraries/automaton",
+    "//libraries/automaton:automaton_test_lib",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/code-style-impl:codeStyle-impl_test_lib",
+    "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "@lib//:ec4j-core",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/settings",
+    "//platform/settings:settings_test_lib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//plugins/editorconfig/common",
+    "//plugins/editorconfig/common:common_test_lib",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+  ],
+  runtime_deps = [
+    ":backend-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.editorconfig.backend.tests` end
+
+### auto-generated section `iml intellij.editorconfig.backend.tests` start
+exports_files([
+  "intellij.editorconfig.backend.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.editorconfig.backend.tests` end
+
+### auto-generated section `test intellij.editorconfig.backend.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "backend_test",
-  runtime_deps = [":backend_test_lib"]
+  name = "backend-tests_test",
+  runtime_deps = [":backend-tests_test_lib"]
 )
-### auto-generated section `test intellij.editorconfig.backend` end
+### auto-generated section `test intellij.editorconfig.backend.tests` end

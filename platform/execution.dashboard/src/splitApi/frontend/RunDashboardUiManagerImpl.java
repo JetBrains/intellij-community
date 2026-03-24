@@ -4,6 +4,7 @@ package com.intellij.platform.execution.dashboard.splitApi.frontend;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunContentDescriptorId;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.RunDashboardManagerProxy;
 import com.intellij.execution.dashboard.RunDashboardService;
 import com.intellij.execution.dashboard.RunDashboardUiManager;
@@ -21,7 +22,6 @@ import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.platform.execution.dashboard.BackendRunDashboardManagerState;
 import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl;
@@ -52,7 +52,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
+import java.util.function.BiPredicate;
 
 import static com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardGroupingRule.GROUPING_RULE_EP_NAME;
 import static com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardUiUtils.updateContentToolbar;
@@ -132,8 +132,17 @@ public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
   }
 
   @Override
-  public @NotNull Predicate<Content> getReuseCondition() {
-    return Conditions.alwaysFalse();
+  public @NotNull BiPredicate<Content, @Nullable RunConfiguration> getReuseCondition() {
+    return (content, runConfiguration) -> {
+      if (IdeProductMode.isFrontend() || runConfiguration == null) return false;
+
+      RunDashboardManagerImpl runDashboardManager = RunDashboardManagerImpl.getInstance(myProject);
+      var service = ContainerUtil.find(runDashboardManager.getRunConfigurations(), s -> {
+        var descriptor = s.getDescriptor();
+        return descriptor != null && descriptor.getAttachedContent() == content;
+      });
+      return service != null && service.getConfigurationSettings().getConfiguration().equals(runConfiguration);
+    };
   }
 
   /**

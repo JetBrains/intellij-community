@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_bridgeGenerated-a.kotlin_module
+  foo/AChild.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/bridgeGenerated/a/AChild.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_bridgeGenerated-a.kotlin_module
+  foo/UseAChildKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/bridgeGenerated/a/useAChild.kt
+End of files
+------------------------------------------
+Exit code: OK

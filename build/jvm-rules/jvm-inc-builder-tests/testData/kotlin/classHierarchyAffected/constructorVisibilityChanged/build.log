@@ -1,0 +1,31 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_constructorVisibilityChanged-a.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/constructorVisibilityChanged/a/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_constructorVisibilityChanged-a.kotlin_module
+  foo/AChild.class
+  foo/CreateAKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/constructorVisibilityChanged/a/AChild.kt
+  kotlin/classHierarchyAffected/constructorVisibilityChanged/a/createA.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_constructorVisibilityChanged-a.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/constructorVisibilityChanged/a/A.kt
+  kotlin/classHierarchyAffected/constructorVisibilityChanged/a/AChild.kt
+  kotlin/classHierarchyAffected/constructorVisibilityChanged/a/createA.kt
+End of files
+------------------------------------------
+Exit code: OK

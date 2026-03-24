@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.impl.run
 
 import com.intellij.application.options.ModulesComboBox
@@ -24,7 +24,7 @@ import com.jetbrains.python.sdk.PySdkListCellRenderer
 import javax.swing.JCheckBox
 import javax.swing.JRadioButton
 
-class PyPluginCommonOptionsPanel {
+internal class PyPluginCommonOptionsPanel {
 
   lateinit var envsComponent: EnvironmentVariablesComponent
   lateinit var useModuleSdkRadioButton: JRadioButton

@@ -1,4 +1,5 @@
 // "Change function signature to 'fun <T> f(a: (T & Any).() -> Unit)'" "true"
+// K2_ERROR: 'f' overrides nothing. Potential signatures for overriding:<br>fun <T> f(a: T & Any.() -> Unit): Unit
 open class A {
     open fun <T> f(a: (T & Any).() -> Unit) {}
 }

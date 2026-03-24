@@ -3,30 +3,45 @@
 var __create = Object.create;
 var { getPrototypeOf: __getProtoOf, defineProperty: __defProp, getOwnPropertyNames: __getOwnPropNames } = Object;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __toESM = (mod, isNodeMode, target) => {
+function __accessProp(key) {
+  return this[key];
+}
+var __toESMCache_node, __toESMCache_esm, __toESM = (mod, isNodeMode, target) => {
+  var canCache = mod != null && typeof mod === "object";
+  if (canCache) {
+    var cache = isNodeMode ? __toESMCache_node ??= /* @__PURE__ */ new WeakMap : __toESMCache_esm ??= /* @__PURE__ */ new WeakMap, cached = cache.get(mod);
+    if (cached)
+      return cached;
+  }
   target = mod != null ? __create(__getProtoOf(mod)) : {};
   let to = isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: !0 }) : target;
   for (let key of __getOwnPropNames(mod))
     if (!__hasOwnProp.call(to, key))
       __defProp(to, key, {
-        get: () => mod[key],
+        get: __accessProp.bind(mod, key),
         enumerable: !0
       });
+  if (canCache)
+    cache.set(mod, to);
   return to;
 };
 var __commonJS = (cb, mod) => () => (mod || cb((mod = { exports: {} }).exports, mod), mod.exports);
+var __returnValue = (v) => v;
+function __exportSetter(name, newValue) {
+  this[name] = __returnValue.bind(null, newValue);
+}
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, {
       get: all[name],
       enumerable: !0,
       configurable: !0,
-      set: (newValue) => all[name] = () => newValue
+      set: __exportSetter.bind(all, name)
     });
 };
 var __require = import.meta.require;
 
-// node_modules/ajv/dist/compile/codegen/code.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/codegen/code.js
 var require_code = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.regexpCode = exports.getEsmExportName = exports.getProperty = exports.safeStringify = exports.stringify = exports.strConcat = exports.addCodeArg = exports.str = exports._ = exports.nil = exports._Code = exports.Name = exports.IDENTIFIER = exports._CodeOrName = void 0;
@@ -171,7 +186,7 @@ var require_code = __commonJS((exports) => {
   exports.regexpCode = regexpCode;
 });
 
-// node_modules/ajv/dist/compile/codegen/scope.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/codegen/scope.js
 var require_scope = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.ValueScope = exports.ValueScopeName = exports.Scope = exports.varKinds = exports.UsedValueState = void 0;
@@ -302,7 +317,7 @@ var require_scope = __commonJS((exports) => {
   exports.ValueScope = ValueScope;
 });
 
-// node_modules/ajv/dist/compile/codegen/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/codegen/index.js
 var require_codegen = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.or = exports.and = exports.not = exports.CodeGen = exports.operators = exports.varKinds = exports.ValueScopeName = exports.ValueScope = exports.Scope = exports.Name = exports.regexpCode = exports.stringify = exports.getProperty = exports.nil = exports.strConcat = exports.str = exports._ = void 0;
@@ -938,7 +953,7 @@ var require_codegen = __commonJS((exports) => {
   }
 });
 
-// node_modules/ajv/dist/compile/util.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/util.js
 var require_util = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.checkStrictMode = exports.getErrorPath = exports.Type = exports.useFunc = exports.setEvaluated = exports.evaluatedPropsToName = exports.mergeEvaluated = exports.eachItem = exports.unescapeJsonPointer = exports.escapeJsonPointer = exports.escapeFragment = exports.unescapeFragment = exports.schemaRefOrVal = exports.schemaHasRulesButRef = exports.schemaHasRules = exports.checkUnknownRules = exports.alwaysValidSchema = exports.toHash = void 0;
@@ -1094,7 +1109,7 @@ var require_util = __commonJS((exports) => {
   exports.checkStrictMode = checkStrictMode;
 });
 
-// node_modules/ajv/dist/compile/names.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/names.js
 var require_names = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var codegen_1 = require_codegen(), names = {
@@ -1118,7 +1133,7 @@ var require_names = __commonJS((exports) => {
   exports.default = names;
 });
 
-// node_modules/ajv/dist/compile/errors.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/errors.js
 var require_errors = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.extendErrors = exports.resetErrorsCount = exports.reportExtraError = exports.reportError = exports.keyword$DataError = exports.keywordError = void 0;
@@ -1211,7 +1226,7 @@ var require_errors = __commonJS((exports) => {
   }
 });
 
-// node_modules/ajv/dist/compile/validate/boolSchema.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/validate/boolSchema.js
 var require_boolSchema = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.boolOrEmptySchema = exports.topBoolOrEmptySchema = void 0;
@@ -1251,7 +1266,7 @@ var require_boolSchema = __commonJS((exports) => {
   }
 });
 
-// node_modules/ajv/dist/compile/rules.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/rules.js
 var require_rules = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.getRules = exports.isJSONType = void 0;
@@ -1278,7 +1293,7 @@ var require_rules = __commonJS((exports) => {
   exports.getRules = getRules;
 });
 
-// node_modules/ajv/dist/compile/validate/applicability.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/validate/applicability.js
 var require_applicability = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.shouldUseRule = exports.shouldUseGroup = exports.schemaHasRulesForType = void 0;
@@ -1298,7 +1313,7 @@ var require_applicability = __commonJS((exports) => {
   exports.shouldUseRule = shouldUseRule;
 });
 
-// node_modules/ajv/dist/compile/validate/dataType.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/validate/dataType.js
 var require_dataType = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.reportTypeError = exports.checkDataTypes = exports.checkDataType = exports.coerceAndCheckDataType = exports.getJSONTypes = exports.getSchemaTypes = exports.DataType = void 0;
@@ -1451,7 +1466,7 @@ var require_dataType = __commonJS((exports) => {
   }
 });
 
-// node_modules/ajv/dist/compile/validate/defaults.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/validate/defaults.js
 var require_defaults = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.assignDefaults = void 0;
@@ -1481,7 +1496,7 @@ var require_defaults = __commonJS((exports) => {
   }
 });
 
-// node_modules/ajv/dist/vocabularies/code.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/code.js
 var require_code2 = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.validateUnion = exports.validateArray = exports.usePattern = exports.callValidateCode = exports.schemaProperties = exports.allSchemaProperties = exports.noPropertyInData = exports.propertyInData = exports.isOwnProperty = exports.hasPropFunc = exports.reportMissingProp = exports.checkMissingProp = exports.checkReportMissingProp = void 0;
@@ -1592,7 +1607,7 @@ var require_code2 = __commonJS((exports) => {
   exports.validateUnion = validateUnion;
 });
 
-// node_modules/ajv/dist/compile/validate/keyword.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/validate/keyword.js
 var require_keyword = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.validateKeywordUsage = exports.validSchemaType = exports.funcKeywordCode = exports.macroKeywordCode = void 0;
@@ -1689,7 +1704,7 @@ var require_keyword = __commonJS((exports) => {
   exports.validateKeywordUsage = validateKeywordUsage;
 });
 
-// node_modules/ajv/dist/compile/validate/subschema.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/validate/subschema.js
 var require_subschema = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.extendSubschemaMode = exports.extendSubschemaData = exports.getSubschema = void 0;
@@ -1754,7 +1769,7 @@ var require_subschema = __commonJS((exports) => {
   exports.extendSubschemaMode = extendSubschemaMode;
 });
 
-// node_modules/fast-deep-equal/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/fast-deep-equal/index.js
 var require_fast_deep_equal = __commonJS((exports, module) => {
   module.exports = function equal(a, b) {
     if (a === b)
@@ -1793,7 +1808,7 @@ var require_fast_deep_equal = __commonJS((exports, module) => {
   };
 });
 
-// node_modules/json-schema-traverse/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/json-schema-traverse/index.js
 var require_json_schema_traverse = __commonJS((exports, module) => {
   var traverse = module.exports = function(schema, opts, cb) {
     if (typeof opts == "function")
@@ -1870,7 +1885,7 @@ var require_json_schema_traverse = __commonJS((exports, module) => {
   }
 });
 
-// node_modules/ajv/dist/compile/resolve.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/resolve.js
 var require_resolve = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.getSchemaRefs = exports.resolveUrl = exports.normalizeId = exports._getFullPath = exports.getFullPath = exports.inlineRef = void 0;
@@ -2003,7 +2018,7 @@ var require_resolve = __commonJS((exports) => {
   exports.getSchemaRefs = getSchemaRefs;
 });
 
-// node_modules/ajv/dist/compile/validate/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/validate/index.js
 var require_validate = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.getData = exports.KeywordCxt = exports.validateFunctionCode = void 0;
@@ -2407,7 +2422,7 @@ var require_validate = __commonJS((exports) => {
   exports.getData = getData;
 });
 
-// node_modules/ajv/dist/runtime/validation_error.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/runtime/validation_error.js
 var require_validation_error = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
 
@@ -2420,7 +2435,7 @@ var require_validation_error = __commonJS((exports) => {
   exports.default = ValidationError;
 });
 
-// node_modules/ajv/dist/compile/ref_error.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/ref_error.js
 var require_ref_error = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var resolve_1 = require_resolve();
@@ -2434,7 +2449,7 @@ var require_ref_error = __commonJS((exports) => {
   exports.default = MissingRefError;
 });
 
-// node_modules/ajv/dist/compile/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/compile/index.js
 var require_compile = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.resolveSchema = exports.getCompilingSchema = exports.resolveRef = exports.compileSchema = exports.SchemaEnv = void 0;
@@ -2612,7 +2627,7 @@ var require_compile = __commonJS((exports) => {
   }
 });
 
-// node_modules/ajv/dist/refs/data.json
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/refs/data.json
 var require_data = __commonJS((exports, module) => {
   module.exports = {
     $id: "https://raw.githubusercontent.com/ajv-validator/ajv/master/lib/refs/data.json#",
@@ -2629,7 +2644,7 @@ var require_data = __commonJS((exports, module) => {
   };
 });
 
-// node_modules/fast-uri/lib/utils.js
+// community/build/mcp-servers/ij-proxy/node_modules/fast-uri/lib/utils.js
 var require_utils = __commonJS((exports, module) => {
   var isUUID = RegExp.prototype.test.bind(/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/iu), isIPv4 = RegExp.prototype.test.bind(/^(?:(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)$/u);
   function stringArrayToHexStripped(input) {
@@ -2834,7 +2849,7 @@ var require_utils = __commonJS((exports, module) => {
   };
 });
 
-// node_modules/fast-uri/lib/schemes.js
+// community/build/mcp-servers/ij-proxy/node_modules/fast-uri/lib/schemes.js
 var require_schemes = __commonJS((exports, module) => {
   var { isUUID } = require_utils(), URN_REG = /([\da-z][\d\-a-z]{0,31}):((?:[\w!$'()*+,\-.:;=@]|%[\da-f]{2})+)/iu, supportedSchemeNames = [
     "http",
@@ -2967,7 +2982,7 @@ var require_schemes = __commonJS((exports, module) => {
   };
 });
 
-// node_modules/fast-uri/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/fast-uri/index.js
 var require_fast_uri = __commonJS((exports, module) => {
   var { normalizeIPv6, removeDotSegments, recomposeAuthority, normalizeComponentEncoding, isIPv4, nonSimpleDomain } = require_utils(), { SCHEMES, getSchemeHandler } = require_schemes();
   function normalize(uri, options) {
@@ -3152,7 +3167,7 @@ var require_fast_uri = __commonJS((exports, module) => {
   module.exports.fastUri = fastUri;
 });
 
-// node_modules/ajv/dist/runtime/uri.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/runtime/uri.js
 var require_uri = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var uri = require_fast_uri();
@@ -3160,7 +3175,7 @@ var require_uri = __commonJS((exports) => {
   exports.default = uri;
 });
 
-// node_modules/ajv/dist/core.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/core.js
 var require_core = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.CodeGen = exports.Name = exports.nil = exports.stringify = exports.str = exports._ = exports.KeywordCxt = void 0;
@@ -3651,7 +3666,7 @@ var require_core = __commonJS((exports) => {
   }
 });
 
-// node_modules/ajv/dist/vocabularies/core/id.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/core/id.js
 var require_id = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var def = {
@@ -3663,7 +3678,7 @@ var require_id = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/core/ref.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/core/ref.js
 var require_ref = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.callRef = exports.getValidate = void 0;
@@ -3759,7 +3774,7 @@ var require_ref = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/core/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/core/index.js
 var require_core2 = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var id_1 = require_id(), ref_1 = require_ref(), core2 = [
@@ -3775,7 +3790,7 @@ var require_core2 = __commonJS((exports) => {
   exports.default = core2;
 });
 
-// node_modules/ajv/dist/vocabularies/validation/limitNumber.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/validation/limitNumber.js
 var require_limitNumber = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var codegen_1 = require_codegen(), ops = codegen_1.operators, KWDs = {
@@ -3800,7 +3815,7 @@ var require_limitNumber = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/validation/multipleOf.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/validation/multipleOf.js
 var require_multipleOf = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var codegen_1 = require_codegen(), error48 = {
@@ -3820,7 +3835,7 @@ var require_multipleOf = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/runtime/ucs2length.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/runtime/ucs2length.js
 var require_ucs2length = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   function ucs2length(str) {
@@ -3836,7 +3851,7 @@ var require_ucs2length = __commonJS((exports) => {
   ucs2length.code = 'require("ajv/dist/runtime/ucs2length").default';
 });
 
-// node_modules/ajv/dist/vocabularies/validation/limitLength.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/validation/limitLength.js
 var require_limitLength = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var codegen_1 = require_codegen(), util_1 = require_util(), ucs2length_1 = require_ucs2length(), error48 = {
@@ -3859,7 +3874,7 @@ var require_limitLength = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/validation/pattern.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/validation/pattern.js
 var require_pattern = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var code_1 = require_code2(), codegen_1 = require_codegen(), error48 = {
@@ -3879,7 +3894,7 @@ var require_pattern = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/validation/limitProperties.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/validation/limitProperties.js
 var require_limitProperties = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var codegen_1 = require_codegen(), error48 = {
@@ -3902,7 +3917,7 @@ var require_limitProperties = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/validation/required.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/validation/required.js
 var require_required = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var code_1 = require_code2(), codegen_1 = require_codegen(), util_1 = require_util(), error48 = {
@@ -3963,7 +3978,7 @@ var require_required = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/validation/limitItems.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/validation/limitItems.js
 var require_limitItems = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var codegen_1 = require_codegen(), error48 = {
@@ -3986,7 +4001,7 @@ var require_limitItems = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/runtime/equal.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/runtime/equal.js
 var require_equal = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var equal = require_fast_deep_equal();
@@ -3994,7 +4009,7 @@ var require_equal = __commonJS((exports) => {
   exports.default = equal;
 });
 
-// node_modules/ajv/dist/vocabularies/validation/uniqueItems.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/validation/uniqueItems.js
 var require_uniqueItems = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var dataType_1 = require_dataType(), codegen_1 = require_codegen(), util_1 = require_util(), equal_1 = require_equal(), error48 = {
@@ -4040,7 +4055,7 @@ var require_uniqueItems = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/validation/const.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/validation/const.js
 var require_const = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var codegen_1 = require_codegen(), util_1 = require_util(), equal_1 = require_equal(), error48 = {
@@ -4061,7 +4076,7 @@ var require_const = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/validation/enum.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/validation/enum.js
 var require_enum = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var codegen_1 = require_codegen(), util_1 = require_util(), equal_1 = require_equal(), error48 = {
@@ -4098,7 +4113,7 @@ var require_enum = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/validation/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/validation/index.js
 var require_validation = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var limitNumber_1 = require_limitNumber(), multipleOf_1 = require_multipleOf(), limitLength_1 = require_limitLength(), pattern_1 = require_pattern(), limitProperties_1 = require_limitProperties(), required_1 = require_required(), limitItems_1 = require_limitItems(), uniqueItems_1 = require_uniqueItems(), const_1 = require_const(), enum_1 = require_enum(), validation = [
@@ -4118,7 +4133,7 @@ var require_validation = __commonJS((exports) => {
   exports.default = validation;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/additionalItems.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/additionalItems.js
 var require_additionalItems = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.validateAdditionalItems = void 0;
@@ -4161,7 +4176,7 @@ var require_additionalItems = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/items.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/items.js
 var require_items = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.validateTuple = void 0;
@@ -4205,7 +4220,7 @@ var require_items = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/prefixItems.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/prefixItems.js
 var require_prefixItems = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var items_1 = require_items(), def = {
@@ -4218,7 +4233,7 @@ var require_prefixItems = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/items2020.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/items2020.js
 var require_items2020 = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var codegen_1 = require_codegen(), util_1 = require_util(), code_1 = require_code2(), additionalItems_1 = require_additionalItems(), error48 = {
@@ -4243,7 +4258,7 @@ var require_items2020 = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/contains.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/contains.js
 var require_contains = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var codegen_1 = require_codegen(), util_1 = require_util(), error48 = {
@@ -4315,7 +4330,7 @@ var require_contains = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/dependencies.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/dependencies.js
 var require_dependencies = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.validateSchemaDeps = exports.validatePropertyDeps = exports.error = void 0;
@@ -4389,7 +4404,7 @@ var require_dependencies = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/propertyNames.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/propertyNames.js
 var require_propertyNames = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var codegen_1 = require_codegen(), util_1 = require_util(), error48 = {
@@ -4422,7 +4437,7 @@ var require_propertyNames = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/additionalProperties.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/additionalProperties.js
 var require_additionalProperties = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var code_1 = require_code2(), codegen_1 = require_codegen(), names_1 = require_names(), util_1 = require_util(), error48 = {
@@ -4507,7 +4522,7 @@ var require_additionalProperties = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/properties.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/properties.js
 var require_properties = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var validate_1 = require_validate(), code_1 = require_code2(), util_1 = require_util(), additionalProperties_1 = require_additionalProperties(), def = {
@@ -4552,7 +4567,7 @@ var require_properties = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/patternProperties.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/patternProperties.js
 var require_patternProperties = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var code_1 = require_code2(), codegen_1 = require_codegen(), util_1 = require_util(), util_2 = require_util(), def = {
@@ -4606,7 +4621,7 @@ var require_patternProperties = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/not.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/not.js
 var require_not = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var util_1 = require_util(), def = {
@@ -4632,7 +4647,7 @@ var require_not = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/anyOf.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/anyOf.js
 var require_anyOf = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var code_1 = require_code2(), def = {
@@ -4645,7 +4660,7 @@ var require_anyOf = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/oneOf.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/oneOf.js
 var require_oneOf = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var codegen_1 = require_codegen(), util_1 = require_util(), error48 = {
@@ -4688,7 +4703,7 @@ var require_oneOf = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/allOf.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/allOf.js
 var require_allOf = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var util_1 = require_util(), def = {
@@ -4710,7 +4725,7 @@ var require_allOf = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/if.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/if.js
 var require_if = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var codegen_1 = require_codegen(), util_1 = require_util(), error48 = {
@@ -4764,7 +4779,7 @@ var require_if = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/thenElse.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/thenElse.js
 var require_thenElse = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var util_1 = require_util(), def = {
@@ -4778,7 +4793,7 @@ var require_thenElse = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/applicator/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/applicator/index.js
 var require_applicator = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var additionalItems_1 = require_additionalItems(), prefixItems_1 = require_prefixItems(), items_1 = require_items(), items2020_1 = require_items2020(), contains_1 = require_contains(), dependencies_1 = require_dependencies(), propertyNames_1 = require_propertyNames(), additionalProperties_1 = require_additionalProperties(), properties_1 = require_properties(), patternProperties_1 = require_patternProperties(), not_1 = require_not(), anyOf_1 = require_anyOf(), oneOf_1 = require_oneOf(), allOf_1 = require_allOf(), if_1 = require_if(), thenElse_1 = require_thenElse();
@@ -4805,7 +4820,7 @@ var require_applicator = __commonJS((exports) => {
   exports.default = getApplicator;
 });
 
-// node_modules/ajv/dist/vocabularies/format/format.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/format/format.js
 var require_format = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var codegen_1 = require_codegen(), error48 = {
@@ -4882,14 +4897,14 @@ var require_format = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/vocabularies/format/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/format/index.js
 var require_format2 = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var format_1 = require_format(), format = [format_1.default];
   exports.default = format;
 });
 
-// node_modules/ajv/dist/vocabularies/metadata.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/metadata.js
 var require_metadata = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.contentVocabulary = exports.metadataVocabulary = void 0;
@@ -4909,7 +4924,7 @@ var require_metadata = __commonJS((exports) => {
   ];
 });
 
-// node_modules/ajv/dist/vocabularies/draft7.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/draft7.js
 var require_draft7 = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var core_1 = require_core2(), validation_1 = require_validation(), applicator_1 = require_applicator(), format_1 = require_format2(), metadata_1 = require_metadata(), draft7Vocabularies = [
@@ -4923,7 +4938,7 @@ var require_draft7 = __commonJS((exports) => {
   exports.default = draft7Vocabularies;
 });
 
-// node_modules/ajv/dist/vocabularies/discriminator/types.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/discriminator/types.js
 var require_types = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.DiscrError = void 0;
@@ -4933,7 +4948,7 @@ var require_types = __commonJS((exports) => {
   })(DiscrError || (exports.DiscrError = DiscrError = {}));
 });
 
-// node_modules/ajv/dist/vocabularies/discriminator/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/vocabularies/discriminator/index.js
 var require_discriminator = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var codegen_1 = require_codegen(), types_1 = require_types(), compile_1 = require_compile(), ref_error_1 = require_ref_error(), util_1 = require_util(), error48 = {
@@ -5011,7 +5026,7 @@ var require_discriminator = __commonJS((exports) => {
   exports.default = def;
 });
 
-// node_modules/ajv/dist/refs/json-schema-draft-07.json
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/refs/json-schema-draft-07.json
 var require_json_schema_draft_07 = __commonJS((exports, module) => {
   module.exports = {
     $schema: "http://json-schema.org/draft-07/schema#",
@@ -5166,7 +5181,7 @@ var require_json_schema_draft_07 = __commonJS((exports, module) => {
   };
 });
 
-// node_modules/ajv/dist/ajv.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv/dist/ajv.js
 var require_ajv = __commonJS((exports, module) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.MissingRefError = exports.ValidationError = exports.CodeGen = exports.Name = exports.nil = exports.stringify = exports.str = exports._ = exports.KeywordCxt = exports.Ajv = void 0;
@@ -5225,7 +5240,7 @@ var require_ajv = __commonJS((exports, module) => {
   } });
 });
 
-// node_modules/ajv-formats/dist/formats.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv-formats/dist/formats.js
 var require_formats = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.formatNames = exports.fastFormats = exports.fullFormats = void 0;
@@ -5381,7 +5396,7 @@ var require_formats = __commonJS((exports) => {
   }
 });
 
-// node_modules/ajv-formats/dist/limit.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv-formats/dist/limit.js
 var require_limit = __commonJS((exports) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   exports.formatLimitDefinition = void 0;
@@ -5441,7 +5456,7 @@ var require_limit = __commonJS((exports) => {
   exports.default = formatLimitPlugin;
 });
 
-// node_modules/ajv-formats/dist/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/ajv-formats/dist/index.js
 var require_dist = __commonJS((exports, module) => {
   Object.defineProperty(exports, "__esModule", { value: !0 });
   var formats_1 = require_formats(), limit_1 = require_limit(), codegen_1 = require_codegen(), fullName = new codegen_1.Name("fullFormats"), fastName = new codegen_1.Name("fastFormats"), formatsPlugin = (ajv, opts = { keywords: !0 }) => {
@@ -5469,7 +5484,7 @@ var require_dist = __commonJS((exports, module) => {
   exports.default = formatsPlugin;
 });
 
-// node_modules/picomatch/lib/constants.js
+// community/build/mcp-servers/ij-proxy/node_modules/picomatch/lib/constants.js
 var require_constants = __commonJS((exports, module) => {
   var POSIX_CHARS = {
     DOT_LITERAL: "\\.",
@@ -5591,7 +5606,7 @@ var require_constants = __commonJS((exports, module) => {
   };
 });
 
-// node_modules/picomatch/lib/utils.js
+// community/build/mcp-servers/ij-proxy/node_modules/picomatch/lib/utils.js
 var require_utils2 = __commonJS((exports) => {
   var {
     REGEX_BACKSLASH,
@@ -5638,15 +5653,15 @@ var require_utils2 = __commonJS((exports) => {
       output = `(?:^(?!${output}).*$)`;
     return output;
   };
-  exports.basename = (path7, { windows } = {}) => {
-    let segs = path7.split(windows ? /[\\/]/ : "/"), last = segs[segs.length - 1];
+  exports.basename = (path6, { windows } = {}) => {
+    let segs = path6.split(windows ? /[\\/]/ : "/"), last = segs[segs.length - 1];
     if (last === "")
       return segs[segs.length - 2];
     return last;
   };
 });
 
-// node_modules/picomatch/lib/scan.js
+// community/build/mcp-servers/ij-proxy/node_modules/picomatch/lib/scan.js
 var require_scan = __commonJS((exports, module) => {
   var utils = require_utils2(), {
     CHAR_ASTERISK,
@@ -5863,7 +5878,7 @@ var require_scan = __commonJS((exports, module) => {
   module.exports = scan;
 });
 
-// node_modules/picomatch/lib/parse.js
+// community/build/mcp-servers/ij-proxy/node_modules/picomatch/lib/parse.js
 var require_parse = __commonJS((exports, module) => {
   var constants = require_constants(), utils = require_utils2(), {
     MAX_LENGTH,
@@ -6415,7 +6430,7 @@ var require_parse = __commonJS((exports, module) => {
   module.exports = parse5;
 });
 
-// node_modules/picomatch/lib/picomatch.js
+// community/build/mcp-servers/ij-proxy/node_modules/picomatch/lib/picomatch.js
 var require_picomatch = __commonJS((exports, module) => {
   var scan = require_scan(), parse5 = require_parse(), utils = require_utils2(), constants = require_constants(), isObject2 = (val) => val && typeof val === "object" && !Array.isArray(val), picomatch = (glob, options, returnState = !1) => {
     if (Array.isArray(glob)) {
@@ -6518,7 +6533,7 @@ var require_picomatch = __commonJS((exports, module) => {
   module.exports = picomatch;
 });
 
-// node_modules/picomatch/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/picomatch/index.js
 var require_picomatch2 = __commonJS((exports, module) => {
   var pico = require_picomatch(), utils = require_utils2();
   function picomatch(glob, options, returnState = !1) {
@@ -6530,11 +6545,12 @@ var require_picomatch2 = __commonJS((exports, module) => {
   module.exports = picomatch;
 });
 
-// ij-mcp-proxy.ts
-import path9 from "path";
+// community/build/mcp-servers/ij-proxy/ij-mcp-proxy.ts
+import path8 from "path";
 import { cwd, env } from "process";
+import { fileURLToPath } from "url";
 
-// node_modules/zod/v4/core/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/core/index.js
 var exports_core2 = {};
 __export(exports_core2, {
   version: () => version,
@@ -6812,7 +6828,7 @@ __export(exports_core2, {
   $ZodAny: () => $ZodAny
 });
 
-// node_modules/zod/v4/core/core.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/core/core.js
 var NEVER = Object.freeze({
   status: "aborted"
 });
@@ -6878,7 +6894,7 @@ function config(newConfig) {
     Object.assign(globalConfig, newConfig);
   return globalConfig;
 }
-// node_modules/zod/v4/core/util.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/core/util.js
 var exports_util = {};
 __export(exports_util, {
   unwrapMessage: () => unwrapMessage,
@@ -7463,7 +7479,7 @@ class Class {
   constructor(..._args) {}
 }
 
-// node_modules/zod/v4/core/errors.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/core/errors.js
 var initializer = (inst, def) => {
   inst.name = "$ZodError", Object.defineProperty(inst, "_zod", {
     value: inst._zod,
@@ -7566,7 +7582,7 @@ function prettifyError(error) {
 `);
 }
 
-// node_modules/zod/v4/core/parse.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/core/parse.js
 var _parse = (_Err) => (schema, value, _ctx, _params) => {
   let ctx = _ctx ? Object.assign(_ctx, { async: !1 }) : { async: !1 }, result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise)
@@ -7622,7 +7638,7 @@ var _parse = (_Err) => (schema, value, _ctx, _params) => {
 }, safeEncodeAsync = /* @__PURE__ */ _safeEncodeAsync($ZodRealError), _safeDecodeAsync = (_Err) => async (schema, value, _ctx) => {
   return _safeParseAsync(_Err)(schema, value, _ctx);
 }, safeDecodeAsync = /* @__PURE__ */ _safeDecodeAsync($ZodRealError);
-// node_modules/zod/v4/core/regexes.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/core/regexes.js
 var exports_regexes = {};
 __export(exports_regexes, {
   xid: () => xid,
@@ -7725,7 +7741,7 @@ function fixedBase64url(length) {
 }
 var md5_hex = /^[0-9a-fA-F]{32}$/, md5_base64 = /* @__PURE__ */ fixedBase64(22, "=="), md5_base64url = /* @__PURE__ */ fixedBase64url(22), sha1_hex = /^[0-9a-fA-F]{40}$/, sha1_base64 = /* @__PURE__ */ fixedBase64(27, "="), sha1_base64url = /* @__PURE__ */ fixedBase64url(27), sha256_hex = /^[0-9a-fA-F]{64}$/, sha256_base64 = /* @__PURE__ */ fixedBase64(43, "="), sha256_base64url = /* @__PURE__ */ fixedBase64url(43), sha384_hex = /^[0-9a-fA-F]{96}$/, sha384_base64 = /* @__PURE__ */ fixedBase64(64, ""), sha384_base64url = /* @__PURE__ */ fixedBase64url(64), sha512_hex = /^[0-9a-fA-F]{128}$/, sha512_base64 = /* @__PURE__ */ fixedBase64(86, "=="), sha512_base64url = /* @__PURE__ */ fixedBase64url(86);
 
-// node_modules/zod/v4/core/checks.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/core/checks.js
 var $ZodCheck = /* @__PURE__ */ $constructor("$ZodCheck", (inst, def) => {
   var _a;
   inst._zod ?? (inst._zod = {}), inst._zod.def = def, (_a = inst._zod).onattach ?? (_a.onattach = []);
@@ -8169,7 +8185,7 @@ var $ZodCheckProperty = /* @__PURE__ */ $constructor("$ZodCheckProperty", (inst,
   };
 });
 
-// node_modules/zod/v4/core/doc.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/core/doc.js
 class Doc {
   constructor(args = []) {
     if (this.content = [], this.indent = 0, this)
@@ -8195,14 +8211,14 @@ class Doc {
   }
 }
 
-// node_modules/zod/v4/core/versions.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/core/versions.js
 var version = {
   major: 4,
   minor: 3,
   patch: 6
 };
 
-// node_modules/zod/v4/core/schemas.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/core/schemas.js
 var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
   var _a;
   inst ?? (inst = {}), inst._zod.def = def, inst._zod.bag = inst._zod.bag || {}, inst._zod.version = version;
@@ -9709,7 +9725,7 @@ function handleRefineResult(result, payload, input, inst) {
     payload.issues.push(issue(_iss));
   }
 }
-// node_modules/zod/v4/locales/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/index.js
 var exports_locales = {};
 __export(exports_locales, {
   zhTW: () => zh_TW_default,
@@ -9763,7 +9779,7 @@ __export(exports_locales, {
   ar: () => ar_default
 });
 
-// node_modules/zod/v4/locales/ar.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/ar.js
 var error = () => {
   let Sizable = {
     string: { unit: "\u062D\u0631\u0641", verb: "\u0623\u0646 \u064A\u062D\u0648\u064A" },
@@ -9862,7 +9878,7 @@ function ar_default() {
     localeError: error()
   };
 }
-// node_modules/zod/v4/locales/az.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/az.js
 var error2 = () => {
   let Sizable = {
     string: { unit: "simvol", verb: "olmal\u0131d\u0131r" },
@@ -9961,7 +9977,7 @@ function az_default() {
     localeError: error2()
   };
 }
-// node_modules/zod/v4/locales/be.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/be.js
 function getBelarusianPlural(count, one, few, many) {
   let absCount = Math.abs(count), lastDigit = absCount % 10, lastTwoDigits = absCount % 100;
   if (lastTwoDigits >= 11 && lastTwoDigits <= 19)
@@ -10104,7 +10120,7 @@ function be_default() {
     localeError: error3()
   };
 }
-// node_modules/zod/v4/locales/bg.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/bg.js
 var error4 = () => {
   let Sizable = {
     string: { unit: "\u0441\u0438\u043C\u0432\u043E\u043B\u0430", verb: "\u0434\u0430 \u0441\u044A\u0434\u044A\u0440\u0436\u0430" },
@@ -10216,7 +10232,7 @@ function bg_default() {
     localeError: error4()
   };
 }
-// node_modules/zod/v4/locales/ca.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/ca.js
 var error5 = () => {
   let Sizable = {
     string: { unit: "car\xE0cters", verb: "contenir" },
@@ -10315,7 +10331,7 @@ function ca_default() {
     localeError: error5()
   };
 }
-// node_modules/zod/v4/locales/cs.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/cs.js
 var error6 = () => {
   let Sizable = {
     string: { unit: "znak\u016F", verb: "m\xEDt" },
@@ -10418,7 +10434,7 @@ function cs_default() {
     localeError: error6()
   };
 }
-// node_modules/zod/v4/locales/da.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/da.js
 var error7 = () => {
   let Sizable = {
     string: { unit: "tegn", verb: "havde" },
@@ -10524,7 +10540,7 @@ function da_default() {
     localeError: error7()
   };
 }
-// node_modules/zod/v4/locales/de.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/de.js
 var error8 = () => {
   let Sizable = {
     string: { unit: "Zeichen", verb: "zu haben" },
@@ -10625,7 +10641,7 @@ function de_default() {
     localeError: error8()
   };
 }
-// node_modules/zod/v4/locales/en.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/en.js
 var error9 = () => {
   let Sizable = {
     string: { unit: "characters", verb: "to have" },
@@ -10724,7 +10740,7 @@ function en_default() {
     localeError: error9()
   };
 }
-// node_modules/zod/v4/locales/eo.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/eo.js
 var error10 = () => {
   let Sizable = {
     string: { unit: "karaktrojn", verb: "havi" },
@@ -10826,7 +10842,7 @@ function eo_default() {
     localeError: error10()
   };
 }
-// node_modules/zod/v4/locales/es.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/es.js
 var error11 = () => {
   let Sizable = {
     string: { unit: "caracteres", verb: "tener" },
@@ -10949,7 +10965,7 @@ function es_default() {
     localeError: error11()
   };
 }
-// node_modules/zod/v4/locales/fa.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/fa.js
 var error12 = () => {
   let Sizable = {
     string: { unit: "\u06A9\u0627\u0631\u0627\u06A9\u062A\u0631", verb: "\u062F\u0627\u0634\u062A\u0647 \u0628\u0627\u0634\u062F" },
@@ -11050,7 +11066,7 @@ function fa_default() {
     localeError: error12()
   };
 }
-// node_modules/zod/v4/locales/fi.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/fi.js
 var error13 = () => {
   let Sizable = {
     string: { unit: "merkki\xE4", subject: "merkkijonon" },
@@ -11153,7 +11169,7 @@ function fi_default() {
     localeError: error13()
   };
 }
-// node_modules/zod/v4/locales/fr.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/fr.js
 var error14 = () => {
   let Sizable = {
     string: { unit: "caract\xE8res", verb: "avoir" },
@@ -11254,7 +11270,7 @@ function fr_default() {
     localeError: error14()
   };
 }
-// node_modules/zod/v4/locales/fr-CA.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/fr-CA.js
 var error15 = () => {
   let Sizable = {
     string: { unit: "caract\xE8res", verb: "avoir" },
@@ -11353,7 +11369,7 @@ function fr_CA_default() {
     localeError: error15()
   };
 }
-// node_modules/zod/v4/locales/he.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/he.js
 var error16 = () => {
   let TypeNames = {
     string: { label: "\u05DE\u05D7\u05E8\u05D5\u05D6\u05EA", gender: "f" },
@@ -11514,7 +11530,7 @@ function he_default() {
     localeError: error16()
   };
 }
-// node_modules/zod/v4/locales/hu.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/hu.js
 var error17 = () => {
   let Sizable = {
     string: { unit: "karakter", verb: "legyen" },
@@ -11615,7 +11631,7 @@ function hu_default() {
     localeError: error17()
   };
 }
-// node_modules/zod/v4/locales/hy.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/hy.js
 function getArmenianPlural(count, one, many) {
   return Math.abs(count) === 1 ? one : many;
 }
@@ -11753,7 +11769,7 @@ function hy_default() {
     localeError: error18()
   };
 }
-// node_modules/zod/v4/locales/id.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/id.js
 var error19 = () => {
   let Sizable = {
     string: { unit: "karakter", verb: "memiliki" },
@@ -11852,7 +11868,7 @@ function id_default() {
     localeError: error19()
   };
 }
-// node_modules/zod/v4/locales/is.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/is.js
 var error20 = () => {
   let Sizable = {
     string: { unit: "stafi", verb: "a\xF0 hafa" },
@@ -11953,7 +11969,7 @@ function is_default() {
     localeError: error20()
   };
 }
-// node_modules/zod/v4/locales/it.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/it.js
 var error21 = () => {
   let Sizable = {
     string: { unit: "caratteri", verb: "avere" },
@@ -12054,7 +12070,7 @@ function it_default() {
     localeError: error21()
   };
 }
-// node_modules/zod/v4/locales/ja.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/ja.js
 var error22 = () => {
   let Sizable = {
     string: { unit: "\u6587\u5B57", verb: "\u3067\u3042\u308B" },
@@ -12155,7 +12171,7 @@ function ja_default() {
     localeError: error22()
   };
 }
-// node_modules/zod/v4/locales/ka.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/ka.js
 var error23 = () => {
   let Sizable = {
     string: { unit: "\u10E1\u10D8\u10DB\u10D1\u10DD\u10DA\u10DD", verb: "\u10E3\u10DC\u10D3\u10D0 \u10E8\u10D4\u10D8\u10EA\u10D0\u10D5\u10D3\u10D4\u10E1" },
@@ -12259,7 +12275,7 @@ function ka_default() {
     localeError: error23()
   };
 }
-// node_modules/zod/v4/locales/km.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/km.js
 var error24 = () => {
   let Sizable = {
     string: { unit: "\u178F\u17BD\u17A2\u1780\u17D2\u179F\u179A", verb: "\u1782\u17BD\u179A\u1798\u17B6\u1793" },
@@ -12362,11 +12378,11 @@ function km_default() {
   };
 }
 
-// node_modules/zod/v4/locales/kh.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/kh.js
 function kh_default() {
   return km_default();
 }
-// node_modules/zod/v4/locales/ko.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/ko.js
 var error25 = () => {
   let Sizable = {
     string: { unit: "\uBB38\uC790", verb: "to have" },
@@ -12465,7 +12481,7 @@ function ko_default() {
     localeError: error25()
   };
 }
-// node_modules/zod/v4/locales/lt.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/lt.js
 var capitalizeFirstCharacter = (text) => {
   return text.charAt(0).toUpperCase() + text.slice(1);
 };
@@ -12659,7 +12675,7 @@ function lt_default() {
     localeError: error26()
   };
 }
-// node_modules/zod/v4/locales/mk.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/mk.js
 var error27 = () => {
   let Sizable = {
     string: { unit: "\u0437\u043D\u0430\u0446\u0438", verb: "\u0434\u0430 \u0438\u043C\u0430\u0430\u0442" },
@@ -12760,7 +12776,7 @@ function mk_default() {
     localeError: error27()
   };
 }
-// node_modules/zod/v4/locales/ms.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/ms.js
 var error28 = () => {
   let Sizable = {
     string: { unit: "aksara", verb: "mempunyai" },
@@ -12860,7 +12876,7 @@ function ms_default() {
     localeError: error28()
   };
 }
-// node_modules/zod/v4/locales/nl.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/nl.js
 var error29 = () => {
   let Sizable = {
     string: { unit: "tekens", verb: "heeft" },
@@ -12960,7 +12976,7 @@ function nl_default() {
     localeError: error29()
   };
 }
-// node_modules/zod/v4/locales/no.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/no.js
 var error30 = () => {
   let Sizable = {
     string: { unit: "tegn", verb: "\xE5 ha" },
@@ -13061,7 +13077,7 @@ function no_default() {
     localeError: error30()
   };
 }
-// node_modules/zod/v4/locales/ota.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/ota.js
 var error31 = () => {
   let Sizable = {
     string: { unit: "harf", verb: "olmal\u0131d\u0131r" },
@@ -13163,7 +13179,7 @@ function ota_default() {
     localeError: error31()
   };
 }
-// node_modules/zod/v4/locales/ps.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/ps.js
 var error32 = () => {
   let Sizable = {
     string: { unit: "\u062A\u0648\u06A9\u064A", verb: "\u0648\u0644\u0631\u064A" },
@@ -13264,7 +13280,7 @@ function ps_default() {
     localeError: error32()
   };
 }
-// node_modules/zod/v4/locales/pl.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/pl.js
 var error33 = () => {
   let Sizable = {
     string: { unit: "znak\xF3w", verb: "mie\u0107" },
@@ -13365,7 +13381,7 @@ function pl_default() {
     localeError: error33()
   };
 }
-// node_modules/zod/v4/locales/pt.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/pt.js
 var error34 = () => {
   let Sizable = {
     string: { unit: "caracteres", verb: "ter" },
@@ -13466,7 +13482,7 @@ function pt_default() {
     localeError: error34()
   };
 }
-// node_modules/zod/v4/locales/ru.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/ru.js
 function getRussianPlural(count, one, few, many) {
   let absCount = Math.abs(count), lastDigit = absCount % 10, lastTwoDigits = absCount % 100;
   if (lastTwoDigits >= 11 && lastTwoDigits <= 19)
@@ -13609,7 +13625,7 @@ function ru_default() {
     localeError: error35()
   };
 }
-// node_modules/zod/v4/locales/sl.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/sl.js
 var error36 = () => {
   let Sizable = {
     string: { unit: "znakov", verb: "imeti" },
@@ -13710,7 +13726,7 @@ function sl_default() {
     localeError: error36()
   };
 }
-// node_modules/zod/v4/locales/sv.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/sv.js
 var error37 = () => {
   let Sizable = {
     string: { unit: "tecken", verb: "att ha" },
@@ -13811,7 +13827,7 @@ function sv_default() {
     localeError: error37()
   };
 }
-// node_modules/zod/v4/locales/ta.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/ta.js
 var error38 = () => {
   let Sizable = {
     string: { unit: "\u0B8E\u0BB4\u0BC1\u0BA4\u0BCD\u0BA4\u0BC1\u0B95\u0BCD\u0B95\u0BB3\u0BCD", verb: "\u0B95\u0BCA\u0BA3\u0BCD\u0B9F\u0BBF\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD" },
@@ -13913,7 +13929,7 @@ function ta_default() {
     localeError: error38()
   };
 }
-// node_modules/zod/v4/locales/th.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/th.js
 var error39 = () => {
   let Sizable = {
     string: { unit: "\u0E15\u0E31\u0E27\u0E2D\u0E31\u0E01\u0E29\u0E23", verb: "\u0E04\u0E27\u0E23\u0E21\u0E35" },
@@ -14015,7 +14031,7 @@ function th_default() {
     localeError: error39()
   };
 }
-// node_modules/zod/v4/locales/tr.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/tr.js
 var error40 = () => {
   let Sizable = {
     string: { unit: "karakter", verb: "olmal\u0131" },
@@ -14114,7 +14130,7 @@ function tr_default() {
     localeError: error40()
   };
 }
-// node_modules/zod/v4/locales/uk.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/uk.js
 var error41 = () => {
   let Sizable = {
     string: { unit: "\u0441\u0438\u043C\u0432\u043E\u043B\u0456\u0432", verb: "\u043C\u0430\u0442\u0438\u043C\u0435" },
@@ -14216,11 +14232,11 @@ function uk_default() {
   };
 }
 
-// node_modules/zod/v4/locales/ua.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/ua.js
 function ua_default() {
   return uk_default();
 }
-// node_modules/zod/v4/locales/ur.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/ur.js
 var error42 = () => {
   let Sizable = {
     string: { unit: "\u062D\u0631\u0648\u0641", verb: "\u06C1\u0648\u0646\u0627" },
@@ -14322,7 +14338,7 @@ function ur_default() {
     localeError: error42()
   };
 }
-// node_modules/zod/v4/locales/uz.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/uz.js
 var error43 = () => {
   let Sizable = {
     string: { unit: "belgi", verb: "bo\u2018lishi kerak" },
@@ -14424,7 +14440,7 @@ function uz_default() {
     localeError: error43()
   };
 }
-// node_modules/zod/v4/locales/vi.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/vi.js
 var error44 = () => {
   let Sizable = {
     string: { unit: "k\xFD t\u1EF1", verb: "c\xF3" },
@@ -14525,7 +14541,7 @@ function vi_default() {
     localeError: error44()
   };
 }
-// node_modules/zod/v4/locales/zh-CN.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/zh-CN.js
 var error45 = () => {
   let Sizable = {
     string: { unit: "\u5B57\u7B26", verb: "\u5305\u542B" },
@@ -14627,7 +14643,7 @@ function zh_CN_default() {
     localeError: error45()
   };
 }
-// node_modules/zod/v4/locales/zh-TW.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/zh-TW.js
 var error46 = () => {
   let Sizable = {
     string: { unit: "\u5B57\u5143", verb: "\u64C1\u6709" },
@@ -14726,7 +14742,7 @@ function zh_TW_default() {
     localeError: error46()
   };
 }
-// node_modules/zod/v4/locales/yo.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/locales/yo.js
 var error47 = () => {
   let Sizable = {
     string: { unit: "\xE0mi", verb: "n\xED" },
@@ -14827,7 +14843,7 @@ function yo_default() {
     localeError: error47()
   };
 }
-// node_modules/zod/v4/core/registries.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/core/registries.js
 var _a, $output = Symbol("ZodOutput"), $input = Symbol("ZodInput");
 
 class $ZodRegistry {
@@ -14868,7 +14884,7 @@ function registry() {
 }
 (_a = globalThis).__zod_globalRegistry ?? (_a.__zod_globalRegistry = registry());
 var globalRegistry = globalThis.__zod_globalRegistry;
-// node_modules/zod/v4/core/api.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/core/api.js
 function _string(Class2, params) {
   return new Class2({
     type: "string",
@@ -15755,7 +15771,7 @@ function _stringFormat(Class2, format, fnOrRegex, _params = {}) {
     def.pattern = fnOrRegex;
   return new Class2(def);
 }
-// node_modules/zod/v4/core/to-json-schema.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/core/to-json-schema.js
 function initializeContext(params) {
   let target = params?.target ?? "draft-2020-12";
   if (target === "draft-4")
@@ -16044,7 +16060,7 @@ var createToJSONSchemaMethod = (schema, processors = {}) => (params) => {
   let { libraryOptions, target } = params ?? {}, ctx = initializeContext({ ...libraryOptions ?? {}, target, io, processors });
   return process2(schema, ctx), extractDefs(ctx, schema), finalize(ctx, schema);
 };
-// node_modules/zod/v4/core/json-schema-processors.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/core/json-schema-processors.js
 var formatMap = {
   guid: "uuid",
   url: "uri",
@@ -16456,7 +16472,7 @@ function toJSONSchema(input, params) {
   let ctx = initializeContext({ ...params, processors: allProcessors });
   return process2(input, ctx), extractDefs(ctx, input), finalize(ctx, input);
 }
-// node_modules/zod/v4/core/json-schema-generator.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/core/json-schema-generator.js
 class JSONSchemaGenerator {
   get metadataRegistry() {
     return this.ctx.metadataRegistry;
@@ -16514,9 +16530,9 @@ class JSONSchemaGenerator {
     return plainResult;
   }
 }
-// node_modules/zod/v4/core/json-schema.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/core/json-schema.js
 var exports_json_schema = {};
-// node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
 function isZ4Schema(s) {
   return !!s._zod;
 }
@@ -16566,7 +16582,7 @@ function getLiteralValue(schema) {
   return;
 }
 
-// node_modules/zod/v4/classic/external.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/classic/external.js
 var exports_external = {};
 __export(exports_external, {
   xor: () => xor,
@@ -16807,7 +16823,7 @@ __export(exports_external, {
   $brand: () => $brand
 });
 
-// node_modules/zod/v4/classic/schemas.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/classic/schemas.js
 var exports_schemas2 = {};
 __export(exports_schemas2, {
   xor: () => xor,
@@ -16976,7 +16992,7 @@ __export(exports_schemas2, {
   ZodAny: () => ZodAny
 });
 
-// node_modules/zod/v4/classic/checks.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/classic/checks.js
 var exports_checks2 = {};
 __export(exports_checks2, {
   uppercase: () => _uppercase,
@@ -17010,7 +17026,7 @@ __export(exports_checks2, {
   endsWith: () => _endsWith
 });
 
-// node_modules/zod/v4/classic/iso.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/classic/iso.js
 var exports_iso = {};
 __export(exports_iso, {
   time: () => time2,
@@ -17047,7 +17063,7 @@ function duration2(params) {
   return _isoDuration(ZodISODuration, params);
 }
 
-// node_modules/zod/v4/classic/errors.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/classic/errors.js
 var initializer2 = (inst, issues) => {
   $ZodError.init(inst, issues), inst.name = "ZodError", Object.defineProperties(inst, {
     format: {
@@ -17076,10 +17092,10 @@ var initializer2 = (inst, issues) => {
   Parent: Error
 });
 
-// node_modules/zod/v4/classic/parse.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/classic/parse.js
 var parse3 = /* @__PURE__ */ _parse(ZodRealError), parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError), safeParse3 = /* @__PURE__ */ _safeParse(ZodRealError), safeParseAsync2 = /* @__PURE__ */ _safeParseAsync(ZodRealError), encode2 = /* @__PURE__ */ _encode(ZodRealError), decode2 = /* @__PURE__ */ _decode(ZodRealError), encodeAsync2 = /* @__PURE__ */ _encodeAsync(ZodRealError), decodeAsync2 = /* @__PURE__ */ _decodeAsync(ZodRealError), safeEncode2 = /* @__PURE__ */ _safeEncode(ZodRealError), safeDecode2 = /* @__PURE__ */ _safeDecode(ZodRealError), safeEncodeAsync2 = /* @__PURE__ */ _safeEncodeAsync(ZodRealError), safeDecodeAsync2 = /* @__PURE__ */ _safeDecodeAsync(ZodRealError);
 
-// node_modules/zod/v4/classic/schemas.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/classic/schemas.js
 var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
   return $ZodType.init(inst, def), Object.assign(inst["~standard"], {
     jsonSchema: {
@@ -17832,7 +17848,7 @@ function json(params) {
 function preprocess(fn, schema) {
   return pipe(transform(fn), schema);
 }
-// node_modules/zod/v4/classic/compat.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/classic/compat.js
 var ZodIssueCode = {
   invalid_type: "invalid_type",
   too_big: "too_big",
@@ -17856,7 +17872,7 @@ function getErrorMap() {
 }
 var ZodFirstPartyTypeKind;
 (function(ZodFirstPartyTypeKind2) {})(ZodFirstPartyTypeKind || (ZodFirstPartyTypeKind = {}));
-// node_modules/zod/v4/classic/from-json-schema.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/classic/from-json-schema.js
 var z = {
   ...exports_schemas2,
   ...exports_checks2,
@@ -18235,7 +18251,7 @@ function fromJSONSchema(schema, params) {
   };
   return convertSchema(schema, ctx);
 }
-// node_modules/zod/v4/classic/coerce.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/classic/coerce.js
 var exports_coerce = {};
 __export(exports_coerce, {
   string: () => string3,
@@ -18260,10 +18276,10 @@ function date4(params) {
   return _coercedDate(ZodDate, params);
 }
 
-// node_modules/zod/v4/classic/external.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod/v4/classic/external.js
 config(en_default());
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/types.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/types.js
 var LATEST_PROTOCOL_VERSION = "2025-11-25";
 var SUPPORTED_PROTOCOL_VERSIONS = [LATEST_PROTOCOL_VERSION, "2025-06-18", "2025-03-26", "2024-11-05", "2024-10-07"], RELATED_TASK_META_KEY = "io.modelcontextprotocol/related-task", JSONRPC_VERSION = "2.0", AssertObjectSchema = custom((v) => v !== null && (typeof v === "object" || typeof v === "function")), ProgressTokenSchema = union([string2(), number2().int()]), CursorSchema = string2(), TaskCreationParamsSchema = looseObject({
   ttl: union([number2(), _null3()]).optional(),
@@ -18925,16 +18941,16 @@ class UrlElicitationRequiredError extends McpError {
   }
 }
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js
 function isTerminal(status) {
   return status === "completed" || status === "failed" || status === "cancelled";
 }
 
-// node_modules/zod-to-json-schema/dist/esm/Options.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod-to-json-schema/dist/esm/Options.js
 var ignoreOverride = Symbol("Let zodToJsonSchema decide on which parser to use");
-// node_modules/zod-to-json-schema/dist/esm/parsers/string.js
+// community/build/mcp-servers/ij-proxy/node_modules/zod-to-json-schema/dist/esm/parsers/string.js
 var ALPHA_NUMERIC = new Set("ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvxyz0123456789");
-// node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-json-schema-compat.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-json-schema-compat.js
 function getMethodLiteral(schema) {
   let methodSchema = getObjectShape(schema)?.method;
   if (!methodSchema)
@@ -18951,7 +18967,7 @@ function parseWithCompat(schema, data) {
   return result.data;
 }
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js
 var DEFAULT_REQUEST_TIMEOUT_MSEC = 60000;
 
 class Protocol {
@@ -19635,7 +19651,7 @@ function mergeCapabilities(base, additional) {
   return result;
 }
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/validation/ajv-provider.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/validation/ajv-provider.js
 var import_ajv = __toESM(require_ajv(), 1), import_ajv_formats = __toESM(require_dist(), 1);
 function createDefaultAjvInstance() {
   let ajv = new import_ajv.default({
@@ -19670,69 +19686,29 @@ class AjvJsonSchemaValidator {
   }
 }
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/client.js
-class ExperimentalClientTasks {
-  constructor(_client) {
-    this._client = _client;
-  }
-  async* callToolStream(params, resultSchema = CallToolResultSchema, options) {
-    let clientInternal = this._client, optionsWithTask = {
-      ...options,
-      task: options?.task ?? (clientInternal.isToolTask(params.name) ? {} : void 0)
-    }, stream = clientInternal.requestStream({ method: "tools/call", params }, resultSchema, optionsWithTask), validator = clientInternal.getToolOutputValidator(params.name);
-    for await (let message of stream) {
-      if (message.type === "result" && validator) {
-        let result = message.result;
-        if (!result.structuredContent && !result.isError) {
-          yield {
-            type: "error",
-            error: new McpError(ErrorCode.InvalidRequest, `Tool ${params.name} has an output schema but did not return structured content`)
-          };
-          return;
-        }
-        if (result.structuredContent)
-          try {
-            let validationResult = validator(result.structuredContent);
-            if (!validationResult.valid) {
-              yield {
-                type: "error",
-                error: new McpError(ErrorCode.InvalidParams, `Structured content does not match the tool's output schema: ${validationResult.errorMessage}`)
-              };
-              return;
-            }
-          } catch (error48) {
-            if (error48 instanceof McpError) {
-              yield { type: "error", error: error48 };
-              return;
-            }
-            yield {
-              type: "error",
-              error: new McpError(ErrorCode.InvalidParams, `Failed to validate structured content: ${error48 instanceof Error ? error48.message : String(error48)}`)
-            };
-            return;
-          }
-      }
-      yield message;
-    }
-  }
-  async getTask(taskId, options) {
-    return this._client.getTask({ taskId }, options);
-  }
-  async getTaskResult(taskId, resultSchema, options) {
-    return this._client.getTaskResult({ taskId }, resultSchema, options);
-  }
-  async listTasks(cursor, options) {
-    return this._client.listTasks(cursor ? { cursor } : void 0, options);
-  }
-  async cancelTask(taskId, options) {
-    return this._client.cancelTask({ taskId }, options);
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/server.js
+class ExperimentalServerTasks {
+  constructor(_server) {
+    this._server = _server;
   }
   requestStream(request, resultSchema, options) {
-    return this._client.requestStream(request, resultSchema, options);
+    return this._server.requestStream(request, resultSchema, options);
+  }
+  async getTask(taskId, options) {
+    return this._server.getTask({ taskId }, options);
+  }
+  async getTaskResult(taskId, resultSchema, options) {
+    return this._server.getTaskResult({ taskId }, resultSchema, options);
+  }
+  async listTasks(cursor, options) {
+    return this._server.listTasks(cursor ? { cursor } : void 0, options);
+  }
+  async cancelTask(taskId, options) {
+    return this._server.cancelTask({ taskId }, options);
   }
 }
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/helpers.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/helpers.js
 function assertToolsCallTaskCapability(requests, method, entityName) {
   if (!requests)
     throw Error(`${entityName} does not support task creation (required for ${method})`);
@@ -19762,412 +19738,7 @@ function assertClientRequestTaskCapability(requests, method, entityName) {
   }
 }
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js
-function applyElicitationDefaults(schema, data) {
-  if (!schema || data === null || typeof data !== "object")
-    return;
-  if (schema.type === "object" && schema.properties && typeof schema.properties === "object") {
-    let obj = data, props = schema.properties;
-    for (let key of Object.keys(props)) {
-      let propSchema = props[key];
-      if (obj[key] === void 0 && Object.prototype.hasOwnProperty.call(propSchema, "default"))
-        obj[key] = propSchema.default;
-      if (obj[key] !== void 0)
-        applyElicitationDefaults(propSchema, obj[key]);
-    }
-  }
-  if (Array.isArray(schema.anyOf)) {
-    for (let sub of schema.anyOf)
-      if (typeof sub !== "boolean")
-        applyElicitationDefaults(sub, data);
-  }
-  if (Array.isArray(schema.oneOf)) {
-    for (let sub of schema.oneOf)
-      if (typeof sub !== "boolean")
-        applyElicitationDefaults(sub, data);
-  }
-}
-function getSupportedElicitationModes(capabilities) {
-  if (!capabilities)
-    return { supportsFormMode: !1, supportsUrlMode: !1 };
-  let hasFormCapability = capabilities.form !== void 0, hasUrlCapability = capabilities.url !== void 0;
-  return { supportsFormMode: hasFormCapability || !hasFormCapability && !hasUrlCapability, supportsUrlMode: hasUrlCapability };
-}
-
-class Client extends Protocol {
-  constructor(_clientInfo, options) {
-    super(options);
-    if (this._clientInfo = _clientInfo, this._cachedToolOutputValidators = /* @__PURE__ */ new Map, this._cachedKnownTaskTools = /* @__PURE__ */ new Set, this._cachedRequiredTaskTools = /* @__PURE__ */ new Set, this._listChangedDebounceTimers = /* @__PURE__ */ new Map, this._capabilities = options?.capabilities ?? {}, this._jsonSchemaValidator = options?.jsonSchemaValidator ?? new AjvJsonSchemaValidator, options?.listChanged)
-      this._pendingListChangedConfig = options.listChanged;
-  }
-  _setupListChangedHandlers(config2) {
-    if (config2.tools && this._serverCapabilities?.tools?.listChanged)
-      this._setupListChangedHandler("tools", ToolListChangedNotificationSchema, config2.tools, async () => {
-        return (await this.listTools()).tools;
-      });
-    if (config2.prompts && this._serverCapabilities?.prompts?.listChanged)
-      this._setupListChangedHandler("prompts", PromptListChangedNotificationSchema, config2.prompts, async () => {
-        return (await this.listPrompts()).prompts;
-      });
-    if (config2.resources && this._serverCapabilities?.resources?.listChanged)
-      this._setupListChangedHandler("resources", ResourceListChangedNotificationSchema, config2.resources, async () => {
-        return (await this.listResources()).resources;
-      });
-  }
-  get experimental() {
-    if (!this._experimental)
-      this._experimental = {
-        tasks: new ExperimentalClientTasks(this)
-      };
-    return this._experimental;
-  }
-  registerCapabilities(capabilities) {
-    if (this.transport)
-      throw Error("Cannot register capabilities after connecting to transport");
-    this._capabilities = mergeCapabilities(this._capabilities, capabilities);
-  }
-  setRequestHandler(requestSchema, handler) {
-    let methodSchema = getObjectShape(requestSchema)?.method;
-    if (!methodSchema)
-      throw Error("Schema is missing a method literal");
-    let methodValue;
-    if (isZ4Schema(methodSchema)) {
-      let v4Schema = methodSchema;
-      methodValue = v4Schema._zod?.def?.value ?? v4Schema.value;
-    } else {
-      let v3Schema = methodSchema;
-      methodValue = v3Schema._def?.value ?? v3Schema.value;
-    }
-    if (typeof methodValue !== "string")
-      throw Error("Schema method literal must be a string");
-    let method = methodValue;
-    if (method === "elicitation/create") {
-      let wrappedHandler = async (request, extra) => {
-        let validatedRequest = safeParse2(ElicitRequestSchema, request);
-        if (!validatedRequest.success) {
-          let errorMessage = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid elicitation request: ${errorMessage}`);
-        }
-        let { params } = validatedRequest.data;
-        params.mode = params.mode ?? "form";
-        let { supportsFormMode, supportsUrlMode } = getSupportedElicitationModes(this._capabilities.elicitation);
-        if (params.mode === "form" && !supportsFormMode)
-          throw new McpError(ErrorCode.InvalidParams, "Client does not support form-mode elicitation requests");
-        if (params.mode === "url" && !supportsUrlMode)
-          throw new McpError(ErrorCode.InvalidParams, "Client does not support URL-mode elicitation requests");
-        let result = await Promise.resolve(handler(request, extra));
-        if (params.task) {
-          let taskValidationResult = safeParse2(CreateTaskResultSchema, result);
-          if (!taskValidationResult.success) {
-            let errorMessage = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
-            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage}`);
-          }
-          return taskValidationResult.data;
-        }
-        let validationResult = safeParse2(ElicitResultSchema, result);
-        if (!validationResult.success) {
-          let errorMessage = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid elicitation result: ${errorMessage}`);
-        }
-        let validatedResult = validationResult.data, requestedSchema = params.mode === "form" ? params.requestedSchema : void 0;
-        if (params.mode === "form" && validatedResult.action === "accept" && validatedResult.content && requestedSchema) {
-          if (this._capabilities.elicitation?.form?.applyDefaults)
-            try {
-              applyElicitationDefaults(requestedSchema, validatedResult.content);
-            } catch {}
-        }
-        return validatedResult;
-      };
-      return super.setRequestHandler(requestSchema, wrappedHandler);
-    }
-    if (method === "sampling/createMessage") {
-      let wrappedHandler = async (request, extra) => {
-        let validatedRequest = safeParse2(CreateMessageRequestSchema, request);
-        if (!validatedRequest.success) {
-          let errorMessage = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid sampling request: ${errorMessage}`);
-        }
-        let { params } = validatedRequest.data, result = await Promise.resolve(handler(request, extra));
-        if (params.task) {
-          let taskValidationResult = safeParse2(CreateTaskResultSchema, result);
-          if (!taskValidationResult.success) {
-            let errorMessage = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
-            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage}`);
-          }
-          return taskValidationResult.data;
-        }
-        let resultSchema = params.tools || params.toolChoice ? CreateMessageResultWithToolsSchema : CreateMessageResultSchema, validationResult = safeParse2(resultSchema, result);
-        if (!validationResult.success) {
-          let errorMessage = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
-          throw new McpError(ErrorCode.InvalidParams, `Invalid sampling result: ${errorMessage}`);
-        }
-        return validationResult.data;
-      };
-      return super.setRequestHandler(requestSchema, wrappedHandler);
-    }
-    return super.setRequestHandler(requestSchema, handler);
-  }
-  assertCapability(capability, method) {
-    if (!this._serverCapabilities?.[capability])
-      throw Error(`Server does not support ${capability} (required for ${method})`);
-  }
-  async connect(transport, options) {
-    if (await super.connect(transport), transport.sessionId !== void 0)
-      return;
-    try {
-      let result = await this.request({
-        method: "initialize",
-        params: {
-          protocolVersion: LATEST_PROTOCOL_VERSION,
-          capabilities: this._capabilities,
-          clientInfo: this._clientInfo
-        }
-      }, InitializeResultSchema, options);
-      if (result === void 0)
-        throw Error(`Server sent invalid initialize result: ${result}`);
-      if (!SUPPORTED_PROTOCOL_VERSIONS.includes(result.protocolVersion))
-        throw Error(`Server's protocol version is not supported: ${result.protocolVersion}`);
-      if (this._serverCapabilities = result.capabilities, this._serverVersion = result.serverInfo, transport.setProtocolVersion)
-        transport.setProtocolVersion(result.protocolVersion);
-      if (this._instructions = result.instructions, await this.notification({
-        method: "notifications/initialized"
-      }), this._pendingListChangedConfig)
-        this._setupListChangedHandlers(this._pendingListChangedConfig), this._pendingListChangedConfig = void 0;
-    } catch (error48) {
-      throw this.close(), error48;
-    }
-  }
-  getServerCapabilities() {
-    return this._serverCapabilities;
-  }
-  getServerVersion() {
-    return this._serverVersion;
-  }
-  getInstructions() {
-    return this._instructions;
-  }
-  assertCapabilityForMethod(method) {
-    switch (method) {
-      case "logging/setLevel":
-        if (!this._serverCapabilities?.logging)
-          throw Error(`Server does not support logging (required for ${method})`);
-        break;
-      case "prompts/get":
-      case "prompts/list":
-        if (!this._serverCapabilities?.prompts)
-          throw Error(`Server does not support prompts (required for ${method})`);
-        break;
-      case "resources/list":
-      case "resources/templates/list":
-      case "resources/read":
-      case "resources/subscribe":
-      case "resources/unsubscribe":
-        if (!this._serverCapabilities?.resources)
-          throw Error(`Server does not support resources (required for ${method})`);
-        if (method === "resources/subscribe" && !this._serverCapabilities.resources.subscribe)
-          throw Error(`Server does not support resource subscriptions (required for ${method})`);
-        break;
-      case "tools/call":
-      case "tools/list":
-        if (!this._serverCapabilities?.tools)
-          throw Error(`Server does not support tools (required for ${method})`);
-        break;
-      case "completion/complete":
-        if (!this._serverCapabilities?.completions)
-          throw Error(`Server does not support completions (required for ${method})`);
-        break;
-      case "initialize":
-        break;
-      case "ping":
-        break;
-    }
-  }
-  assertNotificationCapability(method) {
-    switch (method) {
-      case "notifications/roots/list_changed":
-        if (!this._capabilities.roots?.listChanged)
-          throw Error(`Client does not support roots list changed notifications (required for ${method})`);
-        break;
-      case "notifications/initialized":
-        break;
-      case "notifications/cancelled":
-        break;
-      case "notifications/progress":
-        break;
-    }
-  }
-  assertRequestHandlerCapability(method) {
-    if (!this._capabilities)
-      return;
-    switch (method) {
-      case "sampling/createMessage":
-        if (!this._capabilities.sampling)
-          throw Error(`Client does not support sampling capability (required for ${method})`);
-        break;
-      case "elicitation/create":
-        if (!this._capabilities.elicitation)
-          throw Error(`Client does not support elicitation capability (required for ${method})`);
-        break;
-      case "roots/list":
-        if (!this._capabilities.roots)
-          throw Error(`Client does not support roots capability (required for ${method})`);
-        break;
-      case "tasks/get":
-      case "tasks/list":
-      case "tasks/result":
-      case "tasks/cancel":
-        if (!this._capabilities.tasks)
-          throw Error(`Client does not support tasks capability (required for ${method})`);
-        break;
-      case "ping":
-        break;
-    }
-  }
-  assertTaskCapability(method) {
-    assertToolsCallTaskCapability(this._serverCapabilities?.tasks?.requests, method, "Server");
-  }
-  assertTaskHandlerCapability(method) {
-    if (!this._capabilities)
-      return;
-    assertClientRequestTaskCapability(this._capabilities.tasks?.requests, method, "Client");
-  }
-  async ping(options) {
-    return this.request({ method: "ping" }, EmptyResultSchema, options);
-  }
-  async complete(params, options) {
-    return this.request({ method: "completion/complete", params }, CompleteResultSchema, options);
-  }
-  async setLoggingLevel(level, options) {
-    return this.request({ method: "logging/setLevel", params: { level } }, EmptyResultSchema, options);
-  }
-  async getPrompt(params, options) {
-    return this.request({ method: "prompts/get", params }, GetPromptResultSchema, options);
-  }
-  async listPrompts(params, options) {
-    return this.request({ method: "prompts/list", params }, ListPromptsResultSchema, options);
-  }
-  async listResources(params, options) {
-    return this.request({ method: "resources/list", params }, ListResourcesResultSchema, options);
-  }
-  async listResourceTemplates(params, options) {
-    return this.request({ method: "resources/templates/list", params }, ListResourceTemplatesResultSchema, options);
-  }
-  async readResource(params, options) {
-    return this.request({ method: "resources/read", params }, ReadResourceResultSchema, options);
-  }
-  async subscribeResource(params, options) {
-    return this.request({ method: "resources/subscribe", params }, EmptyResultSchema, options);
-  }
-  async unsubscribeResource(params, options) {
-    return this.request({ method: "resources/unsubscribe", params }, EmptyResultSchema, options);
-  }
-  async callTool(params, resultSchema = CallToolResultSchema, options) {
-    if (this.isToolTaskRequired(params.name))
-      throw new McpError(ErrorCode.InvalidRequest, `Tool "${params.name}" requires task-based execution. Use client.experimental.tasks.callToolStream() instead.`);
-    let result = await this.request({ method: "tools/call", params }, resultSchema, options), validator = this.getToolOutputValidator(params.name);
-    if (validator) {
-      if (!result.structuredContent && !result.isError)
-        throw new McpError(ErrorCode.InvalidRequest, `Tool ${params.name} has an output schema but did not return structured content`);
-      if (result.structuredContent)
-        try {
-          let validationResult = validator(result.structuredContent);
-          if (!validationResult.valid)
-            throw new McpError(ErrorCode.InvalidParams, `Structured content does not match the tool's output schema: ${validationResult.errorMessage}`);
-        } catch (error48) {
-          if (error48 instanceof McpError)
-            throw error48;
-          throw new McpError(ErrorCode.InvalidParams, `Failed to validate structured content: ${error48 instanceof Error ? error48.message : String(error48)}`);
-        }
-    }
-    return result;
-  }
-  isToolTask(toolName) {
-    if (!this._serverCapabilities?.tasks?.requests?.tools?.call)
-      return !1;
-    return this._cachedKnownTaskTools.has(toolName);
-  }
-  isToolTaskRequired(toolName) {
-    return this._cachedRequiredTaskTools.has(toolName);
-  }
-  cacheToolMetadata(tools) {
-    this._cachedToolOutputValidators.clear(), this._cachedKnownTaskTools.clear(), this._cachedRequiredTaskTools.clear();
-    for (let tool of tools) {
-      if (tool.outputSchema) {
-        let toolValidator = this._jsonSchemaValidator.getValidator(tool.outputSchema);
-        this._cachedToolOutputValidators.set(tool.name, toolValidator);
-      }
-      let taskSupport = tool.execution?.taskSupport;
-      if (taskSupport === "required" || taskSupport === "optional")
-        this._cachedKnownTaskTools.add(tool.name);
-      if (taskSupport === "required")
-        this._cachedRequiredTaskTools.add(tool.name);
-    }
-  }
-  getToolOutputValidator(toolName) {
-    return this._cachedToolOutputValidators.get(toolName);
-  }
-  async listTools(params, options) {
-    let result = await this.request({ method: "tools/list", params }, ListToolsResultSchema, options);
-    return this.cacheToolMetadata(result.tools), result;
-  }
-  _setupListChangedHandler(listType, notificationSchema, options, fetcher) {
-    let parseResult = ListChangedOptionsBaseSchema.safeParse(options);
-    if (!parseResult.success)
-      throw Error(`Invalid ${listType} listChanged options: ${parseResult.error.message}`);
-    if (typeof options.onChanged !== "function")
-      throw Error(`Invalid ${listType} listChanged options: onChanged must be a function`);
-    let { autoRefresh, debounceMs } = parseResult.data, { onChanged } = options, refresh = async () => {
-      if (!autoRefresh) {
-        onChanged(null, null);
-        return;
-      }
-      try {
-        let items = await fetcher();
-        onChanged(null, items);
-      } catch (e) {
-        let error48 = e instanceof Error ? e : Error(String(e));
-        onChanged(error48, null);
-      }
-    }, handler = () => {
-      if (debounceMs) {
-        let existingTimer = this._listChangedDebounceTimers.get(listType);
-        if (existingTimer)
-          clearTimeout(existingTimer);
-        let timer = setTimeout(refresh, debounceMs);
-        this._listChangedDebounceTimers.set(listType, timer);
-      } else
-        refresh();
-    };
-    this.setNotificationHandler(notificationSchema, handler);
-  }
-  async sendRootsListChanged() {
-    return this.notification({ method: "notifications/roots/list_changed" });
-  }
-}
-
-// node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/server.js
-class ExperimentalServerTasks {
-  constructor(_server) {
-    this._server = _server;
-  }
-  requestStream(request, resultSchema, options) {
-    return this._server.requestStream(request, resultSchema, options);
-  }
-  async getTask(taskId, options) {
-    return this._server.getTask({ taskId }, options);
-  }
-  async getTaskResult(taskId, resultSchema, options) {
-    return this._server.getTaskResult({ taskId }, resultSchema, options);
-  }
-  async listTasks(cursor, options) {
-    return this._server.listTasks(cursor ? { cursor } : void 0, options);
-  }
-  async cancelTask(taskId, options) {
-    return this._server.cancelTask({ taskId }, options);
-  }
-}
-
-// node_modules/@modelcontextprotocol/sdk/dist/esm/server/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/server/index.js
 class Server extends Protocol {
   constructor(_serverInfo, options) {
     super(options);
@@ -20438,10 +20009,10 @@ class Server extends Protocol {
   }
 }
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
 import process3 from "process";
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/shared/stdio.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/stdio.js
 class ReadBuffer {
   append(chunk) {
     this._buffer = this._buffer ? Buffer.concat([this._buffer, chunk]) : chunk;
@@ -20468,7 +20039,7 @@ function serializeMessage(message) {
 `;
 }
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
 class StdioServerTransport {
   constructor(_stdin = process3.stdin, _stdout = process3.stdout) {
     this._stdin = _stdin, this._stdout = _stdout, this._readBuffer = new ReadBuffer, this._started = !1, this._ondata = (chunk) => {
@@ -20509,7 +20080,7 @@ class StdioServerTransport {
   }
 }
 
-// ../shared/mcp-rpc.mjs
+// community/build/mcp-servers/shared/mcp-rpc.mjs
 import { appendFile, writeFile } from "fs/promises";
 var LOG_FILE = process.env.MCP_LOG;
 function logProgress(message) {
@@ -20563,124 +20134,7 @@ async function clearLogFile() {
   } catch {}
 }
 
-// project-path.ts
-function createProjectPathManager({
-  projectPath,
-  defaultProjectPathKey = "project_path"
-}) {
-  let projectPathKey = null, hasSeenToolsList = !1, hasProjectPathTools = !1, toolProjectPathKeyByName = /* @__PURE__ */ new Map;
-  function normalizeProjectPathArgs(args, desiredKey) {
-    if (!desiredKey)
-      return;
-    let hasSnake = Object.prototype.hasOwnProperty.call(args, "project_path"), hasCamel = Object.prototype.hasOwnProperty.call(args, "projectPath");
-    if (desiredKey === "projectPath") {
-      if (hasCamel) {
-        if (hasSnake)
-          delete args.project_path;
-        if (args.projectPath == null)
-          args.projectPath = projectPath;
-        return;
-      }
-      if (hasSnake) {
-        if (args.projectPath = args.project_path, delete args.project_path, args.projectPath == null)
-          args.projectPath = projectPath;
-        return;
-      }
-      args.projectPath = projectPath;
-      return;
-    }
-    if (desiredKey === "project_path") {
-      if (hasSnake) {
-        if (hasCamel)
-          delete args.projectPath;
-        if (args.project_path == null)
-          args.project_path = projectPath;
-        return;
-      }
-      if (hasCamel) {
-        if (args.project_path = args.projectPath, delete args.projectPath, args.project_path == null)
-          args.project_path = projectPath;
-        return;
-      }
-      args.project_path = projectPath;
-    }
-  }
-  function shouldInjectProjectPath(toolName) {
-    if (!hasSeenToolsList)
-      return !0;
-    if (!hasProjectPathTools)
-      return !1;
-    if (!toolName)
-      return !0;
-    return toolProjectPathKeyByName.has(toolName);
-  }
-  function chooseProjectPathKey(toolName) {
-    if (toolName) {
-      let key = toolProjectPathKeyByName.get(toolName);
-      if (key)
-        return key;
-    }
-    return projectPathKey || defaultProjectPathKey;
-  }
-  function injectProjectPathArgs(toolName, args) {
-    if (!args || typeof args !== "object")
-      return;
-    if (shouldInjectProjectPath(toolName))
-      normalizeProjectPathArgs(args, chooseProjectPathKey(toolName));
-  }
-  function updateProjectPathKeys(tools) {
-    if (!Array.isArray(tools))
-      return;
-    let hasSnake = !1, hasCamel = !1;
-    toolProjectPathKeyByName.clear();
-    for (let tool of tools) {
-      let props = tool?.inputSchema?.properties;
-      if (!props || typeof props !== "object")
-        continue;
-      if (Object.prototype.hasOwnProperty.call(props, "project_path")) {
-        if (hasSnake = !0, typeof tool.name === "string")
-          toolProjectPathKeyByName.set(tool.name, "project_path");
-        continue;
-      }
-      if (Object.prototype.hasOwnProperty.call(props, "projectPath")) {
-        if (hasCamel = !0, typeof tool.name === "string")
-          toolProjectPathKeyByName.set(tool.name, "projectPath");
-      }
-    }
-    if (hasSeenToolsList = !0, hasProjectPathTools = toolProjectPathKeyByName.size > 0, hasSnake)
-      projectPathKey = "project_path";
-    else if (hasCamel)
-      projectPathKey = "projectPath";
-    else
-      projectPathKey = null;
-  }
-  function stripProjectPathFromTools(tools) {
-    if (!Array.isArray(tools))
-      return;
-    for (let tool of tools) {
-      let schema = tool?.inputSchema;
-      if (!schema || schema.type !== "object")
-        continue;
-      let props = schema.properties;
-      if (!props || typeof props !== "object")
-        continue;
-      let removedKeys = [];
-      if (Object.prototype.hasOwnProperty.call(props, "project_path"))
-        delete props.project_path, removedKeys.push("project_path");
-      if (Object.prototype.hasOwnProperty.call(props, "projectPath"))
-        delete props.projectPath, removedKeys.push("projectPath");
-      if (removedKeys.length > 0 && Array.isArray(schema.required))
-        schema.required = schema.required.filter((name) => !removedKeys.includes(name));
-    }
-  }
-  return {
-    injectProjectPathArgs,
-    stripProjectPathFromTools,
-    updateProjectPathKeys
-  };
-}
-
-// node_modules/is-port-reachable/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/is-port-reachable/index.js
 import net from "net";
 async function isPortReachable(port, { host, timeout = 1000 } = {}) {
   if (typeof host !== "string")
@@ -20700,7 +20154,7 @@ async function isPortReachable(port, { host, timeout = 1000 } = {}) {
   }
 }
 
-// node_modules/is-network-error/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/is-network-error/index.js
 var objectToString = Object.prototype.toString, isError = (value) => objectToString.call(value) === "[object Error]", errorMessages2 = /* @__PURE__ */ new Set([
   "network error",
   "Failed to fetch",
@@ -20723,7 +20177,7 @@ function isNetworkError(error48) {
   return errorMessages2.has(message);
 }
 
-// node_modules/p-retry/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/p-retry/index.js
 function validateRetries(retries) {
   if (typeof retries === "number") {
     if (retries < 0)
@@ -20828,7 +20282,7 @@ async function pRetry(input, options = {}) {
   throw Error("Retry attempts exhausted without throwing an error.");
 }
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/shared/transport.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/transport.js
 function normalizeHeaders(headers) {
   if (!headers)
     return {};
@@ -20851,7 +20305,7 @@ function createFetchWithInit(baseFetch = fetch, baseInit) {
   };
 }
 
-// node_modules/pkce-challenge/dist/index.node.js
+// community/build/mcp-servers/ij-proxy/node_modules/pkce-challenge/dist/index.node.js
 var crypto;
 crypto = globalThis.crypto?.webcrypto ?? globalThis.crypto ?? import("crypto").then((m) => m.webcrypto);
 async function getRandomValues(size) {
@@ -20886,7 +20340,7 @@ async function pkceChallenge(length) {
   };
 }
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth.js
 var SafeUrlSchema = url().superRefine((val, ctx) => {
   if (!URL.canParse(val))
     return ctx.addIssue({
@@ -21017,7 +20471,7 @@ var SafeUrlSchema = url().superRefine((val, ctx) => {
   token_type_hint: string2().optional()
 }).strip();
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth-utils.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth-utils.js
 function resourceUrlFromServerUrl(url2) {
   let resourceURL = typeof url2 === "string" ? new URL(url2) : new URL(url2.href);
   return resourceURL.hash = "", resourceURL;
@@ -21032,7 +20486,7 @@ function checkResourceAllowed({ requestedResource, configuredResource }) {
   return requestedPath.startsWith(configuredPath);
 }
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/server/auth/errors.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/server/auth/errors.js
 class OAuthError extends Error {
   constructor(message, errorUri) {
     super(message);
@@ -21139,7 +20593,7 @@ var OAUTH_ERRORS = {
   [InvalidTargetError.errorCode]: InvalidTargetError
 };
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/client/auth.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/client/auth.js
 class UnauthorizedError extends Error {
   constructor(message) {
     super(message ?? "Unauthorized");
@@ -21533,7 +20987,7 @@ async function registerClient(authorizationServerUrl, { metadata, clientMetadata
   return OAuthClientInformationFullSchema.parse(await response.json());
 }
 
-// node_modules/eventsource-parser/dist/index.js
+// community/build/mcp-servers/ij-proxy/node_modules/eventsource-parser/dist/index.js
 class ParseError extends Error {
   constructor(message, options) {
     super(message), this.name = "ParseError", this.type = options.type, this.field = options.field, this.value = options.value, this.line = options.line;
@@ -21621,7 +21075,7 @@ function splitLines(chunk) {
   return [lines, incompleteLine];
 }
 
-// node_modules/eventsource-parser/dist/stream.js
+// community/build/mcp-servers/ij-proxy/node_modules/eventsource-parser/dist/stream.js
 class EventSourceParserStream extends TransformStream {
   constructor({ onError, onRetry, onComment } = {}) {
     let parser;
@@ -21645,7 +21099,7 @@ class EventSourceParserStream extends TransformStream {
   }
 }
 
-// node_modules/@modelcontextprotocol/sdk/dist/esm/client/streamableHttp.js
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/client/streamableHttp.js
 var DEFAULT_STREAMABLE_HTTP_RECONNECTION_OPTIONS = {
   initialReconnectionDelay: 1000,
   maxReconnectionDelay: 30000,
@@ -21924,7 +21378,7 @@ class StreamableHTTPClientTransport {
   }
 }
 
-// stream-transport.ts
+// community/build/mcp-servers/ij-proxy/stream-transport.ts
 var SESSION_NOT_FOUND_RE = /session not found/i;
 function resolveTimeout(timeoutMs) {
   if (timeoutMs === void 0 || timeoutMs === null)
@@ -21959,6 +21413,12 @@ function normalizePortList(preferredPorts, portScanStart, portScanLimit) {
     seen.add(port), candidates.push({ port, kind: "scan" });
   }
   return candidates;
+}
+function formatProbedPortList(candidates) {
+  return candidates.map((candidate) => String(candidate.port)).join(", ");
+}
+function buildEndpointNotFoundMessage(candidates) {
+  return `Failed to locate MCP stream endpoint. Probed ports: ${formatProbedPortList(candidates)}. Install the "MCP Server" plugin and ensure it is enabled in Settings | Tools | MCP Server.`;
 }
 
 class StreamTransportImpl {
@@ -22078,8 +21538,8 @@ class StreamTransportImpl {
         }
         if (!targetUrl) {
           if (warn)
-            warn("No reachable MCP stream ports found during scan");
-          throw Error("Failed to locate MCP stream endpoint");
+            warn(`No reachable MCP stream ports found during scan. Probed ports: ${formatProbedPortList(candidates)}`);
+          throw Error(buildEndpointNotFoundMessage(candidates));
         }
       }
       if (note)
@@ -22179,122 +21639,553 @@ function createStreamTransport({
   });
 }
 
-// workarounds.ts
-var FULL_VERSION_RE = /\b\d{4}\.\d+(?:\.\d+){0,2}\b/, BUILD_VERSION_RE = /\b\d{3}\.\d+(?:\.\d+)?\b/, SNAPSHOT_BUILD_RE = /\b(\d{3})\.SNAPSHOT\b/i, SNAPSHOT_BUILD_PART = Number.MAX_SAFE_INTEGER, ANY_VERSION_RE = /\d+(?:\.\d+)+/;
-var WORKAROUND_FIXED_IN = {
-  ["search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */]: "261.20247"
-}, currentIdeVersion = null;
-function setIdeVersion(rawVersion) {
-  if (!rawVersion) {
-    currentIdeVersion = null;
-    return;
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/client.js
+class ExperimentalClientTasks {
+  constructor(_client) {
+    this._client = _client;
   }
-  currentIdeVersion = parseIdeVersion(rawVersion);
+  async* callToolStream(params, resultSchema = CallToolResultSchema, options) {
+    let clientInternal = this._client, optionsWithTask = {
+      ...options,
+      task: options?.task ?? (clientInternal.isToolTask(params.name) ? {} : void 0)
+    }, stream = clientInternal.requestStream({ method: "tools/call", params }, resultSchema, optionsWithTask), validator = clientInternal.getToolOutputValidator(params.name);
+    for await (let message of stream) {
+      if (message.type === "result" && validator) {
+        let result = message.result;
+        if (!result.structuredContent && !result.isError) {
+          yield {
+            type: "error",
+            error: new McpError(ErrorCode.InvalidRequest, `Tool ${params.name} has an output schema but did not return structured content`)
+          };
+          return;
+        }
+        if (result.structuredContent)
+          try {
+            let validationResult = validator(result.structuredContent);
+            if (!validationResult.valid) {
+              yield {
+                type: "error",
+                error: new McpError(ErrorCode.InvalidParams, `Structured content does not match the tool's output schema: ${validationResult.errorMessage}`)
+              };
+              return;
+            }
+          } catch (error48) {
+            if (error48 instanceof McpError) {
+              yield { type: "error", error: error48 };
+              return;
+            }
+            yield {
+              type: "error",
+              error: new McpError(ErrorCode.InvalidParams, `Failed to validate structured content: ${error48 instanceof Error ? error48.message : String(error48)}`)
+            };
+            return;
+          }
+      }
+      yield message;
+    }
+  }
+  async getTask(taskId, options) {
+    return this._client.getTask({ taskId }, options);
+  }
+  async getTaskResult(taskId, resultSchema, options) {
+    return this._client.getTaskResult({ taskId }, resultSchema, options);
+  }
+  async listTasks(cursor, options) {
+    return this._client.listTasks(cursor ? { cursor } : void 0, options);
+  }
+  async cancelTask(taskId, options) {
+    return this._client.cancelTask({ taskId }, options);
+  }
+  requestStream(request, resultSchema, options) {
+    return this._client.requestStream(request, resultSchema, options);
+  }
 }
-function shouldApplyWorkaround(key) {
-  if (isWorkaroundDisabled(key))
-    return logDebug(`Workaround ${key} not used (disabled by env)`), !1;
-  let fixedInRaw = (WORKAROUND_FIXED_IN[key] ?? "").trim();
-  if (!fixedInRaw)
-    return !0;
-  let ideVersion = currentIdeVersion;
-  if (!ideVersion)
-    return !0;
-  let fixedSpec = parseVersionSpec(fixedInRaw);
-  if (!fixedSpec)
-    return !0;
-  let currentParts = fixedSpec.kind === "build" ? ideVersion.build ?? deriveBuildFromFull(ideVersion.full) : ideVersion.full;
-  if (!currentParts)
-    return !0;
-  if (compareVersionParts(currentParts, fixedSpec.parts) >= 0)
-    return logDebug(`Workaround ${key} not used; fixed in ${fixedInRaw}, ide ${ideVersion.raw}`), !1;
-  return !0;
-}
-function isWorkaroundDisabled(key) {
-  let disabledAll = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUNDS;
-  if (disabledAll && disabledAll !== "false" && disabledAll !== "0")
-    return !0;
-  let disabledKeys = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS;
-  if (!disabledKeys)
-    return !1;
-  return disabledKeys.split(",").map((entry) => entry.trim()).filter((entry) => entry.length > 0).includes(key);
-}
-function logDebug(message) {
-  let enabled = process.env.JETBRAINS_MCP_PROXY_WORKAROUND_DEBUG;
-  if (!enabled || enabled === "0" || enabled === "false")
+
+// community/build/mcp-servers/ij-proxy/node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js
+function applyElicitationDefaults(schema, data) {
+  if (!schema || data === null || typeof data !== "object")
     return;
-  process.stderr.write(`[ij-mcp-proxy] ${message}
-`);
+  if (schema.type === "object" && schema.properties && typeof schema.properties === "object") {
+    let obj = data, props = schema.properties;
+    for (let key of Object.keys(props)) {
+      let propSchema = props[key];
+      if (obj[key] === void 0 && Object.prototype.hasOwnProperty.call(propSchema, "default"))
+        obj[key] = propSchema.default;
+      if (obj[key] !== void 0)
+        applyElicitationDefaults(propSchema, obj[key]);
+    }
+  }
+  if (Array.isArray(schema.anyOf)) {
+    for (let sub of schema.anyOf)
+      if (typeof sub !== "boolean")
+        applyElicitationDefaults(sub, data);
+  }
+  if (Array.isArray(schema.oneOf)) {
+    for (let sub of schema.oneOf)
+      if (typeof sub !== "boolean")
+        applyElicitationDefaults(sub, data);
+  }
 }
-function parseIdeVersion(raw) {
-  let full = extractVersionParts(raw, FULL_VERSION_RE), build = extractVersionParts(raw, BUILD_VERSION_RE);
-  if (!build) {
-    let snapshotMatch = raw.match(SNAPSHOT_BUILD_RE);
-    if (snapshotMatch) {
-      let train = Number.parseInt(snapshotMatch[1], 10);
-      if (!Number.isNaN(train))
-        build = [train, SNAPSHOT_BUILD_PART];
+function getSupportedElicitationModes(capabilities) {
+  if (!capabilities)
+    return { supportsFormMode: !1, supportsUrlMode: !1 };
+  let hasFormCapability = capabilities.form !== void 0, hasUrlCapability = capabilities.url !== void 0;
+  return { supportsFormMode: hasFormCapability || !hasFormCapability && !hasUrlCapability, supportsUrlMode: hasUrlCapability };
+}
+
+class Client extends Protocol {
+  constructor(_clientInfo, options) {
+    super(options);
+    if (this._clientInfo = _clientInfo, this._cachedToolOutputValidators = /* @__PURE__ */ new Map, this._cachedKnownTaskTools = /* @__PURE__ */ new Set, this._cachedRequiredTaskTools = /* @__PURE__ */ new Set, this._listChangedDebounceTimers = /* @__PURE__ */ new Map, this._capabilities = options?.capabilities ?? {}, this._jsonSchemaValidator = options?.jsonSchemaValidator ?? new AjvJsonSchemaValidator, options?.listChanged)
+      this._pendingListChangedConfig = options.listChanged;
+  }
+  _setupListChangedHandlers(config2) {
+    if (config2.tools && this._serverCapabilities?.tools?.listChanged)
+      this._setupListChangedHandler("tools", ToolListChangedNotificationSchema, config2.tools, async () => {
+        return (await this.listTools()).tools;
+      });
+    if (config2.prompts && this._serverCapabilities?.prompts?.listChanged)
+      this._setupListChangedHandler("prompts", PromptListChangedNotificationSchema, config2.prompts, async () => {
+        return (await this.listPrompts()).prompts;
+      });
+    if (config2.resources && this._serverCapabilities?.resources?.listChanged)
+      this._setupListChangedHandler("resources", ResourceListChangedNotificationSchema, config2.resources, async () => {
+        return (await this.listResources()).resources;
+      });
+  }
+  get experimental() {
+    if (!this._experimental)
+      this._experimental = {
+        tasks: new ExperimentalClientTasks(this)
+      };
+    return this._experimental;
+  }
+  registerCapabilities(capabilities) {
+    if (this.transport)
+      throw Error("Cannot register capabilities after connecting to transport");
+    this._capabilities = mergeCapabilities(this._capabilities, capabilities);
+  }
+  setRequestHandler(requestSchema, handler) {
+    let methodSchema = getObjectShape(requestSchema)?.method;
+    if (!methodSchema)
+      throw Error("Schema is missing a method literal");
+    let methodValue;
+    if (isZ4Schema(methodSchema)) {
+      let v4Schema = methodSchema;
+      methodValue = v4Schema._zod?.def?.value ?? v4Schema.value;
+    } else {
+      let v3Schema = methodSchema;
+      methodValue = v3Schema._def?.value ?? v3Schema.value;
+    }
+    if (typeof methodValue !== "string")
+      throw Error("Schema method literal must be a string");
+    let method = methodValue;
+    if (method === "elicitation/create") {
+      let wrappedHandler = async (request, extra) => {
+        let validatedRequest = safeParse2(ElicitRequestSchema, request);
+        if (!validatedRequest.success) {
+          let errorMessage = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid elicitation request: ${errorMessage}`);
+        }
+        let { params } = validatedRequest.data;
+        params.mode = params.mode ?? "form";
+        let { supportsFormMode, supportsUrlMode } = getSupportedElicitationModes(this._capabilities.elicitation);
+        if (params.mode === "form" && !supportsFormMode)
+          throw new McpError(ErrorCode.InvalidParams, "Client does not support form-mode elicitation requests");
+        if (params.mode === "url" && !supportsUrlMode)
+          throw new McpError(ErrorCode.InvalidParams, "Client does not support URL-mode elicitation requests");
+        let result = await Promise.resolve(handler(request, extra));
+        if (params.task) {
+          let taskValidationResult = safeParse2(CreateTaskResultSchema, result);
+          if (!taskValidationResult.success) {
+            let errorMessage = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
+            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage}`);
+          }
+          return taskValidationResult.data;
+        }
+        let validationResult = safeParse2(ElicitResultSchema, result);
+        if (!validationResult.success) {
+          let errorMessage = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid elicitation result: ${errorMessage}`);
+        }
+        let validatedResult = validationResult.data, requestedSchema = params.mode === "form" ? params.requestedSchema : void 0;
+        if (params.mode === "form" && validatedResult.action === "accept" && validatedResult.content && requestedSchema) {
+          if (this._capabilities.elicitation?.form?.applyDefaults)
+            try {
+              applyElicitationDefaults(requestedSchema, validatedResult.content);
+            } catch {}
+        }
+        return validatedResult;
+      };
+      return super.setRequestHandler(requestSchema, wrappedHandler);
+    }
+    if (method === "sampling/createMessage") {
+      let wrappedHandler = async (request, extra) => {
+        let validatedRequest = safeParse2(CreateMessageRequestSchema, request);
+        if (!validatedRequest.success) {
+          let errorMessage = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid sampling request: ${errorMessage}`);
+        }
+        let { params } = validatedRequest.data, result = await Promise.resolve(handler(request, extra));
+        if (params.task) {
+          let taskValidationResult = safeParse2(CreateTaskResultSchema, result);
+          if (!taskValidationResult.success) {
+            let errorMessage = taskValidationResult.error instanceof Error ? taskValidationResult.error.message : String(taskValidationResult.error);
+            throw new McpError(ErrorCode.InvalidParams, `Invalid task creation result: ${errorMessage}`);
+          }
+          return taskValidationResult.data;
+        }
+        let resultSchema = params.tools || params.toolChoice ? CreateMessageResultWithToolsSchema : CreateMessageResultSchema, validationResult = safeParse2(resultSchema, result);
+        if (!validationResult.success) {
+          let errorMessage = validationResult.error instanceof Error ? validationResult.error.message : String(validationResult.error);
+          throw new McpError(ErrorCode.InvalidParams, `Invalid sampling result: ${errorMessage}`);
+        }
+        return validationResult.data;
+      };
+      return super.setRequestHandler(requestSchema, wrappedHandler);
+    }
+    return super.setRequestHandler(requestSchema, handler);
+  }
+  assertCapability(capability, method) {
+    if (!this._serverCapabilities?.[capability])
+      throw Error(`Server does not support ${capability} (required for ${method})`);
+  }
+  async connect(transport, options) {
+    if (await super.connect(transport), transport.sessionId !== void 0)
+      return;
+    try {
+      let result = await this.request({
+        method: "initialize",
+        params: {
+          protocolVersion: LATEST_PROTOCOL_VERSION,
+          capabilities: this._capabilities,
+          clientInfo: this._clientInfo
+        }
+      }, InitializeResultSchema, options);
+      if (result === void 0)
+        throw Error(`Server sent invalid initialize result: ${result}`);
+      if (!SUPPORTED_PROTOCOL_VERSIONS.includes(result.protocolVersion))
+        throw Error(`Server's protocol version is not supported: ${result.protocolVersion}`);
+      if (this._serverCapabilities = result.capabilities, this._serverVersion = result.serverInfo, transport.setProtocolVersion)
+        transport.setProtocolVersion(result.protocolVersion);
+      if (this._instructions = result.instructions, await this.notification({
+        method: "notifications/initialized"
+      }), this._pendingListChangedConfig)
+        this._setupListChangedHandlers(this._pendingListChangedConfig), this._pendingListChangedConfig = void 0;
+    } catch (error48) {
+      throw this.close(), error48;
+    }
+  }
+  getServerCapabilities() {
+    return this._serverCapabilities;
+  }
+  getServerVersion() {
+    return this._serverVersion;
+  }
+  getInstructions() {
+    return this._instructions;
+  }
+  assertCapabilityForMethod(method) {
+    switch (method) {
+      case "logging/setLevel":
+        if (!this._serverCapabilities?.logging)
+          throw Error(`Server does not support logging (required for ${method})`);
+        break;
+      case "prompts/get":
+      case "prompts/list":
+        if (!this._serverCapabilities?.prompts)
+          throw Error(`Server does not support prompts (required for ${method})`);
+        break;
+      case "resources/list":
+      case "resources/templates/list":
+      case "resources/read":
+      case "resources/subscribe":
+      case "resources/unsubscribe":
+        if (!this._serverCapabilities?.resources)
+          throw Error(`Server does not support resources (required for ${method})`);
+        if (method === "resources/subscribe" && !this._serverCapabilities.resources.subscribe)
+          throw Error(`Server does not support resource subscriptions (required for ${method})`);
+        break;
+      case "tools/call":
+      case "tools/list":
+        if (!this._serverCapabilities?.tools)
+          throw Error(`Server does not support tools (required for ${method})`);
+        break;
+      case "completion/complete":
+        if (!this._serverCapabilities?.completions)
+          throw Error(`Server does not support completions (required for ${method})`);
+        break;
+      case "initialize":
+        break;
+      case "ping":
+        break;
+    }
+  }
+  assertNotificationCapability(method) {
+    switch (method) {
+      case "notifications/roots/list_changed":
+        if (!this._capabilities.roots?.listChanged)
+          throw Error(`Client does not support roots list changed notifications (required for ${method})`);
+        break;
+      case "notifications/initialized":
+        break;
+      case "notifications/cancelled":
+        break;
+      case "notifications/progress":
+        break;
+    }
+  }
+  assertRequestHandlerCapability(method) {
+    if (!this._capabilities)
+      return;
+    switch (method) {
+      case "sampling/createMessage":
+        if (!this._capabilities.sampling)
+          throw Error(`Client does not support sampling capability (required for ${method})`);
+        break;
+      case "elicitation/create":
+        if (!this._capabilities.elicitation)
+          throw Error(`Client does not support elicitation capability (required for ${method})`);
+        break;
+      case "roots/list":
+        if (!this._capabilities.roots)
+          throw Error(`Client does not support roots capability (required for ${method})`);
+        break;
+      case "tasks/get":
+      case "tasks/list":
+      case "tasks/result":
+      case "tasks/cancel":
+        if (!this._capabilities.tasks)
+          throw Error(`Client does not support tasks capability (required for ${method})`);
+        break;
+      case "ping":
+        break;
+    }
+  }
+  assertTaskCapability(method) {
+    assertToolsCallTaskCapability(this._serverCapabilities?.tasks?.requests, method, "Server");
+  }
+  assertTaskHandlerCapability(method) {
+    if (!this._capabilities)
+      return;
+    assertClientRequestTaskCapability(this._capabilities.tasks?.requests, method, "Client");
+  }
+  async ping(options) {
+    return this.request({ method: "ping" }, EmptyResultSchema, options);
+  }
+  async complete(params, options) {
+    return this.request({ method: "completion/complete", params }, CompleteResultSchema, options);
+  }
+  async setLoggingLevel(level, options) {
+    return this.request({ method: "logging/setLevel", params: { level } }, EmptyResultSchema, options);
+  }
+  async getPrompt(params, options) {
+    return this.request({ method: "prompts/get", params }, GetPromptResultSchema, options);
+  }
+  async listPrompts(params, options) {
+    return this.request({ method: "prompts/list", params }, ListPromptsResultSchema, options);
+  }
+  async listResources(params, options) {
+    return this.request({ method: "resources/list", params }, ListResourcesResultSchema, options);
+  }
+  async listResourceTemplates(params, options) {
+    return this.request({ method: "resources/templates/list", params }, ListResourceTemplatesResultSchema, options);
+  }
+  async readResource(params, options) {
+    return this.request({ method: "resources/read", params }, ReadResourceResultSchema, options);
+  }
+  async subscribeResource(params, options) {
+    return this.request({ method: "resources/subscribe", params }, EmptyResultSchema, options);
+  }
+  async unsubscribeResource(params, options) {
+    return this.request({ method: "resources/unsubscribe", params }, EmptyResultSchema, options);
+  }
+  async callTool(params, resultSchema = CallToolResultSchema, options) {
+    if (this.isToolTaskRequired(params.name))
+      throw new McpError(ErrorCode.InvalidRequest, `Tool "${params.name}" requires task-based execution. Use client.experimental.tasks.callToolStream() instead.`);
+    let result = await this.request({ method: "tools/call", params }, resultSchema, options), validator = this.getToolOutputValidator(params.name);
+    if (validator) {
+      if (!result.structuredContent && !result.isError)
+        throw new McpError(ErrorCode.InvalidRequest, `Tool ${params.name} has an output schema but did not return structured content`);
+      if (result.structuredContent)
+        try {
+          let validationResult = validator(result.structuredContent);
+          if (!validationResult.valid)
+            throw new McpError(ErrorCode.InvalidParams, `Structured content does not match the tool's output schema: ${validationResult.errorMessage}`);
+        } catch (error48) {
+          if (error48 instanceof McpError)
+            throw error48;
+          throw new McpError(ErrorCode.InvalidParams, `Failed to validate structured content: ${error48 instanceof Error ? error48.message : String(error48)}`);
+        }
+    }
+    return result;
+  }
+  isToolTask(toolName) {
+    if (!this._serverCapabilities?.tasks?.requests?.tools?.call)
+      return !1;
+    return this._cachedKnownTaskTools.has(toolName);
+  }
+  isToolTaskRequired(toolName) {
+    return this._cachedRequiredTaskTools.has(toolName);
+  }
+  cacheToolMetadata(tools) {
+    this._cachedToolOutputValidators.clear(), this._cachedKnownTaskTools.clear(), this._cachedRequiredTaskTools.clear();
+    for (let tool of tools) {
+      if (tool.outputSchema) {
+        let toolValidator = this._jsonSchemaValidator.getValidator(tool.outputSchema);
+        this._cachedToolOutputValidators.set(tool.name, toolValidator);
+      }
+      let taskSupport = tool.execution?.taskSupport;
+      if (taskSupport === "required" || taskSupport === "optional")
+        this._cachedKnownTaskTools.add(tool.name);
+      if (taskSupport === "required")
+        this._cachedRequiredTaskTools.add(tool.name);
+    }
+  }
+  getToolOutputValidator(toolName) {
+    return this._cachedToolOutputValidators.get(toolName);
+  }
+  async listTools(params, options) {
+    let result = await this.request({ method: "tools/list", params }, ListToolsResultSchema, options);
+    return this.cacheToolMetadata(result.tools), result;
+  }
+  _setupListChangedHandler(listType, notificationSchema, options, fetcher) {
+    let parseResult = ListChangedOptionsBaseSchema.safeParse(options);
+    if (!parseResult.success)
+      throw Error(`Invalid ${listType} listChanged options: ${parseResult.error.message}`);
+    if (typeof options.onChanged !== "function")
+      throw Error(`Invalid ${listType} listChanged options: onChanged must be a function`);
+    let { autoRefresh, debounceMs } = parseResult.data, { onChanged } = options, refresh = async () => {
+      if (!autoRefresh) {
+        onChanged(null, null);
+        return;
+      }
+      try {
+        let items = await fetcher();
+        onChanged(null, items);
+      } catch (e) {
+        let error48 = e instanceof Error ? e : Error(String(e));
+        onChanged(error48, null);
+      }
+    }, handler = () => {
+      if (debounceMs) {
+        let existingTimer = this._listChangedDebounceTimers.get(listType);
+        if (existingTimer)
+          clearTimeout(existingTimer);
+        let timer = setTimeout(refresh, debounceMs);
+        this._listChangedDebounceTimers.set(listType, timer);
+      } else
+        refresh();
+    };
+    this.setNotificationHandler(notificationSchema, handler);
+  }
+  async sendRootsListChanged() {
+    return this.notification({ method: "notifications/roots/list_changed" });
+  }
+}
+
+// community/build/mcp-servers/ij-proxy/project-path.ts
+function createProjectPathManager({
+  projectPath,
+  defaultProjectPathKey = "project_path"
+}) {
+  let projectPathKey = null, hasSeenToolsList = !1, hasProjectPathTools = !1, toolProjectPathKeyByName = /* @__PURE__ */ new Map;
+  function normalizeProjectPathArgs(args, desiredKey) {
+    if (!desiredKey)
+      return;
+    let hasSnake = Object.prototype.hasOwnProperty.call(args, "project_path"), hasCamel = Object.prototype.hasOwnProperty.call(args, "projectPath");
+    if (desiredKey === "projectPath") {
+      if (hasSnake)
+        delete args.project_path;
+      args.projectPath = projectPath;
+      return;
+    }
+    if (desiredKey === "project_path") {
+      if (hasCamel)
+        delete args.projectPath;
+      args.project_path = projectPath;
+    }
+  }
+  function shouldInjectProjectPath(toolName) {
+    if (!hasSeenToolsList)
+      return !0;
+    if (!hasProjectPathTools)
+      return !1;
+    if (!toolName)
+      return !0;
+    return toolProjectPathKeyByName.has(toolName);
+  }
+  function chooseProjectPathKey(toolName) {
+    if (toolName) {
+      let key = toolProjectPathKeyByName.get(toolName);
+      if (key)
+        return key;
+    }
+    return projectPathKey || defaultProjectPathKey;
+  }
+  function injectProjectPathArgs(toolName, args) {
+    if (!args || typeof args !== "object")
+      return;
+    if (shouldInjectProjectPath(toolName))
+      normalizeProjectPathArgs(args, chooseProjectPathKey(toolName));
+  }
+  function updateProjectPathKeys(tools) {
+    if (!Array.isArray(tools))
+      return;
+    let hasSnake = !1, hasCamel = !1;
+    toolProjectPathKeyByName.clear();
+    for (let tool of tools) {
+      let props = tool?.inputSchema?.properties;
+      if (!props || typeof props !== "object")
+        continue;
+      if (Object.prototype.hasOwnProperty.call(props, "project_path")) {
+        if (hasSnake = !0, typeof tool.name === "string")
+          toolProjectPathKeyByName.set(tool.name, "project_path");
+        continue;
+      }
+      if (Object.prototype.hasOwnProperty.call(props, "projectPath")) {
+        if (hasCamel = !0, typeof tool.name === "string")
+          toolProjectPathKeyByName.set(tool.name, "projectPath");
+      }
+    }
+    if (hasSeenToolsList = !0, hasProjectPathTools = toolProjectPathKeyByName.size > 0, hasSnake)
+      projectPathKey = "project_path";
+    else if (hasCamel)
+      projectPathKey = "projectPath";
+    else
+      projectPathKey = null;
+  }
+  function stripProjectPathFromTools(tools) {
+    if (!Array.isArray(tools))
+      return;
+    for (let tool of tools) {
+      let schema = tool?.inputSchema;
+      if (!schema || schema.type !== "object")
+        continue;
+      let props = schema.properties;
+      if (!props || typeof props !== "object")
+        continue;
+      let removedKeys = [];
+      if (Object.prototype.hasOwnProperty.call(props, "project_path"))
+        delete props.project_path, removedKeys.push("project_path");
+      if (Object.prototype.hasOwnProperty.call(props, "projectPath"))
+        delete props.projectPath, removedKeys.push("projectPath");
+      if (removedKeys.length > 0 && Array.isArray(schema.required))
+        schema.required = schema.required.filter((name) => !removedKeys.includes(name));
     }
   }
   return {
-    raw,
-    full: full ?? void 0,
-    build: build ?? void 0
+    injectProjectPathArgs,
+    stripProjectPathFromTools,
+    updateProjectPathKeys
   };
 }
-function parseVersionSpec(version2) {
-  let snapshotMatch = version2.match(SNAPSHOT_BUILD_RE);
-  if (snapshotMatch) {
-    let train = Number.parseInt(snapshotMatch[1], 10);
-    if (!Number.isNaN(train))
-      return { parts: [train], kind: "build" };
-  }
-  let match = version2.match(ANY_VERSION_RE);
-  if (!match)
-    return null;
-  let parts = parseVersionParts(match[0]);
-  if (!parts)
-    return null;
-  let kind = parts[0] >= 1000 ? "full" : "build";
-  return { parts, kind };
-}
-function extractVersionParts(raw, regex) {
-  let match = raw.match(regex);
-  if (!match)
-    return null;
-  return parseVersionParts(match[0]);
-}
-function parseVersionParts(value) {
-  let parts = value.split(".").map((part) => Number.parseInt(part, 10));
-  if (parts.some((part) => Number.isNaN(part)))
-    return null;
-  return parts;
-}
-function deriveBuildFromFull(full) {
-  if (!full || full.length < 2)
-    return null;
-  let year = full[0], minor = full[1];
-  if (!Number.isFinite(year) || !Number.isFinite(minor))
-    return null;
-  if (year < 2000 || year > 2100)
-    return null;
-  return [(year - 2000) * 10 + minor];
-}
-function compareVersionParts(left, right) {
-  let maxLength = Math.max(left.length, right.length);
-  for (let i = 0;i < maxLength; i += 1) {
-    let leftValue = left[i] ?? 0, rightValue = right[i] ?? 0;
-    if (leftValue !== rightValue)
-      return leftValue - rightValue;
-  }
-  return 0;
-}
 
-// proxy-tools/handlers/apply-patch.ts
+// community/build/mcp-servers/ij-proxy/proxy-tools/handlers/apply-patch.ts
 import { copyFile, mkdir, rename, rm } from "fs/promises";
 import path3 from "path";
 
-// proxy-tools/git-utils.ts
+// community/build/mcp-servers/ij-proxy/proxy-tools/git-utils.ts
 import { spawn } from "child_process";
 function toGitPath(relativePath) {
   return relativePath.replace(/\\/g, "/");
@@ -22339,7 +22230,7 @@ async function isTrackedPath(relativePath, projectPath) {
   });
 }
 
-// proxy-tools/shared.ts
+// community/build/mcp-servers/ij-proxy/proxy-tools/shared.ts
 import path from "path";
 var TRUNCATION_MARKER = "<<<...content truncated...>>>", FULL_READ_MAX_LINES = 200000, nonEmptyStringSchema = exports_external.string().refine((value) => value.trim() !== "", {
   message: "must be a non-empty string"
@@ -22603,10 +22494,10 @@ function splitLines2(text) {
   return lines;
 }
 
-// proxy-tools/search-fallback.ts
+// community/build/mcp-servers/ij-proxy/proxy-tools/search-fallback.ts
 import path2 from "path";
 
-// proxy-tools/search-in-files.ts
+// community/build/mcp-servers/ij-proxy/proxy-tools/search-in-files.ts
 async function searchInFiles(args, callUpstreamTool) {
   let toolName = typeof args.regexPattern === "string" ? "search_in_files_by_regex" : "search_in_files_by_text", result = await callUpstreamTool(toolName, args), entries = extractEntries(result), structured = extractStructuredContent(result), structuredRecord = structured && typeof structured === "object" ? structured : null;
   return {
@@ -22616,7 +22507,7 @@ async function searchInFiles(args, callUpstreamTool) {
   };
 }
 
-// proxy-tools/search-fallback.ts
+// community/build/mcp-servers/ij-proxy/proxy-tools/search-fallback.ts
 var SEARCH_FALLBACK_REGEX = "(?m)^.*$", SEARCH_FALLBACK_MAX_LINES = 200000, SEARCH_FALLBACK_MAX_LINE_TEXT_CHARS = 1000;
 async function readLinesViaSearch(projectPath, relativePath, absolutePath, maxLine, callUpstreamTool) {
   let cappedMaxLine = Math.min(Math.max(1, maxLine), SEARCH_FALLBACK_MAX_LINES), directory = path2.dirname(relativePath), directoryToSearch = directory === "." ? void 0 : directory, { entries, probablyHasMoreMatchingEntries, timedOut } = await searchInFiles({
@@ -22654,7 +22545,7 @@ function normalizeUsageLine(lineText) {
   return lineText.slice(2, tailIndex);
 }
 
-// proxy-tools/truncation.ts
+// community/build/mcp-servers/ij-proxy/proxy-tools/truncation.ts
 function isTruncatedText(text) {
   return findTruncationMarkerSuffix(text) >= 0 || findTruncationMarkerLine(text) >= 0;
 }
@@ -22683,8 +22574,8 @@ function isLineBreakChar(code) {
   return code === 10 || code === 13;
 }
 
-// proxy-tools/handlers/apply-patch.ts
-var BEGIN_MARKER = "*** Begin Patch", END_MARKER = "*** End Patch", ADD_PREFIX = "*** Add File: ", UPDATE_PREFIX = "*** Update File: ", DELETE_PREFIX = "*** Delete File: ", MOVE_PREFIX = "*** Move to: ", END_OF_FILE = "*** End of File", HEREDOC_PREFIXES = /* @__PURE__ */ new Set(["<<EOF", "<<'EOF'", '<<"EOF"']), TRUNCATION_ERROR = "file content truncated while reading";
+// community/build/mcp-servers/ij-proxy/proxy-tools/handlers/apply-patch.ts
+var BEGIN_MARKER = "*** Begin Patch", END_MARKER = "*** End Patch", ADD_PREFIX = "*** Add File: ", UPDATE_PREFIX = "*** Update File: ", DELETE_PREFIX = "*** Delete File: ", MOVE_PREFIX = "*** Move to: ", END_OF_FILE = "*** End of File", DIFF_GIT_PREFIX = "diff --git ", NO_NEWLINE_MARKER = "\\ No newline at end of file", HEREDOC_PREFIXES = /* @__PURE__ */ new Set(["<<EOF", "<<'EOF'", '<<"EOF"']), TRUNCATION_ERROR = "file content truncated while reading", UNIFIED_DIFF_HEADER_REGEX = /^@@+\s*-\d+(?:,\d+)?\s+\+\d+(?:,\d+)?\s*@@+$/;
 async function handleApplyPatchTool(args, projectPath, callUpstreamTool) {
   let patchText = extractPatchText(args), operations = parsePatch(patchText), touched = 0;
   for (let op of operations) {
@@ -22703,7 +22594,7 @@ async function handleApplyPatchTool(args, projectPath, callUpstreamTool) {
       continue;
     }
     if (op.type === "update") {
-      let original = await readFileTextForPatch(relative, absolute, projectPath, callUpstreamTool), updated = applyHunks(original, op.hunks), resolvedTarget = op.moveTo ? resolvePathInProject(projectPath, op.moveTo, "path") : null, moveTarget = resolvedTarget && resolvedTarget.relative !== relative ? resolvedTarget : null;
+      let original = await readFileTextForPatch(relative, absolute, projectPath, callUpstreamTool), updated = op.hunks.length === 0 ? original : applyHunks(original, op.hunks), resolvedTarget = op.moveTo ? resolvePathInProject(projectPath, op.moveTo, "path") : null, moveTarget = resolvedTarget && resolvedTarget.relative !== relative ? resolvedTarget : null;
       if (moveTarget)
         await ensureParentDir(moveTarget.absolute), await runGitMv(relative, moveTarget.relative, projectPath), await callUpstreamTool("create_new_file", {
           pathInProject: moveTarget.relative,
@@ -22778,14 +22669,36 @@ function unwrapHeredocLines(lines) {
     return lines;
   return lines.slice(1, -1);
 }
+function stripUnifiedDiffHeader(trimmed) {
+  if (UNIFIED_DIFF_HEADER_REGEX.test(trimmed))
+    return "";
+  return trimmed.length > 2 ? trimmed.slice(2).trim() : "";
+}
 function parsePatch(text) {
-  let lines = unwrapHeredocLines(splitLines2(text.trim())), startIndex = lines.findIndex((line) => line.trim() === BEGIN_MARKER);
+  let lines = unwrapHeredocLines(splitLines2(text.trim())), markerRange = findPatchMarkerRange(lines);
+  if (markerRange) {
+    if (looksLikeGitDiff(lines, markerRange.bodyStart, markerRange.bodyEnd))
+      return parseGitDiffPatch(lines, markerRange.bodyStart, markerRange.bodyEnd);
+    return parseCodexPatch(lines, markerRange.bodyStart, markerRange.bodyEnd);
+  }
+  if (looksLikeGitDiff(lines, 0, lines.length))
+    return parseGitDiffPatch(lines, 0, lines.length);
+  throw Error("patch must include *** Begin Patch");
+}
+function findPatchMarkerRange(lines) {
+  let startIndex = lines.findIndex((line) => line.trim() === BEGIN_MARKER);
   if (startIndex === -1)
-    throw Error("patch must include *** Begin Patch");
+    return null;
   let endIndexRelative = lines.slice(startIndex + 1).findIndex((line) => line.trim() === END_MARKER);
   if (endIndexRelative === -1)
     throw Error("patch must include *** End Patch");
-  let endIndex = startIndex + 1 + endIndexRelative, operations = [], i = startIndex + 1;
+  return {
+    bodyStart: startIndex + 1,
+    bodyEnd: startIndex + 1 + endIndexRelative
+  };
+}
+function parseCodexPatch(lines, startIndex, endIndex) {
+  let operations = [], i = startIndex;
   while (i < endIndex) {
     let line = lines[i], headerLine = line.trimStart();
     if (headerLine.startsWith(ADD_PREFIX)) {
@@ -22832,39 +22745,8 @@ function parsePatch(text) {
           i += 1;
           continue;
         }
-        let header = null;
-        if (isHunkHeaderLine(lines[i])) {
-          let trimmed = lines[i].trim(), headerText = trimmed.length > 2 ? trimmed.slice(2).trim() : "";
-          header = headerText === "" ? null : headerText, i += 1;
-        } else if (hunks.length === 0) {
-          if (!isDiffLine(lines[i]))
-            throw Error("Expected @@ hunk header");
-        } else
-          throw Error("Expected @@ hunk header");
-        let hunkLines = [], isEndOfFile = !1;
-        while (i < endIndex && !isHunkHeaderLine(lines[i]) && !isPatchHeaderLine(lines[i])) {
-          let hunkLine = lines[i];
-          if (hunkLine === END_OF_FILE) {
-            isEndOfFile = !0, i += 1;
-            break;
-          }
-          if (hunkLine === "") {
-            hunkLines.push({ prefix: " ", text: "" }), i += 1;
-            continue;
-          }
-          if (![" ", "+", "-"].includes(hunkLine[0])) {
-            if (hunkLines.length === 0)
-              throw Error("Hunk lines must start with space, +, or -");
-            break;
-          }
-          hunkLines.push({
-            prefix: hunkLine[0],
-            text: hunkLine.slice(1)
-          }), i += 1;
-        }
-        if (hunkLines.length === 0)
-          throw Error("Empty hunk in Update File");
-        hunks.push({ header, lines: hunkLines, isEndOfFile });
+        let parsed = parseCodexHunk(lines, i, endIndex, hunks.length === 0);
+        hunks.push(parsed.hunk), i = parsed.nextIndex;
       }
       if (hunks.length === 0)
         throw Error("Update File requires at least one hunk");
@@ -22880,6 +22762,269 @@ function parsePatch(text) {
   if (operations.length === 0)
     throw Error("patch did not contain any operations");
   return operations;
+}
+function parseCodexHunk(lines, startIndex, endIndex, isFirstHunk) {
+  let i = startIndex, header = null, allowsStrictPair = !1;
+  if (isHunkHeaderLine(lines[i])) {
+    let trimmed = lines[i].trim(), headerText = stripUnifiedDiffHeader(trimmed);
+    header = headerText === "" ? null : headerText, allowsStrictPair = trimmed === "@@", i += 1;
+  } else if (isFirstHunk) {
+    if (!isDiffLine(lines[i]))
+      throw Error("Expected @@ hunk header");
+  } else
+    throw Error("Expected @@ hunk header");
+  if (allowsStrictPair && i < endIndex && isStrictPairBlockStart(lines[i]))
+    return parseStrictPairHunk(lines, i, endIndex);
+  let hunkLines = [], isEndOfFile = !1;
+  while (i < endIndex && !isHunkHeaderLine(lines[i]) && !isPatchHeaderLine(lines[i])) {
+    let hunkLine = lines[i];
+    if (hunkLine === END_OF_FILE) {
+      isEndOfFile = !0, i += 1;
+      break;
+    }
+    if (hunkLine === "") {
+      hunkLines.push({ prefix: " ", text: "" }), i += 1;
+      continue;
+    }
+    if (![" ", "+", "-"].includes(hunkLine[0])) {
+      if (hunkLines.length === 0)
+        throw Error("Hunk lines must start with space, +, or -");
+      break;
+    }
+    hunkLines.push({
+      prefix: hunkLine[0],
+      text: hunkLine.slice(1)
+    }), i += 1;
+  }
+  if (hunkLines.length === 0)
+    throw Error("Empty hunk in Update File");
+  return {
+    hunk: { header, lines: hunkLines, isEndOfFile },
+    nextIndex: i
+  };
+}
+function parseStrictPairHunk(lines, startIndex, endIndex) {
+  let i = startIndex, oldLines = [], hasSecondDelimiter = !1;
+  while (i < endIndex && !isPatchHeaderLine(lines[i])) {
+    let line = lines[i];
+    if (line.trim() === "@@") {
+      hasSecondDelimiter = !0, i += 1;
+      break;
+    }
+    oldLines.push(line), i += 1;
+  }
+  if (!hasSecondDelimiter)
+    throw Error("Strict @@ pair hunk requires second @@ delimiter");
+  let newLines = [];
+  while (i < endIndex && !isPatchHeaderLine(lines[i]) && !isHunkHeaderLine(lines[i])) {
+    let line = lines[i];
+    newLines.push(line), i += 1;
+  }
+  if (oldLines.length === 0 && newLines.length === 0)
+    throw Error("Empty hunk in Update File");
+  return {
+    hunk: {
+      header: null,
+      lines: [
+        ...oldLines.map((text) => ({ prefix: "-", text })),
+        ...newLines.map((text) => ({ prefix: "+", text }))
+      ],
+      isEndOfFile: !1
+    },
+    nextIndex: i
+  };
+}
+function parseGitDiffPatch(lines, startIndex, endIndex) {
+  let operations = [], i = startIndex;
+  while (i < endIndex) {
+    while (i < endIndex && lines[i].trim() === "")
+      i += 1;
+    if (i >= endIndex)
+      break;
+    let parsed = parseGitOperation(lines, i, endIndex);
+    operations.push(parsed.operation), i = parsed.nextIndex;
+  }
+  if (operations.length === 0)
+    throw Error("patch did not contain any operations");
+  return operations;
+}
+function parseGitOperation(lines, startIndex, endIndex) {
+  let i = startIndex, oldPath = null, newPath = null, renameFrom = null, renameTo = null, hunks = [], sawGitSignal = !1;
+  while (i < endIndex) {
+    let line = lines[i], trimmed = line.trimStart();
+    if (trimmed === "") {
+      i += 1;
+      continue;
+    }
+    if (trimmed.startsWith(DIFF_GIT_PREFIX)) {
+      if (sawGitSignal)
+        break;
+      sawGitSignal = !0;
+      let parsedPaths = parseDiffGitHeaderPaths(trimmed);
+      if (parsedPaths)
+        oldPath = parsedPaths.oldPath, newPath = parsedPaths.newPath;
+      i += 1;
+      continue;
+    }
+    if (line.startsWith("--- ")) {
+      oldPath = parseGitMarkerPath(line.slice(4)), sawGitSignal = !0, i += 1;
+      continue;
+    }
+    if (line.startsWith("+++ ")) {
+      newPath = parseGitMarkerPath(line.slice(4)), sawGitSignal = !0, i += 1;
+      continue;
+    }
+    if (trimmed.startsWith("rename from ")) {
+      renameFrom = parseGitRenamePath(trimmed.slice(12)), sawGitSignal = !0, i += 1;
+      continue;
+    }
+    if (trimmed.startsWith("rename to ")) {
+      renameTo = parseGitRenamePath(trimmed.slice(10)), sawGitSignal = !0, i += 1;
+      continue;
+    }
+    if (trimmed === NO_NEWLINE_MARKER) {
+      i += 1;
+      continue;
+    }
+    if (trimmed.startsWith("Binary files ") || trimmed === "GIT binary patch")
+      throw Error("Binary git patch is not supported");
+    if (isGitMetadataLine(trimmed)) {
+      sawGitSignal = !0, i += 1;
+      continue;
+    }
+    if (isHunkHeaderLine(line)) {
+      sawGitSignal = !0;
+      let parsedHunk = parseUnifiedHunk(lines, i, endIndex);
+      hunks.push(parsedHunk.hunk), i = parsedHunk.nextIndex;
+      continue;
+    }
+    if (!sawGitSignal)
+      throw Error(`Unexpected patch line: ${line}`);
+    break;
+  }
+  if (!sawGitSignal)
+    throw Error("patch did not contain any operations");
+  return {
+    operation: buildGitOperation(renameFrom ?? oldPath, renameTo ?? newPath, hunks),
+    nextIndex: i
+  };
+}
+function parseUnifiedHunk(lines, startIndex, endIndex) {
+  let i = startIndex, headerText = stripUnifiedDiffHeader(lines[i].trim()), header = headerText === "" ? null : headerText;
+  i += 1;
+  let hunkLines = [], isEndOfFile = !1;
+  while (i < endIndex) {
+    let line = lines[i], trimmed = line.trimStart();
+    if (trimmed.startsWith(DIFF_GIT_PREFIX) || line.startsWith("--- ") || line.startsWith("+++ ") || isHunkHeaderLine(line))
+      break;
+    if (trimmed === NO_NEWLINE_MARKER) {
+      i += 1;
+      continue;
+    }
+    if (line === END_OF_FILE) {
+      isEndOfFile = !0, i += 1;
+      break;
+    }
+    if (line === "") {
+      hunkLines.push({ prefix: " ", text: "" }), i += 1;
+      continue;
+    }
+    if (![" ", "+", "-"].includes(line[0])) {
+      if (hunkLines.length === 0)
+        throw Error("Hunk lines must start with space, +, or -");
+      break;
+    }
+    hunkLines.push({
+      prefix: line[0],
+      text: line.slice(1)
+    }), i += 1;
+  }
+  if (hunkLines.length === 0)
+    throw Error("Empty hunk in Update File");
+  return {
+    hunk: { header, lines: hunkLines, isEndOfFile },
+    nextIndex: i
+  };
+}
+function buildGitOperation(sourcePath, targetPath, hunks) {
+  if (!sourcePath && !targetPath)
+    throw Error("Could not determine file path from git diff");
+  if (!sourcePath) {
+    if (!targetPath)
+      throw Error("Could not determine file path from git diff");
+    ensureSafePatchPath(targetPath, "Add File");
+    let content = hunks.length === 0 ? "" : applyHunks("", hunks);
+    return { type: "add", path: targetPath, content };
+  }
+  if (!targetPath)
+    return ensureSafePatchPath(sourcePath, "Delete File"), { type: "delete", path: sourcePath };
+  return ensureSafePatchPath(sourcePath, "Update File"), ensureSafePatchPath(targetPath, "Move to"), {
+    type: "update",
+    path: sourcePath,
+    moveTo: sourcePath === targetPath ? null : targetPath,
+    hunks
+  };
+}
+function looksLikeGitDiff(lines, startIndex, endIndex) {
+  let hasFileMarkers = !1;
+  for (let i = startIndex;i < endIndex; i += 1) {
+    let line = lines[i], trimmed = line.trimStart();
+    if (trimmed.startsWith(DIFF_GIT_PREFIX))
+      return !0;
+    if (line.startsWith("--- ") || line.startsWith("+++ ")) {
+      hasFileMarkers = !0;
+      continue;
+    }
+    if (trimmed.startsWith("rename from ") || trimmed.startsWith("rename to "))
+      return !0;
+  }
+  return hasFileMarkers;
+}
+function parseDiffGitHeaderPaths(trimmed) {
+  let payload = trimmed.slice(DIFF_GIT_PREFIX.length).trim();
+  if (!payload)
+    return null;
+  let tokens = payload.split(/\s+/, 3);
+  if (tokens.length < 2)
+    return null;
+  return {
+    oldPath: normalizeGitMarkerPath(tokens[0]),
+    newPath: normalizeGitMarkerPath(tokens[1])
+  };
+}
+function parseGitMarkerPath(rawValue) {
+  let marker = rawValue.split("\t", 1)[0].trim();
+  return normalizeGitMarkerPath(marker);
+}
+function parseGitRenamePath(rawValue) {
+  let value = unquoteGitPath(rawValue.trim());
+  if (!value)
+    throw Error("Could not determine file path from git diff");
+  return value;
+}
+function normalizeGitMarkerPath(rawValue) {
+  let value = unquoteGitPath(rawValue.trim());
+  if (value === "/dev/null")
+    return null;
+  if (value.startsWith("a/") || value.startsWith("b/"))
+    return value.slice(2);
+  return value;
+}
+function unquoteGitPath(rawValue) {
+  if (rawValue.length < 2 || rawValue[0] !== '"' || rawValue[rawValue.length - 1] !== '"')
+    return rawValue;
+  return rawValue.slice(1, -1).replace(/\\\\/g, "\\").replace(/\\"/g, '"');
+}
+function isGitMetadataLine(trimmed) {
+  return trimmed.startsWith("index ") || trimmed.startsWith("old mode ") || trimmed.startsWith("new mode ") || trimmed.startsWith("new file mode ") || trimmed.startsWith("deleted file mode ") || trimmed.startsWith("similarity index ") || trimmed.startsWith("dissimilarity index ");
+}
+function isPrefixedDiffLine(line) {
+  return line !== "" && [" ", "+", "-"].includes(line[0]);
+}
+function isStrictPairBlockStart(line) {
+  if (isPatchHeaderLine(line) || isHunkHeaderLine(line))
+    return !1;
+  return !isPrefixedDiffLine(line);
 }
 function ensureSafePatchPath(rawPath, label) {
   if (/[\u0000-\u001F\u007F]/.test(rawPath))
@@ -22918,7 +23063,9 @@ async function moveFile(fromAbsolute, toAbsolute) {
   }
 }
 function applyHunks(originalText, hunks) {
-  let content = splitLines2(originalText), searchStart = 0;
+  let hadTrailingNewline = originalText.endsWith(`
+`) || originalText.endsWith(`\r
+`), content = splitLines2(originalText), searchStart = 0;
   for (let hunk of hunks) {
     if (hunk.header) {
       let headerIndex = findSequence(content, [hunk.header], searchStart, !1);
@@ -22939,7 +23086,7 @@ function applyHunks(originalText, hunks) {
       throw Error("Hunk context not found");
     content.splice(index, oldLines.length, ...newLines), searchStart = index + newLines.length;
   }
-  if (content.length > 0 && content[content.length - 1] !== "")
+  if (hadTrailingNewline && content.length > 0 && content[content.length - 1] !== "")
     content = [...content, ""];
   return content.join(`
 `);
@@ -23023,39 +23170,7 @@ function findSequence(haystack, needle, startIndex = 0, preferEnd = !1) {
   return searchWith((a, b) => normalizeForMatch(a) === normalizeForMatch(b));
 }
 
-// proxy-tools/handlers/edit.ts
-import path4 from "path";
-async function handleEditTool(args, projectPath, callUpstreamTool) {
-  let filePath = requireString(args.file_path, "file_path"), oldString = normalizeLineEndings(requireString(args.old_string, "old_string")), newString = typeof args.new_string === "string" ? normalizeLineEndings(args.new_string) : null;
-  if (newString === null)
-    throw Error("new_string must be a string");
-  if (oldString === newString)
-    throw Error("old_string and new_string must differ");
-  let replaceAllFlag = Boolean(args.replace_all ?? !1), { relative } = resolvePathInProject(projectPath, filePath, "file_path"), originalRaw = await readFileText(relative, { truncateMode: "NONE" }, callUpstreamTool);
-  if (isTruncatedText(originalRaw))
-    throw Error("file content truncated while reading");
-  let original = normalizeLineEndings(originalRaw), updated;
-  if (replaceAllFlag) {
-    let parts = original.split(oldString);
-    if (parts.length === 1)
-      throw Error("old_string not found");
-    updated = parts.join(newString);
-  } else {
-    let firstIndex = original.indexOf(oldString);
-    if (firstIndex === -1)
-      throw Error("old_string not found");
-    if (original.indexOf(oldString, firstIndex + oldString.length) !== -1)
-      throw Error("old_string must be unique or replace_all must be true");
-    updated = `${original.slice(0, firstIndex)}${newString}${original.slice(firstIndex + oldString.length)}`;
-  }
-  return await callUpstreamTool("create_new_file", {
-    pathInProject: relative,
-    text: updated,
-    overwrite: !0
-  }), `Updated ${path4.resolve(projectPath, relative)}`;
-}
-
-// proxy-tools/handlers/list-dir.ts
+// community/build/mcp-servers/ij-proxy/proxy-tools/handlers/list-dir.ts
 var DEFAULT_OFFSET = 1, DEFAULT_LIMIT = 25, DEFAULT_DEPTH = 2, BRANCH_MARKER = "\u251C\u2500\u2500 ", LAST_MARKER = "\u2514\u2500\u2500 ", MARKER_LENGTH = BRANCH_MARKER.length;
 async function handleListDirTool(args, projectPath, callUpstreamTool) {
   let dirPath = requireString(args.dir_path, "dir_path"), offset = args.offset === void 0 || args.offset === null ? DEFAULT_OFFSET : Number(args.offset), limit = args.limit === void 0 || args.limit === null ? DEFAULT_LIMIT : Number(args.limit), depth = args.depth === void 0 || args.depth === null ? DEFAULT_DEPTH : Number(args.depth);
@@ -23136,7 +23251,7 @@ function formatEntry(entry) {
   return `${indent}${entry.name}${suffix}`;
 }
 
-// proxy-tools/handlers/read.ts
+// community/build/mcp-servers/ij-proxy/proxy-tools/handlers/read.ts
 var DEFAULT_READ_LIMIT = 2000, MAX_LINE_LENGTH = 500, TAB_WIDTH = 4, COMMENT_PREFIXES = ["#", "//", "--"], BLOCK_COMMENT_START = "/*", BLOCK_COMMENT_END = "*/", ANNOTATION_PREFIX = "@", TRUNCATION_ERROR2 = "file content truncated while reading";
 async function handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, { format = "numbered" } = {}) {
   let filePath = requireString(args.file_path, "file_path"), offset = toPositiveInt(args.offset, 1, "offset"), limit = toPositiveInt(args.limit, DEFAULT_READ_LIMIT, "limit"), mode = (args.mode ? String(args.mode).toLowerCase() : "slice") === "indentation" ? "indentation" : "slice", includeLineNumbers = format !== "raw", indentation = args.indentation ?? {}, anchorLine = indentation.anchor_line === void 0 || indentation.anchor_line === null ? null : toPositiveInt(indentation.anchor_line, void 0, "anchor_line"), maxLevels = toNonNegativeInt(indentation.max_levels, 0, "max_levels"), includeSiblings = Boolean(indentation.include_siblings ?? !1), includeHeader = indentation.include_header === void 0 ? !0 : Boolean(indentation.include_header), maxLines = indentation.max_lines === void 0 || indentation.max_lines === null ? null : toPositiveInt(indentation.max_lines, void 0, "max_lines"), { relative, absolute } = resolvePathInProject(projectPath, filePath, "file_path");
@@ -23488,8 +23603,8 @@ function isTruncationError(error48) {
   return error48 instanceof Error && error48.message === TRUNCATION_ERROR2;
 }
 
-// proxy-tools/handlers/rename.ts
-import path5 from "path";
+// community/build/mcp-servers/ij-proxy/proxy-tools/handlers/rename.ts
+import path4 from "path";
 async function handleRenameTool(args, projectPath, callUpstreamTool) {
   let toolArgs = args ?? {}, filePath = requireString(toolArgs.pathInProject, "pathInProject"), symbolName = requireString(toolArgs.symbolName, "symbolName"), newName = requireString(toolArgs.newName, "newName"), { relative } = resolvePathInProject(projectPath, filePath, "pathInProject"), result = await callUpstreamTool("rename_refactoring", {
     pathInProject: relative,
@@ -23498,16 +23613,119 @@ async function handleRenameTool(args, projectPath, callUpstreamTool) {
   }), message = extractTextFromResult(result);
   if (message)
     return message;
-  return `Renamed ${symbolName} to ${newName} in ${path5.resolve(projectPath, relative)}`;
+  return `Renamed ${symbolName} to ${newName} in ${path4.resolve(projectPath, relative)}`;
 }
 
-// proxy-tools/handlers/search-shared.ts
-import path6 from "path";
+// community/build/mcp-servers/ij-proxy/workarounds.ts
+var FULL_VERSION_RE = /\b\d{4}\.\d+(?:\.\d+){0,2}\b/, BUILD_VERSION_RE = /\b\d{3}\.\d+(?:\.\d+)?\b/, SNAPSHOT_BUILD_RE = /\b(\d{3})\.SNAPSHOT\b/i, SNAPSHOT_BUILD_PART = Number.MAX_SAFE_INTEGER, ANY_VERSION_RE = /\d+(?:\.\d+)+/;
+var WORKAROUND_FIXED_IN = {
+  ["search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */]: "261.20247"
+};
+function shouldApplyWorkaround(key, rawVersion) {
+  if (isWorkaroundDisabled(key))
+    return logDebug(`Workaround ${key} not used (disabled by env)`), !1;
+  let fixedInRaw = (WORKAROUND_FIXED_IN[key] ?? "").trim();
+  if (!fixedInRaw)
+    return !0;
+  if (!rawVersion)
+    return !0;
+  let ideVersion = parseIdeVersion(rawVersion), fixedSpec = parseVersionSpec(fixedInRaw);
+  if (!fixedSpec)
+    return !0;
+  let currentParts = fixedSpec.kind === "build" ? ideVersion.build ?? deriveBuildFromFull(ideVersion.full) : ideVersion.full;
+  if (!currentParts)
+    return !0;
+  if (compareVersionParts(currentParts, fixedSpec.parts) >= 0)
+    return logDebug(`Workaround ${key} not used; fixed in ${fixedInRaw}, ide ${ideVersion.raw}`), !1;
+  return !0;
+}
+function isWorkaroundDisabled(key) {
+  let disabledAll = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUNDS;
+  if (disabledAll && disabledAll !== "false" && disabledAll !== "0")
+    return !0;
+  let disabledKeys = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS;
+  if (!disabledKeys)
+    return !1;
+  return disabledKeys.split(",").map((entry) => entry.trim()).filter((entry) => entry.length > 0).includes(key);
+}
+function logDebug(message) {
+  let enabled = process.env.JETBRAINS_MCP_PROXY_WORKAROUND_DEBUG;
+  if (!enabled || enabled === "0" || enabled === "false")
+    return;
+  process.stderr.write(`[ij-mcp-proxy] ${message}
+`);
+}
+function parseIdeVersion(raw) {
+  let full = extractVersionParts(raw, FULL_VERSION_RE), build = extractVersionParts(raw, BUILD_VERSION_RE);
+  if (!build) {
+    let snapshotMatch = raw.match(SNAPSHOT_BUILD_RE);
+    if (snapshotMatch) {
+      let train = Number.parseInt(snapshotMatch[1], 10);
+      if (!Number.isNaN(train))
+        build = [train, SNAPSHOT_BUILD_PART];
+    }
+  }
+  return {
+    raw,
+    full: full ?? void 0,
+    build: build ?? void 0
+  };
+}
+function parseVersionSpec(version2) {
+  let snapshotMatch = version2.match(SNAPSHOT_BUILD_RE);
+  if (snapshotMatch) {
+    let train = Number.parseInt(snapshotMatch[1], 10);
+    if (!Number.isNaN(train))
+      return { parts: [train], kind: "build" };
+  }
+  let match = version2.match(ANY_VERSION_RE);
+  if (!match)
+    return null;
+  let parts = parseVersionParts(match[0]);
+  if (!parts)
+    return null;
+  let kind = parts[0] >= 1000 ? "full" : "build";
+  return { parts, kind };
+}
+function extractVersionParts(raw, regex) {
+  let match = raw.match(regex);
+  if (!match)
+    return null;
+  return parseVersionParts(match[0]);
+}
+function parseVersionParts(value) {
+  let parts = value.split(".").map((part) => Number.parseInt(part, 10));
+  if (parts.some((part) => Number.isNaN(part)))
+    return null;
+  return parts;
+}
+function deriveBuildFromFull(full) {
+  if (!full || full.length < 2)
+    return null;
+  let year = full[0], minor = full[1];
+  if (!Number.isFinite(year) || !Number.isFinite(minor))
+    return null;
+  if (year < 2000 || year > 2100)
+    return null;
+  return [(year - 2000) * 10 + minor];
+}
+function compareVersionParts(left, right) {
+  let maxLength = Math.max(left.length, right.length);
+  for (let i = 0;i < maxLength; i += 1) {
+    let leftValue = left[i] ?? 0, rightValue = right[i] ?? 0;
+    if (leftValue !== rightValue)
+      return leftValue - rightValue;
+  }
+  return 0;
+}
 
-// proxy-tools/handlers/search-constants.ts
+// community/build/mcp-servers/ij-proxy/proxy-tools/handlers/search-shared.ts
+import path5 from "path";
+
+// community/build/mcp-servers/ij-proxy/proxy-tools/handlers/search-constants.ts
 var DEFAULT_MAX_RESULTS = 1000, MAX_RESULTS_UPPER_BOUND = 5000, SEARCH_SCOPE_MULTIPLIER = 5;
 
-// proxy-tools/handlers/search-shared.ts
+// community/build/mcp-servers/ij-proxy/proxy-tools/handlers/search-shared.ts
 function normalizeLimit(value, fallback = DEFAULT_MAX_RESULTS) {
   let parsed = toPositiveInt(value, fallback, "limit") ?? fallback;
   return Math.min(parsed, MAX_RESULTS_UPPER_BOUND);
@@ -23589,21 +23807,21 @@ function resolveMoreFlag(result, itemCount, maxResults) {
 function normalizeProjectRelativePath(projectPath, filePath) {
   if (!filePath)
     return "";
-  if (path6.isAbsolute(filePath)) {
-    let relative = path6.relative(projectPath, filePath);
-    if (!relative.startsWith("..") && !path6.isAbsolute(relative))
+  if (path5.isAbsolute(filePath)) {
+    let relative = path5.relative(projectPath, filePath);
+    if (!relative.startsWith("..") && !path5.isAbsolute(relative))
       return toPosixPath(relative);
-    return path6.normalize(filePath);
+    return path5.normalize(filePath);
   }
-  return toPosixPath(path6.normalize(filePath));
+  return toPosixPath(path5.normalize(filePath));
 }
 function toPosixPath(value) {
   return value.replace(/\\/g, "/");
 }
 
-// proxy-tools/handlers/search-scope.ts
+// community/build/mcp-servers/ij-proxy/proxy-tools/handlers/search-scope.ts
 var import_picomatch = __toESM(require_picomatch2(), 1);
-import path7 from "path";
+import path6 from "path";
 import { statSync } from "fs";
 function buildPathScope(projectPath, rawPaths) {
   if (rawPaths === void 0 || rawPaths === null)
@@ -23660,7 +23878,7 @@ function resolveSearchRoot(projectPath, scope, globPattern) {
   for (let candidate of candidates) {
     if (!candidate)
       continue;
-    let absolute = path7.resolve(projectPath, candidate);
+    let absolute = path6.resolve(projectPath, candidate);
     if (isDirectory(absolute))
       return candidate;
   }
@@ -23675,7 +23893,7 @@ function filterEntriesByScope(entries, projectPath, scope) {
   });
 }
 function filterEntriesByDirectory(entries, projectPath, directoryToSearch) {
-  let absoluteDir = path7.resolve(projectPath, directoryToSearch);
+  let absoluteDir = path6.resolve(projectPath, directoryToSearch);
   return entries.filter((entry) => {
     let absolutePath = resolveAbsolutePath(projectPath, entry.filePath);
     return absolutePath ? isWithinDirectory(absolutePath, absoluteDir) : !1;
@@ -23712,10 +23930,10 @@ function normalizePathPattern(pattern, projectPath, originalPattern) {
       throw Error(`Specified path '${originalPattern}' points outside the project directory`);
     return pattern;
   }
-  let absolutePrefix = path7.isAbsolute(prefixTrimmed) ? path7.normalize(prefixTrimmed) : path7.resolve(projectPath, prefixTrimmed);
+  let absolutePrefix = path6.isAbsolute(prefixTrimmed) ? path6.normalize(prefixTrimmed) : path6.resolve(projectPath, prefixTrimmed);
   if (!isWithinProject(projectPath, absolutePrefix))
     throw Error(`Specified path '${originalPattern}' points outside the project directory`);
-  let relativePrefix = toPosixPath2(path7.relative(projectPath, absolutePrefix)), suffix = pattern.slice(prefix.length).replace(/^\/+/, "");
+  let relativePrefix = toPosixPath2(path6.relative(projectPath, absolutePrefix)), suffix = pattern.slice(prefix.length).replace(/^\/+/, "");
   if (relativePrefix === "")
     return suffix;
   if (suffix === "")
@@ -23750,7 +23968,7 @@ function computeCommonDirectory(patterns) {
   }
   if (common.length === 0)
     return null;
-  return path7.normalize(common.join("/"));
+  return path6.normalize(common.join("/"));
 }
 function extractDirectoryPrefix(pattern) {
   let globIndex = indexOfGlobChar(pattern), trimmed = (globIndex < 0 ? pattern : pattern.slice(0, globIndex)).replace(/\/+$/, "");
@@ -23766,7 +23984,7 @@ function extractDirectoryPrefix(pattern) {
   return trimmed;
 }
 function createMatcher(pattern) {
-  let nocase = path7.sep === "\\", matcher = import_picomatch.default(pattern, { dot: !0, nocase });
+  let nocase = path6.sep === "\\", matcher = import_picomatch.default(pattern, { dot: !0, nocase });
   return (candidate) => matcher(candidate);
 }
 function isDirectory(candidatePath) {
@@ -23780,8 +23998,8 @@ function resolveRelativePath(projectPath, filePath) {
   let absolute = resolveAbsolutePath(projectPath, filePath);
   if (!absolute)
     return null;
-  let relative = path7.relative(projectPath, absolute);
-  if (relative.startsWith("..") || path7.isAbsolute(relative))
+  let relative = path6.relative(projectPath, absolute);
+  if (relative.startsWith("..") || path6.isAbsolute(relative))
     return null;
   return toPosixPath2(relative);
 }
@@ -23789,7 +24007,7 @@ function resolveAbsolutePath(projectPath, filePath) {
   let resolved = normalizeEntryPath(projectPath, filePath);
   if (typeof resolved !== "string" || resolved === "")
     return null;
-  return path7.normalize(resolved);
+  return path6.normalize(resolved);
 }
 function matchesScope(scope, relativePosix) {
   if (!scope.includeMatchers.some((matcher) => matcher(relativePosix)))
@@ -23797,18 +24015,18 @@ function matchesScope(scope, relativePosix) {
   return scope.excludeMatchers.every((matcher) => !matcher(relativePosix));
 }
 function isWithinProject(projectPath, candidatePath) {
-  let relative = path7.relative(projectPath, candidatePath);
-  return relative === "" || !relative.startsWith("..") && !path7.isAbsolute(relative);
+  let relative = path6.relative(projectPath, candidatePath);
+  return relative === "" || !relative.startsWith("..") && !path6.isAbsolute(relative);
 }
 function isWithinDirectory(filePath, directoryPath) {
-  let relative = path7.relative(directoryPath, filePath);
-  return relative === "" || !relative.startsWith("..") && !path7.isAbsolute(relative);
+  let relative = path6.relative(directoryPath, filePath);
+  return relative === "" || !relative.startsWith("..") && !path6.isAbsolute(relative);
 }
 function toPosixPath2(value) {
   return value.replace(/\\/g, "/");
 }
 
-// proxy-tools/handlers/search-text.ts
+// community/build/mcp-servers/ij-proxy/proxy-tools/handlers/search-text.ts
 async function handleSearchTextTool(args, projectPath, callUpstreamTool, capabilities) {
   let query = requireString(args.q, "q").trim(), limit = normalizeLimit(args.limit), { scope, normalizedPaths } = buildPathScope(projectPath, args.paths);
   if (capabilities.hasSearchText) {
@@ -23823,7 +24041,7 @@ async function handleSearchTextTool(args, projectPath, callUpstreamTool, capabil
     throw Error("text search is not supported by this IDE version");
   return await searchTextLegacy(query, scope, limit, projectPath, callUpstreamTool);
 }
-async function handleSearchRegexTool(args, projectPath, callUpstreamTool, capabilities) {
+async function handleSearchRegexTool(args, projectPath, callUpstreamTool, capabilities, shouldApplyWorkaround2 = () => !0) {
   let query = requireString(args.q, "q").trim(), limit = normalizeLimit(args.limit), { scope, normalizedPaths } = buildPathScope(projectPath, args.paths);
   if (capabilities.hasSearchRegex) {
     let result = await callUpstreamTool("search_regex", {
@@ -23835,7 +24053,7 @@ async function handleSearchRegexTool(args, projectPath, callUpstreamTool, capabi
   }
   if (!capabilities.supportsRegex)
     throw Error("regex search is not supported by this IDE version");
-  return await searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool);
+  return await searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool, shouldApplyWorkaround2);
 }
 async function searchTextLegacy(query, scope, limit, projectPath, callUpstreamTool) {
   let requestLimit = expandLimit(limit, scope), directoryToSearch = resolveSearchRoot(projectPath, scope, null), { entries, probablyHasMoreMatchingEntries, timedOut } = await searchInFiles({
@@ -23846,21 +24064,21 @@ async function searchTextLegacy(query, scope, limit, projectPath, callUpstreamTo
   }, callUpstreamTool), filtered = scope ? filterEntriesByScope(entries, projectPath, scope) : entries, items = normalizeItemsFromEntries(filtered, projectPath, limit, !0), more = timedOut || probablyHasMoreMatchingEntries || filtered.length > limit;
   return serializeSearchResult({ items, more });
 }
-async function searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool) {
+async function searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool, shouldApplyWorkaround2) {
   let requestLimit = expandLimit(limit, scope), directoryToSearch = resolveSearchRoot(projectPath, scope, null), { entries, probablyHasMoreMatchingEntries, timedOut } = await searchInFiles({
     regexPattern: query,
     directoryToSearch: directoryToSearch ?? void 0,
     caseSensitive: !0,
     maxUsageCount: requestLimit
   }, callUpstreamTool), filtered = entries;
-  if (directoryToSearch && shouldApplyWorkaround("search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */))
+  if (directoryToSearch && shouldApplyWorkaround2("search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */))
     filtered = filterEntriesByDirectory(filtered, projectPath, directoryToSearch);
   if (scope)
     filtered = filterEntriesByScope(filtered, projectPath, scope);
   let items = normalizeItemsFromEntries(filtered, projectPath, limit, !0), more = timedOut || probablyHasMoreMatchingEntries || filtered.length > limit;
   return serializeSearchResult({ items, more });
 }
-// proxy-tools/handlers/search-file.ts
+// community/build/mcp-servers/ij-proxy/proxy-tools/handlers/search-file.ts
 async function handleSearchFileTool(args, projectPath, callUpstreamTool, capabilities) {
   let query = requireString(args.q, "q").trim(), includeExcluded = resolveIncludeExcluded(args), limit = normalizeLimit(args.limit), { scope, normalizedPaths } = buildPathScope(projectPath, args.paths);
   if (capabilities.hasSearchFile) {
@@ -23905,7 +24123,7 @@ function extractFilesResult(result) {
     timedOut: structuredRecord?.timedOut === !0
   };
 }
-// proxy-tools/handlers/search-symbol.ts
+// community/build/mcp-servers/ij-proxy/proxy-tools/handlers/search-symbol.ts
 async function handleSearchSymbolTool(args, projectPath, callUpstreamTool, capabilities) {
   let query = requireString(args.q, "q").trim(), limit = normalizeLimit(args.limit), { normalizedPaths } = buildPathScope(projectPath, args.paths);
   if (capabilities.hasSearchSymbol) {
@@ -23918,21 +24136,7 @@ async function handleSearchSymbolTool(args, projectPath, callUpstreamTool, capab
   }
   throw Error("symbol search is not supported by this IDE version");
 }
-// proxy-tools/handlers/write.ts
-import path8 from "path";
-async function handleWriteTool(args, projectPath, callUpstreamTool) {
-  let filePath = requireString(args.file_path, "file_path"), content = typeof args.content === "string" ? args.content : null;
-  if (content === null)
-    throw Error("content must be a string");
-  let { relative } = resolvePathInProject(projectPath, filePath, "file_path"), normalizedContent = normalizeLineEndings(content);
-  return await callUpstreamTool("create_new_file", {
-    pathInProject: relative,
-    text: normalizedContent,
-    overwrite: !0
-  }), `Wrote ${path8.resolve(projectPath, relative)}`;
-}
-
-// proxy-tools/schemas.ts
+// community/build/mcp-servers/ij-proxy/proxy-tools/schemas.ts
 function objectSchema(properties, required2) {
   return {
     type: "object",
@@ -23983,38 +24187,6 @@ function createReadSchema(includeIndentation) {
       }
     }, []);
   return objectSchema(properties, ["file_path"]);
-}
-function createWriteSchema() {
-  return objectSchema({
-    file_path: {
-      type: "string",
-      description: "Absolute or project-relative path to the file."
-    },
-    content: {
-      type: "string",
-      description: "The contents to write to the file."
-    }
-  }, ["file_path", "content"]);
-}
-function createEditSchema() {
-  return objectSchema({
-    file_path: {
-      type: "string",
-      description: "Absolute or project-relative path to the file."
-    },
-    old_string: {
-      type: "string",
-      description: "Text to replace."
-    },
-    new_string: {
-      type: "string",
-      description: "Replacement text."
-    },
-    replace_all: {
-      type: "boolean",
-      description: "When true, replace all occurrences. Otherwise replace only the first."
-    }
-  }, ["file_path", "old_string", "new_string"]);
 }
 function createListDirSchema() {
   return objectSchema({
@@ -24078,7 +24250,7 @@ function createApplyPatchSchema() {
   return objectSchema({
     input: {
       type: "string",
-      description: "Patch text in the apply_patch format, including Begin/End markers."
+      description: "Patch text in the apply_patch format or unified git diff format."
     }
   }, ["input"]);
 }
@@ -24099,15 +24271,13 @@ function createRenameSchema() {
   }, ["pathInProject", "symbolName", "newName"]);
 }
 
-// proxy-tools/registry.ts
-var TOOL_MODES = {
-  CODEX: "codex",
-  CC: "cc"
-}, BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set(["create_new_file", "execute_terminal_command"]), EXTRA_REPLACED_TOOL_NAMES = [
+// community/build/mcp-servers/ij-proxy/proxy-tools/registry.ts
+var BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set(["create_new_file", "execute_terminal_command"]), EXTRA_REPLACED_TOOL_NAMES = [
   "search_in_files_by_text",
   "search_in_files_by_regex",
   "find_files_by_glob",
   "find_files_by_name_keyword",
+  "replace_text_in_file",
   "search",
   "execute_terminal_command"
 ], RENAME_TOOL_DESCRIPTION = "Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use edit/apply_patch for renames.";
@@ -24130,7 +24300,6 @@ function buildToolSpec(name, description, inputSchema, context) {
 }
 var TOOL_VARIANTS = [
   {
-    mode: TOOL_MODES.CODEX,
     name: "read_file",
     description: "Reads a local file with 1-indexed line numbers, supporting slice and indentation-aware block modes.",
     schemaFactory: () => createReadSchema(!0),
@@ -24139,15 +24308,6 @@ var TOOL_VARIANTS = [
     expose: ({ readCapabilities }) => !readCapabilities.hasReadFile
   },
   {
-    mode: TOOL_MODES.CC,
-    name: "read",
-    description: "Read a local file using absolute or project-relative paths. Returns raw text.",
-    schemaFactory: () => createReadSchema(!1),
-    handlerFactory: ({ projectPath, callUpstreamTool, readCapabilities }) => (args) => handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, { format: "raw" }),
-    upstreamNames: ["get_file_text_by_path"]
-  },
-  {
-    mode: TOOL_MODES.CODEX,
     name: "search_text",
     description: "Search for a text substring in project files.",
     schemaFactory: () => createSearchTextSchema(),
@@ -24156,34 +24316,14 @@ var TOOL_VARIANTS = [
     expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchText && searchCapabilities.supportsText
   },
   {
-    mode: TOOL_MODES.CC,
-    name: "search_text",
-    description: "Search for a text substring in project files.",
-    schemaFactory: () => createSearchTextSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchTextTool(args, projectPath, callUpstreamTool, searchCapabilities),
-    upstreamNames: ["search_text"],
-    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchText && searchCapabilities.supportsText
-  },
-  {
-    mode: TOOL_MODES.CODEX,
     name: "search_regex",
     description: "Search for a regular expression in project files.",
     schemaFactory: () => createSearchRegexSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities, shouldApplyWorkaround: shouldApplyWorkaround2 }) => (args) => handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities, shouldApplyWorkaround2),
     upstreamNames: ["search_regex"],
     expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchRegex && searchCapabilities.supportsRegex
   },
   {
-    mode: TOOL_MODES.CC,
-    name: "search_regex",
-    description: "Search for a regular expression in project files.",
-    schemaFactory: () => createSearchRegexSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities),
-    upstreamNames: ["search_regex"],
-    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchRegex && searchCapabilities.supportsRegex
-  },
-  {
-    mode: TOOL_MODES.CODEX,
     name: "search_file",
     description: "Search for files using a glob pattern.",
     schemaFactory: () => createSearchFileSchema(),
@@ -24192,16 +24332,6 @@ var TOOL_VARIANTS = [
     expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchFile && searchCapabilities.supportsFile
   },
   {
-    mode: TOOL_MODES.CC,
-    name: "search_file",
-    description: "Search for files using a glob pattern.",
-    schemaFactory: () => createSearchFileSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchFileTool(args, projectPath, callUpstreamTool, searchCapabilities),
-    upstreamNames: ["search_file"],
-    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchFile && searchCapabilities.supportsFile
-  },
-  {
-    mode: TOOL_MODES.CODEX,
     name: "search_symbol",
     description: "Search for symbols (classes, methods, fields) by name.",
     schemaFactory: () => createSearchSymbolSchema(),
@@ -24210,16 +24340,6 @@ var TOOL_VARIANTS = [
     expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchSymbol && searchCapabilities.supportsSymbol
   },
   {
-    mode: TOOL_MODES.CC,
-    name: "search_symbol",
-    description: "Search for symbols (classes, methods, fields) by name.",
-    schemaFactory: () => createSearchSymbolSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchSymbolTool(args, projectPath, callUpstreamTool, searchCapabilities),
-    upstreamNames: ["search_symbol"],
-    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchSymbol && searchCapabilities.supportsSymbol
-  },
-  {
-    mode: TOOL_MODES.CODEX,
     name: "list_dir",
     description: "Lists entries in a local directory with 1-indexed entry numbers and simple type labels.",
     schemaFactory: () => createListDirSchema(),
@@ -24227,39 +24347,14 @@ var TOOL_VARIANTS = [
     upstreamNames: ["list_directory_tree"]
   },
   {
-    mode: TOOL_MODES.CODEX,
     name: "apply_patch",
-    description: "Apply a patch using the Codex apply_patch format.",
+    description: "Apply a patch using the Codex apply_patch format or unified git diff format.",
     schemaFactory: () => createApplyPatchSchema(),
     handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleApplyPatchTool(args, projectPath, callUpstreamTool),
-    upstreamNames: ["get_file_text_by_path"]
+    upstreamNames: ["get_file_text_by_path"],
+    expose: ({ readCapabilities }) => !readCapabilities.hasApplyPatch
   },
   {
-    mode: TOOL_MODES.CC,
-    name: "write",
-    description: "Write a local file using an absolute or project-relative path.",
-    schemaFactory: () => createWriteSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleWriteTool(args, projectPath, callUpstreamTool),
-    upstreamNames: ["create_new_file"]
-  },
-  {
-    mode: TOOL_MODES.CC,
-    name: "edit",
-    description: "Replace text in a local file. Fails if the target string is missing.",
-    schemaFactory: () => createEditSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleEditTool(args, projectPath, callUpstreamTool),
-    upstreamNames: ["replace_text_in_file"]
-  },
-  {
-    mode: TOOL_MODES.CODEX,
-    name: "rename",
-    description: RENAME_TOOL_DESCRIPTION,
-    schemaFactory: () => createRenameSchema(),
-    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleRenameTool(args, projectPath, callUpstreamTool),
-    upstreamNames: ["rename_refactoring"]
-  },
-  {
-    mode: TOOL_MODES.CC,
     name: "rename",
     description: RENAME_TOOL_DESCRIPTION,
     schemaFactory: () => createRenameSchema(),
@@ -24267,14 +24362,11 @@ var TOOL_VARIANTS = [
     upstreamNames: ["rename_refactoring"]
   }
 ];
-function getProxyToolVariants(mode) {
-  return TOOL_VARIANTS.filter((tool) => tool.mode === mode);
-}
 function isExposedVariant(tool, context) {
   return resolveToolExpose(tool.expose, context);
 }
-function buildProxyToolingData(mode, context) {
-  let variants = getProxyToolVariants(mode).filter((tool) => isExposedVariant(tool, context)), handlers = /* @__PURE__ */ new Map;
+function buildProxyToolingData(context) {
+  let variants = TOOL_VARIANTS.filter((tool) => isExposedVariant(tool, context)), handlers = /* @__PURE__ */ new Map;
   for (let tool of variants)
     handlers.set(tool.name, tool.handlerFactory(context));
   return {
@@ -24297,20 +24389,7 @@ function getReplacedToolNames() {
   return replaced;
 }
 
-// proxy-tools/tooling.ts
-function resolveToolMode(rawValue) {
-  if (rawValue === void 0 || rawValue === null || rawValue === "")
-    return { mode: TOOL_MODES.CODEX };
-  let normalized = String(rawValue).trim().toLowerCase();
-  if (normalized === "" || normalized === TOOL_MODES.CODEX)
-    return { mode: TOOL_MODES.CODEX };
-  if (normalized === TOOL_MODES.CC || normalized === "claude" || normalized === "claude-code" || normalized === "claude_code")
-    return { mode: TOOL_MODES.CC };
-  return {
-    mode: TOOL_MODES.CODEX,
-    warning: `Unknown JETBRAINS_MCP_TOOL_MODE '${rawValue}', defaulting to codex.`
-  };
-}
+// community/build/mcp-servers/ij-proxy/proxy-tools/tooling.ts
 var DISABLE_NEW_SEARCH_ENV = "JETBRAINS_MCP_PROXY_DISABLE_NEW_SEARCH";
 function isEnvFlagEnabled(name) {
   let raw = process.env[name];
@@ -24345,20 +24424,26 @@ function resolveReadCapabilities(upstreamTools) {
     if (name)
       names.add(name);
   }
-  return { capabilities: { hasReadFile: names.has("read_file") } };
+  return {
+    capabilities: {
+      hasReadFile: names.has("read_file"),
+      hasApplyPatch: names.has("apply_patch")
+    }
+  };
 }
 function createProxyTooling({
   projectPath,
   callUpstreamTool,
-  toolMode,
   searchCapabilities,
-  readCapabilities
+  readCapabilities,
+  ideVersion
 }) {
-  let resolvedMode = toolMode === TOOL_MODES.CC ? TOOL_MODES.CC : TOOL_MODES.CODEX, { proxyToolSpecs, proxyToolNames, handlers } = buildProxyToolingData(resolvedMode, {
+  let boundVersion = ideVersion ?? null, { proxyToolSpecs, proxyToolNames, handlers } = buildProxyToolingData({
     projectPath,
     callUpstreamTool,
     searchCapabilities,
-    readCapabilities
+    readCapabilities,
+    shouldApplyWorkaround: (key) => shouldApplyWorkaround(key, boundVersion)
   });
   async function runProxyToolCall(toolName, args) {
     let handler = handlers.get(toolName);
@@ -24366,10 +24451,231 @@ function createProxyTooling({
       throw Error(`Unknown tool: ${toolName}`);
     return await handler(args);
   }
-  return { proxyToolSpecs, proxyToolNames, runProxyToolCall, toolMode: resolvedMode };
+  return { proxyToolSpecs, proxyToolNames, runProxyToolCall };
 }
 
-// ij-mcp-proxy.ts
+// community/build/mcp-servers/ij-proxy/upstream.ts
+var RECOVERABLE_UPSTREAM_ERROR_RE = /\b(not connected|connection closed|session not found|server not initialized|mcp-session-id header is required)\b/i;
+function getErrorMessage(error48) {
+  return error48 instanceof Error ? error48.message : String(error48);
+}
+function isRecoverableUpstreamError(error48) {
+  return RECOVERABLE_UPSTREAM_ERROR_RE.test(getErrorMessage(error48));
+}
+function normalizeToolResult(result) {
+  if (result && typeof result === "object" && "toolResult" in result)
+    return result.toolResult;
+  return result;
+}
+
+class UpstreamConnection {
+  client;
+  _transport;
+  _projectPathManager;
+  _defaultProjectPathKey;
+  _toolCallTimeoutMs;
+  _warn;
+  _connectedPromise = null;
+  _tools = null;
+  searchCapabilities = resolveSearchCapabilities([]).capabilities;
+  readCapabilities = resolveReadCapabilities([]).capabilities;
+  ideVersion = null;
+  onStateChange;
+  constructor(options) {
+    this._transport = options.transport, this._toolCallTimeoutMs = options.toolCallTimeoutMs, this._warn = options.warn, this._defaultProjectPathKey = options.defaultProjectPathKey, this._projectPathManager = createProjectPathManager({
+      projectPath: options.projectPath,
+      defaultProjectPathKey: options.defaultProjectPathKey
+    }), this.client = new Client({ name: "ij-mcp-proxy", version: "1.0.0" }), this.client.onerror = (error48) => {
+      this._warn(`Upstream client error: ${error48.message}`);
+    }, this.client.onclose = () => {
+      this.reset(), this._warn("Upstream client connection closed; will reconnect on next request");
+    };
+  }
+  updateProjectPath(newProjectPath) {
+    this._projectPathManager = createProjectPathManager({
+      projectPath: newProjectPath,
+      defaultProjectPathKey: this._defaultProjectPathKey
+    });
+  }
+  async connect() {
+    if (!this.client.transport)
+      this._connectedPromise = null, this._tools = null;
+    if (this._connectedPromise)
+      return this._connectedPromise;
+    return this._connectedPromise = this.client.connect(this._transport).catch((error48) => {
+      throw this._connectedPromise = null, error48;
+    }), this._connectedPromise = this._connectedPromise.then(() => {
+      this._updateIdeVersion();
+    }), this._connectedPromise;
+  }
+  reset() {
+    this._connectedPromise = null, this._tools = null, this.searchCapabilities = resolveSearchCapabilities([]).capabilities, this.readCapabilities = resolveReadCapabilities([]).capabilities, this.ideVersion = null, this.onStateChange?.();
+  }
+  async withReconnect(label, fn) {
+    try {
+      return await fn();
+    } catch (error48) {
+      if (!isRecoverableUpstreamError(error48))
+        throw error48;
+      this._warn(`Upstream ${label} failed (${getErrorMessage(error48)}); reconnecting and retrying once`), this.reset();
+      try {
+        await this._transport.resetTransport(error48);
+      } catch (resetError) {
+        this._warn(`Failed to reset MCP stream transport: ${getErrorMessage(resetError)}`);
+      }
+      return await this.connect(), fn();
+    }
+  }
+  async refreshTools() {
+    return await this.withReconnect("tools/list", async () => {
+      await this.connect();
+      let response = await this.client.listTools(), tools = Array.isArray(response?.tools) ? response.tools : [];
+      return this._projectPathManager.updateProjectPathKeys(tools), this._projectPathManager.stripProjectPathFromTools(tools), this._tools = tools, this.searchCapabilities = resolveSearchCapabilities(tools).capabilities, this.readCapabilities = resolveReadCapabilities(tools).capabilities, this.onStateChange?.(), tools;
+    });
+  }
+  async getTools() {
+    if (!this._tools)
+      await this.refreshTools();
+    return this._tools ?? [];
+  }
+  async callTool(toolName, args) {
+    return await this.withReconnect(`tools/call ${toolName}`, async () => {
+      await this.connect(), await this.getTools();
+      let callArgs = { ...args };
+      this._projectPathManager.injectProjectPathArgs(toolName, callArgs);
+      let options = this._toolCallTimeoutMs > 0 ? { timeout: this._toolCallTimeoutMs } : void 0, result = normalizeToolResult(await this.client.callTool({ name: toolName, arguments: callArgs }, void 0, options));
+      if (result?.isError)
+        throw Error(extractTextFromResult(result) || "Upstream tool error");
+      return result;
+    });
+  }
+  async callToolForClient(toolName, args) {
+    return await this.withReconnect(`tools/call ${toolName}`, async () => {
+      await this.connect(), await this.getTools(), this._projectPathManager.injectProjectPathArgs(toolName, args);
+      let options = this._toolCallTimeoutMs > 0 ? { timeout: this._toolCallTimeoutMs } : void 0, result = await this.client.callTool({ name: toolName, arguments: args }, void 0, options);
+      return normalizeToolResult(result);
+    });
+  }
+  async forwardRequest(method, params) {
+    return await this.withReconnect(method, async () => {
+      return await this.connect(), await this.client.request({ method, params }, ResultSchema);
+    });
+  }
+  async forwardNotification(notification) {
+    await this.withReconnect(notification.method, async () => {
+      await this.connect(), await this.client.notification(notification);
+    });
+  }
+  _updateIdeVersion() {
+    let serverInfo = this.client.getServerVersion();
+    this.ideVersion = typeof serverInfo?.version === "string" ? serverInfo.version : null;
+  }
+}
+
+// community/build/mcp-servers/ij-proxy/discovery.ts
+function buildCandidateList(preferredPorts, portScanStart, portScanLimit) {
+  let seen = /* @__PURE__ */ new Set, candidates = [];
+  for (let port of preferredPorts) {
+    if (!Number.isFinite(port) || port <= 0 || seen.has(port))
+      continue;
+    seen.add(port), candidates.push(port);
+  }
+  let limit = Number.isFinite(portScanLimit) && portScanLimit > 0 ? portScanLimit : 0, start = Number.isFinite(portScanStart) && portScanStart > 0 ? portScanStart : 0;
+  for (let i = 0;i < limit; i++) {
+    let port = start + i;
+    if (port <= 0 || seen.has(port))
+      continue;
+    seen.add(port), candidates.push(port);
+  }
+  return candidates;
+}
+async function findReachablePorts(options) {
+  let { preferredPorts, portScanStart, portScanLimit, scanTimeoutMs, buildUrl, probeHost = "127.0.0.1", warn } = options, candidates = buildCandidateList(preferredPorts, portScanStart, portScanLimit);
+  if (candidates.length === 0)
+    return [];
+  let probeResults = await Promise.allSettled(candidates.map(async (port) => {
+    let reachable = await isPortReachable(port, {
+      host: probeHost,
+      timeout: scanTimeoutMs > 0 ? scanTimeoutMs : void 0
+    });
+    return { port, reachable };
+  })), result = [];
+  for (let probeResult of probeResults)
+    if (probeResult.status === "fulfilled" && probeResult.value.reachable) {
+      let port = probeResult.value.port;
+      result.push({ port, url: buildUrl(port) });
+    }
+  if (result.length === 0 && warn)
+    warn(`No reachable MCP stream ports found. Probed: ${candidates.join(", ")}`);
+  return result;
+}
+
+// community/build/mcp-servers/ij-proxy/routing.ts
+import path7 from "path";
+var RIDER_PROJECT_SUBPATH = "dotnet", MERGE_TOOL_NAMES = /* @__PURE__ */ new Set([
+  "search_text",
+  "search_regex",
+  "search_file",
+  "search_symbol"
+]);
+function resolveRoute(toolName, args, projectRoot) {
+  if (MERGE_TOOL_NAMES.has(toolName))
+    return "merge";
+  return resolveIdeForPath(args, projectRoot) === "rider" ? "target-rider" : "primary";
+}
+function rewriteArgsForTarget(route, args) {
+  if (route !== "target-rider")
+    return { ...args };
+  let rewritten = { ...args };
+  for (let key of PATH_ARG_KEYS) {
+    let value = rewritten[key];
+    if (typeof value === "string" && value.length > 0)
+      rewritten[key] = stripRiderPrefix(value);
+  }
+  return rewritten;
+}
+function stripRiderPrefix(filePath) {
+  if (filePath.startsWith(RIDER_PROJECT_SUBPATH + "/"))
+    return filePath.slice(RIDER_PROJECT_SUBPATH.length + 1);
+  if (filePath.startsWith(RIDER_PROJECT_SUBPATH + "\\"))
+    return filePath.slice(RIDER_PROJECT_SUBPATH.length + 1);
+  if (filePath === RIDER_PROJECT_SUBPATH)
+    return "";
+  return filePath;
+}
+function isMergeTool(toolName) {
+  return MERGE_TOOL_NAMES.has(toolName);
+}
+function createPathPrefixTransformer(prefix) {
+  return (items) => items.map((item) => ({
+    ...item,
+    filePath: prefix + "/" + item.filePath
+  }));
+}
+var riderItemTransformer = createPathPrefixTransformer(RIDER_PROJECT_SUBPATH);
+function resolveIdeForPath(args, projectRoot) {
+  let filePath = extractPathArg(args);
+  return filePath != null && isRiderPath(filePath, projectRoot) ? "rider" : "idea";
+}
+function isRiderPath(filePath, projectRoot) {
+  if (!filePath)
+    return !1;
+  let absolute = path7.isAbsolute(filePath) ? path7.normalize(filePath) : path7.resolve(projectRoot, filePath), relative = path7.relative(projectRoot, absolute);
+  if (relative.startsWith("..") || path7.isAbsolute(relative))
+    return !1;
+  return relative === RIDER_PROJECT_SUBPATH || relative.startsWith(RIDER_PROJECT_SUBPATH + path7.sep);
+}
+var PATH_ARG_KEYS = ["pathInProject", "file_path", "dir_path", "directoryPath", "filePath"];
+function extractPathArg(args) {
+  for (let key of PATH_ARG_KEYS) {
+    let value = args[key];
+    if (typeof value === "string" && value.length > 0)
+      return value;
+  }
+  return;
+}
+
+// community/build/mcp-servers/ij-proxy/ij-mcp-proxy.ts
 var explicitMcpUrl = env.JETBRAINS_MCP_STREAM_URL || env.MCP_STREAM_URL || env.JETBRAINS_MCP_URL || env.MCP_URL, defaultHost = "127.0.0.1", defaultPort = 64342, defaultPath = "/stream", defaultScanLimit = 10, portScanStartEnv = env.JETBRAINS_MCP_PORT_START, portScanStart = parseEnvInt("JETBRAINS_MCP_PORT_START", defaultPort), portScanLimit = parseEnvInt("JETBRAINS_MCP_PORT_SCAN_LIMIT", defaultScanLimit), preferredPorts = portScanStartEnv ? [portScanStart] : [defaultPort, 64344], connectTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_CONNECT_TIMEOUT_S", 10), scanTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_SCAN_TIMEOUT_S", 1), queueLimit = parseEnvNonNegativeInt("JETBRAINS_MCP_QUEUE_LIMIT", 100), toolCallTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S", 60), queueWaitTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S", toolCallTimeoutMs > 0 ? Math.round(toolCallTimeoutMs / 1000) : 0), STREAM_RETRY_ATTEMPTS = 3, STREAM_RETRY_BASE_DELAY_MS = 200;
 function parseEnvInt(name, fallback) {
   let raw = env[name];
@@ -24395,71 +24701,206 @@ function parseEnvSeconds(name, fallbackSeconds) {
 function buildStreamUrl(port) {
   return `http://${defaultHost}:${port}${defaultPath}`;
 }
-var explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH, projectPath = explicitProjectPath && explicitProjectPath.length > 0 ? path9.resolve(explicitProjectPath) : path9.resolve(cwd()), defaultProjectPathKey = "project_path", projectPathManager = createProjectPathManager({ projectPath, defaultProjectPathKey }), toolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE), REPLACED_TOOL_NAMES = getReplacedToolNames(), BASE_BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]), searchCapabilities = resolveSearchCapabilities([]).capabilities, readCapabilities = resolveReadCapabilities([]).capabilities;
+function resolveProjectPath(rawValue) {
+  if (!rawValue)
+    return { projectPath: path8.resolve(cwd()) };
+  if (rawValue.startsWith("file://"))
+    try {
+      return { projectPath: path8.resolve(fileURLToPath(new URL(rawValue))) };
+    } catch (error48) {
+      let message = error48 instanceof Error ? error48.message : String(error48);
+      return {
+        projectPath: path8.resolve(rawValue),
+        warning: `Failed to parse JETBRAINS_MCP_PROJECT_PATH as a file URI (${message}); falling back to path resolution.`
+      };
+    }
+  return { projectPath: path8.resolve(rawValue) };
+}
+var explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH, projectPathResolution = resolveProjectPath(explicitProjectPath), projectPath = projectPathResolution.projectPath, defaultProjectPathKey = "project_path", REPLACED_TOOL_NAMES = getReplacedToolNames(), BASE_BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]);
 function blockedToolMessage(toolName) {
-  if (toolName === "create_new_file") {
-    if (toolModeInfo.mode === TOOL_MODES.CC)
-      return `Tool '${toolName}' is not exposed by ij-proxy. Use 'write' instead.`;
+  if (toolName === "create_new_file")
     return `Tool '${toolName}' is not exposed by ij-proxy. Use 'apply_patch' instead.`;
-  }
   return `Tool '${toolName}' is not exposed by ij-proxy.`;
 }
-var proxyToolSpecs = [], proxyToolNames = /* @__PURE__ */ new Set, runProxyToolCall = async () => {
-  throw Error("Proxy tooling not initialized");
-};
-function updateProxyTooling() {
-  let tooling = createProxyTooling({
-    projectPath,
-    callUpstreamTool,
-    toolMode: toolModeInfo.mode,
-    searchCapabilities,
-    readCapabilities
-  });
-  proxyToolSpecs = tooling.proxyToolSpecs, proxyToolNames = tooling.proxyToolNames, runProxyToolCall = tooling.runProxyToolCall;
+var ideaUpstream = null, riderUpstream = null, discoveryPromise = null, proxyToolSpecs = [], proxyToolNames = /* @__PURE__ */ new Set, ideaProxyToolCall = null, riderProxyToolCall = null;
+function primaryUpstream() {
+  let upstream = ideaUpstream ?? riderUpstream;
+  if (!upstream)
+    throw Error("No upstream connection available");
+  return upstream;
 }
-updateProxyTooling();
+function updateProxyTooling() {
+  let ideaSpecs = [], ideaNames = /* @__PURE__ */ new Set;
+  if (ideaUpstream) {
+    let tooling = createProxyTooling({
+      projectPath,
+      callUpstreamTool: (name, args) => ideaUpstream.callTool(name, args),
+      searchCapabilities: ideaUpstream.searchCapabilities,
+      readCapabilities: ideaUpstream.readCapabilities,
+      ideVersion: ideaUpstream.ideVersion
+    });
+    ideaSpecs = tooling.proxyToolSpecs, ideaNames = tooling.proxyToolNames, ideaProxyToolCall = tooling.runProxyToolCall;
+  } else
+    ideaProxyToolCall = null;
+  let riderSpecs = [], riderNames = /* @__PURE__ */ new Set;
+  if (riderUpstream) {
+    let riderProjectPath = path8.join(projectPath, RIDER_PROJECT_SUBPATH), tooling = createProxyTooling({
+      projectPath: riderProjectPath,
+      callUpstreamTool: (name, args) => riderUpstream.callTool(name, args),
+      searchCapabilities: riderUpstream.searchCapabilities,
+      readCapabilities: riderUpstream.readCapabilities,
+      ideVersion: riderUpstream.ideVersion
+    });
+    riderSpecs = tooling.proxyToolSpecs, riderNames = tooling.proxyToolNames, riderProxyToolCall = tooling.runProxyToolCall;
+  } else
+    riderProxyToolCall = null;
+  proxyToolSpecs = mergeToolLists(ideaSpecs, riderSpecs, /* @__PURE__ */ new Set), proxyToolNames = /* @__PURE__ */ new Set([...ideaNames, ...riderNames]);
+}
 function note(message) {
   logToFile(message), logProgress(message);
 }
 function warn(message) {
   logToFile(message), logProgress(message);
 }
-clearLogFile();
-if (toolModeInfo.warning)
-  warn(toolModeInfo.warning);
-var streamTransport = createStreamTransport({
-  explicitUrl: explicitMcpUrl,
-  preferredPorts,
-  portScanStart,
-  portScanLimit,
-  connectTimeoutMs,
-  scanTimeoutMs,
-  queueLimit,
-  queueWaitTimeoutMs,
-  retryAttempts: STREAM_RETRY_ATTEMPTS,
-  retryBaseDelayMs: STREAM_RETRY_BASE_DELAY_MS,
-  buildUrl: buildStreamUrl,
-  note,
-  warn
-}), upstreamClient = new Client({ name: "ij-mcp-proxy", version: "1.0.0" });
-upstreamClient.onerror = (error48) => {
-  warn(`Upstream client error: ${error48.message}`);
-};
-upstreamClient.onclose = () => {
-  resetUpstreamState(), warn("Upstream client connection closed; will reconnect on next request");
-};
-var proxyServer = new Server({ name: "ij-mcp-proxy", version: "1.0.0" }, {
-  capabilities: {
-    tools: { listChanged: !0 },
-    resources: { subscribe: !0, listChanged: !0 },
-    prompts: { listChanged: !0 },
-    logging: {}
+function buildInstructions() {
+  let ides = [];
+  if (ideaUpstream) {
+    let name = ideaUpstream.client.getServerVersion()?.name ?? "IntelliJ IDEA", version2 = ideaUpstream.ideVersion;
+    ides.push(version2 ? `${name} ${version2}` : name);
   }
+  if (riderUpstream) {
+    let name = riderUpstream.client.getServerVersion()?.name ?? "JetBrains Rider", version2 = riderUpstream.ideVersion;
+    ides.push(version2 ? `${name} ${version2}` : name);
+  }
+  if (ides.length === 0)
+    return;
+  return `Connected IDEs: ${ides.join(", ")}.`;
+}
+clearLogFile();
+if (projectPathResolution.warning)
+  warn(projectPathResolution.warning);
+function createUpstreamForUrl(url2) {
+  let transport = createStreamTransport({
+    explicitUrl: url2,
+    preferredPorts: [],
+    portScanStart: 0,
+    portScanLimit: 0,
+    connectTimeoutMs,
+    scanTimeoutMs,
+    queueLimit,
+    queueWaitTimeoutMs,
+    retryAttempts: STREAM_RETRY_ATTEMPTS,
+    retryBaseDelayMs: STREAM_RETRY_BASE_DELAY_MS,
+    buildUrl: buildStreamUrl,
+    note,
+    warn
+  }), conn = new UpstreamConnection({
+    transport,
+    projectPath,
+    defaultProjectPathKey,
+    toolCallTimeoutMs,
+    warn
+  });
+  return conn.onStateChange = () => updateProxyTooling(), conn;
+}
+function setupUpstreamClientHandlers(conn) {
+  conn.client.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
+    try {
+      await conn.refreshTools(), await proxyServer.sendToolListChanged();
+    } catch (error48) {
+      let message = error48 instanceof Error ? error48.message : String(error48);
+      warn(`Failed to refresh tool list after upstream change: ${message}`);
+    }
+  }), conn.client.fallbackRequestHandler = async (request) => {
+    return await proxyServer.request({ method: request.method, params: request.params }, ResultSchema);
+  }, conn.client.fallbackNotificationHandler = async (notification) => {
+    try {
+      await proxyServer.notification(notification);
+    } catch (error48) {
+      let message = error48 instanceof Error ? error48.message : String(error48);
+      warn(`Failed to forward upstream notification: ${message}`);
+    }
+  };
+}
+function isRiderServerName(name) {
+  return /rider/i.test(name);
+}
+async function ensureDiscovered() {
+  if (ideaUpstream || riderUpstream)
+    return;
+  if (discoveryPromise)
+    return discoveryPromise;
+  return discoveryPromise = performDiscovery(), discoveryPromise;
+}
+async function performDiscovery() {
+  try {
+    if (explicitMcpUrl) {
+      let conn = createUpstreamForUrl(explicitMcpUrl);
+      await conn.connect();
+      let name = conn.client.getServerVersion()?.name ?? "";
+      if (isRiderServerName(name))
+        conn.updateProjectPath(path8.join(projectPath, RIDER_PROJECT_SUBPATH)), riderUpstream = conn;
+      else
+        ideaUpstream = conn;
+      setupUpstreamClientHandlers(conn), updateProxyTooling();
+      return;
+    }
+    let reachable = await findReachablePorts({
+      preferredPorts,
+      portScanStart,
+      portScanLimit,
+      scanTimeoutMs,
+      buildUrl: buildStreamUrl,
+      warn
+    });
+    for (let { url: url2 } of reachable) {
+      let conn = createUpstreamForUrl(url2);
+      try {
+        await conn.connect();
+        let name = conn.client.getServerVersion()?.name ?? "";
+        if (isRiderServerName(name) && !riderUpstream)
+          conn.updateProjectPath(path8.join(projectPath, RIDER_PROJECT_SUBPATH)), riderUpstream = conn, setupUpstreamClientHandlers(conn), note(`Rider upstream: ${url2} (${name})`);
+        else if (!isRiderServerName(name) && !ideaUpstream)
+          ideaUpstream = conn, setupUpstreamClientHandlers(conn), note(`IDEA upstream: ${url2} (${name})`);
+        else
+          try {
+            await conn.client.close();
+          } catch {}
+      } catch (error48) {
+        let message = error48 instanceof Error ? error48.message : String(error48);
+        warn(`Failed to connect to ${url2}: ${message}`);
+      }
+    }
+    if (!ideaUpstream && !riderUpstream)
+      throw Error(`No IDE found. Install the "MCP Server" plugin and ensure it is enabled. Probed ports: ${preferredPorts.join(", ")} + scan ${portScanStart}..${portScanStart + portScanLimit - 1}`);
+    if (ideaUpstream && riderUpstream)
+      note("Multi-IDE mode: routing between IDEA and Rider");
+    updateProxyTooling();
+  } finally {
+    discoveryPromise = null;
+  }
+}
+var serverInfo = { name: "ij-mcp-proxy", version: "1.0.0" }, serverCapabilities = {
+  tools: { listChanged: !0 },
+  resources: { subscribe: !0, listChanged: !0 },
+  prompts: { listChanged: !0 },
+  logging: {}
+}, proxyServer = new Server(serverInfo, { capabilities: serverCapabilities });
+proxyServer.setRequestHandler(InitializeRequestSchema, async () => {
+  await performDiscovery();
+  let instructions = buildInstructions();
+  return {
+    protocolVersion: LATEST_PROTOCOL_VERSION,
+    capabilities: serverCapabilities,
+    serverInfo,
+    ...instructions && { instructions }
+  };
 });
 proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
-  let upstreamTools = await getUpstreamTools();
+  await ensureDiscovered();
+  let ideaTools = ideaUpstream ? await ideaUpstream.getTools() : [], riderTools = riderUpstream ? await riderUpstream.getTools() : [], allUpstreamTools = mergeToolLists(ideaTools, riderTools, /* @__PURE__ */ new Set);
   return {
-    tools: mergeToolLists(proxyToolSpecs, upstreamTools, BASE_BLOCKED_TOOL_NAMES)
+    tools: mergeToolLists(proxyToolSpecs, allUpstreamTools, BASE_BLOCKED_TOOL_NAMES)
   };
 });
 proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -24468,49 +24909,58 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     return makeToolError("Tool name is required");
   if (BASE_BLOCKED_TOOL_NAMES.has(toolName))
     return makeToolError(blockedToolMessage(toolName));
-  if (proxyToolNames.has(toolName))
-    try {
-      let output = await runProxyToolCall(toolName, args);
-      return makeToolOutput(output);
-    } catch (error48) {
-      let message = error48 instanceof Error ? error48.message : String(error48);
-      return makeToolError(message);
+  if (await ensureDiscovered(), proxyToolNames.has(toolName)) {
+    if (ideaProxyToolCall && riderProxyToolCall) {
+      if (isMergeTool(toolName))
+        return await callMergedProxyTool(toolName, args);
+      let ide = resolveIdeForPath(args, projectPath), proxyCall2 = ide === "rider" ? riderProxyToolCall : ideaProxyToolCall, rewrittenArgs = rewriteArgsForTarget(ide === "rider" ? "target-rider" : "target-idea", args);
+      try {
+        return makeToolOutput(await proxyCall2(toolName, rewrittenArgs));
+      } catch (error48) {
+        let message = error48 instanceof Error ? error48.message : String(error48);
+        return makeToolError(message);
+      }
     }
+    let proxyCall = ideaProxyToolCall ?? riderProxyToolCall;
+    if (proxyCall)
+      try {
+        return makeToolOutput(await proxyCall(toolName, args));
+      } catch (error48) {
+        let message = error48 instanceof Error ? error48.message : String(error48);
+        return makeToolError(message);
+      }
+  }
+  if (ideaUpstream && riderUpstream) {
+    let route = resolveRoute(toolName, args, projectPath);
+    switch (route) {
+      case "merge":
+        return await callMergedPassthroughTool(toolName, args);
+      case "target-idea":
+      case "target-rider": {
+        let target = route === "target-rider" ? riderUpstream : ideaUpstream;
+        try {
+          return await target.callToolForClient(toolName, rewriteArgsForTarget(route, args));
+        } catch (error48) {
+          let message = error48 instanceof Error ? error48.message : String(error48);
+          return makeToolError(message);
+        }
+      }
+      case "primary":
+        break;
+    }
+  }
   try {
-    return await callUpstreamToolForClient(toolName, args);
+    return await primaryUpstream().callToolForClient(toolName, args);
   } catch (error48) {
     let message = error48 instanceof Error ? error48.message : String(error48);
     return makeToolError(message);
   }
 });
 proxyServer.fallbackRequestHandler = async (request) => {
-  return await withUpstreamReconnect(request.method, async () => {
-    return await ensureUpstreamConnected(), await upstreamClient.request({ method: request.method, params: request.params }, ResultSchema);
-  });
+  return await ensureDiscovered(), await primaryUpstream().forwardRequest(request.method, request.params);
 };
 proxyServer.fallbackNotificationHandler = async (notification) => {
-  await withUpstreamReconnect(notification.method, async () => {
-    await ensureUpstreamConnected(), await upstreamClient.notification(notification);
-  });
-};
-upstreamClient.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
-  try {
-    await refreshUpstreamTools(), await proxyServer.sendToolListChanged();
-  } catch (error48) {
-    let message = error48 instanceof Error ? error48.message : String(error48);
-    warn(`Failed to refresh tool list after upstream change: ${message}`);
-  }
-});
-upstreamClient.fallbackRequestHandler = async (request) => {
-  return await proxyServer.request({ method: request.method, params: request.params }, ResultSchema);
-};
-upstreamClient.fallbackNotificationHandler = async (notification) => {
-  try {
-    await proxyServer.notification(notification);
-  } catch (error48) {
-    let message = error48 instanceof Error ? error48.message : String(error48);
-    warn(`Failed to forward upstream notification: ${message}`);
-  }
+  await ensureDiscovered(), await primaryUpstream().forwardNotification(notification);
 };
 var stdioTransport = new StdioServerTransport;
 stdioTransport.onerror = (error48) => {
@@ -24520,63 +24970,57 @@ proxyServer.connect(stdioTransport).catch((error48) => {
   let message = error48 instanceof Error ? error48.message : String(error48);
   warn(`Failed to start stdio transport: ${message}`);
 });
-var upstreamConnectedPromise = null, upstreamTools = null, RECOVERABLE_UPSTREAM_ERROR_RE = /\b(not connected|connection closed|session not found|server not initialized|mcp-session-id header is required)\b/i;
-function getErrorMessage(error48) {
-  return error48 instanceof Error ? error48.message : String(error48);
+async function callMergedProxyTool(toolName, args) {
+  let results = await Promise.allSettled([
+    ideaProxyToolCall(toolName, { ...args }),
+    riderProxyToolCall(toolName, { ...args })
+  ]);
+  return mergeSettledResults(results, "proxy", [void 0, riderItemTransformer]);
 }
-function isRecoverableUpstreamError(error48) {
-  let message = getErrorMessage(error48);
-  return RECOVERABLE_UPSTREAM_ERROR_RE.test(message);
+async function callMergedPassthroughTool(toolName, args) {
+  let results = await Promise.allSettled([
+    ideaUpstream.callToolForClient(toolName, { ...args }),
+    riderUpstream.callToolForClient(toolName, { ...args })
+  ]);
+  return mergeSettledResults(results, "passthrough", [void 0, riderItemTransformer]);
 }
-function resetUpstreamState() {
-  upstreamConnectedPromise = null, upstreamTools = null, searchCapabilities = resolveSearchCapabilities([]).capabilities, readCapabilities = resolveReadCapabilities([]).capabilities, updateProxyTooling(), setIdeVersion(null);
+function logSettledErrors(results) {
+  for (let r of results)
+    if (r.status === "rejected")
+      warn(`Merge: one upstream failed: ${r.reason instanceof Error ? r.reason.message : String(r.reason)}`);
 }
-async function withUpstreamReconnect(label, fn) {
-  try {
-    return await fn();
-  } catch (error48) {
-    if (!isRecoverableUpstreamError(error48))
-      throw error48;
-    warn(`Upstream ${label} failed (${getErrorMessage(error48)}); reconnecting and retrying once`), resetUpstreamState();
-    try {
-      await streamTransport.resetTransport(error48);
-    } catch (resetError) {
-      warn(`Failed to reset MCP stream transport: ${getErrorMessage(resetError)}`);
+function settledErrorOutput(results) {
+  for (let r of results)
+    if (r.status === "rejected") {
+      let message = r.reason instanceof Error ? r.reason.message : String(r.reason);
+      return makeToolError(message);
     }
-    return await ensureUpstreamConnected(), fn();
+  return makeToolError("All upstreams failed");
+}
+function extractItemsFromResult(value, mode) {
+  if (mode === "proxy")
+    return extractItems(value);
+  let text = extractTextFromResult(value);
+  if (!text)
+    return [];
+  return extractItems({ content: [{ type: "text", text }] });
+}
+function mergeSettledResults(results, mode, transformers = []) {
+  logSettledErrors(results);
+  let allItems = [];
+  for (let i = 0;i < results.length; i++) {
+    let r = results[i];
+    if (r.status !== "fulfilled")
+      continue;
+    let value = r.value;
+    if (value == null)
+      continue;
+    let items = extractItemsFromResult(value, mode), transformer = transformers[i];
+    allItems.push(...transformer ? transformer(items) : items);
   }
-}
-async function ensureUpstreamConnected() {
-  if (!upstreamClient.transport)
-    upstreamConnectedPromise = null, upstreamTools = null;
-  if (upstreamConnectedPromise)
-    return upstreamConnectedPromise;
-  return upstreamConnectedPromise = upstreamClient.connect(streamTransport).catch((error48) => {
-    throw upstreamConnectedPromise = null, error48;
-  }), upstreamConnectedPromise = upstreamConnectedPromise.then(() => {
-    updateIdeVersionFromUpstream();
-  }), upstreamConnectedPromise;
-}
-function updateIdeVersionFromUpstream() {
-  let version2 = upstreamClient.getServerVersion()?.version;
-  setIdeVersion(typeof version2 === "string" ? version2 : null);
-}
-async function refreshUpstreamTools() {
-  return await withUpstreamReconnect("tools/list", async () => {
-    await ensureUpstreamConnected();
-    let response = await upstreamClient.listTools(), tools = Array.isArray(response?.tools) ? response.tools : [];
-    return projectPathManager.updateProjectPathKeys(tools), projectPathManager.stripProjectPathFromTools(tools), upstreamTools = tools, searchCapabilities = resolveSearchCapabilities(tools).capabilities, readCapabilities = resolveReadCapabilities(tools).capabilities, updateProxyTooling(), tools;
-  });
-}
-async function getUpstreamTools() {
-  if (!upstreamTools)
-    await refreshUpstreamTools();
-  return upstreamTools ?? [];
-}
-function normalizeToolResult(result) {
-  if (result && typeof result === "object" && "toolResult" in result)
-    return result.toolResult;
-  return result;
+  if (allItems.length > 0)
+    return makeToolOutput(JSON.stringify({ items: allItems }));
+  return settledErrorOutput(results);
 }
 function makeToolOutput(text) {
   return {
@@ -24599,27 +25043,9 @@ function makeToolError(text) {
     isError: !0
   };
 }
-async function callUpstreamToolForClient(toolName, args) {
-  return await withUpstreamReconnect(`tools/call ${toolName}`, async () => {
-    await ensureUpstreamConnected(), await getUpstreamTools(), projectPathManager.injectProjectPathArgs(toolName, args);
-    let options = toolCallTimeoutMs > 0 ? { timeout: toolCallTimeoutMs } : void 0, result = await upstreamClient.callTool({ name: toolName, arguments: args }, void 0, options);
-    return normalizeToolResult(result);
-  });
-}
-async function callUpstreamTool(toolName, args) {
-  return await withUpstreamReconnect(`tools/call ${toolName}`, async () => {
-    await ensureUpstreamConnected(), await getUpstreamTools();
-    let callArgs = { ...args };
-    projectPathManager.injectProjectPathArgs(toolName, callArgs);
-    let options = toolCallTimeoutMs > 0 ? { timeout: toolCallTimeoutMs } : void 0, result = normalizeToolResult(await upstreamClient.callTool({ name: toolName, arguments: callArgs }, void 0, options));
-    if (result?.isError)
-      throw Error(extractTextFromResult(result) || "Upstream tool error");
-    return result;
-  });
-}
-function mergeToolLists(proxyTools, upstreamTools2, blockedNames) {
+function mergeToolLists(listA, listB, blockedNames) {
   let blocked = blockedNames instanceof Set ? blockedNames : new Set(blockedNames || []), result = [], seen = /* @__PURE__ */ new Set;
-  for (let tool of proxyTools || []) {
+  for (let tool of listA || []) {
     if (!tool || typeof tool.name !== "string")
       continue;
     if (blocked.has(tool.name))
@@ -24628,8 +25054,8 @@ function mergeToolLists(proxyTools, upstreamTools2, blockedNames) {
       continue;
     seen.add(tool.name), result.push(tool);
   }
-  if (Array.isArray(upstreamTools2))
-    for (let tool of upstreamTools2) {
+  if (Array.isArray(listB))
+    for (let tool of listB) {
       let name = tool?.name;
       if (typeof name !== "string" || !name)
         continue;

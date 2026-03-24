@@ -495,6 +495,14 @@ public abstract class NullableNotNullManager {
              .getNullability(annotation.getQualifiedName()) != null;
   }
 
+  /**
+   * @param annotation annotation to check
+   * @return true if the annotation is a non-null annotation, which is used for instrumentation or code generation.
+   */
+  public boolean isNonNullUsedForInstrumentation(@NotNull PsiAnnotation annotation) {
+    return false;
+  }
+
   protected interface NullabilityAnnotationDataHolder {
     /**
      * @return qualified names of all recognized annotations

@@ -1,4 +1,5 @@
 // "Change to 'var'" "true"
+// K2_ERROR: 'val' cannot be reassigned.
 fun foo() {
     var a = 1
     <caret>a = 3

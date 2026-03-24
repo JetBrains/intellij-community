@@ -50,6 +50,11 @@
       <option name="FOREGROUND" value="467cda" />
     </value>
   </option>
+  <option name="KOTLIN_CONTEXT_ARGUMENT">
+    <value>
+      <option name="FOREGROUND" value="da4646" />
+    </value>
+  </option>
   <option name="KOTLIN_DYNAMIC_FUNCTION_CALL">
     <value>
       <option name="FONT_TYPE" value="3" />

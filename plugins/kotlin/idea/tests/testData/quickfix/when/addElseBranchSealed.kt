@@ -1,4 +1,5 @@
 // "Add else branch" "true"
+// K2_ERROR: 'when' expression must be exhaustive. Add the 'is B', 'is C' branches or an 'else' branch.
 sealed class Base {
     class A : Base()
     class B : Base()

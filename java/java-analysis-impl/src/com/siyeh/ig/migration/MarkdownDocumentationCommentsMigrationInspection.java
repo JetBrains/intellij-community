@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -39,6 +40,7 @@ import org.jsoup.nodes.Node;
 import org.jsoup.select.NodeFilter;
 
 import java.util.ArrayDeque;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.psi.javadoc.PsiDocToken.isDocToken;
@@ -119,14 +121,31 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
         if (isDocToken(child, SKIP_TOKENS)) continue;
 
         if (child instanceof PsiInlineDocTag inlineDocTag) {
-          PsiElement next = inlineDocTag.getNameElement().getNextSibling();
-          if (next instanceof PsiWhiteSpace && next.getText().contains("\n") && !Strings.endsWith(result, "<pre>")) {
-            result.append("\n ");
-          }
           String name = inlineDocTag.getName();
-          if ("code".equals(name)) handleCode(inlineDocTag, result);
-          else if ("link".equals(name) || "linkplain".equals(name)) handleLink(inlineDocTag, result);
-          else handleInlineDocTag(inlineDocTag, result);
+          if ("code".equals(name) && JavaDocUtil.isInHtmlTag(inlineDocTag, "pre", true)) {
+            handleCode(inlineDocTag, result);
+          }
+          else if (JavaDocUtil.isInHtmlTag(inlineDocTag, "pre", false)) {
+            StringBuilder escapedTagBuilder = new StringBuilder();
+            handleInlineDocTag(inlineDocTag, escapedTagBuilder);
+            result.append(escapeInline(escapedTagBuilder.toString()));
+          }
+          else {
+            PsiElement next = inlineDocTag.getNameElement().getNextSibling();
+            if (next instanceof PsiWhiteSpace && next.getText().contains("\n") && !Strings.endsWith(result, "<pre>")) {
+              result.append("\n ");
+            }
+
+            if ("code".equals(name)) {
+              handleCode(inlineDocTag, result);
+            }
+            else if ("link".equals(name) || "linkplain".equals(name)) {
+              handleLink(inlineDocTag, result);
+            }
+            else {
+              handleInlineDocTag(inlineDocTag, result);
+            }
+          }
         }
         else if (child instanceof PsiDocParamRef) {
           result.append(escapeInline(child.getText()));
@@ -172,7 +191,18 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
       HtmlToMarkdownVisitor visitor = new HtmlToMarkdownVisitor(html.length());
       body.filter(visitor);
 
-      return visitor.getResult().replace(escape, "&nbsp;");
+      String result = visitor.getResult();
+
+      // (mbo) Not the proudest of this one but some combinations of Javadoc tag and HTML cannot reasonnably be handled with jsoup
+      // unescape element between internal HTML tags. It is expected that internal tags are not nested.
+      Matcher internalTagMatcher = Pattern.compile(
+          "<%s>(.*?)</%s>".formatted(HtmlToMarkdownVisitor.INTERNAL_TAG_INLINE_RAW, HtmlToMarkdownVisitor.INTERNAL_TAG_INLINE_RAW),
+          Pattern.UNICODE_CASE | Pattern.DOTALL | Pattern.MULTILINE)
+        .matcher(result);
+
+      return internalTagMatcher.replaceAll(matchResult -> {
+        return StringUtil.unescapeXmlEntities(matchResult.group(1));
+      }).replace(escape, "&nbsp;");
     }
 
     private static String getElementIndent(PsiElement element) {
@@ -334,7 +364,13 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
       }
 
       switch (nodeName) {
-        case "a" -> result.append("[");
+        case "a" -> {
+          if (!shouldTransformHtmlLink()) {
+            appendWithoutConversion(node);
+            return FilterResult.SKIP_ENTIRELY;
+          }
+          result.append("[");
+        }
         case "i", "em" -> result.append('_');
         case "b", "strong" -> result.append("**");
         case "hr" -> appendWithNewLineIfNeeded("___\n");
@@ -532,6 +568,11 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
         }
       }
       return singleRelevantChild;
+    }
+
+    /// @see <a href="https://docs.oracle.com/en/java/javase/25/docs/specs/javadoc/doc-comment-spec.html#see"> To see why `a` tags shouldn't be converted</a>
+    private boolean shouldTransformHtmlLink() {
+      return !StringUtil.endsWithIgnoreWhitespaces(result, "@see");
     }
 
     /// Append the text with a new line if necessary for the Markdown syntax

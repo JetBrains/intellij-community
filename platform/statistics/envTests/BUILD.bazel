@@ -1,8 +1,15 @@
 ### auto-generated section `build intellij.platform.statistics.envTests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "envTests_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 jvm_library(
   name = "envTests",
+  module_name = "intellij.platform.statistics.envTests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -10,6 +17,8 @@ jvm_library(
     "//platform/core-ui",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
+    "//libraries/jackson3/jackson:libraries-jackson3",
+    "//libraries/jackson3/databind",
   ]
 )
 
@@ -18,10 +27,12 @@ jvm_library(
   module_name = "intellij.platform.statistics.envTests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":envTests_test_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:junit4",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:testcontainers",
@@ -29,13 +40,27 @@ jvm_library(
     "//platform/statistics:statistics_test_lib",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
     "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
     "//platform/statistics/uploader",
+    "//platform/statistics/uploader:uploader_test_lib",
     "//libraries/jackson/jackson",
+    "//libraries/jackson/jackson:jackson_test_lib",
     "//libraries/jackson/databind",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//libraries/jackson3/databind",
+    "//libraries/jackson3/databind:databind_test_lib",
   ],
   runtime_deps = [":envTests"]
 )
 ### auto-generated section `build intellij.platform.statistics.envTests` end
+
+### auto-generated section `iml intellij.platform.statistics.envTests` start
+exports_files([
+  "intellij.platform.statistics.envTests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.statistics.envTests` end
 
 ### auto-generated section `test intellij.platform.statistics.envTests` start
 load("@community//build:tests-options.bzl", "jps_test")

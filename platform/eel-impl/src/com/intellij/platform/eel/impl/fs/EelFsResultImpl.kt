@@ -28,7 +28,7 @@ object EelFsResultImpl {
     EelOpenedFile.Reader.ReadError.Other,
     EelOpenedFile.Writer.WriteError.Other,
     EelFileSystemApi.DiskInfoError.Other,
-    EelFileSystemPosixApi.CreateDirectoryError.Other,
+    EelFileSystemApi.CreateDirectoryError.Other,
     EelFileSystemApi.ChangeAttributesError.Other,
     EelFileSystemApi.DeleteError.Other,
     EelFileSystemApi.CopyError.Other,
@@ -50,7 +50,7 @@ object EelFsResultImpl {
     EelFileSystemApi.StatError.DoesNotExist,
     EelFileSystemApi.CanonicalizeError.DoesNotExist,
     EelFileSystemApi.DiskInfoError.PathDoesNotExists,
-    EelFileSystemPosixApi.CreateDirectoryError.ParentNotFound,
+    EelFileSystemApi.CreateDirectoryError.ParentNotFound,
     EelFileSystemApi.CopyError.SourceDoesNotExist,
     EelFileSystemApi.MoveError.SourceDoesNotExist,
     EelFileSystemPosixApi.CreateSymbolicLinkError.DoesNotExist,
@@ -62,7 +62,7 @@ object EelFsResultImpl {
   data class AlreadyExists(override val where: EelPath, override val message: String) :
     EelFileSystemApi.FileReaderError.AlreadyExists,
     EelFileSystemApi.FileWriterError.AlreadyExists,
-    EelFileSystemPosixApi.CreateDirectoryError.FileAlreadyExists,
+    EelFileSystemApi.CreateDirectoryError.FileAlreadyExists,
     EelFileSystemPosixApi.CreateSymbolicLinkError.FileAlreadyExists,
     EelFileSystemApi.StreamingWriteError.AlreadyExists
 
@@ -76,7 +76,7 @@ object EelFsResultImpl {
     EelFileSystemApi.SameFileError.PermissionDenied,
     EelFileSystemApi.StatError.PermissionDenied,
     EelFileSystemApi.DiskInfoError.PermissionDenied,
-    EelFileSystemPosixApi.CreateDirectoryError.PermissionDenied,
+    EelFileSystemApi.CreateDirectoryError.PermissionDenied,
     EelFileSystemApi.DeleteError.PermissionDenied,
     EelFileSystemApi.CopyError.PermissionDenied,
     EelFileSystemApi.MoveError.PermissionDenied,
@@ -126,7 +126,7 @@ object EelFsResultImpl {
     EelFileSystemApi.CopyError.TargetAlreadyExists
 
   data class DirAlreadyExists(override val where: EelPath, override val message: String) :
-    EelFileSystemPosixApi.CreateDirectoryError.DirAlreadyExists
+    EelFileSystemApi.CreateDirectoryError.DirAlreadyExists
 
   data class DirNotEmpty(override val where: EelPath, override val message: String) :
     EelFileSystemApi.DeleteError.DirNotEmpty,

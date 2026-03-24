@@ -122,7 +122,7 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
 
   @Throws(Exception::class)
   protected open fun setUpFixtures() {
-    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, useDirectoryBasedStorageFormat()).getFixture()
+    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder("test", useDirectoryBasedStorageFormat()).getFixture()
     myTestFixture.setUp()
   }
 

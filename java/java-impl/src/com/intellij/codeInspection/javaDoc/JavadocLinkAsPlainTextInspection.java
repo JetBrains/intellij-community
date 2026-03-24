@@ -13,6 +13,9 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiMarkdownCodeBlock;
+import com.intellij.psi.javadoc.PsiMarkdownLink;
+import com.intellij.psi.javadoc.PsiMarkdownReferenceLink;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +30,6 @@ public final class JavadocLinkAsPlainTextInspection extends LocalInspectionTool 
   private static final Pattern END_TAG = Pattern.compile("^.*</\\w+>", Pattern.DOTALL);
   private static final Pattern TAG_BEFORE_ATTRIBUTE = Pattern.compile("<\\w+\\s.*\\w+\\s*=\\s*[\"']?\\s*$", Pattern.DOTALL);
   private static final Pattern TAG_AFTER_ATTRIBUTE = Pattern.compile("^\\s*[\"']?.*>", Pattern.DOTALL);
-  private static final Pattern TAG_MARKDOWN_BEFORE_ATTRIBUTE = Pattern.compile("]\\(\\s*", Pattern.DOTALL);
-  private static final Pattern TAG_MARKDOWN_AFTER_ATTRIBUTE = Pattern.compile("\\s*\\)", Pattern.DOTALL);
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -48,15 +49,19 @@ public final class JavadocLinkAsPlainTextInspection extends LocalInspectionTool 
           int end = range.getEndOffset();
           PsiElement element = comment.findElementAt(start);
           if (element == null) return;
+
           PsiDocTag tag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class, true, PsiDocComment.class);
           if (tag != null) {
             String tagName = tag.getName();
             if (tagName.equals("see")) continue; // handled by JavaDocReferenceInspection
             if (tagName.equals("code")) continue;
           }
+
+          if (isInInvalidMarkdownStruct(element)) return;
+
           String prefix = commentText.substring(0, start);
           String suffix = commentText.substring(end);
-          if (isContentOfATag(prefix, suffix) || isHtmlTagAttribute(prefix, suffix) || isMarkdownLinkAttribute(prefix, suffix)) continue;
+          if (isContentOfATag(prefix, suffix) || isHtmlTagAttribute(prefix, suffix)) continue;
 
           holder.problem(comment, JavaBundle.message("inspection.javadoc.link.as.plain.text.message"))
             .range(range).fix(new UrlToLinkFix(comment, start, end)).register();
@@ -71,8 +76,14 @@ public final class JavadocLinkAsPlainTextInspection extends LocalInspectionTool 
         return TAG_BEFORE_ATTRIBUTE.matcher(prefix).find() && TAG_AFTER_ATTRIBUTE.matcher(suffix).find();
       }
 
-      private static boolean isMarkdownLinkAttribute(String prefix, String suffix) {
-        return TAG_MARKDOWN_BEFORE_ATTRIBUTE.matcher(prefix).find() && TAG_MARKDOWN_AFTER_ATTRIBUTE.matcher(suffix).find();
+      /// @return `true` if the `element` is in a Markdown struct the inspection should ignore
+      private static boolean isInInvalidMarkdownStruct(PsiElement element) {
+        return !(PsiTreeUtil.getParentOfType(element, true,
+          PsiDocComment.class, // Acts as a stopper
+          PsiMarkdownReferenceLink.class,
+          PsiMarkdownLink.class,
+          PsiMarkdownCodeBlock.class
+        ) instanceof PsiDocComment);
       }
     };
   }

@@ -32,14 +32,14 @@ public final class DirectoryUrl extends AbstractUrl {
   public Object[] createPath(final Project project) {
     if (moduleName != null) {
       final Module module =
-        ReadAction.compute(() -> ModuleManager.getInstance(project).findModuleByName(moduleName));
+        ReadAction.computeBlocking(() -> ModuleManager.getInstance(project).findModuleByName(moduleName));
       if (module == null) return null;
     }
     final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
     final VirtualFile file = virtualFileManager.findFileByUrl(url);
     if (file == null) return null;
     final PsiDirectory directory =
-      ReadAction.compute(() -> PsiManager.getInstance(project).findDirectory(file));
+      ReadAction.computeBlocking(() -> PsiManager.getInstance(project).findDirectory(file));
     if (directory == null) return null;
     return new Object[]{directory};
   }

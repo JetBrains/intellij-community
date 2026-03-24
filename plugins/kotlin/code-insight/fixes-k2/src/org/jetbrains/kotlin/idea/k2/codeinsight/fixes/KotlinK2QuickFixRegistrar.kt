@@ -485,6 +485,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddToStringFixFactories.returnTypeMismatch)
         registerFactory(AddToStringFixFactories.initializerTypeMismatch)
 
+        // todo enable when KT-84991 is fixed
+        // registerFactory(MakeUpperBoundNotNullFixFactories.argumentTypeMismatch)
+        // registerFactory(MakeUpperBoundNotNullFixFactories.nothingToOverride)
+
         registerFactory(CastExpressionFixFactories.smartcastImpossible)
         registerFactory(CastExpressionFixFactories.typeMismatch)
         registerFactory(CastExpressionFixFactories.throwableTypeMismatch)
@@ -623,6 +627,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ConvertExtensionFunctionInExternalDeclarationFixFactory.extensionFunctionInExternalDeclarationFactory)
 
         registerFactory(RenameUnderscoreFixFactory.renameUnderscore)
+        registerFactory(ContextParameterWithoutNameFixFactory.addUnderscoreToContextParameter)
         registerFactory(NamedContextParameterInFunctionTypeFixFactory.removeParameterName)
         registerFactory(ReceiverShadowedByContextParameterFactory.addReceiverFactory)
 

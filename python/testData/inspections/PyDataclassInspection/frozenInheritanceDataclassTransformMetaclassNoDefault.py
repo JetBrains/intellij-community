@@ -40,7 +40,7 @@ class Customer7(Customer3, frozen=False):
     salary: float
 
 # This should generate an error: trying to make frozen=False when parent is frozen=True
-class Customer8(Customer2, <error descr="Frozen dataclasses can not inherit non-frozen one and vice versa">frozen=False</error>):  # E
+class Customer8(Customer2, <error descr="Frozen dataclasses cannot inherit non-frozen one and vice versa">frozen=False</error>):  # E
     salary: float
 
 # OK: Can mutate Customer3 because it's explicitly non-frozen

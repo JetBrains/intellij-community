@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
@@ -92,6 +95,28 @@ public final class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
   @Override
   public @NotNull BareTestFixture createBareFixture() {
     return new BareTestFixtureImpl();
+  }
+
+  @Override
+  public @NotNull CodeInsightTestFixture createCodeInsightFixtureForExistingProject(@NotNull Project project) {
+    IdeaProjectTestFixture projectTestFixture = new IdeaProjectTestFixture() {
+      @Override
+      public Project getProject() {
+        return project;
+      }
+
+      @Override
+      public Module getModule() {
+        return ModuleManager.getInstance(project).getModules()[0];
+      }
+
+      @Override
+      public void setUp() {}
+
+      @Override
+      public void tearDown() {}
+    };
+    return new CodeInsightTestFixtureImpl(projectTestFixture, new TempDirTestFixtureImpl());
   }
 
   public static final class MyEmptyModuleFixtureBuilderImpl extends EmptyModuleFixtureBuilderImpl {

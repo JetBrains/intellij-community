@@ -14,7 +14,10 @@
       implementation="com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptorSerializerProvider"/>
     <xdebugger.customXDescriptorSerializerProvider
       implementation="com.intellij.java.debugger.impl.shared.engine.JavaExecutionStackDescriptorSerializerProvider"/>
-    <postStartupActivity implementation="com.intellij.java.debugger.impl.shared.SharedDebuggerInitializationProjectActivity"/>
+    <xdebugger.customXDescriptorSerializerProvider
+      implementation="com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionDtoSerializerProvider"/>
+    <xdebugger.descriptorStateManager
+      implementation="com.intellij.java.debugger.impl.shared.JavaDebuggerSessionDtoStateExtension"/>
     <xdebugger.xTextValueModificationPreparatorProvider
       implementation="com.intellij.java.debugger.impl.shared.engine.JavaValueTextModificationPreparatorProvider"/>
     <registryKey defaultValue="1000"

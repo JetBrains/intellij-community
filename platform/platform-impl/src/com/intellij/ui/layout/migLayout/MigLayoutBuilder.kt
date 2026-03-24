@@ -1,10 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
+
 package com.intellij.ui.layout.migLayout
 
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.layout.LCFlags
 import com.intellij.ui.layout.LayoutBuilderImpl
@@ -68,8 +69,6 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   override val rootRow: MigLayoutRow = MigLayoutRow(parent = null, builder = this, indent = 0)
 
   override var preferredFocusedComponent: JComponent? = null
-  override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
-  override var componentValidateCallbacks: MutableMap<JComponent, () -> ValidationInfo?> = linkedMapOf()
 
   internal var hideableRowNestingLevel: Int = 0
 

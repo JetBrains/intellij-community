@@ -10,9 +10,29 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "//libraries/asm-tools",
-    "@lib//:tools-api_dump-kotlinx-bcv",
+    "@lib//:kotlinx-bcv",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "@lib//:kotlin-metadata",
+  ],
+  exports = ["@lib//:kotlinx-bcv"]
+)
+
+jvm_library(
+  name = "apiDump_test_lib",
+  module_name = "intellij.tools.apiDump",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:kotlinx-bcv"],
+  runtime_deps = [
+    ":apiDump",
+    "//libraries/asm-tools:asm-tools_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.tools.apiDump` end
+
+### auto-generated section `iml intellij.tools.apiDump` start
+exports_files([
+  "intellij.tools.apiDump.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.tools.apiDump` end

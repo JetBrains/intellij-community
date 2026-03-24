@@ -15,9 +15,12 @@
  */
 package com.theoryinpractice.testng.inspection;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class MalformedDataProviderInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testMissedDataProvider() {
@@ -29,6 +32,29 @@ public class MalformedDataProviderInspectionTest extends LightJavaCodeInsightFix
     myFixture.testHighlighting(true, false, false, "InstanceDataProviderFromForeignClass.java");
   }
 
+  public void testClassLevelDataProviderClass() {
+    myFixture.testHighlighting(true, false, false, "ClassLevelDataProviderClass.java");
+  }
+
+  public void testAbstractClassProvider() {
+    myFixture.testHighlighting(true, false, false, "AbstractClassProvider.java");
+  }
+
+  public void testInheritedClassLevelDataProviderClass() {
+    myFixture.testHighlighting(true, false, false, "InheritedClassLevelDataProviderClass.java");
+  }
+
+  public void testSubclassInheritsDataProvider() {
+    myFixture.testHighlighting(true, false, false, "testSubclassInheritsDataProvider.java");
+  }
+
+  public void testSubclassInheritsDataProviderQuickFix() {
+    List<IntentionAction> fixes = myFixture.getAllQuickFixes("testSubclassInheritsDataProviderFix.java");
+    IntentionAction fix = fixes.stream().filter(f -> f.getText().startsWith("Create method")).findFirst().orElseThrow();
+    myFixture.launchAction(fix);
+    myFixture.checkResultByFile("testSubclassInheritsDataProviderFix_after.java");
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -38,12 +64,17 @@ public class MalformedDataProviderInspectionTest extends LightJavaCodeInsightFix
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.addClass("package org.testng.annotations;\n" +
-                       "public @interface DataProvider {}");
-    myFixture.addClass("package org.testng.annotations;\n" +
-                       "public @interface Test {  java.lang.String dataProvider() default {};" +
-                       " Class dataProviderClass() default {};" +
-                       "}");
+    myFixture.addClass("""
+                         package org.testng.annotations;
+                         public @interface DataProvider {
+                           String name() default "";
+                         }""");
+    myFixture.addClass("""
+                         package org.testng.annotations;
+                         public @interface Test {
+                           String dataProvider() default {};
+                           Class dataProviderClass() default {};
+                         }""");
     myFixture.enableInspections(new MalformedDataProviderInspection());
   }
 }

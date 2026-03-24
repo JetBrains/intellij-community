@@ -1,0 +1,49 @@
+<idea-plugin>
+  <resource-bundle>messages.AgentSessionsBundle</resource-bundle>
+
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.chat"/>
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.agent.workbench.sessions"/>
+    <module name="intellij.agent.workbench.sessions.actions"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindow
+      id="agent.workbench.sessions"
+      anchor="right"
+      icon="AllIcons.Toolwindows.ToolWindowMessages"
+      canCloseContents="false"
+      factoryClass="com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsToolWindowFactory"/>
+  </extensions>
+
+  <actions resource-bundle="messages.AgentSessionsBundle">
+    <action
+      id="AgentWorkbenchSessions.TreePopup.Open"
+      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupOpenAction"/>
+    <action
+      id="AgentWorkbenchSessions.TreePopup.More"
+      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupMoreAction"/>
+    <group
+      id="AgentWorkbenchSessions.TreePopup.NewThread"
+      popup="true"
+      icon="AllIcons.General.Add"
+      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupNewThreadGroup"/>
+    <action
+      id="AgentWorkbenchSessions.TreePopup.Archive"
+      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupArchiveThreadAction"/>
+    <group id="AgentWorkbenchSessions.TreePopup">
+      <reference ref="AgentWorkbenchSessions.TreePopup.Open"/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.More"/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.NewThread"/>
+      <separator/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.Archive"/>
+      <separator/>
+      <reference ref="CopyReferencePopupGroup"/>
+    </group>
+  </actions>
+</idea-plugin>

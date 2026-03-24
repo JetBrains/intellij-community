@@ -2,22 +2,23 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.noarg.gradleJava
 
+import com.intellij.openapi.externalSystem.model.Key
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractAnnotationBasedCompilerPluginGradleImportHandler
 import org.jetbrains.kotlin.idea.gradleTooling.model.noarg.NoArgModel
-import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.noarg.NoArgPluginNames.ANNOTATION_OPTION_NAME
 import org.jetbrains.kotlin.noarg.NoArgPluginNames.INVOKE_INITIALIZERS_OPTION_NAME
 import org.jetbrains.kotlin.noarg.NoArgPluginNames.PLUGIN_ID
 import org.jetbrains.kotlin.noarg.NoArgPluginNames.SUPPORTED_PRESETS
+import java.nio.file.Path
 
 class NoArgGradleProjectImportHandler : AbstractAnnotationBasedCompilerPluginGradleImportHandler<NoArgModel>() {
-    override val compilerPluginId = PLUGIN_ID
-    override val pluginName = "noarg"
-    override val annotationOptionName = ANNOTATION_OPTION_NAME
-    override val pluginJarFileFromIdea: String = KotlinArtifacts.noargCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
-    override val modelKey = NoArgProjectResolverExtension.KEY
+    override val compilerPluginId: String = PLUGIN_ID
+    override val pluginName: String = "noarg"
+    override val annotationOptionName: String = ANNOTATION_OPTION_NAME
+    override val pluginJarFromIdea: Path = KotlinArtifacts.noargCompilerPluginPath
+    override val modelKey: Key<NoArgModel> = NoArgProjectResolverExtension.KEY
 
     override fun getOptions(model: NoArgModel): List<PluginOption> {
         val additionalOptions = listOf(

@@ -209,7 +209,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         final Runnable runnable = () -> {
           for (final Map.Entry<PsiElement, String> entry : renames.entrySet()) {
             final UsageInfo[] usages =
-              ReadAction.compute(() -> RenameUtil.findUsages(
+              ReadAction.computeBlocking(() -> RenameUtil.findUsages(
                 entry.getKey(), entry.getValue(), myRefactoringScope,
                 mySearchInComments, mySearchTextOccurrences, myAllRenames));
             Collections.addAll(variableUsages, usages);

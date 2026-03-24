@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl.inspections
 
+import com.intellij.gradle.java.properties.codeInspection.GradleRedundantKotlinStdLibInspection
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.codeInspection.GradleRedundantKotlinStdLibInspection
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource

@@ -2,7 +2,7 @@
 package com.intellij.codeInsight
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 
@@ -12,13 +12,13 @@ interface AttachSourcesProviderFilter {
   /**
    * Checks can be an instance of AttachSourcesProvider applied to the specific PsiFile.
    */
-  fun isApplicable(provider: AttachSourcesProvider, orderEntries: List<LibraryOrderEntry>, psiFile: PsiFile): Boolean
+  fun isApplicable(provider: AttachSourcesProvider, libraries: Collection<LibraryEntity>, psiFile: PsiFile): Boolean
 
   companion object {
     private val EP_NAME: ExtensionPointName<AttachSourcesProviderFilter> = ExtensionPointName("com.intellij.attachSourcesProviderFilter")
 
     @JvmStatic
-    fun isProviderApplicable(provider: AttachSourcesProvider, orderEntries: List<LibraryOrderEntry>, psiFile: PsiFile): Boolean {
+    fun isProviderApplicable(provider: AttachSourcesProvider, orderEntries: Collection<LibraryEntity>, psiFile: PsiFile): Boolean {
       var applicable = true
       EP_NAME.forEachExtensionSafe {
         if (!it.isApplicable(provider, orderEntries, psiFile)) {

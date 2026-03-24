@@ -25,7 +25,10 @@ fun compileModules(project: Project, useProjectTaskManager: Boolean, vararg modu
   if (useProjectTaskManager) {
     val projectTaskManager = ProjectTaskManager.getInstance(project)
     val promise = projectTaskManager.build(*modules.toTypedArray())
-    promise.waitForPromiseAndPumpEdt(2.minutes)
+    val result = promise.waitForPromiseAndPumpEdt(2.minutes)
+    if (result?.hasErrors() == true) {
+      throw AssertionError("Compilation failed with errors")
+    }
   }
   else {
     compile(project, ModuleCompileScope(project, modules.toTypedArray(), false))

@@ -1,10 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.util.popup
 
-import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
+import com.intellij.collaboration.ui.codereview.list.search.MultiChooserListModel
 import com.intellij.collaboration.ui.codereview.list.search.PopupConfig
 import com.intellij.collaboration.ui.codereview.list.search.ShowDirection
-import com.intellij.collaboration.ui.items
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -24,7 +23,6 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.awt.Point
 import javax.swing.JList
-import javax.swing.ListModel
 import kotlin.coroutines.resume
 
 internal object CollaborationToolsPopupUtil {
@@ -76,22 +74,20 @@ suspend fun <T> JBPopup.showAndAwaitSubmission(
   list: JList<T>,
   point: RelativePoint,
   showDirection: ShowDirection,
-  afterShow: () -> Unit = { },
 ): T? {
   showPopup(point, showDirection)
-  afterShow()
   return waitForChoiceAsync(list)
 }
 
-suspend fun <T> JBPopup.showAndAwaitSubmissions(
-  originalListModel: ListModel<SelectableWrapper<T>>,
+internal suspend fun <T> JBPopup.showAndAwaitSubmissions(
+  chooserModel: MultiChooserListModel<T>,
   point: RelativePoint,
   showDirection: ShowDirection,
-  afterShow: () -> Unit = {}
+  afterShow: () -> Unit = {},
 ): List<T> {
   showPopup(point, showDirection)
   afterShow()
-  return waitForMultipleChoiceAsync(originalListModel)
+  return waitForMultipleChoiceAsync(chooserModel)
 }
 
 /**
@@ -113,14 +109,12 @@ private suspend fun <T> JBPopup.waitForChoiceAsync(list: JList<T>): T {
   }
 }
 
-private suspend fun <T> JBPopup.waitForMultipleChoiceAsync(originalListModel: ListModel<SelectableWrapper<T>>): List<T> {
+private suspend fun <T> JBPopup.waitForMultipleChoiceAsync(chooserModel: MultiChooserListModel<T>): List<T> {
   checkDisposed()
   return try {
     suspendCancellableCoroutine<List<T>> { continuation ->
       addChoicesPopupListener(continuation) {
-        originalListModel.items
-          .filter { item -> item.isSelected }
-          .map { item -> item.value }
+        chooserModel.getChosenItems()
       }
     }
   }

@@ -48,19 +48,25 @@ class PluginSet internal constructor(
   fun withPlugin(plugin: PluginMainDescriptor): PluginSetBuilder {
     // in tests or on plugin installation it is not present in a plugin list, may exist on plugin update, though
     // linear search is ok here - not a hot method
-    val oldPlugin = enabledPlugins.find { it == plugin } // todo may exist on update
+    val oldPlugin = enabledPlugins.find { it.legacyEquals(plugin) } // todo may exist on update
     PluginManagerCore.logger.assertTrue(oldPlugin == null || !oldPlugin.isMarkedForLoading, "$oldPlugin is still loaded")
     PluginManagerCore.logger.assertTrue(plugin.isMarkedForLoading, "$plugin is not marked for loading")
 
     val unsortedPlugins = LinkedHashSet(allPlugins)
-    unsortedPlugins.removeIf { it == plugin }
+    unsortedPlugins.removeIf { it.legacyEquals(plugin) }
     unsortedPlugins.add(plugin)
 
     return PluginSetBuilder(unsortedPlugins)
   }
 
   fun withoutPlugin(plugin: PluginMainDescriptor, disable: Boolean = true): PluginSetBuilder {
-    return PluginSetBuilder(if (disable) allPlugins else allPlugins - plugin)
+    return if (disable) {
+      PluginSetBuilder(allPlugins)
+    } else {
+      val newAllPlugins = LinkedHashSet(allPlugins)
+      newAllPlugins.removeIf { it.legacyEquals(plugin) }
+      PluginSetBuilder(newAllPlugins)
+    }
   }
 
   /**
@@ -100,4 +106,8 @@ class PluginSet internal constructor(
     }
     return result
   }
+}
+
+private fun IdeaPluginDescriptorImpl.legacyEquals(other: Any?): Boolean {
+  return this === other || other is IdeaPluginDescriptorImpl && pluginId == other.pluginId && descriptorPath == other.descriptorPath
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ClassUtil;
@@ -1139,10 +1139,10 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
 
   private void createAccessFixes() {
     JavaFixesPusher<PsiElement, JavaResolveResult> accessFix = (error, sink) -> {
-      if (error.psi() instanceof PsiJavaCodeReferenceElement ref && 
-          error.context().isStaticsScopeCorrect() && error.context().getElement() instanceof PsiJvmMember member) {
-        HighlightFixUtil.registerAccessQuickFixAction(sink, member, ref, null);
-        if (ref instanceof PsiReferenceExpression expression) {
+      if (error.context().isStaticsScopeCorrect() && error.context().getElement() instanceof PsiJvmMember member) {
+        PsiElement element = error.psi();
+        HighlightFixUtil.registerAccessQuickFixAction(sink, member, element, null);
+        if (element instanceof PsiReferenceExpression expression) {
           sink.accept(myFactory.createRenameWrongRefFix(expression));
         }
       }

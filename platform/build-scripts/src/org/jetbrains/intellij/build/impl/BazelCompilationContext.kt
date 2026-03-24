@@ -6,6 +6,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.util.io.URLUtil
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -28,7 +29,6 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.inputStream
-import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 @Internal
@@ -70,7 +70,7 @@ class BazelCompilationContext(
   override val classesOutputDirectory: Path
     get() = delegate.classesOutputDirectory
 
-  private val originalModuleRepository = asyncLazy("Build original module repository") {
+  private val originalModuleRepository = suspendingLazy("Build original module repository") {
     buildOriginalModuleRepository(this@BazelCompilationContext)
   }
 
@@ -121,34 +121,17 @@ class BazelCompilationContext(
   }
 
   override suspend fun withCompilationLock(block: suspend () -> Unit): Unit = delegate.withCompilationLock(block)
-
-  fun replaceAllWithCompressedIfNeeded(files: List<Path>): List<Path> {
-    val out = ArrayList<Path>(files.size)
-    for (path in files) {
-      if (!path.startsWith(classesOutputDirectory)) {
-        out.add(path)
-        continue
-      }
-
-      val module = outputProvider.findModule(path.name)
-      if (module == null) {
-        out.add(path)
-        continue
-      }
-
-      val roots = outputProvider.getModuleOutputRoots(module, path.parent.name == "test")
-      out.addAll(roots)
-    }
-    return out
-  }
 }
 
 internal class BazelTargetsInfo {
   companion object {
+    private val bazelTargetsJson = Json { ignoreUnknownKeys = true }
+
     fun bazelTargetsJsonFile(projectHome: Path): Path = projectHome.resolve("build").resolve("bazel-targets.json")
 
+    @OptIn(ExperimentalSerializationApi::class)
     fun loadBazelTargetsJson(projectRoot: Path): TargetsFile {
-      val targetsFile = bazelTargetsJsonFile(projectRoot).inputStream().use { Json.decodeFromStream<TargetsFile>(it) }
+      val targetsFile = bazelTargetsJsonFile(projectRoot).inputStream().use { bazelTargetsJson.decodeFromStream<TargetsFile>(it) }
       return targetsFile
     }
   }
@@ -174,6 +157,7 @@ internal class BazelTargetsInfo {
   @Serializable
   data class TargetsFile(
     val modules: Map<String, TargetsFileModuleDescription>,
+    val imlTargets: List<String> = emptyList(),
     val projectLibraries: Map<String, LibraryDescription>,
   )
 }

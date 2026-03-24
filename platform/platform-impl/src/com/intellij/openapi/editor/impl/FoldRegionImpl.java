@@ -34,7 +34,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
                  @NotNull String placeholder,
                  @Nullable FoldingGroup group,
                  boolean shouldNeverExpand) {
-    super(editor.getDocument(), startOffset, endOffset,false, true);
+    super(editor.getUiDocument(), startOffset, endOffset,false, true);
     myGroup = group;
     myShouldNeverExpand = shouldNeverExpand;
     myIsExpanded = true;

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.integrations.maven.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.CodeInsightAction;
+import com.intellij.gradle.java.groovy.config.GradleFileType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -12,7 +13,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.plugins.gradle.config.GradleFileType;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 

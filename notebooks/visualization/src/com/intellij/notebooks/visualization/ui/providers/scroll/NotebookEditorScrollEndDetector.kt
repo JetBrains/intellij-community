@@ -3,8 +3,8 @@ package com.intellij.notebooks.visualization.ui.providers.scroll
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import java.awt.event.AdjustmentListener
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
 class NotebookEditorScrollEndDetector private constructor(
@@ -19,14 +20,14 @@ class NotebookEditorScrollEndDetector private constructor(
   private val editor: EditorImpl,
 ) : Disposable {
 
-  val scrollFlow: MutableSharedFlow<Unit> = MutableSharedFlow<Unit>(
+  val scrollFlow: MutableSharedFlow<Unit> = MutableSharedFlow(
     extraBufferCapacity = 1,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
 
   val debouncedScrollFlow: Flow<Unit> = scrollFlow.debounce(AFTER_SCROLL_DELAY_MS)
 
-  private val adjustmentListener = AdjustmentListener { e ->
+  private val adjustmentListener = AdjustmentListener {
     scrollFlow.tryEmit(Unit)
   }
 
@@ -41,13 +42,13 @@ class NotebookEditorScrollEndDetector private constructor(
 
   companion object {
     private val SCROLL_END_DETECTOR_KEY = Key.create<NotebookEditorScrollEndDetector>("SCROLL_END_DETECTOR")
-    private const val AFTER_SCROLL_DELAY_MS = 150L
+    private val AFTER_SCROLL_DELAY_MS = 150.milliseconds
 
     fun install(editor: EditorImpl) {
       if (ApplicationManager.getApplication().isUnitTestMode) return
       val manager = NotebookEditorScrollEndDetector(editor)
       editor.putUserData(SCROLL_END_DETECTOR_KEY, manager)
-      Disposer.register(editor.disposable, manager)
+      EditorUtil.disposeWithEditor(editor, manager)
     }
 
     fun get(editor: EditorImpl): NotebookEditorScrollEndDetector? = editor.getUserData(SCROLL_END_DETECTOR_KEY)

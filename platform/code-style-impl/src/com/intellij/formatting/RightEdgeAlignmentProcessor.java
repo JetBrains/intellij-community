@@ -48,6 +48,10 @@ public final class RightEdgeAlignmentProcessor extends AbstractBlockAlignmentPro
 
     if (indentSpaces >= 0) {
       whiteSpace.setSpaces(spaces, indentSpaces);
+      if (spaces > 0) {
+        // Alignment spaces should not be converted into tabs
+        whiteSpace.setForceSkipTabulationsUsage(true);
+      }
       return true;
     }
     if (whiteSpace.getTotalSpaces() > 0) {
@@ -78,6 +82,10 @@ public final class RightEdgeAlignmentProcessor extends AbstractBlockAlignmentPro
           }
         }
         whiteSpace.setSpaces(spaces, indentSpaces);
+        if (spaces > 0) {
+          // Alignment spaces should not be converted into tabs
+          whiteSpace.setForceSkipTabulationsUsage(true);
+        }
       }
     }
     return false;

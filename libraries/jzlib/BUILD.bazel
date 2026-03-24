@@ -9,10 +9,26 @@ resourcegroup(
 
 jvm_library(
   name = "jzlib",
+  module_name = "intellij.libraries.jzlib",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":jzlib_resources"],
   exports = ["@lib//:libraries-jzlib-jzlib"],
   runtime_deps = ["@lib//:libraries-jzlib-jzlib"]
 )
+
+jvm_library(
+  name = "jzlib_test_lib",
+  module_name = "intellij.libraries.jzlib",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:libraries-jzlib-jzlib"],
+  runtime_deps = [":jzlib"]
+)
 ### auto-generated section `build intellij.libraries.jzlib` end
+
+### auto-generated section `iml intellij.libraries.jzlib` start
+exports_files([
+  "intellij.libraries.jzlib.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jzlib` end

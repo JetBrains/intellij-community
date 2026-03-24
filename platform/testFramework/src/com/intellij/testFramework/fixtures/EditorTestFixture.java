@@ -53,9 +53,11 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +73,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.instantiateAndRun;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -107,24 +108,9 @@ public class EditorTestFixture {
           c == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ?
           (KeyboardShortcut)Objects.requireNonNull(KeymapUtil.getPrimaryShortcut("EditorCompleteStatement")) :
           new KeyboardShortcut(KeyStroke.getKeyStroke(keyCode, 0), null);
-        IdeKeyEventDispatcher keyEventDispatcher = IdeEventQueue.getInstance().getKeyEventDispatcher();
-        keyEventDispatcher.updateCurrentContext(getEditor().getContentComponent(), shortcut);
-        keyEventDispatcher.getContext().setProject(myProject);
-        keyEventDispatcher.getContext().setDataContext(getEditorDataContext());
-        keyEventDispatcher.getContext().setShortcut(shortcut);
-        try {
-          if (keyEventDispatcher.processAction(keyEvent, new ActionProcessor() {
-            @Override
-            public void performAction(@NotNull InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent event) {
-              super.performAction(inputEvent, action, event);
-              LOG.info("type(): performing action '" + event.getActionManager().getId(action) + "'");
-            }
-          })) {
-            return;
-          }
-        }
-        finally {
-          keyEventDispatcher.getContext().clear();
+
+        if (performEditorShortcut(myEditor, myProject, shortcut, keyEvent, "type")) {
+          return;
         }
       }
       ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, getEditorDataContext());
@@ -159,6 +145,31 @@ public class EditorTestFixture {
     return false;
   }
 
+  @RequiresEdt
+  public static boolean performEditorShortcut(@NotNull Editor editor,
+                                              @NotNull Project project,
+                                              @NotNull KeyboardShortcut shortcut,
+                                              @NotNull KeyEvent keyEvent,
+                                              @NotNull String caller) {
+    IdeKeyEventDispatcher keyEventDispatcher = IdeEventQueue.getInstance().getKeyEventDispatcher();
+    keyEventDispatcher.updateCurrentContext(editor.getContentComponent(), shortcut);
+    keyEventDispatcher.getContext().setProject(project);
+    keyEventDispatcher.getContext().setDataContext(EditorUtil.getEditorDataContext(editor));
+    keyEventDispatcher.getContext().setShortcut(shortcut);
+    try {
+      return keyEventDispatcher.processAction(keyEvent, new ActionProcessor() {
+        @Override
+        public void performAction(@NotNull InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent event) {
+          super.performAction(inputEvent, action, event);
+          LOG.info(caller + ": performing action '" + event.getActionManager().getId(action) + "'");
+        }
+      });
+    }
+    finally {
+      keyEventDispatcher.getContext().clear();
+    }
+  }
+
   private @NotNull DataContext getEditorDataContext() {
     return EditorUtil.getEditorDataContext(myEditor);
   }
@@ -171,7 +182,7 @@ public class EditorTestFixture {
     return doHighlighting(false, false);
   }
 
-  public @NotNull @Unmodifiable List<HighlightInfo> doHighlighting(boolean myAllowDirt, boolean readEditorMarkupModel) {
+  public @NotNull @Unmodifiable List<HighlightInfo> doHighlighting(boolean myAllowDocumentModification, boolean readEditorMarkupModel) {
     EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myProject).commitAllDocuments());
 
     PsiFile file = getFile();
@@ -181,7 +192,7 @@ public class EditorTestFixture {
       file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
     }
     assertNotNull(file);
-    return instantiateAndRun(file, editor, ArrayUtilRt.EMPTY_INT_ARRAY, myAllowDirt, readEditorMarkupModel);
+    return CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, ArrayUtilRt.EMPTY_INT_ARRAY, myAllowDocumentModification, readEditorMarkupModel);
   }
 
   protected @NotNull Editor getCompletionEditor() {

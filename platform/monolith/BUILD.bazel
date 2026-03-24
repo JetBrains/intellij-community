@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "monolith",
+  module_name = "intellij.platform.monolith",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":monolith_resources"],
@@ -17,4 +18,22 @@ jvm_library(
     "//platform/backend",
   ]
 )
+
+jvm_library(
+  name = "monolith_test_lib",
+  module_name = "intellij.platform.monolith",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":monolith",
+    "//platform/platform-frontend:frontend_test_lib",
+    "//platform/backend:backend_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.monolith` end
+
+### auto-generated section `iml intellij.platform.monolith` start
+exports_files([
+  "intellij.platform.monolith.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.monolith` end

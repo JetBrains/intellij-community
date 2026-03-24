@@ -12,7 +12,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 /**
  * Defines extension with low-level and high-level Gradle execution parameters configurators.
  *
- * The configurator with [GradleExecutionSettings] is preferred to be used instead of [LongRunningOperation].
+ * The configurator with [com.intellij.gradle.execution.settings.GradleExecutionSettings] is preferred to be used instead of [LongRunningOperation].
  * Because it protects extensions from conflicts due to the parameters replacement API in [LongRunningOperation].
  */
 interface GradleExecutionHelperExtension {
@@ -31,7 +31,7 @@ interface GradleExecutionHelperExtension {
    * Prepare a low-level Gradle [operation] before any Gradle execution.
    *
    * Consider using the high-level [configureSettings] function instead.
-   * The [GradleExecutionSettings] provides mode flexibility for the defining and arranging CLI arguments and VM options.
+   * The [com.intellij.gradle.execution.settings.GradleExecutionSettings] provides mode flexibility for the defining and arranging CLI arguments and VM options.
    * The [LongRunningOperation] provides only unsafe replacement API, that may replace arguments from settings and other extensions.
    *
    * @see <a href="https://docs.gradle.org/current/userguide/tooling_api.html">Gradle tooling API</a>

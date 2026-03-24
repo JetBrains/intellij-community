@@ -92,7 +92,7 @@ class PyTypedDictStubImpl private constructor(
       val calleeName = PyPsiUtils.asQualifiedName(referenceExpression) ?: return null
 
       for (name in PyResolveUtil.resolveImportedElementQNameLocally(referenceExpression).map { it.toString() }) {
-        if (PyTypedDictTypeProvider.nameIsTypedDict(name)) {
+        if (PyTypedDictTypeProvider.Helper.nameIsTypedDict(name)) {
           return calleeName
         }
       }

@@ -13,6 +13,7 @@ import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditor
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewRendererFactory
 import com.intellij.collaboration.ui.codereview.editor.EditorMapped
 import com.intellij.collaboration.ui.codereview.editor.RendererFactory
+import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
 import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
 import com.intellij.collaboration.ui.codereview.editor.renderInlays
 import com.intellij.collaboration.util.HashingUtil
@@ -209,7 +210,12 @@ suspend fun DiffViewerBase.showCodeReview(editorRenderer: EditorCodeReviewRender
                 viewer.editor,
                 viewer.side,
                 { loc -> loc.takeIf { it.first == viewer.side }?.second },
-                { lineIdx -> DiffLineLocation(viewer.side, lineIdx) },
+                { lineIdx ->
+                  DiffLineLocation(viewer.side, lineIdx).takeUnless {
+                    ReviewInEditorUtil.isLastBlankLine(editor.document,
+                                                       lineIdx)
+                  }
+                },
                 { line -> if (viewer.side == Side.LEFT) line to -1 else -1 to line }
               )
             }
@@ -221,8 +227,11 @@ suspend fun DiffViewerBase.showCodeReview(editorRenderer: EditorCodeReviewRender
                 null,
                 { (side, lineIdx) -> viewer.transferLineToOnesideStrict(side, lineIdx).takeIf { it >= 0 } },
                 { lineIdx ->
-                  val (indices, side)  = viewer.transferLineFromOnesideStrict(lineIdx) ?: return@editorRenderer null
-                  side.select(indices).takeIf { it >= 0 }?.let { side to it }
+                  val (indices, side) = viewer.transferLineFromOnesideStrict(lineIdx) ?: return@editorRenderer null
+                  val sideLineIdx = side.select(indices).takeIf { it >= 0 } ?: return@editorRenderer null
+                  // Check line against the document of original side
+                  if (ReviewInEditorUtil.isLastBlankLine(viewer.getDocument(side), sideLineIdx)) return@editorRenderer null
+                  side to sideLineIdx
                 },
                 { line ->
                   val (leftLine, rightLine) = viewer.transferLineFromOneside(line).first
@@ -238,7 +247,12 @@ suspend fun DiffViewerBase.showCodeReview(editorRenderer: EditorCodeReviewRender
                   viewer.editor1,
                   Side.LEFT,
                   { (side, lineIdx) -> lineIdx.takeIf { side == Side.LEFT } },
-                  { lineIdx -> DiffLineLocation(Side.LEFT, lineIdx) },
+                  { lineIdx ->
+                    DiffLineLocation(Side.LEFT, lineIdx).takeUnless {
+                      ReviewInEditorUtil.isLastBlankLine(editor1.document,
+                                                         lineIdx)
+                    }
+                  },
                   { line -> line to viewer.transferPosition(Side.RIGHT, LineCol(line, 0)).line }
                 )
               }
@@ -247,7 +261,12 @@ suspend fun DiffViewerBase.showCodeReview(editorRenderer: EditorCodeReviewRender
                   viewer.editor2,
                   Side.RIGHT,
                   { (side, lineIdx) -> lineIdx.takeIf { side == Side.RIGHT } },
-                  { lineIdx -> DiffLineLocation(Side.RIGHT, lineIdx) },
+                  { lineIdx ->
+                    DiffLineLocation(Side.RIGHT, lineIdx).takeUnless {
+                      ReviewInEditorUtil.isLastBlankLine(editor2.document,
+                                                         lineIdx)
+                    }
+                  },
                   { line -> viewer.transferPosition(Side.LEFT, LineCol(line, 0)).line to line }
                 )
               }

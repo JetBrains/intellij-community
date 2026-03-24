@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
@@ -86,6 +87,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Composite;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -486,6 +488,9 @@ public final class InspectorWindow extends JDialog implements Disposable {
         glassPane.revalidate();
         glassPane.repaint();
       }
+      else {
+        Logger.getInstance(InspectorWindow.class).error("GlassPane is null for " + component + ", this might cause a memory leak");
+      }
     }
     myHighlightComponents.clear();
 
@@ -607,7 +612,18 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
   private static @Nullable JComponent getGlassPane(@NotNull Component component) {
     JRootPane rootPane = SwingUtilities.getRootPane(component);
-    return rootPane == null ? null : (JComponent)rootPane.getGlassPane();
+    JComponent glassPane = rootPane == null ? null : (JComponent)rootPane.getGlassPane();
+    if (glassPane != null) {
+      return glassPane;
+    }
+
+    Container parent = component.getParent();
+    if (parent instanceof IdeGlassPane) {
+      //noinspection CastConflictsWithInstanceof
+      return (JComponent)parent;
+    }
+
+    return null;
   }
 
   private static final class HighlightComponent extends JComponent {

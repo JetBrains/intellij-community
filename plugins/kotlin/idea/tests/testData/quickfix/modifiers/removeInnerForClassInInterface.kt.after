@@ -1,4 +1,5 @@
 // "Remove 'inner' modifier" "true"
+// K2_ERROR: Modifier 'inner' is not applicable inside 'interface'.
 interface A {
     class B
 }

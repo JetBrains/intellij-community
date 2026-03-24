@@ -148,9 +148,6 @@ import java.util.function.Supplier;
 
 @Service(Service.Level.PROJECT)
 public final class ExpectedTypesProvider {
-  private static final ExpectedTypeInfo VOID_EXPECTED = createInfoImpl(PsiTypes.voidType(), ExpectedTypeInfo.TYPE_OR_SUBTYPE,
-                                                                       PsiTypes.voidType(), TailTypes.semicolonType());
-
   private static final Logger LOG = Logger.getInstance(ExpectedTypesProvider.class);
 
   public static ExpectedTypesProvider getInstance(@NotNull Project project) {
@@ -462,7 +459,7 @@ public final class ExpectedTypesProvider {
         }
       }
       if (myVoidable) {
-        myResult.add(VOID_EXPECTED);
+        myResult.add(createInfoImpl(PsiTypes.voidType(), ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiTypes.voidType(), TailTypes.semicolonType()));
       }
     }
 

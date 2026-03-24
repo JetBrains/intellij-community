@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.productLayout.model.error
 
 import com.intellij.platform.pluginGraph.ContentModuleName
+import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import org.assertj.core.api.Assertions.assertThat
@@ -339,7 +340,68 @@ class ValidationFormattersTest {
         .contains("Set loading=\"required\"")
         .contains("+++ b/path.xml")
     }
-    
+
+    @Test
+    fun `MissingContentModulePluginDependencyError suggests module allowedMissingPluginIds`() {
+      val error = MissingContentModulePluginDependencyError(
+        context = "intellij.rider.plugins.for.tea.test.cases",
+        contentModuleName = ContentModuleName("intellij.rider.plugins.for.tea.test.cases"),
+        missingPluginIds = setOf(
+          PluginId("com.intellij.settingsSync"),
+          PluginId("com.intellij.swagger"),
+        ),
+        suppressionKind = MissingContentModulePluginDependencySuppressionKind.DSL_MODULE_ALLOWED_MISSING,
+      )
+
+      val result = formatValidationError(error, useAnsi = false)
+
+      assertThat(result)
+        .contains("allowedMissingPluginIds")
+        .contains("module(\"intellij.rider.plugins.for.tea.test.cases\", allowedMissingPluginIds = listOf(\"com.intellij.settingsSync\", \"com.intellij.swagger\"))")
+        .doesNotContain("suppressions.json")
+    }
+
+    @Test
+    fun `MissingContentModulePluginDependencyError suggests suppressions json for regular module`() {
+      val error = MissingContentModulePluginDependencyError(
+        context = "intellij.react.ultimate",
+        contentModuleName = ContentModuleName("intellij.react.ultimate"),
+        missingPluginIds = setOf(PluginId("com.intellij.css")),
+      )
+
+      val result = formatValidationError(error, useAnsi = false)
+
+      assertThat(result)
+        .contains("suppressions.json")
+        .contains("suppressPlugins")
+        .doesNotContain("allowedMissingPluginIds in the DSL")
+    }
+
+    @Test
+    fun `MissingContentModulePluginDependencyError renders proposed patches`() {
+      val error = MissingContentModulePluginDependencyError(
+        context = "intellij.react.ultimate",
+        contentModuleName = ContentModuleName("intellij.react.ultimate"),
+        missingPluginIds = setOf(PluginId("com.intellij.css")),
+        proposedPatches = listOf(
+          ProposedPatch(
+            title = "Update intellij.react.ultimate.xml",
+            patch = """
+              --- a/intellij.react.ultimate.xml
+              +++ b/intellij.react.ultimate.xml
+            """.trimIndent(),
+          )
+        ),
+      )
+
+      val result = formatValidationError(error, useAnsi = false)
+
+      assertThat(result)
+        .contains("Proposed patch")
+        .contains("Patch (Update intellij.react.ultimate.xml)")
+        .contains("+++ b/intellij.react.ultimate.xml")
+    }
+
     @Test
     fun `formatValidationErrors combines multiple errors`() {
       val errors = listOf(

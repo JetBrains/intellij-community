@@ -6,6 +6,7 @@ import com.intellij.lang.properties.PropertiesInspectionBase
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes
 import com.intellij.lang.properties.psi.Property
 import com.intellij.openapi.util.TextRange
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.siyeh.ig.bugs.IncorrectMessageFormatInspection
@@ -30,7 +31,7 @@ internal class DevKitPropertiesMessageValidationInspection : PropertiesInspectio
 
         if (!(unescapedValue.contains("{0}") || unescapedValue.contains("{0,") ||
               unescapedValue.contains("{1}") || unescapedValue.contains("{1,"))) return
-        val messageFormatResult = MessageFormatUtil.checkFormat(unescapedValue)
+        val messageFormatResult = MessageFormatUtil.checkFormat(unescapedValue, LanguageLevel.HIGHEST)
         if (messageFormatResult.valid) {
           return
         }

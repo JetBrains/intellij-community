@@ -7,19 +7,15 @@ import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.project.modules
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.progress.reportSequentialProgress
-import com.intellij.psi.search.FileTypeIndex
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootMap
-import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
@@ -106,7 +102,12 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
 
     @RequiresEdt
     override fun configureAndGetConfiguredModules(project: Project, excludeModules: Collection<Module>): Set<Module> {
-        val dialog = ConfigureDialogWithModulesAndVersion(project, this, excludeModules, getMinimumSupportedVersion())
+        val dialog = ConfigureDialogWithModulesAndVersion(
+            project,
+            this,
+            effectiveModules(project, excludeModules) ?: emptyList(),
+            getMinimumSupportedVersion()
+        )
 
         dialog.show()
         if (!dialog.isOK) return emptySet()
@@ -267,25 +268,11 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
         modulesAndJvmTargets: Map<ModuleName, TargetJvm> = emptyMap()
     ): () -> ConfigurationResultBuilder
 
-    private fun configurableModulesWithKotlinFiles(project: Project): List<ModuleSourceRootGroup> {
-        val projectScope = project.projectScope()
-        val projectFileIndex = ProjectFileIndex.getInstance(project)
-        val kotlinFiles = runReadAction { FileTypeIndex.getFiles(KotlinFileType.INSTANCE, projectScope) }
-        val modules = kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
-            runReadAction {
-                if (projectFileIndex.isInSourceContent(ktFile)) {
-                    projectFileIndex.getModuleForFile(ktFile)
-                } else null
-            }
-        }
-        val groupByBaseModules = ModuleSourceRootMap(project).groupByBaseModules(modules)
-        return groupByBaseModules
-    }
-
     private fun effectiveModules(project: Project, modules: Collection<Module>): Collection<Module>? {
         val rootModule = runReadAction { getRootModule(project) } ?: return null
         return if (modules.contains(rootModule)) {
-            val moduleSourceRootGroups = configurableModulesWithKotlinFiles(project)
+            val modules = project.modules.asList()
+            val moduleSourceRootGroups = ModuleSourceRootMap(project).groupByBaseModules(modules)
             val rootGroup = moduleSourceRootGroups.firstOrNull { it.baseModule == rootModule }
             modules.filter { it != rootModule } + (rootGroup?.sourceRootModules ?: emptyList())
         } else {

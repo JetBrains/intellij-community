@@ -16,11 +16,11 @@ import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.lastLeaf
 import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformat
@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -39,10 +40,13 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.propertyVisitor
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.isAbstract
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 /**
@@ -73,47 +77,26 @@ internal class ConvertToExplicitBackingFieldsInspection :
         override fun applyFix(project: Project, element: KtProperty, updater: ModPsiUpdater) {
             val psiFactory = KtPsiFactory(element.project)
 
-            val propertyNameText = element.nameIdentifier?.text ?: return
             val backingPropertyContext = context.backingProperty.element ?: return
-            val backingPropertyName = backingPropertyContext.name ?: return
-            val backingPropertyType = backingPropertyContext.typeReference?.text
-
-            val referencesToReplace = element.containingKtFile.collectDescendantsOfType<KtNameReferenceExpression>()
-                .filter { ref ->
-                    ref.getReferencedName() == backingPropertyName && ref.mainReference.resolve() == backingPropertyContext
-                }
-                .map { updater.getWritable(it) }
-
             val backingProperty = updater.getWritable(backingPropertyContext)
-            val initializer = backingProperty.initializer?.let { getElementWithoutInnerComments(it, StringBuilder()) }
 
-            referencesToReplace.map { writableRef ->
-                writableRef.replace(psiFactory.createExpression("this.$propertyNameText")) as KtExpression
-            }.let {
-                shortenReferences(it, shortenOptions = ShortenOptions.ALL_ENABLED)
-            }
+            replaceReferences(element, backingPropertyContext, psiFactory, updater)
 
             val getter = element.getter ?: return
             val accessorsCommentSaver = CommentSaver(getter)
+
             getter.delete()
             if (element.lastLeaf() is PsiWhiteSpace) element.lastLeaf().delete()
             accessorsCommentSaver.restore(element)
 
-            val newPropertyText = buildString {
-                append(element.text)
-                append("\nfield")
-                backingPropertyType?.let {
-                    append(": ")
-                    append(backingPropertyType)
-                }
-                initializer?.let {
-                    append(" = ")
-                    append(it)
-                }
-            }
+            val propertyWithExplicitBackingField: KtProperty = createNewPropertyWithBackingField(
+                elementText = element.text,
+                backingProperty = backingProperty,
+                backingPropertyType = backingPropertyContext.typeReference?.text,
+                psiFactory = psiFactory
+            )
 
-            val newProperty = psiFactory.createProperty(newPropertyText)
-            val replacedProperty = element.replace(newProperty)
+            val replacedProperty = element.replace(propertyWithExplicitBackingField)
             replacedProperty.reformat(canChangeWhiteSpacesOnly = true)
 
             backingProperty.parent.deleteChildRange(
@@ -132,8 +115,8 @@ internal class ConvertToExplicitBackingFieldsInspection :
     }
 
     override fun isApplicableByPsi(element: KtProperty): Boolean {
-        if (element.isVar && element.setter != null) return false
-        if (element.hasModifier(KtTokens.OVERRIDE_KEYWORD) && !element.hasModifier(KtTokens.FINAL_KEYWORD)) return false
+        if (element.isVar) return false
+        if (element.isMember && element.containingClass()?.isAbstract() == true && !element.hasModifier(KtTokens.FINAL_KEYWORD)) return false
         return !element.isPrivate() && element.getter != null
     }
 
@@ -167,7 +150,7 @@ internal class ConvertToExplicitBackingFieldsInspection :
                 val returnExpr = body.statements.singleOrNull() as? KtReturnExpression
                 returnExpr?.returnedExpression as? KtNameReferenceExpression
             }
-
+            is KtDotQualifiedExpression if body.receiverExpression is KtThisExpression -> body.selectorExpression as? KtNameReferenceExpression
             else -> null
         }
         val returnedProperty = returnedExpr?.let { resolveToProperty(it) } ?: return null
@@ -182,6 +165,58 @@ internal class ConvertToExplicitBackingFieldsInspection :
     private fun resolveToProperty(expression: KtNameReferenceExpression): KtProperty? {
         val symbol = expression.mainReference.resolveToSymbol() as? KaPropertySymbol ?: return null
         return symbol.psi as? KtProperty
+    }
+
+    private fun replaceReferences(
+        element: KtProperty,
+        backingPropertyContext: KtProperty,
+        psiFactory: KtPsiFactory,
+        updater: ModPsiUpdater
+    ) {
+        val propertyNameText = element.nameIdentifier?.text ?: return
+        val backingPropertyName = backingPropertyContext.name ?: return
+        val className = backingPropertyContext.containingClass()?.name
+
+        val fullQualifiedPropertyName = buildString {
+            append("this")
+            append(className?.let { "@$it." } ?: ".")
+            append(propertyNameText)
+        }
+
+        element.containingKtFile.collectDescendantsOfType<KtNameReferenceExpression>()
+            .filter { ref ->
+                ref.getReferencedName() == backingPropertyName && ref.mainReference.resolve() == backingPropertyContext
+            }
+            .map { updater.getWritable(it) }
+            .map { writableRef ->
+                writableRef.replace(psiFactory.createExpression(fullQualifiedPropertyName)) as KtExpression
+            }.let {
+                shortenReferences(it, shortenOptions = ShortenOptionsForIde.ALL_ENABLED)
+            }
+    }
+
+    private fun createNewPropertyWithBackingField(
+        elementText: String,
+        backingProperty: KtProperty,
+        backingPropertyType: String?,
+        psiFactory: KtPsiFactory
+    ): KtProperty {
+        val initializer = backingProperty.initializer?.let { getElementWithoutInnerComments(it, StringBuilder()) }
+
+        val newPropertyText = buildString {
+            append(elementText)
+            append("\nfield")
+            backingPropertyType?.let {
+                append(": ")
+                append(backingPropertyType)
+            }
+            initializer?.let {
+                append(" = ")
+                append(it)
+            }
+        }
+
+        return psiFactory.createProperty(newPropertyText)
     }
 
     private fun getElementWithoutInnerComments(property: PsiElement, builder: StringBuilder): String {

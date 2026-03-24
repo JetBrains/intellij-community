@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.settingsScript
 
+import com.intellij.util.io.systemIndependentPath
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 import kotlin.apply as applyKt
 
@@ -25,7 +27,7 @@ internal class GradleSettingScriptBuilderImpl(
       }
       relativePath.startsWith("..") -> {
         include(projectName)
-        setProjectDir(":$projectName", relativePath.toString())
+        setProjectDir(":$projectName", relativePath.invariantSeparatorsPathString)
       }
       else -> {
         include(projectName)

@@ -6,12 +6,14 @@ import com.intellij.notebooks.visualization.NotebookCellInlayManager
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.cellSelectionModel
 import com.intellij.notebooks.visualization.getCells
-import com.intellij.notebooks.visualization.ui.EditorLayerController.Companion.EDITOR_LAYER_CONTROLLER_KEY
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEventArea
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
 import com.intellij.ui.ComponentUtil
 import java.awt.event.MouseAdapter
@@ -36,7 +38,6 @@ class DecoratedEditor private constructor(
 
   init {
     wrapEditorComponent(editorImpl)
-    editorImpl.putUserData(NOTEBOOK_EDITOR_KEY, this)
   }
 
   private fun wrapEditorComponent(editor: EditorImpl) {
@@ -150,23 +151,21 @@ class DecoratedEditor private constructor(
     }
   }
 
+  /** lists assumed to be ordered and non-empty  */
+  private fun hasIntersection(cells: List<NotebookCellLines.Interval>, others: List<NotebookCellLines.Interval>): Boolean =
+    !(cells.last().ordinal < others.first().ordinal || cells.first().ordinal > others.last().ordinal)
+
   companion object {
-    /** lists assumed to be ordered and non-empty  */
-    private fun hasIntersection(cells: List<NotebookCellLines.Interval>, others: List<NotebookCellLines.Interval>): Boolean =
-      !(cells.last().ordinal < others.first().ordinal || cells.first().ordinal > others.last().ordinal)
+    private val NOTEBOOK_EDITOR_KEY = Key.create<NotebookEditor>(NotebookEditor::class.java.name)
 
-    fun install(original: EditorImpl, manager: NotebookCellInlayManager) {
-      val decoratedEditor = DecoratedEditor(original, manager)
-      val controller = EditorLayerController(
-        decoratedEditor.editorImpl.scrollPane.viewport.view as EditorComponentWrapper
-      )
-      original.putUserData(EDITOR_LAYER_CONTROLLER_KEY, controller)
+    fun get(editor: Editor): DecoratedEditor? = editor.getUserData(NOTEBOOK_EDITOR_KEY) as? DecoratedEditor
 
-      Disposer.register(original.disposable, decoratedEditor)
-      Disposer.register(original.disposable) {
-        original.removeUserData(EDITOR_LAYER_CONTROLLER_KEY)
-      }
+    fun install(editor: EditorImpl, manager: NotebookCellInlayManager) {
+      val decoratedEditor = DecoratedEditor(editor, manager)
+      EditorUtil.disposeWithEditor(editor, decoratedEditor)
+
+      editor.putUserData(NOTEBOOK_EDITOR_KEY, decoratedEditor)
+      EditorUtil.disposeWithEditor(editor) { editor.removeUserData(NOTEBOOK_EDITOR_KEY) }
     }
   }
-
 }

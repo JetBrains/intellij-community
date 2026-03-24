@@ -1,14 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.impl;
 
-import com.intellij.platform.runtime.product.IncludedRuntimeModule;
 import com.intellij.platform.runtime.product.ProductMode;
 import com.intellij.platform.runtime.product.RuntimeModuleGroup;
-import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule;
-import com.intellij.platform.runtime.product.serialization.RawIncludedRuntimeModule;
+import com.intellij.platform.runtime.repository.IncludedRuntimeModule;
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
+import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule;
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
+import com.intellij.platform.runtime.repository.impl.IncludedRuntimeModuleImpl;
+import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -80,23 +81,25 @@ public final class MainRuntimeModuleGroup implements RuntimeModuleGroup {
     List<IncludedRuntimeModule> result = new ArrayList<>(rootIncludedModules);
     Set<RuntimeModuleDescriptor> visited = new HashSet<>();
     for (IncludedRuntimeModule rootModule : rootIncludedModules) {
-      collectDependencies(rootModule.getModuleDescriptor(), rootModules, visited, result);
+      if (rootModule.getLoadingRule().equals(RuntimeModuleLoadingRule.EMBEDDED)) {
+        collectDependenciesOfEmbeddedModule(rootModule.getModuleDescriptor(), rootModules, visited, result);
+      }
     }
 
     this.myIncludedModules = result;
     this.myNotIncludedModules = rootNotIncludedModules;
   }
 
-  private static void collectDependencies(RuntimeModuleDescriptor descriptor,
-                                          Set<RuntimeModuleDescriptor> rootModules,
-                                          Set<RuntimeModuleDescriptor> visited,
-                                          List<IncludedRuntimeModule> result) {
+  private static void collectDependenciesOfEmbeddedModule(RuntimeModuleDescriptor descriptor,
+                                                          Set<RuntimeModuleDescriptor> rootModules,
+                                                          Set<RuntimeModuleDescriptor> visited,
+                                                          List<IncludedRuntimeModule> result) {
     for (RuntimeModuleDescriptor dependency : descriptor.getDependencies()) {
       if (!visited.add(dependency)) continue;
       if (!rootModules.contains(dependency)) {
-        result.add(new IncludedRuntimeModuleImpl(dependency, RuntimeModuleLoadingRule.ON_DEMAND));
+        result.add(new IncludedRuntimeModuleImpl(dependency, RuntimeModuleLoadingRule.EMBEDDED));
       }
-      collectDependencies(dependency, rootModules, visited, result);
+      collectDependenciesOfEmbeddedModule(dependency, rootModules, visited, result);
     }
   }
 

@@ -82,7 +82,6 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
   fun getCustomizedPresentationForCurrentSession(): CustomizedBreakpointPresentation?
   fun isDisposed(): Boolean
-  fun updateIcon()
 
   fun dispose()
 

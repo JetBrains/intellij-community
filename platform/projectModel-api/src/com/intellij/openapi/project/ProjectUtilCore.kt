@@ -1,5 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProjectUtilCore")
+
 package com.intellij.openapi.project
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -18,6 +19,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.ide.presentableName
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 @NlsSafe
@@ -106,6 +108,21 @@ val Project.isExternalStorageEnabled: Boolean
  */
 @TestOnly
 fun doNotEnableExternalStorageByDefaultInTests(action: () -> Unit) {
+  doNotEnableExternalStorageByDefaultInTestsImpl(action)
+}
+
+/**
+ * @see [doNotEnableExternalStorageByDefaultInTests]
+ */
+@ApiStatus.Internal
+@TestOnly
+suspend fun doNotEnableExternalStorageByDefaultInTestsSuspend(action: suspend () -> Unit) {
+  doNotEnableExternalStorageByDefaultInTestsImpl {
+    action()
+  }
+}
+
+private inline fun doNotEnableExternalStorageByDefaultInTestsImpl(action: () -> Unit) {
   enableExternalStorageByDefaultInTests = false
   try {
     action()

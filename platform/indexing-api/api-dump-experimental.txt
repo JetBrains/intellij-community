@@ -20,13 +20,6 @@ f:com.intellij.psi.search.IndexPattern
 - *:getWordToHighlight():java.lang.String
 a:com.intellij.psi.stubs.StubIndex
 - *a:getMaxContainingFileCount(com.intellij.psi.stubs.StubIndexKey,java.lang.Object,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):I
-*Fa:com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
-- com.intellij.openapi.project.RootsChangeRescanningInfo
-- a:addInheritedSdk():com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
-- a:addLibrary(com.intellij.openapi.roots.libraries.Library):com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
-- a:addSdk(com.intellij.openapi.projectRoots.Sdk):com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
-- a:buildInfo():com.intellij.openapi.project.RootsChangeRescanningInfo
-- s:newInstance():com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 *:com.intellij.util.indexing.CompositeDataIndexer
 - com.intellij.util.indexing.DataIndexer
 - a:calculateSubIndexer(com.intellij.util.indexing.IndexedFile):java.lang.Object

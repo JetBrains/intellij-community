@@ -32,9 +32,6 @@ import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.components.isClassFile
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.cli.create
-import org.jetbrains.kotlin.cli.extensionsStorage
-import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
-import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
@@ -270,7 +267,9 @@ class KotlinBytecodeToolWindow(
         }
 
         jvmTargets.addActionListener {
-            updateToolWindowOnOptionChange()
+            WriteIntentReadAction.run {
+                updateToolWindowOnOptionChange()
+            }
         }
     }
 

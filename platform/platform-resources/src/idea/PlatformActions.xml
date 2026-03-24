@@ -952,7 +952,6 @@
         <group id="LearnGroup"/>
         <separator/>
         <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction"/>
-        <action id="MeetNewUIAction" class="com.intellij.ide.ui.experimental.meetNewUi.MeetNewUIAction"/>
         <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
         <action id="Help.JetBrainsTV" class="com.intellij.ide.actions.JetBrainsTvAction"/>
         <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction"/>
@@ -1512,6 +1511,8 @@
         <action id="AddManyTestProcesses" internal="true" class="com.intellij.openapi.wm.impl.status.AddManyTestProcesses"/>
         <action id="WriteActionUnderProgress" internal="true" class="com.intellij.internal.TestWriteActionUnderProgress"/>
         <action id="LongBackgroundWriteAction" internal="true" class="com.intellij.internal.LongBackgroundWriteAction"/>
+        <action id="FrequentBackgroundWriteAction" internal="true" class="com.intellij.internal.FrequentBackgroundWriteAction"/>
+        <action id="FrequentBackgroundReadAction" internal="true" class="com.intellij.internal.FrequentBackgroundReadAction"/>
         <action id="TestProgressWindow" internal="true" class="com.intellij.internal.TestProgressWindow"/>
         <action id="TestCoroutineProgress" internal="true" class="com.intellij.internal.TestCoroutineProgressAction"/>
         <separator/>
@@ -1792,7 +1793,6 @@
 
     <group id="ActivateToolWindowActions" searchable="false">
       <action id="ActivateFindToolWindow" class="com.intellij.find.actions.ActivateFindToolWindowAction"/>
-      <action id="ActivateMeetNewUIToolWindow" class="com.intellij.ide.ui.experimental.meetNewUi.ActivateMeetNewUIToolWindowAction"/>
     </group>
 
     <group id="UpdateEntryPointGroup"/>

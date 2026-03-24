@@ -45,51 +45,152 @@ jvm_library(
 
 jvm_library(
   name = "credentialStore-impl_test_lib",
+  module_name = "intellij.platform.credentialStore.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":credentialStore-impl"],
-  deps = [
-    "//platform/util/concurrency",
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":credentialStore-impl",
     "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/credential-store",
-    "//platform/ide-core",
-    "//platform/ide-core-impl",
-    "//jps/model-serialization",
-    "//platform/projectModel-api:projectModel",
-    "//platform/util/jdom",
-    "//platform/projectModel-impl",
-    "//platform/core-ui",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/util",
-    "//platform/remote-core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/util:util-ui",
-    "//platform/core-api:core",
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/coroutines/core",
-    "@lib//:jna",
-    "//libraries/guava",
-    "//libraries/bouncy-castle-provider",
-    "//libraries/snakeyaml",
-    "//libraries/fastutil",
-    "@lib//:platform-credential_store-impl-dbus-java",
-    "//libraries/caffeine",
+    "//platform/credential-store:credential-store_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/remote-core:remote-core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//libraries/bouncy-castle-provider:bouncy-castle-provider_test_lib",
+    "//libraries/snakeyaml:snakeyaml_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/caffeine:caffeine_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework/extensions:testExtensions_test_lib",
     "@lib//:assert_j",
     "@lib//:junit4",
-    "//platform/analysis-api:analysis",
-    "//platform/platform-api:ide",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//images:images-tests",
+    "//images:images-tests_test_lib",
+    "//RegExpSupport:regexp-tests",
+    "//RegExpSupport:regexp-tests_test_lib",
+    "//platform/xdebugger-impl:debugger-impl-tests",
+    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.credentialStore.impl` end
 
-### auto-generated section `test intellij.platform.credentialStore.impl` start
+### auto-generated section `iml intellij.platform.credentialStore.impl` start
+exports_files([
+  "intellij.platform.credentialStore.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.credentialStore.impl` end
+
+### auto-generated section `build intellij.platform.credentialStore.impl.tests` start
+jvm_library(
+  name = "credentialStore-impl-tests",
+  module_name = "intellij.platform.credentialStore.impl.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "credentialStore-impl-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [
+    "//platform/credential-store-impl:credentialStore-impl",
+    "//platform/credential-store-impl:credentialStore-impl_test_lib",
+  ],
+  deps = [
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/credential-store",
+    "//platform/credential-store:credential-store_test_lib",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//jps/model-serialization",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/projectModel-impl",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util",
+    "//platform/util:util_test_lib",
+    "//platform/remote-core",
+    "//platform/remote-core:remote-core_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "@lib//:jna",
+    "//libraries/guava",
+    "//libraries/guava:guava_test_lib",
+    "//libraries/bouncy-castle-provider",
+    "//libraries/bouncy-castle-provider:bouncy-castle-provider_test_lib",
+    "//libraries/snakeyaml",
+    "//libraries/snakeyaml:snakeyaml_test_lib",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
+    "@lib//:platform-credential_store-impl-tests-dbus-java",
+    "//libraries/caffeine",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework/extensions:testExtensions_test_lib",
+    "@lib//:assert_j",
+    "@lib//:junit4",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/platform-api:ide",
+    "//platform/platform-api:ide_test_lib",
+    "//images:images-tests",
+    "//images:images-tests_test_lib",
+    "//RegExpSupport:regexp-tests",
+    "//RegExpSupport:regexp-tests_test_lib",
+    "//platform/xdebugger-impl:debugger-impl-tests",
+    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+  ],
+  runtime_deps = [
+    ":credentialStore-impl-tests",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.credentialStore.impl.tests` end
+
+### auto-generated section `iml intellij.platform.credentialStore.impl.tests` start
+exports_files([
+  "intellij.platform.credentialStore.impl.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.credentialStore.impl.tests` end
+
+### auto-generated section `test intellij.platform.credentialStore.impl.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "credentialStore-impl_test",
-  runtime_deps = [":credentialStore-impl_test_lib"]
+  name = "credentialStore-impl-tests_test",
+  runtime_deps = [":credentialStore-impl-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.credentialStore.impl` end
+### auto-generated section `test intellij.platform.credentialStore.impl.tests` end

@@ -10,7 +10,6 @@ import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.impl.client.HttpClientBuilder
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -38,8 +37,6 @@ object HttpClient {
     }
   }
 
-  fun download(url: String, outFile: File, retries: Long = 3) = download(url, outFile.toPath(), retries)
-
   /**
    * Downloading file from [url] to [outPath] with [retries].
    * @return true - if successful, false - otherwise
@@ -63,6 +60,10 @@ object HttpClient {
               // due to blocking of files listing on S3 bucket
               throw HttpNotFound("Server returned 403 which we interpret as not found for cache-redirector urls: $url")
             }
+
+            if (response.statusLine.statusCode == 403) throw HttpForbidden("Server returned 403 Forbidden: $encodeUrl")
+
+            check(response.statusLine.statusCode == 200) { "Failed to download $url: $response" }
 
             if (!outPath.parent.exists()) {
               outPath.parent.createDirectories()
@@ -105,6 +106,7 @@ object HttpClient {
   }
 
   class HttpNotFound(message: String, cause: Throwable? = null) : NoRetryException(message, cause)
+  class HttpForbidden(message: String, cause: Throwable? = null) : NoRetryException(message, cause)
 
   private fun getLock(path: Path): ReentrantLock = locks.getOrPut(path.toAbsolutePath().toString()) { ReentrantLock() }
 }

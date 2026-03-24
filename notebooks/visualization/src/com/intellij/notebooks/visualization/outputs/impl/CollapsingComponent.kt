@@ -1,21 +1,17 @@
 package com.intellij.notebooks.visualization.outputs.impl
 
-import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.outputs.NotebookLazyOutputComponent
 import com.intellij.notebooks.visualization.outputs.action.NotebookOutputCollapseSingleInCellAction
 import com.intellij.notebooks.visualization.r.inlays.ResizeController
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.util.ui.JBUI
 import java.awt.Cursor
 import java.awt.Dimension
-import java.awt.Font
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.lang.Integer.max
@@ -40,7 +36,8 @@ open class CollapsingComponent(
 
   var maximized: Boolean = false
 
-  fun calculateInnerSize(): Dimension = size.let { Dimension(it.width - insets.run { left + right }, it.height - insets.run { top + bottom }) }
+  fun calculateInnerSize(): Dimension =
+    size.let { Dimension(it.width - insets.run { left + right }, it.height - insets.run { top + bottom }) }
 
   val hasBeenManuallyResized: Boolean
     get() = customSize != null
@@ -61,7 +58,7 @@ open class CollapsingComponent(
   val mainComponent: JComponent = child
 
   private val stubComponent = lazy {
-    val result = StubComponent(editor)
+    val result = StubComponent()
     add(result)
     result
   }
@@ -136,11 +133,10 @@ open class CollapsingComponent(
     }
   }
 
-  private class StubComponent(private val editor: EditorImpl) : JLabel("...") {
+  private class StubComponent : JLabel("...") {
     init {
       isOpaque = true
       border = IdeBorderFactory.createEmptyBorder(JBUI.insets(7, 0))
-      updateUIFromEditor()
       cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
 
       addMouseListener(object : MouseAdapter() {
@@ -150,13 +146,6 @@ open class CollapsingComponent(
       })
     }
 
-    override fun updateUI() {
-      super.updateUI()
-      if (@Suppress("SENSELESS_COMPARISON") (editor != null)) {
-        updateUIFromEditor()
-      }
-    }
-
     private fun onClick(e: MouseEvent) {
       if (e.isConsumed) return
       val parent = parent as? CollapsingComponent ?: return
@@ -164,13 +153,6 @@ open class CollapsingComponent(
       if (ActionManager.getInstance().tryToExecute(action, e, parent, null, true).isProcessed) {
         e.consume()
       }
-    }
-
-    private fun updateUIFromEditor() {
-      val fontType = editor.colorsScheme.getAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES)?.fontType ?: Font.PLAIN
-      foreground = JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND
-      background = editor.notebookAppearance.getTextOutputBackground(editor.colorsScheme)
-      font = EditorUtil.fontForChar(text.first(), fontType, editor).font
     }
   }
 }

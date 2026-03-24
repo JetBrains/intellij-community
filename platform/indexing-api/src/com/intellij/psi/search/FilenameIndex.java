@@ -11,6 +11,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -117,6 +118,7 @@ public final class FilenameIndex {
 
   /** @deprecated Use {@link #processFilesByName(String, boolean, GlobalSearchScope, Processor)} **/
   @Deprecated
+  @RequiresBackgroundThread(generateAssertion = false)
   public static boolean processFilesByName(@NotNull String name,
                                            boolean directories,
                                            @NotNull Processor<? super PsiFileSystemItem> processor,
@@ -140,6 +142,7 @@ public final class FilenameIndex {
    * @param caseSensitively BEWARE: <b>case-insensitive lookup is quite expensive</b>, it involves full-scan over index!
    * @return true if all the matching files were scanned, false if scanning was stopped early because the processor returns false
    */
+  @RequiresBackgroundThread(generateAssertion = false)
   public static boolean processFilesByName(@NotNull String name,
                                            boolean caseSensitively,
                                            @NotNull GlobalSearchScope scope,
@@ -151,6 +154,7 @@ public final class FilenameIndex {
    * @param caseSensitively BEWARE: <b>case-insensitive lookup is quite expensive</b>, it involves full-scan over index!
    * @return true if all the matching files were scanned, false if scanning was stopped early because the processor returns false
    */
+  @RequiresBackgroundThread(generateAssertion = false)
   public static boolean processFilesByNames(@NotNull Set<String> names,
                                             boolean caseSensitively,
                                             @NotNull GlobalSearchScope scope,
@@ -251,6 +255,7 @@ public final class FilenameIndex {
 
   /** @param caseSensitively BEWARE: <b>case-insensitive lookup is quite expensive</b>, it involves full-scan over index! */
   @ApiStatus.Experimental
+  @RequiresBackgroundThread(generateAssertion = false)
   public static boolean hasVirtualFileWithName(@NotNull String name,
                                                boolean caseSensitively,
                                                @NotNull GlobalSearchScope scope,
@@ -260,6 +265,7 @@ public final class FilenameIndex {
 
   /** @param caseSensitively BEWARE: <b>case-insensitive lookup is quite expensive</b>, it involves full-scan over index! */
   @ApiStatus.Experimental
+  @RequiresBackgroundThread(generateAssertion = false)
   public static @Nullable VirtualFile firstVirtualFileWithName(@NotNull String name,
                                                                boolean caseSensitively,
                                                                @NotNull GlobalSearchScope scope,

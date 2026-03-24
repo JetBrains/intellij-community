@@ -10,6 +10,7 @@ import com.intellij.platform.searchEverywhere.SeResultEndEvent
 import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
 import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
+import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
 import com.intellij.platform.searchEverywhere.frontend.vm.SeSearchContext
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,8 +44,10 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
   }
 
   fun invalidate() {
+    SeLog.log(SeLog.THROTTLING) { "Will invalidate result list model" }
     _isValidState.value = false
     isValidAndHasOnlySemantic = false
+    freezer.reset()
   }
 
   fun removeLoadingItem() {
@@ -54,7 +57,14 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
   }
 
   fun addFromThrottledEvent(searchContext: SeSearchContext, throttledEvent: ThrottledItems<SeResultEvent>) {
-    if (!isValid) reset()
+    var shouldFreezeImmediately = false
+
+    if (!isValid) {
+      reset()
+
+      // Fo non-all tab we should freeze the list immediately, because results flickers on every typed symbol otherwise
+      shouldFreezeImmediately = (searchContext.tabId != SeAllTab.ID)
+    }
 
     val wasEmpty = isEmpty
 
@@ -95,6 +105,11 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
       }
     }
 
+    if (shouldFreezeImmediately) {
+      freezer.enable()
+      freezer.freezeIfEnabled(size)
+    }
+
     if (!throttledEvent.isEndEvent()) { // isValidAndHasOnlySemantic does not change if it is an end event
       isValidAndHasOnlySemantic = (isValidAndHasOnlySemantic || (wasEmpty && !isEmpty)) && throttledEvent.allItemsAreSemantic()
     }
@@ -109,19 +124,20 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
 
     fun enable() {
       isEnabled = true
-      SeLog.log(SeLog.FROZEN_COUNT) { "frozenCount = $frozenCountToApply; size = ${listSize()}; isApplied = $isEnabled" }
+      SeLog.log(SeLog.FROZEN_COUNT) { "enable: frozenCount = $frozenCountToApply; size = ${listSize()}; isApplied = $isEnabled" }
     }
 
     fun freezeIfEnabled(count: Int) {
       if (count > frozenCountToApply) {
         frozenCountToApply = count
-        SeLog.log(SeLog.FROZEN_COUNT) { "frozenCount = $frozenCountToApply; size = ${listSize()}; isApplied = $isEnabled" }
+        SeLog.log(SeLog.FROZEN_COUNT) { "freezeIfEnabled: frozenCount = $frozenCountToApply; size = ${listSize()}; isApplied = $isEnabled" }
       }
     }
 
     fun reset() {
       isEnabled = false
       frozenCountToApply = 0
+      SeLog.log(SeLog.FROZEN_COUNT) { "reset: frozenCount = $frozenCountToApply; size = ${listSize()}; isApplied = $isEnabled" }
     }
   }
 }

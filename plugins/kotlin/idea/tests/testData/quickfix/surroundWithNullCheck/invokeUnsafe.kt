@@ -1,4 +1,5 @@
 // "Surround with null check" "true"
+// K2_ERROR: Reference has a nullable type 'Int?'. Use explicit '?.invoke' to make a function-like call instead.
 
 operator fun Int.invoke() = this
 

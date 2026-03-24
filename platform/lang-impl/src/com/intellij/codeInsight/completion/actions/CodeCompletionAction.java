@@ -3,35 +3,16 @@
 package com.intellij.codeInsight.completion.actions;
 
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.NewRdCompletionSupport;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class CodeCompletionAction extends BaseCodeCompletionAction implements LightEditCompatible, ActionRemoteBehaviorSpecification {
+@ApiStatus.Internal
+public class CodeCompletionAction extends BaseCodeCompletionAction implements LightEditCompatible {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     invokeCompletion(e, CompletionType.BASIC, 1);
-  }
-
-  @Override
-  @ApiStatus.Internal
-  public final @Nullable ActionRemoteBehavior getBehavior() {
-    return getCompletionBehavior();
-  }
-
-  @ApiStatus.Internal
-  public static @Nullable ActionRemoteBehavior getCompletionBehavior() {
-    if (NewRdCompletionSupport.isFrontendRdCompletionOn()) {
-      return ActionRemoteBehavior.FrontendOnly;
-    }
-    else {
-      return null;
-    }
   }
 }

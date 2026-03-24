@@ -3,6 +3,7 @@ package com.intellij.tests;
 
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
+import jetbrains.buildServer.messages.serviceMessages.TestFailed;
 import jetbrains.buildServer.messages.serviceMessages.TestFinished;
 import jetbrains.buildServer.messages.serviceMessages.TestStarted;
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut;
@@ -34,6 +35,7 @@ import org.junit.platform.launcher.EngineFilter;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.PostDiscoveryFilter;
+import org.junit.platform.launcher.TagFilter;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
@@ -49,6 +51,7 @@ import org.junit.vintage.engine.descriptor.VintageTestDescriptor;
 import org.opentest4j.AssertionFailedError;
 import org.opentest4j.MultipleFailuresError;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -57,10 +60,12 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +90,10 @@ import java.util.logging.LogRecord;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class JUnit5TeamCityRunner {
   private static final String ENGINE_VINTAGE = System.getProperty("intellij.build.test.engine.vintage");
+  private static final String IGNORE_FIRST_AND_LAST_TESTS = System.getProperty("intellij.build.test.ignoreFirstAndLastTests");
+  private static final String LIST_CLASSES = System.getProperty("intellij.build.test.list.classes");
   private static final String REVERSE_ORDER = System.getProperty("intellij.build.test.reverse.order");
+  private static final String INCLUDE_TAGS = System.getProperty("intellij.build.test.tags");
 
   public static void main(String[] args) throws ClassNotFoundException {
     if (args.length != 1 && args.length != 2) {
@@ -104,7 +112,10 @@ public final class JUnit5TeamCityRunner {
 
       if (args[0].equals("__class__")) {
         String[] classNames = args[1].split(";");
-        selectors = Arrays.stream(classNames).map(DiscoverySelectors::selectClass).toList();
+        selectors = Arrays.stream(classNames).map(className -> {
+          String[] parts = className.split("#", 2);
+          return parts.length == 1 ? DiscoverySelectors.selectClass(className) : DiscoverySelectors.selectMethod(parts[0], parts[1]);
+        }).toList();
         // no filters
       }
       else if (args[0].equals("__package__")) {
@@ -114,14 +125,15 @@ public final class JUnit5TeamCityRunner {
         filters.add(ClassNameFilter.excludeClassNamePatterns("\\Q" + args[1] + "\\E\\.[^.]+\\..*"));
       }
       else if (args[0].equals("__classpathroot__")) {
-        Set<Path> classpathRoots = JUnit5TeamCityRunnerForTestsOnClasspath.getClassPathRoots(classLoader);
+        Set<Path> classpathRoots = getClassRoots(classLoader);
         if (classpathRoots == null) throw new RuntimeException("Failed to get classpath roots");
         selectors = DiscoverySelectors.selectClasspathRoots(classpathRoots);
-        filters.add(JUnit5TeamCityRunnerForTestsOnClasspath.createClassNameFilter(classLoader));      // name check
-        filters.add(JUnit5TeamCityRunnerForTestsOnClasspath.createPostDiscoveryFilter(classLoader));  // bucketing
-        if (!"false".equals(ENGINE_VINTAGE)) filters.add(new IgnorePostDiscoveryFilter());            // IJIgnore and Ignore support in JUnit 3/4
-        filters.add(new PerformancePostDiscoveryFilter());                                            // PerformanceUnitTest support
-        if (!"false".equals(ENGINE_VINTAGE)) filters.add(new HeadlessPostDiscoveryFilter());          // SkipInHeadlessEnvironment support in JUnit 3/4
+        filters.add(new CommonTestClassesFilter());                                           // name check
+        filters.add(new BucketingPostDiscoveryFilter());                                      // bucketing
+        if (!"false".equals(ENGINE_VINTAGE)) filters.add(new IgnorePostDiscoveryFilter());    // IJIgnore and Ignore support in JUnit 3/4
+        filters.add(new PerformancePostDiscoveryFilter());                                    // PerformanceUnitTest support
+        if (!"false".equals(ENGINE_VINTAGE)) filters.add(new HeadlessPostDiscoveryFilter());  // SkipInHeadlessEnvironment support in JUnit 3/4
+        if (INCLUDE_TAGS != null) filters.add(TagFilter.includeTags(INCLUDE_TAGS.split(";")));        // JUnit 5 tag filter
 
         // filter engines
         if ("false".equals(ENGINE_VINTAGE)) {  // JUnit 5 tests only
@@ -143,7 +155,7 @@ public final class JUnit5TeamCityRunner {
       else if (args.length == 1) {
         String className = args[0];
         selectors = Collections.singletonList(DiscoverySelectors.selectClass(className));
-        // no filters
+        filters.addAll(List.of(new IgnorePostDiscoveryFilter(), new PerformancePostDiscoveryFilter()));  // filter methods
       }
       else {
         String className = args[0];
@@ -164,8 +176,8 @@ public final class JUnit5TeamCityRunner {
       boolean reportAsBootstrapTestsSuite = "only".equals(ENGINE_VINTAGE);  // mask suite names to preserve test identity on TeamCity
       listener = new TCExecutionListener(reportAsBootstrapTestsSuite);
 
-      if (JUnit5TeamCityRunnerForTestsOnClasspath.LIST_CLASSES != null) {
-        JUnit5TeamCityRunnerForTestsOnClasspath.saveListOfTestClasses(testPlan);  // save only
+      if (LIST_CLASSES != null) {
+        saveListOfTestClasses(testPlan);  // save only
       }
       else {
         launcher.execute(testPlan, listener);
@@ -175,7 +187,7 @@ public final class JUnit5TeamCityRunner {
       caughtException = e;
     }
     finally {
-      JUnit5TeamCityRunnerForTestsOnClasspath.assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestAllSuite", caughtException);  // TODO: rename to JUnit5TeamCityRunner
+      assertNoUnhandledExceptions(caughtException);
     }
 
     // Determine exit code OUTSIDE of try/catch/finally to avoid finally overriding the exit code
@@ -195,6 +207,63 @@ public final class JUnit5TeamCityRunner {
     }
 
     System.exit(exitCode);
+  }
+
+  private static void assertNoUnhandledExceptions(Throwable e) {
+    String runConfigurationName = System.getProperty("intellij.build.run.configuration.name");
+    final String testName = "JUnit5TeamCityRunnerForTestAllSuite.assertNoUnhandledExceptions"  // TODO: rename to JUnit5TeamCityRunner
+                            + (runConfigurationName == null ? "" : ("(" + runConfigurationName + ")"));
+
+    System.out.println(new TestStarted(testName, true, null));
+    if (e != null) {
+      var testFailedServiceMessage = new TestFailed(testName, e).toString();
+      if (assertNoUnhandledExceptions_isLeak(testFailedServiceMessage) && !"true".equals(IGNORE_FIRST_AND_LAST_TESTS)) {
+        // leaks are already checked by _LastInSuiteTest.testProjectLeak, ignore
+      }
+      else {
+        System.out.println(testFailedServiceMessage);
+      }
+    }
+    System.out.println(new TestFinished(testName, 0));
+  }
+
+  private static boolean assertNoUnhandledExceptions_isLeak(String testFailedServiceMessage) {
+    return
+      // copied from com.intellij.testFramework.LeakHunter#getLeakedObjectDetails
+      testFailedServiceMessage.contains("Found a leaked instance of") ||
+      // copied from com.intellij.openapi.util.ObjectNode#assertNoChildren
+      testFailedServiceMessage.contains("Memory leak detected") &&
+      testFailedServiceMessage.contains("was registered in Disposer");
+  }
+
+  private static Set<Path> getClassRoots(ClassLoader classLoader) throws Throwable {
+    //noinspection unchecked
+    List<Path> testRoots = (List<Path>)MethodHandles.publicLookup()
+      .findStatic(Class.forName("com.intellij.TestAll", false, classLoader),
+                  "getClassRoots", MethodType.methodType(List.class))
+      .invokeExact();
+    return new HashSet<>(testRoots);
+  }
+
+  private static void saveListOfTestClasses(TestPlan testPlan) {
+    ArrayList<String> testClasses = new ArrayList<>(0);
+    for (TestIdentifier root : testPlan.getRoots()) {
+      Set<TestIdentifier> firstLevel = testPlan.getChildren(root);
+      for (TestIdentifier identifier : firstLevel) {
+        identifier.getSource()
+          .filter(source -> source instanceof ClassSource)
+          .map(source -> ((ClassSource)source).getClassName())
+          .ifPresent(name -> testClasses.add(name));
+      }
+    }
+    Path path = Path.of(LIST_CLASSES);
+    try {
+      Files.createDirectories(path.getParent());
+      Files.write(path, testClasses);
+    }
+    catch (IOException e) {
+      throw new RuntimeException("Cannot save list of test classes to " + path.toAbsolutePath(), e);
+    }
   }
 
   public static JUnit4TestAdapterCache createJUnit4TestAdapterCache() {
@@ -234,23 +303,14 @@ public final class JUnit5TeamCityRunner {
   }
 
   public static class TCLogRecordListener extends LogRecordListener {
-    private static final List<String> KNOWN_EXCEPTIONAL_WARNINGS = List.of(  // TODO: migrate these tests to JUnit 5
-      "Discovered 2 'junit-platform.properties' configuration files on the classpath (see below); only the first (*) will be used.",  // https://github.com/junit-team/junit-framework/issues/2794
+    private static final List<String> KNOWN_EXCEPTIONAL_WARNINGS = List.of(
+      "Deleting symbolic link from location inside of temp dir (",  // https://youtrack.jetbrains.com/issue/AT-4053
+      "Discovered 2 'junit-platform.properties' configuration files on the classpath (see below); only the first (*) will be used.",  // https://github.com/junit-team/junit-framework/issues/2794, https://youtrack.jetbrains.com/issue/AT-4058
       "Discovered 3 'junit-platform.properties' configuration files on the classpath (see below); only the first (*) will be used.",
       "Discovered 4 'junit-platform.properties' configuration files on the classpath (see below); only the first (*) will be used.",
-      "Runner org.jetbrains.plugins.ruby.ruby.runners.GemSuite (used on class ",
-      "Runner org.jetbrains.plugins.ruby.ruby.runners.IndexingModeSuite (used on ",
-      "Runner org.junit.internal.runners.SuiteMethod (used on class com.intellij.codeInsight.template.emmet.HtmlEmmetAbbreviationTest) was not able to satisfy all filter requests.",
-      "Runner org.junit.internal.runners.SuiteMethod (used on class com.intellij.codeInsight.template.emmet.XslEmmetAbbreviationTest) was not able to satisfy all filter requests.",
-      "Runner org.junit.internal.runners.SuiteMethod (used on class com.intellij.codeInsight.template.emmet.filters.BemEmmetFilterTest) was not able to satisfy all filter requests.",
-      "Runner org.junit.internal.runners.SuiteMethod (used on class css.emmet.CssPropertiesEmmetAbbreviationTest) was not able to satisfy all filter requests.",
-      "Runner org.junit.runners.Parameterized (used on class com.intellij.database.grid.DataGridInsertRowWithValueTest) was not able to satisfy all filter requests.",
-      "Runner org.junit.runners.Parameterized (used on class com.intellij.lang.ruby.rbs.psi.data.RbsTypeSignatureSubtypeCheckerTest) was not able to satisfy all filter requests.",
-      "Runner org.junit.runners.Parameterized (used on class com.intellij.selenium.shared.pageobject.englishWordDetector.EnglishWordDetectorTest) was not able to satisfy all filter requests.",
-      "Runner org.junit.runners.Parameterized (used on class com.intellij.sql.SqlLiveTemplatesTest) was not able to satisfy all filter requests.",
-      "Runner org.junit.runners.Parameterized (used on class com.intellij.sql.completion.AllSqlCompletionTest) was not able to satisfy all filter requests.",
-      "Runner org.junit.runners.Parameterized (used on class com.intellij.sql.refactoring.SqlExtractNamedQueryTest) was not able to satisfy all filter requests.",
-      "Runner org.junit.runners.Parameterized (used on class com.jetbrains.rd.platform.codeWithMe.FileManifestUtilTest) was not able to satisfy all filter requests."
+      "Failed to invoke TestWatcher [com.intellij.ide.starter.junit5.JUnit5TestWatcher] for method [com.intellij.workspaceModel.integrationTests.tests.aggregator.maven.",  // https://youtrack.jetbrains.com/issue/AT-4052
+      "TestExecutionListener [com.intellij.ide.starter.junit5.FreeSpacePrinter] threw exception for method: executionStarted(TestIdentifier [uniqueId = [engine:group-by-mode]/[class:com.jetbrains.rdct.lambdaTestsUi.UiInfrastructureTest]/",  // https://youtrack.jetbrains.com/issue/AT-4051
+      "Type implements CloseableResource but not AutoCloseable: org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter"  // https://github.com/testcontainers/testcontainers-java/issues/10525
     );
 
     @Override
@@ -293,10 +353,6 @@ public final class JUnit5TeamCityRunner {
       else {
         CAPTURE_STANDARD_OUTPUT = true;
       }
-    }
-
-    public TCExecutionListener() {
-      this(false);
     }
 
     private TCExecutionListener(boolean reportAsBootstrapTestsSuite) {
@@ -390,26 +446,18 @@ public final class JUnit5TeamCityRunner {
           testFailure(testIdentifier, ServiceMessageTypes.TEST_IGNORED, throwableOptional, duration, reason);
         }
 
-        TestLocationStorage.recordTestLocation(testIdentifier, status, getFullTestPath(testIdentifier));
+        TestLocationStorage.recordTestLocation(testIdentifier, status, getTestNameForMetadata(testIdentifier));
 
         testFinished(testIdentifier, duration);
         myFinishCount++;
       }
       else if (hasNonTrivialParent(testIdentifier)) {
-        String messageName = null;
         if (status == TestExecutionResult.Status.FAILED) {
-          messageName = ServiceMessageTypes.TEST_FAILED;
+          myPrintStream.println(new TestStarted(CLASS_CONFIGURATION, false, null));
+          testFailure(CLASS_CONFIGURATION, ServiceMessageTypes.TEST_FAILED, throwableOptional, 0, reason);
+          myPrintStream.println(new TestFinished(CLASS_CONFIGURATION, 0));
         }
-        else if (status == TestExecutionResult.Status.ABORTED) {
-          messageName = ServiceMessageTypes.TEST_IGNORED;
-        }
-        if (messageName != null) {
-          if (status == TestExecutionResult.Status.FAILED) {
-            myPrintStream.println(new TestStarted(CLASS_CONFIGURATION, false, null));
-            testFailure(CLASS_CONFIGURATION, messageName, throwableOptional, 0, reason);
-            myPrintStream.println(new TestFinished(CLASS_CONFIGURATION, 0));
-          }
-
+        if (status != TestExecutionResult.Status.SUCCESSFUL) {
           final Set<TestIdentifier> descendants = myTestPlan != null ? myTestPlan.getDescendants(testIdentifier) : Collections.emptySet();
           if (!descendants.isEmpty() && myFinishCount == 0) {
             for (TestIdentifier childIdentifier : descendants) {
@@ -422,6 +470,16 @@ public final class JUnit5TeamCityRunner {
           }
         }
         if (!myReportAsBootstrapTestsSuite) {
+          myPrintStream.println(new TestSuiteFinished(getName(testIdentifier)));
+        }
+        if (status == TestExecutionResult.Status.ABORTED) myCurrentTestStart = 1;  // mark ignored classes as #smthExecuted
+      }
+      else {
+        if (status == TestExecutionResult.Status.FAILED) {
+          myPrintStream.println(new TestSuiteStarted(getName(testIdentifier)));  // root (e.g. JupiterTestEngine)
+          myPrintStream.println(new TestStarted(CLASS_CONFIGURATION, false, null));
+          testFailure(CLASS_CONFIGURATION, ServiceMessageTypes.TEST_FAILED, throwableOptional, 0, reason);
+          myPrintStream.println(new TestFinished(CLASS_CONFIGURATION, 0));
           myPrintStream.println(new TestSuiteFinished(getName(testIdentifier)));
         }
       }
@@ -583,6 +641,17 @@ public final class JUnit5TeamCityRunner {
       return String.join(": ", names);
     }
 
+    private String getTestNameForMetadata(TestIdentifier testIdentifier) {
+      if (myReportAsBootstrapTestsSuite) {
+        return BOOTSTRAP_TESTS_SUITE_NAME + ": " + getName(testIdentifier);
+      }
+      boolean parentIsMethodSource = myTestPlan.getParent(testIdentifier)
+        .flatMap(TestIdentifier::getSource)
+        .filter(source -> source instanceof MethodSource)
+        .isPresent();
+      return parentIsMethodSource ? getFullTestPath(testIdentifier) : getName(testIdentifier);
+    }
+
     static class LimitedStackTracePrintWriter extends PrintWriter {
       public static final String CAUSED_BY = "Caused by: ";
       private final int headLimit;
@@ -662,6 +731,95 @@ public final class JUnit5TeamCityRunner {
         finish();
         super.close();
       }
+    }
+  }
+
+  public static class CommonTestClassesFilter implements ClassNameFilter {
+    private static final MethodHandle isClassNameIncluded;
+
+    static {
+      try {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        isClassNameIncluded = MethodHandles.publicLookup()
+          .findStatic(Class.forName("com.intellij.TestCaseLoader", true, classLoader),
+                      "isClassNameIncluded", MethodType.methodType(boolean.class, String.class));
+        boolean ignored = (boolean)isClassNameIncluded.invokeExact(Object.class.getName() + "Test");  // force load test classes filter, *Test matches ClassFinder#isSuitableTestClassName
+      }
+      catch (Throwable e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public FilterResult apply(String className) {
+      try {
+        if ((boolean)isClassNameIncluded.invokeExact(className)) {
+          return FilterResult.included(null);
+        }
+        return FilterResult.excluded(null);
+      }
+      catch (Throwable e) {
+        return FilterResult.excluded(e.getMessage());
+      }
+    }
+  }
+
+  public static class BucketingPostDiscoveryFilter implements PostDiscoveryFilter {
+    private static final MethodHandle isClassIncluded;
+
+    static {
+      try {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        isClassIncluded = MethodHandles.publicLookup()
+          .findStatic(Class.forName("com.intellij.TestCaseLoader", true, classLoader),
+                      "isClassIncluded", MethodType.methodType(boolean.class, Class.class));
+        boolean ignored = (boolean)isClassIncluded.invokeExact(Object.class);  // force load bucketing scheme
+      }
+      catch (Throwable e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    private LastCheckResult myLastResult = null;
+
+    @Override
+    public FilterResult apply(TestDescriptor descriptor) {
+      if (descriptor instanceof EngineDescriptor) {
+        return FilterResult.included(null);
+      }
+      TestSource source = descriptor.getSource().orElse(null);
+      if (source == null) {
+        return FilterResult.included("No source for descriptor");
+      }
+      if (source instanceof MethodSource methodSource) {
+        return isIncluded(methodSource.getJavaClass());
+      }
+      if (source instanceof ClassSource classSource) {
+        return isIncluded(classSource.getJavaClass());
+      }
+      return FilterResult.included("Unknown source type " + source.getClass());
+    }
+
+    private FilterResult isIncluded(Class<?> aClass) {
+      if (myLastResult == null || !myLastResult.className.equals(aClass.getName())) {
+        myLastResult = new LastCheckResult(aClass.getName(), isIncludedImpl(aClass));
+      }
+      return myLastResult.result;
+    }
+
+    private static FilterResult isIncludedImpl(Class<?> aClass) {
+      try {
+        if ((boolean)isClassIncluded.invokeExact(aClass)) {
+          return FilterResult.included(null);
+        }
+        return FilterResult.excluded(null);
+      }
+      catch (Throwable e) {
+        return FilterResult.excluded(e.getMessage());
+      }
+    }
+
+    record LastCheckResult(String className, FilterResult result) {
     }
   }
 
@@ -845,4 +1003,5 @@ public final class JUnit5TeamCityRunner {
       delegate.execute(request);
     }
   }
+
 }

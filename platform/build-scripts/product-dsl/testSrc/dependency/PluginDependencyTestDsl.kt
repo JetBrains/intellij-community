@@ -38,7 +38,7 @@ import org.jetbrains.intellij.build.productLayout.pipeline.TestPluginDependencyP
 import org.jetbrains.intellij.build.productLayout.pipeline.TestPluginsOutput
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
-import org.jetbrains.intellij.build.productLayout.util.XmlWritePolicy
+import org.jetbrains.intellij.build.productLayout.util.GeneratedArtifactWritePolicy
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -764,6 +764,7 @@ internal fun testGenerationModel(
   pluginContentCache: PluginContentCache? = null,
   suppressionConfig: SuppressionConfig = SuppressionConfig(),
   updateSuppressions: Boolean = false,
+  suppressionConfigPath: Path? = null,
   pluginAllowedMissingDependencies: Map<ContentModuleName, Set<ContentModuleName>> = emptyMap(),
   testLibraryAllowedInModule: Map<ContentModuleName, Set<String>> = emptyMap(),
   productAllowedMissing: Map<String, Set<ContentModuleName>> = emptyMap(),
@@ -787,14 +788,15 @@ internal fun testGenerationModel(
       projectLibraryToModuleMap = effectiveOutputProvider.getProjectLibraryToModuleMap(),
       pluginAllowedMissingDependencies = pluginAllowedMissingDependencies,
       testLibraryAllowedInModule = testLibraryAllowedInModule,
+      suppressionConfigPath = suppressionConfigPath,
     ),
     projectRoot = Path.of("."),
     outputProvider = effectiveOutputProvider,
     isUltimateBuild = false,
-    descriptorCache = ModuleDescriptorCache(effectiveOutputProvider, GlobalScope),
+    descriptorCache = ModuleDescriptorCache(effectiveOutputProvider),
     pluginContentCache = effectivePluginContentCache,
     fileUpdater = effectiveFileUpdater,
-    xmlWritePolicy = XmlWritePolicy(generationMode, effectiveFileUpdater),
+    generatedArtifactWritePolicy = GeneratedArtifactWritePolicy(generationMode, effectiveFileUpdater),
     scope = GlobalScope,
     pluginGraph = pluginGraph,
     dslTestPluginsByProduct = emptyMap(),
@@ -956,10 +958,9 @@ private fun stubModuleOutputProvider(): ModuleOutputProvider {
 private fun stubPluginContentCache(): PluginContentCache {
   return PluginContentCache(
     outputProvider = stubModuleOutputProvider(),
-    xIncludeCache = AsyncCache(GlobalScope),
+    xIncludeCache = AsyncCache(),
     skipXIncludePaths = emptySet(),
     xIncludePrefixFilter = { null },
-    scope = GlobalScope,
     errorSink = ErrorSink(),
   )
 }

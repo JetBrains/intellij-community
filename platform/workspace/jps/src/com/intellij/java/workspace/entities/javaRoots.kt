@@ -10,6 +10,11 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Parent
 
+/**
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
+ */
 interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
   @Parent
   val sourceRoot: SourceRootEntity
@@ -65,6 +70,11 @@ var SourceRootEntity.Builder.javaSourceRoots: List<JavaSourceRootPropertiesEntit
 val SourceRootEntity.javaSourceRoots: List<JavaSourceRootPropertiesEntity>
   by WorkspaceEntity.extension()
 
+/**
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
+ */
 interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
   @Parent
   val sourceRoot: SourceRootEntity

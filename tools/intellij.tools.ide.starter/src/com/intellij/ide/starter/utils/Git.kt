@@ -7,13 +7,13 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.withRetry
-import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Random
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.deleteRecursively
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -466,11 +466,11 @@ object Git {
     ).start()
   }
 
-  fun buildDiff(dir: Path, file: File, outputFile: Path) {
+  fun buildDiff(dir: Path, file: Path, outputFile: Path) {
     ProcessExecutor(
       "git-build-diff",
       workDir = dir, timeout = 1.minutes,
-      args = listOf("git", "diff", "--output=${outputFile.toFile().absolutePath}", file.absolutePath),
+      args = listOf("git", "diff", "--output=${outputFile.absolutePathString()}", file.absolutePathString()),
     ).start()
   }
 

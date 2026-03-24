@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.serialization
 
 import com.intellij.openapi.components.ComponentManager
@@ -150,9 +150,15 @@ class ExtensionPointSerializerBean : BaseKeyedLazyInstance<SerializationHelper<A
     componentManager: ComponentManager,
     pluginDescriptor: PluginDescriptor,
   ): KSerializer<Any> {
-    val serializableClass = componentManager.loadClass<Any>(fqn, pluginDescriptor)
-    val serializer = SerializerSearcher.findSerializer(serializableClass)
-    return serializer ?: error("Cannot find serializer in $fqn class")
+    try {
+      val serializableClass = componentManager.loadClass<Any>(fqn, pluginDescriptor)
+
+      val serializer = SerializerSearcher.findSerializer(serializableClass)
+      return serializer ?: error("Cannot find serializer in $fqn class")
+    }
+    catch (e: ReflectiveOperationException) {
+      throw IllegalStateException("Cannot find serializer in $fqn class", e)
+    }
   }
 
   override fun getKey(): String = implementationClass!!

@@ -1,0 +1,13 @@
+<!-- DO NOT EDIT: This file is auto-generated from moduleSet("debugger.streams") -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<idea-plugin implementation-detail="true">
+  <id>com.intellij.moduleSet.debugger.streams</id>
+  <name>Debugger Streams</name>
+  <description>Generated plugin wrapper for module set debugger.streams.</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.debugger.streams.backend"/>
+    <module name="intellij.debugger.streams.core"/>
+    <module name="intellij.debugger.streams.shared"/>
+  </content>
+</idea-plugin>

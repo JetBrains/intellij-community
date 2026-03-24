@@ -1,23 +1,18 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.java.remoteServers"/>
-    <module name="intellij.java.compiler.impl"/>
-    <module name="intellij.platform.core"/>
-    <module name="intellij.platform.ide.impl"/>
-    <module name="intellij.java.debugger.impl"/>
-    <module name="intellij.java.execution"/>
-    <module name="intellij.platform.lang.core"/>
-    <module name="intellij.platform.lang.impl"/>
-    <module name="intellij.java.debugger"/>
-    <module name="intellij.platform.projectModel"/>
-    <module name="intellij.java.impl"/>
-    <module name="intellij.java"/>
-    <module name="intellij.java.ui"/>
-    <module name="intellij.platform.core.ui"/>
-
     <plugin id="com.intellij.modules.remoteServers"/>
     <plugin id="com.intellij.modules.java-capable"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.compiler.impl"/>
+    <module name="intellij.java.debugger"/>
+    <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.execution"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.remoteServers"/>
+    <module name="intellij.java.ui"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.remoteServer.moduleBuilderContribution"

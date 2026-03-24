@@ -4,10 +4,6 @@ package com.intellij.util.indexing.diagnostic
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.diagnostic.dto.JsonDateTime
@@ -15,6 +11,9 @@ import com.intellij.util.indexing.diagnostic.dto.JsonDuration
 import com.intellij.util.indexing.diagnostic.dto.JsonFileSize
 import com.intellij.util.indexing.diagnostic.dto.JsonPercentages
 import com.intellij.util.indexing.diagnostic.dto.JsonProcessingSpeed
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.module.kotlin.readValue
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.ZonedDateTime
@@ -106,7 +105,7 @@ object SharedIndexDiagnostic {
   }
 
   private val jacksonMapper: ObjectMapper by lazy {
-    jacksonObjectMapper().registerKotlinModule()
+    jacksonObjectMapper()
   }
 
   private fun getEventsFile(project: Project): Path =

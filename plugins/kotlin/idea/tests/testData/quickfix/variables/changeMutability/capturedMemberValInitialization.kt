@@ -1,4 +1,5 @@
 // "Change to 'var'" "true"
+// K2_ERROR: 'val' cannot be reassigned.
 
 class Test {
     val a: String

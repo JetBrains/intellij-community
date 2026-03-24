@@ -9,10 +9,27 @@ resourcegroup(
 
 jvm_library(
   name = "annotation",
+  module_name = "intellij.libraries.javax.annotation",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":annotation_resources"],
   exports = ["@lib//:javax-annotation-api"],
   runtime_deps = ["@lib//:javax-annotation-api"]
 )
+
+jvm_library(
+  name = "annotation_test_lib",
+  module_name = "intellij.libraries.javax.annotation",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:javax-annotation-api"],
+  runtime_deps = [":annotation"]
+)
 ### auto-generated section `build intellij.libraries.javax.annotation` end
+
+### auto-generated section `iml intellij.libraries.javax.annotation` start
+exports_files([
+  "intellij.libraries.javax.annotation.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.javax.annotation` end

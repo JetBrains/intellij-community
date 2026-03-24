@@ -187,8 +187,11 @@ public final class ParamHelper {
 
   public static boolean isSelfArgsKwargsCallable(@NotNull PyCallableType type, @NotNull TypeEvalContext context) {
     final List<PyCallableParameter> parameters = type.getParameters(context);
-    return parameters != null
-           && parameters.size() == 3 &&
+    return parameters != null && isSelfArgsKwargsSignature(parameters);
+  }
+
+  public static boolean isSelfArgsKwargsSignature(@NotNull List<PyCallableParameter> parameters) {
+    return parameters.size() == 3 &&
            parameters.get(0).isSelf() &&
            parameters.get(1).isPositionalContainer() &&
            parameters.get(2).isKeywordContainer();
@@ -196,10 +199,43 @@ public final class ParamHelper {
 
   public static boolean isArgsKwargsCallable(@NotNull PyCallableType type, @NotNull TypeEvalContext context) {
     final List<PyCallableParameter> parameters = type.getParameters(context);
-    return parameters != null
-           && parameters.size() == 2 &&
+    return parameters != null && isArgsKwargsSignature(parameters);
+  }
+
+  public static boolean isArgsKwargsSignature(@NotNull List<PyCallableParameter> parameters) {
+    return parameters.size() == 2 &&
            parameters.get(0).isPositionalContainer() &&
            parameters.get(1).isKeywordContainer();
+  }
+
+  /**
+   * Checks if the given list of parameters represents a so-called wildcard signature.
+   * A wildcard signature contains only untyped *args and **kwargs (or *args: Any, **kwargs: Any),
+   * possibly with a self parameter for methods.
+   *
+   * @see <a href="https://typing.python.org/en/latest/spec/callables.html#meaning-of-in-callable">Meaning of ... in Callable</a>
+   */
+  public static boolean isWildcardSignature(@NotNull List<PyCallableParameter> parameters, @NotNull TypeEvalContext context) {
+    var params = dropSelf(parameters);
+
+    if (params.isEmpty()) return false;
+
+    return params.size() == 2 &&
+           params.getFirst().isPositionalContainer() &&
+           params.getLast().isKeywordContainer() &&
+           params.getFirst().getArgumentType(context) == null &&
+           params.getLast().getArgumentType(context) == null;
+  }
+
+  /**
+   * Removes the 'self' parameter from the beginning of the parameter list if it exists.
+   *
+   * @param parameters the list of {@link PyCallableParameter} to process
+   * @return a list of {@link PyCallableParameter} with the 'self' parameter removed,
+   *         or the same list if the first parameter is not 'self'.
+   */
+  public static List<PyCallableParameter> dropSelf(@NotNull List<PyCallableParameter> parameters) {
+    return !parameters.isEmpty() && parameters.getFirst().isSelf() ? parameters.subList(1, parameters.size()) : parameters;
   }
 
   public interface ParamWalker {

@@ -64,6 +64,7 @@ tarfile.TarFile.makelink_with_filter
 
 # Incompatible changes introduced in Python 3.10.20
 # (Remove once 3.10.20 becomes available for GitHub Actions)
+email._header_value_parser.make_parenthesis_pairs
 html.parser.HTMLParser.__init__ # parameter `scripting`
 pyexpat.XMLParserType.SetAllocTrackerActivationThreshold
 pyexpat.XMLParserType.SetAllocTrackerMaximumAmplification

@@ -145,6 +145,11 @@ public final class PyRecursiveTypeVisitor extends PyTypeVisitorExt<PyRecursiveTy
     }
 
     @Override
+    public @NotNull List<@Nullable PyType> visitPyOverloadType(@NotNull PyOverloadType overloadType) {
+      return Collections.unmodifiableList(new ArrayList<>(overloadType.getItems()));
+    }
+
+    @Override
     public @NotNull List<@Nullable PyType> visitPyGenericType(@NotNull PyCollectionType genericType) {
       return genericType.getElementTypes();
     }
@@ -184,18 +189,8 @@ public final class PyRecursiveTypeVisitor extends PyTypeVisitorExt<PyRecursiveTy
     }
 
     @Override
-    public @NotNull List<@Nullable PyType> visitPyUnionType(@NotNull PyUnionType unionType) {
-      return Collections.unmodifiableList(new ArrayList<>(unionType.getMembers()));
-    }
-
-    @Override
-    public @NotNull List<@Nullable PyType> visitPyUnsafeUnionType(@NotNull PyUnsafeUnionType unsafeUnionType) {
-      return Collections.unmodifiableList(new ArrayList<>(unsafeUnionType.getMembers()));
-    }
-
-    @Override
-    public @NotNull List<@Nullable PyType> visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
-      return Collections.unmodifiableList(new ArrayList<>(intersectionType.getMembers()));
+    public @NotNull List<@Nullable PyType> visitPyCompositeType(@NotNull PyCompositeType compositeType) {
+      return Collections.unmodifiableList(new ArrayList<>(compositeType.getMembers()));
     }
 
     @Override

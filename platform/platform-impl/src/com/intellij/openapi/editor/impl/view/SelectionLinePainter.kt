@@ -5,10 +5,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.VisualPosition
-import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.scale.JBUIScale.scale
 import java.awt.Graphics2D
 import java.awt.RenderingHints
@@ -68,7 +66,8 @@ private data class CaretLineSelections(
   private val editor: EditorImpl,
   private val line: Int,
   private val selections: List<CaretSelection>,
-  private val lineExtensionWidth: Double
+  private val lineExtensionWidth: Double,
+  private val selectionBoundaryCache: MutableMap<Pair<Int, Int>, Pair<Double, Double>>
 ) {
   private fun trimToLine(selection: CaretSelection): CaretSelection {
     val columnEnd = EditorUtil.getLastVisualLineColumnNumber(editor, line)
@@ -88,16 +87,18 @@ private data class CaretLineSelections(
     editor.isRightAligned && selections.firstOrNull()?.let { it.start.line < line } ?: false
 
   private fun selectionBoundaries(index: Int): Pair<Double, Double> {
-    val selection = this[index]
-    val (rawStart, rawEnd) = Pair(
-      editor.visualPositionToPoint2D(selection.start).x,
-      editor.visualPositionToPoint2D(selection.end).x
-    )
+    return selectionBoundaryCache.getOrPut(line to index) {
+      val selection = this[index]
+      val (rawStart, rawEnd) = Pair(
+        editor.visualPositionToPoint2D(selection.start).x,
+        editor.visualPositionToPoint2D(selection.end).x
+      )
 
-    return Pair(
-      if (index == 0 && isLeftExtended()) rawStart - lineExtensionWidth else rawStart,
-      if (index == selections.lastIndex && isRightExtended()) rawEnd + lineExtensionWidth else rawEnd
-    )
+      Pair(
+        if (index == 0 && isLeftExtended()) rawStart - lineExtensionWidth else rawStart,
+        if (index == selections.lastIndex && isRightExtended()) rawEnd + lineExtensionWidth else rawEnd
+      )
+    }
   }
 
   fun hasSelectionEnd(left: Boolean, pos: Double): Boolean =
@@ -153,9 +154,19 @@ internal class SelectionLinePainter(
   private val lineExtensionWidth: Double,
 ) {
   private val radius = scale(lineHeight / 6.0f).toDouble()
-  private val selectionBg = editor.colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)
+  private val selectionBg = editor.selectionModel.textAttributes.backgroundColor
   private val leftExtensionWidth = if (editor.isRightAligned) lineExtensionWidth else 0.0
   private val rightExtensionWidth = if (editor.isRightAligned) 0.0 else lineExtensionWidth
+  private val visibleScrollArea = editor.scrollingModel.visibleArea.let {
+    if (it.height <= 0) return@let 0 to Int.MAX_VALUE
+
+    val startOffset = editor.visualLineStartOffset(editor.yToVisualLine(it.y) - 1)
+    val endOffset = editor.visualLineStartOffset(editor.yToVisualLine(it.y + it.height) + 1)
+
+    startOffset to endOffset
+  }
+  private val visualLineCache = mutableMapOf<Int, Int>()
+  private val selectionBoundaryCache = mutableMapOf<Pair<Int, Int>, Pair<Double, Double>>()
 
   private val caretSelections by lazy {
     editor.caretModel.allCarets.map { caret ->
@@ -179,6 +190,10 @@ internal class SelectionLinePainter(
 
   private val allCarets by lazy { editor.caretModel.allCarets }
 
+  fun associateWithVisualLine(y: Int, visualLine: Int) {
+    visualLineCache[y] = visualLine
+  }
+
   fun isCFRInSelection(cfr: CustomFoldRegion): Boolean = allCarets.any {
     it.selectionStart <= cfr.startOffset && cfr.endOffset <= it.selectionEnd
   }
@@ -191,36 +206,41 @@ internal class SelectionLinePainter(
     bounds.y in selectedRange && (bounds.y + bounds.height) in selectedRange
   }
 
+  private data class CFRData(val region: CustomFoldRegion, val startLine: Int, val endLine: Int)
   private val customFoldRegions by lazy {
     val foldingModel = editor.foldingModel
     val regions = foldingModel.fetchTopLevel() ?: emptyArray()
 
-    regions.filterIsInstance<CustomFoldRegion>().filter { isCFRInSelection(it) }
+    regions.filterIsInstance<CustomFoldRegion>()
+      .filter {
+        val (visibleStart, visibleEnd) = visibleScrollArea
+        visibleStart <= it.startOffset && it.endOffset <= visibleEnd
+      }
+      .filter { isCFRInSelection(it) }
+      .map {
+        val startLine = editor.offsetToVisualLine(it.startOffset)
+        val endLine = editor.offsetToVisualLine(it.endOffset)
+        CFRData(it, startLine, endLine)
+      }
   }
 
   private fun caretSelectionsForLine(line: Int): CaretLineSelections {
-    if (caretSelections.isEmpty()) return CaretLineSelections(editor, line, emptyList(), lineExtensionWidth)
+    if (caretSelections.isEmpty()) return CaretLineSelections(editor, line, emptyList(), lineExtensionWidth, selectionBoundaryCache)
 
     val lower = caretSelections.binarySearch { if (it.end.line < line) -1 else 1 }.let { -it - 1 }
     val upper = caretSelections.binarySearch { if (it.start.line <= line) -1 else 1 }.let { -it - 1 }
 
-    return CaretLineSelections(editor, line, caretSelections.subList(lower, upper), lineExtensionWidth)
+    return CaretLineSelections(editor, line, caretSelections.subList(lower, upper), lineExtensionWidth, selectionBoundaryCache)
   }
 
   private fun yToVisualLine(y: Int): Int {
-    return editor.yToVisualLine(y - yShift)
-  }
-
-  private fun visualLineToY(visualLine: Int): Int {
-    return editor.visualLineToY(visualLine) + yShift
+    return visualLineCache.getOrPut(y) { editor.yToVisualLine(y - yShift) }
   }
 
   private fun customFoldRegionsFor(visualLine: Int): List<CustomFoldRegion> {
-    return customFoldRegions.filter { cfr ->
-      val startLine = editor.offsetToVisualLine(cfr.startOffset)
-      val endLine = editor.offsetToVisualLine(cfr.endOffset)
+    return customFoldRegions.filter { (_, startLine, endLine) ->
       visualLine in startLine..endLine
-    }
+    }.map { it.region }
   }
 
   private fun blockInlayAbove(visualLine: Int): Inlay<*>? =
@@ -268,7 +288,7 @@ internal class SelectionLinePainter(
 
     return caretSelectionsForLine(visualLine - 1).selectionEndDistance(left, x, precision)
   }
-  
+
   private fun selectionEndDistanceBelowLine(visualLine: Int, x: Double, left: Boolean, checkBlockInlays: Boolean = true, precision: Double = EPSILON): Double? {
     if (visualLine >= editor.view.visibleLineCount) return null
 
@@ -358,14 +378,6 @@ internal class SelectionLinePainter(
   private fun isSelectionRightBound(block: SelectionRectangle): Boolean {
     val visualLine = yToVisualLine(block.topLeft.y.toInt())
     return customFoldRegionsFor(visualLine).isNotEmpty() || caretSelectionsForLine(visualLine).hasSelectionEnd(false, block.bottomRight.x)
-  }
-
-  fun isLineInSelection(x: Float, y: Int, width: Float): Boolean {
-    val line = yToVisualLine(y)
-    if (y != visualLineToY(line)) return false
-
-    val selection = caretSelectionsForLine(line).selectionContaining(x.toDouble()) ?: return false
-    return selection.contains((x + width).toDouble())
   }
 
   private fun paintRoundedBlock(block: SelectionRectangle, cornerTypes: Array<CornerType>) {
@@ -481,7 +493,7 @@ internal class SelectionLinePainter(
       signedDistance != null && abs(signedDistance) < EPSILON -> CornerType.Straight
       signedDistance != null -> {
         val radius = abs(signedDistance) / 2
-        
+
         val thisLineExtendsFurther = if (isLeftCorner) signedDistance > 0 else signedDistance < 0
         if (thisLineExtendsFurther) CornerType.Rounded(radius) else CornerType.InvertedRounded(radius)
       }
@@ -670,8 +682,8 @@ internal class SelectionLinePainter(
   }
 
   private fun paint(rect: Rectangle2D) {
-    if (Registry.`is`("editor.old.full.horizontal.selection.enabled") || editor.isColumnMode) {
-      LOG.error("Using the new selection painting is disabled or editor is in column mode but SelectionLinePainter.paint was called, proceeding with caution")
+    if (!editor.shouldUseNewSelection()) {
+      LOG.error("Using the new selection painting is disabled but SelectionLinePainter.paint was called, proceeding with caution")
       EditorPainter.fillRectExact(
         graphics,
         rect,

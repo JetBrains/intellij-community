@@ -17,6 +17,9 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.table.JBTable;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,25 +36,34 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.AbstractButton;
+import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellEditor;
+import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
 import java.util.Objects;
+import java.util.ResourceBundle;
 import java.util.function.Supplier;
 
 public class CsvRecordFormatForm implements Disposable {
@@ -72,12 +84,18 @@ public class CsvRecordFormatForm implements Disposable {
   }
 
   public static final List<LazyPair<String>> DELIMITERS =
-    List.of(new LazyPair<>("\n", DataGridBundle.messagePointer("csv.format.settings.delimiter.newline"), DataGridBundle.messagePointer("csv.format.settings.delimiter.newline.lowercase")),
-            new LazyPair<>(" ", DataGridBundle.messagePointer("csv.format.settings.delimiter.space"), DataGridBundle.messagePointer("csv.format.settings.delimiter.space.lowercase")),
-            new LazyPair<>("\t", DataGridBundle.messagePointer("csv.format.settings.delimiter.tab"), DataGridBundle.messagePointer("csv.format.settings.delimiter.tab.lowercase")),
-            new LazyPair<>(",", DataGridBundle.messagePointer("csv.format.settings.delimiter.comma"), DataGridBundle.messagePointer("csv.format.settings.delimiter.comma.lowercase")),
-            new LazyPair<>(";", DataGridBundle.messagePointer("csv.format.settings.delimiter.semicolon"), DataGridBundle.messagePointer("csv.format.settings.delimiter.semicolon.lowercase")),
-            new LazyPair<>("|", DataGridBundle.messagePointer("csv.format.settings.delimiter.pipe"), DataGridBundle.messagePointer("csv.format.settings.delimiter.pipe.lowercase")));
+    List.of(new LazyPair<>("\n", DataGridBundle.messagePointer("csv.format.settings.delimiter.newline"),
+                           DataGridBundle.messagePointer("csv.format.settings.delimiter.newline.lowercase")),
+            new LazyPair<>(" ", DataGridBundle.messagePointer("csv.format.settings.delimiter.space"),
+                           DataGridBundle.messagePointer("csv.format.settings.delimiter.space.lowercase")),
+            new LazyPair<>("\t", DataGridBundle.messagePointer("csv.format.settings.delimiter.tab"),
+                           DataGridBundle.messagePointer("csv.format.settings.delimiter.tab.lowercase")),
+            new LazyPair<>(",", DataGridBundle.messagePointer("csv.format.settings.delimiter.comma"),
+                           DataGridBundle.messagePointer("csv.format.settings.delimiter.comma.lowercase")),
+            new LazyPair<>(";", DataGridBundle.messagePointer("csv.format.settings.delimiter.semicolon"),
+                           DataGridBundle.messagePointer("csv.format.settings.delimiter.semicolon.lowercase")),
+            new LazyPair<>("|", DataGridBundle.messagePointer("csv.format.settings.delimiter.pipe"),
+                           DataGridBundle.messagePointer("csv.format.settings.delimiter.pipe.lowercase")));
   private static final List<LazyPair<String>> NULL_TEXT_VARIANTS =
     List.of(new LazyPair<>(DataGridBundle.messagePointer("csv.format.settings.null.text.undefined"), null),
             new LazyPair<>(DataGridBundle.messagePointer("csv.format.settings.null.text.empty.string"), ""),
@@ -88,19 +106,19 @@ public class CsvRecordFormatForm implements Disposable {
                    CsvRecordFormat.QuotationPolicy.AS_NEEDED),
     new LazyPair<>(DataGridBundle.messagePointer("csv.format.settings.quotation.policy.always"), CsvRecordFormat.QuotationPolicy.ALWAYS));
 
-  private JPanel myPanel;
+  private final JPanel myPanel;
 
-  private JBCheckBox myTrimWhitespaceCheckBox;
-  private JBTextField myRecordPrefixTextField;
-  private JBTextField myRecordSuffixTextField;
-  private ComboBox<String> myNullTextCombo;
-  private ComboBox<String> myValueSeparatorComboBox;
-  private ComboBox<String> myRecordSeparatorComboBox;
-  private ComboBox<String> myQuotationPolicyComboBox;
-  private JPanel myRowPrefixSuffixPanel;
-  private ActionLink myAddRowPrefixSuffixActionLink;
-  private JPanel myQuotesTablePanel;
-  private JBLabel myQuotationLabel;
+  private final JBCheckBox myTrimWhitespaceCheckBox;
+  private final JBTextField myRecordPrefixTextField;
+  private final JBTextField myRecordSuffixTextField;
+  private final ComboBox<String> myNullTextCombo;
+  private final ComboBox<String> myValueSeparatorComboBox;
+  private final ComboBox<String> myRecordSeparatorComboBox;
+  private final ComboBox<String> myQuotationPolicyComboBox;
+  private final JPanel myRowPrefixSuffixPanel;
+  private final ActionLink myAddRowPrefixSuffixActionLink;
+  private final JPanel myQuotesTablePanel;
+  private final JBLabel myQuotationLabel;
 
   private QuotesListTable myQuotesTable;
 
@@ -108,6 +126,136 @@ public class CsvRecordFormatForm implements Disposable {
   private final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
 
   public CsvRecordFormatForm(@NotNull Disposable parent) {
+    {
+      myQuotesTable = new QuotesListTable(this);
+      myQuotesTable.getTable().getModel().addTableModelListener(new TableModelListener() {
+        @Override
+        public void tableChanged(TableModelEvent e) {
+          fireFormatChanged();
+        }
+      });
+      myAddRowPrefixSuffixActionLink = new ActionLink("", e -> {
+        setRowPrefixSuffixVisible(true);
+      });
+      myAddRowPrefixSuffixActionLink.setBorder(JBUI.Borders.emptyTop(4));
+    }
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myPanel = new JPanel();
+      myPanel.setLayout(new GridLayoutManager(8, 3, new Insets(0, 0, 0, 0), -1, -1));
+      final JBLabel jBLabel1 = new JBLabel();
+      this.$$$loadLabelText$$$(jBLabel1, this.$$$getMessageFromBundle$$$("messages/DataGridBundle", "settings.value.separator"));
+      myPanel.add(jBLabel1,
+                  new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myValueSeparatorComboBox = new ComboBox();
+      myValueSeparatorComboBox.setEditable(true);
+      myPanel.add(myValueSeparatorComboBox, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                                GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                                new Dimension(1, -1), null, 0, false));
+      final JBLabel jBLabel2 = new JBLabel();
+      this.$$$loadLabelText$$$(jBLabel2, this.$$$getMessageFromBundle$$$("messages/DataGridBundle", "settings.row.separator"));
+      myPanel.add(jBLabel2,
+                  new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myRecordSeparatorComboBox = new ComboBox();
+      myRecordSeparatorComboBox.setEditable(true);
+      myPanel.add(myRecordSeparatorComboBox, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                                 GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                 null, new Dimension(1, -1), null, 0, false));
+      final Spacer spacer1 = new Spacer();
+      myPanel.add(spacer1, new GridConstraints(0, 2, 6, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                               GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+      final Spacer spacer2 = new Spacer();
+      myPanel.add(spacer2, new GridConstraints(7, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                               GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+      myRowPrefixSuffixPanel = new JPanel();
+      myRowPrefixSuffixPanel.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(myRowPrefixSuffixPanel, new GridConstraints(4, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                              null, null, null, 0, true));
+      final JBLabel jBLabel3 = new JBLabel();
+      this.$$$loadLabelText$$$(jBLabel3, this.$$$getMessageFromBundle$$$("messages/DataGridBundle", "settings.row.prefix"));
+      myRowPrefixSuffixPanel.add(jBLabel3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                               GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                               null, null, 0, false));
+      myRecordPrefixTextField = new JBTextField();
+      myRecordPrefixTextField.setColumns(3);
+      myRecordPrefixTextField.setText("");
+      myRowPrefixSuffixPanel.add(myRecordPrefixTextField,
+                                 new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JBLabel jBLabel4 = new JBLabel();
+      this.$$$loadLabelText$$$(jBLabel4, this.$$$getMessageFromBundle$$$("messages/DataGridBundle", "settings.row.suffix"));
+      myRowPrefixSuffixPanel.add(jBLabel4, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                               GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                               null, null, 0, false));
+      myRecordSuffixTextField = new JBTextField();
+      myRecordSuffixTextField.setColumns(3);
+      myRecordSuffixTextField.setText("");
+      myRowPrefixSuffixPanel.add(myRecordSuffixTextField,
+                                 new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      this.$$$loadButtonText$$$(myAddRowPrefixSuffixActionLink,
+                                this.$$$getMessageFromBundle$$$("messages/DataGridBundle", "settings.add.row.prefix.suffix"));
+      myPanel.add(myAddRowPrefixSuffixActionLink,
+                  new GridConstraints(3, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myTrimWhitespaceCheckBox = new JBCheckBox();
+      this.$$$loadButtonText$$$(myTrimWhitespaceCheckBox,
+                                this.$$$getMessageFromBundle$$$("messages/DataGridBundle", "settings.trim.whitespaces"));
+      myPanel.add(myTrimWhitespaceCheckBox,
+                  new GridConstraints(6, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JBLabel jBLabel5 = new JBLabel();
+      this.$$$loadLabelText$$$(jBLabel5, this.$$$getMessageFromBundle$$$("messages/DataGridBundle", "settings.null.value.text"));
+      myPanel.add(jBLabel5,
+                  new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(3, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(panel1, new GridConstraints(5, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
+                                              0, true));
+      panel1.setBorder(
+        BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0), null, TitledBorder.DEFAULT_JUSTIFICATION,
+                                         TitledBorder.DEFAULT_POSITION, null, null));
+      myQuotesTablePanel = new JPanel();
+      myQuotesTablePanel.setLayout(new BorderLayout(0, 0));
+      panel1.add(myQuotesTablePanel, new GridConstraints(0, 0, 2, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                         null, null, 0, false));
+      myQuotationLabel = new JBLabel();
+      this.$$$loadLabelText$$$(myQuotationLabel, this.$$$getMessageFromBundle$$$("messages/DataGridBundle", "settings.quotation"));
+      myQuotesTablePanel.add(myQuotationLabel, BorderLayout.NORTH);
+      final JBLabel jBLabel6 = new JBLabel();
+      this.$$$loadLabelText$$$(jBLabel6, this.$$$getMessageFromBundle$$$("messages/DataGridBundle", "settings.quote.values"));
+      panel1.add(jBLabel6,
+                 new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myQuotationPolicyComboBox = new ComboBox();
+      panel1.add(myQuotationPolicyComboBox, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                                GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                                new Dimension(1, -1), null, 0, false));
+      myNullTextCombo = new ComboBox();
+      myNullTextCombo.setEditable(true);
+      myPanel.add(myNullTextCombo, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                       GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                       new Dimension(1, -1), null, 0, false));
+      jBLabel1.setLabelFor(myValueSeparatorComboBox);
+      jBLabel2.setLabelFor(myRecordSeparatorComboBox);
+      jBLabel3.setLabelFor(myRecordPrefixTextField);
+      jBLabel4.setLabelFor(myRecordSuffixTextField);
+      jBLabel5.setLabelFor(myNullTextCombo);
+      jBLabel6.setLabelFor(myQuotationPolicyComboBox);
+    }
     Disposer.register(parent, this);
     myQuotesTablePanel.add(DataGridEditorUtil.labeledDecorator(myQuotationLabel, myQuotesTable.getTable()));
     ItemListener fireFormatChangedOnItemUpdate = new ItemListener() {
@@ -143,19 +291,77 @@ public class CsvRecordFormatForm implements Disposable {
     myQuotationPolicyComboBox.addItemListener(fireFormatChangedOnItemUpdate);
   }
 
-  private void createUIComponents() {
-    myQuotesTable = new QuotesListTable(this);
-    myQuotesTable.getTable().getModel().addTableModelListener(new TableModelListener() {
-      @Override
-      public void tableChanged(TableModelEvent e) {
-        fireFormatChanged();
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
       }
-    });
-    myAddRowPrefixSuffixActionLink = new ActionLink("", e -> {
-      setRowPrefixSuffixVisible(true);
-    });
-    myAddRowPrefixSuffixActionLink.setBorder(JBUI.Borders.emptyTop(4));
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
   }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myPanel; }
 
   public void reset(@NotNull CsvRecordFormat recordFormat) {
     myResetting = true;
@@ -226,7 +432,9 @@ public class CsvRecordFormatForm implements Disposable {
     return mapping == null ? (V)selected : mapping.value;
   }
 
-  private static <V, P extends LazyPair<V>> void selectInCombo(@NotNull ComboBox<String> combo, @NotNull List<P> mappings, final @Nullable V what) {
+  private static <V, P extends LazyPair<V>> void selectInCombo(@NotNull ComboBox<String> combo,
+                                                               @NotNull List<P> mappings,
+                                                               final @Nullable V what) {
     P mapping = ContainerUtil.find(mappings, pair -> Objects.equals(pair.value, what));
     if (mapping == null) {
       if (what != null) combo.setSelectedItem(what);
@@ -323,7 +531,8 @@ public class CsvRecordFormatForm implements Disposable {
       }
 
       public void setQuotes(@NotNull List<CsvRecordFormat.Quotes> quotesList) {
-        List<String[]> quotes = ContainerUtil.map(quotesList, quotes1 -> new String[]{quotes1.leftQuote, quotes1.rightQuote, escapeMethod(quotes1)});
+        List<String[]> quotes =
+          ContainerUtil.map(quotesList, quotes1 -> new String[]{quotes1.leftQuote, quotes1.rightQuote, escapeMethod(quotes1)});
         model(this).setItems(new ArrayList<>(quotes));
       }
 
@@ -351,7 +560,7 @@ public class CsvRecordFormatForm implements Disposable {
 
       private static @NotNull ListTableModel<String[]> model(@NotNull JTable t) {
         //noinspection unchecked
-        return (ListTableModel<String[]>) t.getModel();
+        return (ListTableModel<String[]>)t.getModel();
       }
 
       static class QuotesRowRenderer extends EditorTextFieldJBTableRowRenderer {
@@ -374,17 +583,112 @@ public class CsvRecordFormatForm implements Disposable {
       }
 
       static class QuotesRowEditor extends EmbeddableEditorAdapter {
-        private JPanel myPanel;
-        private JBTextField myLeftQuoteTextField;
-        private JBTextField myRightQuoteTextField;
-        private ComboBox<String> myEscapeMethodComboBox;
+        private final JPanel myPanel;
+        private final JBTextField myLeftQuoteTextField;
+        private final JBTextField myRightQuoteTextField;
+        private final ComboBox<String> myEscapeMethodComboBox;
 
         QuotesRowEditor() {
+          {
+            // GUI initializer generated by IntelliJ IDEA GUI Designer
+            // >>> IMPORTANT!! <<<
+            // DO NOT EDIT OR ADD ANY CODE HERE!
+            myPanel = new JPanel();
+            myPanel.setLayout(new GridLayoutManager(3, 3, new Insets(0, 0, 0, 0), -1, -1));
+            final JBLabel jBLabel1 = new JBLabel();
+            this.$$$loadLabelText$$$(jBLabel1,
+                                     this.$$$getMessageFromBundle$$$("messages/DataGridBundle", "csv.format.settings.quotes.left"));
+            myPanel.add(jBLabel1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                      0,
+                                                      false));
+            final Spacer spacer1 = new Spacer();
+            myPanel.add(spacer1, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                                     GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+            myLeftQuoteTextField = new JBTextField();
+            myPanel.add(myLeftQuoteTextField,
+                        new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                            null, null, null, 0, false));
+            final JBLabel jBLabel2 = new JBLabel();
+            this.$$$loadLabelText$$$(jBLabel2,
+                                     this.$$$getMessageFromBundle$$$("messages/DataGridBundle", "csv.format.settings.quotes.right"));
+            myPanel.add(jBLabel2, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                      0,
+                                                      false));
+            myRightQuoteTextField = new JBTextField();
+            myPanel.add(myRightQuoteTextField,
+                        new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                            null, null, null, 0, false));
+            final JBLabel jBLabel3 = new JBLabel();
+            this.$$$loadLabelText$$$(jBLabel3,
+                                     this.$$$getMessageFromBundle$$$("messages/DataGridBundle", "csv.format.settings.quotes.escape"));
+            myPanel.add(jBLabel3, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                      0,
+                                                      false));
+            myEscapeMethodComboBox = new ComboBox();
+            myPanel.add(myEscapeMethodComboBox,
+                        new GridConstraints(1, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                            GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                            null, null, 0, false));
+          }
           myLeftQuoteTextField.setColumns(4);
           myRightQuoteTextField.setColumns(4);
           myEscapeMethodComboBox.setModel(new DefaultComboBoxModel<>(new String[]{DUPLICATE_ESCAPE_METHOD.get()}));
           myEscapeMethodComboBox.setEditable(true);
         }
+
+        private static Method $$$cachedGetBundleMethod$$$ = null;
+
+        /** @noinspection ALL */
+        private String $$$getMessageFromBundle$$$(String path, String key) {
+          ResourceBundle bundle;
+          try {
+            Class<?> thisClass = this.getClass();
+            if ($$$cachedGetBundleMethod$$$ == null) {
+              Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+              $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+            }
+            bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+          }
+          catch (Exception e) {
+            bundle = ResourceBundle.getBundle(path);
+          }
+          return bundle.getString(key);
+        }
+
+        /** @noinspection ALL */
+        private void $$$loadLabelText$$$(JLabel component, String text) {
+          StringBuffer result = new StringBuffer();
+          boolean haveMnemonic = false;
+          char mnemonic = '\0';
+          int mnemonicIndex = -1;
+          for (int i = 0; i < text.length(); i++) {
+            if (text.charAt(i) == '&') {
+              i++;
+              if (i == text.length()) break;
+              if (!haveMnemonic && text.charAt(i) != '&') {
+                haveMnemonic = true;
+                mnemonic = text.charAt(i);
+                mnemonicIndex = result.length();
+              }
+            }
+            result.append(text.charAt(i));
+          }
+          component.setText(result.toString());
+          if (haveMnemonic) {
+            component.setDisplayedMnemonic(mnemonic);
+            component.setDisplayedMnemonicIndex(mnemonicIndex);
+          }
+        }
+
+        /** @noinspection ALL */
+        public JComponent $$$getRootComponent$$$() { return myPanel; }
 
         @Override
         public @NotNull JComponent getComponent() {
@@ -420,7 +724,7 @@ public class CsvRecordFormatForm implements Disposable {
 
         @Override
         public JComponent @NotNull [] getFocusableComponents() {
-          return new JComponent[] {myLeftQuoteTextField, myRightQuoteTextField, myEscapeMethodComboBox};
+          return new JComponent[]{myLeftQuoteTextField, myRightQuoteTextField, myEscapeMethodComboBox};
         }
 
         void editingStarted(@NotNull TableCellEditor editor) {

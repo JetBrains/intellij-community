@@ -1,4 +1,5 @@
 // "Remove initializer from property" "true"
+// K2_ERROR: 'lateinit' modifier is not allowed on properties with initializer.
 
 class A {
     <caret>lateinit var str = ""

@@ -180,7 +180,7 @@ object InlayHintsUtils {
     )
 
   /**
-   * Function updates list of old presentations with a new list, taking into account priorities.
+   * Function updates the list of old presentations with a new list, taking into account priorities.
    * Both lists must be sorted.
    *
    * @return list of updated constrained presentations
@@ -315,8 +315,8 @@ object InlayHintsUtils {
       else {
         // In tests [computeCodeVision] is executed in sync mode on EDT
         assert(ApplicationManager.getApplication().isUnitTestMode)
-        return ReadAction.compute<CodeVisionState, Throwable> {
-          return@compute computable.invoke()
+        return ReadAction.computeBlocking<CodeVisionState, Throwable> {
+          computable.invoke()
         }
       }
     }

@@ -510,11 +510,13 @@ internal class SingleContentLayout(
       if (g is Graphics2D) {
         labels.forEach { comp ->
           val labelBounds = comp.bounds
+          val isActive = twcui.window.isActive
+          val isHovered = comp.isHovered || twcui.isPopupOpenedForContent(comp.content)
           if (jbTabs.selectedInfo == retrieveInfo(comp)) {
-            tabPainter.paintSelectedTab(tabsPosition, g, labelBounds, 1, null, twcui.window.isActive, comp.isHovered)
+            tabPainter.paintSelectedTab(tabsPosition, g, labelBounds, 1, null, isActive, isHovered)
           }
           else {
-            tabPainter.paintTab(tabsPosition, g, labelBounds, 1, null, twcui.window.isActive, comp.isHovered)
+            tabPainter.paintTab(tabsPosition, g, labelBounds, 1, null, isActive, isHovered)
           }
         }
       }

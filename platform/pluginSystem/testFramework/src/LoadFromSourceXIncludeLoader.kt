@@ -5,11 +5,13 @@ import com.intellij.platform.pluginSystem.parser.impl.LoadedXIncludeReference
 import com.intellij.platform.pluginSystem.parser.impl.XIncludeLoader
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.pathString
 
 class LoadFromSourceXIncludeLoader(
@@ -18,6 +20,9 @@ class LoadFromSourceXIncludeLoader(
   private val parentDirectoriesPatterns: List<String>,
 ) : XIncludeLoader {
   private val shortXmlPathToFullPaths = collectXmlFiles()
+  private val includedContentModuleDescriptorsSet = LinkedHashSet<Path>()
+  val includedContentModuleDescriptors: List<Path>
+    get() = includedContentModuleDescriptorsSet.toList()
 
   private fun collectXmlFiles(): Map<String, List<Path>> {
     val shortNameToPaths = LinkedHashMap<String, MutableList<Path>>()
@@ -68,6 +73,10 @@ class LoadFromSourceXIncludeLoader(
     val files = shortXmlPathToFullPaths[path] ?: emptyList()
     val file = files.firstOrNull()
     if (file != null) {
+      val module = project.findModuleByName(file.nameWithoutExtension)
+      if (module != null && JpsJavaExtensionService.getInstance().findSourceFileInProductionRoots(module, file.name) == file) {
+        includedContentModuleDescriptorsSet.add(file)
+      }
       return LoadedXIncludeReference(Files.readAllBytes(file), file.pathString)
     }
     return null

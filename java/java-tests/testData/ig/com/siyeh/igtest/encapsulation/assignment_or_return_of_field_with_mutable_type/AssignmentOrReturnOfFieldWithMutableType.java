@@ -239,3 +239,12 @@ record Safe2(List<Integer> values) {
     this.values = List.copyOf(values);
   }
 }
+record Safe3(List<String> someList) {
+  Safe3 {
+    someList = someList == null ? List.of() : List.copyOf(someList);
+  }
+
+  public List<String> someList() {
+    return Collections.unmodifiableList(this.someList);
+  }
+}

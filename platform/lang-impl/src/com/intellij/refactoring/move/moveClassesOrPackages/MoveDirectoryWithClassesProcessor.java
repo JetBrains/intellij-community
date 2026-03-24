@@ -134,7 +134,8 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     if (!ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(() -> ReadAction.run(() -> collectConflicts(conflicts, refUsages)), RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
+      .runProcessWithProgressSynchronously(() -> ReadAction.runBlocking(() -> collectConflicts(conflicts, refUsages)),
+                                           RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
       return false;
     }
     return showConflicts(conflicts, refUsages.get());

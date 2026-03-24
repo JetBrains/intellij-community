@@ -30,6 +30,8 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModelsImpl
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletionImpl
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewInEditorViewModel
@@ -40,6 +42,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRInfoViewModel
+import kotlin.lazy
 
 @ApiStatus.Internal
 internal interface GHPRViewModelContainer {
@@ -98,7 +101,14 @@ internal class GHPRViewModelContainerImpl(
     GHPRBranchWidgetViewModelImpl(project, cs, settings, dataProvider, branchStateVm, reviewVmHelper, pullRequestId, viewPullRequest)
   }
 
-  private val threadsVms = GHPRThreadsViewModelsImpl(project, cs, dataContext, dataProvider)
+  private val commentTextCompletionVm: GHViewModelWithTextCompletion by lazy {
+    GHViewModelWithTextCompletionImpl(cs,
+                                      dataContext.mentionableUsersProvider,
+                                      dataProvider.reviewData,
+                                      dataContext.avatarIconsProvider)
+  }
+
+  private val threadsVms = GHPRThreadsViewModelsImpl(project, cs, dataContext, dataProvider, commentTextCompletionVm)
   override val diffVm: GHPRDiffViewModel by lazy {
     GHPRDiffViewModelImpl(project, cs, dataContext, dataProvider, reviewVmHelper, threadsVms).apply {
       setup()
@@ -113,7 +123,7 @@ internal class GHPRViewModelContainerImpl(
   }
 
   override val timelineVm: GHPRTimelineViewModel by lazy {
-    GHPRTimelineViewModelImpl(project, cs, dataContext, dataProvider).apply {
+    GHPRTimelineViewModelImpl(project, cs, dataContext, dataProvider, commentTextCompletionVm).apply {
       setup()
     }
   }

@@ -70,10 +70,8 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
 
     WhiteSpace previousWhiteSpace = offsetResponsibleBlock.getWhiteSpace();
     previousWhiteSpace.setSpaces(previousWhiteSpace.getSpaces() - diff, previousWhiteSpace.getIndentOffset());
-    // Avoid tabulations usage for aligning blocks that are not the first blocks on a line.
-    if (!previousWhiteSpace.containsLineFeeds()) {
-      previousWhiteSpace.setForceSkipTabulationsUsage(true);
-    }
+    // Backward shift introduces alignment spaces. Keep those exempt from tab conversion.
+    previousWhiteSpace.setForceSkipTabulationsUsage(true);
 
     return Result.BACKWARD_BLOCK_ALIGNED;
   }

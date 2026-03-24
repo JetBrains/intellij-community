@@ -6,7 +6,8 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider;
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
+import com.intellij.openapi.wm.ex.ProjectFrameCapability;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
@@ -60,8 +61,8 @@ public final class FileColorManagerImpl extends FileColorManager {
 
   @Override
   public boolean isEnabled() {
-    if (WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject(myProject) &&
-        WelcomeScreenProjectProvider.Companion.isForceDisabledFileColors()) {
+    //noinspection deprecation
+    if (ProjectFrameCapabilitiesService.Companion.getInstanceSync().has(myProject, ProjectFrameCapability.FORCE_DISABLE_FILE_COLORS)) {
       return false;
     }
 

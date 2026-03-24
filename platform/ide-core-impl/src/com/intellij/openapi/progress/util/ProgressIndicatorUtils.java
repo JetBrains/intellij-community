@@ -374,6 +374,9 @@ public final class ProgressIndicatorUtils {
     awaitWithCheckCanceled(() -> waiter.await(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, MILLISECONDS));
   }
 
+  /**
+   * @see UtilKt#awaitWithCheckCanceled(kotlinx.coroutines.Deferred) for coroutines
+   */
   public static <T> T awaitWithCheckCanceled(@NotNull Future<T> future) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     return awaitWithCheckCanceled(future, indicator);

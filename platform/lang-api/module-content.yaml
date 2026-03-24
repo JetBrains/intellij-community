@@ -2,6 +2,5 @@
   modules:
   - name: intellij.platform.backend.observation
   - name: intellij.platform.ide.core.impl
-  - name: intellij.platform.indexing
   - name: intellij.platform.lang
   - name: intellij.platform.refactoring

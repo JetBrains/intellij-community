@@ -9,6 +9,7 @@ from django.http.response import HttpResponseBase
 from django.urls.resolvers import ResolverMatch, URLResolver
 from django.utils.datastructures import MultiValueDict
 from django.utils.functional import cached_property
+from typing_extensions import override
 
 _ReceiveCallback: TypeAlias = Callable[[], Awaitable[Mapping[str, Any]]]
 
@@ -29,11 +30,14 @@ class ASGIRequest(HttpRequest):
     META: dict[str, Any]
     def __init__(self, scope: Mapping[str, Any], body_file: IO[bytes]) -> None: ...
     @cached_property
+    @override
     def GET(self) -> _ImmutableQueryDict: ...  # type: ignore[override]
     POST: _ImmutableQueryDict
     @property
+    @override
     def FILES(self) -> MultiValueDict[str, uploadedfile.UploadedFile]: ...  # type: ignore[override]
     @cached_property
+    @override
     def COOKIES(self) -> dict[str, str]: ...  # type: ignore[override]
 
 _T = TypeVar("_T")

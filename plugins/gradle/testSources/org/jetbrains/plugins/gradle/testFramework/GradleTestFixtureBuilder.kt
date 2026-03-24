@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
 import org.gradle.util.GradleVersion
@@ -23,7 +23,7 @@ interface GradleTestFixtureBuilder {
       return object : GradleTestFixtureBuilder {
         override val projectName: String = projectName
         override fun createFixture(gradleVersion: GradleVersion): GradleProjectTestFixture {
-          return GradleProjectTestFixtureImpl(projectName, gradleVersion, javaVersionRestriction) {
+          return GradleProjectTestFixtureImpl(projectName, projectName, gradleVersion, javaVersionRestriction) {
             configure(gradleVersion)
           }
         }

@@ -5,6 +5,7 @@ import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.rpc.util.TextRangeDto
 import com.intellij.ide.rpc.util.textRange
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
@@ -17,14 +18,18 @@ import com.intellij.openapi.vfs.findDocument
 import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
 import com.intellij.platform.debugger.impl.rpc.XLineBreakpointInfo
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointAttachment
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointVisualRepresentation
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
@@ -111,6 +116,26 @@ internal class FrontendXLineBreakpointProxy(
 
   internal val registrationInLineManagerStatus = AtomicReference(RegistrationStatus.NOT_STARTED)
 
+  /**
+   * Coroutine scope for attachments, cancelled when the breakpoint is disposed.
+   */
+  private val attachmentScope: CoroutineScope = cs.childScope("attachments")
+
+  /**
+   * Attachments created by [FrontendXLineBreakpointAttachmentProvider] extensions.
+   * Attachments are notified when the breakpoint state changes.
+   */
+  override val attachments: List<XBreakpointAttachment> =
+    FrontendXLineBreakpointAttachmentProvider.createAttachments(this, attachmentScope)
+
+  init {
+    attachmentScope.launch(Dispatchers.EDT) {
+      for (attachment in attachments) {
+        attachment.breakpointChanged()
+      }
+    }
+  }
+
   override fun isTemporary(): Boolean {
     return lineBreakpointInfo.isTemporary
   }
@@ -145,6 +170,10 @@ internal class FrontendXLineBreakpointProxy(
 
   override fun getLine(): Int {
     return lineBreakpointInfo.line
+  }
+
+  override fun getPlacement(): XLineBreakpointPlacement {
+    return lineBreakpointInfo.placement
   }
 
   override fun setFileUrl(url: String) {
@@ -256,6 +285,10 @@ internal class FrontendXLineBreakpointProxy(
 
   override fun createBreakpointDraggableObject(): GutterDraggableObject {
     return visualRepresentation.createBreakpointDraggableObject()
+  }
+
+  override fun updateIcon() {
+    // TODO IJPL-185322 should we cache icon like in Monolith?
   }
 
   override fun toString(): String {

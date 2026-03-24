@@ -240,6 +240,10 @@ final class DetailedEventWatcher implements EventWatcher, Disposable {
   private static void addPluginCost(@NotNull Class<?> runnableClass,
                                     long duration) {
     ClassLoader loader = runnableClass.getClassLoader();
+    if (loader == null) {
+      return;
+    }
+
     String pluginId = PluginUtil.getPluginId(loader).getIdString();
     StartUpMeasurer.addPluginCost(pluginId,
                                   "invokeLater",

@@ -76,6 +76,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -673,6 +675,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     }
   }
 
+  override fun markPluginsAsDisabled(pluginIds: List<PluginId>) {
+    PluginEnabler.HEADLESS.disableById(pluginIds.toSet())
+  }
+
   override fun setEnableStateForDependencies(
     sessionId: String,
     descriptorIds: Set<PluginId>,
@@ -776,6 +782,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       return PluginSearchResult(plugins)
     }
     catch (e: IOException) {
+      currentCoroutineContext().ensureActive()
       LOG.warn(e)
       return PluginSearchResult(emptyList(), e.message)
     }

@@ -28,7 +28,6 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/pluginResources" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/testData" type="java-test-resource" />
       <sourceFolder url="file://$MODULE_DIR$/compatibilityResources" type="java-resource" />
       <excludeFolder url="file://$MODULE_DIR$/setup-test-environment/build" />
     </content>
@@ -44,6 +43,7 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
+    <orderEntry type="module" module-name="intellij.platform.welcomeScreen.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.macro" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
@@ -164,8 +164,6 @@
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
-    <orderEntry type="module" module-name="intellij.platform.feedback" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.datetime" />
     <orderEntry type="module" module-name="intellij.platform.ide.remote" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
@@ -192,13 +190,14 @@
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry.common" />
     <orderEntry type="module" module-name="intellij.python.community.impl.uv.common" />
     <orderEntry type="module" module-name="intellij.python.common" />
-    <orderEntry type="module" module-name="intellij.python.processOutput" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
+    <orderEntry type="module" module-name="intellij.python.processOutput.common" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.rpc" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.python.externalIndex" />
     <orderEntry type="module" module-name="intellij.python.community.impl.conda" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
   </component>
 </module>

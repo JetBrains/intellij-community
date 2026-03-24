@@ -19,11 +19,12 @@ interface EditorTracker {
     fun getInstance(project: Project): EditorTracker = project.service<EditorTracker>()
   }
 
-  // set only for tests, it may corrupt daemon internal data structures
   @get:RequiresEdt
-  @set:RequiresEdt
-  @set:TestOnly
-  var activeEditors: List<Editor>
+  val activeEditors: List<Editor>
+
+  @RequiresEdt
+  @TestOnly
+  fun setActiveEditorsInTests(editors: List<Editor>)
 }
 
 interface EditorTrackerListener : EventListener {

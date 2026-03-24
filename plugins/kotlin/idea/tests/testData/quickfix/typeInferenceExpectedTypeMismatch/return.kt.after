@@ -1,6 +1,7 @@
 // "Remove '.java'" "true"
 // PRIORITY: HIGH
 // WITH_STDLIB
+// K2_ERROR: Return type mismatch: expected 'KClass<Foo>', actual 'Class<Foo>'.
 fun foo(): kotlin.reflect.KClass<Foo> {
     return Foo::class
 }

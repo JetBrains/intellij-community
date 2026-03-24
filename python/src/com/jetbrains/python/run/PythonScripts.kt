@@ -22,7 +22,7 @@ import com.intellij.execution.target.value.TargetValue
 import com.intellij.execution.target.value.constant
 import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.execution.target.value.joinToStringFunction
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -37,6 +37,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.features.PyRunToolParameters
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.target.PathMapping
+import com.jetbrains.python.run.target.PathPythonHelpersMapping
 import com.jetbrains.python.run.target.tryResolveAsPythonHelperDir
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkType
@@ -50,7 +51,7 @@ import java.nio.file.Path
 import kotlin.io.path.pathString
 import kotlin.text.Charsets.UTF_8
 
-private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
+private val LOG = fileLogger()
 
 @JvmOverloads
 @ApiStatus.Internal
@@ -68,7 +69,7 @@ fun PythonExecution.buildTargetedCommandLine(
 
   when (this) {
     is PythonToolExecution -> {
-      toolPath?.let {
+      toolPath.let {
         commandLineBuilder.exePath = TargetValue.fixed(it.pathString)
         commandLineBuilder.addParameters(listOf(*toolParams.toTypedArray()))
       }
@@ -81,6 +82,10 @@ fun PythonExecution.buildTargetedCommandLine(
 
   if (runTool != null) {
     applyRunToolAsync(commandLineBuilder, runTool)
+    // TODO PY-87712 maybe need proper handling of envs (duplicates?)
+    runTool.envs.forEach { (k, v) ->
+      commandLineBuilder.addEnvironmentVariable(k, v)
+    }
   }
 
   when (this) {
@@ -88,14 +93,8 @@ fun PythonExecution.buildTargetedCommandLine(
                                 ?: throw IllegalArgumentException("Python script path must be set")
     is PythonModuleExecution -> moduleName?.let { commandLineBuilder.addParameters(listOf("-m", it)) }
                                 ?: throw IllegalArgumentException("Python module name must be set")
-    is PythonToolScriptExecution -> pythonScriptPath?.let { commandLineBuilder.addParameter(it.apply(targetEnvironment).pathString) }
-                                    ?: throw IllegalArgumentException("Python script path must be set")
-    is PythonToolModuleExecution -> moduleName?.let { moduleName ->
-      moduleFlag?.let { moduleFlag ->
-        commandLineBuilder.addParameters(listOf(moduleFlag, moduleName))
-      } ?: throw IllegalArgumentException("Module flag must be set")
-    } ?: throw IllegalArgumentException("Python module name must be set")
-
+    is PythonToolScriptExecution -> commandLineBuilder.addParameter(pythonScriptPath.apply(targetEnvironment).pathString)
+    is PythonToolModuleExecution -> commandLineBuilder.addParameters(listOf(moduleFlag, moduleName))
   }
 
   for (parameter in parameters) {
@@ -130,6 +129,7 @@ fun PythonExecution.buildTargetedCommandLine(
   }
   return commandLineBuilder.build()
 }
+
 
 private fun applyRunToolAsync(
   commandLineBuilder: TargetedCommandLineBuilder,
@@ -233,7 +233,7 @@ fun addHelperEntriesToPythonPath(envs: MutableMap<String, TargetEnvironmentFunct
                                  failOnError: Boolean = true): List<PathMapping> {
   val targetPlatform = helpersAwareTargetRequest.targetEnvironmentRequest.targetPlatform
   val pythonHelpersMappings = helpersAwareTargetRequest.preparePyCharmHelpers()
-  val pythonHelpersRoots = pythonHelpersMappings.helpers.map(PathMapping::localPath)
+  val pythonHelpersRoots = pythonHelpersMappings.helpers.map(PathPythonHelpersMapping::localPath)
   val targetPathSeparator = targetPlatform.platform.pathSeparator
 
   fun <T> T?.onResolutionFailure(message: String): T? {
@@ -268,14 +268,8 @@ fun PythonExecution.addPythonScriptAsParameter(targetScript: PythonExecution) {
     is PythonModuleExecution -> targetScript.moduleName?.let { moduleName -> addParameters("-m", moduleName) }
                                 ?: throw IllegalArgumentException("Python module name must be set")
 
-    is PythonToolScriptExecution -> targetScript.pythonScriptPath?.let { pythonScriptPath -> addParameter(pythonScriptPath.andThen { it.pathString }) }
-                                    ?: throw IllegalArgumentException("Python script path must be set")
-
-    is PythonToolModuleExecution -> targetScript.moduleName?.let { moduleName ->
-      targetScript.moduleFlag?.let { moduleFlag ->
-        addParameters(moduleFlag, moduleName)
-      } ?: throw java.lang.IllegalArgumentException("Module flag must be set")
-    } ?: throw IllegalArgumentException("Python module name must be set")
+    is PythonToolScriptExecution -> addParameter(targetScript.pythonScriptPath.andThen { it.pathString })
+    is PythonToolModuleExecution -> addParameters(targetScript.moduleFlag, targetScript.moduleName)
   }
 }
 

@@ -1,8 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes
 
 import com.intellij.openapi.roots.impl.RootDescriptor
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.ContainerUtil
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.TestOnly
@@ -128,7 +130,7 @@ internal class MultiverseRootContainer(
   companion object {
     // todo multiple modules per root file are not supported yet
     internal fun merge(containers: List<MultiverseRootContainer>): MultiverseRootContainer {
-      val result = mutableMapOf<VirtualFile, ScopeRootDescriptor>()
+      val result = CollectionFactory.createSmallMemoryFootprintMap<VirtualFile, ScopeRootDescriptor>()
 
       var maxPriority = 0
       for (container in containers) {
@@ -138,7 +140,7 @@ internal class MultiverseRootContainer(
         for ((root, descriptor) in entrySet) {
           val priority = descriptor.orderIndex + maxPriority
           curMax = maxOf(curMax, priority)
-          result.putIfAbsent(root, ScopeRootDescriptor(root, descriptor.orderEntry, priority))
+          result.putIfAbsent(root, ScopeRootDescriptor(descriptor.orderEntry, priority))
         }
 
         maxPriority = maxOf(maxPriority, curMax)

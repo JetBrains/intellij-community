@@ -17,7 +17,7 @@ import java.util.Map;
 final class InspectionProfilerDataHolder {
   /**
    * after inspections completed, save their latencies (from corresponding {@link InspectionRunner.InspectionContext#holder})
-   * to use later in {@link #sortByLatencies(PsiFile, List, HighlightInfoUpdaterImpl)}
+   * to use later in {@link #sortByLatencies}
    */
   static void saveStats(@NotNull PsiFile psiFile, @NotNull List<? extends InspectionRunner.InspectionContext> contexts,
                         @NotNull HighlightInfoUpdaterImpl highlightInfoUpdater) {
@@ -39,12 +39,11 @@ final class InspectionProfilerDataHolder {
    * - last, contexts with inspection tools which produced all other problems in previous run, ordered by latency to the 1st created problem
    */
   @Contract(mutates = "param2")
-  static void sortByLatencies(@NotNull PsiFile psiFile, @NotNull List<InspectionRunner.InspectionContext> init,
-                              @NotNull HighlightInfoUpdaterImpl highlightInfoUpdater) {
+  static void sortByLatencies(@NotNull PsiFile psiFile, @NotNull List<InspectionRunner.InspectionContext> init) {
     init.sort((context1, context2) -> {
       String toolId1 = context1.tool().getShortName();
       String toolId2 = context2.tool().getShortName();
-      return highlightInfoUpdater.compareLatencies(psiFile, toolId1, toolId2);
+      return HighlightInfoUpdaterImpl.compareLatencies(psiFile, toolId1, toolId2);
     });
   }
 }

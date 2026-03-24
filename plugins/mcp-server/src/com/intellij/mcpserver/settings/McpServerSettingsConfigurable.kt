@@ -11,6 +11,9 @@ import com.intellij.mcpserver.createStreamableServerJsonEntry
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.util.getHelpLink
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
@@ -20,9 +23,13 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.TopGap
@@ -34,6 +41,10 @@ import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
 import com.intellij.util.ui.ColorizeProxyIcon
 import com.intellij.util.ui.TextTransferable
+import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.annotations.Nls
@@ -42,6 +53,7 @@ import org.jetbrains.ide.RestService.Companion.getLastFocusedOrOpenedProject
 import java.awt.event.ActionEvent
 import java.nio.file.Path
 import javax.swing.AbstractAction
+import javax.swing.Action
 import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
@@ -121,41 +133,68 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
             val autoconfiguredPressed = ValueComponentPredicate(false)
             val errorDuringConfiguration = ValueComponentPredicate(false)
             val configExists = ValueComponentPredicate(mcpClient.configPath.exists() && mcpClient.configPath.isRegularFile())
+            
+            val transportTypeKnown = ValueComponentPredicate(false)
+            lateinit var configuredTextCell: Cell<javax.swing.JEditorPane>
+            lateinit var restartInfoTextCell: Cell<javax.swing.JEditorPane>
+            lateinit var errorCommentCell: Cell<javax.swing.JEditorPane>
+            
+            // Function to refresh transport message
+            fun refreshTransportMessage() {
+              val transportType = mcpClient.getTransportTypesDisplayString()
+              transportTypeKnown.set(transportType != null)
+              val configuredMessage = if (transportType != null) {
+                McpServerBundle.message("mcp.server.configured.with.transport", transportType)
+              } else {
+                McpServerBundle.message("mcp.server.configured")
+              }
+              configuredTextCell.component.text = configuredMessage
+              restartInfoTextCell.component.text = McpServerBundle.message("mcp.server.client.restart.info.settings", configuredMessage)
+            }
+
+            fun performConfigurationAction(action: suspend () -> Unit) {
+              runCatching {
+                runWithModalProgressBlocking(
+                  ModalTaskOwner.guess(),
+                  McpServerBundle.message("autoconfigure.progress.title"),
+                  TaskCancellation.nonCancellable()
+                ) {
+                  action()
+                }
+              }.onFailure {
+                thisLogger().info(it)
+                errorDuringConfiguration.set(true)
+                val message = if (it is McpClient.McpClientConfigurationException) {
+                  it.message
+                } else {
+                  McpServerBundle.message("mcp.server.client.autoconfig.unknown.error")
+                }
+                errorCommentCell.component.text = McpServerBundle.message("mcp.server.client.autoconfig.error", message)
+              }.onSuccess {
+                errorDuringConfiguration.set(false)
+                isConfigured.set(true)
+                isPortCorrect.set(true)
+                configExists.set(true)
+                autoconfiguredPressed.set(true)
+                refreshTransportMessage()
+              }
+            }
+            
             row {
               cell(JBOptionButton(object : AbstractAction(McpServerBundle.message("autoconfigure.mcp.server")) {
                 override fun actionPerformed(e: ActionEvent?) {
-                  runCatching {
-                    mcpClient.configure()
-                  }.onFailure {
-                    thisLogger().info(it)
-                    errorDuringConfiguration.set(true)
-                  }.onSuccess {
-                    errorDuringConfiguration.set(false)
-                    isConfigured.set(true)
-                    isPortCorrect.set(true)
-                    configExists.set(true)
-                    autoconfiguredPressed.set(true)
+                  performConfigurationAction {
+                    mcpClient.autoConfigure()
                   }
                 }
-              }, options = arrayOf(object : AbstractAction(McpServerBundle.message("open.settings.json")) {
-                override fun actionPerformed(e: ActionEvent?) {
-                  openFileInEditor(mcpClient.configPath)
-                }
-              }, object : AbstractAction(McpServerBundle.message("copy.mcp.server.configuration")) {
-                override fun actionPerformed(e: ActionEvent?) {
-                  CopyPasteManager.getInstance().setContents(TextTransferable(McpClient.json.encodeToString(buildJsonObject {
-                    put(McpClient.productSpecificServerKey(), McpClient.json.encodeToJsonElement(mcpClient.getConfig()))
-                  }) as CharSequence))
-                  if (e != null) showCopiedBallon(e)
-                }
-              })).apply {
-                addSeparator = false
-              })
+              }, null)).apply {
+                configureAdditionalActions(mcpClient, this, ::performConfigurationAction)
+              }
               icon(McpserverIcons.Expui.StatusEnabled).gap(RightGap.SMALL).visibleIf(isConfigured.and(isPortCorrect).and(autoconfiguredPressed.not()))
-              text(McpServerBundle.message("mcp.server.configured")).visibleIf(isConfigured.and(isPortCorrect).and(autoconfiguredPressed.not()))
+              configuredTextCell = text("").visibleIf(isConfigured.and(isPortCorrect).and(autoconfiguredPressed.not()))
 
               icon(McpserverIcons.Expui.StatusEnabled).gap(RightGap.SMALL).visibleIf(autoconfiguredPressed)
-              text(McpServerBundle.message("mcp.server.client.restart.info.settings")).visibleIf(autoconfiguredPressed)
+              restartInfoTextCell = text("").visibleIf(autoconfiguredPressed.and(transportTypeKnown))
 
               icon(ColorizeProxyIcon.Simple(McpserverIcons.Expui.StatusDisabled, JBColor.GRAY)).gap(RightGap.SMALL).visibleIf(isConfigured.not())
               comment(McpServerBundle.message("mcp.server.not.configured")).visibleIf(isConfigured.not())
@@ -164,8 +203,11 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
               comment(McpServerBundle.message("mcp.server.configured.port.invalid")).visibleIf(isConfigured.and(isPortCorrect.not()))
 
               icon(AllIcons.General.Error).gap(RightGap.SMALL).visibleIf(errorDuringConfiguration)
-              comment(McpServerBundle.message("mcp.server.client.autoconfig.error")).visibleIf(errorDuringConfiguration)
+              errorCommentCell = comment(McpServerBundle.message("mcp.server.client.autoconfig.error")).visibleIf(errorDuringConfiguration)
             }
+            
+            // Call initially to populate the text
+            refreshTransportMessage()
           }
         }
       }.visibleIf(enabledCheckboxState!!)
@@ -204,21 +246,6 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
 
     settingsPanel = panel
     return panel
-  }
-
-  private fun showCopiedBallon(event: ActionEvent) {
-    JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(McpServerBundle.message("json.configuration.copied.to.clipboard"), null, null, null).createBalloon().showInCenterOf(event.source as JComponent)
-  }
-
-  private fun openFileInEditor(filePath: Path) {
-    val project = getLastFocusedOrOpenedProject()
-    if (project == null) {
-      return
-    }
-    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath.toString())
-    virtualFile?.let { file ->
-      FileEditorManager.getInstance(project).openFile(file, true)
-    }
   }
 
   override fun isModified(): Boolean {
@@ -287,4 +314,78 @@ private object ConsentValidator : CheckboxValidator {
 
 private interface CheckboxValidator {
   fun isValidNewValue(isSelected: Boolean): Boolean
+}
+
+fun configureAdditionalActions(mcpClient: McpClient, cell: Cell<JBOptionButton>, uiHandler: (suspend () -> Unit) -> Unit) {
+  cell.component.launchOnShow("config of MCP option button") {
+    val array = withContext(Dispatchers.Default) {
+      buildList {
+        val streamConfig = runCatching { mcpClient.getStreamableHttpConfig() }.getOrNull()
+        if (streamConfig != null) {
+          add(object : AnAction(McpServerBundle.message("configure.with.0.transport", "Streamable HTTP")) {
+            override fun actionPerformed(e: AnActionEvent) {
+              uiHandler {
+                mcpClient.configure(streamConfig)
+              }
+            }
+          })
+        }
+        val sseConfig = runCatching { mcpClient.getSSEConfig() }.getOrNull()
+        if (sseConfig != null) {
+          add(object : AnAction(McpServerBundle.message("configure.with.0.transport", "SSE")) {
+            override fun actionPerformed(e: AnActionEvent) {
+              uiHandler {
+                mcpClient.configure(sseConfig)
+              }
+            }
+          })
+        }
+        add(object : AnAction(McpServerBundle.message("configure.with.0.transport", "Stdio")) {
+          override fun actionPerformed(e: AnActionEvent) {
+            uiHandler {
+              mcpClient.configure(mcpClient.getStdioConfig())
+            }
+          }
+        })
+        add(object : AnAction(McpServerBundle.message("open.settings.json")) {
+          override fun actionPerformed(e: AnActionEvent) {
+            openFileInEditor(mcpClient.configPath)
+          }
+        })
+        add(object : AnAction(McpServerBundle.message("copy.mcp.server.configuration")) {
+          override fun actionPerformed(e: AnActionEvent) {
+            e.coroutineScope.launch {
+              CopyPasteManager.getInstance().setContents(TextTransferable(McpClient.json.encodeToString(buildJsonObject {
+                put(McpClient.productSpecificServerKey(), McpClient.json.encodeToJsonElement(mcpClient.getPreferredConfig()))
+              }) as CharSequence))
+              showCopiedBallon(e)
+            }
+          }
+        })
+      }
+    }
+    withContext(Dispatchers.UI) {
+      cell.component.setOptions(array)
+      cell.component.addSeparator = false
+    }
+  }
+}
+
+private fun openFileInEditor(filePath: Path) {
+  val project = getLastFocusedOrOpenedProject()
+  if (project == null) {
+    return
+  }
+  val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath.toString())
+  virtualFile?.let { file ->
+    FileEditorManager.getInstance(project).openFile(file, true)
+  }
+}
+
+private fun showCopiedBallon(event: AnActionEvent) {
+  JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(McpServerBundle.message("json.configuration.copied.to.clipboard"), null, null, null).createBalloon().showInCenterOf(event.inputEvent?.source as JComponent)
+}
+
+private fun showCopiedBallon(event: ActionEvent) {
+  JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(McpServerBundle.message("json.configuration.copied.to.clipboard"), null, null, null).createBalloon().showInCenterOf(event.source as JComponent)
 }

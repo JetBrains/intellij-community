@@ -27,7 +27,7 @@ import java.nio.file.Files
  * Example of infinity waiting                                    - %waitVcsLogIndexing
  * Example of timed waiting with throwing exception on expiration - %waitVcsLogIndexing 5s
  */
-class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
     const val NAME = "waitVcsLogIndexing"
     const val PREFIX = CMD_PREFIX + NAME

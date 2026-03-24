@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.MultipleArgumentsLookupObject
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
@@ -51,7 +52,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
  * }
  * ```
  */
-private enum class Tail {
+internal enum class Tail {
     COMMA, // Additional argument to call required
     RPARENTH, // Call needs no more arguments, move past the closing parenthesis
     RBRACKET, // Similar as RPARENTH but for array access
@@ -262,7 +263,8 @@ internal fun LookupElement.addSmartCompletionTailInsertHandler(): LookupElement 
 
     // There might be multiple tails depending on all the available signatures.
     // If all call signatures require the same tail (i.e., the set is a singleton), we can use this single tail.
-    val singleTail = positionContext.nameExpression.calculateTails().singleOrNull()
+    val singleTail = (`object` as? MultipleArgumentsLookupObject)?.tail
+        ?: positionContext.nameExpression.calculateTails().singleOrNull()
 
     return if (singleTail != null) {
         LookupElementDecorator.withDelegateInsertHandler(this, singleTail.getInsertHandler())

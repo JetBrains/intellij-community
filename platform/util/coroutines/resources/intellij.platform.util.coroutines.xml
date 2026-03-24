@@ -1,0 +1,8 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

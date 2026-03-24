@@ -110,6 +110,11 @@ open class TextEditorComponent(
     }
 
     messageBusConnection.subscribe(FileTypeManager.TOPIC, MyFileTypeListener(textEditor))
+    ApplicationManager.getApplication().invokeLater {
+      if (!isDisposed) {
+        updateModifiedProperty(textEditor)
+      }
+    }
   }
 
   final override fun add(comp: Component): Component {

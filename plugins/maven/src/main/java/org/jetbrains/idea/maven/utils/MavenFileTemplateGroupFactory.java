@@ -10,6 +10,7 @@ import static icons.OpenapiIcons.RepositoryLibraryLogo;
 public final class MavenFileTemplateGroupFactory implements FileTemplateGroupDescriptorFactory {
   public static final String MAVEN_PROJECT_XML_TEMPLATE = "Maven Project.xml";
   public static final String MAVEN_SETTINGS_XML_TEMPLATE = "Maven Settings.xml";
+  public static final String MAVEN_TOOLCHAINS_XML_TEMPLATE = "Maven Toolchains.xml";
 
   @Override
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
@@ -17,6 +18,7 @@ public final class MavenFileTemplateGroupFactory implements FileTemplateGroupDes
 
     group.addTemplate(new FileTemplateDescriptor(MAVEN_PROJECT_XML_TEMPLATE, RepositoryLibraryLogo));
     group.addTemplate(new FileTemplateDescriptor(MAVEN_SETTINGS_XML_TEMPLATE, RepositoryLibraryLogo));
+    group.addTemplate(new FileTemplateDescriptor(MAVEN_TOOLCHAINS_XML_TEMPLATE, RepositoryLibraryLogo));
 
     return group;
   }

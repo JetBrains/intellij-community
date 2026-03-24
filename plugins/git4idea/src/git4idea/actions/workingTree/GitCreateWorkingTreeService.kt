@@ -3,6 +3,7 @@ package git4idea.actions.workingTree
 
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.readAction
@@ -27,6 +28,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.io.path.Path
 
 @Service(Service.Level.APP)
 internal class GitCreateWorkingTreeService(private val coroutineScope: CoroutineScope) {
@@ -115,6 +117,7 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
       return
     }
 
+    TrustedProjects.setProjectTrusted(Path(workingTreeData.workingTreePath.path), true)
     val worktreeProject = ProjectUtil.openOrImport(workingTreeData.workingTreePath.path, null, false)
     if (worktreeProject != null) {
       GitOperationsCollector.logWorktreeProjectOpenedAfterCreation(ideActivity)

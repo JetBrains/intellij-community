@@ -19,6 +19,10 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.completion.impl.k2.FirCompletionDummyIdentifierProviderService"
                         serviceInterface="org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService"/>
 
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.completion.handlers.SmartCompletionTailOffsetProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.completion.impl.k2.handlers.K2SmartCompletionTailOffsetProviderImpl"/>
+
     <registryKey key="kotlin.k2.chain.completion.enabled"
                  description="Allow chained completion items in Kotlin"
                  defaultValue="true"
@@ -81,5 +85,6 @@
     <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinSurroundWithCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinSafeDeleteCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinParameterInfoCompletionCommand" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="com.intellij.codeInsight.completion.command.commands.InsertLiveTemplateCompletionCommandProvider" order="last"/>
   </extensions>
 </idea-plugin>

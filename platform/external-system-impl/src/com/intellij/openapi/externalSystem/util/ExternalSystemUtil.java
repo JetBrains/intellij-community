@@ -262,7 +262,7 @@ public final class ExternalSystemUtil {
   /**
    * @deprecated use {@link ExternalSystemUtil#refreshProject(String, ImportSpec)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void refreshProject(final @NotNull Project project,
                                     final @NotNull ProjectSystemId externalSystemId,
                                     final @NotNull String externalProjectPath,

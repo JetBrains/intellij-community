@@ -623,7 +623,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
     val runningToStop = ContainerUtil.concat(runningOfTheSameType, runningIncompatible)
     if (runningToStop.isNotEmpty()) {
       if (configuration != null) {
-        if (runningOfTheSameType.isNotEmpty() && (runningOfTheSameType.size > 1 || contentToReuse == null || runningOfTheSameType.first() !== contentToReuse)) {
+        if (runningOfTheSameType.isNotEmpty() && (runningOfTheSameType.size > 1 || contentToReuse == null || runningOfTheSameType.first().id != contentToReuse.id)) {
           val result = configuration.configuration.restartSingleton(environment)
           if (result == RestartSingletonResult.NO_FURTHER_ACTION) {
             return
@@ -1090,10 +1090,12 @@ private fun userApprovesStopForSameTypeConfigurations(project: Project, configNa
       return UIBundle.message("dialog.options.do.not.show")
     }
   }
+
+  val escapedConfigName = StringUtil.escapeXmlEntities(configName)
   return Messages.showOkCancelDialog(
     project,
-    ExecutionBundle.message("rerun.singleton.confirmation.message", configName, instancesCount),
-    ExecutionBundle.message("process.is.running.dialog.title", configName),
+    ExecutionBundle.message("rerun.singleton.confirmation.message", escapedConfigName, instancesCount),
+    ExecutionBundle.message("process.is.running.dialog.title", escapedConfigName),
     ExecutionBundle.message("rerun.confirmation.button.text"),
     CommonBundle.getCancelButtonText(),
     Messages.getQuestionIcon(), option) == Messages.OK
@@ -1133,10 +1135,12 @@ private fun userApprovesStopForIncompatibleConfigurations(project: Project,
     names.append(if (name.isNullOrEmpty()) ExecutionBundle.message("run.configuration.no.name") else String.format("'%s'", name))
   }
 
+  val namesEscaped = StringUtil.escapeXmlEntities(names.toString())
+  val configNameEscaped = StringUtil.escapeXmlEntities(configName)
   return Messages.showOkCancelDialog(
     project,
     ExecutionBundle.message("stop.incompatible.confirmation.message",
-      configName, names.toString(), runningIncompatibleDescriptors.size),
+                            configNameEscaped, namesEscaped, runningIncompatibleDescriptors.size),
     ExecutionBundle.message("incompatible.configuration.is.running.dialog.title", runningIncompatibleDescriptors.size),
     ExecutionBundle.message("stop.incompatible.confirmation.button.text"),
     CommonBundle.getCancelButtonText(),

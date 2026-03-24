@@ -392,6 +392,33 @@ fun ideCommon() = moduleSet("ide.common") {
 
 ---
 
+### `plugin(name)` - Create Pluginized Module Set
+
+```kotlin
+fun plugin(
+  name: String,
+  pluginId: String? = null,
+  outputModule: String? = null,
+  addToMainModule: Boolean = true,
+  block: ModuleSetBuilder.() -> Unit
+): ModuleSet
+```
+
+Creates a module set and marks it to be materialized as a standalone bundled plugin wrapper.
+The Product DSL pipeline generates the wrapper module files, `plugin-content.yaml`, and `modules.xml` entries during generation.
+Do not pass the result to product-level or nested `moduleSet(...)` composition APIs; bundle the generated wrapper plugin module instead.
+
+**Example:**
+```kotlin
+fun recentFiles() = plugin("recentFiles") {
+  module("intellij.platform.recentFiles")
+  module("intellij.platform.recentFiles.frontend")
+  module("intellij.platform.recentFiles.backend")
+}
+```
+
+---
+
 ## Loading Override Builder
 
 Available when using `moduleSet(set) { ... }` with overrides:
@@ -512,31 +539,12 @@ data class TestPluginSpec(
 
 Configuration class for module set generation with validation options.
 
-#### `contentModuleAllowedMissingPluginDeps`
+#### Missing Plugin-ID Suppression Policy
 
-```kotlin
-@JvmField val contentModuleAllowedMissingPluginDeps: Map<String, Set<String>> = emptyMap()
-```
+- For DSL-defined test plugin modules, use `allowedMissingPluginIds` in `testPlugin` DSL (`module()`, `requiredModule()`, `embeddedModule()`).
+- For non-DSL content modules, use `suppressions.json` (`contentModules.<module>.suppressPlugins`).
 
-Map of content module name to set of allowed missing plugin dependency IDs.
-
-Used to suppress validation errors for known issues where content modules have IML dependencies on plugin main modules but the XML declaration is intentionally missing.
-
-**This is a temporary allowlist** - the goal is to eliminate all entries over time by either:
-1. Adding the proper `<plugin id="..."/>` declaration to the content module XML
-2. Removing the unnecessary IML dependency
-
-**Example:**
-```kotlin
-ModuleSetGenerationConfig(
-  contentModuleAllowedMissingPluginDeps = mapOf(
-    "intellij.react.ultimate" to setOf("com.intellij.css"),
-    "intellij.kotlin.gradle.multiplatform" to setOf("org.jetbrains.kotlin", "com.intellij.gradle"),
-  ),
-)
-```
-
-See [Validation Rules - Rule 7](validation-rules.md#rule-7-content-module-plugin-dependency-validation) for details on the validation this config suppresses.
+`--update-suppressions` updates `suppressions.json` for non-DSL suppressions only; DSL allowlists remain in code.
 
 ---
 

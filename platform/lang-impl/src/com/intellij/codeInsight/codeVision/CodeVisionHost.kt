@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.settings.CodeVisionGroupDefaultSettingModel
@@ -17,6 +17,7 @@ import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
 import com.intellij.codeWithMe.ClientId
+import com.intellij.ide.PowerSaveMode
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
@@ -25,11 +26,9 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
@@ -40,6 +39,8 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
@@ -73,6 +74,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.reactive.whenTrue
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -81,7 +83,8 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
 import kotlin.time.Duration.Companion.milliseconds
 
-open class CodeVisionHost(val project: Project) {
+@ApiStatus.NonExtendable
+open class CodeVisionHost(val project: Project, protected val coroutineScope: CoroutineScope) {
   companion object {
     private val logger = logger<CodeVisionHost>()
     const val defaultVisibleLenses: Int = 5
@@ -130,10 +133,9 @@ open class CodeVisionHost(val project: Project) {
   @RequiresEdt
   protected open fun initialize() {
     lifeSettingModel.isRegistryEnabled.whenTrue(codeVisionLifetime) { enableCodeVisionLifetime ->
-      runReadAction {
-        if (project.isDisposed) {
-          return@runReadAction
-        }
+      runReadActionBlocking {
+        if (project.isDisposed) return@runReadActionBlocking
+
         subscribeEditorCreated(enableCodeVisionLifetime)
         subscribeAnchorLimitChanged(enableCodeVisionLifetime)
         subscribeMetricsPositionChanged()
@@ -146,6 +148,25 @@ open class CodeVisionHost(val project: Project) {
   @get:RequiresEdt
   val isInitialised: Boolean get() = _isInitialised
   private var _isInitialised = false
+
+  init {
+    CodeVisionContextExtensionProvider.EP_NAME.addExtensionPointListener(
+      coroutineScope,
+      object : ExtensionPointListener<CodeVisionContextExtensionProvider> {
+        override fun extensionAdded(
+          extension: CodeVisionContextExtensionProvider,
+          pluginDescriptor: PluginDescriptor,
+        ) {
+          EditorFactory.getInstance().editorList.asSequence()
+            .mapNotNull { it.getUserData(editorLensContextKey) }
+            .forEach { lensContext ->
+              val contextExtension = extension.createCodeVisionContext(project, lensContext) ?: return@forEach
+              lensContext.registerExtension(contextExtension)
+            }
+        }
+      }
+    )
+  }
 
   open fun handleLensClick(editor: Editor, range: TextRange, entry: CodeVisionEntry) {
     //todo intellij statistic
@@ -197,7 +218,7 @@ open class CodeVisionHost(val project: Project) {
   fun calculateCodeVisionSync(editor: Editor, testRootDisposable: Disposable) {
     calculateFrontendLenses(testRootDisposable.createLifetime(), editor, inTestSyncMode = true) { lenses, _ ->
       if (EDT.isCurrentThreadEdt()) {
-        ReadAction.run<Throwable> {
+        runReadActionBlocking {
           editor.lensContext?.setResults(lenses)
         }
       }
@@ -425,7 +446,7 @@ open class CodeVisionHost(val project: Project) {
       mergingQueueFront.queue(object : Update("") {
         override fun run() {
           val modalityState = ModalityState.stateForComponent(editor.contentComponent).asContextElement()
-          (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT + modalityState + ClientId.coroutineContext()) {
+          coroutineScope.launch(Dispatchers.EDT + modalityState + ClientId.coroutineContext()) {
             recalculateLenses(if (shouldRecalculateAll) emptyList() else providersToRecalculate)
           }
         }
@@ -486,7 +507,8 @@ open class CodeVisionHost(val project: Project) {
     // dropping all lenses if CV disabled
     if (context == null
         || !lifeSettingModel.isEnabled.value
-        || !CodeVisionProjectSettings.getInstance(project).isEnabledForProject()) {
+        || !CodeVisionProjectSettings.getInstance(project).isEnabledForProject()
+        || PowerSaveMode.isEnabled()) {
       consumer(emptyList(), providers.map { it.id })
       return
     }

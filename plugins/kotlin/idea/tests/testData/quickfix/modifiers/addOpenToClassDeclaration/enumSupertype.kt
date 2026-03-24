@@ -4,6 +4,8 @@
 // ACTION: Introduce import alias
 // ACTION: Make '<init>' internal
 // ACTION: Make '<init>' public
+// K2_ERROR: Cannot access 'constructor(): E': it is private in 'E'.
+// K2_ERROR: This type is final, so it cannot be extended.
 // K2_AFTER_ERROR: Cannot access 'constructor(): E': it is private in 'E'.
 // K2_AFTER_ERROR: This type is final, so it cannot be extended.
 enum class E {}

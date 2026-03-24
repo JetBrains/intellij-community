@@ -22,4 +22,23 @@ jvm_library(
   ],
   exports = ["@lib//:jetbrains-mlapi-core"]
 )
+
+jvm_library(
+  name = "ml-logs_test_lib",
+  module_name = "intellij.platform.ml.logs",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:jetbrains-mlapi-core"],
+  runtime_deps = [
+    ":ml-logs",
+    "//platform/util:util_test_lib",
+    "//platform/statistics:statistics_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.ml.logs` end
+
+### auto-generated section `iml intellij.platform.ml.logs` start
+exports_files([
+  "intellij.platform.ml.logs.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.ml.logs` end

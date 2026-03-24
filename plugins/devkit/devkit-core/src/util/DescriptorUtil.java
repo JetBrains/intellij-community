@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.application.WriteAction;
@@ -21,6 +21,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomService;
+import com.intellij.util.xml.XmlFileHeader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -90,14 +91,9 @@ public final class DescriptorUtil {
   }
 
   public static boolean isPluginXml(@Nullable PsiFile file) {
-    return getIdeaPluginTag(file) != null;
-  }
-
-  private static @Nullable XmlTag getIdeaPluginTag(PsiFile file) {
-    if (!(file instanceof XmlFile xmlFile)) return null;
-    XmlTag rootTag = xmlFile.getRootTag();
-    if (rootTag == null) return null;
-    return rootTag.getName().equals(IdeaPlugin.TAG_NAME) ? rootTag : null;
+    if (!(file instanceof XmlFile xmlFile)) return false;
+    XmlFileHeader header = DomService.getInstance().getXmlFileHeader(xmlFile);
+    return IdeaPlugin.TAG_NAME.equals(header.getRootTagLocalName());
   }
 
   public static @Nullable DomFileElement<IdeaPlugin> getIdeaPluginFileElement(@NotNull XmlFile file) {
@@ -137,11 +133,12 @@ public final class DescriptorUtil {
     return ContainerUtil.map(files, ideaPluginDomFileElement -> ideaPluginDomFileElement.getRootElement());
   }
 
-  public static boolean isPluginModuleFile(@NotNull PsiFile file) {
-    XmlTag ideaPlugin = getIdeaPluginTag(file);
-    if (ideaPlugin == null) return false;
-    if (ideaPlugin.findFirstSubTag("id") != null) return false;
-    PsiDirectory parent = file.getParent();
+  public static boolean isPluginModuleFile(@NotNull XmlFile xmlFile) {
+    DomFileElement<IdeaPlugin> domFileElement = DomManager.getDomManager(xmlFile.getProject()).getFileElement(xmlFile, IdeaPlugin.class);
+    if (domFileElement == null) return false;
+    IdeaPlugin ideaPlugin = domFileElement.getRootElement();
+    if (ideaPlugin.getId().getValue() != null) return false;
+    PsiDirectory parent = xmlFile.getParent();
     if (parent == null) return false;
     String parentDirName = parent.getName();
     return !parentDirName.equals("META-INF");

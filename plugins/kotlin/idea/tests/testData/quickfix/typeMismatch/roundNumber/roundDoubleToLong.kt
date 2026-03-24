@@ -1,6 +1,7 @@
 // "Round using roundToLong()" "true"
 // PRIORITY: LOW
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'Double', but 'Long' was expected.
 fun test(d: Double) {
     bar(d<caret>)
 }

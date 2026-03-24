@@ -2012,7 +2012,7 @@ public final class TreeUtil {
     if (model == null) return Promises.rejectedPromise("tree model is not set");
     AsyncPromise<TreePath> promise = new AsyncPromise<>();
     // Code run under "invokeLaterIfNeeded" must not touch PSI, but this code touches it.
-    EdtInvocationManager.invokeLaterIfNeeded(() -> ReadAction.run(() -> promise.setResult(visitModel(model, visitor))));
+    EdtInvocationManager.invokeLaterIfNeeded(() -> ReadAction.runBlocking(() -> promise.setResult(visitModel(model, visitor))));
     return promise;
   }
 

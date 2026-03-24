@@ -17,8 +17,8 @@ abstract class AbstractKotlinCompilerProjectPostConfigurator(protected val kotli
     override val name: String
         get() = KotlinProjectConfigurationBundle.message("kotlin.compiler.plugin.0", kotlinCompilerPluginId)
 
-    protected fun compilerPluginProjectConfigurators(): List<KotlinCompilerPluginProjectConfigurator> =
-        KotlinCompilerPluginProjectConfigurator.compilerPluginProjectConfigurators(kotlinCompilerPluginId)
+    protected fun compilerPluginProjectConfigurators(module: Module): List<KotlinCompilerPluginProjectConfigurator> =
+        KotlinCompilerPluginProjectConfigurator.compilerPluginProjectConfigurators(kotlinCompilerPluginId, module)
 
     protected fun Module.hasCompilerPluginExtension(filter: (FirExtensionRegistrarAdapter) -> Boolean): Boolean {
         val kotlinSourceRootType = getKotlinSourceRootType() ?: return false
@@ -32,7 +32,7 @@ abstract class AbstractKotlinCompilerProjectPostConfigurator(protected val kotli
 
     override fun configureModule(module: Module, configurationResultBuilder: ConfigurationResultBuilder) {
         val configurators =
-            compilerPluginProjectConfigurators().ifEmpty { return }
+            compilerPluginProjectConfigurators(module).ifEmpty { return }
 
         for (configurator in configurators) {
             configurator.configureModule(module, configurationResultBuilder)

@@ -8,17 +8,18 @@ Validation ensures module and plugin dependencies are resolvable at runtime and 
 | --- | --- | --- | --- |
 | 1 | Self-contained module set | Module set | [self-contained-module-set.md](validators/self-contained-module-set.md) |
 | 2 | Product module set | Product | [product-module-set.md](validators/product-module-set.md) |
-| 3 | Content module dependencies | Bundled plugins | [content-module-dependency.md](validators/content-module-dependency.md) |
-| 4 | Plugin content dependencies | Plugin | [plugin-content-dependency.md](validators/plugin-content-dependency.md) |
-| 5 | Plugin-to-plugin dependencies | Plugin | [plugin-plugin-dependency.md](validators/plugin-plugin-dependency.md) |
-| 6 | Plugin dependency declaration duplicates | Plugin | [plugin-dependency-declaration.md](validators/plugin-dependency-declaration.md) |
-| 7 | Test plugin plugin dependencies | Test plugin | [test-plugin-plugin-dependency.md](validators/test-plugin-plugin-dependency.md) |
-| 8 | Duplicate plugin content modules | Product | [plugin-content-duplicates.md](validators/plugin-content-duplicates.md) |
-| 9 | Test plugin descriptor ID conflicts | Product | [plugin-descriptor-id-conflicts.md](validators/plugin-descriptor-id-conflicts.md) |
-| 10 | Library module replacement | Module | [library-module.md](validators/library-module.md) |
-| 11 | Test library scope | Module | [test-library-scope.md](validators/test-library-scope.md) |
-| 12 | Suppression config keys | Config | [suppression-config.md](validators/suppression-config.md) |
-| 13 | Plugin content structural validation | Plugin | [plugin-content-structure.md](validators/plugin-content-structure.md) |
+| 3 | Pluginized module-set references | Product / module set | [pluginized-module-set-reference.md](validators/pluginized-module-set-reference.md) |
+| 4 | Content module dependencies | Bundled plugins | [content-module-dependency.md](validators/content-module-dependency.md) |
+| 5 | Plugin content dependencies | Plugin | [plugin-content-dependency.md](validators/plugin-content-dependency.md) |
+| 6 | Plugin-to-plugin dependencies | Plugin | [plugin-plugin-dependency.md](validators/plugin-plugin-dependency.md) |
+| 7 | Plugin dependency declaration duplicates | Plugin | [plugin-dependency-declaration.md](validators/plugin-dependency-declaration.md) |
+| 8 | Test plugin plugin dependencies | Test plugin | [test-plugin-plugin-dependency.md](validators/test-plugin-plugin-dependency.md) |
+| 9 | Duplicate plugin content modules | Product | [plugin-content-duplicates.md](validators/plugin-content-duplicates.md) |
+| 10 | Test plugin descriptor ID conflicts | Product | [plugin-descriptor-id-conflicts.md](validators/plugin-descriptor-id-conflicts.md) |
+| 11 | Library module replacement | Module | [library-module.md](validators/library-module.md) |
+| 12 | Test library scope | Module | [test-library-scope.md](validators/test-library-scope.md) |
+| 13 | Suppression config keys | Config | [suppression-config.md](validators/suppression-config.md) |
+| 14 | Plugin content structural validation | Plugin | [plugin-content-structure.md](validators/plugin-content-structure.md) |
 
 ## When Validation Runs
 
@@ -69,7 +70,8 @@ Suppressions are explicit contracts: dependencies intentionally omitted from XML
 
 - `allowMissingDependencies` (product): allow missing module deps in a product.
 - `pluginAllowedMissingDependencies` (config): allow missing module deps for a plugin.
-- `contentModuleAllowedMissingPluginDeps` (config): allow missing plugin IDs for a content module.
+- `allowedMissingPluginIds` (DSL test plugins): allow missing plugin IDs for specific DSL-defined test modules or the whole test plugin.
+- `suppressions.json` (`contentModules.<module>.suppressPlugins`): allow missing plugin IDs for non-DSL content modules.
 - `suppressions.json`: suppress module deps, plugin deps, library replacements, or test-library scope fixes.
 
 ## See also

@@ -135,7 +135,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
 
   public void assertWriteActionAllowed() {
     Application app = ApplicationManager.getApplication();
-    if (!EDT.isCurrentThreadEdt() && app.isWriteAccessAllowed()) {
+    if (!EDT.isCurrentThreadEdt()) {
       return;
     }
     app.assertWriteIntentLockAcquired();

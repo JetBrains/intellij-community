@@ -15,7 +15,7 @@ jvm_library(
   kotlinc_opts = ":custom_startUpPerformanceReporter",
   deps = [
     "@lib//:kotlin-stdlib",
-    "//libraries/jackson/jackson",
+    "//libraries/jackson3/jackson:libraries-jackson3",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/util-ex",
@@ -34,4 +34,36 @@ jvm_library(
     "//platform/diagnostic/telemetry",
   ]
 )
+
+jvm_library(
+  name = "startUpPerformanceReporter_test_lib",
+  module_name = "intellij.platform.diagnostic.startUpPerformanceReporter",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_startUpPerformanceReporter",
+  runtime_deps = [
+    ":startUpPerformanceReporter",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/platform-util-io-impl:ide-util-io-impl_test_lib",
+    "//platform/util:util_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/protobuf:protobuf_test_lib",
+    "//platform/diagnostic/telemetry-impl:telemetry-impl_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.diagnostic.startUpPerformanceReporter` end
+
+### auto-generated section `iml intellij.platform.diagnostic.startUpPerformanceReporter` start
+exports_files([
+  "intellij.platform.diagnostic.startUpPerformanceReporter.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.diagnostic.startUpPerformanceReporter` end

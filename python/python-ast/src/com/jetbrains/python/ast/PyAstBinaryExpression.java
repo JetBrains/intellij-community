@@ -44,6 +44,11 @@ public interface PyAstBinaryExpression extends PyAstQualifiedExpression, PyAstCa
     return null;
   }
 
+  default boolean isShortCircuit() {
+    var operator = getOperator();
+    return operator == PyTokenTypes.AND_KEYWORD || operator == PyTokenTypes.OR_KEYWORD;
+  }
+
   default boolean isOperator(String chars) {
     ASTNode child = getNode().getFirstChildNode();
     StringBuilder buf = new StringBuilder();

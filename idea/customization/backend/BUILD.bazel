@@ -9,8 +9,23 @@ resourcegroup(
 
 jvm_library(
   name = "backend",
+  module_name = "intellij.idea.customization.backend",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":backend_resources"]
 )
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.idea.customization.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":backend"]
+)
 ### auto-generated section `build intellij.idea.customization.backend` end
+
+### auto-generated section `iml intellij.idea.customization.backend` start
+exports_files([
+  "intellij.idea.customization.backend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.idea.customization.backend` end

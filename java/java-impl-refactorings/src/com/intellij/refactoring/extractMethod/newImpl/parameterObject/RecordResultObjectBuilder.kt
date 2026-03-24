@@ -19,9 +19,10 @@ class RecordResultObjectBuilder(private val record: PsiClass): ResultObjectBuild
 
     private fun createRecord(variables: List<PsiVariable>): PsiClass {
       require(variables.isNotEmpty())
-      val project = variables.first().project
+      val context = variables.first()
+      val project = context.project
       val factory = PsiElementFactory.getInstance(project)
-      val record = factory.createRecord("Result")
+      val record = factory.createRecord(ResultObjectBuilder.findSafeName(context))
       val header = variables.joinToString(separator = ", ") { variable -> "${variable.type.canonicalText} ${variable.name}" }
       record.recordHeader?.replace(factory.createRecordHeaderFromText(header, record))
       return record

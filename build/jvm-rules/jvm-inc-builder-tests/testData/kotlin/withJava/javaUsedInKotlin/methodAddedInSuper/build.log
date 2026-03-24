@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  Super.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/methodAddedInSuper/a/Super.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_javaUsedInKotlin_methodAddedInSuper-a.kotlin_module
+  Sub.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/methodAddedInSuper/a/Sub.kt
+End of files
+------------------------------------------
+Exit code: ERROR

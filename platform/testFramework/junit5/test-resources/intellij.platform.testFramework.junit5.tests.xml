@@ -1,0 +1,7 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.testFramework.junit5"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

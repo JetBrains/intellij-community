@@ -73,7 +73,7 @@ public final class PatternCompiler {
    */
   public static CompiledPattern compilePattern(Project project, MatchOptions options, boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
-    return ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors, optimizeScope));
+    return ReadAction.computeBlocking(() -> doCompilePattern(project, options, checkForErrors, optimizeScope));
   }
 
   private static @Nullable CompiledPattern doCompilePattern(@NotNull Project project, @NotNull MatchOptions options,

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.pom.java.JavaFeature
@@ -15,6 +15,7 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.PsiYieldStatement
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.IntroduceVariableUtil
@@ -42,8 +43,9 @@ class CallBuilder(private val context: PsiElement) {
 
   private fun createDeclaration(type: PsiType?, name: String, initializer: String): PsiStatement {
     return if (type != null) {
-      factory.createVariableDeclarationStatement(name, type, expressionOf(initializer))
-    } else {
+      factory.createVariableDeclarationStatement(name, type, expressionOf(initializer), context)
+    }
+    else {
       factory.createStatementFromText("$name = $initializer;", context)
     }
   }
@@ -57,13 +59,14 @@ class CallBuilder(private val context: PsiElement) {
     val declarationStatement = declaration as? PsiDeclarationStatement
     val declaredVariable = declarationStatement?.declaredElements?.firstOrNull() as? PsiVariable
     if (declaredVariable != null) {
-      val settings = JavaRefactoringSettings.getInstance()
       val outputVariable = (dataOutput as? VariableOutput)?.variable
-      val declareFinal = outputVariable?.hasModifierProperty(PsiModifier.FINAL) == true || settings.INTRODUCE_LOCAL_CREATE_FINALS == true
+      val declareFinal = outputVariable?.hasModifierProperty(PsiModifier.FINAL) == true
+                         || JavaFileCodeStyleFacade.forContext(context.getContainingFile()).isGenerateFinalLocals()
       PsiUtil.setModifierProperty(declaredVariable, PsiModifier.FINAL, declareFinal)
 
       val isInferredVar = outputVariable?.typeElement?.isInferredType == true
-      if (isInferredVar || PsiUtil.isAvailable(JavaFeature.LVTI, context) && settings.INTRODUCE_LOCAL_CREATE_VAR_TYPE == true) {
+      if (isInferredVar || PsiUtil.isAvailable(JavaFeature.LVTI, context) 
+          && JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE) {
         IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar(declaredVariable.typeElement, declaredVariable)
       }
     }

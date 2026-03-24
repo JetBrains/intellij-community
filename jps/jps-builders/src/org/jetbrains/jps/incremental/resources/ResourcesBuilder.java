@@ -22,6 +22,7 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -122,7 +123,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
       FSOperations.copy(file, targetFile);
       outputConsumer.registerOutputFile(targetFile, List.of(file.getPath()));
     }
-    catch (Exception e) {
+    catch (IOException e) {
       context.processMessage(
         new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, CompilerMessage.getTextFromThrowable(e))
       );

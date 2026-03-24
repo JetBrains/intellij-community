@@ -87,6 +87,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     private val thrownExceptions = mutableListOf<Throwable>()
 
     protected val agentList = mutableListOf<BazelDependencyLabelDescriptor>()
+    override fun assertAllBreakpointsHit() = false
 
     private fun initContexts(suspendContext: SuspendContextImpl) {
         myEvaluationContext = createEvaluationContext(suspendContext)

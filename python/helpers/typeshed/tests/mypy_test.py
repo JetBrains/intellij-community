@@ -44,7 +44,7 @@ except ImportError:
     print_error("Cannot import mypy. Did you install it?")
     sys.exit(1)
 
-SUPPORTED_VERSIONS = ["3.14", "3.13", "3.12", "3.11", "3.10", "3.9"]
+SUPPORTED_VERSIONS = ["3.14", "3.13", "3.12", "3.11", "3.10"]
 SUPPORTED_PLATFORMS = ("linux", "win32", "darwin")
 DIRECTORIES_TO_TEST = [STDLIB_PATH, STUBS_PATH]
 

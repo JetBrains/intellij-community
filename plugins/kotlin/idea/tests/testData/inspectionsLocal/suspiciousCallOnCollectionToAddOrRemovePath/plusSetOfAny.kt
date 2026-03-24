@@ -2,9 +2,8 @@
 // FIX: Convert to 'plusElement' call (changes semantics)
 // IGNORE_K1
 // WITH_STDLIB
-package java.nio.file
-
-class Path
+// RUNTIME_WITH_FULL_JDK
+import java.nio.file.Path
 
 fun test(set: Set<Any>, path: Path) {
     set <caret>+ path

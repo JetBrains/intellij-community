@@ -1,9 +1,25 @@
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:jps_to_bazel_targets_json.bzl", "jps_to_bazel_targets_json")
 
 load("//build:intellij_dev_community.bzl", "intellij_dev_binary_community")
 load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS")
+
+load(":jps_library_derivation_test.bzl", "jps_library_derivation_test_suite")
+jps_library_derivation_test_suite(name = "jps_library_derivation_test")
+
+load(":jps_library_derivation_pipeline_test.bzl", "jps_library_derivation_pipeline_test_suite")
+jps_library_derivation_pipeline_test_suite(name = "jps_library_derivation_pipeline_test")
+
+jps_to_bazel_targets_json(
+  name = "bazel_targets_json",
+  mode = "community",
+  srcs = [
+    "//:jps_to_bazel_community_model_root_files",
+  ] + ALL_COMMUNITY_IML_TARGETS,
+  tool = "@jps_to_bazel//:jps-to-bazel-targets-only",
+)
 
 # Can't name the target 'installers' since it triggers elevation in Windows
 java_binary(
@@ -28,6 +44,14 @@ java_binary(
   ],
   add_opens = INTELLIJ_ADD_OPENS,
   data = ALL_COMMUNITY_TARGETS,
+)
+
+java_binary(
+  name = "jewel_standalone_maven_artifacts",
+  runtime_deps = [":build"],
+  main_class = "JewelMavenArtifactsBuildTarget",
+  add_opens = INTELLIJ_ADD_OPENS,
+  data = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_LIBRARY_COMMUNITY_TARGETS,
 )
 
 # Dev-build targets for running IDEs locally via `bazel run //build:<target>`
@@ -67,7 +91,37 @@ jvm_library(
   exports = ["//platform/build-scripts"],
   runtime_deps = ["@lib//:test-discovery-plugin-base"]
 )
+
+jvm_library(
+  name = "build_test_lib",
+  module_name = "intellij.idea.community.build",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/build-scripts",
+    "//platform/build-scripts:build-scripts_test_lib",
+  ],
+  runtime_deps = [
+    ":build",
+    "//platform/build-scripts:build-scripts_test_lib",
+    "//platform/util:util_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//build/deps:dependencies_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//build/tasks:tasks_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/build-scripts/downloader:downloader_test_lib",
+    "@community//build:zip_test_lib",
+    "//libraries/maven-resolver-provider:maven-resolver-provider_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.idea.community.build` end
+
+### auto-generated section `iml intellij.idea.community.build` start
+exports_files([
+  "intellij.idea.community.build.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.idea.community.build` end
 
 ### auto-generated section `build intellij.idea.community.build.zip` start
 jvm_library(
@@ -82,7 +136,26 @@ jvm_library(
     "//libraries/hash4j",
   ]
 )
+
+jvm_library(
+  name = "zip_test_lib",
+  module_name = "intellij.idea.community.build.zip",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":zip",
+    "//libraries/netty/buffer:buffer_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/hash4j:hash4j_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.idea.community.build.zip` end
+
+### auto-generated section `iml intellij.idea.community.build.zip` start
+exports_files([
+  "jvm-rules/zip/intellij.idea.community.build.zip.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.idea.community.build.zip` end
 
 ### auto-generated section `build intellij.platform.jps.build.dependencyGraph` start
 jvm_library(
@@ -103,7 +176,30 @@ jvm_library(
     "@lib//:kotlin-stdlib-provided",
   ]
 )
+
+jvm_library(
+  name = "dependency-graph_test_lib",
+  module_name = "intellij.platform.jps.build.dependencyGraph",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":dependency-graph",
+    "@community//build:build-javac-rt_test_lib",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//libraries/asm:asm_test_lib",
+    "//libraries/hash4j:hash4j_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "@lib//:kotlin-stdlib-provided",
+  ]
+)
 ### auto-generated section `build intellij.platform.jps.build.dependencyGraph` end
+
+### auto-generated section `iml intellij.platform.jps.build.dependencyGraph` start
+exports_files([
+  "jvm-rules/dependency-graph/intellij.platform.jps.build.dependencyGraph.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jps.build.dependencyGraph` end
 
 ### auto-generated section `build intellij.platform.jps.build.javac.rt` start
 jvm_library(
@@ -123,4 +219,25 @@ jvm_library(
     "//libraries/netty/buffer",
   ]
 )
+
+jvm_library(
+  name = "build-javac-rt_test_lib",
+  module_name = "intellij.platform.jps.build.javac.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":build-javac-rt",
+    "//libraries/javax/annotation:annotation_test_lib",
+    "//libraries/protobuf:protobuf_test_lib",
+    "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+    "//libraries/netty/buffer:buffer_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.jps.build.javac.rt` end
+
+### auto-generated section `iml intellij.platform.jps.build.javac.rt` start
+exports_files([
+  "jvm-rules/jps-builders-6/intellij.platform.jps.build.javac.rt.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.jps.build.javac.rt` end

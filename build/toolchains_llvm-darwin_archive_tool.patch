@@ -1,0 +1,78 @@
+Subject: [PATCH] Replace failing `llvm-ar` call on Linux hosts by `llvm-libtool-darwin` call
+---
+Index: toolchain/cc_toolchain_config.bzl
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/toolchain/cc_toolchain_config.bzl b/toolchain/cc_toolchain_config.bzl
+--- a/toolchain/cc_toolchain_config.bzl	(revision 27c0bc7378a3f0bce997f582b5d94ec84af606c7)
++++ b/toolchain/cc_toolchain_config.bzl	(revision 36d4b12db78c143ca991095811e589186a98004a)
+@@ -288,6 +288,9 @@
+     compiler_rt_link_flags = []
+
+     is_darwin_exec_and_target = exec_os == "darwin" and target_os == "darwin"
++    # Bazel emits libtool-style static archive actions for all Darwin targets,
++    # including Linux-hosted cross-compiles, so we use the bundled libtool (`llvm-libtool-darwin`) on any host
++    use_libtool = target_os == "darwin"
+
+     # Linker flags:
+     if is_darwin_exec_and_target:
+@@ -296,24 +299,19 @@
+             "-fobjc-link-runtime",
+         ])
+
+-        # Use the bundled libtool (llvm-libtool-darwin).
+-        use_libtool = True
+-    elif target_arch in ["wasm32", "wasm64"]:
+-        # lld is invoked as wasm-ld for WebAssembly targets.
+-        use_libtool = False
+-    else:
++    # lld is invoked as wasm-ld for WebAssembly targets.
++    elif target_arch not in ["wasm32", "wasm64"]:
+         if target_os == "linux": # TODO: must reason in terms of ld64
+             link_flags.extend([
+                 "-Wl,--build-id=md5",
+                 "-Wl,--hash-style=gnu",
+                 "-Wl,-z,relro,-z,now",
+             ])
+-        use_libtool = False
+
+     # Pre-installed libtool on macOS has -static as default, but llvm-libtool-darwin needs it
+     # explicitly. cc_common.create_link_variables does not automatically add this either if
+     # output_file arg to it is None.
+-    if is_darwin_exec_and_target:
++    if use_libtool:
+         archive_flags = ["-static"]
+     elif compiler == "clang-cl":
+         archive_flags = ["/MACHINE:{}".format(_machine_arch(target_arch))]
+Index: toolchain/internal/common.bzl
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/toolchain/internal/common.bzl b/toolchain/internal/common.bzl
+--- a/toolchain/internal/common.bzl	(revision 27c0bc7378a3f0bce997f582b5d94ec84af606c7)
++++ b/toolchain/internal/common.bzl	(revision 36d4b12db78c143ca991095811e589186a98004a)
+@@ -56,10 +56,7 @@
+         "llvm-objdump",
+         "llvm-strip",
+     ]
+-}
+-
+-# Extra tools for Darwin.
+-_toolchain_tools_darwin = {
++} | {
+     # rules_foreign_cc relies on the filename of the linker to set flags.
+     # Also see archive_flags in cc_toolchain_config.bzl.
+     # https://github.com/bazelbuild/rules_foreign_cc/blob/5547abc63b12c521113208eea0c5d7f66ba494d4/foreign_cc/built_tools/make_build.bzl#L71
+@@ -277,9 +274,6 @@
+         binary_ext = ".exe"
+         for bin, symlink in _toolchain_tools.items():
+             tools[bin + binary_ext] = symlink + binary_ext
+-    elif os == "darwin":
+-        tools = dict(_toolchain_tools)
+-        tools.update(_toolchain_tools_darwin)
+     else:
+         tools = dict(_toolchain_tools)
+

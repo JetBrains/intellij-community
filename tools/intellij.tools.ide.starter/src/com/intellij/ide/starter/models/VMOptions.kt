@@ -26,7 +26,7 @@ data class VMOptions(
 ) {
   companion object {
     const val ALLOW_SKIPPING_FULL_SCANNING_ON_STARTUP_OPTION: String = "full.scanning.on.startup.can.be.skipped"
-
+    const val TEST_SCRIPT_FILE_OPTION: String = "testscript.filename"
     fun readIdeVMOptions(ide: InstalledIde, file: Path): VMOptions {
       return VMOptions(
         ide = ide,
@@ -281,7 +281,7 @@ data class VMOptions(
 
     logOutput("Test commands to be executed: ${System.lineSeparator()}$scriptText")
 
-    addSystemProperty("testscript.filename", scriptFile)
+    addSystemProperty(TEST_SCRIPT_FILE_OPTION, scriptFile)
     // Use non-success status code 1 when running IDE as a command line tool.
     addSystemProperty("testscript.must.exist.process.with.non.success.code.on.ide.error", "true")
   }
@@ -289,8 +289,6 @@ data class VMOptions(
   fun setFlagIntegrationTests(): Unit = addSystemProperty("idea.is.integration.test", true)
 
   fun setIdeStartupDialogEnabled(value: Boolean = true): Unit = addSystemProperty("intellij.startup.wizard", value)
-
-  fun setNeverShowInitConfigModal(): Unit = addSystemProperty("idea.initially.ask.config", "never")
 
   fun setFatalErrorNotificationEnabled(): Unit = addSystemProperty("idea.fatal.error.notification", true)
 

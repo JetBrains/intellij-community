@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
 package com.intellij.toolWindow
@@ -14,6 +14,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
@@ -26,6 +27,7 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.DesktopLayout
+import com.intellij.openapi.wm.impl.ToolWindowManagerAppLevelHelper
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.openapi.wm.safeToolWindowPaneId
@@ -167,7 +169,7 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
       }
     }
 
-    serviceAsync<ToolWindowManagerImpl.ToolWindowManagerAppLevelHelper>()
+    serviceAsync<ToolWindowManagerAppLevelHelper>()
 
     postEntryProcessing(entries)
 
@@ -185,7 +187,7 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
       }, suffix = " (secondary)")
     }
 
-    manager.registerEpListeners()
+    registerEpListeners(manager)
   }
 
   private suspend fun postEntryProcessing(entries: List<RegisterToolWindowResult>, suffix: String = "") {
@@ -211,7 +213,7 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
     span("postTask executing$suffix") {
       for (result in entries) {
         if (result.postTask != null) {
-          withContext(Dispatchers.EDT) {
+          withContext(Dispatchers.UI) {
             result.postTask.invoke()
           }
         }
@@ -219,6 +221,21 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
     }
   }
 }
+
+private fun registerEpListeners(manager: ToolWindowManagerImpl) {
+  ToolWindowEP.EP_NAME.addExtensionPointListener(manager.coroutineScope, object : ExtensionPointListener<ToolWindowEP> {
+    override fun extensionAdded(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
+      manager.coroutineScope.launch {
+        manager.initToolWindow(extension, pluginDescriptor)
+      }
+    }
+
+    override fun extensionRemoved(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
+      manager.doUnregisterToolWindow(extension.id)
+    }
+  })
+}
+
 
 internal data class PreparedRegisterToolWindowTask(
   @JvmField val task: RegisterToolWindowTaskData,

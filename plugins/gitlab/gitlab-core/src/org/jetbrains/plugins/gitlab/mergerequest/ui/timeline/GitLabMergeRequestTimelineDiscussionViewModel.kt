@@ -81,7 +81,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     .modelFlow(cs, LOG)
 
   override val id: String = discussion.id.toString()
-  override val serverUrl: URL = mr.glProject.serverPath.toURL()
+  override val serverUrl: URL = mr.serverPath.toURL()
   override val author: Flow<GitLabUserDTO> = mainNote.map { it.author }
 
   private val _repliesFolded = MutableStateFlow(true)

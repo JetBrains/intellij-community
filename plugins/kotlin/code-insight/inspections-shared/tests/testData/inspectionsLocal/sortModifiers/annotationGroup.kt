@@ -1,4 +1,4 @@
-// PROBLEM: Modifiers should follow annotations
+// PROBLEM: Modifiers should be placed directly before the relevant element
 annotation class Inject
 annotation class VisibleForTesting
 

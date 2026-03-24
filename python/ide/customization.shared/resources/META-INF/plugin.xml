@@ -14,6 +14,21 @@
     <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen.frontend"/>
   </content>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- This group redefined in 3 places
+      In [plugins\jupyter\core\resources\intellij.jupyter.core.xml] to place it in 'tools' group for all IDEs
+      In [community\python\ide\customization.shared\resources\META-INF\plugin.xml] and
+      [python\pycharm\frontend\split\customization\resources\META-INF\plugin.xml] to place it on top level in setting, below Python group for PyCharm.
+    -->
+    <groupConfigurable id="Jupyter Settings"
+                       parentId="root"
+                       weight="900"
+                       bundle="messages.PycharmIdeCustomizationBundle"
+                       helpTopic="jupyter.settings.page"
+                       displayNameKey="settings.jupyter.configurable.display.name"
+                       descriptionKey="settings.jupyter.configurable.description"/>
+  </extensions>
 </idea-plugin>
 
 

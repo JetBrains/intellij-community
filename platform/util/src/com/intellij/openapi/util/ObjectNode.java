@@ -46,7 +46,7 @@ public final class ObjectNode {
     for (ObjectNode childNode : myChildren.getAllNodes()) {
       Disposable object = childNode.getObject();
       Throwable trace = childNode.getTrace();
-      // please update together with com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath#isLeak
+      // please update together with com.intellij.tests.JUnit5TeamCityRunner#assertNoUnhandledExceptions_isLeak
       String message =
         "Memory leak detected: '" + object + "' (" + object.getClass() + ") was registered in Disposer" +
         " as a child of '"+getObject()+"' (" + getObject().getClass() + ")"+

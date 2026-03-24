@@ -1,4 +1,5 @@
 // "Remove 'lateinit' modifier" "true"
+// K2_ERROR: 'lateinit' modifier is not allowed on properties with initializer.
 
 class Test {
     private<caret> var foo: String = ""

@@ -4,6 +4,8 @@ package com.intellij.java.codeserver.core;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -13,14 +15,19 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiConstantEvaluationHelper;
+import com.intellij.psi.PsiDeconstructionList;
+import com.intellij.psi.PsiDeconstructionPattern;
 import com.intellij.psi.PsiDefaultCaseLabelElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiPattern;
 import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiSwitchBlock;
@@ -32,6 +39,7 @@ import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,6 +53,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
@@ -206,7 +215,8 @@ public final class JavaPsiSwitchUtil {
     if (!isOverWhomUnconditionalForSelector &&
         ((!(overWhom instanceof PsiExpression expression) || ExpressionUtil.isNullLiteral(expression)) &&
          who instanceof PsiKeyword &&
-         JavaKeywords.DEFAULT.equals(who.getText()) || isInCaseNullDefaultLabel(who))) {
+         JavaKeywords.DEFAULT.equals(who.getText()) || isInCaseNullDefaultLabel(who) ||
+         who instanceof PsiSwitchLabelStatementBase switchLabelStatementBase && switchLabelStatementBase.isDefaultCase())) {
       // JEP 440-441
       // A 'default' label dominates a case label with a case pattern,
       // and it also dominates a case label with a null case constant.
@@ -448,6 +458,106 @@ public final class JavaPsiSwitchUtil {
       }
     }
     return elementsToCheckCompleteness;
+  }
+
+  /**
+   * Determines whether a MatchException may occur during the deconstruction process.
+   *
+   * @param deconstructionPattern the deconstruction pattern being analyzed
+   * @param recordComponent the record component being checked
+   * @param deconstructionComponent the deconstruction component corresponding to the record component being checked,
+   * @param skipDominatingElements a set of elements to skip during dominance check
+   * @return {@code true} if a MatchException may occur during deconstruction,
+   *         {@code false} otherwise
+   */
+  public static boolean mayCauseMatchExceptionDuringDeconstruction(@Nullable PsiDeconstructionPattern deconstructionPattern,
+                                                                   @Nullable PsiRecordComponent recordComponent,
+                                                                   @Nullable PsiPattern deconstructionComponent,
+                                                                   @NotNull Set<@NotNull PsiElement> skipDominatingElements) {
+    if (deconstructionPattern == null || deconstructionComponent == null || recordComponent == null) return false;
+    PsiDeconstructionPattern topLevelDeconstruction = deconstructionPattern;
+    while (topLevelDeconstruction.getParent() instanceof PsiDeconstructionList deconstructionList &&
+           deconstructionList.getParent() instanceof PsiDeconstructionPattern parent) {
+      topLevelDeconstruction = parent;
+    }
+    PsiElement deconstructionParent = topLevelDeconstruction.getParent();
+    if (!(deconstructionParent instanceof PsiCaseLabelElementList caseLabelElementList)) return false;
+    if (!(caseLabelElementList.getParent() instanceof PsiSwitchLabelStatementBase switchLabelStatement)) return false;
+    if (!(switchLabelStatement.getParent() instanceof PsiCodeBlock codeBlock &&
+          codeBlock.getParent() instanceof PsiSwitchBlock switchBlock)) {
+      return false;
+    }
+
+    PsiType recordComponentType = recordComponent.getType();
+    PsiClass recordComponentClass = PsiUtil.resolveClassInClassTypeOnly(recordComponentType);
+    if (recordComponentClass == null) return false;
+    if (deconstructionComponent instanceof PsiDeconstructionPattern ||
+        recordComponentClass.hasModifierProperty(PsiModifier.SEALED)) {
+      if (!hasDominated(switchBlock,
+                        topLevelDeconstruction,
+                        deconstructionComponent,
+                        recordComponentClass,
+                        skipDominatingElements)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean hasDominated(@NotNull PsiSwitchBlock block,
+                                      @NotNull PsiDeconstructionPattern pattern,
+                                      @NotNull PsiPattern deconstructionComponent,
+                                      @NotNull PsiClass componentClass,
+                                      @NotNull Set<@NotNull PsiElement> skipDominatingElements) {
+    String text = pattern.getText();
+    TextRange textRange = pattern.getTextRange();
+    TextRange componentTextRange = deconstructionComponent.getTextRange();
+    if (!textRange.contains(componentTextRange)) return true;
+    TextRange toChange = componentTextRange.shiftLeft(textRange.getStartOffset());
+    String newPatternTe = StringUtil.replaceSubstring(text, toChange, componentClass.getQualifiedName() + " someVariable");
+    PsiPattern newPattern = createPatternFromText(newPatternTe, block);
+    if (newPattern == null) return true;
+    List<PsiElement> branches = getSwitchBranches(block);
+    PsiExpression expression = block.getExpression();
+    if (expression == null) return true;
+    PsiType selectorType = expression.getType();
+    if (selectorType == null) return true;
+    for (PsiElement branch : branches) {
+      if (skipDominatingElements.contains(branch) ||
+          //case null, default
+          (isNullOrDefault(branch) &&
+           ContainerUtil.exists(skipDominatingElements, e -> isInCaseNullDefaultLabel(e)))) {
+        continue;
+      }
+      boolean dominated = isDominated(newPattern, branch, selectorType);
+      if (dominated) return true;
+    }
+    return false;
+  }
+
+  private static boolean isNullOrDefault(@NotNull PsiElement branch) {
+    return ExpressionUtil.isNullLiteral(branch) ||
+           (branch instanceof PsiKeyword && JavaKeywords.DEFAULT.equals(branch.getText()));
+  }
+
+
+  private static @Nullable PsiPattern createPatternFromText(@NotNull String patternText, @NotNull PsiElement context) {
+    PsiElementFactory factory = PsiElementFactory.getInstance(context.getProject());
+    String labelText = "case " + patternText + "->{}";
+    PsiStatement statement;
+    try {
+      statement = factory.createStatementFromText(labelText, context);
+    }
+    catch (IncorrectOperationException e) {
+      return null;
+    }
+    PsiSwitchLabelStatementBase label = ObjectUtils.tryCast(statement, PsiSwitchLabelStatementBase.class);
+    if (label == null) return null;
+    PsiCaseLabelElementList list = label.getCaseLabelElementList();
+    if (list == null) return null;
+    PsiCaseLabelElement element = list.getElements()[0];
+    if (!(element instanceof PsiPattern pattern)) return null;
+    return pattern;
   }
 
   /**

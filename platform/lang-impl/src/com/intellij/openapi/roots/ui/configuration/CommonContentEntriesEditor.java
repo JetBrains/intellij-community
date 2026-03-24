@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -40,6 +41,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -59,6 +61,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -165,6 +168,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     final AddContentEntryAction action = new AddContentEntryAction();
     action.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.ALT_DOWN_MASK, mainPanel);
     group.add(action);
+    group.addAll(getAdditionalContentEntryEditorToolbarActions());
 
     myEditorsPanel = new ScrollablePanel(new VerticalStackLayout());
     myEditorsPanel.setBackground(UIUtil.getListBackground());
@@ -229,6 +233,11 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   }
 
   protected void addAdditionalSettingsToPanel(final JPanel mainPanel) {
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull List<AnAction> getAdditionalContentEntryEditorToolbarActions() {
+    return Collections.emptyList();
   }
 
   protected Module getModule() {

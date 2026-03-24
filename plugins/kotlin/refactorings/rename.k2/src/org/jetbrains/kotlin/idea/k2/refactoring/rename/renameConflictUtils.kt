@@ -19,10 +19,15 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -59,6 +64,7 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.utils.addIfNotNull
+import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 
 fun checkClassNameShadowing(
     declaration: KtClassLikeDeclaration,
@@ -314,7 +320,7 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
         }
 
         val qualifierText = when (receiver) {
-            is KaImplicitReceiverValue -> getThisQualifier(receiver)
+            is KaImplicitReceiverValue -> runUnless(appliedSymbol?.symbol?.isStatic == true) { getThisQualifier(receiver) }
 
             is KaExplicitReceiverValue -> {
                 getExplicitQualifier(receiver) ?: return QualifiedState(null, true)
@@ -346,6 +352,15 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
         return QualifiedState(qualifiedExpression, receiver is KaExplicitReceiverValue)
     }
 }
+
+private val KaCallableSymbol.isStatic: Boolean
+    get() = when (this) {
+        is KaNamedFunctionSymbol -> isStatic
+        is KaJavaFieldSymbol -> isStatic
+        is KaPropertySymbol -> isStatic
+        is KaEnumEntrySymbol -> true
+        else -> false
+    }
 
 private fun reportShadowing(
     declaration: PsiNamedElement,

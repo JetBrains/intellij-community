@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventId;
@@ -36,6 +33,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.core.ObjectReadContext;
+import tools.jackson.core.json.JsonFactory;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -151,7 +152,8 @@ public final class OldDirectoryCleaner {
           Files.walkFileTree(directory, visitor);
           var homeDir = Path.of(Files.readString(directory.resolve(ApplicationEx.LOCATOR_FILE_NAME)));
           if (Files.exists(homeDir)) {
-            try (var reader = Files.newBufferedReader(homeDir.resolve(productInfoFileName)); var parser = new JsonFactory().createParser(reader)) {
+            try (var reader = Files.newBufferedReader(homeDir.resolve(productInfoFileName));
+                 var parser = new JsonFactory().createParser(ObjectReadContext.empty(), reader)) {
               if (nameAndVersion.equals(readDataDirectoryName(parser))) {
                 isInstalled = true;
               }
@@ -182,7 +184,7 @@ public final class OldDirectoryCleaner {
       while (parser.nextToken() != null) {
         if ("dataDirectoryName".equals(parser.currentName())) {
           parser.nextToken();
-          return parser.getText();
+          return parser.getString();
         }
         parser.skipChildren();
       }

@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.fasterxml.jackson.jr.ob.JSON
 import okhttp3.CacheControl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
@@ -12,6 +11,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jetbrains.intellij.build.impl.compilation.execute
 import org.jetbrains.intellij.build.impl.compilation.httpClient
+import tools.jackson.jr.ob.JSON
 import java.io.IOException
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets

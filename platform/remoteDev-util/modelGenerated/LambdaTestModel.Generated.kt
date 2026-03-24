@@ -135,6 +135,14 @@ data class LambdaRdSerialized (
     val parametersBase64: List<String>,
     val globalTestScope: Boolean
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(stepName)
+        buffer.writeString(serializedDataBase64)
+        buffer.writeList(classPath) { v -> buffer.writeString(v) }
+        buffer.writeList(parametersBase64) { v -> buffer.writeString(v) }
+        buffer.writeBool(globalTestScope)
+    }
     //companion
     
     companion object : IMarshaller<LambdaRdSerialized> {
@@ -152,11 +160,7 @@ data class LambdaRdSerialized (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdSerialized)  {
-            buffer.writeString(value.stepName)
-            buffer.writeString(value.serializedDataBase64)
-            buffer.writeList(value.classPath) { v -> buffer.writeString(v) }
-            buffer.writeList(value.parametersBase64) { v -> buffer.writeString(v) }
-            buffer.writeBool(value.globalTestScope)
+            value.write(ctx, buffer)
         }
         
         
@@ -217,6 +221,13 @@ data class LambdaRdTestActionParameters (
     val testMethod: String,
     val methodArgumentssBase64: List<String>
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(reference)
+        buffer.writeString(testClass)
+        buffer.writeString(testMethod)
+        buffer.writeList(methodArgumentssBase64) { v -> buffer.writeString(v) }
+    }
     //companion
     
     companion object : IMarshaller<LambdaRdTestActionParameters> {
@@ -233,10 +244,7 @@ data class LambdaRdTestActionParameters (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdTestActionParameters)  {
-            buffer.writeString(value.reference)
-            buffer.writeString(value.testClass)
-            buffer.writeString(value.testMethod)
-            buffer.writeList(value.methodArgumentssBase64) { v -> buffer.writeString(v) }
+            value.write(ctx, buffer)
         }
         
         
@@ -300,6 +308,20 @@ class LambdaRdTestSession private constructor(
     private val _afterAll: RdCall<String, Unit>,
     private val _isResponding: RdCall<Unit, Boolean>
 ) : RdBindableBase() {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        buffer.writeEnum(rdIdeType)
+        RdProperty.write(ctx, buffer, _ready)
+        RdSignal.write(ctx, buffer, _sendException)
+        RdCall.write(ctx, buffer, _runLambda)
+        RdCall.write(ctx, buffer, _runSerializedLambda)
+        RdCall.write(ctx, buffer, _beforeEach)
+        RdCall.write(ctx, buffer, _beforeAll)
+        RdCall.write(ctx, buffer, _afterEach)
+        RdCall.write(ctx, buffer, _afterAll)
+        RdCall.write(ctx, buffer, _isResponding)
+    }
     //companion
     
     companion object : IMarshaller<LambdaRdTestSession> {
@@ -323,17 +345,7 @@ class LambdaRdTestSession private constructor(
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdTestSession)  {
-            value.rdid.write(buffer)
-            buffer.writeEnum(value.rdIdeType)
-            RdProperty.write(ctx, buffer, value._ready)
-            RdSignal.write(ctx, buffer, value._sendException)
-            RdCall.write(ctx, buffer, value._runLambda)
-            RdCall.write(ctx, buffer, value._runSerializedLambda)
-            RdCall.write(ctx, buffer, value._beforeEach)
-            RdCall.write(ctx, buffer, value._beforeAll)
-            RdCall.write(ctx, buffer, value._afterEach)
-            RdCall.write(ctx, buffer, value._afterAll)
-            RdCall.write(ctx, buffer, value._isResponding)
+            value.write(ctx, buffer)
         }
         
         private val __BoolNullableSerializer = FrameworkMarshallers.Bool.nullable()
@@ -443,6 +455,14 @@ data class LambdaRdTestSessionException (
     val stacktrace: List<LambdaRdTestSessionStackTraceElement>,
     val cause: LambdaRdTestSessionExceptionCause?
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(type)
+        buffer.writeNullable(originalType) { buffer.writeString(it) }
+        buffer.writeNullable(message) { buffer.writeString(it) }
+        buffer.writeList(stacktrace) { v -> LambdaRdTestSessionStackTraceElement.write(ctx, buffer, v) }
+        buffer.writeNullable(cause) { LambdaRdTestSessionExceptionCause.write(ctx, buffer, it) }
+    }
     //companion
     
     companion object : IMarshaller<LambdaRdTestSessionException> {
@@ -460,11 +480,7 @@ data class LambdaRdTestSessionException (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdTestSessionException)  {
-            buffer.writeString(value.type)
-            buffer.writeNullable(value.originalType) { buffer.writeString(it) }
-            buffer.writeNullable(value.message) { buffer.writeString(it) }
-            buffer.writeList(value.stacktrace) { v -> LambdaRdTestSessionStackTraceElement.write(ctx, buffer, v) }
-            buffer.writeNullable(value.cause) { LambdaRdTestSessionExceptionCause.write(ctx, buffer, it) }
+            value.write(ctx, buffer)
         }
         
         
@@ -524,6 +540,12 @@ data class LambdaRdTestSessionExceptionCause (
     val message: String?,
     val stacktrace: List<LambdaRdTestSessionStackTraceElement>
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(type)
+        buffer.writeNullable(message) { buffer.writeString(it) }
+        buffer.writeList(stacktrace) { v -> LambdaRdTestSessionStackTraceElement.write(ctx, buffer, v) }
+    }
     //companion
     
     companion object : IMarshaller<LambdaRdTestSessionExceptionCause> {
@@ -539,9 +561,7 @@ data class LambdaRdTestSessionExceptionCause (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdTestSessionExceptionCause)  {
-            buffer.writeString(value.type)
-            buffer.writeNullable(value.message) { buffer.writeString(it) }
-            buffer.writeList(value.stacktrace) { v -> LambdaRdTestSessionStackTraceElement.write(ctx, buffer, v) }
+            value.write(ctx, buffer)
         }
         
         
@@ -596,6 +616,13 @@ data class LambdaRdTestSessionStackTraceElement (
     val fileName: String,
     val lineNumber: Int
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeString(declaringClass)
+        buffer.writeString(methodName)
+        buffer.writeString(fileName)
+        buffer.writeInt(lineNumber)
+    }
     //companion
     
     companion object : IMarshaller<LambdaRdTestSessionStackTraceElement> {
@@ -612,10 +639,7 @@ data class LambdaRdTestSessionStackTraceElement (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdTestSessionStackTraceElement)  {
-            buffer.writeString(value.declaringClass)
-            buffer.writeString(value.methodName)
-            buffer.writeString(value.fileName)
-            buffer.writeInt(value.lineNumber)
+            value.write(ctx, buffer)
         }
         
         

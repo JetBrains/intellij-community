@@ -1,13 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.exporters.meters
 
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonDeserializer
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.module.SimpleModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.common.InstrumentationScopeInfo
 import io.opentelemetry.sdk.metrics.data.AggregationTemporality
@@ -24,6 +17,13 @@ import io.opentelemetry.sdk.metrics.internal.data.ImmutableMetricData
 import io.opentelemetry.sdk.metrics.internal.data.ImmutableSumData
 import io.opentelemetry.sdk.resources.Resource
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.core.JsonParser
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.DeserializationContext
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ValueDeserializer
+import tools.jackson.databind.module.SimpleModule
+import tools.jackson.module.kotlin.jacksonMapperBuilder
 import java.nio.file.Path
 import kotlin.io.path.fileSize
 
@@ -37,13 +37,14 @@ object OpenTelemetryMetersJsonImporter {
 
     if (jsonPath.fileSize() == 0L) return emptyList()
 
-    return jacksonObjectMapper()
-      .registerModule(module)
-      .readValue<Collection<MetricData>>(jsonPath.toFile())
+    return jacksonMapperBuilder()
+      .addModule(module)
+      .build()
+      .readValue(jsonPath, object : TypeReference<Collection<MetricData>>() {})
   }
 }
 
-internal class MetricDataDeserializer : JsonDeserializer<MetricData>() {
+internal class MetricDataDeserializer : ValueDeserializer<MetricData>() {
   companion object {
     private val emptyResource = Resource.empty()
     private val emptyInstrumentationScope = InstrumentationScopeInfo.empty()
@@ -51,7 +52,7 @@ internal class MetricDataDeserializer : JsonDeserializer<MetricData>() {
     private fun getIsMonotonic(dataNode: JsonNode): Boolean = dataNode.get("monotonic").asBoolean(false)
 
     private fun getAggregationTemporality(dataNode: JsonNode): AggregationTemporality =
-      AggregationTemporality.valueOf(dataNode.get("aggregationTemporality").asText())
+      AggregationTemporality.valueOf(dataNode.get("aggregationTemporality").asString())
 
     private fun getStartEpoch(dataPointNode: JsonNode): Long = dataPointNode.get("startEpochNanos").asLong()
 
@@ -63,7 +64,7 @@ internal class MetricDataDeserializer : JsonDeserializer<MetricData>() {
       dataPointNode.get("attributes").properties().forEach { this.put(it.key.toString(), it.value.toString()) }
     }.build()
 
-    private fun getLongPointsData(pointsNode: JsonNode): List<LongPointData> = pointsNode.map { dataPoint ->
+    private fun getLongPointsData(pointsNode: JsonNode): List<LongPointData> = pointsNode.values().map { dataPoint ->
       val startEpoch = getStartEpoch(dataPoint)
       val epoch = getEpoch(dataPoint)
       val value = getValue(dataPoint)
@@ -72,7 +73,7 @@ internal class MetricDataDeserializer : JsonDeserializer<MetricData>() {
       ImmutableLongPointData.create(startEpoch, epoch, attributes, value.asLong())
     }
 
-    private fun getDoublePointsData(pointsNode: JsonNode): List<DoublePointData> = pointsNode.map { dataPoint ->
+    private fun getDoublePointsData(pointsNode: JsonNode): List<DoublePointData> = pointsNode.values().map { dataPoint ->
       val startEpoch = getStartEpoch(dataPoint)
       val epoch = getEpoch(dataPoint)
       val value = getValue(dataPoint)
@@ -83,12 +84,12 @@ internal class MetricDataDeserializer : JsonDeserializer<MetricData>() {
   }
 
   override fun deserialize(jsonParser: JsonParser, ctxt: DeserializationContext): MetricData {
-    val node: JsonNode = jsonParser.codec.readTree(jsonParser)
+    val node: JsonNode = ctxt.readTree(jsonParser)
 
-    val name = node.get("name").asText()
-    val type = node.get("type").asText()
-    val unit = node.get("unit").asText()
-    val description = node.get("description").asText()
+    val name = node.get("name").asString()
+    val type = node.get("type").asString()
+    val unit = node.get("unit").asString()
+    val description = node.get("description").asString()
 
     val data = node.get("data")
     val points = data.get("points")
@@ -122,7 +123,7 @@ internal class MetricDataDeserializer : JsonDeserializer<MetricData>() {
       }
       MetricDataType.SUMMARY -> TODO("Summary deserialization isn't supported yet")
       MetricDataType.HISTOGRAM -> {
-        val pointsData = points.map { dataPoint ->
+        val pointsData = points.values().map { dataPoint ->
           val startEpoch = getStartEpoch(dataPoint)
           val epoch = getEpoch(dataPoint)
           val attributes = getAttributes(dataPoint)
@@ -130,8 +131,8 @@ internal class MetricDataDeserializer : JsonDeserializer<MetricData>() {
           val max = dataPoint.get("max").asDouble(Double.POSITIVE_INFINITY)
           val sum = dataPoint.get("sum").asDouble()
           val min = dataPoint.get("min").asDouble(Double.NEGATIVE_INFINITY)
-          val counts = dataPoint.get("counts").map { it.asLong() }
-          val boundaries = dataPoint.get("boundaries").map { it.asDouble() }
+          val counts = dataPoint.get("counts").values().map { it.asLong() }
+          val boundaries = dataPoint.get("boundaries").values().map { it.asDouble() }
 
           ImmutableHistogramPointData.create(startEpoch, epoch, attributes, sum,
                                              min != Double.NEGATIVE_INFINITY, min,

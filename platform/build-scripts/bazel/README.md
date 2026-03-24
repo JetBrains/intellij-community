@@ -486,8 +486,10 @@ Test cases use projects in `testData/integration/`:
 
 ### Running Tests
 
+From `community/platform/build-scripts/bazel`:
+
 ```bash
-bazel test //:jps-to-bazel-tests
+bazel test //:bazel-generator-integration-tests --test_output=all
 ```
 
 ### Verification Tool

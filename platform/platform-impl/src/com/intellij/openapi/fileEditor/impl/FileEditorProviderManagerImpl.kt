@@ -4,8 +4,8 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.State
@@ -62,7 +62,7 @@ class FileEditorProviderManagerImpl
 
     val suppressors = FileEditorProviderSuppressor.EP_NAME.extensionList
     val hasDocument by lazy {
-      ApplicationManager.getApplication().runReadAction<Boolean, RuntimeException> {
+      runReadActionBlocking {
         FileDocumentManager.getInstance().getDocument(file) != null
       }
     }
@@ -78,7 +78,7 @@ class FileEditorProviderManagerImpl
         continue
       }
 
-      if (ApplicationManager.getApplication().runReadAction<Boolean, RuntimeException> {
+      if (runReadActionBlocking {
           SlowOperations.knownIssue("IDEA-307300, EA-816241").use {
             checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)
           }

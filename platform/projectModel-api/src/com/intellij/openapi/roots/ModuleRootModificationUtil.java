@@ -163,7 +163,7 @@ public final class ModuleRootModificationUtil {
   }
 
   public static void modifyModel(@NotNull Module module, @NotNull Function<? super ModifiableRootModel, Boolean> modifier) {
-    ModifiableRootModel model = ReadAction.compute(() -> ModuleRootManager.getInstance(module).getModifiableModel());
+    ModifiableRootModel model = ReadAction.computeBlocking(() -> ModuleRootManager.getInstance(module).getModifiableModel());
     try {
       if (modifier.apply(model)) {
         ApplicationManager.getApplication().invokeAndWait(() -> {

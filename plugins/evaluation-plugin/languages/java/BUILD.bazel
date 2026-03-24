@@ -24,7 +24,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//plugins/evaluation-plugin/languages",
     "//plugins/evaluation-plugin/core",
-    "//plugins/gradle:gradle-common",
+    "//plugins/gradle",
     "//jps/model-api:model",
     "//jps/model-serialization",
     "//platform/lang-core",
@@ -38,46 +38,125 @@ jvm_library(
 
 jvm_library(
   name = "java_test_lib",
+  module_name = "intellij.evaluationPlugin.languages.java",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":java"],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/analysis-api:analysis",
-    "//platform/core-api:core",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/external-system-impl:externalSystem-impl",
-    "//plugins/maven",
-    "//java/openapi:java",
-    "//java/java-impl:impl",
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":java",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/external-system-impl:externalSystem-impl_test_lib",
+    "//plugins/maven:maven_test_lib",
+    "//java/openapi:java_test_lib",
     "//java/java-impl:impl_test_lib",
-    "//plugins/evaluation-plugin/languages",
-    "//plugins/evaluation-plugin/core",
-    "//plugins/gradle:gradle-common",
-    "//jps/model-api:model",
-    "//jps/model-serialization",
-    "//platform/lang-core",
-    "//platform/projectModel-api:projectModel",
-    "//platform/refactoring",
+    "//plugins/evaluation-plugin/languages:languages_test_lib",
+    "//plugins/evaluation-plugin/core:core_test_lib",
+    "//plugins/gradle:gradle_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//libraries/kotlinx/coroutines/test",
+    "//libraries/kotlinx/coroutines/test:test_test_lib",
     "//java/testFramework",
-    "//platform/smRunner",
+    "//java/testFramework:testFramework_test_lib",
     "//platform/smRunner:smRunner_test_lib",
-    "//platform/execution",
+    "//platform/execution:execution_test_lib",
+    "//plugins/evaluation-plugin:evaluationPlugin-tests",
     "//plugins/evaluation-plugin:evaluationPlugin-tests_test_lib",
-    "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
   ]
 )
 ### auto-generated section `build intellij.evaluationPlugin.languages.java` end
 
-### auto-generated section `test intellij.evaluationPlugin.languages.java` start
+### auto-generated section `iml intellij.evaluationPlugin.languages.java` start
+exports_files([
+  "intellij.evaluationPlugin.languages.java.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.evaluationPlugin.languages.java` end
+
+### auto-generated section `build intellij.evaluationPlugin.languages.java.tests` start
+jvm_library(
+  name = "evaluationPlugin-languages-java-tests",
+  module_name = "intellij.evaluationPlugin.languages.java.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "evaluationPlugin-languages-java-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [
+    "//plugins/evaluation-plugin/languages/java",
+    "//plugins/evaluation-plugin/languages/java:java_test_lib",
+  ],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/external-system-impl:externalSystem-impl_test_lib",
+    "//plugins/maven",
+    "//plugins/maven:maven_test_lib",
+    "//java/openapi:java",
+    "//java/openapi:java_test_lib",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//plugins/evaluation-plugin/languages",
+    "//plugins/evaluation-plugin/languages:languages_test_lib",
+    "//plugins/evaluation-plugin/core",
+    "//plugins/evaluation-plugin/core:core_test_lib",
+    "//plugins/gradle",
+    "//plugins/gradle:gradle_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-serialization",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/refactoring",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//libraries/kotlinx/coroutines/test",
+    "//libraries/kotlinx/coroutines/test:test_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
+    "//platform/execution",
+    "//platform/execution:execution_test_lib",
+    "//plugins/evaluation-plugin:evaluationPlugin-tests",
+    "//plugins/evaluation-plugin:evaluationPlugin-tests_test_lib",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
+  ],
+  runtime_deps = [":evaluationPlugin-languages-java-tests"]
+)
+### auto-generated section `build intellij.evaluationPlugin.languages.java.tests` end
+
+### auto-generated section `iml intellij.evaluationPlugin.languages.java.tests` start
+exports_files([
+  "intellij.evaluationPlugin.languages.java.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.evaluationPlugin.languages.java.tests` end
+
+### auto-generated section `test intellij.evaluationPlugin.languages.java.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "java_test",
-  runtime_deps = [":java_test_lib"]
+  name = "evaluationPlugin-languages-java-tests_test",
+  runtime_deps = [":evaluationPlugin-languages-java-tests_test_lib"]
 )
-### auto-generated section `test intellij.evaluationPlugin.languages.java` end
+### auto-generated section `test intellij.evaluationPlugin.languages.java.tests` end

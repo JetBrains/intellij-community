@@ -1,4 +1,4 @@
-@file:Suppress("MISSING_DEPENDENCY_SUPERCLASS") // avoid test library deps
+@file:Suppress(<warning descr="[ERROR_SUPPRESSION] Suppression of error 'MISSING_DEPENDENCY_SUPERCLASS' might compile and work, but the compiler behavior is UNSPECIFIED and WILL NOT BE PRESERVED. Please report your use case to the Kotlin issue tracker instead: https://kotl.in/issue">"MISSING_DEPENDENCY_SUPERCLASS"</warning>) // avoid test library deps
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.EmptyAction
@@ -119,7 +119,7 @@ object ActionReferenceHighlighting {
     keymap.hasActionId("<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>", mouseShortcut)
   }
 
-  @Suppress("MISSING_DEPENDENCY_CLASS")
+  @Suppress(<warning descr="[ERROR_SUPPRESSION] Suppression of error 'MISSING_DEPENDENCY_CLASS' might compile and work, but the compiler behavior is UNSPECIFIED and WILL NOT BE PRESERVED. Please report your use case to the Kotlin issue tracker instead: https://kotl.in/issue">"MISSING_DEPENDENCY_CLASS"</warning>)
   fun testKeymapUtil(keymapManager: KeymapManager, keyEvent: KeyEvent, keymap: Keymap) {
     KeymapUtil.getShortcutText("myAction")
     KeymapUtil.getShortcutText("<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>")
@@ -152,7 +152,7 @@ object ActionReferenceHighlighting {
     KeymapUtil.matchActionMouseShortcutsModifiers(keymap, 0, "<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>")
   }
 
-  @Suppress("MISSING_DEPENDENCY_SUPERCLASS")
+  @Suppress(<warning descr="[ERROR_SUPPRESSION] Suppression of error 'MISSING_DEPENDENCY_SUPERCLASS' might compile and work, but the compiler behavior is UNSPECIFIED and WILL NOT BE PRESERVED. Please report your use case to the Kotlin issue tracker instead: https://kotl.in/issue">"MISSING_DEPENDENCY_SUPERCLASS"</warning>)
   fun testEditorNotificationPanel(editorNotificationPanel: EditorNotificationPanel) {
      editorNotificationPanel.createActionLabel("text", "myAction")
      editorNotificationPanel.createActionLabel("text", "<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>")
@@ -221,9 +221,9 @@ object ActionReferenceHighlighting {
 
   object MyLightPlatformCodeInsightTestCase : LightPlatformCodeInsightTestCase() {
     fun test() {
-      executeAction("myAction")
-      executeAction("<error descr="Cannot resolve action 'myGroup'">myGroup</error>")
-      executeAction("<error descr="Cannot resolve action 'INVALID_VALUE'">INVALID_VALUE</error>")
+      <warning descr="[MISSING_DEPENDENCY_SUPERCLASS_WARNING] Cannot access 'com.intellij.openapi.actionSystem.DataProvider' which is a supertype of 'LightPlatformCodeInsightTestCase'. This may be forbidden soon. Check the module classpath for missing or conflicting dependencies."><warning descr="[MISSING_DEPENDENCY_SUPERCLASS_WARNING] Cannot access 'junit.framework.TestCase' which is a supertype of 'LightPlatformCodeInsightTestCase'. This may be forbidden soon. Check the module classpath for missing or conflicting dependencies.">executeAction</warning></warning>("myAction")
+      <warning descr="[MISSING_DEPENDENCY_SUPERCLASS_WARNING] Cannot access 'com.intellij.openapi.actionSystem.DataProvider' which is a supertype of 'LightPlatformCodeInsightTestCase'. This may be forbidden soon. Check the module classpath for missing or conflicting dependencies."><warning descr="[MISSING_DEPENDENCY_SUPERCLASS_WARNING] Cannot access 'junit.framework.TestCase' which is a supertype of 'LightPlatformCodeInsightTestCase'. This may be forbidden soon. Check the module classpath for missing or conflicting dependencies.">executeAction</warning></warning>("<error descr="Cannot resolve action 'myGroup'">myGroup</error>")
+      <warning descr="[MISSING_DEPENDENCY_SUPERCLASS_WARNING] Cannot access 'com.intellij.openapi.actionSystem.DataProvider' which is a supertype of 'LightPlatformCodeInsightTestCase'. This may be forbidden soon. Check the module classpath for missing or conflicting dependencies."><warning descr="[MISSING_DEPENDENCY_SUPERCLASS_WARNING] Cannot access 'junit.framework.TestCase' which is a supertype of 'LightPlatformCodeInsightTestCase'. This may be forbidden soon. Check the module classpath for missing or conflicting dependencies.">executeAction</warning></warning>("<error descr="Cannot resolve action 'INVALID_VALUE'">INVALID_VALUE</error>")
     }
   }
 

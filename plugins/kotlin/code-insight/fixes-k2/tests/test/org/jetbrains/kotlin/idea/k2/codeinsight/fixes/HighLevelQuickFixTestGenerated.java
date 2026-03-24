@@ -3631,6 +3631,45 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/contextParameterWithoutName")
+    public static class ContextParameterWithoutName extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("firstPosition.kt")
+        public void testFirstPosition() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/contextParameterWithoutName/firstPosition.kt");
+        }
+
+        @TestMetadata("lastPosition.kt")
+        public void testLastPosition() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/contextParameterWithoutName/lastPosition.kt");
+        }
+
+        @TestMetadata("middlePosition.kt")
+        public void testMiddlePosition() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/contextParameterWithoutName/middlePosition.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/contextParameterWithoutName/simple.kt");
+        }
+
+        @TestMetadata("withComments.kt")
+        public void testWithComments() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/contextParameterWithoutName/withComments.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createClass")
     public abstract static class CreateClass extends AbstractHighLevelQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
@@ -3870,9 +3909,9 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createClass/callExpression/inReturn2.kt");
             }
 
-            @TestMetadata("notApplicableInReturn.kt")
-            public void testNotApplicableInReturn() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createClass/callExpression/notApplicableInReturn.kt");
+            @TestMetadata("inReturnWithInapplicableFunctionType.kt")
+            public void testInReturnWithInapplicableFunctionType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createClass/callExpression/inReturnWithInapplicableFunctionType.kt");
             }
 
             @TestMetadata("parameterClassIsInternal.kt")
@@ -4490,6 +4529,110 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             public void testTypeArgumentWithMultipleBounds() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createClass/typeReference/typeArgumentWithMultipleBounds.kt");
             }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor")
+    public static class CreateSecondaryConstructor extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("argumentTypeMismatch.kt")
+        public void testArgumentTypeMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/argumentTypeMismatch.kt");
+        }
+
+        @TestMetadata("callWithExpectedType.kt")
+        public void testCallWithExpectedType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/callWithExpectedType.kt");
+        }
+
+        @TestMetadata("callWithTypeArguments.kt")
+        public void testCallWithTypeArguments() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/callWithTypeArguments.kt");
+        }
+
+        @TestMetadata("classWithBody.kt")
+        public void testClassWithBody() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/classWithBody.kt");
+        }
+
+        @TestMetadata("classWithoutBody.kt")
+        public void testClassWithoutBody() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/classWithoutBody.kt");
+        }
+
+        @TestMetadata("delegatorToSuperCall.kt")
+        public void testDelegatorToSuperCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/delegatorToSuperCall.kt");
+        }
+
+        @TestMetadata("delegatorToSuperCallNoClass.kt")
+        public void testDelegatorToSuperCallNoClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/delegatorToSuperCallNoClass.kt");
+        }
+
+        @TestMetadata("noParametersImplicitSuperCall.kt")
+        public void testNoParametersImplicitSuperCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/noParametersImplicitSuperCall.kt");
+        }
+
+        @TestMetadata("noParametersSuperCall.kt")
+        public void testNoParametersSuperCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/noParametersSuperCall.kt");
+        }
+
+        @TestMetadata("noParametersThisCall.kt")
+        public void testNoParametersThisCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/noParametersThisCall.kt");
+        }
+
+        @TestMetadata("noneApplicable.kt")
+        public void testNoneApplicable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/noneApplicable.kt");
+        }
+
+        @TestMetadata("superCall.kt")
+        public void testSuperCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/superCall.kt");
+        }
+
+        @TestMetadata("superCallNoClass.kt")
+        public void testSuperCallNoClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/superCallNoClass.kt");
+        }
+
+        @TestMetadata("superCallNoneApplicable.kt")
+        public void testSuperCallNoneApplicable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/superCallNoneApplicable.kt");
+        }
+
+        @TestMetadata("thisCall.kt")
+        public void testThisCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/thisCall.kt");
+        }
+
+        @TestMetadata("tooManyArguments.kt")
+        public void testTooManyArguments() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/tooManyArguments.kt");
+        }
+
+        @TestMetadata("tooManyArgumentsWithImcompatibleType.kt")
+        public void testTooManyArgumentsWithImcompatibleType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/tooManyArgumentsWithImcompatibleType.kt");
+        }
+
+        @TestMetadata("wrongExpectedType.kt")
+        public void testWrongExpectedType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createSecondaryConstructor/wrongExpectedType.kt");
         }
     }
 
@@ -8079,6 +8222,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("customComponentBeyondProperties.kt")
+        public void testCustomComponentBeyondProperties() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/customComponentBeyondProperties.kt");
+        }
+
         @TestMetadata("entryUsedInLambda.kt")
         public void testEntryUsedInLambda() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/entryUsedInLambda.kt");
@@ -8097,6 +8245,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("fullFormLambda.kt")
         public void testFullFormLambda() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/fullFormLambda.kt");
+        }
+
+        @TestMetadata("genericDataClassFullForm.kt")
+        public void testGenericDataClassFullForm() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/genericDataClassFullForm.kt");
         }
 
         @TestMetadata("multipleEntriesSameOriginalName.kt")
@@ -8128,6 +8281,31 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("convertToSquareBrackets.kt")
+        public void testConvertToSquareBrackets() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/convertToSquareBrackets.kt");
+        }
+
+        @TestMetadata("convertToSquareBracketsIndexedValue.kt")
+        public void testConvertToSquareBracketsIndexedValue() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/convertToSquareBracketsIndexedValue.kt");
+        }
+
+        @TestMetadata("convertToSquareBracketsLambda.kt")
+        public void testConvertToSquareBracketsLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/convertToSquareBracketsLambda.kt");
+        }
+
+        @TestMetadata("convertToSquareBracketsTrailingComma.kt")
+        public void testConvertToSquareBracketsTrailingComma() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/convertToSquareBracketsTrailingComma.kt");
+        }
+
+        @TestMetadata("convertToSquareBracketsTriple.kt")
+        public void testConvertToSquareBracketsTriple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/convertToSquareBracketsTriple.kt");
+        }
+
         @TestMetadata("matchProp.kt")
         public void testMatchProp() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/matchProp.kt");
@@ -8146,6 +8324,31 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("mismatchLambda.kt")
         public void testMismatchLambda() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/mismatchLambda.kt");
+        }
+
+        @TestMetadata("moreEntriesThanParameters.kt")
+        public void testMoreEntriesThanParameters() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/moreEntriesThanParameters.kt");
+        }
+
+        @TestMetadata("nestedDestructuringToBrackets.kt")
+        public void testNestedDestructuringToBrackets() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/nestedDestructuringToBrackets.kt");
+        }
+
+        @TestMetadata("underscoreInMiddle.kt")
+        public void testUnderscoreInMiddle() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/underscoreInMiddle.kt");
+        }
+
+        @TestMetadata("underscoreOnly.kt")
+        public void testUnderscoreOnly() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/underscoreOnly.kt");
+        }
+
+        @TestMetadata("underscoreWithMismatch.kt")
+        public void testUnderscoreWithMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/underscoreWithMismatch.kt");
         }
 
         @TestMetadata("valueUsed.kt")
@@ -9625,6 +9828,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/memberVisibilityCanBePrivate/constructorParam.kt");
         }
 
+        @TestMetadata("interdependentProperties.kt")
+        public void testInterdependentProperties() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/memberVisibilityCanBePrivate/interdependentProperties.kt");
+        }
+
         @TestMetadata("internal.kt")
         public void testInternal() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/memberVisibilityCanBePrivate/internal.kt");
@@ -10803,6 +11011,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addTypeParameter2.kt");
             }
 
+            @TestMetadata("changeFunctionGenericsReciever.kt")
+            public void testChangeFunctionGenericsReciever() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeFunctionGenericsReciever.kt");
+            }
+
             @TestMetadata("changeFunctionReciever.kt")
             public void testChangeFunctionReciever() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeFunctionReciever.kt");
@@ -10856,6 +11069,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("changeReturnType.kt")
             public void testChangeReturnType() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeReturnType.kt");
+            }
+
+            @TestMetadata("changeReturnTypeGenerics.kt")
+            public void testChangeReturnTypeGenerics() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeReturnTypeGenerics.kt");
             }
 
             @TestMetadata("changeTypeParameter.kt")
@@ -13017,6 +13235,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/returnInExpressionBody/explicitTypeInParentProperty.kt");
         }
 
+        @TestMetadata("implicitTypeInLambda.kt")
+        public void testImplicitTypeInLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/returnInExpressionBody/implicitTypeInLambda.kt");
+        }
+
         @TestMetadata("implicitTypeInParent.kt")
         public void testImplicitTypeInParent() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/returnInExpressionBody/implicitTypeInParent.kt");
@@ -13187,6 +13410,31 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("explicitThisLaunch.kt")
+        public void testExplicitThisLaunch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/explicitThisLaunch.kt");
+        }
+
+        @TestMetadata("explicitThisLaunchWithNullableTypeArgument.kt")
+        public void testExplicitThisLaunchWithNullableTypeArgument() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/explicitThisLaunchWithNullableTypeArgument.kt");
+        }
+
+        @TestMetadata("implicitReceiverCoroutineContext.kt")
+        public void testImplicitReceiverCoroutineContext() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/implicitReceiverCoroutineContext.kt");
+        }
+
+        @TestMetadata("implicitReceiverLaunch.kt")
+        public void testImplicitReceiverLaunch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/implicitReceiverLaunch.kt");
+        }
+
+        @TestMetadata("implicitThisLaunchWithTypeArgument.kt")
+        public void testImplicitThisLaunchWithTypeArgument() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/implicitThisLaunchWithTypeArgument.kt");
+        }
+
         @TestMetadata("inNonSuspendLambda.kt")
         public void testInNonSuspendLambda() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/inNonSuspendLambda.kt");
@@ -13235,6 +13483,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("withContextWithReturns.kt")
         public void testWithContextWithReturns() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/withContextWithReturns.kt");
+        }
+
+        @TestMetadata("withTypeParameter.kt")
+        public void testWithTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/withTypeParameter.kt");
         }
     }
 
@@ -14698,6 +14951,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/toString/callArgument.kt");
         }
 
+        @TestMetadata("emptyReturn.kt")
+        public void testEmptyReturn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/toString/emptyReturn.kt");
+        }
+
+        @TestMetadata("emptyReturnExpectedNullable.kt")
+        public void testEmptyReturnExpectedNullable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/toString/emptyReturnExpectedNullable.kt");
+        }
+
         @TestMetadata("notNullableExpectedNullable.kt")
         public void testNotNullableExpectedNullable() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/toString/notNullableExpectedNullable.kt");
@@ -15115,6 +15378,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/assignment.kt");
             }
 
+            @TestMetadata("customListOfFunction.kt")
+            public void testCustomListOfFunction() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/customListOfFunction.kt");
+            }
+
             @TestMetadata("emptyListArgumentToMutableList.kt")
             public void testEmptyListArgumentToMutableList() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/emptyListArgumentToMutableList.kt");
@@ -15130,6 +15398,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/emptyListToMutableList.kt");
             }
 
+            @TestMetadata("emptyListToMutableListNullable.kt")
+            public void testEmptyListToMutableListNullable() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/emptyListToMutableListNullable.kt");
+            }
+
             @TestMetadata("emptyListToMutableListWithTypeArg.kt")
             public void testEmptyListToMutableListWithTypeArg() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/emptyListToMutableListWithTypeArg.kt");
@@ -15138,6 +15411,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("emptyMapToMutableMap.kt")
             public void testEmptyMapToMutableMap() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/emptyMapToMutableMap.kt");
+            }
+
+            @TestMetadata("emptyMapToMutableMapNullableReturn.kt")
+            public void testEmptyMapToMutableMapNullableReturn() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/emptyMapToMutableMapNullableReturn.kt");
+            }
+
+            @TestMetadata("emptyMapWithTypeArgsToMutableMap.kt")
+            public void testEmptyMapWithTypeArgsToMutableMap() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/emptyMapWithTypeArgsToMutableMap.kt");
             }
 
             @TestMetadata("emptySetAssignmentToMutableSet.kt")
@@ -15150,6 +15433,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/emptySetToMutableSet.kt");
             }
 
+            @TestMetadata("emptySetToMutableSetNullableInitializer.kt")
+            public void testEmptySetToMutableSetNullableInitializer() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/emptySetToMutableSetNullableInitializer.kt");
+            }
+
             @TestMetadata("initializer.kt")
             public void testInitializer() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/initializer.kt");
@@ -15160,14 +15448,34 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/iterableToArray.kt");
             }
 
+            @TestMetadata("listOfNestedToMutableList.kt")
+            public void testListOfNestedToMutableList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/listOfNestedToMutableList.kt");
+            }
+
+            @TestMetadata("listOfSubtypeToMutableList.kt")
+            public void testListOfSubtypeToMutableList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/listOfSubtypeToMutableList.kt");
+            }
+
             @TestMetadata("listOfToMutableList.kt")
             public void testListOfToMutableList() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/listOfToMutableList.kt");
             }
 
+            @TestMetadata("listOfToMutableSetMismatch.kt")
+            public void testListOfToMutableSetMismatch() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/listOfToMutableSetMismatch.kt");
+            }
+
             @TestMetadata("listOfWithTypeArgsToMutableList.kt")
             public void testListOfWithTypeArgsToMutableList() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/listOfWithTypeArgsToMutableList.kt");
+            }
+
+            @TestMetadata("listOfWrongTypeToMutableList.kt")
+            public void testListOfWrongTypeToMutableList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/listOfWrongTypeToMutableList.kt");
             }
 
             @TestMetadata("listToArray.kt")
@@ -15195,6 +15503,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/mapOfToMutableMap.kt");
             }
 
+            @TestMetadata("mapToMutableListMismatch.kt")
+            public void testMapToMutableListMismatch() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/mapToMutableListMismatch.kt");
+            }
+
+            @TestMetadata("mutableListStarProjection.kt")
+            public void testMutableListStarProjection() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/mutableListStarProjection.kt");
+            }
+
             @TestMetadata("sequenceToArray.kt")
             public void testSequenceToArray() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/sequenceToArray.kt");
@@ -15208,6 +15526,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("setOfToMutableSet.kt")
             public void testSetOfToMutableSet() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/setOfToMutableSet.kt");
+            }
+
+            @TestMetadata("specificImplementationExpected.kt")
+            public void testSpecificImplementationExpected() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/specificImplementationExpected.kt");
             }
 
             @TestMetadata("typeArgumentMismatchWithExplicitType.kt")
@@ -16117,6 +16440,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                     runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/assignmentTypeMismatch.kt");
                 }
 
+                @TestMetadata("assignmentTypeMismatch_2_2.kt")
+                public void testAssignmentTypeMismatch_2_2() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/assignmentTypeMismatch_2_2.kt");
+                }
+
                 @TestMetadata("changeFunctionReturnTypeToFunctionType.kt")
                 public void testChangeFunctionReturnTypeToFunctionType() throws Exception {
                     runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/changeFunctionReturnTypeToFunctionType.kt");
@@ -16125,6 +16453,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 @TestMetadata("changeFunctionReturnTypeToMatchReturnTypeOfReturnedLiteral.kt")
                 public void testChangeFunctionReturnTypeToMatchReturnTypeOfReturnedLiteral() throws Exception {
                     runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/changeFunctionReturnTypeToMatchReturnTypeOfReturnedLiteral.kt");
+                }
+
+                @TestMetadata("changeFunctionReturnTypeToMatchReturnTypeOfReturnedLiteral_2_2.kt")
+                public void testChangeFunctionReturnTypeToMatchReturnTypeOfReturnedLiteral_2_2() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/changeFunctionReturnTypeToMatchReturnTypeOfReturnedLiteral_2_2.kt");
                 }
 
                 @TestMetadata("dontChangeFunctionReturnTypeToErrorType.kt")
@@ -16150,6 +16483,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 @TestMetadata("literalPropertyWithGetter.kt")
                 public void testLiteralPropertyWithGetter() throws Exception {
                     runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/literalPropertyWithGetter.kt");
+                }
+
+                @TestMetadata("literalPropertyWithGetter2.kt")
+                public void testLiteralPropertyWithGetter2() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/literalPropertyWithGetter2.kt");
+                }
+
+                @TestMetadata("literalPropertyWithGetter_2_2.kt")
+                public void testLiteralPropertyWithGetter_2_2() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/literalPropertyWithGetter_2_2.kt");
                 }
 
                 @TestMetadata("multiFakeOverride.kt")
@@ -16255,6 +16598,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 @TestMetadata("typeMismatchInIfStatementReturnedByLiteral.kt")
                 public void testTypeMismatchInIfStatementReturnedByLiteral() throws Exception {
                     runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/typeMismatchInIfStatementReturnedByLiteral.kt");
+                }
+
+                @TestMetadata("typeMismatchInIfStatementReturnedByLiteral_2_2.kt")
+                public void testTypeMismatchInIfStatementReturnedByLiteral_2_2() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/typeMismatchInIfStatementReturnedByLiteral_2_2.kt");
                 }
 
                 @TestMetadata("typeMismatchInInitializer.kt")

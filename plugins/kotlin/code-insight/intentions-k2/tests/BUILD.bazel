@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests",
+  module_name = "intellij.kotlin.codeInsight.intentions.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
@@ -15,41 +16,70 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/kotlin/plugin/k2",
+    "//plugins/kotlin/plugin/k2:k2_test_lib",
     "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/code-insight/api:api_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//libraries/kotlin/reflect",
+    "//libraries/kotlin/reflect:reflect_test_lib",
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
     "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/psi:psi_test_lib",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
     "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/base/code-insight:code-insight_test_lib",
     "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/code-insight/utils:utils_test_lib",
+    "//plugins/kotlin/test-framework",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/fir/tests",
     "//plugins/kotlin/fir/tests:tests_test_lib",
+    "//plugins/kotlin/tests-common:common-tests",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
     "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
     "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+    "//plugins/kotlin/fir/testFramework",
+    "//plugins/kotlin/fir/testFramework:testFramework_test_lib",
   ],
   runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.intentions.tests` end
+
+### auto-generated section `iml intellij.kotlin.codeInsight.intentions.tests` start
+exports_files([
+  "intellij.kotlin.codeInsight.intentions.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.codeInsight.intentions.tests` end
 
 ### auto-generated section `test intellij.kotlin.codeInsight.intentions.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

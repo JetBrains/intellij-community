@@ -18,6 +18,7 @@ import com.intellij.python.pyproject.model.internal.startAutoImportIfNeeded
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
+import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.newProjectWizard.collector.PyProjectTypeGenerator
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector.logPythonNewProjectGenerated
@@ -70,7 +71,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   @RequiresEdt
   override fun generateProject(project: Project, baseDir: VirtualFile, settings: PyV3BaseProjectSettings, module: Module) {
     val coroutineScope = project.service<MyService>().coroutineScope
-    coroutineScope.launch {
+    coroutineScope.launch(TraceContext(PyBundle.message("trace.context.new.project.wizard"), coroutineScope)) {
       generateProjectImpl(settings, module, baseDir)
       startAutoImportIfNeeded(project)
     }

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.usageView.UsageInfo
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -22,6 +23,9 @@ interface SearchEverywherePreviewPrimaryUsageFinder {
   
   fun tryFindPrimaryUsageInfo(psiFile: PsiFile): Pair<UsageInfo, Disposable?>?
   fun tryFindPsiElementForUsageInfo(project: Project, psiElement: PsiElement): PsiElement?
+  @ApiStatus.Internal
+  @RequiresReadLock
+  fun readRangeFromUsageInfo(info: UsageInfo): Pair<Int, Int>?
 }
 
 @ApiStatus.Internal
@@ -44,5 +48,15 @@ class PreviewPrimaryUsageFinderImpl : SearchEverywherePreviewPrimaryUsageFinder 
 
   override fun tryFindPsiElementForUsageInfo(project: Project, psiElement: PsiElement): PsiElement {
     return psiElement
+  }
+
+  override fun readRangeFromUsageInfo(info: UsageInfo): Pair<Int, Int>? {
+    val range = info.smartPointer.psiRange ?: try {
+      info.navigationRange
+    }
+    catch (_: Exception) {
+      null
+    }
+    return range?.let { it.startOffset to it.endOffset }
   }
 }

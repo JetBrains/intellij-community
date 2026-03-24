@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.ide.actions.SearchEverywhereManagerFactory
@@ -18,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.project.projectId
@@ -36,6 +39,7 @@ import com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupHeaderPane
 import com.intellij.platform.searchEverywhere.frontend.vm.SeDummyTabVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
+import com.intellij.platform.searchEverywhere.frontend.ml.SeMlService
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.LIFE_CYCLE
@@ -55,10 +59,12 @@ import fleet.kernel.change
 import fleet.kernel.rebase.shared
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -71,6 +77,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
+import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT, Service.Level.APP)
@@ -135,25 +142,37 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
       try {
         popupSemaphore.withPermit {
-          val providersHolder = SeProvidersHolder.initialize(initEvent, project, session, "Frontend", false)
-          localProvidersHolder = providersHolder
-          initializeVmAndSetToPopup(popupFuture,
-                                    popup,
-                                    popupContentPane,
-                                    searchStatePublisher,
-                                    initialTabs,
-                                    tabFactories,
-                                    tabId,
-                                    searchText,
-                                    initEvent,
-                                    popupScope,
-                                    session,
-                                    providersHolder)
+          val mlService = SeMlService.getInstanceIfEnabled()
+          mlService?.onSessionStarted(project, tabId)
 
-          val showPopupEndTime = System.currentTimeMillis()
-          SeLog.log { "Search Everywhere popup opened in ${showPopupEndTime - showPopupStartTime} ms" }
+          try {
+            val providersHolder = SeProvidersHolder.initialize(initEvent, project, session, "Frontend", false)
+            localProvidersHolder = providersHolder
+            initializeVmAndSetToPopup(popupFuture,
+                                      popup,
+                                      popupContentPane,
+                                      searchStatePublisher,
+                                      tabFactories,
+                                      tabId,
+                                      searchText,
+                                      initEvent,
+                                      popupScope,
+                                      session,
+                                      providersHolder)
 
-          popupClosedCompletable.await()
+            val showPopupEndTime = System.currentTimeMillis()
+            SeLog.log { "Search Everywhere popup opened in ${showPopupEndTime - showPopupStartTime} ms" }
+
+            popupClosedCompletable.await()
+          }
+          finally {
+            withContext(NonCancellable) {
+              // Keep ML session callbacks within the same permit window to avoid finishing
+              // a session while tab flows may still emit state updates.
+              popupScope.coroutineContext[Job]?.cancelAndJoin()
+              mlService?.onSessionFinished()
+            }
+          }
         }
       }
       finally {
@@ -180,7 +199,6 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     popup: JBPopup,
     popupContentPane: SePopupContentPane,
     searchStatePublisher: SeSearchStatePublisher,
-    initialTabs: List<SeDummyTabVm>,
     tabFactories: List<SeTabFactory>,
     tabId: String,
     searchText: String?,
@@ -206,10 +224,10 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       }
     }.map { (loadingTabId, tabLoadingProperty) ->
       popupScope.async {
-        withTimeoutOrNull(tabInitializationTimeoutMillis) {
+        withTimeoutOrNull(tabInitializationTimeoutMillis.milliseconds) {
           tabLoadingProperty.getValue()
         } ?: run {
-          if ((tabId + MAIN_TABS).contains(loadingTabId)) {
+          if (loadingTabId == tabId || loadingTabId in MAIN_TABS) {
             SeLog.warn("Tab $tabId initialization took too long (> ${tabInitializationTimeoutMillis}ms), waiting it's initialization anyway")
             // If we have to open this tab right after the popup is there, we wait until it gets initialized
             tabLoadingProperty.getValue()
@@ -234,7 +252,6 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       popupScope,
       session,
       project,
-      initialTabs,
       tabs,
       deferredTabs,
       adaptedTabs,

@@ -116,15 +116,12 @@ object IjentSessionMediatorUtils {
     lastStderrMessages: MutableSharedFlow<String?>,
     logger: Logger,
   ) {
+    val lineConsumer = createIjentStderrLineConsumer(ijentLabel, lastStderrMessages, logger)
     try {
       errorStream.reader().useLines { lines ->
-        val logIjentStderr = LogIjentStderr(logger)
         for (line in lines) {
           yield()
-          if (line.isNotEmpty()) {
-            logIjentStderr(ijentLabel, line)
-            lastStderrMessages.emit(line)
-          }
+          lineConsumer.consume(line)
         }
       }
     }
@@ -132,6 +129,33 @@ object IjentSessionMediatorUtils {
       logger.debug { "$ijentLabel bootstrap got an error: $err" }
     }
     finally {
+      lineConsumer.complete()
+    }
+  }
+
+  fun createIjentStderrLineConsumer(
+    ijentLabel: String,
+    lastStderrMessages: MutableSharedFlow<String?>,
+    logger: Logger,
+  ): IjentStderrLineConsumer {
+    val logIjentStderr = LogIjentStderr(logger)
+    return IjentStderrLineConsumer(lastStderrMessages) { line ->
+      logIjentStderr(ijentLabel, line)
+    }
+  }
+
+  class IjentStderrLineConsumer internal constructor(
+    private val lastStderrMessages: MutableSharedFlow<String?>,
+    private val lineLogger: (String) -> Unit,
+  ) {
+    suspend fun consume(line: String) {
+      if (line.isNotEmpty()) {
+        lineLogger(line)
+        lastStderrMessages.emit(line)
+      }
+    }
+
+    suspend fun complete() {
       lastStderrMessages.emit(null)
     }
   }

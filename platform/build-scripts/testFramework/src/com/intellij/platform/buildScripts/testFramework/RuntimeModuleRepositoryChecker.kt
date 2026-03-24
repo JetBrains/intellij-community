@@ -143,10 +143,10 @@ internal class RuntimeModuleRepositoryChecker private constructor(
             val mainModules = mainGroupModuleResourceRoots[resourcePath]
             if (mainModules != null) {
               val mainModuleListString = 
-                if (mainModules.size < 3) mainModules.joinToString { it.stringId } 
-                else "${mainModules.first().stringId} and ${mainModules.size - 1} more modules"
-              val moduleId = pluginModule.moduleId.stringId
-              val pluginModuleId = group.mainModule.moduleId.stringId
+                if (mainModules.size < 3) mainModules.joinToString { it.presentableName }
+                else "${mainModules.first().presentableName} and ${mainModules.size - 1} more modules"
+              val moduleId = pluginModule.moduleId.presentableName
+              val pluginModuleId = group.mainModule.moduleId.presentableName
               softly.collectAssertionErrorIfNotRegisteredYet(
                 AssertionError("""
                 |Module '$moduleId' from plugin '$pluginModuleId' has resource root ${commonDistPath.relativize(resourcePath)},
@@ -184,9 +184,9 @@ internal class RuntimeModuleRepositoryChecker private constructor(
         """.trimMargin()))
         return@forEach
       }
-      val pluginPath = FList.singleton("bundled plugin ${group.mainModule.moduleId.stringId}")
+      val pluginPath = FList.singleton("bundled plugin ${group.mainModule.moduleId.presentableName}")
       group.includedModules.forEach {
-        repository.collectDependencies(it.moduleDescriptor, pluginPath.prepend(it.moduleDescriptor.moduleId.stringId), allProductModules)
+        repository.collectDependencies(it.moduleDescriptor, pluginPath.prepend(it.moduleDescriptor.moduleId.presentableName), allProductModules)
       }
     }
 
@@ -194,13 +194,12 @@ internal class RuntimeModuleRepositoryChecker private constructor(
       repository.getModule(moduleId).resourceRootPaths.map { it to moduleId }
     }.groupBy({ it.first }, { it.second })
     
-    for (rawModuleId in moduleRepositoryData.allIds) {
-      val moduleId = RuntimeModuleId.raw(rawModuleId)
-      if (rawModuleId.startsWith(RuntimeModuleId.LIB_NAME_PREFIX)) {
+    for (moduleId in moduleRepositoryData.allModuleIds) {
+      if (moduleId.name.startsWith(RuntimeModuleId.LIB_NAME_PREFIX)) {
         //additional libraries shouldn't cause problems because their resources should not be loaded unless they are requested from modules
         continue
       }
-      val module = context.outputProvider.findModule(rawModuleId)
+      val module = context.outputProvider.findModule(moduleId.name)
       if (module != null && hasModuleOutputPath(module = module, relativePath = "${module.name}.xml", outputProvider = context.outputProvider)) {
         // such a descriptor indicates that it's a module in plugin model V2, and its ClassLoader ignores classes from irrelevant packages,
         // so including its JAR to classpath should not cause problems
@@ -216,21 +215,21 @@ internal class RuntimeModuleRepositoryChecker private constructor(
         val includedModules = productResourceRoots.getValue(included)
         val displayedModulesCount = 10
         val firstIncludedModuleData = includedModules.take(displayedModulesCount).joinToString(separator = System.lineSeparator()) {
-          "'${it.stringId}' (<- ${allProductModules.getValue(it).joinToString(" <- ")})"
+          "'${it.presentableName}' (<- ${allProductModules.getValue(it).joinToString(" <- ")})"
         }
         val rest = includedModules.size - displayedModulesCount
         val embeddedProductPresentableName = "${context.applicationInfo.shortProductName} Frontend"
         val more = if (rest > 0) " and $rest more ${StringUtil.pluralize("module", rest)}" else ""
         softly.collectAssertionErrorIfNotRegisteredYet(AssertionError("""
-          |Module '${moduleId.stringId}' is not part of $embeddedProductPresentableName included in the full ${context.applicationInfo.shortProductName} distribution, but it's packed in ${included.pathString},
+          |Module '${moduleId.presentableName}' is not part of $embeddedProductPresentableName included in the full ${context.applicationInfo.shortProductName} distribution, but it's packed in ${included.pathString},
           |which is included in the classpath of $embeddedProductPresentableName because:
           |$firstIncludedModuleData$more are also packed in it.
-          |This means that '${moduleId.stringId}' will be included in the classpath of $embeddedProductPresentableName as well. 
+          |This means that '${moduleId.presentableName}' will be included in the classpath of $embeddedProductPresentableName as well. 
           |Unnecessary code and resources in the classpath may cause performance problems, also, they may cause $embeddedProductPresentableName to behave differently in a standalone 
           |installation and when invoked from ${context.applicationInfo.fullProductName}. To fix the problem, you should do one of the following:
           |* if other modules packed in '${included.pathString}' shouldn't be part of $embeddedProductPresentableName, remove incorrect dependencies shown above; this may require extracting additional modules;
-          |* if '${moduleId.stringId}' actually should be included in $embeddedProductPresentableName, make sure that it's included either by adding it as a content module in plugin.xml, or by adding it in the main module group in product-modules.xml;
-          |* if '${moduleId.stringId}' should not be included in $embeddedProductPresentableName, but other parts of ${included.pathString} should, ensure that they are put to
+          |* if '${moduleId.presentableName}' actually should be included in $embeddedProductPresentableName, make sure that it's included either by adding it as a content module in plugin.xml, or by adding it in the main module group in product-modules.xml;
+          |* if '${moduleId.presentableName}' should not be included in $embeddedProductPresentableName, but other parts of ${included.pathString} should, ensure that they are put to
           |  separate JAR files; it may be enough to add a runtime dependency on 'intellij.platform.backend' to all modules which shouldn't be included to the frontend part,
           |  the build scripts will take this into account to assign separate JARs automatically; however, if custom layout is specified for a plugin, you may need to put modules
           |  to separate JARs using explicit 'withModule(...)' calls in the layout configuration.
@@ -246,27 +245,27 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     for (mainModuleId in rawProductModules.bundledPluginMainModules) {
       val mainModule = repository.resolveModule(mainModuleId)
       if (mainModule.resolvedModule == null) {
-        val problematicModule = if (mainModule.failedDependencyPath.size == 1) "it" else "its dependency ${mainModule.failedDependencyPath.reversed().joinToString(" <- ") { it.stringId }}"
+        val problematicModule = if (mainModule.failedDependencyPath.size == 1) "it" else "its dependency ${mainModule.failedDependencyPath.reversed().joinToString(" <- ") { it.presentableName }}"
         softly.collectAssertionErrorIfNotRegisteredYet(
           AssertionError(
             buildString { 
-              append("Module '${mainModuleId.stringId}' is specified as the main module of a bundled plugin in product-modules.xml in '$productModulesModule',\n")
+              append("Module '${mainModuleId.presentableName}' is specified as the main module of a bundled plugin in product-modules.xml in '$productModulesModule',\n")
               append("but $problematicModule cannot be found in the runtime module repository in the distribution of $currentDistributionName.\n")
               if (isEmbeddedVariant) {
                 append("It means that the corresponding plugin won't be loaded when '$productName Frontend' is started from the full\n")
                 append("installation of $productName\n")
               }
-              append("If '${mainModuleId.stringId}' shouldn't be available in the frontend variant of $productName, remove it from product-modules.xml file\n")
+              append("If '${mainModuleId.presentableName}' shouldn't be available in the frontend variant of $productName, remove it from product-modules.xml file\n")
               append("(or use 'without-module' tag if it comes via 'include' tag).\n")
               if (isEmbeddedVariant) {
-                append("If it should, add all necessary modules to the plugin layout of the main variant of '${mainModuleId.stringId}' plugin.\n")
+                append("If it should, add all necessary modules to the plugin layout of the main variant of '${mainModuleId.presentableName}' plugin.\n")
                 append("Modules used by the frontend variant only should be put in JAR files in 'frontend-split' subdirectory so they won't be loaded in the regular IDE.\n")
               }
               else {
                 append("If it should, make sure that all necessary modules are included in the distribution of $currentDistributionName.\n")
               }
               if (mainModule.failedDependencyPath.size > 1) {
-                append("If some dependencies in the chain ${mainModule.failedDependencyPath.joinToString(" <- ") { it.stringId }}\n")
+                append("If some dependencies in the chain ${mainModule.failedDependencyPath.joinToString(" <- ") { it.presentableName }}\n")
                 append("are not actually needed, they can be removed from configuration of the corresponding JPS modules (*.iml) to fix this problem.\n")
               }
               append("Please refer to https://youtrack.jetbrains.com/articles/IJPL-A-268 to learn more how the frontend process starts.")
@@ -333,7 +332,7 @@ private fun RuntimeModuleRepository.collectDependencies(
   result: MutableMap<RuntimeModuleId, FList<String>> = LinkedHashMap(),
 ): MutableMap<RuntimeModuleId, FList<String>> {
   if (result.putIfAbsent(moduleDescriptor.moduleId, path) == null) {
-    val newPath = path.prepend(moduleDescriptor.moduleId.stringId)
+    val newPath = path.prepend(moduleDescriptor.moduleId.presentableName)
     for (dependency in moduleDescriptor.dependencies) {
       collectDependencies(dependency, newPath, result)
     }

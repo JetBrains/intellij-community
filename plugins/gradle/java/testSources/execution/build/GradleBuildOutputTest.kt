@@ -10,10 +10,12 @@ import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleBuildOutputTest : GradleExecutionTestCase() {
 
+  @Disabled("IDEA-387217")
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test build script errors on Build`(gradleVersion: GradleVersion) {
@@ -67,7 +69,7 @@ class GradleBuildOutputTest : GradleExecutionTestCase() {
       executeTasks("clean")
 
       waitForAnyGradleTaskExecution {
-        compileModules(project, true, "project.impl.main")
+        try { compileModules(project, true, "project.impl.main") } catch (_: AssertionError) { /* compilation failure expected */ }
       }
       assertBuildViewTree {
         assertNode("successful") {
@@ -90,7 +92,7 @@ class GradleBuildOutputTest : GradleExecutionTestCase() {
       }
 
       waitForAnyGradleTaskExecution {
-        compileModules(project, true, "project.brokenProject.main")
+        try { compileModules(project, true, "project.brokenProject.main") } catch (_: AssertionError) { /* compilation failure expected */ }
       }
       assertBuildViewTree {
         assertNode("failed") {

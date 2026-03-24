@@ -1,0 +1,23 @@
+### auto-generated section `build intellij.idea.community.main.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "main-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "main-tests_test_lib",
+  module_name = "intellij.idea.community.main.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":main-tests"]
+)
+### auto-generated section `build intellij.idea.community.main.tests` end
+
+### auto-generated section `iml intellij.idea.community.main.tests` start
+exports_files([
+  "intellij.idea.community.main.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.idea.community.main.tests` end

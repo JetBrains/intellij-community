@@ -4,11 +4,11 @@ package com.intellij.platform.buildScripts.testFramework.pluginModel
 import com.intellij.platform.distributionContent.testFramework.deserializeContentData
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.ProductModules
-import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
 import com.intellij.platform.runtime.product.serialization.ResourceFileResolver
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -37,7 +37,7 @@ class ModuleBasedPluginLayoutProvider(
     }
     val resourceFileResolver = object : ResourceFileResolver {
       override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
-        val module = project.findModuleByName(moduleId.stringId) ?: return null
+        val module = project.findModuleByName(moduleId.name) ?: return null
         return module.findProductionFile(relativePath)?.inputStream()
       }
     }
@@ -48,7 +48,7 @@ class ModuleBasedPluginLayoutProvider(
       runtimeModuleRepository,
       resourceFileResolver,
     )
-    mainModulesOfBundledPlugins = productModules.bundledPluginModuleGroups.mapTo(HashSet()) { it.mainModule.moduleId.stringId }
+    mainModulesOfBundledPlugins = productModules.bundledPluginModuleGroups.mapTo(HashSet()) { it.mainModule.moduleId.name }
   }
 
   private fun JpsModule.findProductionFile(relativePath: String): Path? = JpsJavaExtensionService.getInstance().findSourceFileInProductionRoots(this, relativePath)
@@ -70,7 +70,7 @@ class ModuleBasedPluginLayoutProvider(
     
     val mainGroupModules = embeddedModulesWithDependencies
       .asSequence()
-      .map { it.moduleId.stringId }
+      .map { it.moduleId.name }
       .filterNot { it.startsWith(RuntimeModuleId.LIB_NAME_PREFIX) }
       .mapNotNull { 
         project.findModuleByName(it)

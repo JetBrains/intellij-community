@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.dsl.inspections
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.codeInspection.toml.UnusedVersionCatalogEntryInspection
+import com.intellij.gradle.java.toml.codeInspection.UnusedVersionCatalogEntryInspection
 import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.BASE_VERSION_CATALOG_FIXTURE
 import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.VERSION_CATALOG_COMPOSITE_BUILD_FIXTURE
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase

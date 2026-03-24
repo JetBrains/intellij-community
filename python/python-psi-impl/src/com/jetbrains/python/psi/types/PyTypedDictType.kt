@@ -15,11 +15,12 @@ import com.jetbrains.python.psi.PyKeyValueExpression
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import org.jetbrains.annotations.ApiStatus
 import java.util.Objects
 
 class PyTypedDictType(
-  private val name: String,
+  override val name: String,
   val fields: Map<String, FieldTypeAndTotality>,
   private val dictClass: PyClass,
   isDefinition: Boolean,
@@ -47,9 +48,7 @@ class PyTypedDictType(
       PyTypedDictType(name, fields, dictClass, true, declaration)
   }
 
-  override fun getName(): String = name
-
-  override fun isBuiltin(): Boolean = false
+  override val isBuiltin: Boolean = false
 
   override fun isCallable(): Boolean = isDefinition
 
@@ -68,6 +67,10 @@ class PyTypedDictType(
     else null
   }
 
+  override fun getParametersType(context: TypeEvalContext): PyCallableParameterVariadicType? {
+    return getParameters(context)?.let { PyCallableParameterListTypeImpl(it) }
+  }
+
   override fun toString(): String = "PyTypedDictType: $name"
 
   override fun equals(other: Any?): Boolean {
@@ -83,7 +86,7 @@ class PyTypedDictType(
     return Objects.hash(super.hashCode(), declaration)
   }
 
-  override fun getDeclarationElement(): PyQualifiedNameOwner = declaration
+  override val declarationElement: PyQualifiedNameOwner = declaration
 
   /**
    * @isRequired is true - if value type is Required, false - if it is NotRequired, and null if it does not have any type specification
@@ -168,7 +171,7 @@ class PyTypedDictType(
       result: TypeCheckingResult,
     ): Boolean {
       if (actualExpression != null && isDictExpression(actualExpression, context)) {
-        val types = PyTypeUtil.toStream(expectedType).toList()
+        val types = expectedType.toStream().toList()
         for (subType in types) {
           if (subType is PyTypedDictType) {
             val res = if (types.size <= 1) result else TypeCheckingResult()
@@ -190,7 +193,7 @@ class PyTypedDictType(
 
     private fun strictUnionMatch(expected: PyType?, actual: PyType?, context: TypeEvalContext): Boolean {
       if (!PyUnionType.isStrictSemanticsEnabled()) {
-        return PyTypeUtil.toStream(actual).allMatch { type -> PyTypeChecker.match(expected, type, context) }
+        return actual.toStream().allMatch { type -> PyTypeChecker.match(expected, type, context) }
       }
       return PyTypeChecker.match(expected, actual, context)
     }
@@ -316,7 +319,7 @@ class PyTypedDictType(
     val hasErrors: Boolean get() = valueTypeErrors.isNotEmpty() || missingKeys.isNotEmpty() || extraKeys.isNotEmpty()
   }
 
-  override fun <T> acceptTypeVisitor(visitor: PyTypeVisitor<T?>): T? {
+  override fun <T> acceptTypeVisitor(visitor: PyTypeVisitor<T>): T? {
     if (visitor is PyTypeVisitorExt) {
       return visitor.visitPyTypedDictType(this)
     }

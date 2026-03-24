@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -47,6 +47,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.fs.EelFileUtils;
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.JBColor;
@@ -71,6 +72,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -416,10 +418,15 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
           }
         })
         .whenExpired(() -> {
-          List<File> filesToRemove = ContainerUtil.map(orphanModules, Path::toFile);
-          List<File> toRemove2 = ContainerUtil.map(orphanModules, path -> path.resolveSibling(path.getFileName() + ".path").toFile());
-
-          FileUtil.asyncDelete(ContainerUtil.concat(filesToRemove, toRemove2));
+          try {
+            for (var path : orphanModules) {
+              EelFileUtils.deleteRecursively(path);
+              EelFileUtils.deleteRecursively(path.resolveSibling(path.getFileName() + ".path"));
+            }
+          }
+          catch (IOException e) {
+            throw new UncheckedIOException(e);
+          }
         });
 
       Disposer.register(project, cleanUpNotification::expire);

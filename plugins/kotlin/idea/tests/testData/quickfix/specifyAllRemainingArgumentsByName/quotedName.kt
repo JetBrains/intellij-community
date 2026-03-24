@@ -1,5 +1,6 @@
 // "Specify all remaining arguments by name" "true"
 // WITH_STDLIB
+// K2_ERROR: No value passed for parameter 'some name'.
 fun foo(`some name`: Int) {}
 
 fun test() {

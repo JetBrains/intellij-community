@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.impl;
 
 import com.intellij.execution.ExecutionException;
@@ -39,6 +39,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/// Consider using [ProcessHandle#allProcesses()] instead.
+@ApiStatus.Obsolete
 public final class ProcessListUtil {
   private static final Logger LOG = Logger.getInstance(ProcessListUtil.class);
   private static final String WIN_PROCESS_LIST_HELPER_FILENAME = "WinProcessListHelper.exe";

@@ -1,14 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.fus
 
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.util.DefaultIndenter
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.MapperFeature
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.json.JsonMapper
 import com.google.gson.JsonParser
 import com.jetbrains.fus.reporting.FusJsonSerializer
 import com.jetbrains.fus.reporting.configuration.ConfigurationClient
@@ -27,6 +19,14 @@ import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.createSkippableJob
 import org.jetbrains.intellij.build.lastModifiedFromHeadRequest
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.StreamReadFeature
+import tools.jackson.core.util.DefaultIndenter
+import tools.jackson.core.util.DefaultPrettyPrinter
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.MapperFeature
+import tools.jackson.databind.SerializationFeature
+import tools.jackson.databind.json.JsonMapper
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -160,7 +160,6 @@ class FusJacksonSerializer: FusJsonSerializer {
       .builder()
       .enable(MapperFeature.REQUIRE_SETTERS_FOR_GETTERS)
       .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-      .serializationInclusion(JsonInclude.Include.NON_NULL)
       .defaultPrettyPrinter(CustomPrettyPrinter())
       .build()
   }
@@ -169,7 +168,7 @@ class FusJacksonSerializer: FusJsonSerializer {
     JsonMapper
       .builder()
       .enable(DeserializationFeature.USE_LONG_FOR_INTS)
-      .enable(com.fasterxml.jackson.core.JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+      .enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
       .build()
   }
@@ -199,7 +198,7 @@ private class CustomPrettyPrinter : DefaultPrettyPrinter {
   constructor() : super()
   constructor(base: DefaultPrettyPrinter?) : super(base)
 
-  override fun writeObjectFieldValueSeparator(g: JsonGenerator) {
+  override fun writeObjectNameValueSeparator(g: JsonGenerator) {
     g.writeRaw(": ")
   }
 

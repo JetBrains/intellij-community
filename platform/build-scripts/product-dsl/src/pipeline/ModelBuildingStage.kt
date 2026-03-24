@@ -27,12 +27,14 @@ import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.ContentModule
 import org.jetbrains.intellij.build.productLayout.DeprecatedXmlInclude
+import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.appendDefaultProductPluginMetadata
 import org.jetbrains.intellij.build.productLayout.buildContentBlocksAndChainMapping
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
 import org.jetbrains.intellij.build.productLayout.collectAndValidateAliases
+import org.jetbrains.intellij.build.productLayout.collectPluginizedModuleSets
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
@@ -43,15 +45,17 @@ import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationC
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 import org.jetbrains.intellij.build.productLayout.discovery.PluginXmlOverride
 import org.jetbrains.intellij.build.productLayout.discovery.computePluginContentFromDslSpec
+import org.jetbrains.intellij.build.productLayout.generator.buildModuleSetPluginContentInfos
 import org.jetbrains.intellij.build.productLayout.graph.PluginGraphBuilder
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
 import org.jetbrains.intellij.build.productLayout.model.error.DuplicateDslTestPluginIdError
+import org.jetbrains.intellij.build.productLayout.moduleSetPluginModuleName
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
 import org.jetbrains.intellij.build.productLayout.traversal.collectPluginContentModules
 import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleNames
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
-import org.jetbrains.intellij.build.productLayout.util.XmlWritePolicy
+import org.jetbrains.intellij.build.productLayout.util.GeneratedArtifactWritePolicy
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -124,10 +128,10 @@ internal object ModelBuildingStage {
       !commitChanges -> GenerationMode.VALIDATE_ONLY
       else -> GenerationMode.NORMAL
     }
-    val xmlWritePolicy = XmlWritePolicy(generationMode, fileUpdater)
+    val generatedArtifactWritePolicy = GeneratedArtifactWritePolicy(generationMode, fileUpdater)
 
     // Create xi:include cache (shared across plugin content extraction)
-    val xIncludeCache = AsyncCache<String, ByteArray?>(scope)
+    val xIncludeCache = AsyncCache<String, ByteArray?>()
 
     // Create plugin content cache
     // ErrorSink is used to emit xi:include errors during plugin content extraction
@@ -137,9 +141,16 @@ internal object ModelBuildingStage {
       skipXIncludePaths = config.skipXIncludePaths,
       xIncludePrefixFilter = config.xIncludePrefixFilter,
       pluginXmlOverrides = productPluginXmlOverrides,
-      scope = scope,
       errorSink = errorSink,
     )
+    val moduleSetPluginContents = buildModuleSetPluginContentInfos(
+      projectRoot = projectRoot,
+      communityModuleSets = discovery.communityModuleSets,
+      ultimateModuleSets = discovery.ultimateModuleSets,
+    )
+    for ((pluginModule, content) in moduleSetPluginContents) {
+      pluginContentCache.addPrecomputedPlugin(pluginModule, content)
+    }
 
     // Build lookup for DSL-defined test plugins keyed by PluginId (semantically correct)
     // Note: PluginId is the XML plugin identifier, distinct from ModuleName (JPS module)
@@ -170,7 +181,7 @@ internal object ModelBuildingStage {
       .toSet()
 
     // Create descriptor cache
-    val descriptorCache = ModuleDescriptorCache(outputProvider = outputProvider, scope = scope)
+    val descriptorCache = ModuleDescriptorCache(outputProvider = outputProvider)
 
     // Build unified graph model for plugin/module/product relationships
     // Graph is the single source of truth - built DURING extraction
@@ -193,6 +204,7 @@ internal object ModelBuildingStage {
       dslTestPluginAdditionalBundles = dslTestPluginAdditionalBundles,
       testPluginModuleNames = testPluginModuleNames,
       extraPluginModules = extraPluginDescriptors.pluginModules,
+      moduleSetWrapperTargets = collectPluginizedModuleSets(discovery.allModuleSets),
     )
     val pluginsToExtract = collectSeededPluginTargets(builder.build())
     extractPlugins(
@@ -204,8 +216,8 @@ internal object ModelBuildingStage {
       testFrameworkContentModules = config.testFrameworkContentModules,
     )
 
-    val includeAliasCache = AsyncCache<String, Set<PluginId>>(scope)
-    val moduleDescriptorAliasCache = AsyncCache<ContentModuleName, Set<PluginId>>(scope)
+    val includeAliasCache = AsyncCache<String, Set<PluginId>>()
+    val moduleDescriptorAliasCache = AsyncCache<ContentModuleName, Set<PluginId>>()
     linkProductsAndBundledPlugins(discovery, builder)
     linkTestPluginsByProduct(config, builder)
     addModuleSets(discovery, builder)
@@ -262,7 +274,7 @@ internal object ModelBuildingStage {
       descriptorCache = descriptorCache,
       pluginContentCache = pluginContentCache,
       fileUpdater = fileUpdater,
-      xmlWritePolicy = xmlWritePolicy,
+      generatedArtifactWritePolicy = generatedArtifactWritePolicy,
       scope = scope,
       pluginGraph = pluginGraph,
       dslTestPluginsByProduct = dslTestPluginExpansion.pluginsByProduct,
@@ -604,6 +616,9 @@ internal object ModelBuildingStage {
 
       // Module sets
       for (moduleSetWithOverrides in spec.moduleSets) {
+        if (moduleSetWithOverrides.moduleSet.pluginSpec != null) {
+          continue
+        }
         builder.linkProductIncludesModuleSet(product.name, moduleSetWithOverrides.moduleSet.name)
       }
 
@@ -681,10 +696,9 @@ internal object ModelBuildingStage {
     //
     // DEPENDS ON: Phase 2 (product edges) + Phase 4 (module sets added)
     // ───────────────────────────────────────────────────────────────────────────────
-    fun aliasNodeName(alias: PluginId): TargetName = TargetName("__alias__:${alias.value}")
     fun linkProductBundlesAlias(productName: String, alias: PluginId) {
       val productId = builder.addProduct(productName)
-      val aliasNodeId = builder.addPlugin(name = aliasNodeName(alias), isTest = false, pluginId = alias)
+      val aliasNodeId = builder.addAliasPlugin(alias)
       builder.addEdge(productId, aliasNodeId, EDGE_BUNDLES)
     }
 
@@ -938,12 +952,13 @@ internal object ModelBuildingStage {
     dslTestPluginAdditionalBundles: Set<TargetName>,
     testPluginModuleNames: Set<TargetName>,
     extraPluginModules: Set<TargetName>,
+    moduleSetWrapperTargets: List<ModuleSet>,
   ) {
     // Compare by string value since TargetName (JPS module) and PluginId are different semantic types.
     val dslTestPluginIdStrings = dslTestPluginIds.mapTo(HashSet()) { it.value }
-    fun addPlugin(target: TargetName) {
+    fun addPlugin(target: TargetName, pluginId: PluginId? = null, isModuleSetWrapper: Boolean = false) {
       if (target.value in dslTestPluginIdStrings) return
-      builder.addPlugin(name = target, isTest = false)
+      builder.addPlugin(name = target, isTest = false, pluginId = pluginId, isModuleSetWrapper = isModuleSetWrapper)
     }
 
     for (product in discovery.products) {
@@ -956,6 +971,12 @@ internal object ModelBuildingStage {
     testPluginModuleNames.forEach(::addPlugin)
     dslTestPluginAdditionalBundles.forEach(::addPlugin)
     extraPluginModules.forEach(::addPlugin)
+    for (moduleSet in moduleSetWrapperTargets) {
+      addPlugin(
+        target = moduleSetPluginModuleName(moduleSet.name),
+        isModuleSetWrapper = true,
+      )
+    }
   }
 
   private fun collectSeededPluginTargets(graph: PluginGraph): List<TargetName> {

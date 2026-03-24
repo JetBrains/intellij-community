@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.tcp
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
-import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.tcp.IjentIsolatedTcpDeployingStrategy
 import kotlinx.coroutines.CancellationException
@@ -41,7 +40,7 @@ abstract class TcpEelMachine(override val internalName: String) : EelMachine {
    */
   private sealed class SessionState {
     data object NotStarted : SessionState()
-    data class Started(val session: IjentSession<IjentApi>) : SessionState()
+    data class Started(val session: IjentSession) : SessionState()
     data class Failed(val error: Throwable, val nanoTime: Long) : SessionState()
   }
 
@@ -57,9 +56,12 @@ abstract class TcpEelMachine(override val internalName: String) : EelMachine {
   protected abstract suspend fun createStrategy(): IjentIsolatedTcpDeployingStrategy
 
   override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
+    return getOrCreateIjentSession().getIjentInstance(descriptor)
+  }
+  suspend fun getOrCreateIjentSession(): IjentSession {
     // Fast path: check if session is still running without acquiring mutex
     (state as? SessionState.Started)?.session?.takeIf { it.isRunning }?.let {
-      return it.getIjentInstance(descriptor)
+      return it
     }
 
     // Slow path: get or create session under mutex
@@ -88,16 +90,16 @@ abstract class TcpEelMachine(override val internalName: String) : EelMachine {
         }
       }
     }
-    return session.getIjentInstance(descriptor)
+    return session
   }
 
   /**
    * Creates a new session. Must be called under [sessionMutex].
    * Concurrent callers wait on mutex and get the created session.
    */
-  private suspend fun createSession(): IjentSession<IjentApi> {
+  private suspend fun createSession(): IjentSession {
     return try {
-      val session: IjentSession<IjentApi> = createStrategy().createIjentSession()
+      val session = createStrategy().createIjentSession()
       state = SessionState.Started(session)
       session
     }
@@ -111,7 +113,7 @@ abstract class TcpEelMachine(override val internalName: String) : EelMachine {
   }
 
   override fun ownsPath(path: Path): Boolean {
-    val pathInternalName = TcpEelPathParser.extractInternalMachineId(path) ?: return false
+    val pathInternalName = TcpEelPathParser.extractInternalMachineId(path)?.first ?: return false
     return pathInternalName == this.internalName
   }
 

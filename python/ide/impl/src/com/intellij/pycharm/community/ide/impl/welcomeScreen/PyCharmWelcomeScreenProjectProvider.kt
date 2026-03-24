@@ -1,20 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.welcomeScreen
 
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.PlatformProjectOpenProcessor
-import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.MISC_PROJECT_WITH_WELCOME_NAME
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.miscProjectDefaultPath
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
 import java.nio.file.Path
 import kotlin.io.path.extension
 
@@ -50,14 +48,11 @@ internal class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvide
     }
 
     if (PlatformProjectOpenProcessor.isNewProject(project)) {
-      createVenvAndSdk(ModuleOrProject.ProjectOnly(project), confirmInstallation = {
-        withContext(Dispatchers.EDT) {
-          MessageDialogBuilder.yesNo(
-            PyCharmCommunityCustomizationBundle.message("misc.no.python.found"),
-            PyCharmCommunityCustomizationBundle.message("misc.install.python.question")
-          ).ask(project)
-        }
-      })
+      // Don't prompt to install Python on the welcome screen (PY-88204).
+      // If Python is already available, the venv/SDK will be configured silently.
+      project.pythonSdkConfigurationMutex.withLock {
+        createVenvAndSdk(ModuleOrProject.ProjectOnly(project), confirmInstallation = { false }).orLogException(thisLogger())
+      }
     }
     return project
   }

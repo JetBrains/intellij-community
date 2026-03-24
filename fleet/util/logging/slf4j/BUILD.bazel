@@ -26,7 +26,7 @@ jvm_library(
   name = "slf4j",
   module_name = "fleet.util.logging.slf4j",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
   resources = [
     ":slf4j_resources",
     ":slf4j_resources_1",
@@ -39,4 +39,23 @@ jvm_library(
   ],
   exports = ["@lib//:slf4j-api"]
 )
+
+jvm_library(
+  name = "slf4j_test_lib",
+  module_name = "fleet.util.logging.slf4j",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_slf4j",
+  exports = ["@lib//:slf4j-api"],
+  runtime_deps = [
+    ":slf4j",
+    "//fleet/util/logging/api:api_test_lib",
+  ]
+)
 ### auto-generated section `build fleet.util.logging.slf4j` end
+
+### auto-generated section `iml fleet.util.logging.slf4j` start
+exports_files([
+  "fleet.util.logging.slf4j.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.util.logging.slf4j` end

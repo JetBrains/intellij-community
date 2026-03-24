@@ -75,6 +75,7 @@ public interface GitRepository extends Repository {
   GitUntrackedFilesHolder getUntrackedFilesHolder();
 
   @NotNull
+  @ApiStatus.Internal
   GitResolvedMergeConflictsFilesHolder getResolvedConflictsFilesHolder();
 
 

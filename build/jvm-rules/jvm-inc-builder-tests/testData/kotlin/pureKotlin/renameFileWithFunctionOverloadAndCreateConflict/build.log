@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  foo/Foo2Kt.class
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_renameFileWithFunctionOverloadAndCreateConflict-a.kotlin_module
+  foo/Foo1Kt.class
+  use/UseFKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/renameFileWithFunctionOverloadAndCreateConflict/a/foo1.kt
+  kotlin/pureKotlin/renameFileWithFunctionOverloadAndCreateConflict/a/foo3.kt
+  kotlin/pureKotlin/renameFileWithFunctionOverloadAndCreateConflict/a/useF.kt
+End of files
+------------------------------------------
+Exit code: ERROR

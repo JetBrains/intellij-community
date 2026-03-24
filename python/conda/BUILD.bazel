@@ -17,8 +17,27 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
     "//platform/core-api:core",
-    "//python/python-process-output:processOutput",
     "//platform/util",
+    "//python/python-process-output/common",
+  ]
+)
+
+jvm_library(
+  name = "conda_test_lib",
+  module_name = "intellij.python.community.impl.conda",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":conda",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//python/python-process-output/common:common_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.community.impl.conda` end
+
+### auto-generated section `iml intellij.python.community.impl.conda` start
+exports_files([
+  "intellij.python.community.impl.conda.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.python.community.impl.conda` end

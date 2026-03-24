@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -72,7 +72,7 @@ final class ShowRunningListAction extends DumbAwareAction {
         ArrayList<Project> projects = new ArrayList<>(Arrays.asList(ProjectManager.getInstance().getOpenProjects()));
         //List should begin with the current project
         projects.remove(project);
-        projects.add(0, project);
+        projects.addFirst(project);
         Pair<? extends JComponent, String> state = getCurrentState(projects);
 
         Pair<? extends JComponent, String> prevState = stateRef.get();
@@ -170,7 +170,7 @@ final class ShowRunningListAction extends DumbAwareAction {
       panel.add(label);
     }
 
-    return Pair.create(panel, state.toString());
+    return new Pair<>(panel, state.toString());
   }
 
   @Override

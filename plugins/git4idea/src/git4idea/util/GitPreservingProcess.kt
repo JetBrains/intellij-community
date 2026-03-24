@@ -101,7 +101,7 @@ class GitPreservingProcess @ApiStatus.Internal constructor(
   private fun configureSaver(saveMethod: GitSaveChangesPolicy, reportLocalHistoryActivity: Boolean): GitChangesSaver {
     val saver = GitChangesSaver.getSaver(project, git, progressIndicator, stashMessage, saveMethod, reportLocalHistoryActivity)
     val mergeDialogCustomizer: MergeDialogCustomizer = object : MergeDialogCustomizer() {
-      override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): @NlsContexts.Label String {
+      override fun getMultipleFileMergeDescription(files: Collection<VirtualFile>): @NlsContexts.Label String {
         return XmlStringUtil.wrapInHtml(
           GitBundle.message(
             "restore.conflict.dialog.description.label.text",

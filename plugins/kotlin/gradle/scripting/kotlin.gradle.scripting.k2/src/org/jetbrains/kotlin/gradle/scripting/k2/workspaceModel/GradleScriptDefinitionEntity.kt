@@ -15,7 +15,7 @@ data class GradleScriptDefinitionEntityId(val id: String) : SymbolicEntityId<Gra
 
 interface GradleScriptDefinitionEntity : WorkspaceEntityWithSymbolicId {
     val definitionId: String
-    val compilationConfiguration: ScriptCompilationConfigurationData
+    val compilationConfigurationData: ScriptCompilationConfigurationData
     val hostConfiguration: ScriptingHostConfigurationEntity
     val evaluationConfiguration: ScriptEvaluationConfigurationEntity?
 

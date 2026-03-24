@@ -16,15 +16,13 @@ jvm_library(
 
 jvm_library(
   name = "text-matching_test_lib",
+  module_name = "intellij.platform.util.text.matching",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form", "testJvm/**/*.kt", "testJvm/**/*.java", "testJvm/**/*.form"], allow_empty = True),
-  associates = [":text-matching"],
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "//platform/util/base",
-    "//platform/util-rt",
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":text-matching",
+    "//platform/util/base:base_test_lib",
     "//platform/util-rt:util-rt_test_lib",
-    "@lib//:kotlin-stdlib",
     "@lib//:kotlin-test",
     "@lib//:kotlin-test-junit5",
     "@lib//:junit5",
@@ -32,11 +30,54 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.util.text.matching` end
 
-### auto-generated section `test intellij.platform.util.text.matching` start
+### auto-generated section `iml intellij.platform.util.text.matching` start
+exports_files([
+  "intellij.platform.util.text.matching.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.text.matching` end
+
+### auto-generated section `build intellij.platform.util.text.matching.tests` start
+jvm_library(
+  name = "text-matching-tests",
+  module_name = "intellij.platform.util.text.matching.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "text-matching-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form", "testJvm/**/*.kt", "testJvm/**/*.java", "testJvm/**/*.form"], allow_empty = True),
+  associates = [
+    "//platform/util/text-matching",
+    "//platform/util/text-matching:text-matching_test_lib",
+  ],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/util/base",
+    "//platform/util/base:base_test_lib",
+    "//platform/util-rt",
+    "//platform/util-rt:util-rt_test_lib",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-junit5",
+    "@lib//:junit5",
+  ],
+  runtime_deps = [":text-matching-tests"]
+)
+### auto-generated section `build intellij.platform.util.text.matching.tests` end
+
+### auto-generated section `iml intellij.platform.util.text.matching.tests` start
+exports_files([
+  "intellij.platform.util.text.matching.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.text.matching.tests` end
+
+### auto-generated section `test intellij.platform.util.text.matching.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "text-matching_test",
-  runtime_deps = [":text-matching_test_lib"]
+  name = "text-matching-tests_test",
+  runtime_deps = [":text-matching-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.util.text.matching` end
+### auto-generated section `test intellij.platform.util.text.matching.tests` end

@@ -7,8 +7,7 @@ import com.intellij.platform.util.progress.RawProgressReporter
 internal class RawProgressReporterIndicator(
   private val reporter: RawProgressReporter,
   contextModality: ModalityState,
-) : EmptyProgressIndicator(contextModality) {
-
+) : BridgeJobIndicatorBase(contextModality) {
   override fun setText(text: String?) {
     reporter.text(text)
   }

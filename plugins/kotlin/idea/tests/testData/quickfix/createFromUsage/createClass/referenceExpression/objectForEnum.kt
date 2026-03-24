@@ -1,4 +1,5 @@
 // "Create object 'RED'" "true"
+// K2_ERROR: Unresolved reference 'RED'.
 enum class SampleEnum {}
 
 fun usage() {

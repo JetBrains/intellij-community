@@ -19,7 +19,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointListener
-import com.intellij.xdebugger.impl.breakpoints.MonolithInlineBreakpointsCache
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointItem
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
@@ -28,6 +28,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
+import java.util.concurrent.CompletableFuture
 
 private class MonolithBreakpointManager(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
   override val breakpointsDialogSettings: XBreakpointsDialogState?
@@ -100,11 +101,12 @@ private class MonolithBreakpointManager(val breakpointManager: XBreakpointManage
     return lastRemovedBreakpoint.asProxy()
   }
 
-  override fun removeBreakpoint(breakpoint: XBreakpointProxy) {
+  override fun removeBreakpoint(breakpoint: XBreakpointProxy): CompletableFuture<Void?> {
     if (breakpoint !is MonolithBreakpointProxy) {
-      return
+      return CompletableFuture.completedFuture(null)
     }
     breakpointManager.removeBreakpoint(breakpoint.breakpoint)
+    return CompletableFuture.completedFuture(null)
   }
 
   override fun restoreRemovedBreakpoint(breakpoint: XBreakpointProxy) {
@@ -136,17 +138,9 @@ private class MonolithBreakpointManager(val breakpointManager: XBreakpointManage
     breakpointManager.rememberRemovedBreakpoint(breakpoint.breakpoint)
   }
 
-  override fun findBreakpointAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): XLineBreakpointProxy? {
-    val breakpoint = breakpointManager.findBreakpointAtLine((type as MonolithLineBreakpointTypeProxy).breakpointType, file, line)
-    if (breakpoint is XLineBreakpointImpl<*>) {
-      return breakpoint.asProxy()
-    }
-    return null
-  }
-
-  override fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): List<XLineBreakpointProxy> {
+  override fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int, placement: XLineBreakpointPlacement): List<XLineBreakpointProxy> {
     val breakpointType = (type as MonolithLineBreakpointTypeProxy).breakpointType
-    return breakpointManager.findBreakpointsAtLine(breakpointType, file, line)
+    return breakpointManager.findBreakpointsAtLine(breakpointType, file, line, placement)
       .filterIsInstance<XLineBreakpointImpl<*>>()
       .map { it.asProxy() }
   }

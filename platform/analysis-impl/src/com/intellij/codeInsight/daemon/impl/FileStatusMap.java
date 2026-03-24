@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -38,7 +37,7 @@ import java.util.concurrent.ConcurrentMap;
  * It is mostly used to keep track of dirty regions. See {@link FileStatus} for the whole data.
  */
 public final class FileStatusMap implements Disposable {
-  private static final Logger LOG = Logger.getInstance(FileStatusMap.class);
+  static final Logger LOG = Logger.getInstance(FileStatusMap.class);
   public static final @NonNls String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING = "PSI/document/model changes are not allowed during highlighting, " +
      "because it leads to the daemon unnecessary restarts. If you really do need to start write action " +
      "during the highlighting, you can pass `canChangeDocument=true` to the CodeInsightTestFixtureImpl#instantiateAndRun() " +
@@ -259,9 +258,7 @@ public final class FileStatusMap implements Disposable {
     // mark the whole file dirty in case no subsequent PSI events will come, but file requires re-highlighting nevertheless
     // e.g., in the case of quick typing/backspacing char
     synchronized (myFileStatusMapState) {
-      for (FileStatus status : myFileStatusMapState.getFileStatuses(document)) {
-        status.markDefensivelyMarkedForAllPasses(myProject);
-      }
+      myFileStatusMapState.markDefensivelyForAllPasses(myProject);
     }
   }
 
@@ -292,29 +289,28 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
-  // todo IJPL-339 do we need context here?
-  @ApiStatus.Experimental
-  public boolean allDirtyScopesAreNull(@NotNull Document document, @NotNull CodeInsightContext context) {
-    synchronized (myFileStatusMapState) {
-      FileStatus status = myFileStatusMapState.getStatusOrNull(document, context);
-      return status != null && !status.isDefensivelyMarkedForAnyPass() && status.isWolfPassFinished() && status.allDirtyScopesAreNull();
-    }
-  }
-
   /**
    * @return true when all registered statuses are clean
    */
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  public boolean allDirtyScopesAreNullFor(@NotNull List<? extends Document> documents) {
+  public boolean allDirtyScopesAreNullFor(@NotNull Document document) {
     synchronized (myFileStatusMapState) {
-      return myFileStatusMapState.allDirtyScopesAreNullFor(documents);
+      return myFileStatusMapState.allDirtyScopesAreNullFor(document);
+    }
+  }
+  @ApiStatus.Internal
+  public boolean allDirtyScopesAreNull() {
+    synchronized (myFileStatusMapState) {
+      return myFileStatusMapState.allDirtyScopesAreNull();
     }
   }
 
   @Override
   public String toString() {
-    return myFileStatusMapState.toString();
+    synchronized (myFileStatusMapState) {
+      return myFileStatusMapState.toString();
+    }
   }
 
   public @NotNull String toString(@NotNull Document document) {
@@ -374,11 +370,11 @@ public final class FileStatusMap implements Disposable {
     synchronized(myFileStatusMapState) {
       FileStatus status = myFileStatusMapState.getOrCreateStatus(document, CodeInsightContexts.anyContext());
       TextRange scope = new TextRange(event.getOffset(), Math.min(event.getOffset() + event.getNewLength(), document.getTextLength()));
-      for (int passId : status.getAllKnownPassIds(myProject)) {
+      for (int passId : FileStatus.getAllKnownPassIds(myProject)) {
         status.combineScopesWith(scope, document);
         if (LOG.isDebugEnabled() && passId == Pass.LOCAL_INSPECTIONS) {
           RangeMarker newScope = status.getDirtyScope(passId);
-          LOG.debug("FileStatusMap.addDocumentCompositeDirtyRange(" + event + ") = " + (newScope == null ? null : newScope == WholeFileDirtyMarker.INSTANCE ? "whole file" : newScope.getTextRange()));
+          LOG.debug("FileStatusMap.addDocumentCompositeDirtyRange(" + event + ":"+document+") = " + (newScope == null ? null : newScope == WholeFileDirtyMarker.INSTANCE ? "whole file" : newScope.getTextRange()));
         }
       }
     }

@@ -32,7 +32,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 
 internal class MonolithXDebugManagerProxy : XDebugManagerProxy {
   override fun getCurrentSessionProxy(project: Project): XDebugSessionProxy? {
@@ -46,7 +45,7 @@ internal class MonolithXDebugManagerProxy : XDebugManagerProxy {
 
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
     val sessionImpl = findSessionImpl(session)
-    return withTemporaryXValueId(value, sessionImpl, block)
+    return withTemporaryXValueIdImpl(value, sessionImpl, block)
   }
 
   // This method is not supported in monolith mode
@@ -110,8 +109,7 @@ internal class MonolithXDebugManagerProxy : XDebugManagerProxy {
 
 }
 
-@ApiStatus.Internal
-suspend fun <T> withTemporaryXValueId(
+internal suspend fun <T> withTemporaryXValueIdImpl(
   value: XValue,
   sessionImpl: XDebugSessionImpl,
   block: suspend (XValueId) -> T,

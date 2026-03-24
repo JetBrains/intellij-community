@@ -754,6 +754,7 @@ private suspend fun openOrCreateProjectInner(name: String, file: Path): Project?
       runConfigurators = false //not used when passing project
       isProjectCreatedWithWizard = true
       project = newProject
+      projectRootDir = file
     })
   }
   catch (e: Throwable) {

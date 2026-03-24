@@ -1,6 +1,6 @@
 # Specification: https://typing.readthedocs.io/en/latest/spec/generics.html#scoping-rules-for-type-variables
 
-from typing import TypeVar, Generic, Iterable, TypeAlias, assert_type
+from typing import TypeVar, Generic, Iterable, TypeAlias, assert_type, Literal
 
 # > A type variable used in a generic function could be inferred to represent
 # > different types in the same code block.
@@ -11,8 +11,13 @@ def fun_1(x: T) -> T:  # T here
 def fun_2(x: T) -> T:  # and here could be different
     return x
 
-assert_type(fun_1(1), int)
-assert_type(fun_2('a'), str)
+# One of these two should pass; either is acceptable:
+assert_type(fun_1(1), int)  # E[fun1]
+assert_type(fun_1(1), Literal[1])  # E[fun1]
+
+# One of these two should pass; either is acceptable:
+assert_type(fun_2("a"), str)  # E[fun2]
+assert_type(fun_2("a"), Literal["a"])  # E[fun2]
 
 # > A type variable used in a method of a generic class that coincides
 # > with one of the variables that parameterize this class is always bound
@@ -39,8 +44,14 @@ class Foo(Generic[T]):
         return y
 
 x: Foo[int] = Foo()
-assert_type(x.method(0, "abc"), str)
-assert_type(x.method(0, b"abc"), bytes)
+
+# Either of these is acceptable; one of the two should pass:
+assert_type(x.method(0, "abc"), str)  # E[method-str]
+assert_type(x.method(0, "abc"), Literal["abc"])  # E[method-str]
+
+# Either of these is acceptable; one of the two should pass:
+assert_type(x.method(0, b"abc"), bytes)  # E[method-bytes]
+assert_type(x.method(0, b"abc"), Literal[b"abc"])  # E[method-bytes]
 
 # > Unbound type variables should not appear in the bodies of generic functions,
 # > or in the class bodies apart from method definitions.

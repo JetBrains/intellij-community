@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.PersistentFSConstants
 import com.intellij.openapi.vfs.limits.FileSizeLimit.Companion.getDefaultContentLoadLimit
 import com.intellij.openapi.vfs.limits.FileSizeLimit.Companion.getDefaultIntellisenseLimit
 import com.intellij.openapi.vfs.limits.FileSizeLimit.Companion.getDefaultPreviewLimit
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 
@@ -27,8 +26,6 @@ import kotlin.math.max
  * **BEWARE**: default limit could be *enlarged but not reduced*: if an extension provides a specific limit smaller than the apt
  * default value -- the value provided by the extension will be ignored, and the default value will be used instead.
  */
-@Suppress("DEPRECATION")
-@ApiStatus.Internal
 interface FileSizeLimit {
   val acceptableExtensions: List<String>
 
@@ -65,17 +62,16 @@ interface FileSizeLimit {
       return fileSize > fileContentLoadLimit
     }
 
-
     /**
      * It is not only the **default** limit for the file types/extensions without an explicitly defined one,
-     * but also a **minimum** file size limit -- i.e., if a custom limit is defined, but it is less than
-     * [getDefaultContentLoadLimit] -- it's value is ignored, and [getDefaultContentLoadLimit] is used
+     * but also a **minimum** file size limit. If a custom limit is defined, but it is less than
+     * [getDefaultContentLoadLimit] - it's value is ignored, and [getDefaultContentLoadLimit] is used
      * instead
      */
     //MAYBE RC: rename to getMinContentLoadLimit()?
     @JvmStatic
+    @Suppress("DEPRECATION")
     fun getDefaultContentLoadLimit(): Int = FileUtilRt.LARGE_FOR_CONTENT_LOADING
-
 
     /**
      * @return [ExtensionSizeLimitInfo.content] if specific size limit is registered for an [extension],
@@ -86,14 +82,14 @@ interface FileSizeLimit {
       return getValue(extension, ExtensionSizeLimitInfo::content, getDefaultContentLoadLimit())
     }
 
-
     /**
      * It is not only the **default** limit for the file types/extensions without an explicitly defined one,
-     * but also a **minimum** file size limit -- i.e., if a custom limit is defined, but it is less than
-     * [getDefaultIntellisenseLimit] -- it's value is ignored, and [getDefaultIntellisenseLimit] is used
+     * but also a **minimum** file size limit. If a custom limit is defined, but it is less than
+     * [getDefaultIntellisenseLimit] - it's value is ignored, and [getDefaultIntellisenseLimit] is used
      * instead
      */
     //MAYBE RC: rename to getMinIntellisenseLimit()
+    @Suppress("DEPRECATION")
     @JvmStatic
     fun getDefaultIntellisenseLimit(): Int = PersistentFSConstants.getMaxIntellisenseFileSize()
 
@@ -105,11 +101,12 @@ interface FileSizeLimit {
 
     /**
      * It is not only the **default** limit for the file types/extensions without an explicitly defined one,
-     * but also a **minimum** file size limit -- i.e., if a custom limit is defined, but it is less than
-     * [getDefaultPreviewLimit] -- it's value is ignored, and [getDefaultPreviewLimit] is used instead
+     * but also a **minimum** file size limit. If a custom limit is defined, but it is less than
+     * [getDefaultPreviewLimit] - it's value is ignored, and [getDefaultPreviewLimit] is used instead
      */
     //MAYBE RC: getMinPreviewLimit()?
     @JvmStatic
+    @Suppress("DEPRECATION")
     fun getDefaultPreviewLimit(): Int = FileUtilRt.LARGE_FILE_PREVIEW_SIZE
 
     @JvmStatic
@@ -117,6 +114,10 @@ interface FileSizeLimit {
       return getValue(extension, ExtensionSizeLimitInfo::preview, getDefaultPreviewLimit())
     }
 
+    @JvmStatic
+    fun getEncodingDetectionLimit(extension: String?): Int {
+      return findApplicable(extension ?: "")?.encodingDetectionLimit ?: Int.MAX_VALUE
+    }
 
     /** @return `getter( getLimitsByExtension()[extension] )`, but no less than [minValue] */
     private fun getValue(extension: String?, getter: (ExtensionSizeLimitInfo) -> Int?, minValue: Int): Int {
@@ -130,7 +131,8 @@ interface FileSizeLimit {
     private fun getLimits(): Map<String, ExtensionSizeLimitInfo> {
       val extensions = EP.extensionsIfPointIsRegistered
 
-      val duplicates: Map<String, Int> = extensions.flatMap { it.acceptableExtensions }.groupingBy { it }.eachCount().filter { it.value > 1 }
+      val duplicates: Map<String, Int> =
+        extensions.flatMap { it.acceptableExtensions }.groupingBy { it }.eachCount().filter { it.value > 1 }
       duplicates.forEach { (element, count) ->
         thisLogger().warn("For file type $element $count limits are registered. Extensions: ${
           extensions

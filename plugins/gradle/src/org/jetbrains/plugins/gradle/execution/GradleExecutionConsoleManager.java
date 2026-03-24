@@ -2,11 +2,8 @@
 package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.execution.filters.Filter;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.service.execution.DefaultExternalSystemExecutionConsoleManager;
@@ -30,12 +27,10 @@ public class GradleExecutionConsoleManager extends DefaultExternalSystemExecutio
   }
 
   @Override
-  public @Nullable ExecutionConsole attachExecutionConsole(@NotNull Project project,
-                                                           @NotNull ExternalSystemTask task,
-                                                           @Nullable ExecutionEnvironment env,
-                                                           @Nullable ProcessHandler processHandler) {
-    ConsoleView executionConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
-    executionConsole.attachToProcess(processHandler);
+  protected @NotNull ConsoleView createConsoleView(@NotNull Project project,
+                                                   @NotNull ExternalSystemTask task,
+                                                   @Nullable ExecutionEnvironment env) {
+    ConsoleView executionConsole = super.createConsoleView(project, task, env);
     Filter[] filters = getCustomExecutionFilters(project, task, env);
     for (Filter filter : filters) {
       executionConsole.addMessageFilter(filter);

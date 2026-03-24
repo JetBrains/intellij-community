@@ -104,7 +104,7 @@ internal open class InlineErrorNotifier(private val inlineComponent: InlineCompo
   }
 }
 
-class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
+internal class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
                                    private val modalityState: ModalityState,
                                    private val panelToValidate: JPanel?) : InlineComponent {
 

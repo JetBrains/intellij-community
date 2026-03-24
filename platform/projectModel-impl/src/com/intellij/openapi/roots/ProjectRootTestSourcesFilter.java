@@ -9,6 +9,6 @@ import org.jetbrains.annotations.NotNull;
 class ProjectRootTestSourcesFilter extends TestSourcesFilter {
   @Override
   public boolean isTestSource(@NotNull VirtualFile file, @NotNull Project project) {
-    return ReadAction.compute(() -> ProjectFileIndex.getInstance(project).isInTestSourceContent(file));
+    return ReadAction.computeBlocking(() -> ProjectFileIndex.getInstance(project).isInTestSourceContent(file));
   }
 }

@@ -171,6 +171,7 @@ private val KtCallExpression.nestedDiagnostics: List<KaDiagnosticWithPsi<*>>
                 is KaFirDiagnostic.UnresolvedReference,
                 is KaFirDiagnostic.BuilderInferenceStubReceiver,
                 is KaFirDiagnostic.ImplicitNothingReturnType,
+                is KaFirDiagnostic.AmbiguousContextArgument
                     -> isAncestor(diagnostic.psi, strict = false)
 
                 else -> false

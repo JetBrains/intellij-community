@@ -43,17 +43,73 @@ jvm_library(
 
 jvm_library(
   name = "build_test_lib",
+  module_name = "intellij.pycharm.community.build",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":build",
+    "//build:build_test_lib",
+    "//platform/build-scripts/testFramework",
+    "//platform/build-scripts/testFramework:testFramework_test_lib",
+    "//platform/util:util_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/build-scripts/downloader:downloader_test_lib",
+    "//build/tasks:tasks_test_lib",
+    "@lib//:junit5",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//python/python-sdk:sdk_test_lib",
+    "//python/python-parser:parser_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//libraries/jsoup:jsoup_test_lib",
+    "//images:images-tests",
+    "//images:images-tests_test_lib",
+    "//RegExpSupport:regexp-tests",
+    "//RegExpSupport:regexp-tests_test_lib",
+    "//platform/xdebugger-impl:debugger-impl-tests",
+    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.pycharm.community.build` end
+
+### auto-generated section `iml intellij.pycharm.community.build` start
+exports_files([
+  "intellij.pycharm.community.build.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.pycharm.community.build` end
+
+### auto-generated section `build intellij.pycharm.community.build.tests` start
+jvm_library(
+  name = "pycharm-community-build-tests",
+  module_name = "intellij.pycharm.community.build.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "pycharm-community-build-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":build"],
+  associates = [
+    "//python/build",
+    "//python/build:build_test_lib",
+  ],
   deps = [
     "//build",
+    "//build:build_test_lib",
     "//platform/build-scripts/testFramework",
+    "//platform/build-scripts/testFramework:testFramework_test_lib",
     "@lib//:kotlin-stdlib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/build-scripts/downloader",
+    "//platform/build-scripts/downloader:downloader_test_lib",
     "//build/tasks",
     "//build/tasks:tasks_test_lib",
     "@lib//:opentelemetry",
@@ -61,22 +117,43 @@ jvm_library(
     "@lib//:opentelemetry-extension-kotlin",
     "@lib//:junit5",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/platform-util-io:ide-util-io",
     "//platform/ide-core",
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
     "//python/python-parser:parser",
+    "//python/python-parser:parser_test_lib",
     "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
     "//libraries/jsoup",
+    "//libraries/jsoup:jsoup_test_lib",
+    "//images:images-tests",
+    "//images:images-tests_test_lib",
+    "//RegExpSupport:regexp-tests",
+    "//RegExpSupport:regexp-tests_test_lib",
+    "//platform/xdebugger-impl:debugger-impl-tests",
+    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+  ],
+  runtime_deps = [
+    ":pycharm-community-build-tests",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
-### auto-generated section `build intellij.pycharm.community.build` end
+### auto-generated section `build intellij.pycharm.community.build.tests` end
 
-### auto-generated section `test intellij.pycharm.community.build` start
+### auto-generated section `iml intellij.pycharm.community.build.tests` start
+exports_files([
+  "intellij.pycharm.community.build.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.pycharm.community.build.tests` end
+
+### auto-generated section `test intellij.pycharm.community.build.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "build_test",
-  runtime_deps = [":build_test_lib"]
+  name = "pycharm-community-build-tests_test",
+  runtime_deps = [":pycharm-community-build-tests_test_lib"]
 )
-### auto-generated section `test intellij.pycharm.community.build` end
+### auto-generated section `test intellij.pycharm.community.build.tests` end

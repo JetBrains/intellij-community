@@ -1,0 +1,22 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_simpleDependencyErrorOnAccessToInternal2-module1.kotlin_module
+  a/A.class
+  a/AKt.class
+  a/InternalA.class
+  a/InternalClassAnnotation.class
+  a/InternalFileAnnotation.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/simpleDependencyErrorOnAccessToInternal2/module1/a.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_simpleDependencyErrorOnAccessToInternal2-module2.kotlin_module
+  b/B.class
+  b/BKt.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/simpleDependencyErrorOnAccessToInternal2/module2/b.kt
+End of files
+------------------------------------------
+Exit code: ERROR

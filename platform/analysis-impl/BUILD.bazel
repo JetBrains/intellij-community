@@ -42,16 +42,72 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "//platform/util/text-matching",
     "//platform/diagnostic",
-    "//libraries/jackson/databind",
-    "//libraries/jackson/jackson",
-    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/jackson3/databind",
+    "//libraries/jackson3/jackson:libraries-jackson3",
+    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
     "//platform/util-class-loader:util-classLoader",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//platform/workspace/storage",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = ["//platform/projectModel-impl"]
 )
+
+jvm_library(
+  name = "analysis-impl_test_lib",
+  module_name = "intellij.platform.analysis.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/projectModel-impl",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+  ],
+  runtime_deps = [
+    ":analysis-impl",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/indexing-impl:indexing-impl_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//libraries/gson:gson_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/util/text-matching:text-matching_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//libraries/jackson3/databind:databind_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.analysis.impl` end
+
+### auto-generated section `iml intellij.platform.analysis.impl` start
+exports_files([
+  "intellij.platform.analysis.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.analysis.impl` end

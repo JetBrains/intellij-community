@@ -111,7 +111,7 @@ object CommunityModuleSets {
    * Recent files support (both backend and frontend).
    * Provides recently opened files UI and persistence.
    */
-  fun recentFiles(): ModuleSet = moduleSet("recentFiles") {
+  fun recentFiles(): ModuleSet = plugin("recentFiles") {
     module("intellij.platform.recentFiles")
     module("intellij.platform.recentFiles.frontend")
     module("intellij.platform.recentFiles.backend")
@@ -142,6 +142,10 @@ object CommunityModuleSets {
     module("intellij.platform.navbar.monolith")
     module("intellij.platform.clouds")
 
+    embeddedModule("intellij.platform.structureView.impl")
+    module("intellij.platform.structureView.backend")
+    module("intellij.platform.structureView.frontend")
+
     module("intellij.platform.execution.serviceView")
     module("intellij.platform.execution.serviceView.frontend")
     module("intellij.platform.execution.serviceView.backend")
@@ -156,7 +160,7 @@ object CommunityModuleSets {
     embeddedModule("intellij.platform.find")
     module("intellij.platform.find.backend")
     module("intellij.platform.editor.frontend")
-    embeddedModule("intellij.platform.managed.cache")
+    module("intellij.platform.managed.cache")
     module("intellij.platform.managed.cache.backend")
 
     module("intellij.platform.todo")
@@ -164,8 +168,6 @@ object CommunityModuleSets {
 
     module("intellij.platform.bookmarks.backend")
     module("intellij.platform.bookmarks.frontend")
-
-    moduleSet(recentFiles())
 
     module("intellij.platform.pluginManager.shared")
     module("intellij.platform.pluginManager.backend")
@@ -215,6 +217,7 @@ object CommunityModuleSets {
   fun vcs(): ModuleSet = moduleSet("vcs") {
     module("intellij.platform.vcs.impl")
     module("intellij.platform.vcs.impl.exec")
+    module("intellij.platform.vcs.impl.debugger")
     module("intellij.platform.vcs.impl.lang")
     module("intellij.platform.vcs.impl.lang.actions")
     module("intellij.platform.vcs.log")
@@ -226,7 +229,6 @@ object CommunityModuleSets {
     embeddedModule("intellij.platform.vcs")
 
     moduleSet(vcsShared())
-    moduleSet(vcsFrontend())
   }
 
   /**
@@ -242,7 +244,8 @@ object CommunityModuleSets {
   /**
    * VCS frontend modules.
    */
-  fun vcsFrontend(): ModuleSet = moduleSet("vcs.frontend") {
+  @Suppress("unused")
+  fun vcsFrontend(): ModuleSet = plugin("vcs.frontend") {
     module("intellij.platform.vcs.impl.frontend")
   }
 
@@ -282,7 +285,8 @@ object CommunityModuleSets {
   /**
    * Stream debugger modules.
    */
-  fun debuggerStreams(): ModuleSet = moduleSet("debugger.streams") {
+  @Suppress("unused")
+  fun debuggerStreams(): ModuleSet = plugin("debugger.streams", addToMainModule = false) {
     module("intellij.debugger.streams.core")
     module("intellij.debugger.streams.shared")
     module("intellij.debugger.streams.backend")
@@ -323,7 +327,8 @@ object CommunityModuleSets {
   /**
    * Grid/data viewer core modules.
    */
-  fun gridCore(): ModuleSet = moduleSet("grid.core") {
+  @Suppress("unused")
+  fun gridCore(): ModuleSet = plugin("grid.core") {
     module("intellij.grid")
     module("intellij.grid.types")
     module("intellij.grid.csv.core.impl")
@@ -337,11 +342,14 @@ object CommunityModuleSets {
    * These are commonly needed by test plugins and are duplicated across products.
    */
   fun platformTestFrameworksCore(): ModuleSet = moduleSet("platform.testFrameworks.core") {
-    module("intellij.platform.testFramework", allowedMissingPluginIds = listOf("com.intellij.java"))
+    module("intellij.platform.testFramework", allowedMissingPluginIds = listOf("com.intellij.java", "com.intellij.platform.images"))
     module("intellij.platform.testFramework.common")
     module("intellij.platform.testFramework.core")
     module("intellij.platform.testFramework.impl")
     module("intellij.platform.testFramework.teamCity")
+    module("intellij.codeowners")
+    module("intellij.codeowners.monorepo.resolver")
+    module("intellij.codeowners.runtime.resolver")
   }
 
   /**
@@ -352,8 +360,8 @@ object CommunityModuleSets {
     module("intellij.platform.testFramework.junit5")
     module("intellij.platform.testFramework.junit5.projectStructure")
     module("intellij.platform.testFramework.junit5.codeInsight")
-    module("intellij.platform.testFramework.junit5._test")
-    module("intellij.platform.testFramework.junit5.eel._test")
+    module("intellij.platform.testFramework.junit5.tests")
+    module("intellij.platform.testFramework.junit5.eel.tests")
     module("intellij.platform.testFramework.junit5.wsl._test")
   }
 
@@ -366,10 +374,11 @@ object CommunityModuleSets {
     module("intellij.rd.ide.model.generated")
     module("intellij.rd.platform")
     module("intellij.rd.ui")
+    module("intellij.platform.split.protocol")
   }
 
   /**
-   * IDE common modules (includes essential, compose, grid.core, vcs, xml, duplicates).
+   * IDE common modules (includes essential, compose, vcs, xml, duplicates).
    */
   fun ideCommon(): ModuleSet = moduleSet("ide.common") {
     // Include essential first (which includes coreLang from CoreModuleSets)
@@ -411,11 +420,11 @@ object CommunityModuleSets {
     module("intellij.libraries.grpc.netty.shaded")
     module("intellij.libraries.jspecify")
 
-    moduleSet(gridCore())
     moduleSet(vcs())
     moduleSet(xml())
     moduleSet(duplicates())
     module("intellij.platform.structuralSearch")
+    embeddedModule("intellij.libraries.batik")
 
     // Note: rd.common is intentionally NOT included in ide.common
     // Reason: Rider uses custom module loading mode due to early backend startup requirements.

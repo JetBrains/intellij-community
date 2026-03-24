@@ -73,7 +73,7 @@ class JavaToKotlinActionGroup : DefaultActionGroup() {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
-        e.presentation.setEnabledAndVisible(childrenCount > 1)
+        e.presentation.setEnabledAndVisible(childrenCount > 1 && isBuiltInActionEnabled(e))
         e.presentation.isDisableGroupIfEmpty = true
         e.presentation.isPopupGroup = true
     }

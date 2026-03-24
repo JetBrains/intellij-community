@@ -1,5 +1,6 @@
 // "Import class 'KProperty'" "true"
 // WITH_STDLIB
+// K2_ERROR: Unresolved reference 'KProperty'.
 
 fun foo(x: <caret>KProperty<Int>) {}
 

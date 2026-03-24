@@ -1,4 +1,5 @@
 // "Remove identifier from anonymous function" "true"
+// K2_ERROR: Anonymous functions with names are prohibited.
 
 fun foo() {
     (bar@ fun() {

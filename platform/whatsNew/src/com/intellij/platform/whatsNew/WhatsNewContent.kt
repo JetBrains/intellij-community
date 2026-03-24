@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.openEditor
+import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.openEditorAsync
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.JsQueryHandler
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Request.Companion.html
 import com.intellij.openapi.project.Project
@@ -44,7 +45,7 @@ import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
 
-internal abstract class WhatsNewContent() {
+internal abstract class WhatsNewContent {
   companion object {
     suspend fun getWhatsNewContent(): WhatsNewContent? {
       return if (WhatsNewInVisionContentProvider.getInstance().isAvailable() &&
@@ -52,14 +53,11 @@ internal abstract class WhatsNewContent() {
                  !ScreenReader.isActive()) {
         val provider = WhatsNewInVisionContentProvider.getInstance()
         WhatsNewVisionContent(provider, provider.getContent().entities.first())
-      } else {
+      }
+      else {
         ExternalProductResourceUrls.getInstance().whatIsNewPageUrl?.toDecodedForm()?.let { WhatsNewUrlContent(it) }
       }
     }
-
-    suspend fun hasWhatsNewContent() = WhatsNewInVisionContentProvider.getInstance().isAvailable()
-                                       || ExternalProductResourceUrls.getInstance().whatIsNewPageUrl != null
-
   }
 
   // Year and release have to be strings, because this is the ApplicationInfo.xml format.
@@ -94,7 +92,8 @@ internal abstract class WhatsNewContent() {
     override fun toString(): String {
       if (hash != null) {
         return "$year-$release-$eap-$hash"
-      } else {
+      }
+      else {
         return "$year-$release-$eap"
       }
     }
@@ -161,13 +160,13 @@ internal class WhatsNewUrlContent(val url: String) : WhatsNewContent() {
   }
 }
 
-internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionContentProvider, page: WhatsNewInVisionContentProvider.Page)
-  : WhatsNewContent() {
+internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionContentProvider, page: WhatsNewInVisionContentProvider.Page) :
+  WhatsNewContent() {
   companion object {
     const val WHATS_NEW_VISION_SCHEME = "whatsnew-vision"
     const val LOCALHOST = "localhost"
 
-    private const val THEME_KEY = "\$__VISION_PAGE_SETTINGS_THEME__$"
+    private const val THEME_KEY = $$"$__VISION_PAGE_SETTINGS_THEME__$"
     private const val DARK_THEME = "dark"
     private const val LIGHT_THEME = "light"
 
@@ -185,6 +184,8 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
   private val contentHash: String
   private val myActionWhiteList: Set<String>
   private val visionActionIds = setOf(GIF_VALUE, ZOOM_VALUE)
+  internal val multipageIds: List<String>
+
   init {
     var html = page.html
     val pattern = page.publicVars.distinctBy { it.value }
@@ -206,19 +207,13 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
     }
     content = html
     myActionWhiteList = page.actions.map { it.value }.toSet()
+    multipageIds = page.multipageIds
     contentHash = DigestUtil.sha1Hex(page.html)
-  }
-
-  private fun getRequest(dataContext: DataContext?): HTMLEditorProvider.Request {
-    val request = html(content)
-    request.withQueryHandler(getHandler(dataContext))
-    request.withResourceHandler(getRequestHandler(dataContext))
-    return request
   }
 
   @OptIn(DelicateCoroutinesApi::class)
   private fun getRequestHandler(dataContext: DataContext?): HTMLEditorProvider.ResourceHandler? {
-    if(dataContext == null) return logger.error("dataContext is null").let { null }
+    if (dataContext == null) return logger.error("dataContext is null").let { null }
 
     return WhatsNewRequestHandler(contentProvider)
   }
@@ -244,8 +239,7 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
       override suspend fun query(id: Long, request: String): String {
         val contains = myActionWhiteList.contains(request)
         if (!contains) {
-          if(visionActionIds.contains(request))
-          {
+          if (visionActionIds.contains(request)) {
             WhatsNewCounterUsageCollector.visionActionPerformed(dataContext.project, request)
             logger.trace { "EapWhatsNew action $request performed" }
             return "true"
@@ -291,10 +285,14 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
     withContext(Dispatchers.EDT) {
       logger.info("Opening What's New in editor.")
       val disposable = Disposer.newDisposable(project)
-      val editor = writeIntentReadAction { openEditor(project, title, getRequest(dataContext)) }
+      val startPageId = WhatsNewMultipageStartIdProvider.getInstance(project).getIdIfSupported(multipageIds)
+      val request = getRequest(startPageId, dataContext)
+      val editor = openEditorAsync(project, title, request)
+
       editor?.let {
         project.serviceAsync<FileEditorManager>().addTopComponent(it, ReactionsPanel.createPanel(PLACE, reactionChecker))
-        WhatsNewCounterUsageCollector.openedPerformed(project, triggeredByUser)
+        val startTime = System.currentTimeMillis()
+        WhatsNewCounterUsageCollector.openedPerformed(project, startPageId, triggeredByUser)
 
         WhatsNewContentVersionChecker.saveLastShownContent(this@WhatsNewVisionContent)
 
@@ -302,13 +300,28 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
         busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
           override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
             if (it.file == file) {
-              WhatsNewCounterUsageCollector.closedPerformed(project)
+              val durationSeconds = (System.currentTimeMillis() - startTime) / 1000
+              WhatsNewCounterUsageCollector.closedPerformed(project, startPageId, durationSeconds)
               Disposer.dispose(disposable)
             }
           }
         })
       } ?: Disposer.dispose(disposable)
     }
+  }
+
+  private fun getRequest(
+    startPageId: String?,
+    dataContext: DataContext?,
+  ): HTMLEditorProvider.Request {
+    val request = startPageId?.let {
+      html(content, "file:///jbcefbrowser#/$it").withOnUrlChanged { oldUrl, newUrl ->
+        WhatsNewCounterUsageCollector.multipageIdChanged(dataContext?.project, oldUrl?.substringAfter("#/"), newUrl.substringAfter("#/"))
+      }
+    } ?: html(content)
+    return request
+      .withQueryHandler(getHandler(dataContext))
+      .withResourceHandler(getRequestHandler(dataContext))
   }
 }
 

@@ -11,6 +11,7 @@ internal class ModuleData(
   val moduleName: String,
   val type: StandardMavenModuleType,
   val sourceLanguageLevel: LanguageLevel?,
+  val jdkName: String?
 ) {
   val isDefaultMainModule = type == StandardMavenModuleType.MAIN_ONLY
   val isAdditionalMainModule = type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL

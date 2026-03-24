@@ -1,12 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+@file:ApiStatus.Internal
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PropertyUtilBase
+import org.jetbrains.annotations.ApiStatus
 
-internal fun getCapitalizedAccessorName(method: PsiMethod): String? {
+fun getCapitalizedAccessorName(method: PsiMethod): String? {
   val propertyName = PropertyUtilBase.getPropertyName(method) ?: return null
   val methodFinalPart = StringUtil.capitalize(propertyName)
   val methodParts = method.containingClass?.takeUnless { it.name?.startsWith(LIBRARIES_FOR_PREFIX) == true }?.name?.trimAccessorName()
@@ -37,10 +40,10 @@ private fun getTopContainingClass(psiMethod: PsiMethod?): PsiClass? {
   return topClass
 }
 
-internal const val BUNDLE_ACCESSORS_SUFFIX = "BundleAccessors"
-internal const val LIBRARY_ACCESSORS_SUFFIX = "LibraryAccessors"
-internal const val PLUGIN_ACCESSORS_SUFFIX = "PluginAccessors"
-internal const val VERSION_ACCESSORS_SUFFIX = "VersionAccessors"
+const val BUNDLE_ACCESSORS_SUFFIX: String = "BundleAccessors"
+const val LIBRARY_ACCESSORS_SUFFIX: String = "LibraryAccessors"
+const val PLUGIN_ACCESSORS_SUFFIX: String = "PluginAccessors"
+const val VERSION_ACCESSORS_SUFFIX: String = "VersionAccessors"
 
-internal const val LIBRARIES_FOR_PREFIX = "LibrariesFor"
+const val LIBRARIES_FOR_PREFIX: String = "LibrariesFor"
 

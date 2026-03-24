@@ -30,9 +30,29 @@ public class KtParameterHintsProviderTestGenerated extends AbstractKtParameterHi
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("annotations.kt")
+    public void testAnnotations() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/annotations.kt");
+    }
+
     @TestMetadata("blacklisted.kt")
     public void testBlacklisted() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/blacklisted.kt");
+    }
+
+    @TestMetadata("contextParameterAndExplicitContextArguments.kt")
+    public void testContextParameterAndExplicitContextArguments() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParameterAndExplicitContextArguments.kt");
+    }
+
+    @TestMetadata("contextParametersAndExplicitContextArguments.kt")
+    public void testContextParametersAndExplicitContextArguments() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParametersAndExplicitContextArguments.kt");
+    }
+
+    @TestMetadata("contextParametersInContext.kt")
+    public void testContextParametersInContext() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParametersInContext.kt");
     }
 
     @TestMetadata("contextParametersLambda.kt")
@@ -48,6 +68,11 @@ public class KtParameterHintsProviderTestGenerated extends AbstractKtParameterHi
     @TestMetadata("contextParametersMultipleWithArgument.kt")
     public void testContextParametersMultipleWithArgument() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParametersMultipleWithArgument.kt");
+    }
+
+    @TestMetadata("contextParametersReceiverFunction.kt")
+    public void testContextParametersReceiverFunction() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParametersReceiverFunction.kt");
     }
 
     @TestMetadata("contextParametersSimple.kt")
@@ -68,6 +93,11 @@ public class KtParameterHintsProviderTestGenerated extends AbstractKtParameterHi
     @TestMetadata("contextParametersUnusedMultipleWithArgument.kt")
     public void testContextParametersUnusedMultipleWithArgument() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParametersUnusedMultipleWithArgument.kt");
+    }
+
+    @TestMetadata("contextParametersWithLabeledLambda.kt")
+    public void testContextParametersWithLabeledLambda() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParametersWithLabeledLambda.kt");
     }
 
     @TestMetadata("contextParametersWithNested.kt")
@@ -98,6 +128,11 @@ public class KtParameterHintsProviderTestGenerated extends AbstractKtParameterHi
     @TestMetadata("invokeCallsParameterNamesWithContextReceivers.kt")
     public void testInvokeCallsParameterNamesWithContextReceivers() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/invokeCallsParameterNamesWithContextReceivers.kt");
+    }
+
+    @TestMetadata("javaClsParameterNames.kt")
+    public void testJavaClsParameterNames() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/javaClsParameterNames.kt");
     }
 
     @TestMetadata("javaParameters.kt")

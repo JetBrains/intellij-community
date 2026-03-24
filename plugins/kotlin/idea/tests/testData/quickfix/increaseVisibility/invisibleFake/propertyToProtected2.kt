@@ -1,4 +1,5 @@
 // "Make 'foo' protected" "true"
+// K2_ERROR: Cannot access 'val foo: Int': it is private in 'A'.
 
 open class A {
     private val foo = 1

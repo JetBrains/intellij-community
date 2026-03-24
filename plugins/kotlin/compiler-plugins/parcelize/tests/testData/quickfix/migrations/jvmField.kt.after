@@ -1,5 +1,7 @@
 // "Migrate to 'Parceler' companion object" "true"
 // WITH_STDLIB
+// K2_ERROR: 'CREATOR' definition is not allowed. Use 'Parceler' companion object instead.
+// K2_ERROR: Overriding 'writeToParcel' is not allowed. Use 'Parceler' companion object instead.
 
 package com.myapp.activity
 
@@ -22,3 +24,4 @@ class Foo(val firstName: String, val age: Int) : Parcelable {
         }
     }
 }
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.k2.K2ParcelMigrateToParcelizeQuickFix

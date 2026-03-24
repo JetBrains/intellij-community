@@ -9,12 +9,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAware;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,14 +22,14 @@ public class ContextHelpAction extends AnAction implements DumbAware, ActionRemo
     this(null);
   }
 
-  public ContextHelpAction(@NonNls @Nullable String helpID) {
+  public ContextHelpAction(@Nullable String helpID) {
     myHelpID = helpID;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    final String helpId = getHelpId(dataContext);
+    var dataContext = e.getDataContext();
+    var helpId = getHelpId(dataContext);
     if (helpId != null) {
       HelpManager.getInstance().invokeHelp(helpId);
     }
@@ -44,14 +41,9 @@ public class ContextHelpAction extends AnAction implements DumbAware, ActionRemo
 
   @Override
   public void update(@NotNull AnActionEvent event){
-    Presentation presentation = event.getPresentation();
-    if (!ApplicationInfo.contextHelpAvailable()) {
-      presentation.setVisible(false);
-      return;
-    }
-
+    var presentation = event.getPresentation();
     if (ActionPlaces.isMainMenuOrActionSearch(event.getPlace())) {
-      DataContext dataContext = event.getDataContext();
+      var dataContext = event.getDataContext();
       presentation.setEnabled(getHelpId(dataContext) != null);
     }
     else {

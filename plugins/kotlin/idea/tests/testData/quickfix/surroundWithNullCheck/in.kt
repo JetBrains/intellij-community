@@ -1,4 +1,5 @@
 // "Surround with null check" "true"
+// K2_ERROR: Operator call is prohibited on a nullable receiver of type 'List<String>?'. Use '?.'-qualified call instead.
 fun test(a: String, b: List<String>?) {
     a <caret>in b
 }

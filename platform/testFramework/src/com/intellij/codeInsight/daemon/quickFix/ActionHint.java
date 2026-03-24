@@ -32,8 +32,6 @@ import static org.junit.Assert.fail;
 
 /**
  * An object representing a wanted assertion of given quick-fix test file.
- *
- * @author Tagir Valeev
  */
 public final class ActionHint {
   private final @NotNull String myExpectedText;

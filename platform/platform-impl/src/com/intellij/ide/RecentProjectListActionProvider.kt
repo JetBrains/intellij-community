@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.diagnostic.LoadingState
@@ -385,7 +385,9 @@ private fun getDuplicateProjectNames(
   return duplicates
 }
 
-private class ProjectGroupComparator(private val projectPaths: Set<String>) : Comparator<ProjectGroup> {
+private class ProjectGroupComparator(projectPaths: Set<String>) : Comparator<ProjectGroup> {
+  private val pathIndex = projectPaths.withIndex().associate { it.value to it.index }
+
   override fun compare(o1: ProjectGroup, o2: ProjectGroup): Int {
     val index1 = getGroupIndex(o1)
     val index2 = getGroupIndex(o2)
@@ -395,8 +397,8 @@ private class ProjectGroupComparator(private val projectPaths: Set<String>) : Co
   private fun getGroupIndex(group: ProjectGroup): Int {
     var index = Integer.MAX_VALUE
     for (path in group.projects) {
-      val i = projectPaths.indexOf(path)
-      if (i in 0 until index) {
+      val i = pathIndex.get(path) ?: continue
+      if (i < index) {
         index = i
       }
     }

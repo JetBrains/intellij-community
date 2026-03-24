@@ -28,7 +28,7 @@ class JC {
   List<@NotNull String> testReturnValue() {
     List<@Nullable String> list = new ArrayList<>();
 
-    Supplier<List<@NotNull String>> supplier = () -> <warning descr="Assigning a class with nullable type arguments when a class with not-null type arguments is expected">list</warning>;
+    Supplier<List<@NotNull String>> supplier = () -> <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">list</warning>;
     Supplier<List<@NotNull String>> supplierRef = <warning descr="Assigning a class with nullable type arguments when a class with not-null type arguments is expected">this::getNullableList</warning>;
 
     Supplier<List<@NotNull String>> supplier3 = () -> { return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">list</warning>;};

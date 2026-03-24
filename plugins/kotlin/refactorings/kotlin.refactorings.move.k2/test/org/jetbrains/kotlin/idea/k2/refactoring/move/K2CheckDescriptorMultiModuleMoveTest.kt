@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveTargetModel
@@ -94,6 +95,103 @@ class K2CheckDescriptorMultiModuleMoveTest : AbstractK2CheckDescriptorMultiModul
         )
     }
 
+    @TestMetadata("moveTheOnlyDeclarationInFile")
+    @Throws(Exception::class)
+    fun testMoveTheOnlyDeclarationInFile() {
+        doTest(
+            "moveTheOnlyDeclarationInFile/moveTheOnlyDeclarationInFile.test",
+            configureMoveModel = { moveModel ->
+                setAllMoveSettingsOn(moveModel)
+                setMoveModelSetting(moveModel.mppDeclarations, false)
+                setNewTargetPackageInSameRoot(moveModel, FqName("bar"))
+            },
+            checkMoveDescriptor = {
+                assert(isFileMove(it)) { "File move was expected, but found ${it::class.java.canonicalName}" }
+            },
+        )
+    }
+
+    @TestMetadata("moveTheOnlyDeclarationInFileChangeFileName")
+    @Throws(Exception::class)
+    fun testMoveTheOnlyDeclarationInFileChangeFileName() {
+        doTest(
+            "moveTheOnlyDeclarationInFileChangeFileName/moveTheOnlyDeclarationInFileChangeFileName.test",
+            configureMoveModel = { moveModel ->
+                setAllMoveSettingsOn(moveModel)
+                setMoveModelSetting(moveModel.mppDeclarations, false)
+                setNewTargetPackageInSameRoot(moveModel, FqName("bar"))
+                setTargetFile(moveModel, "CustomName.kt")
+            },
+            checkMoveDescriptor = {
+                assert(!isFileMove(it)) { "File move should not be done if the file name is changed" }
+            },
+        )
+    }
+
+    @TestMetadata("moveTheOnlyDeclarationInFileWithKmpEnabled")
+    @Throws(Exception::class)
+    fun testMoveTheOnlyDeclarationInFileWithKmpEnabled() {
+        doTest(
+            "moveTheOnlyDeclarationInFileWithKmpEnabled/moveTheOnlyDeclarationInFileWithKmpEnabled.test",
+            configureMoveModel = { moveModel ->
+                setAllMoveSettingsOn(moveModel)
+                setMoveModelSetting(moveModel.mppDeclarations, true)
+                setNewTargetPackageInSameRoot(moveModel, FqName("bar"))
+            },
+            checkMoveDescriptor = {
+                assert(!isFileMove(it)) { "File move should not be done with KMP setting enabled" }
+            },
+        )
+    }
+
+    @TestMetadata("moveTheOnlyDeclarationToExistingFile")
+    @Throws(Exception::class)
+    fun testMoveTheOnlyDeclarationToExistingFile() {
+        doTest(
+            "moveTheOnlyDeclarationToExistingFile/moveTheOnlyDeclarationToExistingFile.test",
+            configureMoveModel = { moveModel ->
+                setAllMoveSettingsOn(moveModel)
+                setMoveModelSetting(moveModel.mppDeclarations, false)
+                setExistingTargetPackageInSameRoot(moveModel, FqName("bar"))
+            },
+            checkMoveDescriptor = {
+                assert(!isFileMove(it)) { "File move should not be done when the target file exists" }
+            },
+        )
+    }
+
+    @TestMetadata("moveOneOfTwoDeclarationsInFile")
+    @Throws(Exception::class)
+    fun testMoveOneOfTwoDeclarationsInFile() {
+        doTest(
+            "moveOneOfTwoDeclarationsInFile/moveOneOfTwoDeclarationsInFile.test",
+            configureMoveModel = { moveModel ->
+                setAllMoveSettingsOn(moveModel)
+                setMoveModelSetting(moveModel.mppDeclarations, false)
+                setNewTargetPackageInSameRoot(moveModel, FqName("bar"))
+            },
+            checkMoveDescriptor = {
+                assert(!isFileMove(it)) { "Unexpected file move" }
+            },
+        )
+    }
+
+    @TestMetadata("moveTwoOfTwoDeclarationsInFile")
+    @Throws(Exception::class)
+    fun testMoveTwoOfTwoDeclarationsInFile() {
+        doTest(
+            "moveTwoOfTwoDeclarationsInFile/moveTwoOfTwoDeclarationsInFile.test",
+            configureMoveModel = { moveModel ->
+                setAllMoveSettingsOn(moveModel)
+                setMoveModelSetting(moveModel.mppDeclarations, false)
+                setNewTargetPackageInSameRoot(moveModel, FqName("bar"))
+            },
+            checkMoveDescriptor = {
+                assert(isFileMove(it)) { "File move was expected, but found ${it::class.java.canonicalName}" }
+            },
+        )
+    }
+
     /**
      * Set the package and reset the target directory to the source root in the move model.
      * Mimics the UI dialog behavior when a non-existent package is selected.
@@ -151,6 +249,12 @@ class K2CheckDescriptorMultiModuleMoveTest : AbstractK2CheckDescriptorMultiModul
             }
         }
     }
+
+    /**
+     * Checks whether the move descriptor is a file move.
+     */
+    private fun isFileMove(moveOperationDescriptor: K2MoveOperationDescriptor<*>): Boolean =
+        moveOperationDescriptor.moveDescriptors.singleOrNull { it is K2MoveDescriptor.Files } != null
 
     private fun setAllMoveSettingsOn(moveModel: K2MoveModel) {
         setMoveModelSetting(moveModel.mppDeclarations, true)

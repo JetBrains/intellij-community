@@ -6,6 +6,7 @@ import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.utils.FileSystem
 import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.tools.ide.util.common.logOutput
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.jar.JarFile
@@ -46,6 +47,7 @@ open class PluginConfigurator(val testContext: IDETestContext) {
     pathToPluginDir.copyToRecursively(targetPluginDir, followLinks = false, overwrite = false)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use [installPluginFromDir] instead", level = DeprecationLevel.ERROR)
   @Suppress("unused")
   fun installPluginFromFolder(pathToPluginFolder: java.io.File): PluginConfigurator = installPluginFromDir(pathToPluginFolder.toPath())
@@ -60,6 +62,9 @@ open class PluginConfigurator(val testContext: IDETestContext) {
     }
     catch (t: HttpClient.HttpNotFound) {
       throw PluginNotFoundException("Plugin $urlToPluginZipFile couldn't be downloaded: ${t.message}", t)
+    }
+    catch (t: HttpClient.HttpForbidden) {
+      throw PluginNotFoundException("Plugin $urlToPluginZipFile is not accessible: ${t.message}", t)
     }
 
     FileSystem.unpack(pluginZip, testContext.paths.pluginsDir)
@@ -93,7 +98,15 @@ open class PluginConfigurator(val testContext: IDETestContext) {
       is PluginWithExactVersion -> pluginsCacheDir.resolve(plugin.version).createDirectories().resolve(fileName)
     }
 
-    HttpClient.downloadIfMissing(plugin.downloadUrl(), downloadedPlugin, retries = 1)
+    try {
+      HttpClient.downloadIfMissing(plugin.downloadUrl(), downloadedPlugin, retries = 1)
+    }
+    catch (t: HttpClient.HttpNotFound) {
+      throw PluginNotFoundException("Plugin $pluginId couldn't be downloaded: ${t.message}", t)
+    }
+    catch (t: HttpClient.HttpForbidden) {
+      throw PluginNotFoundException("Plugin $pluginId is not accessible: ${t.message}", t)
+    }
     if (fileName.endsWith(".jar")) {
       Files.copy(downloadedPlugin, testContext.paths.pluginsDir.resolve(fileName))
     }
@@ -125,10 +138,11 @@ open class PluginConfigurator(val testContext: IDETestContext) {
   private fun findPluginXmlByPluginIdInAGivenDir(pluginId: String, bundledPluginsDir: Path): Boolean = bundledPluginsDir.walk()
     .filter { it.extension == "jar" }
     .any { file ->
-      val jarFile = JarFile(file.toString())
-      return@any when (val entry = jarFile.getJarEntry("META-INF/plugin.xml")) {
-        null -> false
-        else -> jarFile.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }.contains("<id>$pluginId</id>")
+      JarFile(file.toString()).use { jarFile ->
+        return@any when (val entry = jarFile.getJarEntry("META-INF/plugin.xml")) {
+          null -> false
+          else -> jarFile.getInputStream(entry).bufferedReader(Charsets.UTF_8).use { it.readText() }.contains("<id>$pluginId</id>")
+        }
       }
     }
 

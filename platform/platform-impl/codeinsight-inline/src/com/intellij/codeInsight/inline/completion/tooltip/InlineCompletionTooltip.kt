@@ -6,7 +6,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingComponent
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -59,7 +59,7 @@ object InlineCompletionTooltip {
       setBelongsToGlobalPopupStack(false)
     }
 
-    val offset = runReadAction { editor.caretModel.offset }
+    val offset = runReadActionBlocking { editor.caretModel.offset }
     val location = HintManagerImpl.getHintPosition(
       hint, editor,
       editor.offsetToLogicalPosition(offset),

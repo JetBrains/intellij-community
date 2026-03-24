@@ -15,6 +15,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.concurrency.ConcurrencyUtils;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -23,7 +24,6 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectTypeService;
@@ -36,7 +36,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -60,6 +59,9 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
                              int passIdToShowIntentionsFor,
                              int offset) {
     Project project = hostFile.getProject();
+    if (project.isDefault()) {
+      return;
+    }
     PsiElement psiElement = hostFile.findElementAt(offset);
     if (HighlightingLevelManager.getInstance(project).shouldInspect(hostFile)) {
       PsiElement intentionElement = psiElement;
@@ -89,7 +91,7 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
     if (!psiElement.isPhysical() && !PlatformUtils.isFleetBackend()) {
       VirtualFile virtualFile = hostFile.getVirtualFile();
       String text = hostFile.getText();
-      LOG.error("not physical: '" + psiElement.getText() + "' @" + offset + " " +psiElement.getTextRange() +
+      LOG.error("not physical: '" + psiElement.getText() + "' @" + offset + " " + psiElement.getTextRange() +
                 " elem:" + psiElement + " (" + psiElement.getClass().getName() + ")" +
                 " in:" + psiElement.getContainingFile() + " host:" + hostFile + "(" + hostFile.getClass().getName() + ")",
                 new Attachment(virtualFile != null ? virtualFile.getPresentableUrl() : "null", text != null ? text : "null"));
@@ -103,7 +105,7 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
 
     List<LocalInspectionToolWrapper> intentionTools = new ArrayList<>();
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-    for (InspectionToolWrapper<?,?> toolWrapper : profile.getInspectionTools(hostFile)) {
+    for (InspectionToolWrapper<?, ?> toolWrapper : profile.getInspectionTools(hostFile)) {
       if (!isTests && !toolWrapper.isApplicable(projectTypes)) continue;
 
       if (toolWrapper instanceof GlobalInspectionToolWrapper global) {
@@ -113,7 +115,7 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
         HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
         if (profile.isToolEnabled(key, hostFile) &&
             HighlightDisplayLevel.DO_NOT_SHOW.equals(profile.getErrorLevel(key, hostFile))) {
-          intentionTools.add((LocalInspectionToolWrapper)toolWrapper);
+          intentionTools.add(local);
         }
       }
     }
@@ -138,7 +140,21 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
       ContainerUtil.map2Map(intentionTools, wrapper -> Pair.create(wrapper.getShortName(), wrapper.getDisplayName()));
 
     // indicator can be null when run from EDT
-    ProgressIndicator progress = ObjectUtils.notNull(ProgressIndicatorProvider.getGlobalProgressIndicator(), new DaemonProgressIndicator());
+    ConcurrencyUtils.runWithIndicatorOrContextCancellation(DaemonProgressIndicator::new, (progress) -> {
+      collectIntentionsFromDoNotShowLeveledInspectionsWithIndicator(intentionTools, hostFile, progress, toInspect, offset, displayNames, outIntentions);
+      return null;
+    });
+  }
+
+  private static void collectIntentionsFromDoNotShowLeveledInspectionsWithIndicator(
+    @NotNull List<LocalInspectionToolWrapper> intentionTools,
+    @NotNull PsiFile hostFile,
+    @NotNull ProgressIndicator progress,
+    @NotNull @Unmodifiable List<PsiElement> toInspect,
+    int offset,
+    @NotNull Map<@NonNls String, @Nls(capitalization = Nls.Capitalization.Sentence) String> displayNames,
+    @NotNull ShowIntentionsPass.IntentionsInfo outIntentions
+  ) {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
       InspectionEngine.inspectElements(intentionTools, hostFile, hostFile.getTextRange(), true, true, progress, toInspect, PairProcessor.alwaysTrue());
 

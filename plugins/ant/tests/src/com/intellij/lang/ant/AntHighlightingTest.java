@@ -32,7 +32,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   @Override
-  protected void configureByFile(@TestDataFile @NonNls String filePath) throws Exception {
+  protected void configureByFile(@TestDataFile @NonNls @NotNull String filePath) throws Exception {
     super.configureByFile(filePath);
     AntSupport.markFileAsAntFile(myFile.getVirtualFile(), myFile.getProject(), true);
   }

@@ -8,7 +8,8 @@ import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.debugger.impl.frontend.FrontendBreakpointRequestCounter.Companion.REQUEST_IS_NOT_NEEDED
+import com.intellij.platform.debugger.impl.shared.BreakpointRequestCounter
+import com.intellij.platform.debugger.impl.shared.BreakpointRequestCounter.Companion.REQUEST_IS_NOT_NEEDED
 import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.platform.debugger.impl.rpc.XBreakpointCustomPresentationDto
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
@@ -27,7 +28,7 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.breakpoints.BreakpointGutterIconRenderer
 import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase.calculateIcon
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUIUtil
 import com.intellij.xdebugger.impl.rpc.sourcePosition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -58,7 +59,7 @@ internal open class FrontendXBreakpointProxy(
   parentCs: CoroutineScope,
   dto: XBreakpointDto,
   override val type: XBreakpointTypeProxy,
-  private val breakpointRequestCounter: FrontendBreakpointRequestCounter,
+  private val breakpointRequestCounter: BreakpointRequestCounter,
 ) : XBreakpointProxy {
   override val id: XBreakpointId = dto.id
 
@@ -68,6 +69,20 @@ internal open class FrontendXBreakpointProxy(
    * Updates should be performed only via [updateStateIfNeeded].
    */
   private val _state: MutableStateFlow<XBreakpointDtoState> = MutableStateFlow(dto.initialState)
+
+  /**
+   * Custom presentation for the breakpoint (general, persistent).
+   * Updated via presentation events, independent of state changes.
+   */
+  private val _customPresentation: MutableStateFlow<CustomizedBreakpointPresentation?> =
+    MutableStateFlow(dto.initialCustomPresentation?.toPresentation())
+
+  /**
+   * Custom presentation for the current debug session (session-specific).
+   * Updated via presentation events, independent of state changes.
+   */
+  private val _currentSessionCustomPresentation: MutableStateFlow<CustomizedBreakpointPresentation?> =
+    MutableStateFlow(dto.initialCurrentSessionCustomPresentation?.toPresentation())
 
   private val editorsProvider = dto.editorsProviderDto?.let {
     getEditorsProvider(cs, it, documentIdProvider = { frontendDocumentId, expression, position, mode ->
@@ -99,7 +114,7 @@ internal open class FrontendXBreakpointProxy(
       if (!forceRequestWithoutUpdate && newState == old) {
         return REQUEST_IS_NOT_NEEDED
       }
-      requestId = breakpointRequestCounter.increment()
+      requestId = breakpointRequestCounter.nextRequestId(id)
       newState.copy(requestId = requestId)
     }
     assert(requestId != REQUEST_IS_NOT_NEEDED)
@@ -133,7 +148,7 @@ internal open class FrontendXBreakpointProxy(
       // To avoid races with the backend state updates, we only react to breakpoint state updates
       // which have the latest requestId. Otherwise, we ignore the update.
       dto.state.toFlow().collectLatest {
-        if (breakpointRequestCounter.isSuitableUpdate(it.requestId)) {
+        if (breakpointRequestCounter.isSuitableUpdate(id, it.requestId)) {
           _state.value = it
           onBreakpointChange()
         }
@@ -144,6 +159,19 @@ internal open class FrontendXBreakpointProxy(
   internal fun installListener(listener: () -> Unit) {
     assert(this.listener == null) { "Listener is already installed" }
     this.listener = listener
+  }
+
+  /**
+   * Updates presentation from backend event.
+   * Called by FrontendXBreakpointManager when BreakpointPresentationUpdated event arrives.
+   */
+  internal fun updatePresentation(
+    customPresentation: XBreakpointCustomPresentationDto?,
+    currentSessionCustomPresentation: XBreakpointCustomPresentationDto?
+  ) {
+    _customPresentation.value = customPresentation?.toPresentation()
+    _currentSessionCustomPresentation.value = currentSessionCustomPresentation?.toPresentation()
+    onBreakpointChange()
   }
 
   private fun onBreakpointChange() {
@@ -178,7 +206,7 @@ internal open class FrontendXBreakpointProxy(
 
   override fun getIcon(): Icon {
     // TODO: do we need to cache icon like it is done in XBreakpointBase
-    return calculateIcon(this)
+    return XBreakpointUIUtil.calculateIcon(this)
   }
 
   override fun isEnabled(): Boolean = currentState.enabled
@@ -315,21 +343,15 @@ internal open class FrontendXBreakpointProxy(
   }
 
   override fun getCustomizedPresentation(): CustomizedBreakpointPresentation? {
-    // TODO: let's convert it once on state change rather then on every getCustomizedPresentation call
-    return currentState.customPresentation?.toPresentation()
+    return _customPresentation.value
   }
 
   override fun getCustomizedPresentationForCurrentSession(): CustomizedBreakpointPresentation? {
-    // TODO: let's convert it once on state change rather then on every getCustomizedPresentation call
-    return currentState.currentSessionCustomPresentation?.toPresentation()
+    return _currentSessionCustomPresentation.value
   }
 
   override fun isDisposed(): Boolean {
     return !cs.isActive
-  }
-
-  override fun updateIcon() {
-    // TODO IJPL-185322 should we cache icon like in Monolith?
   }
 
   override fun createGutterIconRenderer(): GutterIconRenderer? {
@@ -350,8 +372,11 @@ internal open class FrontendXBreakpointProxy(
   }
 
   override fun dispose() {
+    breakpointRequestCounter.remove(id)
     cs.cancel()
     listener = null
+    _customPresentation.value = null
+    _currentSessionCustomPresentation.value = null
   }
 
   override fun createBreakpointDraggableObject(): GutterDraggableObject? {

@@ -10,6 +10,8 @@ import org.jetbrains.jps.dependency.Graph;
 import org.jetbrains.jps.dependency.NodeSource;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.time.Duration;
 import java.util.function.Consumer;
 
@@ -44,6 +46,16 @@ public final class LoggingDependencyGraph extends LoggingGraph implements Depend
   @Override
   public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources, boolean isSourceOnly) {
     return getDelegate().createDelta(sourcesToProcess, deletedSources, isSourceOnly);
+  }
+
+  @Override
+  public void importSnapshot(InputStream in) throws IOException {
+    getDelegate().importSnapshot(in);
+  }
+
+  @Override
+  public void exportSnapshot(OutputStream out) throws IOException {
+    getDelegate().exportSnapshot(out);
   }
 
   @Override

@@ -75,6 +75,11 @@ public abstract class LafManager {
 
   public abstract boolean getAutodetectSupported();
 
+  @ApiStatus.Internal
+  public @Nullable String getPreferredDarkThemeId() {
+    return null;
+  }
+
   public abstract void setPreferredDarkLaf(@NotNull UIThemeLookAndFeelInfo value);
 
   public abstract void setPreferredLightLaf(@NotNull UIThemeLookAndFeelInfo value);

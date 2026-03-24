@@ -1,4 +1,5 @@
 // "Remove 'override' modifier" "true"
+// K2_ERROR: 'foo' overrides nothing.
 class A() {
     <caret>fun foo() {}
 }

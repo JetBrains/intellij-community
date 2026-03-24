@@ -1,4 +1,5 @@
 // "Add initializer" "true"
+// K2_ERROR: Property must be initialized.
 class A {
     var n: Int = <selection>0</selection><caret>
         set(value: Int) {}

@@ -47,22 +47,27 @@ internal class AccessibilityToolsStateCollector : ApplicationUsagesCollector() {
 
     when {
       SystemInfoRt.isWindows -> {
-        val processList = OSProcessUtil.getProcessList()
-        for (process in processList) {
-          when (process.executableName.lowercase()) {
-            "nvda.exe" -> {
-              set.add(SCREEN_READER.metric(ScreenReader.NVDA))
-            }
-            "jfw.exe" -> {
-              set.add(SCREEN_READER.metric(ScreenReader.JAWS))
-            }
-            "magnify.exe" -> {
-              set.add(SCREEN_MAGNIFIER.metric(ScreenMagnifier.WindowsMagnifier))
-            }
-            "voiceaccess.exe" -> {
-              set.add(VOICE_CONTROL.metric(VoiceControl.WindowsVoiceAccess))
+        try {
+          val processList = OSProcessUtil.getProcessList()
+          for (process in processList) {
+            when (process.executableName.lowercase()) {
+              "nvda.exe" -> {
+                set.add(SCREEN_READER.metric(ScreenReader.NVDA))
+              }
+              "jfw.exe" -> {
+                set.add(SCREEN_READER.metric(ScreenReader.JAWS))
+              }
+              "magnify.exe" -> {
+                set.add(SCREEN_MAGNIFIER.metric(ScreenMagnifier.WindowsMagnifier))
+              }
+              "voiceaccess.exe" -> {
+                set.add(VOICE_CONTROL.metric(VoiceControl.WindowsVoiceAccess))
+              }
             }
           }
+        }
+        catch (_: Throwable) {
+          // Failure to get the process list can happen but very rarely. Treat it as if there are no AT running so we can collect other data
         }
 
         if (Toolkit.getDefaultToolkit().getDesktopProperty("win.highContrast.on") == true) {

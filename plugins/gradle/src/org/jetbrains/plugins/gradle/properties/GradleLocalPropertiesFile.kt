@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.properties
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.properties.models.getStringProperty
 import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_CACHE_DIR_NAME
 import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_LOCAL_PROPERTIES_FILE_NAME
@@ -10,6 +11,7 @@ import java.nio.file.Paths
 
 const val GRADLE_LOCAL_JAVA_HOME_PROPERTY: String = "java.home"
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use GradleConstants#GRADLE_LOCAL_PROPERTIES_FILE_NAME instead")
 const val GRADLE_LOCAL_PROPERTIES_FILE_NAME: String = GRADLE_LOCAL_PROPERTIES_FILE_NAME
 

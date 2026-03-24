@@ -41,6 +41,7 @@ import com.intellij.platform.debugger.impl.rpc.XSuspendContextDto
 import com.intellij.platform.debugger.impl.rpc.XValueMarkerId
 import com.intellij.platform.debugger.impl.rpc.actionIds
 import com.intellij.platform.debugger.impl.rpc.consoleView
+import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
 import com.intellij.platform.debugger.impl.shared.childScopeCancelledOnSessionEvents
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
@@ -174,6 +175,9 @@ class FrontendXDebuggerSession(
   override val isRunToCursorActionAllowed: Boolean
     get() = sessionStateFlow.value.isRunToCursorActionAllowed
 
+  override val isForceStepIntoActionAllowed: Boolean
+    get() = sessionStateFlow.value.isForceStepIntoActionAllowed
+
   override val isSuspended: Boolean
     get() = sessionStateFlow.value.isSuspended
 
@@ -244,6 +248,11 @@ class FrontendXDebuggerSession(
     DebuggerInlayListener.getInstance(project).startListening()
     sessionDto.initialSuspendData?.applyToCurrents()
     cs.launch {
+      val processDescriptorDeferred = sessionDto.processDescriptor
+      if (processDescriptorDeferred != null) {
+        val processDescriptor = processDescriptorDeferred.await()
+        FrontendDescriptorStateManager.getInstance(project).registerProcessDescriptor(id, processDescriptor, cs)
+      }
       sessionDto.sessionEvents.toFlow().collect { event ->
         with(event) {
           updateCurrents()
@@ -301,7 +310,9 @@ class FrontendXDebuggerSession(
         currentStackFrame.value = StackFrameUpdate.notifyChanged(newFrame)
       }
       is XDebuggerSessionEvent.BreakpointsMuted -> {}
-      XDebuggerSessionEvent.SettingsChanged -> {}
+      is XDebuggerSessionEvent.SettingsChanged -> {
+        updateState()
+      }
     }
   }
 
@@ -383,13 +394,13 @@ class FrontendXDebuggerSession(
     }
 
     val proxy = this@FrontendXDebuggerSession
+    val contentToReuse = tabInfo.contentToReuse
     val tab = withContext(Dispatchers.EDT) {
       // we need to await for the console view to be initialized before tab is created
       // so [consoleView] will return an up-to-date result
       consoleViewDeferred.await()
 
-      // TODO restore content to reuse on frontend if needed (it is not used now in create)
-      XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironmentProxyDto?.executionEnvironment(project, tabScope), null,
+      XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironmentProxyDto?.executionEnvironment(project, tabScope), contentToReuse,
                               tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization, tabInfo.defaultFramesViewKey).apply {
         setAdditionalKeysProvider { sink ->
           sink[SplitDebuggerDataKeys.SPLIT_RUN_CONTENT_DESCRIPTOR_KEY] = backendRunContentDescriptorId
@@ -418,7 +429,7 @@ class FrontendXDebuggerSession(
 
     tabScope.launch(Dispatchers.EDT) {
       tabInfo.showTab.await()
-      tab.showTab()
+      tab.showTab(contentToReuse)
     }
 
     // don't subscribe on additional tabs if we have [ExecutionEnvironment] (it means this is Monolith)

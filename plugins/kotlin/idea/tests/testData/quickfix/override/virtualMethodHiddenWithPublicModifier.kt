@@ -1,4 +1,5 @@
 // "Add 'override' modifier" "true"
+// K2_ERROR: 'bar' hides member of supertype 'Foo' and needs an 'override' modifier.
 open class Foo {
     internal open fun bar() {}
 }

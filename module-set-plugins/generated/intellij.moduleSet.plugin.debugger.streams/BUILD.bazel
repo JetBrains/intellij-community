@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.moduleSet.plugin.debugger.streams` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "moduleSet-plugin-debugger-streams_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "moduleSet-plugin-debugger-streams",
+  module_name = "intellij.moduleSet.plugin.debugger.streams",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":moduleSet-plugin-debugger-streams_resources"]
+)
+
+jvm_library(
+  name = "moduleSet-plugin-debugger-streams_test_lib",
+  module_name = "intellij.moduleSet.plugin.debugger.streams",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":moduleSet-plugin-debugger-streams"]
+)
+### auto-generated section `build intellij.moduleSet.plugin.debugger.streams` end
+
+### auto-generated section `iml intellij.moduleSet.plugin.debugger.streams` start
+exports_files([
+  "intellij.moduleSet.plugin.debugger.streams.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.moduleSet.plugin.debugger.streams` end

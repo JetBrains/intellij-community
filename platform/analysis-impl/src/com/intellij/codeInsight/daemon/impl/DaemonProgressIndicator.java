@@ -51,17 +51,17 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
         }
         super.stop();
       }
-      tryCancel(null); // do not call onCancelled in stop()
+      tryCancel(null, "cancel on stop"); // do not call onCancelled in stop()
     }
     return wasRunning;
   }
 
   // must be called under getLock()
-  private boolean tryCancel(@Nullable Throwable cause) {
+  private boolean tryCancel(@Nullable Throwable cause, @NotNull String reason) {
     if (!isCanceled()) {
       // save before cancel to avoid data race with "checkCanceled(); catch(PCE) { check saved Exception }" elsewhere
       if (cause == null) {
-        myTraceableDisposable.kill("Daemon Progress Canceled");
+        myTraceableDisposable.kill(reason);
       }
       else {
         myTraceableDisposable.killExceptionally(cause);
@@ -96,7 +96,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   private void doCancel(@Nullable Throwable cause, @NotNull String reason) {
     boolean wasCanceled;
     synchronized (getLock()) {
-      wasCanceled = tryCancel(cause);
+      wasCanceled = tryCancel(cause, reason);
     }
     if (wasCanceled) { // call outside synchronized to avoid deadlock
       if (LOG.isTraceEnabled()) {
@@ -135,10 +135,11 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
 
   /**
-   * Please use the more structured {@link #runInDebugMode} instead
+   * @deprecated Please use the more structured {@link #runInDebugMode} instead
    */
   @TestOnly
   @ApiStatus.Internal
+  @Deprecated
   public static void setDebug(boolean debug) {
     DaemonProgressIndicator.debug.set(debug ? 1 : 0);
   }
@@ -173,5 +174,10 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   public boolean isIndeterminate() {
     // to avoid silly exceptions "this progress is indeterminate" on storing/restoring wrapper states in JobLauncher
     return false;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull String getTraceableDisposableStackTrace() {
+    return myTraceableDisposable.getStackTrace();
   }
 }

@@ -1,0 +1,12 @@
+// COMPILER_ARGUMENTS: -Xexplicit-backing-fields
+class Controller {
+    val status: CharSequence
+        field = "OK"
+
+    fun check() {
+        val status = "LOCAL_VALUE"
+        val r = object {
+            fun log() = println(this@Controller.status)
+        }
+    }
+}

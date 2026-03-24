@@ -19,6 +19,34 @@ Run a single test class (use FQN or wildcard - simple names don't work):
 ./tests.cmd -Dintellij.build.test.patterns=*MyTest
 ```
 
+### Windows PowerShell note
+
+When running `tests.cmd` from PowerShell, pass JVM `-D...` arguments via stop-parsing mode to avoid argument mangling:
+
+```powershell
+./tests.cmd --% -Dintellij.build.test.patterns=com.example.MyTest
+```
+
+Without `--%`, PowerShell can alter `-D...` arguments before they reach `tests.cmd`, which may lead to errors like `Could not find or load main class ...`.
+
+## Separate Bazel Modules
+
+Some parts of the repository are standalone Bazel modules and must not use `tests.cmd` or `community/tests.cmd`.
+
+### `community/platform/build-scripts/bazel`
+
+- This directory is a separate Bazel module.
+- Tests in this module **must be run via Bazel from that directory**.
+- Use the command documented in `community/platform/build-scripts/bazel/README.md`:
+
+```bash
+cd community/platform/build-scripts/bazel
+../../../../bazel.cmd test //:bazel-generator-integration-tests --test_output=all
+```
+
+- Do **not** use `./tests.cmd` for `org.jetbrains.intellij.build.bazel.BazelGeneratorIntegrationTests` or other tests in that module.
+- If a request touches files under `community/platform/build-scripts/bazel`, prefer that module-local `../../../../bazel.cmd test` flow for verification.
+
 ## Pattern Matching (CRITICAL)
 
 **Simple class names like `MyTest` do NOT work.** You must use FQN or wildcard.
@@ -101,7 +129,7 @@ When running tests, the `mainModule` parameter determines which module's classpa
 | Product | tests.cmd Location | Default mainModule |
 |---------|-------------------|-------------------|
 | IDEA Ultimate | `./tests.cmd` | `intellij.idea.ultimate.tests.main` |
-| Community | `./community/tests.cmd` | `intellij.idea.community.main` |
+| Community | `./community/tests.cmd` | `intellij.idea.community.main.tests` |
 
 ### Known Test Modules by Product
 
@@ -110,13 +138,13 @@ For complete list, see: `intellij-teamcity-config/.teamcity/src/ijplatform/Known
 | Product | Test Module |
 |---------|-------------|
 | IDEA Ultimate | `intellij.idea.ultimate.tests.main` |
-| IDEA Community | `intellij.idea.community.main` |
+| IDEA Community | `intellij.idea.community.main.tests` |
 | GoLand | `intellij.goland.tests` |
 | PyCharm | `intellij.python.tests` |
 | RubyMine | `intellij.rubymine.aggregator` |
-| CLion | `intellij.clion.main` |
-| PhpStorm | `intellij.phpstorm.main` |
-| RustRover | `intellij.rustrover.main` |
+| CLion | `intellij.clion.main.tests` |
+| PhpStorm | `intellij.phpstorm.main.tests` |
+| RustRover | `intellij.rustrover.main.tests` |
 | Kotlin K2/FIR | `kotlin.fir-all-tests` |
 
 ### Finding Tests in Other Modules
@@ -141,6 +169,13 @@ If tests.cmd reports "No tests found":
 3. If not, specify `-Dintellij.build.test.main.module=<your-test-module>`
 
 ### Test Selection (Choose ONE)
+
+**`-Dintellij.build.test.simple.patterns=<selectors>`**
+- Semicolon-separated **exact** test patterns (no wildcards)
+- Each entry is `FullyQualifiedClassName` or `FullyQualifiedClassName#methodName`
+- When specified, test patterns and test groups are ignored
+- Example: `-Dintellij.build.test.simple.patterns=org.jetbrains.intellij.build.TestSelectorsTest#class selector`
+- Example with multiple: `-Dintellij.build.test.simple.patterns=org.jetbrains.intellij.build.TestSelectorsTest#class selector;org.jetbrains.intellij.build.FileSetTest`
 
 **`-Dintellij.build.test.patterns=<pattern>`**
 - Semicolon-separated patterns for test class names
@@ -170,6 +205,22 @@ Fast execution for a single test class:
 ```bash
 ./tests.cmd \
   -Dintellij.build.test.patterns=com.goide.comments.GoCommentReferencesTest
+```
+
+### Run a Specific Test Method
+
+Use simple patterns to run a single test method without wildcards:
+
+```bash
+./tests.cmd \
+  -Dintellij.build.test.simple.patterns=org.jetbrains.intellij.build.TestSelectorsTest#class selector
+```
+
+Multiple methods or a mix of classes and methods:
+
+```bash
+./tests.cmd \
+  '-Dintellij.build.test.simple.patterns=org.jetbrains.intellij.build.TestSelectorsTest#class selector;org.jetbrains.intellij.build.FileSetTest'
 ```
 
 ### Run Tests with Retries (for flaky tests)
@@ -321,6 +372,9 @@ With `idea.include.unconventionally.named.tests=true`:
 - Verify pattern uses class name, not file path: `-Dintellij.build.test.patterns=com.example.MyTest`
 - Check that class name ends with `Test` (or use `-Dpass.idea.include.unconventionally.named.tests=true`)
 - Ensure test module is part of the build classpath
+- For `plugins/llm/**` tests, set `-Dintellij.build.test.main.module` to the nearest `*.tests.iml` module (for example, `plugins/llm/chat/tests/...` -> `intellij.ml.llm.chat.tests`)
+- On Windows PowerShell, pass JVM args through `--%` (for example: `./tests.cmd --% -Dintellij.build.test.patterns=...`)
+- Before changing `main.module`, check whether the test lives in a separate Bazel module such as `community/platform/build-scripts/bazel`; those tests must be run with module-local `../../../../bazel.cmd test`, not `tests.cmd`
 - For performance tests, add `-Dpass.idea.performance.tests=true` or `-Dpass.idea.include.performance.tests=true`
 
 **Tests pass locally but fail in CI:**

@@ -1,4 +1,8 @@
 // "Reorder parameters" "true"
+// K2_ERROR: Parameter 'a1' is uninitialized here.
+// K2_ERROR: Parameter 'a2' is uninitialized here.
+// K2_ERROR: Parameter 'a2' is uninitialized here.
+// K2_ERROR: Parameter 'a3' is uninitialized here.
 fun println(any: Any) = Unit
 
 fun foo(

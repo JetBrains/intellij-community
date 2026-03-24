@@ -63,11 +63,15 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.text.Normalizer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.util.io.DirectoryContentSpecKt.jarFile;
@@ -821,10 +825,31 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
     assertThatExceptionOfType(NoSuchFileException.class)
       .isThrownBy(() -> file.getInputStream())
-      .withMessageContaining("Not a file");
+      .withMessageContaining("Access to special files");
     assertThatExceptionOfType(NoSuchFileException.class)
       .isThrownBy(() -> file.contentsToByteArray())
-      .withMessageContaining("Not a file");
+      .withMessageContaining("Access to special files");
+  }
+
+  @Test(timeout = 30_000)
+  public void specialFileDoesNotCauseHangs_evenHiddenBehindSymlink() {
+    IoTestUtil.assumeUnix();
+
+    var fifo = tempDir.getRootPath().resolve("test.fifo");
+    var symlinkToFifo = tempDir.getRootPath().resolve("symlink_to_test.fifo");
+    IoTestUtil.createFifo(fifo.toString());
+    IoTestUtil.createSymLink(fifo.toString(), symlinkToFifo.toString());
+    var file = requireNonNull(myFS.refreshAndFindFileByNioFile(symlinkToFifo));
+    assertThat(file.is(VFileProperty.SPECIAL)).isFalse();
+    assertThat(file.is(VFileProperty.SYMLINK)).isTrue();
+    assertThat(file.getLength()).isEqualTo(0);
+
+    assertThatExceptionOfType(NoSuchFileException.class)
+      .isThrownBy(() -> file.getInputStream())
+      .withMessageContaining("Access to special files");
+    assertThatExceptionOfType(NoSuchFileException.class)
+      .isThrownBy(() -> file.contentsToByteArray())
+      .withMessageContaining("Access to special files");
   }
 
   @Test
@@ -904,6 +929,78 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     var root = tempDir.getVirtualFileRoot();
     root.refresh(false, true);
     checkAttributesAreEqual(root, (LocalFileSystemImpl)myFS);
+  }
+
+  @Test
+  @SuppressWarnings("IO_FILE_USAGE")
+  public void testRefreshIoFiles() {
+    var fs = LocalFileSystem.getInstance();
+    testRefreshFiles(
+      relativePath -> tempDir.newDirectoryPath(relativePath).toFile(),
+      relativePath -> tempDir.newFileNio(relativePath).toFile(),
+      (file, child) -> file.toPath().resolve(child).toFile(),
+      path -> fs.findFileByIoFile(path),
+      files -> fs.refreshIoFiles(files)
+    );
+  }
+
+  @Test
+  public void testRefreshNioFiles() {
+    var fs = LocalFileSystem.getInstance();
+    testRefreshFiles(
+      relativePath -> tempDir.newDirectoryPath(relativePath),
+      relativePath -> tempDir.newFileNio(relativePath),
+      (path, child) -> path.resolve(child),
+      path -> fs.findFileByNioFile(path),
+      files -> fs.refreshNioFiles(files)
+    );
+  }
+
+  private <T> void testRefreshFiles(
+    Function<String, T> createDir,
+    Function<String, T> createFile,
+    BiFunction<T, String, T> addPath,
+    Function<T, VirtualFile> findFile,
+    Consumer<List<T>> refresh
+  ) {
+    var dirName = "dir";
+    var directory = createDir.apply("dir");
+    var preloadedFile = createFile.apply(dirName + "/preloaded_file.txt");
+    assertNotNull(findFile.apply(preloadedFile));
+    var vDirectory = findFile.apply(directory);
+    assertNotNull(vDirectory);
+
+    vDirectory.getChildren(); // cache children list
+    var newFile = createFile.apply(dirName + "/new_file.txt");
+    var newFile2 = createFile.apply(dirName + "/new_file_2.txt");
+    var deepFile = createFile.apply(dirName + "/a/b/c/d/deep_file.txt");
+    var nonExistingFile = addPath.apply(directory, dirName + "non_existing_file.txt");
+    assertNull(findFile.apply(newFile));
+    assertNull(findFile.apply(newFile2));
+    assertNull(findFile.apply(deepFile));
+
+    var invocationsCount = new int[]{0};
+    var names = new ArrayList<String>();
+
+    var connection = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+        invocationsCount[0]++;
+        for (var event : events) {
+          if (event instanceof VFileCreateEvent) {
+            names.add(event.getFile().getName());
+          }
+        }
+      }
+    });
+
+    refresh.accept(Arrays.asList(preloadedFile, newFile, newFile2, deepFile, nonExistingFile));
+    assertNotNull(findFile.apply(newFile));
+    assertNotNull(findFile.apply(newFile2));
+    assertNotNull(findFile.apply(deepFile));
+    assertThat(names).containsExactly("new_file.txt", "new_file_2.txt", "a");
+    assertEquals(1, invocationsCount[0]);
   }
 
   private static void checkAttributesAreEqual(VirtualFile dir, LocalFileSystemImpl lfs) {
@@ -1043,7 +1140,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     Files.walkFileTree(top, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-        for (int k = 1; k <= 3; k++) {
+        for (var k = 1; k <= 3; k++) {
           var name = "file_" + k;
           IoTestUtil.unchecked(() -> Files.writeString(dir.resolve(name), "."));
         }

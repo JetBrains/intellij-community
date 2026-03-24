@@ -11,6 +11,18 @@ The Agent Workbench plugin reimagines the IDE experience around AI-assisted deve
 
 The goal is to make AI assistance feel like a native part of the development environment, reducing context switching and keeping developers in flow.
 
+## Global Prompt Palette
+
+Use `Cmd+\` (macOS) or `Ctrl+\` (Windows/Linux) to open a centered prompt palette from anywhere in the IDE.
+
+The palette:
+
+- Defaults to Codex (provider-extensible).
+- Captures invocation context (selection/caret snippet, file, symbol, project).
+- Falls back to last selected editor context when invoked outside editors.
+- Uses invocation-derived context chips; add extra details directly in prompt text.
+- Sends the composed first prompt into a newly opened chat session.
+
 ## Architecture
 
 The plugin provides two complementary views for working with AI-assisted development:
@@ -58,10 +70,18 @@ Projects
 
 ## Specifications
 
-Detailed requirements and testing contracts are documented in the spec files:
+Detailed requirements and testing contracts are documented in `spec/`.
 
-- [Agent Threads Tool Window](spec/codex-sessions.spec.md) - Requirements for the Sessions tool window UI, session management, and user interactions
-- [Testing Contract](spec/codex-sessions-testing.spec.md) - Testing strategy, UI coverage requirements, and verification criteria
+- [Core Contracts](spec/agent-core-contracts.spec.md) - Canonical cross-feature contracts: identity, command mapping, shared editor-tab actions, and shared visibility primitives.
+- [Agent Threads Tool Window](spec/agent-sessions.spec.md) - Provider aggregation, load/refresh lifecycle, deduplication, and project/worktree tree behavior.
+- [Agent Threads Visibility and More Row](spec/agent-sessions-thread-visibility.spec.md) - Deterministic visibility rendering and More-row precedence rules.
+- [Agent Chat Editor](spec/agent-chat-editor.spec.md) - Chat tab lifecycle, persistence/restore, lazy terminal initialization, titles/icons.
+- [Agent Chat Dedicated Frame](spec/agent-dedicated-frame.spec.md) - Dedicated-frame mode routing, lifecycle, shortcut semantics, and filtering.
+- [Codex Sessions Rollout Source](spec/agent-sessions-codex-rollout-source.spec.md) - Rollout-default Codex discovery, watcher semantics, backend selector, and app-server write interoperability.
+- [Agent Sessions New-Session Actions](spec/actions/new-thread.spec.md) - New-thread UX, provider/YOLO selection, creation dedup, pending-thread rebinding.
+- [Global Prompt Entry](spec/actions/global-prompt-entry.spec.md) - Global shortcut entrypoint, centered popup UX, context capture, and launch bridge flow.
+- [Global Prompt Suggestions](spec/actions/global-prompt-suggestions.spec.md) - Context-derived seed prompts, prompt-panel suggestion UI, async refresh semantics, and Codex polishing.
+- [Testing Contract](spec/agent-sessions-testing.spec.md) - Coverage ownership matrix and required contract test suites.
 
 ## Test All
 
@@ -70,3 +90,22 @@ Run all Agent Workbench tests with:
 ```bash
 ./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.*'
 ```
+
+## Troubleshooting Codex + ijproxy Launch
+
+When diagnosing a Codex thread started from `Cmd+\` or `Ctrl+\` that falls back to shell tools instead of `ijproxy`, collect a fresh `idea.log` from IDE startup through one repro and enable these categories in `Help | Diagnostic Tools | Debug Log Settings`:
+
+- `#com.intellij.agent.workbench.sessions.launch.config.backend.AgentWorkbenchProjectLaunchConfigLogCategory` for `.agent-workbench.yaml` discovery, parsed config summaries, shim preparation, and provider launch augmentation.
+- `#com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService` for sanitized new-thread launch handoff summaries.
+- `#com.intellij.agent.workbench.codex.common.CodexAppServerClient` for Codex app-server startup summaries and forwarded stderr.
+- `#com.intellij.mcpserver.impl.McpServerService:trace` for IDE MCP server and session startup.
+- `#com.intellij.mcpserver.impl.McpSessionHandler:trace` for MCP tool list updates and actual tool calls.
+- Optional: `#com.intellij.mcpserver.impl.util.network.RoutingContext:trace` for stdio and session transport issues.
+- Optional: `#com.intellij.mcpserver.ToolCallListener:trace` for extra per-tool activity.
+- Optional: `#com.intellij.mcpserver.impl.ReflectionToolsProvider` for MCP tool discovery and loading issues.
+
+Interpret the logs like this:
+
+- If the launch-config category never reports a resolved config for `codex`, agent-workbench did not apply `.agent-workbench.yaml` augmentation.
+- If the launch-config logs look correct but `CodexAppServerClient` shows startup or stderr failures, the problem is before MCP tool calls.
+- If `McpSessionHandler` shows session traffic and tool calls, `ijproxy` was available and shell-only behavior is model-side rather than missing transport.

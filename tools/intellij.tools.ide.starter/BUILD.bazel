@@ -33,22 +33,66 @@ jvm_library(
     "//platform/eel",
     "@lib//:gradle",
     "@lib//:kodein-di-jvm",
-    "@lib//:tools-ide-starter-rauschig-jarchivelib",
     "@lib//:qodana-sarif",
     "//platform/lang-impl",
     "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands",
     "@lib//:jetbrains-annotations",
     "@lib//:tools-ide-starter-github-stephenc-monte-screen-recorder",
     "@lib//:io-qameta-allure-java-commons",
+    "//platform/testFramework/common",
     "//tools/intellij.tools.ide.util.common:ide-util-common",
     "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
     "@lib//:opentelemetry",
     "@lib//:github-oshi-core",
     "//platform/runtime/repository",
+    "//libraries/commons/compress",
+    "//libraries/commons/io",
+    "//platform/platform-util-io:ide-util-io",
   ],
   exports = [
     "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands",
     "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
   ]
 )
+
+jvm_library(
+  name = "ide-starter_test_lib",
+  module_name = "intellij.tools.ide.starter",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_ide-starter",
+  exports = [
+    "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands",
+    "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands_test_lib",
+    "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
+    "//plugins/performanceTesting/event-bus:tools-ide-starter-bus_test_lib",
+  ],
+  runtime_deps = [
+    ":ide-starter",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+    "//libraries/http-client:http-client_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/eel:eel_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands_test_lib",
+    "//platform/testFramework/common:common_test_lib",
+    "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
+    "//plugins/performanceTesting/event-bus:tools-ide-starter-bus_test_lib",
+    "//platform/runtime/repository:repository_test_lib",
+    "//libraries/commons/compress:compress_test_lib",
+    "//libraries/commons/io:io_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.tools.ide.starter` end
+
+### auto-generated section `iml intellij.tools.ide.starter` start
+exports_files([
+  "intellij.tools.ide.starter.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.tools.ide.starter` end

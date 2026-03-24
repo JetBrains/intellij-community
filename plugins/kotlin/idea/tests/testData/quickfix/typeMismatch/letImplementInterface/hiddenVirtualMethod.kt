@@ -1,4 +1,5 @@
 // "Let 'C' implement interface 'I'" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'C', but 'I' was expected.
 
 class C {
     fun exampleMethod() {

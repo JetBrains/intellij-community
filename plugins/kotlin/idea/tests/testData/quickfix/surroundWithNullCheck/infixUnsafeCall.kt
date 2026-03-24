@@ -1,4 +1,5 @@
 // "Surround with null check" "true"
+// K2_ERROR: Infix call is prohibited on a nullable receiver of type 'Int?'. Use '?.'-qualified call instead.
 
 infix fun Int.op(arg: Int) = this
 

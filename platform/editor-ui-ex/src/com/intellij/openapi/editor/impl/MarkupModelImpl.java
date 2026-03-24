@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -11,6 +12,7 @@ import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.impl.elf.ElfTheManager;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -39,12 +41,18 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   private volatile RangeHighlighter[] myCachedHighlighters;
   private final List<MarkupModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final RangeHighlighterTree myHighlighterTree;          // this tree holds regular highlighters with target = HighlighterTargetArea.EXACT_RANGE
-  private final RangeHighlighterTree myHighlighterTreeForLines;  // this tree holds line range highlighters with target = HighlighterTargetArea.LINES_IN_RANGE
+  /**
+   * this tree holds line range highlighters with {@link RangeHighlighter#getTargetArea()} = {@link HighlighterTargetArea#EXACT_RANGE}
+   */
+  private final RangeHighlighterTree myHighlighterTree;
+  /**
+   * this tree holds line range highlighters with {@link RangeHighlighter#getTargetArea()} = {@link HighlighterTargetArea#LINES_IN_RANGE}
+   */
+  private final RangeHighlighterTree myHighlighterTreeForLines;
 
   @ApiStatus.Internal
   protected MarkupModelImpl(@NotNull DocumentEx document) {
-    myDocument = document;
+    myDocument = getLockFreeDocumentIfEnabled(document);
     myHighlighterTree = new RangeHighlighterTree(this);
     myHighlighterTreeForLines = new RangeHighlighterTree(this);
   }
@@ -108,7 +116,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
     PersistentRangeHighlighterImpl highlighter = PersistentRangeHighlighterImpl.create(
       this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, textAttributesKey, false);
-    addRangeHighlighter(highlighter, changeAction);
+    changeAttributes(highlighter, changeAction);
     return highlighter;
   }
 
@@ -142,11 +150,11 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     RangeHighlighterImpl highlighter = isPersistent ?
       PersistentRangeHighlighterImpl.create(this, startOffset, layer, targetArea, textAttributesKey, true)
       : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributesKey, false, false);
-    addRangeHighlighter(highlighter, changeAttributesAction);
+    changeAttributes(highlighter, changeAttributesAction);
     return highlighter;
   }
 
-  private void addRangeHighlighter(@NotNull RangeHighlighterImpl highlighter, @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+  private void changeAttributes(@NotNull RangeHighlighterImpl highlighter, @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     myCachedHighlighters = null;
     if (changeAttributesAction != null) {
       highlighter.changeAttributesNoEvents(changeAttributesAction);
@@ -176,7 +184,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   @NotNull
-  RangeHighlighterTree treeFor(@NotNull RangeHighlighter highlighter) {
+  private RangeHighlighterTree treeFor(@NotNull RangeHighlighter highlighter) {
     return highlighter.getTargetArea() == HighlighterTargetArea.EXACT_RANGE ? myHighlighterTree : myHighlighterTreeForLines;
   }
 
@@ -203,7 +211,11 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @Override
   public void removeHighlighter(@NotNull RangeHighlighter highlighter) {
     myCachedHighlighters = null;
-    treeFor(highlighter).removeInterval((RangeHighlighterEx)highlighter);
+    boolean removed = treeFor(highlighter).removeInterval((RangeHighlighterEx)highlighter);
+    if (!removed && LOG.isDebugEnabled()) {
+      LOG.debug("MMI.removeInterval=false: "+highlighter);
+    }
+    myCachedHighlighters = null;
   }
 
   @Override
@@ -333,5 +345,15 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     int lineStartOffset = startOffset <= 0 ? 0 : startOffset > textLength ? textLength : document.getLineStartOffset(document.getLineNumber(startOffset));
     int lineEndOffset = endOffset <= 0 ? 0 : endOffset >= textLength ? textLength : document.getLineEndOffset(document.getLineNumber(endOffset));
     return new ProperTextRange(lineStartOffset, lineEndOffset);
+  }
+
+  private static @NotNull DocumentEx getLockFreeDocumentIfEnabled(@NotNull DocumentEx realDocument) {
+    if (EditorLockFreeTyping.isEnabled()) {
+      DocumentImpl elfDocument = ElfTheManager.getInstance().getElfDocument(realDocument);
+      if (elfDocument != null) {
+        return elfDocument;
+      }
+    }
+    return realDocument;
   }
 }

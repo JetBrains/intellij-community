@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
@@ -38,6 +38,11 @@ open class CoroutineInfoData(
 
     var job: String? = null
 
+    var jobId: Long? = null
+
+    var parentJobId: Long? = null
+
+    @Deprecated("Do not use parentJob String as an id to group coroutines, use parentJobId instead.")
     var parentJob: String? = null
 
     // NOTE: dispatchers may have a custom String representation, see IDEA-371498
@@ -51,8 +56,15 @@ open class CoroutineInfoData(
         "[${this.dispatcher}${if (job == null) "" else ", $job"}]"
     }
 
+    internal val runningThread: String? by lazy {
+        if (!isRunning) {
+            return@lazy null
+        }
+        lastObservedThread?.name()?.substringBefore(" @${this.name}") ?: UNKNOWN_THREAD
+    }
+
     val coroutineDescriptor: String by lazy {
-        "\"${this.name}:$id\" $state ${if (isRunning) "on thread ${lastObservedThread?.name() ?: UNKNOWN_THREAD }" else "" } $contextSummary"
+        "\"${this.name}:$id\" $state ${runningThread?.let { "on thread $it" } ?: "" } $contextSummary"
     }
 
     private val coroutineStackFrames: CoroutineStacksInfoData? by lazy {
@@ -118,6 +130,7 @@ enum class State(val state: String) {
     }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Please use CoroutineInfoData API instead.")
 class CompleteCoroutineInfoData(
     descriptor: CoroutineDescriptor,

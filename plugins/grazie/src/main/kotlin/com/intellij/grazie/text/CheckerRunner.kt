@@ -2,8 +2,6 @@
 
 package com.intellij.grazie.text
 
-import ai.grazie.nlp.tokenizer.Tokenizer
-import ai.grazie.nlp.tokenizer.sentence.StandardSentenceTokenizer
 import ai.grazie.utils.toLinkedSet
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName
 import com.intellij.codeInspection.LocalQuickFix
@@ -23,8 +21,10 @@ import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuic
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieYtReportAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
+import com.intellij.grazie.rule.SentenceTokenizer
 import com.intellij.grazie.spellcheck.TypoProblem
 import com.intellij.grazie.text.TextChecker.ProofreadingContext
+import com.intellij.grazie.text.TextContent.TextDomain
 import com.intellij.grazie.utils.NaturalTextDetector.seemsNatural
 import com.intellij.grazie.utils.getTextDomain
 import com.intellij.grazie.utils.isGrammar
@@ -32,13 +32,12 @@ import com.intellij.grazie.utils.isSpelling
 import com.intellij.grazie.utils.toProofreadingContext
 import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
@@ -50,79 +49,19 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CancellationException
 
 private val LOG = Logger.getInstance(CheckerRunner::class.java)
 
 class CheckerRunner(val text: TextContent) {
-  private val tokenizer
-    get() = StandardSentenceTokenizer.Default
-
-  private val sentences by lazy { tokenize(text) }
-
-  private fun tokenize(text: TextContent): List<Tokenizer.Token> {
-    val sequence = object : BombedCharSequence(text.toString()) {
-      override fun checkCanceled() {
-        ProgressManager.checkCanceled()
-      }
-    }
-    val ranges = tokenizer.tokenRanges(sequence)
-    return ranges.map { Tokenizer.Token(text.substring(it.start, it.endExclusive), it.start..it.endExclusive) }
-  }
-
-  fun run(): List<TextProblem> = run(TextChecker.allCheckers(), TextContent.TextDomain.ALL)
-
-  fun run(allCheckers: List<TextChecker>, checkedDomains: Set<TextContent.TextDomain>): List<TextProblem> {
-    if (text.isBlank() || allCheckers.isEmpty()) return emptyList()
-    val checkers = if (text.domain in checkedDomains && seemsNatural(text)) allCheckers else allCheckers.filterNot { it.isGrammar() }
-    val languageDetectionRequired = checkers.any { it.isGrammar() } || checkers.any { it.isSpelling() } && seemsCloudConnected()
-    return filter(doRun(checkers, text.toProofreadingContext(languageDetectionRequired)))
-  }
-
   @Suppress("unused")
   @Deprecated("This method is deprecated and does nothing. Use run() instead.")
   @ApiStatus.ScheduledForRemoval
   fun run(checkers: List<TextChecker>, consumer: (List<TextProblem>) -> Unit) {
     // No-op implementation to prevent NoSuchMethodError
   }
-
-  /**
-   * We want for the CPU-bound checkers to all happen on the same thread
-   * because other threads are all needed by other inspections during highlighting.
-   * But we also want for external checkers to make their network requests in parallel.
-   *
-   * So we split the checkers into coroutines but dispatch them on the same thread sequentially.
-   * We schedule the external checkers to start as soon as possible
-   * to allow them to make the requests and suspend, giving up the thread to others.
-   * Then we explicitly start the non-external checkers to do their work, probably CPU-bound.
-   * We periodically yield to allow the external checkers to process their network responses (if any) and possibly suspend further.
-   *
-   * In the end, we still collect the results in the checker registration order
-   * so that problems from the first checkers can override intersecting problems from others.
-   */
-  private fun doRun(checkers: List<TextChecker>, context: ProofreadingContext): Collection<TextProblem> {
-    return runBlockingCancellable {
-      val deferred = checkers.map { checker ->
-        when (checker) {
-          is ExternalTextChecker -> async { checker.checkExternally(context) }
-          else -> async(start = CoroutineStart.LAZY) { checker.check(context) }
-        }
-      }
-      for (job in deferred) {
-        yield() // let all pending external checker jobs complete what they're ready to do and possibly suspend further
-        job.start()
-      }
-      deferred.awaitAll().flatten()
-    }
-  }
-
-  private fun filter(problems: Collection<TextProblem>): List<TextProblem> =
-    TextProblemAggregator.aggregate(text.toString(), problems.filterNot { shouldBeIgnored(it) })
-
-  private fun shouldBeIgnored(problem: TextProblem): Boolean =
-    isSuppressed(problem) ||
-    hasIgnoredCategory(problem) ||
-    isIgnoredByStrategies(problem) ||
-    ProblemFilter.allIgnoringFilters(problem).findAny().isPresent
+  fun run(): List<TextProblem> = run(TextChecker.allCheckers(), TextDomain.ALL)
+  fun run(allCheckers: List<TextChecker>, checkedDomains: Set<TextDomain>): List<TextProblem> = run(allCheckers, text, checkedDomains)
 
   fun toProblemDescriptors(problem: TextProblem, isOnTheFly: Boolean): List<ProblemDescriptor> {
     val parent = problem.text.commonParent
@@ -157,68 +96,9 @@ class CheckerRunner(val text: TextContent) {
     override fun getFixes(): Array<LocalQuickFix> = quickFixes
   }
 
-  private fun isIgnoredByStrategies(descriptor: TextProblem): Boolean {
-    if (descriptor is TypoProblem) return false
-    for (root in text.findPsiElementAt(0).parents(withSelf = true)) {
-      for (strategy in LanguageGrammarChecking.allForLanguage(root.language)) {
-        if (strategy.isMyContextRoot(root)) {
-          val errorRange = text.textRangeToFile(highlightSpan(descriptor)).shiftLeft(root.startOffset)
-          val patternRange = text.textRangeToFile(descriptor.patternRange ?: highlightSpan(descriptor)).shiftLeft(root.startOffset)
-          val typoRange = errorRange.startOffset until errorRange.endOffset
-          val ruleRange = patternRange.startOffset until patternRange.endOffset
-          if (!strategy.isTypoAccepted(text.commonParent, strategy.getRootsChain(root), typoRange, ruleRange) ||
-              !strategy.isTypoAccepted(root, typoRange, ruleRange)) {
-            return true
-          }
-        }
-      }
-    }
-    return false
-  }
-
-  private fun hasIgnoredCategory(problem: TextProblem): Boolean {
-    if (problem is TypoProblem) return false
-    val ignored = ignoredRules(problem)
-    return ignored.rules.isNotEmpty() && problem.fitsGroup(ignored)
-  }
-
-  private fun ignoredRules(descriptor: TextProblem): RuleGroup {
-    val leaves = descriptor.highlightRanges.asSequence()
-      .flatMap { it.startOffset until it.endOffset }
-      .map { text.findPsiElementAt(it) }
-      .toLinkedSet()
-    val ignored = LinkedHashSet<String>()
-    for (leaf in leaves) {
-      for (root in leaf.parents(withSelf = true)) {
-        for (strategy in LanguageGrammarChecking.allForLanguage(root.language)) {
-          for (child in leaf.parents(withSelf = true)) {
-            val group = strategy.getIgnoredRuleGroup(root, child)
-            if (group != null) ignored.addAll(group.rules)
-            if (child == root) break
-          }
-        }
-      }
-    }
-    return RuleGroup(ignored)
-  }
-
-  private fun isSuppressed(problem: TextProblem): Boolean {
-    if (problem is TypoProblem) return false
-    val sentence = findSentence(problem)
-    if (defaultSuppressionPattern(problem, sentence).isSuppressed()) {
-      return true
-    }
-
-    val patternRange = problem.patternRange
-    val errorText = highlightSpan(problem).subSequence(text)
-    return patternRange != null && sentence != null && SuppressionPattern(errorText, sentence).isSuppressed()
-  }
-
   // used in rider
   @ApiStatus.Experimental
-  fun findSentence(problem: TextProblem): String? {
-    return sentences.find { sentence -> problem.highlightRanges.any { range -> range.intersectsStrict(sentence.range.first, sentence.range.last) } }?.token
-  }
+  fun findSentence(problem: TextProblem): String? = CheckerRunner.findSentence(problem)
 
   fun toFixes(problem: TextProblem, descriptor: ProblemDescriptor): Array<LocalQuickFix> {
     val file = text.containingFile
@@ -251,17 +131,8 @@ class CheckerRunner(val text: TextContent) {
 
   // used in rider
   @ApiStatus.Experimental
-  fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): SuppressionPattern {
-    val text = problem.text
-    val patternRange = problem.patternRange
-    if (patternRange != null) {
-      return SuppressionPattern(patternRange.subSequence(text), null)
-    }
-    return SuppressionPattern(highlightSpan(problem).subSequence(text), sentenceText)
-  }
-
-  private fun highlightSpan(problem: TextProblem) =
-    TextRange(problem.highlightRanges[0].startOffset, problem.highlightRanges.last().endOffset)
+  fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): SuppressionPattern =
+    CheckerRunner.defaultSuppressionPattern(problem, sentenceText)
 
   companion object {
     @JvmStatic
@@ -273,6 +144,166 @@ class CheckerRunner(val text: TextContent) {
         .filterNot { it.isEmpty }
         .toList()
     }
+
+    fun checkText(allCheckers: List<TextChecker>, texts: List<TextContent>, checkedDomains: Set<TextDomain>): List<TextProblem> {
+      if (allCheckers.isEmpty() || texts.isEmpty() || texts.all { it.isBlank() }) return emptyList()
+      val checkers = if (texts.all { it.domain !in checkedDomains }) allCheckers.filter { it.isSpelling() } else allCheckers
+      return doRun(checkers, texts.toProofreadingContext(isLanguageDetectionRequired(checkers)))
+        .filterNot { shouldBeIgnored(it) }
+    }
+
+    private fun run(allCheckers: List<TextChecker>, text: TextContent, checkedDomains: Set<TextDomain>): List<TextProblem> {
+      if (text.isBlank() || allCheckers.isEmpty()) return emptyList()
+      val checkers = if (text.domain in checkedDomains && seemsNatural(text)) allCheckers else allCheckers.filterNot { it.isGrammar() }
+      return doRun(checkers, text.toProofreadingContext(isLanguageDetectionRequired(checkers)))
+        .filterNot { shouldBeIgnored(it) }
+    }
+
+    private fun doRun(checkers: List<TextChecker>, context: ProofreadingContext): Collection<TextProblem> =
+      doRun(
+        checkers = checkers,
+        input = context,
+        runLocal = { checker, value -> checker.check(value) },
+        runExternal = { checker, value -> checker.checkExternally(value) },
+      )
+
+    private fun doRun(checkers: List<TextChecker>, contexts: List<ProofreadingContext>): Collection<TextProblem> =
+      doRun(
+        checkers = checkers,
+        input = contexts,
+        runLocal = { checker, value -> checker.check(value) },
+        runExternal = { checker, value -> checker.checkExternally(value) },
+      )
+
+    /**
+     * We want for the CPU-bound checkers to all happen on the same thread
+     * because other threads are all needed by other inspections during highlighting.
+     * But we also want for external checkers to make their network requests in parallel.
+     *
+     * So we split the checkers into coroutines but dispatch them on the same thread sequentially.
+     * We schedule the external checkers to start as soon as possible
+     * to allow them to make the requests and suspend, giving up the thread to others.
+     * Then we explicitly start the non-external checkers to do their work, probably CPU-bound.
+     * We periodically yield to allow the external checkers to process their network responses (if any) and possibly suspend further.
+     *
+     * In the end, we still collect the results in the checker registration order
+     * so that problems from the first checkers can override intersecting problems from others.
+     */
+    private fun <T> doRun(
+      checkers: List<TextChecker>, input: T,
+      runLocal: (TextChecker, T) -> Collection<TextProblem>,
+      runExternal: suspend (ExternalTextChecker, T) -> Collection<TextProblem>,
+    ): Collection<TextProblem> {
+      // Spelling text checker optimization
+      // To get rid of expensive cancellable overhead,
+      // in case if cloud checking is disabled
+      if (checkers.size == 1 && checkers.first().isSpelling()) {
+        val checker = checkers.first()
+        return catching {
+          if (seemsCloudConnected()) {
+            runBlockingCancellable {
+              runExternal(checker as ExternalTextChecker, input)
+            }
+          }
+          else {
+            runLocal(checker, input)
+          }
+        } ?: emptyList()
+      }
+
+      return runBlockingCancellable {
+        val deferred = checkers.map { checker ->
+          when (checker) {
+            is ExternalTextChecker -> async { catching { runExternal(checker, input) } ?: emptyList() }
+            else -> async(start = CoroutineStart.LAZY) { catching { runLocal(checker, input) } ?: emptyList() }
+          }
+        }
+        for (job in deferred) {
+          yield() // let all pending external checker jobs complete what they're ready to do and possibly suspend further
+          job.start()
+        }
+        deferred.awaitAll().flatten()
+      }
+    }
+
+    private fun shouldBeIgnored(problem: TextProblem): Boolean =
+      isSuppressed(problem) ||
+      hasIgnoredCategory(problem) ||
+      isIgnoredByStrategies(problem) ||
+      ProblemFilter.allIgnoringFilters(problem).findAny().isPresent
+
+    private fun isSuppressed(problem: TextProblem): Boolean {
+      if (problem is TypoProblem) return false
+      val sentence = findSentence(problem)
+      if (defaultSuppressionPattern(problem, sentence).isSuppressed()) {
+        return true
+      }
+
+      val patternRange = problem.patternRange
+      val errorText = highlightSpan(problem).subSequence(problem.text)
+      return patternRange != null && sentence != null && SuppressionPattern(errorText, sentence).isSuppressed()
+    }
+
+    private fun isIgnoredByStrategies(descriptor: TextProblem): Boolean {
+      if (descriptor is TypoProblem) return false
+      for (root in descriptor.text.findPsiElementAt(0).parents(withSelf = true)) {
+        for (strategy in LanguageGrammarChecking.allForLanguage(root.language)) {
+          if (strategy.isMyContextRoot(root)) {
+            val errorRange = descriptor.text.textRangeToFile(highlightSpan(descriptor)).shiftLeft(root.startOffset)
+            val patternRange = descriptor.text.textRangeToFile(descriptor.patternRange ?: highlightSpan(descriptor)).shiftLeft(root.startOffset)
+            val typoRange = errorRange.startOffset until errorRange.endOffset
+            val ruleRange = patternRange.startOffset until patternRange.endOffset
+            if (!strategy.isTypoAccepted(descriptor.text.commonParent, strategy.getRootsChain(root), typoRange, ruleRange) ||
+                !strategy.isTypoAccepted(root, typoRange, ruleRange)) {
+              return true
+            }
+          }
+        }
+      }
+      return false
+    }
+
+    private fun highlightSpan(problem: TextProblem) =
+      TextRange(problem.highlightRanges[0].startOffset, problem.highlightRanges.last().endOffset)
+
+    private fun hasIgnoredCategory(problem: TextProblem): Boolean {
+      if (problem is TypoProblem) return false
+      val ignored = ignoredRules(problem)
+      return ignored.rules.isNotEmpty() && problem.fitsGroup(ignored)
+    }
+
+    private fun ignoredRules(descriptor: TextProblem): RuleGroup {
+      val leaves = descriptor.highlightRanges.asSequence()
+        .flatMap { it.startOffset until it.endOffset }
+        .map { descriptor.text.findPsiElementAt(it) }
+        .toLinkedSet()
+      val ignored = LinkedHashSet<String>()
+      for (leaf in leaves) {
+        for (root in leaf.parents(withSelf = true)) {
+          for (strategy in LanguageGrammarChecking.allForLanguage(root.language)) {
+            for (child in leaf.parents(withSelf = true)) {
+              val group = strategy.getIgnoredRuleGroup(root, child)
+              if (group != null) ignored.addAll(group.rules)
+              if (child == root) break
+            }
+          }
+        }
+      }
+      return RuleGroup(ignored)
+    }
+
+    private fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): SuppressionPattern {
+      val text = problem.text
+      val patternRange = problem.patternRange
+      if (patternRange != null) {
+        return SuppressionPattern(patternRange.subSequence(text), null)
+      }
+      return SuppressionPattern(highlightSpan(problem).subSequence(text), sentenceText)
+    }
+
+    private fun findSentence(problem: TextProblem): String? =
+      SentenceTokenizer.toTokens(problem.text)
+        .find { sentence -> problem.highlightRanges.any { range -> range.intersectsStrict(sentence.range.first, sentence.range.last) } }?.token
 
     private fun getShortName(problem: TextProblem): String =
       if (problem.isStyleLike) GrazieInspection.STYLE_INSPECTION
@@ -288,6 +319,19 @@ class CheckerRunner(val text: TextContent) {
                     "(${psi.textRange.startOffset}, ${psi.textRange.endOffset}) length ($psiTextLength). " +
                     "PSI language: ${psi.language.id}, TextContent.fileRanges: ${problem.text.rangesInFile}")
         }
+      }
+    }
+
+    private fun isLanguageDetectionRequired(checkers: List<TextChecker>): Boolean =
+      checkers.any { it.isGrammar() } || checkers.any { it.isSpelling() } && seemsCloudConnected()
+
+    private inline fun <T> catching(function: () -> T): T? {
+      try {
+        return function()
+      } catch (e: Throwable) {
+        if (e is CancellationException) throw e
+        thisLogger().error(e)
+        return null
       }
     }
   }

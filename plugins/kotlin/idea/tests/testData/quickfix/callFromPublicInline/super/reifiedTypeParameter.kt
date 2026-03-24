@@ -4,6 +4,7 @@
 // ACTION: Make 'bar' internal
 // ACTION: Make 'bar' private
 // ACTION: Remove braces from all 'if' statements
+// K2_ERROR: Accessing super members from public-API inline function is deprecated.
 // K2_AFTER_ERROR: Accessing super members from public-API inline function is deprecated.
 // WITH_STDLIB
 open class Base {

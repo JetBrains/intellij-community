@@ -6,4 +6,3 @@ fun foo(): C {
 
 // ELEMENT: C
 // CHAR: \t
-// IGNORE_K2

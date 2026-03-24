@@ -28,28 +28,86 @@ jvm_library(
 
 jvm_library(
   name = "plugin-graph_test_lib",
+  module_name = "intellij.platform.pluginGraph",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_plugin-graph",
-  associates = [":plugin-graph"],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlinx/serialization/core",
+  runtime_deps = [
+    ":plugin-graph",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
     "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
     "//libraries/assertj-core",
-    "//libraries/kotlinx/serialization/json",
-    "//libraries/androidx-collections",
-    "//platform/pluginSystem/parser/impl",
+    "//libraries/assertj-core:assertj-core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//libraries/androidx-collections:androidx-collections_test_lib",
     "//platform/pluginSystem/parser/impl:impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.pluginGraph` end
 
-### auto-generated section `test intellij.platform.pluginGraph` start
+### auto-generated section `iml intellij.platform.pluginGraph` start
+exports_files([
+  "intellij.platform.pluginGraph.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.pluginGraph` end
+
+### auto-generated section `build intellij.platform.pluginGraph.tests` start
+create_kotlinc_options(
+  name = "custom_pluginGraph-tests",
+  opt_in = [
+    "kotlin.RequiresOptIn",
+    "kotlinx.serialization.ExperimentalSerializationApi",
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+  ]
+)
+
+jvm_library(
+  name = "pluginGraph-tests",
+  module_name = "intellij.platform.pluginGraph.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "pluginGraph-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_pluginGraph-tests",
+  associates = [
+    "//platform/build-scripts/product-dsl/plugin-graph",
+    "//platform/build-scripts/product-dsl/plugin-graph:plugin-graph_test_lib",
+  ],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/junit5",
+    "//libraries/junit5:junit5_test_lib",
+    "//libraries/assertj-core",
+    "//libraries/assertj-core:assertj-core_test_lib",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//libraries/androidx-collections",
+    "//libraries/androidx-collections:androidx-collections_test_lib",
+    "//platform/pluginSystem/parser/impl",
+    "//platform/pluginSystem/parser/impl:impl_test_lib",
+  ],
+  runtime_deps = [":pluginGraph-tests"]
+)
+### auto-generated section `build intellij.platform.pluginGraph.tests` end
+
+### auto-generated section `iml intellij.platform.pluginGraph.tests` start
+exports_files([
+  "intellij.platform.pluginGraph.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.pluginGraph.tests` end
+
+### auto-generated section `test intellij.platform.pluginGraph.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "plugin-graph_test",
-  runtime_deps = [":plugin-graph_test_lib"]
+  name = "pluginGraph-tests_test",
+  runtime_deps = [":pluginGraph-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.pluginGraph` end
+### auto-generated section `test intellij.platform.pluginGraph.tests` end

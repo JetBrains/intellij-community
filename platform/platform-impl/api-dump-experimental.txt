@@ -348,6 +348,13 @@ a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - f:withUsePreviewTab(Z):com.intellij.openapi.fileEditor.ex.FileEditorOpenRequest
 a:com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 - *a:reallyExcludeCurrentCommandAsNavigation():V
+f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
+- com.intellij.openapi.fileEditor.FileEditorProvider
+- com.intellij.openapi.project.DumbAware
+- *sf:openEditorWithoutBlocking(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request):V
+f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Companion
+- *f:openEditorAsync(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request,kotlin.coroutines.Continuation):java.lang.Object
+- *f:openEditorWithoutBlocking(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request):V
 *:com.intellij.openapi.options.ex.MutableConfigurableGroup
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.options.ConfigurableGroup
@@ -378,6 +385,17 @@ f:com.intellij.openapi.project.impl.P3SupportKt
 *f:com.intellij.openapi.updateSettings.PluginUpdateInfo$UpdateAvailable
 - com.intellij.openapi.updateSettings.PluginUpdateInfo
 - f:getUpdate():com.intellij.openapi.updateSettings.impl.PluginDownloader
+*f:com.intellij.openapi.util.io.CancellableComputation
+- java.util.function.Function
+- *sf:Companion:com.intellij.openapi.util.io.CancellableComputation$Companion
+- apply(java.lang.Object):java.lang.Object
+- sf:computeCancellable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- sf:wrapAsCancellable(java.util.function.Function):java.util.function.Function
+*f:com.intellij.openapi.util.io.CancellableComputation$Companion
+- f:computeCancellable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- f:wrapAsCancellable(java.util.function.Function):java.util.function.Function
+*f:com.intellij.openapi.util.io.CancellableComputationKt
+- *sf:wrapCancellable(kotlin.jvm.functions.Function2):kotlin.jvm.functions.Function2
 a:com.intellij.openapi.wm.impl.FrameTitleBuilder
 - *:getFileTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.wm.impl.IdeBackgroundUtil
@@ -541,8 +559,6 @@ f:com.intellij.ui.dsl.builder.components.ValidationTooltipKt
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.components.ValidationType
 - s:values():com.intellij.ui.dsl.builder.components.ValidationType[]
-f:com.intellij.ui.render.RenderersKt
-- *sf:fontInfoRenderer(Z):javax.swing.ListCellRenderer
 *f:com.intellij.util.ui.RestartDialogImpl
 - *sf:Companion:com.intellij.util.ui.RestartDialogImpl$Companion
 - <init>():V

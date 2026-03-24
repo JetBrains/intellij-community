@@ -132,3 +132,28 @@ class GridLayout : LayoutManager2 {
     return _rootGrid.getSizeConstrainsData(parent.insets, respectMinimumSize)
   }
 }
+
+@ApiStatus.Internal
+fun JComponent.setVisualPadding(visualPaddings: UnscaledGaps) {
+  val parent = parent
+  if (parent == null) {
+    UiDslException.error("Parent is null: $this")
+    return
+  }
+
+  val layout = parent.layout as? GridLayout
+  if (layout == null) {
+    UiDslException.error("GridLayout was expected, found: ${parent.layout}")
+    return
+  }
+
+  val constraints = layout.getConstraints(this)
+  if (constraints == null) {
+    UiDslException.error("Component is not found in the layout: $this")
+    return
+  }
+
+  constraints.visualPaddings = visualPaddings
+  parent.revalidate()
+  parent.repaint()
+}

@@ -11,6 +11,8 @@ import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
+import com.intellij.platform.eel.fs.EelFileSystemPosixApi.CreateSymbolicLinkError
+import com.intellij.platform.eel.fs.EelFileSystemPosixApi.SymbolicLinkTarget
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
@@ -107,6 +109,14 @@ interface EelFileSystemApi {
     interface PermissionDenied : ListDirectoryError, EelFsError.PermissionDenied
     interface NotDirectory : ListDirectoryError, EelFsError.NotDirectory
     interface Other : ListDirectoryError, EelFsError.Other
+  }
+
+  sealed interface CreateDirectoryError : EelFsError {
+    interface DirAlreadyExists : CreateDirectoryError, EelFsError.AlreadyExists
+    interface FileAlreadyExists : CreateDirectoryError, EelFsError.AlreadyExists
+    interface ParentNotFound : CreateDirectoryError, EelFsError.DoesNotExist
+    interface PermissionDenied : CreateDirectoryError, EelFsError.PermissionDenied
+    interface Other : CreateDirectoryError, EelFsError.Other
   }
 
   /**
@@ -660,6 +670,7 @@ interface EelFileSystemApi {
     val modificationTime: TimeSinceEpoch? get() = null
     val permissions: EelFileInfo.Permissions? get() = null
 
+    @Deprecated("Use generated builder instead")
     interface Builder {
       fun permissions(permissions: EelFileInfo.Permissions): Builder
       fun modificationTime(duration: TimeSinceEpoch): Builder
@@ -669,6 +680,7 @@ interface EelFileSystemApi {
     }
 
     companion object {
+      @Deprecated("Use generated builder instead")
       fun Builder(): Builder = ChangeAttributesOptionsImpl2()
     }
   }
@@ -1025,15 +1037,7 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
   }
 
   @CheckReturnValue
-  suspend fun createDirectory(path: EelPath, attributes: List<CreateDirAttributePosix>): EelResult<Unit, CreateDirectoryError>
-
-  sealed interface CreateDirectoryError : EelFsError {
-    interface DirAlreadyExists : CreateDirectoryError, EelFsError.AlreadyExists
-    interface FileAlreadyExists : CreateDirectoryError, EelFsError.AlreadyExists
-    interface ParentNotFound : CreateDirectoryError, EelFsError.DoesNotExist
-    interface PermissionDenied : CreateDirectoryError, EelFsError.PermissionDenied
-    interface Other : CreateDirectoryError, EelFsError.Other
-  }
+  suspend fun createDirectory(path: EelPath, attributes: List<CreateDirAttributePosix>): EelResult<Unit, EelFileSystemApi.CreateDirectoryError>
 
   @Deprecated("Use the method with the builder")
   @CheckReturnValue
@@ -1161,6 +1165,9 @@ interface EelFileSystemWindowsApi : EelFileSystemApi {
 
   suspend fun getRootDirectories(): Collection<EelPath>
 
+  @CheckReturnValue
+  suspend fun createDirectory(path: EelPath): EelResult<Unit, EelFileSystemApi.CreateDirectoryError>
+
   @Deprecated("Use the method with the builder")
   @CheckReturnValue
   override suspend fun listDirectoryWithAttrs(
@@ -1185,6 +1192,9 @@ interface EelFileSystemWindowsApi : EelFileSystemApi {
   @CheckReturnValue
   override suspend fun stat(@GeneratedBuilder args: EelFileSystemApi.StatArgs): EelResult<EelWindowsFileInfo, StatError> =
     stat(path = args.path, symlinkPolicy = args.symlinkPolicy)
+
+  @CheckReturnValue
+  suspend fun createSymbolicLink(target: SymbolicLinkTarget, linkPath: EelPath): EelResult<Unit, CreateSymbolicLinkError>
 }
 
 @CheckReturnValue

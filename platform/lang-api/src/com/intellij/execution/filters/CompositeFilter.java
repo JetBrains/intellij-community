@@ -99,6 +99,10 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
       ResultItem resultItem = resultItems.get(0);
       return new Result(resultItem.getHighlightStartOffset(), resultItem.getHighlightEndOffset(), resultItem.getHyperlinkInfo(),
                         resultItem.getHighlightAttributes(), resultItem.getFollowedHyperlinkAttributes(), resultItem.getHoveredHyperlinkAttributes()) {
+        {
+          setInvisibleLink(resultItem.isInvisibleLink());
+        }
+
         @Override
         public int getHighlighterLayer() {
           return resultItem.getHighlighterLayer();

@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   resources = [":emojipicker_resources"],
   deps = [
+    "@lib//:kotlin-stdlib",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -25,4 +26,29 @@ jvm_library(
     "//platform/util/xmlDom",
   ]
 )
+
+jvm_library(
+  name = "emojipicker_test_lib",
+  module_name = "intellij.emojipicker",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":emojipicker",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/util/xmlDom:xmlDom_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.emojipicker` end
+
+### auto-generated section `iml intellij.emojipicker` start
+exports_files([
+  "intellij.emojipicker.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.emojipicker` end

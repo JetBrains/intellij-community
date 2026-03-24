@@ -150,10 +150,6 @@ internal open class MonolithBreakpointProxy @Deprecated("Use breakpoint.asProxy(
 
   override fun isDisposed(): Boolean = breakpoint.isDisposed
 
-  override fun updateIcon() {
-    breakpoint.updateIcon()
-  }
-
   override fun dispose() {
     breakpoint.dispose()
   }

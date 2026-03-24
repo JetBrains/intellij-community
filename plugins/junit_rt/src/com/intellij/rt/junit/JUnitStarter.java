@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.junit;
 
 import com.intellij.rt.execution.junit.RepeatCount;
@@ -15,9 +15,11 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Before rename or move
@@ -33,12 +35,9 @@ public final class JUnitStarter {
   public static final String JUNIT5_PARAMETER = "-junit5";
   public static final String JUNIT6_PARAMETER = "-junit6";
   private static final String JUNIT5_KEY = "idea.is.junit5";
+  private static final String JUNIT3_KEY = "idea.force.junit3";
 
   private static final String SOCKET = "-socket";
-  private static final String JUNIT3_RUNNER_NAME = "com.intellij.junit3.JUnit3IdeaTestRunner";
-  private static final String JUNIT4_RUNNER_NAME = "com.intellij.junit4.JUnit4IdeaTestRunner";
-  private static final String JUNIT5_RUNNER_NAME = "com.intellij.junit5.JUnit5IdeaTestRunner";
-  private static final String JUNIT6_RUNNER_NAME = "com.intellij.junit6.JUnit6IdeaTestRunner";
   private static String ourForkMode;
   private static String ourCommandFileName;
   private static String ourWorkingDirs;
@@ -51,42 +50,32 @@ public final class JUnitStarter {
     final ArrayList<String> listeners = new ArrayList<>();
     final String[] name = new String[1];
 
-    String agentName = processParameters(argList, listeners, name);
+    JUnitRunner runner = processParameters(argList, listeners, name);
 
-    if (!Arrays.asList(JUNIT5_RUNNER_NAME, JUNIT6_RUNNER_NAME).contains(agentName) && !canWorkWithJUnitVersion(System.err, agentName)) {
-      System.exit(-3);
-    }
     if (!checkVersion(args, System.err)) {
       System.exit(-3);
     }
 
     @SuppressWarnings("SSBasedInspection")
     String[] array = argList.toArray(new String[0]);
-    int exitCode = prepareStreamsAndStart(array, agentName, listeners, name[0]);
+    int exitCode = prepareStreamsAndStart(array, runner.getRunnerName(), listeners, name[0]);
     System.exit(exitCode);
   }
 
-  private static String processParameters(List<String> args, final List<? super String> listeners, String[] params) {
-    String agentName = isJUnit5Preferred() ? JUNIT5_RUNNER_NAME : JUNIT4_RUNNER_NAME;
+  private static JUnitRunner processParameters(List<String> args, final List<? super String> listeners, String[] params) {
+    JUnitRunner runner = isJUnit5Preferred() ? JUnitRunner.JUNIT5 : JUnitRunner.JUNIT4;
     List<String> result = new ArrayList<>(args.size());
     for (String arg : args) {
       if (arg.startsWith(IDE_VERSION)) {
         //ignore
       }
-      else if (arg.equals(JUNIT3_PARAMETER)) {
-        agentName = JUNIT3_RUNNER_NAME;
-      }
-      else if (arg.equals(JUNIT4_PARAMETER)) {
-        agentName = JUNIT4_RUNNER_NAME;
-      }
-      else if (arg.equals(JUNIT5_PARAMETER)) {
-        agentName = JUNIT5_RUNNER_NAME;
-      }
-      else if (arg.equals(JUNIT6_PARAMETER)) {
-        agentName = JUNIT6_RUNNER_NAME;
-      }
       else {
-        if (arg.startsWith("@name")) {
+        JUnitRunner junitRunner = JUnitRunner.of(arg);
+        if (junitRunner != null) {
+          runner = junitRunner;
+          continue;
+        }
+        else if (arg.startsWith("@name")) {
           params[0] = arg.substring("@name".length());
           continue;
         }
@@ -156,36 +145,51 @@ public final class JUnitStarter {
     }
     args.clear();
     args.addAll(result);
-    if (JUNIT3_RUNNER_NAME.equals(agentName)) {
-      try {
-        Class.forName("org.junit.runner.Computer");
-        agentName = JUNIT4_RUNNER_NAME;
-      }
-      catch (ClassNotFoundException e) {
-        return JUNIT3_RUNNER_NAME;
-      }
-    }
-
-    if (JUNIT4_RUNNER_NAME.equals(agentName)) {
-      try {
-        Class.forName("org.junit.Test");
-      }
-      catch (ClassNotFoundException e) {
-        return JUNIT3_RUNNER_NAME;
-      }
-    }
 
     try {
-      final String forceJUnit3 = System.getProperty("idea.force.junit3");
-      if (Boolean.parseBoolean(forceJUnit3)) return JUNIT3_RUNNER_NAME;
+      if (Boolean.getBoolean(JUNIT3_KEY)) {
+        return JUnitRunner.JUNIT3;
+      }
     }
-    catch (SecurityException ignored) {
+    catch (SecurityException ignore) {
     }
-    return agentName;
+
+    switch (runner) {
+      case JUNIT6:
+        if (JUnitRunner.JUNIT6.check()) return JUnitRunner.JUNIT6;
+        if (JUnitRunner.JUNIT5.check()) {
+          System.err.println("JUnit 6 cannot be used with the current test runtime classpath. Falling back to JUnit 5.");
+          System.err.println("If you expected JUnit 6, please check the test runtime dependencies.");
+          System.err.flush();
+          return JUnitRunner.JUNIT5;
+        }
+        System.err.println("!!! JUnit Platform is not available on the classpath");
+        System.err.flush();
+        System.exit(-3);
+      case JUNIT5:
+        if (JUnitRunner.JUNIT5.check()) return JUnitRunner.JUNIT5;
+        System.err.println("!!! JUnit Platform is not available on the classpath");
+        System.err.flush();
+        System.exit(-3);
+      case JUNIT4:
+      case JUNIT3:
+        if (JUnitRunner.JUNIT4.check()) {
+          return JUnitRunner.JUNIT4;
+        }
+        else {
+          return JUnitRunner.JUNIT3;
+        }
+    }
+    return runner;
   }
 
   private static boolean isJUnit5Preferred() {
-    return Boolean.parseBoolean(System.getProperty(JUNIT5_KEY));
+    try {
+      return Boolean.getBoolean(JUNIT5_KEY);
+    }
+    catch (SecurityException ignore) {
+      return false;
+    }
   }
 
   public static boolean checkVersion(String[] args, PrintStream printStream) {
@@ -201,29 +205,6 @@ public final class JUnitStarter {
       }
     }
     return false;
-  }
-
-  private static boolean canWorkWithJUnitVersion(PrintStream printStream, String agentName) {
-    try {
-      junitVersionChecks(agentName);
-    }
-    catch (Throwable e) {
-      printStream.println("!!! JUnit version 3.8 or later expected:");
-      printStream.println();
-      e.printStackTrace(printStream);
-      printStream.flush();
-      return false;
-    }
-    finally {
-      printStream.flush();
-    }
-    return true;
-  }
-
-  private static void junitVersionChecks(String agentName) throws ClassNotFoundException {
-    Class.forName("junit.framework.ComparisonFailure");
-    getAgentClass(agentName);
-    Class.forName("junit.textui.TestRunner");
   }
 
   private static int prepareStreamsAndStart(String[] args,
@@ -262,6 +243,93 @@ public final class JUnitStarter {
       writer.println(filters); //patterns
       for (String name : classNames) {
         writer.println(name);
+      }
+    }
+  }
+
+  private enum JUnitRunner {
+    JUNIT3(JUNIT3_PARAMETER, "com.intellij.junit3.JUnit3IdeaTestRunner") {
+      @Override
+      public boolean check() {
+        return true;
+      }
+    },
+    JUNIT4(JUNIT4_PARAMETER, "com.intellij.junit4.JUnit4IdeaTestRunner") {
+      @Override
+      public boolean check() {
+        try {
+          Class.forName("junit.framework.ComparisonFailure");
+          Class.forName("junit.textui.TestRunner");
+          Class.forName("org.junit.Test");
+          Class.forName(getRunnerName());
+          return true;
+        }
+        catch (ClassNotFoundException e) {
+          return false;
+        }
+      }
+    },
+    JUNIT5(JUNIT5_PARAMETER, "com.intellij.junit5.JUnit5IdeaTestRunner") {
+      @Override
+      public boolean check() {
+        try {
+          Class.forName("org.junit.platform.engine.TestEngine");
+          Class.forName(getRunnerName());
+          return true;
+        }
+        catch (ClassNotFoundException e) {
+          return false;
+        }
+      }
+    },
+    JUNIT6(JUNIT6_PARAMETER, "com.intellij.junit6.JUnit6IdeaTestRunner") {
+      @Override
+      public boolean check() {
+        try {
+          Class.forName(getRunnerName());
+          String engineJar = getClassLocation("org.junit.platform.engine.TestEngine");
+          String engine6Jar = getClassLocation("org.junit.platform.engine.CancellationToken");
+          return Objects.equals(engineJar, engine6Jar);
+        }
+        catch (ClassNotFoundException e) {
+          return false;
+        }
+      }
+    };
+
+    private final String parameter;
+    private final String runnerName;
+
+    JUnitRunner(String parameter, String runnerName) {
+      this.parameter = parameter;
+      this.runnerName = runnerName;
+    }
+
+    /**
+     * Verifies that all required classes for this runner are present on the classpath.
+     *
+     * @return true if all required classes are present, false otherwise
+     */
+    public abstract boolean check();
+
+    public String getRunnerName() {
+      return runnerName;
+    }
+
+    public static JUnitRunner of(String parameter) {
+      for (JUnitRunner runner : values()) {
+        if (runner.parameter.equals(parameter)) return runner;
+      }
+      return null;
+    }
+
+    private static String getClassLocation(String className) {
+      try {
+        CodeSource cs = Class.forName(className).getProtectionDomain().getCodeSource();
+        return cs != null ? cs.getLocation().toExternalForm() : null;
+      }
+      catch (ClassNotFoundException | SecurityException e) {
+        return null;
       }
     }
   }

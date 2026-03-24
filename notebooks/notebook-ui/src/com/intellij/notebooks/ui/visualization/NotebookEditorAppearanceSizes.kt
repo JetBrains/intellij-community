@@ -20,19 +20,13 @@ interface NotebookEditorAppearanceSizes {
     get() = 5
 
   val codeCellLeftLinePadding: Int
-  val lineNumbersMargin: Int
   val commandModeCellLeftLineWidth: Int
   val editModeCellLeftLineWidth: Int
-  val codeAndCodeTopGrayHeight: Int
-  val codeAndCodeBottomGrayHeight: Int
   val innerCellToolbarHeight: Int
   val spacerHeight: Int
-  val executionTimeHeight: Int
   val spaceBelowCellToolbar: Int
   val cellToolbarTotalHeight: Int
-  val progressStatusHeight: Int
 
-  val extraPaddingExecutionCount: Int
   val cellBorderHeight: Int
   val aboveFirstCellDelimiterHeight: Int
   val distanceBetweenCells: Int

@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -30,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.JComponent;
 import java.util.Objects;
 
-public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix, HighPriorityAction {
+public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix {
   private final LanguageLevel myLevel;
 
   public IncreaseLanguageLevelFix(@NotNull LanguageLevel targetLevel) {

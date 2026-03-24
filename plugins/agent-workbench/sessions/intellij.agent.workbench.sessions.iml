@@ -15,7 +15,6 @@
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
               <args>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.3.10-RC/kotlin-compose-compiler-plugin-2.3.10-RC.jar</arg>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
               </args>
             </arrayArg>
@@ -29,31 +28,38 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="com.intellij.agent.workbench.sessions" />
-      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" packagePrefix="com.intellij.agent.workbench.sessions" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
-    <orderEntry type="module" module-name="intellij.platform.compose" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.common" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
-    <orderEntry type="module" module-name="intellij.agent.workbench.codex.common" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.codex.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.chat" />
+    <orderEntry type="module" module-name="intellij.terminal" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectFrame" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
   </component>
 </module>

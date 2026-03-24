@@ -46,6 +46,9 @@
 - name: lib/modules/intellij.debugger.jvm.advanced.java.jar
   contentModules:
   - name: intellij.debugger.jvm.advanced.java
+- name: lib/modules/intellij.debugger.logpoints.jar
+  contentModules:
+  - name: intellij.debugger.logpoints
 - name: lib/modules/intellij.java.analysis.impl.jar
   contentModules:
   - name: intellij.java.analysis.impl
@@ -163,12 +166,6 @@
 - name: lib/modules/intellij.java.remoteServers.jar
   contentModules:
   - name: intellij.java.remoteServers
-- name: lib/modules/intellij.java.resources.en.jar
-  contentModules:
-  - name: intellij.java.resources.en
-- name: lib/modules/intellij.java.resources.jar
-  contentModules:
-  - name: intellij.java.resources
 - name: lib/modules/intellij.java.structuralSearch.jar
   contentModules:
   - name: intellij.java.structuralSearch
@@ -217,9 +214,6 @@
 - name: lib/modules/intellij.jvm.analysis.refactoring.jar
   contentModules:
   - name: intellij.jvm.analysis.refactoring
-- name: lib/modules/intellij.jvm.dfa.analysis.ui.jar
-  contentModules:
-  - name: intellij.jvm.dfa.analysis.ui
 - name: lib/modules/intellij.platform.jps.build.dependencyGraph.jar
   contentModules:
   - name: intellij.platform.jps.build.dependencyGraph

@@ -12,12 +12,10 @@ import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestLoggerFactory;
-import com.intellij.tests.ExternalClasspathClassLoader;
 import com.intellij.tests.IgnoreException;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.lang.UrlClassLoader;
 import junit.framework.JUnit4TestAdapter;
@@ -151,7 +149,7 @@ public class TestAll implements Test {
     String jarsToRunTestsFrom = System.getProperty("jar.dependencies.to.tests");
     if (jarsToRunTestsFrom != null) {
       String[] jars = jarsToRunTestsFrom.split(";");
-      List<Path> classpath = Objects.requireNonNull(ExternalClasspathClassLoader.getRoots());
+      List<Path> classpath = ContainerUtil.map(Objects.requireNonNull(System.getProperty("java.class.path")).split(File.pathSeparator), Paths::get);
       List<Path> testPaths = Arrays.stream(jars)
         .map(jarName -> {
                List<? extends Path> resultJars = ContainerUtil.filter(classpath, path -> path.getFileName().toString().startsWith(jarName));
@@ -190,33 +188,20 @@ public class TestAll implements Test {
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
       System.out.println("Collecting tests from roots specified by test.roots system property");
-      return ContainerUtil.map(testRoots.split(";"), Paths::get);
+      return ContainerUtil.map(testRoots.split(File.pathSeparator), Paths::get);
     }
-    List<Path> roots = ExternalClasspathClassLoader.getRoots();
-    if (roots != null) {
-      List<Path> excludeRoots = ExternalClasspathClassLoader.getExcludeRoots();
-      if (excludeRoots != null) {
-        System.out.println("Skipping tests from " + excludeRoots.size() + " roots");
-        roots = new ArrayList<>(roots);
-        roots.removeAll(FileCollectionFactory.createCanonicalPathSet(excludeRoots));
-      }
-      System.out.println("Collecting tests from roots specified by " + ExternalClasspathClassLoader.CLASSPATH_FILE_PROPERTY + " system property");
-      return roots;
+    ClassLoader loader = TestAll.class.getClassLoader();
+    if (loader instanceof URLClassLoader) {
+      System.out.println("Collecting tests from TestAll class loader (" + URLClassLoader.class.getName() + ")");
+      return ContainerUtil.map(getClassRoots(((URLClassLoader)loader).getURLs()), url -> Paths.get(url.toUri()));
     }
-    else {
-      ClassLoader loader = TestAll.class.getClassLoader();
-      if (loader instanceof URLClassLoader) {
-        System.out.println("Collecting tests from TestAll class loader (" + URLClassLoader.class.getName() + ")");
-        return ContainerUtil.map(getClassRoots(((URLClassLoader)loader).getURLs()), url -> Paths.get(url.toUri()));
-      }
-      if (loader instanceof UrlClassLoader) {
-        List<Path> urls = ((UrlClassLoader)loader).getBaseUrls();
-        System.out.println("Collecting tests from TestAll class loader (" + UrlClassLoader.class.getName() + ")");
-        return urls;
-      }
-      System.out.println("Collecting tests from java.class.path system property");
-      return ContainerUtil.map(System.getProperty("java.class.path").split(File.pathSeparator), Paths::get);
+    if (loader instanceof UrlClassLoader) {
+      List<Path> urls = ((UrlClassLoader)loader).getBaseUrls();
+      System.out.println("Collecting tests from TestAll class loader (" + UrlClassLoader.class.getName() + ")");
+      return urls;
     }
+    System.out.println("Collecting tests from java.class.path system property");
+    return ContainerUtil.map(System.getProperty("java.class.path").split(File.pathSeparator), Paths::get);
   }
 
   private static List<Path> getClassRoots(URL[] urls) {
@@ -342,8 +327,6 @@ public class TestAll implements Test {
         e.printStackTrace();
       }
     }
-
-    TestCaseLoader.sendTestRunResultsToNastradamus();
   }
 
   private static void dumpSuite(List<Class<?>> testsToRun) {

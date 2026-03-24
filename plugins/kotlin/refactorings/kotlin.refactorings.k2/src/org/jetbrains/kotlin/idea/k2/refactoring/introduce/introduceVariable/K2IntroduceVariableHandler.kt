@@ -51,6 +51,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.psi.isAssignmentLHS
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils

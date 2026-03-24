@@ -1,5 +1,6 @@
 // "Wrap element with 'setOf()' call" "true"
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'String', but 'Set<String>' was expected.
 
 fun foo(a: String) {
     bar(setOf(a)<caret>)

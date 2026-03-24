@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("WslIjentUtil")
 @file:Suppress("RAW_RUN_BLOCKING")  // These functions are called by different legacy code, a ProgressIndicator is not always available.
 @file:ApiStatus.Internal
@@ -8,7 +8,6 @@ package com.intellij.platform.ide.impl.wsl
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.currentCoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +19,7 @@ suspend fun WSLDistribution.createIjentSession(
   project: Project?,
   ijentLabel: String,
   wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
-): IjentSession<IjentPosixApi> {
+): IjentSession.Posix {
   return WslIjentDeployingStrategy(
     scope = parentScope,
     currentDispatcher = currentCoroutineDispatcher(),

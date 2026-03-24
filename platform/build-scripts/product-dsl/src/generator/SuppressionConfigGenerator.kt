@@ -153,12 +153,14 @@ internal object SuppressionConfigGenerator : PipelineNode {
     val diskConfig = SuppressionConfig.load(configPath)
     val configModified = newConfig != diskConfig
 
-    // Only update suppressions.json when explicitly requested via --update-suppressions flag
+    // Queue suppressions.json update for pipeline output stage.
+    // Actual write happens only when the run is error-free and commit is allowed.
     if (configPath != null && model.updateSuppressions) {
       val newJsonContent = SuppressionConfig.serializeToString(newConfig)
-      withContext(Dispatchers.IO) {
-        Files.writeString(configPath, newJsonContent)
+      val oldJsonContent = withContext(Dispatchers.IO) {
+        if (Files.exists(configPath)) Files.readString(configPath) else ""
       }
+      model.fileUpdater.writeIfChanged(configPath, oldJsonContent, newJsonContent)
     }
 
     val moduleCount = suppressionMaps.contentModules.size + mergedPlugins.size

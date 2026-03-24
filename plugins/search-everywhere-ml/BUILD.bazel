@@ -34,8 +34,11 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//platform/testFramework",
@@ -43,13 +46,19 @@ jvm_library(
     "@lib//:search_everywhere_ml-ai-grazie-emb",
     "@lib//:search_everywhere_ml-ai-grazie-model-swagger-annotations-jvm",
     "//platform/projectModel-api:projectModel",
-    "@lib//:io-mockk-jvm",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
   ],
   exports = ["@lib//:search_everywhere_ml-ai-grazie-emb"]
 )
 ### auto-generated section `build intellij.searchEverywhereMl` end
+
+### auto-generated section `iml intellij.searchEverywhereMl` start
+exports_files([
+  "intellij.searchEverywhereMl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.searchEverywhereMl` end
 
 ### auto-generated section `test intellij.searchEverywhereMl` start
 load("@community//build:tests-options.bzl", "jps_test")

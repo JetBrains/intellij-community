@@ -1,0 +1,16 @@
+// FILE: before.kt
+// IGNORE_K1
+fun foo(): Int {
+    listOf(1, 2, 3).forEach {
+        if (it == 2) <caret>return@foo 42
+    }
+    return 0
+}
+// FILE: after.kt
+// IGNORE_K1
+fun <caret>foo(): Int {
+    listOf(1, 2, 3).forEach {
+        if (it == 2) return@foo 42
+    }
+    return 0
+}

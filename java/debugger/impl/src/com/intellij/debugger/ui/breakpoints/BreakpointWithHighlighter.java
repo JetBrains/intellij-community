@@ -9,13 +9,16 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.InstrumentationBreakpointState;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.AccessToken;
@@ -32,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
@@ -176,6 +180,16 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
       return getVerifiedWarningsIcon(muted);
     }
 
+    InstrumentationBreakpointState info = requestsManager.getInstrumentationInfo(this);
+    if (info != null && info.isInstrumentationModeEnabled() && ApplicationManager.getApplication().isInternal()) {
+      if (DebuggerSettings.SUSPEND_NONE.equals(getSuspendPolicy())) {
+        return AllIcons.Breakpoints.LoggingInstrumentation;
+      }
+      else {
+        return AllIcons.Breakpoints.ConditionalInstrumentation;
+      }
+    }
+
     if (isVerified) {
       return getVerifiedIcon(muted);
     }
@@ -246,6 +260,16 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
       }
       res.add(buf.toString());
     }
+
+    DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(myProject);
+    DebuggerSession activeDebuggerSession = debuggerManager.getContext().getDebuggerSession();
+    if (activeDebuggerSession != null) {
+      InstrumentationBreakpointState info = activeDebuggerSession.getProcess().getRequestsManager().getInstrumentationInfo(this);
+      if (info != null && info.isInstrumentationModeEnabled()) {
+        res.add(JavaDebuggerBundle.message("breakpoint.instrumented.note"));
+      }
+    }
+
     return res;
   }
 

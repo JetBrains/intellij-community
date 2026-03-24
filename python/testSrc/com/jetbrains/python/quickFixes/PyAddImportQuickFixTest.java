@@ -419,6 +419,36 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest("Import 'lib.ExampleType'");
   }
 
+  // PY-87970
+  public void testNestedClassAutoImport() {
+    doMultiFileAutoImportTest("Import 'Outer.Inner from mod'");
+  }
+
+  // PY-87971
+  public void testNestedClassQualifiedAutoImport() {
+    doMultiFileAutoImportTest("Import 'Outer.Inner from mod'");
+  }
+
+  // PY-87972
+  public void testQualifyWithAlreadyImportedModule() {
+    doMultiFileAutoImportTest("Import 'src.MyClass from pkg'");
+  }
+
+  // PY-87972
+  public void testQualifyNestedClassWithAlreadyImportedModule() {
+    doMultiFileAutoImportTest("Import 'src.Outer.Inner from pkg'");
+  }
+
+  // PY-88009
+  public void testQualifyWithRegularImport() {
+    doMultiFileAutoImportTest("Import 'pkg.src.MyClass'");
+  }
+
+  // PY-88009
+  public void testQualifyNestedClassWithRegularImport() {
+    doMultiFileAutoImportTest("Import 'pkg.src.Outer.Inner'");
+  }
+
   private void doTestProposedImportsOrdering(String @NotNull ... expected) {
     doMultiFileAutoImportTest("Import", fix -> {
       final List<String> candidates = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText());

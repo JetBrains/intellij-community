@@ -24,7 +24,7 @@ public final class PsiErrorElementUtil {
   private PsiErrorElementUtil() {}
 
   public static boolean hasErrors(@NotNull Project project, @NotNull VirtualFile virtualFile) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       if (project.isDisposed() || !virtualFile.isValid()) return false;
       PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       return psiFile != null && hasErrors(psiFile);

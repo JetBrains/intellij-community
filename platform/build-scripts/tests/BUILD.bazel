@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "tests",
+  module_name = "intellij.platform.buildScripts.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
@@ -21,40 +22,79 @@ jvm_library(
   resources = [":tests_test_resources"],
   deps = [
     "//platform/build-scripts",
+    "//platform/build-scripts:build-scripts_test_lib",
     "@lib//:junit4",
     "@lib//:kotlin-stdlib",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//platform/build-scripts/downloader",
+    "//platform/build-scripts/downloader:downloader_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:assert_j",
     "@lib//:junit5",
     "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework/extensions:testExtensions_test_lib",
     "//build/tasks",
     "//build/tasks:tasks_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//libraries/commons/compress",
+    "//libraries/commons/compress:compress_test_lib",
     "//build",
+    "//build:build_test_lib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/util/zip",
+    "//platform/util/zip:zip_test_lib",
     "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
     "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
     "@community//build:zip",
+    "@community//build:zip_test_lib",
     "//libraries/netty/buffer",
+    "//libraries/netty/buffer:buffer_test_lib",
     "//libraries/hash4j",
+    "//libraries/hash4j:hash4j_test_lib",
     "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
     "//libraries/maven-resolver-provider",
+    "//libraries/maven-resolver-provider:maven-resolver-provider_test_lib",
     "//libraries/mockito",
+    "//libraries/mockito:mockito_test_lib",
     "@lib//:mockito-kotlin",
     "//jps/model-serialization",
+    "//jps/model-serialization:model-serialization_test_lib",
     "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
     "//libraries/jsoup",
+    "//libraries/jsoup:jsoup_test_lib",
+    "//images:images-tests",
+    "//images:images-tests_test_lib",
+    "//RegExpSupport:regexp-tests",
+    "//RegExpSupport:regexp-tests_test_lib",
+    "//platform/xdebugger-impl:debugger-impl-tests",
+    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+    "//platform/testFramework/bootstrap:tools-testsBootstrap",
+    "//platform/testFramework/bootstrap:tools-testsBootstrap_test_lib",
+    "@lib//:junit5Launcher",
+    "//build/tasks:tasks-tests",
+    "//build/tasks:tasks-tests_test_lib",
+    "//platform/build-scripts/product-dsl:buildScripts-productDsl-tests",
+    "//platform/build-scripts/product-dsl:buildScripts-productDsl-tests_test_lib",
   ],
   runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.platform.buildScripts.tests` end
+
+### auto-generated section `iml intellij.platform.buildScripts.tests` start
+exports_files([
+  "intellij.platform.buildScripts.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.buildScripts.tests` end
 
 ### auto-generated section `test intellij.platform.buildScripts.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

@@ -1,4 +1,7 @@
 // "Use inherited visibility" "true"
+// K2_ERROR: Cannot weaken access privilege private for 'run' in 'A'.
+// K2_ERROR: Modifier 'override' is incompatible with 'private'.
+// K2_ERROR: Modifier 'private' is incompatible with 'override'.
 open class A {
     protected open fun run() {}
 }

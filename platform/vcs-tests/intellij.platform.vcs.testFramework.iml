@@ -24,5 +24,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" />
   </component>
 </module>

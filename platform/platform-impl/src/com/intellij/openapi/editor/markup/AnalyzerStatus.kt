@@ -79,6 +79,9 @@ class AnalyzerStatus(
   }
 
   fun isEmpty(): Boolean = this == EMPTY
+  override fun toString(): String {
+    return "AnalyzerStatus(icon=$icon, title='$title', details='$details', inspectionsState=$inspectionsState, passes=$passes, analyzingType=$analyzingType, expandedStatus=$expandedStatus)"
+  }
 
   companion object {
     /**

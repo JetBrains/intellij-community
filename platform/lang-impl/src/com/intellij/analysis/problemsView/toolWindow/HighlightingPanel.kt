@@ -157,7 +157,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
   @RequiresBackgroundThread
   private fun updateStatus() {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
-    val status = ClientId.withClientId(session.clientId) { ReadAction.compute(ThrowableComputable { getCurrentStatus() })}
+    val status = ClientId.withClientId(session.clientId) { ReadAction.computeBlocking(ThrowableComputable { getCurrentStatus() })}
     if (previousStatus != status) {
       ApplicationManager.getApplication().invokeLater {
         if (!myDisposed) {

@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "libraries-netty-codec-compression",
+  module_name = "intellij.libraries.netty.codec.compression",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":libraries-netty-codec-compression_resources"],
@@ -18,4 +19,23 @@ jvm_library(
     "//libraries/netty/buffer",
   ]
 )
+
+jvm_library(
+  name = "libraries-netty-codec-compression_test_lib",
+  module_name = "intellij.libraries.netty.codec.compression",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-netty-codec-compression-netty-codec-compression"],
+  runtime_deps = [
+    ":libraries-netty-codec-compression",
+    "//libraries/netty/buffer:buffer_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.netty.codec.compression` end
+
+### auto-generated section `iml intellij.libraries.netty.codec.compression` start
+exports_files([
+  "intellij.libraries.netty.codec.compression.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.netty.codec.compression` end

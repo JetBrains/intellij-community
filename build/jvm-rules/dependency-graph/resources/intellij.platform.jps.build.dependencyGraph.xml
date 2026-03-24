@@ -2,8 +2,7 @@
 
   <dependencies>
     <module name="intellij.platform.jps.build.javac.rt"/>
-    <module name="intellij.libraries.caffeine" />
-    <module name="intellij.libraries.fastutil" />
+    <module name="intellij.libraries.caffeine"/>
   </dependencies>
 
 </idea-plugin>

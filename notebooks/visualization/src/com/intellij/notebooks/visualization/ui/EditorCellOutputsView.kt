@@ -14,7 +14,7 @@ import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
 import com.intellij.notebooks.visualization.outputs.impl.InnerComponent
 import com.intellij.notebooks.visualization.outputs.impl.SurroundingComponent
 import com.intellij.notebooks.visualization.settings.NotebookSettings
-import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
+import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeNotifier
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -74,7 +74,9 @@ class EditorCellOutputsView(
   }
 
   private val surroundingComponent = SurroundingComponent.create(editor, innerComponent)
-  private val outerComponent = EditorCellDataContext.createContextProvider(cell, surroundingComponent)
+  private val outerComponent = EditorCellDataContext.createContextProvider(cell, surroundingComponent).apply {
+    isOpaque = false
+  }
 
   internal var inlay: Inlay<*>? = null
     private set(value) {
@@ -85,7 +87,7 @@ class EditorCellOutputsView(
       field = value
 
       if (shouldUpdate) {
-        JupyterBoundsChangeHandler.get(editor).boundsChanged()
+        JupyterBoundsChangeNotifier.get(editor).boundsChanged()
       }
     }
 
@@ -97,9 +99,7 @@ class EditorCellOutputsView(
       innerComponent.scrollingEnabled = it
       innerComponent.revalidate()
     }
-    editor.notebookAppearance.editorBackgroundColor.bind(this) {
-      surroundingComponent.background = it
-    }
+    surroundingComponent.background = editor.notebookAppearance.editorBackgroundColor()
     update()
   }
 
@@ -137,7 +137,6 @@ class EditorCellOutputsView(
       }
     }
   }
-
 
   @RequiresEdt
   private fun updateData(outputs: List<EditorCellOutput>): Boolean {

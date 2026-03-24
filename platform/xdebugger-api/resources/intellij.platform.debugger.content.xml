@@ -12,6 +12,8 @@
     <extensionPoint qualifiedName="com.intellij.xdebugger.configurableProvider" interface="com.intellij.xdebugger.settings.DebuggerConfigurableProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.xdebugger.inlineBreakpointsDisabler" interface="com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.breakpointFileProhibitionPolicy"
+                    interface="com.intellij.xdebugger.breakpoints.BreakpointFileProhibitionPolicy" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.xdebugger.textValueVisualizer" interface="com.intellij.xdebugger.ui.TextValueVisualizer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.xdebugger.controlExceptionBreakpointSupport" interface="com.intellij.xdebugger.codeinsight.ControlExceptionBreakpointSupport" dynamic="true"/>
@@ -23,6 +25,8 @@
     <extensionPoint qualifiedName="com.intellij.xdebugger.splitDebuggerModeEnabler" interface="com.intellij.xdebugger.XDebuggerSplitModeEnabler"
                     dynamic="false"/>
     <extensionPoint qualifiedName="com.intellij.xdebugger.xTextValueModificationPreparatorProvider" interface="com.intellij.xdebugger.frame.XValueTextModificationPreparatorProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.breakpointBehaviorPolicy" interface="com.intellij.xdebugger.XBreakpointBehaviorPolicy"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

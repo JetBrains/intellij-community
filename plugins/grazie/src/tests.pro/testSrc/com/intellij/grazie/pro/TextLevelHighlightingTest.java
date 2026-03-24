@@ -20,6 +20,8 @@ import java.util.Set;
 import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
 import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
 import static com.intellij.testFramework.UsefulTestCase.assertOrderedEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @SuppressWarnings("NonAsciiCharacters")
 public class TextLevelHighlightingTest extends BaseTestCase {
@@ -351,5 +353,45 @@ public class TextLevelHighlightingTest extends BaseTestCase {
       <STYLE_SUGGESTION>mo</STYLE_SUGGESTION>re.
       """);
     myFixture.checkHighlighting();
+  }
+
+  @NeedsCloud
+  @Test
+  public void testMassApplyActionConsidersTextLevelIssues() {
+    HighlightingTest.enableLanguages(Set.of(Lang.GERMANY_GERMAN), getProject(), getTestRootDisposable());
+
+    // text level problem is not selected
+    myFixture.configureByText("a.java", """
+      // Sehr geehrte <selection>Damen</selection> und Herren,
+      // ich schreibe Ihnen jetzt. <STYLE_SUGGESTION>ich</STYLE_SUGGESTION> mag den Schreibprozess.
+      """);
+    myFixture.checkHighlighting();
+    assertNull(myFixture.getAvailableIntention("Accept all writing suggestions…"));
+
+    // caret is far from text-level problem (i.e., at another paragraph)
+    myFixture.configureByText("a.java", """
+      // <caret>Completely another paragraph.
+      
+      // Sehr geehrte Damen und Herren,
+      // ich schreibe Ihnen jetzt. <STYLE_SUGGESTION>ich</STYLE_SUGGESTION> mag den Schreibprozess.
+      """);
+    myFixture.checkHighlighting();
+    assertNull(myFixture.getAvailableIntention("Accept all writing suggestions…"));
+
+    // caret is nearby text level problem (i.e., at the same paragraph)
+    myFixture.configureByText("a.java", """
+      // Sehr geehrte <caret>Damen und Herren,
+      // ich schreibe Ihnen jetzt. <STYLE_SUGGESTION>ich</STYLE_SUGGESTION> mag den Schreibprozess.
+      """);
+    myFixture.checkHighlighting();
+    assertNotNull(myFixture.getAvailableIntention("Accept all writing suggestions…"));
+
+    // text level problem is selected
+    myFixture.configureByText("a.java", """
+      // Sehr geehrte Damen und Herren,
+      // ich schreibe Ihnen jetzt. <STYLE_SUGGESTION><selection>i</selection>ch</STYLE_SUGGESTION> mag den Schreibprozess.
+      """);
+    myFixture.checkHighlighting();
+    assertNotNull(myFixture.getAvailableIntention("Accept all writing suggestions…"));
   }
 }

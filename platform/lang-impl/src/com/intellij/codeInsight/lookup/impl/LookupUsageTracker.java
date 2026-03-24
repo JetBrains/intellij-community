@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.BaseCompletionService;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -45,10 +44,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.codeInsight.completion.BaseCompletionService.LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS;
-import static com.intellij.codeInsight.completion.BaseCompletionService.LOOKUP_ELEMENT_RESULT_SET_ORDER;
 import static com.intellij.codeInsight.completion.CompletionData.LOOKUP_ELEMENT_PSI_REFERENCE;
-import static com.intellij.codeInsight.lookup.LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_CONTRIBUTOR;
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS;
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_RESULT_SET_ORDER;
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
 import static com.intellij.codeInsight.lookup.impl.LookupTypedHandler.CANCELLATION_CHAR;
 import static com.intellij.ide.actions.ToolwindowFusEventFields.TOOLWINDOW;
 
@@ -56,7 +56,7 @@ import static com.intellij.ide.actions.ToolwindowFusEventFields.TOOLWINDOW;
 public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 40);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 41);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
@@ -242,7 +242,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
 
     private void triggerLookupUsed(@NotNull FinishType finishType, @Nullable LookupElement currentItem,
                                    char completionChar) {
-      final List<EventPair<?>> data = ReadAction.compute(() -> getCommonUsageInfo(finishType, currentItem, completionChar));
+      List<EventPair<?>> data = ReadAction.computeBlocking(() -> getCommonUsageInfo(finishType, currentItem, completionChar));
 
       final List<EventPair<?>> additionalData = new ArrayList<>();
       LookupUsageDescriptor.EP_NAME.forEachExtensionSafe(usageDescriptor -> {
@@ -302,7 +302,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       if (currentItem != null) {
         data.add(TOKEN_LENGTH.with(currentItem.getLookupString().length()));
         data.add(QUERY_LENGTH.with(myLookup.itemPattern(currentItem).length()));
-        CompletionContributor contributor = currentItem.getUserData(BaseCompletionService.LOOKUP_ELEMENT_CONTRIBUTOR);
+        CompletionContributor contributor = currentItem.getUserData(LOOKUP_ELEMENT_CONTRIBUTOR);
         if (contributor != null) {
           data.add(CONTRIBUTOR.with(contributor.getClass()));
         }

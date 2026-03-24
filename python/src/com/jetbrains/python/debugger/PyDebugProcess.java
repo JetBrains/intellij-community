@@ -89,6 +89,7 @@ import com.jetbrains.python.remote.RemoteProcessControl;
 import com.jetbrains.python.tables.TableCommandParameters;
 import com.jetbrains.python.tables.TableCommandType;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,7 +111,7 @@ import static com.jetbrains.python.debugger.variablesview.usertyperenderers.Conf
 import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.loadTypeRendererChildren;
 import static com.jetbrains.python.statistics.PythonDebuggerIdsHolder.CONNECTION_FAILED;
 
-public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener, PyDebugProcessWithConsole {
+public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener, PyDebugProcessWithConsole, PyStepIntoSupport {
   private static final Logger LOG = Logger.getInstance(PyDebugProcess.class);
   private static final int CONNECTION_TIMEOUT = 60000;
 
@@ -593,6 +594,24 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (!checkCanPerformCommands()) return;
     getSession().sessionResumed();
     passToCurrentThread(context, ResumeOrStepCommand.Mode.STEP_INTO_MY_CODE);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public boolean isStepIntoMyCodeAvailable() {
+    return true;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable String getStepIntoMyCodeUnavailableReason() {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void performStepIntoMyCode() {
+    startStepIntoMyCode(getSession().getSuspendContext());
   }
 
   public void startSetNextStatement(@Nullable XSuspendContext context,

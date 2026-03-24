@@ -1,10 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.ide.ui
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
 import com.intellij.ide.ui.customization.UIThemeCustomizer
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.serviceOrNull
@@ -13,20 +12,14 @@ import com.intellij.ui.ExperimentalUI
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.ObjectReadContext
+import tools.jackson.core.json.JsonFactory
 import java.awt.Color
 import java.util.ArrayDeque
 import java.util.Deque
-import java.util.LinkedHashMap
 import java.util.function.BiFunction
-import kotlin.collections.HashMap
-import kotlin.collections.Map
-import kotlin.collections.MutableMap
-import kotlin.collections.contains
-import kotlin.collections.emptyMap
-import kotlin.collections.hashMapOf
-import kotlin.collections.isNotEmpty
-import kotlin.collections.joinTo
-import kotlin.collections.set
 
 internal class UIThemeBean {
   @JvmField
@@ -81,7 +74,7 @@ fun readThemeBeanForTest(
   awtColorConsumer: ((String, Color) -> Unit)? = null,
   namedColorConsumer: ((String, String) -> Unit)? = null,
 ): Map<String, String?> {
-  val bean = readTheme(JsonFactory().createParser(data), warn)
+  val bean = readTheme(JsonFactory().createParser(ObjectReadContext.empty(), data), warn)
   if (iconConsumer != null) {
     val icons = bean.icons ?: return emptyMap()
     for (key in icons.keys) {
@@ -155,7 +148,7 @@ internal fun readTheme(parser: JsonParser, warn: (String, Throwable?) -> Unit): 
       }
       JsonToken.VALUE_TRUE -> readTopLevelBoolean(parser, bean, value = true)
       JsonToken.VALUE_FALSE -> readTopLevelBoolean(parser, bean, value = false)
-      JsonToken.FIELD_NAME -> { }
+      JsonToken.PROPERTY_NAME -> { }
       null -> break
       else -> {
         logger<UIThemeBean>().warn("Unknown field: ${parser.currentName()}")
@@ -281,7 +274,7 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
                 path.append('.')
               }
               path.append(fieldName)
-              result[path.toString()] = parser.text
+              result[path.toString()] = parser.string
               path.setLength(0)
             }
             else -> {
@@ -291,7 +284,7 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
         }
       }
       JsonToken.VALUE_STRING -> {
-        putEntry(prefix, result, parser, path) { parseStringValue(value = parser.text, key = it, warn) }
+        putEntry(prefix, result, parser, path) { parseStringValue(value = parser.string, key = it, warn) }
       }
       JsonToken.VALUE_NUMBER_INT -> {
         putEntry(prefix, result, parser, path) { parser.intValue }
@@ -307,7 +300,7 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
       }
       JsonToken.VALUE_NULL -> {
       }
-      JsonToken.FIELD_NAME -> {
+      JsonToken.PROPERTY_NAME -> {
         currentFieldName = parser.currentName()
       }
       null -> {
@@ -344,7 +337,7 @@ private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>
         break
       }
       JsonToken.VALUE_STRING -> {
-        val text = parser.text
+        val text = parser.string
         val key = parser.currentName()
         if (isColorLike(text)) {
           val color = parseColorOrNull(text, key)
@@ -368,7 +361,7 @@ private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>
       JsonToken.VALUE_TRUE -> {
         result[parser.currentName()] = true
       }
-      JsonToken.VALUE_NULL, JsonToken.FIELD_NAME -> { }
+      JsonToken.VALUE_NULL, JsonToken.PROPERTY_NAME -> { }
       null -> {
         break
       }
@@ -520,11 +513,12 @@ private fun importIconsFromParentTheme(map: Map<String, Any?>?, parentMap: Map<S
   val parentPalette = parentMap?.get("ColorPalette")
 
   if (result != null && palette is Map<*, *> && parentPalette is Map<*, *>) {
-    val unitedPalette = LinkedHashMap<Any, Any?>(parentPalette)
+    @Suppress("UNCHECKED_CAST")
+    val unitedPalette = LinkedHashMap(parentPalette as Map<Any, Any?>)
     @Suppress("UNCHECKED_CAST")
     unitedPalette.putAll(palette as Map<Any, Any?>)
     val mutableMap = LinkedHashMap(result)
-    mutableMap["ColorPalette"] = unitedPalette
+    mutableMap.put("ColorPalette", unitedPalette)
     return mutableMap
   }
   return result

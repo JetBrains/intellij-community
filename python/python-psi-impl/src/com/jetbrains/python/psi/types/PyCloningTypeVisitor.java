@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -198,23 +197,19 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
 
   @Override
   public PyType visitPyCallableType(@NotNull PyCallableType callableType) {
-    List<PyCallableParameter> parameters = callableType.getParameters(myTypeEvalContext);
+    PyCallableParameterVariadicType clonedParametersType = clone(callableType.getParametersType(myTypeEvalContext));
     return new PyCallableTypeImpl(
-      parameters != null ? ContainerUtil.map(parameters, parameter ->
-        new PyCallableParameterImpl(
-          parameter.getName(),
-          Ref.create(clone(parameter.getType(myTypeEvalContext))),
-          parameter.getDefaultValue(),
-          parameter.getParameter(),
-          parameter.isPositionalContainer(),
-          parameter.isKeywordContainer(),
-          parameter.getDeclarationElement()
-        )) : null,
+      clonedParametersType,
       clone(callableType.getReturnType(myTypeEvalContext)),
       callableType.getCallable(),
       callableType.getModifier(),
       callableType.getImplicitOffset()
     );
+  }
+
+  @Override
+  public PyType visitPyOverloadType(@NotNull PyOverloadType overloadType) {
+    return new PyOverloadType(ContainerUtil.map(overloadType.getItems(), this::clone), overloadType.getImpl());
   }
 
   @Override

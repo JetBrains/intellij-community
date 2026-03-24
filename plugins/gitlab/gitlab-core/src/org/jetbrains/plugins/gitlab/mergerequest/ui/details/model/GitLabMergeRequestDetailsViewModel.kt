@@ -50,7 +50,7 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
   currentUser: GitLabUserDTO,
   projectData: GitLabProject,
   private val mergeRequest: GitLabMergeRequest,
-  private val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+  avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   htmlConverter: GitLabMarkdownToHtmlConverter,
 ) : GitLabMergeRequestDetailsViewModel {
 
@@ -86,9 +86,19 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
   override val detailsReviewFlowVm = GitLabMergeRequestReviewFlowViewModelImpl(
     project, cs, currentUser, projectData, mergeRequest, avatarIconsProvider
   )
-  override val branchesVm = GitLabMergeRequestBranchesViewModel(cs, mergeRequest, projectData.projectMapping)
-  override val statusVm = GitLabMergeRequestStatusViewModelImpl(project, cs, projectData.projectMapping.gitRepository,
-                                                                projectData.projectMapping.repository.serverPath, mergeRequest)
+  override val branchesVm = GitLabMergeRequestBranchesViewModel(
+    cs,
+    mergeRequest,
+    projectData.projectCoordinates.serverPath,
+    projectData.gitRemote
+  )
+  override val statusVm = GitLabMergeRequestStatusViewModelImpl(
+    project,
+    cs,
+    projectData.gitRemote.repository,
+    projectData.projectCoordinates.serverPath,
+    mergeRequest
+  )
   override val changesVm = GitLabMergeRequestChangesViewModelImpl(project, cs, mergeRequest, htmlConverter)
 
   override fun reloadData() {

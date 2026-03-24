@@ -49,7 +49,7 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
     myScopeOfInterest = scopeOfInterest;
     myForwardScope = scopeOfInterest != null
                      ? scopeOfInterest
-                     : ReadAction.compute(() -> getScope().getNarrowedComplementaryScope(getProject()));
+                     : ReadAction.computeBlocking(() -> getScope().getNarrowedComplementaryScope(getProject()));
     myFileCount = myForwardScope.getFileCount();
     myTotalFileCount = myFileCount + scope.getFileCount();
   }

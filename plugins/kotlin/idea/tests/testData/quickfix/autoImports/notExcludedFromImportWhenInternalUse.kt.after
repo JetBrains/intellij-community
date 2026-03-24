@@ -12,6 +12,7 @@
 // ACTION: Import class 'FunctionReference'
 // ACTION: Introduce local variable
 // ACTION: Rename reference
+// K2_ERROR: Unresolved reference 'FunctionReference'.
 
 package kotlin
 

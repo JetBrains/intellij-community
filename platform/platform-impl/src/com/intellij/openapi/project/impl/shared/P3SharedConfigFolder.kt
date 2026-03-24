@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.impl.processPerProjectSupport
 import kotlinx.coroutines.CoroutineScope
@@ -24,8 +25,10 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.exists
 import kotlin.io.path.readBytes
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
 internal class P3SharedConfigFolderApplicationLoadListener : ApplicationLoadListener {
@@ -70,17 +73,29 @@ internal class ProcessPerProjectSharedConfigFolderApplicationInitializedListener
 
   private fun setupSyncDisabledPlugins(path: Path, asyncScope: CoroutineScope) {
     val syncDisabledPluginsRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val syncIsPending = AtomicBoolean(false)
     asyncScope.launch(Dispatchers.IO) {
-      syncDisabledPluginsRequests.debounce(100).collectLatest {
-        syncDisabledPluginsFile(path)
+      try {
+        syncDisabledPluginsRequests.debounce(100.milliseconds).collectLatest {
+          syncDisabledPluginsFile(path)
+          syncIsPending.set(false)
+        }
+      }
+      finally {
+        if (syncIsPending.get()) {
+          syncDisabledPluginsFile(path)
+        }
       }
     }
     DisabledPluginsState.addDisablePluginListener {
+      LOG.debug("Disabled plugins changed, starting sync")
+      syncIsPending.set(true)
       syncDisabledPluginsRequests.tryEmit(Unit)
     }
   }
 
   private fun syncDisabledPluginsFile(originalConfigDir: Path) {
+    LOG.debug { "Syncing disabled plugins file in $originalConfigDir" }
     val sourceFile = PathManager.getConfigDir().resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
     val targetFileName = processPerProjectSupport().disabledPluginsFileName
     val targetFile = originalConfigDir.resolve(targetFileName)

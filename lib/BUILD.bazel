@@ -117,6 +117,21 @@ jvm_import(
 )
 
 copy_file(
+  name = "io.methvin/directory-watcher-0.19.1.jar_copy",
+  src = "@io_methvin-directory-watcher-0_19_1_http//file",
+  out = "io.methvin/directory-watcher-0.19.1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "agent-workbench-filewatch-directory-watcher",
+  jar = "@io_methvin-directory-watcher-0_19_1_http//file",
+  source_jar = "@io_methvin-directory-watcher-0_19_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "ai.grazie/grazie-rule-engine-0.3.116.jar_copy",
   src = "@ai_grazie-grazie-rule-engine-0_3_116_http//file",
   out = "ai.grazie/grazie-rule-engine-0.3.116.jar",
@@ -648,6 +663,58 @@ jvm_import(
 )
 
 copy_file(
+  name = "org.ow2.asm/asm-analysis-9.8.jar_copy",
+  src = "@org_ow2_asm-asm-analysis-9_8_http//file",
+  out = "org.ow2.asm/asm-analysis-9.8.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.ow2.asm/asm-tree-9.8.jar_copy",
+  src = "@org_ow2_asm-asm-tree-9_8_http//file",
+  out = "org.ow2.asm/asm-tree-9.8.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.ow2.asm/asm-9.8.jar_copy",
+  src = "@org_ow2_asm-asm-9_8_http//file",
+  out = "org.ow2.asm/asm-9.8.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "asm-tools",
+  exports = [
+    ":org_ow2_asm-asm-analysis-9_8_http_import",
+    ":org_ow2_asm-asm-tree-9_8_http_import",
+    ":org_ow2_asm-asm-9_8_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_ow2_asm-asm-analysis-9_8_http_import",
+  jar = "@org_ow2_asm-asm-analysis-9_8_http//file",
+  source_jar = "@org_ow2_asm-asm-analysis-9_8-sources_http//file"
+)
+
+jvm_import(
+  name = "org_ow2_asm-asm-tree-9_8_http_import",
+  jar = "@org_ow2_asm-asm-tree-9_8_http//file",
+  source_jar = "@org_ow2_asm-asm-tree-9_8-sources_http//file"
+)
+
+jvm_import(
+  name = "org_ow2_asm-asm-9_8_http_import",
+  jar = "@org_ow2_asm-asm-9_8_http//file",
+  source_jar = "@org_ow2_asm-asm-9_8-sources_http//file"
+)
+
+copy_file(
   name = "org.assertj/assertj-core-4.0.0-M1.jar_copy",
   src = "@org_assertj-assertj-core-4_0_0-M1_http//file",
   out = "org.assertj/assertj-core-4.0.0-M1.jar",
@@ -842,32 +909,244 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.jetbrains.fus.reporting/ap-validation-all-1.0.205.jar_copy",
-  src = "@com_jetbrains_fus_reporting-ap-validation-all-1_0_205_http//file",
-  out = "com.jetbrains.fus.reporting/ap-validation-all-1.0.205.jar",
+  name = "io.github.java-diff-utils/java-diff-utils-4.12.jar_copy",
+  src = "@io_github_java-diff-utils-java-diff-utils-4_12_http//file",
+  out = "io.github.java-diff-utils/java-diff-utils-4.12.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "codeowners-ownership-java-diff-utils",
+  jar = "@io_github_java-diff-utils-java-diff-utils-4_12_http//file",
+  source_jar = "@io_github_java-diff-utils-java-diff-utils-4_12-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "com.squareup.okio/okio-jvm-3.9.0.jar_copy",
+  src = "@com_squareup_okio-okio-jvm-3_9_0_http//file",
+  out = "com.squareup.okio/okio-jvm-3.9.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "codeowners-ownership-okio",
+  jar = "@com_squareup_okio-okio-jvm-3_9_0_http//file",
+  source_jar = "@com_squareup_okio-okio-jvm-3_9_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.junit.jupiter/junit-jupiter-engine-5.12.2.jar_copy",
+  src = "@org_junit_jupiter-junit-jupiter-engine-5_12_2_http//file",
+  out = "org.junit.jupiter/junit-jupiter-engine-5.12.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.junit.platform/junit-platform-engine-1.12.2.jar_copy",
+  src = "@org_junit_platform-junit-platform-engine-1_12_2_http//file",
+  out = "org.junit.platform/junit-platform-engine-1.12.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.opentest4j/opentest4j-1.3.0.jar_copy",
+  src = "@org_opentest4j-opentest4j-1_3_0_http//file",
+  out = "org.opentest4j/opentest4j-1.3.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.junit.platform/junit-platform-commons-1.12.2.jar_copy",
+  src = "@org_junit_platform-junit-platform-commons-1_12_2_http//file",
+  out = "org.junit.platform/junit-platform-commons-1.12.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.junit.jupiter/junit-jupiter-api-5.12.2.jar_copy",
+  src = "@org_junit_jupiter-junit-jupiter-api-5_12_2_http//file",
+  out = "org.junit.jupiter/junit-jupiter-api-5.12.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.apiguardian/apiguardian-api-1.1.2.jar_copy",
+  src = "@org_apiguardian-apiguardian-api-1_1_2_http//file",
+  out = "org.apiguardian/apiguardian-api-1.1.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "codeowners-test-junit-jupiter-engine",
+  exports = [
+    ":org_junit_jupiter-junit-jupiter-engine-5_12_2_http_import",
+    ":org_junit_platform-junit-platform-engine-1_12_2_http_import",
+    ":org_opentest4j-opentest4j-1_3_0_http_import",
+    ":org_junit_platform-junit-platform-commons-1_12_2_http_import",
+    ":org_junit_jupiter-junit-jupiter-api-5_12_2_http_import",
+    ":org_apiguardian-apiguardian-api-1_1_2_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_junit_jupiter-junit-jupiter-engine-5_12_2_http_import",
+  jar = "@org_junit_jupiter-junit-jupiter-engine-5_12_2_http//file",
+  source_jar = "@org_junit_jupiter-junit-jupiter-engine-5_12_2-sources_http//file"
+)
+
+jvm_import(
+  name = "org_junit_platform-junit-platform-engine-1_12_2_http_import",
+  jar = "@org_junit_platform-junit-platform-engine-1_12_2_http//file",
+  source_jar = "@org_junit_platform-junit-platform-engine-1_12_2-sources_http//file"
+)
+
+jvm_import(
+  name = "org_opentest4j-opentest4j-1_3_0_http_import",
+  jar = "@org_opentest4j-opentest4j-1_3_0_http//file",
+  source_jar = "@org_opentest4j-opentest4j-1_3_0-sources_http//file"
+)
+
+jvm_import(
+  name = "org_junit_platform-junit-platform-commons-1_12_2_http_import",
+  jar = "@org_junit_platform-junit-platform-commons-1_12_2_http//file",
+  source_jar = "@org_junit_platform-junit-platform-commons-1_12_2-sources_http//file"
+)
+
+jvm_import(
+  name = "org_junit_jupiter-junit-jupiter-api-5_12_2_http_import",
+  jar = "@org_junit_jupiter-junit-jupiter-api-5_12_2_http//file",
+  source_jar = "@org_junit_jupiter-junit-jupiter-api-5_12_2-sources_http//file"
+)
+
+jvm_import(
+  name = "org_apiguardian-apiguardian-api-1_1_2_http_import",
+  jar = "@org_apiguardian-apiguardian-api-1_1_2_http//file",
+  source_jar = "@org_apiguardian-apiguardian-api-1_1_2-sources_http//file"
+)
+
+copy_file(
+  name = "org.junit.platform/junit-platform-console-1.12.2.jar_copy",
+  src = "@org_junit_platform-junit-platform-console-1_12_2_http//file",
+  out = "org.junit.platform/junit-platform-console-1.12.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.junit.platform/junit-platform-reporting-1.12.2.jar_copy",
+  src = "@org_junit_platform-junit-platform-reporting-1_12_2_http//file",
+  out = "org.junit.platform/junit-platform-reporting-1.12.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.junit.platform/junit-platform-launcher-1.12.2.jar_copy",
+  src = "@org_junit_platform-junit-platform-launcher-1_12_2_http//file",
+  out = "org.junit.platform/junit-platform-launcher-1.12.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.opentest4j.reporting/open-test-reporting-tooling-spi-0.2.0.jar_copy",
+  src = "@org_opentest4j_reporting-open-test-reporting-tooling-spi-0_2_0_http//file",
+  out = "org.opentest4j.reporting/open-test-reporting-tooling-spi-0.2.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "codeowners-test-junit-platform-console",
+  exports = [
+    ":org_junit_platform-junit-platform-console-1_12_2_http_import",
+    ":org_junit_platform-junit-platform-reporting-1_12_2_http_import",
+    ":org_junit_platform-junit-platform-launcher-1_12_2_http_import",
+    ":org_junit_platform-junit-platform-engine-1_12_2_http_import",
+    ":org_opentest4j-opentest4j-1_3_0_http_import",
+    ":org_junit_platform-junit-platform-commons-1_12_2_http_import",
+    ":org_opentest4j_reporting-open-test-reporting-tooling-spi-0_2_0_http_import",
+    ":org_apiguardian-apiguardian-api-1_1_2_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_junit_platform-junit-platform-console-1_12_2_http_import",
+  jar = "@org_junit_platform-junit-platform-console-1_12_2_http//file",
+  source_jar = "@org_junit_platform-junit-platform-console-1_12_2-sources_http//file"
+)
+
+jvm_import(
+  name = "org_junit_platform-junit-platform-reporting-1_12_2_http_import",
+  jar = "@org_junit_platform-junit-platform-reporting-1_12_2_http//file",
+  source_jar = "@org_junit_platform-junit-platform-reporting-1_12_2-sources_http//file"
+)
+
+jvm_import(
+  name = "org_junit_platform-junit-platform-launcher-1_12_2_http_import",
+  jar = "@org_junit_platform-junit-platform-launcher-1_12_2_http//file",
+  source_jar = "@org_junit_platform-junit-platform-launcher-1_12_2-sources_http//file"
+)
+
+jvm_import(
+  name = "org_opentest4j_reporting-open-test-reporting-tooling-spi-0_2_0_http_import",
+  jar = "@org_opentest4j_reporting-open-test-reporting-tooling-spi-0_2_0_http//file",
+  source_jar = "@org_opentest4j_reporting-open-test-reporting-tooling-spi-0_2_0-sources_http//file"
+)
+
+java_library(
+  name = "codeowners-test-junit-platform-reporting",
+  exports = [
+    ":org_junit_platform-junit-platform-reporting-1_12_2_http_import",
+    ":org_junit_platform-junit-platform-launcher-1_12_2_http_import",
+    ":org_junit_platform-junit-platform-engine-1_12_2_http_import",
+    ":org_opentest4j-opentest4j-1_3_0_http_import",
+    ":org_junit_platform-junit-platform-commons-1_12_2_http_import",
+    ":org_apiguardian-apiguardian-api-1_1_2_http_import",
+    ":org_opentest4j_reporting-open-test-reporting-tooling-spi-0_2_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "com.jetbrains.fus.reporting/ap-validation-all-1.0.226.jar_copy",
+  src = "@com_jetbrains_fus_reporting-ap-validation-all-1_0_226_http//file",
+  out = "com.jetbrains.fus.reporting/ap-validation-all-1.0.226.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "com-jetbrains-fus-reporting-ap-validation-all",
-  jar = "@com_jetbrains_fus_reporting-ap-validation-all-1_0_205_http//file",
-  source_jar = "@com_jetbrains_fus_reporting-ap-validation-all-1_0_205-sources_http//file",
+  jar = "@com_jetbrains_fus_reporting-ap-validation-all-1_0_226_http//file",
+  source_jar = "@com_jetbrains_fus_reporting-ap-validation-all-1_0_226-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "com.jetbrains.fus.reporting/api-1.0.205.jar_copy",
-  src = "@com_jetbrains_fus_reporting-api-1_0_205_http//file",
-  out = "com.jetbrains.fus.reporting/api-1.0.205.jar",
+  name = "com.jetbrains.fus.reporting/fus-api-1.0.226.jar_copy",
+  src = "@com_jetbrains_fus_reporting-fus-api-1_0_226_http//file",
+  out = "com.jetbrains.fus.reporting/fus-api-1.0.226.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "com-jetbrains-fus-reporting-api",
-  jar = "@com_jetbrains_fus_reporting-api-1_0_205_http//file",
-  source_jar = "@com_jetbrains_fus_reporting-api-1_0_205-sources_http//file",
+  name = "com-jetbrains-fus-reporting-fus-api",
+  jar = "@com_jetbrains_fus_reporting-fus-api-1_0_226_http//file",
+  source_jar = "@com_jetbrains_fus_reporting-fus-api-1_0_226-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -1882,6 +2161,13 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "execution-process-mediator-client-tests-grpc-inprocess",
+  jar = "@io_grpc-grpc-inprocess-1_65_1_http//file",
+  source_jar = "@io_grpc-grpc-inprocess-1_65_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
   name = "com.willowtreeapps.assertk/assertk-jvm-0.23.jar_copy",
   src = "@com_willowtreeapps_assertk-assertk-jvm-0_23_http//file",
@@ -1934,18 +2220,28 @@ jvm_import(
   source_jar = "@org_opentest4j-opentest4j-1_2_0-sources_http//file"
 )
 
+java_library(
+  name = "execution-process-mediator-common-tests-com-willowtreeapps-assertk-assertk-jvm",
+  exports = [
+    ":com_willowtreeapps_assertk-assertk-jvm-0_23_http_import",
+    ":com_willowtreeapps_opentest4k-opentest4k-jvm-1_2_1_http_import",
+    ":org_opentest4j-opentest4j-1_2_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
-  name = "jetbrains.fleet/expects-compiler-plugin-2.3.10-RC-0.1.jar_copy",
-  src = "@jetbrains_fleet-expects-compiler-plugin-2_3_10-RC-0_1_http//file",
-  out = "jetbrains.fleet/expects-compiler-plugin-2.3.10-RC-0.1.jar",
+  name = "jetbrains.fleet/expects-compiler-plugin-2.3.20-0.1.jar_copy",
+  src = "@jetbrains_fleet-expects-compiler-plugin-2_3_20-0_1_http//file",
+  out = "jetbrains.fleet/expects-compiler-plugin-2.3.20-0.1.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "expects-compiler-plugin",
-  jar = "@jetbrains_fleet-expects-compiler-plugin-2_3_10-RC-0_1_http//file",
-  source_jar = "@jetbrains_fleet-expects-compiler-plugin-2_3_10-RC-0_1-sources_http//file",
+  jar = "@jetbrains_fleet-expects-compiler-plugin-2_3_20-0_1_http//file",
+  source_jar = "@jetbrains_fleet-expects-compiler-plugin-2_3_20-0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -1974,6 +2270,13 @@ copy_file(
 
 jvm_import(
   name = "file_prediction-file-prediction-model",
+  jar = "@org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "file_prediction-tests-file-prediction-model",
   jar = "@org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0_http//file",
   source_jar = "@org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0-sources_http//file",
   visibility = ["//visibility:public"]
@@ -2864,6 +3167,21 @@ jvm_import(
 )
 
 copy_file(
+  name = "org.jetbrains.amper/async-processes-0.8.0.jar_copy",
+  src = "@org_jetbrains_amper-async-processes-0_8_0_http//file",
+  out = "org.jetbrains.amper/async-processes-0.8.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "fleet-jetbrains-amper-async-processes",
+  jar = "@org_jetbrains_amper-async-processes-0_8_0_http//file",
+  source_jar = "@org_jetbrains_amper-async-processes-0_8_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "com.jetbrains.intellij.idea/idea-community-build-zip-252.11244.jar_copy",
   src = "@com_jetbrains_intellij_idea-idea-community-build-zip-252_11244_http//file",
   out = "com.jetbrains.intellij.idea/idea-community-build-zip-252.11244.jar",
@@ -3079,17 +3397,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.google.protobuf/protobuf-java-util-3.24.4-jb.2.jar_copy",
-  src = "@com_google_protobuf-protobuf-java-util-3_24_4-jb_2_http//file",
-  out = "com.google.protobuf/protobuf-java-util-3.24.4-jb.2.jar",
+  name = "com.google.protobuf/protobuf-java-util-3.25.5.jar_copy",
+  src = "@com_google_protobuf-protobuf-java-util-3_25_5_http//file",
+  out = "com.google.protobuf/protobuf-java-util-3.25.5.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "google-protobuf-java-util",
-  jar = "@com_google_protobuf-protobuf-java-util-3_24_4-jb_2_http//file",
-  source_jar = "@com_google_protobuf-protobuf-java-util-3_24_4-jb_2-sources_http//file",
+  jar = "@com_google_protobuf-protobuf-java-util-3_25_5_http//file",
+  source_jar = "@com_google_protobuf-protobuf-java-util-3_25_5-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3109,17 +3427,24 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps/gradle-api-9.3.0.jar_copy",
-  src = "@org_jetbrains_intellij_deps-gradle-api-9_3_0_http//file",
-  out = "org.jetbrains.intellij.deps/gradle-api-9.3.0.jar",
+  name = "org.jetbrains.intellij.deps/gradle-api-9.4.0.jar_copy",
+  src = "@org_jetbrains_intellij_deps-gradle-api-9_4_0_http//file",
+  out = "org.jetbrains.intellij.deps/gradle-api-9.4.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "gradle",
-  jar = "@org_jetbrains_intellij_deps-gradle-api-9_3_0_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-gradle-api-9_3_0-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps-gradle-api-9_4_0_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-gradle-api-9_4_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "gradle-provided",
+  exports = [":gradle"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -3133,6 +3458,13 @@ copy_file(
 
 jvm_import(
   name = "gradle-jps-ant",
+  jar = "@org_apache_ant-ant-1_10_15_http//file",
+  source_jar = "@org_apache_ant-ant-1_10_15-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "gradle-jps-tests-ant",
   jar = "@org_apache_ant-ant-1_10_15_http//file",
   source_jar = "@org_apache_ant-ant-1_10_15-sources_http//file",
   visibility = ["//visibility:public"]
@@ -5221,14 +5553,6 @@ copy_file(
   visibility = ["//visibility:public"]
 )
 
-copy_file(
-  name = "io.github.java-diff-utils/java-diff-utils-4.12.jar_copy",
-  src = "@io_github_java-diff-utils-java-diff-utils-4_12_http//file",
-  out = "io.github.java-diff-utils/java-diff-utils-4.12.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
 java_library(
   name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-core",
   exports = [
@@ -6749,33 +7073,11 @@ copy_file(
   visibility = ["//visibility:public"]
 )
 
-copy_file(
-  name = "com.fasterxml.jackson.core/jackson-annotations-2.19.0.jar_copy",
-  src = "@com_fasterxml_jackson_core-jackson-annotations-2_19_0_http//file",
-  out = "com.fasterxml.jackson.core/jackson-annotations-2.19.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
+jvm_import(
   name = "jackson-databind",
-  exports = [
-    ":com_fasterxml_jackson_core-jackson-databind-2_19_0_http_import",
-    ":com_fasterxml_jackson_core-jackson-annotations-2_19_0_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "com_fasterxml_jackson_core-jackson-databind-2_19_0_http_import",
   jar = "@com_fasterxml_jackson_core-jackson-databind-2_19_0_http//file",
-  source_jar = "@com_fasterxml_jackson_core-jackson-databind-2_19_0-sources_http//file"
-)
-
-jvm_import(
-  name = "com_fasterxml_jackson_core-jackson-annotations-2_19_0_http_import",
-  jar = "@com_fasterxml_jackson_core-jackson-annotations-2_19_0_http//file",
-  source_jar = "@com_fasterxml_jackson_core-jackson-annotations-2_19_0-sources_http//file"
+  source_jar = "@com_fasterxml_jackson_core-jackson-databind-2_19_0-sources_http//file",
+  visibility = ["//visibility:public"]
 )
 
 copy_file(
@@ -6915,6 +7217,27 @@ copy_file(
 
 jvm_import(
   name = "java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-http",
+  jar = "@org_apache_maven_resolver-maven-resolver-transport-http-1_9_22_http//file",
+  source_jar = "@org_apache_maven_resolver-maven-resolver-transport-http-1_9_22-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "java-aether_dependency_resolver-tests-org-apache-maven-resolver-maven-resolver-connector-basic",
+  jar = "@org_apache_maven_resolver-maven-resolver-connector-basic-1_9_22_http//file",
+  source_jar = "@org_apache_maven_resolver-maven-resolver-connector-basic-1_9_22-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "java-aether_dependency_resolver-tests-org-apache-maven-resolver-maven-resolver-transport-file",
+  jar = "@org_apache_maven_resolver-maven-resolver-transport-file-1_9_22_http//file",
+  source_jar = "@org_apache_maven_resolver-maven-resolver-transport-file-1_9_22-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "java-aether_dependency_resolver-tests-org-apache-maven-resolver-maven-resolver-transport-http",
   jar = "@org_apache_maven_resolver-maven-resolver-transport-http-1_9_22_http//file",
   source_jar = "@org_apache_maven_resolver-maven-resolver-transport-http-1_9_22-sources_http//file",
   visibility = ["//visibility:public"]
@@ -7069,33 +7392,56 @@ jvm_import(
   source_jar = "@org_freemarker-freemarker-2_3_32-sources_http//file"
 )
 
+java_library(
+  name = "java-coverage-tests-_ja_co_co",
+  exports = [
+    ":org_jacoco-org_jacoco_ant-0_8_14_http_import",
+    ":org_jacoco-org_jacoco_core-0_8_14_http_import",
+    ":org_ow2_asm-asm-9_9_http_import",
+    ":org_ow2_asm-asm-commons-9_9_http_import",
+    ":org_ow2_asm-asm-tree-9_9_http_import",
+    ":org_jacoco-org_jacoco_report-0_8_14_http_import",
+    ":org_jacoco-org_jacoco_agent-0_8_14_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "java-coverage-tests-coverage-report",
+  exports = [
+    ":org_jetbrains_intellij_deps-coverage-report-1_0_25_http_import",
+    ":org_freemarker-freemarker-2_3_32_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
-  name = "org.jetbrains.intellij.deps/debugger-agent-1.136.jar_copy",
-  src = "@org_jetbrains_intellij_deps-debugger-agent-1_136_http//file",
-  out = "org.jetbrains.intellij.deps/debugger-agent-1.136.jar",
+  name = "org.jetbrains.intellij.deps/debugger-agent-1.147.jar_copy",
+  src = "@org_jetbrains_intellij_deps-debugger-agent-1_147_http//file",
+  out = "org.jetbrains.intellij.deps/debugger-agent-1.147.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "java-debugger-agent-holder-debugger-agent",
-  jar = "@org_jetbrains_intellij_deps-debugger-agent-1_136_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-debugger-agent-1_136-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps-debugger-agent-1_147_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-debugger-agent-1_147-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps/sa-jdwp-1.24.jar_copy",
-  src = "@org_jetbrains_intellij_deps-sa-jdwp-1_24_http//file",
-  out = "org.jetbrains.intellij.deps/sa-jdwp-1.24.jar",
+  name = "org.jetbrains.intellij.deps/sa-jdwp-1.25.jar_copy",
+  src = "@org_jetbrains_intellij_deps-sa-jdwp-1_25_http//file",
+  out = "org.jetbrains.intellij.deps/sa-jdwp-1.25.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "java-debugger-impl-sa-jdwp",
-  jar = "@org_jetbrains_intellij_deps-sa-jdwp-1_24_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-sa-jdwp-1_24-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps-sa-jdwp-1_25_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-sa-jdwp-1_25-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -7357,17 +7703,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.jediterm/jediterm-core-3.61.jar_copy",
-  src = "@org_jetbrains_jediterm-jediterm-core-3_61_http//file",
-  out = "org.jetbrains.jediterm/jediterm-core-3.61.jar",
+  name = "org.jetbrains.jediterm/jediterm-core-3.64.jar_copy",
+  src = "@org_jetbrains_jediterm-jediterm-core-3_64_http//file",
+  out = "org.jetbrains.jediterm/jediterm-core-3.64.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "jediterm-core",
-  jar = "@org_jetbrains_jediterm-jediterm-core-3_61_http//file",
-  source_jar = "@org_jetbrains_jediterm-jediterm-core-3_61-sources_http//file",
+  jar = "@org_jetbrains_jediterm-jediterm-core-3_64_http//file",
+  source_jar = "@org_jetbrains_jediterm-jediterm-core-3_64-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -7424,6 +7770,21 @@ jvm_import(
 )
 
 copy_file(
+  name = "com.jetbrains.format-ripper/format-ripper-1.3.0.jar_copy",
+  src = "@com_jetbrains_format-ripper-format-ripper-1_3_0_http//file",
+  out = "com.jetbrains.format-ripper/format-ripper-1.3.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "jetbrains-format-ripper",
+  jar = "@com_jetbrains_format-ripper-format-ripper-1_3_0_http//file",
+  source_jar = "@com_jetbrains_format-ripper-format-ripper-1_3_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "org.jetbrains.intellij.deps/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar_copy",
   src = "@org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http//file",
   out = "org.jetbrains.intellij.deps/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar",
@@ -7476,32 +7837,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-annotations-jvm-2.2.21.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-annotations-jvm-2_2_21_http//file",
-  out = "org.jetbrains.kotlin/kotlin-annotations-jvm-2.2.21.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "jetbrains-kotlin-annotations-jvm",
-  jar = "@org_jetbrains_kotlin-kotlin-annotations-jvm-2_2_21_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-annotations-jvm-2_2_21-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.kotlin/kotlin-compose-compiler-plugin-2.3.10-RC.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_3_10-RC_http//file",
-  out = "org.jetbrains.kotlin/kotlin-compose-compiler-plugin-2.3.10-RC.jar",
+  name = "org.jetbrains.kotlin/kotlin-compose-compiler-plugin-2.3.20.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_3_20_http//file",
+  out = "org.jetbrains.kotlin/kotlin-compose-compiler-plugin-2.3.20.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "jetbrains-kotlin-compose-compiler-plugin",
-  jar = "@org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_3_10-RC_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_3_10-RC-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_3_20_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_3_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8168,25 +8514,9 @@ copy_file(
 )
 
 copy_file(
-  name = "org.opentest4j/opentest4j-1.3.0.jar_copy",
-  src = "@org_opentest4j-opentest4j-1_3_0_http//file",
-  out = "org.opentest4j/opentest4j-1.3.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "org.junit.platform/junit-platform-commons-1.13.4.jar_copy",
   src = "@org_junit_platform-junit-platform-commons-1_13_4_http//file",
   out = "org.junit.platform/junit-platform-commons-1.13.4.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.apiguardian/apiguardian-api-1.1.2.jar_copy",
-  src = "@org_apiguardian-apiguardian-api-1_1_2_http//file",
-  out = "org.apiguardian/apiguardian-api-1.1.2.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -8209,21 +8539,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "org_opentest4j-opentest4j-1_3_0_http_import",
-  jar = "@org_opentest4j-opentest4j-1_3_0_http//file",
-  source_jar = "@org_opentest4j-opentest4j-1_3_0-sources_http//file"
-)
-
-jvm_import(
   name = "org_junit_platform-junit-platform-commons-1_13_4_http_import",
   jar = "@org_junit_platform-junit-platform-commons-1_13_4_http//file",
   source_jar = "@org_junit_platform-junit-platform-commons-1_13_4-sources_http//file"
-)
-
-jvm_import(
-  name = "org_apiguardian-apiguardian-api-1_1_2_http_import",
-  jar = "@org_apiguardian-apiguardian-api-1_1_2_http//file",
-  source_jar = "@org_apiguardian-apiguardian-api-1_1_2-sources_http//file"
 )
 
 java_library(
@@ -8504,6 +8822,33 @@ java_library(
 )
 
 copy_file(
+  name = "org.junit.jupiter/junit-jupiter-params-6.0.0.jar_copy",
+  src = "@org_junit_jupiter-junit-jupiter-params-6_0_0_http//file",
+  out = "org.junit.jupiter/junit-jupiter-params-6.0.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "junit6Params",
+  exports = [
+    ":org_junit_jupiter-junit-jupiter-params-6_0_0_http_import",
+    ":org_junit_jupiter-junit-jupiter-api-6_0_0_http_import",
+    ":org_opentest4j-opentest4j-1_3_0_http_import",
+    ":org_junit_platform-junit-platform-commons-6_0_0_http_import",
+    ":org_apiguardian-apiguardian-api-1_1_2_http_import",
+    ":org_jspecify-jspecify-1_0_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_junit_jupiter-junit-jupiter-params-6_0_0_http_import",
+  jar = "@org_junit_jupiter-junit-jupiter-params-6_0_0_http//file",
+  source_jar = "@org_junit_jupiter-junit-jupiter-params-6_0_0-sources_http//file"
+)
+
+copy_file(
   name = "org.jetbrains.nativecerts/jvm-native-trusted-roots-1.1.7.jar_copy",
   src = "@org_jetbrains_nativecerts-jvm-native-trusted-roots-1_1_7_http//file",
   out = "org.jetbrains.nativecerts/jvm-native-trusted-roots-1.1.7.jar",
@@ -8629,6 +8974,13 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "kotlin-analysis-platform-tests-ehcache-sizeof",
+  jar = "@org_ehcache-sizeof-0_4_0_http//file",
+  source_jar = "@org_ehcache-sizeof-0_4_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
   name = "org.jetbrains.intellij.deps.completion/completion-ranking-kotlin-0.4.0.jar_copy",
   src = "@org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0_http//file",
@@ -8682,17 +9034,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-metadata-jvm-2.3.10-RC.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_3_10-RC_http//file",
-  out = "org.jetbrains.kotlin/kotlin-metadata-jvm-2.3.10-RC.jar",
+  name = "org.jetbrains.kotlin/kotlin-metadata-jvm-2.3.20.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_3_20_http//file",
+  out = "org.jetbrains.kotlin/kotlin-metadata-jvm-2.3.20.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlin-metadata",
-  jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_3_10-RC_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_3_10-RC-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_3_20_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_3_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8712,47 +9064,47 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-reflect-2.3.10-RC.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-reflect-2_3_10-RC_http//file",
-  out = "org.jetbrains.kotlin/kotlin-reflect-2.3.10-RC.jar",
+  name = "org.jetbrains.kotlin/kotlin-reflect-2.3.20.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-reflect-2_3_20_http//file",
+  out = "org.jetbrains.kotlin/kotlin-reflect-2.3.20.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlin-reflect",
-  jar = "@org_jetbrains_kotlin-kotlin-reflect-2_3_10-RC_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-reflect-2_3_10-RC-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-reflect-2_3_20_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-reflect-2_3_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-script-runtime-2.3.10-RC.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-script-runtime-2_3_10-RC_http//file",
-  out = "org.jetbrains.kotlin/kotlin-script-runtime-2.3.10-RC.jar",
+  name = "org.jetbrains.kotlin/kotlin-script-runtime-2.3.20.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-script-runtime-2_3_20_http//file",
+  out = "org.jetbrains.kotlin/kotlin-script-runtime-2.3.20.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlin-script-runtime",
-  jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_3_10-RC_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_3_10-RC-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_3_20_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_3_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-stdlib-2.3.10-RC.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-stdlib-2_3_10-RC_http//file",
-  out = "org.jetbrains.kotlin/kotlin-stdlib-2.3.10-RC.jar",
+  name = "org.jetbrains.kotlin/kotlin-stdlib-2.3.20.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-stdlib-2_3_20_http//file",
+  out = "org.jetbrains.kotlin/kotlin-stdlib-2.3.20.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlin-stdlib",
-  jar = "@org_jetbrains_kotlin-kotlin-stdlib-2_3_10-RC_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-stdlib-2_3_10-RC-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-stdlib-2_3_20_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-stdlib-2_3_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8764,17 +9116,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-test-2.3.10-RC.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-test-2_3_10-RC_http//file",
-  out = "org.jetbrains.kotlin/kotlin-test-2.3.10-RC.jar",
+  name = "org.jetbrains.kotlin/kotlin-test-2.3.20.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-test-2_3_20_http//file",
+  out = "org.jetbrains.kotlin/kotlin-test-2.3.20.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlin-test",
-  jar = "@org_jetbrains_kotlin-kotlin-test-2_3_10-RC_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-test-2_3_10-RC-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-test-2_3_20_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-test-2_3_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8847,17 +9199,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-test-junit-2.3.10-RC.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-test-junit-2_3_10-RC_http//file",
-  out = "org.jetbrains.kotlin/kotlin-test-junit-2.3.10-RC.jar",
+  name = "org.jetbrains.kotlin/kotlin-test-junit-2.3.20.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-test-junit-2_3_20_http//file",
+  out = "org.jetbrains.kotlin/kotlin-test-junit-2.3.20.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlin-test-junit",
-  jar = "@org_jetbrains_kotlin-kotlin-test-junit-2_3_10-RC_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-test-junit-2_3_10-RC-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-test-junit-2_3_20_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-test-junit-2_3_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8899,32 +9251,39 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/allopen-compiler-plugin-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-allopen-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/allopen-compiler-plugin-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/allopen-compiler-plugin-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-allopen-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/allopen-compiler-plugin-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-allopen-compiler-plugin",
-  jar = "@org_jetbrains_kotlin-allopen-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-allopen-compiler-plugin-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-allopen-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-allopen-compiler-plugin-for-ide-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-allopen-compiler-plugin-provided",
+  exports = [":kotlinc-allopen-compiler-plugin"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/analysis-api-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-analysis-api-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/analysis-api-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/analysis-api-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-analysis-api-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/analysis-api-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-analysis-api",
-  jar = "@org_jetbrains_kotlin-analysis-api-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-analysis-api-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-analysis-api-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-analysis-api-for-ide-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8936,17 +9295,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/analysis-api-fe10-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-analysis-api-fe10-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/analysis-api-fe10-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/analysis-api-fe10-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-analysis-api-fe10-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/analysis-api-fe10-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-analysis-api-fe10",
-  jar = "@org_jetbrains_kotlin-analysis-api-fe10-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-analysis-api-fe10-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-analysis-api-fe10-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-analysis-api-fe10-for-ide-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8958,17 +9317,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/analysis-api-impl-base-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/analysis-api-impl-base-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/analysis-api-impl-base-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/analysis-api-impl-base-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-analysis-api-impl-base",
-  jar = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8980,32 +9339,39 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/analysis-api-impl-base-tests-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-analysis-api-impl-base-tests-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/analysis-api-impl-base-tests-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/analysis-api-impl-base-tests-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-analysis-api-impl-base-tests-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/analysis-api-impl-base-tests-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-analysis-api-impl-base-tests",
-  jar = "@org_jetbrains_kotlin-analysis-api-impl-base-tests-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-analysis-api-impl-base-tests-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-analysis-api-impl-base-tests-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-analysis-api-impl-base-tests-for-ide-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-analysis-api-impl-base-tests-provided",
+  exports = [":kotlinc-analysis-api-impl-base-tests"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/analysis-api-k2-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-analysis-api-k2-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/analysis-api-k2-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/analysis-api-k2-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-analysis-api-k2-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/analysis-api-k2-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-analysis-api-k2",
-  jar = "@org_jetbrains_kotlin-analysis-api-k2-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-analysis-api-k2-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-analysis-api-k2-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-analysis-api-k2-for-ide-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9017,32 +9383,39 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/analysis-api-k2-tests-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-analysis-api-k2-tests-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/analysis-api-k2-tests-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/analysis-api-k2-tests-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-analysis-api-k2-tests-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/analysis-api-k2-tests-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-analysis-api-k2-tests",
-  jar = "@org_jetbrains_kotlin-analysis-api-k2-tests-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-analysis-api-k2-tests-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-analysis-api-k2-tests-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-analysis-api-k2-tests-for-ide-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-analysis-api-k2-tests-provided",
+  exports = [":kotlinc-analysis-api-k2-tests"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/analysis-api-platform-interface-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-analysis-api-platform-interface-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/analysis-api-platform-interface-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/analysis-api-platform-interface-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-analysis-api-platform-interface-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/analysis-api-platform-interface-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-analysis-api-platform-interface",
-  jar = "@org_jetbrains_kotlin-analysis-api-platform-interface-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-analysis-api-platform-interface-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-analysis-api-platform-interface-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-analysis-api-platform-interface-for-ide-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9054,32 +9427,39 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/assignment-compiler-plugin-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/assignment-compiler-plugin-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/assignment-compiler-plugin-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/assignment-compiler-plugin-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-assignment-compiler-plugin",
-  jar = "@org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-assignment-compiler-plugin-provided",
+  exports = [":kotlinc-assignment-compiler-plugin"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/compose-compiler-plugin-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-compose-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/compose-compiler-plugin-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/compose-compiler-plugin-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-compose-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/compose-compiler-plugin-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-compose-compiler-plugin",
-  jar = "@org_jetbrains_kotlin-compose-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-compose-compiler-plugin-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-compose-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-compose-compiler-plugin-for-ide-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9091,62 +9471,149 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/incremental-compilation-impl-tests-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-incremental-compilation-impl-tests-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/incremental-compilation-impl-tests-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/incremental-compilation-impl-tests-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-incremental-compilation-impl-tests-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/incremental-compilation-impl-tests-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-incremental-compilation-impl-tests",
-  jar = "@org_jetbrains_kotlin-incremental-compilation-impl-tests-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-incremental-compilation-impl-tests-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-incremental-compilation-impl-tests-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-incremental-compilation-impl-tests-for-ide-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-incremental-compilation-impl-tests-provided",
+  exports = [":kotlinc-incremental-compilation-impl-tests"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/js-plain-objects-compiler-plugin-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-js-plain-objects-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/js-plain-objects-compiler-plugin-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/js-plain-objects-compiler-plugin-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-js-plain-objects-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/js-plain-objects-compiler-plugin-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-js-plain-objects-compiler-plugin",
-  jar = "@org_jetbrains_kotlin-js-plain-objects-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-js-plain-objects-compiler-plugin-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-js-plain-objects-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-js-plain-objects-compiler-plugin-for-ide-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-js-plain-objects-compiler-plugin-provided",
+  exports = [":kotlinc-js-plain-objects-compiler-plugin"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-build-common-tests-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-build-common-tests-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlin-build-common-tests-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-build-common-tests-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-build-common-tests-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-build-common-tests-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-build-common-tests",
-  jar = "@org_jetbrains_kotlin-kotlin-build-common-tests-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-build-common-tests-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-build-common-tests-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-build-common-tests-for-ide-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-kotlin-build-common-tests-provided",
+  exports = [":kotlinc-kotlin-build-common-tests"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-compiler-cli-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-compiler-cli-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlin-compiler-cli-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-build-tools-api-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-build-tools-api-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-build-tools-api-2.4.0-dev-6760.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlinc-kotlin-build-tools-api",
+  jar = "@org_jetbrains_kotlin-kotlin-build-tools-api-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-build-tools-api-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-kotlin-build-tools-api-provided",
+  exports = [":kotlinc-kotlin-build-tools-api"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.kotlin/kotlin-build-tools-cri-impl-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-build-tools-cri-impl-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-build-tools-cri-impl-2.4.0-dev-6760.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlinc-kotlin-build-tools-cri-impl",
+  jar = "@org_jetbrains_kotlin-kotlin-build-tools-cri-impl-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-build-tools-cri-impl-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-kotlin-build-tools-cri-impl-provided",
+  exports = [":kotlinc-kotlin-build-tools-cri-impl"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.kotlin/kotlin-build-tools-impl-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-build-tools-impl-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-build-tools-impl-2.4.0-dev-6760.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlinc-kotlin-build-tools-impl",
+  jar = "@org_jetbrains_kotlin-kotlin-build-tools-impl-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-build-tools-impl-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-kotlin-build-tools-impl-provided",
+  exports = [":kotlinc-kotlin-build-tools-impl"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.kotlin/kotlin-compiler-cli-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-compiler-cli-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-compiler-cli-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-compiler-cli",
-  jar = "@org_jetbrains_kotlin-kotlin-compiler-cli-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-compiler-cli-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-compiler-cli-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-compiler-cli-for-ide-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9158,17 +9625,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-compiler-common-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-compiler-common-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlin-compiler-common-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-compiler-common-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-compiler-common-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-compiler-common-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-compiler-common",
-  jar = "@org_jetbrains_kotlin-kotlin-compiler-common-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-compiler-common-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-compiler-common-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-compiler-common-for-ide-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9180,17 +9647,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-compiler-fe10-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-compiler-fe10-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlin-compiler-fe10-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-compiler-fe10-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-compiler-fe10-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-compiler-fe10-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-compiler-fe10",
-  jar = "@org_jetbrains_kotlin-kotlin-compiler-fe10-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-compiler-fe10-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-compiler-fe10-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-compiler-fe10-for-ide-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9202,17 +9669,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-compiler-fir-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlin-compiler-fir-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-compiler-fir-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-compiler-fir-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-compiler-fir",
-  jar = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9224,17 +9691,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-compiler-ir-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-compiler-ir-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlin-compiler-ir-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-compiler-ir-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-compiler-ir-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-compiler-ir-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-compiler-ir",
-  jar = "@org_jetbrains_kotlin-kotlin-compiler-ir-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-compiler-ir-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-compiler-ir-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-compiler-ir-for-ide-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9246,17 +9713,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-compiler-tests-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-compiler-tests-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlin-compiler-tests-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-compiler-tests-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-compiler-tests-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-compiler-tests-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-compiler-tests",
-  jar = "@org_jetbrains_kotlin-kotlin-compiler-tests-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-compiler-tests-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-compiler-tests-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-compiler-tests-for-ide-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9268,47 +9735,61 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-dataframe-compiler-plugin-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-dataframe-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlin-dataframe-compiler-plugin-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-dataframe-compiler-plugin-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-dataframe-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-dataframe-compiler-plugin-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-dataframe-compiler-plugin",
-  jar = "@org_jetbrains_kotlin-kotlin-dataframe-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-dataframe-compiler-plugin-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-dataframe-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-dataframe-compiler-plugin-for-ide-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-kotlin-dataframe-compiler-plugin-provided",
+  exports = [":kotlinc-kotlin-dataframe-compiler-plugin"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-dist-for-ide-2.3.0.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-dist-for-ide-2_3_0_http//file",
-  out = "org.jetbrains.kotlin/kotlin-dist-for-ide-2.3.0.jar",
+  name = "org.jetbrains.kotlin/kotlin-dist-for-ide-2.3.20.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-dist-for-ide-2_3_20_http//file",
+  out = "org.jetbrains.kotlin/kotlin-dist-for-ide-2.3.20.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-dist",
-  jar = "@org_jetbrains_kotlin-kotlin-dist-for-ide-2_3_0_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-dist-for-ide-2_3_0-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-dist-for-ide-2_3_20_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-dist-for-ide-2_3_20-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-kotlin-dist-provided",
+  exports = [":kotlinc-kotlin-dist"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-gradle-statistics-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-gradle-statistics-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlin-gradle-statistics-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-gradle-statistics-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-gradle-statistics-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-gradle-statistics-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-gradle-statistics",
-  jar = "@org_jetbrains_kotlin-kotlin-gradle-statistics-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-gradle-statistics-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-gradle-statistics-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-gradle-statistics-for-ide-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9320,17 +9801,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-jps-common-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlin-jps-common-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-jps-common-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-jps-common-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-jps-common",
-  jar = "@org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9342,17 +9823,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-jps-plugin-classpath-2.3.0.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_0_http//file",
-  out = "org.jetbrains.kotlin/kotlin-jps-plugin-classpath-2.3.0.jar",
+  name = "org.jetbrains.kotlin/kotlin-jps-plugin-classpath-2.3.20.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_20_http//file",
+  out = "org.jetbrains.kotlin/kotlin-jps-plugin-classpath-2.3.20.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-jps-plugin-classpath",
-  jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_0_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_0-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_20_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_3_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9364,77 +9845,127 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-jps-plugin-classpath-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlin-jps-plugin-classpath-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-jps-plugin-classpath-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-jps-plugin-classpath-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-jps-plugin-classpath-bootstrap-for-tests",
-  jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-kotlin-jps-plugin-classpath-bootstrap-for-tests-provided",
+  exports = [":kotlinc-kotlin-jps-plugin-classpath-bootstrap-for-tests"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-jps-plugin-tests-for-ide-2.3.0.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-jps-plugin-tests-for-ide-2_3_0_http//file",
-  out = "org.jetbrains.kotlin/kotlin-jps-plugin-tests-for-ide-2.3.0.jar",
+  name = "org.jetbrains.kotlin/kotlin-jps-plugin-tests-for-ide-2.3.20.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-jps-plugin-tests-for-ide-2_3_20_http//file",
+  out = "org.jetbrains.kotlin/kotlin-jps-plugin-tests-for-ide-2.3.20.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-jps-plugin-tests",
-  jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-tests-for-ide-2_3_0_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-tests-for-ide-2_3_0-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-tests-for-ide-2_3_20_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-jps-plugin-tests-for-ide-2_3_20-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-kotlin-jps-plugin-tests-provided",
+  exports = [":kotlinc-kotlin-jps-plugin-tests"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-script-runtime-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-script-runtime-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlin-script-runtime-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-objcexport-header-generator-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-objcexport-header-generator-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-objcexport-header-generator-for-ide-2.4.0-dev-6760.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlinc-kotlin-objcexport-header-generator",
+  jar = "@org_jetbrains_kotlin-kotlin-objcexport-header-generator-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-objcexport-header-generator-for-ide-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-kotlin-objcexport-header-generator-provided",
+  exports = [":kotlinc-kotlin-objcexport-header-generator"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.kotlin/kotlin-script-runtime-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-script-runtime-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-script-runtime-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-script-runtime",
-  jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-kotlin-script-runtime-provided",
+  exports = [":kotlinc-kotlin-script-runtime"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-scripting-common-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-scripting-common-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlin-scripting-common-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-scripting-common-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-scripting-common-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-scripting-common-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-scripting-common",
-  jar = "@org_jetbrains_kotlin-kotlin-scripting-common-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-scripting-common-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-scripting-common-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-scripting-common-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-kotlin-scripting-common-provided",
+  exports = [":kotlinc-kotlin-scripting-common"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-scripting-compiler-impl-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-scripting-compiler-impl-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlin-scripting-compiler-impl-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-scripting-compiler-impl-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-scripting-compiler-impl-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-scripting-compiler-impl-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-scripting-compiler-impl",
-  jar = "@org_jetbrains_kotlin-kotlin-scripting-compiler-impl-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-scripting-compiler-impl-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-scripting-compiler-impl-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-scripting-compiler-impl-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9446,47 +9977,83 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-scripting-dependencies-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-scripting-dependencies-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlin-scripting-dependencies-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-scripting-dependencies-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-scripting-dependencies-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-scripting-dependencies-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-scripting-dependencies",
-  jar = "@org_jetbrains_kotlin-kotlin-scripting-dependencies-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-scripting-dependencies-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-scripting-dependencies-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-scripting-dependencies-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-kotlin-scripting-dependencies-provided",
+  exports = [":kotlinc-kotlin-scripting-dependencies"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-scripting-jvm-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-scripting-jvm-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlin-scripting-jvm-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-scripting-jvm-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-scripting-jvm-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-scripting-jvm-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-scripting-jvm",
-  jar = "@org_jetbrains_kotlin-kotlin-scripting-jvm-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-scripting-jvm-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-scripting-jvm-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-scripting-jvm-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-kotlin-scripting-jvm-provided",
+  exports = [":kotlinc-kotlin-scripting-jvm"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlinx-serialization-compiler-plugin-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlinx-serialization-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/kotlinx-serialization-compiler-plugin-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/kotlin-swift-export-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-swift-export-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlin-swift-export-for-ide-2.4.0-dev-6760.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlinc-kotlin-swift-export",
+  jar = "@org_jetbrains_kotlin-kotlin-swift-export-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-swift-export-for-ide-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-kotlin-swift-export-provided",
+  exports = [":kotlinc-kotlin-swift-export"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.kotlin/kotlinx-serialization-compiler-plugin-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlinx-serialization-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/kotlinx-serialization-compiler-plugin-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlinx-serialization-compiler-plugin",
-  jar = "@org_jetbrains_kotlin-kotlinx-serialization-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlinx-serialization-compiler-plugin-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-kotlinx-serialization-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlinx-serialization-compiler-plugin-for-ide-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9498,17 +10065,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/lombok-compiler-plugin-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-lombok-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/lombok-compiler-plugin-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/lombok-compiler-plugin-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-lombok-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/lombok-compiler-plugin-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-lombok-compiler-plugin",
-  jar = "@org_jetbrains_kotlin-lombok-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-lombok-compiler-plugin-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-lombok-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-lombok-compiler-plugin-for-ide-2_4_0-dev-6760-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9520,92 +10087,149 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/low-level-api-fir-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-low-level-api-fir-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/low-level-api-fir-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/low-level-api-fir-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-low-level-api-fir-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/low-level-api-fir-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-low-level-api-fir",
-  jar = "@org_jetbrains_kotlin-low-level-api-fir-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-low-level-api-fir-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-low-level-api-fir-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-low-level-api-fir-for-ide-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-low-level-api-fir-provided",
+  exports = [":kotlinc-low-level-api-fir"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/noarg-compiler-plugin-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-noarg-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/noarg-compiler-plugin-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/noarg-compiler-plugin-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-noarg-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/noarg-compiler-plugin-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-noarg-compiler-plugin",
-  jar = "@org_jetbrains_kotlin-noarg-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-noarg-compiler-plugin-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-noarg-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-noarg-compiler-plugin-for-ide-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-noarg-compiler-plugin-provided",
+  exports = [":kotlinc-noarg-compiler-plugin"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/parcelize-compiler-plugin-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-parcelize-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/parcelize-compiler-plugin-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/parcelize-compiler-plugin-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-parcelize-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/parcelize-compiler-plugin-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-parcelize-compiler-plugin",
-  jar = "@org_jetbrains_kotlin-parcelize-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-parcelize-compiler-plugin-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-parcelize-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-parcelize-compiler-plugin-for-ide-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-parcelize-compiler-plugin-provided",
+  exports = [":kotlinc-parcelize-compiler-plugin"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/sam-with-receiver-compiler-plugin-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-sam-with-receiver-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/sam-with-receiver-compiler-plugin-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/sam-with-receiver-compiler-plugin-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-sam-with-receiver-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/sam-with-receiver-compiler-plugin-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-sam-with-receiver-compiler-plugin",
-  jar = "@org_jetbrains_kotlin-sam-with-receiver-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-sam-with-receiver-compiler-plugin-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-sam-with-receiver-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-sam-with-receiver-compiler-plugin-for-ide-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-sam-with-receiver-compiler-plugin-provided",
+  exports = [":kotlinc-sam-with-receiver-compiler-plugin"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/scripting-compiler-plugin-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-scripting-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/scripting-compiler-plugin-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/scripting-compiler-plugin-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-scripting-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/scripting-compiler-plugin-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-scripting-compiler-plugin",
-  jar = "@org_jetbrains_kotlin-scripting-compiler-plugin-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-scripting-compiler-plugin-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-scripting-compiler-plugin-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-scripting-compiler-plugin-for-ide-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-scripting-compiler-plugin-provided",
+  exports = [":kotlinc-scripting-compiler-plugin"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/symbol-light-classes-for-ide-2.4.0-dev-2631.jar_copy",
-  src = "@org_jetbrains_kotlin-symbol-light-classes-for-ide-2_4_0-dev-2631_http//file",
-  out = "org.jetbrains.kotlin/symbol-light-classes-for-ide-2.4.0-dev-2631.jar",
+  name = "org.jetbrains.kotlin/symbol-light-classes-for-ide-2.4.0-dev-6760.jar_copy",
+  src = "@org_jetbrains_kotlin-symbol-light-classes-for-ide-2_4_0-dev-6760_http//file",
+  out = "org.jetbrains.kotlin/symbol-light-classes-for-ide-2.4.0-dev-6760.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-symbol-light-classes",
-  jar = "@org_jetbrains_kotlin-symbol-light-classes-for-ide-2_4_0-dev-2631_http//file",
-  source_jar = "@org_jetbrains_kotlin-symbol-light-classes-for-ide-2_4_0-dev-2631-sources_http//file",
+  jar = "@org_jetbrains_kotlin-symbol-light-classes-for-ide-2_4_0-dev-6760_http//file",
+  source_jar = "@org_jetbrains_kotlin-symbol-light-classes-for-ide-2_4_0-dev-6760-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-symbol-light-classes-provided",
+  exports = [":kotlinc-symbol-light-classes"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.kotlinx/binary-compatibility-validator-0.17.0.jar_copy",
+  src = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http//file",
+  out = "org.jetbrains.kotlinx/binary-compatibility-validator-0.17.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlinx-bcv",
+  jar = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http//file",
+  source_jar = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -10214,58 +10838,6 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.ow2.asm/asm-analysis-9.8.jar_copy",
-  src = "@org_ow2_asm-asm-analysis-9_8_http//file",
-  out = "org.ow2.asm/asm-analysis-9.8.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.ow2.asm/asm-tree-9.8.jar_copy",
-  src = "@org_ow2_asm-asm-tree-9_8_http//file",
-  out = "org.ow2.asm/asm-tree-9.8.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.ow2.asm/asm-9.8.jar_copy",
-  src = "@org_ow2_asm-asm-9_8_http//file",
-  out = "org.ow2.asm/asm-9.8.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "libraries-asm-tools-asm-tools",
-  exports = [
-    ":org_ow2_asm-asm-analysis-9_8_http_import",
-    ":org_ow2_asm-asm-tree-9_8_http_import",
-    ":org_ow2_asm-asm-9_8_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org_ow2_asm-asm-analysis-9_8_http_import",
-  jar = "@org_ow2_asm-asm-analysis-9_8_http//file",
-  source_jar = "@org_ow2_asm-asm-analysis-9_8-sources_http//file"
-)
-
-jvm_import(
-  name = "org_ow2_asm-asm-tree-9_8_http_import",
-  jar = "@org_ow2_asm-asm-tree-9_8_http//file",
-  source_jar = "@org_ow2_asm-asm-tree-9_8-sources_http//file"
-)
-
-jvm_import(
-  name = "org_ow2_asm-asm-9_8_http_import",
-  jar = "@org_ow2_asm-asm-9_8_http//file",
-  source_jar = "@org_ow2_asm-asm-9_8-sources_http//file"
-)
-
-copy_file(
   name = "dk.brics/automaton-1.12-4.jar_copy",
   src = "@dk_brics-automaton-1_12-4_http//file",
   out = "dk.brics/automaton-1.12-4.jar",
@@ -10277,6 +10849,252 @@ jvm_import(
   name = "libraries-automaton-automaton",
   jar = "@dk_brics-automaton-1_12-4_http//file",
   source_jar = "@dk_brics-automaton-1_12-4-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.intellij.deps.batik/batik-transcoder-1.16.0-35.jar_copy",
+  src = "@org_jetbrains_intellij_deps_batik-batik-transcoder-1_16_0-35_http//file",
+  out = "org.jetbrains.intellij.deps.batik/batik-transcoder-1.16.0-35.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.intellij.deps.batik/batik-awt-util-1.16.0-35.jar_copy",
+  src = "@org_jetbrains_intellij_deps_batik-batik-awt-util-1_16_0-35_http//file",
+  out = "org.jetbrains.intellij.deps.batik/batik-awt-util-1.16.0-35.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.apache.xmlgraphics/xmlgraphics-commons-2.8.jar_copy",
+  src = "@org_apache_xmlgraphics-xmlgraphics-commons-2_8_http//file",
+  out = "org.apache.xmlgraphics/xmlgraphics-commons-2.8.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.intellij.deps.batik/batik-bridge-1.16.0-35.jar_copy",
+  src = "@org_jetbrains_intellij_deps_batik-batik-bridge-1_16_0-35_http//file",
+  out = "org.jetbrains.intellij.deps.batik/batik-bridge-1.16.0-35.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.intellij.deps.batik/batik-anim-1.16.0-35.jar_copy",
+  src = "@org_jetbrains_intellij_deps_batik-batik-anim-1_16_0-35_http//file",
+  out = "org.jetbrains.intellij.deps.batik/batik-anim-1.16.0-35.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.intellij.deps.batik/batik-parser-1.16.0-35.jar_copy",
+  src = "@org_jetbrains_intellij_deps_batik-batik-parser-1_16_0-35_http//file",
+  out = "org.jetbrains.intellij.deps.batik/batik-parser-1.16.0-35.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.intellij.deps.batik/batik-svg-dom-1.16.0-35.jar_copy",
+  src = "@org_jetbrains_intellij_deps_batik-batik-svg-dom-1_16_0-35_http//file",
+  out = "org.jetbrains.intellij.deps.batik/batik-svg-dom-1.16.0-35.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.intellij.deps.batik/batik-dom-1.16.0-35.jar_copy",
+  src = "@org_jetbrains_intellij_deps_batik-batik-dom-1_16_0-35_http//file",
+  out = "org.jetbrains.intellij.deps.batik/batik-dom-1.16.0-35.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.intellij.deps.batik/batik-css-1.16.0-35.jar_copy",
+  src = "@org_jetbrains_intellij_deps_batik-batik-css-1_16_0-35_http//file",
+  out = "org.jetbrains.intellij.deps.batik/batik-css-1.16.0-35.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.intellij.deps.batik/batik-ext-1.16.0-35.jar_copy",
+  src = "@org_jetbrains_intellij_deps_batik-batik-ext-1_16_0-35_http//file",
+  out = "org.jetbrains.intellij.deps.batik/batik-ext-1.16.0-35.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.intellij.deps.batik/batik-gvt-1.16.0-35.jar_copy",
+  src = "@org_jetbrains_intellij_deps_batik-batik-gvt-1_16_0-35_http//file",
+  out = "org.jetbrains.intellij.deps.batik/batik-gvt-1.16.0-35.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.intellij.deps.batik/batik-svggen-1.16.0-35.jar_copy",
+  src = "@org_jetbrains_intellij_deps_batik-batik-svggen-1_16_0-35_http//file",
+  out = "org.jetbrains.intellij.deps.batik/batik-svggen-1.16.0-35.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.intellij.deps.batik/batik-util-1.16.0-35.jar_copy",
+  src = "@org_jetbrains_intellij_deps_batik-batik-util-1_16_0-35_http//file",
+  out = "org.jetbrains.intellij.deps.batik/batik-util-1.16.0-35.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.intellij.deps.batik/batik-constants-1.16.0-35.jar_copy",
+  src = "@org_jetbrains_intellij_deps_batik-batik-constants-1_16_0-35_http//file",
+  out = "org.jetbrains.intellij.deps.batik/batik-constants-1.16.0-35.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.intellij.deps.batik/batik-xml-1.16.0-35.jar_copy",
+  src = "@org_jetbrains_intellij_deps_batik-batik-xml-1_16_0-35_http//file",
+  out = "org.jetbrains.intellij.deps.batik/batik-xml-1.16.0-35.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-batik-batik-transcoder",
+  exports = [
+    ":org_jetbrains_intellij_deps_batik-batik-transcoder-1_16_0-35_http_import",
+    ":org_jetbrains_intellij_deps_batik-batik-awt-util-1_16_0-35_http_import",
+    ":org_apache_xmlgraphics-xmlgraphics-commons-2_8_http_import",
+    ":org_jetbrains_intellij_deps_batik-batik-bridge-1_16_0-35_http_import",
+    ":org_jetbrains_intellij_deps_batik-batik-anim-1_16_0-35_http_import",
+    ":org_jetbrains_intellij_deps_batik-batik-parser-1_16_0-35_http_import",
+    ":org_jetbrains_intellij_deps_batik-batik-svg-dom-1_16_0-35_http_import",
+    ":org_jetbrains_intellij_deps_batik-batik-dom-1_16_0-35_http_import",
+    ":org_jetbrains_intellij_deps_batik-batik-css-1_16_0-35_http_import",
+    ":org_jetbrains_intellij_deps_batik-batik-ext-1_16_0-35_http_import",
+    ":org_jetbrains_intellij_deps_batik-batik-gvt-1_16_0-35_http_import",
+    ":org_jetbrains_intellij_deps_batik-batik-svggen-1_16_0-35_http_import",
+    ":org_jetbrains_intellij_deps_batik-batik-util-1_16_0-35_http_import",
+    ":org_jetbrains_intellij_deps_batik-batik-constants-1_16_0-35_http_import",
+    ":org_jetbrains_intellij_deps_batik-batik-xml-1_16_0-35_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_batik-batik-transcoder-1_16_0-35_http_import",
+  jar = "@org_jetbrains_intellij_deps_batik-batik-transcoder-1_16_0-35_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_batik-batik-transcoder-1_16_0-35-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_batik-batik-awt-util-1_16_0-35_http_import",
+  jar = "@org_jetbrains_intellij_deps_batik-batik-awt-util-1_16_0-35_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_batik-batik-awt-util-1_16_0-35-sources_http//file"
+)
+
+jvm_import(
+  name = "org_apache_xmlgraphics-xmlgraphics-commons-2_8_http_import",
+  jar = "@org_apache_xmlgraphics-xmlgraphics-commons-2_8_http//file",
+  source_jar = "@org_apache_xmlgraphics-xmlgraphics-commons-2_8-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_batik-batik-bridge-1_16_0-35_http_import",
+  jar = "@org_jetbrains_intellij_deps_batik-batik-bridge-1_16_0-35_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_batik-batik-bridge-1_16_0-35-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_batik-batik-anim-1_16_0-35_http_import",
+  jar = "@org_jetbrains_intellij_deps_batik-batik-anim-1_16_0-35_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_batik-batik-anim-1_16_0-35-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_batik-batik-parser-1_16_0-35_http_import",
+  jar = "@org_jetbrains_intellij_deps_batik-batik-parser-1_16_0-35_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_batik-batik-parser-1_16_0-35-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_batik-batik-svg-dom-1_16_0-35_http_import",
+  jar = "@org_jetbrains_intellij_deps_batik-batik-svg-dom-1_16_0-35_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_batik-batik-svg-dom-1_16_0-35-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_batik-batik-dom-1_16_0-35_http_import",
+  jar = "@org_jetbrains_intellij_deps_batik-batik-dom-1_16_0-35_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_batik-batik-dom-1_16_0-35-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_batik-batik-css-1_16_0-35_http_import",
+  jar = "@org_jetbrains_intellij_deps_batik-batik-css-1_16_0-35_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_batik-batik-css-1_16_0-35-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_batik-batik-ext-1_16_0-35_http_import",
+  jar = "@org_jetbrains_intellij_deps_batik-batik-ext-1_16_0-35_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_batik-batik-ext-1_16_0-35-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_batik-batik-gvt-1_16_0-35_http_import",
+  jar = "@org_jetbrains_intellij_deps_batik-batik-gvt-1_16_0-35_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_batik-batik-gvt-1_16_0-35-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_batik-batik-svggen-1_16_0-35_http_import",
+  jar = "@org_jetbrains_intellij_deps_batik-batik-svggen-1_16_0-35_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_batik-batik-svggen-1_16_0-35-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_batik-batik-util-1_16_0-35_http_import",
+  jar = "@org_jetbrains_intellij_deps_batik-batik-util-1_16_0-35_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_batik-batik-util-1_16_0-35-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_batik-batik-constants-1_16_0-35_http_import",
+  jar = "@org_jetbrains_intellij_deps_batik-batik-constants-1_16_0-35_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_batik-batik-constants-1_16_0-35-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_batik-batik-xml-1_16_0-35_http_import",
+  jar = "@org_jetbrains_intellij_deps_batik-batik-xml-1_16_0-35_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_batik-batik-xml-1_16_0-35-sources_http//file"
+)
+
+copy_file(
+  name = "xml-apis/xml-apis-ext-1.3.04.jar_copy",
+  src = "@xml-apis-xml-apis-ext-1_3_04_http//file",
+  out = "xml-apis/xml-apis-ext-1.3.04.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-batik-xml-apis-ext",
+  jar = "@xml-apis-xml-apis-ext-1_3_04_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -11410,6 +12228,21 @@ jvm_import(
 )
 
 copy_file(
+  name = "com.fasterxml.jackson.core/jackson-annotations-2.21.jar_copy",
+  src = "@com_fasterxml_jackson_core-jackson-annotations-2_21_http//file",
+  out = "com.fasterxml.jackson.core/jackson-annotations-2.21.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-jackson-annotations-jackson-annotations",
+  jar = "@com_fasterxml_jackson_core-jackson-annotations-2_21_http//file",
+  source_jar = "@com_fasterxml_jackson_core-jackson-annotations-2_21-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "com.fasterxml.jackson.jr/jackson-jr-objects-2.19.0.jar_copy",
   src = "@com_fasterxml_jackson_jr-jackson-jr-objects-2_19_0_http//file",
   out = "com.fasterxml.jackson.jr/jackson-jr-objects-2.19.0.jar",
@@ -11421,6 +12254,81 @@ jvm_import(
   name = "libraries-jackson-jr-objects-jackson-jr-objects",
   jar = "@com_fasterxml_jackson_jr-jackson-jr-objects-2_19_0_http//file",
   source_jar = "@com_fasterxml_jackson_jr-jackson-jr-objects-2_19_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "tools.jackson.core/jackson-databind-3.1.0-rc1.jar_copy",
+  src = "@tools_jackson_core-jackson-databind-3_1_0-rc1_http//file",
+  out = "tools.jackson.core/jackson-databind-3.1.0-rc1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-jackson3-databind-jackson3-databind",
+  jar = "@tools_jackson_core-jackson-databind-3_1_0-rc1_http//file",
+  source_jar = "@tools_jackson_core-jackson-databind-3_1_0-rc1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "tools.jackson.dataformat/jackson-dataformat-yaml-3.1.0-rc1.jar_copy",
+  src = "@tools_jackson_dataformat-jackson-dataformat-yaml-3_1_0-rc1_http//file",
+  out = "tools.jackson.dataformat/jackson-dataformat-yaml-3.1.0-rc1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-jackson3-dataformat-yaml-jackson3-dataformat-yaml",
+  jar = "@tools_jackson_dataformat-jackson-dataformat-yaml-3_1_0-rc1_http//file",
+  source_jar = "@tools_jackson_dataformat-jackson-dataformat-yaml-3_1_0-rc1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "tools.jackson.core/jackson-core-3.1.0-rc1.jar_copy",
+  src = "@tools_jackson_core-jackson-core-3_1_0-rc1_http//file",
+  out = "tools.jackson.core/jackson-core-3.1.0-rc1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-jackson3-jackson3",
+  jar = "@tools_jackson_core-jackson-core-3_1_0-rc1_http//file",
+  source_jar = "@tools_jackson_core-jackson-core-3_1_0-rc1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "tools.jackson.jr/jackson-jr-objects-3.1.0-rc1.jar_copy",
+  src = "@tools_jackson_jr-jackson-jr-objects-3_1_0-rc1_http//file",
+  out = "tools.jackson.jr/jackson-jr-objects-3.1.0-rc1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-jackson3-jr-objects-jackson3-jr-objects",
+  jar = "@tools_jackson_jr-jackson-jr-objects-3_1_0-rc1_http//file",
+  source_jar = "@tools_jackson_jr-jackson-jr-objects-3_1_0-rc1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "tools.jackson.module/jackson-module-kotlin-3.1.0-rc1.jar_copy",
+  src = "@tools_jackson_module-jackson-module-kotlin-3_1_0-rc1_http//file",
+  out = "tools.jackson.module/jackson-module-kotlin-3.1.0-rc1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-jackson3-module-kotlin-jackson3-module-kotlin",
+  jar = "@tools_jackson_module-jackson-module-kotlin-3_1_0-rc1_http//file",
+  source_jar = "@tools_jackson_module-jackson-module-kotlin-3_1_0-rc1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -11470,17 +12378,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.jediterm/jediterm-ui-3.61.jar_copy",
-  src = "@org_jetbrains_jediterm-jediterm-ui-3_61_http//file",
-  out = "org.jetbrains.jediterm/jediterm-ui-3.61.jar",
+  name = "org.jetbrains.jediterm/jediterm-ui-3.64.jar_copy",
+  src = "@org_jetbrains_jediterm-jediterm-ui-3_64_http//file",
+  out = "org.jetbrains.jediterm/jediterm-ui-3.64.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-jediterm-ui-jediterm-ui",
-  jar = "@org_jetbrains_jediterm-jediterm-ui-3_61_http//file",
-  source_jar = "@org_jetbrains_jediterm-jediterm-ui-3_61-sources_http//file",
+  jar = "@org_jetbrains_jediterm-jediterm-ui-3_64_http//file",
+  source_jar = "@org_jetbrains_jediterm-jediterm-ui-3_64-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -11526,6 +12434,103 @@ jvm_import(
   name = "libraries-jgoodies-forms-jgoodies-forms",
   jar = "@com_jgoodies-forms-1_1-preview_http//file",
   visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "com.jcraft/jsch.agentproxy.connector-factory-0.0.9.jar_copy",
+  src = "@com_jcraft-jsch_agentproxy_connector-factory-0_0_9_http//file",
+  out = "com.jcraft/jsch.agentproxy.connector-factory-0.0.9.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "com.jcraft/jsch.agentproxy.core-0.0.9.jar_copy",
+  src = "@com_jcraft-jsch_agentproxy_core-0_0_9_http//file",
+  out = "com.jcraft/jsch.agentproxy.core-0.0.9.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "com.jcraft/jsch.agentproxy.usocket-jna-0.0.9.jar_copy",
+  src = "@com_jcraft-jsch_agentproxy_usocket-jna-0_0_9_http//file",
+  out = "com.jcraft/jsch.agentproxy.usocket-jna-0.0.9.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "com.jcraft/jsch.agentproxy.usocket-nc-0.0.9.jar_copy",
+  src = "@com_jcraft-jsch_agentproxy_usocket-nc-0_0_9_http//file",
+  out = "com.jcraft/jsch.agentproxy.usocket-nc-0.0.9.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "com.jcraft/jsch.agentproxy.sshagent-0.0.9.jar_copy",
+  src = "@com_jcraft-jsch_agentproxy_sshagent-0_0_9_http//file",
+  out = "com.jcraft/jsch.agentproxy.sshagent-0.0.9.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "com.jcraft/jsch.agentproxy.pageant-0.0.9.jar_copy",
+  src = "@com_jcraft-jsch_agentproxy_pageant-0_0_9_http//file",
+  out = "com.jcraft/jsch.agentproxy.pageant-0.0.9.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-jsch-agent-proxy-jsch-agent-proxy",
+  exports = [
+    ":com_jcraft-jsch_agentproxy_connector-factory-0_0_9_http_import",
+    ":com_jcraft-jsch_agentproxy_core-0_0_9_http_import",
+    ":com_jcraft-jsch_agentproxy_usocket-jna-0_0_9_http_import",
+    ":com_jcraft-jsch_agentproxy_usocket-nc-0_0_9_http_import",
+    ":com_jcraft-jsch_agentproxy_sshagent-0_0_9_http_import",
+    ":com_jcraft-jsch_agentproxy_pageant-0_0_9_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com_jcraft-jsch_agentproxy_connector-factory-0_0_9_http_import",
+  jar = "@com_jcraft-jsch_agentproxy_connector-factory-0_0_9_http//file",
+  source_jar = "@com_jcraft-jsch_agentproxy_connector-factory-0_0_9-sources_http//file"
+)
+
+jvm_import(
+  name = "com_jcraft-jsch_agentproxy_core-0_0_9_http_import",
+  jar = "@com_jcraft-jsch_agentproxy_core-0_0_9_http//file",
+  source_jar = "@com_jcraft-jsch_agentproxy_core-0_0_9-sources_http//file"
+)
+
+jvm_import(
+  name = "com_jcraft-jsch_agentproxy_usocket-jna-0_0_9_http_import",
+  jar = "@com_jcraft-jsch_agentproxy_usocket-jna-0_0_9_http//file",
+  source_jar = "@com_jcraft-jsch_agentproxy_usocket-jna-0_0_9-sources_http//file"
+)
+
+jvm_import(
+  name = "com_jcraft-jsch_agentproxy_usocket-nc-0_0_9_http_import",
+  jar = "@com_jcraft-jsch_agentproxy_usocket-nc-0_0_9_http//file",
+  source_jar = "@com_jcraft-jsch_agentproxy_usocket-nc-0_0_9-sources_http//file"
+)
+
+jvm_import(
+  name = "com_jcraft-jsch_agentproxy_sshagent-0_0_9_http_import",
+  jar = "@com_jcraft-jsch_agentproxy_sshagent-0_0_9_http//file",
+  source_jar = "@com_jcraft-jsch_agentproxy_sshagent-0_0_9-sources_http//file"
+)
+
+jvm_import(
+  name = "com_jcraft-jsch_agentproxy_pageant-0_0_9_http_import",
+  jar = "@com_jcraft-jsch_agentproxy_pageant-0_0_9_http//file",
+  source_jar = "@com_jcraft-jsch_agentproxy_pageant-0_0_9-sources_http//file"
 )
 
 copy_file(
@@ -11814,32 +12819,69 @@ jvm_import(
 )
 
 copy_file(
-  name = "io.netty/netty-codec-compression-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-codec-compression-4_2_0_RC2_http//file",
-  out = "io.netty/netty-codec-compression-4.2.0.RC2.jar",
+  name = "io.netty/netty-buffer-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-buffer-4_2_10_Final_http//file",
+  out = "io.netty/netty-buffer-4.2.10.Final.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "io.netty/netty-common-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-common-4_2_10_Final_http//file",
+  out = "io.netty/netty-common-4.2.10.Final.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-netty-buffer-netty-buffer",
+  exports = [
+    ":io_netty-netty-buffer-4_2_10_Final_http_import",
+    ":io_netty-netty-common-4_2_10_Final_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "io_netty-netty-buffer-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-buffer-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-buffer-4_2_10_Final-sources_http//file"
+)
+
+jvm_import(
+  name = "io_netty-netty-common-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-common-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-common-4_2_10_Final-sources_http//file"
+)
+
+copy_file(
+  name = "io.netty/netty-codec-compression-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-codec-compression-4_2_10_Final_http//file",
+  out = "io.netty/netty-codec-compression-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-netty-codec-compression-netty-codec-compression",
-  jar = "@io_netty-netty-codec-compression-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-codec-compression-4_2_0_RC2-sources_http//file",
+  jar = "@io_netty-netty-codec-compression-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-codec-compression-4_2_10_Final-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-handler-proxy-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-handler-proxy-4_2_0_RC2_http//file",
-  out = "io.netty/netty-handler-proxy-4.2.0.RC2.jar",
+  name = "io.netty/netty-handler-proxy-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-handler-proxy-4_2_10_Final_http//file",
+  out = "io.netty/netty-handler-proxy-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-codec-socks-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-codec-socks-4_2_0_RC2_http//file",
-  out = "io.netty/netty-codec-socks-4.2.0.RC2.jar",
+  name = "io.netty/netty-codec-socks-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-codec-socks-4_2_10_Final_http//file",
+  out = "io.netty/netty-codec-socks-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -11847,22 +12889,22 @@ copy_file(
 java_library(
   name = "libraries-netty-handler-proxy-netty-handler-proxy",
   exports = [
-    ":io_netty-netty-handler-proxy-4_2_0_RC2_http_import",
-    ":io_netty-netty-codec-socks-4_2_0_RC2_http_import",
+    ":io_netty-netty-handler-proxy-4_2_10_Final_http_import",
+    ":io_netty-netty-codec-socks-4_2_10_Final_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "io_netty-netty-handler-proxy-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-handler-proxy-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-handler-proxy-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-handler-proxy-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-handler-proxy-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-handler-proxy-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-codec-socks-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-codec-socks-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-codec-socks-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-codec-socks-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-codec-socks-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-codec-socks-4_2_10_Final-sources_http//file"
 )
 
 copy_file(
@@ -11993,62 +13035,62 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.jetbrains.rd/rd-core-2026.1.0.jar_copy",
-  src = "@com_jetbrains_rd-rd-core-2026_1_0_http//file",
-  out = "com.jetbrains.rd/rd-core-2026.1.0.jar",
+  name = "com.jetbrains.rd/rd-core-2026.1.2.jar_copy",
+  src = "@com_jetbrains_rd-rd-core-2026_1_2_http//file",
+  out = "com.jetbrains.rd/rd-core-2026.1.2.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-rd-core-rd-core",
-  jar = "@com_jetbrains_rd-rd-core-2026_1_0_http//file",
-  source_jar = "@com_jetbrains_rd-rd-core-2026_1_0-sources_http//file",
+  jar = "@com_jetbrains_rd-rd-core-2026_1_2_http//file",
+  source_jar = "@com_jetbrains_rd-rd-core-2026_1_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "com.jetbrains.rd/rd-framework-2026.1.0.jar_copy",
-  src = "@com_jetbrains_rd-rd-framework-2026_1_0_http//file",
-  out = "com.jetbrains.rd/rd-framework-2026.1.0.jar",
+  name = "com.jetbrains.rd/rd-framework-2026.1.2.jar_copy",
+  src = "@com_jetbrains_rd-rd-framework-2026_1_2_http//file",
+  out = "com.jetbrains.rd/rd-framework-2026.1.2.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-rd-framework-rd-framework",
-  jar = "@com_jetbrains_rd-rd-framework-2026_1_0_http//file",
-  source_jar = "@com_jetbrains_rd-rd-framework-2026_1_0-sources_http//file",
+  jar = "@com_jetbrains_rd-rd-framework-2026_1_2_http//file",
+  source_jar = "@com_jetbrains_rd-rd-framework-2026_1_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "com.jetbrains.rd/rd-swing-2026.1.0.jar_copy",
-  src = "@com_jetbrains_rd-rd-swing-2026_1_0_http//file",
-  out = "com.jetbrains.rd/rd-swing-2026.1.0.jar",
+  name = "com.jetbrains.rd/rd-swing-2026.1.2.jar_copy",
+  src = "@com_jetbrains_rd-rd-swing-2026_1_2_http//file",
+  out = "com.jetbrains.rd/rd-swing-2026.1.2.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-rd-swing-rd-swing",
-  jar = "@com_jetbrains_rd-rd-swing-2026_1_0_http//file",
-  source_jar = "@com_jetbrains_rd-rd-swing-2026_1_0-sources_http//file",
+  jar = "@com_jetbrains_rd-rd-swing-2026_1_2_http//file",
+  source_jar = "@com_jetbrains_rd-rd-swing-2026_1_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "com.jetbrains.rd/rd-text-2026.1.0.jar_copy",
-  src = "@com_jetbrains_rd-rd-text-2026_1_0_http//file",
-  out = "com.jetbrains.rd/rd-text-2026.1.0.jar",
+  name = "com.jetbrains.rd/rd-text-2026.1.2.jar_copy",
+  src = "@com_jetbrains_rd-rd-text-2026_1_2_http//file",
+  out = "com.jetbrains.rd/rd-text-2026.1.2.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-rd-text-rd-text",
-  jar = "@com_jetbrains_rd-rd-text-2026_1_0_http//file",
-  source_jar = "@com_jetbrains_rd-rd-text-2026_1_0-sources_http//file",
+  jar = "@com_jetbrains_rd-rd-text-2026_1_2_http//file",
+  source_jar = "@com_jetbrains_rd-rd-text-2026_1_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -13601,6 +14643,62 @@ jvm_import(
 java_library(
   name = "maven-server-event_listener-org-apache-maven-maven-core-3-3-9-provided",
   exports = [":maven-server-event_listener-org-apache-maven-maven-core-3-3-9"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "maven-server-event_listener-tests-com-google-inject-guice-no_aop-4-0",
+  exports = [
+    ":com_google_inject-guice-4_0_http_import",
+    ":javax_inject-javax_inject-1_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "maven-server-event_listener-tests-com-google-inject-guice-no_aop-4-0-provided",
+  exports = [":maven-server-event_listener-tests-com-google-inject-guice-no_aop-4-0"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "maven-server-event_listener-tests-org-apache-maven-maven-core-3-3-9",
+  exports = [
+    ":org_apache_maven-maven-core-3_3_9_http_import",
+    ":org_apache_maven-maven-model-3_3_9_http_import",
+    ":org_apache_maven-maven-settings-3_3_9_http_import",
+    ":org_apache_maven-maven-settings-builder-3_3_9_http_import",
+    ":org_apache_maven-maven-builder-support-3_3_9_http_import",
+    ":org_apache_maven-maven-repository-metadata-3_3_9_http_import",
+    ":org_apache_maven-maven-artifact-3_3_9_http_import",
+    ":org_apache_maven-maven-plugin-api-3_3_9_http_import",
+    ":org_apache_maven-maven-model-builder-3_3_9_http_import",
+    ":com_google_guava-guava-18_0_http_import",
+    ":org_apache_maven-maven-aether-provider-3_3_9_http_import",
+    ":org_eclipse_aether-aether-spi-1_0_2_v20150114_http_import",
+    ":org_eclipse_aether-aether-impl-1_0_2_v20150114_http_import",
+    ":org_eclipse_aether-aether-api-1_0_2_v20150114_http_import",
+    ":org_eclipse_aether-aether-util-1_0_2_v20150114_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2_http_import",
+    ":javax_enterprise-cdi-api-1_0_http_import",
+    ":javax_annotation-jsr250-api-1_0_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2_http_import",
+    ":org_codehaus_plexus-plexus-interpolation-1_21_http_import",
+    ":org_codehaus_plexus-plexus-utils-3_0_22_http_import",
+    ":org_codehaus_plexus-plexus-classworlds-2_5_2_http_import",
+    ":org_codehaus_plexus-plexus-component-annotations-1_6_http_import",
+    ":org_sonatype_plexus-plexus-sec-dispatcher-1_3_http_import",
+    ":org_sonatype_plexus-plexus-cipher-1_4_http_import",
+    ":org_apache_commons-commons-lang3-3_4_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "maven-server-event_listener-tests-org-apache-maven-maven-core-3-3-9-provided",
+  exports = [":maven-server-event_listener-tests-org-apache-maven-maven-core-3-3-9"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )
@@ -16424,6 +17522,13 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "maven-test_framework-tests-io-takari-maven-wrapper",
+  jar = "@io_takari-maven-wrapper-0_5_5_http//file",
+  source_jar = "@io_takari-maven-wrapper-0_5_5-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
   name = "com.moandjiezana.toml/toml4j-0.7.2.jar_copy",
   src = "@com_moandjiezana_toml-toml4j-0_7_2_http//file",
@@ -16536,75 +17641,58 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "netty-buffer",
-  exports = [
-    ":io_netty-netty-buffer-4_2_0_RC2_http_import",
-    ":io_netty-netty-common-4_2_0_RC2_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
 copy_file(
-  name = "io.netty/netty-codec-http2-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-codec-http2-4_2_0_RC2_http//file",
-  out = "io.netty/netty-codec-http2-4.2.0.RC2.jar",
+  name = "io.netty/netty-codec-http2-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-codec-http2-4_2_10_Final_http//file",
+  out = "io.netty/netty-codec-http2-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-transport-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-transport-4_2_0_RC2_http//file",
-  out = "io.netty/netty-transport-4.2.0.RC2.jar",
+  name = "io.netty/netty-transport-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-transport-4_2_10_Final_http//file",
+  out = "io.netty/netty-transport-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-resolver-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-resolver-4_2_0_RC2_http//file",
-  out = "io.netty/netty-resolver-4.2.0.RC2.jar",
+  name = "io.netty/netty-resolver-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-resolver-4_2_10_Final_http//file",
+  out = "io.netty/netty-resolver-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-codec-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-codec-4_2_0_RC2_http//file",
-  out = "io.netty/netty-codec-4.2.0.RC2.jar",
+  name = "io.netty/netty-codec-base-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-codec-base-4_2_10_Final_http//file",
+  out = "io.netty/netty-codec-base-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-codec-base-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-codec-base-4_2_0_RC2_http//file",
-  out = "io.netty/netty-codec-base-4.2.0.RC2.jar",
+  name = "io.netty/netty-handler-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-handler-4_2_10_Final_http//file",
+  out = "io.netty/netty-handler-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-handler-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-handler-4_2_0_RC2_http//file",
-  out = "io.netty/netty-handler-4.2.0.RC2.jar",
+  name = "io.netty/netty-transport-native-unix-common-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-transport-native-unix-common-4_2_10_Final_http//file",
+  out = "io.netty/netty-transport-native-unix-common-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-transport-native-unix-common-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-transport-native-unix-common-4_2_0_RC2_http//file",
-  out = "io.netty/netty-transport-native-unix-common-4.2.0.RC2.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "io.netty/netty-codec-http-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-codec-http-4_2_0_RC2_http//file",
-  out = "io.netty/netty-codec-http-4.2.0.RC2.jar",
+  name = "io.netty/netty-codec-http-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-codec-http-4_2_10_Final_http//file",
+  out = "io.netty/netty-codec-http-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -16612,133 +17700,126 @@ copy_file(
 java_library(
   name = "netty-codec-http",
   exports = [
-    ":io_netty-netty-codec-http2-4_2_0_RC2_http_import",
-    ":io_netty-netty-transport-4_2_0_RC2_http_import",
-    ":io_netty-netty-resolver-4_2_0_RC2_http_import",
-    ":io_netty-netty-codec-4_2_0_RC2_http_import",
-    ":io_netty-netty-codec-base-4_2_0_RC2_http_import",
-    ":io_netty-netty-handler-4_2_0_RC2_http_import",
-    ":io_netty-netty-transport-native-unix-common-4_2_0_RC2_http_import",
-    ":io_netty-netty-codec-http-4_2_0_RC2_http_import",
+    ":io_netty-netty-codec-http2-4_2_10_Final_http_import",
+    ":io_netty-netty-transport-4_2_10_Final_http_import",
+    ":io_netty-netty-resolver-4_2_10_Final_http_import",
+    ":io_netty-netty-codec-base-4_2_10_Final_http_import",
+    ":io_netty-netty-handler-4_2_10_Final_http_import",
+    ":io_netty-netty-transport-native-unix-common-4_2_10_Final_http_import",
+    ":io_netty-netty-codec-http-4_2_10_Final_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "io_netty-netty-codec-http2-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-codec-http2-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-codec-http2-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-codec-http2-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-codec-http2-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-codec-http2-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-transport-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-transport-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-transport-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-transport-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-transport-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-transport-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-resolver-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-resolver-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-resolver-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-resolver-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-resolver-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-resolver-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-codec-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-codec-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-codec-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-codec-base-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-codec-base-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-codec-base-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-codec-base-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-codec-base-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-codec-base-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-handler-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-handler-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-handler-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-handler-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-handler-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-handler-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-transport-native-unix-common-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-transport-native-unix-common-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-transport-native-unix-common-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-transport-native-unix-common-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-transport-native-unix-common-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-transport-native-unix-common-4_2_0_RC2-sources_http//file"
-)
-
-jvm_import(
-  name = "io_netty-netty-codec-http-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-codec-http-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-codec-http-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-codec-http-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-codec-http-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-codec-http-4_2_10_Final-sources_http//file"
 )
 
 copy_file(
-  name = "io.netty/netty-codec-protobuf-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-codec-protobuf-4_2_0_RC2_http//file",
-  out = "io.netty/netty-codec-protobuf-4.2.0.RC2.jar",
+  name = "io.netty/netty-codec-protobuf-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-codec-protobuf-4_2_10_Final_http//file",
+  out = "io.netty/netty-codec-protobuf-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "netty-codec-protobuf",
-  jar = "@io_netty-netty-codec-protobuf-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-codec-protobuf-4_2_0_RC2-sources_http//file",
+  jar = "@io_netty-netty-codec-protobuf-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-codec-protobuf-4_2_10_Final-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-tcnative-boringssl-static-2.0.73.Final.jar_copy",
-  src = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final_http//file",
-  out = "io.netty/netty-tcnative-boringssl-static-2.0.73.Final.jar",
+  name = "io.netty/netty-tcnative-boringssl-static-2.0.75.Final.jar_copy",
+  src = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final_http//file",
+  out = "io.netty/netty-tcnative-boringssl-static-2.0.75.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-tcnative-classes-2.0.73.Final.jar_copy",
-  src = "@io_netty-netty-tcnative-classes-2_0_73_Final_http//file",
-  out = "io.netty/netty-tcnative-classes-2.0.73.Final.jar",
+  name = "io.netty/netty-tcnative-classes-2.0.75.Final.jar_copy",
+  src = "@io_netty-netty-tcnative-classes-2_0_75_Final_http//file",
+  out = "io.netty/netty-tcnative-classes-2.0.75.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-tcnative-boringssl-static-2.0.73.Final-linux-x86_64.jar_copy",
-  src = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final-linux-x86_64_http//file",
-  out = "io.netty/netty-tcnative-boringssl-static-2.0.73.Final-linux-x86_64.jar",
+  name = "io.netty/netty-tcnative-boringssl-static-2.0.75.Final-linux-x86_64.jar_copy",
+  src = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final-linux-x86_64_http//file",
+  out = "io.netty/netty-tcnative-boringssl-static-2.0.75.Final-linux-x86_64.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-tcnative-boringssl-static-2.0.73.Final-linux-aarch_64.jar_copy",
-  src = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final-linux-aarch_64_http//file",
-  out = "io.netty/netty-tcnative-boringssl-static-2.0.73.Final-linux-aarch_64.jar",
+  name = "io.netty/netty-tcnative-boringssl-static-2.0.75.Final-linux-aarch_64.jar_copy",
+  src = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final-linux-aarch_64_http//file",
+  out = "io.netty/netty-tcnative-boringssl-static-2.0.75.Final-linux-aarch_64.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-tcnative-boringssl-static-2.0.73.Final-osx-x86_64.jar_copy",
-  src = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final-osx-x86_64_http//file",
-  out = "io.netty/netty-tcnative-boringssl-static-2.0.73.Final-osx-x86_64.jar",
+  name = "io.netty/netty-tcnative-boringssl-static-2.0.75.Final-osx-x86_64.jar_copy",
+  src = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final-osx-x86_64_http//file",
+  out = "io.netty/netty-tcnative-boringssl-static-2.0.75.Final-osx-x86_64.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-tcnative-boringssl-static-2.0.73.Final-osx-aarch_64.jar_copy",
-  src = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final-osx-aarch_64_http//file",
-  out = "io.netty/netty-tcnative-boringssl-static-2.0.73.Final-osx-aarch_64.jar",
+  name = "io.netty/netty-tcnative-boringssl-static-2.0.75.Final-osx-aarch_64.jar_copy",
+  src = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final-osx-aarch_64_http//file",
+  out = "io.netty/netty-tcnative-boringssl-static-2.0.75.Final-osx-aarch_64.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-tcnative-boringssl-static-2.0.73.Final-windows-x86_64.jar_copy",
-  src = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final-windows-x86_64_http//file",
-  out = "io.netty/netty-tcnative-boringssl-static-2.0.73.Final-windows-x86_64.jar",
+  name = "io.netty/netty-tcnative-boringssl-static-2.0.75.Final-windows-x86_64.jar_copy",
+  src = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final-windows-x86_64_http//file",
+  out = "io.netty/netty-tcnative-boringssl-static-2.0.75.Final-windows-x86_64.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -16746,57 +17827,57 @@ copy_file(
 java_library(
   name = "netty-tcnative-boringssl",
   exports = [
-    ":io_netty-netty-tcnative-boringssl-static-2_0_73_Final_http_import",
-    ":io_netty-netty-tcnative-classes-2_0_73_Final_http_import",
-    ":io_netty-netty-tcnative-boringssl-static-2_0_73_Final-linux-x86_64_http_import",
-    ":io_netty-netty-tcnative-boringssl-static-2_0_73_Final-linux-aarch_64_http_import",
-    ":io_netty-netty-tcnative-boringssl-static-2_0_73_Final-osx-x86_64_http_import",
-    ":io_netty-netty-tcnative-boringssl-static-2_0_73_Final-osx-aarch_64_http_import",
-    ":io_netty-netty-tcnative-boringssl-static-2_0_73_Final-windows-x86_64_http_import",
+    ":io_netty-netty-tcnative-boringssl-static-2_0_75_Final_http_import",
+    ":io_netty-netty-tcnative-classes-2_0_75_Final_http_import",
+    ":io_netty-netty-tcnative-boringssl-static-2_0_75_Final-linux-x86_64_http_import",
+    ":io_netty-netty-tcnative-boringssl-static-2_0_75_Final-linux-aarch_64_http_import",
+    ":io_netty-netty-tcnative-boringssl-static-2_0_75_Final-osx-x86_64_http_import",
+    ":io_netty-netty-tcnative-boringssl-static-2_0_75_Final-osx-aarch_64_http_import",
+    ":io_netty-netty-tcnative-boringssl-static-2_0_75_Final-windows-x86_64_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "io_netty-netty-tcnative-boringssl-static-2_0_73_Final_http_import",
-  jar = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final_http//file",
-  source_jar = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final-sources_http//file"
+  name = "io_netty-netty-tcnative-boringssl-static-2_0_75_Final_http_import",
+  jar = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final_http//file",
+  source_jar = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-tcnative-classes-2_0_73_Final_http_import",
-  jar = "@io_netty-netty-tcnative-classes-2_0_73_Final_http//file",
-  source_jar = "@io_netty-netty-tcnative-classes-2_0_73_Final-sources_http//file"
+  name = "io_netty-netty-tcnative-classes-2_0_75_Final_http_import",
+  jar = "@io_netty-netty-tcnative-classes-2_0_75_Final_http//file",
+  source_jar = "@io_netty-netty-tcnative-classes-2_0_75_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-tcnative-boringssl-static-2_0_73_Final-linux-x86_64_http_import",
-  jar = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final-linux-x86_64_http//file",
-  source_jar = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final-sources_http//file"
+  name = "io_netty-netty-tcnative-boringssl-static-2_0_75_Final-linux-x86_64_http_import",
+  jar = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final-linux-x86_64_http//file",
+  source_jar = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-tcnative-boringssl-static-2_0_73_Final-linux-aarch_64_http_import",
-  jar = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final-linux-aarch_64_http//file",
-  source_jar = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final-sources_http//file"
+  name = "io_netty-netty-tcnative-boringssl-static-2_0_75_Final-linux-aarch_64_http_import",
+  jar = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final-linux-aarch_64_http//file",
+  source_jar = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-tcnative-boringssl-static-2_0_73_Final-osx-x86_64_http_import",
-  jar = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final-osx-x86_64_http//file",
-  source_jar = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final-sources_http//file"
+  name = "io_netty-netty-tcnative-boringssl-static-2_0_75_Final-osx-x86_64_http_import",
+  jar = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final-osx-x86_64_http//file",
+  source_jar = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-tcnative-boringssl-static-2_0_73_Final-osx-aarch_64_http_import",
-  jar = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final-osx-aarch_64_http//file",
-  source_jar = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final-sources_http//file"
+  name = "io_netty-netty-tcnative-boringssl-static-2_0_75_Final-osx-aarch_64_http_import",
+  jar = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final-osx-aarch_64_http//file",
+  source_jar = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-tcnative-boringssl-static-2_0_73_Final-windows-x86_64_http_import",
-  jar = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final-windows-x86_64_http//file",
-  source_jar = "@io_netty-netty-tcnative-boringssl-static-2_0_73_Final-sources_http//file"
+  name = "io_netty-netty-tcnative-boringssl-static-2_0_75_Final-windows-x86_64_http_import",
+  jar = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final-windows-x86_64_http//file",
+  source_jar = "@io_netty-netty-tcnative-boringssl-static-2_0_75_Final-sources_http//file"
 )
 
 copy_file(
@@ -16815,17 +17896,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "jetbrains.fleet/noria-compiler-plugin-2.3.10-RC-0.1.jar_copy",
-  src = "@jetbrains_fleet-noria-compiler-plugin-2_3_10-RC-0_1_http//file",
-  out = "jetbrains.fleet/noria-compiler-plugin-2.3.10-RC-0.1.jar",
+  name = "jetbrains.fleet/noria-compiler-plugin-2.3.20-0.1.jar_copy",
+  src = "@jetbrains_fleet-noria-compiler-plugin-2_3_20-0_1_http//file",
+  out = "jetbrains.fleet/noria-compiler-plugin-2.3.20-0.1.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "noria-compiler-plugin",
-  jar = "@jetbrains_fleet-noria-compiler-plugin-2_3_10-RC-0_1_http//file",
-  source_jar = "@jetbrains_fleet-noria-compiler-plugin-2_3_10-RC-0_1-sources_http//file",
+  jar = "@jetbrains_fleet-noria-compiler-plugin-2_3_20-0_1_http//file",
+  source_jar = "@jetbrains_fleet-noria-compiler-plugin-2_3_20-0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -16840,14 +17921,6 @@ copy_file(
   name = "com.squareup.okhttp3/okhttp-5.0.0-alpha.14.jar_copy",
   src = "@com_squareup_okhttp3-okhttp-5_0_0-alpha_14_http//file",
   out = "com.squareup.okhttp3/okhttp-5.0.0-alpha.14.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.squareup.okio/okio-jvm-3.9.0.jar_copy",
-  src = "@com_squareup_okio-okio-jvm-3_9_0_http//file",
-  out = "com.squareup.okio/okio-jvm-3.9.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -17483,21 +18556,6 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.jetbrains.format-ripper/format-ripper-1.2.0.jar_copy",
-  src = "@com_jetbrains_format-ripper-format-ripper-1_2_0_http//file",
-  out = "com.jetbrains.format-ripper/format-ripper-1.2.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "platform-build_scripts-jetbrains-format-ripper",
-  jar = "@com_jetbrains_format-ripper-format-ripper-1_2_0_http//file",
-  source_jar = "@com_jetbrains_format-ripper-format-ripper-1_2_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "org.jetbrains.intellij.deps/intellij-coverage-reporter-1.0.766.jar_copy",
   src = "@org_jetbrains_intellij_deps-intellij-coverage-reporter-1_0_766_http//file",
   out = "org.jetbrains.intellij.deps/intellij-coverage-reporter-1.0.766.jar",
@@ -17537,105 +18595,145 @@ jvm_import(
 )
 
 copy_file(
-  name = "io.netty/netty-all-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-all-4_2_0_RC2_http//file",
-  out = "io.netty/netty-all-4.2.0.RC2.jar",
+  name = "io.netty/netty-all-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-all-4_2_10_Final_http//file",
+  out = "io.netty/netty-all-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-handler-ssl-ocsp-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-handler-ssl-ocsp-4_2_0_RC2_http//file",
-  out = "io.netty/netty-handler-ssl-ocsp-4.2.0.RC2.jar",
+  name = "io.netty/netty-codec-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-codec-4_2_10_Final_http//file",
+  out = "io.netty/netty-codec-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-pkitesting-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-pkitesting-4_2_0_RC2_http//file",
-  out = "io.netty/netty-pkitesting-4.2.0.RC2.jar",
+  name = "io.netty/netty-codec-http3-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-codec-http3-4_2_10_Final_http//file",
+  out = "io.netty/netty-codec-http3-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.bouncycastle/bcpkix-jdk18on-1.79.jar_copy",
-  src = "@org_bouncycastle-bcpkix-jdk18on-1_79_http//file",
-  out = "org.bouncycastle/bcpkix-jdk18on-1.79.jar",
+  name = "org.jctools/jctools-core-4.0.5.jar_copy",
+  src = "@org_jctools-jctools-core-4_0_5_http//file",
+  out = "org.jctools/jctools-core-4.0.5.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.bouncycastle/bcutil-jdk18on-1.79.jar_copy",
-  src = "@org_bouncycastle-bcutil-jdk18on-1_79_http//file",
-  out = "org.bouncycastle/bcutil-jdk18on-1.79.jar",
+  name = "io.netty/netty-handler-ssl-ocsp-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-handler-ssl-ocsp-4_2_10_Final_http//file",
+  out = "io.netty/netty-handler-ssl-ocsp-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.bouncycastle/bcprov-jdk18on-1.79.jar_copy",
-  src = "@org_bouncycastle-bcprov-jdk18on-1_79_http//file",
-  out = "org.bouncycastle/bcprov-jdk18on-1.79.jar",
+  name = "io.netty/netty-transport-classes-epoll-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-transport-classes-epoll-4_2_10_Final_http//file",
+  out = "io.netty/netty-transport-classes-epoll-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-transport-classes-epoll-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-transport-classes-epoll-4_2_0_RC2_http//file",
-  out = "io.netty/netty-transport-classes-epoll-4.2.0.RC2.jar",
+  name = "io.netty/netty-transport-classes-kqueue-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-transport-classes-kqueue-4_2_10_Final_http//file",
+  out = "io.netty/netty-transport-classes-kqueue-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-transport-classes-kqueue-4.2.0.RC2.jar_copy",
-  src = "@io_netty-netty-transport-classes-kqueue-4_2_0_RC2_http//file",
-  out = "io.netty/netty-transport-classes-kqueue-4.2.0.RC2.jar",
+  name = "io.netty/netty-codec-classes-quic-4.2.10.Final.jar_copy",
+  src = "@io_netty-netty-codec-classes-quic-4_2_10_Final_http//file",
+  out = "io.netty/netty-codec-classes-quic-4.2.10.Final.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-transport-native-epoll-4.2.0.RC2-linux-x86_64.jar_copy",
-  src = "@io_netty-netty-transport-native-epoll-4_2_0_RC2-linux-x86_64_http//file",
-  out = "io.netty/netty-transport-native-epoll-4.2.0.RC2-linux-x86_64.jar",
+  name = "io.netty/netty-transport-native-epoll-4.2.10.Final-linux-x86_64.jar_copy",
+  src = "@io_netty-netty-transport-native-epoll-4_2_10_Final-linux-x86_64_http//file",
+  out = "io.netty/netty-transport-native-epoll-4.2.10.Final-linux-x86_64.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-transport-native-epoll-4.2.0.RC2-linux-aarch_64.jar_copy",
-  src = "@io_netty-netty-transport-native-epoll-4_2_0_RC2-linux-aarch_64_http//file",
-  out = "io.netty/netty-transport-native-epoll-4.2.0.RC2-linux-aarch_64.jar",
+  name = "io.netty/netty-transport-native-epoll-4.2.10.Final-linux-aarch_64.jar_copy",
+  src = "@io_netty-netty-transport-native-epoll-4_2_10_Final-linux-aarch_64_http//file",
+  out = "io.netty/netty-transport-native-epoll-4.2.10.Final-linux-aarch_64.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-transport-native-epoll-4.2.0.RC2-linux-riscv64.jar_copy",
-  src = "@io_netty-netty-transport-native-epoll-4_2_0_RC2-linux-riscv64_http//file",
-  out = "io.netty/netty-transport-native-epoll-4.2.0.RC2-linux-riscv64.jar",
+  name = "io.netty/netty-transport-native-epoll-4.2.10.Final-linux-riscv64.jar_copy",
+  src = "@io_netty-netty-transport-native-epoll-4_2_10_Final-linux-riscv64_http//file",
+  out = "io.netty/netty-transport-native-epoll-4.2.10.Final-linux-riscv64.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-transport-native-kqueue-4.2.0.RC2-osx-x86_64.jar_copy",
-  src = "@io_netty-netty-transport-native-kqueue-4_2_0_RC2-osx-x86_64_http//file",
-  out = "io.netty/netty-transport-native-kqueue-4.2.0.RC2-osx-x86_64.jar",
+  name = "io.netty/netty-transport-native-kqueue-4.2.10.Final-osx-x86_64.jar_copy",
+  src = "@io_netty-netty-transport-native-kqueue-4_2_10_Final-osx-x86_64_http//file",
+  out = "io.netty/netty-transport-native-kqueue-4.2.10.Final-osx-x86_64.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "io.netty/netty-transport-native-kqueue-4.2.0.RC2-osx-aarch_64.jar_copy",
-  src = "@io_netty-netty-transport-native-kqueue-4_2_0_RC2-osx-aarch_64_http//file",
-  out = "io.netty/netty-transport-native-kqueue-4.2.0.RC2-osx-aarch_64.jar",
+  name = "io.netty/netty-transport-native-kqueue-4.2.10.Final-osx-aarch_64.jar_copy",
+  src = "@io_netty-netty-transport-native-kqueue-4_2_10_Final-osx-aarch_64_http//file",
+  out = "io.netty/netty-transport-native-kqueue-4.2.10.Final-osx-aarch_64.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "io.netty/netty-codec-native-quic-4.2.10.Final-linux-x86_64.jar_copy",
+  src = "@io_netty-netty-codec-native-quic-4_2_10_Final-linux-x86_64_http//file",
+  out = "io.netty/netty-codec-native-quic-4.2.10.Final-linux-x86_64.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "io.netty/netty-codec-native-quic-4.2.10.Final-linux-aarch_64.jar_copy",
+  src = "@io_netty-netty-codec-native-quic-4_2_10_Final-linux-aarch_64_http//file",
+  out = "io.netty/netty-codec-native-quic-4.2.10.Final-linux-aarch_64.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "io.netty/netty-codec-native-quic-4.2.10.Final-osx-x86_64.jar_copy",
+  src = "@io_netty-netty-codec-native-quic-4_2_10_Final-osx-x86_64_http//file",
+  out = "io.netty/netty-codec-native-quic-4.2.10.Final-osx-x86_64.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "io.netty/netty-codec-native-quic-4.2.10.Final-osx-aarch_64.jar_copy",
+  src = "@io_netty-netty-codec-native-quic-4_2_10_Final-osx-aarch_64_http//file",
+  out = "io.netty/netty-codec-native-quic-4.2.10.Final-osx-aarch_64.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "io.netty/netty-codec-native-quic-4.2.10.Final-windows-x86_64.jar_copy",
+  src = "@io_netty-netty-codec-native-quic-4_2_10_Final-windows-x86_64_http//file",
+  out = "io.netty/netty-codec-native-quic-4.2.10.Final-windows-x86_64.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -17643,108 +18741,142 @@ copy_file(
 java_library(
   name = "platform-build_scripts-netty",
   exports = [
-    ":io_netty-netty-all-4_2_0_RC2_http_import",
-    ":io_netty-netty-buffer-4_2_0_RC2_http_import",
-    ":io_netty-netty-codec-base-4_2_0_RC2_http_import",
-    ":io_netty-netty-codec-4_2_0_RC2_http_import",
-    ":io_netty-netty-codec-http-4_2_0_RC2_http_import",
-    ":io_netty-netty-codec-http2-4_2_0_RC2_http_import",
-    ":io_netty-netty-common-4_2_0_RC2_http_import",
-    ":io_netty-netty-handler-4_2_0_RC2_http_import",
-    ":io_netty-netty-transport-native-unix-common-4_2_0_RC2_http_import",
-    ":io_netty-netty-handler-ssl-ocsp-4_2_0_RC2_http_import",
-    ":io_netty-netty-resolver-4_2_0_RC2_http_import",
-    ":io_netty-netty-transport-4_2_0_RC2_http_import",
-    ":io_netty-netty-pkitesting-4_2_0_RC2_http_import",
-    ":org_bouncycastle-bcpkix-jdk18on-1_79_http_import",
-    ":org_bouncycastle-bcutil-jdk18on-1_79_http_import",
-    ":org_bouncycastle-bcprov-jdk18on-1_79_http_import",
-    ":io_netty-netty-transport-classes-epoll-4_2_0_RC2_http_import",
-    ":io_netty-netty-transport-classes-kqueue-4_2_0_RC2_http_import",
-    ":io_netty-netty-transport-native-epoll-4_2_0_RC2-linux-x86_64_http_import",
-    ":io_netty-netty-transport-native-epoll-4_2_0_RC2-linux-aarch_64_http_import",
-    ":io_netty-netty-transport-native-epoll-4_2_0_RC2-linux-riscv64_http_import",
-    ":io_netty-netty-transport-native-kqueue-4_2_0_RC2-osx-x86_64_http_import",
-    ":io_netty-netty-transport-native-kqueue-4_2_0_RC2-osx-aarch_64_http_import",
+    ":io_netty-netty-all-4_2_10_Final_http_import",
+    ":io_netty-netty-buffer-4_2_10_Final_http_import",
+    ":io_netty-netty-codec-base-4_2_10_Final_http_import",
+    ":io_netty-netty-codec-4_2_10_Final_http_import",
+    ":io_netty-netty-codec-http-4_2_10_Final_http_import",
+    ":io_netty-netty-codec-http2-4_2_10_Final_http_import",
+    ":io_netty-netty-codec-http3-4_2_10_Final_http_import",
+    ":org_jctools-jctools-core-4_0_5_http_import",
+    ":io_netty-netty-transport-native-unix-common-4_2_10_Final_http_import",
+    ":io_netty-netty-common-4_2_10_Final_http_import",
+    ":io_netty-netty-handler-4_2_10_Final_http_import",
+    ":io_netty-netty-handler-ssl-ocsp-4_2_10_Final_http_import",
+    ":io_netty-netty-resolver-4_2_10_Final_http_import",
+    ":io_netty-netty-transport-4_2_10_Final_http_import",
+    ":io_netty-netty-transport-classes-epoll-4_2_10_Final_http_import",
+    ":io_netty-netty-transport-classes-kqueue-4_2_10_Final_http_import",
+    ":io_netty-netty-codec-classes-quic-4_2_10_Final_http_import",
+    ":io_netty-netty-transport-native-epoll-4_2_10_Final-linux-x86_64_http_import",
+    ":io_netty-netty-transport-native-epoll-4_2_10_Final-linux-aarch_64_http_import",
+    ":io_netty-netty-transport-native-epoll-4_2_10_Final-linux-riscv64_http_import",
+    ":io_netty-netty-transport-native-kqueue-4_2_10_Final-osx-x86_64_http_import",
+    ":io_netty-netty-transport-native-kqueue-4_2_10_Final-osx-aarch_64_http_import",
+    ":io_netty-netty-codec-native-quic-4_2_10_Final-linux-x86_64_http_import",
+    ":io_netty-netty-codec-native-quic-4_2_10_Final-linux-aarch_64_http_import",
+    ":io_netty-netty-codec-native-quic-4_2_10_Final-osx-x86_64_http_import",
+    ":io_netty-netty-codec-native-quic-4_2_10_Final-osx-aarch_64_http_import",
+    ":io_netty-netty-codec-native-quic-4_2_10_Final-windows-x86_64_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "io_netty-netty-all-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-all-4_2_0_RC2_http//file"
+  name = "io_netty-netty-all-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-all-4_2_10_Final_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-handler-ssl-ocsp-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-handler-ssl-ocsp-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-handler-ssl-ocsp-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-codec-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-codec-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-codec-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-pkitesting-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-pkitesting-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-pkitesting-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-codec-http3-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-codec-http3-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-codec-http3-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "org_bouncycastle-bcpkix-jdk18on-1_79_http_import",
-  jar = "@org_bouncycastle-bcpkix-jdk18on-1_79_http//file",
-  source_jar = "@org_bouncycastle-bcpkix-jdk18on-1_79-sources_http//file"
+  name = "org_jctools-jctools-core-4_0_5_http_import",
+  jar = "@org_jctools-jctools-core-4_0_5_http//file",
+  source_jar = "@org_jctools-jctools-core-4_0_5-sources_http//file"
 )
 
 jvm_import(
-  name = "org_bouncycastle-bcutil-jdk18on-1_79_http_import",
-  jar = "@org_bouncycastle-bcutil-jdk18on-1_79_http//file",
-  source_jar = "@org_bouncycastle-bcutil-jdk18on-1_79-sources_http//file"
+  name = "io_netty-netty-handler-ssl-ocsp-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-handler-ssl-ocsp-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-handler-ssl-ocsp-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "org_bouncycastle-bcprov-jdk18on-1_79_http_import",
-  jar = "@org_bouncycastle-bcprov-jdk18on-1_79_http//file",
-  source_jar = "@org_bouncycastle-bcprov-jdk18on-1_79-sources_http//file"
+  name = "io_netty-netty-transport-classes-epoll-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-transport-classes-epoll-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-transport-classes-epoll-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-transport-classes-epoll-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-transport-classes-epoll-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-transport-classes-epoll-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-transport-classes-kqueue-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-transport-classes-kqueue-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-transport-classes-kqueue-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-transport-classes-kqueue-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-transport-classes-kqueue-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-transport-classes-kqueue-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-codec-classes-quic-4_2_10_Final_http_import",
+  jar = "@io_netty-netty-codec-classes-quic-4_2_10_Final_http//file",
+  source_jar = "@io_netty-netty-codec-classes-quic-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-transport-native-epoll-4_2_0_RC2-linux-x86_64_http_import",
-  jar = "@io_netty-netty-transport-native-epoll-4_2_0_RC2-linux-x86_64_http//file",
-  source_jar = "@io_netty-netty-transport-native-epoll-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-transport-native-epoll-4_2_10_Final-linux-x86_64_http_import",
+  jar = "@io_netty-netty-transport-native-epoll-4_2_10_Final-linux-x86_64_http//file",
+  source_jar = "@io_netty-netty-transport-native-epoll-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-transport-native-epoll-4_2_0_RC2-linux-aarch_64_http_import",
-  jar = "@io_netty-netty-transport-native-epoll-4_2_0_RC2-linux-aarch_64_http//file",
-  source_jar = "@io_netty-netty-transport-native-epoll-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-transport-native-epoll-4_2_10_Final-linux-aarch_64_http_import",
+  jar = "@io_netty-netty-transport-native-epoll-4_2_10_Final-linux-aarch_64_http//file",
+  source_jar = "@io_netty-netty-transport-native-epoll-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-transport-native-epoll-4_2_0_RC2-linux-riscv64_http_import",
-  jar = "@io_netty-netty-transport-native-epoll-4_2_0_RC2-linux-riscv64_http//file",
-  source_jar = "@io_netty-netty-transport-native-epoll-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-transport-native-epoll-4_2_10_Final-linux-riscv64_http_import",
+  jar = "@io_netty-netty-transport-native-epoll-4_2_10_Final-linux-riscv64_http//file",
+  source_jar = "@io_netty-netty-transport-native-epoll-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-transport-native-kqueue-4_2_0_RC2-osx-x86_64_http_import",
-  jar = "@io_netty-netty-transport-native-kqueue-4_2_0_RC2-osx-x86_64_http//file",
-  source_jar = "@io_netty-netty-transport-native-kqueue-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-transport-native-kqueue-4_2_10_Final-osx-x86_64_http_import",
+  jar = "@io_netty-netty-transport-native-kqueue-4_2_10_Final-osx-x86_64_http//file",
+  source_jar = "@io_netty-netty-transport-native-kqueue-4_2_10_Final-sources_http//file"
 )
 
 jvm_import(
-  name = "io_netty-netty-transport-native-kqueue-4_2_0_RC2-osx-aarch_64_http_import",
-  jar = "@io_netty-netty-transport-native-kqueue-4_2_0_RC2-osx-aarch_64_http//file",
-  source_jar = "@io_netty-netty-transport-native-kqueue-4_2_0_RC2-sources_http//file"
+  name = "io_netty-netty-transport-native-kqueue-4_2_10_Final-osx-aarch_64_http_import",
+  jar = "@io_netty-netty-transport-native-kqueue-4_2_10_Final-osx-aarch_64_http//file",
+  source_jar = "@io_netty-netty-transport-native-kqueue-4_2_10_Final-sources_http//file"
+)
+
+jvm_import(
+  name = "io_netty-netty-codec-native-quic-4_2_10_Final-linux-x86_64_http_import",
+  jar = "@io_netty-netty-codec-native-quic-4_2_10_Final-linux-x86_64_http//file",
+  source_jar = "@io_netty-netty-codec-native-quic-4_2_10_Final-sources_http//file"
+)
+
+jvm_import(
+  name = "io_netty-netty-codec-native-quic-4_2_10_Final-linux-aarch_64_http_import",
+  jar = "@io_netty-netty-codec-native-quic-4_2_10_Final-linux-aarch_64_http//file",
+  source_jar = "@io_netty-netty-codec-native-quic-4_2_10_Final-sources_http//file"
+)
+
+jvm_import(
+  name = "io_netty-netty-codec-native-quic-4_2_10_Final-osx-x86_64_http_import",
+  jar = "@io_netty-netty-codec-native-quic-4_2_10_Final-osx-x86_64_http//file",
+  source_jar = "@io_netty-netty-codec-native-quic-4_2_10_Final-sources_http//file"
+)
+
+jvm_import(
+  name = "io_netty-netty-codec-native-quic-4_2_10_Final-osx-aarch_64_http_import",
+  jar = "@io_netty-netty-codec-native-quic-4_2_10_Final-osx-aarch_64_http//file",
+  source_jar = "@io_netty-netty-codec-native-quic-4_2_10_Final-sources_http//file"
+)
+
+jvm_import(
+  name = "io_netty-netty-codec-native-quic-4_2_10_Final-windows-x86_64_http_import",
+  jar = "@io_netty-netty-codec-native-quic-4_2_10_Final-windows-x86_64_http//file",
+  source_jar = "@io_netty-netty-codec-native-quic-4_2_10_Final-sources_http//file"
 )
 
 copy_file(
@@ -17837,17 +18969,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps/intellij-coverage-agent-1.0.771.jar_copy",
-  src = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_771_http//file",
-  out = "org.jetbrains.intellij.deps/intellij-coverage-agent-1.0.771.jar",
+  name = "org.jetbrains.intellij.deps/intellij-coverage-agent-1.0.773.jar_copy",
+  src = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_773_http//file",
+  out = "org.jetbrains.intellij.deps/intellij-coverage-agent-1.0.773.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "platform-coverage-agent-intellij-coverage",
-  jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_771_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_771-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_773_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_773-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -17889,6 +19021,15 @@ jvm_import(
 )
 
 java_library(
+  name = "platform-credential_store-impl-tests-dbus-java",
+  exports = [
+    ":com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1_http_import",
+    ":com_github_hypfvieh-dbus-java-core-4_2_1_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
   name = "platform-eel_helper-jline-terminal",
   exports = [
     ":org_jline-jline-terminal-3_27_0_http_import",
@@ -17907,6 +19048,13 @@ copy_file(
 
 jvm_import(
   name = "platform-images-build-pngencoder",
+  jar = "@com_pngencoder-pngencoder-0_14_0_http//file",
+  source_jar = "@com_pngencoder-pngencoder-0_14_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-images-build-tests-pngencoder",
   jar = "@com_pngencoder-pngencoder-0_14_0_http//file",
   source_jar = "@com_pngencoder-pngencoder-0_14_0-sources_http//file",
   visibility = ["//visibility:public"]
@@ -18340,6 +19488,84 @@ java_library(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "platform-jewel-detekt_plugin-tests-io-gitlab-arturbosch-detekt-api",
+  exports = [
+    ":io_gitlab_arturbosch_detekt-detekt-api-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-psi-utils-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-utils-1_23_8_http_import",
+    ":dev_drewhamilton_poko-poko-annotations-jvm-0_17_1_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "platform-jewel-detekt_plugin-tests-io-gitlab-arturbosch-detekt-core",
+  exports = [
+    ":io_gitlab_arturbosch_detekt-detekt-core-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-api-1_23_8_http_import",
+    ":dev_drewhamilton_poko-poko-annotations-jvm-0_17_1_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-parser-1_23_8_http_import",
+    ":io_github_davidburstrom_contester-contester-breakpoint-0_2_0_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-tooling-1_23_8_http_import",
+    ":org_snakeyaml-snakeyaml-engine-2_7_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-metrics-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-psi-utils-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-report-html-1_23_8_http_import",
+    ":org_jetbrains_kotlinx-kotlinx-html-jvm-0_8_1_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-report-md-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-report-txt-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-report-xml-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-report-sarif-1_23_8_http_import",
+    ":io_github_detekt_sarif4k-sarif4k-jvm-0_6_0_http_import",
+    ":org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_4_1_http_import",
+    ":org_jetbrains_kotlin-kotlin-stdlib-common-1_7_20_http_import",
+    ":org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_4_1_http_import",
+    ":org_jetbrains_kotlin-kotlin-stdlib-jdk8-1_7_20_http_import",
+    ":org_jetbrains_kotlin-kotlin-stdlib-jdk7-1_7_20_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-utils-1_23_8_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "platform-jewel-detekt_plugin-tests-io-gitlab-arturbosch-detekt-test",
+  exports = [
+    ":io_gitlab_arturbosch_detekt-detekt-test-1_23_8_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-api-1_23_8_http_import",
+    ":org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21_http_import",
+    ":org_jetbrains_kotlin-kotlin-script-runtime-2_0_21_http_import",
+    ":org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http_import",
+    ":org_jetbrains_intellij_deps-trove4j-1_0_20200330_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-psi-utils-1_23_8_http_import",
+    ":dev_drewhamilton_poko-poko-annotations-jvm-0_17_1_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-test-utils-1_23_8_http_import",
+    ":org_junit_jupiter-junit-jupiter-api-5_10_2_http_import",
+    ":org_opentest4j-opentest4j-1_3_0_http_import",
+    ":org_junit_platform-junit-platform-commons-1_10_2_http_import",
+    ":org_apiguardian-apiguardian-api-1_1_2_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-parser-1_23_8_http_import",
+    ":io_github_davidburstrom_contester-contester-breakpoint-0_2_0_http_import",
+    ":org_jetbrains_kotlin-kotlin-main-kts-2_0_21_http_import",
+    ":org_jetbrains_kotlin-kotlin-scripting-compiler-embeddable-2_0_21_http_import",
+    ":org_jetbrains_kotlin-kotlin-scripting-compiler-impl-embeddable-2_0_21_http_import",
+    ":org_jetbrains_kotlin-kotlin-scripting-common-2_0_21_http_import",
+    ":org_jetbrains_kotlin-kotlin-scripting-jvm-2_0_21_http_import",
+    ":io_gitlab_arturbosch_detekt-detekt-utils-1_23_8_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "platform-jewel-detekt_plugin-tests-jetbrains-kotlin-compiler-embeddable",
+  exports = [
+    ":org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21_http_import",
+    ":org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http_import",
+    ":org_jetbrains_intellij_deps-trove4j-1_0_20200330_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
   name = "org.commonmark/commonmark-0.24.0.jar_copy",
   src = "@org_commonmark-commonmark-0_24_0_http//file",
@@ -18350,6 +19576,13 @@ copy_file(
 
 jvm_import(
   name = "platform-jewel-markdown-core-org-commonmark-commonmark",
+  jar = "@org_commonmark-commonmark-0_24_0_http//file",
+  source_jar = "@org_commonmark-commonmark-0_24_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-markdown-core-tests-org-commonmark-commonmark",
   jar = "@org_commonmark-commonmark-0_24_0_http//file",
   source_jar = "@org_commonmark-commonmark-0_24_0-sources_http//file",
   visibility = ["//visibility:public"]
@@ -18390,6 +19623,15 @@ jvm_import(
   name = "org_nibor_autolink-autolink-0_11_0_http_import",
   jar = "@org_nibor_autolink-autolink-0_11_0_http//file",
   source_jar = "@org_nibor_autolink-autolink-0_11_0-sources_http//file"
+)
+
+java_library(
+  name = "platform-jewel-markdown-extensions-autolink-tests-commonmark-ext-autolink",
+  exports = [
+    ":org_commonmark-commonmark-ext-autolink-0_24_0_http_import",
+    ":org_nibor_autolink-autolink-0_11_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
 )
 
 copy_file(
@@ -18469,6 +19711,20 @@ copy_file(
 
 jvm_import(
   name = "platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
+  jar = "@org_jetbrains_compose_components-components-resources-desktop-1_10_0_http//file",
+  source_jar = "@org_jetbrains_compose_components-components-resources-desktop-1_10_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources",
+  jar = "@org_jetbrains_compose_components-components-resources-1_10_0_http//file",
+  source_jar = "@org_jetbrains_compose_components-components-resources-1_10_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources-desktop",
   jar = "@org_jetbrains_compose_components-components-resources-desktop-1_10_0_http//file",
   source_jar = "@org_jetbrains_compose_components-components-resources-desktop-1_10_0-sources_http//file",
   visibility = ["//visibility:public"]
@@ -18587,6 +19843,13 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "platform-settings-local-tests-jackson-dataformat-cbor",
+  jar = "@com_fasterxml_jackson_dataformat-jackson-dataformat-cbor-2_19_0_http//file",
+  source_jar = "@com_fasterxml_jackson_dataformat-jackson-dataformat-cbor-2_19_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
   name = "com.squareup.okhttp3/mockwebserver-5.0.0-alpha.11.jar_copy",
   src = "@com_squareup_okhttp3-mockwebserver-5_0_0-alpha_11_http//file",
@@ -18624,303 +19887,13 @@ jvm_import(
   source_jar = "@com_squareup_okhttp3-mockwebserver3-5_0_0-alpha_11-sources_http//file"
 )
 
-copy_file(
-  name = "com.intellij.remoterobot/remote-fixtures-0.11.19.jar_copy",
-  src = "@com_intellij_remoterobot-remote-fixtures-0_11_19_http//file",
-  out = "com.intellij.remoterobot/remote-fixtures-0.11.19.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "platform-test_framework-ui-intellij-remoterobot-remote-fixtures",
-  jar = "@com_intellij_remoterobot-remote-fixtures-0_11_19_http//file",
-  source_jar = "@com_intellij_remoterobot-remote-fixtures-0_11_19-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.intellij.remoterobot/robot-server-core-0.11.19.jar_copy",
-  src = "@com_intellij_remoterobot-robot-server-core-0_11_19_http//file",
-  out = "com.intellij.remoterobot/robot-server-core-0.11.19.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.intellij.remoterobot/remote-robot-0.11.19.jar_copy",
-  src = "@com_intellij_remoterobot-remote-robot-0_11_19_http//file",
-  out = "com.intellij.remoterobot/remote-robot-0.11.19.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.slf4j/slf4j-api-2.0.7.jar_copy",
-  src = "@org_slf4j-slf4j-api-2_0_7_http//file",
-  out = "org.slf4j/slf4j-api-2.0.7.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.kotlin/kotlin-reflect-1.8.10.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-reflect-1_8_10_http//file",
-  out = "org.jetbrains.kotlin/kotlin-reflect-1.8.10.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.squareup.retrofit2/retrofit-2.9.0.jar_copy",
-  src = "@com_squareup_retrofit2-retrofit-2_9_0_http//file",
-  out = "com.squareup.retrofit2/retrofit-2.9.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.squareup.okhttp3/okhttp-3.14.9.jar_copy",
-  src = "@com_squareup_okhttp3-okhttp-3_14_9_http//file",
-  out = "com.squareup.okhttp3/okhttp-3.14.9.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.squareup.okio/okio-1.17.2.jar_copy",
-  src = "@com_squareup_okio-okio-1_17_2_http//file",
-  out = "com.squareup.okio/okio-1.17.2.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.squareup.retrofit2/converter-gson-2.9.0.jar_copy",
-  src = "@com_squareup_retrofit2-converter-gson-2_9_0_http//file",
-  out = "com.squareup.retrofit2/converter-gson-2.9.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.mozilla/rhino-1.7.14.jar_copy",
-  src = "@org_mozilla-rhino-1_7_14_http//file",
-  out = "org.mozilla/rhino-1.7.14.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.assertj/assertj-swing-junit-3.17.1.jar_copy",
-  src = "@org_assertj-assertj-swing-junit-3_17_1_http//file",
-  out = "org.assertj/assertj-swing-junit-3.17.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "junit/junit-4.12.jar_copy",
-  src = "@junit-junit-4_12_http//file",
-  out = "junit/junit-4.12.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.hamcrest/hamcrest-core-1.3.jar_copy",
-  src = "@org_hamcrest-hamcrest-core-1_3_http//file",
-  out = "org.hamcrest/hamcrest-core-1.3.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.assertj/assertj-core-3.17.2.jar_copy",
-  src = "@org_assertj-assertj-core-3_17_2_http//file",
-  out = "org.assertj/assertj-core-3.17.2.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.easytesting/fest-util-1.2.5.jar_copy",
-  src = "@org_easytesting-fest-util-1_2_5_http//file",
-  out = "org.easytesting/fest-util-1.2.5.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.easytesting/fest-reflect-1.4.1.jar_copy",
-  src = "@org_easytesting-fest-reflect-1_4_1_http//file",
-  out = "org.easytesting/fest-reflect-1.4.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "net.bytebuddy/byte-buddy-dep-1.14.5.jar_copy",
-  src = "@net_bytebuddy-byte-buddy-dep-1_14_5_http//file",
-  out = "net.bytebuddy/byte-buddy-dep-1.14.5.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.ow2.asm/asm-9.5.jar_copy",
-  src = "@org_ow2_asm-asm-9_5_http//file",
-  out = "org.ow2.asm/asm-9.5.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.ow2.asm/asm-commons-9.5.jar_copy",
-  src = "@org_ow2_asm-asm-commons-9_5_http//file",
-  out = "org.ow2.asm/asm-commons-9.5.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
 java_library(
-  name = "platform-test_framework-ui-intellij-remoterobot-robot-server-core",
+  name = "platform-test_framework-tests-okhttp3-mockwebserver",
   exports = [
-    ":com_intellij_remoterobot-robot-server-core-0_11_19_http_import",
-    ":com_intellij_remoterobot-remote-robot-0_11_19_http_import",
-    ":org_slf4j-slf4j-api-2_0_7_http_import",
-    ":org_jetbrains_kotlin-kotlin-reflect-1_8_10_http_import",
-    ":com_squareup_retrofit2-retrofit-2_9_0_http_import",
-    ":com_squareup_okhttp3-okhttp-3_14_9_http_import",
-    ":com_squareup_okio-okio-1_17_2_http_import",
-    ":com_squareup_retrofit2-converter-gson-2_9_0_http_import",
-    ":org_mozilla-rhino-1_7_14_http_import",
-    ":org_assertj-assertj-swing-junit-3_17_1_http_import",
-    ":junit-junit-4_12_http_import",
-    ":org_hamcrest-hamcrest-core-1_3_http_import",
-    ":org_assertj-assertj-swing-3_17_1_http_import",
-    ":org_assertj-assertj-core-3_17_2_http_import",
-    ":org_easytesting-fest-util-1_2_5_http_import",
-    ":org_easytesting-fest-reflect-1_4_1_http_import",
-    ":net_bytebuddy-byte-buddy-dep-1_14_5_http_import",
-    ":org_ow2_asm-asm-9_5_http_import",
-    ":org_ow2_asm-asm-commons-9_5_http_import",
+    ":com_squareup_okhttp3-mockwebserver-5_0_0-alpha_11_http_import",
+    ":com_squareup_okhttp3-mockwebserver3-5_0_0-alpha_11_http_import",
   ],
   visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "com_intellij_remoterobot-robot-server-core-0_11_19_http_import",
-  jar = "@com_intellij_remoterobot-robot-server-core-0_11_19_http//file",
-  source_jar = "@com_intellij_remoterobot-robot-server-core-0_11_19-sources_http//file"
-)
-
-jvm_import(
-  name = "com_intellij_remoterobot-remote-robot-0_11_19_http_import",
-  jar = "@com_intellij_remoterobot-remote-robot-0_11_19_http//file",
-  source_jar = "@com_intellij_remoterobot-remote-robot-0_11_19-sources_http//file"
-)
-
-jvm_import(
-  name = "org_slf4j-slf4j-api-2_0_7_http_import",
-  jar = "@org_slf4j-slf4j-api-2_0_7_http//file",
-  source_jar = "@org_slf4j-slf4j-api-2_0_7-sources_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_kotlin-kotlin-reflect-1_8_10_http_import",
-  jar = "@org_jetbrains_kotlin-kotlin-reflect-1_8_10_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-reflect-1_8_10-sources_http//file"
-)
-
-jvm_import(
-  name = "com_squareup_retrofit2-retrofit-2_9_0_http_import",
-  jar = "@com_squareup_retrofit2-retrofit-2_9_0_http//file",
-  source_jar = "@com_squareup_retrofit2-retrofit-2_9_0-sources_http//file"
-)
-
-jvm_import(
-  name = "com_squareup_okhttp3-okhttp-3_14_9_http_import",
-  jar = "@com_squareup_okhttp3-okhttp-3_14_9_http//file",
-  source_jar = "@com_squareup_okhttp3-okhttp-3_14_9-sources_http//file"
-)
-
-jvm_import(
-  name = "com_squareup_okio-okio-1_17_2_http_import",
-  jar = "@com_squareup_okio-okio-1_17_2_http//file",
-  source_jar = "@com_squareup_okio-okio-1_17_2-sources_http//file"
-)
-
-jvm_import(
-  name = "com_squareup_retrofit2-converter-gson-2_9_0_http_import",
-  jar = "@com_squareup_retrofit2-converter-gson-2_9_0_http//file",
-  source_jar = "@com_squareup_retrofit2-converter-gson-2_9_0-sources_http//file"
-)
-
-jvm_import(
-  name = "org_mozilla-rhino-1_7_14_http_import",
-  jar = "@org_mozilla-rhino-1_7_14_http//file",
-  source_jar = "@org_mozilla-rhino-1_7_14-sources_http//file"
-)
-
-jvm_import(
-  name = "org_assertj-assertj-swing-junit-3_17_1_http_import",
-  jar = "@org_assertj-assertj-swing-junit-3_17_1_http//file",
-  source_jar = "@org_assertj-assertj-swing-junit-3_17_1-sources_http//file"
-)
-
-jvm_import(
-  name = "junit-junit-4_12_http_import",
-  jar = "@junit-junit-4_12_http//file",
-  source_jar = "@junit-junit-4_12-sources_http//file"
-)
-
-jvm_import(
-  name = "org_hamcrest-hamcrest-core-1_3_http_import",
-  jar = "@org_hamcrest-hamcrest-core-1_3_http//file",
-  source_jar = "@org_hamcrest-hamcrest-core-1_3-sources_http//file"
-)
-
-jvm_import(
-  name = "org_assertj-assertj-swing-3_17_1_http_import",
-  jar = "@org_assertj-assertj-swing-3_17_1_http//file",
-  source_jar = "@org_assertj-assertj-swing-3_17_1-sources_http//file"
-)
-
-jvm_import(
-  name = "org_assertj-assertj-core-3_17_2_http_import",
-  jar = "@org_assertj-assertj-core-3_17_2_http//file",
-  source_jar = "@org_assertj-assertj-core-3_17_2-sources_http//file"
-)
-
-jvm_import(
-  name = "org_easytesting-fest-util-1_2_5_http_import",
-  jar = "@org_easytesting-fest-util-1_2_5_http//file",
-  source_jar = "@org_easytesting-fest-util-1_2_5-sources_http//file"
-)
-
-jvm_import(
-  name = "org_easytesting-fest-reflect-1_4_1_http_import",
-  jar = "@org_easytesting-fest-reflect-1_4_1_http//file",
-  source_jar = "@org_easytesting-fest-reflect-1_4_1-sources_http//file"
-)
-
-jvm_import(
-  name = "net_bytebuddy-byte-buddy-dep-1_14_5_http_import",
-  jar = "@net_bytebuddy-byte-buddy-dep-1_14_5_http//file",
-  source_jar = "@net_bytebuddy-byte-buddy-dep-1_14_5-sources_http//file"
-)
-
-jvm_import(
-  name = "org_ow2_asm-asm-9_5_http_import",
-  jar = "@org_ow2_asm-asm-9_5_http//file",
-  source_jar = "@org_ow2_asm-asm-9_5-sources_http//file"
-)
-
-jvm_import(
-  name = "org_ow2_asm-asm-commons-9_5_http_import",
-  jar = "@org_ow2_asm-asm-commons-9_5_http//file",
-  source_jar = "@org_ow2_asm-asm-commons-9_5-sources_http//file"
 )
 
 copy_file(
@@ -18954,17 +19927,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.google.protobuf/protobuf-java-3.24.4-jb.2.jar_copy",
-  src = "@com_google_protobuf-protobuf-java-3_24_4-jb_2_http//file",
-  out = "com.google.protobuf/protobuf-java-3.24.4-jb.2.jar",
+  name = "com.google.protobuf/protobuf-java-3.25.5.jar_copy",
+  src = "@com_google_protobuf-protobuf-java-3_25_5_http//file",
+  out = "com.google.protobuf/protobuf-java-3.25.5.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "protobuf",
-  jar = "@com_google_protobuf-protobuf-java-3_24_4-jb_2_http//file",
-  source_jar = "@com_google_protobuf-protobuf-java-3_24_4-jb_2-sources_http//file",
+  jar = "@com_google_protobuf-protobuf-java-3_25_5_http//file",
+  source_jar = "@com_google_protobuf-protobuf-java-3_25_5-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -19034,6 +20007,19 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "python-community-impl-tests-completion-ranking-python-with-full-line",
+  jar = "@org_jetbrains_intellij_deps_completion-completion-ranking-python-with-full-line-0_2_1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_completion-completion-ranking-python-with-full-line-0_2_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "python-community-impl-tests-ml-completion-prev-exprs-models",
+  jar = "@completion_ml_python_features-ml-completion-prev-exprs-models-1_11_http//file",
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
   name = "com.jetbrains.ml.models/python-imports-ranking-model-coral-panda-republished-6.jar_copy",
   src = "@com_jetbrains_ml_models-python-imports-ranking-model-coral-panda-republished-6_http//file",
@@ -19065,17 +20051,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.jetbrains.rd/rd-gen-2026.1.0.jar_copy",
-  src = "@com_jetbrains_rd-rd-gen-2026_1_0_http//file",
-  out = "com.jetbrains.rd/rd-gen-2026.1.0.jar",
+  name = "com.jetbrains.rd/rd-gen-2026.1.2.jar_copy",
+  src = "@com_jetbrains_rd-rd-gen-2026_1_2_http//file",
+  out = "com.jetbrains.rd/rd-gen-2026.1.2.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "rd-gen",
-  jar = "@com_jetbrains_rd-rd-gen-2026_1_0_http//file",
-  source_jar = "@com_jetbrains_rd-rd-gen-2026_1_0-sources_http//file",
+  jar = "@com_jetbrains_rd-rd-gen-2026_1_2_http//file",
+  source_jar = "@com_jetbrains_rd-rd-gen-2026_1_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -19108,33 +20094,40 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "relaxng-tests-jing",
+  jar = "@thaiopensource-jing-20030619_http//file",
+  source_jar = "@thaiopensource-jing-20030619-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
-  name = "jetbrains.fleet/rhizomedb-compiler-plugin-2.3.10-RC-0.1.jar_copy",
-  src = "@jetbrains_fleet-rhizomedb-compiler-plugin-2_3_10-RC-0_1_http//file",
-  out = "jetbrains.fleet/rhizomedb-compiler-plugin-2.3.10-RC-0.1.jar",
+  name = "jetbrains.fleet/rhizomedb-compiler-plugin-2.3.20-0.1.jar_copy",
+  src = "@jetbrains_fleet-rhizomedb-compiler-plugin-2_3_20-0_1_http//file",
+  out = "jetbrains.fleet/rhizomedb-compiler-plugin-2.3.20-0.1.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "rhizomedb-compiler-plugin",
-  jar = "@jetbrains_fleet-rhizomedb-compiler-plugin-2_3_10-RC-0_1_http//file",
-  source_jar = "@jetbrains_fleet-rhizomedb-compiler-plugin-2_3_10-RC-0_1-sources_http//file",
+  jar = "@jetbrains_fleet-rhizomedb-compiler-plugin-2_3_20-0_1_http//file",
+  source_jar = "@jetbrains_fleet-rhizomedb-compiler-plugin-2_3_20-0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "com.jetbrains.fleet/rpc-compiler-plugin-2.3.10-RC-0.1.jar_copy",
-  src = "@com_jetbrains_fleet-rpc-compiler-plugin-2_3_10-RC-0_1_http//file",
-  out = "com.jetbrains.fleet/rpc-compiler-plugin-2.3.10-RC-0.1.jar",
+  name = "com.jetbrains.fleet/rpc-compiler-plugin-2.3.20-0.1.jar_copy",
+  src = "@com_jetbrains_fleet-rpc-compiler-plugin-2_3_20-0_1_http//file",
+  out = "com.jetbrains.fleet/rpc-compiler-plugin-2.3.20-0.1.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "rpc-compiler-plugin",
-  jar = "@com_jetbrains_fleet-rpc-compiler-plugin-2_3_10-RC-0_1_http//file",
-  source_jar = "@com_jetbrains_fleet-rpc-compiler-plugin-2_3_10-RC-0_1-sources_http//file",
+  jar = "@com_jetbrains_fleet-rpc-compiler-plugin-2_3_20-0_1_http//file",
+  source_jar = "@com_jetbrains_fleet-rpc-compiler-plugin-2_3_20-0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -19278,7 +20271,70 @@ jvm_import(
 )
 
 jvm_import(
+  name = "search_everywhere_ml-ranking-core-tests-find-action-model",
+  jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_0_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "search_everywhere_ml-ranking-core-tests-find-action-model-experimental",
+  jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "search_everywhere_ml-ranking-core-tests-find-all-model-experimental",
+  jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-all-model-252_0_1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-all-model-252_0_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "search_everywhere_ml-ranking-core-tests-find-classes-model",
+  jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_0_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "search_everywhere_ml-ranking-core-tests-find-classes-model-experimental",
+  jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "search_everywhere_ml-ranking-core-tests-find-ec-model-experimental",
+  jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-ec-model-252_0_1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-ec-model-252_0_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "search_everywhere_ml-ranking-core-tests-find-file-model",
+  jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_0_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "search_everywhere_ml-ranking-core-tests-find-file-model-experimental",
+  jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-file-model-252_0_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
+  jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_122_http//file",
+  source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_122-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "search_everywhere_ml-typos-tests-ai-grazie-spell-gec-engine-local-jvm",
   jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_122_http//file",
   source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_122-sources_http//file",
   visibility = ["//visibility:public"]
@@ -19356,21 +20412,6 @@ jvm_import(
   name = "snakeyaml",
   jar = "@org_yaml-snakeyaml-2_4_http//file",
   source_jar = "@org_yaml-snakeyaml-2_4-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "info.debatty/java-string-similarity-2.0.0.jar_copy",
-  src = "@info_debatty-java-string-similarity-2_0_0_http//file",
-  out = "info.debatty/java-string-similarity-2.0.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "spellchecker-java-string-similarity",
-  jar = "@info_debatty-java-string-similarity-2_0_0_http//file",
-  source_jar = "@info_debatty-java-string-similarity-2_0_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -19517,6 +20558,13 @@ copy_file(
 
 jvm_import(
   name = "terminal-completion-terminal-completion-spec",
+  jar = "@org_jetbrains_terminal-completion-spec-0_7_0_http//file",
+  source_jar = "@org_jetbrains_terminal-completion-spec-0_7_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "terminal-completion-tests-terminal-completion-spec",
   jar = "@org_jetbrains_terminal-completion-spec-0_7_0_http//file",
   source_jar = "@org_jetbrains_terminal-completion-spec-0_7_0-sources_http//file",
   visibility = ["//visibility:public"]
@@ -19722,21 +20770,6 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.kotlinx/binary-compatibility-validator-0.17.0.jar_copy",
-  src = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http//file",
-  out = "org.jetbrains.kotlinx/binary-compatibility-validator-0.17.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "tools-api_dump-kotlinx-bcv",
-  jar = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http//file",
-  source_jar = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "com.github.stephenc.monte/monte-screen-recorder-0.7.7.0.jar_copy",
   src = "@com_github_stephenc_monte-monte-screen-recorder-0_7_7_0_http//file",
   out = "com.github.stephenc.monte/monte-screen-recorder-0.7.7.0.jar",
@@ -19748,20 +20781,6 @@ jvm_import(
   name = "tools-ide-starter-github-stephenc-monte-screen-recorder",
   jar = "@com_github_stephenc_monte-monte-screen-recorder-0_7_7_0_http//file",
   source_jar = "@com_github_stephenc_monte-monte-screen-recorder-0_7_7_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.rauschig/jarchivelib-1.2.0.jar_copy",
-  src = "@org_rauschig-jarchivelib-1_2_0_http//file",
-  out = "org.rauschig/jarchivelib-1.2.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "tools-ide-starter-rauschig-jarchivelib",
-  jar = "@org_rauschig-jarchivelib-1_2_0_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -19929,6 +20948,16 @@ jvm_import(
   source_jar = "@com_apollographql_apollo-apollo-annotations-jvm-4_0_0-sources_http//file"
 )
 
+java_library(
+  name = "vcs-github-tests-apollographql-apollo-ast-jvm",
+  exports = [
+    ":com_apollographql_apollo-apollo-ast-jvm-4_0_0_http_import",
+    ":com_squareup_okio-okio-jvm-3_9_0_http_import",
+    ":com_apollographql_apollo-apollo-annotations-jvm-4_0_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
 copy_file(
   name = "com.jetbrains.intellij.platform/workspace-model-codegen-0.0.9.jar_copy",
   src = "@com_jetbrains_intellij_platform-workspace-model-codegen-0_0_9_http//file",
@@ -20010,31 +21039,19 @@ jvm_import(
   source_jar = "@org_apache_logging_log4j-log4j-api-2_20_0-sources_http//file"
 )
 
-copy_file(
-  name = "xalan/serializer-2.7.3.jar_copy",
-  src = "@xalan-serializer-2_7_3_http//file",
-  out = "xalan/serializer-2.7.3.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
-  name = "xslt-debugger-impl-rt-_serializer-2-7-3",
-  jar = "@xalan-serializer-2_7_3_http//file",
+  name = "xml-xmlbeans-tests-_xml_beans",
+  jar = "@org_apache_xmlbeans-xmlbeans-5_1_1_http//file",
+  source_jar = "@org_apache_xmlbeans-xmlbeans-5_1_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
-copy_file(
-  name = "xalan/xalan-2.7.3.jar_copy",
-  src = "@xalan-xalan-2_7_3_http//file",
-  out = "xalan/xalan-2.7.3.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "xslt-debugger-impl-rt-_xalan-2-7-3",
-  jar = "@xalan-xalan-2_7_3_http//file",
+java_library(
+  name = "xml-xmlbeans-tests-apache-logging-log4j-to-slf4j",
+  exports = [
+    ":org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http_import",
+    ":org_apache_logging_log4j-log4j-api-2_20_0_http_import",
+  ],
   visibility = ["//visibility:public"]
 )
 

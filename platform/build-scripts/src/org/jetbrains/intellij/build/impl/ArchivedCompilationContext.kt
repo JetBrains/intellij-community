@@ -1,10 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.platform.util.coroutines.mapConcurrent
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildMessages
@@ -19,6 +17,7 @@ import org.jetbrains.intellij.build.impl.moduleBased.buildOriginalModuleReposito
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.writeLines
 
 @Internal
@@ -30,7 +29,7 @@ class ArchivedCompilationContext internal constructor(
   val archivesLocation: Path
     get() = storage.archivedOutputDirectory
 
-  private val originalModuleRepository = asyncLazy("Build original module repository") {
+  private val originalModuleRepository = suspendingLazy("Build original module repository") {
     buildOriginalModuleRepository(this@ArchivedCompilationContext)
   }
 
@@ -39,26 +38,11 @@ class ArchivedCompilationContext internal constructor(
   override suspend fun getOriginalModuleRepository(): OriginalModuleRepository = originalModuleRepository.await()
 
   override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<Path> {
-    return doReplace(delegate.getModuleRuntimeClasspath(module, forTests))
+    return delegate.getModuleRuntimeClasspath(module, forTests).mapConcurrent { storage.getArchived(it) }.filterNotNull()
   }
 
   override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {
     return ArchivedCompilationContext(delegate = delegate.createCopy(messages, options, paths), storage = storage, scope = null)
-  }
-
-  @Suppress("MemberVisibilityCanBePrivate")
-  fun replaceWithCompressedIfNeeded(p: Path): Path = storage.getArchived(p)
-
-  suspend fun replaceAllWithCompressedIfNeeded(files: List<Path>): List<Path> = doReplace(files)
-
-  private suspend fun doReplace(files: Collection<Path>): List<Path> {
-    return coroutineScope {
-      files.map { file ->
-        async {
-          replaceWithCompressedIfNeeded(file)
-        }
-      }.awaitAll()
-    }
   }
 
   fun saveMapping(file: Path) {
@@ -76,7 +60,13 @@ private class ArchivedModuleOutputProvider(
   private val zipFilePool = ModuleOutputZipFilePool(scope)
 
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
-    return delegateOutputProvider.getModuleOutputRoots(module, forTests).map { storage.getArchived(it) }
+    val outputRoots = delegateOutputProvider.getModuleOutputRoots(module, forTests).mapNotNull { storage.getArchived(it) }
+    for (outputRoot in outputRoots) {
+      check(outputRoot.isRegularFile()) {
+        "'${module.name}' module's output root doesn't exist: $outputRoot"
+      }
+    }
+    return outputRoots
   }
 
   override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {

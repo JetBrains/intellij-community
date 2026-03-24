@@ -47,6 +47,9 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.compose.ide.plugin.k2" />
 </module>

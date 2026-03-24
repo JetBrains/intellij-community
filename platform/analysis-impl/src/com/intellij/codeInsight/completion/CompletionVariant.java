@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion;
 
@@ -26,7 +26,6 @@ import java.util.Set;
 @ApiStatus.Internal
 @Deprecated(forRemoval = true)
 public class CompletionVariant {
-  protected static final TailType DEFAULT_TAIL_TYPE = TailTypes.spaceType();
 
   private final Set<Scope> myScopeClasses = new HashSet<>();
   private ElementFilter myPosition;
@@ -106,7 +105,7 @@ public class CompletionVariant {
   }
 
   public void addCompletion(@NonNls String keyword){
-    addCompletion(keyword, DEFAULT_TAIL_TYPE);
+    addCompletion(keyword, TailTypes.spaceType());
   }
 
   public void addCompletion(@NonNls String keyword, TailType tailType){

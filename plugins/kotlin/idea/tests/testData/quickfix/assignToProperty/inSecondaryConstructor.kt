@@ -1,4 +1,6 @@
 // "Assign to property" "true"
+// K2_ERROR: 'val' cannot be reassigned.
+// K2_ERROR: Property must be initialized or be abstract.
 class Test {
     val foo: Int
 

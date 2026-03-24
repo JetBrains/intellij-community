@@ -1,10 +1,18 @@
 ### auto-generated section `build fleet.ktor.network.tls` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "tls_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "tls",
+  module_name = "fleet.ktor.network.tls",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
+  resources = [":tls_resources"],
   exports = [
     "@lib//:fleet-io-ktor-http",
     "@lib//:fleet-io-ktor-io",
@@ -26,4 +34,25 @@ jvm_library(
     "@lib//:slf4j-api",
   ]
 )
+
+jvm_library(
+  name = "tls_test_lib",
+  module_name = "fleet.ktor.network.tls",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:fleet-io-ktor-http",
+    "@lib//:fleet-io-ktor-io",
+    "@lib//:fleet-io-ktor-network",
+    "@lib//:fleet-io-ktor-network-tls",
+    "@lib//:fleet-io-ktor-utils",
+  ],
+  runtime_deps = [":tls"]
+)
 ### auto-generated section `build fleet.ktor.network.tls` end
+
+### auto-generated section `iml fleet.ktor.network.tls` start
+exports_files([
+  "fleet.ktor.network.tls.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.ktor.network.tls` end

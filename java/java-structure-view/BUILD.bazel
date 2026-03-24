@@ -21,6 +21,31 @@ jvm_library(
     "//platform/util:util-ui",
     "//java/java-analysis-impl:analysis-impl",
     "//platform/platform-api:ide",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+  ]
+)
+
+jvm_library(
+  name = "structureView_test_lib",
+  module_name = "intellij.java.structureView",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":structureView",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/structure-view-impl:structureView-impl_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//java/java-analysis-impl:analysis-impl_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.structureView` end
+
+### auto-generated section `iml intellij.java.structureView` start
+exports_files([
+  "intellij.java.structureView.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.structureView` end

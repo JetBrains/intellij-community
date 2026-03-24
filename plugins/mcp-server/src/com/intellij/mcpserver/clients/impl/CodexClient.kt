@@ -4,6 +4,7 @@ import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.clients.McpClientInfo
 import com.intellij.mcpserver.clients.configs.CodexStreamableHttpConfig
 import com.intellij.mcpserver.clients.configs.ExistingConfig
+import com.intellij.mcpserver.clients.configs.STDIOServerConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.createParentDirectories
@@ -20,18 +21,18 @@ open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
 ) {
   override fun isConfigured(): Boolean? {
     val stdio = isStdIOConfigured() ?: return null
-    val sse = isSSEConfigured() ?: return null
-    return stdio || sse
+    val network = isSSEOrStreamConfigured() ?: return null
+    return stdio || network
   }
 
-  override fun getSSEConfig(): ServerConfig = CodexStreamableHttpConfig(url = streamableHttpUrl)
+  override suspend fun getStreamableHttpConfig(): ServerConfig = CodexStreamableHttpConfig(url = streamableHttpUrl)
 
   override fun readMcpServers(): Map<String, ExistingConfig>? {
     if (!configPath.exists()) return null
     return runCatching { parseCodexServers(configPath.readText()) }.getOrNull()
   }
 
-  override fun configure() {
+  override suspend fun configure(config: ServerConfig) {
     val existingContent = if (configPath.exists()) configPath.readText() else ""
     val productServerKey = productSpecificServerKey()
 
@@ -39,7 +40,7 @@ open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
       existing = existingContent,
       productServerKey = productServerKey,
       legacyKeys = LEGACY_SERVER_KEYS,
-      url = streamableHttpUrl
+      config = config
     )
 
     configPath.parent?.createParentDirectories()
@@ -61,7 +62,6 @@ open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
         val table = v as? Map<*, *> ?: continue
 
         val command = table["command"] as? String
-        val type = (table["type"] as? String) ?: (table["transport"] as? String)
         val url = (table["url"] as? String) ?: (table["serverUrl"] as? String)
 
         val args = (table["args"] as? List<*>)?.filterIsInstance<String>()?.ifEmpty { null }
@@ -80,7 +80,7 @@ open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
           args = args,
           env = env,
           url = url,
-          type = type,
+          type = if (command != null) "stdio" else "http",
         )
       }
       return result
@@ -90,7 +90,7 @@ open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
       existing: String,
       productServerKey: String,
       legacyKeys: Set<String>,
-      url: String
+      config: ServerConfig,
     ): String {
       val root = normalizeTomlMap(Toml().read(existing).toMap())
 
@@ -100,9 +100,15 @@ open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
         key !in legacyKeys || key == productServerKey
       }
 
-      val existingProductTable = (serversWithoutLegacy[productServerKey] as? Map<*, *>) ?: emptyMap<Any, Any>()
-      val updatedProductTable = existingProductTable + ("url" to url)
-      
+      val updatedProductTable = when (config) {
+        is CodexStreamableHttpConfig -> mapOf("url" to config.url)
+        is STDIOServerConfig -> mapOf(
+          "command" to config.command,
+          "args" to config.args,
+          "env" to config.env)
+        else -> throw IllegalArgumentException("Unexpected config type: ${config::class.java}")
+      }
+
       val updatedServers = serversWithoutLegacy + (productServerKey to updatedProductTable)
 
       val updatedRoot = root + (MCP_SERVERS to updatedServers)

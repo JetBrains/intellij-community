@@ -66,7 +66,7 @@ public final class ShowFontsUsedByEditorAction extends EditorAction implements A
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          Set<@NlsSafe String> fontNames = ReadAction.compute(() -> collectFontNames((EditorEx)editor));
+          Set<@NlsSafe String> fontNames = ReadAction.computeBlocking(() -> collectFontNames((EditorEx)editor));
           textToShow = StringUtil.join(fontNames, "\n");
         }
 

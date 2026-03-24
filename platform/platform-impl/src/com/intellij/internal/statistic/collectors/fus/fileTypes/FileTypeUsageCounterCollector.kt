@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.fileTypes
 
 import com.intellij.ide.fileTemplates.FileTemplate
@@ -18,6 +18,7 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
+import com.intellij.openapi.application.EditorLockFreeTyping
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -82,7 +83,12 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
   @RequiresEdt
   @JvmStatic
   fun triggerEdit(project: Project, file: VirtualFile) {
-    val projectState = ReadAction.compute<List<EventPair<*>>, Throwable> {
+    if (EditorLockFreeTyping.isEnabled()) {
+      // TODO: `triggerEdit` acquires RA on EDT while typing,
+      //  it should be reworked for lock-free typing (IJPL-54)
+      return
+    }
+    val projectState = ReadAction.computeBlocking<List<EventPair<*>>, Throwable> {
       listOf(
         EventFields.Dumb.with(isDumb(project)),
         INCOMPLETE_DEPENDENCIES_MODE.with(project.service<IncompleteDependenciesService>().getState())

@@ -1,5 +1,15 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.search.refIndex" visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.kotlin.gradle.gradle"/>
+  </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="kotlin.cri.bta.support.enabled"
+                 defaultValue="false"
+                 restartRequired="false"
+                 description="Enable Kotlin Compiler Reference Index support for BTA-based builds (Gradle/Maven)"/>
+
     <codeUsageScopeOptimizer implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinScopeOptimizer"/>
 
     <projectService
@@ -30,6 +40,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <kotlinCompilerReferenceIndexStorageProvider
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.bta.BtaKotlinCompilerReferenceIndexStorageProvider"
+            id="BtaKotlinCompilerReferenceIndexStorageProvider"
+            order="before JpsKotlinCompilerReferenceIndexStorageProvider"/>
     <kotlinCompilerReferenceIndexStorageProvider
             implementation="org.jetbrains.kotlin.idea.search.refIndex.jps.JpsKotlinCompilerReferenceIndexStorageProvider"
             id="JpsKotlinCompilerReferenceIndexStorageProvider"

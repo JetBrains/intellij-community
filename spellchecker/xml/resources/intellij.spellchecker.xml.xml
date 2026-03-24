@@ -1,8 +1,14 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
     <module name="intellij.spellchecker"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <spellchecker.support language="HTML" implementationClass="com.intellij.spellchecker.xml.HtmlSpellcheckingStrategy"/>
     <spellchecker.support language="XML" implementationClass="com.intellij.spellchecker.xml.XmlSpellcheckingStrategy" id="xml"/>

@@ -8,6 +8,7 @@
     ]]></description>
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Image" extensions="webp"/>
-    <ApplicationLoadListener implementation="com.android.tools.adtui.webp.WebpMetadataRegistrar"/>
+    <imageReaderWriterSpi type="read" implementationClass="com.android.tools.adtui.webp.WebpImageReaderSpi"/>
+    <imageReaderWriterSpi type="write" implementationClass="com.android.tools.adtui.webp.WebpImageWriterSpi"/>
   </extensions>
 </idea-plugin>

@@ -6,8 +6,6 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.FailSafeClas
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Iterator;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -37,8 +35,8 @@ public interface ClassDataZipEntry {
     return map(filter(builder.getEntryNames().iterator(), ClassDataZipEntry::isClassDataEntry), entryName -> create(entryName, builder));
   }
 
-  static Iterator<ClassDataZipEntry> fromSteam(InputStream is) {
-    return map(filter(new ZipEntryIterator(is), se -> isClassDataEntry(se.getEntry().getName())), se -> create(se.getEntry(), se.getStream()));
+  static Iterator<ClassDataZipEntry> fromSteam(ZipInputStream zip) {
+    return map(filter(ZipElement.fromZipStream(zip), elem -> isClassDataEntry(elem.getEntry().getName())), elem -> create(elem.getEntry(), elem.getContent()));
   }
 
   private static ClassDataZipEntry create(String entryName, ZipOutputBuilder zipData) {
@@ -65,30 +63,24 @@ public interface ClassDataZipEntry {
     };
   }
 
-  private static ClassDataZipEntry create(ZipEntry entry, ZipInputStream in) {
-    try {
-      byte[] bytes = in.readAllBytes();
-      return new ClassDataZipEntry() {
-        private final ClassReader reader = new FailSafeClassReader(bytes);
+  private static ClassDataZipEntry create(ZipEntry entry, final byte[] contentBytes) {
+    return new ClassDataZipEntry() {
+      private final ClassReader reader = new FailSafeClassReader(contentBytes);
 
-        @Override
-        public String getPath() {
-          return entry.getName();
-        }
+      @Override
+      public String getPath() {
+        return entry.getName();
+      }
 
-        @Override
-        public byte[] getContent() {
-          return bytes;
-        }
+      @Override
+      public byte[] getContent() {
+        return contentBytes;
+      }
 
-        @Override
-        public ClassReader getClassReader() {
-          return reader;
-        }
-      };
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+      @Override
+      public ClassReader getClassReader() {
+        return reader;
+      }
+    };
   }
 }

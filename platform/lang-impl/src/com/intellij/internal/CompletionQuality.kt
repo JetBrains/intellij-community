@@ -23,7 +23,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
@@ -111,7 +111,7 @@ internal class CompletionQualityStatsAction : AnAction() {
       override fun run(indicator: ProgressIndicator) {
         val files = (if (dialog.scope is GlobalSearchScope) {
           lateinit var collectionFiles: Collection<VirtualFile>
-          runReadAction {
+          runReadActionBlocking {
             collectionFiles = FileTypeIndex.getFiles(fileType, dialog.scope as GlobalSearchScope)
           }
           collectionFiles
@@ -136,7 +136,7 @@ internal class CompletionQualityStatsAction : AnAction() {
 
           lateinit var document: Document
           lateinit var completionAttempts: List<Pair<Int, String>>
-          runReadAction {
+          runReadActionBlocking {
             document = FileDocumentManager.getInstance().getDocument(file) ?: throw Exception("Can't get document: ${file.name}")
             val psiFile = PsiManager.getInstance(project).findFile(file) ?: throw Exception("Can't find file: ${file.name}")
             completionAttempts = getCompletionAttempts(psiFile, wordsFrequencyMap)

@@ -517,7 +517,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>blur</code></strong> event fires when an element has lost focus. The event does not bubble, but the related <a href=\"$MDN_URL$/Web/API/Element/focusout_event\" ><code>focusout</code></a> event that follows does bubble.\nAn element will lose focus if another element is selected.\nAn element will also lose focus if a style that does not allow focus is applied, such as <code>hidden</code>, or if the element is removed from the document — in both of these cases focus moves to the <code>body</code> element (viewport).\nNote however that <code>blur</code> is not fired when a focused element is removed from the document.\nThe opposite of <code>blur</code> is the <a href=\"$MDN_URL$/Web/API/Element/focus_event\" ><code>focus</code></a> event, which fires when the element has <em>received</em> focus.\nThe <code>blur</code> event is not cancelable."
+      "doc": "The <strong><code>blur</code></strong> event fires when an element has lost focus. The event does not bubble, but the related <a href=\"$MDN_URL$/Web/API/Element/focusout_event\" ><code>focusout</code></a> event that follows does bubble.\nAn element will lose focus if another element is selected.\nAn element will also lose focus if a style that does not allow focus is applied, such as <code>hidden</code>, or if the element is removed from the document — in both of these cases focus moves to the <code>body</code> element (viewport).\nNote that browser behavior differs when a focused element is removed from the document. In Chromium-based browsers, removing a focused element triggers a <code>blur</code> event, while in Firefox it does not.\nThe opposite of <code>blur</code> is the <a href=\"$MDN_URL$/Web/API/Element/focus_event\" ><code>focus</code></a> event, which fires when the element has <em>received</em> focus.\nThe <code>blur</code> event is not cancelable."
     },
     "boundary": {
       "url": "$MDN_URL$/web/api/speechsynthesisutterance/boundary_event",
@@ -3792,7 +3792,7 @@
         "lowDate": "2021-04-26",
         "highDate": "2023-10-26"
       },
-      "doc": "The <code>visibilitychange</code> event is fired at the document when the contents of its tab have become visible or have been hidden.\nThe event is not cancelable."
+      "doc": "The <code>visibilitychange</code> event is fired at the document when its visibility status changes — for example, when the user switches browser tabs, navigates to a new page, minimizes or closes the browser, or on mobile, switches to a different app.\nThe event is not cancelable."
     },
     "voiceschanged": {
       "url": "$MDN_URL$/web/api/speechsynthesis/voiceschanged_event",

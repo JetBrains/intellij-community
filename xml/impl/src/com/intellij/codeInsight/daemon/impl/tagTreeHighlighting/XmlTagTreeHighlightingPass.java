@@ -293,8 +293,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
     for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
-      if (info == null) continue;
-      if (info.type == Holder.TYPE) {
+      if (info != null && info.type == Holder.TYPE) {
         highlighter.dispose();
       }
     }

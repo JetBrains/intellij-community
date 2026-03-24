@@ -19,11 +19,11 @@ import git4idea.util.GitFileUtils
 import java.io.File
 import java.nio.file.Path
 
-class GitSilentFileAdderProviderImpl(private val project: Project) : GitSilentFileAdderProvider {
+internal class GitSilentFileAdderProviderImpl(private val project: Project) : GitSilentFileAdderProvider {
   override fun create(): GitSilentFileAdder = GitSilentFileAdderImpl(project)
 }
 
-class GitSilentFileAdderImpl(private val project: Project) : GitSilentFileAdder {
+private class GitSilentFileAdderImpl(private val project: Project) : GitSilentFileAdder {
   private val gitVcs = GitVcs.getInstance(project)
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)
   private val vcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(project)

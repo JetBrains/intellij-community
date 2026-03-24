@@ -38,7 +38,6 @@ import kotlinx.coroutines.flow.transformLatest
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.WithGitLabNamespace
 import org.jetbrains.plugins.gitlab.api.request.findProject
 import org.jetbrains.plugins.gitlab.api.request.getMemberNamespacesForShare
@@ -164,7 +163,7 @@ internal class GitLabShareProjectDialogViewModel(
       if (account == null || api == null || namespace == null) return@combine false
 
       LOG.info("Checking for existing repositories at coordinates: ${account.server}/${namespace.fullPath}/$name")
-      api.graphQL.findProject(GitLabProjectCoordinates(account.server, GitLabProjectPath(namespace.fullPath, name))).body() != null
+      api.graphQL.findProject(GitLabProjectPath(namespace.fullPath, name)).body() != null
     }.stateIn(cs, SharingStarted.Eagerly, false)
 
   private val accountValidationError: StateFlow<@NlsContexts.DialogMessage String?> =

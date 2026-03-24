@@ -110,7 +110,7 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
     final T data;
     try {
       data = getInterpreterForm().createSdkData();
-      return getSdkFactory().createUnfinished(data, myExistingSdks);
+      return getSdkFactory().createUnfinished(myProject, data, myExistingSdks);
     }
     catch (RemoteSdkException e) {
       LOG.debug(e);
@@ -171,7 +171,7 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
 
   protected boolean validateRemoteSdkData(T data) {
     for (Sdk sdk : myExistingSdks) {
-      if (StringUtil.equals(sdk.getHomePath(), getSdkFactory().generateSdkHomePath(data))) {
+      if (StringUtil.equals(sdk.getHomePath(), getSdkFactory().generateSdkHomePath(getProject(), data))) {
         validationFailed(IdeBundle.message("dialog.message.there.already.same.interpreter", sdk.getName()), false);
         return false;
       }

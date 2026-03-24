@@ -1,4 +1,5 @@
 // "Add 'constructor' keyword" "true"
+// K2_ERROR: Use the 'constructor' keyword after the modifiers of the primary constructor.
 
 class A private constructor()
 

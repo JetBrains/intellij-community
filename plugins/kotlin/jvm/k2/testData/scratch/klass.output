@@ -1,0 +1,5 @@
+Compilation failed: error: backend Internal error: Exception during IR lowering
+File being compiled: klass.kts
+The root cause java.lang.AssertionError was thrown at: org.jetbrains.kotlin.backend.jvm.lower.AnonymousObjectSuperConstructorLowering.visitBlock(AnonymousObjectSuperConstructorLowering.kt:73) (klass.kts): org.jetbrains.kotlin.backend.common.BackendException: Backend Internal error: Exception during IR lowering
+File being compiled: klass.kts
+The root cause java.lang.AssertionError was thrown at: org.jetbrains.kotlin.backend.jvm.lower.AnonymousObjectSuperConstructorLowering.visitBlock(AnonymousObjectSuperConstructorLowering.kt:73)

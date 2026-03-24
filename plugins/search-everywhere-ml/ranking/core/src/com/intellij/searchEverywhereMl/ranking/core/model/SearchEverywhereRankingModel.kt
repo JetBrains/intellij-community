@@ -12,7 +12,7 @@ import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFil
 internal abstract class SearchEverywhereRankingModel(protected val model: DecisionFunction) {
   abstract fun predict(features: Map<String, Any?>): Double
   protected fun rawModelPredict(features: Map<String, Any?>): Double {
-    return model.predict(buildArray(model.featuresOrder, features))
+    return model.predict(buildArray(model.featuresOrder, withLegacyFeatureNameAliases(features)))
   }
 
   private fun buildArray(featuresOrder: Array<FeatureMapper>, features: Map<String, Any?>): DoubleArray {

@@ -11,6 +11,7 @@ class BinaryPredicate(UnaryPredicate):
     argtypes: Any
 
 geos_hasz: UnaryPredicate
+geos_hasm: UnaryPredicate
 geos_isclosed: UnaryPredicate
 geos_isempty: UnaryPredicate
 geos_isring: UnaryPredicate

@@ -38,38 +38,47 @@ private val COMMON_VM_OPTIONS: List<String> = listOf(
 /** duplicates RepositoryHelper.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY */
 private const val CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url"
 
-fun generateVmOptions(context: BuildContext): List<String> = generateVmOptions(
-   context.applicationInfo.isEAP,
-   context.productProperties.customJvmMemoryOptions,
-   context.productProperties.additionalVmOptions.let {
-     val url = computeCustomPluginRepositoryUrl(context)
-     if (url == null) it else it + "-D${CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY}=${url}"
-   },
-   context.productProperties.platformPrefix,
- )
+fun generateVmOptions(context: BuildContext, extra: List<String> = emptyList()): List<String> =
+  generateVmOptions(
+    isEAP = context.applicationInfo.isEAP,
+    customVmMemoryOptions = context.productProperties.customJvmMemoryOptions,
+    additionalVmOptions = context.productProperties.additionalVmOptions.let {
+      val url = computeCustomPluginRepositoryUrl(context)
+      if (url == null) it else it + "-D${CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY}=${url}"
+    } + extra,
+    platformPrefix = context.productProperties.platformPrefix,
+    headless = context.options.isLanguageServer,
+  )
 
  internal fun generateVmOptions(
    isEAP: Boolean,
    customVmMemoryOptions: Map<String, String>,
    additionalVmOptions: List<String>,
    platformPrefix: String?,
+   headless: Boolean = false,
  ): List<String> {
    val result = ArrayList<String>()
-
-   val memory = LinkedHashMap<String, String>(customVmMemoryOptions)
-   memory.putIfAbsent("-Xms", DEFAULT_MIN_HEAP)
-   memory.putIfAbsent("-Xmx", DEFAULT_MAX_HEAP)
-   for ((k, v) in memory) {
-     result.add(k + v)
-   }
-
-   result.addAll(COMMON_VM_OPTIONS)
-
-   if (isMultiRoutingFileSystemEnabledForProduct(platformPrefix)) {
-     result.addAll(MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS)
-   }
-
-   result += additionalVmOptions
+   listOfNotNull(
+     LinkedHashMap<String, String>(customVmMemoryOptions).apply {
+       putIfAbsent("-Xms", DEFAULT_MIN_HEAP)
+       putIfAbsent("-Xmx", DEFAULT_MAX_HEAP)
+     }
+       .map { (k, v) -> k + v },
+     COMMON_VM_OPTIONS,
+     if (isMultiRoutingFileSystemEnabledForProduct(platformPrefix)) {
+       MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+     }
+     else null,
+     additionalVmOptions,
+   )
+     .flatten()
+     .filterNotTo(result) {
+       if (headless) {
+         it.contains("awt.") || it.contains("swing.") ||
+         it.contains("java2d.") || it.contains("skiko.")
+       }
+       else false
+     }
 
    if (isEAP) {
      var index = result.indexOf("-ea")
@@ -78,6 +87,12 @@ fun generateVmOptions(context: BuildContext): List<String> = generateVmOptions(
      result.add(index, "-XX:MaxJavaStackTraceDepth=10000")  // must be consistent with `ConfigImportHelper#updateVMOptions`
    }
 
+   if (headless) {
+     var index = result.indexOf("-ea") + 1
+     if (index <= 0) index = result.indexOfFirst { it.startsWith("-D") }
+     if (index < 0) index = result.size
+     result.add(index, "-Djava.awt.headless=true")
+   }
    return result
  }
 
@@ -93,7 +108,7 @@ private fun computeCustomPluginRepositoryUrl(context: BuildContext): String? {
 }
 
 
-internal fun writeVmOptions(file: Path, vmOptions: Sequence<String>, separator: String) {
+internal fun writeVmOptions(file: Path, vmOptions: List<String>, separator: String) {
   Files.writeString(file, vmOptions.joinToString(separator, postfix = separator), StandardCharsets.US_ASCII)
 }
 

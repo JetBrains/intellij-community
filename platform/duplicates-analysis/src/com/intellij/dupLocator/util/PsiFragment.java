@@ -44,8 +44,8 @@ public abstract class PsiFragment {
     return doGetLanguageForElement(element);
   }
 
-  protected PsiAnchor createAnchor(final PsiElement element) {
-    return ReadAction.compute(() -> PsiAnchor.create(element));
+  protected PsiAnchor createAnchor(PsiElement element) {
+    return ReadAction.computeBlocking(() -> PsiAnchor.create(element));
   }
 
   public PsiFragment(List<? extends PsiElement> elements) {

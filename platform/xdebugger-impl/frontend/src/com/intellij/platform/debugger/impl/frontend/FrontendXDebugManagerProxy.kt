@@ -10,18 +10,17 @@ import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XStackFrameId
 import com.intellij.platform.debugger.impl.rpc.XValueId
+import com.intellij.platform.debugger.impl.shared.XDebuggerMonolithAccessPoint
 import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.frame.XExecutionStack
+import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebuggerExecutionPointManagerImpl
-import com.intellij.xdebugger.impl.proxy.withTemporaryXValueId
-import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
-import com.intellij.xdebugger.frame.XStackFrame
-import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.XDebuggerWatchesManagerImpl
 import kotlinx.coroutines.flow.Flow
 
 internal class FrontendXDebugManagerProxy : XDebugManagerProxy {
@@ -43,9 +42,8 @@ internal class FrontendXDebugManagerProxy : XDebugManagerProxy {
     }
     else {
       // Otherwise try to fall back to monolith implementation if possible
-      val monolithSession = XDebuggerEntityConverter.getSession(session) ?: error("XValue is not a FrontendXValue: $value")
-      monolithSession as XDebugSessionImpl
-      return withTemporaryXValueId(value, monolithSession, block)
+      val accessPoint = XDebuggerMonolithAccessPoint.findFirst() ?: error("XValue is not a FrontendXValue: $value. Do not create XValues in remdev, always use platform support")
+      return accessPoint.withTemporaryXValueId(value, session, block)
     }
   }
 
@@ -86,7 +84,7 @@ internal class FrontendXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override fun getWatchesManager(project: Project): XDebuggerWatchesManager {
-    return getFrontendManager(project).watchesManager
+    return XDebuggerWatchesManagerImpl.getInstance(project)
   }
 
   private fun getFrontendManager(project: Project): FrontendXDebuggerManager = FrontendXDebuggerManager.getInstance(project)

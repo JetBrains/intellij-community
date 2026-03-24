@@ -34,7 +34,11 @@ public interface Dictionary {
    */
   @Nullable
   @Deprecated(forRemoval = true)
-  Boolean contains(@NotNull String word);
+  default Boolean contains(@NotNull String word) {
+    throw new UnsupportedOperationException(
+      "Dictionary.contains() should not be used. Call and implement lookup() instead because it provides clear indication through LookupStatus."
+    );
+  }
 
   @NotNull
   default LookupStatus lookup(@NotNull String word) {
@@ -54,5 +58,4 @@ public interface Dictionary {
       return this == Absent || this == Alien;
     }
   }
-
 }

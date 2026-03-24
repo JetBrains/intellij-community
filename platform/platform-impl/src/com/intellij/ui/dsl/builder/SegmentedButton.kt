@@ -67,6 +67,8 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
   fun bind(property: ObservableMutableProperty<T>): SegmentedButton<T>
 
+  fun bind(prop: MutableProperty<T>): SegmentedButton<T>
+
   @ApiStatus.Experimental
   // todo union whenItemSelected methods into onChange
   fun whenItemSelected(parentDisposable: Disposable? = null, listener: (T) -> Unit): SegmentedButton<T>

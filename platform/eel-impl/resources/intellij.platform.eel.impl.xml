@@ -6,7 +6,9 @@
     <module name="intellij.libraries.pty4j"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
@@ -22,8 +24,19 @@
       key="ijent.incremental.walking.transfer"
       restartRequired="false"
       defaultValue="true"/>
+
+    <advancedSetting
+      id="container.environments.env.var.shell.mode"
+      enumClass="com.intellij.platform.eel.impl.settings.EnvVarShellMode"
+      default="LOGIN_INTERACTIVE"
+      bundle="messages.EelImplBundle"
+      groupKey="advanced.settings.container.environments"
+    />
   </extensions>
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.eel.impl.portAccessibleLocally"
+                    dynamic="false"
+                    interface="com.intellij.platform.eel.impl.portAccessibleLocally.EelPortAccessibleLocally"/>
     <extensionPoint name="multiRoutingFileSystemBackend" interface="com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend"
                     dynamic="true"/>
   </extensionPoints>

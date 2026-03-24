@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.platform.debugger.impl.shared.XDebuggerMonolithAccessPoint
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
@@ -41,13 +42,9 @@ import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
-import com.intellij.xdebugger.impl.frame.XSplitterWatchesViewImpl
 import com.intellij.xdebugger.impl.frame.XValueMarkers
-import com.intellij.xdebugger.impl.frame.XWatchesViewImpl
-import com.intellij.xdebugger.impl.inline.XInlineWatchesView
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.findValue
-import com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.impl.updateExecutionPosition
@@ -113,6 +110,8 @@ private class MonolithSessionProxy(val session: XDebugSession) : XDebugSessionPr
     get() = sessionImpl.isStepOutActionAllowed
   override val isRunToCursorActionAllowed: Boolean
     get() = sessionImpl.isRunToCursorActionAllowed
+  override val isForceStepIntoActionAllowed: Boolean
+    get() = sessionImpl.isForceStepIntoActionAllowed
   override val isLibraryFrameFilterSupported: Boolean
     get() = session.debugProcess.isLibraryFrameFilterSupported
   override val isValuesCustomSorted: Boolean
@@ -351,6 +350,10 @@ internal class XDebuggerMonolithAccessPointImpl : XDebuggerMonolithAccessPoint {
     return BackendXValueModel.findById(valueId)?.xValue
   }
 
+  override fun getExecutionStack(stackId: XExecutionStackId): XExecutionStack? {
+    return stackId.findValue()?.executionStack
+  }
+
   override fun getBreakpointType(typeId: String): XBreakpointType<*, *>? {
     return XBreakpointUtil.findType(typeId)
   }
@@ -367,11 +370,8 @@ internal class XDebuggerMonolithAccessPointImpl : XDebuggerMonolithAccessPoint {
     return (breakpoint as? XBreakpointBase<*, *, *>)?.asProxy()
   }
 
-  override fun createWatchesViewComponent(sessionProxy: XDebugSessionProxy, watchesInVariables: Boolean): XInlineWatchesView {
-    if (SessionTabComponentProvider.hasProvider()) {
-      return XSplitterWatchesViewImpl(sessionProxy, watchesInVariables, true, withToolbar = false)
-    }
-
-    return XWatchesViewImpl(sessionProxy, watchesInVariables, true, false)
+  override suspend fun <T> withTemporaryXValueId(value: XValue, proxy: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
+    val sessionImpl = getSession(proxy) as XDebugSessionImpl
+    return withTemporaryXValueIdImpl(value, sessionImpl, block)
   }
 }

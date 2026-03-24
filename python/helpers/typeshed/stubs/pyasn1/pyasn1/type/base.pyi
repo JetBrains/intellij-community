@@ -126,7 +126,7 @@ AbstractSimpleAsn1Item = SimpleAsn1Type
 
 class ConstructedAsn1Type(Asn1Type):
     strictConstraints: bool
-    componentType: namedtype.NamedTypes | None
+    componentType: namedtype.NamedTypes | Asn1Type | None
     sizeSpec: constraint.ConstraintsIntersection
     def __init__(self, **kwargs) -> None: ...
     def __eq__(self, other): ...

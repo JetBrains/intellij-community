@@ -9,6 +9,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.externalProcessAuthHelper.AuthenticationGate;
+import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -43,6 +44,7 @@ import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -609,18 +611,23 @@ public class GitImpl extends GitImplBase {
                                          final @NotNull GitRemote remote,
                                          final @NotNull List<? extends GitLineHandlerListener> listeners,
                                          final String... params) {
-    return fetch(repository, remote, listeners, null, params);
+    return fetch(repository, remote, listeners, null, null, params);
   }
 
+  @ApiStatus.Internal
   public @NotNull GitCommandResult fetch(final @NotNull GitRepository repository,
                                          final @NotNull GitRemote remote,
                                          final @NotNull List<? extends GitLineHandlerListener> listeners,
                                          @Nullable AuthenticationGate authenticationGate,
+                                         @Nullable AuthenticationMode authenticationMode,
                                          final String... params) {
     return runCommand(() -> {
       GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.FETCH);
       if (authenticationGate != null) {
         h.setAuthenticationGate(authenticationGate);
+      }
+      if (authenticationMode != null) {
+        h.setIgnoreAuthenticationMode(authenticationMode);
       }
       h.setSilent(false);
       h.setStdoutSuppressed(false);

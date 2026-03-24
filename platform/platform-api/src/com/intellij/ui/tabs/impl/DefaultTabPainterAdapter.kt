@@ -21,7 +21,7 @@ class DefaultTabPainterAdapter(override val tabPainter: JBTabPainter) : TabPaint
         borderThickness = tabs.borderThickness,
         tabColor = info.tabColor,
         active = tabs.isActiveTabs(info),
-        hovered = tabs.isHoveredTab(label),
+        hovered = tabs.isHoveredOrWithPopup(label),
       )
     }
     else {
@@ -32,7 +32,7 @@ class DefaultTabPainterAdapter(override val tabPainter: JBTabPainter) : TabPaint
         borderThickness = tabs.borderThickness,
         tabColor = info.tabColor,
         active = tabs.isActiveTabs(info),
-        hovered = tabs.isHoveredTab(label) && tabs.getVisibleInfos().size > 1,
+        hovered = tabs.isHoveredOrWithPopup(label) && tabs.getVisibleInfos().size > 1,
       )
     }
   }

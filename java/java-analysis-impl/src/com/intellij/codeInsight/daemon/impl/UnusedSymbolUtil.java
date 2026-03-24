@@ -325,7 +325,11 @@ public final class UnusedSymbolUtil {
     if (!(containingFile instanceof PsiJavaFile)) return true;  // Groovy field can be referenced from Java by getter
     if (member instanceof PsiField) return false;  //Java field cannot be referenced by anything but its name
     if (member instanceof PsiMethod) {
-      return PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)member);  //Java accessors can be referenced by field name from Groovy
+      if (PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)member)) return true;  //Java accessors can be referenced by field name from Groovy
+      for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
+        ProgressManager.checkCanceled();
+        if (provider.isReferencedByAlternativeNames(member)) return true;
+      }
     }
     return false;
   }

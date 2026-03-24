@@ -12,6 +12,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
@@ -31,6 +32,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.isCondaVirtualEnv
+import com.jetbrains.python.isSuccess
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
@@ -50,6 +52,7 @@ import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.getSdksToInstall
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
+import com.jetbrains.python.sdk.impl.resolvePythonHome
 import com.jetbrains.python.sdk.isSystemWide
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -77,7 +80,8 @@ sealed interface FileSystem<P : PathHolder> {
   val isLocal: Boolean
 
   fun parsePath(raw: String): PyResult<P>
-  fun validateExecutable(path: P): PyResult<Unit>
+  suspend fun validateExecutable(path: P): PyResult<Unit>
+  suspend fun fileExists(path: P): Boolean
 
   /**
    * [pathToPython] has to be system (not venv) if set [requireSystemPython]
@@ -89,10 +93,13 @@ sealed interface FileSystem<P : PathHolder> {
   suspend fun wrapSdk(sdk: Sdk): SdkWrapper<P>
   suspend fun detectSelectableVenv(projectPathPrefix: Path): List<DetectedSelectableInterpreter<P>>
   fun preferredInterpreterBasePath(): P? = null
-  suspend fun resolvePythonBinary(pythonHome: P): P?
+  fun resolvePythonBinary(pythonHome: P): P?
+  fun resolvePythonHome(pythonBinary: P): P
+  fun getVenvName(pythonHome: P): String?
 
   fun getBinaryToExec(path: P): BinaryToExec
   suspend fun which(cmd: String): P?
+  suspend fun getHomePath(): P?
 
   data class Eel(
     val eelApi: EelApi,
@@ -113,13 +120,15 @@ sealed interface FileSystem<P : PathHolder> {
       PyResult.localizedError(e.localizedMessage)
     }
 
-    override fun validateExecutable(path: PathHolder.Eel): PyResult<Unit> {
+    override suspend fun validateExecutable(path: PathHolder.Eel): PyResult<Unit> {
       return when {
         !path.path.exists() -> PyResult.localizedError(message("sdk.create.not.executable.does.not.exist.error"))
         path.path.isDirectory() -> PyResult.localizedError(message("sdk.create.executable.directory.error"))
         else -> PyResult.success(Unit)
       }
     }
+
+    override suspend fun fileExists(path: PathHolder.Eel): Boolean = path.path.exists()
 
     override suspend fun validateVenv(homePath: PathHolder.Eel): PyResult<Unit> = withContext(Dispatchers.IO) {
       val validationResult = when {
@@ -230,11 +239,21 @@ sealed interface FileSystem<P : PathHolder> {
       else -> null
     }
 
-    override suspend fun resolvePythonBinary(pythonHome: PathHolder.Eel): PathHolder.Eel? {
+    override fun resolvePythonBinary(pythonHome: PathHolder.Eel): PathHolder.Eel? {
       return pythonHome.path.resolvePythonBinary()?.let { PathHolder.Eel(it) }
     }
 
+    override fun resolvePythonHome(pythonBinary: PathHolder.Eel): PathHolder.Eel {
+      return PathHolder.Eel(pythonBinary.path.resolvePythonHome())
+    }
+
+    override fun getVenvName(pythonHome: PathHolder.Eel): String? {
+      return resolvePythonBinary(pythonHome)?.let { VirtualEnvReader().getVenvName(it.path) }
+    }
+
     override suspend fun which(cmd: String): PathHolder.Eel? = detectTool(cmd, eelApi)?.let { PathHolder.Eel(it) }
+
+    override suspend fun getHomePath(): PathHolder.Eel = PathHolder.Eel(eelApi.userInfo.home.asNioPath())
   }
 
   data class Target(
@@ -248,15 +267,24 @@ sealed interface FileSystem<P : PathHolder> {
     override val isLocal: Boolean = false
 
     private val systemPythonCache = ArrayList<DetectedSelectableInterpreter<PathHolder.Target>>()
+    private lateinit var shellImpl: String
 
     override fun parsePath(raw: String): PyResult<PathHolder.Target> {
       return PyResult.success(PathHolder.Target(raw))
     }
 
     /**
-     * Currently, we don't validate executable on target because there is no API to check path existence and its type on target.
+     * Currently, we don't validate the executable on target because there is no API to check its type on target.
      */
-    override fun validateExecutable(path: PathHolder.Target): PyResult<Unit> = PyResult.success(Unit)
+    override suspend fun validateExecutable(path: PathHolder.Target): PyResult<Unit> =
+      if (fileExists(path)) {
+        PyResult.success(Unit)
+      }
+      else PyResult.localizedError(message("sdk.create.not.executable.does.not.exist.error"))
+
+    override suspend fun fileExists(path: PathHolder.Target): Boolean {
+      return executeCommand("test -f ${path.pathString}").isSuccess
+    }
 
     override suspend fun validateVenv(homePath: PathHolder.Target): PyResult<Unit> = withContext(Dispatchers.IO) {
       val pythonBinaryPath = resolvePythonBinary(homePath)
@@ -335,20 +363,53 @@ sealed interface FileSystem<P : PathHolder> {
       return listOf(systemPython)
     }
 
-    override suspend fun resolvePythonBinary(pythonHome: PathHolder.Target): PathHolder.Target {
-      val pythonHomeString = pythonHome.pathString.takeIf { !it.contains("/bin/python") }
-                             ?: return pythonHome
+    override fun resolvePythonBinary(pythonHome: PathHolder.Target): PathHolder.Target {
+      val pythonHomeString = pythonHome.pathString
+      val platform = targetEnvironmentConfiguration.getPlatformAndRoot().platform
+      return PathHolder.Target(VirtualEnvReader().findPythonInPythonRootForTarget(pythonHomeString, platform))
+    }
 
-      val pythonBinaryString = pythonHomeString.let { "${it.removeSuffix("/")}/bin/python" }
+    override fun resolvePythonHome(pythonBinary: PathHolder.Target): PathHolder.Target {
+      return PathHolder.Target(pythonBinary.pathString.substringBeforeLast("/bin/"))
+    }
 
-      return PathHolder.Target(pythonBinaryString)
+    override fun getVenvName(pythonHome: PathHolder.Target): String? {
+      val pythonBinary = resolvePythonBinary(pythonHome)
+      val pythonBinaryString = pythonBinary.pathString
+      val platform = targetEnvironmentConfiguration.getPlatformAndRoot().platform
+      return VirtualEnvReader().getVenvNameForTarget(pythonBinaryString, platform)
     }
 
     override suspend fun which(cmd: String): PathHolder.Target? {
-      val which = getBinaryToExec(PathHolder.Target("which"))
-      val condaPathString = ExecService().execGetStdout(which, Args(cmd)).getOr { return null }
-      val condaPathOnFS = parsePath(condaPathString).getOr { return null }
-      return condaPathOnFS
+      val binaryPathString = executeCommand("which $cmd").getOr { return null }
+      val binaryPathOnFS = parsePath(binaryPathString).getOr { return null }
+      return binaryPathOnFS
+    }
+
+    override suspend fun getHomePath(): PathHolder.Target? = executeCommand($$"echo ${HOME}").successOrNull?.let { PathHolder.Target(it) }
+
+    private suspend fun executeCommand(cmd: String): PyResult<String> {
+      val shell = getShell()
+      val bin = getBinaryToExec(PathHolder.Target(shell))
+      return ExecService().execGetStdout(bin, Args("-l", "-c", cmd))
+    }
+
+    private suspend fun getShell(): String {
+      if (!this::shellImpl.isInitialized) {
+        shellImpl = getShellImpl().orLogException(LOG) ?: "/bin/sh"
+      }
+      return shellImpl
+    }
+
+    private suspend fun getShellImpl(): PyResult<String> {
+      val bin1 = getBinaryToExec(PathHolder.Target("getent"))
+      val execService = ExecService()
+      val res = execService.execGetStdout(bin1, Args("passwd")).getOr { return it }
+      val bin2 = getBinaryToExec(PathHolder.Target("whoami"))
+      val user = execService.execGetStdout(bin2).getOr { return it }
+      val shell = res.lines().firstOrNull { it.substringBefore(':').contains(user) }?.substringAfterLast(':')
+      @Suppress("HardCodedStringLiteral")
+      return shell?.let { PyResult.success(it) } ?: PyResult.localizedError("Could not get shell")
     }
   }
 }

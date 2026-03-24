@@ -18,6 +18,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.components.Badge
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
@@ -28,6 +29,7 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
@@ -41,7 +43,7 @@ private val myCbBlinkCaret                            get() = CheckboxDescriptor
 private val myCbSmoothBlinkCaret                      get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.smooth.caret.blinking"), model::isSmoothBlinkCaret, model::setSmoothBlinkCaret)
 private val myCbBlockCursor                           get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.block.caret"), model::isBlockCursor, model::setBlockCursor)
 private val myCbFullLineHeightCursor                  get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.full.line.height.caret"), model::isFullLineHeightCursor, model::setFullLineHeightCursor)
-private val myCbAnimatedCaret                         get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.animated.caret"), model::isAnimatedCaret, model::setAnimatedCaret)
+private val myCbSmoothCaretMovement                   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.animated.caret"), model::isSmoothCaretMovement, model::setSmoothCaretMovement)
 private val myCbHighlightSelectionOccurrences         get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.highlight.selection.occurrences"), model::isHighlightSelectionOccurrences, model::setHighlightSelectionOccurrences)
 private val myCbRightMargin                           get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.right.margin"), model::isRightMarginShown, model::setRightMarginShown)
 private val myCbShowLineNumbers                       get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.line.numbers"), model::isLineNumbersShown, model::setLineNumbersShown)
@@ -80,6 +82,7 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       }
       row {
         checkBox(myCbSmoothBlinkCaret)
+        icon(Badge.new)
       }.enabledIf(cbBlinkCaret!!.selected)
       row {
         checkBox(myCbBlockCursor)
@@ -88,7 +91,7 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
         checkBox(myCbFullLineHeightCursor)
       }
       row {
-        checkBox(myCbAnimatedCaret)
+        checkBox(myCbSmoothCaretMovement)
         comboBox(
           DefaultComboBoxModel(EditorSettings.CaretEasing.entries.toTypedArray()),
           renderer = textListCellRenderer {
@@ -99,6 +102,8 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
             }
           }
         ).bindItem(model::getCaretEasing, model::setCaretEasing)
+          .customize(UnscaledGaps(right = 20))
+        icon(Badge.new)
       }
       row {
         checkBox(myCbHighlightSelectionOccurrences)

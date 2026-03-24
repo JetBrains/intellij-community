@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
@@ -298,7 +299,10 @@ public final class GenerationUtil {
       PsiParameter parameter = parameters[i];
       if (parameter == null) continue;
       if (parameter instanceof PsiCompiledElement) {
-        parameter = (PsiParameter)((PsiCompiledElement)parameter).getMirror();
+        // todo fix IDEA-387059
+        PsiParameter finalParameter = parameter;
+        parameter =
+          BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> (PsiParameter)((PsiCompiledElement)finalParameter).getMirror());
       }
 
       if (i > 0) text.append(", ");  //append ','

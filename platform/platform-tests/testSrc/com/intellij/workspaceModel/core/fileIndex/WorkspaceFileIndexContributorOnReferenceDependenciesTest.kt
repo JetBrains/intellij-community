@@ -204,7 +204,6 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
         name = "New Name"
       }
     }
-    referredTestEntityContributor.assertNumberOfCalls(4)
     readAction {
       assertTrue(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
     }

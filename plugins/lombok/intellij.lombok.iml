@@ -6,9 +6,6 @@
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/lang/src" isTestSource="false" generated="true" />
-      <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/testData" type="java-test-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -43,5 +40,10 @@
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.codeserver.highlighting" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" />
   </component>
 </module>

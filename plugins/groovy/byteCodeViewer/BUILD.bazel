@@ -20,6 +20,29 @@ jvm_library(
     "//plugins/ByteCodeViewer:java-byteCodeViewer",
     "@lib//:jetbrains-annotations",
     "//platform/util",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+  ]
+)
+
+jvm_library(
+  name = "byteCodeViewer_test_lib",
+  module_name = "intellij.groovy.byteCodeViewer",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":byteCodeViewer",
+    "//platform/core-api:core_test_lib",
+    "//plugins/groovy/groovy-psi:psi_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//plugins/ByteCodeViewer:java-byteCodeViewer_test_lib",
+    "//platform/util:util_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.groovy.byteCodeViewer` end
+
+### auto-generated section `iml intellij.groovy.byteCodeViewer` start
+exports_files([
+  "intellij.groovy.byteCodeViewer.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.groovy.byteCodeViewer` end

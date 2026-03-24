@@ -22,7 +22,7 @@ fun createUvPipVenvSdk(venvPython: PythonBinary, workingDirectory: Path?): Sdk {
   return SdkConfigurationUtil.setupSdk(emptyArray(),
                                        venvPython.refreshAndFindVirtualFileOrDirectory()!!,
                                        SdkType.findByName(PyNames.PYTHON_SDK_ID_NAME)!!,
-                                       UvSdkAdditionalData(workingDirectory, true),
+                                       UvSdkAdditionalData(workingDirectory, true, null, null),
                                        null)
 }
 

@@ -7,7 +7,7 @@ import com.intellij.codeInsight.hints.declarative.InlayPosition
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.codeInsight.hints.declarative.impl.InlayData
 import com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
-import com.intellij.codeInsight.hints.declarative.impl.interaction.DefaultInlayInteractionHandler
+import com.intellij.codeInsight.hints.declarative.impl.interaction.CombinedInlayInteractionHandler
 import com.intellij.codeInsight.hints.declarative.impl.interaction.InlayInteractionHandler
 import com.intellij.codeInsight.hints.declarative.impl.views.CapturedPointInfo
 import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationList
@@ -75,7 +75,7 @@ abstract class DeclarativeInlayRendererBase<Model>(
   }
 
   fun getInteractionHandler(): InlayInteractionHandler {
-    return DefaultInlayInteractionHandler
+    return CombinedInlayInteractionHandler
   }
 
   @ApiStatus.Internal

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.ide.util.RunOnceUtil
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
@@ -8,14 +9,16 @@ import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.TerminalUiSettingsManager.CursorShape
-import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
+import org.jetbrains.plugins.terminal.block.ui.updateFrontendSettingsAndSync
+import org.jetbrains.plugins.terminal.settings.TerminalApplicationTitleShowingMode
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -25,13 +28,16 @@ import java.util.concurrent.CopyOnWriteArrayList
        exportable = true,
        presentableName = TerminalOptionsProvider.PresentableNameGetter::class,
        storages = [Storage(value = "terminal.xml")])
-class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : PersistentStateComponent<TerminalOptionsProvider.State> {
+class TerminalOptionsProvider(internal val coroutineScope: CoroutineScope) : PersistentStateComponent<TerminalOptionsProvider.State> {
   private var state = State()
 
   override fun getState(): State = state
 
   override fun loadState(newState: State) {
     state = newState
+
+    ExperimentalTerminalMigration.migrateTerminalEngineOnce(options = this)
+    migrateApplicationTitleSettingOnce()
 
     // In the case of RemDev settings are synced from backend to frontend using `loadState` method.
     // So, notify the listeners on every `loadState` to not miss the change.
@@ -47,9 +53,6 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
     var terminalEngine: TerminalEngine = TerminalEngine.REWORKED
 
     @ApiStatus.Internal
-    var terminalEngineInRemDev: TerminalEngine = TerminalEngine.REWORKED
-
-    @ApiStatus.Internal
     var showCompletionPopupAutomatically: Boolean = true
     @ApiStatus.Internal
     var commandCompletionShowingMode: TerminalCommandCompletionShowingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS
@@ -59,6 +62,12 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
 
     @ApiStatus.Internal
     var minContrastRatio: Float = TerminalContrastRatio.DEFAULT_VALUE.value
+
+    @ApiStatus.Internal
+    var showApplicationTitle: Boolean = true
+
+    @ApiStatus.Internal
+    var applicationTitleShowingMode: TerminalApplicationTitleShowingMode = TerminalApplicationTitleShowingMode.WHEN_COMMAND_RUNNING
 
     var myTabName: @Nls String = defaultTabName()
     var myCloseSessionOnLogout: Boolean = true
@@ -93,23 +102,11 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
 
   // Nice property delegation (var shellPath: String? by state::myShellPath) cannot be used on `var` properties (KTIJ-19450)
 
-  /**
-   * We use different default values for the terminal engine in monolith and RemDev mode.
-   * So, the getter returns the state depending on that.
-   * But the setter applies the provided value to both monolith and RemDev modes.
-   * So, when a user changes the default in any mode, it will be applied everywhere.
-   */
   var terminalEngine: TerminalEngine
-    get() {
-      return if (AppMode.isRemoteDevHost() || PlatformUtils.isJetBrainsClient()) {
-        state.terminalEngineInRemDev
-      }
-      else state.terminalEngine
-    }
+    get() = state.terminalEngine
     set(value) {
-      if (state.terminalEngine != value || state.terminalEngineInRemDev != value) {
+      if (state.terminalEngine != value) {
         state.terminalEngine = value
-        state.terminalEngineInRemDev = value
         fireSettingsChanged()
       }
     }
@@ -165,6 +162,28 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
       val options = TerminalLocalOptions.getInstance()
       if (options.shellPath != value) {
         options.shellPath = value
+        fireSettingsChanged()
+      }
+    }
+
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
+  var showApplicationTitle: Boolean
+    get() = state.showApplicationTitle
+    set(value) {
+      if (state.showApplicationTitle != value) {
+        state.showApplicationTitle = value
+        fireSettingsChanged()
+      }
+    }
+
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
+  var applicationTitleShowingMode: TerminalApplicationTitleShowingMode
+    get() = state.applicationTitleShowingMode
+    set(value) {
+      if (state.applicationTitleShowingMode != value) {
+        state.applicationTitleShowingMode = value
         fireSettingsChanged()
       }
     }
@@ -282,6 +301,18 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
         fireSettingsChanged()
       }
     }
+
+  private fun migrateApplicationTitleSettingOnce() {
+    RunOnceUtil.runOnceForApp("TerminalOptionsProvider.appTitleMigration.2026.1.1") {
+      updateFrontendSettingsAndSync(coroutineScope) {
+        val enabled = AdvancedSettings.getBoolean("terminal.show.application.title")
+        if (enabled) {
+          state.showApplicationTitle = true
+          state.applicationTitleShowingMode = TerminalApplicationTitleShowingMode.ALWAYS
+        }
+      }
+    }
+  }
 
   companion object {
     val instance: TerminalOptionsProvider

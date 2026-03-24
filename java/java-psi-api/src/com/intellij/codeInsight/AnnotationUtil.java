@@ -85,6 +85,8 @@ public class AnnotationUtil {
 
   public static final String J_SPECIFY_NON_NULL = "org.jspecify.annotations.NonNull";
   public static final String J_SPECIFY_NULLABLE = "org.jspecify.annotations.Nullable";
+  public static final String J_SPECIFY_NULL_MARKED = "org.jspecify.annotations.NullMarked";
+  public static final String J_SPECIFY_NULL_UNMARKED = "org.jspecify.annotations.NullUnmarked";
 
   public static final String NON_NLS = "org.jetbrains.annotations.NonNls";
   public static final String NLS = "org.jetbrains.annotations.Nls";

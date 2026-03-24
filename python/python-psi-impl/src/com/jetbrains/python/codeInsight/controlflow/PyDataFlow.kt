@@ -188,7 +188,7 @@ private fun PyStatement.isIgnoredUnreachableStatement(context: FlowContext): Boo
 private fun PsiElement.isTerminatingStatement(context: TypeEvalContext): Boolean {
   return when (this) {
     is PyRaiseStatement -> true
-    is PyAssertStatement -> getArguments().firstOrNull()?.asBooleanNoResolve() == false
+    is PyAssertStatement -> arguments.firstOrNull()?.asBooleanNoResolve() == false
     is PyExpressionStatement -> expression is PyCallExpression && context.getType(expression) is PyNeverType
     else -> false
   }

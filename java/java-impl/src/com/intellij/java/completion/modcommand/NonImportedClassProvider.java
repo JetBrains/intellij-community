@@ -14,7 +14,7 @@ import com.intellij.codeInsight.completion.JavaPatternCompletionUtil;
 import com.intellij.codeInsight.completion.LimitedAccessibleClassPreprocessor;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -62,7 +62,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInsight.completion.JavaClassNameCompletionContributor.getAllAnnotationClasses;
@@ -115,7 +114,7 @@ final class NonImportedClassProvider extends JavaModCompletionItemProvider {
       .withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2, PsiSwitchBlock.class)));
 
   @Override
-  public void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink) {
+  public void provideItems(CompletionContext context, ModCompletionResult sink) {
     if (!isClassNamePossible(context) || context.matcher().getPrefix().isEmpty()) {
       return;
     }
@@ -123,7 +122,7 @@ final class NonImportedClassProvider extends JavaModCompletionItemProvider {
   }
 
   private static void suggestNonImportedClasses(CompletionContext parameters,
-                                                Consumer<ModCompletionItem> sink) {
+                                                ModCompletionResult sink) {
     if (UNEXPECTED_REFERENCE_AFTER_DOT.accepts(parameters.getPosition())) return;
     addAllClasses(parameters, parameters.invocationCount() <= 2, parameters.matcher(), sink);
   }
@@ -131,7 +130,7 @@ final class NonImportedClassProvider extends JavaModCompletionItemProvider {
   public static void addAllClasses(CompletionContext parameters,
                                    boolean filterByScope,
                                    PrefixMatcher matcher,
-                                   Consumer<ModCompletionItem> sink) {
+                                   ModCompletionResult sink) {
     final PsiElement insertedElement = parameters.getPosition();
     final PsiFile psiFile = insertedElement.getContainingFile();
 

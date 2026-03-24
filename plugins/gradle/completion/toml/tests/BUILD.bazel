@@ -1,0 +1,60 @@
+### auto-generated section `build intellij.gradle.completion.toml.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  module_name = "intellij.gradle.completion.toml.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/analysis-api:analysis",
+    "//plugins/toml/core",
+    "//plugins/repository-search/completion",
+    "//plugins/gradle/completion",
+    "//plugins/gradle",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.gradle.completion.toml.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/util",
+    "//platform/util:util_test_lib",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//plugins/toml/core",
+    "//plugins/toml/core:core_test_lib",
+    "//plugins/repository-search/completion",
+    "//plugins/repository-search/completion:completion_test_lib",
+    "//plugins/gradle/completion",
+    "//plugins/gradle/completion:completion_test_lib",
+    "//plugins/gradle",
+    "//plugins/gradle:gradle_test_lib",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.gradle.completion.toml.tests` end
+
+### auto-generated section `iml intellij.gradle.completion.toml.tests` start
+exports_files([
+  "intellij.gradle.completion.toml.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.gradle.completion.toml.tests` end
+
+### auto-generated section `test intellij.gradle.completion.toml.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.gradle.completion.toml.tests` end

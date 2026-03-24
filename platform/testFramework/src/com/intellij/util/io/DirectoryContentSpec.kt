@@ -14,6 +14,7 @@ import com.intellij.util.io.impl.JarSpec
 import com.intellij.util.io.impl.ZipSpec
 import com.intellij.util.io.impl.assertContentUnderFileMatches
 import com.intellij.util.io.impl.fillSpecFromDirectory
+import org.jetbrains.annotations.ApiStatus
 import org.junit.rules.ErrorCollector
 import java.io.File
 import java.nio.file.Path
@@ -105,6 +106,7 @@ interface DirectoryContentSpec {
   /**
    * Generates files, directories and archives accordingly to this specification in [target] directory
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use generate(Path) instead")
   fun generate(target: File): Unit = generate(target.toPath())
 
@@ -126,9 +128,12 @@ interface DirectoryContentSpec {
  * @param errorCollector will be used to report all errors at once if provided, otherwise only the first error will be reported
  */
 @JvmOverloads
-fun File.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
-                       filePathFilter: (String) -> Boolean = { true }, errorCollector: ErrorCollector? = null) {
-  assertContentUnderFileMatches(toPath(), spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector.asReporter(),
+fun File.assertMatches(spec: DirectoryContentSpec,
+                       fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
+                       filePathFilter: (String) -> Boolean = { true },
+                       ignoreEmptyDirectories: Boolean = false,
+                       errorCollector: ErrorCollector? = null) {
+  assertContentUnderFileMatches(toPath(), spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, ignoreEmptyDirectories, errorCollector.asReporter(),
                                 expectedDataIsInSpec = true)
 }
 
@@ -138,10 +143,13 @@ fun File.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatc
  * @param errorCollector will be used to report all errors at once if provided, otherwise only the first error will be reported
  */
 @JvmOverloads
-fun Path.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
-                       filePathFilter: (String) -> Boolean = { true }, errorCollector: ErrorCollector? = null) {
-  assertContentUnderFileMatches(this, spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector.asReporter(),
-                                expectedDataIsInSpec = true)
+fun Path.assertMatches(spec: DirectoryContentSpec,
+                       fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
+                       filePathFilter: (String) -> Boolean = { true },
+                       ignoreEmptyDirectories: Boolean = false,
+                       errorCollector: ErrorCollector? = null) {
+  assertContentUnderFileMatches(this, spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, ignoreEmptyDirectories,
+                                errorCollector.asReporter(), expectedDataIsInSpec = true)
 }
 
 /**
@@ -149,9 +157,12 @@ fun Path.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatc
  * from the spec will be shown as actual, and the data from the file will be shown as expected.
  */
 @JvmOverloads
-fun DirectoryContentSpec.assertIsMatchedBy(path: Path, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
-                                           filePathFilter: (String) -> Boolean = { true }, errorCollector: ErrorCollector? = null) {
-  assertContentUnderFileMatches(path, this as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector.asReporter(),
+fun DirectoryContentSpec.assertIsMatchedBy(path: Path,
+                                           fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
+                                           filePathFilter: (String) -> Boolean = { true },
+                                           ignoreEmptyDirectories: Boolean = false,
+                                           errorCollector: ErrorCollector? = null) {
+  assertContentUnderFileMatches(path, this as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, ignoreEmptyDirectories, errorCollector.asReporter(),
                                 expectedDataIsInSpec = false)
 }
 
@@ -160,9 +171,12 @@ fun DirectoryContentSpec.assertIsMatchedBy(path: Path, fileTextMatcher: FileText
  * from the spec will be shown as actual, and the data from the file will be shown as expected.
  */
 @JvmOverloads
-fun DirectoryContentSpec.assertIsMatchedBy(path: Path, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
-                                           filePathFilter: (String) -> Boolean, customErrorReporter: ContentMismatchReporter?) {
-  assertContentUnderFileMatches(path, this as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, customErrorReporter, 
+fun DirectoryContentSpec.assertIsMatchedBy(path: Path,
+                                           fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
+                                           filePathFilter: (String) -> Boolean,
+                                           ignoreEmptyDirectories: Boolean = false,
+                                           customErrorReporter: ContentMismatchReporter?) {
+  assertContentUnderFileMatches(path, this as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, ignoreEmptyDirectories, customErrorReporter,
                                 expectedDataIsInSpec = false)
 }
 

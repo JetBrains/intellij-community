@@ -1,0 +1,3 @@
+g: class Generics$GClass
+
+$$result: (GClass()) → 1

@@ -15,10 +15,10 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider.Companion.getWelcomeScreenProjectPath
-import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenAppScopeHolder
+import com.intellij.platform.ide.nonModalWelcomeScreen.isWelcomeExperienceProjectSync
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -43,7 +43,7 @@ private class WelcomeScreenProjectCloseHandler {
   init {
     ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosingBeforeSave(project: Project) {
-        if (isWelcomeScreenProject(project)) {
+        if (project.isWelcomeExperienceProjectSync()) {
           val fileEditorManager = FileEditorManager.getInstance(project)
           filesToCloseOnProjectClose.forEach { file ->
             fileEditorManager.closeFile(file)
@@ -103,12 +103,16 @@ abstract class WelcomeScreenOpenFileNotificationProvider : EditorNotificationPro
     project: Project,
     file: VirtualFile,
   ): Function<FileEditor, JComponent?>? {
-    if (!isWelcomeScreenProject(project)) return null
+    if (!project.isWelcomeExperienceProjectSync()) {
+      return null
+    }
     if (file is LightVirtualFile ||
         file.path in closedNotificationFiles ||
         ScratchUtil.isScratch(file) ||
         file.extension == "http"
-    ) return null
+    ) {
+      return null
+    }
 
     // Pre-compute the project root in the background thread
     val projectRootInfo = selectProjectRoot(file)

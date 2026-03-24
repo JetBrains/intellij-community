@@ -1,16 +1,32 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.xerces"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.diff"/>
+    <module name="intellij.platform.vcs"/>
     <module name="intellij.xml.analysis.impl"/>
-    <module name="intellij.xml.structureView.impl"/>
+    <module name="intellij.xml.dom"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.xml.psi"/>
     <module name="intellij.xml.psi.impl"/>
-    <module name="intellij.platform.backend"/>
-    <module name="intellij.libraries.xerces"/>
-    <module name="intellij.xml.dom"/>
+    <module name="intellij.xml.structureView.impl"/>
     <module name="intellij.xml.ui.common"/>
-    <module name="intellij.platform.vcs"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint name="completion.htmlInTextCompletionEnabler"
@@ -61,8 +77,6 @@
     <action id="EscapeEntities" class="com.intellij.xml.actions.EscapeEntitiesAction">
       <add-to-group group-id="EditMenu" anchor="last"/>
     </action>
-
-    <action id="SurroundWithTagTemplate" class="com.intellij.xml.actions.XmlSurroundWithTagTemplateAction" icon="AllIcons.Nodes.Tag"/>
   </actions>
 
   <projectListeners>
@@ -299,9 +313,6 @@
 
     <lang.implementationTextSelectioner language="XML"
                                         implementationClass="com.intellij.codeInsight.hint.XmlImplementationTextSelectioner"/>
-    <defaultLiveTemplates file="liveTemplates/html_xml.xml"/>
-    <defaultLiveTemplates file="liveTemplates/zen_html.xml"/>
-    <defaultLiveTemplates file="liveTemplates/zen_xsl.xml"/>
     <productivityFeaturesProvider implementation="com.intellij.featureStatistics.XmlProductivityFeatureProvider"/>
 
     <elementSignatureProvider implementation="com.intellij.codeInsight.folding.impl.XmlElementSignatureProvider"/>

@@ -6,6 +6,7 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 
@@ -43,10 +44,4 @@ abstract class AbstractCoroutineAsyncStackTraceTest : AbstractAsyncStackTraceTes
     override fun getFramePresentation(f: XStackFrame): String {
         return XDebuggerTestUtil.getFramePresentation(f)
     }
-}
-
-abstract class AbstractK2CoroutineAsyncStackTraceTest : AbstractCoroutineAsyncStackTraceTest() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 }

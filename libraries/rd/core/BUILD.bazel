@@ -9,10 +9,27 @@ resourcegroup(
 
 jvm_library(
   name = "core",
+  module_name = "intellij.libraries.rd.core",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":core_resources"],
   exports = ["@lib//:libraries-rd-core-rd-core"],
   runtime_deps = ["@lib//:libraries-rd-core-rd-core"]
 )
+
+jvm_library(
+  name = "core_test_lib",
+  module_name = "intellij.libraries.rd.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-rd-core-rd-core"],
+  runtime_deps = [":core"]
+)
 ### auto-generated section `build intellij.libraries.rd.core` end
+
+### auto-generated section `iml intellij.libraries.rd.core` start
+exports_files([
+  "intellij.libraries.rd.core.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.rd.core` end

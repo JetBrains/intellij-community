@@ -6,10 +6,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.shared.InlineBreakpointsCache
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
 interface XBreakpointManagerProxy {
@@ -37,7 +39,7 @@ interface XBreakpointManagerProxy {
   fun subscribeOnBreakpointsChanges(disposable: Disposable, listener: () -> Unit)
   fun getLastRemovedBreakpoint(): XBreakpointProxy?
 
-  fun removeBreakpoint(breakpoint: XBreakpointProxy)
+  fun removeBreakpoint(breakpoint: XBreakpointProxy): CompletableFuture<Void?>
 
   fun rememberRemovedBreakpoint(breakpoint: XBreakpointProxy)
   fun restoreRemovedBreakpoint(breakpoint: XBreakpointProxy)
@@ -45,10 +47,10 @@ interface XBreakpointManagerProxy {
   fun copyLineBreakpoint(breakpoint: XLineBreakpointProxy, file: VirtualFile, line: Int)
   fun onBreakpointRemoval(breakpoint: XLineBreakpointProxy, session: XDebugSessionProxy)
 
-  fun findBreakpointAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): XLineBreakpointProxy? =
-    findBreakpointsAtLine(type, file, line).firstOrNull()
+  fun findBreakpointAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int, placement: XLineBreakpointPlacement): XLineBreakpointProxy? =
+    findBreakpointsAtLine(type, file, line, placement).firstOrNull()
 
-  fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): List<XLineBreakpointProxy>
+  fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int, placement: XLineBreakpointPlacement): List<XLineBreakpointProxy>
 
   suspend fun <T> withLightBreakpointIfPossible(editor: Editor?, info: XLineBreakpointInstallationInfo, block: suspend () -> T): T
 }
@@ -58,6 +60,7 @@ interface XBreakpointManagerProxy {
 data class XLineBreakpointInstallationInfo(
   val types: List<XLineBreakpointTypeProxy>,
   val position: XSourcePosition,
+  val placement: XLineBreakpointPlacement,
   val isTemporary: Boolean,
   val isLogging: Boolean,
   val logExpression: String?,

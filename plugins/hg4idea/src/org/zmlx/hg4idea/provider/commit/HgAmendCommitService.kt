@@ -13,6 +13,7 @@ internal class HgAmendCommitService(project: Project) : AmendCommitService(proje
   private val vcs: HgVcs get() = HgVcs.getInstance(project)!!
 
   override fun isAmendCommitSupported(): Boolean = vcs.version.isAmendSupported
+  override fun isAmendSpecificCommitSupported(): Boolean = false
 
   override fun getLastCommitMessage(root: VirtualFile): String {
     val commandExecutor = HgCommandExecutor(project)

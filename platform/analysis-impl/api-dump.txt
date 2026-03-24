@@ -255,6 +255,11 @@ com.intellij.codeInsight.template.TemplateEditingListener
 com.intellij.codeInsight.template.TemplateManagerListener
 - java.util.EventListener
 - a:templateStarted(com.intellij.codeInsight.template.impl.TemplateState):V
+com.intellij.codeInsight.template.impl.ModCommandAwareTemplateOptionalProcessor
+- com.intellij.codeInsight.template.impl.TemplateOptionalProcessor
+- a:processText(com.intellij.codeInsight.template.Template,com.intellij.openapi.editor.ModNavigator,com.intellij.openapi.editor.RangeMarker):V
+- processText(com.intellij.openapi.project.Project,com.intellij.codeInsight.template.Template,com.intellij.openapi.editor.Document,com.intellij.openapi.editor.RangeMarker,com.intellij.openapi.editor.Editor):V
+c:com.intellij.codeInsight.template.impl.TemplateImpl
 com.intellij.codeInsight.template.impl.TemplateOptionalProcessor
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -266,6 +271,8 @@ com.intellij.codeInsight.template.impl.TemplateOptionalProcessor
 com.intellij.codeInsight.template.impl.TemplatePreprocessor
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:preprocessTemplate(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I,java.lang.String,java.lang.String):V
+c:com.intellij.codeInspection.AddToInspectionOptionListFix
+- availableInBatchMode():Z
 com.intellij.codeInspection.AggregateResultsInspection
 a:com.intellij.codeInspection.InspectionManagerBase
 - createProblemDescriptor(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.String,com.intellij.codeInspection.ProblemHighlightType,java.lang.String,Z,com.intellij.codeInspection.LocalQuickFix[]):com.intellij.codeInspection.ProblemDescriptor
@@ -298,6 +305,8 @@ com.intellij.codeInspection.InspectionToolResultExporter
 c:com.intellij.codeInspection.ProblemDescriptorBase
 - <init>(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,java.lang.String,com.intellij.codeInspection.LocalQuickFix[],com.intellij.codeInspection.ProblemHighlightType,Z,com.intellij.openapi.util.TextRange,Z,Z,java.lang.String):V
 - getTooltipTemplate():java.lang.String
+c:com.intellij.codeInspection.UpdateInspectionOptionFix
+- availableInBatchMode():Z
 com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
 - a:cancel():V
 - a:createClosureState(com.intellij.psi.PsiElement,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):V

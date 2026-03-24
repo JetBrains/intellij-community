@@ -16,37 +16,36 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
 import org.jetbrains.plugins.gitlab.api.GitLabId
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
-import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGroupDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelGQLDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNamespaceDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNamespaceRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectForCloneDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectIsForkedDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectsForCloneDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabRepositoryCreationRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabWorkItemDTO
 import org.jetbrains.plugins.gitlab.api.dto.WithGitLabNamespace
 import org.jetbrains.plugins.gitlab.api.gitLabQuery
-import org.jetbrains.plugins.gitlab.api.restApiUri
+import org.jetbrains.plugins.gitlab.api.projectApiUrl
 import org.jetbrains.plugins.gitlab.api.withErrorStats
 import org.jetbrains.plugins.gitlab.api.withQuery
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
+import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import java.net.URI
 import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse
 
 @SinceGitLab("12.0")
-suspend fun GitLabApi.GraphQL.findProject(project: GitLabProjectCoordinates): HttpResponse<out GitLabProjectDTO?> {
+suspend fun GitLabApi.GraphQL.findProject(projectPath: GitLabProjectPath): HttpResponse<out GitLabProjectDTO?> {
   val parameters = mapOf(
-    "projectId" to project.projectPath.fullPath(),
+    "projectId" to projectPath.fullPath(),
   )
   val request = gitLabQuery(GitLabGQLQuery.GET_PROJECT, parameters)
   return withErrorStats(GitLabGQLQuery.GET_PROJECT) {
@@ -73,9 +72,9 @@ suspend fun GitLabApi.Rest.createProject(
 }
 
 @SinceGitLab("16.9")
-private suspend fun GitLabApi.GraphQL.isProjectForked(project: GitLabProjectCoordinates): HttpResponse<out Boolean> {
+private suspend fun GitLabApi.GraphQL.isProjectForked(projectPath: GitLabProjectPath): HttpResponse<out Boolean> {
   val parameters = mapOf(
-    "projectId" to project.projectPath.fullPath(),
+    "projectId" to projectPath.fullPath(),
   )
   val request = gitLabQuery(GitLabGQLQuery.GET_PROJECT_IS_FORKED, parameters)
   return withErrorStats(GitLabGQLQuery.GET_PROJECT_IS_FORKED) {
@@ -84,28 +83,35 @@ private suspend fun GitLabApi.GraphQL.isProjectForked(project: GitLabProjectCoor
 }
 
 @SinceGitLab("12.0")
-private suspend fun GitLabApi.Rest.isProjectForked(project: GitLabProjectCoordinates): HttpResponse<out GitLabProjectIsForkedDTO> {
-  val uri = project.restApiUri
-  val request = request(uri).GET().build()
+private suspend fun GitLabApi.Rest.isProjectForked(projectPath: GitLabProjectPath): HttpResponse<out GitLabProjectIsForkedDTO> {
+  val request = request(projectApiUrl(projectPath.fullPath())).GET().build()
   return withErrorStats(GitLabApiRequestName.REST_GET_PROJECT_IS_FORKED) {
     loadJsonValue(request)
   }
 }
 
-suspend fun GitLabApi.isProjectForked(project: GitLabProjectCoordinates): Boolean =
+@SinceGitLab("3.0", note = "Not an exact version")
+suspend fun GitLabApi.Rest.getProject(projectPath: GitLabProjectPath): HttpResponse<out GitLabProjectRestDTO> {
+  val request = request(projectApiUrl(projectPath.fullPath())).GET().build()
+  return withErrorStats(GitLabApiRequestName.REST_GET_PROJECT) {
+    loadJsonValue(request)
+  }
+}
+
+suspend fun GitLabApi.isProjectForked(projectPath: GitLabProjectPath): Boolean =
   if (getMetadata().version < GitLabVersion(16, 9)) {
-    rest.isProjectForked(project).body().isForked
+    rest.isProjectForked(projectPath).body().isForked
   }
   else {
-    graphQL.isProjectForked(project).body()
+    graphQL.isProjectForked(projectPath).body()
   }
 
 
 @SinceGitLab("13.1", note = "No exact version")
-fun GitLabApi.GraphQL.createAllProjectLabelsFlow(project: GitLabProjectCoordinates): Flow<List<GitLabLabelDTO>> =
+fun GitLabApi.GraphQL.createAllProjectLabelsFlow(projectPath: GitLabProjectPath): Flow<List<GitLabLabelGQLDTO>> =
   ApiPageUtil.createGQLPagesFlow { page ->
     val parameters = page.asParameters() + mapOf(
-      "fullPath" to project.projectPath.fullPath()
+      "fullPath" to projectPath.fullPath()
     )
     val request = gitLabQuery(GitLabGQLQuery.GET_PROJECT_LABELS, parameters)
     withErrorStats(GitLabGQLQuery.GET_PROJECT_LABELS) {
@@ -114,10 +120,10 @@ fun GitLabApi.GraphQL.createAllProjectLabelsFlow(project: GitLabProjectCoordinat
   }.map { it.nodes }
 
 @SinceGitLab("15.2")
-fun GitLabApi.GraphQL.createAllWorkItemsFlow(project: GitLabProjectCoordinates): Flow<List<GitLabWorkItemDTO>> =
+fun GitLabApi.GraphQL.createAllWorkItemsFlow(projectPath: GitLabProjectPath): Flow<List<GitLabWorkItemDTO>> =
   ApiPageUtil.createGQLPagesFlow { page ->
     val parameters = page.asParameters() + mapOf(
-      "fullPath" to project.projectPath.fullPath()
+      "fullPath" to projectPath.fullPath()
     )
     val request = gitLabQuery(GitLabGQLQuery.GET_PROJECT_WORK_ITEMS, parameters)
     withErrorStats(GitLabGQLQuery.GET_PROJECT_WORK_ITEMS) {
@@ -126,7 +132,7 @@ fun GitLabApi.GraphQL.createAllWorkItemsFlow(project: GitLabProjectCoordinates):
   }.map { it.nodes }
 
 @SinceGitLab("7.0", note = "No exact version")
-fun getProjectUsersURI(project: GitLabProjectCoordinates) = project.restApiUri.resolveRelative("users")
+fun GitLabApi.Rest.getProjectUsersURI(projectId: String): URI = projectApiUrl(projectId).resolveRelative("users")
 
 @SinceGitLab("7.0", note = "No exact version")
 suspend fun GitLabApi.Rest.getProjectUsers(uri: URI): HttpResponse<out List<GitLabUserRestDTO>> {
@@ -159,9 +165,7 @@ suspend fun GitLabApi.Rest.getProjectNamespace(namespaceId: String): HttpRespons
 @ApiStatus.Internal
 @SinceGitLab("14.3", note = "Doesn't fetch subgroups before 17.10")
 fun GitLabApi.GraphQL.getMemberNamespacesForShare(glMetadata: GitLabServerMetadata): Flow<List<WithGitLabNamespace>> =
-  ApiPageUtil.createGQLPagesFlow { initialPage ->
-    val page = GraphQLRequestPagination(initialPage.afterCursor, 10)
-
+  ApiPageUtil.createGQLPagesFlow(startPage = GraphQLRequestPagination(10)) { page ->
     val parameters = page.asParameters()
 
     val result = if (glMetadata.version < GitLabVersion(17, 10)) {
@@ -176,48 +180,23 @@ fun GitLabApi.GraphQL.getMemberNamespacesForShare(glMetadata: GitLabServerMetada
       }
     }.body()
 
-    val namespaces = (if (page.afterCursor == null) listOf(result.currentUser.namespace) else listOf()) +
-                     result.groups.nodes.filter { it.userPermissions.createProjects }
-    GraphQLConnectionDTO<WithGitLabNamespace>(result.groups.pageInfo, namespaces)
+    val namespaces = buildList {
+      if (page.afterCursor == null) add(result.currentUser.namespace)
+      if (result.groups != null) addAll(result.groups.nodes.filter { it.userPermissions.createProjects })
+    }
+    val pageInfo = result.groups?.pageInfo ?: GraphQLCursorPageInfoDTO(null, false, null, false)
+    GraphQLConnectionDTO(pageInfo, namespaces)
   }.map { it.nodes }
 
 private data class GitLabUserNamespacesResult(
   val currentUser: CurrentUser,
-  val groups: GraphQLConnectionDTO<GitLabGroupDTO>,
+  val groups: GraphQLConnectionDTO<GitLabGroupDTO>?,
 ) {
   data class CurrentUser(val namespace: GitLabNamespaceDTO)
 }
 
-@SinceGitLab("13.1")
-suspend fun GitLabApi.GraphQL.createMergeRequest(
-  project: GitLabProjectCoordinates,
-  sourceBranch: String,
-  targetBranch: String,
-  title: String,
-  description: String?,
-): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
-  val parameters = mapOf(
-    "projectId" to project.projectPath.fullPath(),
-    "sourceBranch" to sourceBranch,
-    "targetBranch" to targetBranch,
-    "title" to title,
-    "description" to description
-  )
-
-  val request = gitLabQuery(GitLabGQLQuery.MERGE_REQUEST_CREATE, parameters)
-  return withErrorStats(GitLabGQLQuery.MERGE_REQUEST_CREATE) {
-    loadResponse<GitLabCreateMergeRequestResult>(request, "mergeRequestCreate")
-  }
-}
-
-private class LabelConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabLabelDTO>)
-  : GraphQLConnectionDTO<GitLabLabelDTO>(pageInfo, nodes)
+private class LabelConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabLabelGQLDTO>)
+  : GraphQLConnectionDTO<GitLabLabelGQLDTO>(pageInfo, nodes)
 
 private class WorkItemConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabWorkItemDTO>)
   : GraphQLConnectionDTO<GitLabWorkItemDTO>(pageInfo, nodes)
-
-private class GitLabCreateMergeRequestResult(
-  mergeRequest: GitLabMergeRequestDTO,
-  errors: List<String>?,
-  override val value: GitLabMergeRequestDTO = mergeRequest,
-) : GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>(errors)

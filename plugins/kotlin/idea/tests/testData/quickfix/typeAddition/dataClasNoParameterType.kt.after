@@ -1,5 +1,7 @@
 // ISSUE: KTIJ-23069
 // "Add type 'Int' to parameter 'one'" "true"
+// K2_ERROR: An explicit type is required on a value parameter.
+// K2_ERROR: An explicit type is required on a value parameter.
 
 data class dataClass(val on<caret>e: Int = 1)
 

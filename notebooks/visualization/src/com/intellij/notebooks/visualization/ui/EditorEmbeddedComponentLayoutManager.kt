@@ -1,6 +1,6 @@
 package com.intellij.notebooks.visualization.ui
 
-import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
+import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeNotifier
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.ex.EditorEx
@@ -18,7 +18,6 @@ internal class EditorEmbeddedComponentLayoutManager(private val editor: EditorEx
   private val constraints: MutableList<Pair<JComponent, Constraint>> = mutableListOf()
   private val myEditorScrollPane: JScrollPane
     get() = editor.scrollPane
-
 
   override fun dispose() {
     constraints.clear()
@@ -125,7 +124,7 @@ internal class EditorEmbeddedComponentLayoutManager(private val editor: EditorEx
       // [com.intellij.openapi.editor.impl.FoldingModelImpl.onCustomFoldRegionPropertiesChange] fires listeners
       // before make model consistent.
       // Here we have to call it once again to get correct bounds.
-      JupyterBoundsChangeHandler.get(customFoldRegion.editor).boundsChanged()
+      JupyterBoundsChangeNotifier.get(customFoldRegion.editor).boundsChanged()
     }
 
     override val order: Int

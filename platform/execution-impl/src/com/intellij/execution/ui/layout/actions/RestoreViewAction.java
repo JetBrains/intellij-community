@@ -6,6 +6,7 @@ import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareToggleAction;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.custom.options.ContentLayoutStateSettings;
 import org.jetbrains.annotations.ApiStatus;
@@ -47,7 +48,7 @@ public final class RestoreViewAction extends DumbAwareToggleAction implements Vi
   public void update(final @NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setText(myLayoutSettings.getDisplayName(), false);
-    e.getPresentation().setEnabled(myLayoutSettings.isEnabled());
+    e.getPresentation().setEnabled(myLayoutSettings.isEnabled() && !Disposer.isDisposed(myContent));
   }
 
   @Override

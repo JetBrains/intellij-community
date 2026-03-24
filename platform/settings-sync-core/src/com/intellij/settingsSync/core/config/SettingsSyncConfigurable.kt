@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -90,9 +91,11 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -107,6 +110,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.border.Border
+import kotlin.time.Duration.Companion.seconds
 
 internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineScope) : BoundConfigurable(message("title.settings.sync")),
                                                                                       SettingsSyncEnabler.Listener,
@@ -427,6 +431,11 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(
             SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_AND_REMOVED_DATA_FROM_SERVER)
         }
+        // Don't set syncEnabled = false here - the bridge will do it via stopSyncingAndRollback
+        // when processing the DeleteServerData event
+        disableSyncOption.set(DisableSyncType.DISABLE)
+        syncStatusChanged()
+        return
       }
       DisableSyncType.DISABLE -> {
         SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_ONLY)
@@ -536,19 +545,25 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         updateRemoveDataState(RemoteDataRemovalState.IN_PROGRESS)
         val project: Project? = ProjectManager.getInstanceIfCreated()?.openProjects?.firstOrNull()
         val result = try {
-          withBackgroundProgress(
-            currentOrDefaultProject(project),
-            message("disable.remove.data.background.progress",
-                    userAccount.toString()),
-            false,
-          ) {
-            if (shouldStopSyncing) {
-              sendRemoveRemoteDataEvent()
-            } else {
-              SettingsSyncBridge.removeRemoteData(userAccount.userData)
+          withTimeout(60.seconds) {
+            withBackgroundProgress(
+              currentOrDefaultProject(project),
+              message("disable.remove.data.background.progress",
+                      userAccount.toString()),
+              false,
+            ) {
+              if (shouldStopSyncing) {
+                sendRemoveRemoteDataEvent()
+              } else {
+                SettingsSyncBridge.removeRemoteData(userAccount.userData)
+              }
             }
           }
+        } catch (_: TimeoutCancellationException) {
+          LOG.warn("Remote data removal timed out after 60 seconds")
+          DeleteServerDataResult.Error("Remote data removal timed out after 60 seconds")
         } catch (ex : Exception) {
+          LOG.warn("Exception during remote data removal", ex)
           DeleteServerDataResult.Error(ex.toString())
         }
         when (result) {
@@ -586,13 +601,18 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   }
 
   private suspend fun sendRemoveRemoteDataEvent(): DeleteServerDataResult {
+    LOG.info("sendRemoveRemoteDataEvent: firing DeleteServerData event")
     val result = suspendCancellableCoroutine { continuation ->
+      LOG.info("sendRemoveRemoteDataEvent: creating suspendCancellableCoroutine")
       SettingsSyncEvents.getInstance().fireSettingsChanged(
         SyncSettingsEvent.DeleteServerData { deleteResult ->
+          LOG.info("sendRemoveRemoteDataEvent: callback invoked with result=$deleteResult")
           continuation.resume(deleteResult) { _, _, _ -> }
         }
       )
+      LOG.info("sendRemoveRemoteDataEvent: event fired, waiting for callback")
     }
+    LOG.info("sendRemoveRemoteDataEvent: returning result=$result")
     return result
   }
 
@@ -809,7 +829,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         }
       }
       else if (currentStatus is SettingsSyncStatusTracker.SyncStatus.Error) {
-        cellUserComboBox.comment?.text = message("sync.status.failed", currentStatus.errorMessage)
+        cellUserComboBox.comment?.text = message("sync.status.failed", StringUtil.escapeXmlEntities(currentStatus.errorMessage))
       }
     }
     else {

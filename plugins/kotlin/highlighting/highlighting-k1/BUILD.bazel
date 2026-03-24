@@ -58,6 +58,51 @@ jvm_library(
     "//java/java-impl:impl",
     "//java/openapi:java",
     "@lib//:kotlinc-analysis-api",
+    "//plugins/kotlin/base/fe10/project-structure",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-highlighting-k1_test_lib",
+  module_name = "kotlin.highlighting.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-highlighting-k1",
+  runtime_deps = [
+    ":kotlin-highlighting-k1",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//java/java-analysis-impl:analysis-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/base/statistics:statistics_test_lib",
+    "//plugins/kotlin/code-insight/utils:utils_test_lib",
+    "//plugins/kotlin/code-insight/line-markers-shared:kotlin-code-insight-line-markers-shared_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//java/openapi:java_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.highlighting.k1` end
+
+### auto-generated section `iml kotlin.highlighting.k1` start
+exports_files([
+  "kotlin.highlighting.k1.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.highlighting.k1` end

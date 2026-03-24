@@ -22,6 +22,9 @@ import org.jetbrains.intellij.build.impl.PluginLayout
  */
 val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.platform.images",
+  "intellij.moduleSet.plugin.grid.core",
+  "intellij.moduleSet.plugin.recentFiles",
+  "intellij.moduleSet.plugin.vcs.frontend",
   "intellij.dev"
 )
 

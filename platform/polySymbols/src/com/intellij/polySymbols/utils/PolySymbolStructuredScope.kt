@@ -234,8 +234,6 @@ abstract class PolySymbolStructuredScope<T : PsiElement, R : PsiElement>(protect
 
     override fun createPointer(): Pointer<out PolySymbolScope> =
       throw IllegalStateException("PolySymbolPsiScopeImpl cannot be pointed to. It should be wrapped with PolySymbolPsiScopeWithPointer.")
-
-    override fun getModificationCount(): Long = 0
   }
 
 }

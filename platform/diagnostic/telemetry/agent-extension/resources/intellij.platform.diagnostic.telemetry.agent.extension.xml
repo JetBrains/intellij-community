@@ -1,3 +1,9 @@
 <idea-plugin package="com.intellij.platform.diagnostic.telemetry.agent.extension">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+  </dependencies>
+  <!-- endregion -->
   <!-- Platform module intellij.diagnostic.telemetry.agent.extension -->
 </idea-plugin>

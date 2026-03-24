@@ -1,0 +1,37 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.hash4j"/>
+    <module name="intellij.libraries.jediterm.core"/>
+    <module name="intellij.libraries.jediterm.ui"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.miglayout.swing"/>
+    <module name="intellij.libraries.pty4j"/>
+    <module name="intellij.libraries.rd.core"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core.plugins"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectFrame"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

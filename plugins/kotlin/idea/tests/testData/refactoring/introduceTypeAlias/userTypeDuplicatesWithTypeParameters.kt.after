@@ -12,4 +12,6 @@ fun foo() {
     val t3: S<String>
     val t4: A<Int, A<String, Boolean>>
     val t5: A<(Int) -> Int, A<() -> Int, Boolean>>
+    val t6: S<Missing>
+    val t7: A<Missing, A<AnotherMissing, Boolean>>
 }

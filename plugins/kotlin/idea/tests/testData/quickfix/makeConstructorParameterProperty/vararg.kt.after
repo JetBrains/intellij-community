@@ -1,4 +1,5 @@
 // "Make constructor parameter a property" "true"
+// K2_ERROR: Unresolved reference 'dismissibleViewTypes'.
 
 class SomeClass(private vararg val dismissibleViewTypes: Int) {
     fun someFun() {

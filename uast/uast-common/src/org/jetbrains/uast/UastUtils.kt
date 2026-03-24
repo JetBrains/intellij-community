@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmMultifileClass
 @file:JvmName("UastUtils")
-
 package org.jetbrains.uast
 
 import com.intellij.openapi.util.TextRange
@@ -18,7 +17,6 @@ import com.intellij.util.SmartList
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.visitor.AbstractUastVisitor
-import java.io.File
 import java.util.stream.Stream
 
 inline fun <reified T : UElement> UElement.getParentOfType(strict: Boolean = true): T? = getParentOfType(T::class.java, strict)
@@ -87,7 +85,7 @@ fun <T : UElement> UElement.getParentOfType(
 fun UElement?.getUCallExpression(searchLimit: Int = Int.MAX_VALUE): UCallExpression? {
   if (this == null) return null
   var u: UElement? = this
-  for (i in 1..searchLimit) {
+  for (@Suppress("unused") i in 1..searchLimit) {
     if (u == null) break
     if (u is UCallExpression) return u
 
@@ -115,7 +113,7 @@ fun <T : UElement> PsiElement?.findContaining(clazz: Class<T>): T? {
   return null
 }
 
-fun <T : UElement> PsiElement?.findAnyContaining(vararg types: Class<out T>): T? = findAnyContaining(Int.Companion.MAX_VALUE, *types)
+fun <T : UElement> PsiElement?.findAnyContaining(vararg types: Class<out T>): T? = findAnyContaining(Int.MAX_VALUE, *types)
 
 fun <T : UElement> PsiElement?.findAnyContaining(depthLimit: Int, vararg types: Class<out T>): T? {
   var element = this
@@ -180,11 +178,10 @@ fun skipParenthesizedExprUp(elem: UElement?): UElement? {
   return parent
 }
 
-
-/**
- * Get a physical [File] for this file, or null if there is no such file on disk.
- */
-fun UFile.getIoFile(): File? = sourcePsi.virtualFile?.let { VfsUtilCore.virtualToIoFile(it) }
+@Deprecated("avoid j.i.File use")
+@ApiStatus.ScheduledForRemoval
+@Suppress("IO_FILE_USAGE")
+fun UFile.getIoFile(): java.io.File? = sourcePsi.virtualFile?.let { VfsUtilCore.virtualToIoFile(it) }
 
 @Deprecated("use UastFacade", ReplaceWith("UastFacade"))
 @ApiStatus.ScheduledForRemoval
@@ -198,22 +195,9 @@ tailrec fun UElement.getUastContext(): UastContext {
   return (uastParent ?: error("PsiElement should exist at least for UFile")).getUastContext()
 }
 
-@Deprecated("could unexpectedly throw exception", ReplaceWith("UastFacade.findPlugin"))
-@ApiStatus.ScheduledForRemoval
-tailrec fun UElement.getLanguagePlugin(): UastLanguagePlugin {
-  val psi = this.sourcePsi
-  if (psi != null) {
-    return UastFacade.findPlugin(psi) ?: error("Language plugin was not found for $this (${this.javaClass.name})")
-  }
-
-  return (uastParent ?: error("PsiElement should exist at least for UFile")).getLanguagePlugin()
-}
-
-fun Collection<UElement?>.toPsiElements(): List<PsiElement> = mapNotNull { it?.sourcePsi }
-
 /**
  * A helper function for getting parents for given [PsiElement] that could be considered as identifier.
- * Useful for working with gutter according to recommendations in [com.intellij.codeInsight.daemon.LineMarkerProvider].
+ * Useful for working with gutter according to recommendations in `LineMarkerProvider`.
  *
  * @see [getUParentForAnnotationIdentifier] for working with annotations
  */

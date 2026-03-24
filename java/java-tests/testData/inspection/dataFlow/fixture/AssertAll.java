@@ -12,7 +12,7 @@ public class AssertAll {
     Assertions.assertAll(
       () -> Assertions.assertNotNull(<warning descr="Argument 's1' might be null but passed to non-annotated parameter">s1</warning>),
       () -> Assertions.assertTrue(s1.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>().isEmpty()),
-      <warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>
+      <warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>
     );
     Assertions.assertNotNull(<warning descr="Argument 's2' might be null but passed to non-annotated parameter">s2</warning>);
     Assertions.assertAll(

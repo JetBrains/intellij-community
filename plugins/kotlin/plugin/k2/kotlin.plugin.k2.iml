@@ -36,6 +36,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.psi" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.scratch.definition" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.statistics" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.completion.api" scope="RUNTIME" />
@@ -121,7 +122,6 @@
     <orderEntry type="module" module-name="kotlin.base.injection" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding.gradle" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.kotlin.onboarding.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight.minimal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" />
     <orderEntry type="module" module-name="intellij.kotlin.formatter.minimal" />

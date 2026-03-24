@@ -7,8 +7,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 typealias CheckToml = Boolean
 typealias EnvExists = Boolean
@@ -40,12 +42,10 @@ sealed class CreateSdkInfo(private val sdkCreator: SdkCreator) :
     getSdkCreator(moduleName).createSdk()
 
   /**
-   * We want to preserve the initial order, but at the same time existing environment should have a higher priority by default
+   * We want to preserve the initial order, but at the same time we'd like to have a sort order depending on the type of CreateSdkInfo
    */
   override fun compareTo(other: CreateSdkInfo): Int {
-    val thisExists = if (this is ExistingEnv) 0 else 1
-    val otherExists = if (other is ExistingEnv) 0 else 1
-    return thisExists.compareTo(otherExists)
+    return sortOrder.compareTo(other.sortOrder)
   }
 
   class ExistingEnv internal constructor(
@@ -54,15 +54,38 @@ sealed class CreateSdkInfo(private val sdkCreator: SdkCreator) :
     sdkCreator: SdkCreator,
   ) : CreateSdkInfo(sdkCreator)
 
+  class WillInstallTool internal constructor(
+    val toolToInstall: String,
+    val pathPersister: (Path) -> Unit,
+    override val intentionName: @IntentionName String,
+  ) : CreateSdkInfo(
+    {
+      /**
+       * This specific CreateSdkInfo is only supposed to be used for proposing tool installation, it never should be used for SDK creation.
+       */
+      PyResult.localizedError(PySdkBundle.message("python.sdk.cannot.create.tool.should.be.installed"))
+    }
+  )
+
   class WillCreateEnv internal constructor(
     override val intentionName: String,
     sdkCreator: SdkCreator,
   ) : CreateSdkInfo(sdkCreator)
+
+  private val sortOrder: Int
+    get() = when (this) {
+      is ExistingEnv -> 0
+      is WillInstallTool -> 1
+      is WillCreateEnv -> 2
+    }
 }
 
 @ApiStatus.Internal
 sealed interface EnvCheckerResult {
   data class EnvFound(val pythonInfo: PythonInfo, val intentionName: @IntentionName String) : EnvCheckerResult
+  data class SuggestToolInstallation(
+    val toolToInstall: String, val pathPersister: (Path) -> Unit, val intentionName: @IntentionName String,
+  ) : EnvCheckerResult
   data class EnvNotFound(val intentionName: @IntentionName String) : EnvCheckerResult
   object CannotConfigure : EnvCheckerResult
 }
@@ -79,6 +102,7 @@ suspend fun prepareSdkCreator(
       sdkCreator(true)
     )
     is EnvCheckerResult.EnvNotFound -> CreateSdkInfo.WillCreateEnv(res.intentionName, sdkCreator(false))
+    is EnvCheckerResult.SuggestToolInstallation -> CreateSdkInfo.WillInstallTool(res.toolToInstall, res.pathPersister, res.intentionName)
     is EnvCheckerResult.CannotConfigure -> null
   }
 }

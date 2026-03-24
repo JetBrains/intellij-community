@@ -41,6 +41,18 @@ class TokenLoginInputPanelFactory(
     errorPresenter: ErrorStatusPresenter<Throwable>?,
     footer: Panel.() -> Unit = { }
   ): DialogPanel {
+    return createIn(cs, serverFieldDisabled, null, tokenNote, errorPresenter, footer)
+  }
+
+  @JvmOverloads
+  fun createIn(
+    cs: CoroutineScope,
+    serverFieldDisabled: Boolean,
+    serverNote: @NlsContexts.DetailedDescription String?,
+    tokenNote: @NlsContexts.DetailedDescription String?,
+    errorPresenter: ErrorStatusPresenter<Throwable>?,
+    footer: Panel.() -> Unit = { }
+  ): DialogPanel {
 
     val serverTextField = ExtendableTextField()
     val progressExtension = ExtendableTextComponent.Extension
@@ -65,6 +77,7 @@ class TokenLoginInputPanelFactory(
           .bindText(model::serverUri)
           .align(AlignX.FILL)
           .resizableColumn()
+          .comment(serverNote, maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
           .enabledIf(progressModel.toComponentPredicate(!serverFieldDisabled))
           .validationOnApply {
             when {

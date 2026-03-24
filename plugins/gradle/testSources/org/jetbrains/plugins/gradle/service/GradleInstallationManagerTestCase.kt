@@ -29,7 +29,7 @@ abstract class GradleInstallationManagerTestCase : GradleImportingTestCase() {
       }
     }
 
-    val actualVersion = settings.resolveGradleVersion()
+    val actualVersion = GradleInstallationManager.guessGradleVersion(settings) ?: GradleVersion.current()
     assertEquals(expectedVersion, actualVersion)
   }
 

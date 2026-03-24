@@ -26,6 +26,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExpandableTextField
+import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
@@ -344,6 +345,14 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     val result = cell(ExpandableTextField(parser, joiner))
     result.columns(COLUMNS_SHORT)
     return result
+  }
+
+  override fun extendableTextField(): Cell<ExtendableTextField> {
+    return cell(ExtendableTextField())
+      .columns(COLUMNS_SHORT)
+      .applyToComponent {
+        isOpaque = false
+      }
   }
 
   override fun intTextField(range: IntRange?, keyboardStep: Int?): CellImpl<JBTextField> {

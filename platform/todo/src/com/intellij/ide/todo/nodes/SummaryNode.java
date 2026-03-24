@@ -112,7 +112,7 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
   public int getTodoItemCount(final ToDoSummary val) {
     int count = 0;
     for(final Iterator<PsiFile> i=myBuilder.getAllFiles();i.hasNext();){
-      count += ReadAction.compute(() -> getTreeStructure().getTodoItemCount(i.next()));
+      count += ReadAction.computeBlocking(() -> getTreeStructure().getTodoItemCount(i.next()));
       }
     return count;
   }

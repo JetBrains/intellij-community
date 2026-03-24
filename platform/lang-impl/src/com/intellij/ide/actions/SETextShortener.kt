@@ -52,4 +52,52 @@ object SETextShortener {
     val adjustedWidth = max(adjustedText.length * maxWidth / fullWidth - 1,left.length + 3)
     return StringUtil.trimMiddle(adjustedText, adjustedWidth)
   }
+
+  /**
+   * Shortens the given text to fit within the specified maximum width.
+   *
+   * @param originalText a text to shorten
+   * @param maxWidth the maximum allowed width in pixels or other metrics
+   * @param getTextWidth a function which calculates text width in pixels or other metrics
+   * @return the shortened text
+   */
+  fun getShortenText(originalText: @NlsSafe String, maxWidth: Int, getTextWidth: (String) -> Int): @NlsSafe String {
+    if (maxWidth <= 0) return originalText
+
+    val length = originalText.length
+    if (length == 0) return originalText
+
+    val textWidth = getTextWidth(originalText)
+    if (textWidth == 0 || textWidth <= maxWidth) return originalText
+
+    // Approximate new length
+    var newLength = maxWidth * length / textWidth
+    if (newLength == 0) return originalText
+
+    var newText = originalText.substring(0, newLength)
+    var newWidth = getTextWidth(newText)
+
+    // If the text became shorter than max,
+    // then we add length until it becomes longer than max and return the prefix of the new length - 1
+    while (newWidth < maxWidth) {
+      newLength += 1
+      newWidth = getTextWidth(originalText.substring(0, newLength))
+
+      if (newWidth >= maxWidth) {
+        return originalText.substring(0, newLength - 1)
+      }
+    }
+
+    // If the text became longer than max,
+    // then we subtract length until it becomes shorter than max and return the prefix of the new length
+    while (newWidth > maxWidth) {
+      newLength -= 1
+      newText = originalText.substring(0, newLength)
+      newWidth = getTextWidth(newText)
+
+      if (newWidth <= maxWidth) return newText
+    }
+
+    return newText
+  }
 }

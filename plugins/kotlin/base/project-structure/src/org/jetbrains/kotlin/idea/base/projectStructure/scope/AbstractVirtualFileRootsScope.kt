@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.base.projectStructure.scope
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.impl.ProjectFileIndexImpl
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -27,7 +27,7 @@ abstract class AbstractVirtualFileRootsScope(project: Project) : GlobalSearchSco
     @Volatile
     private var vfsModificationCount: Long = 0
 
-    protected val myProjectFileIndex: ProjectFileIndexImpl = ProjectRootManager.getInstance(project).fileIndex as ProjectFileIndexImpl
+    protected val myProjectFileIndex: ProjectFileIndex = ProjectRootManager.getInstance(project).fileIndex
 
     /**
      * A map from [VirtualFile] roots to an integer which represents the position of the root in the classpath.

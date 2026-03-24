@@ -18,8 +18,12 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvid
 import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.evaluateRuntimeKaType
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.SmartCompletionReplaceExistingArgumentHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WrapSingleStringTemplateEntryWithBracesInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.addSmartCompletionTailInsertHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.keepOldArgumentListOnTab
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.FunctionCallLookupObject
 import org.jetbrains.kotlin.idea.completion.implCommon.handlers.CompletionCharInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStringTemplateBracesInsertHandler
 import org.jetbrains.kotlin.idea.completion.isAtFunctionLiteralStart
@@ -78,6 +82,7 @@ internal class K2CompletionSectionContext<out P : KotlinRawPositionContext>(
         // For extension properties, this will not be relevant and we can use anonymous keys.
         private val RUNTIME_TYPE_KEY: Key<Optional<KaType?>> = Key.create("RUNTIME_TYPE_KEY")
         private val EXTENSION_CHECKER_KEY: Key<Optional<KaCompletionExtensionCandidateChecker?>> = Key.create("EXTENSION_CHECKER_KEY")
+        private val RUNTIME_EXTENSION_CHECKER_KEY: Key<Optional<KaCompletionExtensionCandidateChecker?>> = Key.create("RUNTIME_EXTENSION_CHECKER_KEY")
     }
 
     val completionContext: K2CompletionContext<P> = commonData.completionContext
@@ -104,7 +109,25 @@ internal class K2CompletionSectionContext<out P : KotlinRawPositionContext>(
         receiver?.evaluateRuntimeKaType()
     }
 
+    /**
+     * A checker that determines which extensions are applicable
+     * at the current completion position based on the static type of the receiver.
+     */
     val extensionChecker: KaCompletionExtensionCandidateChecker? by LazyCompletionSessionProperty(EXTENSION_CHECKER_KEY) {
+        val sectionContext = contextOf<K2CompletionSectionContext<P>>()
+
+        createExtensionChecker(sectionContext.positionContext, sectionContext.parameters.originalFile, null)
+    }
+
+    /**
+     * A checker that determines which extensions are applicable
+     * at the current completion position based on the runtime type of the receiver.
+     *
+     * [runtimeTypeExtensionChecker] is kept as another property to be able to compute
+     * runtime type completions separately, ensuring that the potentially slow runtime type evaluation
+     * does not block the display of other completion suggestions.
+     */
+    val runtimeTypeExtensionChecker: KaCompletionExtensionCandidateChecker? by LazyCompletionSessionProperty(RUNTIME_EXTENSION_CHECKER_KEY) {
         val sectionContext = contextOf<K2CompletionSectionContext<P>>()
 
         createExtensionChecker(sectionContext.positionContext, sectionContext.parameters.originalFile, sectionContext.runtimeType)
@@ -286,13 +309,30 @@ internal abstract class K2CompletionContributor<P : KotlinRawPositionContext>(
             element.suppressItemSelectionByCharsOnTyping = true
         }
 
+        val lookupObject = element.`object`
+        if (lookupObject is FunctionCallLookupObject && lookupObject.inputValueArgumentsAreRequired) {
+            // This is required to not replace arguments already passed to existing function calls,
+            // if the replacing function also requires value arguments
+            element.keepOldArgumentListOnTab()
+        }
+
         val bracesInsertHandler = when (context.parameters.type) {
             KotlinFirCompletionParameters.CorrectionType.BRACES_FOR_STRING_TEMPLATE -> InsertStringTemplateBracesInsertHandler
             else -> WrapSingleStringTemplateEntryWithBracesInsertHandler
         }
 
         var element = element
+
         if (context.completionContext.parameters.completionType == CompletionType.SMART) {
+            if (element.getUserData(KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY) == null) {
+                // In smart completion we want to replace entire arguments (e.g., including their parentheses)
+                // if replacement completion is used
+                element = LookupElementDecorator.withDelegateInsertHandler(
+                    element,
+                    SmartCompletionReplaceExistingArgumentHandler()
+                )
+            }
+
             element = element.addSmartCompletionTailInsertHandler()
         }
 

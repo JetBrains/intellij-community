@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orde
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
-import org.junit.AssumptionViolatedException
 import org.junit.Test
 
 @TestMetadata("multiplatform/core/features/misc")
@@ -45,9 +44,6 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
 
     @Test
     fun testDependencyOnStdlibFromPlatformSourceSets() {
-        if (flakyKgpImportKT82895()) {
-            throw AssumptionViolatedException("KT-82895")
-        }
         doTest {
             hideStdlib = false
             onlyCheckers(OrderEntriesChecker)
@@ -63,18 +59,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
     }
 
     @Test
-    fun testMppLibAndHmppConsumer() {
-        doTest {
-            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
-
-            publish("lib")
-            excludeDependencies(""".*consumer.*""")
-            excludeModules(""".*lib.*""")
-        }
-    }
-
-    @Test
-    fun testHmppLibAndMppConsumer() {
+    fun testKmpLibraryAndConsumer() {
         doTest {
             onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
 
@@ -196,9 +181,6 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
 
     @Test
     fun testNativeUnsupportedPlatform() {
-        if (flakyKgpImportKT82895()) {
-            throw AssumptionViolatedException("KT-82895")
-        }
         doTest {
             onlyCheckers(OrderEntriesChecker)
 

@@ -33,6 +33,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
@@ -471,7 +472,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   private fun doOpenTextEditor(descriptor: FileEditorNavigatable): Editor {
     val file = descriptor.file
     virtualFileToEditor.get(file)?.let { return it }
-    val document = FileDocumentManager.getInstance().getDocument(file)!!
+    val document = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation { FileDocumentManager.getInstance().getDocument(file)!! }
     val editorFactory = EditorFactory.getInstance()
     val editor = editorFactory.createEditor(document, project)
     try {

@@ -6,9 +6,25 @@ import com.intellij.workspaceModel.codegen.engine.GenerationProblem
 import com.intellij.workspaceModel.codegen.engine.ProblemLocation
 import com.intellij.workspaceModel.codegen.impl.CodeGeneratorVersionCalculator
 import com.intellij.workspaceModel.codegen.impl.engine.ProblemReporter
-import com.intellij.workspaceModel.codegen.impl.writer.*
-import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
-import com.intellij.workspaceModel.codegen.impl.writer.fields.*
+import com.intellij.workspaceModel.codegen.impl.writer.ConnectionId
+import com.intellij.workspaceModel.codegen.impl.writer.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.codegen.impl.writer.GeneratedCodeImplVersion
+import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityBase
+import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityInternalApi
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.additionalAnnotations
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.allFields
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.allRefsFields
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.defaultJavaBuilderName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.getRefType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.implPackage
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaImplName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.refsFields
+import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsEntityFieldCode
+import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
+import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionId
+import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionIdCode
+import com.intellij.workspaceModel.codegen.impl.writer.lines
 
 fun ObjClass<*>.implWsEntityCode(reporter: ProblemReporter): String {
   checkReferences(this@implWsEntityCode, reporter)
@@ -54,7 +70,7 @@ private val ObjClass<*>.implWsEntityAnnotations: String
   get() {
     return lines {
       if (additionalAnnotations.isNotEmpty()) {
-        line(additionalAnnotations)
+        list(additionalAnnotations)
       }
       line("@${GeneratedCodeApiVersion}(${CodeGeneratorVersionCalculator.apiVersion})")
       lineNoNl("@${GeneratedCodeImplVersion}(${CodeGeneratorVersionCalculator.implementationMajorVersion})")

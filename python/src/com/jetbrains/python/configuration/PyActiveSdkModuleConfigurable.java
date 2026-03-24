@@ -16,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 // Inherit in the module you are going to use it
 @ApiStatus.Internal
 public abstract class PyActiveSdkModuleConfigurable extends ModuleAwareProjectConfigurable<UnnamedConfigurable> {
+  public static final String CONFIGURABLE_ID = "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable";
+
   private final Project myProject;
 
   protected PyActiveSdkModuleConfigurable(Project project) {
@@ -31,7 +33,7 @@ public abstract class PyActiveSdkModuleConfigurable extends ModuleAwareProjectCo
     // All python modules do have it.
     // But some IDEs might not want to see Python SDK configs for their modules even when they have `baseDir`.
     // Those might disable the registry key.
-    return PyModuleService.getInstance().isPythonModule(module) ||
+    return PyModuleService.getInstance(myProject).isPythonModule(module) ||
            (Registry.is("python.show.modules.with.base.dir") && BasePySdkExtKt.getBaseDir(module) != null);
   }
 

@@ -32,13 +32,13 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="library" name="kaml" level="project" />
@@ -64,12 +64,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.core" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="library" scope="TEST" name="byte-buddy" level="project" />
-    <orderEntry type="library" scope="TEST" name="opentest4j" level="project" />
-    <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
   </component>
 </module>

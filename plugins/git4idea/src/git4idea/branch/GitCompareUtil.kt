@@ -11,7 +11,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.regex.Pattern
 
-fun IndexDataGetter.match(root: VirtualFile,
+internal fun IndexDataGetter.match(root: VirtualFile,
                           sourceBranchCommits: IntSet,
                           targetBranchCommits: IntSet,
                           reliable: Boolean = true): IntSet {

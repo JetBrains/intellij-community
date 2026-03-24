@@ -3,6 +3,7 @@ package com.intellij.vcs.git.actions.branch
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -13,11 +14,13 @@ import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.rpc.GitOperationsApi
 import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
 import git4idea.GitStandardLocalBranch
+import git4idea.GitStandardRemoteBranch
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class GitCheckoutWithUpdateAction : GitBranchActionToBeWrapped, DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+class GitCheckoutWithUpdateAction : GitBranchActionToBeWrapped, DumbAwareAction(),
+                                    ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -27,18 +30,27 @@ class GitCheckoutWithUpdateAction : GitBranchActionToBeWrapped, DumbAwareAction(
         isEnabledAndVisible = false
         return
       }
+
+      val localBranch = data.branch
+      val remoteBranch = data.remoteBranches.firstOrNull()
       isEnabledAndVisible = true
-      isEnabled = data.hasTrackingInfos
-      if (!data.hasTrackingInfos) {
-        description = GitBundle.message("branches.tracking.branch.doesn.t.configured.for.s",
-                                        "'${data.branch.name}'")
+      isEnabled = remoteBranch != null
+      val descriptionText = if (remoteBranch == null) {
+        GitBundle.message("branches.tracking.branch.doesn.t.configured.for.s",
+                          "'${data.branch.name}'")
       }
+      else {
+        GitBundle.message("action.Git.Checkout.Update.description.with.branch.names", "'${localBranch.name}'", "'${remoteBranch.nameForLocalOperations}'")
+      }
+
+      description = descriptionText
+      putClientProperty(ActionUtil.TOOLTIP_TEXT, description)
     }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val data = ActionData.create(e) ?: return
-    if (!data.hasTrackingInfos) return
+    if (data.remoteBranches.isEmpty()) return
     val repositoryIds = data.repositories.map { it.repositoryId }
 
     GitOperationsApi.launchRequest(data.project) {
@@ -50,7 +62,7 @@ class GitCheckoutWithUpdateAction : GitBranchActionToBeWrapped, DumbAwareAction(
     val project: Project,
     val branch: GitStandardLocalBranch,
     val repositories: List<GitRepositoryModel>,
-    val hasTrackingInfos: Boolean,
+    val remoteBranches: List<GitStandardRemoteBranch>,
   ) {
     companion object {
       fun create(e: AnActionEvent): ActionData? {
@@ -63,7 +75,7 @@ class GitCheckoutWithUpdateAction : GitBranchActionToBeWrapped, DumbAwareAction(
         return when {
           !hasRemotes(repositories) -> null
           isAlreadyCheckedOut(repositories, branch) -> null
-          else -> ActionData(project, branch, repositories, hasTrackingInfos = hasTrackingInfos(repositories, branch))
+          else -> ActionData(project, branch, repositories, getRemoteBranches(repositories, branch))
         }
       }
 
@@ -79,8 +91,8 @@ class GitCheckoutWithUpdateAction : GitBranchActionToBeWrapped, DumbAwareAction(
         return repositories.all { it.state.isCurrentRef(branch) }
       }
 
-      private fun hasTrackingInfos(repositories: List<GitRepositoryModel>, branch: GitStandardLocalBranch): Boolean =
-        repositories.any { it.state.getTrackingInfo(branch) != null }
+      private fun getRemoteBranches(repositories: List<GitRepositoryModel>, branch: GitStandardLocalBranch): List<GitStandardRemoteBranch> =
+        repositories.mapNotNull { it.state.getTrackingInfo(branch) }
     }
   }
 }

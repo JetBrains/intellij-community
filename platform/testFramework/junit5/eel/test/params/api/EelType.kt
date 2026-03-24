@@ -4,10 +4,5 @@ package com.intellij.platform.testFramework.junit5.eel.params.api
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-sealed interface EelType
-sealed interface RemoteEelType
-
-class Wsl : EelType, RemoteEelType
-class Docker : EelType, RemoteEelType
-data object Local : EelType
+enum class EelType { Wsl, Docker, Local }
 

@@ -92,7 +92,7 @@ private suspend fun executeRewordOperation(
       inMemoryOperation = {
         val objectRepo = GitObjectRepository(repository)
         val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.debug.notify.errors")
-        GitInMemoryRewordOperation(objectRepo, commit, newMessage).execute(showFailureNotification)
+        GitInMemoryRewordOperation(objectRepo, commit.id, newMessage).execute(showFailureNotification)
       },
       fallbackOperation = {
         coroutineToIndicator {

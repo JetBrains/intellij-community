@@ -161,7 +161,7 @@ describe('apply_patch handler (edge cases)', () => {
     const patch = buildPatch([
       '*** Begin Patch',
       '*** Update File: sample.txt',
-      '@@',
+      '@@ def sample()',
       '*alpha',
       '*** End Patch'
     ])
@@ -184,6 +184,22 @@ describe('apply_patch handler (edge cases)', () => {
     await rejects(
       () => handleApplyPatchTool({patch}, projectPath, callUpstreamTool),
       /Empty hunk in Update File/
+    )
+  })
+
+  it('errors when strict @@ pair hunk misses second delimiter', async () => {
+    const {callUpstreamTool} = createMockToolCaller()
+    const patch = buildPatch([
+      '*** Begin Patch',
+      '*** Update File: sample.txt',
+      '@@',
+      'alpha',
+      '*** End Patch'
+    ])
+
+    await rejects(
+      () => handleApplyPatchTool({patch}, projectPath, callUpstreamTool),
+      /Strict @@ pair hunk requires second @@ delimiter/
     )
   })
 
@@ -302,7 +318,7 @@ describe('apply_patch handler (edge cases)', () => {
     strictEqual(result, 'Applied patch to 1 file.')
     strictEqual(calls.some((call) => call.name === 'search_in_files_by_regex'), true)
     const writeCall = calls.find((call) => call.name === 'create_new_file')
-    strictEqual(writeCall.args.text, 'gamma\nbeta\n')
+    strictEqual(writeCall.args.text, 'gamma\nbeta')
   })
 
   it('requests full content to avoid truncation on update', async () => {

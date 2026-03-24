@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchSurrounder;
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
@@ -28,9 +29,13 @@ public class TryStatementPostfixTemplate extends PostfixTemplate implements Dumb
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+    if (JavaPostfixTemplatesUtils.isInExpressionFile(context)) return false;
+
     PsiStatement statementParent = PsiTreeUtil.getNonStrictParentOfType(context, PsiStatement.class);
     if (statementParent == null ||
-        newOffset != statementParent.getTextRange().getEndOffset()) return false;
+        newOffset != statementParent.getTextRange().getEndOffset()) {
+      return false;
+    }
 
     if (statementParent instanceof PsiDeclarationStatement) return true;
 

@@ -53,7 +53,7 @@ import static com.intellij.patterns.StandardPatterns.or;
 public final class PyDocstringCompletionContributor extends CompletionContributor implements DumbAware {
   public PyDocstringCompletionContributor() {
     extend(CompletionType.BASIC,
-           or(psiElement().withParent(DocStringTagCompletionContributor.DOCSTRING_PATTERN), psiComment()),
+           or(psiElement().withParent(DocStringTagCompletionContributor.Helper.DOCSTRING_PATTERN), psiComment()),
            new IdentifierCompletionProvider());
   }
 

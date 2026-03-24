@@ -11,3 +11,6 @@ Special handling applies to the directories below. If a file you touch lives und
   - Bazel: do not run Bazel build and tests here.
 - **AI Assistant activation** (`plugins/llm/activation/`):
   - Activation: follow `plugins/llm/activation/.ai/guidelines.md` before edits or reviews.
+- **Toolbox** (`toolbox/`):
+  - Tests: never use `./tests.cmd`; see `toolbox/.ai/index.md` for Gradle/Bazel test commands.
+  - Build: use `./bazel.cmd build //toolbox/...` instead of `./bazel-build-all.cmd`.

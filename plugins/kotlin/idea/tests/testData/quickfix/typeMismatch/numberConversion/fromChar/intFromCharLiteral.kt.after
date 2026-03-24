@@ -1,5 +1,6 @@
 // "Convert expression to 'Int'" "true"
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'Char', but 'Int' was expected.
 fun int(x: Int) {}
 
 fun test(c: Char) {

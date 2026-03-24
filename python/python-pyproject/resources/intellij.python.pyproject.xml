@@ -9,9 +9,12 @@
 
   <resource-bundle>messages.PyProjectTomlBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey defaultValue="true" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model"
+    <!-- "ask" means "ask user"-->
+    <registryKey defaultValue="[off*|on|ask]" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model"
                  restartRequired="true"/>
-    <postStartupActivity implementation="com.intellij.python.pyproject.model.internal.platformBridge.PyProjectSyncActivity"/>
+    <notificationGroup id="PyProject.toml" displayType="STICKY_BALLOON" isLogByDefault="true"
+                       bundle="messages.PyProjectTomlBundle" key="pyproject.notification.title"/>
+    <backgroundPostStartupActivity implementation="com.intellij.python.pyproject.model.internal.platformBridge.PyProjectSyncActivity"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.python.pyproject.statistics.PythonTomlStatsUsagesCollector"/>
   </extensions>

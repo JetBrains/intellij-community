@@ -230,6 +230,7 @@ internal fun BuildFile.generateProvidedMavenLib(
     }
   }
   else {
+    load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
     target("kt_jvm_library") {
       option("name", targetName + PROVIDED_SUFFIX)
       option("exports", listOf(exportsLabel))

@@ -1,4 +1,5 @@
 // "Create class 'Foo'" "true"
+// K2_ERROR: Unresolved reference 'Foo'.
 
 fun test() {
     val a = <caret>Foo(2, "2") { p: Int -> p + 1 }

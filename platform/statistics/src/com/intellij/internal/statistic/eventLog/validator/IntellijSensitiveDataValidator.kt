@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroup
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRuleFactory
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.RecorderDataValidationRule
+import com.jetbrains.fus.reporting.api.RecorderDataValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
 import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
@@ -19,6 +19,10 @@ import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.jetbrains.fus.reporting.MessageBus
 import com.jetbrains.fus.reporting.MetadataStorage
+import com.jetbrains.fus.reporting.api.IEventContext
+import com.jetbrains.fus.reporting.api.IEventGroupRules
+import com.jetbrains.fus.reporting.api.IEventGroupsFilterRules
+import com.jetbrains.fus.reporting.api.IGroupValidators
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
@@ -232,6 +236,26 @@ private class BlindSensitiveDataValidator(
   override fun guaranteeCorrectEventId(context: IEventContext, groupRules: IEventGroupRules?): String = context.eventId
 
   override fun guaranteeCorrectEventData(context: IEventContext, groupRules: IEventGroupRules?): MutableMap<String, Any> {
+    @Suppress("UNCHECKED_CAST")
+    return context.eventData as MutableMap<String, Any>
+  }
+
+  override fun guaranteeRejectedValuesReplacedWithDefaultValuesInEventData(
+    eventData: MutableMap<String, Any>,
+    context: IEventContext,
+    groupRules: IEventGroupRules?,
+    groupVersion: String,
+  ): MutableMap<String, Any> {
+    @Suppress("UNCHECKED_CAST")
+    return context.eventData as MutableMap<String, Any>
+  }
+
+  override fun guaranteeRequiredFieldsInEventData(
+    eventData: MutableMap<String, Any>,
+    context: IEventContext,
+    groupRules: IEventGroupRules?,
+    groupVersion: String,
+  ): MutableMap<String, Any> {
     @Suppress("UNCHECKED_CAST")
     return context.eventData as MutableMap<String, Any>
   }

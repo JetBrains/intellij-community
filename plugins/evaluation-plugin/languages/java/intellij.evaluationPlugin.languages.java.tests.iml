@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/test">
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.maven" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.evaluationPlugin.languages" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.evaluationPlugin.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.smRunner" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.evaluationPlugin.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.evaluationPlugin.languages.java" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.evaluationPlugin.languages.java" />
+</module>

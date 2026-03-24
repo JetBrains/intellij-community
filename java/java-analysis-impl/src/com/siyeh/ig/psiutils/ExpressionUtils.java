@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -217,8 +217,7 @@ public final class ExpressionUtils {
     return isEvaluatedAtCompileTime(expression, new HashSet<>());
   }
 
-  private static boolean isEvaluatedAtCompileTime(@Nullable PsiExpression expression,
-                                                  @NotNull Set<PsiVariable> visited) {
+  private static boolean isEvaluatedAtCompileTime(@Nullable PsiExpression expression, @NotNull Set<PsiVariable> visited) {
     if (expression == null) return false;
     if (expression instanceof PsiLiteralExpression) {
       return true;
@@ -282,6 +281,10 @@ public final class ExpressionUtils {
 
   public static boolean isEmptyStringLiteral(@Nullable PsiExpression expression) {
     return PsiUtil.skipParenthesizedExprDown(expression) instanceof PsiLiteralExpression literal && "\"\"".equals(literal.getText());
+  }
+
+  public static boolean isStringLiteral(@Nullable PsiExpression expression) {
+    return PsiUtil.skipParenthesizedExprDown(expression) instanceof PsiLiteralExpression literal && literal.getValue() instanceof String;
   }
 
   @Contract("null -> false")
@@ -766,9 +769,19 @@ public final class ExpressionUtils {
   }
 
   public static boolean isStringConcatenation(PsiElement element) {
-    if (!(element instanceof PsiPolyadicExpression expression)) return false;
-    final PsiType type = expression.getType();
-    return type != null && type.equalsToText(JAVA_LANG_STRING);
+    return element instanceof PsiPolyadicExpression expression && hasStringType(expression);
+  }
+
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isNonConstantStringConcatenation(@Nullable PsiExpression expression) {
+    return PsiUtil.deparenthesizeExpression(expression) instanceof PsiPolyadicExpression polyadicExpression
+           && hasStringType(polyadicExpression)
+           && JavaTokenType.PLUS.equals(polyadicExpression.getOperationTokenType())
+           && !isEvaluatedAtCompileTime(polyadicExpression)
+           && ContainerUtil.exists(polyadicExpression.getOperands(),
+                                   o -> nonStructuralChildren(o).anyMatch(c -> c instanceof PsiReferenceExpression
+                                                                               || c instanceof PsiMethodCallExpression
+                                                                               || c instanceof PsiArrayAccessExpression));
   }
 
   /**
@@ -1224,6 +1237,7 @@ public final class ExpressionUtils {
       from = polyadicDiff.first;
       to = polyadicDiff.second;
     }
+    //noinspection DuplicatedCode
     if (diff instanceof PsiBinaryExpression bin && bin.getOperationTokenType().equals(JavaTokenType.MINUS)) {
       PsiExpression left = bin.getLOperand();
       PsiExpression right = bin.getROperand();
@@ -1231,6 +1245,7 @@ public final class ExpressionUtils {
         return true;
       }
     }
+    //noinspection DuplicatedCode
     if (from instanceof PsiBinaryExpression bin && bin.getOperationTokenType().equals(JavaTokenType.MINUS)) {
       PsiExpression left = bin.getLOperand();
       PsiExpression right = bin.getROperand();
@@ -1343,8 +1358,7 @@ public final class ExpressionUtils {
 
   private static boolean isConstantContent(PsiVariable array) {
     Boolean isConstantArray = CachedValuesManager.<Boolean>getCachedValue(array, () -> CachedValueProvider.Result
-      .create(!ContainerUtil.exists(VariableAccessUtils.getVariableReferences(array), 
-                                    ExpressionUtils::canBeMutated), 
+      .create(!ContainerUtil.exists(VariableAccessUtils.getVariableReferences(array), ExpressionUtils::canBeMutated),
               PsiModificationTracker.MODIFICATION_COUNT));
     return Boolean.TRUE.equals(isConstantArray);
   }

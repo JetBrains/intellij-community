@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/test">
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.credentialStore" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tasks" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vcs.github" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.collaborationTools" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vcs.github.tracker" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.vcs.github.tracker" />
+</module>

@@ -15,7 +15,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.community.impl.poetry.common.poetryPath
-import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.jetbrains.python.PyBundle
@@ -23,7 +22,6 @@ import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.poetry.PoetryPyProjectTomlPythonVersionsService
-import com.jetbrains.python.poetry.findPoetryToml
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
@@ -37,7 +35,6 @@ import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState.Invisible
 import com.jetbrains.python.sdk.add.v2.getBasePath
 import com.jetbrains.python.sdk.add.v2.getOrInstallBasePython
 import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
-import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.poetry.configurePoetryEnvironment
 import com.jetbrains.python.sdk.poetry.createNewPoetrySdk
 import com.jetbrains.python.statistics.InterpreterType
@@ -49,7 +46,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import java.nio.file.Paths
 import kotlin.io.path.exists
 
 internal class EnvironmentCreatorPoetry<P : PathHolder>(
@@ -86,9 +82,10 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
     scope.launch(Dispatchers.IO) {
       val moduleDir = model.getBasePath(module).let { VirtualFileManager.getInstance().findFileByNioPath(it) }
 
-      val validatedInterpreters = moduleDir?.let {
-        PoetryPyProjectTomlPythonVersionsService.instance.validateInterpretersVersions(moduleDir, model.baseInterpreters)
-      } ?: model.baseInterpreters
+      val project = module?.project
+      val validatedInterpreters = if (moduleDir != null && project != null) {
+        PoetryPyProjectTomlPythonVersionsService.getInstance(project).validateInterpretersVersions(moduleDir, model.baseInterpreters)
+      } else model.baseInterpreters
 
       withContext(Dispatchers.EDT) {
         basePythonComboBox.initialize(scope, validatedInterpreters)
@@ -108,7 +105,7 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
 
           venvExistenceValidationState.set(
             if (venvPath.exists())
-              Error(Paths.get(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
+              Error(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
             else
               Invisible
           )
@@ -119,12 +116,14 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
   override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
     val basePythonBinaryPath = model.getOrInstallBasePython()
 
-    module?.let { service<PoetryConfigService>().setInProjectEnv(it) }
+    service<PoetryConfigService>().updateExistingPoetryToml(moduleBasePath)
     return when (basePythonBinaryPath) {
       is PathHolder.Eel -> createNewPoetrySdk(
         moduleBasePath = moduleBasePath,
         basePythonBinaryPath = basePythonBinaryPath.path,
-        installPackages = false
+        installPackages = false,
+        errorSink = errorSink,
+        inProjectEnv = isInProjectEnvFlow.value,
       )
       else -> PyResult.localizedError(PyBundle.message("target.is.not.supported", basePythonBinaryPath))
     }
@@ -145,7 +144,7 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
     with(panel) {
       row("") {
         checkBox(PyBundle.message("python.sdk.poetry.dialog.add.new.environment.in.project.checkbox"))
-          .bindSelected(service<PoetryConfigService>().state::isInProjectEnv)
+          .bindSelected(isInProjectEnvProp)
       }
     }
   }
@@ -159,13 +158,12 @@ private class PoetryConfigService :
     var isInProjectEnv = false
   }
 
-  suspend fun setInProjectEnv(module: Module) {
-    val hasPoetryToml = findPoetryToml(module) != null
-    if (state.isInProjectEnv || hasPoetryToml) {
-      val modulePath = withContext(Dispatchers.IO) {
-        PyProjectToml.findFile(module)?.parent?.toNioPath() ?: module.baseDir?.path?.let { Path.of(it) }
-      }
-      configurePoetryEnvironment(modulePath, "virtualenvs.in-project", state.isInProjectEnv.toString(), "--local")
+  suspend fun updateExistingPoetryToml(moduleBasePath: Path) {
+    val poetryTomlExists = withContext(Dispatchers.IO) {
+      moduleBasePath.resolve("poetry.toml").exists()
+    }
+    if (poetryTomlExists) {
+      configurePoetryEnvironment(moduleBasePath, "virtualenvs.in-project", state.isInProjectEnv.toString(), "--local")
     }
   }
 }

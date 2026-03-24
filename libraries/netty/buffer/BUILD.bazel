@@ -9,10 +9,27 @@ resourcegroup(
 
 jvm_library(
   name = "buffer",
+  module_name = "intellij.libraries.netty.buffer",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":buffer_resources"],
-  exports = ["@lib//:netty-buffer"],
-  runtime_deps = ["@lib//:netty-buffer"]
+  exports = ["@lib//:libraries-netty-buffer-netty-buffer"],
+  runtime_deps = ["@lib//:libraries-netty-buffer-netty-buffer"]
+)
+
+jvm_library(
+  name = "buffer_test_lib",
+  module_name = "intellij.libraries.netty.buffer",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-netty-buffer-netty-buffer"],
+  runtime_deps = [":buffer"]
 )
 ### auto-generated section `build intellij.libraries.netty.buffer` end
+
+### auto-generated section `iml intellij.libraries.netty.buffer` start
+exports_files([
+  "intellij.libraries.netty.buffer.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.netty.buffer` end

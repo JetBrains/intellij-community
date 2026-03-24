@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.layout.CCFlags
-import com.intellij.ui.layout.GrowPolicy
 import com.intellij.ui.layout.SpacingConfiguration
 import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.BoundSize
@@ -49,8 +48,6 @@ internal fun overrideFlags(cc: CC, flags: Array<out CCFlags>) {
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Mig Layout is going to be removed, IDEA-306719")
 internal class DefaultComponentConstraintCreator(spacing: SpacingConfiguration) {
-  private val shortTextSizeSpec = ConstraintParser.parseBoundSize("${spacing.shortTextWidth}px!", false, true)
-  private val mediumTextSizeSpec = ConstraintParser.parseBoundSize("${spacing.shortTextWidth}px::${spacing.maxShortTextWidth}px", false, true)
 
   val vertical1pxGap: BoundSize = ConstraintParser.parseBoundSize("${JBUI.scale(1)}px!", true, false)
 
@@ -85,13 +82,6 @@ internal class DefaultComponentConstraintCreator(spacing: SpacingConfiguration) 
           view.rows = 3
         }
       }
-    }
-  }
-
-  fun applyGrowPolicy(cc: CC, growPolicy: GrowPolicy) {
-    cc.horizontal.size = when (growPolicy) {
-      GrowPolicy.SHORT_TEXT -> shortTextSizeSpec
-      GrowPolicy.MEDIUM_TEXT -> mediumTextSizeSpec
     }
   }
 }

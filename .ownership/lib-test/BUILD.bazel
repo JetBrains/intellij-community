@@ -1,0 +1,78 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+
+java_binary(
+  name = "test",
+  visibility = ["//visibility:public"],
+  runtime_deps = [":codeowners-test_test_lib"],
+  main_class = "org.junit.platform.console.ConsoleLauncher",
+  args = [
+    "execute",
+    "--fail-if-no-tests",
+    "--select-class=com.intellij.codeowners.CodeOwnersTest",
+    "--select-class=com.intellij.codeowners.GroupNameTest",
+    "--select-class=com.intellij.codeowners.GroupsParserTest",
+    "--select-class=com.intellij.codeowners.OwnershipParserTest",
+    "--select-class=com.intellij.codeowners.OwnershipScannerTest",
+    "--select-class=com.intellij.codeowners.ReviewRulesParserTest",
+  ],
+)
+
+### auto-generated section `build intellij.codeowners.test` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "codeowners-test_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "codeowners-test",
+  module_name = "intellij.codeowners.test",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//.ownership/lib:codeowners",
+    "@lib//:junit5Launcher",
+    "@lib//:codeowners-test-junit-jupiter-engine",
+    "@lib//:codeowners-test-junit-platform-console",
+    "@lib//:codeowners-test-junit-platform-reporting",
+    "@lib//:kaml",
+    "@lib//:kotlinx-serialization-core",
+  ]
+)
+
+jvm_library(
+  name = "codeowners-test_test_lib",
+  module_name = "intellij.codeowners.test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":codeowners-test_test_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//.ownership/lib:codeowners",
+    "//.ownership/lib:codeowners_test_lib",
+    "@lib//:junit5",
+    "@lib//:io-mockk",
+    "@lib//:kaml",
+    "@lib//:kotlinx-serialization-core",
+  ],
+  runtime_deps = [":codeowners-test"]
+)
+### auto-generated section `build intellij.codeowners.test` end
+
+### auto-generated section `iml intellij.codeowners.test` start
+exports_files([
+  "intellij.codeowners.test.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.codeowners.test` end
+
+### auto-generated section `test intellij.codeowners.test` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "codeowners-test_test",
+  runtime_deps = [":codeowners-test_test_lib"]
+)
+### auto-generated section `test intellij.codeowners.test` end

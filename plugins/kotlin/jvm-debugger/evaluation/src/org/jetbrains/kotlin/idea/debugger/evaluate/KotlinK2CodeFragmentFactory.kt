@@ -65,7 +65,7 @@ class KotlinK2CodeFragmentFactory : KotlinCodeFragmentFactoryBase() {
                 null
             } else {
                 LOG.assertTrue(!DebuggerManagerThreadImpl.isManagerThread(), "Should be invoked outside manager thread")
-                val timeout = Registry.intValue("debugger.evaluation.runtime.type", 500).milliseconds
+                val timeout = Registry.intValue("debugger.evaluation.runtime.type", 2000).milliseconds
                 val runtimeType = CompletableDeferred<KaTypePointer<KaType>?>()
                 val job = executeOnDMT(managerThread) {
                     coroutineToIndicator { indicator ->

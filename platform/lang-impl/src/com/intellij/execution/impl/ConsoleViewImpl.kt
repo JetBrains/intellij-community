@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.execution.impl
@@ -6,9 +6,10 @@ package com.intellij.execution.impl
 import com.google.common.base.CharMatcher
 import com.intellij.codeInsight.folding.impl.FoldingUtil
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler
-import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase
+import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.currentOrNull
 import com.intellij.codeWithMe.ClientId.Companion.isCurrentlyUnderLocalId
+import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
 import com.intellij.execution.ConsoleFolding
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.actions.ClearConsoleAction
@@ -22,7 +23,6 @@ import com.intellij.execution.filters.HyperlinkInfoBase
 import com.intellij.execution.filters.HyperlinkWithPopupMenuInfo
 import com.intellij.execution.filters.InputFilter
 import com.intellij.execution.impl.ConsoleState.NotStartedStated
-import com.intellij.execution.impl.ConsoleViewImpl.Companion.CONSOLE_VIEW_IN_EDITOR_VIEW
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
@@ -69,7 +69,6 @@ import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.actionSystem.TypedAction
-import com.intellij.openapi.editor.actionSystem.TypedActionHandler
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction
 import com.intellij.openapi.editor.colors.EditorColorsListener
@@ -574,7 +573,7 @@ open class ConsoleViewImpl protected constructor(
     else {
       for (pair in result) {
         if (pair.first != null) {
-          print(pair.first, (if (pair.second == null) contentType else pair.second)!!, null)
+          print(pair.first, (pair.second ?: contentType), null)
         }
       }
     }
@@ -651,14 +650,19 @@ open class ConsoleViewImpl protected constructor(
   open fun flushDeferredText() {
     ThreadingAssertions.assertEventDispatchThread()
     if (isDisposed) return
-    val editor = editor as EditorEx?
-    val shouldStickToEnd = !myCancelStickToEnd && isStickingToEnd(
-      editor!!)
+
+    val editor = editor as EditorEx
+    withExplicitClientId(ClientId.localId) {
+      flushDeferredTextImpl(editor)
+    }
+  }
+
+  private fun flushDeferredTextImpl(editor: EditorEx) {
+    val shouldStickToEnd = !myCancelStickToEnd && isStickingToEnd(editor)
     myCancelStickToEnd = false // Cancel only needs to last for one update. Next time, isStickingToEnd() will be false.
 
     var deferredTokens: List<TokenBuffer.TokenInfo>
-    val document: Document = editor!!.document
-
+    val document: Document = editor.document
     synchronized(LOCK) {
       if (myOutputPaused) return
       deferredTokens = myDeferredBuffer.drain()
@@ -1626,6 +1630,12 @@ open class ConsoleViewImpl protected constructor(
   val text: String
     get() = editor!!.document.text
 
+  @TestOnly
+  @ApiStatus.Internal
+  fun initPredefinedFiltersForTests() {
+    updatePredefinedFiltersLater()
+  }
+
   companion object {
     private const val CONSOLE_VIEW_POPUP_MENU: @NonNls String = "ConsoleView.PopupMenu"
     private val LOG = logger<ConsoleViewImpl>()
@@ -1651,7 +1661,7 @@ private fun initTypedHandler() {
   EditorActionManager.getInstance()
   val typedAction = TypedAction.getInstance()
   @Suppress("DEPRECATION")
-  typedAction.setupHandler(MyTypedHandler(typedAction.handler))
+  typedAction.setupHandler(ConsoleViewTypedHandler(typedAction.handler))
   ourTypedHandlerInitialized = true
 }
 
@@ -1682,16 +1692,4 @@ private fun moveScrollRemoveSelection(editor: Editor, offset: Int) {
   editor.caretModel.moveToOffset(offset)
   editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
   editor.selectionModel.removeSelection()
-}
-
-private class MyTypedHandler(originalAction: TypedActionHandler) : TypedActionHandlerBase(originalAction) {
-  override fun execute(editor: Editor, charTyped: Char, dataContext: DataContext) {
-    val consoleView = editor.getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW)
-    if (consoleView == null || !consoleView.state.isRunning || consoleView.isViewer) {
-      myOriginalHandler?.execute(editor, charTyped, dataContext)
-      return
-    }
-    val text = charTyped.toString()
-    consoleView.type(editor, text)
-  }
 }

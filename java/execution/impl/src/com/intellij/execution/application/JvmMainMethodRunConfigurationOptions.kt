@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application
 
 import com.intellij.configurationStore.Property
@@ -36,6 +36,9 @@ open class JvmMainMethodRunConfigurationOptions : JvmConfigurationOptions() {
   // so, we cannot use NONE as the default value
   @get:OptionTag(nameAttribute = "", valueAttribute = "name")
   var shortenClasspath: ShortenCommandLine? by enum<ShortenCommandLine>()
+
+  @get:OptionTag("USE_MODULE_PATH")
+  open var isUseModulePath: Boolean by property(true)
 
   @get:OptionTag(InputRedirectAware.InputRedirectOptionsImpl.REDIRECT_INPUT)
   var isRedirectInput: Boolean by property(false)

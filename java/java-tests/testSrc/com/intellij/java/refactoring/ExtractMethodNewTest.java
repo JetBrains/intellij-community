@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -53,159 +53,159 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testExitPoints1() throws Exception {
+  public void testExitPoints1() {
     doExitPointsTest(true);
   }
 
-  public void testExitPoints2() throws Exception {
+  public void testExitPoints2() {
     doTest();
   }
 
-  public void testExitPoints3() throws Exception {
+  public void testExitPoints3() {
     doExitPointsTest(true);
   }
 
-  public void testExitPoints4() throws Exception {
+  public void testExitPoints4() {
     doTest();
   }
 
-  public void testExitPoints4Nullable() throws Exception {
+  public void testExitPoints4Nullable() {
     doExitPointsTest(false);
   }
 
-  public void testExitPointsInsideLoop() throws Exception {
+  public void testExitPointsInsideLoop() {
     doExitPointsTest(true);
   }
 
-  public void testExitPoints5() throws Exception {
+  public void testExitPoints5() {
     doTest();
   }
 
-  public void testExitPoints6() throws Exception {
+  public void testExitPoints6() {
     doTest();
   }
 
-  public void testExitPoints7() throws Exception {
+  public void testExitPoints7() {
     doExitPointsTest(false);
   }
 
-  public void testExitPoints8() throws Exception {
+  public void testExitPoints8() {
     doTest();
   }
 
-  public void testExitPoints9() throws Exception {
+  public void testExitPoints9() {
     doTest();
   }
 
-  public void testExitPoints10() throws Exception {
+  public void testExitPoints10() {
     doExitPointsTest(false);
   }
 
-  public void testExitPoints11() throws Exception {
+  public void testExitPoints11() {
     doTest();
   }
 
-  public void testNotNullCheckNameConflicts() throws Exception {
+  public void testNotNullCheckNameConflicts() {
     doTest();
   }
 
-  public void testContinueInside() throws Exception {
+  public void testContinueInside() {
     doTest();
   }
 
-  public void testBooleanExpression() throws Exception {
+  public void testBooleanExpression() {
     doTest();
   }
 
-  public void testScr6241() throws Exception {
+  public void testScr6241() {
     doTest();
   }
 
-  public void testScr7091() throws Exception {
+  public void testScr7091() {
     doTest();
   }
 
-  public void testScr10464() throws Exception {
+  public void testScr10464() {
     doTest();
   }
 
-  public void testScr9852() throws Exception {
+  public void testScr9852() {
     doTest();
   }
 
-  public void testUseVarAfterTry() throws Exception {
+  public void testUseVarAfterTry() {
     doTest();
   }
 
-  public void testUseParamInCatch() throws Exception {
+  public void testUseParamInCatch() {
     doExitPointsTest(false);
   }
 
-  public void testUseParamInFinally() throws Exception {
+  public void testUseParamInFinally() {
     doExitPointsTest(false);
   }
 
-  public void testUseVarAfterCatch() throws Exception {
+  public void testUseVarAfterCatch() {
     doExitPointsTest(false);
   }
 
-  public void testUseVarInCatch1() throws Exception {
+  public void testUseVarInCatch1() {
     doTest();
   }
 
-  public void testUseVarInCatch2() throws Exception {
+  public void testUseVarInCatch2() {
     doExitPointsTest(false);
   }
 
-  public void testUseVarInCatchInvisible() throws Exception {
+  public void testUseVarInCatchInvisible() {
     doTest();
   }
 
-  public void testUseVarInCatchNested1() throws Exception {
+  public void testUseVarInCatchNested1() {
     doTest();
   }
 
-  public void testUseVarInCatchNested2() throws Exception {
+  public void testUseVarInCatchNested2() {
     doExitPointsTest(false);
   }
 
-  public void testUseVarInOtherCatch() throws Exception {
+  public void testUseVarInOtherCatch() {
     doTest();
   }
 
-  public void testUseVarInFinally1() throws Exception {
+  public void testUseVarInFinally1() {
     doTest();
   }
 
-  public void testUseVarInFinally2() throws Exception {
+  public void testUseVarInFinally2() {
     doExitPointsTest(false);
   }
 
-  public void testOneBranchAssignment() throws Exception {
+  public void testOneBranchAssignment() {
     doTest();
   }
 
-  public void testExtractFromCodeBlock() throws Exception {
+  public void testExtractFromCodeBlock() {
     doTest();
   }
 
-  public void testUnusedInitializedVar() throws Exception {
+  public void testUnusedInitializedVar() {
     doTest();
   }
 
-  public void testTryFinally() throws Exception {
+  public void testTryFinally() {
     doTest();
   }
 
-  public void testFinally() throws Exception {
+  public void testFinally() {
     doTest();
   }
 
-  public void testExtractFromAnonymous() throws Exception {
+  public void testExtractFromAnonymous() {
     doTest();
   }
 
-  public void testSCR12245() throws Exception {
+  public void testSCR12245() {
     try {
       doTest();
       fail("Should not work for assignment expression");
@@ -213,71 +213,71 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testLeaveCommentsWhenExpressionExtracted() throws Exception {
+  public void testLeaveCommentsWhenExpressionExtracted() {
     doTest();
   }
 
-  public void testSCR15815() throws Exception {
+  public void testSCR15815() {
     doTest();
   }
 
-  public void testFieldGroupAnchor() throws Exception {
+  public void testFieldGroupAnchor() {
     doTest();
   }
 
-  public void testFieldGroupAnchor2() throws Exception {
+  public void testFieldGroupAnchor2() {
     doTest();
   }
 
-  public void testSCR27887() throws Exception {
+  public void testSCR27887() {
     doTest();
   }
 
-  public void testSCR28427() throws Exception {
+  public void testSCR28427() {
     doTest();
   }
 
-  public void testTryFinallyInsideFor() throws Exception {
+  public void testTryFinallyInsideFor() {
     doTest();
   }
 
-  public void testExtractFromTryFinally() throws Exception {
+  public void testExtractFromTryFinally() {
     doTest();
   }
 
-  public void testInferredReturnType1() throws Exception {
+  public void testInferredReturnType1() {
     doTest();
   }
 
-  public void testInferredReturnType2() throws Exception {
+  public void testInferredReturnType2() {
     doTest();
   }
 
-  public void testInferredReturnType3() throws Exception {
+  public void testInferredReturnType3() {
     doTest();
   }
 
-  public void testInferredReturnType4() throws Exception {
+  public void testInferredReturnType4() {
     doTest();
   }
 
-  public void testInferredReturnType5() throws Exception {
+  public void testInferredReturnType5() {
     doTest();
   }
 
-  public void testInferredReturnType6() throws Exception {
+  public void testInferredReturnType6() {
     doTest();
   }
 
-  public void testNotPassedStaticField() throws Exception {
+  public void testNotPassedStaticField() {
     doTestPassFieldsAsParams();
   }
 
-  public void testNotPassedStaticField2() throws Exception {
+  public void testNotPassedStaticField2() {
     doTestPassFieldsAsParams();
   }
 
-  public void testExtractAssignmentExpression() throws Exception {
+  public void testExtractAssignmentExpression() {
     try {
       doTest();
       fail("Should not work for assignment expression");
@@ -285,7 +285,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testExtractAssignmentExpressionFromStatement() throws Exception {
+  public void testExtractAssignmentExpressionFromStatement() {
     try {
       doTest();
       fail("Should not work for assignment expression");
@@ -293,46 +293,50 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testAssignmentInsideLambda() throws Exception {
+  public void testAssignmentInsideLambda() {
     doTest();
   }
 
-  public void testExtractFromTryFinally2() throws Exception {
+  public void testAssignmentToField() {
     doTest();
   }
 
-  public void testLesyaBug() throws Exception {
+  public void testExtractFromTryFinally2() {
+    doTest();
+  }
+
+  public void testLesyaBug() {
     myCatchOnNewLine = false;
     doTest();
   }
 
-  public void testForEach() throws Exception {
+  public void testForEach() {
     doTest();
   }
 
-  public void testAnonInner() throws Exception {
+  public void testAnonInner() {
     doTest();
   }
 
 
-  public void testConflictingAnonymous() throws Exception {
+  public void testConflictingAnonymous() {
     doTest();
   }
 
-  public void testVarDeclAfterExpressionExtraction() throws Exception {
+  public void testVarDeclAfterExpressionExtraction() {
     doTest();
   }
 
-  public void testFinalParamUsedInsideAnon() throws Exception {
+  public void testFinalParamUsedInsideAnon() {
     JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_PARAMETERS = false;
     doTestWithJava17();
   }
 
-  private void doTestWithJava17() throws Exception {
+  private void doTestWithJava17() {
     doTestWithLanguageLevel(LanguageLevel.JDK_1_7);
   }
 
-  private void doTestWithLanguageLevel(LanguageLevel languageLevel) throws Exception {
+  private void doTestWithLanguageLevel(LanguageLevel languageLevel) {
     LanguageLevel oldLevel = IdeaTestUtil.setProjectLanguageLevel(getProject(), languageLevel);
     try {
       doTest();
@@ -342,238 +346,244 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testNonFinalWritableParam() throws Exception {
+  public void testNonFinalWritableParam() {
     JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_PARAMETERS = true;
     doTest();
   }
 
-  public void testCodeDuplicatesWithContinue() throws Exception {
+  public void testCodeDuplicatesWithContinue() {
     doDuplicatesTest();
   }
 
-  public void testDuplicatesFromAnonymous() throws Exception {
+  public void testDuplicatesFromAnonymous() {
     doDuplicatesTest();
   }
 
-  public void testDuplicatesFullyQualifiedType() throws Exception {
+  public void testDuplicatesFullyQualifiedType() {
     doDuplicatesTest();
   }
 
-  public void testCodeDuplicatesWithContinueNoReturn() throws Exception {
+  public void testCodeDuplicatesWithContinueNoReturn() {
     doDuplicatesTest();
   }
 
-  public void testCodeDuplicatesWithStaticInitializer() throws Exception {
+  public void testCodeDuplicatesWithStaticInitializer() {
     doDuplicatesTest();
   }
 
-  public void testDuplicateInUnreachableCode() throws Exception {
+  public void testDuplicateInUnreachableCode() {
     doDuplicatesTest();
   }
 
-  public void testExpressionDuplicates() throws Exception {
+  public void testExpressionDuplicates() {
     doDuplicatesTest();
   }
 
-  public void testClassReference() throws Exception {
+  public void testClassReference() {
     doDuplicatesTest();
   }
 
-  public void testClassReference2() throws Exception {
+  public void testClassReference2() {
     doDuplicatesTest();
   }
 
-  public void testCodeDuplicates() throws Exception {
+  public void testCodeDuplicates() {
     doDuplicatesTest();
   }
 
-  public void testCodeDuplicates2() throws Exception {
+  public void testCodeDuplicates2() {
     doDuplicatesTest();
   }
 
-  public void testCodeDuplicates3() throws Exception {
+  public void testCodeDuplicates3() {
     doDuplicatesTest();
   }
 
-  public void testCodeDuplicates4() throws Exception {
+  public void testCodeDuplicates4() {
     doDuplicatesTest();
   }
 
-  public void testCodeDuplicates5() throws Exception {
+  public void testCodeDuplicates5() {
     doDuplicatesTest();
   }
 
-  public void testCodeDuplicatesWithOutputValue() throws Exception {
+  public void testCodeDuplicatesWithOutputValue() {
     doDuplicatesTest();
   }
 
-  public void testCodeDuplicatesWithOutputValue1() throws Exception {
+  public void testCodeDuplicatesWithOutputValue1() {
     doDuplicatesTest();
   }
 
-  public void testCodeDuplicatesWithEmptyStatementsBlocksParentheses() throws Exception {
+  public void testCodeDuplicatesWithEmptyStatementsBlocksParentheses() {
     doDuplicatesTest();
   }
 
-  public void testCodeDuplicatesWithMultExitPoints() throws Exception {
+  public void testCodeDuplicatesWithMultExitPoints() {
     doDuplicatesTest();
   }
 
-  public void testCodeDuplicatesWithReturn() throws Exception {
+  public void testCodeDuplicatesWithReturn() {
     doDuplicatesTest();
   }
 
-  public void testCodeDuplicatesWithReturn2() throws Exception {
+  public void testCodeDuplicatesWithReturn2() {
     doDuplicatesTest();
   }
 
-  public void testCodeDuplicatesWithReturnInAnonymous() throws Exception {
+  public void testCodeDuplicatesWithReturnInAnonymous() {
     doDuplicatesTest();
   }
 
-  public void testCodeDuplicatesWithComments() throws Exception {
+  public void testCodeDuplicatesWithComments() {
     doDuplicatesTest();
   }
 
-  public void testSCR32924() throws Exception {
+  public void testSCR32924() {
     doDuplicatesTest();
   }
 
-  public void testFinalOutputVar() throws Exception {
+  public void testFinalOutputVar() {
     doDuplicatesTest();
   }
-
-  public void testIdeaDev2291() throws Exception {
+  
+  public void testGenerateFinalVar() {
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.GENERATE_FINAL_LOCALS = true;
     doTest();
   }
 
-  public void testOxfordBug() throws Exception {
+  public void testIdeaDev2291() {
     doTest();
   }
 
-  public void testIDEADEV33368() throws Exception {
+  public void testOxfordBug() {
+    doTest();
+  }
+
+  public void testIDEADEV33368() {
     doExitPointsTest(false);
   }
 
-  public void testInlineCreated2ReturnLocalVariablesOnly() throws Exception {
+  public void testInlineCreated2ReturnLocalVariablesOnly() {
     doTest();
   }
 
-  public void testGuardMethodDuplicates() throws Exception {
+  public void testGuardMethodDuplicates() {
     doDuplicatesTest();
   }
 
-  public void testGuardMethodDuplicates1() throws Exception {
+  public void testGuardMethodDuplicates1() {
     doDuplicatesTest();
   }
 
-  public void testInstanceMethodDuplicatesInStaticContext() throws Exception {
+  public void testInstanceMethodDuplicatesInStaticContext() {
     doDuplicatesTest();
   }
 
 
-  public void testLValueNotDuplicate() throws Exception {
+  public void testLValueNotDuplicate() {
     doDuplicatesTest();
   }
 
-  protected void doDuplicatesTest() throws Exception {
+  protected void doDuplicatesTest() {
     doTest(true);
   }
 
-  public void testExtractFromFinally() throws Exception {
+  public void testExtractFromFinally() {
     doTest();
   }
 
-  public void testNoShortCircuit() throws Exception {
+  public void testNoShortCircuit() {
     doTest();
   }
 
-  public void testStopFolding() throws Exception {
+  public void testStopFolding() {
     doTest();
   }
 
-  public void testStopFoldingForArrayWriteAccessInConsequentUsages() throws Exception {
+  public void testStopFoldingForArrayWriteAccessInConsequentUsages() {
     doTest();
   }
 
-  public void testStopFoldingPostfixInside() throws Exception {
+  public void testStopFoldingPostfixInside() {
     doTest();
   }
 
-  public void testFoldedWithNestedExpressions() throws Exception {
+  public void testFoldedWithNestedExpressions() {
     doTest();
   }
 
-  public void testFoldedWithConflictedNames() throws Exception {
+  public void testFoldedWithConflictedNames() {
     doTest();
   }
 
-  public void testFoldingWithFieldInvolved() throws Exception {
+  public void testFoldingWithFieldInvolved() {
     doTest();
   }
 
-  public void testFoldingWithFunctionCall() throws Exception {
+  public void testFoldingWithFunctionCall() {
     doTest();
   }
 
-  public void testDontSkipVariablesUsedInLeftSideOfAssignments() throws Exception {
+  public void testDontSkipVariablesUsedInLeftSideOfAssignments() {
     doTest();
   }
 
-  public void testIDEADEV11748() throws Exception {
+  public void testIDEADEV11748() {
     doTest();
   }
 
-  public void testIDEADEV11848() throws Exception {
+  public void testIDEADEV11848() {
     doTest();
   }
 
   //TODO support as method conflict
-  public void _testIDEADEV11036() throws Exception {
+  public void _testIDEADEV11036() {
     doTest();
   }
 
-  public void testLocalClass() throws Exception {
+  public void testLocalClass() {
     doPrepareErrorTest("Local class is defined out of the selected block.");
   }
 
-  public void testLocalClassUsage() throws Exception {
+  public void testLocalClassUsage() {
     doPrepareErrorTest("Local class is used out of the selected block.");
   }
 
-  public void testLocalClassScope() throws Exception {
+  public void testLocalClassScope() {
     doTest();
   }
 
-  public void testStaticImport() throws Exception {
+  public void testStaticImport() {
     doTest();
   }
 
-  public void testThisCall() throws Exception {
+  public void testThisCall() {
     doTest();
   }
 
-  public void testChainedConstructor() throws Exception {
+  public void testChainedConstructor() {
     doChainedConstructorTest(false);
   }
 
-  public void testChainedConstructorDuplicates() throws Exception {
+  public void testChainedConstructorDuplicates() {
     doChainedConstructorTest(true);
   }
 
-  public void testChainedConstructorInvalidDuplicates() throws Exception {
+  public void testChainedConstructorInvalidDuplicates() {
     doChainedConstructorTest(true);
   }
 
-  public void testReturnFromTry() throws Exception {
+  public void testReturnFromTry() {
     doTest();
   }
 
-  public void testLocalClassDefinedInMethodWhichIsUsedLater() throws Exception {
+  public void testLocalClassDefinedInMethodWhichIsUsedLater() {
     doPrepareErrorTest("Local class is used out of the selected block.");
   }
 
-  public void testForceBraces() throws Exception {
+  public void testForceBraces() {
     final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     int old = settings.IF_BRACE_FORCE;
     settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
@@ -585,684 +595,693 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testConstantConditionsAffectingControlFlow() throws Exception {
+  public void testConstantConditionsAffectingControlFlow() {
     doTest();
   }
 
-  public void testConstantConditionsAffectingControlFlow1() throws Exception {
+  public void testConstantConditionsAffectingControlFlow1() {
     doTest();
   }
-  public void testNotInitializedInsideFinally() throws Exception {
-    doTest();
-  }
-
-  public void testGenericsParameters() throws Exception {
+  public void testNotInitializedInsideFinally() {
     doTest();
   }
 
-  public void testUnusedGenerics() throws Exception {
+  public void testGenericsParameters() {
     doTest();
   }
 
-  public void testParamsUsedInLocalClass() throws Exception {
+  public void testUnusedGenerics() {
+    doTest();
+  }
+
+  public void testParamsUsedInLocalClass() {
     doTestWithJava17();
   }
 
-  private void doChainedConstructorTest(final boolean replaceAllDuplicates) throws Exception {
+  private void doChainedConstructorTest(boolean replaceAllDuplicates) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     boolean success = performExtractMethod(true, replaceAllDuplicates, getEditor(), getFile(), getProject(), true);
     assertTrue(success);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  public void testReassignedVarAfterCall() throws Exception {
+  public void testReassignedVarAfterCall() {
     final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
     settings.GENERATE_FINAL_LOCALS = true;
     doTest();
   }
 
-  public void testNonPhysicalAssumptions() throws Exception {
+  public void testNonPhysicalAssumptions() {
     doTest();
   }
 
-  public void testNullableCheck() throws Exception {
+  public void testNullableCheck() {
     doTest();
   }
 
-  public void testNullableCheck1() throws Exception {
+  public void testNullableCheck1() {
     doTest();
   }
 
-  public void testNullableCheckVoid() throws Exception {
+  public void testNullableCheckVoid() {
     doTest();
   }
 
-  public void testNullableCheckDontMissFinal() throws Exception {
+  public void testNullableCheckDontMissFinal() {
     doTest();
   }
 
-  public void testNullableCheckBreak() throws Exception {
+  public void testNullableCheckBreak() {
+    doTest();
+  }
+  
+  public void testArrayInitializer() {
     doTest();
   }
 
-  public void testSimpleArrayAccess() throws Exception {
+  public void testSimpleArrayAccess() {
     doTest();
   }
 
-  public void testArrayAccess() throws Exception {
+  public void testArrayAccess() {
     doTest();
   }
 
-  public void testArrayAccess1() throws Exception {
+  public void testArrayAccess1() {
     doTest();
   }
 
-  public void testArrayAccessWithLocalIndex() throws Exception {
+  public void testArrayAccessWithLocalIndex() {
     doTest();
   }
 
-  public void testArrayAccessWithTopExpression() throws Exception {
+  public void testArrayAccessWithTopExpression() {
     doTest();
   }
 
-  public void testArrayAccessWithDuplicates() throws Exception {
+  public void testArrayAccessWithDuplicates() {
     doDuplicatesTest();
   }
 
-  public void testVerboseArrayAccess() throws Exception {
+  public void testVerboseArrayAccess() {
     doTest();
   }
 
   //TODO keep bad formatting if possible
-  public void _testParameterFormatting() throws Exception {
+  public void _testParameterFormatting() {
     doTest();
   }
 
-  public void _testNoExpressionFormatting1() throws Exception {
+  public void _testNoExpressionFormatting1() {
     doTest();
   }
 
-  public void _testNoExpressionFormatting2() throws Exception {
+  public void _testNoExpressionFormatting2() {
     doTest();
   }
 
-  public void testIgnoreSwitchBreak() throws Exception {
+  public void testIgnoreSwitchBreak() {
     doTest();
   }
 
-  public void testExtractSwitchVariable() throws Exception {
+  public void testExtractSwitchVariable() {
     doTest();
   }
 
-  public void testReturnVariablesResolved() throws Exception {
+  public void testReturnVariablesResolved() {
     doTest();
   }
 
-  public void testExtractBranchedPrimitive() throws Exception {
+  public void testExtractBranchedPrimitive() {
     doTest();
   }
 
-  public void testExtractSwitchNotNullVariable() throws Exception {
+  public void testExtractSwitchNotNullVariable() {
     doTest();
   }
 
-  public void testAvoidContinueInsideMethod() throws Exception {
+  public void testAvoidContinueInsideMethod() {
     doTest();
   }
 
-  public void testLocalVariablesAreNotExposed() throws Exception {
+  public void testLocalVariablesAreNotExposed() {
     doTest();
   }
 
-  public void testExtractConditionalContinue() throws Exception {
+  public void testExtractConditionalContinue() {
     doTest();
   }
 
-  public void testExtractConditionalBreak() throws Exception {
+  public void testExtractConditionalBreak() {
     doTest();
   }
 
-  public void testDontMissReturn() throws Exception {
+  public void testDontMissReturn() {
     doTest();
   }
 
-  public void testNoRedundantContinue() throws Exception {
+  public void testNoRedundantContinue() {
     doTest();
   }
 
-  public void testDontReplaceThrowWithReturn() throws Exception {
+  public void testDontReplaceThrowWithReturn() {
     doTest();
   }
 
-  public void testDontMissReturnDueToThrowable() throws Exception {
+  public void testDontMissReturnDueToThrowable() {
     doTest();
   }
 
-  public void testDontExtractInsideSwitch() throws Exception {
+  public void testDontExtractInsideSwitch() {
     try {
       doTest();
       fail("Should fail inside switch");
-    } catch (PrepareFailedException e){
+    } catch (PrepareFailedException ignore) {
     }
   }
 
-  public void testDontExtractFieldWithConstructor() throws Exception {
+  public void testDontExtractFieldWithConstructor() {
     doChainedConstructorTest(false);
   }
 
-  public void testExtractSingleLabelFromSwitch() throws Exception {
+  public void testExtractSingleLabelFromSwitch() {
     doTest();
   }
 
-  public void testExtractVariableAndReturn() throws Exception {
+  public void testExtractVariableAndReturn() {
     doTest();
   }
 
-  public void testExtractVariableAndReturn1() throws Exception {
+  public void testExtractVariableAndReturn1() {
     try {
       doTest();
       fail("Should not extract different returns");
-    } catch (PrepareFailedException e) {
+    } catch (PrepareFailedException ignore) {
     }
   }
 
-  public void testExtractVariableAndReturn2() throws Exception {
+  public void testExtractVariableAndReturn2() {
     try {
       doTest();
       fail("Should not extract internal references");
-    } catch (PrepareFailedException e) {
+    } catch (PrepareFailedException ignore) {
     }
   }
 
-  public void testExtractVariableAndReturn3() throws Exception {
+  public void testExtractVariableAndReturn3() {
     try {
       doTest();
       fail("Should not extract semantically different references");
-    } catch (PrepareFailedException e) {
+    } catch (PrepareFailedException ignore) {
     }
   }
 
-  public void testDontExtractUnfoldableVariable() throws Exception {
+  public void testDontExtractUnfoldableVariable() {
     try {
       doTest();
-      fail("Should not extract nullable variable if primitive type delcared outside");
-    } catch (PrepareFailedException e) {
+      fail("Should not extract nullable variable if primitive type declared outside");
+    } catch (PrepareFailedException ignore) {
     }
   }
 
-  public void testExtractConstantExpressions() throws Exception {
+  public void testExtractConstantExpressions() {
       doTest();
   }
 
-  public void testDontExtractLocalConstant() throws Exception {
+  public void testDontExtractLocalConstant() {
     try {
       doTest();
       fail("Should fail if expression is linked to the scope");
-    } catch (PrepareFailedException e){
+    } catch (PrepareFailedException ignore) {
     }
   }
 
-  public void testDontExtractCustomFinalObjects() throws Exception {
+  public void testDontExtractCustomFinalObjects() {
     try {
       doTest();
       fail("Should fail if expression contains mutable object");
-    } catch (PrepareFailedException e){
+    } catch (PrepareFailedException ignore) {
     }
   }
 
-  public void testWriteArrayAccess() throws Exception {
+  public void testWriteArrayAccess() {
     doTest();
   }
 
-  public void testShortCircuit() throws Exception {
+  public void testShortCircuit() {
     doTest();
   }
 
-  public void testRecursiveCallToExtracted() throws Exception {
+  public void testRecursiveCallToExtracted() {
     doTest();
   }
 
-  public void testCodeDuplicatesVarargsShouldNotChangeReturnType() throws Exception {
+  public void testCodeDuplicatesVarargsShouldNotChangeReturnType() {
     doDuplicatesTest();
   }
 
-  public void testVarargsArguments() throws Exception {
+  public void testVarargsArguments() {
     doTest();
   }
 
-  public void testParametersFromAnonymous() throws Exception {
+  public void testParametersFromAnonymous() {
     doTest();
   }
 
-  public void testCast4ParamGeneration() throws Exception {
+  public void testCast4ParamGeneration() {
     doTest();
   }
 
-  public void testNearComment() throws Exception {
+  public void testNearComment() {
     doTest();
   }
 
-  public void testFoldInWhile() throws Exception {
+  public void testFoldInWhile() {
     doTest();
   }
 
-  public void testFoldedParamNameSuggestion() throws Exception {
+  public void testFoldedParamNameSuggestion() {
     doTest();
   }
 
-  public void testNonFoldInIfBody() throws Exception {
+  public void testNonFoldInIfBody() {
     doTest();
   }
 
-  public void testComplexTypeParams() throws Exception {
+  public void testComplexTypeParams() {
     doTest();
   }
 
-  public void testExtractWithLeadingComment() throws Exception {
+  public void testExtractWithLeadingComment() {
     doTest();
   }
 
-  public void testInvalidReference() throws Exception {
+  public void testInvalidReference() {
     doTest();
   }
 
-  public void testRedundantCast() throws Exception {
+  public void testRedundantCast() {
     doTest();
   }
 
-  public void testDisabledParam() throws Exception {
-    doTestDisabledParam();
+  public void testDisabledParam() {
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    settings.ELSE_ON_NEW_LINE = true;
+    settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, 0);
+    assertTrue(success);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  public void testTypeParamsList() throws Exception {
+  public void testTypeParamsList() {
     doTest();
   }
 
-  public void testTypeParamsListWithRecursiveDependencies() throws Exception {
+  public void testTypeParamsListWithRecursiveDependencies() {
     doTest();
   }
 
-  public void testFromLambdaBody() throws Exception {
+  public void testFromLambdaBody() {
     doTest();
   }
 
-  public void testFromLambdaBody1() throws Exception {
+  public void testFromLambdaBody1() {
     doTest();
   }
 
-  public void testFromLambdaBodyCapturedWildcardParams() throws Exception {
+  public void testFromLambdaBodyCapturedWildcardParams() {
     doTest();
   }
 
-  public void testFromLambdaBodyToAnonymous() throws Exception {
+  public void testFromLambdaBodyToAnonymous() {
     doTest();
   }
 
-  public void testFromLambdaBodyToToplevelInsideCodeBlock() throws Exception {
+  public void testFromLambdaBodyToToplevelInsideCodeBlock() {
     doTest();
   }
 
-  public void testFromLambdaBodyWithReturn() throws Exception {
+  public void testFromLambdaBodyWithReturn() {
     doTest();
   }
 
-  public void testOneLineLambda() throws Exception {
+  public void testOneLineLambda() {
     doTest();
   }
 
-  public void testMethod2Interface() throws Exception {
+  public void testMethod2Interface() {
     doTestWithLanguageLevel(LanguageLevel.JDK_1_8);
   }
 
-  public void testMethod2InterfaceFromStatic() throws Exception {
+  public void testMethod2InterfaceFromStatic() {
     doTestWithLanguageLevel(LanguageLevel.JDK_1_8);
   }
 
-  public void testMethod2InterfaceFromConstant() throws Exception {
+  public void testMethod2InterfaceFromConstant() {
     doTestWithLanguageLevel(LanguageLevel.JDK_1_8);
   }
 
-  public void testParamDetection() throws Exception {
+  public void testParamDetection() {
     doTest();
   }
 
-  public void testSkipComments() throws Exception {
+  public void testSkipComments() {
     doTest();
   }
 
-  public void testFinalParams4LocalClasses() throws Exception {
+  public void testFinalParams4LocalClasses() {
     doTestWithJava17();
   }
 
-  public void testIncompleteExpression() throws Exception {
+  public void testIncompleteExpression() {
     doTest();
   }
 
-  public void testTwoFromThreeEqStatements() throws Exception {
+  public void testTwoFromThreeEqStatements() {
     doDuplicatesTest();
   }
 
-  public void testCastWhenDuplicateReplacement() throws Exception {
+  public void testCastWhenDuplicateReplacement() {
     doDuplicatesTest();
   }
 
-  public void testCheckQualifierMapping() throws Exception {
+  public void testCheckQualifierMapping() {
     doDuplicatesTest();
   }
 
-  public void testArrayReturnType() throws Exception {
+  public void testArrayReturnType() {
     doDuplicatesTest();
   }
 
-  public void testOverloadedMethods() throws Exception {
+  public void testOverloadedMethods() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureOneParam() throws Exception {
+  public void testSuggestChangeSignatureOneParam() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureOneParamMultipleTimesInside() throws Exception {
+  public void testSuggestChangeSignatureOneParamMultipleTimesInside() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureLeaveSameExpressionsUntouched() throws Exception {
+  public void testSuggestChangeSignatureLeaveSameExpressionsUntouched() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureSameParamNames() throws Exception {
+  public void testSuggestChangeSignatureSameParamNames() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureCallToSameClassMethod() throws Exception {
+  public void testSuggestChangeSignatureCallToSameClassMethod() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureInitialParameterUnused() throws Exception {
+  public void testSuggestChangeSignatureInitialParameterUnused() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureWithFolding() throws Exception {
+  public void testSuggestChangeSignatureWithFolding() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureWithArrayFolding() throws Exception {
+  public void testSuggestChangeSignatureWithArrayFolding() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureWithGetterFolding() throws Exception {
+  public void testSuggestChangeSignatureWithGetterFolding() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureWithMultiFolding() throws Exception {
+  public void testSuggestChangeSignatureWithMultiFolding() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureWithTwoWayFolding() throws Exception {
+  public void testSuggestChangeSignatureWithTwoWayFolding() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureSameSubexpression() throws Exception {
+  public void testSuggestChangeSignatureSameSubexpression() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureSameSubexpressionWholeLine() throws Exception {
+  public void testSuggestChangeSignatureSameSubexpressionWholeLine() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureTrivialMethod() throws Exception {
+  public void testSuggestChangeSignatureTrivialMethod() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignaturePlusOneFolding() throws Exception {
+  public void testSuggestChangeSignaturePlusOneFolding() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureVoidCallFolding() throws Exception {
+  public void testSuggestChangeSignatureVoidCallFolding() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureThreeOccurrencesTwoLiteralFolding() throws Exception {
+  public void testSuggestChangeSignatureThreeOccurrencesTwoLiteralFolding() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureFourOccurrencesTwoLiteralFolding() throws Exception {
+  public void testSuggestChangeSignatureFourOccurrencesTwoLiteralFolding() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureThreeOccurrencesTwoVariableFolding() throws Exception {
+  public void testSuggestChangeSignatureThreeOccurrencesTwoVariableFolding() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureFourOccurrencesTwoVariableFolding() throws Exception {
+  public void testSuggestChangeSignatureFourOccurrencesTwoVariableFolding() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureWithOutputVariables() throws Exception {
+  public void testSuggestChangeSignatureWithOutputVariables() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureEqualConstExprFolding() throws Exception {
+  public void testSuggestChangeSignatureEqualConstExprFolding() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureLongConstExprFolding() throws Exception {
+  public void testSuggestChangeSignatureLongConstExprFolding() {
     doDuplicatesTest();
   }
 
-  public void testSuggestChangeSignatureTwoFieldInitializers() throws Exception {
+  public void testSuggestChangeSignatureTwoFieldInitializers() {
     doDuplicatesTest();
   }
 
-  public void testConditionalReturnInDuplicate() throws Exception {
+  public void testConditionalReturnInDuplicate() {
     doDuplicatesTest();
   }
 
   // todo DuplicatesFinder.canBeEquivalent() should see the difference between 'return' and assignment
-  public void _testConditionalReturnVsAssignDuplicate() throws Exception {
+  public void _testConditionalReturnVsAssignDuplicate() {
     doDuplicatesTest();
   }
 
-  public void testConditionalWithTwoParameters() throws Exception {
+  public void testConditionalWithTwoParameters() {
     doDuplicatesTest();
   }
 
-  public void testOverlappingDuplicate() throws Exception {
+  public void testOverlappingDuplicate() {
     doDuplicatesTest();
   }
 
-  public void testEffectivelyLocalVariables() throws Exception {
+  public void testEffectivelyLocalVariables() {
     doDuplicatesTest();
   }
 
-  public void testEffectivelyLocalWithinExpression() throws Exception {
+  public void testEffectivelyLocalWithinExpression() {
     doDuplicatesTest();
   }
 
-  public void testParametrizedDuplicateNestedSubexpression() throws Exception {
+  public void testParametrizedDuplicateNestedSubexpression() {
     doDuplicatesTest();
   }
 
-  public void testParametrizedDuplicateDeclaredOutputVariable() throws Exception {
+  public void testParametrizedDuplicateDeclaredOutputVariable() {
     doDuplicatesTest();
   }
 
-  public void testParametrizedDuplicateDeclaredReusedVariable() throws Exception {
+  public void testParametrizedDuplicateDeclaredReusedVariable() {
     doDuplicatesTest();
   }
 
-  public void testExactDuplicateDeclaredReusedVariable() throws Exception {
+  public void testExactDuplicateDeclaredReusedVariable() {
     doDuplicatesTest();
   }
 
-  public void testExactDuplicateTwoDeclaredReusedVariables() throws Exception {
+  public void testExactDuplicateTwoDeclaredReusedVariables() {
     doDuplicatesTest();
   }
 
-  public void testParametrizedDuplicateUnfoldArrayArgument() throws Exception {
+  public void testParametrizedDuplicateUnfoldArrayArgument() {
     doDuplicatesTest();
   }
 
-  public void testParametrizedDuplicateFoldListElement() throws Exception {
+  public void testParametrizedDuplicateFoldListElement() {
     doDuplicatesTest();
   }
 
-  public void testParametrizedDuplicateFoldArrayElement() throws Exception {
+  public void testParametrizedDuplicateFoldArrayElement() {
     doDuplicatesTest();
   }
 
-  public void testParametrizedMultiDuplicatesFoldArrayElement() throws Exception {
+  public void testParametrizedMultiDuplicatesFoldArrayElement() {
     doDuplicatesTest();
   }
 
-  public void testParametrizedDuplicateFoldArrayElementTwoUsages() throws Exception {
+  public void testParametrizedDuplicateFoldArrayElementTwoUsages() {
     doDuplicatesTest();
   }
 
-  public void testTripleParametrizedDuplicate() throws Exception {
+  public void testTripleParametrizedDuplicate() {
     doDuplicatesTest();
   }
 
-  public void testParametrizedDuplicateKeepSignature() throws Exception {
+  public void testParametrizedDuplicateKeepSignature() {
     doExactDuplicatesTest();
   }
 
-  public void testRejectParametrizedDuplicate() throws Exception {
+  public void testRejectParametrizedDuplicate() {
     doExactDuplicatesTest();
   }
 
-  public void testParametrizedDuplicateRepeatedArguments() throws Exception {
+  public void testParametrizedDuplicateRepeatedArguments() {
     doDuplicatesTest();
   }
 
-  public void testParametrizedDuplicateTripleRepeatedArguments() throws Exception {
+  public void testParametrizedDuplicateTripleRepeatedArguments() {
     doDuplicatesTest();
   }
 
-  public void testParametrizedDuplicateExactlyRepeatedArguments() throws Exception {
+  public void testParametrizedDuplicateExactlyRepeatedArguments() {
     doDuplicatesTest();
   }
 
-  public void testParametrizedDuplicateExpression() throws Exception {
+  public void testParametrizedDuplicateExpression() {
     doDuplicatesTest();
   }
 
-  public void testPatternVariable() throws Exception {
+  public void testPatternVariable() {
     doTestWithLanguageLevel(LanguageLevel.HIGHEST);
   }
 
-  public void testPatternVariableIntroduced() throws Exception {
+  public void testPatternVariableIntroduced() {
     doExitPointsTest(false);
   }
 
-  public void testPatternVariableIntroduced2() throws Exception {
+  public void testPatternVariableIntroduced2() {
     doExitPointsTest(false);
   }
 
-  public void testPatternVariableIntroduced3() throws Exception {
+  public void testPatternVariableIntroduced3() {
     doTestWithLanguageLevel(LanguageLevel.HIGHEST);
   }
 
-  public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {
+  public void testSuggestChangeSignatureWithChangedParameterName() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, false, "p");
     assertTrue(success);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  public void testTargetAnonymous() throws Exception {
+  public void testTargetAnonymous() {
     doTest();
   }
 
-  public void testSimpleMethodsInOneLine() throws Exception {
+  public void testSimpleMethodsInOneLine() {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     doTest();
   }
 
-  public void testExtractUnresolvedLambdaParameter() throws Exception {
+  public void testExtractUnresolvedLambdaParameter() {
     try {
       doTest();
       fail("Should not work for single lambda parameter");
-    } catch (PrepareFailedException e){
-
     }
+    catch (PrepareFailedException ignore) {}
   }
 
-  public void testExtractUnresolvedLambdaExpression() throws Exception {
+  public void testExtractUnresolvedLambdaExpression() {
     doTest();
   }
 
-  public void testNoNPE1() throws Exception {
+  public void testNoNPE1() {
     doTest();
   }
 
-  public void testNoNPE2() throws Exception {
+  public void testNoNPE2() {
     doTest();
   }
 
-  public void testTheOnlyParenthesisExpressionWhichIsSkippedInControlFlow() throws Exception {
+  public void testTheOnlyParenthesisExpressionWhichIsSkippedInControlFlow() {
     doTest();
   }
 
-  public void testExpression() throws Exception {
+  public void testExpression() {
     doTestWithJava17();
   }
 
-  public void testNonPhysicalSubexpression() throws Exception {
+  public void testNonPhysicalSubexpression() {
     doTest();
   }
 
-  public void testCopyParamAnnotations() throws Exception {
+  public void testCopyParamAnnotations() {
     doTest();
   }
 
-  public void testInferredNotNullInReturnStatement() throws Exception {
+  public void testInferredNotNullInReturnStatement() {
     doTest();
   }
 
-  public void testSkipThrowsDeclaredInLambda() throws Exception {
+  public void testSkipThrowsDeclaredInLambda() {
     doTest();
   }
 
-  public void testChangedReturnType() throws Exception {
+  public void testChangedReturnType() {
     doTestReturnTypeChanged(PsiType.getJavaLangObject(getPsiManager(), GlobalSearchScope.allScope(getProject())));
   }
 
   //TODO remove or implement
-  public void _testMakeVoidMethodReturnVariable() throws Exception {
+  public void _testMakeVoidMethodReturnVariable() {
     doTestReturnTypeChanged(PsiTypes.intType());
   }
 
-  public void testNoReturnTypesSuggested() throws Exception {
+  public void testNoReturnTypesSuggested() {
     doTestReturnTypeChanged(PsiTypes.intType());
   }
 
-  public void testMultipleVarsInMethodNoReturnStatementAndAssignment() throws Exception {
+  public void testMultipleVarsInMethodNoReturnStatementAndAssignment() {
     //return type should not be suggested but still
     doTestReturnTypeChanged(PsiTypes.intType());
   }
 
-  public void testReassignFinalFieldInside() throws Exception {
+  public void testReassignFinalFieldInside() {
     doTestReturnTypeChanged(PsiTypes.intType());
   }
 
-  public void testShortenClassRefsInNewReturnType() throws Exception {
+  public void testShortenClassRefsInNewReturnType() {
     doTestReturnTypeChanged(PsiType.getTypeByName(CommonClassNames.JAVA_UTIL_COLLECTION, getProject(), GlobalSearchScope.allScope(getProject())));
   }
 
-  public void testPassFieldAsParameterAndMakeStatic() throws Exception {
+  public void testPassFieldAsParameterAndMakeStatic() {
     doTestPassFieldsAsParams();
   }
 
-  public void testDefaultNamesConflictResolution() throws Exception {
+  public void testDefaultNamesConflictResolution() {
     final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
     settings.LOCAL_VARIABLE_NAME_PREFIX = "_";
     doTest();
   }
 
-  public void testInferredNotNull() throws Exception {
+  public void testInferredNotNull() {
     doTest();
   }
 
@@ -1284,95 +1303,95 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testConditionalExitCombinedWithNullabilityShouldPreserveVarsUsedInExitStatements() throws Exception {
+  public void testConditionalExitCombinedWithNullabilityShouldPreserveVarsUsedInExitStatements() {
     doTest();
   }
 
-  public void testSingleExitPOintWithTryFinally() throws Exception {
+  public void testSingleExitPOintWithTryFinally() {
     doTest();
   }
 
-  public void testLocalVariableModifierList() throws Exception {
+  public void testLocalVariableModifierList() {
     doTest();
   }
 
-  public void testLocalVariableAnnotationsOrder() throws Exception {
+  public void testLocalVariableAnnotationsOrder() {
     doTest();
   }
 
-  public void testDifferentAnnotations() throws Exception {
+  public void testDifferentAnnotations() {
     doTest();
   }
 
-  public void testSkipCustomAnnotations() throws Exception {
+  public void testSkipCustomAnnotations() {
     doTest();
   }
 
-  public void testNullabilityIsTypeAnnotation() throws Exception {
+  public void testNullabilityIsTypeAnnotation() {
     doTest();
   }
 
-  public void testKeepDeclarationWithAnnotations() throws Exception {
+  public void testKeepDeclarationWithAnnotations() {
     doTest();
   }
 
-  public void testFilterAnnotations() throws Exception {
+  public void testFilterAnnotations() {
     doTest();
   }
 
-  public void testNullabilityAnnotationOverridden() throws Exception {
+  public void testNullabilityAnnotationOverridden() {
     doTest();
   }
 
-  public void testSameAnnotations() throws Exception {
+  public void testSameAnnotations() {
     doTest();
   }
 
-  public void testNormalExitIf() throws Exception {
+  public void testNormalExitIf() {
     doTest();
   }
 
-  public void testNormalExitTry() throws Exception {
+  public void testNormalExitTry() {
     doTest();
   }
 
-  public void testMethodAnnotations() throws Exception {
+  public void testMethodAnnotations() {
     doTest();
   }
 
-  public void testNotNullArgument0() throws Exception {
+  public void testNotNullArgument0() {
     doTest();
   }
 
-  public void testNotNullArgument1() throws Exception {
+  public void testNotNullArgument1() {
     doTest();
   }
 
-  public void testNotNullArgument2() throws Exception {
+  public void testNotNullArgument2() {
     doTest();
   }
 
-  public void testNotNullArgument3() throws Exception {
+  public void testNotNullArgument3() {
     doTest();
   }
 
-  public void testNotNullArgument4() throws Exception {
+  public void testNotNullArgument4() {
     doTest();
   }
 
-  public void testNotNullArgument5() throws Exception {
+  public void testNotNullArgument5() {
     doTest();
   }
 
-  public void testNotNullArgument6() throws Exception {
+  public void testNotNullArgument6() {
     doTest();
   }
 
-  public void testNotNullArgument7() throws Exception {
+  public void testNotNullArgument7() {
     doTest();
   }
 
-  public void testNotNullArgumentTooComplexCode() throws Exception {
+  public void testNotNullArgumentTooComplexCode() {
     RegistryValue value = Registry.get("ide.dfa.state.limit");
     int oldValue = value.asInteger();
     try {
@@ -1383,51 +1402,51 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testVariableInLoopWithConditionalBreak() throws Exception {
+  public void testVariableInLoopWithConditionalBreak() {
     doTest();
   }
 
-  public void testNotNullArgumentLambdaBare() throws Exception {
+  public void testNotNullArgumentLambdaBare() {
     doTest();
   }
 
-  public void testNotNullArgumentLambdaInIf() throws Exception {
+  public void testNotNullArgumentLambdaInIf() {
     doTest();
   }
 
-  public void testNotNullArgumentLambdaInIfNoBlock() throws Exception {
+  public void testNotNullArgumentLambdaInIfNoBlock() {
     doTest();
   }
 
-  public void testNotNullArgumentLambdaInWhileNoBlock() throws Exception {
+  public void testNotNullArgumentLambdaInWhileNoBlock() {
     doTest();
   }
 
-  public void testNotNullArgumentLambdaInsideBody() throws Exception {
+  public void testNotNullArgumentLambdaInsideBody() {
     doTest();
   }
 
-  public void testNotNullArgumentLambdaInIfInsideBody() throws Exception {
+  public void testNotNullArgumentLambdaInIfInsideBody() {
     doTest();
   }
 
-  public void testNotNullArgumentAnonymousClassBare() throws Exception {
+  public void testNotNullArgumentAnonymousClassBare() {
     doTest();
   }
 
-  public void testNotNullArgumentAnonymousClassInIf() throws Exception {
+  public void testNotNullArgumentAnonymousClassInIf() {
     doTest();
   }
 
-  public void testNotNullArgumentAnonymousClassInIfNoBlock() throws Exception {
+  public void testNotNullArgumentAnonymousClassInIfNoBlock() {
     doTest();
   }
 
-  public void testNotNullArgumentLambdaInForInitializer() throws Exception {
+  public void testNotNullArgumentLambdaInForInitializer() {
     doTest();
   }
 
-  public void testEmptyParenthesis() throws Exception {
+  public void testEmptyParenthesis() {
     try {
       doTest();
       fail("Should not work for empty parenthesis");
@@ -1436,11 +1455,11 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testNestedReference() throws Exception {
+  public void testNestedReference() {
     doTest();
   }
 
-  public void testQualifyWhenConflictingNamePresent() throws Exception {
+  public void testQualifyWhenConflictingNamePresent() {
     final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
@@ -1464,13 +1483,13 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     });
   }
 
-  public void testStaticForNestedClass() throws Exception {
+  public void testStaticForNestedClass() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true, null, null, null);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  public void testStaticForOuterClass() throws Exception {
+  public void testStaticForOuterClass() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     final int caret = getEditor().getSelectionModel().getLeadSelectionOffset();
     final PsiClass outerClass = PsiTreeUtil.getParentOfType(getFile().findElementAt(caret), PsiClass.class).getContainingClass();
@@ -1478,152 +1497,152 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  public void testDontMakeParametersFinalDueToUsagesInsideAnonymous() throws Exception {
+  public void testDontMakeParametersFinalDueToUsagesInsideAnonymous() {
     doTest();
   }
 
-  public void testBuilderChainWithArrayAccess() throws Exception {
+  public void testBuilderChainWithArrayAccess() {
     doTest();
   }
 
-  public void testBuilderChainWithArrayAccessExpr() throws Exception {
+  public void testBuilderChainWithArrayAccessExpr() {
     doTest();
   }
 
-  public void testBuilderChainWithArrayAccessIf() throws Exception {
+  public void testBuilderChainWithArrayAccessIf() {
     doTest();
   }
 
-  public void testBuilderChainWith2DimArrayAccess() throws Exception {
+  public void testBuilderChainWith2DimArrayAccess() {
     doTest();
   }
 
-  public void testCallOnArrayElement() throws Exception {
+  public void testCallOnArrayElement() {
     doTest();
   }
 
-  public void testCallOn2DimArrayElement() throws Exception {
+  public void testCallOn2DimArrayElement() {
     doTest();
   }
 
-  public void testCallOnFieldArrayElement() throws Exception {
+  public void testCallOnFieldArrayElement() {
     doTest();
   }
 
-  public void testExtractedVariableReused() throws Exception {
+  public void testExtractedVariableReused() {
     doTest();
   }
 
-  public void testExtractBareThenBranch() throws Exception {
+  public void testExtractBareThenBranch() {
     doTest();
   }
 
-  public void testExtractBareElseBranch() throws Exception {
+  public void testExtractBareElseBranch() {
     doTest();
   }
 
   //TODO fix formatting
-  public void _testExtractBareForBody() throws Exception {
+  public void _testExtractBareForBody() {
     doTest();
   }
 
-  public void testExtractBareDoWhileBody() throws Exception {
+  public void testExtractBareDoWhileBody() {
     doTest();
   }
 
-  public void testExtractBracedElseBranch() throws Exception {
+  public void testExtractBracedElseBranch() {
     doTest();
   }
 
-  public void testExtractBracedDoWhileBody() throws Exception {
+  public void testExtractBracedDoWhileBody() {
     doTest();
   }
 
-  public void testInferredNotNullInReturnStatementDuplicate() throws Exception {
+  public void testInferredNotNullInReturnStatementDuplicate() {
     doDuplicatesTest();
   }
 
-  public void testNullableCheckBreakDuplicate() throws Exception {
+  public void testNullableCheckBreakDuplicate() {
     doDuplicatesTest();
   }
 
-  public void testOutputVariableDuplicate() throws Exception {
+  public void testOutputVariableDuplicate() {
     doDuplicatesTest();
   }
 
-  public void testNullableCheckVoidDuplicate() throws Exception {
+  public void testNullableCheckVoidDuplicate() {
     doTest();
   }
 
-  public void testWriteDifferentFieldsDuplicate() throws Exception {
+  public void testWriteDifferentFieldsDuplicate() {
     doDuplicatesTest();
   }
 
-  public void testDecrementDifferentFieldsDuplicate() throws Exception {
+  public void testDecrementDifferentFieldsDuplicate() {
     doDuplicatesTest();
   }
 
-  public void testDecrementDifferentStaticFieldsDuplicate() throws Exception {
+  public void testDecrementDifferentStaticFieldsDuplicate() {
     doDuplicatesTest();
   }
 
-  public void testDecrementDifferentOuterFieldsDuplicate() throws Exception {
+  public void testDecrementDifferentOuterFieldsDuplicate() {
     doDuplicatesTest();
   }
 
-  public void testDecrementDifferentInnerFieldsDuplicate() throws Exception {
+  public void testDecrementDifferentInnerFieldsDuplicate() {
     doDuplicatesTest();
   }
 
-  public void testDecrementDifferentChainedFieldsDuplicate() throws Exception {
+  public void testDecrementDifferentChainedFieldsDuplicate() {
     doDuplicatesTest();
   }
 
-  public void testArgumentFoldingWholeStatement() throws Exception {
+  public void testArgumentFoldingWholeStatement() {
     doDuplicatesTest();
   }
 
-  public void testArgumentFoldingWholeStatementForUpdate() throws Exception {
+  public void testArgumentFoldingWholeStatementForUpdate() {
     doDuplicatesTest();
   }
 
-  public void testArgumentFoldingWholeStatementForUpdateList() throws Exception {
+  public void testArgumentFoldingWholeStatementForUpdateList() {
     doDuplicatesTest();
   }
 
-  public void testArgumentFoldingMethodCall() throws Exception {
+  public void testArgumentFoldingMethodCall() {
     doDuplicatesTest();
   }
 
-  public void testBoxedConditionalReturn() throws Exception {
+  public void testBoxedConditionalReturn() {
     doDuplicatesTest();
   }
 
-  public void testAvoidGenericArgumentCast() throws Exception {
+  public void testAvoidGenericArgumentCast() {
     doDuplicatesTest();
   }
 
-  public void testAvoidGenericArgumentCastLocalClass() throws Exception {
+  public void testAvoidGenericArgumentCastLocalClass() {
     doDuplicatesTest();
   }
 
-  public void testDuplicatePreserveComments() throws Exception {
+  public void testDuplicatePreserveComments() {
     doDuplicatesTest();
   }
 
-  public void testDuplicateSubexpression() throws Exception {
+  public void testDuplicateSubexpression() {
     doDuplicatesTest();
   }
 
-  public void testDuplicateSubexpressionWithParentheses() throws Exception {
+  public void testDuplicateSubexpressionWithParentheses() {
     doDuplicatesTest();
   }
 
-  public void testOneVariableExpression() throws Exception {
+  public void testOneVariableExpression() {
     doDuplicatesTest();
   }
 
-  public void testInterfaceMethodVisibility() throws Exception {
+  public void testInterfaceMethodVisibility() {
     final String doesNotExist = "foo.bar.baz.DoesNotExist";
     final NullableNotNullManager nullManager = NullableNotNullManager.getInstance(getProject());
 
@@ -1651,39 +1670,39 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testBeforeCommentAfterSelectedFragment() throws Exception {
+  public void testBeforeCommentAfterSelectedFragment() {
     doTest();
   }
 
-  public void testInsideCommentAfterSelectedFragment() throws Exception {
+  public void testInsideCommentAfterSelectedFragment() {
     doTest();
   }
 
-  public void testEmptyBlockStatement() throws Exception {
+  public void testEmptyBlockStatement() {
     doExitPointsTest(false);
   }
 
-  public void testCallChainExpression() throws Exception {
+  public void testCallChainExpression() {
     doTest();
   }
 
-  public void testFromDefaultMethodInInterface() throws Exception {
+  public void testFromDefaultMethodInInterface() {
     doTest();
   }
 
-  public void testFromPrivateMethodInInterface() throws Exception {
+  public void testFromPrivateMethodInInterface() {
     doTest();
   }
 
-  public void testFromStaticMethodInInterface() throws Exception {
+  public void testFromStaticMethodInInterface() {
     doTestWithLanguageLevel(LanguageLevel.JDK_1_8);
   }
 
-  public void testDisjunctionType() throws Exception {
+  public void testDisjunctionType() {
     doTest();
   }
 
-  public void testExtractFromAnnotation() throws Exception {
+  public void testExtractFromAnnotation() {
     try {
       doTest();
       fail("Should not work for annotations");
@@ -1692,7 +1711,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testExtractFromAnnotation1() throws Exception {
+  public void testExtractFromAnnotation1() {
     try {
       doTest();
       fail("Should not work for annotations");
@@ -1701,15 +1720,15 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testExtractConditionFromSimpleIf() throws Exception {
+  public void testExtractConditionFromSimpleIf() {
     doTest();
   }
 
-  public void testExtractConditionFromSimpleIf1() throws Exception {
+  public void testExtractConditionFromSimpleIf1() {
     doTest();
   }
 
-  public void testSimpleWithNullableDirectlyBeforeType() throws Exception {
+  public void testSimpleWithNullableDirectlyBeforeType() {
     JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(getProject());
     boolean oldValue = instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE;
     instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = true;
@@ -1721,7 +1740,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testSimpleWithNullableDirectlyBeforeKeyword() throws Exception {
+  public void testSimpleWithNullableDirectlyBeforeKeyword() {
     JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(getProject());
     boolean oldValue = instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE;
     instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = false;
@@ -1733,7 +1752,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testNullableAnnotationNotTypeUse() throws Exception {
+  public void testNullableAnnotationNotTypeUse() {
     final NullableNotNullManager nullManager = NullableNotNullManager.getInstance(getProject());
 
     final List<String> nullables = nullManager.getNullables();
@@ -1758,14 +1777,28 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  private void doTestDisabledParam() throws PrepareFailedException {
-    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
-    settings.ELSE_ON_NEW_LINE = true;
-    settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, 0);
-    assertTrue(success);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  public void testNotNullContainerNotNullParam() {
+    doTest();
+  }
+
+  public void testNotNullContainerNullableParam() {
+    doTest();
+  }
+
+  public void testNotNullContainerUnknownParam() {
+    doTest();
+  }
+
+  public void testNotNullContainerNotNullResult() {
+    doTest();
+  }
+
+  public void testNotNullContainerNullableResult() {
+    doTest();
+  }
+
+  public void testNotNullContainerUnknownResult() {
+    doTest();
   }
 
   private void doTestReturnTypeChanged(PsiType type) throws PrepareFailedException {
@@ -1788,7 +1821,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  private void doPrepareErrorTest(final String expectedMessage) throws Exception {
+  private void doPrepareErrorTest(String expectedMessage) {
     String expectedError = null;
     try {
       doErrorTest();
@@ -1799,40 +1832,40 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     assertEquals(expectedMessage, expectedError);
   }
 
-  private void doErrorTest() throws Exception {
+  private void doErrorTest() {
     String fileName = getTestName(false) + ".java";
     configureByFile(BASE_PATH + fileName);
     performAction(false,false);
   }
 
-  private void doExitPointsTest(boolean shouldSucceed) throws Exception {
+  private void doExitPointsTest(boolean shouldSucceed) {
     String fileName = getTestName(false) + ".java";
     configureByFile(BASE_PATH + fileName);
     boolean succeed = false;
     try {
       doErrorTest();
       succeed = true;
-    } catch (PrepareFailedException e) {
     }
+    catch (PrepareFailedException ignore) {}
     assertEquals(shouldSucceed, succeed);
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     doTest(true);
   }
 
-  private void doTest(boolean duplicates) throws Exception {
+  private void doTest(boolean duplicates) {
     doTest(duplicates, null);
   }
 
-  private void doExactDuplicatesTest() throws Exception {
+  private void doExactDuplicatesTest() {
     doTest(true, () -> getFile().putUserData(ExtractMethodProcessor.SIGNATURE_CHANGE_ALLOWED, Boolean.FALSE));
   }
 
-  private void doTest(boolean duplicates, @Nullable Runnable prepare) throws Exception {
+  private void doTest(boolean duplicates, @Nullable Runnable prepare) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     if (prepare != null) prepare.run();
     boolean success = performAction(true, duplicates);
@@ -1840,7 +1873,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  private boolean performAction(boolean doRefactor, boolean replaceAllDuplicates) throws Exception {
+  private boolean performAction(boolean doRefactor, boolean replaceAllDuplicates) {
     return performExtractMethod(doRefactor, replaceAllDuplicates, getEditor(), getFile(), getProject());
   }
 
@@ -1857,7 +1890,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
                                               @NotNull Editor editor,
                                               @NotNull PsiFile file,
                                               @NotNull Project project,
-                                              final boolean extractChainedConstructor) throws PrepareFailedException, IncorrectOperationException {
+                                              boolean extractChainedConstructor) throws PrepareFailedException, IncorrectOperationException {
     return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor,
                                 ArrayUtilRt.EMPTY_INT_ARRAY);
   }
@@ -1867,7 +1900,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
                                               @NotNull Editor editor,
                                               @NotNull PsiFile file,
                                               @NotNull Project project,
-                                              final boolean extractChainedConstructor,
+                                              boolean extractChainedConstructor,
                                               int @NotNull ... disabledParams) throws PrepareFailedException, IncorrectOperationException {
     return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor, null, false, null, disabledParams);
   }
@@ -1877,7 +1910,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
                                               @NotNull Editor editor,
                                               @NotNull PsiFile file,
                                               @NotNull Project project,
-                                              final boolean extractChainedConstructor,
+                                              boolean extractChainedConstructor,
                                               PsiType returnType,
                                               boolean makeStatic,
                                               String newNameOfFirstParam,
@@ -1891,7 +1924,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
                                               @NotNull Editor editor,
                                               @NotNull PsiFile file,
                                               @NotNull Project project,
-                                              final boolean extractChainedConstructor,
+                                              boolean extractChainedConstructor,
                                               PsiType returnType,
                                               boolean makeStatic,
                                               String newNameOfFirstParam,
@@ -1953,7 +1986,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
       final Boolean hasDuplicates = processor.hasDuplicates();
       if (hasDuplicates == null || hasDuplicates.booleanValue()) {
         final List<Match> duplicates = processor.getDuplicates();
-        for (final Match match : duplicates) {
+        for (Match match : duplicates) {
           if (!match.getMatchStart().isValid() || !match.getMatchEnd().isValid()) continue;
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           ApplicationManager.getApplication().runWriteAction(() -> {

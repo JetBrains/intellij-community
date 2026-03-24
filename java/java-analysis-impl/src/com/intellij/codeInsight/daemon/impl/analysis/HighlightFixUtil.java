@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -154,7 +154,6 @@ import java.util.function.Consumer;
 
 import static com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil.checkRecordExhaustiveness;
 import static com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil.findMissedClasses;
-import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
@@ -167,8 +166,8 @@ public final class HighlightFixUtil {
                                                  @Nullable PsiType fromType,
                                                  @Nullable PsiType toType,
                                                  @NotNull PsiExpression expression) {
-    if (toType instanceof PsiArrayType) {
-      PsiType arrayComponentType = ((PsiArrayType)toType).getComponentType();
+    if (toType instanceof PsiArrayType arrayToType) {
+      PsiType arrayComponentType = arrayToType.getComponentType();
       if (!(arrayComponentType instanceof PsiPrimitiveType) &&
           !(PsiUtil.resolveClassInType(arrayComponentType) instanceof PsiTypeParameter)) {
         PsiExpression collection = expression;
@@ -177,12 +176,12 @@ public final class HighlightFixUtil {
           if (collection == null) return;
           fromType = collection.getType();
         }
-        if (fromType instanceof PsiClassType &&
-            (CommonClassNames.JAVA_LANG_OBJECT.equals(arrayComponentType.getCanonicalText()) || !((PsiClassType)fromType).isRaw()) &&
+        if (fromType instanceof PsiClassType arrayFromType &&
+            (CommonClassNames.JAVA_LANG_OBJECT.equals(arrayComponentType.getCanonicalText()) || !arrayFromType.isRaw()) &&
             InheritanceUtil.isInheritor(fromType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
           PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(fromType, expression.getResolveScope());
           if (collectionItemType != null && arrayComponentType.isConvertibleFrom(collectionItemType)) {
-            info.accept(QuickFixFactory.getInstance().createCollectionToArrayFix(collection, expression, (PsiArrayType)toType));
+            info.accept(QuickFixFactory.getInstance().createCollectionToArrayFix(collection, expression, arrayToType));
           }
         }
       }
@@ -191,16 +190,15 @@ public final class HighlightFixUtil {
 
   /**
    * Make an element protected/package-private/public suggestion.
-   * For private method in the interface it should add default modifier as well.
+   * For a private method in an interface it should add default modifier as well.
    */
   static void registerAccessQuickFixAction(@NotNull Consumer<? super CommonIntentionAction> info,
                                            @NotNull PsiJvmMember refElement,
-                                           @NotNull PsiJavaCodeReferenceElement place,
+                                           @NotNull PsiElement place,
                                            @Nullable PsiElement fileResolveScope) {
     PsiClass accessObjectClass = null;
-    PsiElement qualifier = place.getQualifier();
-    if (qualifier instanceof PsiExpression) {
-      accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass((PsiExpression)qualifier).getElement();
+    if (place instanceof PsiJavaCodeReferenceElement ref && ref.getQualifier() instanceof PsiExpression expr) {
+      accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(expr).getElement();
     }
     if (place instanceof PsiReferenceExpression ref) {
       FieldAccessFixer fixer = FieldAccessFixer.create(ref, refElement, place);
@@ -279,9 +277,9 @@ public final class HighlightFixUtil {
     if (place instanceof PsiReferenceExpression && place.getParent() instanceof PsiMethodCallExpression) {
       ReplaceGetClassWithClassLiteralFix.registerFix((PsiMethodCallExpression)place.getParent(), info);
     }
-    if (refElement instanceof PsiJvmModifiersOwner && !(refElement instanceof PsiParameter)) {
+    if (refElement instanceof PsiJvmModifiersOwner owner && !(refElement instanceof PsiParameter)) {
       List<IntentionAction> fixes =
-        JvmElementActionFactories.createModifierActions((PsiJvmModifiersOwner)refElement, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, true));
+        JvmElementActionFactories.createModifierActions(owner, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, true));
       fixes.forEach(info);
     }
     // make context non-static
@@ -289,19 +287,19 @@ public final class HighlightFixUtil {
     if (staticParent != null && isInstanceReference(place)) {
       info.accept(QuickFixFactory.getInstance().createModifierListFix(staticParent, PsiModifier.STATIC, false, false));
     }
-    if (place instanceof PsiReferenceExpression && refElement instanceof PsiField) {
-      info.accept(QuickFixFactory.getInstance().createCreateFieldFromUsageFix((PsiReferenceExpression)place));
+    if (place instanceof PsiReferenceExpression ref && refElement instanceof PsiField) {
+      info.accept(QuickFixFactory.getInstance().createCreateFieldFromUsageFix(ref));
     }
   }
 
   private static boolean isInstanceReference(@NotNull PsiJavaCodeReferenceElement place) {
     PsiElement qualifier = place.getQualifier();
     if (qualifier == null) return true;
-    if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return false;
+    if (!(qualifier instanceof PsiJavaCodeReferenceElement ref)) return false;
     PsiElement q = ((PsiReference)qualifier).resolve();
     if (q instanceof PsiClass) return false;
     if (q != null) return true;
-    String qname = ((PsiJavaCodeReferenceElement)qualifier).getQualifiedName();
+    String qname = ref.getQualifiedName();
     return qname == null || !Character.isLowerCase(qname.charAt(0));
   }
 
@@ -343,8 +341,8 @@ public final class HighlightFixUtil {
       PsiType type = variable.getType();
       if (type instanceof PsiArrayType && type.getArrayDimensions() == itemType.getArrayDimensions()) {
         PsiType componentType = type.getDeepComponentType();
-        if (componentType instanceof PsiPrimitiveType) {
-          PsiClassType boxedType = ((PsiPrimitiveType)componentType).getBoxedType(variable);
+        if (componentType instanceof PsiPrimitiveType primitiveType) {
+          PsiClassType boxedType = primitiveType.getBoxedType(variable);
           if (boxedType != null) {
             return getChangeVariableTypeFixes(variable, PsiTypesUtil.createArrayType(boxedType, type.getArrayDimensions()));
           }
@@ -436,10 +434,9 @@ public final class HighlightFixUtil {
   }
 
   public static void registerFixesForExpressionStatement(@NotNull Consumer<? super CommonIntentionAction> info,
-                                                         @NotNull PsiElement statement) {
-    if (!(statement instanceof PsiExpressionStatement)) return;
+                                                         @NotNull PsiExpressionStatement statement) {
     if (!(statement.getParent() instanceof PsiCodeBlock block)) return;
-    PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
+    PsiExpression expression = statement.getExpression();
     if (expression instanceof PsiAssignmentExpression) return;
     PsiType type = expression.getType();
     if (type == null) return;
@@ -715,17 +712,13 @@ public final class HighlightFixUtil {
                                                                    @NotNull PsiMethod resolved) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
     PsiVariable variable = null;
-    if (parent instanceof PsiVariable) {
-      variable = (PsiVariable)parent;
+    if (parent instanceof PsiVariable var) {
+      variable = var;
     }
-    else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
-      PsiExpression lExpression = assignmentExpression.getLExpression();
-      if (lExpression instanceof PsiReferenceExpression referenceExpression) {
-        PsiElement resolve = referenceExpression.resolve();
-        if (resolve instanceof PsiVariable) {
-          variable = (PsiVariable)resolve;
-        }
-      }
+    else if (parent instanceof PsiAssignmentExpression assignment
+             && assignment.getLExpression() instanceof PsiReferenceExpression ref
+             && ref.resolve() instanceof PsiVariable var) {
+      variable = var;
     }
 
     if (variable != null) {
@@ -1054,8 +1047,7 @@ public final class HighlightFixUtil {
     PsiElement memberName = reference.getReferenceNameElement();
     if (!(qualifier instanceof PsiJavaCodeReferenceElement referenceElement) || memberName == null) return false;
 
-    PsiClass clazz = tryCast(referenceElement.resolve(), PsiClass.class);
-    if (clazz == null) return false;
+    if (!(referenceElement.resolve() instanceof PsiClass clazz)) return false;
 
     if (newExpression.getArgumentList() == null) {
       PsiField field = clazz.findFieldByName(memberName.getText(), true);

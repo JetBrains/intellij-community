@@ -6,6 +6,7 @@ import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -29,12 +30,12 @@ public class FileTypeExtension<T> extends KeyedExtensionCollector<T, FileType> {
     return forKey(t);
   }
 
-  public T forFileType(@NotNull FileType t) {
+  public @Nullable T forFileType(@NotNull FileType t) {
     final List<T> all = allForFileType(t);
     return all.isEmpty() ? null : all.get(0);
   }
 
-  public Map<FileType, T> getAllRegisteredExtensions() {
+  public @NotNull Map<FileType, T> getAllRegisteredExtensions() {
     List<KeyedLazyInstance<T>> extensions = getExtensions();
     Map<FileType, T> result = new HashMap<>();
     for (KeyedLazyInstance<T> extension : extensions) {

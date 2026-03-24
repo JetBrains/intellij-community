@@ -65,7 +65,7 @@ class RemoteDevBackgroundRun(
     }
   }
 
-  @Remote("com.jetbrains.thinclient.lux.LuxClientService")
+  @Remote("com.jetbrains.thinclient.lux.LuxClientService", plugin = "com.intellij.jetbrains.client.performanceTesting")
   interface LuxClientService {
     fun getMaybeInstance(): LuxClientService?
   }
@@ -81,5 +81,10 @@ class RemoteDevBackgroundRun(
     finally {
       backendRun.closeIdeAndWait(closeIdeTimeout + 30.seconds, false)
     }
+  }
+
+  override fun forceKill() {
+    backendRun.forceKill()
+    super.forceKill()
   }
 }

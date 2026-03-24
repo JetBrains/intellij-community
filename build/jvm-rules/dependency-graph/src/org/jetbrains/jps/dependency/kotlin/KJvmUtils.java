@@ -44,6 +44,14 @@ final class KJvmUtils {
     return container instanceof KmClass && Attributes.getModality(((KmClass)container)) == Modality.SEALED;
   }
 
+  static boolean isFinal(JvmClass cls) {
+    return isFinal(getDeclarationContainer(cls));
+  }
+
+  static boolean isFinal(KmDeclarationContainer container) {
+    return container instanceof KmClass && Attributes.getModality(((KmClass)container)) == Modality.FINAL;
+  }
+
   static Iterable<KmFunction> allKmFunctions(Node<?, ?> node) {
     KotlinMeta meta = getKotlinMeta(node);
     return meta != null? meta.getKmFunctions() : Collections.emptyList();
@@ -89,6 +97,11 @@ final class KJvmUtils {
     // apart from lookups with actual property name, kotlinc generates lookups with getter/setter bytecode names
     // these lookups, named after property bytecode getter and setter, allow to distinguish between property read and write access usages in .kt file
     return method.getName();
+  }
+
+  static @Nullable String getCompanionObjectName(JvmClass cls) {
+    KotlinMeta meta = getKotlinMeta(cls);
+    return meta != null? meta.getCompanionObject() : null;
   }
 
   static boolean isDeclaresDefaultValue(KmFunction f) {

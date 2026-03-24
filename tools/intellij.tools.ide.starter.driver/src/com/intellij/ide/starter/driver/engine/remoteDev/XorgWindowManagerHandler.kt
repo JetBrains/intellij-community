@@ -1,6 +1,6 @@
 package com.intellij.ide.starter.driver.engine.remoteDev
 
-import com.intellij.driver.sdk.waitNotNull
+import com.intellij.driver.sdk.waitNotNullAsync
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.process.getProcessList
@@ -14,14 +14,14 @@ import kotlin.time.Duration.Companion.seconds
 
 object XorgWindowManagerHandler {
 
-  fun provideDisplay(): Int {
-    return waitNotNull("There is a display", 5.seconds) { getRunningDisplays().firstOrNull() }
+  suspend fun provideDisplay(): Int {
+    return waitNotNullAsync("There is a display", 5.seconds) { getRunningDisplays().firstOrNull() }
   }
 
   // region Fluxbox
   private val fluxboxName = "fluxbox"
 
-  private fun isFluxBoxIsRunning(displayWithColumn: String): Boolean {
+  private suspend fun isFluxBoxIsRunning(displayWithColumn: String): Boolean {
     val running = getProcessList { it.name == fluxboxName && it.arguments.contains(":$displayWithColumn") }.isNotEmpty()
     logOutput("$fluxboxName is running: $running")
     return running
@@ -54,8 +54,8 @@ object XorgWindowManagerHandler {
         timeout = 2.hours,
         args = listOf("/usr/bin/${fluxboxName}", "-display", displayWithColumn),
         workDir = null,
-        stdoutRedirect = ExecOutputRedirect.ToFile(fluxboxRunLog.toFile()),
-        stderrRedirect = ExecOutputRedirect.ToFile(fluxboxRunLog.toFile())
+        stdoutRedirect = ExecOutputRedirect.ToFile(fluxboxRunLog),
+        stderrRedirect = ExecOutputRedirect.ToFile(fluxboxRunLog)
       ).startCancellable()
     }
     else {

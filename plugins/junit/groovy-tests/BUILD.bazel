@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "groovy-tests",
+  module_name = "intellij.junit.groovy.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
@@ -16,17 +17,29 @@ jvm_library(
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework_test_lib",
     "//plugins/junit/testFramework",
+    "//plugins/junit/testFramework:testFramework_test_lib",
   ],
   runtime_deps = [":groovy-tests"]
 )
 ### auto-generated section `build intellij.junit.groovy.tests` end
+
+### auto-generated section `iml intellij.junit.groovy.tests` start
+exports_files([
+  "intellij.junit.groovy.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.junit.groovy.tests` end
 
 ### auto-generated section `test intellij.junit.groovy.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

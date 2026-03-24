@@ -1,23 +1,25 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pip
 
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.community.execService.Args
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator.Companion.findPathInHelpers
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.common.toPythonPackage
+import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
@@ -44,6 +46,7 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
   override suspend fun installPackageCommand(
     installRequest: PythonPackageInstallRequest,
     options: List<String>,
+    module: Module?,
   ): PyResult<Unit> = engine.installPackageCommand(installRequest, options)
 
   override suspend fun syncCommand(): PyResult<Unit> {
@@ -67,7 +70,7 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
     vararg specifications: PythonRepositoryPackageSpecification,
   ): PyResult<Unit> = engine.updatePackageCommand(*specifications)
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> = engine.uninstallPackageCommand(*pythonPackages)
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?): PyResult<Unit> = engine.uninstallPackageCommand(*pythonPackages, workspaceMember = workspaceMember)
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> = engine.loadPackagesCommand()
 
@@ -100,62 +103,39 @@ class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPa
   /**
    * This method is for local SDK only. It does nothing for remote SDK.
    */
-  internal suspend fun installManagementIfNeeded(): Boolean {
-    if (PythonSdkUtil.isRemote(sdk)) return false
-    if (hasManagement()) return true
-    return performManagementInstallation()
+  internal suspend fun installManagementIfNeeded(): PyResult<Unit> {
+    if (PythonSdkUtil.isRemote(sdk)) return PyResult.success(Unit)
+    if (hasManagement()) return PyResult.success(Unit)
+    return installManagement()
   }
-
-  private suspend fun performManagementInstallation(): Boolean = installManagement()
 
   suspend fun hasManagement(): Boolean =
-    languageLevel < LanguageLevel.PYTHON27 || (manager.hasInstalledPackage(PIP_PACKAGE) && hasSetuptools())
+    languageLevel < LanguageLevel.PYTHON27 || (hasPip() && hasSetuptools())
 
-  private suspend fun installManagement(): Boolean =
-    installWheelIfMissing(::hasPip, WheelFiles.PIP_WHEEL_NAME) &&
-    installWheelIfMissing(::hasSetuptools, WheelFiles.SETUPTOOLS_WHEEL_NAME)
-
-  private suspend fun installWheelIfMissing(requirementCheck: suspend () -> Boolean, wheelNameToInstall: String): Boolean {
-    if (!requirementCheck()) {
-      return withContext(Dispatchers.IO) {
-        val wheelPathToInstall = findPathInHelpers(wheelNameToInstall).toString()
-        installUsingPipWheel("--no-index", wheelPathToInstall)
-      }
-    }
-    return true
+  private suspend fun installManagement(): PyResult<Unit> {
+    if (!hasPip()) installWheel(WheelFiles.PIP_WHEEL_NAME).getOr { return it }
+    if (!hasSetuptools()) installWheel(WheelFiles.SETUPTOOLS_WHEEL_NAME).getOr { return it }
+    return PyResult.success(Unit)
   }
 
-  private fun installUsingPipWheel(vararg additionalArgs: String): Boolean {
-    val pipWheelPath = findPathInHelpers(WheelFiles.PIP_WHEEL_NAME).resolve(Path.of(PyPackageUtil.PIP))
-    val commandArguments = buildCommandArguments(pipWheelPath, *additionalArgs)
-    return executeCommand(commandArguments)
+  private suspend fun installWheel(wheelName: String): PyResult<Unit> = withContext(Dispatchers.IO) {
+    val pipPath = findPathInHelpers(WheelFiles.PIP_WHEEL_NAME).resolve(Path.of(PyPackageUtil.PIP))
+    val wheelPath = findPathInHelpers(wheelName).toString()
+    val pythonPath = requireNotNull(sdk.homePath).let { Path.of(it) }
+    val args = Args(pipPath.toString(), "install", "--no-index", wheelPath)
+    ExecService().execGetStdout(pythonPath, args).mapSuccess { }
   }
 
-  private fun executeCommand(commandArguments: List<String>): Boolean {
-    val processHandler = CapturingProcessHandler(GeneralCommandLine(commandArguments))
-    val output: ProcessOutput = processHandler.runProcess()
-    return output.exitCode == 0
-  }
-
-
-  private suspend fun hasPip(): Boolean = manager.hasInstalledPackage(PIP_PACKAGE)
+  private suspend fun hasPip(): Boolean = manager.hasInstalledPackage(PyPackageUtil.PIP)
 
   private suspend fun hasSetuptools(): Boolean =
     languageLevel >= LanguageLevel.PYTHON312 ||
-    manager.hasInstalledPackage(SETUPTOOLS_PACKAGE) ||
-    manager.hasInstalledPackage(DISTRIBUTE_PACKAGE)
-
-  private fun buildCommandArguments(wheelPath: Path, vararg additionalArgs: String): List<String> =
-    listOfNotNull(sdk.homePath.toString(), wheelPath.toString(), "install") + additionalArgs
+    manager.hasInstalledPackage(PyPackageUtil.SETUPTOOLS) ||
+    manager.hasInstalledPackage(PyPackageUtil.DISTRIBUTE)
 
   private object WheelFiles {
     const val SETUPTOOLS_WHEEL_NAME = "setuptools-44.1.1-py2.py3-none-any.whl"
     const val PIP_WHEEL_NAME = "pip-24.3.1-py2.py3-none-any.whl"
   }
 
-  companion object {
-    val PIP_PACKAGE: PythonPackage = PythonPackage(PyPackageUtil.PIP, "24.3.1", false)
-    val SETUPTOOLS_PACKAGE: PythonPackage = PythonPackage(PyPackageUtil.SETUPTOOLS, "44.1.1", false)
-    val DISTRIBUTE_PACKAGE: PythonPackage = PythonPackage(PyPackageUtil.DISTRIBUTE, "", false)
-  }
 }

@@ -26,28 +26,77 @@ jvm_library(
 
 jvm_library(
   name = "experiment_test_lib",
+  module_name = "intellij.platform.experiment",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":experiment"],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
-    "//platform/statistics",
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":experiment",
+    "//platform/core-api:core_test_lib",
     "//platform/statistics:statistics_test_lib",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/projectModel-api:projectModel",
-    "//platform/projectModel-impl",
-    "//platform/platform-impl:ide-impl",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:junit5",
   ]
 )
 ### auto-generated section `build intellij.platform.experiment` end
 
-### auto-generated section `test intellij.platform.experiment` start
+### auto-generated section `iml intellij.platform.experiment` start
+exports_files([
+  "intellij.platform.experiment.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.experiment` end
+
+### auto-generated section `build intellij.platform.experiment.tests` start
+jvm_library(
+  name = "experiment-tests",
+  module_name = "intellij.platform.experiment.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "experiment-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [
+    "//platform/experiment",
+    "//platform/experiment:experiment_test_lib",
+  ],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/projectModel-impl",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:junit5",
+  ],
+  runtime_deps = [
+    ":experiment-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.experiment.tests` end
+
+### auto-generated section `iml intellij.platform.experiment.tests` start
+exports_files([
+  "intellij.platform.experiment.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.experiment.tests` end
+
+### auto-generated section `test intellij.platform.experiment.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "experiment_test",
-  runtime_deps = [":experiment_test_lib"]
+  name = "experiment-tests_test",
+  runtime_deps = [":experiment-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.experiment` end
+### auto-generated section `test intellij.platform.experiment.tests` end

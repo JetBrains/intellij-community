@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
@@ -46,14 +46,12 @@ import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isVirtualEnv
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
@@ -62,7 +60,6 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.createDetectedSdk
-import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -262,6 +259,55 @@ suspend fun createSdk(
          ?: PyResult.localizedError(PyBundle.message("python.sdk.failed.to.create.interpreter.title"))
 }
 
+@Internal
+suspend fun <P : PathHolder> createSdk(
+  pythonBinaryPath: P,
+  suggestedSdkName: String?,
+  sdkAdditionalData: PythonSdkAdditionalData? = null,
+): PyResult<Sdk> {
+  val sdkType = PythonSdkType.getInstance()
+  val existingSdks = PythonSdkUtil.getAllSdks()
+
+  // for remote sdks we can't distinguish target environment configurations (docker the worst case)
+  if (sdkAdditionalData !is PyTargetAwareAdditionalData) {
+    existingSdks.find {
+      it.sdkAdditionalData?.javaClass == sdkAdditionalData?.javaClass &&
+      it.homePath == pythonBinaryPath.toString()
+    }?.let {
+      return PyResult.success(it)
+    }
+  }
+
+  val sdk = when (pythonBinaryPath) {
+    is PathHolder.Eel -> {
+      val pythonBinaryVirtualFile = withContext(Dispatchers.IO) {
+        VirtualFileManager.getInstance().refreshAndFindFileByNioPath(pythonBinaryPath.path)
+      } ?: return PyResult.localizedError(PyBundle.message("python.sdk.python.executable.not.found", pythonBinaryPath))
+
+      SdkConfigurationUtil.setupSdk(
+        existingSdks.toTypedArray(),
+        pythonBinaryVirtualFile,
+        sdkType,
+        false,
+        sdkAdditionalData,
+        suggestedSdkName
+      )
+    }
+    is PathHolder.Target -> {
+      SdkConfigurationUtil.createSdk(
+        existingSdks,
+        pythonBinaryPath.pathString,
+        sdkType,
+        sdkAdditionalData,
+        suggestedSdkName
+      ).also { sdk -> sdkType.setupSdkPaths(sdk) }
+    }
+  }
+
+  return sdk?.let { PyResult.success(it) }
+         ?: PyResult.localizedError(PyBundle.message("python.sdk.failed.to.create.interpreter.title"))
+}
+
 internal fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.DialogTitle title: String) {
   runInEdt {
     val description = PyPackageManagementService.toErrorDescription(listOf(e), sdk) ?: return@runInEdt
@@ -320,21 +366,6 @@ fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
   return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeDir, PythonSdkType.getInstance(), null, null)
 }
 
-@Internal
-suspend fun PyDetectedSdk.setupSdk(
-  module: Module,
-  existingSdks: List<Sdk>,
-  doAssociate: Boolean,
-) {
-  val newSdk = setupAssociated(existingSdks, module.baseDir?.path, doAssociate).getOr {
-    ShowingMessageErrorSync.emit(it.error, module.project)
-    return
-  }
-  withContext(Dispatchers.EDT) {
-    SdkConfigurationUtil.addSdk(newSdk)
-  }
-  setReadyToUseSdk(module.project, module, newSdk)
-}
 
 @Internal
 suspend fun PyDetectedSdk.setupAssociated(
@@ -442,7 +473,7 @@ fun getInnerVirtualEnvRoot(sdk: Sdk): VirtualFile? {
 }
 
 internal suspend fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? = withContext(Dispatchers.IO) {
-  // please don't forget to update com.jetbrains.python.inspections.interpreter.PyInterpreterInspection#getSuitableSdkFix
+  // please don't forget to update com.jetbrains.python.inspections.interpreter.PyInterpreterNotificationProvider (createCacheLoader)
   // after changing this method
 
   val baseSdkName = PythonSdkType.suggestBaseSdkName(sdkHome) ?: return@withContext null

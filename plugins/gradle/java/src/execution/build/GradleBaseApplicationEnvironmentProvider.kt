@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build
 
 import com.intellij.compiler.options.CompileStepBeforeRun
@@ -93,7 +93,7 @@ abstract class GradleBaseApplicationEnvironmentProvider : GradleExecutionEnviron
       getConfigurationRunName(runProfile)
     } ?: return null
     val module = runProfile.configurationModule.module ?: return null
-    val javaModuleName = runProfile.findJavaModuleName(isTestModule(module))
+    val javaModuleName = if (runProfile.isUseModulePath()) runProfile.findJavaModuleName(isTestModule(module)) else null
 
     val gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module) ?: return null
     val externalProjectPath = gradleModuleData.directoryToRunTask

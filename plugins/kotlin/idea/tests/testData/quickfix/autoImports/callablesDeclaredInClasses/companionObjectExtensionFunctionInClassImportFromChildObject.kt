@@ -1,4 +1,5 @@
 // "Import extension function 'Companion.foobar'" "true"
+// K2_ERROR: Unresolved reference 'foobar'.
 package p
 
 open class T {

@@ -6,6 +6,7 @@ import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.MonitorExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
@@ -309,8 +310,10 @@ public final class StackVarsProcessor {
     boolean notdom = getUsedVersions(ssau, leftpaar, usedVers);
 
     if (!notdom && usedVers.isEmpty()) {
-      if (left.isStack() && (right.type == Exprent.EXPRENT_INVOCATION ||
-                             right.type == Exprent.EXPRENT_ASSIGNMENT || right.type == Exprent.EXPRENT_NEW)) {
+      if (left.isStack() && (
+        (right.type == Exprent.EXPRENT_INVOCATION && !((InvocationExprent)right).isBoxingCall())||
+                             right.type == Exprent.EXPRENT_ASSIGNMENT ||
+                             right.type == Exprent.EXPRENT_NEW)) {
         if (right.type == Exprent.EXPRENT_NEW) {
           // new Object(); permitted
           NewExprent nexpr = (NewExprent)right;

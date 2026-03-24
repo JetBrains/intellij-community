@@ -4,6 +4,7 @@
 package org.jetbrains.kotlin.idea.gradle.versionCatalog.toml
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
+import com.intellij.gradle.java.toml.findOriginInTomlFile
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
@@ -12,7 +13,6 @@ import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension.GRADLE_VERSION_CATALOGS_DYNAMIC_SUPPORT
-import org.jetbrains.plugins.gradle.toml.findOriginInTomlFile
 import org.jetbrains.plugins.gradle.util.isInVersionCatalogAccessor
 import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.tryResolve

@@ -30,7 +30,7 @@ public abstract class UsageInfoSearcherAdapter implements UsageSearcher {
         UsageViewBundle.message("notification.usage.search.is.not.available.until.indices.are.ready"), DumbModeBlockedFunctionality.UsageInfoSearcherAdapter);
       return;
     }
-    final Usage[] usages = ReadAction.compute(() -> UsageInfo2UsageAdapter.convert(refUsages.get()));
+    final Usage[] usages = ReadAction.computeBlocking(() -> UsageInfo2UsageAdapter.convert(refUsages.get()));
 
     for (final Usage usage : usages) {
       ApplicationManager.getApplication().runReadAction(() -> {

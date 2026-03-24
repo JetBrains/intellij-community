@@ -28,13 +28,15 @@ internal data class ContentModuleDependencyPlan(
   @JvmField val existingXmlModuleDependencies: Set<ContentModuleName>,
   /** Existing plugin deps already in XML. */
   @JvmField val existingXmlPluginDependencies: Set<PluginId>,
+  /** Existing plugin deps to preserve during update (manual aliases or suppressed deps). */
+  @JvmField val preserveExistingPluginDependencies: Set<PluginId>,
   /** Effective plugin deps written to XML (auto + preserved). */
   @JvmField val writtenPluginDependencies: List<PluginId>,
   /** All plugin deps inferred from JPS (before suppressions). */
   @JvmField val allJpsPluginDependencies: Set<PluginId>,
   /** Suppressed module deps (used to preserve existing manual entries). */
   @JvmField val suppressedModules: Set<ContentModuleName>,
-  /** Suppressed plugin deps (used to preserve existing manual entries). */
+  /** Plugin deps intentionally omitted from XML. */
   @JvmField val suppressedPlugins: Set<PluginId>,
   /** Suppression usages recorded during planning. */
   @JvmField val suppressionUsages: List<SuppressionUsage>,

@@ -8,7 +8,9 @@ class ExecuteRunConfigurationsConfiguration {
     /**
      * Fully qualified name of functions of which to execute the associated run gutters (run configurations)
      */
-    val functionFqNames = mutableSetOf<String>()
+    val functionDetails = mutableSetOf<FunctionDetails>()
 
     var executionTimeout: Duration = 2.minutes
 }
+
+data class FunctionDetails(val fqn: String, val containingFileName: String?, val moduleName: String?)

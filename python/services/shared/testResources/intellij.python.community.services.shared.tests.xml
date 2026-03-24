@@ -1,0 +1,10 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.python.community.services.shared"/>
+    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.testFramework.junit5"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

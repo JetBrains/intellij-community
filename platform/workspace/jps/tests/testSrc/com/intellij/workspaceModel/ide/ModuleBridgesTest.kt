@@ -7,6 +7,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.EmptyModuleType
@@ -14,6 +15,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -37,6 +39,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
@@ -55,6 +58,7 @@ import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.toConfigLocation
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
@@ -71,6 +75,7 @@ import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.workspaceModel.updateProjectModel
@@ -84,10 +89,12 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootTypeProperties
@@ -157,6 +164,32 @@ class ModuleBridgesTest {
       moduleManager.getModifiableModel().let {
         it.disposeModule(module)
         it.commit()
+      }
+    }
+  }
+
+  @Test
+  fun testModuleChangesSourceAndName(): Unit = timeoutRunBlocking {
+    val customEntitySource = object : EntitySource {}
+
+    val newModuleName = "xxx_renamed"
+    val moduleManager = ModuleManager.getInstance(project)
+
+    val module = writeAction { moduleManager.newModule(temporaryDirectoryRule.newDirectoryPath(), "PYTHON_MODULE") }
+    try {
+      project.workspaceModel.update("...") { storage ->
+        val moduleEntity = module.findModuleEntity(storage)!!
+        storage.modifyModuleEntity(moduleEntity) {
+          name = newModuleName
+          entitySource = customEntitySource
+        }
+
+      }
+      Assertions.assertThat(project.modules.map { it.name }).containsExactly(newModuleName)
+    }
+    finally {
+      writeAction {
+        moduleManager.disposeModule(module)
       }
     }
   }
@@ -438,7 +471,9 @@ class ModuleBridgesTest {
           this.contentRoots = listOf(
             ContentRootEntity(virtualFileUrl, emptyList<@NlsSafe String>(), entitySource) {
               this.sourceRoots = listOf(
-                SourceRootEntity(virtualFileUrl, DEFAULT_SOURCE_ROOT_TYPE_ID, JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
+                SourceRootEntity(virtualFileUrl,
+                                 DEFAULT_SOURCE_ROOT_TYPE_ID,
+                                 JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
               )
             }
           )

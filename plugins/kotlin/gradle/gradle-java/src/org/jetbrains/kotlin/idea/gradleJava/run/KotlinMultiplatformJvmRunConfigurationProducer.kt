@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -53,7 +54,14 @@ class KotlinMultiplatformJvmRunConfigurationProducer : LazyRunConfigurationProdu
         if (!KotlinMainFunctionDetector.getInstance().isMain(function)) return false
         val runTask = KotlinJvmRunTaskData.findSuitableKotlinJvmRunTask(module) ?: return false
         if (runTask.taskName !in configuration.settings.taskNames) return false
-        return mainClassScriptParameter(function) in configuration.settings.scriptParameters
+
+        val isDifferentMainFunction = function.containingKtFile.javaFileFacadeFqName.asString() != configuration.mainFunctionClassFqn
+        if (isDifferentMainFunction) return false
+
+        if (!runTask.isComposeGradlePluginConfigured &&
+            mainClassScriptParameter(function) !in configuration.settings.scriptParameters) return false
+
+        return true
     }
 
     override fun setupConfigurationFromContext(

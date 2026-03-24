@@ -11,6 +11,8 @@ internal fun ErrorLog.reportAsFailures() {
   }
 }
 
+private var codeOwnerResolutionFailed = false
+
 // Avoid changing the test name!
 // TeamCity remembers failures by the test name.
 // Changing the test name results in effectively new failed tests being reported,
@@ -20,6 +22,14 @@ internal fun ErrorLog.reportAsFailures() {
 private fun logAsTeamcityTestFailure(error: LoggedError) {
   val message = findMessage(error)
   val stackTraceContent = error.stackTraceToString()
+  val owner = if (codeOwnerResolutionFailed) null
+  else runCatching {
+    TestLoggerFactory.getCurrentTestClass()?.let { codeOwnerResolver?.getOwnerGroupName(it) }
+  }.onFailure {
+    codeOwnerResolutionFailed = true
+    println(it)
+  }.getOrNull()
+
   val testName = if (message == null) {
     "Error logged without message"
   } else {
@@ -27,7 +37,7 @@ private fun logAsTeamcityTestFailure(error: LoggedError) {
       .replace("[:.()]".toRegex(), " ")
       .replace(" +".toRegex(), " ")
   }
-  System.out.reportTestFailure(testName, message ?: "", stackTraceContent)
+  System.out.reportTestFailure(testName, message ?: "", stackTraceContent, owner)
 }
 
 private fun findMessage(t: Throwable): String? {

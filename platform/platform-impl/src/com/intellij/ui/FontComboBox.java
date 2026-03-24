@@ -5,13 +5,11 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FontInfo;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -46,36 +44,7 @@ public final class FontComboBox extends AbstractFontCombo {
     // preScaled=true as 'size' reflects already scaled font
     mySize = JBDimension.create(size, true);
     setSwingPopup(false);
-    //noinspection unchecked
-    setRenderer(new GroupedComboBoxRenderer(this) {
-      @Override
-      public @Nullable ListSeparator separatorFor(Object value) {
-        if (getModel() instanceof Model m && value instanceof FontInfo info) {
-          if (!m.myMonoFonts.isEmpty() && m.myMonoFonts.get(0) == info)
-            return new ListSeparator(ApplicationBundle.message("settings.editor.font.monospaced"));
-          if (!m.myAllFonts.isEmpty() && ContainerUtil.find(m.myAllFonts, f -> !f.isMonospaced()) == info)
-            return new ListSeparator(ApplicationBundle.message("settings.editor.font.proportional"));
-        }
-        return null;
-      }
-
-      @Override
-      public void customize(@NotNull SimpleColoredComponent item, Object value, int index, boolean isSelected, boolean hasFocus) {
-        if (value instanceof FontInfo info) {
-          item.setFont(index == -1 ? JBUI.Fonts.label() : info.getFont());
-          item.append(info.toString());
-        }
-        else if (value instanceof Model.NoFontItem nfi) {
-          item.append(nfi.toString());
-        }
-        else if (value instanceof Model.LoadingFontsItem lfi) {
-          item.append(lfi.toString(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        }
-        else if (value instanceof String s) {
-          item.append(s); //NON-NLS
-        }
-      }
-    });
+    setupDefaultRenderer(false, true);
     getModel().addListDataListener(new ListDataListener() {
       @Override
       public void intervalAdded(ListDataEvent e) {}
@@ -143,12 +112,33 @@ public final class FontComboBox extends AbstractFontCombo {
     }
   }
 
-  private static final class Model extends AbstractListModel implements ComboBoxModel {
+  /**
+   * Customizes the renderer for the font combo box.
+   *
+   * @param isEditorFont whether the fonts are used in the editor or in the UI
+   * @param showGroups whether to show Monospaced/Proportional font groups. Should be false if the combobox uses
+   *                   monospaced fonts only.
+   */
+  public void setupDefaultRenderer(boolean isEditorFont, boolean showGroups) {
+    var builder = new FontInfoRendererBuilder();
+
+    if (isEditorFont) {
+      builder.editorFont();
+    }
+    if (showGroups) {
+      builder.withSeparatorFontType(() -> myModel.myAllFonts, () -> myModel.myMonoFonts);
+    }
+
+    //noinspection unchecked
+    setRenderer(builder.buildFontComboBoxRenderer());
+  }
+
+  static final class Model extends AbstractListModel implements ComboBoxModel {
     private final NoFontItem myNoFontItem;
     private LoadingFontsItem myLoadingFontsItem = null;
 
-    private volatile List<FontInfo> myAllFonts = Collections.emptyList();
-    private volatile List<FontInfo> myMonoFonts = Collections.emptyList();
+    private volatile @NotNull List<FontInfo> myAllFonts = Collections.emptyList();
+    private volatile @NotNull List<FontInfo> myMonoFonts = Collections.emptyList();
     private boolean myMonospacedOnly;
     private Object mySelectedItem;
 
@@ -171,7 +161,7 @@ public final class FontComboBox extends AbstractFontCombo {
       }
     }
 
-    private void setFonts(List<FontInfo> all, boolean filterNonLatin) {
+    private void setFonts(@NotNull List<FontInfo> all, boolean filterNonLatin) {
       List<FontInfo> allFonts = new ArrayList<>(all.size());
       List<FontInfo> monoFonts = new ArrayList<>();
       for (FontInfo info : all) {
@@ -214,7 +204,7 @@ public final class FontComboBox extends AbstractFontCombo {
         if (item instanceof FontInfo) {
           FontInfo info = getInfo(item);
           if (info == null) {
-            List<FontInfo> list = myMonospacedOnly ? myMonoFonts : myAllFonts;
+            @NotNull List<FontInfo> list = myMonospacedOnly ? myMonoFonts : myAllFonts;
             item = list.isEmpty() ? null : list.get(0);
           }
         }
@@ -268,14 +258,14 @@ public final class FontComboBox extends AbstractFontCombo {
       return null;
     }
 
-    private static final class NoFontItem {
+    static final class NoFontItem {
       @Override
       public @NlsSafe String toString() {
         return ApplicationBundle.message("settings.editor.font.none");
       }
     }
 
-    private static final class LoadingFontsItem {
+    static final class LoadingFontsItem {
       @Override
       public @NlsSafe String toString() {
         return ApplicationBundle.message("settings.editor.font.loading");

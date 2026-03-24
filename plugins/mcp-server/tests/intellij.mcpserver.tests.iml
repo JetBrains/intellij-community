@@ -16,7 +16,6 @@
             <arrayArg name="pluginClasspaths">
               <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
             </arrayArg>
-            <arrayArg name="pluginOptions" />
           </arrayArguments>
         </compilerArguments>
       </configuration>
@@ -32,7 +31,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinTestAssertionsCoreJvm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" scope="TEST" />
@@ -51,6 +49,11 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.terminal" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.mcpserver" />
 </module>

@@ -13,60 +13,339 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.Function;
 import com.intellij.util.ui.PresentableEnumUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.AbstractButton;
+import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.border.TitledBorder;
 import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.ResourceBundle;
 
 public final class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
-  private JTextField myKeepBlankLines;
-  private JComboBox<CodeStyleSettings.WrapStyle> myWrapAttributes;
-  private JCheckBox myAlignAttributes;
-  private JCheckBox myKeepWhiteSpaces;
+  private final JTextField myKeepBlankLines;
+  private final JComboBox<CodeStyleSettings.WrapStyle> myWrapAttributes;
+  private final JCheckBox myAlignAttributes;
+  private final JCheckBox myKeepWhiteSpaces;
 
-  private JPanel myPanel;
-  private JPanel myPreviewPanel;
+  private final JPanel myPanel;
+  private final JPanel myPreviewPanel;
 
-  private JCheckBox mySpacesAroundEquality;
-  private JCheckBox mySpacesAroundTagName;
-  private JCheckBox myAlignText;
-  private ExpandableTextField myInsertNewLineTagNames;
-  private ExpandableTextField myRemoveNewLineTagNames;
-  private ExpandableTextField myDoNotAlignChildrenTagNames;
-  private ExpandableTextField myKeepWhiteSpacesTagNames;
-  private ExpandableTextField myInlineElementsTagNames;
-  private JTextField myDoNotAlignChildrenMinSize;
-  private JCheckBox myShouldKeepBlankLines;
-  private JCheckBox mySpaceInEmptyTag;
-  private JCheckBox myWrapText;
-  private JCheckBox myShouldKeepLineBreaksInText;
-  private ExpandableTextField myDontBreakIfInlineContent;
-  private JBScrollPane myJBScrollPane;
-  private JPanel myRightMarginPanel;
-  private JComboBox<CodeStyleSettings.QuoteStyle> myQuotesCombo;
-  private JBCheckBox myEnforceQuotesBox;
-  private ComboBox<CodeStyleSettings.HtmlTagNewLineStyle> myBeforeFirstAttributeCombo;
-  private ComboBox<CodeStyleSettings.HtmlTagNewLineStyle> myAfterLastAttributeCombo;
-  private JPanel mySettingsPanel;
+  private final JCheckBox mySpacesAroundEquality;
+  private final JCheckBox mySpacesAroundTagName;
+  private final JCheckBox myAlignText;
+  private final ExpandableTextField myInsertNewLineTagNames;
+  private final ExpandableTextField myRemoveNewLineTagNames;
+  private final ExpandableTextField myDoNotAlignChildrenTagNames;
+  private final ExpandableTextField myKeepWhiteSpacesTagNames;
+  private final ExpandableTextField myInlineElementsTagNames;
+  private final JTextField myDoNotAlignChildrenMinSize;
+  private final JCheckBox myShouldKeepBlankLines;
+  private final JCheckBox mySpaceInEmptyTag;
+  private final JCheckBox myWrapText;
+  private final JCheckBox myShouldKeepLineBreaksInText;
+  private final ExpandableTextField myDontBreakIfInlineContent;
+  private final JBScrollPane myJBScrollPane;
+  private final JPanel myRightMarginPanel;
+  private final JComboBox<CodeStyleSettings.QuoteStyle> myQuotesCombo;
+  private final JBCheckBox myEnforceQuotesBox;
+  private final ComboBox<CodeStyleSettings.HtmlTagNewLineStyle> myBeforeFirstAttributeCombo;
+  private final ComboBox<CodeStyleSettings.HtmlTagNewLineStyle> myAfterLastAttributeCombo;
+  private final JPanel mySettingsPanel;
   private RightMarginForm myRightMarginForm;
   private final List<HtmlCodeStylePanelExtension.HtmlPanelCustomizer> myPanelCustomizers;
 
   public CodeStyleHtmlPanel(CodeStyleSettings settings) {
     super(settings);
+    {
+      myRightMarginForm = new RightMarginForm(HtmlFileType.INSTANCE.getLanguage(), getSettings());
+      myRightMarginPanel = myRightMarginForm.getTopPanel();
+      myJBScrollPane = new JBScrollPane() {
+        @Override
+        public Dimension getPreferredSize() {
+          Dimension prefSize = super.getPreferredSize();
+          return new Dimension(prefSize.width + 15, prefSize.height);
+        }
+      };
+
+      Function<String, List<String>> parser = (list) -> Arrays.asList(list.split(","));
+      Function<List<String>, String> joiner = (list) -> StringUtil.join(list, ",");
+      myInsertNewLineTagNames = new ExpandableTextField(parser, joiner);
+      myRemoveNewLineTagNames = new ExpandableTextField(parser, joiner);
+      myDoNotAlignChildrenTagNames = new ExpandableTextField(parser, joiner);
+      myInlineElementsTagNames = new ExpandableTextField(parser, joiner);
+      myKeepWhiteSpacesTagNames = new ExpandableTextField(parser, joiner);
+      myDontBreakIfInlineContent = new ExpandableTextField(parser, joiner);
+    }
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myPanel = new JPanel();
+      myPanel.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), 4, -1));
+      myPreviewPanel = new JPanel();
+      myPanel.add(myPreviewPanel, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                      null, null, 0, false));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(panel1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
+                                              0, false));
+      myJBScrollPane.setHorizontalScrollBarPolicy(31);
+      panel1.add(myJBScrollPane, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_NORTHWEST, GridConstraints.FILL_NONE,
+                                                     GridConstraints.SIZEPOLICY_FIXED,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                     null, null, 0, false));
+      myJBScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(), null, TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                TitledBorder.DEFAULT_POSITION, null, null));
+      final JPanel panel2 = new JPanel();
+      panel2.setLayout(new GridLayoutManager(4, 1, new Insets(10, 10, 10, 10), -1, -1));
+      myJBScrollPane.setViewportView(panel2);
+      mySettingsPanel = new JPanel();
+      mySettingsPanel.setLayout(new GridLayoutManager(11, 3, new Insets(0, 0, 0, 0), -1, -1));
+      panel2.add(mySettingsPanel, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                      null, null, 0, false));
+      final JLabel label1 = new JLabel();
+      this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "label.or.if.tag.size.more.than"));
+      mySettingsPanel.add(label1, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                      1, false));
+      myDoNotAlignChildrenMinSize = new JTextField();
+      mySettingsPanel.add(myDoNotAlignChildrenMinSize,
+                          new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, 1,
+                                              GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(50, -1), null, 0, false));
+      final JLabel label2 = new JLabel();
+      this.$$$loadLabelText$$$(label2, this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "label.lines"));
+      mySettingsPanel.add(label2, new GridConstraints(3, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                      GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null,
+                                                      null, 0, false));
+      final JLabel label3 = new JLabel();
+      this.$$$loadLabelText$$$(label3, this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "label.insert.new.line.before"));
+      mySettingsPanel.add(label3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                      0, false));
+      final JLabel label4 = new JLabel();
+      this.$$$loadLabelText$$$(label4, this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "label.remove.new.line.before"));
+      mySettingsPanel.add(label4, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                      0, false));
+      final JLabel label5 = new JLabel();
+      this.$$$loadLabelText$$$(label5, this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "label.do.not.indent.children.of"));
+      mySettingsPanel.add(label5, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                      0, false));
+      myInsertNewLineTagNames.setText("");
+      mySettingsPanel.add(myInsertNewLineTagNames,
+                          new GridConstraints(0, 1, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_BOTH, 1,
+                                              GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(100, -1), null, 0, false));
+      myRemoveNewLineTagNames.setText("");
+      mySettingsPanel.add(myRemoveNewLineTagNames,
+                          new GridConstraints(1, 1, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_BOTH, 1,
+                                              GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(100, -1), null, 0, false));
+      myDoNotAlignChildrenTagNames.setText("");
+      mySettingsPanel.add(myDoNotAlignChildrenTagNames,
+                          new GridConstraints(2, 1, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_BOTH, 1,
+                                              GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(100, -1), null, 0, false));
+      myInlineElementsTagNames.setText("");
+      mySettingsPanel.add(myInlineElementsTagNames,
+                          new GridConstraints(4, 1, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_BOTH, 1,
+                                              GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(100, -1), null, 0, false));
+      final JLabel label6 = new JLabel();
+      this.$$$loadLabelText$$$(label6, this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "inline.elements"));
+      mySettingsPanel.add(label6, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                      0, false));
+      final JLabel label7 = new JLabel();
+      this.$$$loadLabelText$$$(label7, this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "label.keep.white.spaces.inside"));
+      mySettingsPanel.add(label7, new GridConstraints(5, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                      0, false));
+      final JLabel label8 = new JLabel();
+      this.$$$loadLabelText$$$(label8, this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "don.t.break.if.inline.content"));
+      mySettingsPanel.add(label8, new GridConstraints(6, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                      0, false));
+      myKeepWhiteSpacesTagNames.setText("");
+      mySettingsPanel.add(myKeepWhiteSpacesTagNames,
+                          new GridConstraints(5, 1, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_BOTH, 1,
+                                              GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(100, -1), null, 0, false));
+      myDontBreakIfInlineContent.setText("");
+      mySettingsPanel.add(myDontBreakIfInlineContent,
+                          new GridConstraints(6, 1, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_BOTH, 1,
+                                              GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(100, -1), null, 0, false));
+      final JLabel label9 = new JLabel();
+      this.$$$loadLabelText$$$(label9, this.$$$getMessageFromBundle$$$("messages/ApplicationBundle", "generated.quote.marks"));
+      mySettingsPanel.add(label9, new GridConstraints(9, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                      0, false));
+      myQuotesCombo = new JComboBox();
+      mySettingsPanel.add(myQuotesCombo, new GridConstraints(9, 1, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                             GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                             null, null, 0, false));
+      myEnforceQuotesBox = new JBCheckBox();
+      this.$$$loadButtonText$$$(myEnforceQuotesBox,
+                                this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "generated.quote.enforce.format"));
+      mySettingsPanel.add(myEnforceQuotesBox, new GridConstraints(10, 1, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                  GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                                  null, null, 0, false));
+      final JBLabel jBLabel1 = new JBLabel();
+      this.$$$loadLabelText$$$(jBLabel1,
+                               this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "html.label.new.line.before.first.attribute"));
+      mySettingsPanel.add(jBLabel1, new GridConstraints(7, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null,
+                                                        null, 0, false));
+      myBeforeFirstAttributeCombo = new ComboBox();
+      mySettingsPanel.add(myBeforeFirstAttributeCombo,
+                          new GridConstraints(7, 1, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
+                                              false));
+      final JBLabel jBLabel2 = new JBLabel();
+      this.$$$loadLabelText$$$(jBLabel2,
+                               this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "html.label.new.line.after.last.attribute"));
+      mySettingsPanel.add(jBLabel2, new GridConstraints(8, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null,
+                                                        null, 0, false));
+      myAfterLastAttributeCombo = new ComboBox();
+      mySettingsPanel.add(myAfterLastAttributeCombo,
+                          new GridConstraints(8, 1, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
+                                              false));
+      final JPanel panel3 = new JPanel();
+      panel3.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+      panel2.add(panel3, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
+                                             0, false));
+      final JPanel panel4 = new JPanel();
+      panel4.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
+      panel3.add(panel4, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null,
+                                             null, 0, false));
+      myAlignAttributes = new JCheckBox();
+      myAlignAttributes.setMargin(new Insets(0, 0, 0, 0));
+      this.$$$loadButtonText$$$(myAlignAttributes, this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "checkbox.align.attributes"));
+      panel4.add(myAlignAttributes, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                        GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myAlignText = new JCheckBox();
+      myAlignText.setMargin(new Insets(0, 0, 0, 0));
+      this.$$$loadButtonText$$$(myAlignText, this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "checkbox.align.text"));
+      panel4.add(myAlignText, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                  GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myKeepWhiteSpaces = new JCheckBox();
+      myKeepWhiteSpaces.setMargin(new Insets(0, 0, 0, 0));
+      this.$$$loadButtonText$$$(myKeepWhiteSpaces, this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "checkbox.keep.white.spaces"));
+      panel4.add(myKeepWhiteSpaces, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                        GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myWrapText = new JCheckBox();
+      this.$$$loadButtonText$$$(myWrapText, this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "checkbox.wrap.text"));
+      panel4.add(myWrapText, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                 GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JPanel panel5 = new JPanel();
+      panel5.setLayout(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
+      panel5.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+      panel3.add(panel5, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null,
+                                             null, 0, false));
+      panel5.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(BorderFactory.createEtchedBorder(),
+                                                                                this.$$$getMessageFromBundle$$$(
+                                                                                  "messages/ApplicationBundle", "title.spaces"),
+                                                                                TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                                TitledBorder.DEFAULT_POSITION, null, null));
+      mySpacesAroundEquality = new JCheckBox();
+      this.$$$loadButtonText$$$(mySpacesAroundEquality,
+                                this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "checkbox.spaces.around.equals.in.attribute"));
+      panel5.add(mySpacesAroundEquality, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      mySpacesAroundTagName = new JCheckBox();
+      this.$$$loadButtonText$$$(mySpacesAroundTagName,
+                                this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "checkbox.spaces.around.tag.name"));
+      panel5.add(mySpacesAroundTagName, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                            GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      mySpaceInEmptyTag = new JCheckBox();
+      this.$$$loadButtonText$$$(mySpaceInEmptyTag, this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "checkbox.spaces.in.empty.tag"));
+      panel5.add(mySpaceInEmptyTag, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                        GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JPanel panel6 = new JPanel();
+      panel6.setLayout(new GridLayoutManager(4, 2, new Insets(0, 0, 0, 0), -1, -1));
+      panel2.add(panel6, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
+                                             0, false));
+      myShouldKeepBlankLines = new JCheckBox();
+      myShouldKeepBlankLines.setMargin(new Insets(0, 0, 0, 0));
+      this.$$$loadButtonText$$$(myShouldKeepBlankLines,
+                                this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "checkbox.keep.line.breaks"));
+      panel6.add(myShouldKeepBlankLines, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JLabel label10 = new JLabel();
+      this.$$$loadLabelText$$$(label10, this.$$$getMessageFromBundle$$$("messages/ApplicationBundle", "label.wrap.attributes"));
+      panel6.add(label10,
+                 new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JLabel label11 = new JLabel();
+      this.$$$loadLabelText$$$(label11, this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "editbox.keep.blank.lines"));
+      panel6.add(label11,
+                 new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myKeepBlankLines = new JTextField();
+      myKeepBlankLines.setColumns(3);
+      panel6.add(myKeepBlankLines,
+                 new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(50, -1), null, 0, false));
+      myWrapAttributes = new JComboBox();
+      myWrapAttributes.setEnabled(true);
+      panel6.add(myWrapAttributes, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                       GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null,
+                                                       null, 0, false));
+      myShouldKeepLineBreaksInText = new JCheckBox();
+      myShouldKeepLineBreaksInText.setMargin(new Insets(0, 0, 0, 0));
+      this.$$$loadButtonText$$$(myShouldKeepLineBreaksInText,
+                                this.$$$getMessageFromBundle$$$("messages/XmlUiBundle", "checkbox.keep.line.breaks.in.text"));
+      panel6.add(myShouldKeepLineBreaksInText, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                   GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                   null, null, null, 0, false));
+      panel2.add(myRightMarginPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                         null, null, 0, false));
+      jBLabel1.setLabelFor(myBeforeFirstAttributeCombo);
+      jBLabel2.setLabelFor(myAfterLastAttributeCombo);
+    }
     installPreviewPanel(myPreviewPanel);
 
     fillWrappingCombo(myWrapAttributes);
@@ -97,30 +376,81 @@ public final class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     }
   }
 
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myPanel; }
+
   @Override
   protected EditorHighlighter createHighlighter(final @NotNull EditorColorsScheme scheme) {
     return XmlHighlighterFactory.createXMLHighlighter(scheme);
-  }
-
-  private void createUIComponents() {
-    myRightMarginForm = new RightMarginForm(HtmlFileType.INSTANCE.getLanguage(), getSettings());
-    myRightMarginPanel = myRightMarginForm.getTopPanel();
-    myJBScrollPane = new JBScrollPane() {
-      @Override
-      public Dimension getPreferredSize() {
-        Dimension prefSize = super.getPreferredSize();
-        return new Dimension(prefSize.width + 15, prefSize.height);
-      }
-    };
-
-    Function<String, List<String>> parser = (list) -> Arrays.asList(list.split(","));
-    Function<List<String>, String> joiner = (list) -> StringUtil.join(list, ",");
-    myInsertNewLineTagNames = new ExpandableTextField(parser, joiner);
-    myRemoveNewLineTagNames = new ExpandableTextField(parser, joiner);
-    myDoNotAlignChildrenTagNames = new ExpandableTextField(parser, joiner);
-    myInlineElementsTagNames = new ExpandableTextField(parser, joiner);
-    myKeepWhiteSpacesTagNames = new ExpandableTextField(parser, joiner);
-    myDontBreakIfInlineContent = new ExpandableTextField(parser, joiner);
   }
 
   @Override
@@ -186,7 +516,8 @@ public final class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myInsertNewLineTagNames.setText(settings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE);
     myRemoveNewLineTagNames.setText(settings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE);
     myDoNotAlignChildrenTagNames.setText(settings.HTML_DO_NOT_INDENT_CHILDREN_OF);
-    myDoNotAlignChildrenMinSize.setText(settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES == 0 ? "" : String.valueOf(settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES));
+    myDoNotAlignChildrenMinSize.setText(
+      settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES == 0 ? "" : String.valueOf(settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES));
     myInlineElementsTagNames.setText(settings.HTML_INLINE_ELEMENTS);
     myDontBreakIfInlineContent.setText(settings.HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT);
     myKeepWhiteSpacesTagNames.setText(settings.HTML_KEEP_WHITESPACES_INSIDE);
@@ -205,7 +536,8 @@ public final class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     if (settings.HTML_KEEP_BLANK_LINES != getIntValue(myKeepBlankLines)) {
       return true;
     }
-    if (settings.HTML_ATTRIBUTE_WRAP != CodeStyleSettings.WrapStyle.getId((CodeStyleSettings.WrapStyle)myWrapAttributes.getSelectedItem())) {
+    if (settings.HTML_ATTRIBUTE_WRAP !=
+        CodeStyleSettings.WrapStyle.getId((CodeStyleSettings.WrapStyle)myWrapAttributes.getSelectedItem())) {
       return true;
     }
 
@@ -291,12 +623,10 @@ public final class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   @Override
   protected String getPreviewText() {
     return readFromFile(this.getClass(), "preview.html.template");
-
   }
 
   @Override
   protected @NotNull FileType getFileType() {
     return HtmlFileType.INSTANCE;
   }
-
 }

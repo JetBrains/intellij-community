@@ -18,7 +18,6 @@ import com.intellij.openapi.actionSystem.MacOtherAction;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteIntentReadAction;
@@ -650,8 +649,7 @@ public abstract class DialogWrapper {
   }
 
   private static boolean isRemoveHelpButton() {
-    return !ApplicationInfo.contextHelpAvailable() ||
-           Registry.is("ide.remove.help.button.from.dialogs", false);
+    return Registry.is("ide.remove.help.button.from.dialogs", false);
   }
 
   /**

@@ -1,0 +1,22 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_sealedClassesAddInheritor-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/sealedClassesAddInheritor/a/C.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_sealedClassesAddInheritor-a.kotlin_module
+  test/A.class
+  test/B.class
+  test/Base.class
+  test/C.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/sealedClassesAddInheritor/a/A.kt
+  kotlin/pureKotlin/sealedClassesAddInheritor/a/B.kt
+  kotlin/pureKotlin/sealedClassesAddInheritor/a/Base.kt
+  kotlin/pureKotlin/sealedClassesAddInheritor/a/C.kt
+End of files
+------------------------------------------
+Exit code: OK

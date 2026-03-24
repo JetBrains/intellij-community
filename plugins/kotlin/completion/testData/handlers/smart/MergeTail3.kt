@@ -14,5 +14,3 @@ fun foo() {
 }
 
 // ELEMENT: f1
-
-// IGNORE_K2

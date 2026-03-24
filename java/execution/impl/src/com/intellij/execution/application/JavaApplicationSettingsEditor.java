@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -11,6 +11,7 @@ import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.execution.ui.ModuleClasspathCombo;
 import com.intellij.execution.ui.SettingsEditorFragment;
+import com.intellij.execution.ui.TagButton;
 import com.intellij.execution.ui.TargetPathFragment;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
@@ -20,12 +21,16 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.ui.TextFieldWithAutoCompletion.StringsCompletionProvider;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +84,20 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
                                                      configuration.setImplicitClassConfiguration(value);
                                                      updateMainClassFragment(configuration.isImplicitClassConfiguration());
                                                    }));
+    // "Do not use module path" option availability in background to avoid calling indexes from EDT
+    if (!getProject().isDefault()) {
+      SettingsEditorFragment<ApplicationConfiguration, TagButton> fragment =
+        SettingsEditorFragment.createTag("app.use.module.path",
+                                         ExecutionBundle.message("do.not.use.module.path.tag"),
+                                         ExecutionBundle.message("group.java.options"),
+                                         configuration -> !configuration.isUseModulePath(),
+                                         (configuration, value) -> configuration.setUseModulePath(!value));
+      fragments.add(fragment);
+      ReadAction.nonBlocking(() -> fragment.setRemovable(
+        FilenameIndex.getFilesByName(getProject(), PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(getProject())).length > 0))
+        .expireWith(fragment).submit(NonUrgentExecutor.getInstance());
+    }
+
     fragments.add(commonParameterFragments.programArguments());
     fragments.add(new TargetPathFragment<>());
     fragments.add(commonParameterFragments.createRedirectFragment());

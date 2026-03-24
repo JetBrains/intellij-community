@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil.getSitePackagesDirectory
 import org.jetbrains.annotations.ApiStatus
 
@@ -56,7 +57,9 @@ suspend fun refreshPaths(project: Project, sdk: Sdk) {
     RefreshQueue.getInstance().refresh(true, listOfNotNull(getSitePackagesDirectory(sdk), sdk.associatedModuleDir))
   }
 
-  PythonSdkUpdater.scheduleUpdate(sdk, project, false)
+  PyPackageCoroutine.launch(project) {
+    PythonSdkUpdater.scheduleUpdate(sdk, project, false)
+  }
 }
 
 internal fun dropUpdaterInHeadless(): Boolean {

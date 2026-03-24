@@ -4,41 +4,47 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.hints.declarative.InlayActionHandler
 import com.intellij.codeInsight.hints.declarative.InlayActionPayload
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
-import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-public class JavaFqnDeclarativeInlayActionHandler : InlayActionHandler {
-  public companion object {
-    public const val HANDLER_NAME: String = "java.fqn.class"
-  }
-
-  override fun handleClick(editor: Editor, payload: InlayActionPayload) {
-    val project = editor.project ?: return
-    AppExecutorUtil.getAppExecutorService().submit {
-      runReadAction {
-        val aClass = findNavigationElement(project, payload)
-        if (aClass != null) {
-          invokeLater(null) {
-            aClass.navigate(true)
-          }
-        }
+public class JavaFqnDeclarativeInlayActionHandler(private val cs: CoroutineScope) : InlayActionHandler {
+  override fun handleClick(e: EditorMouseEvent, payload: InlayActionPayload) {
+    val project = e.editor.project ?: return
+    cs.launch {
+      val aClass = readAction {
+        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(e.editor.document) ?: return@readAction null
+        findNavigationElement(project, psiFile, payload)
+      } ?: return@launch
+      withContext(Dispatchers.EDT) {
+        aClass.navigate(true)
       }
     }
+  }
+
+  public companion object {
+    public const val HANDLER_NAME: String = "java.fqn.class"
   }
 }
 
 /**
  * Finds class to navigate to by [InlayActionPayload]
  */
-public fun findNavigationElement(project: Project, payload: InlayActionPayload): PsiClass? {
+public fun findNavigationElement(project: Project, file: PsiFile, payload: InlayActionPayload): PsiClass? {
   if (payload !is StringInlayActionPayload) return null
-  val fqn = payload.text
-  val facade = JavaPsiFacade.getInstance(project)
-  return facade.findClass(fqn, GlobalSearchScope.allScope(project))
+  val index = ProjectFileIndex.getInstance(project)
+  val scope = ModuleUtilCore.findModuleForPsiElement(file)
+    ?.getModuleWithDependenciesAndLibrariesScope(index.isInTestSourceContent(file.virtualFile)) ?: return null
+  return JavaPsiFacade.getInstance(project).findClass(payload.text, scope)
 }

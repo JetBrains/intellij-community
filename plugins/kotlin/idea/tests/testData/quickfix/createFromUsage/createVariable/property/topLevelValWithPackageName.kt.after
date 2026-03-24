@@ -1,5 +1,7 @@
 // "Create property 'foo'" "true"
 // ERROR: Property must be initialized
+// K2_ERROR: Expression expected, but package name found.
+// K2_ERROR: Return type mismatch: expected 'Int', actual 'Unit'.
 // K2_AFTER_ERROR: Property must be initialized.
 
 package foo

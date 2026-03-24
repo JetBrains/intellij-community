@@ -50,6 +50,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -63,7 +64,6 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
-import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import com.intellij.xdebugger.impl.proxy.MonolithLineBreakpointProxy;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
@@ -292,9 +292,18 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                                        VirtualFile file,
                                                                                        int line,
                                                                                        Boolean temporary) {
+    return addLineBreakpoint(breakpointManager, variant, file, line, temporary, XLineBreakpointPlacement.ON_LINE);
+  }
+
+  public static <P extends XBreakpointProperties> XLineBreakpoint<P> addLineBreakpoint(XBreakpointManager breakpointManager,
+                                                                                       XLineBreakpointType<P>.XLineBreakpointVariant variant,
+                                                                                       VirtualFile file,
+                                                                                       int line,
+                                                                                       Boolean temporary,
+                                                                                       @NotNull XLineBreakpointPlacement placement) {
     var properties = variant.createProperties();
     var type = variant.getType();
-    var breakpoint = addLineBreakpoint(breakpointManager, type, properties, file, line, temporary);
+    var breakpoint = addLineBreakpoint(breakpointManager, type, properties, file, line, temporary, placement);
     if (!type.variantAndBreakpointMatch(breakpoint, variant)) {
       LOG.error("breakpoint doesn't match source variant, " + type + ", " + variant.getClass());
     }
@@ -306,8 +315,9 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                                         P properties,
                                                                                         VirtualFile file,
                                                                                         int line,
-                                                                                        Boolean temporary) {
-    return breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary);
+                                                                                        Boolean temporary,
+                                                                                        @NotNull XLineBreakpointPlacement placement) {
+    return breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary, placement);
   }
 
   @ApiStatus.Internal
@@ -506,7 +516,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   public void disableValueLookup(@NotNull Editor editor) {
-    ValueLookupManagerController.DISABLE_VALUE_LOOKUP.set(editor, Boolean.TRUE);
+    DebuggerUIUtil.DISABLE_VALUE_LOOKUP.set(editor, Boolean.TRUE);
   }
 
 
@@ -576,7 +586,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
           DebuggerUIUtil.invokeLater(() -> view.print("Stack: ", ConsoleViewContentType.SYSTEM_OUTPUT));
           myFrames.forEach(f -> {
             SimpleColoredText text = new SimpleColoredText();
-            ReadAction.run(() -> f.customizeTextPresentation(text));
+            ReadAction.runBlocking(() -> f.customizeTextPresentation(text));
+
             XSourcePosition position = f.getSourcePosition();
             Navigatable navigatable = position != null ? position.createNavigatable(project) : null;
             DebuggerUIUtil.invokeLater(() -> {

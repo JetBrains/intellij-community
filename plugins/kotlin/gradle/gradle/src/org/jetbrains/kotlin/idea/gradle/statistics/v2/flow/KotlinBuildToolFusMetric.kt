@@ -148,17 +148,33 @@ internal open class RegexStringFusMetric(metric: String, regex: String, aggregat
 /**
  * String FUS metric that concatenates all values from a list of allowed values.
  * The final value will be a semicolon-separated string of all valid values.
- * 
+ *
+ * Use [JoinedListValuesStringFusMetric] instead. Global regexp could be updated without changing the codebase.
+ *
  * @param metric The name of the metric
  * @param allowedValues The list of allowed values for validation
  */
-internal class ConcatenatedAllowedListValuesStringFusMetric(metric: String, allowedValues: List<String>) :
+class ConcatenatedAllowedListValuesStringFusMetric(metric: String, allowedValues: List<String>) :
     KotlinBuildToolFusMetric<String>(
         metric,
         eventField = EventFields.StringValidatedByInlineRegexp(metric.lowercase(), allowedValues.joinToString(prefix = "((", postfix = ");?)+", separator = "|"),
         ) as EventField<String>,
         validationStep = KotlinBuildToolStringAllowedValuesFlowValidationStep(allowedValues),
         aggregationStep = ConcatenateValuesAggregationStep(";")
+    )
+
+/**
+ * String FUS metric that concatenates all values.
+ * Global enum #kbt_$metric should be registered in the FUS backend.
+ *
+ * @param metric The name of the metric
+ */
+class JoinedListValuesStringFusMetric(metric: String, enumRef: String = "kbt_${metric.lowercase()}") :
+    KotlinBuildToolFusMetric<List<String>>(
+        metric,
+        eventField = EventFields.StringListValidatedByEnum(metric.lowercase(),enumRef) as EventField<List<String>>,
+        validationStep = KotlinBuildToolListFlowValidationStep(),
+        aggregationStep = JoinListAggregationStep
     )
 
 /**

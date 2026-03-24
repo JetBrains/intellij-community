@@ -51,7 +51,6 @@ public final class FindManagerImpl extends FindManagerBase {
   private static final Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY =
     Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
 
-  private final FindUsagesManager myFindUsagesManager;
   private boolean isFindWasPerformed;
   private boolean isSelectNextOccurrenceWasPerformed;
   private Point myReplaceInFilePromptPos = new Point(-1, -1);
@@ -62,8 +61,6 @@ public final class FindManagerImpl extends FindManagerBase {
 
   public FindManagerImpl(@NotNull Project project) {
     super(project);
-
-    myFindUsagesManager = new FindUsagesManager(myProject);
 
     NotificationsConfigurationImpl.remove("FindInPath");
     Disposer.register(project, () -> {
@@ -415,9 +412,5 @@ public final class FindManagerImpl extends FindManagerBase {
         region.setExpanded(true);
       }
     });
-  }
-
-  public @NotNull FindUsagesManager getFindUsagesManager() {
-    return myFindUsagesManager;
   }
 }

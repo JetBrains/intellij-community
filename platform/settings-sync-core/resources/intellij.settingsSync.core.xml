@@ -1,8 +1,32 @@
 <idea-plugin visibility="internal" package="com.intellij.settingsSync.core">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.vcs.log"/>
     <plugin id="Git4Idea"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.module.kotlin"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.diff.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.dvcs.impl"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.log.impl"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.settingsSync.core.SettingsSyncSettings"/>
     <applicationService serviceImplementation="com.intellij.settingsSync.core.notification.NotificationServiceImpl"

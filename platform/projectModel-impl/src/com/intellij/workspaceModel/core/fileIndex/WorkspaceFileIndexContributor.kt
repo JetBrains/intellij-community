@@ -186,7 +186,27 @@ enum class WorkspaceFileKind {
 }
 
 /**
- * Provides functions which can be used to specify which files should be included or excluded from the workspace. 
+ * A condition for excluding files from a root registered in [WorkspaceFileSetRegistrar.registerExclusionCondition].
+ */
+interface WorkspaceFileSetExclusionCondition {
+  /**
+   * Returns `true` if [file] should be excluded.
+   */
+  fun shouldExclude(file: VirtualFile): Boolean
+
+  override fun equals(other: Any?): Boolean
+
+  override fun hashCode(): Int
+}
+
+private data class LegacyWorkspaceFileSetExclusionCondition(
+  private val condition: (VirtualFile) -> Boolean,
+) : WorkspaceFileSetExclusionCondition {
+  override fun shouldExclude(file: VirtualFile): Boolean = condition(file)
+}
+
+/**
+ * Provides functions which can be used to specify which files should be included or excluded from the workspace.
  * This interface may be used only inside implementation of [WorkspaceFileIndexContributor.registerFileSets] function.
  */
 interface WorkspaceFileSetRegistrar {
@@ -238,7 +258,16 @@ interface WorkspaceFileSetRegistrar {
    * @param condition may access the passed file and its parents and children only
    * @param entity first parameter of [WorkspaceFileIndexContributor.registerFileSets] must be passed here
    */
-  fun registerExclusionCondition(root: VirtualFileUrl, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity)
+  fun registerExclusionCondition(
+    root: VirtualFileUrl,
+    condition: WorkspaceFileSetExclusionCondition,
+    entity: WorkspaceEntity,
+  )
+
+  @Deprecated("Use the overload accepting WorkspaceFileSetExclusionCondition")
+  fun registerExclusionCondition(root: VirtualFileUrl, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity) {
+    registerExclusionCondition(root, LegacyWorkspaceFileSetExclusionCondition(condition), entity)
+  }
 
   /**
    * Includes [file] to the workspace. Note, that unlike the default [registerFileSet], files under [file] won't be included.

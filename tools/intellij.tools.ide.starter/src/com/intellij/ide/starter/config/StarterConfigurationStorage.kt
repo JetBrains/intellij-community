@@ -2,6 +2,7 @@ package com.intellij.ide.starter.config
 
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.models.SystemBind
+import com.intellij.ide.starter.runner.DevBuildServerRunner
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -34,7 +35,6 @@ val starterConfigurationStorageDefaults = mapOf<String, String>(
   ENV_JBR_DEV_SERVER_VERSION to System.getenv(ENV_JBR_DEV_SERVER_VERSION),
   ENABLE_SCRAMBLING_FOR_DEVSERVER to System.getenv().getOrDefault("ENABLE_SCRAMBLING_FOR_DEVSERVER", "false"),
   ENV_MONITORING_DUMPS_INTERVAL_SECONDS to System.getenv().getOrDefault(ENV_MONITORING_DUMPS_INTERVAL_SECONDS, "60"),
-  ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS to System.getenv().getOrDefault(ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS, "2000"),
   ENV_DEBUG_LOGGING_ENABLED to System.getenv().getOrDefault(ENV_DEBUG_LOGGING_ENABLED, "false"),
 ).filter { entry ->
   @Suppress("SENSELESS_COMPARISON")
@@ -43,7 +43,8 @@ val starterConfigurationStorageDefaults = mapOf<String, String>(
 
 fun ConfigurationStorage.Companion.useLatestDownloadedIdeBuild() = instance().getBoolean(ENV_USE_LATEST_DOWNLOADED_IDE_BUILD)
 
-fun ConfigurationStorage.Companion.useInstaller(): Boolean = instance().getBoolean(ENV_JUNIT_RUNNER_USE_INSTALLER)
+// installer is used by default when intellij.tools.ide.starter.build.server is not available -> DevBuildServerRunner.instance.isDevBuildSupported() == false (e.g. for clients)
+fun ConfigurationStorage.Companion.useInstaller(): Boolean = instance().getOrDefault(ENV_JUNIT_RUNNER_USE_INSTALLER, DevBuildServerRunner.instance.isDevBuildSupported().not().toString()).toBoolean()
 fun ConfigurationStorage.Companion.useInstaller(value: Boolean) = instance().put(ENV_JUNIT_RUNNER_USE_INSTALLER, value)
 
 fun ConfigurationStorage.Companion.useDockerContainer(): Boolean = instance().getBoolean(ENV_USE_DOCKER_CONTAINER)
@@ -108,7 +109,7 @@ fun ConfigurationStorage.Companion.enableScrambling() = instance().put(ENABLE_SC
 fun ConfigurationStorage.Companion.disableScrambling() = instance().put(ENABLE_SCRAMBLING_FOR_DEVSERVER, false)
 
 var ConfigurationStorage.Companion.coroutineScopesCancellationTimeout: Duration
-  get() = instance().get(ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS) { (it ?: "2000").toLong().milliseconds }
+  get() = instance().get(ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS) { (it ?: "10000").toLong().milliseconds }
   set(value) = instance().put(ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS, value.inWholeMilliseconds.toString())
 
 var ConfigurationStorage.Companion.starterDebugEnabled: Boolean

@@ -9,10 +9,27 @@ resourcegroup(
 
 jvm_library(
   name = "forms",
+  module_name = "intellij.libraries.jgoodies.forms",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":forms_resources"],
   exports = ["@lib//:libraries-jgoodies-forms-jgoodies-forms"],
   runtime_deps = ["@lib//:libraries-jgoodies-forms-jgoodies-forms"]
 )
+
+jvm_library(
+  name = "forms_test_lib",
+  module_name = "intellij.libraries.jgoodies.forms",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-jgoodies-forms-jgoodies-forms"],
+  runtime_deps = [":forms"]
+)
 ### auto-generated section `build intellij.libraries.jgoodies.forms` end
+
+### auto-generated section `iml intellij.libraries.jgoodies.forms` start
+exports_files([
+  "intellij.libraries.jgoodies.forms.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jgoodies.forms` end

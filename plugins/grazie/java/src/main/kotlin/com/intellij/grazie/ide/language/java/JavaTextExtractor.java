@@ -85,6 +85,7 @@ public class JavaTextExtractor extends TextExtractor {
             ContainerUtil.map(Text.allOccurrences(Pattern.compile("(?<=\n)" + "\\s{" + indent + "}"), content), Exclusion::exclude));
         }
         content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(Pattern.compile("\\\\\n"), content), Exclusion::exclude));
+        content = replaceBackslashEscapes(content);
         return ContainerUtil.createMaybeSingletonList(content.trimWhitespace());
       }
       if (indent == -1 && content != null) {

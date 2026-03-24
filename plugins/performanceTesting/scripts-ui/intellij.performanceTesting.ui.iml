@@ -6,7 +6,6 @@
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
-      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -21,5 +20,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
   </component>
 </module>

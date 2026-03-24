@@ -1,4 +1,6 @@
 // "Create parameter 'foo'" "true"
+// K2_ERROR: Expression expected, but package name found.
+// K2_ERROR: Initializer type mismatch: expected 'Int', actual 'Unit'.
 
 package foo
 

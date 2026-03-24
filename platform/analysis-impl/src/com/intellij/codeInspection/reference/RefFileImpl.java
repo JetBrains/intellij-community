@@ -28,7 +28,7 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
 
   @Override
   public void accept(@NotNull RefVisitor visitor) {
-    ReadAction.run(() -> visitor.visitFile(this));
+    ReadAction.runBlocking(() -> visitor.visitFile(this));
   }
 
   @Override

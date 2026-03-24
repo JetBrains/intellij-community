@@ -2,10 +2,10 @@
 package org.jetbrains.kotlin.idea.fir.extensions
 
 import java.nio.file.FileSystems
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
-import kotlin.io.path.notExists
 import kotlin.io.path.readText
 
 /**
@@ -34,7 +34,8 @@ object CompilerPluginRegistrarUtils {
 }
 
 private fun readFirstExistingFileContentFromJar(jarFile: Path, pathsInJar: List<String>): String? {
-    if (jarFile.notExists() || jarFile.extension != "jar") return null
+    //  non-readable (non-existing or not enough permissions) files
+    if (jarFile.extension != "jar" || !Files.isReadable(jarFile)) return null
 
     FileSystems.newFileSystem(jarFile).use { fileSystem ->
         for (path in pathsInJar) {

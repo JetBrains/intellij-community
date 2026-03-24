@@ -48,7 +48,6 @@ class FieldListFilter(FacetsMixin, ListFilter):
     list_separator: ClassVar[str]
     field: Field
     field_path: str
-    title: _StrOrPromise
     def __init__(
         self,
         field: Field,

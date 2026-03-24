@@ -395,7 +395,7 @@ open class LanguageConsoleImpl(private val myHelper: Helper) : ConsoleViewImpl(
     }
 
     open fun getFile(): PsiFile {
-      return ReadAction.compute<PsiFile, RuntimeException> {
+      return ReadAction.computeBlocking<PsiFile, RuntimeException> {
         PsiUtilCore.getPsiFile(project, virtualFile)
       }
     }

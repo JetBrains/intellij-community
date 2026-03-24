@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -37,6 +36,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -389,7 +389,7 @@ class ConvertScopeFunctionToParameter(counterpartName: String) : ConvertScopeFun
     override fun postprocessLambda(lambda: KtLambdaArgument) {
         shortenReferences(
             lambda,
-            shortenOptions = ShortenOptions(
+            shortenOptions = ShortenOptionsForIde(
                 removeThisLabels = true,
                 removeThis = false,
             )
@@ -603,7 +603,7 @@ class ConvertScopeFunctionToReceiver(counterpartName: String) : ConvertScopeFunc
     override fun postprocessLambda(lambda: KtLambdaArgument) {
         shortenReferences(
             lambda,
-            shortenOptions = ShortenOptions(
+            shortenOptions = ShortenOptionsForIde(
                 removeThisLabels = true,  // Keep 'this@' labels
                 removeThis = true          // Remove redundant 'this' references
             )

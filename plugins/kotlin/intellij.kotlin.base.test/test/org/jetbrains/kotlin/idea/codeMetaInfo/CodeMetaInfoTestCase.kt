@@ -181,7 +181,7 @@ open class CodeMetaInfoTestCase(
         if (dumbMode) {
             val disposable = Disposer.newCheckedDisposable("mustWaitForSmartMode")
             try {
-                (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).mustWaitForSmartMode(false, disposable)
+                CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, disposable)
                 DumbModeTestUtils.runInDumbModeSynchronously(project) { task() }
             } finally {
                 Disposer.dispose(disposable)

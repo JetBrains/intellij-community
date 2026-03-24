@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
@@ -16,6 +17,7 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.toPythonPackages
+import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.conda.environmentYml.CondaEnvironmentYmlSdkUtils
 import com.jetbrains.python.packaging.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.packaging.conda.environmentYml.format.EnvironmentYmlModifier
@@ -24,10 +26,8 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipPackageManagerEngine
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
 
 class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project, sdk).also {
@@ -88,7 +88,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
     PyResult.success(condaPackages + onlyPipOutdated)
   }
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> = when (installRequest) {
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?): PyResult<Unit> = when (installRequest) {
     is PythonPackageInstallRequest.ByLocation -> pipPackageEngine.installPackageCommand(installRequest, options)
     is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> installSeveralPackages(installRequest.specifications, options)
   }
@@ -104,7 +104,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
       manager.updatePackageCommand(*specs.toTypedArray())
     }
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> {
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?): PyResult<Unit> {
     val installedPackagesForRemove = installedPackages.mapNotNull {
       it.takeIf { it.name in pythonPackages }
     }
@@ -112,12 +112,12 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
     val pipPackages = installedPackagesForRemove - condaPackages
 
     if (condaPackages.isNotEmpty()) {
-      condaPackageEngine.uninstallPackageCommand(*condaPackages.map { it.name }.toTypedArray()).getOr {
+      condaPackageEngine.uninstallPackageCommand(*condaPackages.map { it.name }.toTypedArray(), workspaceMember = workspaceMember).getOr {
         return it
       }
     }
     if (pipPackages.isNotEmpty()) {
-      pipPackageEngine.uninstallPackageCommand(*pipPackages.map { it.name }.toTypedArray()).getOr {
+      pipPackageEngine.uninstallPackageCommand(*pipPackages.map { it.name }.toTypedArray(), workspaceMember = workspaceMember).getOr {
         return it
       }
     }
@@ -151,9 +151,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
 
   override suspend fun extractDependencies(): PyResult<List<PythonPackage>>? {
     val envFile = getDependencyFile() ?: return null
-    val requirements = withContext(Dispatchers.IO) {
-      CondaEnvironmentYmlParser.fromFile (envFile)
-    }  ?: return null
+    val requirements = CondaEnvironmentYmlParser.fromFile(envFile) ?: return null
     return PyResult.success(requirements.toPythonPackages())
   }
 

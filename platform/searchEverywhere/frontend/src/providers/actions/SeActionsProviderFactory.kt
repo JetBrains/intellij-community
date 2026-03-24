@@ -17,8 +17,12 @@ class SeActionsProviderFactory : SeWrappedLegacyContributorItemsProviderFactory,
     get() = SeProviderIdUtils.ACTIONS_ID
 
   override suspend fun getItemsProvider(project: Project?, legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider? {
+    return getItemsProvider(project, legacyContributor, isAllTab = true)
+  }
+
+  override suspend fun getItemsProvider(project: Project?, legacyContributor: SearchEverywhereContributor<Any>, isAllTab: Boolean): SeItemsProvider? {
     if (legacyContributor !is ActionSearchEverywhereContributor) return null
 
-    return SeActionsAdaptedProvider(SeAsyncContributorWrapper(legacyContributor))
+    return SeActionsAdaptedProvider(SeAsyncContributorWrapper(legacyContributor), isTypoTolerantSearchEnabled = !isAllTab)
   }
 }

@@ -16,6 +16,7 @@ jvm_library(
   deps = [
     "//platform/lang-core",
     "//platform/util",
+    "@lib//:kotlin-stdlib",
     "//java/openapi:java",
     "//java/idea-ui:ui",
     "//platform/platform-impl:ide-impl",
@@ -27,4 +28,31 @@ jvm_library(
     "//platform/analysis-api:analysis",
   ]
 )
+
+jvm_library(
+  name = "promo_test_lib",
+  module_name = "intellij.java.promo",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":promo",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/util:util_test_lib",
+    "//java/openapi:java_test_lib",
+    "//java/idea-ui:ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.java.promo` end
+
+### auto-generated section `iml intellij.java.promo` start
+exports_files([
+  "intellij.java.promo.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.promo` end

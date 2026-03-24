@@ -1,10 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.ide.CliResult
-import com.intellij.openapi.application.ApplicationStarter.Companion.ANY_MODALITY
-import com.intellij.openapi.application.ApplicationStarter.Companion.NON_MODAL
-import com.intellij.openapi.application.ApplicationStarter.Companion.NOT_IN_EDT
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
@@ -25,8 +22,8 @@ abstract class ModernApplicationStarter : ApplicationStarter {
  * This extension point allows running a custom [command-line] application based on the IntelliJ platform.
  *
  * A command may come directly (there were no other instances of the application running, so the command starts a new one),
- * or externally (the application has detected a running instance and passed a command to it). In the former case, the platform
- * invokes [.premain] and [.main] methods, in the latter - [.processExternalCommandLineAsync].
+ * or externally (the application has detected a running instance and passed a command to it).
+ * In the former case, the platform invokes [premain] and [main] methods, in the latter – [processExternalCommandLine].
  */
 interface ApplicationStarter {
   companion object {
@@ -50,8 +47,7 @@ interface ApplicationStarter {
    * may ignore the flag and process a command as [NON_MODAL]).
    */
   @get:MagicConstant(intValues = [NON_MODAL.toLong(), ANY_MODALITY.toLong(), NOT_IN_EDT.toLong()])
-  val requiredModality: Int
-    get() = NON_MODAL
+  val requiredModality: Int get() = NON_MODAL
 
   /**
    * Called before application initialization.
@@ -61,19 +57,18 @@ interface ApplicationStarter {
   fun premain(args: List<String>) {}
 
   /**
-   * Called when application has been initialized. Invoked in event dispatch thread.
+   * Called when the application has been initialized. Invoked on the EDT.
    *
-   * An application starter should take care of terminating JVM when appropriate by calling [System.exit].
+   * **NB:** the starter should take care of terminating the JVM when appropriate by calling [System.exit].
    *
-   * @param args program arguments (including the selector)
+   * @param args program arguments (including the command)
    */
   fun main(args: List<String>) {}
 
   /**
    * Applications that are incapable of working in a headless mode should override the method and return `false`.
    */
-  val isHeadless: Boolean
-    get() = true
+  val isHeadless: Boolean get() = true
 
   /**
    * Applications that are capable of processing command-line arguments within a running IDE instance

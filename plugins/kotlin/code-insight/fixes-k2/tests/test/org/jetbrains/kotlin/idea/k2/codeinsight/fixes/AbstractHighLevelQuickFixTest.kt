@@ -48,6 +48,10 @@ abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
         }
     }
 
+    override fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {
+        K2DirectiveBasedActionUtils.checkForErrorsBefore(mainFile, ktFile, fileText)
+    }
+
     override fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
         K2DirectiveBasedActionUtils.checkForErrorsAfter(mainFile, ktFile, fileText)
     }

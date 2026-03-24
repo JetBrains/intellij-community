@@ -14,6 +14,18 @@ import com.intellij.mcpserver.stdio.main
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.provider.utils.lines
+import com.intellij.platform.eel.spawnProcess
+import com.intellij.util.text.SemVer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.ClassDiscriminatorMode
@@ -57,13 +69,41 @@ abstract class McpClient(
 
   open fun mcpServersKey(): String = "mcpServers"
 
-  open fun configure(): Unit = updateServerConfig(getConfig())
+  /**
+   * Attempts to configure an MCP client with the provider server configuration.
+   *
+   * It is possible that the client does not support this particular configuration (i.e., the client is not ready for Streamable HTTP at the moment).
+   * If this is the case, then an [McpClientConfigurationException] gets thrown.
+   * @return null if configuration was completed without errors, or an error message otherwise
+   */
+  @Throws(McpClientConfigurationException::class)
+  open suspend fun configure(config: ServerConfig) {
+    val existingConfig = readExistingConfig()
+    val updatedConfig = buildUpdatedConfig(existingConfig, config)
+    writeConfigToFile(updatedConfig)
+  }
 
-  fun getConfig(): ServerConfig = getSSEConfig() ?: getStdioConfig()
+  class McpClientConfigurationException(override val message: String): Exception(message)
 
-  protected open fun getSSEConfig(): ServerConfig? = null
+  suspend fun autoConfigure() {
+    val streamableHttpConfig = getStreamableHttpConfig()
+    if (streamableHttpConfig != null && runCatching { configure(streamableHttpConfig) }.isSuccess) {
+      return
+    }
+    val sseConfig = getSSEConfig()
+    if (sseConfig != null && runCatching { configure(sseConfig) }.isSuccess) {
+      return
+    }
+    return configure(getStdioConfig())
+  }
 
-  private fun getStdioConfig(): ServerConfig {
+  suspend fun getPreferredConfig(): ServerConfig = getStreamableHttpConfig() ?: getSSEConfig() ?: getStdioConfig()
+
+  open suspend fun getStreamableHttpConfig(): ServerConfig? = null
+
+  open suspend fun getSSEConfig(): ServerConfig? = null
+
+  fun getStdioConfig(): ServerConfig {
     val cmd = createStdioMcpServerCommandLine(McpServerService.getInstance().port, null)
     return STDIOServerConfig(command = cmd.exePath, args = cmd.parametersList.parameters, env = cmd.environment)
   }
@@ -85,7 +125,7 @@ abstract class McpClient(
     }
   }
 
-  protected fun isSSEConfigured(): Boolean? {
+  protected fun isSSEOrStreamConfigured(): Boolean? {
     val mcpServers = readMcpServers()
     if (mcpServers?.isEmpty() ?: true) return null
     return mcpServers.any { (_, serverConfig) ->
@@ -98,6 +138,39 @@ abstract class McpClient(
     val currentPort = McpServerService.getInstance().port
     val servers = readMcpServers() ?: return true
     return servers.any { (_, serverConfig) -> isPortMatching(serverConfig, currentPort) }
+  }
+
+  fun getConfiguredTransportTypes(): Set<TransportType> {
+    val mcpServers = readMcpServers() ?: return emptySet()
+    if (mcpServers.isEmpty()) return emptySet()
+
+    val result = mutableSetOf<TransportType>()
+
+    for ((_, serverConfig) in mcpServers) {
+      if (serverConfig.command != null) {
+        result.add(TransportType.STDIO)
+      }
+
+      when (serverConfig.type) {
+        "sse" -> result.add(TransportType.SSE)
+        "http" -> result.add(TransportType.STREAMABLE_HTTP)
+      }
+    }
+
+    return result
+  }
+
+  fun getTransportTypesDisplayString(): String? {
+    val types = getConfiguredTransportTypes()
+    if (types.isEmpty()) return null
+
+    return types.joinToString(", ") { type ->
+      when (type) {
+        TransportType.STDIO -> "Stdio"
+        TransportType.SSE -> "SSE"
+        TransportType.STREAMABLE_HTTP -> "HTTP Stream"
+      }
+    }
   }
 
   private fun isPortMatching(serverConfig: ExistingConfig, targetPort: Int): Boolean {
@@ -116,12 +189,6 @@ abstract class McpClient(
       return configuredPort == targetPort
     }
     return true
-  }
-
-  protected fun updateServerConfig(serverEntry: ServerConfig) {
-    val existingConfig = readExistingConfig()
-    val updatedConfig = buildUpdatedConfig(existingConfig, serverEntry)
-    writeConfigToFile(updatedConfig)
   }
 
   @Deprecated("Use product-specific terminology")
@@ -212,6 +279,12 @@ abstract class McpClient(
   private data class ParsedServerUrl(val host: String, val port: Int, val path: String)
 
   companion object {
+    enum class TransportType {
+      STDIO,
+      SSE,
+      STREAMABLE_HTTP
+    }
+
     private val STREAM_PATHS: Set<String> = setOf("/sse", "/stream")
 
     @Volatile
@@ -286,6 +359,17 @@ abstract class McpClient(
     private fun sanitizeSegment(segment: String): String =
       segment.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]+"), "")
 
+    fun CoroutineScope.getSemVerOfVscodeFork(exe: String): Deferred<SemVer?> {
+      return async(start = CoroutineStart.LAZY, context = Dispatchers.IO) {
+        val localEelApi = LocalEelDescriptor.toEelApi()
+        val versionStdout = try {
+          localEelApi.exec.spawnProcess(exe, "-v").eelIt().stdout.lines().first().trim()
+        } catch (_: ExecuteProcessException) {
+          return@async null
+        }
+        SemVer.parseFromText(versionStdout)
+      }
+    }
   }
 
   @JsonIgnoreUnknownKeys

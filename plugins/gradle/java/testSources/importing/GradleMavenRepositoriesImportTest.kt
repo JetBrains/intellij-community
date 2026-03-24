@@ -15,7 +15,7 @@ class GradleMavenRepositoriesImportTest: GradleImportingTestCase() {
       |repositories {
       |  maven {
       |    name = "test"
-      |    url = "file:///tmp/repo"
+      |    url = "https://example.org/repo"
       |  }
       |}
       |
@@ -23,11 +23,7 @@ class GradleMavenRepositoriesImportTest: GradleImportingTestCase() {
 
       val repositoriesConfiguration = RemoteRepositoriesConfiguration.getInstance(myProject)
 
-      val expectedUrl = if (SystemInfo.isWindows) {
-        "file:////tmp/repo"
-      } else {
-        "file:/tmp/repo"
-      }
+      val expectedUrl = "https://example.org/repo"
 
       assertContainsElements(repositoriesConfiguration.repositories, RemoteRepositoryDescription("test", "test", expectedUrl))
     } finally {

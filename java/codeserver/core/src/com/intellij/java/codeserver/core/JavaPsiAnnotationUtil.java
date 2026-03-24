@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.RetentionPolicy;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Utility methods related to {@link PsiAnnotation}.
@@ -91,9 +93,7 @@ public final class JavaPsiAnnotationUtil {
         if (stmt != null) {
           PsiModifierList modifierList = stmt.getAnnotationList();
           if (modifierList != null) {
-            for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-              processor.process(annotation, superPackage);
-            }
+            processor.processAll(Arrays.asList(modifierList.getAnnotations()), superPackage);
           }
         }
       }
@@ -104,14 +104,14 @@ public final class JavaPsiAnnotationUtil {
   }
 
   /**
-   * A functional interface to be used with {@link #processPackageAnnotations(PsiFile, PackageAnnotationProcessor, boolean)}
+   * An interface to be used with {@link #processPackageAnnotations(PsiFile, PackageAnnotationProcessor, boolean)}
    */
   @FunctionalInterface
   public interface PackageAnnotationProcessor {
     /**
-     * @param annotation applicable package annotation
-     * @param superPackage whether the annotation is from a super-package
+     * @param annotations applicable package annotations
+     * @param superPackage whether the annotations are from a super-package
      */
-    void process(@NotNull PsiAnnotation annotation, boolean superPackage);
+    void processAll(@NotNull List<@NotNull PsiAnnotation> annotations, boolean superPackage);
   }
 }

@@ -69,8 +69,6 @@ import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM;
 
 /**
  * Represents a derived JVM field
- *
- * @author Tagir Valeev
  */
 public enum SpecialField implements DerivedVariableDescriptor {
   ARRAY_LENGTH("length", "special.field.array.length", true) {

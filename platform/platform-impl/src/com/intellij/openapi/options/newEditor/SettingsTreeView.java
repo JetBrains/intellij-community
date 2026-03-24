@@ -38,6 +38,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.Badge;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -728,7 +729,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       if (isBeta(configurable)) {
         myTextLabel.setIconOnTheRight(true);
         myTextLabel.setIconTextGap(JBUIScale.scale(8));
-        myTextLabel.setIcon(AllIcons.General.Beta);
+        myTextLabel.setIcon(Badge.getBeta());
       }
 
       Configurable.Promo promo = asPromo(configurable);

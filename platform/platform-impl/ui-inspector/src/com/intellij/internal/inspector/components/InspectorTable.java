@@ -629,7 +629,7 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
     private void printClassName(String className) {
       String[] parts = className.split("@");  // there can be a class name with hashcode
       String classFqn = parts[0];
-      PsiElement classElement = ReadAction.compute(() -> UiInspectorImpl.findClassByFqn(myProject, classFqn));
+      PsiElement classElement = ReadAction.computeBlocking(() -> UiInspectorImpl.findClassByFqn(myProject, classFqn));
       if (classElement != null) {
         printHyperlinkToPreview(classFqn, project -> UiInspectorImpl.openClassByFqn(project, classFqn, true));
         if (parts.length > 1) {

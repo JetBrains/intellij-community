@@ -21,6 +21,30 @@ jvm_library(
     "//plugins/maven",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/jps",
+    "//platform/core-api:core",
+  ]
+)
+
+jvm_library(
+  name = "maven_test_lib",
+  module_name = "intellij.kotlin.compilerPlugins.dataframe.maven",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":maven",
+    "//plugins/kotlin/maven:maven_test_lib",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support_test_lib",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/maven:maven_test_lib",
+    "//plugins/maven:maven_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/jps:jps_test_lib",
+    "//platform/core-api:core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.dataframe.maven` end
+
+### auto-generated section `iml intellij.kotlin.compilerPlugins.dataframe.maven` start
+exports_files([
+  "intellij.kotlin.compilerPlugins.dataframe.maven.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.compilerPlugins.dataframe.maven` end

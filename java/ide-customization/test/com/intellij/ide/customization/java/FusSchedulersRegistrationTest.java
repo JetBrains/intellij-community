@@ -5,13 +5,18 @@ import com.intellij.ide.ApplicationActivity;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.util.Pair;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-public class FusSchedulersRegistrationTest extends BasePlatformTestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class FusSchedulersRegistrationTest {
   // runs with intellij.java.tests classpath
 
   public static final String PLUGIN_ID = "com.intellij.java.ide";
@@ -21,19 +26,20 @@ public class FusSchedulersRegistrationTest extends BasePlatformTestCase {
   private final ExtensionPointName<ApplicationActivity> POST_STARTUP_ACTIVITIES_EP =
     new ExtensionPointName<>("com.intellij.postStartupActivity");
 
+  @Test
   public void testSchedulerActivitiesAvailable() {
     var applicationActivities = getExtensionClasses(APP_ACTIVITIES_EP);
-    assertTrue("StatisticsJobsScheduler is missing",
-               applicationActivities.containsKey("com.intellij.internal.statistic.updater.StatisticsJobsScheduler"));
-    assertTrue("StatisticsStateCollectorsScheduler is missing",
-               applicationActivities.containsKey("com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"));
+    assertTrue(applicationActivities.containsKey("com.intellij.internal.statistic.updater.StatisticsJobsScheduler"),
+               "StatisticsJobsScheduler is missing");
+    assertTrue(applicationActivities.containsKey("com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"),
+               "StatisticsStateCollectorsScheduler is missing");
 
     assertEquals(PLUGIN_ID, applicationActivities.get("com.intellij.internal.statistic.updater.StatisticsJobsScheduler"));
     assertEquals(PLUGIN_ID, applicationActivities.get("com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"));
 
     var postStartup = getExtensionClasses(POST_STARTUP_ACTIVITIES_EP);
-    assertTrue("StatisticsStateCollectorsScheduler$MyStartupActivity is missing",
-               postStartup.containsKey("com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler$MyStartupActivity"));
+    assertTrue(postStartup.containsKey("com.intellij.internal.statistic.updater.StatisticsStateCollectorsSchedulerProjectActivity"),
+               "StatisticsStateCollectorsSchedulerProjectActivity is missing");
 
     assertEquals(PLUGIN_ID, applicationActivities.get("com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"));
   }

@@ -42,8 +42,10 @@ public class TestMain {
             "  print-cwd\n" +
             "  async-profiler\n" +
             "  exit-code <number>\n" +
+            "  exception\n" +
             "  sigsegv\n" +
-            "  main-class");
+            "  main-class\n" +
+            "  remoteDevStatus");
           System.exit(1);
         }
       }
@@ -112,6 +114,15 @@ public class TestMain {
   }
 
   private static void exception() {
+    try {
+      nestedException();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static void nestedException() {
     throw new UnsupportedOperationException("aw, snap");
   }
 

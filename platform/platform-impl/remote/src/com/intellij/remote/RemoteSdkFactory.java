@@ -15,9 +15,9 @@ public interface RemoteSdkFactory<T extends RemoteSdkAdditionalData> {
   Sdk createRemoteSdk(@Nullable Project project, @NotNull T data, @Nullable String sdkName, Collection<Sdk> existingSdks)
     throws RemoteSdkException;
 
-  String generateSdkHomePath(@NotNull T data);
+  String generateSdkHomePath(@Nullable Project project, @NotNull T data);
 
-  Sdk createUnfinished(T data, Collection<Sdk> existingSdks);
+  Sdk createUnfinished(@Nullable Project project, T data, Collection<Sdk> existingSdks);
 
   String getDefaultUnfinishedName();
 

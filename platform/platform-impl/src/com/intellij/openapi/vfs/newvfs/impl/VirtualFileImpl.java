@@ -87,6 +87,7 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
 
   @Override
   public VirtualFile[] getChildren() {
+    //TODO RC: why we return empty array here, if VirtualFile.getChildren() contract says !directory -> null?
     return EMPTY_ARRAY;
   }
 

@@ -222,7 +222,8 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
       val startupOptions = TerminalStartupOptionsImpl(
         shellCommand = if (isPowerShell) listOf("powershell.exe") else listOf("/bin/zsh", "--login", "-i"),
         workingDirectory = "fakeDir",
-        envVariables = emptyMap()
+        envVariables = emptyMap(),
+        pid = null,
       )
       val session = EchoingTerminalSession(startupOptions, fixtureScope.childScope("EchoingTerminalSession"))
       doWithCompletionFixture(project, session, fixtureScope) { fixture ->

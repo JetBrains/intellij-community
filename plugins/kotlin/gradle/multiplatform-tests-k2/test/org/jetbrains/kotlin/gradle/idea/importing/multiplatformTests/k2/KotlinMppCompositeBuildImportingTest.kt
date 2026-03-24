@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests.k2
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.LinkedProjectPathsTestsFeature
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.NoErrorEventsDuringImportFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.test.TestMetadata

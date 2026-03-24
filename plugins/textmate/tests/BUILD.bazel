@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests",
+  module_name = "intellij.textmate.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
@@ -16,6 +17,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
     "//plugins/textmate/core",
+    "//plugins/textmate/core:core_test_lib",
     "//plugins/textmate/joni",
     "//plugins/textmate/joni:joni_test_lib",
     "//platform/testFramework",
@@ -25,28 +27,50 @@ jvm_library(
     "@lib//:junit5",
     "@lib//:kotlin-test",
     "//libraries/kotlinx/coroutines/test",
+    "//libraries/kotlinx/coroutines/test:test_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//platform/util/xmlDom",
+    "//platform/util/xmlDom:xmlDom_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//plugins/textmate",
+    "//plugins/textmate:textmate_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
     "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//plugins/grazie/src:core",
+    "//plugins/grazie/src:core_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//plugins/textmate/plugin",
+    "//plugins/textmate/plugin:plugin_test_lib",
     "//plugins/textmate/backend",
+    "//plugins/textmate/backend:backend_test_lib",
+    "//plugins/textmate/core/tests",
     "//plugins/textmate/core/tests:tests_test_lib",
     "@lib//:kotlin-test-junit5",
   ],
   runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.textmate.tests` end
+
+### auto-generated section `iml intellij.textmate.tests` start
+exports_files([
+  "intellij.textmate.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.textmate.tests` end
 
 ### auto-generated section `test intellij.textmate.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

@@ -9,28 +9,59 @@ data class CodexSubAgent(
   @JvmField val name: String,
 )
 
+enum class CodexThreadSourceKind {
+  CLI,
+  VSCODE,
+  EXEC,
+  APP_SERVER,
+  SUB_AGENT,
+  SUB_AGENT_REVIEW,
+  SUB_AGENT_COMPACT,
+  SUB_AGENT_THREAD_SPAWN,
+  SUB_AGENT_OTHER,
+  UNKNOWN,
+}
+
+enum class CodexThreadStatusKind {
+  NOT_LOADED,
+  IDLE,
+  ACTIVE,
+  SYSTEM_ERROR,
+  UNKNOWN,
+}
+
+enum class CodexThreadActiveFlag {
+  WAITING_ON_APPROVAL,
+  WAITING_ON_USER_INPUT,
+}
+
 @Immutable
 data class CodexThread(
   @JvmField val id: String,
   @JvmField val title: String,
   @JvmField val updatedAt: Long,
   @JvmField val archived: Boolean,
-  // TODO: Populate subAgents once Codex exposes multi-agent hierarchy data.
+  // Populated when backend data includes subagent hierarchy (for example, rollout thread_spawn metadata).
   @JvmField val subAgents: List<CodexSubAgent> = emptyList(),
+  @JvmField val gitBranch: String? = null,
+  @JvmField val cwd: String? = null,
+  @JvmField val sourceKind: CodexThreadSourceKind = CodexThreadSourceKind.UNKNOWN,
+  @JvmField val parentThreadId: String? = null,
+  @JvmField val agentNickname: String? = null,
+  @JvmField val agentRole: String? = null,
+  @JvmField val statusKind: CodexThreadStatusKind = CodexThreadStatusKind.UNKNOWN,
+  @JvmField val activeFlags: List<CodexThreadActiveFlag> = emptyList(),
 )
 
 @Immutable
-data class CodexProjectSessions(
-  @JvmField val path: String,
-  @JvmField val name: String,
-  @JvmField val isOpen: Boolean,
-  @JvmField val threads: List<CodexThread> = emptyList(),
-  @JvmField val isLoading: Boolean = false,
-  @JvmField val isPagingThreads: Boolean = false,
-  @JvmField val hasLoaded: Boolean = false,
-  @JvmField val nextThreadsCursor: String? = null,
-  @JvmField val errorMessage: String? = null,
-  @JvmField val loadMoreErrorMessage: String? = null,
+data class CodexThreadActivitySnapshot(
+  @JvmField val threadId: String,
+  @JvmField val updatedAt: Long,
+  @JvmField val statusKind: CodexThreadStatusKind,
+  @JvmField val activeFlags: List<CodexThreadActiveFlag> = emptyList(),
+  @JvmField val hasUnreadAssistantMessage: Boolean = false,
+  @JvmField val isReviewing: Boolean = false,
+  @JvmField val hasInProgressTurn: Boolean = false,
 )
 
 @Immutable
@@ -39,7 +70,30 @@ data class CodexThreadPage(
   @JvmField val nextCursor: String?,
 )
 
-data class CodexSessionsState(
-  @JvmField val projects: List<CodexProjectSessions> = emptyList(),
-  @JvmField val lastUpdatedAt: Long? = null,
+enum class CodexAppServerNotificationKind {
+  THREAD_STARTED,
+  THREAD_STATUS_CHANGED,
+  TURN_STARTED,
+  TURN_COMPLETED,
+  COMMAND_EXECUTION_OUTPUT_DELTA,
+  TERMINAL_INTERACTION,
+  OTHER,
+}
+
+@Immutable
+data class CodexAppServerStartedThread(
+  @JvmField val id: String,
+  @JvmField val title: String,
+  @JvmField val updatedAt: Long,
+  @JvmField val cwd: String,
+  @JvmField val statusKind: CodexThreadStatusKind = CodexThreadStatusKind.UNKNOWN,
+  @JvmField val activeFlags: List<CodexThreadActiveFlag> = emptyList(),
+)
+
+@Immutable
+data class CodexAppServerNotification(
+  @JvmField val method: String,
+  @JvmField val kind: CodexAppServerNotificationKind,
+  @JvmField val threadId: String? = null,
+  @JvmField val startedThread: CodexAppServerStartedThread? = null,
 )

@@ -24,6 +24,7 @@ import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
@@ -121,17 +122,13 @@ class WorkspaceFileIndexContributorDependenciesTest {
 
     childWorkspaceFileIndexContributor.numberOfCalls.set(0)
 
+    assertEquals("sibling property", childWorkspaceFileIndexContributor.latestSiblingProperty)
+
     model.update("Remove sibling") {
       it.removeEntity(siblingEntity)
     }
 
-    // call from WorkspaceFileIndexData:
-    // first call changed parent
-    // second call to remove file sets
-
-    // two calls through ProjectEntityIndexingService - removed and added file sets
-    // case with changed parent is not handled through ProjectEntityIndexingService
-    assertEquals(4, childWorkspaceFileIndexContributor.numberOfCalls.get(), "ChildWorkspaceFileIndexContributor should be called after relative removed")
+    assertNull(childWorkspaceFileIndexContributor.latestSiblingProperty)
   }
 
   @Test
@@ -144,6 +141,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
       child = ChildTestEntity("new child property", NonPersistentEntitySource)
     }
 
+    assertEquals("sibling property", childWorkspaceFileIndexContributor.latestSiblingProperty)
     childWorkspaceFileIndexContributor.numberOfCalls.set(0)
 
     val newSiblingEntity = SiblingEntity("new sibling property", NonPersistentEntitySource) {
@@ -154,8 +152,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
       it.addEntity(newSiblingEntity)
     }
 
-    // one call through WorkspaceFileIndexData and the other through ProjectEntityIndexingService
-    assertEquals(3, childWorkspaceFileIndexContributor.numberOfCalls.get(), "ChildWorkspaceFileIndexContributor should be called after relative added")
+    assertEquals("new sibling property", childWorkspaceFileIndexContributor.latestSiblingProperty)
   }
 
   // we need SkipAddingToWatchedRoots to pass filter WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors()
@@ -194,6 +191,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
 
     override fun registerFileSets(entity: ParentTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
       latestChildProperty = entity.child?.customChildProperty
+      registrar.registerFileSet(entity.parentEntityRoot, WorkspaceFileKind.CUSTOM, entity, null)
     }
   }
 }

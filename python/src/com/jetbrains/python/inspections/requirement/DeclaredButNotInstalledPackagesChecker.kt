@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections.requirement
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VfsUtil
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.toRequirements
@@ -11,16 +12,24 @@ import com.jetbrains.python.packaging.management.extractDependenciesAsync
 import com.jetbrains.python.psi.PyUtil
 
 class DeclaredButNotInstalledPackagesChecker(
-  val ignoredPackages: Collection<String>,
+  ignoredPackages: Collection<String>,
 ) {
+  private val ignoredPackageNames: Set<String> = ignoredPackages.mapTo(mutableSetOf()) { PyPackageName.normalizePackageName(it) }
+
   fun findUnsatisfiedRequirements(module: Module, manager: PythonPackageManager): List<PyRequirement> {
     val requirements = manager.extractDependenciesAsync() ?: return emptyList()
+    val packagesToCheck = filterToMainPackages(requirements, manager)
     val installedPackages = manager.listInstalledPackagesSnapshot()
     val modulePackages = collectPackagesInModule(module)
 
-    return requirements.toRequirements().filter { requirement ->
+    return packagesToCheck.toRequirements().filter { requirement ->
       isRequirementUnsatisfied(requirement, installedPackages, modulePackages)
     }
+  }
+
+  private fun filterToMainPackages(packages: List<PythonPackage>, manager: PythonPackageManager): List<PythonPackage> {
+    if (!manager.installedMightBeTransitive) return packages
+    return packages.filter { it.dependencyGroup == null }
   }
 
   private fun isRequirementUnsatisfied(
@@ -28,21 +37,11 @@ class DeclaredButNotInstalledPackagesChecker(
     installedPackages: List<PythonPackage>,
     modulePackages: List<PythonPackage>,
   ): Boolean {
-    if (requirement.name in ignoredPackages) {
+    if (requirement.name in ignoredPackageNames) {
       return false
     }
 
-    val isSatisfiedInInstalled = isSatisfied(requirement, installedPackages)
-    val isSatisfiedInModule = isSatisfied(requirement, modulePackages)
-
-    return !isSatisfiedInInstalled && !isSatisfiedInModule
-  }
-
-  private fun isSatisfied(requirement: PyRequirement, packages: List<PythonPackage>): Boolean {
-    val matchingPackage = packages.find { it.name == requirement.name } ?: return false
-    return requirement.versionSpecs.isEmpty() || requirement.versionSpecs.all { spec ->
-      spec.matches(matchingPackage.version)
-    }
+    return !(installedPackages + modulePackages).any { it.matches(requirement) }
   }
 
   private fun collectPackagesInModule(module: Module): List<PythonPackage> {

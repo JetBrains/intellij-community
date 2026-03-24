@@ -15,6 +15,12 @@ override var entitySource: EntitySource
 var version: Int
 var name: String
 var isSimple: Boolean
+var char: Char
+var long: Long
+var float: Float
+var double: Double
+var short: Short
+var byte: Byte
 }
 
 internal object SimpleEntityType : EntityType<SimpleEntity, SimpleEntityBuilder>(){
@@ -23,6 +29,12 @@ operator fun invoke(
 version: Int,
 name: String,
 isSimple: Boolean,
+char: Char,
+long: Long,
+float: Float,
+double: Double,
+short: Short,
+byte: Byte,
 entitySource: EntitySource,
 init: (SimpleEntityBuilder.() -> Unit)? = null,
 ): SimpleEntityBuilder{
@@ -30,6 +42,12 @@ val builder = builder()
 builder.version = version
 builder.name = name
 builder.isSimple = isSimple
+builder.char = char
+builder.long = long
+builder.float = float
+builder.double = double
+builder.short = short
+builder.byte = byte
 builder.entitySource = entitySource
 init?.invoke(builder)
 return builder
@@ -47,6 +65,12 @@ fun SimpleEntity(
 version: Int,
 name: String,
 isSimple: Boolean,
+char: Char,
+long: Long,
+float: Float,
+double: Double,
+short: Short,
+byte: Byte,
 entitySource: EntitySource,
 init: (SimpleEntityBuilder.() -> Unit)? = null,
-): SimpleEntityBuilder = SimpleEntityType(version, name, isSimple, entitySource, init)
+): SimpleEntityBuilder = SimpleEntityType(version, name, isSimple, char, long, float, double, short, byte, entitySource, init)

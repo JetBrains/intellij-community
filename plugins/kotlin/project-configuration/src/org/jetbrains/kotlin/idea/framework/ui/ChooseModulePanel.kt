@@ -48,9 +48,9 @@ class ChooseModulePanel(
             project,
             message("lookup.kotlin.modules.configurations.progress.text"),
             Computable {
-                val modules = getCanBeConfiguredModules(project, configurator)
+                val modules = getCanBeConfiguredModules(project, configurator).filterNot { it in excludedModule }
                 val modulesWithKtFiles =
-                    getCanBeConfiguredModulesWithKotlinFiles(project, configurator)
+                    getCanBeConfiguredModulesWithKotlinFiles(project, configurator).filterNot { it in excludedModule }
                 Pair.create(
                     modules,
                     modulesWithKtFiles
@@ -59,11 +59,20 @@ class ChooseModulePanel(
 
         modules = modulesPair.first
         modulesWithKtFiles = modulesPair.second
-        chosenModuleType = if (modulesWithKtFiles.isEmpty()) {
-            AtomicProperty(ChoseModuleType.ALL)
-        } else {
-            AtomicProperty(ChoseModuleType.CONTAINING_KT)
+
+        val type = when {
+            modulesWithKtFiles.isEmpty() -> {
+                if (modules.isEmpty()) {
+                    ChoseModuleType.ALL
+                } else {
+                    ChoseModuleType.SINGLE
+                }
+            }
+            else -> {
+                ChoseModuleType.CONTAINING_KT
+            }
         }
+        chosenModuleType = AtomicProperty(type)
         selectedModule = AtomicProperty(modules.firstOrNull())
     }
 

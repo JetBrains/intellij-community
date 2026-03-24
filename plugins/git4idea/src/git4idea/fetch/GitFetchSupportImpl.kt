@@ -6,8 +6,8 @@ import com.intellij.dvcs.MultiRootMessage
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.externalProcessAuthHelper.AuthenticationGate
 import com.intellij.externalProcessAuthHelper.RestrictingAuthenticationGate
-import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -23,9 +23,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.concurrency.AppExecutorUtil
-import git4idea.GitDisposable
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitUtil.findRemoteByName
 import git4idea.GitUtil.mention
@@ -37,8 +35,6 @@ import git4idea.config.GitConfigUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.fetchBranches
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
@@ -210,7 +206,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       return 1
     }
 
-    return min(maxThreads, MAX_SSH_CONNECTIONS)
+    return maxThreads.coerceAtMost(MAX_SSH_CONNECTIONS).coerceAtLeast(1)
   }
 
   private fun waitForFetchTasks(tasks: List<FetchTask>): List<SingleRemoteResult> {
@@ -260,7 +256,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     val params = fetchTarget.asParams()
     val repository = fetchTarget.repository
     val remote = fetchTarget.remote
-    val result = git.fetch(fetchTarget.repository, remote, listOf(progressListener), authenticationGate, *params)
+    val result = git.fetch(fetchTarget.repository, remote, listOf(progressListener), authenticationGate, fetchTarget.authMode, *params)
     val pruned = result.output.mapNotNull { getPrunedRef(it) }
     if (result.success()) {
       BackgroundTaskUtil.syncPublisher(repository.project, GIT_AUTHENTICATION_SUCCESS).authenticationSucceeded(repository, remote)
@@ -284,10 +280,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     fun error(): @Nls String {
       val errorMessage = multiRemoteMessage(true)
       for ((remote, result) in results) {
-        if (result.error != null) {
-          val presentableErrorMessage = GitFetchErrorFormatter.format(result.error)
-          errorMessage.append(remote, presentableErrorMessage)
-        }
+        if (result.error != null) errorMessage.append(remote, result.error)
       }
       return errorMessage.asString()
     }
@@ -322,6 +315,8 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
 
     private val isFailed = results.values.any { !it.totallySuccessful() }
 
+    override fun isSuccessful(): Boolean = !isFailed
+
     override fun showNotification() {
       doShowNotification()
     }
@@ -351,10 +346,22 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
 
     private fun showSuccessNotification() {
       val title = GitBundle.message("notification.title.fetch.success")
-      val message = buildMessage(null)
+      val autoFetchService = project.service<GitAutoFetchNotificationsService>()
+      val shouldShowAutoFetchNotification = autoFetchService.shouldShow()
+      val message = if (shouldShowAutoFetchNotification) {
+        autoFetchService.getSuggestionMessage()
+      } else {
+        buildMessage(null)
+      }
       val notification = VcsNotifier.standardNotification()
         .createNotification(title, message, NotificationType.INFORMATION)
       notification.setDisplayId(GitNotificationIdsHolder.FETCH_RESULT)
+
+      if (shouldShowAutoFetchNotification) {
+        autoFetchService.createActions().forEach { notification.addAction(it) }
+        notification.setSuggestionType(true)
+      }
+
       vcsNotifier.notify(notification)
     }
 
@@ -364,20 +371,6 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       val notification = VcsNotifier.standardNotification()
         .createNotification(title, message, NotificationType.ERROR)
       notification.setDisplayId(GitNotificationIdsHolder.FETCH_RESULT_ERROR)
-
-      if (allFailuresAreCheckedOutBranches()) {
-        notification.addAction(NotificationAction.createSimpleExpiring(
-          GitBundle.message("branches.update.anyway.notification.action")) {
-          notification.expire()
-          GitDisposable.getInstance(project).coroutineScope.launch {
-            withBackgroundProgress(project, GitBundle.message("branches.updating.process")) {
-              val failedDueToCheckedOutBranch = findFailedDueToCheckedOutBranch()
-              fetchBranches(project, failedDueToCheckedOutBranch, updateHeadOk = true)
-            }
-          }
-        })
-      }
-
       vcsNotifier.notify(notification)
     }
 
@@ -412,25 +405,5 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
         sb.appendRaw(text)
       }
     }
-
-    private fun allFailuresAreCheckedOutBranches(): Boolean {
-      return getAllFailedResults().all { GitFetchErrorFormatter.isCheckedOutBranchError(it.error) }
-    }
-
-    private fun findFailedDueToCheckedOutBranch(): List<GitFetchSpec> {
-      return getAllFailedResults()
-        .filter { GitFetchErrorFormatter.isCheckedOutBranchError(it.error) }
-        .map { it.fetchSpec }
-    }
-
-    private fun getAllFailedResults(): List<FailedSingleRemoteResult> {
-      return results.values.flatMap { repoResult ->
-        repoResult.results.values.mapNotNull { singleRemoteResult ->
-          singleRemoteResult.error?.let { error -> FailedSingleRemoteResult(singleRemoteResult.fetchSpec, error) }
-        }
-      }
-    }
-
-    private data class FailedSingleRemoteResult(val fetchSpec: GitFetchSpec, val error: @Nls String)
   }
 }

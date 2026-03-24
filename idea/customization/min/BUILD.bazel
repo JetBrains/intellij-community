@@ -9,8 +9,23 @@ resourcegroup(
 
 jvm_library(
   name = "min",
+  module_name = "intellij.platform.customization.min",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":min_resources"]
 )
+
+jvm_library(
+  name = "min_test_lib",
+  module_name = "intellij.platform.customization.min",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":min"]
+)
 ### auto-generated section `build intellij.platform.customization.min` end
+
+### auto-generated section `iml intellij.platform.customization.min` start
+exports_files([
+  "intellij.platform.customization.min.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.customization.min` end

@@ -20,7 +20,6 @@ import org.jetbrains.jps.util.Pair;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -121,14 +120,9 @@ public class BuildContextImpl implements BuildContext {
 
     Map<NodeSource, String> sourcesMap = new HashMap<>();
     for (String src : CLFlags.SRCS.getValue(flags)) {
-      try {
-        Path inputPath = baseDir.resolve(src).toRealPath(LinkOption.NOFOLLOW_LINKS); // ensure the input path names have exactly the same case as on the disk
-        assert isSourceDependency(inputPath);
-        sourcesMap.put(myPathMapper.toNodeSource(inputPath), getDigest.apply(src));
-      }
-      catch (IOException e) {
-        report(Message.create(null, Message.Kind.ERROR, "Unable to resolve relative path " + src, e));
-      }
+      Path inputPath = baseDir.resolve(src).normalize();
+      assert isSourceDependency(inputPath);
+      sourcesMap.put(myPathMapper.toNodeSource(inputPath), getDigest.apply(src));
     }
     mySources = new SourceSnapshotImpl(sourcesMap);
 
@@ -178,7 +172,7 @@ public class BuildContextImpl implements BuildContext {
     }
 
     myBuilderOptions = BuilderOptions.create(buildJavaOptions(flags), buildKotlinOptions(flags, map(myLibraries.getElements(), myPathMapper::toPath)));
-    myBuildProcessLogger = VMFlags.isBuildProcessLoggerEnabled()? new BuildProcessLoggerImpl(baseDir) : BuildProcessLogger.EMPTY;
+    myBuildProcessLogger = VMFlags.isBuildProcessLoggerEnabled()? new BatchBuildProcessLogger(new BuildProcessLoggerImpl(baseDir)) : BuildProcessLogger.EMPTY;
   }
 
   private static @NotNull List<String> buildKotlinOptions(Map<CLFlags, List<String>> flags, @NotNull Iterable<@NotNull Path> classpath) {
@@ -242,7 +236,7 @@ public class BuildContextImpl implements BuildContext {
     if (CLFlags.X_WASM_ATTACH_JS_EXCEPTION.isFlagSet(flags)) {
       options.add("-Xwasm-attach-js-exception");
     }
-    for (String flag : CLFlags.X_X_LANGUAGE.getValue(flags)) {
+    for (String flag : CLFlags.X_XLANGUAGE.getValue(flags)) {
       options.add("-XXLanguage:" + flag);
     }
 

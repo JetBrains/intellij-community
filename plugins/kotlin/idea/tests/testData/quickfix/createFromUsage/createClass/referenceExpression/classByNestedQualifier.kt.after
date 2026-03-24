@@ -1,5 +1,6 @@
 // "Create class 'B'" "true"
 // ERROR: Unresolved reference: C
+// K2_ERROR: Unresolved reference 'B'.
 // K2_AFTER_ERROR: Unresolved reference 'C'.
 package p
 

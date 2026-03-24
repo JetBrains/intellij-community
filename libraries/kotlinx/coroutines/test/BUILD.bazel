@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "test",
+  module_name = "intellij.libraries.kotlinx.coroutines.test",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":test_resources"],
@@ -18,4 +19,23 @@ jvm_library(
     "@lib//:kotlinx-coroutines-test",
   ]
 )
+
+jvm_library(
+  name = "test_test_lib",
+  module_name = "intellij.libraries.kotlinx.coroutines.test",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:kotlinx-coroutines-test"],
+  runtime_deps = [
+    ":test",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.kotlinx.coroutines.test` end
+
+### auto-generated section `iml intellij.libraries.kotlinx.coroutines.test` start
+exports_files([
+  "intellij.libraries.kotlinx.coroutines.test.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.kotlinx.coroutines.test` end

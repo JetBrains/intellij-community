@@ -1,0 +1,16 @@
+"scope:1@300" virtual tid=0x0 nid=NA suspended [Coroutine] [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}]
+	at example.Parent.one(Parent.kt:1)
+
+"scope:2@301" virtual tid=0x0 nid=NA running [Coroutine]
+	at example.Child.two(Child.kt:2)
+
+============ INTELLIJ META_DATA ============
+{
+    "version": 1,
+    "tree_links": [
+        {
+            "tree_id": 301,
+            "parent_tree_id": 300
+        }
+    ]
+}

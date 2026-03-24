@@ -22,6 +22,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
+
 final class FileRecursiveIterator {
   private final @NotNull Project myProject;
   private final @NotNull Collection<? extends VirtualFile> myRoots;
@@ -64,7 +66,7 @@ final class FileRecursiveIterator {
         if (fileOrDir.isDirectory() || !visited.add(fileOrDir)) {
           return true;
         }
-        PsiFile psiFile = ReadAction.compute(() -> myProject.isDisposed() ? null : PsiManager.getInstance(myProject).findFile(fileOrDir));
+        PsiFile psiFile = ReadAction.computeBlocking(() -> myProject.isDisposed() ? null : PsiManager.getInstance(myProject).findFile(fileOrDir));
         return psiFile == null || processor.process(psiFile);
       })) return false;
     }
@@ -73,6 +75,6 @@ final class FileRecursiveIterator {
 
   static @NotNull List<PsiDirectory> collectModuleDirectories(Module module) {
     VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-    return ReadAction.compute(() -> ContainerUtil.mapNotNull(contentRoots, root -> PsiManager.getInstance(module.getProject()).findDirectory(root)));
+    return ReadAction.computeBlocking(() -> mapNotNull(contentRoots, root -> PsiManager.getInstance(module.getProject()).findDirectory(root)));
   }
 }

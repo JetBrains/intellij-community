@@ -3,6 +3,7 @@ package com.intellij.execution.testframework.actions
 
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.actions.DocumentsSynchronizer
+import com.intellij.diff.actions.DocumentsSynchronizer.DocumentSynchronizerAssignmentTracker
 import com.intellij.diff.contents.DiffContentBase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.util.DiffUserDataKeysEx
@@ -32,7 +33,7 @@ class TestDiffContent(
   private val project: Project,
   private val original: DocumentContent,
   text: String,
-  private val elemPtr: SmartPsiElementPointer<PsiElement>
+  private val elemPtr: SmartPsiElementPointer<PsiElement>,
 ) : DiffContentBase(), DocumentContent {
   override fun getDocument(): Document = fakeDocument
 
@@ -92,19 +93,10 @@ class TestDiffContent(
     }
 
   }
-
-  private var assignments = 0
+  private val assignmentTracker = DocumentSynchronizerAssignmentTracker(synchronizer)
 
   override fun onAssigned(isAssigned: Boolean) {
-    if (isAssigned) {
-      if (assignments == 0) synchronizer.startListen()
-      assignments++
-    }
-    else {
-      assignments--
-      if (assignments == 0) synchronizer.stopListen()
-    }
-    assert(assignments >= 0)
+    assignmentTracker.onAssigned(isAssigned)
   }
 
   companion object {
@@ -112,7 +104,7 @@ class TestDiffContent(
     fun create(
       project: Project,
       text: String,
-      elemPtr: SmartPsiElementPointer<PsiElement>
+      elemPtr: SmartPsiElementPointer<PsiElement>,
     ): TestDiffContent? {
       val element = elemPtr.element ?: return null
       val document = PsiDocumentManager.getInstance(project).getDocument(element.containingFile) ?: return null
@@ -120,9 +112,9 @@ class TestDiffContent(
       return TestDiffContent(project, diffContent, text, elemPtr).apply {
         val originalLineConvertor = original.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR)
         putUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR, IntUnaryOperator { value ->
-          val valid = ReadAction.compute<Boolean, Throwable> { element.isValid }
+          val valid = ReadAction.computeBlocking<Boolean, Throwable> { element.isValid }
           if (!valid) return@IntUnaryOperator -1
-          val line = ReadAction.compute<Int, Throwable> { value + original.document.getLineNumber(element.startOffset) }
+          val line = ReadAction.computeBlocking<Int, Throwable> { value + original.document.getLineNumber(element.startOffset) }
           originalLineConvertor?.applyAsInt(line) ?: line
         })
       }

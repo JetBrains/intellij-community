@@ -1,4 +1,5 @@
 // "Add non-null asserted (a!!) call" "true"
+// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'String?'.
 
 fun foo(a: String?) {
     a!!.length

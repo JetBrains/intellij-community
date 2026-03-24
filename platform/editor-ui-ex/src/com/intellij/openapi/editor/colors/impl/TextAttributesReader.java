@@ -1,9 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import org.intellij.lang.annotations.JdkConstants;
+import com.intellij.util.ui.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;

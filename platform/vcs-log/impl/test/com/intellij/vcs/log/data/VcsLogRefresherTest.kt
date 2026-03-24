@@ -174,7 +174,7 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     private val project = logData.project
 
     val dataWaiter = DataWaiter()
-    val loader = VcsLogRefresherImpl(cs, logData.storage, logData.logProviders, VcsLogProgress(project),
+    val loader = VcsLogRefresherImpl(cs, project, logData.storage, logData.logProviders, VcsLogProgress(project),
                                      null, dataWaiter, recentCommitsCount)
 
     @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)

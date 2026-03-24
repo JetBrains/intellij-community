@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "tests",
+  module_name = "intellij.platform.workspace.jps.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -26,40 +27,61 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True),
   resources = [":tests_test_resources"],
-  associates = ["//platform/workspace/jps"],
+  associates = [
+    "//platform/workspace/jps",
+    "//platform/workspace/jps:jps_test_lib",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
     "//jps/model-serialization",
+    "//jps/model-serialization:model-serialization_test_lib",
     "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//platform/workspace/storage",
+    "//platform/workspace/storage:storage_test_lib",
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
     "//platform/lang-impl:lang-tests",
     "//platform/lang-impl:lang-tests_test_lib",
+    "//platform/workspace/storage/tests",
     "//platform/workspace/storage/tests:tests_test_lib",
     "@lib//:assert_j",
     "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
     "//libraries/commons/lang3",
+    "//libraries/commons/lang3:lang3_test_lib",
     "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/workspace/storage/testEntities",
     "//platform/workspace/storage/testEntities:testEntities_test_lib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:kotlin-test",
     "//platform/backend/workspace",
+    "//platform/backend/workspace:workspace_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/util/coroutines",
+    "//platform/util/coroutines:coroutines_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//java/java-impl:impl",
     "//java/java-impl:impl_test_lib",
     "//platform/eel-provider",
+    "//platform/eel-provider:eel-provider_test_lib",
     "//platform/testFramework/junit5/eel",
     "//platform/testFramework/junit5/eel:eel_test_lib",
     "@lib//:jet_check",
@@ -69,6 +91,12 @@ jvm_library(
   runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.platform.workspace.jps.tests` end
+
+### auto-generated section `iml intellij.platform.workspace.jps.tests` start
+exports_files([
+  "intellij.platform.workspace.jps.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.workspace.jps.tests` end
 
 ### auto-generated section `test intellij.platform.workspace.jps.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

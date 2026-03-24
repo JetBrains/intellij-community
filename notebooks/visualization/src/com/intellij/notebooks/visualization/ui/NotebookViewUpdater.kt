@@ -3,13 +3,13 @@ package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.visualization.InlaysChangedListener
 import com.intellij.notebooks.visualization.UpdateContext
-import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
+import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeNotifier
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 
 class NotebookViewUpdater private constructor(val editor: EditorImpl) : Disposable {
@@ -47,6 +47,10 @@ class NotebookViewUpdater private constructor(val editor: EditorImpl) : Disposab
     UPDATE_MANAGER_KEY.set(editor, this)
   }
 
+  override fun dispose() {
+    changedListener = null
+  }
+
   fun <T> update(force: Boolean = false, keepScrollingPositon: Boolean = true, block: (updateCtx: UpdateContext) -> T): T {
     val ctx = updateCtx
     return if (ctx != null) {
@@ -72,8 +76,7 @@ class NotebookViewUpdater private constructor(val editor: EditorImpl) : Disposab
   }
 
   private fun <T> updateImpl(newCtx: UpdateContext, block: (updateCtx: UpdateContext) -> T): T {
-    val jupyterBoundsChangeHandler = JupyterBoundsChangeHandler.get(editor)
-    jupyterBoundsChangeHandler.postponeUpdates()
+    JupyterBoundsChangeNotifier.get(editor).postponeUpdates()
     val r = block(newCtx)
     updateCtx = null
     if (editorIsProcessingDocument) {
@@ -88,22 +91,21 @@ class NotebookViewUpdater private constructor(val editor: EditorImpl) : Disposab
 
   private fun finalizeChanges() {
     inlaysChanged()
-    val jupyterBoundsChangeHandler = JupyterBoundsChangeHandler.get(editor)
-    jupyterBoundsChangeHandler.boundsChanged()
-    jupyterBoundsChangeHandler.performPostponed()
+    JupyterBoundsChangeNotifier.get(editor).apply {
+      boundsChanged()
+      performPostponed()
+    }
   }
 
   private fun inlaysChanged() {
     changedListener?.inlaysChanged()
   }
 
-  override fun dispose(): Unit = Unit
-
   companion object {
     fun install(editor: EditorImpl) {
       val notebookViewUpdater = NotebookViewUpdater(editor)
-      Disposer.register(editor.disposable, notebookViewUpdater)
       editor.putUserData(UPDATE_MANAGER_KEY, notebookViewUpdater)
+      EditorUtil.disposeWithEditor(editor, notebookViewUpdater)
     }
 
     fun getOrNull(editor: Editor): NotebookViewUpdater? = editor.getUserData(UPDATE_MANAGER_KEY)

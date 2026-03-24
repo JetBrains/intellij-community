@@ -1,7 +1,27 @@
 <html>
 <body>
-Reports redundant class fields that can be replaced with local variables.
-<p>If all local usages of a field are preceded by assignments to that field, the
-  field can be removed, and its usages can be replaced with local variables.</p>
+Reports <code>private</code> fields that are redundant and can be replaced with a local variable.
+<p>If all local usages of a field are preceded by an assignment to that field, the
+  field can be replaced with one or more local variables.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  class DeskLamp {
+    private boolean on = false;
+
+    boolean pressButton() {
+      on = true;
+      return on;
+    }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class DeskLamp {
+    boolean pressButton() {
+      boolean on = true;
+      return on;
+    }
+  }
+</code></pre>
 </body>
 </html>

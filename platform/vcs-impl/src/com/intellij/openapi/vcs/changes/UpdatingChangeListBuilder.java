@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -103,7 +102,7 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
 
   @Override
   public void processUnversionedFile(FilePath filePath) {
-    if (acceptFilePath(filePath, false)) {
+    if (acceptFilePath(filePath)) {
       myComposite.getUnversionedFileHolder().addFile(myScope.getVcs(), filePath);
       SwitchedFileHolder switchedFileHolder = myComposite.getSwitchedFileHolder();
       if (!switchedFileHolder.isEmpty()) {
@@ -135,7 +134,7 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
 
   @Override
   public void processModifiedWithoutCheckout(VirtualFile file) {
-    if (acceptFile(file, false)) {
+    if (acceptFile(file)) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("processModifiedWithoutCheckout " + file);
       }
@@ -145,14 +144,14 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
 
   @Override
   public void processIgnoredFile(FilePath filePath) {
-    if (acceptFilePath(filePath, false)) {
+    if (acceptFilePath(filePath)) {
       myComposite.getIgnoredFileHolder().addFile(myScope.getVcs(), filePath);
     }
   }
 
   @Override
   public void processLockedFolder(VirtualFile file) {
-    if (acceptFile(file, true)) {
+    if (acceptFile(file)) {
       if (myFoldersCutDownWorker.addCurrent(file)) {
         myComposite.getLockedFileHolder().addFile(file);
       }
@@ -161,21 +160,21 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
 
   @Override
   public void processLogicallyLockedFolder(VirtualFile file, LogicalLock logicalLock) {
-    if (acceptFile(file, true)) {
+    if (acceptFile(file)) {
       myComposite.getLogicallyLockedFileHolder().add(file, logicalLock);
     }
   }
 
   @Override
   public void processSwitchedFile(VirtualFile file, String branch, boolean recursive) {
-    if (acceptFile(file, false)) {
+    if (acceptFile(file)) {
       myComposite.getSwitchedFileHolder().addFile(file, branch, recursive);
     }
   }
 
   @Override
   public void processRootSwitch(VirtualFile file, String branch) {
-    if (acceptFile(file, true)) {
+    if (acceptFile(file)) {
       myComposite.getRootSwitchFileHolder().addFile(file, branch, false);
     }
   }
@@ -199,17 +198,15 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
     return myAdditionalInfo;
   }
 
-  private boolean acceptFile(@Nullable VirtualFile file, boolean allowIgnored) {
+  private boolean acceptFile(@Nullable VirtualFile file) {
     checkIfDisposed();
     if (file == null) return false;
-    if (!allowIgnored && ReadAction.compute(() -> myVcsManager.isIgnored(file))) return false;
     return myScope.belongsTo(VcsUtil.getFilePath(file));
   }
 
-  private boolean acceptFilePath(@Nullable FilePath filePath, boolean allowIgnored) {
+  private boolean acceptFilePath(@Nullable FilePath filePath) {
     checkIfDisposed();
     if (filePath == null) return false;
-    if (!allowIgnored && ReadAction.compute(() -> myVcsManager.isIgnored(filePath))) return false;
     return myScope.belongsTo(filePath);
   }
 }

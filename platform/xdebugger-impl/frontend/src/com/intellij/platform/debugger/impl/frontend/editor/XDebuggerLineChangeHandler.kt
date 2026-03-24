@@ -10,6 +10,8 @@ import com.intellij.platform.debugger.impl.frontend.getAvailableBreakpointTypesF
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.impl.XSourcePositionImpl
+import com.intellij.openapi.editor.impl.BreakpointArea
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -19,11 +21,10 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.swing.Icon
 
 internal class XDebuggerLineChangeHandler(
   scope: CoroutineScope,
-  private val handler: (EditorGutterComponentEx, XSourcePositionImpl, icon: Icon?) -> Unit
+  private val handler: (EditorGutterComponentEx, XSourcePositionImpl, breakpointType: XBreakpointTypeProxy?, BreakpointArea) -> Unit
 ) {
   private val lineChangedEvents = MutableSharedFlow<LineChangedEvent?>(extraBufferCapacity = 1,
                                                                        onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -34,13 +35,12 @@ internal class XDebuggerLineChangeHandler(
         if (event == null) {
           return@collectLatest
         }
-        val (editor, position) = event
+        val (editor, position, breakpointArea) = event
         val project = editor.project ?: return@collectLatest
         try {
-          val type = getBreakpointTypeForLine(project, editor, position.line)
-          val icon = type?.enabledIcon
+          val type = getBreakpointTypeForLine(project, editor, position.line, breakpointArea)
           withContext(Dispatchers.Main) {
-            handler(editor.gutter as EditorGutterComponentEx, position, icon)
+            handler(editor.gutter as EditorGutterComponentEx, position, type, breakpointArea)
           }
         }
         catch (e: CancellationException) {
@@ -53,23 +53,27 @@ internal class XDebuggerLineChangeHandler(
     }
   }
 
-  fun lineChanged(editor: Editor, position: XSourcePositionImpl) {
-    lineChangedEvents.tryEmit(LineChangedEvent(editor, position))
+  fun lineChanged(editor: Editor, position: XSourcePositionImpl, breakpointArea: BreakpointArea) {
+    lineChangedEvents.tryEmit(LineChangedEvent(editor, position, breakpointArea))
   }
 
   fun exitedGutter() {
     lineChangedEvents.tryEmit(null)
   }
 
-  private suspend fun getBreakpointTypeForLine(project: Project, editor: Editor, line: Int): XBreakpointTypeProxy? {
+  private suspend fun getBreakpointTypeForLine(project: Project, editor: Editor, line: Int, breakpointArea: BreakpointArea): XBreakpointTypeProxy? {
     val types: List<XBreakpointTypeProxy> = if (SplitDebuggerMode.isSplitDebugger()) {
       FrontendEditorLinesBreakpointsInfoManager.getInstance(project).getBreakpointsInfoForLine(editor, line).types
     }
     else {
       getAvailableBreakpointTypesFromServer(project, editor, line).types
     }
-    return types.firstOrNull()
+    return if (breakpointArea is BreakpointArea.InterLine) {
+      types.singleOrNull()?.takeIf { it is XLineBreakpointTypeProxy && it.supportsInterLinePlacement() }
+    } else {
+      types.firstOrNull()
+    }
   }
 
-  private data class LineChangedEvent(val editor: Editor, val position: XSourcePositionImpl)
+  private data class LineChangedEvent(val editor: Editor, val position: XSourcePositionImpl, val breakpointArea: BreakpointArea)
 }

@@ -21,10 +21,22 @@ open class FileComparisonFailedError @JvmOverloads constructor(
 ), FileComparisonData {
   init {
     require(expectedFilePath == null || File(expectedFilePath).isFile) {
-      "'expectedFilePath' should point to the existing file or be null"
+      """
+        'expectedFilePath' should point to the existing file or be null
+        expectedFilePath=$expectedFilePath
+        expectedFilePath.exists=${File(expectedFilePath).exists()}
+        expectedFilePath.isFile=${File(expectedFilePath).isFile}
+        message=$message
+      """.trimIndent()
     }
     require(actualFilePath == null || File(actualFilePath).isFile) {
-      "'actualFilePath' should point to the existing file or be null"
+      """
+        'actualFilePath' should point to the existing file or be null
+        actualFilePath=$actualFilePath
+        actualFilePath.exists=${File(actualFilePath).exists()}
+        actualFilePath.isFile=${File(actualFilePath).isFile}
+        message=$message
+      """.trimIndent()
     }
   }
 

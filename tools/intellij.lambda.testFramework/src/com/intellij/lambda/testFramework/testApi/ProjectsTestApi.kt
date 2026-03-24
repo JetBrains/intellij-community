@@ -57,6 +57,12 @@ suspend fun waitForProject(timeout: Duration = 5.seconds): Project =
   }
 
 context(lambdaIdeContext: LambdaIdeContext)
+suspend fun waitForNoProjects(timeout: Duration = 5.seconds) =
+  waitSuspending("There is no project", timeout,
+                 getter = { getProjects() },
+                 checker = { it.isEmpty() })
+
+context(lambdaIdeContext: LambdaIdeContext)
 suspend fun focusProject(projectName: String) {
   waitForProject(projectName).requestAndWaitFocus()
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -25,7 +25,6 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiReturnStatement;
@@ -88,12 +87,10 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
   @Override
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     List<LocalQuickFix> quickFixes = new ArrayList<>();
-    if (infos.length > 1 && infos[1] instanceof Boolean canBeRemoved && canBeRemoved) {
-      quickFixes.add(new RedundantMethodOverrideFix());
-    }
-    if (infos.length > 0 && infos[0] instanceof Boolean isDelegate && !isDelegate) {
-      quickFixes.add(new ReplaceWithSuperDelegateFix());
-    }
+    boolean isDelegate = (boolean)infos[0];
+    boolean canBeRemoved = (boolean)infos[1];
+    if (canBeRemoved) quickFixes.add(new RedundantMethodOverrideFix());
+    if (!isDelegate && ignoreDelegates) quickFixes.add(new ReplaceWithSuperDelegateFix());
     return quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
@@ -124,41 +121,35 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameIdentifier, @NotNull ModPsiUpdater updater) {
       if (!(methodNameIdentifier.getParent() instanceof PsiMethod method)) return;
+      PsiCodeBlock methodBody = method.getBody();
+      if (methodBody == null) return;
       PsiMethod superMethod = findSuperMethod(method);
       if (superMethod == null) return;
       PsiClassType requiredQualifier = findRequiredSuperQualifier(method.getContainingClass(), superMethod);
       String qualifier = requiredQualifier != null ? requiredQualifier.rawType().getCanonicalText() + ".super." : "super.";
-      String parameters = StringUtil.join(superMethod.getParameterList().getParameters(), PsiParameter::getName, ",");
-      String call = qualifier + method.getName() + "(" + parameters + ");";
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      String arguments = StringUtil.join(parameters, PsiParameter::getName, ",");
+      String call = qualifier + method.getName() + "(" + arguments + ");";
       if (!PsiTypes.voidType().equals(method.getReturnType())) {
         call = "return " + call;
       }
       PsiSubstitutor substitutor = AbstractMethodOverridesAbstractMethodInspection.getSuperSubstitutor(method, superMethod);
       if (substitutor == null) return;
-      PsiParameterList parameterList = (PsiParameterList) superMethod.getParameterList().copy();
-      for (PsiParameter parameter: parameterList.getParameters()) {
-        PsiTypeElement newType = PsiElementFactory.getInstance(project).createTypeElement(substitutor.substitute(parameter.getType()));
+      PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
+      for (int i = 0; i < superParameters.length; i++) {
+        PsiParameter superParameter = superParameters[i];
+        PsiParameter parameter = parameters[i];
+        PsiTypeElement newType = PsiElementFactory.getInstance(project).createTypeElement(substitutor.substitute(superParameter.getType()));
         PsiTypeElement oldType = parameter.getTypeElement();
         assert oldType != null;
         oldType.replace(newType);
       }
-      for (PsiParameter parameter: method.getParameterList().getParameters()) {
-        PsiTypeElement newType = PsiElementFactory.getInstance(project).createTypeElement(substitutor.substitute(parameter.getType()));
-        PsiTypeElement oldType = parameter.getTypeElement();
-        assert oldType != null;
-        oldType.replace(newType);
+      for (PsiStatement element : methodBody.getStatements()) {
+        element.delete();
       }
-      method.getParameterList().replace(parameterList);
-      PsiCodeBlock methodBody = method.getBody();
-      if (methodBody != null) {
-        for (PsiStatement element : methodBody.getStatements()) {
-          element.delete();
-        }
-        PsiStatement statement = PsiElementFactory.getInstance(project).createStatementFromText(call, methodBody);
-        methodBody.add(statement);
-      }
+      PsiStatement statement = PsiElementFactory.getInstance(project).createStatementFromText(call, methodBody);
+      methodBody.add(statement);
     }
-
   }
 
   private static class RedundantMethodOverrideFix extends PsiUpdateModCommandQuickFix {
@@ -227,11 +218,10 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
         return;
       }
       if (checkLibraryMethods && superMethod instanceof PsiCompiledElement) {
-        final PsiElement navigationElement = superMethod.getNavigationElement();
-        if (!(navigationElement instanceof PsiMethod)) {
+        if (!(superMethod.getNavigationElement() instanceof PsiMethod m)) {
           return;
         }
-        superMethod = (PsiMethod)navigationElement;
+        superMethod = m;
       }
       final PsiCodeBlock superBody = superMethod.getBody();
       final PsiMethod finalSuperMethod = superMethod;
@@ -377,8 +367,8 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
       for (int i = 0; i < arguments.length; i++) {
         PsiExpression argument = arguments[i];
         PsiExpression exp = PsiUtil.deparenthesizeExpression(argument);
-        if (!(exp instanceof PsiReferenceExpression)) return false;
-        PsiElement resolved = ((PsiReferenceExpression)exp).resolve();
+        if (!(exp instanceof PsiReferenceExpression ref)) return false;
+        PsiElement resolved = ref.resolve();
         if (!method.getManager().areElementsEquivalent(parameters[i], resolved)) {
           return false;
         }

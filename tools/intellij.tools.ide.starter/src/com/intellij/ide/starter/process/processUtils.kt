@@ -8,15 +8,18 @@ import com.intellij.ide.starter.process.ProcessKiller.killProcesses
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.runner.IDERunContext
-import com.intellij.tools.ide.util.common.NoRetryException
 import com.intellij.tools.ide.util.common.PrintFailuresMode
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.withRetry
 import com.intellij.util.system.OS
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import oshi.SystemInfo
 import oshi.software.os.OSProcess
-import oshi.software.os.OperatingSystem
 import java.io.IOException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -26,17 +29,25 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.readLines
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.measureTimedValue
 
-fun getProcessList(vararg substringToSearch: String): List<ProcessInfo> =
-  getProcessList { p ->
+suspend fun getProcessList(): List<ProcessInfo> =
+  coroutineScope {
+    val processes = withContext(Dispatchers.IO) {
+      SystemInfo().operatingSystem.getProcesses({ p -> p.state != OSProcess.State.INVALID }, null, 0)
+    }
+    processes
+      .map { async { it.toProcessInfo() } }
+      .awaitAll()
+  }
+
+suspend fun getProcessList(vararg substringToSearch: String): List<ProcessInfo> =
+  getProcessList().filter { p ->
     substringToSearch.isEmpty() || p.arguments.any { arg -> substringToSearch.any { arg.contains(it) } }
   }
 
-fun getProcessList(filter: Predicate<ProcessInfo>): List<ProcessInfo> =
-  SystemInfo().operatingSystem.getProcesses({ p -> p.state != OSProcess.State.INVALID && filter.test(ProcessInfo.create(p.processID.toLong())) },
-                                            null,
-                                            0)
-    .map { it.toProcessInfo() }
+suspend fun getProcessList(filter: Predicate<ProcessInfo>): List<ProcessInfo> =
+  getProcessList().filter(filter::test)
 
 /**
  * Identifies and terminates any leftover processes from previous test runs, specifically those
@@ -47,16 +58,16 @@ fun getProcessList(filter: Predicate<ProcessInfo>): List<ProcessInfo> =
  * This lead to OOM and other errors during tests, for example,
  * IDEA-256265: shared-indexes tests on Linux suspiciously fail with 137 (killed by OOM)
  */
-fun findAndKillLeftoverProcessesFromTestRuns(reportErrors: Boolean = false) {
+suspend fun findAndKillLeftoverProcessesFromTestRuns(reportErrors: Boolean = false) {
   val substringToSearch: List<String> = listOf("/$IDE_TESTS_SUBSTRING/", "\\$IDE_TESTS_SUBSTRING\\")
   findAndKillProcessesBySubstring(*substringToSearch.toTypedArray()) { processInfosToKill ->
     if (reportErrors) {
       val message = "Unexpected running processes were detected after IDE was stopped ${processInfosToKill.joinToString(", ") { it.name }}"
       CIServer.instance.reportTestFailure(testName = message,
                                           message = message + "\n" +
-                                                    processInfosToKill.joinToString(", ") { "Process:[Name:${it.name},Id:${it.pid}]\n" } + "\n" +
+                                                    processInfosToKill.joinToString(", ") { "Process:[Name:${it.name}, Id:${it.pid}]" } + "\n\n" +
                                                     "Please investigate if the process should have been stopped together with the IDE, it means it is a bug, you can raise a YT ticket and mute the exception.\n" +
-                                                    "If it is an expected behaviour, it is recommended to add a call `${::findAndKillProcesses}` with appropriate arguments in @After/@AfterEach.\n" +
+                                                    "If it is an expected behaviour, it is recommended to add a call `${::findAndKillProcesses}` with appropriate arguments in @After/@AfterEach.\n\n" +
                                                     "Processes were collected based on command line, containing '${
                                                       substringToSearch.joinToString(", ")
                                                     }'.\n" +
@@ -74,13 +85,13 @@ fun findAndKillLeftoverProcessesFromTestRuns(reportErrors: Boolean = false) {
  *                         to the found processes before attempting to kill them. Defaults to an empty callback.
  * @return `true` if all targeted processes were successfully killed or none were detected; `false` otherwise.
  */
-fun findAndKillProcessesBySubstring(vararg substringToSearch: String, onFoundProcesses: (List<ProcessInfo>) -> Unit = {}) {
+suspend fun findAndKillProcessesBySubstring(vararg substringToSearch: String, onFoundProcesses: (List<ProcessInfo>) -> Unit = {}) {
   return findAndKillProcesses(message = "Killing process containing '${substringToSearch.joinToString(",")}' in command line",
                               filter = { p -> p.arguments.any { arg -> substringToSearch.any { arg.contains(it) } } },
                               onFoundProcesses = onFoundProcesses)
 }
 
-fun findAndKillProcesses(message: String? = null, filter: Predicate<ProcessInfo>, onFoundProcesses: (List<ProcessInfo>) -> Unit = {}) {
+suspend fun findAndKillProcesses(message: String? = null, filter: Predicate<ProcessInfo>, onFoundProcesses: (List<ProcessInfo>) -> Unit = {}) {
   val prefix = message ?: "Killing process matching '$filter' in command line"
   logOutput("$prefix ...")
   val processInfosToKill = getProcessList(filter)
@@ -139,20 +150,44 @@ private fun ProcessInfo.argumentsAreFromIdea(): Boolean {
     }
 }
 
-
-suspend fun getIdeProcessIdWithRetry(parentProcessInfo: ProcessInfo, runContext: IDERunContext): Long {
+/*
+  In most cases returns a real pid.
+  In case the parent process has exited too quickly, returns null.
+  In case we were trying to find the pid for some adequate time and failed, throws an exception.
+ */
+suspend fun getIdeProcessIdWithRetry(parentProcessInfo: ProcessInfo, runContext: IDERunContext): Long? {
   if (OS.CURRENT != OS.Linux) {
     return parentProcessInfo.pid
   }
 
-  logOutput("Guessing IDE process ID on Linux: \n${parentProcessInfo.description}")
-  val attemptsResult = withRetry(retries = 100,
-                                 delay = 3.seconds,
-                                 messageOnFailure = "Couldn't find appropriate IDE process id for pid ${parentProcessInfo.pid}",
-                                 printFailuresMode = PrintFailuresMode.ALL_FAILURES) {
-    getIdeProcessId(parentProcessInfo, runContext)
+  if (parentProcessInfo.isIde(runContext)) {
+    logOutput("Parent process is an IDE process itself (was launched without wrapper)")
+    return parentProcessInfo.pid
   }
-  return requireNotNull(attemptsResult) { "IDE process id must not be null" }
+
+  logOutput("Guessing IDE process ID on Linux: \n${parentProcessInfo.description}")
+
+  val attemptsResult = measureTimedValue {
+    withRetry(retries = 10,
+              delay = 3.seconds,
+              messageOnFailure = "Couldn't find appropriate IDE process id for pid ${parentProcessInfo.pid}",
+              printFailuresMode = PrintFailuresMode.ALL_FAILURES) {
+      getIdeProcessId(parentProcessInfo, runContext)
+    }
+  }
+
+  if (attemptsResult.value == null) {
+    if (attemptsResult.duration < 5.seconds && parentProcessInfo.processHandle?.isAlive != true) {
+      //the processes finished too fast for us to determine the pid
+      return null
+    }
+    else {
+      error("Couldn't find appropriate IDE process id for pid ${parentProcessInfo.pid} in ${attemptsResult.duration}. " +
+            "Means something is wrong with our diagnostics.")
+    }
+  }
+
+  return attemptsResult.value
 }
 
 
@@ -161,37 +196,28 @@ suspend fun getIdeProcessIdWithRetry(parentProcessInfo: ProcessInfo, runContext:
  * Thus, we must guess the IDE process ID for capturing the thread dumps.
  * In case of Dev Server, under xvfb-run the whole build process is happening so the waiting time can be long.
  */
-private fun getIdeProcessId(parentProcessInfo: ProcessInfo, runContext: IDERunContext): Long {
+private suspend fun getIdeProcessId(parentProcessInfo: ProcessInfo, runContext: IDERunContext): Long? {
   if (OS.CURRENT != OS.Linux) {
     return parentProcessInfo.pid
   }
 
   if (parentProcessInfo.processHandle?.isAlive != true) {
-    throw NoRetryException("Couldn't guess IDE process: parent process is not alive", null)
+    logOutput("Couldn't guess IDE process: parent process is not alive")
+    return null
   }
+
   logOutput("Guessing IDE process ID on Linux (pid of the IDE process wrapper ${parentProcessInfo.pid})")
 
-  if (parentProcessInfo.isIde(runContext)) {
-    logOutput("Parent process is an IDE process itself (was launched without wrapper)")
-    return parentProcessInfo.pid
+  val suitableChildren = getProcessList().filter { processInfo ->
+    processInfo.parentPid == parentProcessInfo.pid && processInfo.isIde(runContext)
   }
-
-  val suitableChildren = SystemInfo().operatingSystem.getChildProcesses(
-    parentProcessInfo.pid.toInt(),
-    { ProcessInfo.create(it.processID.toLong()).isIde(runContext) },
-    OperatingSystem.ProcessSorting.UPTIME_DESC,
-    0
-  ).map { it.toProcessInfo() }
 
   if (suitableChildren.isEmpty()) {
     throw Exception("There are no suitable candidates for IDE process\n" +
                     "All children: \n" +
-                    SystemInfo().operatingSystem.getChildProcesses(
-                      parentProcessInfo.pid.toInt(),
-                      null,
-                      OperatingSystem.ProcessSorting.UPTIME_DESC,
-                      0
-                    ).joinToString("\n") { it.toProcessInfo().description })
+                    getProcessList()
+                      .filter { it.parentPid == parentProcessInfo.pid }
+                      .joinToString("\n") { it.description })
   }
 
   if (suitableChildren.size > 1) {
@@ -240,7 +266,7 @@ suspend fun collectJavaThreadDumpSuspendable(
       workDir,
       timeout = 1.minutes,
       args = command,
-      stdoutRedirect = ExecOutputRedirect.ToFile(dumpFile.toFile()),
+      stdoutRedirect = ExecOutputRedirect.ToFile(dumpFile),
       stderrRedirect = ExecOutputRedirect.ToStdOut("[jstack-err]"),
       silent = true
     ).startCancellable()

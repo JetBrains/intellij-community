@@ -9,8 +9,11 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.ui.Queryable
 import com.intellij.psi.NavigatablePsiElement
+import com.intellij.ui.icons.RowIcon
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -58,6 +61,7 @@ class KotlinStructureViewElement(
     override fun getIcon(open: Boolean): Icon? = kotlinPresentation.getIcon(open)
     override fun getPresentableText(): String? = kotlinPresentation.presentableText
 
+    @OptIn(KaAllowAnalysisOnEdt::class)
     @TestOnly
     override fun putInfo(info: MutableMap<in String, in String?>) {
         // Sanity check for API consistency
@@ -66,6 +70,11 @@ class KotlinStructureViewElement(
 
         info["text"] = presentableText
         info["location"] = locationString
+        allowAnalysisOnEdt {
+            info["icon"] = with(getIcon(false)) {
+                (this as? RowIcon)?.allIcons?.joinToString(transform = Icon::toString) ?: this?.toString()
+            }
+        }
     }
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {

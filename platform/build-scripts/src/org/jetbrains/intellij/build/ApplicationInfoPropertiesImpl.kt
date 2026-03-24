@@ -124,7 +124,7 @@ internal class ApplicationInfoPropertiesImpl(
     val companyTag = root.getChild("company")!!
     companyName = companyTag.getAttributeValue("name")!!
     shortCompanyName = companyTag.getAttributeValue("shortName") ?: shortenCompanyName(companyName)
-    val svgPath = root.getChild("icon")?.getAttributeValue("svg")
+    val svgPath = root.getChild("icon")?.getAttributeValue("svg")?.takeIf { it.isNotEmpty() }
     svgRelativePath = if (isEAP) (root.getChild("icon-eap")?.getAttributeValue("svg") ?: svgPath) else svgPath
     svgProductIcons = sequenceOf(root.getChild("icon"), root.getChild("icon-eap"))
       .filterNotNull()

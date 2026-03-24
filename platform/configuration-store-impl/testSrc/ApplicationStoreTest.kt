@@ -30,6 +30,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.refreshVfs
 import com.intellij.testFramework.registerServiceInstance
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.util.xmlb.SettingsInternalApi
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.Dispatchers
@@ -60,6 +61,7 @@ import kotlin.io.path.writeBytes
 import kotlin.io.path.writeText
 import kotlin.properties.Delegates
 
+@OptIn(SettingsInternalApi::class)
 class ApplicationStoreTest {
   companion object {
     @JvmField @ClassRule val appRule = ApplicationRule()

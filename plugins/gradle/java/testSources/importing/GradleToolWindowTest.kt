@@ -18,6 +18,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
 import groovy.util.Node
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.junit.Test
 import org.junit.runners.Parameterized
 import java.io.File
@@ -25,15 +26,12 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.concurrent.atomic.AtomicReference
 
-@Suppress("SpellCheckingInspection")
 open class GradleToolWindowTest : GradleImportingTestCase() {
   companion object {
     @JvmStatic
     @Parameterized.Parameters(name = "with Gradle-{0}")
     fun data(): MutableCollection<String?> {
-      val result = ArrayList<String?>()
-      result.add("5.0")
-      return result
+      return mutableListOf(VersionMatcherRule.getSupportedGradleVersions().last())
     }
 
     private fun buildTree(name: String?, nodes: Array<ExternalSystemNode<*>>, parent: Node?): Node {
@@ -72,12 +70,12 @@ group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
 
-    createProjectSubFile("../child1/build.gradle", """
+    createProjectSubFile("child1/build.gradle", """
 group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
 
-    createProjectSubFile("../child2/build.gradle", """
+    createProjectSubFile("child2/build.gradle", """
 group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
@@ -99,16 +97,16 @@ group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
 
-    createProjectSubFile("../child1/build.gradle", """
+    createProjectSubFile("child1/build.gradle", """
 group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
-    createProjectSubFile("../child2/build.gradle", """
+    createProjectSubFile("child2/build.gradle", """
 group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
 
-    createProjectSubFile("../child2/dot.child/build.gradle", """
+    createProjectSubFile("child2/dot.child/build.gradle", """
 group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
@@ -128,7 +126,7 @@ group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
 
-    createProjectSubFile("../child1/build.gradle", """
+    createProjectSubFile("child1/build.gradle", """
 group 'test'
 version '1.0-SNAPSHOT'
 def foo = new testBuildSrcClassesUsages.BuildSrcClass().sayHello()
@@ -158,11 +156,11 @@ group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
 
-    createProjectSubFile("../child1/build.gradle", """
+    createProjectSubFile("child1/build.gradle", """
 group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
-    createProjectSubFile("../child2/build.gradle", """
+    createProjectSubFile("child2/build.gradle", """
 group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
@@ -186,11 +184,11 @@ group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
 
-    createProjectSubFile("../child1/build.gradle", """
+    createProjectSubFile("child1/build.gradle", """
 group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
-    createProjectSubFile("../child2/build.gradle", """
+    createProjectSubFile("child2/build.gradle", """
 group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
@@ -217,12 +215,12 @@ group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
 
-    createProjectSubFile("../child1/build.gradle", """
+    createProjectSubFile("child1/build.gradle", """
 group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
 
-    createProjectSubFile("../child2/build.gradle", """
+    createProjectSubFile("child2/build.gradle", """
 group 'test'
 version '1.0-SNAPSHOT'
 """.trimIndent())
@@ -252,13 +250,15 @@ includeBuild '../my-utils'
 
     createProjectSubFile("../my-app/settings.gradle", "rootProject.name = 'my-app'\n")
     createProjectSubFile("../my-app/build.gradle", """
-apply plugin: 'java'
+      plugins {
+        id 'java'
+      }
 group 'org.sample'
 version '1.0'
 
 dependencies {
-  compile 'org.sample:number-utils:1.0'
-  compile 'org.sample:string-utils:1.0'
+  implementation 'org.sample:number-utils:1.0'
+  implementation 'org.sample:string-utils:1.0'
 }
 """.trimIndent())
 
@@ -268,19 +268,26 @@ include 'number-utils', 'string-utils'
 """.trimIndent())
 
     createProjectSubFile("../my-utils/build.gradle", injectRepo("""
-subprojects {
-  apply plugin: 'java'
+""".trimIndent()))
 
+    createProjectSubFile("../my-utils/string-utils/build.gradle", """
+      plugins {
+        id 'java-library'
+      }
   group 'org.sample'
   version '1.0'
-}
-
-project(':string-utils') {
   dependencies {
-    compile 'org.apache.commons:commons-lang3:3.4'
+    api 'org.apache.commons:commons-lang3:3.4'
   }
-}
-""".trimIndent()))
+    """.trimIndent())
+
+    createProjectSubFile("../my-utils/number-utils/build.gradle", """
+      plugins {
+        id 'java'
+      }
+  group 'org.sample'
+  version '1.0'
+    """.trimIndent())
 
     doTest()
   }
@@ -292,6 +299,13 @@ rootProject.name = 'rootProject'
 include 'p1', 'p2', 'p1:sub:sp1', 'p2:p2sub:sub:sp2'
 include 'p1:leaf', 'p2:leaf'
 """.trimIndent())
+
+    createProjectSubFile("p1/build.gradle", """""")
+    createProjectSubFile("p2/build.gradle", """""")
+    createProjectSubFile("p1/sub/sp1/build.gradle", """""")
+    createProjectSubFile("p2/p2sub/sub/sp2/build.gradle", """""")
+    createProjectSubFile("p1/leaf/build.gradle", """""")
+    createProjectSubFile("p2/leaf/build.gradle", """""")
 
     doTest()
   }

@@ -13,9 +13,12 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.opentest4j.TestAbortedException
+import java.util.ResourceBundle
 import kotlin.io.path.pathString
 
-const val LATEST_UV_VERSION = "0.9.26"
+val LATEST_UV_VERSION: String by lazy {
+  ResourceBundle.getBundle("com.intellij.python.test.env.junit5.tools").getString("uv.version")
+}
 
 /**
  * Extension that ensures Uv tool is available and configured.

@@ -222,6 +222,7 @@ class Operation:
     def __getattr__(self, name: str) -> Incomplete: ...
 
 class TensorShape(metaclass=ABCMeta):
+    __slots__ = ["_dims"]
     def __init__(self, dims: ShapeLike) -> None: ...
     @property
     def rank(self) -> int: ...
@@ -308,6 +309,7 @@ class UnconnectedGradients(Enum):
 _SpecProto = TypeVar("_SpecProto", bound=Message)
 
 class TypeSpec(ABC, Generic[_SpecProto]):
+    __slots__ = ["_cached_cmp_key"]
     @property
     @abstractmethod
     def value_type(self) -> Any: ...
@@ -323,6 +325,7 @@ class TypeSpec(ABC, Generic[_SpecProto]):
     def most_specific_compatible_type(self, other: Self) -> Self: ...
 
 class TensorSpec(TypeSpec[struct_pb2.TensorSpecProto]):
+    __slots__: list[str] = []
     def __init__(self, shape: ShapeLike, dtype: DTypeLike = ..., name: str | None = None) -> None: ...
     @property
     def value_type(self) -> Tensor: ...
@@ -339,6 +342,7 @@ class TensorSpec(TypeSpec[struct_pb2.TensorSpecProto]):
     def is_compatible_with(self, spec_or_tensor: Self | TensorCompatible) -> _bool: ...  # type: ignore[override]
 
 class SparseTensorSpec(TypeSpec[struct_pb2.TypeSpecProto]):
+    __slots__ = ["_shape", "_dtype"]
     def __init__(self, shape: ShapeLike | None = None, dtype: DTypeLike = ...) -> None: ...
     @property
     def value_type(self) -> SparseTensor: ...
@@ -350,6 +354,7 @@ class SparseTensorSpec(TypeSpec[struct_pb2.TypeSpecProto]):
     def from_value(cls, value: SparseTensor) -> Self: ...
 
 class RaggedTensorSpec(TypeSpec[struct_pb2.TypeSpecProto]):
+    __slots__ = ["_shape", "_dtype", "_ragged_rank", "_row_splits_dtype", "_flat_values_spec"]
     def __init__(
         self,
         shape: ShapeLike | None = None,

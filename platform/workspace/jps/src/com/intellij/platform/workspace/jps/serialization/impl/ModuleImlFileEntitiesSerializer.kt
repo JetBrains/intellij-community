@@ -136,6 +136,8 @@ private val MODULE_OPTIONS_TO_CHECK = setOf(
   "external.root.project.path", "external.system.module.group", "external.system.module.type"
 )
 
+internal val LOG = logger<ModuleImlFileEntitiesSerializer>()
+
 internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePath,
                                                     override val fileUrl: VirtualFileUrl,
                                                     override val internalEntitySource: JpsFileEntitySource,
@@ -893,7 +895,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   ) {
     val externalSystemOptions = module.exModuleOptions
     val customImlData = module.customImlData
-    saveModuleOptions(externalSystemOptions, module.type?.name, customImlData, content)
+    saveModuleOptions(externalSystemOptions, module.type?.name, module.entitySource, customImlData, content)
     val moduleOptions = customImlData?.customModuleOptions
     val customSerializerId = moduleOptions?.get(JpsProjectLoader.CLASSPATH_ATTRIBUTE)
     if (customSerializerId != null) {
@@ -1046,9 +1048,15 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   protected open fun saveModuleOptions(externalSystemOptions: ExternalSystemModuleOptionsEntity?,
                                        moduleType: String?,
+                                       moduleEntitySource: EntitySource,
                                        customImlData: ModuleCustomImlDataEntity?,
                                        content: WritableJpsFileContent) {
     val optionsMap = TreeMap<String, String?>()
+    if (moduleEntitySource is JpsImportedEntitySource && moduleEntitySource.externalSystemId != externalSystemOptions?.externalSystem) {
+      LOG.error("External system ID mismatch: ModuleEntity.entitySource (${moduleEntitySource.externalSystemId}) != ExternalSystemModuleOptionsEntity.externalSystem (${externalSystemOptions?.externalSystem}). " +
+                "Module is probably misconfigured. It'll get '${externalSystemOptions?.externalSystem}' system ID after deserialization.")
+    }
+
     if (externalSystemOptions != null) {
       if (externalSystemOptions.externalSystem == SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID) {
         optionsMap[SerializationConstants.IS_MAVEN_MODULE_IML_ATTRIBUTE] = true.toString()
@@ -1148,8 +1156,6 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   override fun toString(): String = "ModuleImlFileEntitiesSerializer($fileUrl)"
 
   companion object {
-    private val LOG = logger<ModuleImlFileEntitiesSerializer>()
-
     // The comparator has reversed priority. So, the last entry of this list will be printed as a first attribute in the xml tag.
     private val orderOfKnownAttributes = listOf(
       INHERIT_COMPILER_OUTPUT_ATTRIBUTE,

@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.Usage;
+import org.jetbrains.jps.dependency.impl.GraphElementInterner;
 
 import java.io.IOException;
 
@@ -14,11 +15,11 @@ public abstract class JvmElementUsage implements Usage {
   private final @NotNull JvmNodeReferenceID myOwner;
 
   JvmElementUsage(@NotNull JvmNodeReferenceID owner) {
-    myOwner = owner;
+    myOwner = GraphElementInterner.intern(owner);
   }
 
   JvmElementUsage(GraphDataInput in) throws IOException {
-    myOwner = new JvmNodeReferenceID(in);
+    myOwner = GraphElementInterner.intern(new JvmNodeReferenceID(in));
   }
 
   @Override

@@ -28,7 +28,6 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/ide-core",
     "//platform/project/shared:project",
-    "//platform/remote-driver/test-sdk:driver-sdk",
     "//platform/lang-api:lang",
     "//platform/ide-core-impl",
     "//platform/platform-impl/rpc",
@@ -36,4 +35,41 @@ jvm_library(
   exports = ["//plugins/markdown/core:markdown"],
   runtime_deps = ["//platform/backend"]
 )
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.markdown.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//plugins/markdown/core:markdown",
+    "//plugins/markdown/core:markdown_test_lib",
+  ],
+  runtime_deps = [
+    ":backend",
+    "//plugins/markdown/core:markdown_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//libraries/markdown:markdown_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//platform/kernel/backend:backend_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.markdown.backend` end
+
+### auto-generated section `iml intellij.markdown.backend` start
+exports_files([
+  "intellij.markdown.backend.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.markdown.backend` end

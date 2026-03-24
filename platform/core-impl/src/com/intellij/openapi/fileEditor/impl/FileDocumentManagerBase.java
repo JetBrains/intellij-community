@@ -2,9 +2,11 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
@@ -46,8 +48,9 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   @Override
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false) // assert for real file
   public final @Nullable Document getDocument(@NotNull VirtualFile file) {
+    EditorLockFreeTyping.assertReadAccess(file);
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document != null) {
       return document;
@@ -195,6 +198,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     myDocumentCache.remove(file);
     file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
     document.putUserData(FILE_KEY, null);
+    DocumentImpl.processQueue(); // document maybe stuck in RangeMarkerTree queue
     fireFileBindingChanged(document, file, null);
   }
 

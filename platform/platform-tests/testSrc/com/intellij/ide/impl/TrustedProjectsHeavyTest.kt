@@ -8,6 +8,7 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.io.PathPrefixTree
 import com.intellij.testFramework.useProjectAsync
+import com.intellij.util.xmlb.SettingsInternalApi
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -71,6 +72,7 @@ class TrustedProjectsHeavyTest : TrustedProjectsHeavyTestCase() {
         generatePaths("other-project", numOtherProjects)
       }
       testPerformance("Set trusted state for other-project with ${otherProjectRoots.size} roots") {
+        @OptIn(SettingsInternalApi::class)
         TrustedPaths.getInstance().state = TrustedPaths.State(otherProjectRoots.associate { it.toString() to true })
       }
     }

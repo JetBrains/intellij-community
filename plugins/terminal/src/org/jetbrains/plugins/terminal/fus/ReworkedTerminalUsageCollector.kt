@@ -25,7 +25,7 @@ private const val GROUP_ID = "terminal"
 object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 11)
+  private val GROUP = EventLogGroup(GROUP_ID, 14)
 
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
   private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
@@ -35,6 +35,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val TERMINAL_OPENING_WAY = EventFields.Enum<TerminalOpeningWay>("opening_way")
   private val TABS_COUNT = EventFields.Int("tab_count")
   private val FOCUS = StringEventField.ValidatedByCustomValidationRule("counterpart", TerminalFocusRule::class.java)
+  private val AGENT_WORKBENCH_PROVIDER_FIELD = EventFields.String("provider", listOf("codex", "claude"))
 
   // Latency measurement related fields
   private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_ms")
@@ -122,6 +123,21 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   private val tabClosingCheckLatency = GROUP.registerVarargEvent("tab.closing.check.latency", DURATION_FIELD)
 
+  private val agentWorkbenchPromoShownEvent = GROUP.registerEvent(
+    "agent.workbench.promo.shown",
+    AGENT_WORKBENCH_PROVIDER_FIELD,
+  )
+
+  private val agentWorkbenchPromoInstallClickedEvent = GROUP.registerEvent(
+    "agent.workbench.promo.install.clicked",
+    AGENT_WORKBENCH_PROVIDER_FIELD,
+  )
+
+  private val agentWorkbenchPromoActivationSucceededEvent = GROUP.registerEvent(
+    "agent.workbench.promo.activation.succeeded",
+    AGENT_WORKBENCH_PROVIDER_FIELD,
+  )
+
   @JvmStatic
   fun logTabOpened(project: Project, tabCount: Int) {
     tabOpenedEvent.log(project, tabCount)
@@ -145,15 +161,15 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   @JvmStatic
   fun logCommandStarted(project: Project, userCommandLine: String) {
     val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(userCommandLine)
-    commandStartedEvent.log(project, commandData?.command, commandData?.subCommand)
+    commandStartedEvent.log(project, commandData.command, commandData.subCommand)
   }
 
   fun logCommandFinished(project: Project, userCommandLine: String, exitCode: Int, executionTime: Duration) {
     val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(userCommandLine)
     commandFinishedEvent.log(
       project,
-      TerminalCommandUsageStatistics.commandExecutableField with commandData?.command,
-      TerminalCommandUsageStatistics.subCommandField with commandData?.subCommand,
+      TerminalCommandUsageStatistics.commandExecutableField with commandData.command,
+      TerminalCommandUsageStatistics.subCommandField with commandData.subCommand,
       EXIT_CODE_FIELD with exitCode,
       EXECUTION_TIME_FIELD with executionTime.inWholeMilliseconds
     )
@@ -258,6 +274,18 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   fun logTabClosingCheckLatency(duration: Duration) {
     tabClosingCheckLatency.log(DURATION_FIELD with duration)
   }
+
+  fun logAgentWorkbenchPromoShown(project: Project, provider: String) {
+    agentWorkbenchPromoShownEvent.log(project, provider)
+  }
+
+  fun logAgentWorkbenchPromoInstallClicked(project: Project, provider: String) {
+    agentWorkbenchPromoInstallClickedEvent.log(project, provider)
+  }
+
+  fun logAgentWorkbenchPromoActivationSucceeded(project: Project, provider: String) {
+    agentWorkbenchPromoActivationSucceededEvent.log(project, provider)
+  }
 }
 
 @ApiStatus.Internal
@@ -278,7 +306,7 @@ internal class TerminalFocusRule : CustomValidationRule() {
       return ValidationResultType.ACCEPTED
     }
     else {
-      return toolWindowRule.validate(data, context)
+      return ValidationResultType.fromFusApiResultType(toolWindowRule.validate(data, context))
     }
   }
 }

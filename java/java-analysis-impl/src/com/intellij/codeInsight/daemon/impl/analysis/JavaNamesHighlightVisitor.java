@@ -43,6 +43,7 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocFragmentName;
+import com.intellij.psi.javadoc.PsiDocReferenceHolder;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -137,6 +138,15 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
     }
   }
 
+  @Override
+  public void visitDocReferenceHolder(PsiDocReferenceHolder refHolder) {
+    PsiReference reference = refHolder.getReference();
+    if (reference != null && reference.resolve() instanceof PsiMethod psiMethod) {
+      myHolder.add(HighlightNamesUtil.highlightMethodName(psiMethod, refHolder, false, myHolder.getColorsScheme()));
+    }
+
+    super.visitDocReferenceHolder(refHolder);
+  }
 
   @Override
   public void visitIdentifier(@NotNull PsiIdentifier identifier) {

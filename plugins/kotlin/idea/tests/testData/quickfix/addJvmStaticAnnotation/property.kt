@@ -1,5 +1,6 @@
 // "Add '@JvmStatic' annotation to 'foo'" "true"
 // WITH_STDLIB
+// K2_ERROR: Using protected members that are not '@JvmStatic' in the superclass companion is not yet supported.
 open class A {
     companion object {
         protected val foo = 2

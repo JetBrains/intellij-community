@@ -40,20 +40,20 @@ public class CaseSensitivityDetectionTest {
     var systemDrive = System.getenv("SystemDrive");  // typically, "C:"
     assertNotNull(systemDrive);
     var root = Path.of(systemDrive + '\\');
-    var rootCs = FileSystemUtil.readParentCaseSensitivity(root.toFile());
+    var rootCs = FileSystemUtil.readParentCaseSensitivity(root);
     assertEquals(systemDrive, CaseSensitivity.INSENSITIVE, rootCs);
 
     var systemRoot = System.getenv("SystemRoot");  // typically, "C:\Windows"
     assertNotNull(systemRoot);
     var child = Path.of(systemRoot);
     assertEquals(root, child.getParent());
-    assertEquals(systemRoot, rootCs, FileSystemUtil.readParentCaseSensitivity(child.toFile()));
+    assertEquals(systemRoot, rootCs, FileSystemUtil.readParentCaseSensitivity(child));
   }
 
   @Test public void wslRootsMustBeCaseSensitive() {
     var name = assumeWorkingWslDistribution();
     var root = Path.of("\\\\wsl$\\" + name);
-    assertEquals(root.toString(), CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(root.toFile()));
+    assertEquals(root.toString(), CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(root));
   }
 
   @Test public void caseSensitivityChangesUnderWindowsMustBeReReadCorrectly() throws IOException {
@@ -62,7 +62,7 @@ public class CaseSensitivityDetectionTest {
     assumeTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
 
     var dir = tempDir.newDirectoryPath("dir");
-    var file = dir.resolve("child.txt").toFile();
+    var file = dir.resolve("child.txt");
     assertEquals(CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
     setCaseSensitivity(dir, true);
     assertEquals(CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
@@ -74,28 +74,28 @@ public class CaseSensitivityDetectionTest {
     assumeMacOS();
 
     var root = Path.of("/");
-    var rootCs = FileSystemUtil.readParentCaseSensitivity(root.toFile());
+    var rootCs = FileSystemUtil.readParentCaseSensitivity(root);
     assertNotEquals(CaseSensitivity.UNKNOWN, rootCs);
 
     var child = Path.of("/Users");
     assertEquals(root, child.getParent());
-    assertEquals(rootCs, FileSystemUtil.readParentCaseSensitivity(child.toFile()));
+    assertEquals(rootCs, FileSystemUtil.readParentCaseSensitivity(child));
   }
 
   @Test public void linuxBasics() {
     assumeLinux();
 
     var root = Path.of("/");
-    var rootCs = FileSystemUtil.readParentCaseSensitivity(root.toFile());
+    var rootCs = FileSystemUtil.readParentCaseSensitivity(root);
     assertEquals(CaseSensitivity.SENSITIVE, rootCs);
 
     var child = Path.of("/home");
-    assertEquals(rootCs, FileSystemUtil.readParentCaseSensitivity(child.toFile()));
+    assertEquals(rootCs, FileSystemUtil.readParentCaseSensitivity(child));
   }
 
   @Test public void caseSensitivityIsReadSanely() throws IOException {
     var file = tempDir.newFileNio("dir/x.txt");
-    var sensitivity = FileSystemUtil.readParentCaseSensitivity(file.toFile());
+    var sensitivity = FileSystemUtil.readParentCaseSensitivity(file);
     if (sensitivity == CaseSensitivity.SENSITIVE) {
       Files.createFile(file.resolveSibling("X.txt"));
     }
@@ -111,8 +111,8 @@ public class CaseSensitivityDetectionTest {
   @Test public void caseSensitivityOfNonExistingDirMustBeUnknown() {
     var file = tempDir.getRootPath().resolve("dir/child.txt");
     assertFalse(Files.exists(file.getParent()));
-    assertEquals(CaseSensitivity.UNKNOWN, FileSystemUtil.readCaseSensitivityByNativeAPI(file.toFile()));
-    assertEquals(CaseSensitivity.UNKNOWN, FileSystemUtil.readCaseSensitivityByJavaIO(file.toFile()));
+    assertEquals(CaseSensitivity.UNKNOWN, FileSystemUtil.readParentCaseSensitivityByNativeAPI(file));
+    assertEquals(CaseSensitivity.UNKNOWN, FileSystemUtil.readParentCaseSensitivityByJavaNio(file));
   }
 
   @Test public void nativeApiWorksInSimpleCases() {
@@ -120,7 +120,7 @@ public class CaseSensitivityDetectionTest {
     assertFalse(FileSystemUtil.isCaseToggleable(file.getFileName().toString()));
 
     var expected = OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS ? CaseSensitivity.INSENSITIVE : CaseSensitivity.SENSITIVE;
-    assertEquals(expected, FileSystemUtil.readParentCaseSensitivity(file.toFile()));
+    assertEquals(expected, FileSystemUtil.readParentCaseSensitivity(file));
   }
 
   @Test public void nativeApiWorksWithNonLatinPaths() {
@@ -128,20 +128,20 @@ public class CaseSensitivityDetectionTest {
     assumeTrue(uni != null);
     var file = tempDir.newFileNio(uni + "/0");
     var expected = OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS ? CaseSensitivity.INSENSITIVE : CaseSensitivity.SENSITIVE;
-    assertEquals(expected, FileSystemUtil.readParentCaseSensitivity(file.toFile()));
+    assertEquals(expected, FileSystemUtil.readParentCaseSensitivity(file));
   }
 
   @Test public void caseSensitivityNativeWrappersMustWorkAtLeastInSimpleCases() {
     var defaultCS = SystemInfo.isFileSystemCaseSensitive ? CaseSensitivity.SENSITIVE : CaseSensitivity.INSENSITIVE;
-    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(tempDir.newFileNio("dir0/child.txt").toFile()));
-    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(tempDir.newFileNio("dir0/0").toFile())); // there's a toggleable "child.txt" in this dir already
-    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(tempDir.newFileNio("dir1/0").toFile()));
+    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByNativeAPI(tempDir.newFileNio("dir0/child.txt")));
+    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByNativeAPI(tempDir.newFileNio("dir0/0"))); // there's a toggleable "child.txt" in this dir already
+    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByNativeAPI(tempDir.newFileNio("dir1/0")));
   }
 
   @Test public void caseSensitivityMustBeDeducibleByPureJavaIOAtLeastInSimpleCases() {
     var defaultCS = SystemInfo.isFileSystemCaseSensitive ? CaseSensitivity.SENSITIVE : CaseSensitivity.INSENSITIVE;
-    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByJavaIO(tempDir.newFileNio("dir0/child.txt").toFile()));
-    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByJavaIO(tempDir.newFileNio("dir0/0").toFile())); // there's a toggleable "child.txt" in this dir already
-    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByJavaIO(tempDir.newDirectoryPath("dir0/Ubuntu").toFile()));
+    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaNio(tempDir.newFileNio("dir0/child.txt")));
+    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaNio(tempDir.newFileNio("dir0/0"))); // there's a toggleable "child.txt" in this dir already
+    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaNio(tempDir.newDirectoryPath("dir0/Ubuntu")));
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
@@ -309,11 +310,13 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
                           () -> {
                             startDumbIfPossible();
                             try {
-                              tryRollback();
-                              final PsiNamedElement variable = getVariable();
-                              if (variable != null) {
-                                createInplaceRenamerToRestart(variable, myEditor, newName).performInplaceRefactoring(nameSuggestions);
-                              }
+                              WriteIntentReadAction.run(() -> {
+                                tryRollback();
+                                final PsiNamedElement variable = getVariable();
+                                if (variable != null) {
+                                  createInplaceRenamerToRestart(variable, myEditor, newName).performInplaceRefactoring(nameSuggestions);
+                                }
+                              });
                             }
                             finally {
                               stopDumbLaterIfPossible();

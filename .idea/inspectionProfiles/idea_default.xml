@@ -700,6 +700,7 @@
     <inspection_tool class="Java8MapApi" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="Java8MapForEach" enabled="true" level="Strong Warning" enabled_by_default="true" />
     <inspection_tool class="Java8ReplaceMapGet" enabled="true" level="INFORMATION" enabled_by_default="true" />
+    <inspection_tool class="JavaApiUsageInspection" enabled="true" level="Strong Warning" enabled_by_default="true" />
     <inspection_tool class="JavaDoc" enabled="true" level="Strong Warning" enabled_by_default="false">
       <scope name="Tests" level="Strong Warning" enabled="false">
         <option name="TOP_LEVEL_CLASS_OPTIONS">
@@ -1263,8 +1264,6 @@
             <module name="intellij.java.psi.impl" />
             <module name="intellij.java.remoteServers" />
             <module name="intellij.java.remoteServers.impl" />
-            <module name="intellij.java.resources" />
-            <module name="intellij.java.resources.en" />
             <module name="intellij.java.rt" />
             <module name="intellij.java.structuralSearch" />
             <module name="intellij.java.structureView" />
@@ -1508,8 +1507,6 @@
           <module name="intellij.java.psi.impl" />
           <module name="intellij.java.remoteServers" />
           <module name="intellij.java.remoteServers.impl" />
-          <module name="intellij.java.resources" />
-          <module name="intellij.java.resources.en" />
           <module name="intellij.java.rt" />
           <module name="intellij.java.structuralSearch" />
           <module name="intellij.java.structureView" />
@@ -1962,19 +1959,19 @@
         <constraint name="lType" nameOfExprType="org\.jetbrains\.kotlin\.analysis\.api\.types\.KaType" within="" contains="" />
         <constraint name="rType" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="can be simplified to ReadAction.compute()" uuid="44cf5267-e665-3ff5-9d2f-0de5c6983156" text="$application$.runReadAction(new $Computable$() {&#10;  public $SearchScope$ compute() {&#10;    return $e$;&#10;  }&#10;})" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.compute(()-&gt;$e$)">
+      <replaceConfiguration name="can be simplified to ReadAction.compute()" uuid="44cf5267-e665-3ff5-9d2f-0de5c6983156" text="$application$.runReadAction(new $Computable$() {&#10;  public $SearchScope$ compute() {&#10;    return $e$;&#10;  }&#10;})" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.computeBlocking(()-&gt;$e$)">
         <constraint name="SearchScope" within="" contains="" />
         <constraint name="e" within="" contains="" />
         <constraint name="application" nameOfExprType="com.intellij.openapi.application.Application" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="Computable" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="can be simplified to ReadAction.compute()" uuid="44cf5267-e665-3ff5-9d2f-0de5c6983156" text="$application$.runReadAction(($C$)()-&gt;$e$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.compute(()-&gt;$e$)">
+      <replaceConfiguration name="can be simplified to ReadAction.compute()" uuid="44cf5267-e665-3ff5-9d2f-0de5c6983156" text="$application$.runReadAction(($C$)()-&gt;$e$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.computeBlocking(()-&gt;$e$)">
         <constraint name="e" within="" contains="" />
         <constraint name="C" minCount="0" within="" contains="" />
         <constraint name="application" nameOfExprType="com.intellij.openapi.application.Application" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="can be simplified to ReadAction.compute()" uuid="44cf5267-e665-3ff5-9d2f-0de5c6983156" text="$application$.runReadAction($Computable$() {&#10;  fun compute() {&#10;    return $e$&#10;  }&#10;})" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.compute { $e$ }">
+      <replaceConfiguration name="can be simplified to ReadAction.compute()" uuid="44cf5267-e665-3ff5-9d2f-0de5c6983156" text="$application$.runReadAction($Computable$() {&#10;  fun compute() {&#10;    return $e$&#10;  }&#10;})" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.computeBlocking { $e$ }">
         <constraint name="e" within="" contains="" />
         <constraint name="application" nameOfExprType="com.intellij.openapi.application.Application" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="Computable" within="" contains="" />
@@ -2083,6 +2080,12 @@
       </searchConfiguration>
       <searchConfiguration name="Catch is too broad" uuid="a8f5f167-f44f-3964-a6c9-98dee827110c" text="runCatching" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Catch is too broad" uuid="a8f5f167-f44f-3964-a6c9-98dee827110c" text="try {&#10;    $TryStatement$&#10;} catch($Exception$ : $Class$) {&#10;}" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="TryStatement" maxCount="2147483647" within="" contains="" />
+        <constraint name="Exception" within="" contains="" />
+        <constraint name="Class" regexp="(Exception|Throwable|RuntimeException)" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="CefMessageRouter.create" description="Instances of CefMessagerRouter created directly are not supported on the backend in remote development. Use JBCefApp.createMessageRouter or migrate to JBCefJSQuery.  " problemDescriptor="Use JBCefApp.createMessageRouter or migrate to JBCefJSQuery." text="$Instance$.$MethodCall$($Parameter$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />

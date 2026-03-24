@@ -25,10 +25,10 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration.StandardConfirmation
 import com.intellij.openapi.vcs.VcsConfiguration.StandardOption
@@ -48,6 +48,7 @@ import com.intellij.openapi.vcs.history.VcsHistoryCache
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses
 import com.intellij.openapi.vcs.impl.projectlevelman.MappingsToRoots
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings
+import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings.MappedRoot
 import com.intellij.openapi.vcs.impl.projectlevelman.OptionsAndConfirmations
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowConfirmationOption
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowSettingOption
@@ -57,7 +58,8 @@ import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.ui.content.ContentManager
@@ -67,6 +69,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.DateFormatUtil
+import com.intellij.util.text.StringTokenizer
 import com.intellij.vcs.console.VcsConsoleTabService
 import com.intellij.vcsUtil.VcsImplUtil
 import kotlinx.coroutines.CoroutineScope
@@ -74,9 +77,11 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.util.Collections
+import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 
@@ -130,34 +135,27 @@ class ProjectLevelVcsManagerImpl(
     ?: file.presentableName
 
   override fun getVcsFor(file: VirtualFile?): AbstractVcs? {
-    if (project.isDisposed()) return null
-    return mappingsHolder.getMappedRootFor(file)?.vcs
+    return getMappedRootFor(file)?.vcs
   }
 
   override fun getVcsFor(file: FilePath?): AbstractVcs? {
-    if (project.isDisposed()) return null
-    return mappingsHolder.getMappedRootFor(file)?.vcs
+    return getMappedRootFor(file)?.vcs
   }
 
   override fun getVcsRootFor(file: VirtualFile?): VirtualFile? {
-    if (file == null || project.isDisposed()) return null
-    return mappingsHolder.getMappedRootFor(file)?.root
+    return getMappedRootFor(file)?.root
   }
 
   override fun getVcsRootObjectFor(file: VirtualFile?): VcsRoot? {
-    if (file == null || project.isDisposed()) return null
-    return mappingsHolder.getMappedRootFor(file)?.let { VcsRoot(it.vcs, it.root) }
+    return getMappedRootFor(file)?.let { VcsRoot(it.vcs, it.root) }
   }
 
   override fun getVcsRootFor(file: FilePath?): VirtualFile? {
-    if (file == null || project.isDisposed()) return null
-    return mappingsHolder.getMappedRootFor(file)?.root
+    return getMappedRootFor(file)?.root
   }
 
   override fun getVcsRootObjectFor(file: FilePath?): VcsRoot? {
-    if (file == null || project.isDisposed()) return null
-
-    val root = mappingsHolder.getMappedRootFor(file)
+    val root = getMappedRootFor(file)
     return if (root != null) VcsRoot(root.vcs, root.root) else null
   }
 
@@ -208,13 +206,25 @@ class ProjectLevelVcsManagerImpl(
   }
 
   override fun getDirectoryMappingFor(path: FilePath): VcsDirectoryMapping? {
-    if (project.isDisposed()) return null
-    return mappingsHolder.getMappedRootFor(path)?.mapping
+    return getMappedRootFor(path)?.mapping
   }
 
   private fun getDirectoryMappingFor(file: VirtualFile): VcsDirectoryMapping? {
-    if (project.isDisposed()) return null
-    return mappingsHolder.getMappedRootFor(file)?.mapping
+    return getMappedRootFor(file)?.mapping
+  }
+
+  private fun getMappedRootFor(file: FilePath?): MappedRoot? {
+    if (file == null) return null
+    val root: MappedRoot = mappingsHolder.getMappedRootFor(file) ?: return null
+    if (isIgnoredUnderRoot(root.root, file)) return null
+    return root
+  }
+
+  private fun getMappedRootFor(file: VirtualFile?): MappedRoot? {
+    if (file == null) return null
+    val root: MappedRoot = mappingsHolder.getMappedRootFor(file) ?: return null
+    if (isIgnoredUnderRoot(root.root, file)) return null
+    return root
   }
 
   override fun setDirectoryMapping(path: @NonNls String, activeVcsName: @NonNls String?) {
@@ -513,42 +523,69 @@ class ProjectLevelVcsManagerImpl(
                            isInDirectoryBasedRoot(vf) ||
                            hasExplicitMapping(vf) ||
                            fileIndex.isInContent(vf) ||
-                           (!Registry.`is`("ide.hide.excluded.files") && fileIndex.isExcludedFile(vf))
-      isUnderProject && !isIgnored(vf)
+                           fileIndex.isExcludedFile(vf)
+      isUnderProject && !isIgnoredFilePath(vf.path)
     })
   }
 
   override fun isIgnored(vf: VirtualFile): Boolean {
-    return ReadAction.compute(ThrowableComputable {
-      if (project.isDisposed() || project.isDefault) return@ThrowableComputable false
-      if (!vf.isValid()) return@ThrowableComputable false
-      if (Registry.`is`("ide.hide.excluded.files")) {
-        return@ThrowableComputable FileIndexFacade.getInstance(project).isExcludedFile(vf)
-      }
-      else {
-        return@ThrowableComputable FileIndexFacade.getInstance(project).isUnderIgnored(vf)
-      }
-    })
+    return isIgnoredFilePath(vf.path)
   }
 
   override fun isIgnored(filePath: FilePath): Boolean {
-    return ReadAction.compute(ThrowableComputable {
-      if (project.isDisposed() || project.isDefault) return@ThrowableComputable false
-      if (Registry.`is`("ide.hide.excluded.files")) {
-        val vf = VcsImplUtil.findValidParentAccurately(filePath)
-        return@ThrowableComputable vf != null && FileIndexFacade.getInstance(project).isExcludedFile(vf)
+    return isIgnoredFilePath(filePath.path)
+  }
+
+  @ApiStatus.Internal
+  fun isIgnoredFileRoot(file: VirtualFile): Boolean {
+    return ReadAction.nonBlocking(Callable {
+      when {
+        project.isDisposed() || project.isDefault -> false
+        !file.isValid() -> false
+        else -> FileIndexFacade.getInstance(project).isUnderIgnored(file)
       }
-      else {
-        // WARN: might differ from 'myExcludedIndex.isUnderIgnored' if whole content root is under folder with 'ignored' name.
-        val fileTypeManager = FileTypeManager.getInstance()
-        for (name in StringUtil.tokenize(filePath.getPath(), "/")) {
-          if (fileTypeManager.isFileIgnored(name)) {
-            return@ThrowableComputable true
-          }
-        }
-        return@ThrowableComputable false
+    }).executeSynchronously()
+  }
+
+  override fun isIgnoredUnderRoot(vcsRoot: VirtualFile, filePath: FilePath): Boolean {
+    val tokenizer = StringTokenizer(filePath.getPath(), "/")
+    tokenizer.resetCurrentPosition(vcsRoot.getPath().length)
+    return isIgnoredFileName(tokenizer)
+  }
+
+  override fun isIgnoredUnderRoot(vcsRoot: VirtualFile, file: VirtualFile): Boolean {
+    val fileTypeManager = FileTypeManager.getInstance()
+
+    var curr: VirtualFile? = file
+    while (curr != null && curr != vcsRoot) {
+      val name = curr.getName()
+      if (fileTypeManager.isFileIgnored(name)) {
+        return true
       }
-    })
+
+      curr = curr.getParent()
+    }
+    return false
+  }
+
+  private fun isIgnoredFilePath(path: @SystemIndependent String): Boolean {
+    val tokenizer = StringTokenizer(path, "/")
+    return isIgnoredFileName(tokenizer)
+  }
+
+  /**
+   * WARN: might differ from [FileIndexFacade.isUnderIgnored]
+   */
+  private fun isIgnoredFileName(tokenizer: StringTokenizer): Boolean {
+    val fileTypeManager = FileTypeManager.getInstance()
+    while (tokenizer.hasMoreTokens()) {
+      val name = tokenizer.nextToken()
+      if (name.isEmpty()) continue
+      if (fileTypeManager.isFileIgnored(name)) {
+        return true
+      }
+    }
+    return false
   }
 
   private fun isInDirectoryBasedRoot(file: VirtualFile): Boolean {
@@ -641,12 +678,12 @@ class ProjectLevelVcsManagerImpl(
   }
 
   internal class ActivateVcsesStartupActivity : VcsStartupActivity {
-    override fun runActivity(project: Project) {
-      if (WelcomeScreenProjectProvider.isWelcomeScreenProject(project)) {
+    override suspend fun execute(project: Project) {
+      if (ProjectFrameCapabilitiesService.getInstance().has(project, ProjectFrameCapability.SUPPRESS_VCS_UI)) {
         return
       }
 
-      getInstanceImpl(project).mappingsHolder.activateActiveVcses()
+      (project.serviceAsync<ProjectLevelVcsManager>() as ProjectLevelVcsManagerImpl).mappingsHolder.activateActiveVcses()
     }
 
     override val order: Int

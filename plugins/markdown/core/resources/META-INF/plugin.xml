@@ -21,6 +21,7 @@
     <module name="intellij.markdown.spellchecker"/>
     <module name="intellij.markdown.compose.preview"/>
     <module name="intellij.markdown.frontend"/>
+    <module name="intellij.markdown.frontend.split"/>
     <module name="intellij.markdown.backend"/>
   </content>
 
@@ -68,6 +69,9 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.markdownCompatibilityChecker"
                     interface="org.intellij.plugins.markdown.lang.MarkdownCompatibilityChecker"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.actionPromoterExtension"
+                    interface="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoterExtension"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -554,9 +558,6 @@
       <!-- Also add all insert actions into the default generate popup -->
       <add-to-group group-id="GenerateGroup" anchor="last"/>
       <reference ref="Markdown.Styling.CreateLink"/>
-      <action id="Markdown.InsertEmptyTable"
-              class="org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction"
-              icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Table"/>
       <!--<action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"-->
       <!--        id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"-->
       <!--        icon="AllIcons.General.LayoutPreviewOnly">-->
@@ -566,9 +567,7 @@
               class="org.intellij.plugins.markdown.editor.toc.GenerateTableOfContentsAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.BulletList"/>
     </group>
-    <action id="Markdown.Insert"
-            class="org.intellij.plugins.markdown.ui.actions.InsertAction"
-            use-shortcut-of="Generate"/>
+
 
     <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
             id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
@@ -579,7 +578,6 @@
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="EditorToggleColumnMode"/>
       <separator/>
       <reference ref="Markdown.TableContextMenuGroup"/>
-      <reference ref="Markdown.Insert"/>
     </group>
 
     <group id="Markdown.Toolbar.Left" class="com.intellij.openapi.actionSystem.DefaultActionGroup">

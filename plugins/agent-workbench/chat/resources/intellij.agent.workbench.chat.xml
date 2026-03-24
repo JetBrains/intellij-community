@@ -1,13 +1,21 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.agent.workbench.codex.common"/>
+    <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
     <module name="intellij.terminal.frontend"/>
   </dependencies>
   <!-- endregion -->
-  <resource-bundle>messages.CodexChatBundle</resource-bundle>
+  <resource-bundle>messages.AgentChatBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileEditorProvider id="agent.workbench-chat-editor" implementation="com.intellij.agent.workbench.chat.CodexChatFileEditorProvider"/>
+    <virtualFileSystem key="agent-chat" implementationClass="com.intellij.agent.workbench.chat.AgentChatVirtualFileSystem"/>
+    <notificationGroup id="Agent Workbench Chat" displayType="BALLOON" bundle="messages.AgentChatBundle"
+                       key="notification.group.agent.workbench.chat"/>
+    <fileIconProvider implementation="com.intellij.agent.workbench.chat.AgentChatFileIconProvider"/>
+    <fileEditorProvider id="agent.workbench-chat-editor" implementation="com.intellij.agent.workbench.chat.AgentChatFileEditorProvider"/>
+    <editorTabTitleProvider implementation="com.intellij.agent.workbench.chat.AgentChatEditorTabTitleProvider"/>
   </extensions>
 </idea-plugin>

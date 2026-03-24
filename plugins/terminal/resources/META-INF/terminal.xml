@@ -56,6 +56,8 @@
                  description="Enable new terminal for Fish"/>
     <registryKey key="terminal.new.ui.show.promotion" defaultValue="false"
                  description="Whether to show the GotIt tooltip with a proposal to try the New Terminal"/>
+    <registryKey key="terminal.agent.workbench.promotion.enabled" defaultValue="true"
+                 description="Enable Agent Workbench promotion in the reworked terminal when supported AI CLIs are used"/>
     <registryKey key="terminal.new.ui.autocompletion" defaultValue="true"
                  description="Whether to run autocompletion in the New Terminal"/>
     <registryKey key="terminal.classic.refresh.vfs.on.shell.command.finished" defaultValue="true"
@@ -71,6 +73,8 @@
     <registryKey key="terminal.generic.hyperlinks" defaultValue="true"
                  description="Show generic file hyperlinks in the reworked terminal. Such hyperlinks are highlighted on mouse hover.
                   Open a new terminal after enabling this option to take effect."/>
+    <registryKey key="terminal.generic.hyperlinks.for.relative.path" defaultValue="true"
+                 description="Show generic file hyperlinks for relative paths in the reworked terminal. Requires enabled `terminal.generic.hyperlinks`."/>
     <registryKey key="terminal.ai.inline.completion.enabled" defaultValue="false"
                  description="Whether Terminal AI Inline Completion is enabled and visible in the settings"/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalGenericFileFilterProvider"/>
@@ -122,8 +126,8 @@
     <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"
                         serviceImplementation="org.jetbrains.plugins.terminal.search.JediTermSearchComponentProviderImpl"/>
     <advancedSetting id="new.terminal.output.capacity.kb" default="1024" groupKey="group.advanced.settings.terminal"/>
-
-    <postStartupActivity implementation="org.jetbrains.plugins.terminal.block.GenOneTerminalOptionHidingActivity"/>
+    <advancedSetting id="terminal.shift.enter.sends.esc.cr" default="true"
+                     bundle="messages.TerminalBundle" groupKey="group.advanced.settings.terminal"/>
 
     <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.block.reworked.TerminalSessionIdDataContextSerializer" />
     <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.block.reworked.IsAlternateBufferDataContextSerializer" />
@@ -140,6 +144,8 @@
     <shellSupport key="zsh" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.zsh.ZshSupport"/>
     <shellSupport key="bash" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.bash.BashSupport"/>
     <shellSupport key="powershell" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.powershell.PowerShellSupport"/>
+
+    <shellsDetector implementation="org.jetbrains.plugins.terminal.shellDetection.LocalProjectShellsDetector"/>
   </extensions>
 
   <extensionPoints>
@@ -170,6 +176,10 @@
                     interface="org.jetbrains.plugins.terminal.TerminalCloudCompletionSettingsProvider"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.toolWindowInitializer"
                     interface="org.jetbrains.plugins.terminal.TerminalToolWindowInitializer" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.hyperlinkNavigationInterceptor" dynamic="true"
+                    interface="org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigationInterceptor"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.shellsDetector" dynamic="true"
+                    interface="org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetector"/>
   </extensionPoints>
 
   <applicationListeners>

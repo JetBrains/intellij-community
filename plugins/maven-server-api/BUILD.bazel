@@ -11,13 +11,41 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/util-rt",
     "//platform/util/jdom",
-    "//plugins/maven-model",
+    "//plugins/maven/model",
     "//platform/diagnostic/telemetry/rt",
   ],
   exports = [
     "@lib//:jetbrains-annotations",
     "//platform/util-rt",
-    "//plugins/maven-model",
+    "//plugins/maven/model",
+  ]
+)
+
+jvm_library(
+  name = "maven-server_test_lib",
+  module_name = "intellij.maven.server",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = [
+    "@lib//:jetbrains-annotations",
+    "//platform/util-rt",
+    "//platform/util-rt:util-rt_test_lib",
+    "//plugins/maven/model",
+    "//plugins/maven/model:model_test_lib",
+  ],
+  runtime_deps = [
+    ":maven-server",
+    "//platform/util-rt:util-rt_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//plugins/maven/model:model_test_lib",
+    "//platform/diagnostic/telemetry/rt:rt_test_lib",
   ]
 )
 ### auto-generated section `build intellij.maven.server` end
+
+### auto-generated section `iml intellij.maven.server` start
+exports_files([
+  "intellij.maven.server.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.maven.server` end

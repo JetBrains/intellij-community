@@ -215,7 +215,7 @@ public final class CachedIntentions implements IntentionContainer {
     wrapActionsTo(descriptors, myGutters, false);
   }
 
-  private boolean addActionsTo(@NotNull List<HighlightInfo.IntentionActionDescriptor> newDescriptors,
+  private boolean addActionsTo(@NotNull List<? extends HighlightInfo.IntentionActionDescriptor> newDescriptors,
                                @NotNull Set<? super IntentionActionWithTextCaching> cachedActions) {
     boolean changed = false;
     for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
@@ -224,7 +224,7 @@ public final class CachedIntentions implements IntentionContainer {
     return changed;
   }
 
-  private boolean wrapActionsTo(@NotNull List<HighlightInfo.IntentionActionDescriptor> newDescriptors,
+  private boolean wrapActionsTo(@NotNull List<? extends HighlightInfo.IntentionActionDescriptor> newDescriptors,
                                 @NotNull Set<? super IntentionActionWithTextCaching> cachedActions,
                                 boolean shouldCallIsAvailable) {
     if (cachedActions.isEmpty() && newDescriptors.isEmpty()) return false;
@@ -314,9 +314,8 @@ public final class CachedIntentions implements IntentionContainer {
       if (editor == null) continue;
       var problemOffset = myOffset >= 0 ? myOffset : editor.getCaretModel().getOffset();
       Pair<PsiFile, Editor> availableIn = ShowIntentionActionsHandler
-        .chooseBetweenHostAndInjected(myPsiFile, editor, problemOffset, containingFile, (f, e, o) -> {
-          return ShowIntentionActionsHandler.availableFor(f, e, o, option);
-        });
+        .chooseBetweenHostAndInjected(myPsiFile, editor, problemOffset, containingFile,
+                                      (f, e, o) -> ShowIntentionActionsHandler.availableFor(f, e, o, option));
       if (availableIn == null) continue;
       IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option);
       boolean isErrorFix = myErrorFixes.contains(textCaching);
@@ -415,7 +414,7 @@ public final class CachedIntentions implements IntentionContainer {
       }
     }
 
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
         return myErrorFixes.contains(value) ? AllIcons.Actions.QuickfixBulb :
                myInspectionFixes.contains(value) ? AllIcons.Actions.IntentionBulb :

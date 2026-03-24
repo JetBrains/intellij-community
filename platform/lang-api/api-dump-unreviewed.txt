@@ -868,7 +868,6 @@ f:com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHand
 - sf:Companion:com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler$Companion
 - sf:HANDLER_ID:java.lang.String
 - <init>():V
-- handleClick(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.hints.declarative.InlayActionPayload):V
 f:com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler$Companion
 f:com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 - com.intellij.codeInsight.hints.declarative.InlayActionPayload
@@ -2228,7 +2227,7 @@ a:com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable
 c:com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableBase
 - com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable
 - pf:myFrameworkSupportModel:com.intellij.ide.util.frameworkSupport.FrameworkSupportModel
-- b:$$$getRootComponent$$$():javax.swing.JComponent
+- $$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.ide.util.frameworkSupport.FrameworkSupportProviderBase,com.intellij.ide.util.frameworkSupport.FrameworkSupportModel):V
 - <init>(com.intellij.ide.util.frameworkSupport.FrameworkSupportProviderBase,com.intellij.ide.util.frameworkSupport.FrameworkSupportModel,java.util.List,java.lang.String):V
 - addSupport(com.intellij.openapi.module.Module,com.intellij.openapi.roots.ModifiableRootModel,com.intellij.openapi.roots.libraries.Library):V
@@ -4370,8 +4369,9 @@ a:com.intellij.psi.impl.include.FileIncludeManager
 - a:resolveFileInclude(com.intellij.psi.impl.include.FileIncludeInfo,com.intellij.psi.PsiFile):com.intellij.psi.PsiFileSystemItem
 a:com.intellij.psi.impl.include.FileIncludeProvider
 - <init>():V
-- a:acceptFile(com.intellij.openapi.vfs.VirtualFile):Z
+- acceptFile(com.intellij.openapi.vfs.VirtualFile):Z
 - acceptFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
+- acceptFile(com.intellij.util.indexing.IndexedFile):Z
 - a:getId():java.lang.String
 - a:getIncludeInfos(com.intellij.util.indexing.FileContent):com.intellij.psi.impl.include.FileIncludeInfo[]
 - getIncludeName(com.intellij.psi.PsiFile,java.lang.String):java.lang.String

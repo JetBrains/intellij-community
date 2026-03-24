@@ -10,21 +10,18 @@ java.FILE
       DOC_TAG
         DOC_TAG_NAME
         WHITE_SPACE
-        DOC_REFERENCE_HOLDER
-          JAVA_CODE_REFERENCE
-            IDENTIFIER
-            REFERENCE_PARAMETER_LIST
-              <empty list>
-        DOC_TAG_VALUE_ELEMENT
+        DOC_METHOD_OR_FIELD_REF
+          DOC_TAG_VALUE_TOKEN
           DOC_TAG_VALUE_LPAREN
-        DOC_REFERENCE_HOLDER
-          LONG_KEYWORD
-        DOC_TAG_VALUE_ELEMENT
-          DOC_TAG_VALUE_COMMA
-        WHITE_SPACE
-        DOC_REFERENCE_HOLDER
-          LONG_KEYWORD
-        DOC_TAG_VALUE_ELEMENT
+          DOC_TAG_VALUE_ELEMENT
+            DOC_TYPE_HOLDER
+              TYPE
+                LONG_KEYWORD
+            DOC_TAG_VALUE_COMMA
+            WHITE_SPACE
+            DOC_TYPE_HOLDER
+              TYPE
+                LONG_KEYWORD
           DOC_TAG_VALUE_RPAREN
       WHITE_SPACE
       DOC_COMMENT_END

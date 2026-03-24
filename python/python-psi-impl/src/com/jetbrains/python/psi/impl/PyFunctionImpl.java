@@ -72,6 +72,7 @@ import com.jetbrains.python.psi.stubs.PyAnnotationOwnerStub;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyCallableType;
@@ -85,6 +86,7 @@ import com.jetbrains.python.psi.types.PyNeverType;
 import com.jetbrains.python.psi.types.PySelfType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
@@ -109,6 +111,7 @@ import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsModifierWrappingCall;
 import static com.jetbrains.python.psi.impl.PyDeprecationUtilKt.extractDeprecationMessageFromDecorator;
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements PyFunction {
 
@@ -220,7 +223,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public @Nullable PyType getInferredReturnType(@NotNull TypeEvalContext context) {
-    PyType inferredType = null;
+    PyType inferredType = PyAnyType.getUnknown();
     if (context.allowReturnTypes(this)) {
       final PyType returnType = getReturnStatementType(context);
       final Pair<PyType, PyType> yieldSendTypePair = getYieldExpressionType(context);
@@ -280,7 +283,10 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
                                            @NotNull Map<PyExpression, PyCallableParameter> parameters,
                                            @NotNull TypeEvalContext context) {
     if (PyTypeChecker.hasGenerics(type, context)) {
-      final var substitutions = PyTypeChecker.unifyGenericCall(receiver, parameters, context);
+      PyType callableType = context.getType(this);
+      PyCallableType callableTypeCasted = callableType instanceof PyCallableType ? (PyCallableType)callableType : null;
+      final var substitutions =
+        PyTypeInferenceCspFactory.unifyGenericCall(callSiteExpression, receiver, callableTypeCasted, parameters, context);
       if (substitutions != null) {
         // Special handling for __new__ constructor and factory methods of generic classes returning Self:
         //
@@ -303,14 +309,14 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         type = PyTypeChecker.substitute(type, substitutionsWithUnresolvedReturnGenerics, context);
       }
       else {
-        type = null;
+        type = PyAnyType.getUnknown();
       }
     }
     // TODO Is it still needed if we infer Self as a return type?
     else if (receiver != null) {
       type = replaceSelf(type, receiver, context);
     }
-    if (type != null && isDynamicallyEvaluated(parameters.values(), context)) {
+    if (!isUnknown(type) && isDynamicallyEvaluated(parameters.values(), context)) {
       type = PyUnionType.createWeakType(type);
     }
     return PyNarrowedType.Companion.bindIfNeeded(type, callSiteExpression);

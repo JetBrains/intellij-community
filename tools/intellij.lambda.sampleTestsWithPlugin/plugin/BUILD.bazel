@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "plugin",
+  module_name = "intellij.lambda.sampleTestsWithPlugin.plugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
@@ -22,3 +23,9 @@ jvm_library(
   runtime_deps = [":plugin"]
 )
 ### auto-generated section `build intellij.lambda.sampleTestsWithPlugin.plugin` end
+
+### auto-generated section `iml intellij.lambda.sampleTestsWithPlugin.plugin` start
+exports_files([
+  "intellij.lambda.sampleTestsWithPlugin.plugin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.lambda.sampleTestsWithPlugin.plugin` end

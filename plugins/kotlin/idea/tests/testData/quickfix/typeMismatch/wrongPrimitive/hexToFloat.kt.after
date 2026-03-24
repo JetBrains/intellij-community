@@ -1,4 +1,5 @@
 // "Change to '15F'" "true"
+// K2_ERROR: Initializer type mismatch: expected 'Float', actual 'Int'.
 
 val a : Float = 15F<caret>
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrongPrimitiveLiteralFix

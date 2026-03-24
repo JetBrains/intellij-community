@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -opt-in=com.intellij.util.xmlb.SettingsInternalApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="21" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
+          </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+            </arrayArg>
+            <arrayArg name="pluginOptions" />
+          </arrayArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/testSrc">
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.extensions" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.settings" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.protobuf" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="opentelemetry" level="project" />
+    <orderEntry type="library" scope="TEST" name="opentelemetry-semconv" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.mvstore" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
+    <orderEntry type="module-library" scope="TEST">
+      <library name="jackson-dataformat-cbor" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.19.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.19.0/jackson-dataformat-cbor-2.19.0.jar">
+              <sha256sum>ce27bf04655ac4a9f703ebf340782cf6836fc36c569a2daf25077c32532c88be</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.19.0/jackson-dataformat-cbor-2.19.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.19.0/jackson-dataformat-cbor-2.19.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.dataformat.yaml" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.xmlDom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.objectSerializer" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.aalto.xml" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.cbor" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.settings.local" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.platform.settings.local" />
+</module>

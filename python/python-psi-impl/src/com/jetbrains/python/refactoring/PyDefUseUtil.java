@@ -22,6 +22,7 @@ import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Version;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
@@ -105,7 +106,7 @@ public final class PyDefUseUtil {
                       result.add(typeGuardInstruction);
                       return ControlFlowUtil.Operation.CONTINUE;
                     }
-                    if (instruction.num() < startNum &&
+                    if (isNotBackEdge(instruction.num(), startNum) &&
                         context.getOrigin() == callInstruction.getElement().getContainingFile()) {
                       var newContext = (MAX_CONTROL_FLOW_SIZE > instructions.length)
                                        ? TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin())
@@ -113,7 +114,7 @@ public final class PyDefUseUtil {
                       if (callInstruction.isNoReturnCall(newContext)) return ControlFlowUtil.Operation.CONTINUE;
                     }
                   }
-                  if (instruction.num() < startNum
+                  if (isNotBackEdge(instruction.num(), startNum)
                       && acceptTypeAssertions && instruction instanceof ConditionalInstruction conditionalInstruction) {
                     if (conditionalInstruction.getCondition() instanceof PyTypedElement typedElement &&
                         context.getOrigin() == typedElement.getContainingFile()) {
@@ -138,7 +139,7 @@ public final class PyDefUseUtil {
                   if (instruction instanceof ReadWriteInstruction rwInstruction) {
                     final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
                     if (access.isWriteAccess() ||
-                        acceptTypeAssertions && access.isAssertTypeAccess() && instruction.num() < startNum) {
+                        acceptTypeAssertions && access.isAssertTypeAccess() && isNotBackEdge(instruction.num(), startNum)) {
 
                       final String name = rwInstruction.getName();
 
@@ -165,6 +166,15 @@ public final class PyDefUseUtil {
       return Collections.emptyList();
     }
     return new ArrayList<>(result);
+  }
+
+  /**
+   * New analysis handles back edges separately.
+   *
+   * @see com.jetbrains.python.psi.impl.PyReferenceExpressionImpl#getTypeByControlFlow(String, TypeEvalContext, PyExpression, ScopeOwner)
+   */
+  private static boolean isNotBackEdge(int instNum, int startNum) {
+    return instNum < startNum;
   }
 
   private static boolean isQualifiedBy(QualifiedName varQname, @NotNull String qualifier) {

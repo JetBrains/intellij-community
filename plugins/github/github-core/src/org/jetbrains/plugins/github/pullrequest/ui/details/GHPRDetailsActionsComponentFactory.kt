@@ -6,7 +6,6 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActionsComponentFactory
-import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActionsComponentFactory.CodeReviewActions
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
@@ -39,20 +38,19 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.action.GHPRSetMyselfA
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.GHPRSquashMergeAction
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRSubmitReviewPopup
+import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JComponent
 
 @ApiStatus.Internal
 object GHPRDetailsActionsComponentFactory {
-  private const val BUTTONS_GAP = 10
-
   fun create(
     scope: CoroutineScope,
     project: Project,
     reviewRequestState: Flow<ReviewRequestState>,
     reviewFlowVm: GHPRReviewFlowViewModel
   ): JComponent {
-    val reviewActions = CodeReviewActions(
+    val reviewActions = Actions(
       requestReviewAction = GHPRRequestReviewAction(scope, project, reviewFlowVm),
       reRequestReviewAction = GHPRReRequestReviewAction(scope, project, reviewFlowVm),
       closeReviewAction = GHPRCloseAction(scope, project, reviewFlowVm),
@@ -63,15 +61,13 @@ object GHPRDetailsActionsComponentFactory {
       mergeSquashReviewAction = GHPRSquashMergeAction(scope, project, reviewFlowVm),
       rebaseReviewAction = GHPRRebaseMergeAction(scope, project, reviewFlowVm)
     )
-    val moreActionsGroup = DefaultActionGroup(GithubBundle.message("pull.request.merge.commit.action"), true)
 
     return Wrapper().apply {
       bindContentIn(scope, reviewFlowVm.role) { role ->
         val mainPanel = when (role) {
-          ReviewRole.AUTHOR -> createActionsForAuthor(reviewFlowVm, reviewActions, moreActionsGroup)
-          ReviewRole.REVIEWER -> createActionsForReviewer(reviewFlowVm, reviewActions, moreActionsGroup)
-          ReviewRole.GUEST -> CodeReviewDetailsActionsComponentFactory.createActionsForGuest(reviewActions, moreActionsGroup,
-                                                                                             ::createMergeActionGroup)
+          ReviewRole.AUTHOR -> createActionsForAuthor(reviewFlowVm, reviewActions)
+          ReviewRole.REVIEWER -> createActionsForReviewer(reviewFlowVm, reviewActions)
+          ReviewRole.GUEST -> createActionsForGuest(reviewActions)
         }
 
         CodeReviewDetailsActionsComponentFactory.createActionsComponent(
@@ -87,8 +83,7 @@ object GHPRDetailsActionsComponentFactory {
 
   private fun CoroutineScope.createActionsForAuthor(
     reviewFlowVm: GHPRReviewFlowViewModel,
-    reviewActions: CodeReviewActions,
-    moreActionsGroup: DefaultActionGroup
+    reviewActions: Actions,
   ): JComponent {
     val cs = this
     val reviewState = reviewFlowVm.reviewState
@@ -101,6 +96,7 @@ object GHPRDetailsActionsComponentFactory {
       cs, reviewState, requestedReviewers, reviewActions.reRequestReviewAction
     )
     val mergeReviewButton = createMergeReviewOptionButton(cs, reviewFlowVm, reviewActions)
+    val moreActionsGroup = createMoreActionGroup()
     val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       reviewState.collect { reviewState ->
@@ -118,7 +114,7 @@ object GHPRDetailsActionsComponentFactory {
       }
     }
 
-    return HorizontalListPanel(BUTTONS_GAP).apply {
+    return HorizontalListPanel(CodeReviewDetailsActionsComponentFactory.BUTTONS_GAP).apply {
       add(requestReviewButton)
       add(reRequestReviewButton)
       add(mergeReviewButton)
@@ -128,8 +124,7 @@ object GHPRDetailsActionsComponentFactory {
 
   private fun CoroutineScope.createActionsForReviewer(
     reviewFlowVm: GHPRReviewFlowViewModel,
-    reviewActions: CodeReviewActions,
-    moreActionsGroup: DefaultActionGroup
+    reviewActions: Actions,
   ): JComponent {
     val cs = this
     val submitReviewButton = JButton().apply {
@@ -159,6 +154,7 @@ object GHPRDetailsActionsComponentFactory {
       }
     }
     val mergeReviewButton = createMergeReviewOptionButton(cs, reviewFlowVm, reviewActions)
+    val moreActionsGroup = createMoreActionGroup()
     val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       reviewFlowVm.reviewState.collect { reviewState ->
@@ -177,9 +173,28 @@ object GHPRDetailsActionsComponentFactory {
       }
     }
 
-    return HorizontalListPanel(BUTTONS_GAP).apply {
+    return HorizontalListPanel(CodeReviewDetailsActionsComponentFactory.BUTTONS_GAP).apply {
       add(submitReviewButton)
       add(mergeReviewButton)
+      add(moreActionsButton)
+    }
+  }
+
+  private fun createActionsForGuest(reviewActions: Actions): JComponent {
+    val setMyselfAsReviewerButton = JButton(reviewActions.setMyselfAsReviewerAction).apply {
+      isOpaque = false
+    }
+    val moreActionsGroup = createMoreActionGroup()
+    val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
+    moreActionsGroup.apply {
+      removeAll()
+      add(reviewActions.requestReviewAction.toAnAction())
+      add(createMergeActionGroup(reviewActions))
+      add(reviewActions.closeReviewAction.toAnAction())
+    }
+
+    return HorizontalListPanel(CodeReviewDetailsActionsComponentFactory.BUTTONS_GAP).apply {
+      add(setMyselfAsReviewerButton)
       add(moreActionsButton)
     }
   }
@@ -187,7 +202,7 @@ object GHPRDetailsActionsComponentFactory {
   private fun createMergeReviewOptionButton(
     cs: CoroutineScope,
     reviewFlowVm: GHPRReviewFlowViewModel,
-    reviewActions: CodeReviewActions
+    reviewActions: Actions,
   ): JBOptionButton {
     // Usual order: [0] -- "Merge", [1] -- "Squash and Merge", [2] -- "Rebase"
     val actions = mutableListOf(reviewActions.mergeReviewAction, reviewActions.mergeSquashReviewAction, reviewActions.rebaseReviewAction)
@@ -203,11 +218,25 @@ object GHPRDetailsActionsComponentFactory {
     }
   }
 
-  private fun createMergeActionGroup(reviewActions: CodeReviewActions): ActionGroup {
+  private fun createMergeActionGroup(reviewActions: Actions): ActionGroup {
     return DefaultActionGroup(CollaborationToolsBundle.message("review.details.action.merge.group"), true).apply {
       add(reviewActions.mergeReviewAction.toAnAction())
       add(reviewActions.mergeSquashReviewAction.toAnAction())
       add(reviewActions.rebaseReviewAction.toAnAction())
     }
   }
+
+  private fun createMoreActionGroup() = DefaultActionGroup(GithubBundle.message("pull.request.merge.commit.action"), true)
+
+  private data class Actions(
+    val requestReviewAction: Action,
+    val reRequestReviewAction: Action,
+    val closeReviewAction: Action,
+    val reopenReviewAction: Action,
+    val setMyselfAsReviewerAction: Action,
+    val postReviewAction: Action,
+    val mergeReviewAction: Action,
+    val mergeSquashReviewAction: Action,
+    val rebaseReviewAction: Action,
+  )
 }

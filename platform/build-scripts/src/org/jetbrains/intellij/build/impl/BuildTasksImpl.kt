@@ -145,7 +145,6 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-    buildDistribution(context = context, isUpdateFromSources = true)
     val arch = if (SystemInfoRt.isMac && CpuArch.isIntel64() && CpuArch.isEmulated()) {
       JvmArchitecture.aarch64
     }
@@ -153,6 +152,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
       JvmArchitecture.currentJvmArch
     }
     context.options.targetArch = arch
+    buildDistribution(context = context, isUpdateFromSources = true)
     val targetLibcImpl = LibcImpl.current(OsFamily.currentOs)
     layoutShared(context)
     if (includeBinAndRuntime) {
@@ -183,7 +183,10 @@ val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = listOf(
 )
 
 fun createIdeaPropertyFile(context: BuildContext): CharSequence {
-  val builder = StringBuilder(Files.readString(context.paths.communityHomeDir.resolve("bin/idea.properties")))
+  val builder = StringBuilder(Files.readString(context.paths.communityHomeDir.resolve(when {
+    context.options.isLanguageServer -> "../language-server/building/idea.properties"
+    else -> "bin/idea.properties"
+  })))
   for (it in context.productProperties.additionalIDEPropertiesFilePaths) {
     builder.append('\n').append(Files.readString(it))
   }
@@ -195,22 +198,23 @@ fun createIdeaPropertyFile(context: BuildContext): CharSequence {
   val map = LinkedHashMap<String, String>(1)
   map["settings_dir"] = settingsDir
   builder.append(BuildUtils.replaceAll(temp, map, "@@"))
-  if (context.applicationInfo.isEAP) {
+
+  if (!context.options.isLanguageServer) {
     builder.append(
-      "\n#-----------------------------------------------------------------------\n" +
-      "# Change to 'disabled' if you don't want to receive instant visual notifications\n" +
-      "# about fatal errors that happen to an IDE or plugins installed.\n" +
-      "#-----------------------------------------------------------------------\n" +
-      "idea.fatal.error.notification=enabled\n"
-    )
-  }
-  else {
-    builder.append(
-      "\n#-----------------------------------------------------------------------\n" +
-      "# Change to 'enabled' if you want to receive instant visual notifications\n" +
-      "# about fatal errors that happen to an IDE or plugins installed.\n" +
-      "#-----------------------------------------------------------------------\n" +
-      "idea.fatal.error.notification=disabled\n"
+      if (context.applicationInfo.isEAP) {
+        "\n#-----------------------------------------------------------------------\n" +
+        "# Change to 'disabled' if you don't want to receive instant visual notifications\n" +
+        "# about fatal errors that happen to an IDE or plugins installed.\n" +
+        "#-----------------------------------------------------------------------\n" +
+        "idea.fatal.error.notification=enabled\n"
+      }
+      else {
+        "\n#-----------------------------------------------------------------------\n" +
+        "# Change to 'enabled' if you want to receive instant visual notifications\n" +
+        "# about fatal errors that happen to an IDE or plugins installed.\n" +
+        "#-----------------------------------------------------------------------\n" +
+        "idea.fatal.error.notification=disabled\n"
+      }
     )
   }
   return builder
@@ -680,7 +684,7 @@ private fun checkProductLayout(context: BuildContext) {
 
   val pluginLayouts = layout.pluginLayouts
   checkPluginDuplicates(pluginLayouts)
-  checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", context)
+  checkPluginModules(context.getBundledPluginModules(), "effective bundled plugin modules", context)
   checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", context)
   checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", context)
   if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
@@ -798,7 +802,7 @@ private fun checkPluginModules(pluginModules: Collection<String>?, fieldName: St
     context.outputProvider.findModule(name)?.let { findFileInModuleSources(it, "META-INF/plugin.xml") } == null
   }
   check(unknownBundledPluginModules.isEmpty()) {
-    "The following modules from $fieldName don't contain META-INF/plugin.xml file and aren't specified as optional plugin modules" +
+    "The following modules from $fieldName don't contain META-INF/plugin.xml file and aren't specified as optional plugin modules " +
     "in productProperties.productLayout.pluginLayouts: ${unknownBundledPluginModules.joinToString()}."
   }
 }
@@ -1169,6 +1173,10 @@ private suspend fun crossPlatformZip(
         // Linux and Windows: we don't add specific dist dirs for ARM, so, copy dist files explicitly
         // macOS: we don't copy dist files to avoid extra copy operation
         val content = distFile.content
+
+        // Skip OS-specific plugin-classpath.txt; not published in cross-platform SDK
+        if (distFile.relativePath == PLUGIN_CLASSPATH && distFile.os != null) continue
+
         if (zipFileUniqueGuard.putIfAbsent(distFile.relativePath, content) == null) {
           when (content) {
             is LocalDistFileContent -> out.entry(distFile.relativePath, content.file)

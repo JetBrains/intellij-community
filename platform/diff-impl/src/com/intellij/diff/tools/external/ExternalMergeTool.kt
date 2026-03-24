@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.external
 
-import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.contents.FileContent
-import com.intellij.diff.merge.MergeRequest
 import com.intellij.diff.merge.ThreesideMergeRequest
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalTool
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolGroup
@@ -30,18 +28,11 @@ object ExternalMergeTool {
   fun isDefault(): Boolean = isEnabled() && ExternalDiffSettings.isNotBuiltinMergeTool()
 
   @JvmStatic
-  fun show(project: Project?,
-           externalTool: ExternalTool,
-           request: MergeRequest) {
+  fun show(project: Project?, externalTool: ExternalTool, request: ThreesideMergeRequest) {
     try {
-      if (canShow(request)) {
-        ExternalDiffToolUtil.executeMerge(project, externalTool, (request as ThreesideMergeRequest), null)
-      }
-      else {
-        DiffManagerEx.getInstance().showMergeBuiltin(project, request)
-      }
+      ExternalDiffToolUtil.executeMerge(project, externalTool, request, null)
     }
-    catch (ignore: ProcessCanceledException) {
+    catch (_: ProcessCanceledException) {
     }
     catch (e: Throwable) {
       LOG.warn(e)
@@ -49,25 +40,17 @@ object ExternalMergeTool {
     }
   }
 
-  @JvmStatic
-  fun canShow(request: MergeRequest): Boolean {
-    if (request is ThreesideMergeRequest) {
-      val outputContent = request.outputContent
-      if (!canProcessOutputContent(outputContent)) return false
-
-      val contents = request.contents
-      if (contents.size != 3) return false
-      for (content in contents) {
-        if (!ExternalDiffToolUtil.canCreateFile(content)) return false
-      }
-      return true
-    }
-    return false
+  fun canShow(request: ThreesideMergeRequest): Boolean {
+    return request.outputContent.canProcessOutputContent() &&
+           request.contents.size == 3 &&
+           request.contents.all { content -> ExternalDiffToolUtil.canCreateFile(content) }
   }
 
-  private fun canProcessOutputContent(content: DiffContent): Boolean {
-    if (content is DocumentContent) return true
-    if (content is FileContent && content.file.isInLocalFileSystem) return true
-    return false
+  private fun DiffContent.canProcessOutputContent(): Boolean {
+    return when (this) {
+      is DocumentContent -> true
+      is FileContent if file.isInLocalFileSystem -> true
+      else -> false
+    }
   }
 }

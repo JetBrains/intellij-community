@@ -34,6 +34,7 @@ import com.jetbrains.python.mapResult
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -174,7 +175,9 @@ private suspend fun createOrOpenProjectAndSdk(
       title = PyCharmCommunityCustomizationBundle.message("misc.project.generating.env"),
       cancellation = TaskCancellation.cancellable()
     ) {
-      createVenvAndSdk(ModuleOrProject.ProjectOnly(project), confirmInstallation, systemPythonService, vfsProjectPath)
+      project.pythonSdkConfigurationMutex.withLock {
+        createVenvAndSdk(ModuleOrProject.ProjectOnly(project), confirmInstallation, systemPythonService, vfsProjectPath)
+      }
     }
   }
   val sdk = sdkResult.getOr(PyBundle.message("project.error.cant.venv")) { return it }

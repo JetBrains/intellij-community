@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -38,8 +38,12 @@ import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.search.ActualContextFileInfo;
 import com.intellij.psi.search.CodeInsightContextAwareSearchScopes;
+import com.intellij.psi.search.CodeInsightContextFileInfo;
+import com.intellij.psi.search.DoesNotContainFileInfo;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.NoContextFileInfo;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilCore;
@@ -208,17 +212,42 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public PsiFile findFile(@NotNull String name) {
+    VirtualFile childVFile = findVirtualFileChild(name);
+    if (childVFile == null) return null;
+
+    return myManager.findFile(childVFile);
+  }
+
+  @Override
+  public @Nullable PsiFile findFile(@NotNull String name, @NotNull GlobalSearchScope scope) {
+    VirtualFile childVFile = findVirtualFileChild(name);
+    if (childVFile == null) return null;
+
+    CodeInsightContextFileInfo fileInfo = CodeInsightContextAwareSearchScopes.getFileContextInfo(scope, childVFile);
+    if (fileInfo instanceof NoContextFileInfo) {
+      // any file is okay
+      return myManager.findFile(childVFile);
+    }
+
+    if (fileInfo instanceof ActualContextFileInfo) {
+      Collection<CodeInsightContext> contexts = ((ActualContextFileInfo)fileInfo).getContexts();
+      // taking the first context
+      return myManager.findFile(childVFile, ContainerUtil.getFirstItem(contexts));
+    }
+
+    LOG.assertTrue(fileInfo instanceof DoesNotContainFileInfo);
+    return null;
+  }
+
+  private @Nullable VirtualFile findVirtualFileChild(@NotNull String name) {
     ProgressManager.checkCanceled();
     VirtualFile childVFile = myFile.findChild(name);
-    if (childVFile == null) return null;
-    if (!childVFile.isValid()) {
-      LOG.error(
-        "Invalid file: " + childVFile + " in dir " + myFile + ", dir.valid=" + myFile.isValid(),
-        new InvalidVirtualFileAccessException(childVFile)
-      );
+    if (childVFile != null && !childVFile.isValid()) {
+      LOG.error("Invalid file: " + childVFile + " in dir " + myFile + ", dir.valid=" + myFile.isValid(),
+                new InvalidVirtualFileAccessException(childVFile));
       return null;
     }
-    return myManager.findFile(childVFile);
+    return childVFile;
   }
 
   @Override

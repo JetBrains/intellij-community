@@ -16,7 +16,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder
 import com.intellij.openapi.vcs.VcsNotifier
@@ -329,8 +328,7 @@ class GitShareProjectService(
 
   private fun filterOutIgnored(files: Collection<VirtualFile>): Collection<VirtualFile> {
     val changeListManager = ChangeListManager.getInstance(project)
-    val vcsManager = ProjectLevelVcsManager.getInstance(project)
-    return files.filter({ file -> !changeListManager.isIgnoredFile(file) && !vcsManager.isIgnored(file) })
+    return files.filter({ file -> !changeListManager.isIgnoredFile(file) })
   }
 
   private fun pushCurrentBranch(

@@ -1,9 +1,11 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteDev.tests.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.diagnostic.logs.DebugLogLevel
@@ -16,6 +18,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
@@ -46,6 +49,7 @@ import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
 import com.intellij.ui.AppIcon
 import com.intellij.ui.WinFocusStealer
+import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import com.intellij.util.ui.ImageUtil
 import com.jetbrains.rd.framework.IdKind
@@ -98,11 +102,6 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       System.getProperty(DistributedTestsAgentConstants.sourcePathProperty, PathManager.getHomePath()).let(::File)
     }
 
-    /**
-     * ID of the plugin which contains test code.
-     * Currently, only test code of the client part is put to a separate plugin.
-     */
-    const val TEST_PLUGIN_ID: String = "com.intellij.tests.plugin"
     const val TEST_PLUGIN_DIRECTORY_NAME: String = "tests-plugin"
   }
 
@@ -266,8 +265,14 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         }
 
         session.getProductCodeAndVersion.setSuspend(sessionBgtDispatcher) { _, _ ->
+          val namesInfo = ApplicationNamesInfo.getInstance()
           ApplicationInfo.getInstance().build.let {
-            RdProductInfo(productCode = it.productCode, productVersion = it.asStringWithoutProductCode())
+            RdProductInfo(
+              productCode = it.productCode,
+              productVersion = it.asStringWithoutProductCode(),
+              productName = namesInfo.productName,
+              productFullName = namesInfo.fullProductName,
+            )
           }
         }
 
@@ -353,6 +358,11 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
         session.makeScreenshot.setSuspend(sessionBgtDispatcher) { _, fileName ->
           makeScreenshot(fileName)
+        }
+
+
+        session.dumpThreads.setSuspend(sessionBgtDispatcher) { _, _ ->
+          dumpThreads()
         }
 
         session.projectsAreInitialised.setSuspend(sessionBgtDispatcher) { _, _ ->
@@ -520,6 +530,23 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             }
             makeScreenshotOfComponent(screenshotFile, window)
           }
+          true
+        }
+        catch (e: Throwable) {
+          LOG.warn("Test action 'makeScreenshot' hasn't finished successfully", e)
+          false
+        }
+      }
+    }
+  }
+
+  private suspend fun dumpThreads(): Boolean {
+    return runLogged("Dumping threads") {
+      @Suppress("OPT_IN_USAGE")
+      withContext(blockingDispatcher + NonCancellable) { // even if there is a modal window opened
+        return@withContext try {
+          val dump = PerformanceWatcher.getInstance().dumpThreads("Test session", true, false) ?: return@withContext false
+          LOG.info("Thread dump is saved at: $dump")
           true
         }
         catch (e: Throwable) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -51,7 +51,7 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -169,7 +169,7 @@ public final class CustomizationUtil {
     return reorderedChildren.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  public static void optimizeSchema(final JTree tree, final CustomActionsSchema schema) {
+  public static void optimizeSchema(@NotNull JTree tree, @NotNull CustomActionsSchema schema) {
     //noinspection HardCodedStringLiteral
     @SuppressWarnings("DialogTitleCapitalization")
     Group rootGroup = new Group("root");
@@ -248,8 +248,8 @@ public final class CustomizationUtil {
     return getTreePath(0, path, tree.getModel().getRoot());
   }
 
-  @ApiStatus.Internal
-  public static ActionUrl getActionUrl(final TreePath treePath,
+  @Internal
+  public static @NotNull ActionUrl getActionUrl(@NotNull TreePath treePath,
                                        @MagicConstant(intValues = {ActionUrl.ADDED, ActionUrl.DELETED, ActionUrl.MOVE}) int actionType) {
     ActionUrl url = new ActionUrl();
     for (int i = 0; i < treePath.getPath().length - 1; i++) {
@@ -259,16 +259,16 @@ public final class CustomizationUtil {
       }
     }
 
-    final DefaultMutableTreeNode component = ((DefaultMutableTreeNode)treePath.getLastPathComponent());
+    DefaultMutableTreeNode component = ((DefaultMutableTreeNode)treePath.getLastPathComponent());
     Object userObj = component.getUserObject();
     url.setComponent(userObj instanceof Pair<?, ?> pair ? pair.first : userObj);
-    final TreeNode parent = component.getParent();
+    TreeNode parent = component.getParent();
     url.setAbsolutePosition(parent != null ? parent.getIndex(component) : 0);
     url.setActionType(actionType);
     return url;
   }
 
-  @ApiStatus.Internal
+  @Internal
   public static TreePath getTreePath(JTree tree, ActionUrl url) {
     return getTreePath(0, url.getGroupPath(), tree.getModel().getRoot());
   }

@@ -35,7 +35,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -135,18 +134,13 @@ public class RecentProjectPanel extends JPanel {
     myList = createList(recentProjectActions.toArray(AnAction.EMPTY_ARRAY), getPreferredScrollableViewportSize());
     myList.setCellRenderer(createRenderer(pathShortener));
 
-    if (Registry.is("autocheck.availability.welcome.screen.projects")) {
-      myChecker = new FilePathChecker(() -> {
-        if (myList.isShowing()) {
-          myList.revalidate();
-          myList.repaint();
-        }
-      }, pathsToCheck);
-      Disposer.register(parentDisposable, myChecker);
-    }
-    else {
-      myChecker = null;
-    }
+    myChecker = new FilePathChecker(() -> {
+      if (myList.isShowing()) {
+        myList.revalidate();
+        myList.repaint();
+      }
+    }, pathsToCheck);
+    Disposer.register(parentDisposable, myChecker);
 
     new ClickListener(){
       @Override
@@ -656,7 +650,7 @@ public class RecentProjectPanel extends JPanel {
     }
 
     private void onAppStateChanged() {
-      boolean settingsAreOK = Registry.is("autocheck.availability.welcome.screen.projects") && !PowerSaveMode.isEnabled();
+      boolean settingsAreOK = !PowerSaveMode.isEnabled();
       boolean everythingIsOK = settingsAreOK && ApplicationManager.getApplication().isActive();
       synchronized (this) {
         if (service == null && everythingIsOK) {

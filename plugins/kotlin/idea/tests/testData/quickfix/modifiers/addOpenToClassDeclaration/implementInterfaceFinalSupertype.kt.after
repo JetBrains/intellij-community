@@ -1,4 +1,5 @@
 // "Make 'A' 'open'" "true"
+// K2_ERROR: This type is final, so it cannot be extended.
 interface X {}
 interface Y {}
 

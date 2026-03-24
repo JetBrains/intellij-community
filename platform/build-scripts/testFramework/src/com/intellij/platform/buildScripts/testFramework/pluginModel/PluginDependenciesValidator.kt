@@ -40,9 +40,10 @@ import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import java.nio.file.Files
 import java.nio.file.Path
@@ -197,12 +198,15 @@ class PluginDependenciesValidator private constructor(
           .flatMap { (it as UrlClassLoader).files.asSequence() }
           .mapTo(HashSet()) { getModuleName(it) }
 
-      val enumerator = JpsJavaExtensionService.dependencies(sourceModule).satisfying {
+      val compileOnlyDependencies = options.compileOnlyDependencies.filter { it.first == "*" || it.first == sourceModule.name }.mapTo(HashSet()) { it.second }
+
+      val enumerator = JpsJavaExtensionService.dependencies(sourceModule).satisfying { dependency ->
         /* for now only dependencies used for compilation of production code are checked; in the future, we can check dependencies with 'Runtime' scope as well;
-           note that dependencies with scope 'Provided' are checked by intention: in some cases, such dependencies are used for modules from other plugins, and we need to check
+           note that dependencies with scope 'Provided' are checked by default: in some cases, such dependencies are used for modules from other plugins, and we need to check
            corresponding dependency at runtime in these cases */
-        val scope = JpsJavaExtensionService.getInstance().getDependencyExtension(it)?.scope
-        scope != null && scope.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_COMPILE)
+        val scope = JpsJavaExtensionService.getInstance().getDependencyExtension(dependency)?.scope
+        scope == JpsJavaDependencyScope.COMPILE
+        || scope == JpsJavaDependencyScope.PROVIDED && dependency is JpsModuleDependency && dependency.moduleReference.moduleName !in compileOnlyDependencies
       }
       enumerator.processModules { targetModule ->
         val targetModuleName = targetModule.name
@@ -215,9 +219,21 @@ class PluginDependenciesValidator private constructor(
 
           val allExpectedTargets = jpsModuleToRuntimeDescriptors[targetModuleName]
           if (allExpectedTargets == null) {
-            //println("Skipping reporting '$sourceModuleName' -> '$targetModuleName' because no runtime descriptors found\n")
+            if (options.reportProblemIfTargetModuleIsNotIncludedInDistribution) {
+              val errorMessage = """
+                  |'${sourceModule.name}' has compile dependency on '$targetModuleName' in *.iml,
+                  |and it's included in ${sourceDescriptors.joinToString { it.shortPresentation }}, but '$targetModuleName' isn't found in the distribution. 
+                  |This may cause NoClassDefFoundError at runtime.
+                  |Check if classes from '${sourceModule.name}' really use classes from '$targetModuleName' using 'Analyze This Dependency' action in the Project Structure dialog:
+                  |If no, remove the dependency. 
+                  |If the dependency is really used, ensure that '$targetModuleName' is included in the distribution.
+                  |$messageDescribingHowToUpdateLayoutData 
+                  |""".trimMargin()
+              errors.add(PluginModuleConfigurationError(pluginModelModuleName = sourceModule.name, errorMessage = errorMessage))
+            }
             return@processModules
           }
+
           val expectedTargets = allExpectedTargets.filter { it.contentModuleName?.contains("/") != true }.takeIf { it.isNotEmpty() } ?: allExpectedTargets
           val sourceDescriptorsString = if (sourceDescriptors.size == 1) {
             "${sourceDescriptors.first().shortPresentation} doesn't have dependency"

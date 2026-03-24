@@ -143,7 +143,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
               registeredIndexesWereCorrupted = indexesWereCorrupted,
               sourceOfScanning = SourceOfScanning.IndexTumblerOn,
             )
-            indexesCleanupJob.forgetProjectDirtyFilesOnCompletion(fileBasedIndex, project, projectDirtyFilesQueue, registeredIndexes.orphanDirtyFilesQueue.untrimmedSize)
+            indexesCleanupJob?.forgetProjectDirtyFilesOnCompletion(fileBasedIndex, project, projectDirtyFilesQueue, registeredIndexes.orphanDirtyFilesQueue.untrimmedSize)
           }
           LOG.info("Index rescanning has been started. Reason: `$reason`")
         }

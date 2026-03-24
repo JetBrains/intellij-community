@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
+import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import java.nio.file.Path
@@ -25,7 +27,7 @@ class GradleDaemonJvmCriteriaMigrationAction : DumbAwareAction() {
         val settings = GradleSettings.getInstance(project)
         for (projectSettings in settings.linkedProjectsSettings) {
             val projectPath = projectSettings.externalProjectPath
-            val gradleVersion = projectSettings.resolveGradleVersion()
+            val gradleVersion = GradleInstallationManager.guessGradleVersion(projectSettings) ?: GradleVersion.current()
             if (GradleDaemonJvmHelper.isDaemonJvmCriteriaSupported(gradleVersion)) {
                 if (!GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(Path.of(projectPath), gradleVersion)) {
                     GradleDaemonJvmCriteriaMigrationHelper.migrateToDaemonJvmCriteria(project, projectPath)

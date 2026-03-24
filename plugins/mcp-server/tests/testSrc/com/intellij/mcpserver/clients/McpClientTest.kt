@@ -2,8 +2,9 @@ package com.intellij.mcpserver.clients
 
 import com.intellij.mcpserver.clients.configs.STDIOServerConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
-import com.intellij.mcpserver.clients.configs.VSCodeSSEConfig
+import com.intellij.mcpserver.clients.configs.VSCodeNetworkConfig
 import com.intellij.mcpserver.clients.impl.VSCodeClient
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 
+@TestApplication
 class McpClientTest {
 
   @AfterEach
@@ -101,7 +103,7 @@ class McpClientTest {
     McpClient.overrideWriteLegacyForTests(false)
 
     val client = TestableVSCodeClient()
-    val serverEntry = VSCodeSSEConfig(url = "http://localhost:1234/sse", type = "sse")
+    val serverEntry = VSCodeNetworkConfig(url = "http://localhost:1234/sse", type = "sse")
 
     val existingConfig = buildJsonObject {
       put("servers", buildJsonObject {
@@ -149,7 +151,7 @@ class McpClientTest {
     McpClient.overrideWriteLegacyForTests(true)
 
     val client = TestableVSCodeClient()
-    val serverEntry = VSCodeSSEConfig(url = "http://localhost:7777/sse", type = "sse")
+    val serverEntry = VSCodeNetworkConfig(url = "http://localhost:7777/sse", type = "sse")
 
     val existingConfig = buildJsonObject {
       put("servers", buildJsonObject {

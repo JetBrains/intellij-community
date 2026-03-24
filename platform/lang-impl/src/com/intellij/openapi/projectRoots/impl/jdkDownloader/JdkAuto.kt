@@ -3,6 +3,7 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.Service
@@ -33,7 +34,6 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdkMultipleDownloadsFi
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.JarFileSystem
@@ -349,7 +349,7 @@ class JdkAuto : UnknownSdkResolver {
         indicator.text = ProjectBundle.message("progress.text.checking.existing.jdks")
 
         val result = mutableListOf<JavaLocalSdkFix>()
-        for (it in ApplicationManager.getApplication().runReadAction(Computable { ProjectJdkTable.getInstance().allJdks})) {
+        for (it in runReadActionBlocking { ProjectJdkTable.getInstance().allJdks}) {
           if (it.sdkType != sdkType) {
             continue
           }

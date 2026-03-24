@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.ide.util.FileStructurePopup;
@@ -25,7 +25,7 @@ import java.util.Collection;
 import static com.intellij.ide.actions.ViewStructureAction.createPopup;
 
 public final class ShowFileStructurePopupCommand extends AbstractCommand implements Disposable {
-  public static final String PREFIX = CMD_PREFIX + "showFileStructureDialog";
+  public static final String PREFIX = CMD_PREFIX + "showFileStructureDialogClassic";
   public static final String SPAN_NAME = "FileStructurePopup";
 
   public ShowFileStructurePopupCommand(@NotNull String text, int line) {
@@ -51,7 +51,7 @@ public final class ShowFileStructurePopupCommand extends AbstractCommand impleme
       if (fileEditor != null) {
         Span span = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).startSpan();
         try (Scope ignored = span.makeCurrent()) {
-          final FileStructurePopup popup = createPopup(project, fileEditor);
+          final FileStructurePopup popup = (FileStructurePopup)createPopup(project, fileEditor);
           if (popup != null) {
             Span spanShow = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME + "#Show").startSpan();
             Span spanFill = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME + "#Fill").startSpan();

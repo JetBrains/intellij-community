@@ -42,38 +42,115 @@ jvm_library(
 
 jvm_library(
   name = "java-byteCodeViewer_test_lib",
+  module_name = "intellij.java.byteCodeViewer",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_java-byteCodeViewer",
-  associates = [":java-byteCodeViewer"],
-  deps = [
-    "//libraries/asm",
-    "//platform/analysis-api:analysis",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/projectModel-api:projectModel",
-    "//platform/util",
-    "//platform/core-api:core",
-    "//platform/platform-api:ide",
-    "//platform/platform-impl:ide-impl",
-    "//platform/lang-api:lang",
-    "//platform/lang-impl",
-    "//java/java-psi-api:psi",
-    "//java/execution/openapi:java-execution",
-    "//java/openapi:java",
-    "//java/compiler/impl",
+  runtime_deps = [
+    ":java-byteCodeViewer",
+    "//libraries/asm:asm_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//java/execution/openapi:java-execution_test_lib",
+    "//java/openapi:java_test_lib",
+    "//java/compiler/impl:impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//platform/core-ui",
-    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/core-ui:core-ui_test_lib",
+    "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.byteCodeViewer` end
 
-### auto-generated section `test intellij.java.byteCodeViewer` start
+### auto-generated section `iml intellij.java.byteCodeViewer` start
+exports_files([
+  "intellij.java.byteCodeViewer.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.byteCodeViewer` end
+
+### auto-generated section `build intellij.java.byteCodeViewer.tests` start
+create_kotlinc_options(
+  name = "custom_java-byteCodeViewer-tests",
+  x_explicit_api_mode = "strict"
+)
+
+jvm_library(
+  name = "java-byteCodeViewer-tests",
+  module_name = "intellij.java.byteCodeViewer.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "java-byteCodeViewer-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_java-byteCodeViewer-tests",
+  associates = [
+    "//plugins/ByteCodeViewer:java-byteCodeViewer",
+    "//plugins/ByteCodeViewer:java-byteCodeViewer_test_lib",
+  ],
+  deps = [
+    "//libraries/asm",
+    "//libraries/asm:asm_test_lib",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-api:ide",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
+    "//java/execution/openapi:java-execution",
+    "//java/execution/openapi:java-execution_test_lib",
+    "//java/openapi:java",
+    "//java/openapi:java_test_lib",
+    "//java/compiler/impl",
+    "//java/compiler/impl:impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
+  ],
+  runtime_deps = [
+    ":java-byteCodeViewer-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.java.byteCodeViewer.tests` end
+
+### auto-generated section `iml intellij.java.byteCodeViewer.tests` start
+exports_files([
+  "intellij.java.byteCodeViewer.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.byteCodeViewer.tests` end
+
+### auto-generated section `test intellij.java.byteCodeViewer.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "java-byteCodeViewer_test",
-  runtime_deps = [":java-byteCodeViewer_test_lib"]
+  name = "java-byteCodeViewer-tests_test",
+  runtime_deps = [":java-byteCodeViewer-tests_test_lib"]
 )
-### auto-generated section `test intellij.java.byteCodeViewer` end
+### auto-generated section `test intellij.java.byteCodeViewer.tests` end

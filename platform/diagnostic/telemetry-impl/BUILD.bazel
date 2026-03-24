@@ -24,7 +24,7 @@ jvm_library(
   resources = [":telemetry-impl_resources"],
   kotlinc_opts = ":custom_telemetry-impl",
   deps = [
-    "//libraries/jackson/jackson",
+    "//libraries/jackson3/jackson:libraries-jackson3",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:kotlin-stdlib",
@@ -50,4 +50,42 @@ jvm_library(
     "//platform/diagnostic/telemetry/rt",
   ]
 )
+
+jvm_library(
+  name = "telemetry-impl_test_lib",
+  module_name = "intellij.platform.diagnostic.telemetry.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_telemetry-impl",
+  exports = [
+    "//platform/diagnostic/telemetry.exporters",
+    "//platform/diagnostic/telemetry.exporters:telemetry.exporters_test_lib",
+    "//platform/diagnostic/telemetry/rt",
+    "//platform/diagnostic/telemetry/rt:rt_test_lib",
+  ],
+  runtime_deps = [
+    ":telemetry-impl",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//libraries/hdr-histogram:hdr-histogram_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/util/http:http_test_lib",
+    "//libraries/kotlinx/serialization/protobuf:protobuf_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//platform/diagnostic/telemetry.exporters:telemetry.exporters_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/diagnostic/telemetry/rt:rt_test_lib",
+    "//libraries/guava:guava_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.impl` end
+
+### auto-generated section `iml intellij.platform.diagnostic.telemetry.impl` start
+exports_files([
+  "intellij.platform.diagnostic.telemetry.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.diagnostic.telemetry.impl` end

@@ -33,7 +33,6 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
@@ -109,19 +108,8 @@ final class AnnotationChecker {
       return;
     }
 
-    PsiElement parent = ref.getParent();
-    while (parent instanceof PsiJavaCodeReferenceElement referenceElement) {
-      PsiElement qualified = referenceElement.resolve();
-      if (qualified instanceof PsiMember member && member.hasModifierProperty(PsiModifier.STATIC)) {
-        myVisitor.report(JavaErrorKinds.ANNOTATION_NOT_ALLOWED_STATIC.create(annotation));
-        return;
-      }
-      if (qualified instanceof PsiClass) {
-        parent = parent.getParent();
-      }
-      else {
-        break;
-      }
+    if (PsiImplUtil.isTypeQualifierOfStaticMember(ref)) {
+      myVisitor.report(JavaErrorKinds.ANNOTATION_NOT_ALLOWED_STATIC.create(annotation));
     }
   }
 

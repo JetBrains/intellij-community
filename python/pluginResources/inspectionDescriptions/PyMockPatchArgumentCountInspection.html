@@ -1,0 +1,9 @@
+<html>
+<body>
+<p>Reports functions decorated with <code>@patch</code> or <code>@patch.object</code> where the number of
+  parameters does not match the number of mock objects injected by the decorators.</p>
+<p>Each <code>@patch</code> decorator without an explicit <code>new=</code> argument injects one
+  additional parameter. The innermost decorator injects the first parameter (after <code>self</code>),
+  and the outermost injects the last.</p>
+</body>
+</html>

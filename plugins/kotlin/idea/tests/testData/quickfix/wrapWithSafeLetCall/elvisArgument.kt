@@ -1,5 +1,6 @@
 // "Wrap with '?.let { ... }' call" "true"
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'Int?', but 'Int' was expected.
 fun foo(i: Int) {}
 
 fun test(a: Int?, b: Int?) {

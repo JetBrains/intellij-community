@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jackson3.dataformat.yaml.jar
+  modules:
+  - name: intellij.libraries.jackson3.dataformat.yaml
+    libraries:
+      jackson3-dataformat-yaml:
+      - name: $MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-yaml/3/jackson-dataformat-yaml-3.jar

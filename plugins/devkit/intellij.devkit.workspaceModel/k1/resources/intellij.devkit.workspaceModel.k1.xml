@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="com.intellij.modules.kotlin.k1"/>
     <module name="intellij.devkit.workspaceModel"/>
+    <module name="kotlin.base.fe10.project-structure"/>
   </dependencies>
 
   <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>

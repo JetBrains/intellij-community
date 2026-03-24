@@ -360,8 +360,8 @@ public final class JBAnimator implements Disposable {
     myCurrentAnimatorFuture.cancel(false);
     if (!myDisposed.getAndSet(true) && myService != EdtExecutorService.getScheduledExecutorInstance()) {
       myService.shutdownNow();
-      JBAnimatorHelper.cancelHighPrecisionTimer(this);
     }
+    JBAnimatorHelper.cancelHighPrecisionTimer(this);
   }
 
   /**

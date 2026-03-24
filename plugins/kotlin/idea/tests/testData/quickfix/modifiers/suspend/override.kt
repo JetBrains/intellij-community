@@ -1,4 +1,6 @@
 // "Make bar suspend" "true"
+// K2_ERROR: Non-suspend function 'bar' cannot override suspend function 'suspend fun bar(): Unit' defined in 'A'.
+// K2_ERROR: Suspend function 'suspend fun foo(): Unit' can only be called from a coroutine or another suspend function.
 
 suspend fun foo() {}
 

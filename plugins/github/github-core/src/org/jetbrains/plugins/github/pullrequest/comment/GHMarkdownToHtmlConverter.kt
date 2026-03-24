@@ -14,6 +14,7 @@ import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.findChildOfType
+import org.intellij.markdown.ast.getParentOfType
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.flavours.gfm.GFMElementTypes
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
@@ -23,6 +24,7 @@ import org.intellij.markdown.html.SimpleInlineTagProvider
 import org.intellij.markdown.parser.LinkMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.plugins.github.api.GithubServerPath
 import java.net.URI
 
 // TODO: fix bug with CRLF line endings from markdown library
@@ -30,31 +32,33 @@ class GHMarkdownToHtmlConverter(private val project: Project?) {
   companion object {
     const val OPEN_PR_LINK_PREFIX = "ghpullrequest:"
 
-    private val CAPTURE_PR_ID_REGEX = "(#\\d+)".toRegex()
+    private val CAPTURE_USER_ID_REGEX = """(?<=^|[\s\p{Punct}])(@[a-zA-Z0-9-]+)(?=[\s\p{Punct}]|$)""".toRegex(RegexOption.MULTILINE)
+    private val CAPTURE_PR_ID_REGEX = """(?<=^|[\s\p{Punct}])(#\d+)(?=[\s\p{Punct}]|$)""".toRegex(RegexOption.MULTILINE)
   }
 
   /**
    * Marks links to other pull requests (recognized by a prefixed '#') as special links.
    */
-  fun convertMarkdown(markdownText: @NlsSafe String): @NlsSafe String {
-    val text = preprocessPullRequestIds(markdownText.replace("\r", ""))
+  fun convertMarkdown(markdownText: @NlsSafe String, server: GithubServerPath? = null): @NlsSafe String {
+    val text = markdownText.replace("\r", "")
     val flavourDescriptor = GithubFlavourDescriptor(CodeBlockHtmlSyntaxHighlighter(project))
 
-    return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, null)
+    return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, server?.toUrl())
   }
 
-  fun convertMarkdownWithSuggestedChange(markdownText: @NlsSafe String,
-                                         filePath: @NonNls String,
-                                         reviewContent: @NonNls String): @NlsSafe String {
-    val text = preprocessPullRequestIds(markdownText.replace("\r", ""))
+  fun convertMarkdownWithSuggestedChange(
+    markdownText: @NlsSafe String,
+    filePath: @NonNls String,
+    reviewContent: @NonNls String,
+    server: GithubServerPath? = null
+  ): @NlsSafe String {
+    val text = markdownText.replace("\r", "")
     val htmlSyntaxHighlighter = GHSuggestionHtmlSyntaxHighlighter(project, filePath, reviewContent)
     val flavourDescriptor = GithubFlavourDescriptor(htmlSyntaxHighlighter)
 
-    return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, null)
+    return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, server?.toUrl())
   }
 
-  private fun preprocessPullRequestIds(markdownSource: String): String =
-    markdownSource.replace(CAPTURE_PR_ID_REGEX, "[$1]($1)")
 
   private class GithubFlavourDescriptor(
     private val htmlSyntaxHighlighter: HtmlSyntaxHighlighter
@@ -64,8 +68,45 @@ class GHMarkdownToHtmlConverter(private val project: Project?) {
       return map + mapOf(
         GFMElementTypes.STRIKETHROUGH to SimpleInlineTagProvider("strike", 2, -2),
         MarkdownElementTypes.CODE_FENCE to CodeFenceSyntaxHighlighterGeneratingProvider(htmlSyntaxHighlighter),
-        MarkdownElementTypes.INLINE_LINK to GHLinkGeneratingProvider(map[MarkdownElementTypes.INLINE_LINK])
+        MarkdownElementTypes.INLINE_LINK to GHLinkGeneratingProvider(map[MarkdownElementTypes.INLINE_LINK]),
+        MarkdownTokenTypes.TEXT to GHTextGeneratingProvider(baseURI)
       )
+    }
+  }
+
+  private class GHTextGeneratingProvider(private val baseURI: URI?) : GeneratingProvider {
+    override fun processNode(
+      visitor: HtmlGenerator.HtmlGeneratingVisitor,
+      text: String,
+      node: ASTNode,
+    ) {
+      if (node.getParentOfType(MarkdownElementTypes.CODE_SPAN) != null) {
+        visitor.consumeHtml(text)
+        return
+      }
+      val toString = node.getTextInNode(text).toString()
+      val result = toString.preprocessPullRequestIds().preprocessUserIds()
+      visitor.consumeHtml(result)
+    }
+
+    private fun String.preprocessPullRequestIds(): String {
+      if (!contains('#')) return this
+      return replace(CAPTURE_PR_ID_REGEX) {
+        val pr = it.value
+        val prId = pr.substring(1)
+        val url = "$OPEN_PR_LINK_PREFIX$prId"
+        HtmlChunk.link(url, pr).toString()
+      }
+    }
+
+    private fun String.preprocessUserIds(): String {
+      if (!contains('@')) return this
+      return replace(CAPTURE_USER_ID_REGEX) {
+        val mention = it.value
+        val userLogin = mention.substring(1)
+        val url = baseURI?.resolve(userLogin)?.toString() ?: mention
+        HtmlChunk.link(url, mention).toString()
+      }
     }
   }
 
@@ -87,14 +128,6 @@ class GHMarkdownToHtmlConverter(private val project: Project?) {
       linkText as String
       linkDestination as String
 
-      // If the destination starts with '#', it's either an issue ID or a PR ID
-      if (linkDestination.startsWith('#')) {
-        val prId = linkDestination.substring(1)
-        val mrUrl = "$OPEN_PR_LINK_PREFIX$prId"
-        visitor.consumeHtml(HtmlChunk.link(mrUrl, "#${prId}").toString())
-        return
-      }
-
       // Otherwise, treat the link as a normal browser-handled link
       visitor.consumeHtml(HtmlChunk.link(linkDestination, linkText).toString())
       return
@@ -103,7 +136,7 @@ class GHMarkdownToHtmlConverter(private val project: Project?) {
 }
 
 @ApiStatus.Internal
-fun String.convertToHtml(project: Project): @NlsSafe String {
+fun String.convertToHtml(project: Project, server: GithubServerPath? = null): @NlsSafe String {
   val processedText = processIssueIdsMarkdown(project, this)
-  return GHMarkdownToHtmlConverter(project).convertMarkdown(processedText)
+  return GHMarkdownToHtmlConverter(project).convertMarkdown(processedText, server)
 }

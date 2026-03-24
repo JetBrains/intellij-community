@@ -1,9 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -23,7 +22,6 @@ import com.intellij.openapi.projectRoots.impl.UnknownMissingSdk
 import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -189,14 +187,14 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
     val rootProgressIndicator = resolveProgressIndicator()
 
     val namedSdk = sdkName?.let {
-      ApplicationManager.getApplication().runReadAction(Computable {
+      runReadActionBlocking {
         val jdkTable = project?.let { ProjectJdkTable.getInstance(it) }
                        ?: ProjectJdkTable.getInstance()
         when (sdkType) {
           null -> jdkTable.findJdk(sdkName)
           else -> jdkTable.findJdk(sdkName, sdkType.name)
         }
-      })
+      }
     }
 
     if (trySdk(namedSdk, rootProgressIndicator)) {
@@ -364,7 +362,7 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
         //it could be that the suggested SDK is already registered, so we could simply return it
         //NOTE: something similar has to be done with downloading SDKs, e.g. we should replace download task with an already running one
         val sdkPrototype = possibleFix.registeredSdkPrototype
-        if (sdkPrototype != null && sdkPrototype in runReadAction {
+        if (sdkPrototype != null && sdkPrototype in runReadActionBlocking {
             val jdkTable = project?.let { ProjectJdkTable.getInstance(it) }
                            ?: ProjectJdkTable.getInstance()
             jdkTable.allJdks

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.options.OptPane;
@@ -90,14 +90,13 @@ public final class SequencedCollectionMethodCanBeUsedInspection extends Abstract
         PsiExpression collection = qualifierCall.getMethodExpression().getQualifierExpression();
         if (collection == null || collection instanceof PsiThisExpression) return;
         if (!InheritanceUtil.isInheritor(collection.getType(), "java.util.SequencedCollection")) return;
-        String name = "getFirst";
-        report(call, name);
+        report(call, "getFirst");
       }
 
       private void report(@NotNull PsiMethodCallExpression call, String name) {
         holder.registerProblem(
           Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement()),
-          JavaBundle.message("inspection.stream.api.migration.can.be.replaced.with.call", name + "()"),
+          JavaBundle.message("inspection.stream.api.migration.can.be.replaced.with.call", name),
           new ReplaceWithCallFix(name));
       }
 

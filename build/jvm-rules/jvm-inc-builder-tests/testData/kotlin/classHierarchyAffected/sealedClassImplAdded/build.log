@@ -1,0 +1,28 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+  B.class
+  Base.class
+  META-INF/kotlin_classHierarchyAffected_sealedClassImplAdded-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/sealedClassImplAdded/a/Base.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_sealedClassImplAdded-a.kotlin_module
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/sealedClassImplAdded/a/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_sealedClassImplAdded-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/sealedClassImplAdded/a/use.kt
+End of files
+------------------------------------------
+Exit code: OK

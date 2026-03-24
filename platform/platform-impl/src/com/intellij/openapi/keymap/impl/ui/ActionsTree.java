@@ -260,11 +260,11 @@ public final class ActionsTree {
     ActionManager actionManager = ActionManager.getInstance();
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComponent));
     Condition<? super AnAction> condFilter = combineWithBaseFilter(ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, true));
-    Group mainGroup = ActionsTreeUtil.createMainGroup(project, keymap, allQuickLists, filter, true, condFilter);
+    Group mainGroup = ActionTreeGroupUtil.createMainGroup(project, keymap, allQuickLists, filter, true, condFilter);
 
     if ((StringUtil.isNotEmpty(filter) || shortcut != null) && mainGroup.initIds().isEmpty()) {
       condFilter = combineWithBaseFilter(ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, false));
-      mainGroup = ActionsTreeUtil.createMainGroup(project, keymap, allQuickLists, filter, false, condFilter);
+      mainGroup = ActionTreeGroupUtil.createMainGroup(project, keymap, allQuickLists, filter, false, condFilter);
     }
 
     myRoot = ActionsTreeUtil.createNode(mainGroup);

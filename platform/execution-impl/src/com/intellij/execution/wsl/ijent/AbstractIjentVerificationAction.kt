@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DialogTitleCapitalization", "HardCodedStringLiteral")
 
 package com.intellij.execution.wsl.ijent
@@ -22,7 +22,6 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.ijent.IjentMissingBinary
-import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.spi.IjentDeployingStrategy
 import kotlinx.coroutines.CoroutineScope
@@ -66,7 +65,7 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
           withModalProgress(modalTaskOwner, e.presentation.text, TaskCancellation.cancellable()) {
             coroutineScope {
               val (title, deployingStrategy, descriptor) = deployingStrategy(this)
-              deployingStrategy.createIjentSession<IjentPosixApi>().getIjentInstance(descriptor).use { ijent ->
+              deployingStrategy.createIjentSession().getIjentInstance(descriptor).use { ijent ->
                 coroutineScope {
                   launch {
                     val info = ijent.ijentProcessInfo

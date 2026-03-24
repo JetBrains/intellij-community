@@ -7,5 +7,4 @@ fun test(product: Product) {
     val (id, name) = product
     println(id)
 }
-
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.RenameVariableToMatchPropertiesQuickFix

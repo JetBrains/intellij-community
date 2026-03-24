@@ -1,0 +1,10 @@
+<idea-plugin visibility="internal">
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.idea.reposearch.contributor"
+                    interface="com.intellij.repository.search.completion.api.DependencyCompletionContributor" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.repository.search.completion.api.DependencyCompletionService"
+                        serviceImplementation="com.intellij.repository.search.completion.impl.DependencyCompletionServiceImpl"/>
+  </extensions>
+</idea-plugin>

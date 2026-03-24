@@ -11,17 +11,7 @@ public interface GraphConfiguration {
   @NotNull
   DependencyGraph getGraph();
 
-  static GraphConfiguration create(@NotNull DependencyGraph graph, @NotNull NodeSourcePathMapper pathMapper) {
-    return new GraphConfiguration() {
-      @Override
-      public @NotNull NodeSourcePathMapper getPathMapper() {
-        return pathMapper;
-      }
-
-      @Override
-      public @NotNull DependencyGraph getGraph() {
-        return graph;
-      }
-    };
+  default boolean isGraphUpdated() {
+    return true;
   }
 }

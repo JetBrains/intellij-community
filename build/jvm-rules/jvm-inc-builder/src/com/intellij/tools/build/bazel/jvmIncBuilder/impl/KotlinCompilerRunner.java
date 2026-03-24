@@ -1,16 +1,26 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
-import com.intellij.tools.build.bazel.jvmIncBuilder.*;
+import com.intellij.tools.build.bazel.jvmIncBuilder.BuildContext;
+import com.intellij.tools.build.bazel.jvmIncBuilder.BuildProcessLogger;
+import com.intellij.tools.build.bazel.jvmIncBuilder.CLFlags;
+import com.intellij.tools.build.bazel.jvmIncBuilder.DataPaths;
+import com.intellij.tools.build.bazel.jvmIncBuilder.DiagnosticSink;
+import com.intellij.tools.build.bazel.jvmIncBuilder.ExitCode;
+import com.intellij.tools.build.bazel.jvmIncBuilder.Message;
+import com.intellij.tools.build.bazel.jvmIncBuilder.StorageManager;
+import com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.fir.ImplicitTypeTrackerPluginRegistrar;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerDataSink;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputOrigin;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
+import kotlin.metadata.jvm.KmPackageParts;
+import kotlin.metadata.jvm.KotlinModuleMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.fir.ImplicitTypeTrackerPluginRegistrar;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.NodeSourcePathMapper;
 import org.jetbrains.jps.dependency.java.LookupNameUsage;
@@ -26,14 +36,15 @@ import org.jetbrains.kotlin.cli.jvm.config.VirtualJvmClasspathRoot;
 import org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline;
 import org.jetbrains.kotlin.com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.kotlin.com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.kotlin.com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.kotlin.compiler.plugin.CliOptionValue;
 import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor;
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar;
 import org.jetbrains.kotlin.config.CompilerConfiguration;
 import org.jetbrains.kotlin.config.Services;
-import org.jetbrains.kotlin.incremental.*;
-import org.jetbrains.kotlin.incremental.components.EnumWhenTracker;
+import org.jetbrains.kotlin.incremental.ConstantRef;
+import org.jetbrains.kotlin.incremental.ImportTrackerImpl;
+import org.jetbrains.kotlin.incremental.InlineConstTrackerImpl;
+import org.jetbrains.kotlin.incremental.LookupTrackerImpl;
 import org.jetbrains.kotlin.incremental.components.ImportTracker;
 import org.jetbrains.kotlin.incremental.components.InlineConstTracker;
 import org.jetbrains.kotlin.incremental.components.LookupTracker;
@@ -48,11 +59,24 @@ import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import static com.intellij.tools.build.bazel.jvmIncBuilder.impl.KotlinPluginsKt.configurePlugins;
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.find;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.isEmpty;
+import static org.jetbrains.jps.util.Iterators.map;
 import static org.jetbrains.kotlin.cli.common.ExitCode.OK;
 import static org.jetbrains.kotlin.cli.common.arguments.ParseCommandLineArgumentsKt.parseCommandLineArguments;
 import static org.jetbrains.kotlin.cli.plugins.PluginsOptionsParserKt.processCompilerPluginOptions;
@@ -66,15 +90,11 @@ public class KotlinCompilerRunner implements CompilerRunner {
 
   private LookupTrackerImpl lookupTracker;
   private InlineConstTrackerImpl inlineConstTracker;
-  private EnumWhenTrackerImpl enumWhenTracker;
   private ImportTrackerImpl importTracker;
   private ImplicitTypeDependencyTracker inferredTypeTracker;
   private final @NotNull Map<@NotNull String, @NotNull PluginClasspathConfig> myPluginIdToPluginClasspath = new HashMap<>();
   private final @NotNull Map<@NotNull String, List<CliOptionValue>> myInternalPluginIdToOptions = new HashMap<>();
   private final List<String> myJavaSources;
-
-  private final @Nullable String myModuleEntryPath;
-  private byte @Nullable [] myLastGoodModuleEntryContent;
 
   public KotlinCompilerRunner(BuildContext context, StorageManager storageManager)  {
     myContext = context;
@@ -105,19 +125,6 @@ public class KotlinCompilerRunner implements CompilerRunner {
     myJavaSources = collect(
       map(filter(context.getSources().getElements(), KotlinCompilerRunner::isJavaSource), ns -> myPathMapper.toPath(ns).toString()), new ArrayList<>()
     );
-
-    String moduleEntryPath = null;
-    try {
-      ZipOutputBuilderImpl outBuilder = storageManager.getOutputBuilder();
-      moduleEntryPath = find(outBuilder.listEntries("META-INF/"), n -> n.endsWith(DataPaths.KOTLIN_MODULE_EXTENSION));
-      if (moduleEntryPath != null) {
-        myLastGoodModuleEntryContent = outBuilder.getContent(moduleEntryPath);
-      }
-    }
-    catch (IOException e) {
-      context.report(Message.create(this, e));
-    }
-    myModuleEntryPath = moduleEntryPath;
   }
 
   @Override
@@ -139,18 +146,37 @@ public class KotlinCompilerRunner implements CompilerRunner {
   }
 
   @Override
-  public Iterable<String> getOutputPathsToDelete() {
-    return myModuleEntryPath != null? List.of(myModuleEntryPath) : List.of();
-  }
-
-  @Override
   public ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnostic, OutputSink out) throws Exception {
     try {
+
+      ZipOutputBuilder outputBuilder = myStorageManager.getOutputBuilder();
+      ZipOutputBuilder abiOutputBuilder = myStorageManager.getAbiOutputBuilder();
+
+      String moduleEntryPath = find(outputBuilder.listEntries("META-INF/"), n -> n.endsWith(DataPaths.KOTLIN_MODULE_EXTENSION));
+      byte[] moduleEntryContent = moduleEntryPath != null? outputBuilder.getContent(moduleEntryPath) : null;
+      byte[] abiModuleEntryContent = moduleEntryPath != null && abiOutputBuilder != null? abiOutputBuilder.getContent(moduleEntryPath) : null;
+
+      IncrementalCache incCache = new KotlinIncrementalCacheImpl(myStorageManager, flat(deletedSources, sources), moduleEntryPath, moduleEntryContent);
+      
       if (isEmpty(sources)) {
+        if (moduleEntryPath != null && !isEmpty(deletedSources)) {
+          // ObsoletePackageParts here are only classes corresponding to deleted sources
+          outputBuilder.putEntry(moduleEntryPath, cleanObsoletePackageParts(incCache, moduleEntryContent));
+          if (abiOutputBuilder != null){
+            abiOutputBuilder.putEntry(moduleEntryPath, cleanObsoletePackageParts(incCache, abiModuleEntryContent));
+          }
+        }
         return ExitCode.OK;
       }
+
+      if (moduleEntryPath != null && myStorageManager.getCompositeOutputBuilder().deleteEntry(moduleEntryPath)) { // ensure previous state is removed
+        BuildProcessLogger logger = myContext.getBuildLogger();
+        if (logger.isEnabled()) {
+          logger.logDeletedPaths(List.of(moduleEntryPath));
+        }
+      }
+
       K2JVMCompilerArguments kotlinArgs = buildKotlinCompilerArguments(myContext, sources);
-      KotlinIncrementalCacheImpl incCache = new KotlinIncrementalCacheImpl(myStorageManager, flat(deletedSources, sources), myModuleEntryPath, myLastGoodModuleEntryContent);
       OutputVirtualFile outputFileSystemRoot = new OutputFileSystem(new KotlinVirtualFileProvider(out)).root;
       Services services = buildServices(kotlinArgs.getModuleName(), incCache, outputFileSystemRoot);
       MessageCollector messageCollector = new KotlinMessageCollector(diagnostic, this);
@@ -187,15 +213,14 @@ public class KotlinCompilerRunner implements CompilerRunner {
       }
       finally {
         processTrackers(out, generatedClasses);
-        if (myModuleEntryPath != null) {
-          byte[] updated = myStorageManager.getOutputBuilder().getContent(myModuleEntryPath);
-          if (updated != null) {
-            // save the updated state for the next round
-            myLastGoodModuleEntryContent = updated;
+        if (moduleEntryPath != null) {
+          if (outputBuilder.getContent(moduleEntryPath) == null) {
+            // restore adjusted module entry
+            outputBuilder.putEntry(moduleEntryPath, cleanObsoletePackageParts(incCache, moduleEntryContent));
           }
-          else {
-            // make sure the output contains the module entry corresponding to last known good state
-            myStorageManager.getOutputBuilder().putEntry(myModuleEntryPath, myLastGoodModuleEntryContent);
+          if (abiOutputBuilder != null && abiOutputBuilder.getContent(moduleEntryPath) == null) {
+            // restore adjusted module entry
+            abiOutputBuilder.putEntry(moduleEntryPath, cleanObsoletePackageParts(incCache, abiModuleEntryContent));
           }
         }
       }
@@ -209,7 +234,42 @@ public class KotlinCompilerRunner implements CompilerRunner {
     }
   }
 
-  private record GeneratedClass(String jvmClassName, File source) {}
+  private static byte[] cleanObsoletePackageParts(IncrementalCache incCache, byte[] moduleEntryContent) {
+    Collection<String> _parts = incCache.getObsoletePackageParts();
+    if (_parts.isEmpty()) {
+      return moduleEntryContent;
+    }
+    Set<String> obsoleteFacades = _parts instanceof Set? (Set<String>) _parts : collect(_parts, new HashSet<>());
+    KotlinModuleMetadata moduleMeta = KotlinModuleMetadata.read(moduleEntryContent);
+    Map<String, KmPackageParts> packageParts = moduleMeta.getKmModule().getPackageParts(); // mutable
+    boolean changed = false;
+    for (Iterator<Map.Entry<String, KmPackageParts>> packagePartsIterator = packageParts.entrySet().iterator(); packagePartsIterator.hasNext(); ) {
+      KmPackageParts parts = packagePartsIterator.next().getValue();
+      List<String> facades = parts.getFileFacades(); // mutable
+      Map<String, String> multiFileParts = parts.getMultiFileClassParts(); // mutable
+
+      changed |= facades.removeAll(obsoleteFacades);
+      for (Iterator<Map.Entry<String, String>> it = multiFileParts.entrySet().iterator(); it.hasNext(); ) {
+        Map.Entry<String, String> entry = it.next();
+        if (obsoleteFacades.contains(entry.getValue())) {
+          it.remove();
+          changed = true;
+        }
+      }
+
+      if (facades.isEmpty() && multiFileParts.isEmpty()) {
+        packagePartsIterator.remove();
+        changed = true;
+      }
+    }
+    return changed? moduleMeta.write() : moduleEntryContent;
+  }
+
+  private record GeneratedClass(String jvmClassName, File source) {
+    public String getNormalizedSourcePath() {
+      return source.getPath().replace(File.separatorChar, '/');
+    }
+  }
 
   private void processTrackers(OutputSink out, List<GeneratedClass> generated) {
     ensureTrackersInitialized();
@@ -217,18 +277,15 @@ public class KotlinCompilerRunner implements CompilerRunner {
 
     for (GeneratedClass outputClass : generated) {
       processInlineConstTracker(inlineConstTracker, outputClass, out);
-      processBothEnumWhenAndImportTrackers(enumWhenTracker, importTracker, outputClass, out);
+      processImportTracker(importTracker, outputClass, out);
     }
 
     processInferredTypeTracker(inferredTypeTracker, out);
   }
 
-
-  private static void processInlineConstTracker(InlineConstTrackerImpl inlineConstTracker,
-                                                GeneratedClass output,
-                                                OutputSink callback) {
+  private static void processInlineConstTracker(InlineConstTrackerImpl inlineConstTracker, GeneratedClass output, OutputSink callback) {
     Map<String, Collection<ConstantRef>> constMap = inlineConstTracker.getInlineConstMap();
-    Collection<ConstantRef> constantRefs = constMap.get(output.source.getPath());
+    Collection<ConstantRef> constantRefs = constMap.get(output.getNormalizedSourcePath());
     if (constantRefs == null) return;
 
     List<CompilerDataSink.ConstantRef> cRefs = new ArrayList<>();
@@ -256,22 +313,12 @@ public class KotlinCompilerRunner implements CompilerRunner {
     }
   }
 
-  private static void processBothEnumWhenAndImportTrackers(EnumWhenTrackerImpl enumWhenTracker, ImportTrackerImpl importTracker, GeneratedClass output, OutputSink callback) {
-    Map<String, Collection<String>> whenMap = enumWhenTracker.getWhenExpressionFilePathToEnumClassMap();
+  private static void processImportTracker(ImportTrackerImpl importTracker, GeneratedClass output, OutputSink callback) {
     Map<String, Collection<String>> importMap = importTracker.getFilePathToImportedFqNamesMap();
-
-    Collection<String> enumFqNameClasses = whenMap.get(output.source.getPath());
-    Collection<String> importedFqNames = importMap.get(output.source.getPath());
-
-    if (enumFqNameClasses == null && importedFqNames == null) return;
-
-    List<String> enumClassesWithStar = enumFqNameClasses != null ?
-                                       ContainerUtil.map(enumFqNameClasses, name -> name + ".*") :
-                                       new ArrayList<>();
-
-    callback.registerImports(output.jvmClassName,
-                             importedFqNames != null ? importedFqNames : new ArrayList<>(),
-                             enumClassesWithStar);
+    Collection<String> importedFqNames = importMap.get(output.getNormalizedSourcePath());
+    if (importedFqNames != null) {
+      callback.registerImports(output.jvmClassName, importedFqNames, List.of());
+    }
   }
 
   private void processLookupTracker(LookupTrackerImpl lookupTracker, OutputSink callback) {
@@ -300,12 +347,10 @@ public class KotlinCompilerRunner implements CompilerRunner {
     Services.Builder builder = new Services.Builder();
     lookupTracker = new LookupTrackerImpl(LookupTracker.DO_NOTHING.INSTANCE);
     inlineConstTracker = new InlineConstTrackerImpl();
-    enumWhenTracker = new EnumWhenTrackerImpl();
     importTracker = new ImportTrackerImpl();
 
     builder.register(LookupTracker.class, lookupTracker);
     builder.register(InlineConstTracker.class, inlineConstTracker);
-    builder.register(EnumWhenTracker.class, enumWhenTracker);
     builder.register(ImportTracker.class, importTracker);
     builder.register(
       IncrementalCompilationComponents.class,
@@ -410,7 +455,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
       arguments.setLanguageVersion(languageVersion);
     }
     arguments.setProgressiveMode(CLFlags.PROGRESSIVE.isFlagSet(flags));
-    String explicitApiMode = CLFlags.X_EXPLICIT_API_MODE.getOptionalScalarValue(flags);
+    String explicitApiMode = CLFlags.X_EXPLICIT_API.getOptionalScalarValue(flags);
     if (explicitApiMode != null) {
       arguments.setExplicitApi(explicitApiMode);
     }
@@ -421,11 +466,6 @@ public class KotlinCompilerRunner implements CompilerRunner {
     String jvmDefault = CLFlags.JVM_DEFAULT.getOptionalScalarValue(flags);
     if (jvmDefault != null) {
       arguments.setJvmDefaultStable(jvmDefault);
-    }
-    else {
-      // try to migrate from the deprecated option
-      jvmDefault = CLFlags.X_JVM_DEFAULT.getOptionalScalarValue(flags);
-      arguments.setJvmDefaultStable(migrateXJvmDefaultValue(jvmDefault));
     }
     arguments.setInlineClasses(CLFlags.X_INLINE_CLASSES.isFlagSet(flags));
     arguments.setContextReceivers(CLFlags.X_CONTEXT_RECEIVERS.isFlagSet(flags));
@@ -445,15 +485,6 @@ public class KotlinCompilerRunner implements CompilerRunner {
     return arguments;
   }
 
-  private static String migrateXJvmDefaultValue(String xjvmDefaultValue) {
-    return xjvmDefaultValue == null? null : switch (xjvmDefaultValue) {
-      case "disable" -> "disable";
-      case "all-compatibility" -> "enable";
-      case "all" -> "no-compatibility";
-      default -> null;
-    };
-  }
-
   private static <T> Collection<T> ensureCollection(Iterable<T> seq) {
     return seq instanceof Collection<T>? (Collection<T>)seq : collect(seq, new ArrayList<>());
   }
@@ -462,7 +493,6 @@ public class KotlinCompilerRunner implements CompilerRunner {
     List<String> nullTrackers = new ArrayList<>();
     if (lookupTracker == null) nullTrackers.add("lookup tracker");
     if (inlineConstTracker == null) nullTrackers.add("inline const tracker");
-    if (enumWhenTracker == null) nullTrackers.add("enum-when tracker");
     if (importTracker == null) nullTrackers.add("import tracker");
     if (inferredTypeTracker == null) nullTrackers.add("inferred type tracker");
 

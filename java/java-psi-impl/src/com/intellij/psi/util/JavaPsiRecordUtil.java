@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.psi.PsiClass;
@@ -113,12 +113,14 @@ public final class JavaPsiRecordUtil {
   }
 
   /**
-   * @param method method to check
-   * @return true if given method is a compact constructor (has no parameter list),
-   * regardless whether it's declared in the record or not
+   * Determines if the specified {@code PsiMethod} is a compact constructor (i.e. has no parameter list),
+   * whether it's declared inside a record class or not.
+   *
+   * @param method  the method to check
+   * @return {@code true} if {@code method} is a compact constructor; {@code false} otherwise.
    */
   public static boolean isCompactConstructor(@NotNull PsiMethod method) {
-    return method.isConstructor() && method.getParameterList().getText() == null;
+    return method.isConstructor() && !(method instanceof LightRecordCanonicalConstructor) && method.getParameterList().getText() == null;
   }
 
   /**

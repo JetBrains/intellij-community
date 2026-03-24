@@ -307,6 +307,19 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
         EelPathUtils.walkingTransfer(sourceNioPath, targetNioPath, removeSource = true, copyAttributes = true)
       }
     }
+
+  protected fun createSymbolicLinkImpl(
+    target: EelFileSystemPosixApi.SymbolicLinkTarget,
+    linkPath: EelPath,
+  ): EelResult<Unit, EelFileSystemPosixApi.CreateSymbolicLinkError> =
+    wrapIntoEelResult {
+      val targetPath = when (target) {
+        is EelFileSystemPosixApi.SymbolicLinkTarget.Absolute -> target.path.toNioPath()
+        is EelFileSystemPosixApi.SymbolicLinkTarget.Relative -> Path.of(target.reference.first(), *target.reference.drop(1).toTypedArray())
+      }
+
+      Files.createSymbolicLink(linkPath.toNioPath(), targetPath)
+    }
 }
 
 @EelDelicateApi
@@ -474,7 +487,7 @@ abstract class PosixNioBasedEelFileSystemApi(
   override suspend fun createDirectory(
     path: EelPath,
     attributes: List<EelFileSystemPosixApi.CreateDirAttributePosix>,
-  ): EelResult<Unit, EelFileSystemPosixApi.CreateDirectoryError> =
+  ): EelResult<Unit, EelFileSystemApi.CreateDirectoryError> =
     wrapIntoEelResult {
       Files.createDirectory(path.toNioPath())
     }
@@ -519,15 +532,7 @@ abstract class PosixNioBasedEelFileSystemApi(
   override suspend fun createSymbolicLink(
     target: EelFileSystemPosixApi.SymbolicLinkTarget,
     linkPath: EelPath,
-  ): EelResult<Unit, EelFileSystemPosixApi.CreateSymbolicLinkError> =
-    wrapIntoEelResult {
-      val targetPath = when (target) {
-        is EelFileSystemPosixApi.SymbolicLinkTarget.Absolute -> target.path.toNioPath()
-        is EelFileSystemPosixApi.SymbolicLinkTarget.Relative -> Path.of(target.reference.first(), *target.reference.drop(1).toTypedArray())
-      }
-
-      Files.createSymbolicLink(linkPath.toNioPath(), targetPath)
-    }
+  ): EelResult<Unit, EelFileSystemPosixApi.CreateSymbolicLinkError> = createSymbolicLinkImpl(target, linkPath)
 
   override suspend fun streamingWrite(chunks: Flow<ByteBuffer>, targetFileOpenOptions: EelFileSystemApi.WriteOptions): StreamingWriteResult = doStreamingWrite(chunks, targetFileOpenOptions)
 
@@ -545,6 +550,13 @@ abstract class WindowsNioBasedEelFileSystemApi(
   override suspend fun getRootDirectories(): Collection<EelPath> =
     FileSystems.getDefault().rootDirectories.map { path ->
       EelPath.parse(path.toString(), LocalEelDescriptor)
+    }
+
+  override suspend fun createDirectory(
+    path: EelPath,
+  ): EelResult<Unit, EelFileSystemApi.CreateDirectoryError> =
+    wrapIntoEelResult {
+      Files.createDirectory(path.toNioPath())
     }
 
   override suspend fun listDirectoryWithAttrs(path: EelPath, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
@@ -576,6 +588,11 @@ abstract class WindowsNioBasedEelFileSystemApi(
 
   override suspend fun walkDirectory(options: EelFileSystemApi.WalkDirectoryOptions): Flow<WalkDirectoryEntryResult> =
     doWalkDirectory(options, descriptor)
+
+  override suspend fun createSymbolicLink(
+    target: EelFileSystemPosixApi.SymbolicLinkTarget,
+    linkPath: EelPath,
+  ): EelResult<Unit, EelFileSystemPosixApi.CreateSymbolicLinkError> = createSymbolicLinkImpl(target, linkPath)
 }
 
 private fun copyTimes(
@@ -594,7 +611,7 @@ private fun EelFileSystemApi.TimeSinceEpoch.toFileTime(): FileTime =
 
 private fun getFileAttributes(child: Path, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelFileInfo =
   if (SystemInfoRt.isWindows) {
-    getWindowsFileAttributes(child)
+    getWindowsFileAttributes(child, symlinkPolicy)
   }
   else {
     getPosixFileAttributes(child, symlinkPolicy)
@@ -637,9 +654,30 @@ private fun getPosixFileAttributes(child: Path, symlinkPolicy: EelFileSystemApi.
   )
 }
 
-private fun getWindowsFileAttributes(child: Path): EelWindowsFileInfo {
-  val s = Files.readAttributes(child, DosFileAttributes::class.java)
+private fun extractFileKey(fileKey: Any?): Triple<Int, Int, Int> {
+  if (fileKey == null) return Triple(0, 0, 0)
+  val c = fileKey.javaClass
+  val vol = c.getDeclaredField("volSerialNumber").apply { isAccessible = true }.getInt(fileKey)
+  val high = c.getDeclaredField("fileIndexHigh").apply { isAccessible = true }.getInt(fileKey)
+  val low = c.getDeclaredField("fileIndexLow").apply { isAccessible = true }.getInt(fileKey)
+  return Triple(vol, high, low)
+}
+
+private fun getWindowsFileAttributes(child: Path, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelWindowsFileInfo {
+  val linkOptions = when (symlinkPolicy) {
+    EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE -> arrayOf(LinkOption.NOFOLLOW_LINKS)
+    EelFileSystemApi.SymlinkPolicy.JUST_RESOLVE, EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW -> arrayOf()
+  }
+  val s = child.fileSystem.provider().readAttributes(child, DosFileAttributes::class.java, *linkOptions)
+  val basic = child.fileSystem.provider().readAttributes(child, BasicFileAttributes::class.java, *linkOptions)
+  val fileKey = basic.fileKey()
+
+  val (vol, high, low) = extractFileKey(fileKey)
+
   return object : EelWindowsFileInfo {
+    override val volumeSerialNumber = vol
+    override val fileIndexHigh = high
+    override val fileIndexLow = low
     override val permissions: EelWindowsFileInfo.Permissions =
       object : EelWindowsFileInfo.Permissions {
         override val isReadOnly: Boolean = s.isReadOnly

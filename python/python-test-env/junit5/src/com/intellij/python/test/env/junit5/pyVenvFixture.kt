@@ -31,7 +31,7 @@ fun TestFixture<SdkFixture<PyEnvironment>>.pyVenvFixture(
   val env = this@pyVenvFixture.init().env
   withContext(Dispatchers.EDT) {
     val module = moduleFixture?.init()
-    val venvDir = where.init()
+    val venvDir = where.init().resolve(".venv")
     val venvPython = createVenv(env.pythonPath, venvDir).getOrThrow()
     val venvSdk = withContext(Dispatchers.IO) { createSdk(venvPython) }
     if (addToSdkTable) {

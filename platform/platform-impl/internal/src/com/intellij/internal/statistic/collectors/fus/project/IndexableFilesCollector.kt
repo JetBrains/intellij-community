@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectRootManager
@@ -38,7 +38,7 @@ internal class IndexableFilesCollector : ProjectUsagesCollector() {
         return@ContentIterator false
       }
 
-      runReadAction {
+      runReadActionBlocking {
         if (fileOrDir.isValid && !fileOrDir.isDirectory && !fileIndex.isExcluded(fileOrDir)) {
           if (fileIndex.isInContent(fileOrDir)) {
             inContentIndexableFiles++

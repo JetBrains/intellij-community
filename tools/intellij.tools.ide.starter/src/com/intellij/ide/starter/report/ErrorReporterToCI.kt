@@ -9,9 +9,11 @@ import com.intellij.ide.starter.utils.generifyErrorMessage
 import com.intellij.util.SystemProperties
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
+import kotlin.io.path.readText
 import kotlin.jvm.optionals.getOrNull
 
 object ErrorReporterToCI: ErrorReporter {
@@ -50,16 +52,16 @@ object ErrorReporterToCI: ErrorReporter {
     val errors = mutableListOf<Error>()
     val errorsDirectories = rootErrorsDir.listDirectoryEntries()
     for (errorDir in errorsDirectories) {
-      val messageFile = errorDir.resolve(MESSAGE_FILENAME).toFile()
+      val messageFile = errorDir.resolve(MESSAGE_FILENAME)
       if (!messageFile.exists()) continue
 
       val messageText = generifyErrorMessage(messageFile.readText().trimIndent().trim())
-      val testNameFile = errorDir.resolve(TESTNAME_FILENAME).toFile()
+      val testNameFile = errorDir.resolve(TESTNAME_FILENAME)
       val testName = if (testNameFile.exists()) testNameFile.readText().trim() else null
 
       val errorType = ErrorType.fromMessage(messageText)
       if (errorType == ErrorType.ERROR) {
-        val stacktraceFile = errorDir.resolve(STACKTRACE_FILENAME).toFile()
+        val stacktraceFile = errorDir.resolve(STACKTRACE_FILENAME)
         if (!stacktraceFile.exists()) continue
         val stackTrace = stacktraceFile.readText().trimIndent().trim()
         errors.add(Error(messageText, stackTrace, "", errorType, testName))
@@ -124,16 +126,17 @@ object ErrorReporterToCI: ErrorReporter {
       val failureDetailsProvider = FailureDetailsOnCI.instance
       val failureDetailsMessage = failureDetailsProvider.getFailureDetails(runContext)
       val urlToLogs = failureDetailsProvider.getLinkToCIArtifacts(runContext).toString()
+      val linkToMuteArticle = "\nThis test fail is an exception! \nYou can find instructions about muting this error in this link https://youtrack.jetbrains.com/articles/IJPL-A-1185/How-to-create-a-new-mapping"
       if (CIServer.instance.isTestFailureShouldBeIgnored(messageText) || CIServer.instance.isTestFailureShouldBeIgnored(stackTraceContent)) {
         CIServer.instance.ignoreTestFailure(testName = "(${generifyErrorMessage(testName)})",
                                             message = failureDetailsMessage)
       }
       else {
         CIServer.instance.reportTestFailure(testName = "(${generifyErrorMessage(testName)})",
-                                            message = failureDetailsMessage,
+                                            message = failureDetailsMessage + linkToMuteArticle,
                                             details = stackTraceContent,
                                             linkToLogs = urlToLogs)
-        AllureReport.reportFailure(runContext.contextName, messageText,
+        AllureReport.reportFailure(runContext.contextName, messageText + linkToMuteArticle,
                                    stackTraceContent,
                                    links = AllureLink.single("Link to Logs and artifacts", failureDetailsProvider.getLinkToCIArtifacts(runContext) ?: "fail to get link"))
       }

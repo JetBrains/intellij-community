@@ -9,8 +9,23 @@ resourcegroup(
 
 jvm_library(
   name = "compose-ide-plugin",
+  module_name = "intellij.compose.ide.plugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":compose-ide-plugin_resources"]
 )
+
+jvm_library(
+  name = "compose-ide-plugin_test_lib",
+  module_name = "intellij.compose.ide.plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":compose-ide-plugin"]
+)
 ### auto-generated section `build intellij.compose.ide.plugin` end
+
+### auto-generated section `iml intellij.compose.ide.plugin` start
+exports_files([
+  "intellij.compose.ide.plugin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.compose.ide.plugin` end

@@ -9,9 +9,9 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.application
+import org.jetbrains.plugins.terminal.ExperimentalTerminalMigration
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
@@ -47,7 +47,7 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
     e.presentation.isEnabledAndVisible = e.project != null &&
                                          ExperimentalUI.isNewUI() &&
                                          (engine != TerminalEngine.NEW_TERMINAL ||
-                                          TerminalUtil.isGenOneTerminalOptionVisible() == true ||
+                                          ExperimentalTerminalMigration.isExpTerminalOptionVisible() == true ||
                                           // Normally, New Terminal can't be enabled if 'getGenOneTerminalVisibilityValue' is false.
                                           // But if it is enabled for some reason (for example, the corresponding registry key was switched manually),
                                           // show this option as well to avoid strange behavior when nothing is selected in the popup.

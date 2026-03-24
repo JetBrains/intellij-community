@@ -15,6 +15,7 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointPlacement;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.impl.proxy.MonolithBreakpointManagerKt;
 import com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxyKt;
@@ -60,6 +61,11 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   @Override
   public @NotNull XLineBreakpointType<P> getType() {
     return myType;
+  }
+
+  @Override
+  public @NotNull XLineBreakpointPlacement getPlacement() {
+    return myState.getPlacement();
   }
 
   @Override
@@ -133,7 +139,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   public void resetSourcePosition(long requestId) {
     mySourcePosition = null;
-    if (getBreakpointManager().getRequestCounter().setRequestCompleted(requestId)) {
+    if (getBreakpointManager().getRequestCounter().setRequestCompleted(getBreakpointId(), requestId)) {
       fireBreakpointChanged();
     }
   }

@@ -1,5 +1,6 @@
 // "Make 'R' reified and 'flatten' inline" "true"
 // WITH_STDLIB
+// K2_ERROR: Cannot use 'R' as reified type parameter. Use a class instead.
 
 fun <T: Iterable<Array<R>>, R> T.flatten(): Array<R> {
     return this.flatMap { it.asIterable() }.toTypedArray<caret>()

@@ -1,4 +1,5 @@
 // "Create enum constant 'RED'" "true"
+// K2_ERROR: Unresolved reference 'RED'.
 enum class SampleEnum {}
 
 fun usage(sample: SampleEnum) {

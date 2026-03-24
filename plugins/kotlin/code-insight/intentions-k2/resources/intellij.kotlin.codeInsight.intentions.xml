@@ -39,6 +39,13 @@
 
     <intentionAction>
       <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.SamConversionToAnonymousObjectIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.SafeAccessToIfThenIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
@@ -707,6 +714,20 @@
     <intentionAction>
       <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ReconstructTypeInCastOrIsIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ReplaceRepeatWithForLoopIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ReplaceForLoopWithRepeatIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>

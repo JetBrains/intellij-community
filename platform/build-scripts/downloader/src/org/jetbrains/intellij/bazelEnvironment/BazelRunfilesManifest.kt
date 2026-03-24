@@ -12,6 +12,10 @@ class BazelRunfilesManifest(val manifestFile: String? = System.getenv(RUNFILES_M
     const val RUNFILES_MANIFEST_FILE_ENV_NAME: String = "RUNFILES_MANIFEST_FILE"
   }
 
+  override fun toString(): String {
+    return "BazelRunfilesManifest(manifestFile=$manifestFile)"
+  }
+
   val exists: Boolean by lazy {
     manifestFile ?: return@lazy false
     Path.of(manifestFile).exists()

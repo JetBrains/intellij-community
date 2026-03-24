@@ -1,0 +1,30 @@
+<html>
+<body>
+Reports code that casts a service declared with <code>open="true"</code> to a more specific class than the service interface.
+<p>
+  When a service is marked as "open" in its <code>plugin.xml</code> registration, it can be overridden by other plugins
+  with a different implementation. Casting such a service to a specific implementation class is unsafe
+  because the actual instance at runtime may be a different class, leading to <code>ClassCastException</code>.
+</p>
+<p><b>Example:</b></p>
+<pre><code lang="xml">
+  &lt;!-- plugin.xml --&gt;
+  &lt;extensions defaultExtensionNs="com.intellij"&gt;
+    &lt;projectService serviceInterface="com.example.MyService"
+                    serviceImplementation="com.example.MyServiceImpl"
+                    open="true" /&gt;
+  &lt;/extensions&gt;
+</code></pre>
+<pre><code lang="java">
+  // Bad: Casting open service to specific implementation
+  MyServiceImpl impl = (MyServiceImpl) project.getService(MyService.class);
+</code></pre>
+<p>
+  Instead, use only the declared service interface:
+</p>
+<pre><code lang="java">
+  // Good: Using the service interface
+  MyService service = project.getService(MyService.class);
+</code></pre>
+</body>
+</html>

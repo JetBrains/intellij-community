@@ -49,6 +49,7 @@ import fleet.rpc.core.toRpc
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.consumeEach
@@ -124,6 +125,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       leftToolbarActions,
       topToolbarActions,
       settingsActions,
+      processDescriptor = debugProcess.processDescriptor?.asDeferred(),
     )
   }
 
@@ -227,6 +229,19 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
             XBreakpointEvent.BreakpointRemoved((breakpoint as XBreakpointBase<*, *, *>).breakpointId)
           }
         }
+
+        override fun breakpointPresentationUpdated(breakpoint: XBreakpoint<*>, session: XDebugSession?) {
+          val breakpointBase = breakpoint as? XBreakpointBase<*, *, *> ?: return
+          val sessionImpl = session as? XDebugSessionImpl
+
+          events.trySend {
+            XBreakpointEvent.BreakpointPresentationUpdated(
+              breakpointId = breakpointBase.breakpointId,
+              customPresentation = breakpointBase.customizedPresentation?.toRpc(),
+              currentSessionCustomPresentation = sessionImpl?.getBreakpointPresentation(breakpoint)?.toRpc()
+            )
+          }
+        }
       })
 
       val currentBreakpoints = breakpointManager.allBreakpoints
@@ -267,7 +282,7 @@ fun XDebugSessionImpl.getSessionEventsFlow(
 ): Flow<XDebuggerSessionEvent> = channelFlow {
   val currentSession = this@getSessionEventsFlow
   // Offload serialization from listener to background
-  val rawEvents = Channel<() -> XDebuggerSessionEvent>(Channel.UNLIMITED)
+  val rawEvents = Channel<suspend () -> XDebuggerSessionEvent>(Channel.UNLIMITED)
 
   val listener = object : XDebugSessionListener {
     override fun sessionPaused() {
@@ -308,7 +323,7 @@ fun XDebugSessionImpl.getSessionEventsFlow(
     }
 
     override fun settingsChanged() {
-      rawEvents.trySend { XDebuggerSessionEvent.SettingsChanged }
+      rawEvents.trySend { XDebuggerSessionEvent.SettingsChanged(currentSession.state()) }
     }
 
     override fun settingsChangedFromFrontend() {
@@ -348,4 +363,5 @@ private fun XDebugSessionImpl.state(): XDebugSessionState = XDebugSessionState(
   isStepOverActionAllowed = isStepOverActionAllowed,
   isStepOutActionAllowed = isStepOutActionAllowed,
   isRunToCursorActionAllowed = isRunToCursorActionAllowed,
+  isForceStepIntoActionAllowed = isForceStepIntoActionAllowed,
 )

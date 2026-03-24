@@ -1,6 +1,7 @@
 from typing import Any, TypeAlias
 
 from django.template.defaulttags import TemplateLiteral
+from typing_extensions import override
 
 _Token: TypeAlias = list[int] | int | str
 
@@ -9,6 +10,7 @@ class TokenBase:
     value: Any
     first: Any
     second: Any
+    lbp: int
     def nud(self, parser: Any) -> None: ...
     def led(self, left: Any, parser: Any) -> None: ...
     def display(self) -> Any: ...
@@ -20,15 +22,13 @@ OPERATORS: Any
 
 class Literal(TokenBase):
     id: str
-    lbp: int
     value: _Token | None
     def __init__(self, value: _Token | None) -> None: ...
+    @override
     def display(self) -> str: ...
     def eval(self, context: dict[Any, Any]) -> _Token | None: ...
 
-class EndToken(TokenBase):
-    lbp: int
-    def nud(self, parser: Any) -> None: ...
+EndToken: TokenBase
 
 class IfParser:
     error_class: Any

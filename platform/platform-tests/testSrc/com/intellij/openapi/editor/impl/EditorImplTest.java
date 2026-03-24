@@ -41,6 +41,7 @@ import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -352,7 +353,7 @@ public class EditorImplTest extends AbstractEditorTest {
       }
     }, getTestRootDisposable());
     runWriteCommand(() -> DocumentUtil.executeInBulk(document, ()-> document.insertString(3, "\n\n")));
-    RangeHighlighter[] highlighters = getEditor().getMarkupModel().getAllHighlighters();
+    RangeHighlighter[] highlighters = ContainerUtil.findAllAsArray(getEditor().getMarkupModel().getAllHighlighters(), h->h.isValid());
     assertEquals(1, highlighters.length);
     assertEquals(7, highlighters[0].getStartOffset());
     assertEquals(8, highlighters[0].getEndOffset());
@@ -367,7 +368,7 @@ public class EditorImplTest extends AbstractEditorTest {
                                                        new TextAttributes(null, null, null, null, Font.BOLD),
                                                        HighlighterTargetArea.EXACT_RANGE);
     });
-    RangeHighlighter[] highlighters = getEditor().getMarkupModel().getAllHighlighters();
+    RangeHighlighter[] highlighters = ContainerUtil.findAllAsArray(getEditor().getMarkupModel().getAllHighlighters(), h->h.isValid());
     assertEquals(1, highlighters.length);
     assertEquals(7, highlighters[0].getStartOffset());
     assertEquals(8, highlighters[0].getEndOffset());

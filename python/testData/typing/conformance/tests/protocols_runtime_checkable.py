@@ -88,9 +88,7 @@ def func3():
     if isinstance(Concrete3A(), Proto3):  # E: unsafe overlap
         pass
 
-    if isinstance(
-        Concrete3B(), (Proto3, NonDataProtocol)  # E: unsafe overlap
-    ):
+    if isinstance(Concrete3B(), (Proto3, NonDataProtocol)):  # E: unsafe overlap
         pass
 
     if issubclass(Concrete3A, (Proto3, NonDataProtocol)):  # E: unsafe overlap

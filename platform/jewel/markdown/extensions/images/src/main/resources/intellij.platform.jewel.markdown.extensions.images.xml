@@ -1,8 +1,11 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <module name="intellij.platform.jewel.markdown.core" />
-    <module name="intellij.platform.jewel.ui" />
-    <module name="intellij.platform.jewel.foundation" />
-    <module name="intellij.libraries.coil" />
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.coil"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.jewel.foundation"/>
+    <module name="intellij.platform.jewel.markdown.core"/>
+    <module name="intellij.platform.jewel.ui"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

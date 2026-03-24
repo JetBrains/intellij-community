@@ -22,7 +22,6 @@ import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.request.findProject
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
@@ -34,6 +33,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.create.action.GitLabMergeRequestOpenCreateTabNotificationAction
 import org.jetbrains.plugins.gitlab.mergerequest.ui.create.action.GitLabOpenMergeRequestExistingTabNotificationAction
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 
 private val LOG = logger<GitLabPushNotificationCustomizer>()
 
@@ -48,31 +48,53 @@ internal class GitLabPushNotificationCustomizer(private val project: Project) : 
 
     // If we already have a GitLab connection open, make sure it matches
     val connection = project.serviceAsync<GitLabProjectConnectionManager>().connectionState.value
-    if (connection != null && (connection.repo.gitRepository != repository || connection.repo.gitRemote != remoteBranch.remote)) {
-      return emptyList()
-    }
 
-    val (projectMapping, account) = connection?.let {
-      it.repo to it.account
-    } ?: run {
-      val accountManager = serviceAsync<GitLabAccountManager>()
-      val savedAccount = project.serviceAsync<GitLabMergeRequestsPreferences>().selectedUrlAndAccountId?.second?.let { savedId ->
-        accountManager.findAccountOrNull { it.id == savedId }
+    if (connection != null) {
+      if (connection.repo.gitRepository != repository || connection.repo.gitRemote != remoteBranch.remote) {
+        return emptyList()
       }
-      GitPushNotificationUtil.findRepositoryAndAccount(
-        project.serviceAsync<GitLabProjectsManager>().knownRepositories,
-        repository, remoteBranch.remote,
-        accountManager.accountsState.value,
-        savedAccount,
-        project.serviceAsync<GitLabProjectDefaultAccountHolder>().account
-      )
-    } ?: return emptyList()
+      return createActionList(connection.account, connection.projectData.projectCoordinates.projectPath, remoteBranch, connection.repo)
+    }
 
-    if (!canCreateReview(projectMapping, account, remoteBranch)) {
+    val accountManager = serviceAsync<GitLabAccountManager>()
+    val savedAccount = project.serviceAsync<GitLabMergeRequestsPreferences>().selectedUrlAndAccountId?.second?.let { savedId ->
+      accountManager.findAccountOrNull { it.id == savedId }
+    }
+    val (projectMapping, account) = GitPushNotificationUtil.findRepositoryAndAccount(
+      project.serviceAsync<GitLabProjectsManager>().knownRepositories,
+      repository, remoteBranch.remote,
+      accountManager.accountsState.value,
+      savedAccount,
+      project.serviceAsync<GitLabProjectDefaultAccountHolder>().account
+    ) ?: return emptyList()
+    // be aware, for a renamed project no action will be returned, because of the incorrect path
+    val projectFullPath = projectMapping.repository.projectPath
+    return createActionList(account, projectFullPath, remoteBranch, projectMapping)
+  }
+
+  private suspend fun createActionList(
+    account: GitLabAccount,
+    projectFullPath: GitLabProjectPath,
+    remoteBranch: GitRemoteBranch,
+    projectMapping: GitLabProjectMapping,
+  ): List<AnAction> {
+    val accountManager = serviceAsync<GitLabAccountManager>()
+    val token = accountManager.findCredentials(account) ?: return emptyList()
+    val api = serviceAsync<GitLabApiManager>().getClient(account.server, token)
+
+    if (!canCreateReview(api, projectFullPath, remoteBranch)) {
       return emptyList()
     }
 
-    val existingMRs = findExistingMergeRequests(projectMapping, account, remoteBranch)
+    val existingMRs = findExistingMergeRequests(api, projectFullPath, remoteBranch)
+    return actions(existingMRs, projectMapping, account)
+  }
+
+  private fun actions(
+    existingMRs: List<GitLabMergeRequestByBranchDTO>,
+    projectMapping: GitLabProjectMapping,
+    account: GitLabAccount,
+  ): List<AnAction> {
     return when (existingMRs.size) {
       0 -> {
         listOf(GitLabMergeRequestOpenCreateTabNotificationAction(project, projectMapping, account))
@@ -93,14 +115,13 @@ internal class GitLabPushNotificationCustomizer(private val project: Project) : 
    * - The repository must exist
    * - The branch cannot be the default branch (we don't allow creating an MR from default -> default)
    */
-  private suspend fun canCreateReview(projectMapping: GitLabProjectMapping, account: GitLabAccount, branch: GitRemoteBranch): Boolean {
-    val accountManager = serviceAsync<GitLabAccountManager>()
-    val token = accountManager.findCredentials(account) ?: return false
-    val api = serviceAsync<GitLabApiManager>().getClient(account.server, token)
-
-    val repository = projectMapping.repository
-    val repositoryInfo = getRepositoryInfo(api, repository) ?: run {
-      LOG.warn("Repository not found: $repository")
+  private suspend fun canCreateReview(
+    api: GitLabApi,
+    projectFullPath: GitLabProjectPath,
+    branch: GitRemoteBranch,
+  ): Boolean {
+    val repositoryInfo = getRepositoryInfo(api, projectFullPath) ?: run {
+      LOG.warn("Repository not found: $projectFullPath")
       return false
     }
 
@@ -109,15 +130,15 @@ internal class GitLabPushNotificationCustomizer(private val project: Project) : 
     return repositoryInfo.rootRef != remoteBranchName
   }
 
-  private suspend fun getRepositoryInfo(api: GitLabApi, project: GitLabProjectCoordinates) =
+  private suspend fun getRepositoryInfo(api: GitLabApi, projectFullPath: GitLabProjectPath) =
     try {
-      api.graphQL.findProject(project).body()?.repository
+      api.graphQL.findProject(projectFullPath).body()?.repository
     }
     catch (ce: CancellationException) {
       throw ce
     }
     catch (e: Exception) {
-      LOG.warn("Failed to lookup repository $project", e)
+      LOG.warn("Failed to lookup repository $projectFullPath in $project", e)
       null
     }
 
@@ -125,28 +146,22 @@ internal class GitLabPushNotificationCustomizer(private val project: Project) : 
    * Look up any existing open merge requests on the given remote branch.
    */
   private suspend fun findExistingMergeRequests(
-    projectMapping: GitLabProjectMapping,
-    account: GitLabAccount,
+    api: GitLabApi,
+    targetProjectPath: GitLabProjectPath,
     branch: GitRemoteBranch,
   ): List<GitLabMergeRequestByBranchDTO> {
-    val accountManager = serviceAsync<GitLabAccountManager>()
-    val token = accountManager.findCredentials(account) ?: return emptyList()
-    val api = serviceAsync<GitLabApiManager>().getClient(account.server, token)
-
-    val repository = projectMapping.repository
     val remoteBranchName = branch.nameForRemoteOperations
 
     return withContext(Dispatchers.IO) {
-      val targetProjectPath = repository.projectPath.fullPath()
       try {
-        val mrs = api.graphQL.findMergeRequestsByBranch(repository, GitLabMergeRequestState.OPENED, remoteBranchName).body()!!.nodes
-        mrs.filter { it.targetProject.fullPath == targetProjectPath && it.sourceProject?.fullPath == targetProjectPath }
+        val mrs = api.graphQL.findMergeRequestsByBranch(targetProjectPath, GitLabMergeRequestState.OPENED, remoteBranchName).body()!!.nodes
+        mrs.filter { it.targetProject.fullPath == targetProjectPath.fullPath() && it.sourceProject?.fullPath == targetProjectPath.fullPath() }
       }
       catch (ce: CancellationException) {
         throw ce
       }
       catch (e: Exception) {
-        LOG.warn("Failed to lookup existing merge requests for branch $remoteBranchName in $repository", e)
+        LOG.warn("Failed to lookup existing merge requests for branch $remoteBranchName in $targetProjectPath", e)
         emptyList()
       }
     }

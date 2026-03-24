@@ -74,7 +74,7 @@ class ToolValidator<P : PathHolder>(
   }
 
   private fun autodetectExecutableJob(): Deferred<Unit> {
-    return scope.async(TraceContext(PyBundle.message("tracecontext.detecting.executable", toolVersionPrefix), scope)) {
+    return scope.async(TraceContext(PyBundle.message("trace.context.detecting.executable", toolVersionPrefix), scope)) {
       withContext(Dispatchers.EDT) { isDirtyValue.set(true) }
       val validatedPath = fileSystem.autodetectWithVersionProbe(toolVersionPrefix, defaultPathSupplier)
       withContext(Dispatchers.EDT) { backProperty.set(validatedPath) }

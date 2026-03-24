@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.Patches;
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -26,7 +27,6 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -56,7 +56,7 @@ import static java.util.Objects.requireNonNullElse;
  * {@code HttpRequests.request("https://example.com").readString(progressIndicator)}</p>
  *
  * <p>Downloading a file:<br>
- * {@code HttpRequests.request("https://example.com/file.zip").saveToFile(new File(downloadDir, "temp.zip"), progressIndicator)}</p>
+ * {@code HttpRequests.request("https://example.com/file.zip").saveToFile(downloadDir.resolve("temp.zip"), progressIndicator)}</p>
  *
  * <p>Tuning a connection:<br>
  * {@code HttpRequests.request(url).userAgent("IntelliJ").readString()}<br>
@@ -102,8 +102,8 @@ public final class HttpRequests {
 
     /** Prefer {@link #saveToFile(Path, ProgressIndicator)}. */
     @ApiStatus.Obsolete
-    @SuppressWarnings("IO_FILE_USAGE")
-    default @NotNull File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException {
+    @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+    default @NotNull java.io.File saveToFile(@NotNull java.io.File file, @Nullable ProgressIndicator indicator) throws IOException {
       return saveToFile(file.toPath(), indicator).toFile();
     }
 
@@ -578,6 +578,8 @@ public final class HttpRequests {
     }
 
     for (var i = 0; i < builder.myRedirectLimit; i++) {
+      ProgressManager.checkCanceled();
+
       var url = request.myUrl;
 
       URLConnection connection;
@@ -599,8 +601,8 @@ public final class HttpRequests {
         throw new IOException(e);
       }
 
-      if (connection instanceof HttpsURLConnection) {
-        configureSslConnection(url, (HttpsURLConnection)connection);
+      if (connection instanceof HttpsURLConnection httpsURLConnection) {
+        configureSslConnection(url, httpsURLConnection);
       }
 
       connection.setConnectTimeout(builder.myConnectTimeout);
@@ -610,8 +612,8 @@ public final class HttpRequests {
         connection.setRequestProperty("User-Agent", builder.myUserAgent);
       }
 
-      if (builder.myHostnameVerifier != null && connection instanceof HttpsURLConnection) {
-        ((HttpsURLConnection)connection).setHostnameVerifier(builder.myHostnameVerifier);
+      if (builder.myHostnameVerifier != null && connection instanceof HttpsURLConnection httpsURLConnection) {
+        httpsURLConnection.setHostnameVerifier(builder.myHostnameVerifier);
       }
 
       if (builder.myGzip) {
@@ -658,7 +660,12 @@ public final class HttpRequests {
         responseCode = httpURLConnection.getResponseCode();
       }
       catch (SSLHandshakeException e) {
+        ProgressManager.checkCanceled();
         throw !NetUtils.isSniEnabled() ? new SSLException("SSL error probably caused by disabled SNI", e) : e;
+      }
+      catch (SSLException e) {
+        ProgressManager.checkCanceled();
+        throw e;
       }
 
       if (LOG.isDebugEnabled()) {

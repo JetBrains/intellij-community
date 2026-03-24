@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  JavaClass.class
+End of files
+Compiling files:
+  kotlin/incrementalJvmCompilerOnly/changeAnnotationInJavaClass/a/JavaClass.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_incrementalJvmCompilerOnly_changeAnnotationInJavaClass-a.kotlin_module
+  UsageKt.class
+End of files
+Compiling files:
+  kotlin/incrementalJvmCompilerOnly/changeAnnotationInJavaClass/a/usage.kt
+End of files
+------------------------------------------
+Exit code: OK

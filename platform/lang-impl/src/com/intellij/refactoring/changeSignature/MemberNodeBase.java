@@ -106,7 +106,7 @@ public abstract class MemberNodeBase<M extends PsiElement> extends CheckedTreeNo
     M member = getMember();
     if (member != null) {
       final int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
-      renderer.setIcon(ReadAction.compute(() -> member.getIcon(flags)));
+      renderer.setIcon(ReadAction.computeBlocking(() -> member.getIcon(flags)));
       customizeRendererText(renderer);
     }
   }

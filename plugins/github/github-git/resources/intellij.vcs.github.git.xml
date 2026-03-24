@@ -1,7 +1,11 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <module name="intellij.vcs.github"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="Git4Idea"/>
+    <module name="intellij.platform.collaborationTools"/>
+    <module name="intellij.platform.vcs.dvcs.impl"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <!-- endregion -->
   </dependencies>
 
   <resource-bundle>messages.GithubBundle</resource-bundle>

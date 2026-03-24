@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("EelProviderUtil")
 package com.intellij.platform.eel.provider
 
@@ -15,17 +15,16 @@ import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelPosixApi
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.EelWindowsApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.util.coroutines.mapNotNullConcurrent
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
-import java.io.IOException
 import java.nio.file.Path
 
 @ApiStatus.Experimental
@@ -34,34 +33,8 @@ interface LocalWindowsEelApi : LocalEelApi, EelWindowsApi
 @ApiStatus.Experimental
 interface LocalPosixEelApi : LocalEelApi, EelPosixApi
 
-/**
- * Thrown when an EEL cannot be accessed or initialized.
- *
- * This exception indicates that the target execution environment (such as a remote machine,
- * Docker container, or WSL instance) is temporarily or permanently unavailable.
- *
- * Common scenarios include:
- * - Docker daemon connection failures
- * - Container not found or stopped
- * - Remote SSH connection issues
- * - Environment-specific setup errors
- *
- * This exception is typically thrown during:
- * - [EelProvider.tryInitialize] when initializing EEL for a project
- * - Project opening when the remote environment is unavailable
- *
- * The exception should contain a localized user-facing message explaining the specific
- * reason for unavailability, and optionally wrap the underlying cause.
- *
- * @param message Localized user-facing error message explaining why the EEL is unavailable
- * @param cause Optional underlying exception that caused the unavailability
- *
- * @see EelProvider.tryInitialize
- */
-@ApiStatus.Internal
-class EelUnavailableException(override val message: @Nls String, cause: Throwable? = null) : IOException(message, cause)
-
 private val EEL_MACHINE_KEY: Key<EelMachine> = Key.create("com.intellij.platform.eel.machine")
+private val EEL_DESCRIPTOR_KEY: Key<EelDescriptor> = Key.create("com.intellij.platform.eel.descriptor")
 
 fun Project.getEelMachine(): EelMachine {
   val descriptor = getEelDescriptor()
@@ -87,7 +60,8 @@ fun Project.getEelMachine(): EelMachine {
   }
 }
 
-private fun Project.setEelMachine(machine: EelMachine) {
+@ApiStatus.Internal
+fun Project.setEelMachine(machine: EelMachine) {
   putUserData(EEL_MACHINE_KEY, machine)
 }
 
@@ -158,10 +132,13 @@ val Path.osFamily: EelOsFamily get() = getEelDescriptor().osFamily
 
 /**
  * Retrieves [EelDescriptor] for the environment where [this] is located.
- * If the project is not the real one (i.e., it is default or not backed by a real file), then [LocalEelDescriptor] will be returned.
+ * If the project is not the real one (i.e., it is default or not backed by a real file), then [LocalEelDescriptor] will be returned,
+ * unless an explicit descriptor has been set via [setEelDescriptor] (e.g., for RD thin client with a fake project).
  */
 @ApiStatus.Experimental
 fun Project.getEelDescriptor(): EelDescriptor {
+  getUserData(EEL_DESCRIPTOR_KEY)?.let { return it }
+
   @MultiRoutingFileSystemPath
   val filePath = projectFilePath
   if (filePath == null) {
@@ -176,7 +153,18 @@ fun Project.getEelDescriptor(): EelDescriptor {
   return Path.of(filePath).getEelDescriptor()
 }
 
+/**
+ * Explicitly associates an [EelDescriptor] with this project.
+ * This is useful for projects that are not backed by a real file path (e.g., the default project in RD thin client),
+ * where the descriptor cannot be inferred from the project file path.
+ */
+@ApiStatus.Internal
+fun Project.setEelDescriptor(descriptor: EelDescriptor) {
+  putUserData(EEL_DESCRIPTOR_KEY, descriptor)
+}
+
 @get:ApiStatus.Experimental
+@OptIn(LowLevelLocalMachineAccess::class)
 val localEel: LocalEelApi by lazy {
   if (OS.CURRENT == OS.Windows) ApplicationManager.getApplication().service<LocalWindowsEelApi>()
   else ApplicationManager.getApplication().service<LocalPosixEelApi>()
@@ -208,10 +196,11 @@ data object LocalEelMachine : EelMachine {
 }
 
 @ApiStatus.Experimental
+@OptIn(LowLevelLocalMachineAccess::class)
 data object LocalEelDescriptor : EelDescriptor {
   private val LOG = logger<LocalEelDescriptor>()
 
-  override val name: @NonNls String = "Local: ${System.getProperty("os.name")}"
+  override val name: String = "Local: ${System.getProperty("os.name")}"
 
   override val osFamily: EelOsFamily by lazy {
     when (OS.CURRENT) {

@@ -1,5 +1,6 @@
 // "Convert expression to 'MutableList' by inserting '.toMutableList()'" "true"
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'List<String>', but 'MutableList<String>' was expected.
 
 fun foo(a: List<String>) {
     bar(a<caret>)

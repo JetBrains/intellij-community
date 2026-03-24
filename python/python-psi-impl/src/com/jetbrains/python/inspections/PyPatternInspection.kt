@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyTypeChecker
-import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -60,7 +60,7 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
 
   override fun visitPyClassPattern(node: PyClassPattern) {
     val type = myTypeEvalContext.getType(node.classNameReference)
-    val types = PyTypeUtil.toStream(type).toList()
+    val types = type.toStream().toList()
     if (types.isNotEmpty() && types.none { PyTypeChecker.isUnknown(it, myTypeEvalContext) }) {
       val invalidTypes = types.filter { it !is PyClassType || !it.isDefinition }
       if (invalidTypes.isNotEmpty()) {

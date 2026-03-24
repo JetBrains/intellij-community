@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="intellij.platform.syntax.psi" />
     <orderEntry type="module" module-name="intellij.xml.syntax" />
     <orderEntry type="module" module-name="intellij.platform.syntax.util" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
   </component>
 </module>

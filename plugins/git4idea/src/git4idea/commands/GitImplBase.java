@@ -2,6 +2,7 @@
 package git4idea.commands;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -127,6 +128,9 @@ public abstract class GitImplBase implements Git {
       if (isCredHelperUsed != GitVcsApplicationSettings.getInstance().isUseCredentialHelper()) {
         // do not spend attempt if the credential helper has been enabled
         continue;
+      }
+      if (handler.getIgnoreAuthenticationMode() != AuthenticationMode.FULL) {
+        break;
       }
       authAttempt++;
     }
@@ -412,24 +416,47 @@ public abstract class GitImplBase implements Git {
 
   private static @NotNull AccessToken lock(@NotNull GitLineHandler handler, boolean canSuppressOptionalLocks) {
     Project project = handler.project();
-    LockingPolicy lockingPolicy = handler.getCommand().lockingPolicy();
 
-    if (project == null || project.isDefault() || lockingPolicy == READ) {
+    if (project == null || project.isDefault() || !shouldTakeWriteLock(handler, canSuppressOptionalLocks)) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
 
     ReadWriteLock executionLock = GitVcs.getInstance(project).getCommandLock();
-    Lock lock = lockingPolicy == READ_OPTIONAL_LOCKING && canSuppressOptionalLocks
-                ? executionLock.readLock()
-                : executionLock.writeLock();
+    Lock lock = executionLock.writeLock();
 
+    long startTime = System.currentTimeMillis();
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Acquiring lock for command '%s'".formatted(handler));
+    }
     ProgressIndicatorUtils.awaitWithCheckCanceled(lock);
+    long acquisitionTime = System.currentTimeMillis() - startTime;
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(new Throwable(getLockAcquiredMessage(handler, acquisitionTime)));
+    }
+    else if (LOG.isDebugEnabled()) {
+      LOG.debug(getLockAcquiredMessage(handler, acquisitionTime));
+    }
+
     return new AccessToken() {
       @Override
       public void finish() {
         lock.unlock();
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Lock released by '%s'".formatted(handler));
+        }
       }
     };
+  }
+
+  private static @NotNull String getLockAcquiredMessage(@NotNull GitLineHandler handler, long acquisitionTime) {
+    return "Acquired lock for command '%s' in %dms".formatted(handler, acquisitionTime);
+  }
+
+  private static boolean shouldTakeWriteLock(@NotNull GitLineHandler handler, boolean canSuppressOptionalLocks) {
+    LockingPolicy lockingPolicy = handler.getCommand().lockingPolicy();
+    return lockingPolicy != READ &&
+           // If lock can't be suppressed, then command can be executed with writing side effects
+           (lockingPolicy != READ_OPTIONAL_LOCKING || !canSuppressOptionalLocks);
   }
 
   public static boolean looksLikeProgress(@NotNull String line) {

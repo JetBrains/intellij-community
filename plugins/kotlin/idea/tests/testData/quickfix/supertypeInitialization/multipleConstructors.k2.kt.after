@@ -4,6 +4,7 @@
 // ACTION: Change to constructor invocation
 // RUNTIME_WITH_FULL_JDK
 // Issue: KTIJ-32887
+// K2_ERROR: This type has a constructor, so it must be initialized here.
 import java.util.ArrayList
 
 class C(c: MutableCollection<out String>) : ArrayList<String>(c)

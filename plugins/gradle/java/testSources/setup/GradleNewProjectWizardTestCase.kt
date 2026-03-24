@@ -164,6 +164,12 @@ abstract class GradleNewProjectWizardTestCase : GradleTestCase() {
     Assertions.assertEquals(jvmCriteria, properties.criteria)
   }
 
+  fun assertNoCompilationErrors() {
+    // TODO: IDEA-386782 has to be fixed by throwing exception from e.g. `compileModules`
+    val compilationError = executionOutputTracker.output.any { it.contains("Compilation error.") }
+    Assertions.assertFalse(compilationError, "No compilation errors expected")
+  }
+
   companion object {
 
     val NEW_EMPTY_PROJECT = UIBundle.message("label.project.wizard.empty.project.generator.name")

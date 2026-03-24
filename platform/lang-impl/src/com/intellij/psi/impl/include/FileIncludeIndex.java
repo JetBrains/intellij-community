@@ -86,7 +86,7 @@ public final class FileIncludeIndex extends FileBasedIndexExtension<String, List
         return FILE_INCLUDE_PROVIDER_EP_NAME
             .getExtensionList()
             .stream()
-            .filter(provider -> provider.acceptFile(file.getFile()))
+            .filter(provider -> provider.acceptFile(file))
             .collect(Collectors.toSet());
       }
 
@@ -162,7 +162,7 @@ public final class FileIncludeIndex extends FileBasedIndexExtension<String, List
           return false;
         }
         for (FileIncludeProvider provider : FILE_INCLUDE_PROVIDER_EP_NAME.getExtensionList()) {
-          if (provider.acceptFile(file, indexedFile.getProject())) {
+          if (provider.acceptFile(indexedFile)) {
             return true;
           }
         }

@@ -192,7 +192,8 @@ var <PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION><MUTABLE_VARIABLE>globalCounte
             KotlinBundle.message("highlighter.descriptor.text.smart.constant") to KotlinHighlightingColors.SMART_CONSTANT,
             KotlinBundle.message("highlighter.descriptor.text.smart.cast.receiver") to KotlinHighlightingColors.SMART_CAST_RECEIVER,
             KotlinBundle.message("highlighter.descriptor.text.label") to KotlinHighlightingColors.LABEL,
-            KotlinBundle.message("highlighter.descriptor.text.named.argument") to KotlinHighlightingColors.NAMED_ARGUMENT
+            KotlinBundle.message("highlighter.descriptor.text.named.argument") to KotlinHighlightingColors.NAMED_ARGUMENT,
+            KotlinBundle.message("highlighter.descriptor.text.context.argument") to KotlinHighlightingColors.CONTEXT_ARGUMENT,
         ) + DslStyleUtils.descriptionsToStyles.map { (description, key) -> description to key }.toTypedArray()
     }
 

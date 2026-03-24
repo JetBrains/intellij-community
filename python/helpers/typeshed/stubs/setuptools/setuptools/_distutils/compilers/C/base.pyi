@@ -2,7 +2,7 @@ from _typeshed import BytesPath, Incomplete, StrOrBytesPath, StrPath, Unused
 from collections.abc import Callable, Iterable, MutableSequence, Sequence
 from subprocess import _ENV
 from typing import ClassVar, Final, Literal, TypeVar, overload
-from typing_extensions import TypeAlias, TypeVarTuple, Unpack
+from typing_extensions import TypeAlias, TypeVarTuple, Unpack, deprecated
 
 _Macro: TypeAlias = tuple[str] | tuple[str, str | None]
 _StrPathT = TypeVar("_StrPathT", bound=StrPath)
@@ -53,6 +53,12 @@ class Compiler:
     def set_link_objects(self, objects: list[str]) -> None: ...
     def detect_language(self, sources: str | list[str]) -> str | None: ...
     def find_library_file(self, dirs: Iterable[str], lib: str, debug: bool = False) -> str | None: ...
+    @overload
+    def has_function(
+        self, funcname: str, libraries: list[str] | None = None, library_dirs: list[str] | tuple[str, ...] | None = None
+    ) -> bool: ...
+    @overload
+    @deprecated("The `includes`, `include_dirs` parameters are deprecated.")
     def has_function(
         self,
         funcname: str,

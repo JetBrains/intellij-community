@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.base.platforms
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -53,9 +53,10 @@ class LibraryEffectiveKindProviderImpl(private val project: Project): LibraryEff
         val virtualFile = classRoots.firstOrNull() ?: return null
         virtualFile.putUserData(CLASS_ROOTS_KEY, classRoots)
         try {
-            return runReadAction {
+            return ReadAction.nonBlocking<PersistentLibraryKind<*>> {
+                if (project.isDisposed || !virtualFile.isValid) return@nonBlocking null
                 KotlinLibraryKindGistProvider.getInstance().kotlinLibraryKindGist.getFileData(project, virtualFile)
-            }
+            }.executeSynchronously()
         } finally {
             virtualFile.removeUserData(CLASS_ROOTS_KEY)
         }

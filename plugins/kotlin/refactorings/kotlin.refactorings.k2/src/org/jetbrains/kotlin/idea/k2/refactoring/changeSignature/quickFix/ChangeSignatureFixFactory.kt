@@ -17,7 +17,9 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.createInheritanceTypeSubstitutor
 import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.functionTypeKind
 import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
@@ -39,6 +41,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.builtins.StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -292,6 +295,11 @@ object ChangeSignatureFixFactory {
             } else {
                 val parameters = (ktCallableDeclaration as? KtCallableDeclaration)?.valueParameters ?: emptyList()
                 val arguments = callElement.valueArguments
+                val substitutor = buildSubstitutor {
+                    for (entry in functionCall.typeArgumentsMapping) {
+                        substitution(entry.key, entry.value)
+                    }
+                }
 
                 for (i in arguments.indices) {
                     val argument = arguments[i]
@@ -300,7 +308,8 @@ object ChangeSignatureFixFactory {
                     if (i < parameters.size) {
                         usedNames.add(parameters[i].name!!)
                         val argumentType = getKtType(expression)
-                        val parameterType = parameters[i].returnType
+                        val parameterType = substitutor.substitute(parameters[i].returnType)
+
                         if (argumentType != null && !argumentType.isSubtypeOf(parameterType)) {
                             changeInfo.newParameters[i + if ((ktCallableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0].setType(
                                 argumentType.render(position = Variance.IN_VARIANCE)

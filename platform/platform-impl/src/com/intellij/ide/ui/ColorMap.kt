@@ -3,12 +3,12 @@
 
 package com.intellij.ide.ui
 
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
 import java.awt.Color
 
 private val LOG: Logger
@@ -40,7 +40,7 @@ internal fun readColorMapFromJson(parser: JsonParser,
         return result
       }
       JsonToken.VALUE_STRING -> {
-        val text = parser.text
+        val text = parser.string
         val key = parser.currentName()
         if (isColorLike(text)) {
           val color = parseColorOrNull(text, key)
@@ -52,7 +52,7 @@ internal fun readColorMapFromJson(parser: JsonParser,
         }
         result.put(key, NamedColorValue(name = text))
       }
-      JsonToken.FIELD_NAME -> {
+      JsonToken.PROPERTY_NAME -> {
       }
       null -> {
         break

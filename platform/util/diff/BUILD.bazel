@@ -1,11 +1,18 @@
 ### auto-generated section `build intellij.platform.util.diff` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "diff_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "diff",
   module_name = "intellij.platform.util.diff",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":diff_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
     "//platform/util/base/multiplatform",
@@ -14,4 +21,23 @@ jvm_library(
     "@lib//:jetbrains-annotations",
   ]
 )
+
+jvm_library(
+  name = "diff_test_lib",
+  module_name = "intellij.platform.util.diff",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":diff",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.util.diff` end
+
+### auto-generated section `iml intellij.platform.util.diff` start
+exports_files([
+  "intellij.platform.util.diff.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.diff` end

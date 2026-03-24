@@ -12,15 +12,20 @@ import fleet.modules.api.FleetModuleInfo
 import fleet.modules.api.FleetModuleLayer
 import fleet.modules.api.FleetModuleLayerLoader
 import fleet.util.logging.KLoggers.logger
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 private val logger by lazy { logger(ResolvedPluginLayer::class) }
 
-fun loadPluginModulesAndResources(moduleLayerLoader: FleetModuleLayerLoader,
-                                  resolvedLayers: Map<LayerSelector, ResolvedPluginLayer>,
-                                  sortedSelectors: List<LayerSelector>,
-                                  externalDependencies: Map<LayerSelector, List<FleetModuleLayer>>,
-                                  baseLayers: List<FleetModuleLayer>,
-                                  loadDockModuleLayer: (modulePath: Set<FleetModuleInfo>) -> FleetModuleLayer): Map<LayerSelector, PluginModulesAndResources> {
+suspend fun loadPluginModulesAndResources(
+  moduleLayerLoader: FleetModuleLayerLoader,
+  resolvedLayers: Map<LayerSelector, ResolvedPluginLayer>,
+  sortedSelectors: List<LayerSelector>,
+  externalDependencies: Map<LayerSelector, List<FleetModuleLayer>>,
+  baseLayers: List<FleetModuleLayer>,
+  loadDockModuleLayer: (modulePath: Set<FleetModuleInfo>) -> FleetModuleLayer,
+): Map<LayerSelector, PluginModulesAndResources> {
   val result = HashMap<LayerSelector, PluginModulesAndResources>(sortedSelectors.size)
   for (selector in sortedSelectors) {
     val resolvedLayer = resolvedLayers.get(selector) ?: continue
@@ -34,8 +39,10 @@ fun loadPluginModulesAndResources(moduleLayerLoader: FleetModuleLayerLoader,
         moduleLayerLoader.moduleLayer(modulePath = moduleInfos(resolvedLayer), parentLayers = baseLayers + external + internal)
       }
     }
-    val modules = resolvedLayer.modules.mapNotNull { moduleName ->
-      moduleLayer.findModule(moduleName)
+    val modules = coroutineScope {
+      resolvedLayer.modules.map { moduleName ->
+        async { moduleLayer.findModule (moduleName) }
+      }.awaitAll().filterNotNull()
     }
     result.put(selector, PluginModulesAndResources(layer = moduleLayer, modules = modules, resources = resolvedLayer.resources))
   }

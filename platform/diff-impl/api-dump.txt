@@ -535,6 +535,11 @@ f:com.intellij.diff.impl.DiffSettingsHolder$State
 c:com.intellij.diff.impl.DiffWindow
 - <init>(com.intellij.openapi.project.Project,com.intellij.diff.chains.DiffRequestChain,com.intellij.diff.DiffDialogHints):V
 - p:createProcessor():com.intellij.diff.impl.DiffRequestProcessor
+f:com.intellij.diff.impl.FileAssignmentTracker
+- com.intellij.diff.impl.AssignmentTracker
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile[]):V
+- onEachAssignment():V
+- onLastUnassignment():V
 com.intellij.diff.lang.DiffIgnoredRangeProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:accepts(com.intellij.openapi.project.Project,com.intellij.diff.contents.DiffContent):Z
@@ -1167,6 +1172,7 @@ f:com.intellij.diff.tools.util.DiffNotifications
 - sf:createNotificationProvider(java.lang.String,java.awt.Color,com.intellij.ui.EditorNotificationPanel$Status):com.intellij.diff.util.DiffNotificationProvider
 - bs:createNotificationProvider$default(java.lang.String,java.awt.Color,com.intellij.ui.EditorNotificationPanel$Status,I,java.lang.Object):com.intellij.diff.util.DiffNotificationProvider
 - f:createOperationCanceled():javax.swing.JPanel
+- sf:createReadOnlyFile():javax.swing.JPanel
 - sf:createRemovedContent():javax.swing.JPanel
 - sf:hideNotification(com.intellij.ui.EditorNotificationPanel):V
 c:com.intellij.diff.tools.util.DiffSplitter

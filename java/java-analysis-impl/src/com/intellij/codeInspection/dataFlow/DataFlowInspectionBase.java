@@ -8,6 +8,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -136,6 +137,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   public boolean REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = true;
   public boolean REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true;
   public boolean REPORT_UNSOUND_WARNINGS = true;
+  public boolean REPORT_MATCHED_EXCEPTION = true;
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
@@ -153,6 +155,9 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     }
     if (!REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL) {
       node.addContent(new Element("option").setAttribute("name", "REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL").setAttribute("value", "false"));
+    }
+    if (!REPORT_MATCHED_EXCEPTION) {
+      node.addContent(new Element("option").setAttribute("name", "CHECK_MATCHED_EXCEPTION").setAttribute("value", "false"));
     }
     if (!REPORT_UNSOUND_WARNINGS) {
       node.addContent(new Element("option").setAttribute("name", "REPORT_UNSOUND_WARNINGS").setAttribute("value", "false"));
@@ -546,12 +551,12 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     for (NullabilityProblem<?> problem : problems) {
       PsiExpression expression = problem.getDereferencedExpression();
       boolean nullLiteral = ExpressionUtils.isNullLiteral(expression);
-      if (!REPORT_UNSOUND_WARNINGS) {
-        if (expression == null || !nullLiteral && CommonDataflow.getDfType(expression, IGNORE_ASSERT_STATEMENTS) != DfTypes.NULL) continue;
+      boolean alwaysNull = problem.isAlwaysNull(IGNORE_ASSERT_STATEMENTS);
+      if (!REPORT_UNSOUND_WARNINGS && !alwaysNull) {
+        continue;
       }
       // Expression of null type: could be failed LVTI, skip it to avoid confusion
       if (expression != null && !nullLiteral && PsiTypes.nullType().equals(expression.getType())) continue;
-      boolean alwaysNull = problem.isAlwaysNull(IGNORE_ASSERT_STATEMENTS);
       NullabilityProblemKind.innerClassNPE.ifMyProblem(problem, newExpression -> {
         List<LocalQuickFix> fixes = createNPEFixes(newExpression.getQualifier(), newExpression, reporter.isOnTheFly(), alwaysNull);
         reporter
@@ -607,6 +612,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       Consumer<PsiExpression> reportNullability = expr -> reportNullabilityProblem(reporter, problem, expression);
       NullabilityProblemKind.assigningToNotNull.ifMyProblem(problem, reportNullability);
       NullabilityProblemKind.storingToNotNullArray.ifMyProblem(problem, reportNullability);
+      if (REPORT_MATCHED_EXCEPTION) {
+        NullabilityProblemKind.deconstructionMatchException.ifMyProblem(problem, pattern -> {
+          reportDeconstructionMatchExceptionProblem(reporter, problem, pattern);
+        });
+      }
       if (SUGGEST_NULLABLE_ANNOTATIONS) {
         NullabilityProblemKind.passingToNonAnnotatedMethodRefParameter.ifMyProblem(
           problem, methodRef -> reportNullableArgumentPassedToNonAnnotatedMethodRef(reporter, problem, methodRef));
@@ -619,6 +629,25 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                                                     alwaysNull));
       }
     }
+  }
+
+  private void reportDeconstructionMatchExceptionProblem(@NotNull ProblemReporter reporter,
+                                                         @NotNull NullabilityProblem<?> problem,
+                                                         @NotNull PsiPattern pattern) {
+    ModCommandAction modCommandAction = createSwitchAddDefault(pattern);
+    if (modCommandAction == null) {
+      reporter.registerProblem(pattern, problem.getMessage(IGNORE_ASSERT_STATEMENTS));
+      return;
+    }
+    reporter.registerProblem(pattern, problem.getMessage(IGNORE_ASSERT_STATEMENTS), LocalQuickFix.from(modCommandAction));
+  }
+
+  private static @Nullable ModCommandAction createSwitchAddDefault(@NotNull PsiPattern pattern) {
+    QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
+    PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(pattern, PsiSwitchBlock.class);
+    if (switchBlock == null) return null;
+    ModCommandAction modCommandAction = quickFixFactory.createAddSwitchDefaultFix(switchBlock, null).asModCommandAction();
+    return modCommandAction;
   }
 
   private void reportNullabilityProblem(ProblemReporter reporter,

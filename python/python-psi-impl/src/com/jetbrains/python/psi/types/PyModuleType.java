@@ -180,10 +180,14 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     }
     else if (realLocation != null) {
       final ScopeOwner owner = ScopeUtil.getScopeOwner(realLocation);
-      final boolean crawlScope =
-        owner != null && (resolveContext == null || resolveContext.getTypeEvalContext().maySwitchToAST(realLocation));
-      if (crawlScope) {
-        importElements.addAll(getVisibleImports(owner));
+      if (owner != null) {
+        boolean maySwitchToAst = resolveContext == null || resolveContext.getTypeEvalContext().maySwitchToAST(realLocation);
+        if (maySwitchToAst) {
+          importElements.addAll(getVisibleImports(owner));
+        }
+        else if (owner instanceof PyFile pyFile) {
+          importElements.addAll(getTopImports(pyFile));
+        }
       }
       else if (realLocation instanceof PyFile pyFile) {
         importElements.addAll(getTopImports(pyFile));

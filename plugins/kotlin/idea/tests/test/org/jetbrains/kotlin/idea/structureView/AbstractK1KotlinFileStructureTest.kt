@@ -4,5 +4,5 @@ package org.jetbrains.kotlin.idea.structureView
 import com.intellij.ide.util.InheritedMembersNodeProvider
 
 abstract class AbstractK1KotlinFileStructureTest: AbstractKotlinFileStructureTest() {
-    override fun nodeProviderClass(): Class<out InheritedMembersNodeProvider<*>> = KotlinInheritedMembersNodeProvider::class.java
+    override fun nodeProvider(): InheritedMembersNodeProvider<*> = KotlinInheritedMembersNodeProvider()
 }

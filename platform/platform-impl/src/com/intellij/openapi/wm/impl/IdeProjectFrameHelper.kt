@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.application.ModalityState
@@ -27,7 +27,8 @@ private val EXTENSION_KEY = Key.create<String>("extensionKey")
 internal class IdeProjectFrameHelper(
   frame: IdeFrameImpl,
   loadingState: FrameLoadingState,
-) : ProjectFrameHelper(frame, loadingState) {
+  projectFrameTypeId: String?,
+) : ProjectFrameHelper(frame, loadingState, projectFrameTypeId) {
   @get:RequiresEdt
   lateinit var toolWindowPane: ToolWindowPane
     private set

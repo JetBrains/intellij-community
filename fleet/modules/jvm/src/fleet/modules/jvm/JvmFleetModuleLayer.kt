@@ -20,7 +20,7 @@ data class JvmFleetModuleLayer(val layer: ModuleLayer) : FleetModuleLayer {
     }
   }
 
-  override fun findModule(name: String): FleetModule? {
+  override suspend fun findModule(name: String): FleetModule? {
     return layer
       .findModule(name)
       .map(::JvmFleetModule)

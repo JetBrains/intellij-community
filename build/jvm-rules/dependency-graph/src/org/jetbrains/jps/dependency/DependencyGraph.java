@@ -5,6 +5,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.Flushable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -23,5 +26,9 @@ public interface DependencyGraph extends Graph, Closeable, Flushable {
   /**
    * Merge data from the Delta into this dependency storage
    */
-  void integrate (@NotNull DifferentiateResult diffResult);
+  void integrate(@NotNull DifferentiateResult diffResult);
+
+  void importSnapshot(InputStream in) throws IOException;
+
+  void exportSnapshot(OutputStream out) throws IOException;
 }

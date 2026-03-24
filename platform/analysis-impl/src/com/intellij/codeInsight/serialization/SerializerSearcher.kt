@@ -6,8 +6,8 @@ import java.lang.reflect.Modifier
 
 internal object SerializerSearcher {
   fun findSerializer(serializableClass: Class<Any>): KSerializer<Any>? =
-    findSerializerInObjectClass(serializableClass) ?:
-    findSerializerInCompanionClass(serializableClass)
+    findSerializerInObjectClass(serializableClass)
+    ?: findSerializerInCompanionClass(serializableClass)
 
   private fun findSerializerInObjectClass(objectClass: Class<*>): KSerializer<Any>? {
     val instanceField = objectClass.fields.firstOrNull {

@@ -103,7 +103,8 @@ public final class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate 
         usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, parameter, true) {
           @Override
           public void deleteElement() throws IncorrectOperationException {
-            final PsiDocMethodOrFieldRef.MyReference javadocMethodReference = (PsiDocMethodOrFieldRef.MyReference)element.getReference();
+            final PsiDocMethodOrFieldRef.MethodOrFieldReference
+              javadocMethodReference = (PsiDocMethodOrFieldRef.MethodOrFieldReference)element.getReference();
             if (javadocMethodReference != null) {
               javadocMethodReference.bindToText(newText);
             }

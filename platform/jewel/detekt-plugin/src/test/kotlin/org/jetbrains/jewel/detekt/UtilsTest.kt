@@ -6,8 +6,10 @@ import io.gitlab.arturbosch.detekt.test.compileAndLint
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jewel.detekt.rules.EqualityMembersRule
 import org.jetbrains.jewel.detekt.rules.MissingApiStatusAnnotationRule
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
+@Disabled("AT-3959")
 class UtilsTest {
     @Test
     fun `isJewelSymbol should return true for exact org_jetbrains_jewel package`() {

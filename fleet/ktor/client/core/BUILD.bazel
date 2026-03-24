@@ -1,10 +1,18 @@
 ### auto-generated section `build fleet.ktor.client.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "core",
+  module_name = "fleet.ktor.client.core",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
+  resources = [":core_resources"],
   exports = [
     "@lib//:fleet-io-ktor-client-core",
     "@lib//:fleet-io-ktor-events",
@@ -39,4 +47,31 @@ jvm_library(
     "@lib//:slf4j-api",
   ]
 )
+
+jvm_library(
+  name = "core_test_lib",
+  module_name = "fleet.ktor.client.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:fleet-io-ktor-client-core",
+    "@lib//:fleet-io-ktor-events",
+    "@lib//:fleet-io-ktor-http",
+    "@lib//:fleet-io-ktor-io",
+    "@lib//:fleet-io-ktor-network",
+    "@lib//:fleet-io-ktor-serialization",
+    "@lib//:fleet-io-ktor-sse",
+    "@lib//:fleet-io-ktor-utils",
+    "@lib//:fleet-io-ktor-websocket-serialization",
+    "@lib//:fleet-io-ktor-websockets",
+    "@lib//:fleet-io-ktor-http-cio",
+  ],
+  runtime_deps = [":core"]
+)
 ### auto-generated section `build fleet.ktor.client.core` end
+
+### auto-generated section `iml fleet.ktor.client.core` start
+exports_files([
+  "fleet.ktor.client.core.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml fleet.ktor.client.core` end

@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagementPolicy;
-import com.intellij.ide.ui.NewUiUtilKt;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -58,7 +57,6 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.BadgeIconSupplier;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.IconManager;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
@@ -104,8 +102,6 @@ public final class SettingsEntryPointAction extends ActionGroup
   private static final Logger LOG = Logger.getInstance(SettingsEntryPointAction.class);
 
   private static final BadgeIconSupplier GEAR_ICON = new BadgeIconSupplier(AllIcons.General.GearPlain);
-  private static final Icon NEW_UI_ICON =
-    IconManager.getInstance().withIconBadge(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.NEW_UI);
   private static final BadgeIconSupplier IDE_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.IdeUpdate);
   private static final BadgeIconSupplier PLUGIN_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.PluginUpdate);
 
@@ -169,7 +165,7 @@ public final class SettingsEntryPointAction extends ActionGroup
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent event) {
-    if (event == null) return AnAction.EMPTY_ARRAY;
+    if (event == null) return EMPTY_ARRAY;
 
     DataContext context = event.getDataContext();
 
@@ -228,7 +224,7 @@ public final class SettingsEntryPointAction extends ActionGroup
         }
       }
     }
-    return result.toArray(AnAction.EMPTY_ARRAY);
+    return result.toArray(EMPTY_ARRAY);
   }
 
   private static @NotNull ListPopup createMainPopup(@NotNull ActionGroup group, @NotNull DataContext context, @Nullable String eventPlace) {
@@ -338,7 +334,7 @@ public final class SettingsEntryPointAction extends ActionGroup
             };
 
             float leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.getUnscaled();
-            Insets innerInsets = ((JBInsets)JBUI.CurrentTheme.Popup.Selection.innerInsets()).getUnscaled();
+            Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets().getUnscaled();
             panel.setBorder(JBUI.Borders.empty(12, (int)(leftRightInset + innerInsets.left), 12, 14));
 
             JPanel iconPanel = new NonOpaquePanel(new BorderLayout());
@@ -382,12 +378,9 @@ public final class SettingsEntryPointAction extends ActionGroup
 
   private static boolean ourShowPlatformUpdateIcon;
   private static boolean ourShowPluginsUpdateIcon;
-  private static boolean ourNewUiIcon = calculateOurNewUiIcon();
 
   public static void updateState() {
     resetActionIcon();
-
-    ourNewUiIcon = calculateOurNewUiIcon();
 
     boolean showPluginsUpdates = isShowPluginsUpdates();
 
@@ -426,10 +419,6 @@ public final class SettingsEntryPointAction extends ActionGroup
            !UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled();
   }
 
-  private static boolean calculateOurNewUiIcon() {
-    return !ExperimentalUI.isNewUI() && !ExperimentalUI.Companion.isNewUiUsedOnce() && NewUiUtilKt.getNewUiPromotionDaysCount() < 14;
-  }
-
   private static @NotNull @Nls String getActionTooltip() {
     boolean updates = ourShowPlatformUpdateIcon || ourShowPluginsUpdateIcon;
     if (!updates) {
@@ -459,7 +448,7 @@ public final class SettingsEntryPointAction extends ActionGroup
     }
     String message = updates
                      ? IdeBundle.message("settings.entry.point.with.updates.tooltip")
-                     : IdeBundle.message(ourNewUiIcon ? "settings.entry.point.newUi.tooltip" : "settings.entry.point.tooltip");
+                     : IdeBundle.message("settings.entry.point.tooltip");
 
     List<String> tooltips =
       new ArrayList<>(ContainerUtil.mapNotNull(ActionProvider.EP_NAME.getExtensionList(), provider -> provider.getTooltip()));
@@ -477,7 +466,6 @@ public final class SettingsEntryPointAction extends ActionGroup
   private static void resetActionIcon() {
     ourShowPlatformUpdateIcon = false;
     ourShowPluginsUpdateIcon = false;
-    ourNewUiIcon = false;
   }
 
   private static @NotNull Icon calculateActionIcon() {
@@ -486,9 +474,6 @@ public final class SettingsEntryPointAction extends ActionGroup
     }
     if (ourShowPluginsUpdateIcon) {
       return ExperimentalUI.isNewUI() ? GEAR_ICON.getInfoIcon() : getCustomizedIcon(PLUGIN_UPDATE_ICON);
-    }
-    if (ourNewUiIcon) {
-      return NEW_UI_ICON;
     }
 
     return getCustomizedIcon(GEAR_ICON);
@@ -595,7 +580,7 @@ public final class SettingsEntryPointAction extends ActionGroup
   }
 
   /**
-   * Allows to modify a base icon provided by {@link BadgeIconSupplier}. The icon of the first extension which returns a non-null value
+   * Allows modifying a base icon provided by {@link BadgeIconSupplier}. The icon of the first extension which returns a non-null value
    * will be used.
    */
   public interface IconCustomizer {
@@ -615,7 +600,7 @@ public final class SettingsEntryPointAction extends ActionGroup
   }
 
   /**
-   * Marker interface to suppress automatic dots "..." addition after action name.
+   * Marker interface to suppress automatic dots "..." addition after the action name.
    */
   public interface NoDots {
   }

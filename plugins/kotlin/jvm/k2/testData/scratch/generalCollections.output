@@ -1,0 +1,199 @@
+Numbers:
+[12, 7, 25, 42, 9, 18, 33, 56, 71, 64, 5, 29, 48, 90, 13, 37, 22, 81, 44, 60]
+
+========== BASIC LOOPS ==========
+Even number: 12
+Odd number: 7
+Odd number: 25
+Even number: 42
+Odd number: 9
+Even number: 18
+Odd number: 33
+Even number: 56
+Odd number: 71
+Even number: 64
+Odd number: 5
+Odd number: 29
+Even number: 48
+Even number: 90
+Odd number: 13
+Odd number: 37
+Even number: 22
+Odd number: 81
+Even number: 44
+Even number: 60
+
+========== INDEXED LOOP ==========
+Index=0 value=12 doubled=24
+Index=1 value=7 doubled=14
+Index=2 value=25 doubled=50
+Index=3 value=42 doubled=84
+Index=4 value=9 doubled=18
+Index=5 value=18 doubled=36
+Index=6 value=33 doubled=66
+Index=7 value=56 doubled=112
+Index=8 value=71 doubled=142
+Index=9 value=64 doubled=128
+Index=10 value=5 doubled=10
+Index=11 value=29 doubled=58
+Index=12 value=48 doubled=96
+Index=13 value=90 doubled=180
+Index=14 value=13 doubled=26
+Index=15 value=37 doubled=74
+Index=16 value=22 doubled=44
+Index=17 value=81 doubled=162
+Index=18 value=44 doubled=88
+Index=19 value=60 doubled=120
+
+========== MAP / FILTER ==========
+Mapping 12 -> 36
+Mapping 7 -> 21
+Mapping 25 -> 75
+Mapping 42 -> 126
+Mapping 9 -> 27
+Mapping 18 -> 54
+Mapping 33 -> 99
+Mapping 56 -> 168
+Mapping 71 -> 213
+Mapping 64 -> 192
+Mapping 5 -> 15
+Mapping 29 -> 87
+Mapping 48 -> 144
+Mapping 90 -> 270
+Mapping 13 -> 39
+Mapping 37 -> 111
+Mapping 22 -> 66
+Mapping 81 -> 243
+Mapping 44 -> 132
+Mapping 60 -> 180
+Filtering 36 keep=true
+Filtering 21 keep=true
+Filtering 75 keep=false
+Filtering 126 keep=true
+Filtering 27 keep=true
+Filtering 54 keep=true
+Filtering 99 keep=true
+Filtering 168 keep=true
+Filtering 213 keep=true
+Filtering 192 keep=true
+Filtering 15 keep=false
+Filtering 87 keep=true
+Filtering 144 keep=true
+Filtering 270 keep=false
+Filtering 39 keep=true
+Filtering 111 keep=true
+Filtering 66 keep=true
+Filtering 243 keep=true
+Filtering 132 keep=true
+Filtering 180 keep=false
+Processed result:
+[36, 21, 126, 27, 54, 99, 168, 213, 192, 87, 144, 39, 111, 66, 243, 132]
+
+========== REDUCE ==========
+Reduce step acc=36 value=21
+Reduce step acc=57 value=126
+Reduce step acc=183 value=27
+Reduce step acc=210 value=54
+Reduce step acc=264 value=99
+Reduce step acc=363 value=168
+Reduce step acc=531 value=213
+Reduce step acc=744 value=192
+Reduce step acc=936 value=87
+Reduce step acc=1023 value=144
+Reduce step acc=1167 value=39
+Reduce step acc=1206 value=111
+Reduce step acc=1317 value=66
+Reduce step acc=1383 value=243
+Reduce step acc=1626 value=132
+Reduced sum = 1758
+
+========== FOLD ==========
+Fold step acc=100 value=36
+Fold step acc=64 value=21
+Fold step acc=43 value=126
+Fold step acc=-83 value=27
+Fold step acc=-110 value=54
+Fold step acc=-164 value=99
+Fold step acc=-263 value=168
+Fold step acc=-431 value=213
+Fold step acc=-644 value=192
+Fold step acc=-836 value=87
+Fold step acc=-923 value=144
+Fold step acc=-1067 value=39
+Fold step acc=-1106 value=111
+Fold step acc=-1217 value=66
+Fold step acc=-1283 value=243
+Fold step acc=-1526 value=132
+Fold result = -1658
+
+========== GROUPING ==========
+Grouped numbers:
+LOW -> [12, 7, 25, 9, 18, 5, 29, 13, 22]
+MID -> [42, 33, 56, 64, 48, 37, 44, 60]
+HIGH -> [71, 90, 81]
+
+========== MAP OPERATIONS ==========
+Name map:
+{Alice=28, Bob=34, Charlie=52, Diana=23, Eve=45}
+Alice is 28 years old
+Bob is 34 years old
+Charlie is 52 years old
+Diana is 23 years old
+Eve is 45 years old
+Age categories:
+{Alice=Young, Bob=Adult, Charlie=Senior, Diana=Young, Eve=Senior}
+
+========== NESTED COLLECTIONS ==========
+Matrix:
+[1, 4, 7, 2, 9]
+[3, 8, 5, 6, 0]
+[9, 2, 4, 1, 7]
+[6, 3, 8, 5, 2]
+[4, 7, 1, 9, 3]
+
+Iterating matrix:
+1 4 7 2 9
+3 8 5 6 0
+9 2 4 1 7
+6 3 8 5 2
+4 7 1 9 3
+
+========== FLATMAP ==========
+Flatten row: [1, 4, 7, 2, 9]
+Flatten row: [3, 8, 5, 6, 0]
+Flatten row: [9, 2, 4, 1, 7]
+Flatten row: [6, 3, 8, 5, 2]
+Flatten row: [4, 7, 1, 9, 3]
+Flattened:
+[1, 4, 7, 2, 9, 3, 8, 5, 6, 0, 9, 2, 4, 1, 7, 6, 3, 8, 5, 2, 4, 7, 1, 9, 3]
+
+========== BUILD LIST ==========
+Adding square 1
+Adding square 4
+Adding square 9
+Adding square 16
+Adding square 25
+Adding square 36
+Adding square 49
+Adding square 64
+Adding square 81
+Adding square 100
+Built list:
+[1, 4, 9, 16, 25, 36, 49, 64, 81, 100]
+
+========== SORTING ==========
+Sorted ascending: [5, 7, 9, 12, 13, 18, 22, 25, 29, 33, 37, 42, 44, 48, 56, 60, 64, 71, 81, 90]
+Sorted descending: [90, 81, 71, 64, 60, 56, 48, 44, 42, 37, 33, 29, 25, 22, 18, 13, 12, 9, 7, 5]
+
+========== WINDOWED ==========
+Window 0 -> [12, 7, 25] sum=44
+Window 1 -> [25, 42, 9] sum=76
+Window 2 -> [9, 18, 33] sum=60
+Window 3 -> [33, 56, 71] sum=160
+Window 4 -> [71, 64, 5] sum=140
+Window 5 -> [5, 29, 48] sum=82
+Window 6 -> [48, 90, 13] sum=151
+Window 7 -> [13, 37, 22] sum=72
+Window 8 -> [22, 81, 44] sum=147
+
+========== DONE ==========

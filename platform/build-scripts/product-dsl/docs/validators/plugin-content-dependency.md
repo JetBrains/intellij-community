@@ -12,7 +12,7 @@ Validates runtime dependency correctness for plugin content modules and plugin-l
 - Slot: `Slots.CONTENT_MODULE_PLAN` (results from `ContentModuleDependencyPlanner`).
 - Graph: plugin content and dependency edges (`EDGE_CONTAINS_CONTENT`, `EDGE_CONTAINS_CONTENT_TEST`, `EDGE_CONTENT_MODULE_DEPENDS_ON`, `EDGE_CONTENT_MODULE_DEPENDS_ON_TEST`, plugin `dependsOnContentModule`).
 - Model: `buildPluginValidationModel()` (resolution sources + graph queries for bundling and plugin types).
-- Config: `pluginAllowedMissingDependencies`, product `allowMissingDependencies`, `contentModuleAllowedMissingPluginDeps`, and `suppressionConfig`.
+- Config: `pluginAllowedMissingDependencies`, product `allowMissingDependencies`, DSL `allowedMissingPluginIds`, and `suppressionConfig`.
 
 ## Rules
 
@@ -37,13 +37,19 @@ Validates runtime dependency correctness for plugin content modules and plugin-l
 
 - `suppressionConfig` suppresses module deps for content modules; suppressed implicit deps are excluded from validation.
 - `pluginAllowedMissingDependencies` and product `allowMissingDependencies` exclude specific module deps.
-- `contentModuleAllowedMissingPluginDeps` excludes specific missing plugin IDs for the content module plugin-dep check.
+- DSL `allowedMissingPluginIds` excludes specific missing plugin IDs for DSL-defined test-plugin modules.
+- `suppressionConfig.contentModules[].suppressPlugins` excludes specific missing plugin IDs for non-DSL content modules.
 - This validator must not report errors for dependencies intentionally suppressed from XML.
 
 ## Output
 
 - `PluginDependencyError` for module dependency resolution and filtered deps.
 - `MissingContentModulePluginDependencyError` for missing plugin IDs in content module XML.
+- Proposed patch behavior for `MissingContentModulePluginDependencyError`:
+  - DSL-defined test modules: propose a Kotlin source patch that adds/updates `allowedMissingPluginIds` on `module()`, `embeddedModule()`, or `requiredModule()` when a unique declaration is found.
+  - Non-DSL modules: propose a `suppressions.json` patch (`contentModules.<module>.suppressPlugins`).
+  - If a DSL declaration cannot be resolved uniquely, emit only a suppression snippet (no file patch).
+  - In `--update-suppressions` mode, `suppressions.json` patch proposals are omitted from error text (the file is updated directly by `SuppressionConfigGenerator`).
 
 ## Non-goals
 

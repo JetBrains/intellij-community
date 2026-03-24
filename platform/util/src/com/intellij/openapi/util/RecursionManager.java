@@ -258,7 +258,9 @@ public final class RecursionManager {
 
     @Override
     public String toString() {
-      return guardId + "->" + userObject;
+      // Refrain from calling userObject.toString() to avoid potential recursion. The reason is that
+      // userObject.toString() can invoke arbitrary other calls that in turn may cause this recursion.
+      return guardId + "->" + userObject.getClass().getName() + "@" + myHashCode;
     }
   }
 

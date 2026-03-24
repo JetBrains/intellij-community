@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  test/A.class
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_classRecreated-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/classRecreated/a/A.kt
+End of files
+------------------------------------------
+Exit code: OK

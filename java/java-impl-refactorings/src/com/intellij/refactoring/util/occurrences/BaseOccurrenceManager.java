@@ -7,7 +7,7 @@ import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiStatement;
-import com.intellij.psi.PsiSwitchLabelStatement;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
@@ -75,7 +75,11 @@ public abstract class BaseOccurrenceManager implements OccurrenceManager {
     return anchor instanceof PsiField && ((PsiField)anchor).hasInitializer() && !(anchor instanceof PsiEnumConstant) ? ((PsiField)anchor).getInitializer() : anchor;
   }
 
-  private static boolean needToDeclareFinal(PsiExpression[] occurrences) {
+  /**
+   * @param occurrences that will be replaced by extracted variable.
+   * @return whether an extracted variable should have a {@code final} modifier based on occurrences usage.
+   */
+  public static boolean needToDeclareFinal(PsiExpression[] occurrences) {
     PsiElement scopeToDeclare = null;
     for (PsiExpression occurrence : occurrences) {
       final PsiElement data = occurrence.getUserData(ElementToWorkOn.PARENT);
@@ -86,7 +90,7 @@ public abstract class BaseOccurrenceManager implements OccurrenceManager {
       else {
         scopeToDeclare = PsiTreeUtil.findCommonParent(scopeToDeclare, element);
       }
-      if (PsiTreeUtil.getParentOfType(element, PsiSwitchLabelStatement.class, true, PsiStatement.class) != null) {
+      if (PsiTreeUtil.getParentOfType(element, PsiSwitchLabelStatementBase.class, true, PsiStatement.class) != null) {
         return true;
       }
     }

@@ -25,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents an indexed container (java.util.List or array)
- *
- * @author Tagir Valeev
  */
 public abstract class IndexedContainer {
   private final @NotNull PsiExpression myQualifier;

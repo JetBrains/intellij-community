@@ -1,8 +1,10 @@
-from datetime import date, datetime
-from typing import TypedDict, overload, type_check_only
+import datetime
+from typing import TypedDict, TypeVar, type_check_only
 from typing_extensions import NotRequired
 
-from dateparser import _Settings
+from dateparser.conf import Settings
+
+_DateT = TypeVar("_DateT", bound=datetime.date)
 
 @type_check_only
 class _SpanInformation(TypedDict):
@@ -13,20 +15,9 @@ class _SpanInformation(TypedDict):
     end_pos: int
     number: NotRequired[int]
 
-@overload
-def get_week_start(date: datetime, start_of_week: str = "monday") -> datetime: ...
-@overload
-def get_week_start(date: date, start_of_week: str = "monday") -> date: ...
-@overload
-def get_week_end(date: datetime, start_of_week: str = "monday") -> datetime: ...
-@overload
-def get_week_end(date: date, start_of_week: str = "monday") -> date: ...
+def get_week_start(date: _DateT, start_of_week: str = "monday") -> _DateT: ...
+def get_week_end(date: _DateT, start_of_week: str = "monday") -> _DateT: ...
 def detect_time_span(text: str) -> _SpanInformation | None: ...
-@overload
 def generate_time_span(
-    span_info: _SpanInformation, base_date: datetime | None = None, settings: _Settings | None = None
-) -> tuple[datetime, datetime]: ...
-@overload
-def generate_time_span(
-    span_info: _SpanInformation, base_date: date = ..., settings: _Settings | None = None
-) -> tuple[date, date]: ...
+    span_info: _SpanInformation, base_date: _DateT | None = None, settings: Settings | None = None
+) -> tuple[_DateT, _DateT]: ...

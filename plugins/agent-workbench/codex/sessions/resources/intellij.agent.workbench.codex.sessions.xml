@@ -1,0 +1,32 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.chat"/>
+    <module name="intellij.agent.workbench.codex.common"/>
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.filewatch"/>
+    <module name="intellij.agent.workbench.json"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.agent.workbench.sessions"/>
+    <module name="intellij.agent.workbench.sessions.actions"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.CodexSessionsBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <agent.workbench.sessionProvider
+      id="agentWorkbenchCodex"
+      order="before agentWorkbenchClaude"
+      implementation="com.intellij.agent.workbench.codex.sessions.CodexAgentSessionProviderDescriptor"/>
+    <advancedSetting
+      id="agent.workbench.codex.prompt.suggestion.model"
+      default="off"
+      bundle="messages.CodexSessionsBundle"
+      groupKey="advanced.settings.agent.workbench"/>
+    <agent.workbench.promptSuggestionAiBackend
+      implementation="com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerPromptSuggestionBackend"/>
+  </extensions>
+
+</idea-plugin>

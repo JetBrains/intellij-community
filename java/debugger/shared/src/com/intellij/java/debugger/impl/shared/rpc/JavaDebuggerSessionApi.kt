@@ -1,11 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.debugger.impl.shared.rpc
 
 import com.intellij.execution.filters.Filter
+import com.intellij.ide.ui.colors.SerializableSimpleTextAttributes
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.debugger.impl.rpc.SerializableSimpleTextAttributes
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XValueId
@@ -69,6 +69,7 @@ data class ThreadDumpWithAwaitingDependencies(
   val icons: List<IconId>,
   val attributes: List<SerializableSimpleTextAttributes>,
   val stackTraces: List<@NlsSafe String>,
+  val exportedStackTraces: List<@NlsSafe String>,
   val stateDescriptions: List<@NlsSafe String>,
   val iconToolTips: List<@Nls String?>,
   val awaitingDependencies: Map<Int, IntArray>,
@@ -82,9 +83,14 @@ data class JavaThreadDumpItemDto(
   val firstLine: @NlsSafe String,
   val stateDescriptionIndex: Int,
   val stackTraceIndex: Int,
+  val exportedStackTraceIndex: Int,
   val iconToolTipIndex: Byte,
   val interestLevel: Int,
   val iconIndex: Byte,
   val attributesIndex: Byte,
   val isDeadLocked: Boolean,
+  val isContainer: Boolean,
+  val canBeHidden: Boolean,
+  val treeId: Long?,
+  val parentTreeId: Long?,
 )

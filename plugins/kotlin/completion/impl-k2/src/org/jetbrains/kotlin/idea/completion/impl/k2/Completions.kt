@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2InfixCallable
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2KDocCallableCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2KDocParameterNameContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2KeywordCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2MultipleArgumentContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2NamedArgumentCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2OperatorNameCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2PackageCompletionContributor
@@ -70,6 +71,7 @@ internal object Completions {
         K2SuperMemberCompletionContributor(),
         K2TrailingFunctionParameterNameCompletionContributorBase.All(),
         K2TrailingFunctionParameterNameCompletionContributorBase.Missing(),
+        K2MultipleArgumentContributor(),
         K2CallableCompletionContributor(),
         K2CallableReferenceCompletionContributor(),
         K2InfixCallableCompletionContributor(),

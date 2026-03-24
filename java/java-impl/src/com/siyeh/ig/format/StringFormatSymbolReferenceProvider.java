@@ -69,7 +69,7 @@ public final class StringFormatSymbolReferenceProvider implements PsiSymbolRefer
     if (!MessageFormatUtil.PATTERN_METHODS.matches(callExpression)) return List.of();
     String formatString = ObjectUtils.tryCast(expression.getValue(), String.class);
     if (formatString == null) return List.of();
-    MessageFormatUtil.MessageFormatResult format = MessageFormatUtil.checkFormat(formatString);
+    MessageFormatUtil.MessageFormatResult format = MessageFormatUtil.checkFormat(formatString, PsiUtil.getLanguageLevel(expression));
     List<MessageFormatUtil.MessageFormatPlaceholder> placeholders = format.placeholders();
     if (placeholders.isEmpty()) return List.of();
     return createReferences(callExpression, 0, expression, placeholders);

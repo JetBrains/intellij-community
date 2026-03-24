@@ -21,10 +21,12 @@ data class NamedFailure(val name: String, val error: Throwable) {
 /**
  * Groups multiple exception using presentable names obtained via [naming] function.
  */
-fun <T : Throwable> Collection<T>.groupFailures(naming: (T) -> String): List<NamedFailure> =
-  groupBy { naming(it) }.map { (name, errors) ->
-    NamedFailure(name, errors.singleOrNull() ?: MultipleFailuresError("${errors.size} failures", errors))
-  }
+fun <T : Throwable> Collection<T>.groupFailures(naming: (T) -> String): Sequence<NamedFailure> {
+  return groupBy { naming(it) }.asSequence()
+    .map { (name, errors) ->
+      NamedFailure(name, errors.singleOrNull() ?: MultipleFailuresError("${errors.size} failures", errors))
+    }
+}
 
 /**
  * Converts multiple failures to separate tests.

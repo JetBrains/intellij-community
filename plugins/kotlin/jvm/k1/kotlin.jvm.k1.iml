@@ -62,5 +62,13 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.highlighting.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.statistics" />
   </component>
 </module>

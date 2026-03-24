@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -28,6 +28,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Tracks a PSI element inside a language injection. Stores a host-context smart pointer and the
+ * injected range in host-file coordinates, converting between host and injected coordinate spaces
+ * on restoration. Handles non-editable affix fragments (prefix/suffix around the injected code).
+ */
 class InjectedSelfElementInfo extends SmartPointerElementInfo {
   private final @NotNull SmartPsiFileRange myInjectedFileRangeInHostFile;
   private final @Nullable AffixOffsets myAffixOffsets;
@@ -72,7 +77,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   VirtualFile getVirtualFile() {
-    PsiElement element = restoreElement((SmartPointerManagerEx)SmartPointerManager.getInstance(getProject()));
+    PsiElement element = restoreElement(SmartPointerManagerEx.getInstanceEx(getProject()));
     if (element == null) return null;
     return element.getContainingFile().getVirtualFile();
   }
@@ -175,7 +180,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     Segment hostElementRange = psi ? myInjectedFileRangeInHostFile.getPsiRange() : myInjectedFileRangeInHostFile.getRange();
     if (hostElementRange == null) return null;
 
-    return hostToInjected(psi, hostElementRange, restoreFile((SmartPointerManagerEx)SmartPointerManager.getInstance(getProject())), myAffixOffsets);
+    return hostToInjected(psi, hostElementRange, restoreFile(SmartPointerManagerEx.getInstanceEx(getProject())), myAffixOffsets);
   }
 
   private static @Nullable ProperTextRange hostToInjected(boolean psi, @NotNull Segment hostRange, @Nullable PsiFile injectedFile, @Nullable AffixOffsets affixOffsets) {

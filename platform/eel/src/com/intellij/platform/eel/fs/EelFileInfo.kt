@@ -112,6 +112,9 @@ interface EelPosixFileInfo : EelFileInfo {
 @ApiStatus.Internal
 interface EelWindowsFileInfo : EelFileInfo {
   override val permissions: Permissions
+  val volumeSerialNumber: Int
+  val fileIndexHigh: Int
+  val fileIndexLow: Int
 
   interface Permissions : EelFileInfo.Permissions {
     val isReadOnly: Boolean

@@ -1,13 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("WinProcessTerminator")
-@file:Internal
-
 package com.intellij.execution.process
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
@@ -23,16 +20,15 @@ import java.util.concurrent.TimeUnit
  *
  * @return true if graceful termination has been performed (however the process may be still alive)
  */
-@JvmOverloads
-internal fun terminateWinProcessGracefully(processHandler: KillableProcessHandler,
-                                           processService: LocalProcessService,
-                                           terminateGracefully: () -> Boolean = {
-                                             processService.sendWinProcessCtrlC(processHandler.process)
-                                           }): Boolean {
+internal fun terminateWinProcessGracefully(
+  processHandler: KillableProcessHandler,
+  processService: LocalProcessService,
+  terminateGracefully: () -> Boolean,
+): Boolean {
   val questionFoundOrTerminated: CompletableFuture<Void> = CompletableFuture()
   val processListener = object : ProcessListener {
     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-      // Need to match "Terminate batch job (Y/N)?" message, but it's localized. Let's match "?" only.
+      // Need to match the "Terminate batch job (Y/N)?" message, but it's localized. Let's match "?" only.
       if (ProcessOutputType.isStdout(outputType) && "?" in event.text) {
         processHandler.removeProcessListener(this)
         questionFoundOrTerminated.complete(null)
@@ -45,29 +41,29 @@ internal fun terminateWinProcessGracefully(processHandler: KillableProcessHandle
     }
   }
   processHandler.addProcessListener(processListener)
-  return terminateGracefully().also {
-    if (it) {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        if (isCmdBatchFile(processHandler, processService)) {
-          awaitBatchQuestionAndDestroyInTests(questionFoundOrTerminated, processHandler)
-        }
-        processHandler.removeProcessListener(processListener)
-        return@also
+  if (terminateGracefully()) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      if (isCmdBatchFile(processHandler, processService)) {
+        awaitBatchQuestionAndDestroyInTests(questionFoundOrTerminated, processHandler)
       }
+      processHandler.removeProcessListener(processListener)
+    }
+    else {
       questionFoundOrTerminated.whenComplete { _, _ ->
         if (!processHandler.isProcessTerminated && isCmdBatchFile(processHandler, processService)) {
           destroy(processHandler)
         }
       }
     }
-    else {
-      processHandler.removeProcessListener(processListener)
-    }
+    return true
+  }
+  else {
+    processHandler.removeProcessListener(processListener)
+    return false
   }
 }
 
-private fun awaitBatchQuestionAndDestroyInTests(questionFoundOrTerminated: CompletableFuture<Void>,
-                                                processHandler: KillableProcessHandler) {
+private fun awaitBatchQuestionAndDestroyInTests(questionFoundOrTerminated: CompletableFuture<Void>, processHandler: KillableProcessHandler) {
   try {
     questionFoundOrTerminated.get(10, TimeUnit.SECONDS)
     destroy(processHandler)

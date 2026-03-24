@@ -63,4 +63,10 @@ sealed interface XDebugTabLayouterEvent {
 
   @Serializable
   data class TabRemoved(val contentUniqueId: Int) : XDebugTabLayouterEvent
+
+  @Serializable
+  data class TabHidden(val contentUniqueId: Int) : XDebugTabLayouterEvent
+
+  @Serializable
+  data class TabRestored(val contentUniqueId: Int) : XDebugTabLayouterEvent
 }

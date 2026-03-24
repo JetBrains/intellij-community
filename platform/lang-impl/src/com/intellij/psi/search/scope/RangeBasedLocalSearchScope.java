@@ -106,7 +106,7 @@ public abstract class RangeBasedLocalSearchScope extends LocalSearchScope {
 
   private void createIfNeeded() {
     if (myLocalSearchScope == null) {
-      myLocalSearchScope = ReadAction.compute(() -> new LocalSearchScope(getPsiElements(), myDisplayName, myIgnoreInjectedPsi));
+      myLocalSearchScope = ReadAction.computeBlocking(() -> new LocalSearchScope(getPsiElements(), myDisplayName, myIgnoreInjectedPsi));
     }
   }
 

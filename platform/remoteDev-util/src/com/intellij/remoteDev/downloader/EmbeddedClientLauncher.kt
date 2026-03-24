@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteDev.downloader
 
 import com.intellij.execution.ShortenCommandLine
@@ -80,6 +81,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       PlatformUtils.PYCHARM_PREFIX, PlatformUtils.PYCHARM_CE_PREFIX -> RuntimeModuleId.module("intellij.pycharm.frontend.split")
       PlatformUtils.RIDER_PREFIX -> RuntimeModuleId.module("intellij.rider.frontend.split")
       PlatformUtils.GOIDE_PREFIX -> RuntimeModuleId.module("intellij.goland.frontend.split")
+      PlatformUtils.DBE_PREFIX -> RuntimeModuleId.module("intellij.datagrip.frontend.split")
       PlatformUtils.CLION_PREFIX -> RuntimeModuleId.module("intellij.clion.ide.frontend.split")
       PlatformUtils.PHP_PREFIX -> RuntimeModuleId.module("intellij.phpstorm.frontend.split")
       PlatformUtils.WEB_PREFIX -> RuntimeModuleId.module("intellij.webstorm.frontend.split")
@@ -98,7 +100,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
   }
 
   fun launch(url: String, extraArguments: List<String>, lifetime: Lifetime, errorReporter: EmbeddedClientErrorReporter): Lifetime {
-    val launcherData = createLauncherViaIdeExecutable() ?: findOldJetBrainsClientLauncher()
+    val launcherData = findCustomClientLauncher() ?: createLauncherViaIdeExecutable() ?: findOldJetBrainsClientLauncher()
     if (launcherData != null) {
       LOG.debug("Start embedded client using launcher")
       val workingDirectory = Path(PathManager.getHomePath())
@@ -178,12 +180,22 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     return JetBrainsClientLauncherData(executable, listOf(executable.pathString))
   }
   
+  private fun findCustomClientLauncher(): JetBrainsClientLauncherData? {
+    if (OS.CURRENT == OS.Windows && Registry.`is`("rdct.embedded.client.prefer.jetrains_client64.exe")) {
+      //prefer a special launcher for JetBrains Client if it exists to ensure that the special 'remote' icon will be used for the application
+      return PathManager.findBinFile("jetbrains_client64.exe")?.let {
+        JetBrainsClientLauncherData(it, listOf(it.pathString))
+      }
+    }
+    return null
+  }
+
   private fun findOldJetBrainsClientLauncher(): JetBrainsClientLauncherData? {
     return when (OS.CURRENT) {
       OS.macOS -> {
-        return null
+        null
       }
-      OS.Windows -> PathManager.findBinFile("jetbrains_client64.exe")?.let { 
+      OS.Windows -> PathManager.findBinFile("jetbrains_client64.exe")?.let {
         JetBrainsClientLauncherData(it, listOf(it.pathString))
       }
       else -> PathManager.findBinFile("jetbrains_client.sh")?.let {

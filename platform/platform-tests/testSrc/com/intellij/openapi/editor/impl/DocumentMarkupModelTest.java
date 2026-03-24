@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
@@ -46,7 +47,7 @@ public class DocumentMarkupModelTest extends BasePlatformTestCase {
     ((EditorEx)myFixture.getEditor()).setColorsScheme(scheme);
     myFixture.doHighlighting();
     MarkupModel model = DocumentMarkupModel.forDocument(myFixture.getEditor().getDocument(), getProject(), false);
-    RangeHighlighter[] highlighters = model.getAllHighlighters();
+    RangeHighlighter[] highlighters = ContainerUtil.findAllAsArray(model.getAllHighlighters(), h->h.isValid());
     assertThat(highlighters).hasSize(1);
     TextAttributes attributes = highlighters[0].getTextAttributes(scheme);
     assertThat(attributes).isNotNull();

@@ -1,38 +1,20 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.ParametersList;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
-import com.intellij.util.JavaModuleOptions;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
@@ -45,18 +27,12 @@ import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static com.intellij.platform.ijent.community.buildConstants.IjentBuildScriptsConstantsKt.IJENT_BOOT_CLASSPATH_MODULE;
 
 @ApiStatus.Internal
 public final class JUnitDevKitPatcher extends JUnitPatcher {
   private static final Logger LOG = Logger.getInstance(JUnitDevKitPatcher.class);
-
-  static final String SYSTEM_CL_PROPERTY = "java.system.class.loader";
-
-  private static final Key<Boolean> LOADER_VALID = Key.create("LOADER_VALID_9");
 
   @Override
   public void patchJavaParameters(@NotNull Project project, @Nullable Module module, JavaParameters javaParameters) {
@@ -68,19 +44,19 @@ public final class JUnitDevKitPatcher extends JUnitPatcher {
     if (IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
       BuiltInServerConnectionData.passDataAboutBuiltInServer(javaParameters, project);
       
-      if (!vm.hasProperty(SYSTEM_CL_PROPERTY) && !vm.getList().contains("--add-modules")) {
+      if (!vm.hasProperty(DevKitPatcherHelper.SYSTEM_CL_PROPERTY) && !vm.getList().contains("--add-modules")) {
         // check that UrlClassLoader is available in the test module classpath
         // if module-path is used, skip custom loader
         var qualifiedName = "com.intellij.util.lang.UrlClassLoader";
-        if (loaderValid(project, module, qualifiedName)) {
-          vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
+        if (DevKitPatcherHelper.loaderValid(project, module, qualifiedName)) {
+          vm.addProperty(DevKitPatcherHelper.SYSTEM_CL_PROPERTY, qualifiedName);
           vm.addProperty(UrlClassLoader.CLASSPATH_INDEX_PROPERTY_NAME, "true");
         }
       }
 
       var basePath = project.getBasePath();
       if (module != null && hasIjentDefaultFsProviderInClassPath(module)) {
-        DevKitApplicationPatcherKt.enableIjentDefaultFsProvider(project, vm);
+        DevKitPatcherHelper.enableIjentDefaultFsProvider(project, vm);
       }
       if (!vm.hasProperty(PathManager.PROPERTY_SYSTEM_PATH)) {
         assert basePath != null;
@@ -91,7 +67,7 @@ public final class JUnitDevKitPatcher extends JUnitPatcher {
         vm.addProperty(PathManager.PROPERTY_CONFIG_PATH, EelPathUtils.renderAsEelPath(Path.of(basePath, "config/test").toAbsolutePath()));
       }
 
-      appendAddOpensWhenNeeded(project, jdk, vm);
+      DevKitPatcherHelper.appendAddOpensWhenNeeded(project, jdk, vm);
 
       if (!Boolean.parseBoolean(vm.getPropertyValue("intellij.devkit.junit.skip.settings.from.intellij.yaml"))) {
         JUnitDevKitUnitTestingSettings.getInstance(project).apply(module, javaParameters);
@@ -146,50 +122,6 @@ public final class JUnitDevKitPatcher extends JUnitPatcher {
     javaParameters.getClassPath().addFirst(libPath + "resources.jar");
   }
 
-  public static void appendAddOpensWhenNeeded(@NotNull Project project, @NotNull Sdk jdk, @NotNull ParametersList vm) {
-    var sdkVersion = jdk.getSdkType() instanceof JavaSdk javaSdk ? javaSdk.getVersion(jdk) : null;
-    if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_25)) {
-      vm.add("--enable-native-access=ALL-UNNAMED");
-    }
-    if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
-      var scope = ProjectScope.getContentScope(project);
-      var files = ReadAction.compute(() -> FilenameIndex.getVirtualFilesByName("OpenedPackages.txt", scope));
-      if (files.size() > 1) {
-        var list = files.stream().map(VirtualFile::getPresentableUrl).collect(Collectors.joining("\n"));
-        var message = DevKitBundle.message("notification.message.duplicate.packages.file", list);
-        new Notification("DevKit Errors", message, NotificationType.ERROR).notify(project);
-      }
-      else if (!files.isEmpty()) {
-        var file = files.iterator().next();
-        var projectFilePath =
-          Objects.requireNonNull(project.getProjectFilePath(), "Run configurations should not be invoked on the default project");
-        var eelApi = EelProviderUtil.toEelApiBlocking(EelProviderUtil.getEelDescriptor(Path.of(projectFilePath)));
-        var targetOs = EelProviderUtil.systemOs(eelApi);
-        try (var stream = file.getInputStream()) {
-          JavaModuleOptions.readOptions(stream, targetOs).forEach(vm::add);
-        }
-        catch (ProcessCanceledException e) {
-          throw e; //unreachable
-        }
-        catch (Throwable e) {
-          LOG.error("Failed to load --add-opens list from 'OpenedPackages.txt'", e);
-        }
-      }
-    }
-  }
-
-  static boolean loaderValid(@NotNull Project project, @Nullable Module module, @NotNull String qualifiedName) {
-    UserDataHolder holder = module == null ? project : module;
-    var result = holder.getUserData(LOADER_VALID);
-    if (result == null) {
-      result = ReadAction.compute(() -> DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
-        var scope = module != null ? GlobalSearchScope.moduleRuntimeScope(module, true) : GlobalSearchScope.allScope(project);
-        return JavaPsiFacade.getInstance(project).findClass(qualifiedName, scope) != null;
-      }));
-      holder.putUserData(LOADER_VALID, result);
-    }
-    return result;
-  }
 
   private static @Nullable Path getSandboxPath(Sdk jdk) {
     if (jdk.getSdkAdditionalData() instanceof Sandbox sandbox) {

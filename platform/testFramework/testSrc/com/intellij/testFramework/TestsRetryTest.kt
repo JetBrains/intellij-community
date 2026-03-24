@@ -12,7 +12,6 @@ import java.io.File
  * It intentionally mixes JUnit 5 and JUnit 3/4, so it will be run by both runners.
  *
  * @see com.intellij.RetriesImpl.getListenerForOutOfProcessRetry
- * @see com.intellij.TestCaseLoader.explicitTestsFilter
  * @see org.jetbrains.intellij.build.impl.TestingTasksImpl.runJUnit5Engine
  *
  */
@@ -20,18 +19,15 @@ import java.io.File
 class TestsRetryTest : TestCase() {
   @Test
   fun testArtificiallyFailingOnFirstTry() {
-    val propertyName = "intellij.build.test.list.file"
+    val propertyName = "intellij.build.test.retries.failedClasses.file"
     val property = System.getProperty(propertyName, "")
     if (property.isNullOrBlank()) {
       throw AssumptionViolatedException("No re-run property '$propertyName' defined, won't fail")
     }
-    val file = File(property)
-    if (!file.exists()) {
-      fail("Re-run file ('$property') is empty, indicating first run, hence failing")
+    val patterns = System.getProperty("intellij.build.test.patterns", "")
+    if (!patterns.split(";").contains(this.javaClass.name)) {
+      fail("This test is not explicitly listed in 'intellij.build.test.patterns' property, indicating first run, hence failing")
     }
-    val lines = file.readLines()
-    if (!lines.any { it.contains(this.javaClass.name) }) {
-      fail("This class is not in the re-run list at '$property':\n${lines.joinToString("\n")}")
-    }
+    // don't fail on the second run
   }
 }

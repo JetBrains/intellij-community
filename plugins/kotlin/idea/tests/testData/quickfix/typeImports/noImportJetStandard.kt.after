@@ -1,4 +1,5 @@
 // "Remove initializer from property" "true"
+// K2_ERROR: Property with initializer cannot be abstract.
 package a
 
 class M {

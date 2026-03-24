@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
@@ -176,7 +177,9 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
     checkBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        updateItems(model, list, checkBox, popup);
+        WriteIntentReadAction.run(() -> {
+          updateItems(model, list, checkBox, popup);
+        });
         titleUpdater.run();
       }
     });

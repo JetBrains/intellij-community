@@ -64,11 +64,20 @@ public abstract class VcsRootChecker {
     return false;
   }
 
+
   /**
    * Check if the given directory is ignored in the given VCS root.
    * Such situation can happen, when we detect a VCS root above the directory: in that case we should detect the root only if the directory
    * is not ignored from that root (e.g. the root is the home directory, and the VCS is used for storing configs, ignoring everything else).
    */
+  public boolean isIgnored(@NotNull Project project, VirtualFile root, @NotNull VirtualFile checkForIgnore) {
+    return isIgnored(root, checkForIgnore);
+  }
+
+  /**
+   * @deprecated Replaced by {@link #isIgnored(Project, VirtualFile, VirtualFile)}
+   */
+  @Deprecated
   public boolean isIgnored(@NotNull VirtualFile root, @NotNull VirtualFile checkForIgnore) {
     return false;
   }

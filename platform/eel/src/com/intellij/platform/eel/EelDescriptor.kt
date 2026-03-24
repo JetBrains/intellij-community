@@ -41,8 +41,10 @@ interface EelMachine {
 
   /**
    * Converts this machine into a [EelApi] — starts or reuses a running environment.
+   * @throws EelUnavailableException if eel is unavailable (i.e. remote machine is gone, docker container removed e.t.c.). Show it to a user, ask to fix and try again.
    */
   @ApiStatus.Experimental
+  @Throws(EelUnavailableException::class)
   suspend fun toEelApi(descriptor: EelDescriptor): EelApi
 
   fun ownsPath(path: Path): Boolean

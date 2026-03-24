@@ -1,0 +1,67 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_annotationListChanged-a.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/annotationListChanged/a/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_annotationListChanged-a.kotlin_module
+  bar/ImportStarKt.class
+  bar/ReferencedByFqNameKt.class
+  foo/AChild.class
+  foo/AGrandChild.class
+  foo/ATypeParameter.class
+  foo/FunctionParameterKt.class
+  foo/GetAKt.class
+  foo/ReturnTypeImplicitKt.class
+  foo/ReturnTypeKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/annotationListChanged/a/AChild.kt
+  kotlin/classHierarchyAffected/annotationListChanged/a/AGrandChild.kt
+  kotlin/classHierarchyAffected/annotationListChanged/a/ATypeParameter.kt
+  kotlin/classHierarchyAffected/annotationListChanged/a/functionParameter.kt
+  kotlin/classHierarchyAffected/annotationListChanged/a/getA.kt
+  kotlin/classHierarchyAffected/annotationListChanged/a/importStar.kt
+  kotlin/classHierarchyAffected/annotationListChanged/a/referencedByFqName.kt
+  kotlin/classHierarchyAffected/annotationListChanged/a/returnType.kt
+  kotlin/classHierarchyAffected/annotationListChanged/a/returnTypeImplicit.kt
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_annotationListChanged-a.kotlin_module
+  foo/A.class
+  foo/Ann.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/annotationListChanged/a/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_annotationListChanged-a.kotlin_module
+  bar/ImportStarKt.class
+  bar/ReferencedByFqNameKt.class
+  foo/AChild.class
+  foo/AGrandChild.class
+  foo/ATypeParameter.class
+  foo/FunctionParameterKt.class
+  foo/GetAKt.class
+  foo/ReturnTypeImplicitKt.class
+  foo/ReturnTypeKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/annotationListChanged/a/AChild.kt
+  kotlin/classHierarchyAffected/annotationListChanged/a/AGrandChild.kt
+  kotlin/classHierarchyAffected/annotationListChanged/a/ATypeParameter.kt
+  kotlin/classHierarchyAffected/annotationListChanged/a/functionParameter.kt
+  kotlin/classHierarchyAffected/annotationListChanged/a/getA.kt
+  kotlin/classHierarchyAffected/annotationListChanged/a/importStar.kt
+  kotlin/classHierarchyAffected/annotationListChanged/a/referencedByFqName.kt
+  kotlin/classHierarchyAffected/annotationListChanged/a/returnType.kt
+  kotlin/classHierarchyAffected/annotationListChanged/a/returnTypeImplicit.kt
+End of files
+------------------------------------------
+Exit code: OK

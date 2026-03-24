@@ -108,11 +108,12 @@ fun overrideFileEditorManagerImplementation(implementation: Class<out FileEditor
 private suspend fun openProjectPerformTaskCloseProject(projectDir: Path, task: (Project) -> Unit) {
   val projectManager = ProjectManagerEx.getInstanceEx()
   val project = projectManager.openProject(projectDir, createTestOpenProjectOptions())!!
+  val historyManager = EditorHistoryManager.getInstance(project)
   try {
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
         task(project)
-        project.stateStore.saveComponent(EditorHistoryManager.getInstance(project))
+        project.stateStore.saveComponent(historyManager)
       }
     }
   }

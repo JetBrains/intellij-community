@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "mockito",
+  module_name = "intellij.libraries.mockito",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["@lib//:mockito"],
@@ -11,4 +12,19 @@ jvm_library(
     "@lib//:byte-buddy",
   ]
 )
+
+jvm_library(
+  name = "mockito_test_lib",
+  module_name = "intellij.libraries.mockito",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:mockito"],
+  runtime_deps = [":mockito"]
+)
 ### auto-generated section `build intellij.libraries.mockito` end
+
+### auto-generated section `iml intellij.libraries.mockito` start
+exports_files([
+  "intellij.libraries.mockito.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.mockito` end

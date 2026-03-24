@@ -190,6 +190,7 @@ public final class EditorTestUtil {
       .add(CommonDataKeys.HOST_EDITOR, hostEditor)
       .add(CommonDataKeys.EDITOR, editor)
       .add(CommonDataKeys.VIRTUAL_FILE, editor.getVirtualFile())
+      .add(CommonDataKeys.PROJECT, editor.getProject())
       .build();
   }
 
@@ -918,6 +919,7 @@ public final class EditorTestUtil {
       }
     }
   }
+  @RequiresEdt
   public static void buildInitialFoldingsInBackground(@NotNull Editor editor) {
     ThreadingAssertions.assertEventDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();

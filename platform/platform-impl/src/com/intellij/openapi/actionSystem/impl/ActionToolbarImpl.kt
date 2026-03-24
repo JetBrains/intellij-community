@@ -55,7 +55,6 @@ import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.AnimatedIcon
@@ -441,12 +440,15 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     mySecondaryGroupUpdater = secondaryGroupUpdater
   }
 
+  /**
+   * The component order shall be consistent with [effectiveButtonOrder]
+   */
   protected open fun fillToolBar(actions: List<AnAction>, layoutSecondaries: Boolean) {
     var isLastElementSeparator = false
     val rightAligned: MutableList<AnAction> = ArrayList()
     for (i in actions.indices) {
       val action: AnAction = actions[i]
-      if (isAlignmentEnabled() && action is RightAlignedToolbarAction || forceRightAlignment()) {
+      if (isRightAlignedAction(action)) {
         rightAligned.add(action)
         continue
       }
@@ -500,6 +502,11 @@ open class ActionToolbarImpl @JvmOverloads constructor(
 
   protected open fun isSecondaryAction(action: AnAction, actionIndex: Int): Boolean {
     return !myActionGroup.isPrimary(action)
+  }
+
+  private fun isRightAlignedAction(action: AnAction): Boolean {
+    if (forceRightAlignment()) return true
+    return isAlignmentEnabled() && action is RightAlignedToolbarAction
   }
 
   protected open fun isAlignmentEnabled(): Boolean = true
@@ -1124,7 +1131,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       else {
         val icon = AnimatedIcon.Default.INSTANCE
         label.setIcon(EmptyIcon.create(icon.iconWidth, icon.iconHeight))
-        EdtScheduler.getInstance().schedule(Registry.intValue("actionSystem.toolbar.progress.icon.delay", 500), CoroutineSupport.UiDispatcherKind.RELAX) {
+        EdtScheduler.getInstance().schedule(500, CoroutineSupport.UiDispatcherKind.RELAX) {
           label.setIcon(icon)
         }
       }
@@ -1176,13 +1183,16 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     data class Replacement(val buttonIndex: Int, val nextAction: AnAction)
 
     if (newVisibleActions.size != myVisibleActions.size) return false
+    val effectiveOldActions = myVisibleActions.sortedWith(effectiveButtonOrder())
+    val effectiveNewActions = newVisibleActions.sortedWith(effectiveButtonOrder())
+
     val components = getComponents()
     val pairs = ArrayList<Replacement>()
 
     var buttonIndex = 0 // avoid N^2 button search
-    for (index in myVisibleActions.indices) {
-      val prev: AnAction = myVisibleActions[index]
-      val next: AnAction = newVisibleActions[index]
+    for (index in effectiveOldActions.indices) {
+      val prev: AnAction = effectiveOldActions[index]
+      val next: AnAction = effectiveNewActions[index]
       if (next.javaClass != prev.javaClass) return false // in theory, that should be OK, but better to be safe
 
       val isSecondaryAction = isSecondaryAction(next, index)
@@ -1227,7 +1237,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       pairs.add(Replacement(buttonIndex - 1, next))
     }
 
-    if (pairs.size == newVisibleActions.size) {
+    if (pairs.size == effectiveNewActions.size) {
       return false // no gain from in-place updates
     }
 
@@ -1241,6 +1251,18 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       button.validate()
     }
     return true
+  }
+
+  /**
+   * Order actions consistently with [Container.getComponents]
+   */
+  private fun effectiveButtonOrder(): Comparator<AnAction> {
+    return compareBy {
+      when {
+        isRightAlignedAction(it) -> 1
+        else -> 0
+      }
+    }
   }
 
   /**

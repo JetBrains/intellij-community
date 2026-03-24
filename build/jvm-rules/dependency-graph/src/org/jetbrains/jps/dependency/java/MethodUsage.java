@@ -4,6 +4,7 @@ package org.jetbrains.jps.dependency.java;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
+import org.jetbrains.jps.dependency.impl.GraphElementInterner;
 
 import java.io.IOException;
 
@@ -13,12 +14,12 @@ public final class MethodUsage extends MemberUsage{
 
   public MethodUsage(String className, String name, String descriptor) {
     super(className, name);
-    myDescriptor = descriptor;
+    myDescriptor = GraphElementInterner.intern(descriptor);
   }
 
   public MethodUsage(JvmNodeReferenceID clsId, String name, String descriptor) {
     super(clsId, name);
-    myDescriptor = descriptor;
+    myDescriptor = GraphElementInterner.intern(descriptor);
   }
 
   public MethodUsage(@NotNull JvmNodeReferenceID owner, GraphDataInput in) throws IOException {

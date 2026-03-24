@@ -16,7 +16,6 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.conda.saveLocalPythonCondaPath
@@ -31,6 +30,7 @@ import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.ValidatedPathField
 import com.jetbrains.python.sdk.add.v2.Version
+import com.jetbrains.python.sdk.add.v2.withAdjustedWidth
 import com.jetbrains.python.sdk.add.v2.createInstallCondaFix
 import com.jetbrains.python.sdk.add.v2.displayLoaderWhen
 import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
@@ -106,7 +106,7 @@ internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAdd
             }
             .align(Align.FILL)
             .applyToComponent {
-              preferredSize = JBUI.size(preferredSize)
+              preferredSize = preferredSize.withAdjustedWidth
             }
             .component
         }

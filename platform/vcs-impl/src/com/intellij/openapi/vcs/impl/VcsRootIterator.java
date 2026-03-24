@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -54,11 +53,11 @@ public class VcsRootIterator {
     if ((rootFilter != null) && (!rootFilter.accept(file))) {
       return false;
     }
-    return !isIgnoredByVcs(myVcsManager, myProject, file);
+    return !isIgnoredByVcs(myVcsManager, vcsRoot, file);
   }
 
-  private static boolean isIgnoredByVcs(final ProjectLevelVcsManager vcsManager, final Project project, final VirtualFile file) {
-    return ReadAction.compute(() -> project.isDisposed() || vcsManager.isIgnored(file));
+  private static boolean isIgnoredByVcs(final ProjectLevelVcsManager vcsManager, @NotNull VirtualFile vcsRoot, @NotNull VirtualFile file) {
+    return vcsManager.isIgnoredUnderRoot(vcsRoot, file);
   }
 
   private static final class MyRootFilter {
@@ -161,7 +160,7 @@ public class VcsRootIterator {
 
         @Override
         public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
-          if (isIgnoredByVcs(myVcsManager, myProject, file)) return SKIP_CHILDREN;
+          if (isIgnoredByVcs(myVcsManager, myRoot, file)) return SKIP_CHILDREN;
           if (myRootPresentFilter != null && !myRootPresentFilter.accept(file)) return SKIP_CHILDREN;
           if (myProject.isDisposed() || !process(file)) return skipTo(myRoot);
           if (myDirectoryFilter != null && file.isDirectory() && !myDirectoryFilter.shouldGoIntoDirectory(file)) return SKIP_CHILDREN;

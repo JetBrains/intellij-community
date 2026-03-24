@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.envTest.upload
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.internal.statistic.config.EventLogOptions
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
 import com.intellij.internal.statistic.eventLog.LogEventRecordRequest
@@ -11,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.connection.EventLogResultDecorat
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult.ResultCode
+import tools.jackson.databind.ObjectMapper
 import java.io.File
 import java.nio.file.Paths
 import kotlin.io.path.readText
@@ -218,8 +218,8 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
 
     return resultHolder.successContents.map {
       val jsonObject = ObjectMapper().readTree(it)
-      assertEquals(jsonObject["method"].asText(), "POST")
-      SerializationHelper.deserializeLogEventRecordRequest(jsonObject["body"].asText())
+      assertEquals(jsonObject["method"].asString(), "POST")
+      SerializationHelper.deserializeLogEventRecordRequest(jsonObject["body"].asString())
     }
   }
 

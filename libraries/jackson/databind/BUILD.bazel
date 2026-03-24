@@ -9,13 +9,42 @@ resourcegroup(
 
 jvm_library(
   name = "databind",
+  module_name = "intellij.libraries.jackson.databind",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":databind_resources"],
-  exports = ["@lib//:jackson-databind"],
+  exports = [
+    "@lib//:jackson-databind",
+    "//libraries/jackson/annotations",
+  ],
   runtime_deps = [
     "@lib//:jackson-databind",
+    "//libraries/jackson/annotations",
     "//libraries/jackson/jackson",
   ]
 )
+
+jvm_library(
+  name = "databind_test_lib",
+  module_name = "intellij.libraries.jackson.databind",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = [
+    "@lib//:jackson-databind",
+    "//libraries/jackson/annotations",
+    "//libraries/jackson/annotations:annotations_test_lib",
+  ],
+  runtime_deps = [
+    ":databind",
+    "//libraries/jackson/annotations:annotations_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.jackson.databind` end
+
+### auto-generated section `iml intellij.libraries.jackson.databind` start
+exports_files([
+  "intellij.libraries.jackson.databind.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jackson.databind` end

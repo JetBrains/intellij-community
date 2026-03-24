@@ -62,6 +62,12 @@ internal sealed interface PathAnnotationInfo {
 
   object Unspecified : PathAnnotationInfo
 
+  /**
+   * Impossible to determine the path annotation type for the given expression.
+   * This happens when, for example, the source PSI is a [com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl].
+   */
+  object Invalid : PathAnnotationInfo
+
   companion object {
     /**
      * Checks if the given string is a valid filename (no forward or backward slashes).
@@ -270,6 +276,8 @@ internal sealed interface PathAnnotationInfo {
           }
         }
       }
+
+      if (sourcePsi?.textLength == 0) return Invalid
 
       // We don't check if the expression is a string literal or constant that denotes a filename here
       // because we want to handle that in the visitCallExpression method

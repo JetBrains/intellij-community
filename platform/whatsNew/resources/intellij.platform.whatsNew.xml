@@ -1,10 +1,26 @@
 <idea-plugin visibility="public" package="com.intellij.platform.whatsNew">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+  </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.platform.whatsNew.WhatsNewShowOnStartCheckService" order="last"/>
     <applicationService serviceImplementation="com.intellij.platform.whatsNew.WhatsNewInVisionContentProvider" open="true"/>
+    <projectService serviceImplementation="com.intellij.platform.whatsNew.WhatsNewMultipageStartIdProvider" open="true"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.whatsNew.reaction.ReactionCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.whatsNew.collectors.WhatsNewCounterUsageCollector"/>
-
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.platform.whatsNew.collectors.WhatsNewMultipageIdValidationRule"/>
     <registryKey defaultValue="false" description="Whats new test mode" key="whats.new.test.mode" restartRequired="false" />
   </extensions>
   <actions resource-bundle="messages.ActionsBundle">

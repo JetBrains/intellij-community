@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.components.commonSupertype
 import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.isUnitType
 import org.jetbrains.kotlin.analysis.api.components.targetSymbol
+import org.jetbrains.kotlin.analysis.api.components.typeCreator
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -35,8 +36,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
@@ -51,12 +55,14 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -110,8 +116,8 @@ internal object ChangeTypeQuickFixFactories {
         getSuperCallableSymbol = { it.superVariable as KaPropertySymbol },
     )
 
-    context(session: KaSession)
     @OptIn(KaExperimentalApi::class)
+    context(session: KaSession)
     private fun getActualType(ktType: KaType, position: KtElement): KaType {
         return ktType.toFunctionType() ?: with(session) { ktType.approximateToDenotableSupertypeOrSelf(position) } ?: ktType
     }
@@ -141,7 +147,8 @@ internal object ChangeTypeQuickFixFactories {
         val property = this as? KtProperty
         val returnTypes = buildList {
             addAll(returnedExpressions.mapNotNull { returnExpr ->
-                (property?.getPropertyInitializerType() ?: returnExpr.expressionType)?.let { getActualType(it, this@returnType) }
+                val propertyInitializerType = property?.getPropertyInitializerType()
+                (propertyInitializerType ?: returnExpr.expressionType)?.let { getActualType(it, this@returnType) }
                     ?.takeUnless { it is KaErrorType }
             })
             if (!candidateType.isUnitType) {
@@ -191,6 +198,9 @@ internal object ChangeTypeQuickFixFactories {
                         )
                     )
                 }
+
+                addIfNotNull(returnTypeMismatchReportedFromLambdaFix(element, actualType))
+
                 addAll(
                     registerExpressionTypeFixes(diagnosticsPsi, expectedType, actualType)
                 )
@@ -199,6 +209,39 @@ internal object ChangeTypeQuickFixFactories {
                 )
             }
         }
+
+    context(session: KaSession)
+    private fun returnTypeMismatchReportedFromLambdaFix(element: KtElement, actualType: KaType): ModCommandAction? {
+        // Kotlin 2.2.x and earlier return required details about expected and action types in diagnostic
+        if (element.languageVersionSettings.languageVersion < LanguageVersion.KOTLIN_2_3) return null
+
+        // Required type has to be recreated since 2.3
+        val expression =
+            (element as? KtFunctionLiteral)?.parent as? KtLambdaExpression
+
+        val enclosingDeclaration = expression?.parentOfType<KtDeclaration>()
+        val lambdaDeclarationIsProperty = enclosingDeclaration is KtPropertyAccessor
+        if (enclosingDeclaration !is KtCallableDeclaration && !lambdaDeclarationIsProperty) return null
+
+        val newExpressionType =
+            (expression.expressionType as? KaFunctionType)?.changeReturnType(actualType) ?:
+            return null
+
+        val candidateType = getActualType(newExpressionType, enclosingDeclaration)
+        val ktType = enclosingDeclaration.returnType(candidateType)
+        val typeInfo =
+            with(session) {
+                createTypeInfo(ktType)
+            }
+
+        val target =
+            if (lambdaDeclarationIsProperty) enclosingDeclaration.property else enclosingDeclaration as KtCallableDeclaration
+
+        val targetType =
+            if (lambdaDeclarationIsProperty) TargetType.VARIABLE else TargetType.ENCLOSING_DECLARATION
+
+        return UpdateTypeQuickFix(target, targetType, typeInfo)
+    }
 
     internal fun KaSession.createTypeFixesForCalledDeclaration(
         expression: KtExpression,
@@ -231,6 +274,21 @@ internal object ChangeTypeQuickFixFactories {
         val calledFunction = callable.psi as? KtCallableDeclaration ?: return null
         return UpdateTypeQuickFix(calledFunction, TargetType.CALLED_FUNCTION, createTypeInfo(expectedType))
     }
+
+    @OptIn(KaExperimentalApi::class)
+    context(session: KaSession)
+    private fun KaFunctionType.changeReturnType(newReturnType: KaType) : KaFunctionType {
+        val type = this
+        // TODO: could be simplified when KT-85037 is fixed
+        return typeCreator.functionType {
+            receiverType = type.receiverType
+            for (parameterType in type.parameterTypes) {
+                valueParameter(null, parameterType)
+            }
+            returnType = newReturnType
+        }
+    }
+
 
     private fun KaSession.createUpdateTypeFixesForCalledVariable(
         resolvedCall: KaCallInfo,
@@ -276,12 +334,13 @@ internal object ChangeTypeQuickFixFactories {
             createRequireReturnTypeFix(diagnostic.psi)
         }
 
+    @OptIn(KaExperimentalApi::class)
     private fun KaSession.createRequireReturnTypeFix(returnExpr: KtReturnExpression): List<ModCommandAction> {
-        val psi = returnExpr.targetSymbol?.psi
+        val psi = returnExpr.resolveSymbol()?.psi
         val declaration = psi as? KtCallableDeclaration ?: (psi as? KtPropertyAccessor)?.property
             ?: return emptyList()
 
-        val expressionType = returnExpr.returnedExpression?.expressionType ?: return emptyList()
+        val expressionType = returnExpr.returnedExpression?.expressionType ?: builtinTypes.unit
         return listOf(
             UpdateTypeQuickFix(
                 declaration,
@@ -296,13 +355,15 @@ internal object ChangeTypeQuickFixFactories {
             val declaration = diagnostic.psi as? KtProperty
                 ?: return@ModCommandBased emptyList()
 
-            val actualType = getActualType(diagnostic.actualType, declaration)
             val expectedType = diagnostic.expectedType
-            if (actualType.semanticallyEquals(expectedType)) {
+            val actualType = diagnostic.actualType
+            val type = declaration.getPropertyInitializerType() ?: actualType
+            val newActualType = getActualType(type, declaration)
+            if (newActualType.semanticallyEquals(expectedType)) {
                 return@ModCommandBased emptyList()
             }
 
-            registerVariableTypeFixes(declaration, actualType, expectedType)
+            registerVariableTypeFixes(declaration, newActualType, expectedType)
         }
 
     val assignmentTypeMismatch =
@@ -469,9 +530,10 @@ internal object ChangeTypeQuickFixFactories {
         return UpdateTypeQuickFix(singleMatchingOverriddenFunctionPsi, TargetType.BASE_DECLARATION, createTypeInfo(type))
     }
 
-    private fun KaSession.createTypeInfo(ktType: KaType) = with(CallableReturnTypeUpdaterUtils.TypeInfo) {
-        createByKtTypes(ktType)
-    }
+    private fun KaSession.createTypeInfo(ktType: KaType): CallableReturnTypeUpdaterUtils.TypeInfo =
+        with(CallableReturnTypeUpdaterUtils.TypeInfo) {
+            createByKtTypes(ktType)
+        }
 
     private fun getDestructuringDeclarationEntryThatTypeMismatchComponentFunction(
         componentName: Name,

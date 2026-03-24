@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,6 +54,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointPr
 
 import javax.swing.SwingUtilities;
 import java.lang.reflect.InvocationTargetException;
+import java.text.MessageFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -102,6 +104,10 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     return true;
   }
 
+  protected boolean assertAllBreakpointsHit() {
+    return true;
+  }
+
   public final List<InvokeRatherLaterRequest> myRatherLaterRequests = new ArrayList<>();
 
   protected DebugProcessImpl getDebugProcess() {
@@ -144,9 +150,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     ThreadTracker.awaitJDIThreadsTermination(100, TimeUnit.SECONDS);
     try {
       myDebugProcess = null;
-      myBreakpointProvider = null;
       myRatherLaterRequests.clear();
       myWasUsedOnlyDefaultSuspendPolicy = true;
+      if (assertAllBreakpointsHit() && myBreakpointProvider != null) {
+        myBreakpointProvider.assertAllBreakpointsHit();
+      }
+      myBreakpointProvider = null;
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -458,7 +467,8 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   public void createBreakpoints(PsiFile file) {
     Runnable runnable = () -> {
       BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
-      Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+      Document document =
+        BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> PsiDocumentManager.getInstance(myProject).getDocument(file));
       assert document != null;
       String text = document.getText();
 
@@ -529,7 +539,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
             }
           }
           case "Line" -> {
-            breakpoint = breakpointManager.addLineBreakpoint(document, commentLine + 1);
+            Integer lambdaOrdinal = comment.readIntValue("lambdaOrdinal");
+            breakpoint = breakpointManager.addLineBreakpoint(document, commentLine + 1, p -> {
+              if (lambdaOrdinal != null) {
+                p.setEncodedInlinePosition(JavaLineBreakpointProperties.encodeInlinePosition(lambdaOrdinal.intValue(), false));
+              }
+            });
             if (breakpoint != null) {
               systemPrintln("LineBreakpoint created at " + breakpointLocation);
             }
@@ -600,6 +615,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     private final DebugProcessImpl myDebugProcess;
     private final List<SuspendContextRunnable> myRepeatingRunnables = new ArrayList<>();
     private final Queue<SuspendContextRunnable> myScriptRunnables = new ArrayDeque<>();
+    private int breakpointCount;
 
     public BreakpointProvider(DebugProcessImpl debugProcess) {
       myDebugProcess = debugProcess;
@@ -607,6 +623,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
     public void onBreakpoint(SuspendContextRunnable runnable) {
       myScriptRunnables.add(runnable);
+      breakpointCount++;
     }
 
     public void onEveryBreakpoint(SuspendContextRunnable runnable) {
@@ -673,6 +690,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       // do not switch context on resume inside stepping
       if (pausedContext != null && !myDebugProcess.isSteppingInProgress()) {
         paused(pausedContext);
+      }
+    }
+
+    private void assertAllBreakpointsHit() {
+      if (breakpointCount > 0 && !myScriptRunnables.isEmpty()) {
+        fail(MessageFormat.format("{0} from {1} breakpoints are not hit", myScriptRunnables.size(), breakpointCount));
       }
     }
   }

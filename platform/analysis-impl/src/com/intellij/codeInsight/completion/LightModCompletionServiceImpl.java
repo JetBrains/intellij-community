@@ -6,8 +6,8 @@ import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.WeighingContext;
-import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemProvider;
+import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,7 +27,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 /**
  * A lightweight implementation of completion using ModCompletion providers 
@@ -37,7 +36,7 @@ import java.util.function.Consumer;
 @ApiStatus.Internal
 public final class LightModCompletionServiceImpl {
   public static void getItems(PsiFile file, int caretOffset, int invocationCount, CompletionType type,
-                              Consumer<ModCompletionItem> sink) {
+                              ModCompletionResult sink) {
     CharSequence sequence = file.getFileDocument().getCharsSequence();
     int start = findStart(caretOffset, sequence);
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
@@ -54,7 +53,7 @@ public final class LightModCompletionServiceImpl {
   }
 
   public static void getItems(PsiFile file, int startOffset, int caretOffset, int invocationCount, CompletionType type,  
-                              Consumer<ModCompletionItem> sink) {
+                              ModCompletionResult sink) {
     PsiElement element;
     PsiElement original = file.findElementAt(startOffset);
     if (startOffset == caretOffset) {

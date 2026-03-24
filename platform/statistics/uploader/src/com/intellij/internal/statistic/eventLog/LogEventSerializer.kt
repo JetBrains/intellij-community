@@ -1,27 +1,28 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
-import com.fasterxml.jackson.core.JsonParseException
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.exc.StreamReadException
-import com.fasterxml.jackson.databind.DatabindException
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.JsonDeserializer
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.databind.module.SimpleModule
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.BooleanNode
-import com.fasterxml.jackson.databind.node.DoubleNode
-import com.fasterxml.jackson.databind.node.LongNode
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.databind.node.TextNode
-import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
+import tools.jackson.core.JacksonException
+import tools.jackson.core.JsonParser
+import tools.jackson.core.StreamReadFeature
+import tools.jackson.core.exc.StreamReadException
+import tools.jackson.databind.DatabindException
+import tools.jackson.databind.DeserializationContext
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.ValueDeserializer
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.module.SimpleModule
+import tools.jackson.databind.node.ArrayNode
+import tools.jackson.databind.node.BooleanNode
+import tools.jackson.databind.node.DoubleNode
+import tools.jackson.databind.node.LongNode
+import tools.jackson.databind.node.ObjectNode
+import tools.jackson.databind.node.StringNode
+import tools.jackson.module.kotlin.kotlinModule
 import java.io.OutputStreamWriter
 import kotlin.math.roundToLong
 
@@ -83,11 +84,11 @@ object LogEventSerializer {
     else {
       action.put("count", event.event.count)
     }
-    action.set<JsonNode>("data", mapper.valueToTree(event.event.data))
+    action.set("data", mapper.valueToTree(event.event.data))
     action.put("id", event.event.id)
 
-    obj.set<ObjectNode>("group", group)
-    obj.set<ObjectNode>("event", action)
+    obj.set("group", group)
+    obj.set("event", action)
     return obj
   }
 
@@ -96,14 +97,14 @@ object LogEventSerializer {
   }
 }
 
-class LogEventRecordRequestJsonDeserializer : JsonDeserializer<LogEventRecordRequest>() {
-  @Throws(JsonParseException::class)
+class LogEventRecordRequestJsonDeserializer : ValueDeserializer<LogEventRecordRequest>() {
+  @Throws(JacksonException::class)
   override fun deserialize(jsonParser: JsonParser, context: DeserializationContext): LogEventRecordRequest {
-    val node: JsonNode = jsonParser.codec.readTree(jsonParser)
+    val node: JsonNode = jsonParser.readValueAsTree()
 
-    val recorder = node.get("recorder").asText()
-    val product = node.get("product").asText()
-    val device = node.get("device").asText()
+    val recorder = node.get("recorder").asString()
+    val product = node.get("product").asString()
+    val device = node.get("device").asString()
     var internal = false
     if (node.has("internal")) {
       internal = node.get("internal").asBoolean()
@@ -140,7 +141,7 @@ object SerializationHelper {
       .addModule(kotlinModule())
       .addModule(module)
       .enable(DeserializationFeature.USE_LONG_FOR_INTS)
-      .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+      .enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
       .build()
   }
@@ -154,7 +155,7 @@ object SerializationHelper {
       .addModule(kotlinModule())
       .addModule(module)
       .enable(DeserializationFeature.USE_LONG_FOR_INTS)
-      .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+      .enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
       .build()
   }
@@ -202,20 +203,20 @@ class LogEventDeserializer(val logger: DataCollectorDebugLogger) {
 /**
  * Deserialize events manually, so they won't be changed by scrambling
  */
-class LogEventJsonDeserializer : JsonDeserializer<LogEvent>() {
-  @Throws(JsonParseException::class)
+class LogEventJsonDeserializer : ValueDeserializer<LogEvent>() {
+  @Throws(JacksonException::class)
   override fun deserialize(jsonParser: JsonParser, context: DeserializationContext): LogEvent {
-    val node: JsonNode = jsonParser.codec.readTree(jsonParser)
+    val node: JsonNode = jsonParser.readValueAsTree()
 
-    val recorderVersion = node.get("recorder_version").asText()
-    val session = node.get("session").asText()
-    val build = node.get("build").asText()
-    val bucket = node.get("bucket").asText()
+    val recorderVersion = node.get("recorder_version").asString()
+    val session = node.get("session").asString()
+    val build = node.get("build").asString()
+    val bucket = node.get("bucket").asString()
     val time = node.get("time").asLong()
 
     val group = node.get("group")
-    val groupId = group.get("id").asText()
-    val groupVersion = group.get("version").asText()
+    val groupId = group.get("id").asString()
+    val groupVersion = group.get("version").asString()
 
     val actionObj = node.get("event")
     val action = createAction(actionObj)
@@ -224,32 +225,38 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent>() {
 
   private fun transformData(value: JsonNode): Any {
     return when (value) {
-      is TextNode -> value.textValue()
+      is StringNode -> value.asString() ?: ""
       is LongNode -> value.longValue()
       is BooleanNode -> value.booleanValue()
-      is ArrayNode -> value.map { if (it != null) transformData(it) else null }
+      is ArrayNode -> {
+        val data = ArrayList<Any>(value.size())
+        value.forEach { entryValue ->
+          data.add(transformData(entryValue))
+        }
+        data
+      }
       is ObjectNode -> {
-        val data = HashMap<Any, Any?>()
+        val data = HashMap<Any, Any>()
         value.properties().forEach { (entryKey, entryValue) ->
-          val newValue = if (entryValue != null) transformData(entryValue) else null
+          val newValue = transformData(entryValue)
           data[entryKey] = newValue
         }
-        return data
+        data
       }
       is DoubleNode -> {
         if (value.doubleValue() % 1 == 0.0) {
-          return value.doubleValue().roundToLong()
+          value.doubleValue().roundToLong()
         }
         else {
-          return value.doubleValue()
+          value.doubleValue()
         }
       }
-      else -> value
+      else -> value as Any
     }
   }
 
   fun createAction(obj: JsonNode): LogEventAction {
-    val id = obj.get("id").asText()
+    val id = obj.get("id").asString()
     val isState = obj.has("state") && obj.get("state").asBoolean()
     val data = HashMap<String, Any>()
     if (obj.has("data")) {

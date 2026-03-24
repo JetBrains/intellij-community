@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -56,7 +58,8 @@ public class ActionsTreeTest {
   private static final String NON_EXISTENT_ACTION = "DummyNonExistent";
   private static final String ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION = "DummyWithUseShortcutOfExistentAction";
   private static final String ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED = "DummyWithUseShortcutOfExistentActionRedefined";
-  private static final String ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT = "DummyWithUseShortcutOfExistentActionRedefinedInParent";
+  private static final String ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT =
+    "DummyWithUseShortcutOfExistentActionRedefinedInParent";
   private static final String ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION = "DummyWithUseShortcutOfNonExistentAction";
 
   private static final String ACTION_WITH_FIXED_SHORTCUTS = "DummyActionWithFixedShortcuts";
@@ -73,6 +76,7 @@ public class ActionsTreeTest {
   private AnAction myActionWithUseShortcutOfExistentRedefinedInParent;
   private AnAction myActionWithUseShortcutOfNonExistent;
   private AnAction myActionWithFixedShortcuts;
+  private KeymapImpl myKeymap;
 
   private ActionsTree actionTree;
 
@@ -96,7 +100,8 @@ public class ActionsTreeTest {
     actionManager.registerAction(EXISTENT_ACTION, myActionExistent);
     actionManager.registerAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION, myActionWithUseShortcutOfExistent);
     actionManager.registerAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED, myActionWithUseShortcutOfExistentRedefined);
-    actionManager.registerAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT, myActionWithUseShortcutOfExistentRedefinedInParent);
+    actionManager.registerAction(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT,
+                                 myActionWithUseShortcutOfExistentRedefinedInParent);
     actionManager.registerAction(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION, myActionWithUseShortcutOfNonExistent);
     actionManager.registerAction(ACTION_WITH_FIXED_SHORTCUTS, myActionWithFixedShortcuts);
 
@@ -105,7 +110,7 @@ public class ActionsTreeTest {
     actionManager.bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
     actionManager.bindShortcuts(NON_EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
 
-    setRestrictions(testDisposable, new ActionShortcutRestrictions(){
+    setRestrictions(testDisposable, new ActionShortcutRestrictions() {
       @NotNull
       @Override
       public ShortcutRestrictions getForActionId(String actionId) {
@@ -138,10 +143,10 @@ public class ActionsTreeTest {
     parent.setName("parent");
     parent.addShortcut(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT, shortcut1);
     parent.setCanModify(false);
-    KeymapImpl child = parent.deriveKeymap("child");
-    child.addShortcut(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED, shortcut2);
-    child.addShortcut(ACTION_EDITOR_DELETE_WITH_SHORTCUT, shortcut2);
-    actionTree.reset(child, new QuickList[0]);
+    myKeymap = parent.deriveKeymap("child");
+    myKeymap.addShortcut(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED, shortcut2);
+    myKeymap.addShortcut(ACTION_EDITOR_DELETE_WITH_SHORTCUT, shortcut2);
+    actionTree.reset(myKeymap, new QuickList[0]);
   }
 
   @AfterEach
@@ -215,7 +220,7 @@ public class ActionsTreeTest {
       try {
         AnAction stub = manager.getActionOrStub(id);
         AnAction action = manager.getAction(id);
-        String actionIdAndClass = "'"+id + "' (" + action.getClass() + ")";
+        String actionIdAndClass = "'" + id + "' (" + action.getClass() + ")";
         if (stub != action) {
           Presentation before = stub.getTemplatePresentation();
           Presentation after = action.getTemplatePresentation();
@@ -244,14 +249,14 @@ public class ActionsTreeTest {
 
   private static void checkPresentationProperty(String name, String message, Object expected, Object actual) {
     if (!Objects.equals(expected, actual)) {
-      LOG.debug(name + " updated: "+ message + "; old:" + expected + "; new:" + actual);
+      LOG.debug(name + " updated: " + message + "; old:" + expected + "; new:" + actual);
     }
   }
 
   @Test
   public void testFiltering() {
     doTest("Dummy",
-           // all below actions should still be present, as they contain 'Dummy' in their actionId
+      // all below actions should still be present, as they contain 'Dummy' in their actionId
            Arrays.asList(
              ACTION_WITHOUT_TEXT_AND_DESCRIPTION,
              ACTION_WITH_TEXT_ONLY,
@@ -268,6 +273,21 @@ public class ActionsTreeTest {
              ACTION_WITH_FIXED_SHORTCUTS
            )
     );
+  }
+
+  @Test
+  public void testCreateMainGroupDirectly() {
+    Group mainGroup = ActionTreeGroupUtil.createMainGroup(null, myKeymap, new QuickList[0], "Dummy", true,
+                                                          ActionsTreeUtil.isActionFiltered(ActionManager.getInstance(), myKeymap, null,
+                                                                                           "Dummy", true));
+    mainGroup.initIds();
+
+    assertEquals(KeyMapBundle.message("all.actions.group.title"), mainGroup.getName());
+    assertTrue(ContainerUtil.exists(mainGroup.getChildren(), o -> o instanceof Group group &&
+                                                                  KeyMapBundle.message("editor.actions.group.title")
+                                                                    .equals(group.getName())));
+    assertTrue(mainGroup.containsId(ACTION_WITHOUT_TEXT_AND_DESCRIPTION));
+    assertFalse(mainGroup.containsId(ACTION_WITH_FIXED_SHORTCUTS));
   }
 
   private void doTest(String filter, List<String> idsThatMustBePresent, List<String> idsThatMustNotBePresent) {

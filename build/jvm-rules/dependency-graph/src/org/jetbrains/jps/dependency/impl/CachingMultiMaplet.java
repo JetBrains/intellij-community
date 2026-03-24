@@ -5,10 +5,12 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.MultiMaplet;
+import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.util.Iterators;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.function.BiFunction;
 
 public final class CachingMultiMaplet<K, V> implements MultiMaplet<K, V> {
 
@@ -81,6 +83,16 @@ public final class CachingMultiMaplet<K, V> implements MultiMaplet<K, V> {
       finally {
         myCache.invalidate(key);
       }
+    }
+  }
+
+  @Override
+  public void update(K key, @NotNull Iterable<V> dataAfter, BiFunction<? super Iterable<V>, ? super Iterable<V>, Difference.Specifier<? extends V, ?>> diffComparator) {
+    try {
+      myDelegate.update(key, dataAfter, diffComparator);
+    }
+    finally {
+      myCache.invalidate(key);
     }
   }
 

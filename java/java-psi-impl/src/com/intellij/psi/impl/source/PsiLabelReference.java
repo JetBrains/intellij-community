@@ -8,7 +8,6 @@ import com.intellij.psi.PsiLabeledStatement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,11 +62,6 @@ public class PsiLabelReference implements PsiReference {
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
     return resolve() == element;
-  }
-
-  @Override
-  public String @NotNull [] getVariants() {
-    return ArrayUtil.toStringArray(PsiImplUtil.findAllEnclosingLabels(myStatement));
   }
 
   @Override

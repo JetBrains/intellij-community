@@ -15,6 +15,8 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.PathUtil
 import com.jetbrains.rd.framework.RdId
 import com.jetbrains.rd.util.string.IPrintable
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.KotlinModuleKind
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertNotNull
 import kotlin.script.experimental.api.SourceCode
@@ -22,10 +24,12 @@ import kotlin.script.experimental.api.SourceCode
 internal object LibrariesRequiredForWorkspace {
   val workspaceStorage = ModuleLibrary("intellij.platform.workspace.storage")
   val workspaceJpsEntities = ModuleLibrary("intellij.platform.workspace.jps")
+  val jetbrainsAnnotations = JarLibrary("jetbrains-annotations", ApiStatus::class.java)
   private val intellijJava = ModuleLibrary("intellij.java")
 
   private val rider = ModuleLibrary("intellij.rider")
   private val riderUnityPlugin = ModuleLibrary("intellij.rider.plugins.unity")
+  private val riderUnityPluginModel = ModuleLibrary("intellij.rider.plugins.unity.model")
   private val riderModelGenerated = ModuleLibrary("intellij.rider.model.generated")
   private val rdIdeModelGenerated = ModuleLibrary("intellij.rd.ide.model.generated")
   private val riderRdClient = ModuleLibrary("intellij.rider.rdclient.dotnet")
@@ -40,6 +44,7 @@ internal object LibrariesRequiredForWorkspace {
 
   private val kotlinJpsCommon = JarLibrary("kotlinc-kotlin-jps-common", KotlinModuleKind::class.java)
   private val kotlinScriptingCommon = JarLibrary("kotlinc-kotlin-scripting-common", SourceCode::class.java)
+  private val kotlinCompilerCommon = JarLibrary("kotlinc-kotlin-compiler-common", K1Deprecation::class.java)
   private val rdCore = JarLibrary("rd-core", IPrintable::class.java)
   private val rdFramework = JarLibrary("rd-framework", RdId::class.java)
   private val androidStudioPlatform = JarLibrary("studio-platform", AgpVersion::class.java)
@@ -50,19 +55,22 @@ internal object LibrariesRequiredForWorkspace {
         listOf(intellijJava)
       }
       "intellij.rider.plugins.unity" -> {
-        listOf(riderUnityPlugin, rdCore)
+        listOf(riderUnityPlugin, rdCore, riderRdClient, riderUnityPluginModel)
       }
       "intellij.rider" -> {
         listOf(riderRdClient)
       }
       "intellij.rider.rdclient.dotnet" -> {
-        listOf(rdFramework, rdCore, riderModelGenerated, riderUnityPlugin, rider, rdIdeModelGenerated)
+        listOf(rdFramework, rdCore, riderModelGenerated, rdIdeModelGenerated)
       }
       "intellij.kotlin.base.facet" -> {
         listOf(intellijJava, kotlinJpsCommon)
       }
       "intellij.kotlin.base.scripting" -> {
         listOf(kotlinScriptingCommon)
+      }
+      "kotlin.base.scripting.k1" -> {
+        listOf(kotlinCompilerCommon)
       }
       "intellij.kotlin.gradle.scripting" -> {
         listOf(kotlinBaseScripting)
@@ -80,7 +88,7 @@ internal object LibrariesRequiredForWorkspace {
         listOf(cidrProjectModel)
       }
       "intellij.android.projectSystem.gradle" -> {
-        listOf(androidProjectSystem, androidGradleModels, androidStudioPlatform)
+        listOf(androidProjectSystem, androidGradleModels, androidStudioPlatform, gradle, gradleToolingExtension)
       }
       else -> {
         emptyList()

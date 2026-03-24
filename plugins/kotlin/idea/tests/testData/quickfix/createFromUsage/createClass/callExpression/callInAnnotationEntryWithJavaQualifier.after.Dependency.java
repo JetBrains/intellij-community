@@ -1,7 +1,9 @@
+import org.jetbrains.annotations.NotNull;
+
 class J {
 
-    public static @interface bar {
-        String s();
+    public @interface bar {
+        @NotNull String string();
 
         int i();
     }

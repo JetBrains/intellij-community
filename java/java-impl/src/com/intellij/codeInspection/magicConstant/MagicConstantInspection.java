@@ -24,6 +24,8 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.JdkUtils;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.JavaPsiFacade;
@@ -247,6 +249,10 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
   public static Runnable getAttachAnnotationsJarFix(@NotNull Project project) {
     Boolean found = project.getUserData(ANNOTATIONS_BEING_ATTACHED);
     if (found != null) {
+      return null;
+    }
+    if (!(VirtualFileManager.getInstance().getFileSystem(LocalFileSystem.PROTOCOL) instanceof LocalFileSystem)) {
+      // Likely, analyzer context: not supported
       return null;
     }
 

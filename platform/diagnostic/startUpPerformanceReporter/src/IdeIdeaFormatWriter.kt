@@ -2,7 +2,7 @@
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.platform.diagnostic.startUpPerformanceReporter
 
-import com.fasterxml.jackson.core.JsonGenerator
+import tools.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.ThreadNameManager
@@ -13,8 +13,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.tree.IElementType
 import com.intellij.ui.icons.IconLoadMeasurer
-import com.intellij.util.io.jackson.array
-import com.intellij.util.io.jackson.obj
+import com.intellij.util.io.jackson.*
 import com.intellij.util.io.sha3_512
 import com.intellij.util.lang.ClassPath
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap

@@ -103,6 +103,7 @@ object KotlinElementFactory {
     fun newFieldElement(property: KtProperty): FieldElement {
         val fe = FieldElement()
         fe.name = property.nameIdentifier?.text ?: _NO_NAME_PROVIDED_
+        fe.accessor = property.nameIdentifier?.text
         if (property.hasModifier(KtTokens.CONST_KEYWORD)) fe.isConstant = true
 
         val propertySymbol = property.symbol as? KaPropertySymbol ?: return fe
@@ -121,6 +122,7 @@ object KotlinElementFactory {
     fun newFieldElement(parameter: KtParameter): FieldElement {
         val fe = FieldElement()
         fe.name = parameter.nameIdentifier?.text ?: _NO_NAME_PROVIDED_
+        fe.accessor = parameter.nameIdentifier?.text
         setElementInfo(fe, parameter.returnType, parameter.modifierList)
         return fe
     }

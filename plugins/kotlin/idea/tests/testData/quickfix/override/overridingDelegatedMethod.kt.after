@@ -1,4 +1,6 @@
 // "Make XX.foo open" "true"
+// K2_ERROR: 'foo' in 'A' is final and cannot be overridden.
+// K2_ERROR: Modifier 'final' is not applicable inside 'interface'.
 interface X {
     fun foo()
 }

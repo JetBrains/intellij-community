@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractPrimaryParameters
+import org.jetbrains.kotlin.idea.codeinsight.utils.isPositionalDestructuringType
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -52,11 +53,13 @@ internal class ConvertNameBasedDestructuringShortFormToFullInspection : KotlinAp
     override fun KaSession.prepareContext(element: KtDestructuringDeclaration): Unit? {
         // Just verify that we can extract primary parameters - the actual work will be done in the QuickFix
         if (extractPrimaryParameters(element) == null) return null
+        // Exclude stdlib types - they should use brackets [x, y] instead
+        if (element.isPositionalDestructuringType()) return null
         return Unit
     }
 }
 
-private class ConvertNameBasedDestructuringShortFormToFullFix : KotlinModCommandQuickFix<KtDestructuringDeclaration>() {
+internal class ConvertNameBasedDestructuringShortFormToFullFix : KotlinModCommandQuickFix<KtDestructuringDeclaration>() {
 
     override fun getFamilyName(): String = KotlinBundle.message("convert.to.full.name.based.form.destructing")
 

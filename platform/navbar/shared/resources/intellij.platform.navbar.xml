@@ -1,2 +1,9 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang.impl"/>
+  </dependencies>
+  <!-- endregion -->
 </idea-plugin>

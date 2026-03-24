@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.startUpPerformanceReporter
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
@@ -10,11 +8,16 @@ import com.intellij.diagnostic.ThreadNameManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.jackson.array
+import com.intellij.util.io.jackson.createGenerator
 import com.intellij.util.io.jackson.obj
+import com.intellij.util.io.jackson.writeNumberField
+import com.intellij.util.io.jackson.writeStringField
 import com.intellij.util.system.OS
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import org.jetbrains.annotations.ApiStatus.Internal
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.json.JsonFactory
 import java.io.CharArrayWriter
 import java.io.Writer
 import java.nio.ByteBuffer
@@ -216,9 +219,7 @@ class ExposingCharArrayWriter : CharArrayWriter(8192) {
 }
 
 internal fun createJsonGenerator(output: Writer): JsonGenerator {
-  val writer = JsonFactory().createGenerator(output)
-  writer.prettyPrinter = MyJsonPrettyPrinter()
-  return writer
+  return JsonFactory().createGenerator(output, MyJsonPrettyPrinter())
 }
 
 // to make output more compact (quite a lot of slow components)
@@ -228,7 +229,7 @@ private class MyJsonPrettyPrinter : IntelliJPrettyPrinter() {
   override fun writeStartObject(g: JsonGenerator) {
     objectLevel++
     if (objectLevel > 1) {
-      _objectIndenter = FixedSpaceIndenter.instance
+      _objectIndenter = FixedSpaceIndenter.instance()
     }
     super.writeStartObject(g)
   }

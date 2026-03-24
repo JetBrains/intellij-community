@@ -44,6 +44,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		(	common.attrs
 		&	source.attrs.src
 		&	source.attrs.type?
+		&	source.attrs.media?
 		)
 		source.attrs.src =
 			attribute src {
@@ -52,6 +53,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 		source.attrs.type =
 			attribute type {
 				common.data.mimetype
+			}
+		source.attrs.media =
+			attribute media {
+				common.data.mediaquery
 			}
 	source.inner =
 		( empty )

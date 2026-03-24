@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil.wrap
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -56,7 +55,7 @@ object VcsLogComponents {
     colorManager: VcsLogColorManager,
     parentDisposable: Disposable,
   ): VcsLogGraphTable {
-    val graphTableModel = GraphTableModel(logData, { logUi.requestMore(EmptyRunnable.INSTANCE) }, logUi.properties)
+    val graphTableModel = GraphTableModel(logData, { logUi.requestMore() }, logUi.properties)
     return createTable(logUi.id, graphTableModel, logUi.properties, colorManager, { logUi.refresher.onRefresh() }, filterUi,
                        { commitHash: String -> logUi.jumpToHash(commitHash, false, true) },
                        parentDisposable)

@@ -169,13 +169,12 @@ class ControllerBackedStoreTest {
     store.save(forceSavingAllSettings = true)
 
     assertThat(jsonDomToXml(saved!!)).isEqualTo(testElementXml)
-    assertThat(saved!!.get("name")?.jsonPrimitive?.content).isEqualTo("test")
-    assertThat(saved!!.get("attributes")?.jsonObject?.toString()).isEqualTo("""{"answer":"42","foo":"bar"}""")
-    assertThat(saved!!.get("children")!!.jsonArray.get(0).jsonObject.get("content")!!.jsonPrimitive.content).isEqualTo("hello")
-    assertThat(saved!!).hasSize(3)
+    assertThat(saved.get("name")?.jsonPrimitive?.content).isEqualTo("test")
+    assertThat(saved.get("attributes")?.jsonObject?.toString()).isEqualTo("""{"answer":"42","foo":"bar"}""")
+    assertThat(saved.get("children")!!.jsonArray.get(0).jsonObject.get("content")!!.jsonPrimitive.content).isEqualTo("hello")
+    assertThat(saved).hasSize(3)
 
     toReturn = saved
-    saved = null
     store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     assertThat(JDOMUtil.write(component.state)).isEqualTo(testElementXml)
   }

@@ -5,11 +5,12 @@ import com.intellij.lexer.Lexer
 import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.notebooks.visualization.NotebookCellLines.MarkersAtLines
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.keyFMap.KeyFMap
 import kotlin.math.max
 
 interface NotebookCellLinesLexer {
-  fun markerSequence(chars: CharSequence, ordinalIncrement: Int, offsetIncrement: Int, defaultLanguage: Language): Sequence<Marker>
+  fun markerSequence(chars: CharSequence, ordinalIncrement: Int, offsetIncrement: Int, defaultLanguage: Language, file: VirtualFile?): Sequence<Marker>
 
   private data class IntervalInfo(val lineNumber: Int, val cellType: CellType, val markersAtLInes: MarkersAtLines, val data: KeyFMap)
 

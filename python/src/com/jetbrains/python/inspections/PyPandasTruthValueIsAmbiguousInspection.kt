@@ -31,7 +31,7 @@ class PyPandasTruthValueIsAmbiguousInspection : PyInspection() {
   private class Visitor(private val holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
     override fun visitPyAssertStatement(node: PyAssertStatement) {
       super.visitPyAssertStatement(node)
-      val expression = node.getArguments().firstOrNull() ?: return
+      val expression = node.arguments.firstOrNull() ?: return
       reportProblems(expression)
     }
 

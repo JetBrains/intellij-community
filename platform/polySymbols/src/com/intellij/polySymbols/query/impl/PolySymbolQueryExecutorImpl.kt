@@ -59,7 +59,7 @@ class PolySymbolQueryExecutorImpl(
 
   override val allowResolve: Boolean = if (PlatformUtils.isJetBrainsClient()) false else allowResolve
 
-  private val rootScope: List<PolySymbolScope> = initializeCompoundScopes(rootScope)
+  internal val rootScope: List<PolySymbolScope> = initializeCompoundScopes(rootScope)
   private var nestingLevel: Int = 0
 
   override var keepUnresolvedTopLevelReferences: Boolean = false
@@ -373,10 +373,6 @@ class PolySymbolQueryExecutorImpl(
         .sortAndDeduplicate()
       result
     }
-
-
-  override fun getModificationCount(): Long =
-    rootScope.sumOf { it.modificationCount } + namesProvider.modificationCount + resultsCustomizer.modificationCount
 
   @RequiresReadLock
   private fun <T, P : PolySymbolQueryParams> runQuery(

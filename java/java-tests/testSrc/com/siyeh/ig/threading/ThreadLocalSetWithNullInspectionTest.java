@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -12,8 +12,8 @@ public class ThreadLocalSetWithNullInspectionTest extends LightJavaInspectionTes
       final class Simple {
           public static void main(String[] args) {
               ThreadLocal<Integer> threadLocal = new ThreadLocal<>();
-              (getThreadLocal(threadLocal)).set((null));
-              threadLocal.set(null);
+              (getThreadLocal(threadLocal)).<warning descr="'ThreadLocal.set()' with null as an argument may cause memory leak">set</warning>((null));
+              threadLocal.<warning descr="'ThreadLocal.set()' with null as an argument may cause memory leak">set</warning>(null);
           }
       
           private static ThreadLocal<Integer> getThreadLocal(ThreadLocal<Integer> threadLocal) {

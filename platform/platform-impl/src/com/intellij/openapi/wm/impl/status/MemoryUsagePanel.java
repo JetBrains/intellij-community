@@ -2,24 +2,31 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.diagnostic.PlatformMemoryUtil;
+import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.Gray;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.LazyInitializer.LazyValue;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.io.DirectByteBufferAllocator;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.system.OS;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jetbrains.JBR;
+import com.jetbrains.SystemUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,17 +184,23 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
       int usedBarLength = (int)(barWidth * usedMem / maxMem);
       int allocatedBarLength = (int)(barWidth * allocatedMem / maxMem);
 
-      // background
+      boolean isIslandTheme = IslandsState.Companion.isEnabled();
+      int arc     = isIslandTheme ? JBUI.scale(6) : 0;
+      int yOffset = isIslandTheme ? JBUI.scale(3) : 0;
+      int hDelta  = isIslandTheme ? JBUI.scale(8) : 0;
+
+      GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
       g.setColor(UIUtil.getPanelBackground());
-      g.fillRect(0, 0, barWidth, size.height);
+      g.fillRoundRect(0, yOffset, barWidth, size.height - hDelta, arc, arc);
 
       // gauge (allocated)
       g.setColor(myUnusedColor);
-      g.fillRect(0, 0, allocatedBarLength, size.height);
+      g.fillRoundRect(0, yOffset, allocatedBarLength, size.height - hDelta, arc, arc);
 
       // gauge (used)
       g.setColor(myUsedColor);
-      g.fillRect(0, 0, usedBarLength, size.height);
+      g.fillRoundRect(0, yOffset, usedBarLength, size.height - hDelta, arc, arc);
+      config.restore();
 
       //text
       super.paintComponent(g);

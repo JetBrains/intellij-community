@@ -1,4 +1,5 @@
 // "Add star projections" "true"
+// K2_ERROR: 6 type arguments expected. Use 'A<*, *>.B<*, *>.C<*, *>' if you do not intend to pass type arguments.
 class A<T, U> {
     inner class B<V, W> {
         inner class C<X, Y>

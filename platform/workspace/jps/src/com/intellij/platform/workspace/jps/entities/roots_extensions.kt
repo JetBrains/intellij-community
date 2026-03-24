@@ -15,6 +15,10 @@ import org.jetbrains.annotations.NonNls
 /**
  * Stores order of excluded roots in iml file.
  * This is needed to ensure that corresponding tags are saved in the same order to avoid unnecessary modifications of iml file.
+ *
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
  */
 @Internal
 interface SourceRootOrderEntity : WorkspaceEntity {
@@ -68,6 +72,10 @@ val ContentRootEntity.sourceRootOrder: SourceRootOrderEntity?
 
 /**
  * Describes custom properties of [SourceFolder][com.intellij.openapi.roots.SourceFolder].
+ *
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
  */
 @Internal
 interface CustomSourceRootPropertiesEntity : WorkspaceEntity {
@@ -121,6 +129,10 @@ val SourceRootEntity.customSourceRootProperties: CustomSourceRootPropertiesEntit
 /**
  * Stores order of excluded roots in iml file.
  * This is needed to ensure that corresponding tags are saved in the same order to avoid unnecessary modifications of iml file.
+ *
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
  */
 @Internal
 interface ExcludeUrlOrderEntity : WorkspaceEntity {

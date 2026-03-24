@@ -2,7 +2,6 @@ package com.intellij.notebooks.visualization.ui
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.notebooks.ui.afterDistinctChange
-import com.intellij.notebooks.ui.bind
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.UpdateContext
 import com.intellij.notebooks.visualization.ui.EditorEmbeddedComponentLayoutManager.CustomFoldingConstraint
@@ -14,11 +13,13 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.AWTEvent.MOUSE_EVENT_MASK
 import java.awt.AWTEvent.MOUSE_MOTION_EVENT_MASK
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
+import javax.swing.BorderFactory
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -44,12 +45,23 @@ open class CustomFoldingEditorCellViewComponent(protected val cell: EditorCell, 
 
   private val presentationToComponent = mutableMapOf<InlayPresentation, JComponent>()
 
+  private var rightBorderColor: Color? = null
+
   @TestOnly
   fun getComponentForTest(): JComponent {
     return component
   }
 
   open fun updateCustomComponent() { }
+
+  fun setRightBorderColor(color: Color?) {
+    if (rightBorderColor == color)
+      return
+    rightBorderColor = color
+    mainComponent.border = if (color == null) BorderFactory.createEmptyBorder()
+    else BorderFactory.createMatteBorder(0, 0, 0, 1, color)
+    mainComponent.repaint()
+  }
 
   private fun updateGutterIcons(gutterAction: AnAction?) {
     editor.notebookViewUpdater.update { ctx ->
@@ -64,9 +76,8 @@ open class CustomFoldingEditorCellViewComponent(protected val cell: EditorCell, 
     cell.gutterAction.afterDistinctChange(this) { action ->
       updateGutterIcons(action)
     }
-    editor.notebookAppearance.editorBackgroundColor.bind(this) {
-      bottomContainer.background = it
-    }
+
+    bottomContainer.background = editor.notebookAppearance.editorBackgroundColor()
   }
 
   override fun dispose(): Unit = editor.notebookViewUpdater.update { ctx ->

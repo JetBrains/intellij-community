@@ -3,9 +3,26 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "trove",
+  module_name = "intellij.platform.util.trove",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = ["@lib//:platform-util-trove-trove"],
   runtime_deps = ["@lib//:platform-util-trove-trove"]
 )
+
+jvm_library(
+  name = "trove_test_lib",
+  module_name = "intellij.platform.util.trove",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:platform-util-trove-trove"],
+  runtime_deps = [":trove"]
+)
 ### auto-generated section `build intellij.platform.util.trove` end
+
+### auto-generated section `iml intellij.platform.util.trove` start
+exports_files([
+  "intellij.platform.util.trove.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.trove` end

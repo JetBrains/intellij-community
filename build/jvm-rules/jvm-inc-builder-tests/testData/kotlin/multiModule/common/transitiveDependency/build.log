@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_transitiveDependency-module1.kotlin_module
+  a/A.class
+  a/AKt.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/transitiveDependency/module1/a.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_transitiveDependency-module2.kotlin_module
+  b/BKt.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/transitiveDependency/module2/b.kt
+End of files
+------------------------------------------
+Exit code: OK

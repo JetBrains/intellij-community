@@ -2,6 +2,7 @@
   <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
 
   <dependencies>
+    <module name="intellij.platform.searchEverywhere.frontend"/>
     <module name="intellij.platform.ml.impl"/>
     <module name="intellij.searchEverywhereMl.ranking.ext"/>
   </dependencies>
@@ -19,11 +20,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-
-    <registryKey defaultValue="false"
-                 description="Mark position changes in Search Everywhere"
-                 key="search.everywhere.ml.show.diff"/>
-
     <registryKey defaultValue=""
                  description="Path to the local action-ranking model."
                  key="search.everywhere.ml.action.model.path"/>
@@ -45,7 +41,7 @@
                   implementationClass="com.intellij.searchEverywhereMl.ranking.core.features.statistician.SearchEverywhereSymbolStatistician"/>
 
     <statistician key="searchEverywhereContributor"
-                  implementationClass="com.intellij.searchEverywhereMl.ranking.core.features.statistician.SearchEverywhereContributorStatistician"/>
+                  implementationClass="com.intellij.searchEverywhereMl.ranking.core.features.statistician.SearchResultProviderStatistician"/>
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRunConfigurationTypeValidator"/>
@@ -56,6 +52,8 @@
       implementation="com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereEssentialContributorMlMarker"/>
 
     <searchEverywhereMlService implementation="com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMlRankingService"/>
+
+    <searchEverywhere.mlService implementation="com.intellij.searchEverywhereMl.ranking.core.SplitSeMlService"/>
   </extensions>
 
   <extensionPoints>
@@ -102,9 +100,6 @@
       implementation="com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereClassesRankingModelLoader"/>
     <rankingModelLoader
       implementation="com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereAllRankingModelLoader"/>
-
-    <searchEverywhereStateFeaturesProvider
-      implementation="com.intellij.searchEverywhereMl.ranking.core.features.CoreStateFeaturesProvider"/>
   </extensions>
 
   <applicationListeners>

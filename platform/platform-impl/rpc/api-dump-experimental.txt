@@ -43,6 +43,36 @@ f:com.intellij.ide.rpc.DataContextIdKt
 f:com.intellij.ide.rpc.DocumentIdKt
 - *sf:document(com.intellij.ide.rpc.DocumentId):com.intellij.openapi.editor.Document
 - *sf:rpcId(com.intellij.openapi.editor.Document):com.intellij.ide.rpc.DocumentId
+*f:com.intellij.ide.rpc.FileEditorId
+- *sf:Companion:com.intellij.ide.rpc.FileEditorId$Companion
+- <init>():V
+*bf:com.intellij.ide.rpc.FileEditorId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.rpc.FileEditorId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.rpc.FileEditorId
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.rpc.FileEditorId):V
+*f:com.intellij.ide.rpc.FileEditorId$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.ide.rpc.FileEditorIdKt
+- sf:fileEditor(com.intellij.ide.rpc.FileEditorId):com.intellij.openapi.fileEditor.FileEditor
+- sf:rpcId(com.intellij.openapi.fileEditor.FileEditor):com.intellij.ide.rpc.FileEditorId
+*f:com.intellij.ide.rpc.ShortcutId
+- *sf:Companion:com.intellij.ide.rpc.ShortcutId$Companion
+- <init>():V
+*bf:com.intellij.ide.rpc.ShortcutId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.rpc.ShortcutId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.rpc.ShortcutId
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.rpc.ShortcutId):V
+*f:com.intellij.ide.rpc.ShortcutId$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.ide.rpc.ShortcutIdKt
+- *sf:rpcId(com.intellij.openapi.actionSystem.Shortcut):com.intellij.ide.rpc.ShortcutId
+- *sf:shortcut(com.intellij.ide.rpc.ShortcutId):com.intellij.openapi.actionSystem.Shortcut
 *f:com.intellij.ide.ui.SerializableTextChunk
 - *sf:Companion:com.intellij.ide.ui.SerializableTextChunk$Companion
 - <init>(com.intellij.usages.TextChunk):V
@@ -86,6 +116,35 @@ f:com.intellij.ide.rpc.DocumentIdKt
 f:com.intellij.ide.ui.colors.ColorIdKt
 - *sf:color(com.intellij.ide.ui.colors.ColorId):java.awt.Color
 - *sf:rpcId(java.awt.Color):com.intellij.ide.ui.colors.ColorId
+*f:com.intellij.ide.ui.colors.SerializableSimpleTextAttributes
+- *sf:Companion:com.intellij.ide.ui.colors.SerializableSimpleTextAttributes$Companion
+*bf:com.intellij.ide.ui.colors.SerializableSimpleTextAttributes$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.ui.colors.SerializableSimpleTextAttributes$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.ui.colors.SerializableSimpleTextAttributes
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.ui.colors.SerializableSimpleTextAttributes):V
+*f:com.intellij.ide.ui.colors.SerializableSimpleTextAttributes$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.ide.ui.colors.SerializableSimpleTextAttributesKt
+- *sf:attributes(com.intellij.ide.ui.colors.SerializableSimpleTextAttributes):com.intellij.ui.SimpleTextAttributes
+- *sf:rpcId(com.intellij.ui.SimpleTextAttributes):com.intellij.ide.ui.colors.SerializableSimpleTextAttributes
+*f:com.intellij.ide.ui.colors.TextAttributeKeyId
+- *sf:Companion:com.intellij.ide.ui.colors.TextAttributeKeyId$Companion
+- <init>():V
+*bf:com.intellij.ide.ui.colors.TextAttributeKeyId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.ui.colors.TextAttributeKeyId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.ui.colors.TextAttributeKeyId
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.ui.colors.TextAttributeKeyId):V
+*f:com.intellij.ide.ui.colors.TextAttributeKeyId$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.ide.ui.colors.TextAttributeKeyIdKt
+- *sf:key(com.intellij.ide.ui.colors.TextAttributeKeyId):com.intellij.openapi.editor.colors.TextAttributesKey
+- *sf:rpcId(com.intellij.openapi.editor.colors.TextAttributesKey):com.intellij.ide.ui.colors.TextAttributeKeyId
 *f:com.intellij.ide.ui.icons.IconId
 - *sf:Companion:com.intellij.ide.ui.icons.IconId$Companion
 - <init>():V

@@ -91,7 +91,7 @@ internal object PluginContentStructureValidator : PipelineNode {
         fixStructuralViolations(
           violations = violations,
           pluginContentInfo = pluginInfo,
-          strategy = model.xmlWritePolicy,
+          strategy = model.generatedArtifactWritePolicy,
         )
         fixedPlugins.add(error.pluginName)
       }

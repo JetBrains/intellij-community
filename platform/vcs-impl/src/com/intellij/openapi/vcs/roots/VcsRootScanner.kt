@@ -18,6 +18,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vcs.impl.VcsStartupActivity
@@ -83,10 +84,12 @@ class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScop
     fun getInstance(project: Project): VcsRootScanner = project.service<VcsRootScanner>()
 
     @JvmStatic
-    fun visitDirsRecursivelyWithoutExcluded(project: Project,
-                                            root: VirtualFile,
-                                            visitIgnoredFoldersThemselves: Boolean,
-                                            processor: (VirtualFile) -> VirtualFileVisitor.Result) {
+    fun visitDirsRecursivelyWithoutExcluded(
+      project: Project,
+      root: VirtualFile,
+      visitIgnoredFoldersThemselves: Boolean,
+      processor: (VirtualFile) -> VirtualFileVisitor.Result,
+    ) {
       val fileIndex = ProjectRootManager.getInstance(project).fileIndex
       val depthLimit = VirtualFileVisitor.limit(Registry.intValue("vcs.root.detector.folder.depth"))
       val ignorePattern = parseDirIgnorePattern()
@@ -218,7 +221,7 @@ class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScop
 }
 
 private fun isIgnoredDirectory(project: Project, ignorePattern: Pattern?, dir: VirtualFile): Boolean {
-  if (ProjectLevelVcsManager.getInstance(project).isIgnored(dir)) {
+  if (ProjectLevelVcsManagerImpl.getInstanceImpl(project).isIgnoredFileRoot(dir)) {
     LOG.debug { "Skipping ignored dir: $dir" }
     return true
   }

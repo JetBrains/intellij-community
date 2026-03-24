@@ -44,5 +44,6 @@
     <orderEntry type="module" module-name="kotlin.j2k.shared" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" />
     <orderEntry type="module" module-name="kotlin.idea" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.project-structure" />
   </component>
 </module>

@@ -1,5 +1,6 @@
 // "Convert expression to 'Long'" "true"
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'Char', but 'Long' was expected.
 fun long(x: Long) {}
 
 fun test(c: Char) {

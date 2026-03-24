@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io
 
 import com.intellij.openapi.Disposable
@@ -33,6 +33,7 @@ import kotlin.random.Random
 class BuiltInServer private constructor(
   val eventLoopGroup: EventLoopGroup,
   val childEventLoopGroup: EventLoopGroup,
+  val address: InetAddress,
   val port: Int,
   private val channelRegistrar: ChannelRegistrar,
 ) : Disposable {
@@ -87,8 +88,8 @@ class BuiltInServer private constructor(
       val channelRegistrar = ChannelRegistrar()
       val bootstrap = createServerBootstrap(eventLoopGroup, eventLoopGroup)
       configureChildHandler(bootstrap, channelRegistrar, handler)
-      val port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar)
-      return BuiltInServer(eventLoopGroup, eventLoopGroup, port, channelRegistrar)
+      val (address, port) = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar)
+      return BuiltInServer(eventLoopGroup, eventLoopGroup, address, port, channelRegistrar)
     }
 
     fun configureChildHandler(
@@ -114,7 +115,7 @@ class BuiltInServer private constructor(
       tryAnyPort: Boolean,
       bootstrap: ServerBootstrap,
       registrar: ChannelRegistrar,
-    ): Int {
+    ): Pair<InetAddress, Int> {
       val address = InetAddress.getByName("127.0.0.1")
       val maxPort = (firstPort + portsCount) - 1
       for (port in firstPort..maxPort) {
@@ -126,7 +127,7 @@ class BuiltInServer private constructor(
         val future = asDeferred(bootstrap.bind(address, port)).await()
         if (future.isSuccess) {
           registrar.setServerChannel(future.channel(), true)
-          return port
+          return address to port
         }
         else if (!tryAnyPort && port == maxPort) {
           throw future.cause()
@@ -137,7 +138,7 @@ class BuiltInServer private constructor(
       val future = asDeferred(bootstrap.bind(address, 0)).await()
       if (future.isSuccess) {
         registrar.setServerChannel(future.channel(), true)
-        return (future.channel().localAddress() as InetSocketAddress).port
+        return address to (future.channel().localAddress() as InetSocketAddress).port
       }
       throw future.cause()
     }

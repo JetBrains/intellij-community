@@ -22,6 +22,7 @@ import com.jetbrains.python.sdk.associatedModuleNioPath
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 /**
@@ -94,7 +95,7 @@ object PythonRequirementTxtSdkUtils {
     val path = try {
       Path.of(originalPath)
     }
-    catch (t: Throwable) {
+    catch (t: InvalidPathException) {
       thisLogger().warn(t)
       return
     }

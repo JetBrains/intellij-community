@@ -33,72 +33,184 @@ jvm_library(
     "//platform/ide-core",
     "//platform/ide-core/plugins",
     "//platform/projectModel-api:projectModel",
+    "//platform/project-frame",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/jackson3/jackson:libraries-jackson3",
+    "//libraries/jackson3/databind",
+    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
     "//libraries/kotlin/reflect",
     "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
-    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
   exports = [
-    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ]
 )
 
 jvm_library(
   name = "statistics_test_lib",
+  module_name = "intellij.platform.statistics",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":statistics"],
-  deps = [
-    "//platform/core-api:core",
-    "//platform/core-impl",
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//platform/util/jdom",
-    "//platform/statistics/uploader",
-    "//libraries/fastutil",
-    "//platform/util/concurrency",
-    "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/core-ui",
-    "@lib//:jna",
-    "//platform/util",
-    "//platform/runtime/product",
-    "//platform/platform-util-io:ide-util-io",
-    "//platform/util-ex",
-    "//libraries/caffeine",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/ide-core",
-    "//platform/ide-core/plugins",
-    "//platform/projectModel-api:projectModel",
-    "//libraries/jackson/jackson",
-    "//libraries/jackson/databind",
-    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
-    "//libraries/kotlin/reflect",
-    "//libraries/kotlinx/coroutines/core",
-    "@lib//:junit5",
-    "@lib//:assert_j",
-    "//libraries/kotlinx/serialization/json",
-    "//libraries/kotlinx/serialization/core",
-    "@lib//:com-jetbrains-fus-reporting-api",
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ],
-  exports = [
-    "@lib//:com-jetbrains-fus-reporting-api",
-    "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+  runtime_deps = [
+    ":statistics",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/statistics/uploader:uploader_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/runtime/product:product_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/ide-core/plugins:plugins_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/project-frame:project-frame_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//libraries/jackson3/databind:databind_test_lib",
+    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "@lib//:junit5",
+    "@lib//:assert_j",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.statistics` end
 
-### auto-generated section `test intellij.platform.statistics` start
+### auto-generated section `iml intellij.platform.statistics` start
+exports_files([
+  "intellij.platform.statistics.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.statistics` end
+
+### auto-generated section `build intellij.platform.statistics.tests` start
+jvm_library(
+  name = "statistics-tests",
+  module_name = "intellij.platform.statistics.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+  ]
+)
+
+jvm_library(
+  name = "statistics-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+  ],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/statistics/uploader",
+    "//platform/statistics/uploader:uploader_test_lib",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "@lib//:jna",
+    "//platform/util",
+    "//platform/util:util_test_lib",
+    "//platform/runtime/product",
+    "//platform/runtime/product:product_test_lib",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
+    "//libraries/caffeine",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/ide-core",
+    "//platform/ide-core/plugins",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/project-frame",
+    "//platform/project-frame:project-frame_test_lib",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//libraries/jackson3/databind",
+    "//libraries/jackson3/databind:databind_test_lib",
+    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
+    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
+    "//libraries/kotlin/reflect",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "@lib//:junit5",
+    "@lib//:assert_j",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+  ],
+  exports = [
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+  ],
+  runtime_deps = [
+    ":statistics-tests",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/ide-core/plugins:plugins_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.statistics.tests` end
+
+### auto-generated section `iml intellij.platform.statistics.tests` start
+exports_files([
+  "intellij.platform.statistics.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.statistics.tests` end
+
+### auto-generated section `test intellij.platform.statistics.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "statistics_test",
-  runtime_deps = [":statistics_test_lib"]
+  name = "statistics-tests_test",
+  runtime_deps = [":statistics-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.statistics` end
+### auto-generated section `test intellij.platform.statistics.tests` end

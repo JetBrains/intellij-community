@@ -20,12 +20,10 @@ import io.modelcontextprotocol.kotlin.sdk.client.SseClientTransport
 import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
-import org.junit.jupiter.api.Assertions.assertNotNull
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.platform.commons.annotation.Testable
 import kotlin.io.path.Path
-import kotlin.test.assertEquals
-import kotlin.test.fail
 
 @Testable
 @TestApplication
@@ -84,7 +82,7 @@ abstract class McpToolsetTestBase {
   }
 
   protected val CallToolResult.textContent: TextContent get() = content.firstOrNull() as? TextContent
-                                                                ?: fail("Tool call result should be TextContent")
+                                                                ?: throw AssertionError("Tool call result should be TextContent")
   protected suspend fun testMcpTool(
     toolName: String,
     input: kotlinx.serialization.json.JsonObject,
@@ -92,7 +90,7 @@ abstract class McpToolsetTestBase {
   ) {
     testMcpTool(toolName, input) { result ->
       val textContent = result.textContent
-      assertEquals(output, textContent.text, "Tool call result should match expected output")
+      assertThat(textContent.text).isEqualTo(output)
     }
   }
 
@@ -106,10 +104,10 @@ abstract class McpToolsetTestBase {
       // Call the tool with the provided input
       try {
         McpServerSettings.getInstance().state.enableBraveMode = true
-        val result = client.callTool(toolName, input) ?: fail("Tool call result should not be null")
+        val result = client.callTool(toolName, input)
         resultChecker(result)
         // Just verify that the call doesn't throw an exception
-        assertNotNull(result, "Tool call result should not be null")
+        assertThat(result).isNotNull()
         // Log the result for debugging
         println("[DEBUG_LOG] Tool $toolName result: $result")
       }

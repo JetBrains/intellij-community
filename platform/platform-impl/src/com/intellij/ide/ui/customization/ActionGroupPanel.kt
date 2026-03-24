@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.QuickListsManager.Companion.getInstance
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.keymap.KeyMapBundle
+import com.intellij.openapi.keymap.impl.ui.ActionTreeGroupUtil
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.keymap.impl.ui.Group
 import com.intellij.openapi.project.DumbAwareToggleAction
@@ -94,7 +95,7 @@ class ActionGroupPanel(
   }
 
   private fun addAllActions() : DefaultTreeModel {
-    val rootGroup = ActionsTreeUtil.createMainGroup(null, null, getInstance().allQuickLists)
+    val rootGroup = ActionTreeGroupUtil.createMainGroup(null, null, getInstance().allQuickLists)
     val root = ActionsTreeUtil.createNode(rootGroup)
     return DefaultTreeModel(root)
   }

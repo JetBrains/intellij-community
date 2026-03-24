@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process
 
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
 import java.io.OutputStream
@@ -24,20 +23,6 @@ interface LocalProcessService {
     redirectErrorStream: Boolean,
   ): Process
 
-  @Deprecated("Use the other `startPtyProcess` instead")
-  fun startPtyProcess(
-    command: Array<String>,
-    directory: String?,
-    env: Map<String, String>,
-    options: LocalPtyOptions,
-    app: Application?,
-    redirectErrorStream: Boolean,
-    windowsAnsiColorEnabled: Boolean,
-    unixOpenTtyToPreserveOutputAfterTermination: Boolean
-  ): Process {
-    return startPtyProcess(command.toList(), directory, env, options, redirectErrorStream)
-  }
-
   fun sendWinProcessCtrlC(process: Process): Boolean
 
   /**
@@ -54,16 +39,12 @@ interface LocalProcessService {
 
   fun isLocalPtyProcess(process: Process): Boolean
 
-  fun winPtyChildProcessId(process: Process): Int?
-
   fun hasControllingTerminal(process: Process): Boolean
-
-  fun killWinProcess(pid: Int)
 
   /**
    * @return the command line of the process
    */
-  fun getCommand(process: Process): List<String> = listOf<String>()
+  fun getCommand(process: Process): List<String> = listOf()
 
   companion object {
     @JvmStatic

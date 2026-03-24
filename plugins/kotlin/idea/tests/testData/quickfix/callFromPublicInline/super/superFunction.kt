@@ -1,4 +1,5 @@
 // "Make 'inlineFun' internal" "true"
+// K2_ERROR: Accessing super members from public-API inline function is deprecated.
 open class Base {
     fun baseFun(param: Any) {}
 }

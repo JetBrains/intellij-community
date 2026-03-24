@@ -21,13 +21,11 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
@@ -36,24 +34,19 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
-    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.structureView.impl" />
     <orderEntry type="module" module-name="intellij.platform.usageView.impl" />
-    <orderEntry type="module" module-name="kotlin.plugin.k2" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" />
     <orderEntry type="module" module-name="intellij.kotlin.base.psi" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
     <orderEntry type="module" module-name="intellij.kotlin.base.resources" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" />
-    <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
-    <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.fir.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
@@ -77,7 +70,6 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.kotlin.searching.base" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" />
     <orderEntry type="module" module-name="intellij.kotlin.ide" />
     <orderEntry type="module" module-name="intellij.libraries.velocity" />
@@ -87,14 +79,9 @@
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.kotlin.searching" />
-    <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.statistics" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
-    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.bundled" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.base.scripting" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.descriptions" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
   </component>
 </module>

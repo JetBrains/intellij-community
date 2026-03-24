@@ -30,6 +30,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.invariantSeparatorsPathString
 
 class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
@@ -753,7 +754,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
       createBuildFile {
         withJavaPlugin()
         addPostfix("""
-          |sourceSets.main.java.srcDirs += "${externalProjectRoot.resolve("src/main/java")}"
+          |sourceSets.main.java.srcDirs += "${externalProjectRoot.resolve("src/main/java").invariantSeparatorsPathString}"
         """.trimMargin())
       }
 

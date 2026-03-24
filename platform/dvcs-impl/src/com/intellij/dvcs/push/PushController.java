@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push;
 
 import com.intellij.diff.util.DiffUtil;
@@ -238,6 +238,7 @@ public final class PushController implements Disposable {
     }
 
     final PushTargetPanel<T> pushTargetPanel = pushSupport.createTargetPanel(repository, source, target);
+    Disposer.register(this, pushTargetPanel);
     final RepositoryWithBranchPanel<T> repoPanel = new RepositoryWithBranchPanel<>(myProject, repoName,
                                                                                    source.getPresentation(), pushTargetPanel);
     CheckBoxModel checkBoxModel = model.getCheckBoxModel();

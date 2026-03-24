@@ -23,8 +23,8 @@ import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetExclusionCondition;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar;
-import kotlin.jvm.functions.Function1;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,7 +62,7 @@ final class ExcludeRootsCache {
   }
 
   @NotNull List<String> getExcludedUrls() {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       CachedUrls cache = myCache;
       long actualModCount = Arrays.stream(ProjectManager.getInstance().getOpenProjects())
         .mapToLong(project -> {
@@ -153,7 +153,7 @@ final class ExcludeRootsCache {
 
     @Override
     public void registerExclusionCondition(@NotNull VirtualFileUrl root,
-                                          @NotNull Function1<? super VirtualFile, Boolean> condition,
+                                          @NotNull WorkspaceFileSetExclusionCondition condition,
                                           @NotNull WorkspaceEntity entity) {
       // Exclusion conditions are not URLs themselves
     }

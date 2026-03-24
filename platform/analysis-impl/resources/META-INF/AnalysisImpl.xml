@@ -3,7 +3,8 @@
 
   <extensionPoints>
     <extensionPoint name="severitiesProvider"
-                    interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"/>
+                    interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="fileRankerMlService" interface="com.intellij.psi.search.FileRankerMlService" dynamic="true"/>
 
@@ -36,6 +37,11 @@
       <with attribute="descriptor" implements="com.intellij.codeInsight.completion.serialization.RestartPrefixConditionDescriptor"/>
       <with attribute="converter" implements="com.intellij.codeInsight.completion.serialization.PrefixConditionDescriptorConverter"/>
     </extensionPoint>
+    <extensionPoint name="completion.frontendFriendlyTailType" beanClass="com.intellij.codeInsight.serialization.ExtensionPointSerializerBean" dynamic="true">
+      <with attribute="target" implements="com.intellij.codeInsight.TailType"/>
+      <with attribute="descriptor" implements="com.intellij.codeInsight.completion.FrontendFriendlyTailType"/>
+      <with attribute="converter" implements="com.intellij.codeInsight.completion.TailTypeToFrontendFriendlyConverter"/>
+    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.profile.codeInspection.InspectionProjectProfileManager" open="true"
@@ -43,6 +49,8 @@
     <projectService serviceInterface="com.intellij.packageDependencies.DependencyValidationManager"
                     serviceImplementation="com.intellij.packageDependencies.DependencyValidationManagerImpl"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy"
+                            order="last"/>
+    <modcompletion.completionItemProvider language="any" implementationClass="com.intellij.codeInsight.completion.PsiReferenceCompletionItemProvider"
                             order="last"/>
     <applicationService serviceInterface="com.intellij.psi.stubs.SerializationManagerEx"
                         serviceImplementation="com.intellij.psi.stubs.SerializationManagerImpl" preload="true"/>
@@ -91,9 +99,17 @@
 
     <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.SyntheticPsiFileSupport$HighlightFilter"/>
     <daemon.intentionActionFilter implementation="com.intellij.codeInsight.daemon.SyntheticPsiFileSupport$IntentionFilter"/>
-    <completion.frontendFriendlyInsertHandler
-      target="com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler"/>
-    <completion.frontendFriendlyInsertHandler
-      target="com.intellij.codeInsight.completion.NoOpFrontendFriendlyInsertHandler"/>
+
+    <completion.frontendFriendlyInsertHandler target="com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler"/>
+    <completion.frontendFriendlyInsertHandler target="com.intellij.codeInsight.completion.NoOpFrontendFriendlyInsertHandler"/>
+
+    <completion.frontendFriendlyTailType target="com.intellij.codeInsight.completion.FrontendFriendlyCharTailType"/>
+    <completion.frontendFriendlyTailType target="com.intellij.codeInsight.completion.NoneTailType"/>
+    <completion.frontendFriendlyTailType target="com.intellij.codeInsight.completion.HumbleSpaceBeforeWordTailType"/>
+    <completion.frontendFriendlyTailType target="com.intellij.codeInsight.completion.CondExprColonTailType"/>
+    <completion.frontendFriendlyTailType target="com.intellij.codeInsight.completion.FrontendFriendlyUnknownTailType"/>
+    <completion.frontendFriendlyTailType target="com.intellij.codeInsight.CharTailType"
+                                         converter="com.intellij.codeInsight.completion.CharTailTypeConverter"
+                                         descriptor="com.intellij.codeInsight.completion.FrontendFriendlyCharTailType"/>
   </extensions>
 </idea-plugin>

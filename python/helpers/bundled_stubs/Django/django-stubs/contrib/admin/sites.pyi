@@ -1,11 +1,11 @@
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from typing import Any, TypeAlias, TypeVar
 from weakref import WeakSet
 
 from django.apps.config import AppConfig
 from django.contrib.admin.models import LogEntry
 from django.contrib.admin.options import ModelAdmin
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.core.checks import CheckMessage
 from django.db.models.base import Model
 from django.db.models.query import QuerySet
@@ -27,6 +27,7 @@ class AdminSite:
     index_title: _StrOrPromise
     site_url: str | None
     login_form: type[AuthenticationForm] | None
+    password_change_form: type[PasswordChangeForm] | None
     index_template: str | None
     app_index_template: str | None
     login_template: str | None
@@ -42,7 +43,7 @@ class AdminSite:
     _global_actions: dict[str, _ActionCallback]
     _actions: dict[str, _ActionCallback]
     def __init__(self, name: str = ...) -> None: ...
-    def check(self, app_configs: Iterable[AppConfig] | None) -> list[CheckMessage]: ...
+    def check(self, app_configs: Sequence[AppConfig] | None) -> list[CheckMessage]: ...
     def register(
         self,
         model_or_iterable: type[Model] | Iterable[type[Model]],

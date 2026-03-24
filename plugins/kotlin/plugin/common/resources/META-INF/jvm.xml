@@ -1,8 +1,5 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <scratch.creationHelper language="kotlin"
-                            implementationClass="org.jetbrains.kotlin.idea.jvm.shared.scratch.KotlinScratchFileCreationHelper"/>
-
     <registryKey
             key="repo.with.kotlin.versions.url"
             description="URL of a JSON file with Kotlin versions"
@@ -12,6 +9,7 @@
     <registryKey key="kotlin.not.configured.show.notification"
                  defaultValue="true"
                  description="Show notification about Kotlin missing configuration"/>
+
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

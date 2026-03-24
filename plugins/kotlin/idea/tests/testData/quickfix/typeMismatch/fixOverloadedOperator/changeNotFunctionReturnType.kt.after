@@ -1,4 +1,5 @@
 // "Change return type of called function 'A.not' to 'A'" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'String', but 'A' was expected.
 interface A {
     operator fun not(): A
     operator fun times(a: A): A

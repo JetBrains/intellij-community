@@ -7,7 +7,7 @@
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.common"/>
     <module name="intellij.python.community.execService.python"/>
-    <module name="intellij.python.processOutput"/>
+    <module name="intellij.python.processOutput.common"/>
   </dependencies>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -20,6 +20,6 @@
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <python.common.toolToIconMapper implementation="com.intellij.python.hatch.impl.HatchIdMapper"/>
-    <python.processOutput.processOutputIconMapping implementation="com.intellij.python.hatch.impl.HatchIconMapping"/>
+    <python.processOutput.common.processOutputIconMapping implementation="com.intellij.python.hatch.impl.HatchIconMapping"/>
   </extensions>
 </idea-plugin>

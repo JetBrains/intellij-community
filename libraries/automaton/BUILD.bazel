@@ -9,10 +9,27 @@ resourcegroup(
 
 jvm_library(
   name = "automaton",
+  module_name = "intellij.libraries.automaton",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":automaton_resources"],
   exports = ["@lib//:libraries-automaton-automaton"],
   runtime_deps = ["@lib//:libraries-automaton-automaton"]
 )
+
+jvm_library(
+  name = "automaton_test_lib",
+  module_name = "intellij.libraries.automaton",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-automaton-automaton"],
+  runtime_deps = [":automaton"]
+)
 ### auto-generated section `build intellij.libraries.automaton` end
+
+### auto-generated section `iml intellij.libraries.automaton` start
+exports_files([
+  "intellij.libraries.automaton.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.automaton` end

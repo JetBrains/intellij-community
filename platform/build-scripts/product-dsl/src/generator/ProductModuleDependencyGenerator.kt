@@ -57,7 +57,7 @@ internal object ProductModuleDependencyGenerator : PipelineNode {
 
       val cache = model.descriptorCache
       val graph = model.pluginGraph
-      val strategy = model.xmlWritePolicy
+      val strategy = model.generatedArtifactWritePolicy
       val suppressionConfig = model.suppressionConfig
       val updateSuppressions = model.updateSuppressions
 
@@ -77,12 +77,13 @@ internal object ProductModuleDependencyGenerator : PipelineNode {
           val dependencyNames = dependencies.mapTo(HashSet()) { it.value }
           val existingXmlModules = info.existingModuleDependencies.toSet()
           val existingXmlModulesAsContentModuleName = existingXmlModules.mapTo(HashSet(), ::ContentModuleName)
-          val effectiveSuppressedModules = computeEffectiveSuppressedDeps(
+          val moduleHandling = computeExistingDependencyHandling(
             updateSuppressions = updateSuppressions,
             existingXmlDeps = existingXmlModulesAsContentModuleName,
             jpsDeps = dependencies.toSet(),
             suppressedDeps = suppressedModules,
           )
+          val effectiveSuppressedModules = moduleHandling.effectiveSuppressedDeps
           val suppressionUsages = ArrayList<SuppressionUsage>()
           val moduleDeps = collectModuleDepsWithSuppressions(
             contentModuleName = contentModuleName,
@@ -106,6 +107,7 @@ internal object ProductModuleDependencyGenerator : PipelineNode {
               effectiveSuppressedModules.contains(ContentModuleName(moduleNameToPreserve))
             },
             preserveExistingPlugin = { true },
+            allowInsideSectionRegion = false,
             strategy = strategy,
           )
           DependencyFileResult(
@@ -147,6 +149,9 @@ private fun computeProductModuleDeps(
       when (val c = classifyTarget(dep.targetId)) {
         is DependencyClassification.ModuleDep -> {
           val depName = c.moduleName.value
+          if (depName == moduleName) {
+            return@dependsOn
+          }
           if (depName.startsWith(LIB_MODULE_PREFIX) && !libraryModuleFilter(depName)) {
             return@dependsOn
           }

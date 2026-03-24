@@ -162,4 +162,9 @@ public final class StringTokenizer implements Enumeration<String> {
     newPosition = -1;
     maxPosition = s.length();
   }
+
+  public void resetCurrentPosition(int position) {
+    currentPosition = position;
+    newPosition = -1;
+  }
 }

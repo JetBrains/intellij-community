@@ -1,8 +1,22 @@
 <idea-plugin visibility="internal" package="com.intellij.platform.searchEverywhere.frontend">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.frontend"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.searchEverywhere"/>
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
+  <!-- endregion -->
 
   <actions resource-bundle="messages.searchEverywhereFrontendBundle">
     <action id="SeNewSearchToggleAction" class="com.intellij.platform.searchEverywhere.frontend.actions.SeNewSearchToggleAction"/>
@@ -11,6 +25,13 @@
   <extensionPoints>
     <extensionPoint name="searchEverywhere.tabFactory"
                     interface="com.intellij.platform.searchEverywhere.frontend.SeTabFactory"
+                    dynamic="true"/>
+
+    <extensionPoint name="searchEverywhere.mlService"
+                    interface="com.intellij.platform.searchEverywhere.frontend.ml.SeMlService"
+                    dynamic="true"/>
+    <extensionPoint name="searchEverywhere.previewPanelListener"
+                    interface="com.intellij.platform.searchEverywhere.frontend.ui.SePreviewPanelListener"
                     dynamic="true"/>
   </extensionPoints>
 

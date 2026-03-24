@@ -35,6 +35,7 @@ open class EventLogGroup {
   val groupData: List<Pair<EventField<*>, FeatureUsageData.() -> Unit>>
 
   @Deprecated("Descriptions are moved to a separate file; use another constructor", ReplaceWith("EventLogGroup(id, version, recorder, groupData)"))
+  @Suppress("EventLogDescription")
   constructor(
     @EventIdName id: String,
     version: Int,
@@ -68,6 +69,7 @@ open class EventLogGroup {
   }
 
   @Deprecated("Descriptions are moved to a separate file; use another constructor", ReplaceWith("EventLogGroup(id, version, recorder)"))
+  @Suppress("EventLogDescription")
   constructor(
     @EventIdName id: String,
     version: Int,

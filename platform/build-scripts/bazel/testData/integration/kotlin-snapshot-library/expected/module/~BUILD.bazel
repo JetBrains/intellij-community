@@ -1,0 +1,24 @@
+### auto-generated section `build module` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "module",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["@lib//:kotlinc-analysis-api"]
+)
+
+jvm_library(
+  name = "module_test_lib",
+  module_name = "module",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":module"]
+)
+### auto-generated section `build module` end
+
+### auto-generated section `iml module` start
+exports_files([
+  "module.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml module` end

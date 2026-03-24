@@ -5,9 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
-import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -23,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
-  private static final Logger LOG = Logger.getInstance(DaemonCodeAnalyzerEx.class);
-
   public static DaemonCodeAnalyzerEx getInstanceEx(Project project) {
     return (DaemonCodeAnalyzerEx)getInstance(project);
   }
@@ -40,6 +37,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   /**
    * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
    */
+  @RequiresReadLock
   public static boolean processHighlights(@NotNull Document document,
                                           @NotNull Project project,
                                           @Nullable("null means all") HighlightSeverity minSeverity,
@@ -54,6 +52,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   /**
    * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
    */
+  @RequiresReadLock
   @ApiStatus.Experimental
   public static boolean processHighlights(@NotNull MarkupModelEx model,
                                           @NotNull Project project,
@@ -171,8 +170,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     }
 
     Document document = textEditor.getEditor().getDocument();
-    CodeInsightContext context = EditorContextManager.getCachedEditorContext(textEditor.getEditor(), project);
-    return context != null && getInstanceEx(project).getFileStatusMap().allDirtyScopesAreNull(document, context);
+    return getInstanceEx(project).getFileStatusMap().allDirtyScopesAreNullFor(document);
   }
 
   @ApiStatus.Internal

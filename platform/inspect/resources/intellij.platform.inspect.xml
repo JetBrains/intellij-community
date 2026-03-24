@@ -1,8 +1,23 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.vcs"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.util.diff"/>
+    <module name="intellij.platform.vcs"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <appStarter id="inspect" implementation="com.intellij.codeInspection.InspectionMain"/>
     <inspectionGroupProvider implementation="com.intellij.codeInspection.inspectionProfile.InspectionBasicGroupProvider" />

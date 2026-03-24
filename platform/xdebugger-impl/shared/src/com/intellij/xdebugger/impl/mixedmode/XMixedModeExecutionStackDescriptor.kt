@@ -11,7 +11,7 @@ const val MIXED_MODE_EXECUTION_STACK_DESCRIPTOR_ID: String = "XMixedModeExecutio
 
 @ApiStatus.Internal
 @Serializable
-class XMixedModeExecutionStackDescriptor(val highStackDescriptor : XDescriptor?, val lowStackDescriptor: XDescriptor?) : XDescriptor {
+class XMixedModeExecutionStackDescriptor(val highStackDescriptor: XDescriptor?, val lowStackDescriptor: XDescriptor?) : XDescriptor {
 
   override val kind: String = MIXED_MODE_EXECUTION_STACK_DESCRIPTOR_ID
 

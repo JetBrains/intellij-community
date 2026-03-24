@@ -16,7 +16,9 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,21 +34,44 @@ public final class JSpecifyAnnotationSupport implements AnnotationPackageSupport
   public @NotNull ContextNullabilityInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
                                                                              PsiAnnotation.TargetType @NotNull [] types,
                                                                              boolean superPackage) {
+    return getNullabilityByContainerAnnotations(Arrays.asList(anno), types, superPackage);
+  }
+
+  @Override
+  public @NotNull ContextNullabilityInfo getNullabilityByContainerAnnotations(@NotNull List<@NotNull PsiAnnotation> annotations,
+                                                                              PsiAnnotation.TargetType @NotNull [] types,
+                                                                              boolean superPackage) {
     if (superPackage) return ContextNullabilityInfo.EMPTY;
-    String name = anno.getQualifiedName();
-    if (name == null) return ContextNullabilityInfo.EMPTY;
     if (ArrayUtil.contains(PsiAnnotation.TargetType.LOCAL_VARIABLE, types)) return ContextNullabilityInfo.EMPTY;
-    Nullability nullability;
-    switch (name) {
-      case DEFAULT_NOT_NULL -> nullability = Nullability.NOT_NULL;
-      case DEFAULT_NULLNESS_UNKNOWN -> nullability = Nullability.UNKNOWN;
-      default -> {
-        return ContextNullabilityInfo.EMPTY;
-      }
-    }
-    return ContextNullabilityInfo.constant(new NullabilityAnnotationInfo(anno, nullability, true))
+    NullabilityAnnotationInfo info = getContainerNullabilityAnnotationInfo(annotations);
+    if (info == null) return ContextNullabilityInfo.EMPTY;
+    return ContextNullabilityInfo.constant(info)
       .disableInCast()
       .filtering(context -> !resolvesToTypeParameter(context));
+  }
+
+  private static @Nullable NullabilityAnnotationInfo getContainerNullabilityAnnotationInfo(@NotNull List<@NotNull PsiAnnotation> annotations) {
+    PsiAnnotation foundAnnotation = null;
+    Nullability foundNullability = null;
+    for (PsiAnnotation annotation : annotations) {
+      Nullability nullability = containerAnnotationFqnToNullability(annotation.getQualifiedName());
+      if (nullability != null) {
+        // From JSpecify specification: @NullMarked and @NullUnmarked applied to the same container cancel out each other.
+        if (foundNullability != null && nullability != foundNullability) return null;
+        foundAnnotation = annotation;
+        foundNullability = nullability;
+      }
+    }
+
+    return foundAnnotation == null ? null : new NullabilityAnnotationInfo(foundAnnotation, foundNullability, true);
+  }
+
+  private static Nullability containerAnnotationFqnToNullability(@Nullable String fqn) {
+    return switch (fqn) {
+      case DEFAULT_NOT_NULL -> Nullability.NOT_NULL;
+      case DEFAULT_NULLNESS_UNKNOWN -> Nullability.UNKNOWN;
+      case null, default -> null;
+    };
   }
 
   @Override

@@ -23,6 +23,7 @@ import com.jetbrains.python.sdk.add.v2.PySdkCreator
 import com.jetbrains.python.sdk.add.v2.PythonSdkPanelBuilderAndSdkCreator
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.moduleIfExists
+import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -128,13 +129,15 @@ class NewPythonProjectStep(parent: NewProjectWizardStep, val createPythonModuleS
     }
 
     runWithModalProgressBlocking(project, PyBundle.message("python.sdk.creating.python.sdk")) {
-      val (sdk, _) = pySdkCreator.getSdk(moduleOrProject).getOr {
-        errorSink.emit(it.error, project)
-        return@runWithModalProgressBlocking
-      }
-      pythonSdk = sdk
-      moduleOrProject.moduleIfExists?.let { module ->
-        configurePythonSdk(project, module, sdk)
+      project.pythonSdkConfigurationMutex.withLock {
+        val (sdk, _) = pySdkCreator.getSdk(moduleOrProject).getOr {
+          errorSink.emit(it.error, project)
+          return@withLock
+        }
+        pythonSdk = sdk
+        moduleOrProject.moduleIfExists?.let { module ->
+          configurePythonSdk(project, module, sdk)
+        }
       }
     }
   }

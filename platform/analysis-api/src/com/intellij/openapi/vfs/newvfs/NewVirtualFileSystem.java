@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,11 +11,9 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.FileNavigator.NavigateResult;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -55,7 +53,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   @ApiStatus.OverrideOnly
   protected abstract @NotNull String extractRootPath(@NotNull String normalizedPath);
 
-  public abstract @Nullable VirtualFile findFileByPathIfCached(@NonNls @NotNull String path);
+  public abstract @Nullable VirtualFile findFileByPathIfCached(@NotNull String path);
 
   @Override
   public void refreshWithoutFileWatcher(boolean asynchronous) {
@@ -87,32 +85,32 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
 
   @Override
   public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
-    VirtualFileListener wrapper = myListenerWrappers.remove(listener);
+    var wrapper = myListenerWrappers.remove(listener);
     if (wrapper != null) {
       //noinspection deprecation
       VirtualFileManager.getInstance().removeVirtualFileListener(wrapper);
     }
   }
 
-  /** Provides a way to sort file systems */
-  //TODO it seems this method is never really used -- maybe drop it (deprecate-for-removal?)
-  public abstract int getRank();
+  /** @deprecated unused; do not implement / override */
+  @Deprecated(forRemoval = true)
+  public int getRank() {
+    return 1;
+  }
 
   @Override
-  public abstract @NotNull VirtualFile copyFile(Object requestor,
-                                                @NotNull VirtualFile file,
-                                                @NotNull VirtualFile newParent,
-                                                @NotNull String newName) throws IOException;
+  public abstract @NotNull VirtualFile copyFile(
+    Object requestor,
+    @NotNull VirtualFile file,
+    @NotNull VirtualFile newParent,
+    @NotNull String newName
+  ) throws IOException;
 
   @Override
-  public abstract @NotNull VirtualFile createChildDirectory(Object requestor,
-                                                            @NotNull VirtualFile parent,
-                                                            @NotNull String name) throws IOException;
+  public abstract @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String name) throws IOException;
 
   @Override
-  public abstract @NotNull VirtualFile createChildFile(Object requestor,
-                                                       @NotNull VirtualFile parent,
-                                                       @NotNull String name) throws IOException;
+  public abstract @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String name) throws IOException;
 
   @Override
   public abstract void deleteFile(Object requestor, @NotNull VirtualFile file) throws IOException;
@@ -151,18 +149,18 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   /**
    * Resolves the given path against the given fileSystem, without adding the file in VFS cache.
    *
-   * @return a VFS cached file for the path given, if the file is already cached by VFS, or a transient file for the path, if such
-   * a file is not yet cached in VFS, or null if the path is invalid or doesn't exist, or doesn't belong to the fileSystem given.
+   * @return a VFS cached file for the path given, if the file is already cached by VFS,
+   * or a transient file for the path, if such a file is not yet cached in VFS,
+   * or {@code null} if the path is invalid or doesn't exist or doesn't belong to the given file system.
    */
   @Override
   @ApiStatus.Internal
   public @Nullable VirtualFile findFileByPathWithoutCaching(@NotNull String path) {
-    NavigateResult<VirtualFile> result = findCachedOrTransientFileByPath(this, path);
+    var result = findCachedOrTransientFileByPath(this, path);
     return result.resolvedFileOr(null);
   }
 
   /* ============================================== static helpers ============================================== */
-
 
   /**
    * Resolves the given path against the given fileSystem, looking only in already cached in VFS {@link VirtualFile}s.
@@ -176,20 +174,19 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    * This method is often used to either get the resolved and already cached file, or call VFS.refresh() or alike starting with
    * lastCachedFile, if a subtree is not yet resolved.
    */
-  public static @NotNull Pair<NewVirtualFile, NewVirtualFile> findCachedFileByPath(@NotNull NewVirtualFileSystem fileSystem,
-                                                                                   @NotNull String path) {
-    //Pair<NewVirtualFile, Iterable<String>> rootAndPath = extractRootAndPathSegments(fileSystem, path);
-    //if (rootAndPath == null) return Pair.empty();
-
+  public static @NotNull Pair<NewVirtualFile, NewVirtualFile> findCachedFileByPath(
+    @NotNull NewVirtualFileSystem fileSystem,
+    @NotNull String path
+  ) {
     FileNavigator<NewVirtualFile> navigator = new FileNavigator<>() {
       @Override
       public @Nullable NewVirtualFile parentOf(@NotNull NewVirtualFile file) {
         if (!file.is(SYMLINK)) {
           return file.getParent();
         }
-        String canonicalPath = file.getCanonicalPath();
+        var canonicalPath = file.getCanonicalPath();
         if (canonicalPath != null) {
-          NewVirtualFile canonicalFile = findCachedFileByPath(fileSystem, canonicalPath).first;
+          var canonicalFile = findCachedFileByPath(fileSystem, canonicalPath).first;
           if (canonicalFile != null) {
             return canonicalFile.getParent();
           }
@@ -203,7 +200,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
       }
     };
 
-    NavigateResult<NewVirtualFile> result = FileNavigator.navigate(fileSystem, path, navigator);
+    var result = FileNavigator.navigate(fileSystem, path, navigator);
 
     if (result.isResolved()) {
       return Pair.pair(result.resolvedFileOrFail(), null);
@@ -220,18 +217,20 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    * is invalid or doesn't exist, or doesn't belong to the fileSystem given.
    */
   @ApiStatus.Internal
-  public static @NotNull NavigateResult<VirtualFile> findCachedOrTransientFileByPath(@NotNull NewVirtualFileSystem fileSystem,
-                                                                                     @NotNull String path) {
-    FileNavigator<VirtualFile> navigator = new FileNavigator<>() {
+  public static @NotNull NavigateResult<VirtualFile> findCachedOrTransientFileByPath(
+    @NotNull NewVirtualFileSystem fileSystem,
+    @NotNull String path
+  ) {
+    var navigator = new FileNavigator<>() {
       @Override
       public @Nullable VirtualFile parentOf(@NotNull VirtualFile file) {
         if (!file.is(SYMLINK)) {
           return file.getParent();
         }
 
-        String canonicalPath = file.getCanonicalPath();
+        var canonicalPath = file.getCanonicalPath();
         if (canonicalPath != null) {
-          NewVirtualFile canonicalFile = findCachedFileByPath(fileSystem, canonicalPath).first;
+          var canonicalFile = findCachedFileByPath(fileSystem, canonicalPath).first;
           if (canonicalFile != null) {
             return canonicalFile.getParent();
           }
@@ -240,10 +239,9 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
       }
 
       @Override
-      public VirtualFile childOf(@NotNull VirtualFile parent,
-                                 @NotNull String childName) {
+      public VirtualFile childOf(@NotNull VirtualFile parent, @NotNull String childName) {
         if (parent instanceof NewVirtualFile) {
-          NewVirtualFile child = ((NewVirtualFile)parent).findChildIfCached(childName);
+          var child = ((NewVirtualFile)parent).findChildIfCached(childName);
           if (child != null) {
             return child;
           }
@@ -252,14 +250,14 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
       }
     };
 
-    NavigateResult<VirtualFile> result = FileNavigator.navigate(fileSystem, path, navigator);
+    var result = FileNavigator.navigate(fileSystem, path, navigator);
 
     if (!result.isResolved()) {
       //I see no reason to pass through partially-resolved file, if any:
       return NavigateResult.empty();
     }
 
-    VirtualFile resolvedFile = result.resolvedFileOrFail();
+    var resolvedFile = result.resolvedFileOrFail();
     if (resolvedFile instanceof NewVirtualFile) {
       VirtualFile wrappedFile = new CacheAvoidingVirtualFileWrapper((NewVirtualFile)resolvedFile);
       return NavigateResult.resolved(wrappedFile);
@@ -274,23 +272,25 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    * or not yet cached in VFS.
    */
   @ApiStatus.Internal
-  public static @Nullable NewVirtualFile findFileByPathIfCached(@NotNull NewVirtualFileSystem fileSystem,
-                                                                @NotNull String path) {
+  public static @Nullable NewVirtualFile findFileByPathIfCached(@NotNull NewVirtualFileSystem fileSystem, @NotNull String path) {
     return findCachedFileByPath(fileSystem, path).first;
   }
 
-  private static final String FILE_SEPARATORS = "/" + (File.separatorChar == '/' ? "" : File.separator);
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  private static final String FILE_SEPARATORS = "/" + (java.io.File.separatorChar == '/' ? "" : java.io.File.separator);
 
   /**
    * Same as {@link #extractRootFromPath(NewVirtualFileSystem, String)}, but path-from-root returned not as a single String,
    * but as an {@link Iterable} of the path's segments.
    */
   @ApiStatus.Internal
-  public static @Nullable Pair<@NotNull NewVirtualFile, @NotNull Iterable<String>> extractRootAndPathSegments(@NotNull NewVirtualFileSystem fileSystem,
-                                                                                                              @NotNull String path) {
-    PathFromRoot pair = extractRootFromPath(fileSystem, path);
+  public static @Nullable Pair<@NotNull NewVirtualFile, @NotNull Iterable<String>> extractRootAndPathSegments(
+    @NotNull NewVirtualFileSystem fileSystem,
+    @NotNull String path
+  ) {
+    var pair = extractRootFromPath(fileSystem, path);
     if (pair == null) return null;
-    Iterable<String> parts = StringUtil.tokenize(pair.pathFromRoot(), FILE_SEPARATORS);
+    var parts = StringUtil.tokenize(pair.pathFromRoot(), FILE_SEPARATORS);
     return Pair.create(pair.root(), parts);
   }
 
@@ -306,27 +306,25 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    * Returns null if the path is incorrect and/or not recognizable by the fileSystem
    */
   @ApiStatus.Internal
-  public static @Nullable PathFromRoot extractRootFromPath(@NotNull NewVirtualFileSystem fileSystem,
-                                                           @NotNull String path) {
-    String normalizedPath = fileSystem.normalize(path);
+  public static @Nullable PathFromRoot extractRootFromPath(@NotNull NewVirtualFileSystem fileSystem, @NotNull String path) {
+    var normalizedPath = fileSystem.normalize(path);
     if (normalizedPath == null || normalizedPath.isBlank()) {
       return null;
     }
 
-    String rootPath = fileSystem.extractRootPath(normalizedPath);
+    var rootPath = fileSystem.extractRootPath(normalizedPath);
     if (rootPath.isBlank() || rootPath.length() > normalizedPath.length()) {
       //rootPath.isBlank() means that it is the path that is incorrect (not belong to the file system)
-      LOG.warn(fileSystem + " has extracted incorrect root '" + rootPath + "' from '" + normalizedPath +
-               "' (original '" + path + "')");
+      LOG.warn(fileSystem + " has extracted incorrect root '" + rootPath + "' from '" + normalizedPath + "' (original '" + path + "')");
       return null;
     }
 
-    NewVirtualFile root = ManagingFS.getInstance().findRoot(rootPath, fileSystem);
+    var root = ManagingFS.getInstance().findRoot(rootPath, fileSystem);
     if (root == null || !root.exists()) {
       return null;
     }
 
-    int restPathStart = rootPath.length();
+    var restPathStart = rootPath.length();
     if (restPathStart < normalizedPath.length() && normalizedPath.charAt(restPathStart) == '/') restPathStart++;
     return new PathFromRoot(root, normalizedPath.substring(restPathStart));
   }
@@ -342,9 +340,8 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    * @return VirtualFile for the path, if resolved, null if not -- e.g. path is invalid or doesn't exist, or not belongs to
    * fileSystem given.
    */
-  protected static @Nullable NewVirtualFile findFileByPath(@NotNull NewVirtualFileSystem vfs,
-                                                           @NotNull String path) {
-    NavigateResult<NewVirtualFile> result = FileNavigator.navigate(vfs, path, FileNavigator.POSIX_LIGHT);
+  protected static @Nullable NewVirtualFile findFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+    var result = FileNavigator.navigate(vfs, path, FileNavigator.POSIX_LIGHT);
     return result.resolvedFileOr(null);
   }
 }

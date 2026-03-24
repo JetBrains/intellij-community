@@ -143,6 +143,10 @@ data class InvalidSuppressionConfigKeyError(
   @JvmField val invalidContentModuleKeys: Set<ContentModuleName>,
   /** Keys in plugins that don't match any plugin */
   @JvmField val invalidPluginKeys: Set<ContentModuleName>,
+  /** Keys in plugins that should be placed in contentModules instead */
+  @JvmField val misplacedInPlugins: Set<ContentModuleName> = emptySet(),
+  /** Keys in contentModules that should be placed in plugins instead */
+  @JvmField val misplacedInContentModules: Set<ContentModuleName> = emptySet(),
   override val ruleName: String = "SuppressionConfigValidation",
 ) : ValidationError {
   override val category: ErrorCategory get() = ErrorCategory.INVALID_SUPPRESSION_KEY
@@ -154,6 +158,9 @@ data class InvalidSuppressionConfigKeyError(
       appendLine("  ${s.yellow}Invalid contentModules keys (not actual content modules):${s.reset}")
       for (key in invalidContentModuleKeys.map { it.value }.sorted()) {
         appendLine("    ${s.red}*${s.reset} ${s.bold}$key${s.reset}")
+        if (ContentModuleName(key) in misplacedInContentModules) {
+          appendLine("      ${s.blue}→ This is a plugin. Move to 'plugins' section.${s.reset}")
+        }
       }
       appendLine()
     }
@@ -161,10 +168,13 @@ data class InvalidSuppressionConfigKeyError(
       appendLine("  ${s.yellow}Invalid plugins keys (not actual plugin modules):${s.reset}")
       for (key in invalidPluginKeys.map { it.value }.sorted()) {
         appendLine("    ${s.red}*${s.reset} ${s.bold}$key${s.reset}")
+        if (ContentModuleName(key) in misplacedInPlugins) {
+          appendLine("      ${s.blue}→ This is a content module. Move to 'contentModules' section.${s.reset}")
+        }
       }
       appendLine()
     }
-    appendLine("${s.blue}Fix:${s.reset} Remove stale keys or fix typos in suppressions.json")
+    appendLine("${s.blue}Fix:${s.reset} Remove stale keys, fix typos, or move misplaced keys to the correct section in suppressions.json")
     appendLine()
     appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
     appendLine()

@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.productLayout.generator
 
@@ -56,6 +56,7 @@ internal object TestPluginDependencyPlanner : PipelineNode {
     val pluginTargetNamesByPluginId = buildPluginTargetNamesByPluginId(model.pluginGraph)
     val pluginIdByTargetName = buildPluginIdByTargetName(model.pluginGraph)
     val resolutionContext = DependencyResolutionContext(model.pluginGraph)
+    val allRealProductNames = embeddedCheckProductNames(model.discovery.products.map { it.name })
 
     val plans = testPluginsWithSource.map { (spec, productClass, productName) ->
       buildTestPluginDependencyPlan(
@@ -67,6 +68,7 @@ internal object TestPluginDependencyPlanner : PipelineNode {
         depsByModule = depsByModule,
         pluginTargetNamesByPluginId = pluginTargetNamesByPluginId,
         pluginIdByTargetName = pluginIdByTargetName,
+        allRealProductNames = allRealProductNames,
         dependencyChains = model.dslTestPluginDependencyChains[spec.pluginId].orEmpty(),
       )
     }
@@ -90,10 +92,13 @@ private fun buildTestPluginDependencyPlan(
   depsByModule: Map<ContentModuleName, ContentModuleDependencyPlan>,
   pluginTargetNamesByPluginId: Map<PluginId, Set<TargetName>>,
   pluginIdByTargetName: Map<TargetName, PluginId>,
+  allRealProductNames: Set<String>,
   dependencyChains: Map<ContentModuleName, List<ContentModuleName>>,
 ): TestPluginDependencyPlan {
+  val embeddedCheckProductNames = if (productName in allRealProductNames) setOf(productName) else allRealProductNames
   val contentData = buildContentBlocksAndChainMapping(spec.spec, collectModuleSetAliases = false)
   val contentModules = contentData.contentBlocks
+    .asSequence()
     .flatMap { it.modules }
     .mapTo(LinkedHashSet()) { it.name }
   val allowedMissingByModule = buildAllowedMissingByModule(contentData)
@@ -108,14 +113,12 @@ private fun buildTestPluginDependencyPlan(
   val unresolvedPluginsFromContent = LinkedHashMap<PluginId, LinkedHashSet<TargetName>>()
   for (moduleName in contentModules) {
     val moduleDeps = depsByModule.get(moduleName)?.testDependencies ?: continue
-    if (moduleDeps.isEmpty()) continue
+    if (moduleDeps.isEmpty()) {
+      continue
+    }
 
     for (dependency in moduleDeps) {
-      if (dependency in contentModules) continue
-      if (dependency.value.startsWith(LIB_MODULE_PREFIX)) {
-        if (!shouldSkipEmbeddedDependency(graph, dependency)) {
-          moduleDepsFromContent.add(dependency)
-        }
+      if (dependency in contentModules) {
         continue
       }
 
@@ -128,16 +131,20 @@ private fun buildTestPluginDependencyPlan(
         globalAllowedMissing = globalAllowedMissing,
       )
       if (owningProdPlugins.isEmpty()) {
-        val pluginId = pluginIdByTargetName[TargetName(dependency.value)]
+        val pluginId = pluginIdByTargetName.get(TargetName(dependency.value))
         if (pluginId != null) {
-          if (pluginId == spec.pluginId) continue
-          if (pluginId in moduleAllowedMissing) continue
+          if (pluginId == spec.pluginId) {
+            continue
+          }
+          if (pluginId in moduleAllowedMissing) {
+            continue
+          }
           if (TargetName(dependency.value) in resolvableOwners) {
             requiredByPlugin.computeIfAbsent(pluginId) { LinkedHashSet() }.add(moduleName)
           }
           else {
             val targets = unresolvedPluginsFromContent.computeIfAbsent(pluginId) { LinkedHashSet() }
-            val names = pluginTargetNamesByPluginId[pluginId].orEmpty()
+            val names = pluginTargetNamesByPluginId.get(pluginId).orEmpty()
             if (names.isEmpty()) {
               targets.add(TargetName(dependency.value))
             }
@@ -147,10 +154,10 @@ private fun buildTestPluginDependencyPlan(
           }
           continue
         }
-        if (dependency in resolvableModules) continue
-        if (!shouldSkipEmbeddedDependency(graph, dependency)) {
-          moduleDepsFromContent.add(dependency)
+        if (dependency in resolvableModules) {
+          continue
         }
+        moduleDepsFromContent.add(dependency)
         continue
       }
 
@@ -160,8 +167,12 @@ private fun buildTestPluginDependencyPlan(
       }
 
       for (owner in resolvableProdOwners) {
-        if (owner.pluginId == spec.pluginId) continue
-        if (owner.pluginId in moduleAllowedMissing) continue
+        if (owner.pluginId == spec.pluginId) {
+          continue
+        }
+        if (owner.pluginId in moduleAllowedMissing) {
+          continue
+        }
         requiredByPlugin.computeIfAbsent(owner.pluginId) { LinkedHashSet() }.add(moduleName)
       }
     }
@@ -170,10 +181,11 @@ private fun buildTestPluginDependencyPlan(
   val targetPlan = collectTargetDependencies(
     graph = graph,
     resolutionContext = resolutionContext,
-    spec = spec,
-    bundledPluginNames = bundledPluginNames,
-    pluginTargetNamesByPluginId = pluginTargetNamesByPluginId,
-  )
+      spec = spec,
+      bundledPluginNames = bundledPluginNames,
+      pluginTargetNamesByPluginId = pluginTargetNamesByPluginId,
+      embeddedCheckProductNames = embeddedCheckProductNames,
+    )
 
   val computedPluginDependencies = LinkedHashSet<PluginId>().apply {
     addAll(targetPlan.pluginDependencies)
@@ -226,6 +238,7 @@ private fun collectTargetDependencies(
   spec: TestPluginSpec,
   bundledPluginNames: Set<TargetName>,
   pluginTargetNamesByPluginId: Map<PluginId, Set<TargetName>>,
+  embeddedCheckProductNames: Set<String>,
 ): TargetDependencyPlan {
   val moduleDeps = LinkedHashSet<ContentModuleName>()
   val pluginDeps = LinkedHashSet<PluginId>()
@@ -295,8 +308,10 @@ private fun collectTargetDependencies(
                 }
                 return@dependsOn
               }
-              val depModuleId = contentModule(classification.moduleName)?.id ?: -1
-              if (depModuleId >= 0 && shouldSkipEmbeddedPluginDependency(depModuleId)) return@dependsOn
+              val depModuleId = contentModule(classification.moduleName)
+              if (depModuleId != null && shouldSkipEmbeddedPluginDependency(depModuleId, embeddedCheckProductNames)) {
+                return@dependsOn
+              }
               moduleDeps.add(classification.moduleName)
             }
             is DependencyClassification.PluginDep -> {
@@ -348,18 +363,13 @@ private fun buildPluginIdByTargetName(graph: PluginGraph): Map<TargetName, Plugi
   val result = HashMap<TargetName, PluginId>()
   graph.query {
     plugins { plugin ->
-      if (plugin.isTest) return@plugins
+      if (plugin.isTest) {
+        return@plugins
+      }
       val pluginId = plugin.pluginIdOrNull ?: return@plugins
-      result[plugin.name()] = pluginId
+      result.put(plugin.name(), pluginId)
     }
   }
   return result
 }
 
-
-private fun shouldSkipEmbeddedDependency(graph: PluginGraph, moduleName: ContentModuleName): Boolean {
-  return graph.query {
-    val depModuleId = contentModule(moduleName)?.id ?: return@query false
-    shouldSkipEmbeddedPluginDependency(depModuleId)
-  }
-}

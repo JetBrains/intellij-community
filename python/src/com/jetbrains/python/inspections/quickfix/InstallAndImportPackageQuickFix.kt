@@ -3,14 +3,17 @@
 package com.jetbrains.python.inspections.quickfix
 
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.writeCommandAction
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.imports.AddImportHelper
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-internal class InstallAndImportPackageQuickFix(
-  override val packageName: String,
+@ApiStatus.Internal
+class InstallAndImportPackageQuickFix(
+  packageName: String,
   private val importAlias: String?,
 ) : InstallPackageQuickFix(packageName) {
 
@@ -18,17 +21,10 @@ internal class InstallAndImportPackageQuickFix(
 
   override fun getFamilyName(): @Nls String = PyPsiBundle.message("QFIX.install.and.import.package")
 
-  override fun onSuccess(descriptor: ProblemDescriptor?) {
-    executeWriteCommandToAddImport(descriptor?.psiElement ?: return)
-  }
-
-  private fun executeWriteCommandToAddImport(psiElement: PsiElement) {
-    WriteCommandAction.writeCommandAction(psiElement.project)
-      .withName(PyPsiBundle.message("INSP.package.requirements.add.import"))
-      .withGroupId(GROUP_ID)
-      .run<RuntimeException> {
-        addImportToFile(psiElement)
-      }
+  override suspend fun onSuccess(project: Project, descriptor: ProblemDescriptor) {
+    writeCommandAction(project, PyPsiBundle.message("INSP.package.requirements.add.import")) {
+      addImportToFile(descriptor.psiElement ?: return@writeCommandAction )
+    }
   }
 
   private fun addImportToFile(element: PsiElement) =
@@ -39,8 +35,4 @@ internal class InstallAndImportPackageQuickFix(
       AddImportHelper.ImportPriority.THIRD_PARTY,
       element
     )
-
-  companion object {
-    private const val GROUP_ID = "Add import"
-  }
 }

@@ -30,7 +30,7 @@ internal class DropAnErrorAction : DumbAwareAction() {
     }
     else {
       ApplicationManager.getApplication().executeOnPooledThread {
-        (1..3).forEach {
+        repeat(3) {
           Logger.getInstance(TEST_LOGGER).error(TEST_MESSAGE, Exception(randomString()))
           TimeoutUtil.sleep(200)
         }
@@ -58,6 +58,7 @@ internal class DropAnErrorWithAttachmentsAction : DumbAwareAction() {
     Logger.getInstance(TEST_LOGGER).error(TEST_MESSAGE, Exception(randomString()), *attachments)
   }
 
+  @Suppress("UsagesOfObsoleteApi", "IO_FILE_USAGE")
   private fun getLargeAttachment(): Array<Attachment> {
     val size = 300 * 1024 * 1024
     val file = FileUtil.createTempFile("large-attachment", ".bin", true)

@@ -1,5 +1,6 @@
 // "Replace with 'emptyArray()' call" "true"
 // WITH_STDLIB
+// K2_ERROR: Null cannot be a value of a non-null type 'Array<String>'.
 
 fun foo(a: String?): Array<String> {
     val w = a ?: return null<caret>

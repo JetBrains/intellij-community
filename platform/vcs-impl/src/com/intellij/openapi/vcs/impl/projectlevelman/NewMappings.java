@@ -46,7 +46,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.vcsUtil.VcsUtil;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +75,7 @@ public final class NewMappings implements Disposable {
 
   private FileWatchRequestsManager myFileWatchRequestsManager;
 
-  private final ProjectLevelVcsManager myVcsManager;
+  private final ProjectLevelVcsManagerImpl myVcsManager;
   private final Project myProject;
 
   private volatile List<VcsDirectoryMapping> myMappings = Collections.emptyList(); // sorted by MAPPINGS_COMPARATOR
@@ -415,7 +414,7 @@ public final class NewMappings implements Disposable {
     Map<VirtualFile, MappedRoot> mappedRoots = new HashMap<>();
     Disposable pointerDisposable = Disposer.newDisposable();
 
-    if (!TrustedProjects.isProjectTrusted(myProject)) {
+    if (!TrustedProjects.isProjectTrusted(myProject) || myProject.isDefault()) {
       return new Mappings(Collections.emptyList(), pointerDisposable);
     }
 
@@ -465,7 +464,7 @@ public final class NewMappings implements Disposable {
       List<MappedRoot> result = ContainerUtil.sorted(mappedRoots.values(), ROOT_COMPARATOR);
 
       for (MappedRoot root : result) {
-        if (myVcsManager.isIgnored(VcsUtil.getFilePath(root.root))) {
+        if (myVcsManager.isIgnoredFileRoot(root.root)) {
           LOG.warn("Root mapping is under ignored root: " + root.root);
         }
       }
@@ -634,7 +633,6 @@ public final class NewMappings implements Disposable {
   public @Nullable MappedRoot getMappedRootFor(@Nullable VirtualFile file) {
     if (file == null || !file.isInLocalFileSystem()) return null;
     if (myMappedRoots.isEmpty()) return null;
-    if (myVcsManager.isIgnored(file)) return null;
 
     return myMappedRootsMapping.getRootFor(file);
   }
@@ -642,7 +640,6 @@ public final class NewMappings implements Disposable {
   public @Nullable MappedRoot getMappedRootFor(@Nullable FilePath file) {
     if (file == null || file.isNonLocal()) return null;
     if (myMappedRoots.isEmpty()) return null;
-    if (myVcsManager.isIgnored(file)) return null;
 
     return myMappedRootsMapping.getRootFor(file);
   }

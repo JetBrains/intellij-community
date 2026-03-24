@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp;
 
 import com.intellij.lexer.Lexer;
@@ -785,10 +785,7 @@ public class RegExpLexerTest extends LexerTestCase {
       UNICODE_CHAR ('\\u{FF}')
       HEX_CHAR ('\\x{fff}')
       UNICODE_CHAR ('\\u1234')
-      INVALID_UNICODE_ESCAPE_TOKEN ('\\u')
-      CHARACTER ('1')
-      CHARACTER ('2')
-      CHARACTER ('3')
+      INVALID_UNICODE_ESCAPE_TOKEN ('\\u123')
       INVALID_UNICODE_ESCAPE_TOKEN ('\\u')""", lexer);
     final RegExpLexer lexer2 = new RegExpLexer(EnumSet.of(DANGLING_METACHARACTERS));
     doTest("\\u{1F680}", """

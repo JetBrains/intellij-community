@@ -1,0 +1,13 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <agent.workbench.sessionLaunchSpecAugmenter implementation="com.intellij.agent.workbench.sessions.launch.config.backend.AgentWorkbenchProjectLaunchConfigAugmenter"/>
+  </extensions>
+</idea-plugin>

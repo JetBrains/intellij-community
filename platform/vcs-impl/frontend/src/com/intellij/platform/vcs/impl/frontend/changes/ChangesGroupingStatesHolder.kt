@@ -49,7 +49,7 @@ class ChangesGroupingStatesHolder(private val cs: CoroutineScope) {
       GroupingItemsEntity.each().collect { itemsEntity ->
         val itemsList = itemsEntity.items.map { it.name }.toMutableSet()
         states[itemsEntity.place] = itemsList
-        itemsEntity.asQuery()[GroupingItemsEntity.Items].collect { groupingKey ->
+        itemsEntity.asQuery().get(GroupingItemsEntity.Items).collect { groupingKey ->
           itemsList.add(groupingKey.name)
         }
       }

@@ -43,6 +43,9 @@
                 #if (${INHERIT_MAVEN_KOTLIN_PLUGIN_VERSION} == false)
                 <version>$${kotlin.version}</version>
                 #end
+                #if (${EXTENSIONS_SUPPORT} == true)
+                <extensions>true</extensions>
+                #end
                 <executions>
                     <execution>
                         <id>compile</id>

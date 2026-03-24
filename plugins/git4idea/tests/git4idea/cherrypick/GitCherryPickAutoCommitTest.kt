@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.cherrypick
 
 import com.intellij.dvcs.repo.Repository
@@ -391,7 +391,11 @@ internal class GitCherryPickAutoCommitTest(private val createChangelistAutomatic
     assertEquals(Repository.State.GRAFTING, repo.state)
 
     // Act: try to continue with unresolved conflicts
+    `do nothing on merge`()
     launchCherryPick(repo).join()
+
+    // Assert: merge dialog was shown again
+    `assert merge dialog was shown`()
 
     // Assert: still grafting, operation didn't finish
     assertEquals(Repository.State.GRAFTING, repo.state)

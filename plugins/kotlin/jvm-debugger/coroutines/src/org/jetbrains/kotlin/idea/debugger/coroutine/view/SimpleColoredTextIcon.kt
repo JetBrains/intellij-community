@@ -106,22 +106,10 @@ internal class SimpleColoredTextIconPresentationRenderer {
 
     private val settings: ThreadsViewSettings = ThreadsViewSettings.getInstance()
     
-    fun render(infoData: CoroutineInfoData, isCurrent: Boolean, textToHideFromContext: String): SimpleColoredTextIcon {
-        val thread = infoData.lastObservedThread
-        val name = thread?.name()?.substringBefore(" @${infoData.name}") ?: ""
-        val threadState = if (thread != null) DebuggerUtilsEx.getThreadStatusText(thread.status()) else ""
-        
+    fun renderCoroutineInfo(infoData: CoroutineInfoData, isCurrent: Boolean): SimpleColoredTextIcon {
         val icon = fromState(infoData.state, isCurrent)
-
         val label = SimpleColoredTextIcon(icon, !infoData.isCreated)
-        label.append("\"")
-        label.appendValue(infoData.coroutineDescriptor)
-        label.append("\": ${infoData.state}")
-        if (name.isNotEmpty()) {
-            label.append(" on thread \"")
-            label.appendValue(name)
-            label.append("\": $threadState")
-        }
+        label.append(infoData.coroutineDescriptor)
         return label
     }
 

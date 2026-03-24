@@ -20,6 +20,7 @@
 - <init>():V
 - pa:addCompletions(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionResultSet,I,java.lang.String,com.intellij.polySymbols.query.PolySymbolQueryExecutor,com.intellij.psi.PsiElement):V
 - pf:addCompletions(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.util.ProcessingContext,com.intellij.codeInsight.completion.CompletionResultSet):V
+- p:createSorter(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionSorter
 - pa:getContext(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - sf:isFurtherCodeCompletionPreventedFor(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.polySymbols.PolySymbolKind[]):Z
 - sf:preventFurtherCodeCompletionsFor(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.polySymbols.PolySymbolKind):V

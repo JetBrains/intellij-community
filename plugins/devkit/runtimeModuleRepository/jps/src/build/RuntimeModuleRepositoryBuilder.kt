@@ -2,11 +2,14 @@
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
 import com.intellij.devkit.runtimeModuleRepository.generator.JpsCompilationResourcePathsSchema
+import com.intellij.devkit.runtimeModuleRepository.generator.NoContentModuleDetector
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryValidator
 import com.intellij.devkit.runtimeModuleRepository.jps.impl.DevkitRuntimeModuleRepositoryJpsBundle
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
+import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.intellij.platform.runtime.repository.serialization.impl.CompactFileWriter
 import org.jetbrains.annotations.Nls
@@ -48,13 +51,13 @@ internal class RuntimeModuleRepositoryBuilder
     context.processMessage(ProgressMessage(DevkitRuntimeModuleRepositoryJpsBundle.message("progress.message.generating.intellij.modules.repository"), BuildTargetChunk(setOf(target))))
     val timeToCreateDescriptors = measureTimeMillis {
       val resourcePathsSchema = JpsCompilationResourcePathsSchema(project)
-      descriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptorsForWholeProject(project, resourcePathsSchema)
+      descriptors = RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptorsForWholeProject(project, resourcePathsSchema, NoContentModuleDetector)
     }
     LOG.info("${descriptors.size} descriptors are created in ${timeToCreateDescriptors}ms")
     
     val errorReporter = object : RuntimeModuleRepositoryValidator.ErrorReporter {
-      override fun reportDuplicatingId(moduleId: String) {
-        context.reportError(DevkitRuntimeModuleRepositoryJpsBundle.message("error.message.duplicating.id.0.is.found", moduleId))
+      override fun reportDuplicatingId(moduleId: RuntimeModuleId) {
+        context.reportError(DevkitRuntimeModuleRepositoryJpsBundle.message("error.message.duplicating.id.0.is.found", moduleId.presentableName))
       }
     }
     RuntimeModuleRepositoryValidator.validate(descriptors, errorReporter) 
@@ -67,16 +70,18 @@ internal class RuntimeModuleRepositoryBuilder
     val outputDir = Path.of(JpsPathUtil.urlToOsPath(outputUrl))
     val modulesXml = RuntimeModuleRepositoryTarget.getModulesXmlFile(project) ?: error("Project was not loaded from .idea")
     try {
+      val pluginHeaders = emptyList<RawRuntimePluginHeader>()
       val jarRepositoryPath = outputDir.resolve(RuntimeModuleRepositoryGenerator.JAR_REPOSITORY_FILE_NAME)
       val timeToSaveDescriptorsToJar = measureTimeMillis {
-        RuntimeModuleRepositorySerialization.saveToJar(descriptors, null, jarRepositoryPath, null, RuntimeModuleRepositoryGenerator.GENERATOR_VERSION)
+        RuntimeModuleRepositorySerialization.saveToJar(descriptors, pluginHeaders, null, jarRepositoryPath, RuntimeModuleRepositoryGenerator.GENERATOR_VERSION)
       }
       outputConsumer.registerOutputFile(jarRepositoryPath.toFile(), listOf(modulesXml.absolutePath))
       LOG.info("${descriptors.size} descriptors are saved to JAR in ${timeToSaveDescriptorsToJar}ms")
 
       val compactRepositoryPath = outputDir.resolve(RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME)
       val timeToSaveDescriptorsToCompactFile = measureTimeMillis {
-        CompactFileWriter.saveToFile(descriptors, null, null, RuntimeModuleRepositoryGenerator.GENERATOR_VERSION, compactRepositoryPath)
+        CompactFileWriter.saveToFile(descriptors,
+                                     pluginHeaders, null, RuntimeModuleRepositoryGenerator.GENERATOR_VERSION, compactRepositoryPath)
       }
       LOG.info("${descriptors.size} descriptors are saved in compact format in ${timeToSaveDescriptorsToCompactFile}ms")
       outputConsumer.registerOutputFile(compactRepositoryPath.toFile(), listOf(modulesXml.absolutePath))

@@ -1,19 +1,34 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.rpc"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.recentFiles"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint interface="com.intellij.platform.recentFiles.frontend.RecentFilesAdvertisementProvider"
-                    name="recentFiles.advertisementProvider"
+                    qualifiedName="com.intellij.recentFiles.advertisementProvider"
                     dynamic="true"/>
     <extensionPoint interface="com.intellij.platform.recentFiles.frontend.RecentFilesNavigator"
-                    name="recentFiles.navigator"
+                    qualifiedName="com.intellij.recentFiles.navigator"
                     dynamic="true"/>
     <extensionPoint interface="com.intellij.platform.recentFiles.frontend.RecentFilesExcluder"
-                    name="recentFiles.excluder"
+                    qualifiedName="com.intellij.recentFiles.excluder"
                     dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
@@ -24,7 +39,7 @@
 
     <postStartupActivity implementation="com.intellij.platform.recentFiles.frontend.model.RecentFileModelSynchronizer"/>
   </extensions>
-  <actions>
+  <actions resource-bundle="messages.ActionsBundle">
     <group id="SwitcherAndRecentFiles">
       <action id="Switcher" class="com.intellij.platform.recentFiles.frontend.Switcher"/>
       <action id="SwitcherForward" class="com.intellij.platform.recentFiles.frontend.ShowSwitcherForwardAction"/>

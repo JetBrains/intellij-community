@@ -14,8 +14,27 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":base_resources"],
   deps = [
+    "@lib//:kotlin-stdlib",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-util-io:ide-util-io",
   ]
 )
+
+jvm_library(
+  name = "base_test_lib",
+  module_name = "intellij.idea.customization.base",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":base",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.idea.customization.base` end
+
+### auto-generated section `iml intellij.idea.customization.base` start
+exports_files([
+  "intellij.idea.customization.base.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.idea.customization.base` end

@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "json",
+  module_name = "intellij.libraries.kotlinx.serialization.json",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":json_resources"],
@@ -18,4 +19,23 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
   ]
 )
+
+jvm_library(
+  name = "json_test_lib",
+  module_name = "intellij.libraries.kotlinx.serialization.json",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:kotlinx-serialization-json"],
+  runtime_deps = [
+    ":json",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.kotlinx.serialization.json` end
+
+### auto-generated section `iml intellij.libraries.kotlinx.serialization.json` start
+exports_files([
+  "intellij.libraries.kotlinx.serialization.json.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.kotlinx.serialization.json` end

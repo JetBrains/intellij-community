@@ -16,7 +16,7 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
             UAnnotation (fqName = WithDefaultValue) [@WithDefaultValue]
             UAnnotation (fqName = SuppressLint) [@SuppressLint(value = "Lorem")]
                 UNamedExpression (name = value) [value = "Lorem"]
-                    UPolyadicExpression (operator = +) ["Lorem"] : java.lang.String
+                    UPolyadicExpression (operator = +) ["Lorem"] : @org.jetbrains.annotations.NotNull() java.lang.String
                         ULiteralExpression (value = "Lorem") ["Lorem"] : java.lang.String
             UBlockExpression [{...}]
                 UReturnExpression [return 5]
@@ -30,11 +30,11 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
             UAnnotation (fqName = SuppressLint) [@SuppressLint(value = <noref>("Lorem", "Ipsum", "Dolor"))]
                 UNamedExpression (name = value) [value = <noref>("Lorem", "Ipsum", "Dolor")]
                     UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [<noref>("Lorem", "Ipsum", "Dolor")]
-                        UPolyadicExpression (operator = +) ["Lorem"] : java.lang.String
+                        UPolyadicExpression (operator = +) ["Lorem"] : @org.jetbrains.annotations.NotNull() java.lang.String
                             ULiteralExpression (value = "Lorem") ["Lorem"] : java.lang.String
-                        UPolyadicExpression (operator = +) ["Ipsum"] : java.lang.String
+                        UPolyadicExpression (operator = +) ["Ipsum"] : @org.jetbrains.annotations.NotNull() java.lang.String
                             ULiteralExpression (value = "Ipsum") ["Ipsum"] : java.lang.String
-                        UPolyadicExpression (operator = +) ["Dolor"] : java.lang.String
+                        UPolyadicExpression (operator = +) ["Dolor"] : @org.jetbrains.annotations.NotNull() java.lang.String
                             ULiteralExpression (value = "Dolor") ["Dolor"] : java.lang.String
             UBlockExpression [{...}]
                 UReturnExpression [return Unit]
@@ -55,11 +55,11 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
                 UNamedExpression (name = strs) [strs = collectionLiteral["a", "b", "c"]]
                     UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [collectionLiteral["a", "b", "c"]] : @org.jetbrains.annotations.NotNull() java.lang.String @org.jetbrains.annotations.NotNull() []
                         UIdentifier (Identifier ([)) [UIdentifier (Identifier ([))]
-                        UPolyadicExpression (operator = +) ["a"] : java.lang.String
+                        UPolyadicExpression (operator = +) ["a"] : @org.jetbrains.annotations.NotNull() java.lang.String
                             ULiteralExpression (value = "a") ["a"] : java.lang.String
-                        UPolyadicExpression (operator = +) ["b"] : java.lang.String
+                        UPolyadicExpression (operator = +) ["b"] : @org.jetbrains.annotations.NotNull() java.lang.String
                             ULiteralExpression (value = "b") ["b"] : java.lang.String
-                        UPolyadicExpression (operator = +) ["c"] : java.lang.String
+                        UPolyadicExpression (operator = +) ["c"] : @org.jetbrains.annotations.NotNull() java.lang.String
                             ULiteralExpression (value = "c") ["c"] : java.lang.String
             UBlockExpression [{...}]
                 UReturnExpression [return 3]

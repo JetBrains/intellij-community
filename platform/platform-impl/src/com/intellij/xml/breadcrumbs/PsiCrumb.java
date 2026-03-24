@@ -30,7 +30,7 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb, LazyTooltip
   @Override
   public String getTooltip() {
     if (needCalculateTooltip()) {
-      ReadAction.run(() -> {
+      ReadAction.runBlocking(() -> {
         PsiElement element = getElement(this);
         tooltip = element == null ? null
                                   : provider.getElementTooltip(element);

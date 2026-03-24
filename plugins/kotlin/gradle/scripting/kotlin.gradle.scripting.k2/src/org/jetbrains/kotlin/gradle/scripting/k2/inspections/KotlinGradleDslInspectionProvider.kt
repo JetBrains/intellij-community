@@ -65,4 +65,49 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
     ): PsiElementVisitor {
         return RedundantKotlinStdLibInspectionVisitor(holder)
     }
+
+    override fun isAvoidApplyPluginMethodInspectionAvailable(file: PsiFile): Boolean {
+        return FileUtilRt.extensionEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
+    }
+
+    override fun getAvoidApplyPluginMethodInspectionVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): PsiElementVisitor {
+        return KotlinAvoidApplyPluginMethodInspectionVisitor(holder)
+    }
+
+    override fun isAvoidRepositoriesInBuildGradleInspectionAvailable(file: PsiFile): Boolean {
+        return FileUtilRt.fileNameEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_NAME)
+    }
+
+    override fun getAvoidRepositoriesInBuildGradleInspectionVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): PsiElementVisitor {
+        if (!isOnTheFly) return PsiElementVisitor.EMPTY_VISITOR // probably better done interactively
+        return KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(holder)
+    }
+
+    override fun isAvoidDuplicateDependenciesInspectionAvailable(file: PsiFile): Boolean {
+        return FileUtilRt.extensionEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
+    }
+
+    override fun getAvoidDuplicateDependenciesInspectionVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): PsiElementVisitor {
+        return KotlinAvoidDuplicateDependenciesInspectionVisitor(holder, isOnTheFly)
+    }
+
+    override fun isTaskMissingDescriptionInspectionAvailable(file: PsiFile): Boolean {
+        return FileUtilRt.extensionEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
+    }
+
+    override fun getTaskMissingDescriptionInspectionVisitor(
+        holder: ProblemsHolder,
+        onTheFly: Boolean
+    ): PsiElementVisitor {
+        return KotlinTaskMissingDescriptionInspectionVisitor(holder)
+    }
 }

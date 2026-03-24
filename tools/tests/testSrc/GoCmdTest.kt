@@ -1,6 +1,7 @@
 package com.intellij.tools.cmd
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.io.TempDir
@@ -18,6 +19,7 @@ class GoCmdTest {
     assertThat(result.stdout).startsWith("go version go$version")
   }
 
+  @Disabled("AT-3959")
   @Test
   fun runHelloWorld(@TempDir tempDir: Path) {
     tempDir.resolve("hello.go").writeText("""

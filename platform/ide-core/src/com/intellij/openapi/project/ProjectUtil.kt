@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProjectUtil")
 package com.intellij.openapi.project
 
@@ -18,24 +18,20 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.PathUtilRt
-import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.text.trimMiddle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 import java.util.Locale
 import javax.swing.JComponent
-import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 
 val NOTIFICATIONS_SILENT_MODE: Key<Boolean> = Key.create("NOTIFICATIONS_SILENT_MODE")
@@ -210,7 +206,7 @@ fun getProjectCacheFileName(presentableUrl: String?,
  * instead.
  */
 @JvmOverloads
-fun Project.getProjectCachePath(@NonNls cacheDirName: String, isForceNameUse: Boolean = false, extensionWithDot: String = ""): Path {
+fun Project.getProjectCachePath(cacheDirName: String, isForceNameUse: Boolean = false, extensionWithDot: String = ""): Path {
   return PathManager.getSystemDir().resolve(cacheDirName).resolve(getProjectCacheFileName(isForceNameUse, extensionWithDot = extensionWithDot))
 }
 
@@ -223,7 +219,7 @@ fun Project.getProjectCachePath(@NonNls cacheDirName: String, isForceNameUse: Bo
  * are located under the same directory,
  * and if a new project is created with the same name and location as some previously deleted project, it won't reuse its caches.
  */
-fun Project.getProjectDataPath(@NonNls name: String): Path {
+fun Project.getProjectDataPath(name: String): Path {
   return getProjectDataPathRoot(this).resolve(name)
 }
 
@@ -238,15 +234,14 @@ val projectsDataDir: Path
  * Asynchronously deletes caches directories obtained via [getProjectDataPath] for all projects.
  */
 @Experimental
-fun clearCachesForAllProjects(@NonNls dataDirName: String) {
-  projectsDataDir.directoryStreamIfExists { dirs ->
-    val filesToDelete = dirs.asSequence().map { it.resolve(dataDirName) }.filter { it.exists() }.map { it.toFile() }.toList()
-    FileUtil.asyncDelete(filesToDelete)
+fun clearCachesForAllProjects(dataDirName: String) {
+  for (projectDir in NioFiles.list(projectsDataDir)) {
+    NioFiles.deleteRecursively(projectDir.resolve(dataDirName))
   }
 }
 
 @Experimental
-fun clearCachesForAllProjectsStartingWith(@NonNls prefix: String) {
+fun clearCachesForAllProjectsStartingWith(prefix: String) {
   require(!prefix.isEmpty())
   // a snapshot list instead of a stream is used - do not iterate a directory while deleting its content
   for (projectDir in NioFiles.list(projectsDataDir)) {

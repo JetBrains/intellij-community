@@ -1,6 +1,8 @@
 // "Add 'JUnit4' to classpath" "true"
 // ERROR: Unresolved reference: Before
 // ERROR: Unresolved reference: junit
+// K2_ERROR: Unresolved reference 'Before'.
+// K2_ERROR: Unresolved reference 'junit'.
 // K2_AFTER_ERROR: Unresolved reference 'Before'.
 // K2_AFTER_ERROR: Unresolved reference 'junit'.
 // WITH_STDLIB

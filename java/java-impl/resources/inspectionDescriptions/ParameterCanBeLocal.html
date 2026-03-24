@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports redundant method parameters that can be replaced with local variables.
-<p>If all local usages of a parameter are preceded by assignments to that parameter, the
-parameter can be removed and its usages replaced with local variables.
-It makes no sense to have such a parameter, as values that are passed to it are overwritten.
+Reports method parameters that are redundant and can be replaced with a local variable.
+<p>If all usages of a parameter are preceded by an assignment to that parameter, the
+parameter can be replaced with a local variable.
+Such a parameter is unnecessary, as values that are passed to it are overwritten.
   Usually, the problem appears as a result of refactoring.</p>
 <p>Example:</p>
 <pre><code>

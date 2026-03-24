@@ -164,7 +164,7 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
     for (Map.Entry<String, FileHighlightingSetting[]> entry : entries) {
       String url = entry.getKey();
       // remove invalid entries to make sure we save only the valid ones
-      if (ReadAction.compute(() -> VirtualFileManager.getInstance().findFileByUrl(url)) != null) {
+      if (ReadAction.computeBlocking(() -> VirtualFileManager.getInstance().findFileByUrl(url)) != null) {
         Element child = new Element(SETTING_TAG);
         child.setAttribute(FILE_ATT, url);
         FileHighlightingSetting[] settings = entry.getValue();

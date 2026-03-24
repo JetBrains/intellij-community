@@ -1,4 +1,4 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -41,10 +41,10 @@ internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleSc
             readField("definitionId")
             return dataSource.definitionId
         }
-    override val compilationConfiguration: ScriptCompilationConfigurationData
+    override val compilationConfigurationData: ScriptCompilationConfigurationData
         get() {
-            readField("compilationConfiguration")
-            return dataSource.compilationConfiguration
+            readField("compilationConfigurationData")
+            return dataSource.compilationConfigurationData
         }
     override val hostConfiguration: ScriptingHostConfigurationEntity
         get() {
@@ -101,8 +101,8 @@ internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleSc
             if (!getEntityData().isDefinitionIdInitialized()) {
                 error("Field GradleScriptDefinitionEntity#definitionId should be initialized")
             }
-            if (!getEntityData().isCompilationConfigurationInitialized()) {
-                error("Field GradleScriptDefinitionEntity#compilationConfiguration should be initialized")
+            if (!getEntityData().isCompilationConfigurationDataInitialized()) {
+                error("Field GradleScriptDefinitionEntity#compilationConfigurationData should be initialized")
             }
             if (!getEntityData().isHostConfigurationInitialized()) {
                 error("Field GradleScriptDefinitionEntity#hostConfiguration should be initialized")
@@ -118,8 +118,8 @@ internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleSc
             dataSource as GradleScriptDefinitionEntity
             if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
             if (this.definitionId != dataSource.definitionId) this.definitionId = dataSource.definitionId
-            if (this.compilationConfiguration != dataSource.compilationConfiguration) this.compilationConfiguration =
-                dataSource.compilationConfiguration
+            if (this.compilationConfigurationData != dataSource.compilationConfigurationData) this.compilationConfigurationData =
+                dataSource.compilationConfigurationData
             if (this.hostConfiguration != dataSource.hostConfiguration) this.hostConfiguration = dataSource.hostConfiguration
             if (this.evaluationConfiguration != dataSource?.evaluationConfiguration) this.evaluationConfiguration =
                 dataSource.evaluationConfiguration
@@ -142,12 +142,12 @@ internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleSc
                 getEntityData(true).definitionId = value
                 changedProperty.add("definitionId")
             }
-        override var compilationConfiguration: ScriptCompilationConfigurationData
-            get() = getEntityData().compilationConfiguration
+        override var compilationConfigurationData: ScriptCompilationConfigurationData
+            get() = getEntityData().compilationConfigurationData
             set(value) {
                 checkModificationAllowed()
-                getEntityData(true).compilationConfiguration = value
-                changedProperty.add("compilationConfiguration")
+                getEntityData(true).compilationConfigurationData = value
+                changedProperty.add("compilationConfigurationData")
 
             }
         override var hostConfiguration: ScriptingHostConfigurationEntity
@@ -175,12 +175,12 @@ internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleSc
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class GradleScriptDefinitionEntityData : WorkspaceEntityData<GradleScriptDefinitionEntity>() {
     lateinit var definitionId: String
-    lateinit var compilationConfiguration: ScriptCompilationConfigurationData
+    lateinit var compilationConfigurationData: ScriptCompilationConfigurationData
     lateinit var hostConfiguration: ScriptingHostConfigurationEntity
     var evaluationConfiguration: ScriptEvaluationConfigurationEntity? = null
 
     internal fun isDefinitionIdInitialized(): Boolean = ::definitionId.isInitialized
-    internal fun isCompilationConfigurationInitialized(): Boolean = ::compilationConfiguration.isInitialized
+    internal fun isCompilationConfigurationDataInitialized(): Boolean = ::compilationConfigurationData.isInitialized
     internal fun isHostConfigurationInitialized(): Boolean = ::hostConfiguration.isInitialized
 
     override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<GradleScriptDefinitionEntity> {
@@ -210,7 +210,7 @@ internal class GradleScriptDefinitionEntityData : WorkspaceEntityData<GradleScri
     }
 
     override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-        return GradleScriptDefinitionEntity(definitionId, compilationConfiguration, hostConfiguration, entitySource) {
+        return GradleScriptDefinitionEntity(definitionId, compilationConfigurationData, hostConfiguration, entitySource) {
             this.evaluationConfiguration = this@GradleScriptDefinitionEntityData.evaluationConfiguration
         }
     }
@@ -226,7 +226,7 @@ internal class GradleScriptDefinitionEntityData : WorkspaceEntityData<GradleScri
         other as GradleScriptDefinitionEntityData
         if (this.entitySource != other.entitySource) return false
         if (this.definitionId != other.definitionId) return false
-        if (this.compilationConfiguration != other.compilationConfiguration) return false
+        if (this.compilationConfigurationData != other.compilationConfigurationData) return false
         if (this.hostConfiguration != other.hostConfiguration) return false
         if (this.evaluationConfiguration != other.evaluationConfiguration) return false
         return true
@@ -237,7 +237,7 @@ internal class GradleScriptDefinitionEntityData : WorkspaceEntityData<GradleScri
         if (this.javaClass != other.javaClass) return false
         other as GradleScriptDefinitionEntityData
         if (this.definitionId != other.definitionId) return false
-        if (this.compilationConfiguration != other.compilationConfiguration) return false
+        if (this.compilationConfigurationData != other.compilationConfigurationData) return false
         if (this.hostConfiguration != other.hostConfiguration) return false
         if (this.evaluationConfiguration != other.evaluationConfiguration) return false
         return true
@@ -246,7 +246,7 @@ internal class GradleScriptDefinitionEntityData : WorkspaceEntityData<GradleScri
     override fun hashCode(): Int {
         var result = entitySource.hashCode()
         result = 31 * result + definitionId.hashCode()
-        result = 31 * result + compilationConfiguration.hashCode()
+        result = 31 * result + compilationConfigurationData.hashCode()
         result = 31 * result + hostConfiguration.hashCode()
         result = 31 * result + evaluationConfiguration.hashCode()
         return result
@@ -255,7 +255,7 @@ internal class GradleScriptDefinitionEntityData : WorkspaceEntityData<GradleScri
     override fun hashCodeIgnoringEntitySource(): Int {
         var result = javaClass.hashCode()
         result = 31 * result + definitionId.hashCode()
-        result = 31 * result + compilationConfiguration.hashCode()
+        result = 31 * result + compilationConfigurationData.hashCode()
         result = 31 * result + hostConfiguration.hashCode()
         result = 31 * result + evaluationConfiguration.hashCode()
         return result

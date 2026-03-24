@@ -439,7 +439,7 @@ public final class StubIndexImpl extends StubIndexEx {
   public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull IFileElementType fileElementType) {
     return () -> {
       if (PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE == PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
-        ReadAction.run(() -> {
+        ReadAction.runBlocking(() -> {
           if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl index) {
             index.getChangedFilesCollector().processFilesToUpdateInReadAction();
           }

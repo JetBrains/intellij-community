@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -123,13 +124,13 @@ public interface InlineTransformer {
     if (!InlineMethodProcessor.checkBadReturns(returns, body)) {
       return ref -> {
         InlineUtil.TailCallType type = InlineUtil.getTailCallType(ref);
-        if (type == InlineUtil.TailCallType.Return || type == InlineUtil.TailCallType.Simple) {
+        if (type == InlineUtil.TailCallType.Return || type == InlineUtil.TailCallType.Simple || type == InlineUtil.TailCallType.Throw) {
           return type.getTransformer();
         }
         return new NormalTransformer();
       };
     }
-    boolean canUseContinue = Arrays.stream(returns).allMatch(statement -> {
+    boolean canUseContinue = ContainerUtil.and(returns, statement -> {
       // We cannot use "continue" without introducing a label if any of returns is inside nested loop.
       // Introducing a label is ugly, so let's move to fallback transformer 
       return PsiTreeUtil.getParentOfType(statement, PsiLoopStatement.class, true, PsiMethod.class) == null;

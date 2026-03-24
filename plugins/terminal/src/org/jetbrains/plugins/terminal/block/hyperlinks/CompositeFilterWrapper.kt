@@ -35,7 +35,11 @@ private data class ComputedFilter(
 )
 
 @ApiStatus.Internal
-class CompositeFilterWrapper(private val project: Project, coroutineScope: CoroutineScope) {
+class CompositeFilterWrapper(
+  private val project: Project,
+  coroutineScope: CoroutineScope,
+  private val filterContext: TerminalHyperlinkFilterContext? = null,
+) {
   private val filtersUpdatedListeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
 
   private val customFilters: MutableList<Filter> = CopyOnWriteArrayList()
@@ -68,7 +72,7 @@ class CompositeFilterWrapper(private val project: Project, coroutineScope: Corou
 
   private suspend fun computeFilter(): CompositeFilter {
     val filters = readAction {
-      ConsoleViewUtil.computeConsoleFilters(project, null, TerminalFilterScope(project))
+      ConsoleViewUtil.computeConsoleFilters(project, null, TerminalFilterScope(project, filterContext))
     }
     return CompositeFilter(project, customFilters + filters).also {
       it.setForceUseAllFilters(true)

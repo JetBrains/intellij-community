@@ -593,7 +593,7 @@ open class IdeDocumentHistoryImpl(
     val offset = editor.getCaretModel().offset
     var marker = fileEditor.getUserData(CACHED_CARET_MARKER_KEY)
     if (marker == null || !marker.isValid || marker.startOffset != offset || marker.endOffset != offset) {
-      marker = editor.getDocument().createRangeMarker(offset, offset)
+      marker = editor.getUiDocument().createRangeMarker(offset, offset)
       fileEditor.putUserData(CACHED_CARET_MARKER_KEY, marker)
     }
     return marker

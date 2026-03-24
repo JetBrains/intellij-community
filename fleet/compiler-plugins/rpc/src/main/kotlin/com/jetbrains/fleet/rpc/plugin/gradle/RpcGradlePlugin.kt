@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerPluginSupportPlugin
 import org.jetbrains.kotlin.gradle.plugin.SubpluginArtifact
 import org.jetbrains.kotlin.gradle.plugin.SubpluginOption
 
-private const val VERSION = "2.3.10-RC-0.1"
+private const val VERSION = "2.3.20-0.1"
 
 class RpcGradlePlugin : KotlinCompilerPluginSupportPlugin {
   override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean = true

@@ -9,6 +9,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
@@ -35,6 +36,7 @@ sealed class SystemDarkThemeDetector {
       return when {
         SystemInfoRt.isMac -> MacOSDetector(syncFunction)
         SystemInfo.isWin10OrNewer -> WindowsDetector(syncFunction)
+        SystemInfoRt.isLinux -> LinuxThemeDetector(syncFunction)
         else -> EmptyDetector
       }
     }
@@ -57,6 +59,7 @@ private abstract class AsyncDetector : SystemDarkThemeDetector() {
 
   override fun check(parameter: Boolean?) {
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+      RegistryManager.getInstance()
       val isDark = isDark()
       withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
         syncFunction.accept(isDark, parameter)
@@ -156,6 +159,31 @@ private class WindowsDetector(override val syncFunction: BiConsumer<Boolean, Boo
     }
     catch (_: Throwable) {}
     return false
+  }
+}
+
+private class LinuxThemeDetector(override val syncFunction: BiConsumer<Boolean, Boolean?>) : AsyncDetector() {
+
+  private val service: DBusSettingsMonitorService
+    get() = service()
+
+  override val detectionSupported: Boolean
+    get() {
+      return service.isServiceAllowed && isDarkScheme() != null
+    }
+
+  init {
+    service.setDarkSchemeListener {
+      syncFunction.accept(it, null)
+    }
+  }
+
+  override fun isDark(): Boolean {
+    return isDarkScheme() == true
+  }
+
+  private fun isDarkScheme(): Boolean? {
+    return service.darkScheme.value
   }
 }
 

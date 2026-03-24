@@ -324,12 +324,20 @@ fun CodeInsightTestFixture.renderLookupItems(
   lookupElements?.asSequence()
     ?.map {
       val presentation = TestLookupElementPresentation.renderReal(it)
-      LookupElementInfo(it, it.lookupString, presentation.itemText, presentation.tailText,
-                        presentation.typeText, (it as? PrioritizedLookupElement<*>)?.priority ?: 0.0,
-                        (it as? PrioritizedLookupElement<*>)?.explicitProximity,
-                        presentation.isStrikeout, presentation.isItemTextBold,
-                        presentation.isItemTextItalic, presentation.isItemTextUnderlined,
-                        presentation.isTypeGrayed)
+      LookupElementInfo(
+        lookupElement = it,
+        lookupString = it.lookupString,
+        displayText = presentation.itemText,
+        tailText = presentation.tailText,
+        typeText = presentation.typeText,
+        priority = (it as? PrioritizedLookupElement<*>)?.priority ?: 0.0,
+        proximity = (it as? PrioritizedLookupElement<*>)?.explicitProximity,
+        isStrikeout = presentation.isStrikeout,
+        isItemTextBold = presentation.isItemTextBold,
+        isItemTextItalic = presentation.isItemTextItalic,
+        isItemTextUnderline = presentation.isItemTextUnderlined,
+        isTypeGreyed = presentation.isTypeGrayed,
+      )
     }
     ?.filter(lookupFilter)
     ?.sortedWith(

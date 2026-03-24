@@ -24,14 +24,28 @@ public final class ColorDescriptor {
 
   static ColorDescriptor fromSystemColor(final String systemColor) {
     ColorDescriptor result = new ColorDescriptor(null);
-    result.mySystemColor = systemColor;
+    if (checkField(SystemColor.class, systemColor)) {
+      result.mySystemColor = systemColor;
+    }
     return result;
   }
 
   static ColorDescriptor fromAWTColor(final String awtColor) {
     ColorDescriptor result = new ColorDescriptor(null);
-    result.myAWTColor = awtColor;
+    if (checkField(Color.class, awtColor)) {
+      result.myAWTColor = awtColor;
+    }
     return result;
+  }
+
+  private static boolean checkField(Class aClass, String fieldName) {
+    try {
+      aClass.getDeclaredField(fieldName);
+      return true;
+    }
+    catch (NoSuchFieldException ignored) {
+      return false;
+    }
   }
 
   private static Color getColorField(final Class aClass, final String fieldName) {

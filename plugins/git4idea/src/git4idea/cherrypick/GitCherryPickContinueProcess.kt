@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.cherrypick
 
 import com.intellij.dvcs.DvcsUtil
@@ -18,6 +18,7 @@ import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.impl.VcsLogManager
+import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.GitActivity
 import git4idea.GitDisposable
@@ -25,6 +26,7 @@ import git4idea.GitNotificationIdsHolder
 import git4idea.GitUtil
 import git4idea.actions.GitAbortOperationAction
 import git4idea.applyChanges.GitApplyChangesConflictNotification
+import git4idea.applyChanges.GitApplyChangesConflictResolver
 import git4idea.applyChanges.GitApplyChangesLocalChangesDetectedNotification
 import git4idea.applyChanges.GitApplyChangesProcess.Companion.commitDetails
 import git4idea.applyChanges.GitApplyChangesProcess.Companion.getCommitsDetails
@@ -97,6 +99,15 @@ internal object GitCherryPickContinueProcess {
   }
 
   private fun handleConflictsDetected(repository: GitRepository, vcsNotifier: VcsNotifier, commit: VcsCommitMetadata) {
+    val resolver = GitApplyChangesConflictResolver(repository.project, repository.root, commit.id.toShortString(),
+                                                   VcsUserUtil.getShortPresentation(commit.author), commit.subject, operationName)
+    val mergeCompleted = resolver.merge()
+
+    if (mergeCompleted) {
+      launchCherryPick(repository)
+      return
+    }
+
     val description = commit.commitDetails() +
                       UIUtil.BR +
                       GitBundle.message("apply.changes.unresolved.conflicts.text")

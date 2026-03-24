@@ -1,5 +1,6 @@
-// "Create parameter 'bar23'" "true"
+// "Create parameter 'bar233'" "true"
 // ERROR: Unresolved reference: foo23
-// ERROR: Unresolved reference: bar23
+// ERROR: Unresolved reference: bar233
 
-class B(bar23: MutableList<MutableList<@MyNotNull Int>?>) : A(foo23, bar23)
+class B(bar233: MutableList<MutableList<@MyNotNull Int>?>) : A(foo23, ba<selection><caret></selection>r233)
+// WITH_STDLIB

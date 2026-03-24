@@ -44,8 +44,12 @@ internal class DelegateBuildRunner : DefaultJavaProgramRunner() {
     return result.get()
   }
 
+  /**
+   * The runner serves only "Delegate IDE Build/Run Actions to Maven", the platform should not choose this runner when filtering.
+   * It must be obtained directly by ID or via [Util.getDelegateRunner]
+   */
   override fun canRun(executorId: String, profile: RunProfile): Boolean {
-    return executorId == DefaultRunExecutor.EXECUTOR_ID && profile is MavenRunConfiguration
+    return false
   }
 
   override fun doExecuteAsync(state: TargetEnvironmentAwareRunProfileState, env: ExecutionEnvironment): Promise<RunContentDescriptor?> {

@@ -41,6 +41,32 @@ class KotlinMppRunConfigurationsTest : AbstractKotlinMppGradleImportingTest() {
         }
     }
 
+    @PluginTargetVersions(pluginVersion = "2.3.10-dev-0+")
+    @Test
+    fun testJvmRunNewStructure() {
+        doTest {
+            onlyModules(""".*(jvmMain|desktopApp)""")
+            executeRunConfiguration(
+                functionFqName = "org.example.project.main",
+                containingFile = "main.kt",
+                moduleName = "DesktopWebNewStruct.desktopApp.main"
+            )
+        }
+    }
+
+    @PluginTargetVersions(pluginVersion = "2.3.10-dev-0+")
+    @Test
+    fun testJvmRunNewStructureAlternativeEntrypoint() {
+        doTest {
+            onlyModules(""".*(jvmMain|desktopApp)""")
+            executeRunConfiguration(
+                functionFqName = "org.example.project.main",
+                containingFile = "foo.kt",
+                moduleName = "DesktopWebNewStruct.desktopApp.main"
+            )
+        }
+    }
+
     @Ignore("KTIJ-37464")
     @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+", gradleVersion = "8.4+")
     @Test

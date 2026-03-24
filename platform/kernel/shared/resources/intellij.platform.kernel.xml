@@ -6,6 +6,7 @@
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>

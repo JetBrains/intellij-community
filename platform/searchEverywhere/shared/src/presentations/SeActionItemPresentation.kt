@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.presentations
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
+import com.intellij.platform.searchEverywhere.SeUiInspectorInfo
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -19,6 +20,7 @@ sealed interface SeActionItemPresentation : SeItemPresentation {
     val location: @Nls String? = null,
     private var _switcherState: Boolean? = null,
     val extendedInfo: SeExtendedInfo? = null,
+    val uiInspectorInfo: SeUiInspectorInfo? = null,
   ) {
     val switcherState: Boolean? get() = _switcherState
     fun toggleStateIfSwitcher() {
@@ -49,6 +51,7 @@ data class SeRunnableActionItemPresentation(
 ) : SeActionItemPresentation {
   override val text: String get() = commonData.text
   override val extendedInfo: SeExtendedInfo? get() = commonData.extendedInfo
+  override val uiInspectorInfo: SeUiInspectorInfo? get() = commonData.uiInspectorInfo
 
   @ApiStatus.Internal
   @Serializable
@@ -79,6 +82,7 @@ data class SeOptionActionItemPresentation(
 ) : SeActionItemPresentation {
   override val text: String get() = commonData.text
   override val extendedInfo: SeExtendedInfo? get() = commonData.extendedInfo
+  override val uiInspectorInfo: SeUiInspectorInfo? get() = commonData.uiInspectorInfo
 
   override fun contentEquals(other: SeItemPresentation?): Boolean {
     if (this === other) return true

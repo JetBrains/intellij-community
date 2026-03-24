@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.toolwindow
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.util.text.DateFormatUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import tools.jackson.databind.ObjectMapper
 
 class StatisticsEventLogMessageBuilder {
   fun buildLogMessage(logEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?): String {

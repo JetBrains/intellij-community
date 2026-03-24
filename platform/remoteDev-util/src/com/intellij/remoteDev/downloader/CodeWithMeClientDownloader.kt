@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteDev.downloader
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -103,6 +104,7 @@ object CodeWithMeClientDownloader {
   private const val extractDirSuffix = ".ide.d"
 
   private val config get () = service<JetBrainsClientDownloaderConfigurationProvider>()
+  private val ourJreLinkCreationLock = Any()
 
   internal fun parseProductInfo(productInfoPath: Path): ProductInfo? {
     if (!productInfoPath.exists()) {
@@ -972,15 +974,17 @@ object CodeWithMeClientDownloader {
 
     val guestHome = findCwmGuestHome(guestRoot)
     val link = guestHome / "jbr"
-    createSymlink(link, linkTarget)
+    synchronized(ourJreLinkCreationLock) {
+      createSymlink(link, linkTarget)
+    }
     return link
   }
 
   private fun createSymlink(link: Path, target: Path) {
     val targetRealPath = target.toRealPath()
-    val linkExists = true
-    val linkRealPath = if (link.exists(LinkOption.NOFOLLOW_LINKS)) link.toRealPath() else null
-    val isSymlink = FileSystemUtil.getAttributes(link.toFile())?.isSymLink == true
+    val linkExists = link.exists(LinkOption.NOFOLLOW_LINKS)
+    val linkRealPath = if (linkExists) link.toRealPath() else null
+    val isSymlink = isSymlink(link)
 
     LOG.info("$link: exists=$linkExists, realPath=$linkRealPath, isSymlink=$isSymlink")
     if (linkExists && isSymlink && linkRealPath == targetRealPath) {

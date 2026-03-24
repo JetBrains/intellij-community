@@ -147,7 +147,7 @@ class CardReportGenerator(
           }
         }
 
-        val tableSize = propertiesByCategory.map { it.value.size }.max()
+        val tableSize = propertiesByCategory.map { it.value.size }.maxOrNull() ?: 0
         for (i in 0..tableSize) {
           tr {
             for (category in categories) {

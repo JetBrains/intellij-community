@@ -19,7 +19,7 @@ public class SliceLeafEquality implements HashingStrategy<PsiElement> {
   @Override
   public int hashCode(@Nullable PsiElement element) {
     if (element == null) return 0;
-    String text = ReadAction.compute(() -> {
+    String text = ReadAction.computeBlocking(() -> {
       PsiElement elementToCompare = substituteElement(element);
       return elementToCompare instanceof PsiNamedElement ? ((PsiNamedElement)elementToCompare).getName()
                                                          : AstBufferUtil.getTextSkippingWhitespaceComments(elementToCompare.getNode());
@@ -35,6 +35,6 @@ public class SliceLeafEquality implements HashingStrategy<PsiElement> {
     if (o1 == null || o2 == null) {
       return false;
     }
-    return ReadAction.compute(() -> PsiEquivalenceUtil.areElementsEquivalent(o1, o2));
+    return ReadAction.computeBlocking(() -> PsiEquivalenceUtil.areElementsEquivalent(o1, o2));
   }
 }

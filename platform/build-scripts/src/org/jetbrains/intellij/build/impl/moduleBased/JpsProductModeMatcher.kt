@@ -10,7 +10,7 @@ import org.jetbrains.jps.model.module.JpsModule
  * This is an equivalent implementation of [com.intellij.platform.runtime.product.impl.ProductModeMatcher] based on JPS model instead of the runtime module repository.
  */
 internal class JpsProductModeMatcher(productMode: ProductMode) {
-  private val incompatibleRootModule = ProductModeLoadingRules.getIncompatibleRootModules(productMode).map { it.stringId }
+  private val incompatibleRootModule = ProductModeLoadingRules.getIncompatibleRootModules(productMode).map { it.name }
   private val cache: MutableMap<JpsModule, Boolean> = mutableMapOf()
   
   fun matches(module: JpsModule): Boolean {

@@ -9,6 +9,7 @@ import fleet.util.cast
 import fleet.util.letIf
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.nullable
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Base interface that must be implemented by every Fleet service.
@@ -26,6 +27,7 @@ interface RemoteApi<Metadata>
 @Target(AnnotationTarget.CLASS)
 annotation class Rpc
 
+@ApiStatus.Internal
 sealed interface RemoteKind {
   data class Data(val serializer: KSerializer<*>) : RemoteKind
   data class Flow(val elementKind: RemoteKind, val nullable: Boolean) : RemoteKind
@@ -36,6 +38,7 @@ sealed interface RemoteKind {
   data class Resource(val descriptor: RemoteApiDescriptor<*>) : RemoteKind
 }
 
+@ApiStatus.Internal
 fun RemoteKind.serializer(debugInfo: String): KSerializer<Any?> {
   return when (this) {
     is RemoteKind.Data -> serializer
@@ -47,14 +50,19 @@ fun RemoteKind.serializer(debugInfo: String): KSerializer<Any?> {
     is RemoteKind.Resource -> error("Resource has no serializer")
   }.cast()
 }
-
+@ApiStatus.Internal
 data class ParameterDescriptor(val parameterName: String, val parameterKind: RemoteKind)
+@ApiStatus.Internal
 data class RpcSignature(val methodName: String, val parameters: Array<ParameterDescriptor>, val returnType: RemoteKind)
 
 interface RemoteApiDescriptor<T : RemoteApi<*>> {
+  @ApiStatus.Internal
   fun getSignature(methodName: String): RpcSignature
+  @ApiStatus.Internal
   fun clientStub(proxy: suspend (String, Array<Any?>) -> Any?): T
+  @ApiStatus.Internal
   fun getApiFqn(): String
+  @ApiStatus.Internal
   suspend fun call(impl: T, methodName: String, args: Array<Any?>): Any?
 }
 

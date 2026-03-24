@@ -1,7 +1,6 @@
 <idea-plugin>
   <actions>
     <action class="com.intellij.execution.wsl.target.WslSyncAction" internal="true" text="WSL Sync"/>
-    <action class="com.intellij.execution.wsl.proxy.WslProxyAction" internal="true"/>
     <action id="TerminalIncreaseFontSize" class="com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction$IncreaseEditorFontSize"
             use-shortcut-of="EditorIncreaseFontSize">
       <override-text place="GoToAction"/>
@@ -88,7 +87,7 @@
 
     <actionConfigurationCustomizer implementation="com.intellij.execution.runToolbar.MyActionConfigurationCustomizer"/>
 
-    <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal"/>
+    <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal" visible="false"/>
 
     <registryKey defaultValue="false"
                  description="Run implementation for split mode."

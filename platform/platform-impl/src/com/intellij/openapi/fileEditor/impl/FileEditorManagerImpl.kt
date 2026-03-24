@@ -92,10 +92,11 @@ import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.plus
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vcs.FileStatusManager
@@ -682,17 +683,24 @@ open class FileEditorManagerImpl(
 
   open fun isProblem(file: VirtualFile): Boolean = false
 
-  open fun getFileTooltipText(file: VirtualFile, composite: EditorComposite?): @NlsContexts.Tooltip String {
-    val prefix = if (composite != null && composite.isPreview) "${LangBundle.message("preview.editor.tab.tooltip.text")} " else ""
+  open fun getFileTooltipText(file: VirtualFile, composite: EditorComposite?): HtmlChunk {
+    val prefix = if (composite != null && composite.isPreview) {
+      HtmlChunk.raw("${LangBundle.message("preview.editor.tab.tooltip.text")} ")
+    }
+    else HtmlChunk.empty()
+
     for (provider in EditorTabTitleProvider.EP_NAME.lazySequence()) {
       val text = try {
-        provider.getEditorTabTooltipText(project, file) ?: continue
+        provider.getEditorTabTooltipHtml(project, file) ?: continue
       }
-      catch (ignore: IndexNotReadyException) {
+      catch (_: IndexNotReadyException) {
+        continue
       }
       return prefix + text
     }
-    return prefix + FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
+
+    val filePathString = FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
+    return prefix + HtmlChunk.text(filePathString)
   }
 
   override fun updateFilePresentation(file: VirtualFile) {
@@ -1208,7 +1216,13 @@ open class FileEditorManagerImpl(
       // todo RDCT-78
       val session = project.currentSessionOrNull ?: return null
       LOG.assertTrue(!session.isLocal, "Trying to get ClientFileEditorManager for local ClientId")
-      return session.serviceOrNull<ClientFileEditorManager>()
+
+      if (session.isDisposed) {
+        return session.serviceIfCreated<ClientFileEditorManager>()
+      }
+      else {
+        return session.serviceOrNull<ClientFileEditorManager>()
+      }
     }
 
   /**

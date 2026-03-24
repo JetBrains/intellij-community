@@ -53,13 +53,6 @@ public abstract class Decompressor {
       mySource = file;
     }
 
-    /** @deprecated use {@link #Tar(Path)} instead */
-    @Deprecated
-    @SuppressWarnings("IO_FILE_USAGE")
-    public Tar(@NotNull File file) {
-      mySource = file.toPath();
-    }
-
     public Tar(@NotNull InputStream stream) {
       mySource = stream;
     }

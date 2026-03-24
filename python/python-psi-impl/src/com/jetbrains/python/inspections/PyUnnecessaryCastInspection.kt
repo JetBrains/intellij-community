@@ -18,7 +18,7 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.PyType
-import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.PyTypeUtil.isSameType
 
 class PyUnnecessaryCastInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -37,7 +37,7 @@ class PyUnnecessaryCastInspection : PyInspection() {
         val targetType = Ref.deref(targetTypeRef)
         val actualType: PyType? = myTypeEvalContext.getType(args[1])
 
-        if (!PyTypeUtil.isSameType(targetType, actualType, myTypeEvalContext)) return
+        if (!targetType.isSameType(actualType, myTypeEvalContext)) return
         val toName = PythonDocumentationProvider.getTypeName(targetType, myTypeEvalContext)
         registerProblem(
           callExpression,

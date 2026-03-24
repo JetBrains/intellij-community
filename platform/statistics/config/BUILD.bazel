@@ -1,11 +1,18 @@
 ### auto-generated section `build intellij.platform.statistics.config` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "config_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "config",
   module_name = "intellij.platform.statistics.config",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":config_resources"],
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
@@ -13,6 +20,32 @@ jvm_library(
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/jackson3/jackson:libraries-jackson3",
+    "//libraries/jackson3/databind",
+    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
+  ]
+)
+
+jvm_library(
+  name = "config_test_lib",
+  module_name = "intellij.platform.statistics.config",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":config",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//libraries/jackson3/databind:databind_test_lib",
+    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.statistics.config` end
+
+### auto-generated section `iml intellij.platform.statistics.config` start
+exports_files([
+  "intellij.platform.statistics.config.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.statistics.config` end

@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, Final, NamedTuple
+from typing import Any, ClassVar, Final, NamedTuple, type_check_only
 from typing_extensions import Self
 
 from docutils.transforms import Transform
@@ -6,6 +6,7 @@ from docutils.transforms import Transform
 __docformat__: Final = "reStructuredText"
 __version__: Final[str]
 
+@type_check_only
 class _VersionInfo(NamedTuple):
     major: int
     minor: int
@@ -15,6 +16,7 @@ class _VersionInfo(NamedTuple):
     release: bool
 
 class VersionInfo(_VersionInfo):
+    __slots__ = ()
     def __new__(
         cls, major: int = 0, minor: int = 0, micro: int = 0, releaselevel: str = "final", serial: int = 0, release: bool = True
     ) -> Self: ...

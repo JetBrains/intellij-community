@@ -33,6 +33,8 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtReferenceMutateService
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
+import org.jetbrains.kotlin.lexer.KtSingleValueToken
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.tail
@@ -58,6 +60,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementOrCallableRef
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 import org.jetbrains.kotlin.resolve.ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE
+import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 /**
@@ -336,28 +339,53 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         val shortName = fqName.quoteIfNeeded().shortName().asString()
         val isInfix = analyze(targetElement) { (targetElement.symbol as? KaNamedFunctionSymbol)?.isInfix == true }
         val isOperator = analyze(targetElement) { (targetElement.symbol as? KaNamedFunctionSymbol)?.isOperator == true }
-        val replacedExpr = if (isOperator) {
-            val identifier = Name.identifier(shortName)
-            val isUnary = OperatorNameConventions.UNARY_OPERATION_NAMES.contains(identifier)
-            val operator = OperatorNameConventions.TOKENS_BY_OPERATOR_NAME[identifier] ?: shortName
-            val newOperator = if (isUnary) {
-                (psiFactory.createExpression("${operator}0") as KtUnaryExpression).operationReference
-            } else {
-                psiFactory.createOperationName(operator)
+        val replacedExpr = when {
+            isOperator -> replaceWithOperatorIfNeeded(shortName, psiFactory)
+            isInfix -> replaced(psiFactory.createOperationName(shortName))
+            else -> {
+                // replacing infix or operator function call with regular call
+                val binaryExpression = parentOfType<KtBinaryExpression>() ?: error("Binary expression expected")
+                binaryExpression.replaced(psiFactory.createExpression("${binaryExpression.left?.text}.$shortName(${binaryExpression.right?.text})"))
             }
-            replaced(newOperator)
-        } else if (isInfix) {
-            replaced(psiFactory.createOperationName(shortName))
-        } else {
-            // replacing infix or operator function call with regular call
-            val binaryExpression = parentOfType<KtBinaryExpression>() ?: error("Binary expression expected")
-            binaryExpression.replaced(psiFactory.createExpression("${binaryExpression.left?.text}.$shortName(${binaryExpression.right?.text})"))
         }
         val isUnQualifiable = targetElement.isCallableAsExtensionFunction() || replacedExpr is KtOperationReferenceExpression
         return if (isUnQualifiable || fqName.withoutRootPrefix().parent() == FqName.ROOT) {
             replacedExpr.containingKtFile.addImport(fqName.withoutRootPrefix())
             ReplaceResult(replacedExpr, isUnQualifiable)
         } else ReplaceResult(replacedExpr, false)
+    }
+
+    /**
+     * Creates a new expression replacing the given [shortName] with an appropriate operator, if necessary.
+     *
+     * If the old [this] expression was not in the operator form, the new expression won't be either.
+     * If the old expression was an augmented assignment (e.g., +=) and [shortName] has a counterpart,
+     * an augmented assignment will be created instead of the basic operator.
+     * The old expression should be considered because augmented assignments resolve to basic operators
+     * when there is no dedicated overload.
+     */
+    private fun KtOperationReferenceExpression.replaceWithOperatorIfNeeded(
+        shortName: String,
+        psiFactory: KtPsiFactory
+    ): KtSimpleNameExpression {
+        val identifier = Name.identifier(shortName)
+        val isUnary = OperatorNameConventions.UNARY_OPERATION_NAMES.contains(identifier)
+        val wasOperator = operationSignTokenType != null
+        val wasAugmentedAssignment = operationSignTokenType in KtTokens.AUGMENTED_ASSIGNMENTS
+        val operatorToken = OperatorConventions.getOperationSymbolForName(identifier) as? KtSingleValueToken
+        val operatorOrPlainName = operatorToken?.value?.takeIf { wasOperator } ?: shortName
+
+        val newOperator = when {
+            wasAugmentedAssignment -> {
+                val augmentedOperatorToken = OperatorConventions.ASSIGNMENT_OPERATION_COUNTERPARTS.inverse()[operatorToken]
+                val maybeAugmentedOperator = augmentedOperatorToken?.value ?: operatorOrPlainName
+                psiFactory.createOperationName(maybeAugmentedOperator)
+            }
+
+            isUnary -> (psiFactory.createExpression("${operatorOrPlainName}0") as KtUnaryExpression).operationReference
+            else -> psiFactory.createOperationName(operatorOrPlainName)
+        }
+        return replaced(newOperator)
     }
 
     override fun KtSimpleReference<KtNameReferenceExpression>.suggestVariableName(

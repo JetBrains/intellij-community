@@ -297,6 +297,7 @@ internal val javaPsiElementTypeConverter: ElementTypeConverter = elementTypeConv
   JavaDocSyntaxElementType.DOC_MARKDOWN_CODE_BLOCK to JavaDocElementType.DOC_MARKDOWN_CODE_BLOCK,
   JavaDocSyntaxElementType.DOC_MARKDOWN_REFERENCE_LINK to JavaDocElementType.DOC_MARKDOWN_REFERENCE_LINK,
   JavaDocSyntaxElementType.DOC_MARKDOWN_REFERENCE_LABEL to JavaDocElementType.DOC_MARKDOWN_REFERENCE_LABEL,
+  JavaDocSyntaxElementType.DOC_MARKDOWN_LINK to JavaDocElementType.DOC_MARKDOWN_LINK,
 
   JavaDocSyntaxTokenType.DOC_COMMENT_START to JavaDocTokenType.DOC_COMMENT_START,
   JavaDocSyntaxTokenType.DOC_COMMENT_END to JavaDocTokenType.DOC_COMMENT_END,
@@ -320,6 +321,7 @@ internal val javaPsiElementTypeConverter: ElementTypeConverter = elementTypeConv
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_SLASH to JavaDocTokenType.DOC_TAG_VALUE_SLASH,
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN to JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN,
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN to JavaDocTokenType.DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN,
+  JavaDocSyntaxTokenType.DOC_TAG_FORMAT_STRING to JavaDocTokenType.DOC_TAG_FORMAT_STRING,
   JavaDocSyntaxTokenType.DOC_CODE_FENCE to JavaDocTokenType.DOC_CODE_FENCE,
   JavaDocSyntaxTokenType.DOC_RBRACKET to JavaDocTokenType.DOC_RBRACKET,
   JavaDocSyntaxTokenType.DOC_LBRACKET to JavaDocTokenType.DOC_LBRACKET,

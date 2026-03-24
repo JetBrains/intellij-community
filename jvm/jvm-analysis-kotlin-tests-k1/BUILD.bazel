@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "analysis-kotlin-tests-k1",
+  module_name = "intellij.jvm.analysis.kotlin.tests.k1",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["//plugins/kotlin/plugin/k1"]
@@ -15,18 +16,32 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework_test_lib",
+    "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
+    "//jvm/jvm-analysis-kotlin-tests-shared:analysis-kotlin-tests-shared",
     "//jvm/jvm-analysis-kotlin-tests-shared:analysis-kotlin-tests-shared_test_lib",
   ],
-  runtime_deps = [":analysis-kotlin-tests-k1"]
+  runtime_deps = [
+    ":analysis-kotlin-tests-k1",
+    "//plugins/kotlin/plugin/k1:k1_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.jvm.analysis.kotlin.tests.k1` end
+
+### auto-generated section `iml intellij.jvm.analysis.kotlin.tests.k1` start
+exports_files([
+  "intellij.jvm.analysis.kotlin.tests.k1.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.jvm.analysis.kotlin.tests.k1` end
 
 ### auto-generated section `test intellij.jvm.analysis.kotlin.tests.k1` start
 load("@community//build:tests-options.bzl", "jps_test")

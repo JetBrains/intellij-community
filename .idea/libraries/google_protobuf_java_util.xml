@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="google.protobuf.java.util" type="repository">
-    <properties maven-id="com.google.protobuf:protobuf-java-util:3.24.4-jb.2">
+    <properties maven-id="com.google.protobuf:protobuf-java-util:3.25.5">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java-util/3.24.4-jb.2/protobuf-java-util-3.24.4-jb.2.jar">
-          <sha256sum>bd30f6cf55c4f9f0891f8b6ea6601c1502b643543d2535c8b477ea0481809e99</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java-util/3.25.5/protobuf-java-util-3.25.5.jar">
+          <sha256sum>dacc58b2c3d2fa8d4bddc1acb881e78d6cf7c137dd78bc1d67f6aca732436a8d</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -16,11 +16,11 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java-util/3.24.4-jb.2/protobuf-java-util-3.24.4-jb.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java-util/3.25.5/protobuf-java-util-3.25.5.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java-util/3.24.4-jb.2/protobuf-java-util-3.24.4-jb.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java-util/3.25.5/protobuf-java-util-3.25.5-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

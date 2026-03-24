@@ -54,7 +54,7 @@ class TestGroupFilterRulesBuilder {
   }
 
   fun build(): EventGroupsFilterRules<EventLogBuild> {
-    val result = HashMap<String, EventGroupFilterRules<EventLogBuild>>()
+    val result = HashMap<String?, EventGroupFilterRules<EventLogBuild>>()
     for (groupId in groupIds) {
       val builds: List<BuildRange<EventLogBuild>> = groupBuilds.getOrDefault(groupId, emptyList())
       val versions: List<VersionRange> = groupVersions.getOrDefault(groupId, emptyList())

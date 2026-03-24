@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -12,7 +12,7 @@ import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
-import org.intellij.lang.annotations.JdkConstants;
+import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

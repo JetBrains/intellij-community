@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.theoryinpractice.testng;
 
@@ -48,6 +48,7 @@ import java.util.List;
 import static com.theoryinpractice.testng.TestNGCommonClassNames.LIFE_CYCLE_CLASSES;
 import static com.theoryinpractice.testng.TestNGCommonClassNames.ORG_TESTNG_ANNOTATIONS_FACTORY;
 import static com.theoryinpractice.testng.TestNGCommonClassNames.ORG_TESTNG_ANNOTATIONS_TEST;
+import static com.theoryinpractice.testng.util.TestNGUtil.DATA_PROVIDER_ATTRIBUTE;
 
 public class TestNGReferenceContributor extends PsiReferenceContributor {
   private static PsiElementPattern.Capture<PsiLiteral> getElementPattern(
@@ -87,7 +88,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       });
 
     registrar.registerReferenceProvider(
-      getElementPattern(List.of(ORG_TESTNG_ANNOTATIONS_TEST, ORG_TESTNG_ANNOTATIONS_FACTORY), "dataProvider"),
+      getElementPattern(List.of(ORG_TESTNG_ANNOTATIONS_TEST, ORG_TESTNG_ANNOTATIONS_FACTORY), DATA_PROVIDER_ATTRIBUTE),
       new PsiReferenceProvider() {
         @Override
         public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {

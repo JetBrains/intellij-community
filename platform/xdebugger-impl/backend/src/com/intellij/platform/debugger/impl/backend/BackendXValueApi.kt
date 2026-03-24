@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
+import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.NlsContexts
@@ -371,7 +372,7 @@ private sealed interface RawComputeChildrenEvent {
 
   data class SetMessage(val message: String, val icon: Icon?, val attributes: SimpleTextAttributes, val link: XDebuggerTreeNodeHyperlink?) : RawComputeChildrenEvent {
     override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope): XValueComputeChildrenEvent {
-      return XValueComputeChildrenEvent.SetMessage(message, icon?.rpcId(), attributes.toRpc(), link?.toRpc(parentCoroutineScope))
+      return XValueComputeChildrenEvent.SetMessage(message, icon?.rpcId(), attributes.rpcId(), link?.toRpc(parentCoroutineScope))
     }
   }
 

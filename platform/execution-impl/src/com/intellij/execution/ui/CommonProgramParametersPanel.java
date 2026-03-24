@@ -51,13 +51,31 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   private Module myModuleContext = null;
   private boolean myHasModuleMacro;
   protected final Map<String, String> myMacrosMap = new HashMap<>();
+  private final @Nullable Project myProject;
 
+  /**
+   * @deprecated Use {@link #CommonProgramParametersPanel(boolean init, Project project)} instead, pass {@code null} only for a default project
+   */
+  @Deprecated
   public CommonProgramParametersPanel() {
     this(true);
   }
 
+  /**
+   * @deprecated Use {@link #CommonProgramParametersPanel(boolean init, Project project)} instead, pass {@code null} only for a default project
+   */
+  @Deprecated
   public CommonProgramParametersPanel(boolean init) {
+    this(init, null);
+  }
+
+  public CommonProgramParametersPanel(@Nullable Project project) {
+    this(true, project);
+  }
+
+  public CommonProgramParametersPanel(boolean init, @Nullable Project project) {
     super();
+    myProject = project;
 
     setLayout(new VerticalFlowLayout(VerticalFlowLayout.MIDDLE, 0, 5, true, false));
 
@@ -88,7 +106,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     myWorkingDirectoryField = new TextFieldWithBrowseButton();
 
     var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(ExecutionBundle.message("select.working.directory.message"));
-    myWorkingDirectoryField.addBrowseFolderListener(getProject(), descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    myWorkingDirectoryField.addBrowseFolderListener(myProject, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     myWorkingDirectoryComponent = LabeledComponent.create(myWorkingDirectoryField, ExecutionBundle.message("run.configuration.working.directory.label"));
 
     myEnvVariablesComponent = createEnvironmentVariablesComponent();
@@ -106,7 +124,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   }
 
   protected @NotNull EnvironmentVariablesComponent createEnvironmentVariablesComponent() {
-    return new EnvironmentVariablesComponent();
+    return new EnvironmentVariablesComponent(myProject);
   }
 
   /**

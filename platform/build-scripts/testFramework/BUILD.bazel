@@ -54,4 +54,48 @@ jvm_library(
     "//platform/distribution-content:distributionContent-testFramework",
   ]
 )
+
+jvm_library(
+  name = "testFramework_test_lib",
+  module_name = "intellij.platform.buildScripts.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_testFramework",
+  runtime_deps = [
+    ":testFramework",
+    "//platform/build-scripts:build-scripts_test_lib",
+    "//libraries/jackson/jr-objects:libraries-jackson-jr-objects_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/runtime/repository:repository_test_lib",
+    "//platform/testFramework/core:core_test_lib",
+    "//java/java-runtime:rt_test_lib",
+    "//build/tasks:tasks_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//platform/build-scripts/downloader:downloader_test_lib",
+    "//tools/reproducibleBuilds.diff:reproducibleBuilds.diff_test_lib",
+    "//jps/jps-builders:build_test_lib",
+    "//platform/runtime/product:product_test_lib",
+    "//libraries/aalto-xml:aalto-xml_test_lib",
+    "//platform/platform-impl/bootstrap:bootstrap_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/pluginSystem/testFramework:testFramework_test_lib",
+    "//platform/pluginSystem/parser/impl:impl_test_lib",
+    "//platform/util/xmlDom:xmlDom_test_lib",
+    "//platform/buildData:buildData_test_lib",
+    "//platform/util/zip:zip_test_lib",
+    "//platform/distribution-content:distributionContent-testFramework_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.buildScripts.testFramework` end
+
+### auto-generated section `iml intellij.platform.buildScripts.testFramework` start
+exports_files([
+  "intellij.platform.buildScripts.testFramework.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.buildScripts.testFramework` end

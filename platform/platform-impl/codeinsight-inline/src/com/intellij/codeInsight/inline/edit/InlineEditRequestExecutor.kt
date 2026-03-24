@@ -31,10 +31,12 @@ import kotlin.coroutines.cancellation.CancellationException
 @JvmInline
 @ApiStatus.Internal
 value class InlineEditRequestJob(private val job: Job) : Disposable {
-  @RequiresEdt
+
   override fun dispose() {
     job.cancel()
   }
+
+  fun isCompleted(): Boolean = job.isCompleted
 }
 
 @ApiStatus.Internal

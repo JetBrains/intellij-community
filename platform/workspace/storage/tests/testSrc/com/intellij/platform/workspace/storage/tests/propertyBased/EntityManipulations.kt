@@ -245,7 +245,7 @@ internal abstract class ModifyEntity<E : WorkspaceEntity, M : WorkspaceEntity.Bu
 }
 
 private fun Class<*>.toBuilderClass(): Class<*> {
-  return Class.forName("$packageName.Modifiable$simpleName", true, classLoader)
+  return Class.forName("$packageName.${simpleName}Builder", true, classLoader)
 }
 
 private object NamedEntityManipulation : EntityManipulation {

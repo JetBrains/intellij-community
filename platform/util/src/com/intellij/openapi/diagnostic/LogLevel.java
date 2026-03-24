@@ -22,11 +22,11 @@ public enum LogLevel {
   }
 
   @ApiStatus.Internal
-  public Level getLevel() {
+  public @NotNull Level getLevel() {
     return myLevel;
   }
 
-  public String getLevelName() {
+  public @NotNull String getLevelName() {
     return myLevel.getName();
   }
 
@@ -36,5 +36,16 @@ public enum LogLevel {
 
   static @NotNull String getPrettyLevelName(@NotNull Level level) {
     return level == Level.WARNING ? "WARN" : level.getName();
+  }
+
+  static @NotNull LogLevel from(@NotNull Level level) {
+    if (level == Level.ALL) return ALL;
+    if (level == Level.FINER) return TRACE;
+    if (level == Level.FINE) return DEBUG;
+    if (level == Level.INFO) return INFO;
+    if (level == Level.WARNING) return WARNING;
+    if (level == Level.SEVERE) return ERROR;
+    if (level == Level.OFF) return OFF;
+    return DEBUG;
   }
 }

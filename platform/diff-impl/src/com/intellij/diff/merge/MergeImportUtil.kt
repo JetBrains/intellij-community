@@ -62,12 +62,12 @@ class MergeImportUtil {
     }
 
     @JvmStatic
-    fun getImportMergeRange(project: Project?, psiFiles: MutableList<PsiFile>): MergeRange? {
+    fun getImportMergeRange(project: Project?, psiFiles: List<PsiFile>): MergeRange? {
       if (project == null || psiFiles.size != 3) return null
 
       val ranges = ArrayList<LineRange>()
       for (side in ThreeSide.entries) {
-        val psiFile = side.select(psiFiles) ?: return null
+        val psiFile = side.select(psiFiles)
         val importRange = getImportLineRange(psiFile) ?: return null
         ranges.add(importRange)
       }

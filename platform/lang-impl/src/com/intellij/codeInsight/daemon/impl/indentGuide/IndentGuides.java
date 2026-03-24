@@ -41,8 +41,8 @@ final class IndentGuides {
 
   private final Document document;
   private final CustomHighlighterRenderer renderer;
-  private List<IndentGuideDescriptor> descriptors;
-  private List<TextRange> ranges;
+  private volatile List<IndentGuideDescriptor> descriptors = Collections.emptyList();
+  private volatile List<TextRange> ranges = Collections.emptyList();
 
   IndentGuides(@NotNull Document document, @NotNull CustomHighlighterRenderer renderer) {
     this.document = document;
@@ -60,7 +60,7 @@ final class IndentGuides {
   @RequiresReadLock
   void buildIndents(@NotNull List<IndentGuideDescriptor> descriptors) {
     this.descriptors = descriptors;
-    this.ranges =  buildRanges();
+    this.ranges = buildRanges();
   }
 
   @RequiresEdt

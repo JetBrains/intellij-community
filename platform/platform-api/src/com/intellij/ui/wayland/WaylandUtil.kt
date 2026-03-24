@@ -36,16 +36,6 @@ fun getValidBoundsForPopup(popup: Component): Rectangle? {
   }
   val validBounds = getNearestTopLevelParentBounds(popup) ?: return null
   LOG.debug { "The allowed bounds in screen coordinates are $validBounds" }
-  val directParent = popup.parent
-  if (directParent == null) {
-    LOG.warn("Impossible to determine the valid bounds because the popup has no direct parent: $popup")
-    return null
-  }
-  // Now convert the allowed bounds to the direct parent's coordinate system.
-  val directParentLocation = directParent.locationOnScreen
-  validBounds.x -= directParentLocation.x
-  validBounds.y -= directParentLocation.y
-  LOG.debug { "The allowed bounds in parent coordinates are $validBounds" }
   return validBounds
 }
 

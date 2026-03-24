@@ -21,5 +21,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.internal.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
   </component>
 </module>

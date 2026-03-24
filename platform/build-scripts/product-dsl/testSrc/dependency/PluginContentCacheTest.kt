@@ -50,10 +50,9 @@ class PluginContentCacheTest {
       val staleErrorSink = ErrorSink()
       val staleCache = PluginContentCache(
         outputProvider = outputProvider,
-        xIncludeCache = AsyncCache(this),
+        xIncludeCache = AsyncCache(),
         skipXIncludePaths = emptySet(),
         xIncludePrefixFilter = { null },
-        scope = this,
         errorSink = staleErrorSink,
       )
       val staleContent = staleCache.extract(plugin = pluginName, isTest = false)
@@ -64,10 +63,9 @@ class PluginContentCacheTest {
       val overrideErrorSink = ErrorSink()
       val overrideCache = PluginContentCache(
         outputProvider = outputProvider,
-        xIncludeCache = AsyncCache(this),
+        xIncludeCache = AsyncCache(),
         skipXIncludePaths = emptySet(),
         xIncludePrefixFilter = { null },
-        scope = this,
         errorSink = overrideErrorSink,
       )
       val overrideContent = overrideCache.extract(

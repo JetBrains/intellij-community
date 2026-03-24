@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.codeInspection.VariableTypeCanBeExplicitInspection;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ActionContext;
@@ -9,6 +10,7 @@ import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
@@ -30,17 +32,20 @@ public class ReplaceVarWithExplicitTypeFix extends PsiUpdateModCommandAction<Psi
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiTypeElement startElement, @NotNull ModPsiUpdater updater) {
-    if (startElement.getParent() instanceof PsiParameter psiParameter &&
-        psiParameter.getDeclarationScope() instanceof PsiLambdaExpression lambda) {
+    if (startElement.getParent() instanceof PsiParameter p && p.getDeclarationScope() instanceof PsiLambdaExpression lambda) {
       for (PsiParameter parameter : lambda.getParameterList().getParameters()) {
         PsiTypeElement typeElement = parameter.getTypeElement();
         if (typeElement != null) {
           PsiTypesUtil.replaceWithExplicitType(typeElement);
         }
       }
-      return;
     }
-    PsiTypesUtil.replaceWithExplicitType(startElement);
+    else {
+      PsiTypeElement result = PsiTypesUtil.replaceWithExplicitType(startElement);
+      if (result != null && result.getParent() instanceof PsiLocalVariable var) {
+        RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(var.getInitializer());
+      }
+    }
   }
 
   @Override
@@ -50,16 +55,10 @@ public class ReplaceVarWithExplicitTypeFix extends PsiUpdateModCommandAction<Psi
 
   private static boolean isAvailable(@NotNull PsiTypeElement startElement) {
     PsiElement parent = startElement.getParent();
-    if (parent instanceof PsiParameter psiParameter) {
-      PsiElement declarationScope = psiParameter.getDeclarationScope();
-      if (declarationScope instanceof PsiLambdaExpression lambda) {
-        return ContainerUtil.and(lambda.getParameterList().getParameters(),
-                                 parameter -> VariableTypeCanBeExplicitInspection.getTypeElementToExpand(parameter) != null);
-      }
+    if (parent instanceof PsiParameter p && p.getDeclarationScope() instanceof PsiLambdaExpression lambda) {
+      return ContainerUtil.and(lambda.getParameterList().getParameters(),
+                               parameter -> VariableTypeCanBeExplicitInspection.getTypeElementToExpand(parameter) != null);
     }
-    if (parent instanceof PsiVariable variable) {
-      return VariableTypeCanBeExplicitInspection.getTypeElementToExpand(variable) != null;
-    }
-    return false;
+    return parent instanceof PsiVariable variable && VariableTypeCanBeExplicitInspection.getTypeElementToExpand(variable) != null;
   }
 }

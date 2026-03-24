@@ -16,7 +16,9 @@ interface ProjectRootManager {
   fun setProjectSdk(sdk: Sdk?)
 }
 
-@Remote("com.intellij.openapi.roots.ProjectRootManager", rdTarget = RdTarget.FRONTEND)
+@Remote("com.intellij.openapi.roots.ProjectRootManager",
+        rdTarget = RdTarget.FRONTEND,
+        plugin = "com.intellij.jetbrains.client.performanceTesting")
 interface FrontendProjectRootManager {
   fun getContentRoots(): Array<VirtualFile>
 }

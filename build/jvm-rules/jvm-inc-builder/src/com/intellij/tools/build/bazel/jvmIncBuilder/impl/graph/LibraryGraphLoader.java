@@ -14,7 +14,7 @@ import org.jetbrains.jps.dependency.Delta;
 import org.jetbrains.jps.dependency.Graph;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.impl.DeltaImpl;
-import org.jetbrains.jps.dependency.impl.GraphImpl;
+import org.jetbrains.jps.dependency.impl.IndexFactory;
 import org.jetbrains.jps.dependency.impl.PathSource;
 import org.jetbrains.jps.dependency.java.JvmClassNodeBuilder;
 import org.jetbrains.jps.util.Pair;
@@ -23,7 +23,12 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.zip.ZipInputStream;
 
 public final class LibraryGraphLoader {
   private static final int CACHE_SIZE = VMFlags.getLibraryGraphCacheSize();
@@ -39,8 +44,8 @@ public final class LibraryGraphLoader {
   }
 
   private static Pair<NodeSourceSnapshot, Graph> loadReadonlyLibraryGraph(NodeSource lib, Path jarPath) throws IOException {
-    try (var is = new BufferedInputStream(Files.newInputStream(jarPath))) {
-      return loadReadonlyLibraryGraph(lib, new DeltaImpl(Set.of(), Set.of(), GraphImpl.IndexFactory.mandatoryIndices()) /*depGraph.createDelta(Set.of(), Set.of(), false)*/, ClassDataZipEntry.fromSteam(is));
+    try (var zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(jarPath)))) {
+      return loadReadonlyLibraryGraph(lib, new DeltaImpl(Set.of(), Set.of(), IndexFactory.mandatoryIndices()) /*depGraph.createDelta(Set.of(), Set.of(), false)*/, ClassDataZipEntry.fromSteam(zis));
     }
   }
 

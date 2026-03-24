@@ -7,10 +7,12 @@ fragment project on Project {
   httpUrlToRepo
   sshUrlToRepo
 
+  squashReadOnly
   removeSourceBranchAfterMerge
   onlyAllowMergeIfAllDiscussionsAreResolved
   onlyAllowMergeIfPipelineSucceeds
   allowMergeOnSkippedPipeline
+  mergeRequestsFfOnlyEnabled
 
   allowsMultipleMergeRequestAssignees
   allowsMultipleMergeRequestReviewers

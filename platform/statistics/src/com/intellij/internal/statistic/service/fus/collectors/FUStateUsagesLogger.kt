@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
+import com.intellij.openapi.util.registry.RegistryManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -204,6 +205,9 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
   }
 
   internal suspend fun logApplicationStates(onStartup: Boolean) {
+    // state loggers may depend on Registry
+    RegistryManager.getInstanceAsync()
+
     logCollectorsMetrics(project = null,
                          getCollectors = { UsageCollectors.getApplicationCollectors(this@FUStateUsagesLogger, onStartup) },
                          collectMetrics = { it.getMetricsAsync() })
@@ -236,6 +240,9 @@ class ProjectFUStateUsagesLogger(
   }
 
   private suspend fun logProjectState() {
+    // state loggers may depend on Registry
+    RegistryManager.getInstanceAsync()
+
     logCollectorsMetrics(project = project,
                          getCollectors = { UsageCollectors.getProjectCollectors(this@ProjectFUStateUsagesLogger) },
                          collectMetrics = { it.collect(project) })

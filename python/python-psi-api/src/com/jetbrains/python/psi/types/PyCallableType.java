@@ -47,6 +47,21 @@ public interface PyCallableType extends PyType {
     return null;
   }
 
+  /**
+   * Returns the parameters type as a variadic type.
+   * This method provides a unified way to handle different forms of callable parameters:
+   * <ul>
+   * <li>{@link PyCallableParameterListType} for regular parameter lists</li>
+   * <li>{@link PyParamSpecType} for a single ParamSpec parameter type <code>Callable[P, R]</code></li>
+   * <li>{@link PyConcatenateType} for a single Concatenate type <code>Callable[Concatenate[T1, T2, P], R]</code></li>
+   * </ul>
+   * @return the parameters type, or null if not applicable
+   */
+  @ApiStatus.Experimental
+  default @Nullable PyCallableParameterVariadicType getParametersType(@NotNull TypeEvalContext context) {
+    return null;
+  }
+
   @Override
   @Nullable
   default String getName() {
@@ -65,14 +80,14 @@ public interface PyCallableType extends PyType {
                                                builder.append(name);
                                                builder.append(": ");
                                              }
-                                             builder.append(type != null ? type.getName() : PyNames.UNKNOWN_TYPE);
+                                             builder.append(type != null ? type.getName() : PyNames.ANY_TYPE);
                                              return builder.toString();
                                            }
-                                           return PyNames.UNKNOWN_TYPE;
+                                           return PyNames.ANY_TYPE;
                                          },
                                          ", ") :
                          "...",
-                         returnType != null ? returnType.getName() : PyNames.UNKNOWN_TYPE);
+                         returnType != null ? returnType.getName() : PyNames.ANY_TYPE);
   }
 
   default @Nullable PyCallable getCallable() {

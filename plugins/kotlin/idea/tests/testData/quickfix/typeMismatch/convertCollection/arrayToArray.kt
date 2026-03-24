@@ -1,5 +1,6 @@
 // "Convert expression to 'Array' by inserting '.toTypedArray()'" "false"
 // ERROR: Type mismatch: inferred type is Array<out String> but Array<String> was expected
+// K2_ERROR: Argument type mismatch: actual type is 'Array<CapturedType(out String)>', but 'Array<String>' was expected.
 // K2_AFTER_ERROR: Argument type mismatch: actual type is 'Array<CapturedType(out String)>', but 'Array<String>' was expected.
 // ACTION: Cast expression 'strings' to 'Array<String>'
 // ACTION: Change parameter 'strings' type of function 'bar' to 'Array<out String>'

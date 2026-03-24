@@ -16,12 +16,17 @@ import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.WelcomeScreenUI
 import com.intellij.driver.sdk.ui.components.common.tabbedPane
 import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
+import com.intellij.driver.sdk.ui.components.elements.accessibleList
 import com.intellij.driver.sdk.ui.components.elements.checkBox
+import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.components.elements.waitSelected
+import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.ui.xQuery
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.driver.sdk.waitFor
 import java.awt.Point
+import java.awt.event.KeyEvent
 import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JDialog
@@ -63,6 +68,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
   val marketplaceTab = x { and(byType(JLabel::class.java), byAccessibleName("Marketplace")) }
   val gearButton = x { byAccessibleName("Manage Repositories, Configure Proxy or Install Plugin from Disk") }
   val searchOptionsButton = x { byAccessibleName("Search Options") }
+  val updateAllButton = x { byAccessibleName("Update all") }
 
   fun waitLoaded(timeout: Duration = 40.seconds) {
     waitFor("no progress indicators on plugins page", timeout) {
@@ -75,7 +81,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   fun installedTabWorkaroundApply() {
-    // workaround for bug https://youtrack.jetbrains.com/issue/IJPL-228318 - switch between tabs to refresh UI state
+    // TODO workaround for bug https://youtrack.jetbrains.com/issue/IJPL-228318 - switch between tabs to refresh UI state
     openInstalledTab()
     openMarketplaceTab()
   }
@@ -125,10 +131,15 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
       and(byType("com.intellij.ide.plugins.newui.ListPluginComponent"), byAccessibleName(pluginName))
     }.apply(action)
 
+  fun isPluginPresentInList(pluginName: String): Boolean =
+      xx(ListPluginComponent::class.java) {
+        and(byType("com.intellij.ide.plugins.newui.ListPluginComponent"), byAccessibleName(pluginName))
+      }.list().isNotEmpty()
+
   fun pluginDetailsPage(action: PluginDetailsPage.() -> Unit = {}): PluginDetailsPage =
     x(PluginDetailsPage::class.java) { byType("com.intellij.ide.plugins.newui.PluginDetailsPageComponent") }.apply(action)
 
-  //Dirty kostyl because our plugin manager can show this btn in one of these places or in both
+  //TODO Dirty kostyl because our plugin manager can show this btn in one of these places or in both
   // and we cant predict it until full refactoring
   fun checkAnyRestartBtnForPlugin(pluginName: String) {
     step("Wait for restart button to appear either in list or in details") {
@@ -145,11 +156,12 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     val name get() = accessibleName
     val installButton = x { and(byType(JButton::class.java), byAccessibleName("Install")) }
     val installedButton = x { and(byType(JButton::class.java), byAccessibleName("Installed")) }
+    val uninstalledButton = x { and(byType(JButton::class.java), byAccessibleName("Uninstalled")) }
     val enabledCheckBox = checkBox { and(byType(JCheckBox::class.java), byAccessibleName("Enabled")) }
     val ultimateTagLabel = x { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Ultimate")) }
     val proTagLabel = x { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Pro")) }
     val errorNotice = x { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
-    val updateButton = x { byAccessibleName("Update") }
+    val updatePluginButton = x { byAccessibleName("Update") }
     val restartIdeButton = x { byAccessibleName("Restart IDE") }
     val errorComponent = x { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
 
@@ -164,8 +176,8 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     }
 
     fun updatePlugin(): ListPluginComponent {
-      step("Wait for update btn and click") {
-        updateButton.waitFound(30.seconds).click()
+      step("Wait for update plugin btn and click") {
+        updatePluginButton.waitFound(30.seconds).click()
       }
       return this
     }
@@ -176,6 +188,14 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
       }
       return this
     }
+
+    fun checkUninstalledBtn(): ListPluginComponent {
+      step("Wait for the Uninstalled btn appearance") {
+        uninstalledButton.waitFound(2.minutes)
+      }
+      return this
+    }
+
 
     fun checkRestartBtnInPluginsList(): ListPluginComponent {
       step("Wait for the Restart IDE btn appearance in the plugins list") {
@@ -190,6 +210,26 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
         enabledCheckBox.waitSelected(true)
       }
       return this
+    }
+
+    fun checkErrorContainsText(errorText: String): ListPluginComponent {
+      step("[Check] The error  notice in the Plugins list contains text '$errorText'") {
+        errorComponent.waitContainsText(errorText)
+      }
+      return this
+    }
+
+    fun uninstallPluginByHotkey(): ListPluginComponent {
+      step("Click on plugin and press hotkey") {
+        click()
+        keyboard { key(if (SystemInfo.isMac) KeyEvent.VK_BACK_SPACE else KeyEvent.VK_DELETE) }
+      }
+      return this
+    }
+
+    fun pluginDescription(): PluginDetailsPage {
+      this.click()
+      return driver.ui.x(PluginDetailsPage::class.java) { byType("com.intellij.ide.plugins.newui.PluginDetailsPageComponent") }
     }
 
     @Remote("com.intellij.ide.plugins.newui.ListPluginComponent")
@@ -226,6 +266,14 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     fun checkRestartBtn(): PluginDetailsPage {
       step("Check the Restart IDE in the plugins description") {
         restartButton.waitFound(2.minutes)
+      }
+      return this
+    }
+
+    fun uninstallPlugin(): PluginDetailsPage {
+      step("Click on dropdown and uninstall plugin") {
+        arrowButton.click()
+        driver.ui.popup().waitFound(15.seconds).accessibleList().clickItem("Uninstall")
       }
       return this
     }

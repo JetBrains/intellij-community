@@ -37,6 +37,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
@@ -220,9 +221,9 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   // handle queued elements
   @Override
   public void run() {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
 
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       // assume changedElement won't change under read action
       flushUpdateFileStatusQueue();
     });

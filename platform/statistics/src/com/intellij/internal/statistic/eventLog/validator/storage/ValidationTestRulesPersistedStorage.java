@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.intellij.internal.statistic.config.SerializationHelper;
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
@@ -147,7 +146,7 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
     }
   }
 
-  public @NotNull List<GroupValidationTestRule> loadValidationTestRules() throws JsonProcessingException {
+  public @NotNull List<GroupValidationTestRule> loadValidationTestRules() {
     ArrayList<EventGroupRemoteDescriptor> testGroupsSchemes =
       EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myTestMetadataPersistence).groups;
     ArrayList<GroupValidationTestRule> groups = new ArrayList<>();

@@ -1,11 +1,11 @@
-Index: platform/platform-impl/src/com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory.java
+Index: community/platform/platform-impl/src/com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory.java
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
-diff --git a/platform/platform-impl/src/com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory.java b/platform/platform-impl/src/com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory.java
---- a/platform/platform-impl/src/com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory.java	(revision 37976ff1a51e226063f8165c4d1b3ac439282428)
-+++ b/platform/platform-impl/src/com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory.java	(date 1747755577014)
+diff --git a/community/platform/platform-impl/src/com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory.java b/community/platform/platform-impl/src/com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory.java
+--- a/community/platform/platform-impl/src/com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory.java	(revision 37976ff1a51e226063f8165c4d1b3ac439282428)
++++ b/community/platform/platform-impl/src/com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory.java	(date 1747755577014)
 @@ -454,7 +454,7 @@
      }
  

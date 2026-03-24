@@ -13,14 +13,14 @@ import com.intellij.ui.awt.RelativePoint
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object DefaultInlayInteractionHandler : InlayInteractionHandler {
+class DefaultInlayInteractionHandler : InlayInteractionHandler {
   override fun handleLeftClick(
     inlay: Inlay<out DeclarativeInlayRendererBase<*>>,
     clickInfo: CapturedPointInfo,
     e: EditorMouseEvent,
     controlDown: Boolean,
-  ) {
-    if (clickInfo.entry == null) return
+  ): Boolean {
+    if (clickInfo.entry == null) return false
     val entry = clickInfo.entry
     val presentationList = clickInfo.presentationList
     val editor = e.editor
@@ -36,6 +36,7 @@ object DefaultInlayInteractionHandler : InlayInteractionHandler {
       presentationList.toggleTreeState(entry.parentIndexToSwitch)
       inlay.renderer.invalidate()
     }
+    return true
   }
 
   override fun handleHover(
@@ -45,16 +46,15 @@ object DefaultInlayInteractionHandler : InlayInteractionHandler {
   ): LightweightHint? {
     val tooltip = clickInfo.presentationList.model.tooltip ?: return null
     return PresentationFactory(e.editor).showTooltip(e.mouseEvent, tooltip)
-
   }
 
   override fun handleRightClick(
     inlay: Inlay<out DeclarativeInlayRendererBase<*>>,
     clickInfo: CapturedPointInfo,
     e: EditorMouseEvent,
-  ) {
+  ): Boolean {
     val inlayData = clickInfo.presentationList.model
     service<DeclarativeInlayActionService>().invokeInlayMenu(inlayData, e, RelativePoint(e.mouseEvent.locationOnScreen))
+    return true
   }
-
 }

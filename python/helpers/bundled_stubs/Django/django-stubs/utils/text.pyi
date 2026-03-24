@@ -1,11 +1,12 @@
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import AsyncIterable, AsyncIterator, Iterable, Iterator
 from html.parser import HTMLParser
 from io import BytesIO
 from re import Pattern
-from typing import ClassVar, TypeVar, overload
+from typing import Any, ClassVar, TypeVar, overload
 
 from django.db.models.base import Model
-from django.utils.functional import SimpleLazyObject, _StrOrPromise, cached_property
+from django.utils.functional import SimpleLazyObject, _StrOrPromise, _StrPromise, cached_property
+from typing_extensions import override
 
 _StrOrPromiseT = TypeVar("_StrOrPromiseT", bound=_StrOrPromise)
 _StrOrPromiseOrNoneT = TypeVar("_StrOrPromiseOrNoneT", bound=_StrOrPromise | None)
@@ -32,7 +33,6 @@ class TruncateWordsHTMLParser(TruncateHTMLParser):
     def process(self, data: str) -> tuple[str, str]: ...
 
 class Truncator(SimpleLazyObject):
-    MAX_LENGTH_HTML: ClassVar[int]
     def __init__(self, text: Model | str) -> None: ...
     def chars(self, num: int, truncate: str | None = None, html: bool = False) -> str: ...
     def words(self, num: int, truncate: str | None = None, html: bool = False) -> str: ...
@@ -47,10 +47,13 @@ def phone2numeric(phone: _StrOrPromiseT) -> _StrOrPromiseT: ...
 def compress_string(s: bytes, *, max_random_bytes: int | None = None) -> bytes: ...
 
 class StreamingBuffer(BytesIO):
-    vals: list[bytes]
+    @override
     def read(self) -> bytes: ...  # type: ignore[override]
 
 def compress_sequence(sequence: Iterable[bytes], *, max_random_bytes: int | None = None) -> Iterator[bytes]: ...
+def acompress_sequence(
+    sequence: AsyncIterable[bytes], *, max_random_bytes: int | None = None
+) -> AsyncIterator[bytes]: ...
 
 smart_split_re: Pattern[str]
 
@@ -58,5 +61,4 @@ def smart_split(text: str) -> Iterator[str]: ...
 def unescape_string_literal(s: _StrOrPromiseT) -> _StrOrPromiseT: ...
 def slugify(value: _StrOrPromiseT, allow_unicode: bool = False) -> _StrOrPromiseT: ...
 def camel_case_to_spaces(value: str) -> str: ...
-
-format_lazy: Callable[..., _StrOrPromise]
+def format_lazy(format_string: _StrOrPromise, *args: Any, **kwargs: Any) -> _StrPromise: ...

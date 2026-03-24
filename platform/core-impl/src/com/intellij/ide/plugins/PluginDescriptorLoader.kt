@@ -452,7 +452,7 @@ private fun CoroutineScope.loadThirdPartyBundledPluginDescriptors(loadingContext
 suspend fun loadDescriptors(
   zipPoolDeferred: Deferred<ZipEntryResolverPool>,
   mainClassLoaderDeferred: Deferred<ClassLoader>?,
-): Pair<PluginDescriptorLoadingContext, PluginDescriptorLoadingResult> {
+): Pair<PluginDescriptorLoadingContext, PluginsDiscoveryResult> {
   val isUnitTestMode = PluginManagerCore.isUnitTestMode
   val isRunningFromSources = PluginManagerCore.isRunningFromSources()
   val isInDevServerMode = AppMode.isRunningFromDevBuild()
@@ -571,7 +571,7 @@ private suspend fun loadDescriptors(
   isRunningFromSources: Boolean,
   zipPoolDeferred: Deferred<ZipEntryResolverPool>,
   mainClassLoaderDeferred: Deferred<ClassLoader>?,
-): PluginDescriptorLoadingResult {
+): PluginsDiscoveryResult {
   val zipPool = zipPoolDeferred.await()
   val mainClassLoader = mainClassLoaderDeferred?.await() ?: PluginManagerCore::class.java.classLoader
   val discoveredPlugins = coroutineScope {
@@ -590,7 +590,7 @@ private suspend fun loadDescriptors(
     val pluginsFromPropertyDeferred = loadDescriptorsFromProperty(loadingContext, zipPool)
     pluginsDeferred.await() + listOfNotNull(thirdPartyBundledPluginsDeferred.await(), pluginsFromPropertyDeferred.await())
   }
-  return PluginDescriptorLoadingResult.build(discoveredPlugins)
+  return PluginsDiscoveryResult.build(discoveredPlugins)
 }
 
 internal fun CoroutineScope.loadPluginDescriptorsForPathBasedLoader(
@@ -893,6 +893,7 @@ fun isProductWithTheOnlyDescriptor(platformPrefix: String): Boolean {
          platformPrefix == PlatformUtils.DBE_PREFIX ||
          platformPrefix == PlatformUtils.DATASPELL_PREFIX ||
          platformPrefix == PlatformUtils.GATEWAY_PREFIX ||
+         platformPrefix == "LanguageServer" ||
          platformPrefix == "CodeServer"
 }
 
@@ -972,8 +973,13 @@ private fun loadContentModuleDescriptors(
         !isRunningFromSourcesWithoutDevBuild &&
         // module-based loader is not supported, descriptorContent maybe null
         (!isDeprecatedLoader || module.descriptorContent != null) &&
-        (moduleId.name.startsWith("intellij.") || moduleId.name.startsWith("fleet.")) &&
-        loadProductModule(
+        moduleId.name.run {
+          startsWith("intellij.") ||
+          startsWith("fleet.") ||
+          startsWith("language-server.")
+        }
+    ) {
+      if (loadProductModule(
           jarFile = jarFileForModule,
           module = module,
           subDescriptorFile = subDescriptorFile,
@@ -981,7 +987,8 @@ private fun loadContentModuleDescriptors(
           xIncludeLoader = xIncludeLoader,
           containerDescriptor = descriptor,
         )) {
-      continue
+        continue
+      }
     }
 
     if (isDeprecatedLoader && jarFileForModule != null && Files.exists(jarFileForModule)) {
@@ -1131,7 +1138,7 @@ fun loadDescriptorsFromOtherIde(
   customPluginDir: Path,
   bundledPluginDir: Path?,
   productBuildNumber: BuildNumber?,
-): PluginDescriptorLoadingResult {
+): PluginsDiscoveryResult {
   val classLoader = PluginDescriptorLoadingContext::class.java.classLoader
   val pool = NonShareableJavaZipFilePool()
   val loadingContext = PluginDescriptorLoadingContext(
@@ -1158,7 +1165,7 @@ fun loadDescriptorsFromOtherIde(
     loadingContext.close()
     pool.close()
   }
-  return PluginDescriptorLoadingResult.build(discoveredPlugins)
+  return PluginsDiscoveryResult.build(discoveredPlugins)
 }
 
 suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false): DiscoveredPluginsList {

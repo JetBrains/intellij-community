@@ -4,8 +4,9 @@ package com.intellij.ide.actions
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.util.ExecUtil
+import com.intellij.ide.actions.AttachDirectoryUsagesCollector.ATTACH_DIRECTORY_ACTIVITY
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.ide.actions.AttachDirectoryUsagesCollector.SpecialDirectory
-import com.intellij.ide.actions.AttachDirectoryUsagesCollector.logAttachedDirectoryFilesCount
 import com.intellij.ide.actions.AttachDirectoryUsagesCollector.logAttachedSpecialDirectory
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -27,7 +28,27 @@ import java.nio.file.Paths
 import kotlin.math.min
 
 internal object AttachDirectoryUsagesCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("attach.directory.statistics", 1)
+  private val GROUP = EventLogGroup("attach.directory.statistics", 2)
+
+  private val FILES_COUNT_FIELD = EventFields.LogarithmicInt("files_count_log_scale")
+  private val FILES_COUNT_LIMIT_FIELD = EventFields.Int("files_count_limit")
+  private val LIMIT_REACHED_FIELD = EventFields.Boolean("limit_reached")
+
+  internal val ATTACH_DIRECTORY_ACTIVITY = GROUP.registerIdeActivity(
+    "attach.directory.count.files.activity",
+    startEventAdditionalFields = emptyArray(),
+    finishEventAdditionalFields = arrayOf(FILES_COUNT_FIELD, FILES_COUNT_LIMIT_FIELD, LIMIT_REACHED_FIELD)
+  )
+
+  internal fun finishFilesTraversal(activity: StructuredIdeActivity, filesCount: Int) {
+    activity.finished {
+      listOf(
+        FILES_COUNT_FIELD.with(filesCount),
+        FILES_COUNT_LIMIT_FIELD.with(FILES_COUNT_LIMIT),
+        LIMIT_REACHED_FIELD.with(filesCount == FILES_COUNT_LIMIT)
+      )
+    }
+  }
 
   enum class SpecialDirectory {
     HOME {
@@ -97,37 +118,33 @@ internal object AttachDirectoryUsagesCollector : CounterUsagesCollector() {
     abstract fun matches(root: VirtualFile): Boolean
   }
 
-  private val ATTACHED_DIRECTORY_EVENT = GROUP.registerEvent(
-    "attached.directory",
-    EventFields.LogarithmicInt("files_count"), EventFields.Int("files_count_limit"), EventFields.Boolean("limit_reached")
-  )
-
   private val ATTACHED_SPECIAL_DIRECTORY_EVENT = GROUP.registerEvent(
     "attached.special.directory",
     EventFields.Enum<SpecialDirectory>("type")
   )
 
-  override fun getGroup() = GROUP
-
-  @JvmStatic
-  fun logAttachedDirectoryFilesCount(filesCount: Int) {
-    ATTACHED_DIRECTORY_EVENT.log(filesCount, FILES_COUNT_LIMIT, filesCount == FILES_COUNT_LIMIT)
-  }
-
   @JvmStatic
   fun logAttachedSpecialDirectory(type: SpecialDirectory) {
     ATTACHED_SPECIAL_DIRECTORY_EVENT.log(type)
   }
+
+  override fun getGroup() = GROUP
 }
 
 @Service(Service.Level.PROJECT)
-private class FileCountLogger(private val cs: CoroutineScope) {
+private class FileCountLogger(private val p: Project, private val cs: CoroutineScope) {
   fun logFilesOnDiskCount(root: VirtualFile) {
     when (val specialKind = SpecialDirectory.entries.firstOrNull { it.matches(root) }) {
       null -> {
         cs.launch(Dispatchers.IO) {
-          val filesCount = countFilesOnDisk(root)
-          logAttachedDirectoryFilesCount(filesCount)
+          val activity = ATTACH_DIRECTORY_ACTIVITY.started(p)
+          try {
+            val filesCount = countFilesOnDisk(root)
+            AttachDirectoryUsagesCollector.finishFilesTraversal(activity, filesCount)
+          }
+          finally {
+            if (!activity.isFinished()) activity.finished()
+          }
         }
       }
       else -> {

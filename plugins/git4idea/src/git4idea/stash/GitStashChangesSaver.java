@@ -10,6 +10,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -167,7 +168,6 @@ public class GitStashChangesSaver extends GitChangesSaver {
       return params;
     }
 
-
     @Override
     protected void notifyUnresolvedRemain() {
       VcsNotifier.importantNotification()
@@ -197,7 +197,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
   private static class UnstashMergeDialogCustomizer extends MergeDialogCustomizer {
 
     @Override
-    public @NotNull String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+    public @NotNull @NlsContexts.Label String getMultipleFileMergeDescription(@NotNull Collection<? extends @NotNull VirtualFile> files) {
       return GitBundle.message("stash.unstash.conflict.dialog.description.label.text");
     }
 

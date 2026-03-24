@@ -20,16 +20,12 @@ import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 
-import static org.jetbrains.jps.util.Iterators.collect;
 import static org.jetbrains.jps.util.Iterators.find;
-import static org.jetbrains.jps.util.Iterators.map;
 
 // this is a base implementation for shared functionality in both DependencyGraph and Delta
 @ApiStatus.Internal
@@ -43,36 +39,6 @@ public abstract class GraphImpl implements Graph {
   private static final Set<String> ourMandatoryIndexNames = Set.of(
     NodeDependenciesIndex.NAME, SubclassesIndex.NAME, TypealiasesIndex.NAME
   );
-
-  public interface IndexFactory {
-    Iterable<BackDependencyIndex> createIndices(@NotNull MapletFactory cFactory);
-
-
-    /**
-     * An index factory creating set of mandatory indices that must be present in all graph instances
-     */
-    static IndexFactory mandatoryIndices() {
-      return containerFactory -> List.of(
-        new NodeDependenciesIndex(containerFactory),
-        new SubclassesIndex(containerFactory),
-        new TypealiasesIndex(containerFactory)
-      );
-    }
-
-    /**
-     *
-     * @param extension indices
-     * @return a combined index factory that creates all mandatory indices plus those specified  
-     */
-    static IndexFactory create(Function<MapletFactory, BackDependencyIndex>... extIndices) {
-      IndexFactory mandatory = mandatoryIndices();
-      return containerFactory -> collect(
-        map(Arrays.asList(extIndices), extIndex -> extIndex.apply(containerFactory)),
-        collect(mandatory.createIndices(containerFactory), new ArrayList<>())
-      );
-    }
-
-  }
 
   protected GraphImpl(@NotNull MapletFactory cFactory, IndexFactory indexFactory) {
     myContainerFactory = cFactory;

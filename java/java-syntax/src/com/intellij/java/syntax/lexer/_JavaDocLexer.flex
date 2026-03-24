@@ -16,6 +16,8 @@ import kotlin.jvm.JvmStatic
   private var myMarkdownMode = false;
   /** Whether comment data should take into account spaces, on used with [myMarkdownMode] */
   private var commentDataWithSpaces = false;
+  /** Whether we're in @value tag and should accept VALUE_FORMAT */
+  private var inValueTag = false;
 
   constructor(isJdk15Enabled: Boolean) {
     myJdk15Enabled = isJdk15Enabled;
@@ -69,6 +71,7 @@ IDENTIFIER_WITHOUT_SYMBOLS={ALPHA}({ALPHA}|{DIGIT})*
 IDENTIFIER={ALPHA}({ALPHA}|{DIGIT}|[":.-"])*
 TAG_IDENTIFIER=[^\ \t\f\n\r]+
 INLINE_TAG_IDENTIFIER=[^\ \t\f\n\r\}]+
+FORMAT_STRING=%[^\ \t\f\n\r}]+
 
 // 20 should cover most fences. JFlex doesn't allow unlimited upper bound
 CODE_FENCE_BACKTICKS=(`{3, 20})
@@ -233,12 +236,15 @@ LEADING_TOKEN_MARKDOWN="///"
 <INLINE_TAG_NAME> "@"("code"|"literal") { yybegin(CODE_TAG_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
 <INLINE_TAG_NAME> "@"("return"|"summary") { yybegin(DOC_TAG_VALUE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
 <INLINE_TAG_NAME> "@snippet" { yybegin(SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
+<INLINE_TAG_NAME> "@value" { inValueTag = true; yybegin(TAG_DOC_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
 <INLINE_TAG_NAME> "@"{INLINE_TAG_IDENTIFIER} { yybegin(TAG_DOC_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
 <COMMENT_DATA_START, COMMENT_DATA, TAG_DOC_SPACE, DOC_TAG_VALUE, CODE_TAG, CODE_TAG_SPACE, SNIPPET_ATTRIBUTE_VALUE_DOUBLE_QUOTES,
-SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON> "}" { yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_INLINE_TAG_END; }
+SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON> "}" { inValueTag = false; yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_INLINE_TAG_END; }
+
+<CODE_TAG, CODE_TAG_SPACE> {WHITE_DOC_SPACE_CHAR}+ { yybegin(CODE_TAG); return JavaDocSyntaxTokenType.DOC_SPACE; }
+<CODE_TAG, CODE_TAG_SPACE> . { yybegin(CODE_TAG); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
 
 <COMMENT_DATA_START, COMMENT_DATA, DOC_TAG_VALUE> . { yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
-<CODE_TAG, CODE_TAG_SPACE> . { yybegin(CODE_TAG); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
 <COMMENT_DATA_START> "@"("author"|"deprecated"|"hidden"|"index"|"implNote"|"return"|"serial") { yybegin(DOC_TAG_VALUE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
 <COMMENT_DATA_START> "@"{TAG_IDENTIFIER} { yybegin(TAG_DOC_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
 
@@ -295,14 +301,25 @@ SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON> "}"
       [^{}\n]+ {return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
 }
 
+<DOC_TAG_VALUE> {FORMAT_STRING} {
+  if (inValueTag) {
+    inValueTag = false;
+    yybegin(TAG_DOC_SPACE);
+    return JavaDocSyntaxTokenType.DOC_TAG_FORMAT_STRING;
+  }
+  else {
+    yypushback(yylength());
+    yybegin(COMMENT_DATA);
+    return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
+  }
+}
+
 <TAG_DOC_SPACE> {WHITE_DOC_SPACE_CHAR}+ {
   if (checkAhead('<') || checkAhead('\"')) yybegin(COMMENT_DATA);
   else if (checkAhead('\u007b')) yybegin(COMMENT_DATA);  // lbrace - there's a error in JLex when typing lbrace directly
   else yybegin(DOC_TAG_VALUE);
   return JavaDocSyntaxTokenType.DOC_SPACE;
 }
-
-<CODE_TAG, CODE_TAG_SPACE> {WHITE_DOC_SPACE_CHAR}+ { yybegin(CODE_TAG); return JavaDocSyntaxTokenType.DOC_SPACE; }
 
 "*"+"/" {
     if(myMarkdownMode) {

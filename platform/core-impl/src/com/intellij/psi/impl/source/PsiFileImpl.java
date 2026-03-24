@@ -11,6 +11,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -214,20 +215,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     if (!myPossiblyInvalidated) return true;
 
-    /*
-    Originally, all PSI was invalidated on root change, to avoid UI freeze (IDEA-172762),
-    but that has led to too many PIEAEs (like IDEA-191185, IDEA-188292, IDEA-184186, EA-114990).
-
-    Ideally those clients should all be converted to smart pointers, but that proved to be quite hard to do, especially without breaking API.
-    And they mostly worked before those batch invalidations.
-
-    So now we have a smarter way of dealing with this issue. On root change, we mark
-    PSI as "potentially invalid", and then, when someone calls "isValid"
-    (hopefully not for all cached PSI at once, and hopefully in a background thread),
-    we check if the old PSI is equivalent to the one that would be re-created in its place.
-    If yes, we return valid. If no, we invalidate the old PSI forever and return the new one.
-    */
-
     // synchronized by read-write action
     if (((FileManagerEx)myManager.getFileManager()).evaluateValidity(this)) {
       myPossiblyInvalidated = false;
@@ -249,7 +236,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   protected void assertReadAccessAllowed() {
-    if (myViewProvider.getVirtualFile() instanceof ReadOnlyLightVirtualFile) return;
+    VirtualFile virtualFile = myViewProvider.getVirtualFile();
+    if (virtualFile instanceof ReadOnlyLightVirtualFile) return;
+    if (!EditorLockFreeTyping.isReadAccessNeeded(virtualFile)) return;
     ApplicationManager.getApplication().assertReadAccessAllowed();
   }
 

@@ -12,6 +12,8 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class ThreadDumpParserTest {
@@ -798,8 +800,81 @@ public class ThreadDumpParserTest {
     List<ThreadState> threads = ThreadDumpParser.parse(text);
     assertEquals(4, threads.size());
 
-    assertTrue(threads.get(3).getName().endsWith("@957"));
+    assertEquals("main@1", threads.get(0).getName());
+    assertNull(threads.get(0).getUniqueId());
+    assertEquals("ForkJoinPool-1-worker-1@934", threads.get(1).getName());
+    assertNull(threads.get(1).getUniqueId());
+    assertEquals("{unnamed}@960", threads.get(2).getName());
+    assertNull(threads.get(2).getUniqueId());
+    assertEquals("{unnamed}@957", threads.get(3).getName());
+    assertNull(threads.get(3).getUniqueId());
     assertTrue(threads.get(3).isVirtual());
+  }
+
+  @Test
+  public void testOurDebuggerExportFormatWithCoroutines() {
+    String text = """
+      "main@1" prio=5 tid=0x1 nid=NA runnable
+        java.lang.Thread.State: RUNNABLE
+        at Main.main(Main.java:1)
+
+      "scope:1@300" virtual tid=0x0 nid=NA suspended [Coroutine] [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}]
+        at example.Parent.one(Parent.kt:1)
+
+      "scope:2@301" virtual tid=0x0 nid=NA running [Coroutine]
+        at example.Child.two(Child.kt:2)
+      """;
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(3, threads.size());
+
+    ThreadState main = ContainerUtil.find(threads, thread -> "main@1".equals(thread.getName()));
+    assertNotNull(main);
+    assertEquals("RUNNABLE", main.getJavaThreadState());
+    assertFalse(main.isVirtual());
+
+    ThreadState suspendedCoroutine = ContainerUtil.find(threads, thread -> "scope:1@300".equals(thread.getName()));
+    assertNotNull(suspendedCoroutine);
+    assertNull(suspendedCoroutine.getJavaThreadState());
+    assertEquals("suspended", suspendedCoroutine.getState());
+    assertTrue(suspendedCoroutine.isVirtual());
+
+    ThreadState runningCoroutine = ContainerUtil.find(threads, thread -> "scope:2@301".equals(thread.getName()));
+    assertNotNull(runningCoroutine);
+    assertNull(runningCoroutine.getJavaThreadState());
+    assertEquals("running", runningCoroutine.getState());
+    assertTrue(runningCoroutine.isVirtual());
+  }
+
+  @Test
+  public void testOurDebuggerExportFormatKeepsSerializedUniqueIdInThreadName() {
+    String text = """
+      "scope@worker@957" tid=0x1c nid=NA virtual runnable
+        java.lang.Thread.State: RUNNABLE
+      	at java.base/java.lang.VirtualThread.run(VirtualThread.java:309)
+      """;
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(1, threads.size());
+
+    ThreadState thread = threads.getFirst();
+    assertEquals("scope@worker@957", thread.getName());
+    assertNull(thread.getUniqueId());
+    assertTrue(thread.isVirtual());
+  }
+
+  @Test
+  public void testThreadNameStartingWithAtIsNotInterpretedAsSerializedUniqueId() {
+    String text = """
+      "@4343" tid=0x1c nid=NA virtual runnable
+        java.lang.Thread.State: RUNNABLE
+      	at java.base/java.lang.VirtualThread.run(VirtualThread.java:309)
+      """;
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(1, threads.size());
+
+    ThreadState thread = threads.getFirst();
+    assertEquals("{unnamed}@4343", thread.getName());
+    assertNull(thread.getUniqueId());
+    assertTrue(thread.isVirtual());
   }
 
   @PerformanceUnitTest

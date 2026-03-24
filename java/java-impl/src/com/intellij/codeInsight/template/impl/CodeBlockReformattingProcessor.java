@@ -4,7 +4,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -20,18 +20,16 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public final class CodeBlockReformattingProcessor implements TemplateOptionalProcessor, DumbAware {
+public final class CodeBlockReformattingProcessor implements ModCommandAwareTemplateOptionalProcessor, DumbAware {
 
   @Override
-  public void processText(Project project,
-                          Template template,
-                          Document document,
-                          RangeMarker templateRange,
-                          Editor editor) {
+  public void processText(@NotNull Template template, @NotNull ModNavigator navigator, @NotNull RangeMarker templateRange) {
     if (!template.isToReformat()) return;
+    Project project = navigator.getProject();
+    Document document = navigator.getDocument();
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
+    PsiFile file = PsiUtilBase.getPsiFileInModNavigator(navigator);
     if (!(file instanceof PsiJavaFile)) return;
 
     CharSequence text = document.getImmutableCharSequence();

@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_kotlinUsedInJava_importedClassRemoved-a.kotlin_module
+  root/Root.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/importedClassRemoved/a/Root.kt
+End of files
+Cleaning output files:
+  Usage.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/importedClassRemoved/a/Usage.java
+End of files
+------------------------------------------
+Exit code: ERROR

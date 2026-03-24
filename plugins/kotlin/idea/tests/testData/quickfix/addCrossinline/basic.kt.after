@@ -1,4 +1,5 @@
 // "Add 'crossinline' to parameter 'block'" "true"
+// K2_ERROR: Cannot inline 'block: () -> Unit' here: it might contain non-local returns. Add 'crossinline' modifier to parameter declaration 'block: () -> Unit'.
 
 interface I {
     fun foo()

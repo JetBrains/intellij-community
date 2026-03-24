@@ -50,8 +50,9 @@ public final class PlatformContentEntriesConfigurable implements Configurable {
   }
 
   private void createEditor() {
-    myModifiableModel =
-      ReadAction.compute(() -> ModuleRootManager.getInstance(myModule).getModifiableModel());
+    myModifiableModel = ReadAction.computeBlocking(
+      () -> ModuleRootManager.getInstance(myModule).getModifiableModel()
+    );
 
     final ModuleConfigurationStateImpl moduleConfigurationState =
       new ModuleConfigurationStateImpl(myModule.getProject(), new DefaultModulesProvider(myModule.getProject())) {
@@ -73,7 +74,7 @@ public final class PlatformContentEntriesConfigurable implements Configurable {
         return entries;
       }
     };
-    JComponent component = ReadAction.compute(() -> myEditor.createComponent());
+    JComponent component = ReadAction.computeBlocking(() -> myEditor.createComponent());
     myTopPanel.add(component, BorderLayout.CENTER);
   }
 

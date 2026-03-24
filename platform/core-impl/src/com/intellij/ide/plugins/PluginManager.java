@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
@@ -44,9 +44,7 @@ public final class PluginManager {
     return Files.isRegularFile(onceInstalledFile) ? onceInstalledFile : null;
   }
 
-  /**
-   * @deprecated Use {@link PluginManagerCore#getPlugin(PluginId)}
-   */
+  /** @deprecated Use {@link PluginManagerCore#getPlugin(PluginId)} */
   @Deprecated
   public static @Nullable IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
     return PluginManagerCore.getPlugin(id);
@@ -70,9 +68,7 @@ public final class PluginManager {
     return loader instanceof PluginAwareClassLoader ? ((PluginAwareClassLoader)loader).getPluginDescriptor() : null;
   }
 
-  /**
-   * @deprecated Use {@link #getPluginByClass}
-   */
+  /** @deprecated Use {@link #getPluginByClass} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static @Nullable PluginId getPluginByClassName(@NotNull String className) {
@@ -95,7 +91,7 @@ public final class PluginManager {
 
   /**
    * @deprecated Bad API, sorry. Please use {@link PluginManagerCore#isDisabled(PluginId)} to check plugin's state,
-   * {@link DisabledPluginsState#getDisabledIds()} to get an unmodifiable collection of all disabled plugins (rarely needed).
+   * {@link DisabledPluginsState#disabledPlugins} to get an unmodifiable collection of all disabled plugins (rarely needed).
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
@@ -132,9 +128,7 @@ public final class PluginManager {
     return PluginManagerCore.disablePlugin(PluginId.getId(id));
   }
 
-  /**
-   * @deprecated Use {@link PluginManagerCore#enablePlugin(PluginId)}
-   */
+  /** @deprecated Use {@link PluginManagerCore#enablePlugin(PluginId)} */
   @Deprecated
   public static boolean enablePlugin(@NotNull String id) {
     return PluginManagerCore.enablePlugin(PluginId.getId(id));
@@ -144,9 +138,7 @@ public final class PluginManager {
     return PluginManagerCore.enablePlugin(id);
   }
 
-  /**
-   * @deprecated Use own logger.
-   */
+  /** @deprecated Use own logger. */
   @Deprecated
   @ApiStatus.Internal
   public static @NotNull Logger getLogger() {
@@ -158,15 +150,12 @@ public final class PluginManager {
   }
 
   /**
-   * Convert build number like '146.9999' to '146.*' (like plugin repository does) to ensure that plugins which have such values in
-   * 'until-build' attribute will be compatible with 146.SNAPSHOT build.
+   * Convert build number like '146.9999' to '146.*' (like plugin repository does)
+   * to ensure that plugins which have such values in the 'until-build' attribute will be compatible with 146.SNAPSHOT build.
    */
   @ApiStatus.Internal
   public static @Nullable String convertExplicitBigNumberInUntilBuildToStar(@Nullable String build) {
-    if (build == null) {
-      return null;
-    }
-
+    if (build == null) return null;
     Matcher matcher = EXPLICIT_BIG_NUMBER_PATTERN.matcher(build);
     return matcher.matches() ? (matcher.group(1) + ".*") : build;
   }
@@ -177,8 +166,10 @@ public final class PluginManager {
   }
 
   @ApiStatus.Internal
-  public static <T extends PluginDescriptor> @NotNull Stream<@NotNull T> filterVisiblePlugins(@NotNull Collection<@NotNull T> plugins,
-                                                                                              boolean showImplementationDetails) {
+  public static <T extends PluginDescriptor> @NotNull Stream<@NotNull T> filterVisiblePlugins(
+    @NotNull Collection<@NotNull T> plugins,
+    boolean showImplementationDetails
+  ) {
     return plugins
       .stream()
       .filter(descriptor -> !descriptor.getPluginId().equals(CORE_ID))

@@ -190,7 +190,7 @@ final class InspectionRunner {
           }
           tool.inspectionStarted(session, myIsOnTheFly);
 
-          List<? extends PsiElement> sortedInside = highlightInfoUpdater.sortByPsiElementFertility(myPsiFile, toolWrapper, toolWrapper.runForWholeFile() ? wholeInside : restrictedInside);
+          List<? extends PsiElement> sortedInside = HighlightInfoUpdaterImpl.sortByPsiElementFertility(myPsiFile, toolWrapper, toolWrapper.runForWholeFile() ? wholeInside : restrictedInside);
           List<? extends PsiElement> outside = toolWrapper.runForWholeFile() ? wholeOutside : restrictedOutside;
           InspectionContext context = new InspectionContext(toolWrapper, holder, visitor, sortedInside, outside, InspectionVisitorOptimizer.getAcceptingPsiTypes(visitor), myPsiFile);
           init.add(context);
@@ -198,7 +198,7 @@ final class InspectionRunner {
       }
       //sort `init`, according to the priorities, saved earlier to run in order
       // but only for visible elements, because we don't care about the order in 'outside', and spending CPU on their rearrangement would be counterproductive
-      InspectionProfilerDataHolder.sortByLatencies(myPsiFile, init, highlightInfoUpdater);
+      InspectionProfilerDataHolder.sortByLatencies(myPsiFile, init);
 
       Processor<? super InspectionContext> contextProcessor = (context) -> {
         executeInImpatientReadAction(()-> {

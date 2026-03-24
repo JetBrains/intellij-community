@@ -3,7 +3,6 @@ package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ui.ExperimentalUI
-import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
@@ -23,7 +22,7 @@ internal class DarculaComboBoxRenderer : JLabel(), ListCellRenderer<Any>, Experi
 
   private var selectionColor: Color? = null
 
-  override fun getListCellRendererComponent(list: JList<out Any?>, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component? {
+  override fun getListCellRendererComponent(list: JList<out Any?>, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component {
     val collapsedCombobox = index < 0
     border = if (collapsedCombobox) null else getItemBorder()
 
@@ -53,7 +52,7 @@ internal class DarculaComboBoxRenderer : JLabel(), ListCellRenderer<Any>, Experi
   }
 
   override fun getPreferredSize(): Dimension? {
-    val size: Dimension
+    val size: Dimension?
 
     if (this.text.isNullOrEmpty()) {
       setText(" ")
@@ -85,7 +84,7 @@ internal class DarculaComboBoxRenderer : JLabel(), ListCellRenderer<Any>, Experi
 
   private fun getItemBorder(): Border {
     val leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.unscaled.toInt()
-    val innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets().let { (it as? JBInsets)?.unscaled ?: it }
+    val innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets().unscaled
 
     return JBUI.Borders.empty(2, innerInsets.left + leftRightInset, 2, innerInsets.right + leftRightInset)
   }

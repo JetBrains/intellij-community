@@ -18,7 +18,7 @@ final class JBZipFileWrapper implements GenericZipFile {
   private final JBZipFile myZipFile;
 
   JBZipFileWrapper(@NotNull Path file) throws IOException {
-    myZipFile = new JBZipFile(file, true);
+    myZipFile = new JBZipFile(file, /* readonly = */ true, /* isRemoteIo = */ true);
   }
 
   @Override

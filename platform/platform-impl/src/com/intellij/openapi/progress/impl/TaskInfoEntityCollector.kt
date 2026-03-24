@@ -51,16 +51,15 @@ internal class PerProjectTaskInfoEntityCollector(private val project: Project, p
 
 private fun collectActiveTasks(cs: CoroutineScope, project: Project?) {
   cs.launch {
-    val projectOrDefault = project ?: serviceAsync<ProjectManager>().defaultProject
     activeTasks
       .filter { it.projectEntity?.projectId == project?.projectId() }
       .collect { task ->
-        showTaskIndicator(cs, projectOrDefault, task)
+        showTaskIndicator(cs, project, task)
       }
   }
 }
 
-private fun showTaskIndicator(cs: CoroutineScope, project: Project, task: TaskInfoEntity) {
+private fun showTaskIndicator(cs: CoroutineScope, project: Project?, task: TaskInfoEntity) {
   cs.launch {
     tryWithEntities(task) {
       LOG.trace { "Showing indicator for task: entityId=${task.eid}, title=${task.title}, project=$project" }
@@ -79,8 +78,9 @@ private fun showTaskIndicator(cs: CoroutineScope, project: Project, task: TaskIn
         }
       }
 
+      val projectOrDefault = project ?: serviceAsync<ProjectManager>().defaultProject
       showIndicator(
-        project,
+        projectOrDefault,
         progressModel,
         task.updates.asValuesFlow()
       )

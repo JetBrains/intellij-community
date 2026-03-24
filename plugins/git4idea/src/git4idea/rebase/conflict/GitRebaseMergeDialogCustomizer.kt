@@ -102,7 +102,7 @@ private class GitRebaseMergeDialogCustomizer(
     }
   }
 
-  override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>) = getDescriptionForRebase(
+  override fun getMultipleFileMergeDescription(files: Collection<VirtualFile>) = getDescriptionForRebase(
     repository, rebasingBranch, baseBranch, baseHash
   )
 

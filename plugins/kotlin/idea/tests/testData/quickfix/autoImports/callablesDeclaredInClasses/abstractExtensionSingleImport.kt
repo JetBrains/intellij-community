@@ -1,4 +1,5 @@
 // "Import extension function 'Int.based'" "true"
+// K2_ERROR: Unresolved reference 'based'.
 package p
 
 abstract class Base1 {

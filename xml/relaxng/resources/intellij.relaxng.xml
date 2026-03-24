@@ -1,12 +1,27 @@
 <idea-plugin visibility="public">
   <module value="com.intellij.modules.relaxng"/>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.xml.impl"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.xml.dom"/>
+    <module name="intellij.xml.impl"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.xml.psi"/>
-    <module name="intellij.platform.backend"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <gotoSymbolContributor implementation="org.intellij.plugins.relaxNG.GotoSymbolContributor" />

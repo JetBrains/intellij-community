@@ -1,5 +1,7 @@
 // "Surround with null check" "true"
 // ERROR: 'when' expression must be exhaustive, add necessary 'false' branch or 'else' branch instead
+// K2_ERROR: 'when' expression must be exhaustive. Add the 'false' branch or an 'else' branch.
+// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'Int?'.
 // K2_AFTER_ERROR: 'when' expression must be exhaustive. Add the 'false' branch or an 'else' branch.
 
 fun foo(arg: Int?, flag: Boolean) {

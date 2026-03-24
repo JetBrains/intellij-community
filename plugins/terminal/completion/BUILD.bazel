@@ -16,26 +16,68 @@ jvm_library(
 
 jvm_library(
   name = "completion_test_lib",
+  module_name = "intellij.terminal.completion",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:terminal-completion-terminal-completion-spec"],
+  runtime_deps = [
+    ":completion",
+    "//platform/util:util_test_lib",
+    "@lib//:junit4",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ]
+)
+### auto-generated section `build intellij.terminal.completion` end
+
+### auto-generated section `iml intellij.terminal.completion` start
+exports_files([
+  "intellij.terminal.completion.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.terminal.completion` end
+
+### auto-generated section `build intellij.terminal.completion.tests` start
+jvm_library(
+  name = "completion-tests",
+  module_name = "intellij.terminal.completion.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:terminal-completion-tests-terminal-completion-spec"]
+)
+
+jvm_library(
+  name = "completion-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":completion"],
+  associates = [
+    "//plugins/terminal/completion",
+    "//plugins/terminal/completion:completion_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:terminal-completion-terminal-completion-spec",
+    "@lib//:terminal-completion-tests-terminal-completion-spec",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "@lib//:junit4",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ],
-  exports = ["@lib//:terminal-completion-terminal-completion-spec"]
+  exports = ["@lib//:terminal-completion-tests-terminal-completion-spec"],
+  runtime_deps = [":completion-tests"]
 )
-### auto-generated section `build intellij.terminal.completion` end
+### auto-generated section `build intellij.terminal.completion.tests` end
 
-### auto-generated section `test intellij.terminal.completion` start
+### auto-generated section `iml intellij.terminal.completion.tests` start
+exports_files([
+  "intellij.terminal.completion.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.terminal.completion.tests` end
+
+### auto-generated section `test intellij.terminal.completion.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "completion_test",
-  runtime_deps = [":completion_test_lib"]
+  name = "completion-tests_test",
+  runtime_deps = [":completion-tests_test_lib"]
 )
-### auto-generated section `test intellij.terminal.completion` end
+### auto-generated section `test intellij.terminal.completion.tests` end

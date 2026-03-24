@@ -1,34 +1,43 @@
 <idea-plugin>
-  <resource-bundle>messages.CodexSessionsBundle</resource-bundle>
+  <resource-bundle>messages.AgentSessionsBundle</resource-bundle>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.agent.workbench.codex.common"/>
+    <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.agent.workbench.chat"/>
-    <module name="intellij.platform.compose"/>
-    <!-- endregion -->
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <toolWindow
-      id="agent.workbench.sessions"
-      anchor="right"
-      icon="AllIcons.Toolwindows.ToolWindowMessages"
-      canCloseContents="false"
-      factoryClass="com.intellij.agent.workbench.sessions.CodexSessionsToolWindowFactory"/>
+    <agent.workbench.promptLauncher implementation="com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherBridge"/>
+    <postStartupActivity implementation="com.intellij.agent.workbench.sessions.sleep.AgentSessionSleepPreventionStartupActivity"/>
+    <notificationGroup id="Agent Workbench Sessions" displayType="BALLOON" bundle="messages.AgentSessionsBundle"
+                       key="notification.group.agent.workbench.sessions"/>
     <advancedSetting
       id="agent.workbench.chat.open.in.dedicated.frame"
       default="true"
-      bundle="messages.CodexSessionsBundle"
+      bundle="messages.AgentSessionsBundle"
       groupKey="advanced.settings.agent.workbench"/>
+    <advancedSetting
+      id="agent.workbench.prevent.system.sleep.while.working"
+      default="true"
+      bundle="messages.AgentSessionsBundle"
+      groupKey="advanced.settings.agent.workbench"/>
+    <projectFrameCapabilitiesProvider implementation="com.intellij.agent.workbench.sessions.frame.AgentWorkbenchProjectFrameCapabilitiesProvider"/>
+    <toolWindowLayoutProfileProvider implementation="com.intellij.agent.workbench.sessions.frame.AgentWorkbenchToolWindowLayoutProfileProvider"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="MainToolbarVCSGroup"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="ExecutionTargetsToolbarGroup"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="NewUiRunWidget"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="AIAssistantHubPopupAction"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="BuildSolutionBar"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="ActiveDeviceGroup"/>
   </extensions>
 
-  <actions resource-bundle="messages.CodexSessionsBundle">
-    <group id="AgentWorkbenchSessions.ToolWindow.GearActions">
-      <reference ref="OpenFile"/>
-      <separator/>
-      <action id="AgentWorkbenchSessions.ToggleDedicatedFrame" class="com.intellij.agent.workbench.sessions.CodexSessionsDedicatedFrameToggleAction"/>
-      <action id="AgentWorkbenchSessions.Refresh" class="com.intellij.agent.workbench.sessions.CodexSessionsRefreshAction"/>
-    </group>
-  </actions>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <hyperlinkNavigationInterceptor implementation="com.intellij.agent.workbench.sessions.service.AgentWorkbenchTerminalHyperlinkNavigationInterceptor"/>
+  </extensions>
+
 </idea-plugin>

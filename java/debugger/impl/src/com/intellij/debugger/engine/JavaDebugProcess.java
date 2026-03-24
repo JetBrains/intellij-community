@@ -74,6 +74,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.frame.XDescriptor;
 import com.intellij.xdebugger.frame.XDropFrameHandler;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -115,6 +116,8 @@ public class JavaDebugProcess extends XDebugProcess {
     process -> new JavaBreakpointHandler.JavaWildcardBreakpointHandler(process),
     process -> new JavaBreakpointHandler.JavaCollectionBreakpointHandler(process)
   };
+
+  private final @Nullable CompletableFuture<@NotNull XDescriptor> myProcessDescriptor;
 
   public static JavaDebugProcess create(final @NotNull XDebugSession session, final @NotNull DebuggerSession javaSession) {
     JavaDebugProcess res = new JavaDebugProcessWithThreadsActions(session, javaSession);
@@ -257,6 +260,7 @@ public class JavaDebugProcess extends XDebugProcess {
     mySmartStepIntoActionHandler = new JvmSmartStepIntoActionHandler(javaSession);
     myDropFrameActionActionHandler = new JvmDropFrameActionHandler(javaSession);
     myJavaDebugSessionEventsProvider = new JavaDebugSessionEventsProvider(this);
+    myProcessDescriptor = JavaProcessDescriptorFactory.createProcessDescriptor(this);
   }
 
   private boolean shouldApplyContext(DebuggerContextImpl context) {
@@ -654,6 +658,11 @@ public class JavaDebugProcess extends XDebugProcess {
   @Override
   public @Nullable XDropFrameHandler getDropFrameHandler() {
     return myDropFrameActionActionHandler;
+  }
+
+  @Override
+  public @Nullable CompletableFuture<XDescriptor> getProcessDescriptor() {
+    return myProcessDescriptor;
   }
 
   private static final class JavaDebugProcessWithThreadsActions extends JavaDebugProcess implements ThreadsActionsProvider {

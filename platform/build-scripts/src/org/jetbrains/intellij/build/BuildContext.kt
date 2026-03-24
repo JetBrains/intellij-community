@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.platform.buildData.productInfo.ProductInfoLayoutItem
@@ -10,7 +10,7 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.impl.DistributionBuilderState
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
@@ -151,7 +151,7 @@ interface BuildContext : CompilationContext {
     proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }
 
-  fun getFrontendModuleFilter(): FrontendModuleFilter
+  suspend fun getFrontendModuleFilter(): FrontendModuleFilter
   
   fun getContentModuleFilter(): ContentModuleFilter
 
@@ -177,7 +177,7 @@ interface BuildContext : CompilationContext {
    * Loads raw data from product-modules.xml file located in module [rootModuleName], for a product running in [productMode].
    * It doesn't use files from module output directories, so it works even if the modules aren't compiled yet.
    */
-  @ApiStatus.Internal
+  @Internal
   fun loadRawProductModules(rootModuleName: String, productMode: ProductMode): RawProductModules
 
   suspend fun runProcess(
@@ -192,11 +192,11 @@ interface BuildContext : CompilationContext {
 
   val isNightlyBuild: Boolean
 
-  @ApiStatus.Internal
+  @Internal
   suspend fun distributionState(): DistributionBuilderState
 }
 
-suspend inline fun <T> BuildContext.executeStep(
+suspend inline fun <T> CompilationContext.executeStep(
   spanBuilder: SpanBuilder,
   stepId: String,
   coroutineContext: CoroutineContext = EmptyCoroutineContext,

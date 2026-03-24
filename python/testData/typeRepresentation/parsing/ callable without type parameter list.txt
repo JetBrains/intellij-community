@@ -2,7 +2,7 @@ TypeRepresentation:a.pythonTypeRepresentation
   PyFunctionTypeRepresentation
     PyParameterListRepresentation
       PsiElement(Py:LPAR)('(')
-      PyNamedParameterTypeRepresentation
+      PyNamedParameterTypeRepresentation('x')
         PsiElement(Py:IDENTIFIER)('x')
         PsiElement(Py:COLON)(':')
         PsiWhiteSpace(' ')

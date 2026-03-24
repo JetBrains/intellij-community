@@ -34,7 +34,8 @@
     <lang.parserDefinition language="SVG" implementationClass="org.intellij.images.fileTypes.impl.SvgParserDefinition"/>
     <fileLookupInfoProvider implementation="org.intellij.images.completion.ImageLookupInfoProvider"/>
     <documentationProvider implementation="org.intellij.images.fileTypes.ImageDocumentationProvider"/>
-    <ApplicationLoadListener implementation="org.intellij.images.util.imageio.ImageReaderSpiRegistrar"/>
+    <imageReaderWriterSpi type="read" implementationClass="org.intellij.images.util.imageio.CommonsImagingImageReaderSpi"/>
+    <imageReaderWriterSpi type="read" implementationClass="org.intellij.images.util.imageio.svg.SvgImageReaderSpi"/>
 
     <filePasteProvider implementation="org.intellij.images.ide.ImagePasteProvider" order="last"/>
 

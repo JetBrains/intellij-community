@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -52,20 +52,20 @@ public class AddNewArrayExpressionFix extends PsiUpdateModCommandAction<PsiArray
     doFix(myType, initializer);
   }
 
-  public static void doFix(@NotNull PsiArrayInitializerExpression initializer) {
+  public static PsiExpression doFix(@NotNull PsiArrayInitializerExpression initializer) {
     PsiType type = getType(initializer);
-    if (type == null) return;
-    doFix(type, initializer);
+    if (type == null) return null;
+    return doFix(type, initializer);
   }
-  
-  private static void doFix(@NotNull PsiType type, @NotNull PsiArrayInitializerExpression initializer) {
+
+  private static PsiExpression doFix(@NotNull PsiType type, @NotNull PsiArrayInitializerExpression initializer) {
     Project project = initializer.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     @NonNls String text = "new " + type.getCanonicalText() + "[]{}";
     PsiNewExpression newExpr = (PsiNewExpression) factory.createExpressionFromText(text, null);
     Objects.requireNonNull(newExpr.getArrayInitializer()).replace(initializer);
     newExpr = (PsiNewExpression) CodeStyleManager.getInstance(project).reformat(newExpr);
-    initializer.replace(newExpr);
+    return (PsiExpression)initializer.replace(newExpr);
   }
 
   private static PsiType getType(@NotNull PsiArrayInitializerExpression initializer) {

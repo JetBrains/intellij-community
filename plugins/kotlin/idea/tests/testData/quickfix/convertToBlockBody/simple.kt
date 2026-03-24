@@ -1,4 +1,5 @@
 // "Convert to block body" "true"
+// K2_ERROR: Returns are prohibited in functions with expression body. Use block body '{...}'.
 fun foo(): Int = when {
     true -> {
         if (true) <caret>return 1

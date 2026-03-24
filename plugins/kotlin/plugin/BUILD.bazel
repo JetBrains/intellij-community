@@ -9,8 +9,23 @@ resourcegroup(
 
 jvm_library(
   name = "plugin",
+  module_name = "kotlin.plugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":plugin_resources"]
 )
+
+jvm_library(
+  name = "plugin_test_lib",
+  module_name = "kotlin.plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":plugin"]
+)
 ### auto-generated section `build kotlin.plugin` end
+
+### auto-generated section `iml kotlin.plugin` start
+exports_files([
+  "kotlin.plugin.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.plugin` end

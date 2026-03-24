@@ -1,0 +1,7 @@
+"scope:1@300" virtual tid=0x0 nid=NA running [Coroutine] [dispatcher=Dispatchers.Default]
+    at example.Parent.one(Parent.kt:1)
+
+============ INTELLIJ META_DATA ============
+{
+    "version": 1
+}

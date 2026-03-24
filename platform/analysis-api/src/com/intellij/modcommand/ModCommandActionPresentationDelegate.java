@@ -8,11 +8,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
 
+/**
+ * A decorator around {@link ModCommandAction} to allow for customizing how the action appears in the UI
+ * (by passing a custom {@linkplain Presentation presentation}) without changing what it does.
+ * <p>
+ * Not intended to be instantiated directly. Use {@link ModCommandAction#withPresentation} instead.
+ */
 final class ModCommandActionPresentationDelegate implements ModCommandAction, ReportingClassSubstitutor {
   private final @NotNull ModCommandAction myAction;
   private final @NotNull UnaryOperator<@NotNull Presentation> myPresentationModifier;
 
-  ModCommandActionPresentationDelegate(@NotNull ModCommandAction action, @NotNull UnaryOperator<@NotNull Presentation> presentationModifier) {
+  ModCommandActionPresentationDelegate(@NotNull ModCommandAction action,
+                                       @NotNull UnaryOperator<@NotNull Presentation> presentationModifier) {
     myAction = action;
     myPresentationModifier = presentationModifier;
   }
@@ -36,6 +43,11 @@ final class ModCommandActionPresentationDelegate implements ModCommandAction, Re
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
     return myAction.generatePreview(context);
+  }
+
+  @Override
+  public boolean availableInBatchMode() {
+    return myAction.availableInBatchMode();
   }
 
   @Override

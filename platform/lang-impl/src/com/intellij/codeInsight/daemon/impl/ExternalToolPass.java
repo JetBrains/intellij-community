@@ -173,7 +173,7 @@ final class ExternalToolPass extends ProgressableTextEditorHighlightingPass impl
             // All updates are running in the non-cancellable section, so here we are repeating the inner logic of MergingUpdateQueue here
             Cancellation.executeInNonCancelableSection(() -> {
               // Highlighting requires read access
-              ReadAction.run(() -> {
+              ReadAction.runBlocking(() -> {
                 doFinish();
               });
             });
@@ -196,7 +196,7 @@ final class ExternalToolPass extends ProgressableTextEditorHighlightingPass impl
           BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
             // run annotators outside the read action because they could start OSProcessHandler
             runChangeAware(myDocument, () -> doAnnotate());
-            ReadAction.run(() -> {
+            ReadAction.runBlocking(() -> {
               ProgressManager.checkCanceled();
               if (!documentChanged(modificationStampBefore)) {
                 doApply();
@@ -280,7 +280,7 @@ final class ExternalToolPass extends ProgressableTextEditorHighlightingPass impl
         ContainerUtil.notNullize(data.annotationHolder).stream().map(annotation -> HighlightInfo.fromAnnotation(data.annotator, annotation, getDocument())))
       .toList();
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true);
-    HighlightingSessionImpl.runInsideHighlightingSession(myFile, getContext(), getColorsScheme(), ProperTextRange.create(myFile.getTextRange()), false, session -> {
+    HighlightingSessionImpl.runInsideHighlightingSession(myFile, getColorsScheme(), ProperTextRange.create(myFile.getTextRange()), false, session -> {
       // use the method which doesn't retrieve a HighlightingSession from the indicator, because we likely destroyed the one already
       BackgroundUpdateHighlightersUtil.setHighlightersInRange(myRestrictRange, highlights, markupModel, getId(), session);
       DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getContext(), getId(), session.getProgressIndicator());

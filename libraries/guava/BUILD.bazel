@@ -9,10 +9,27 @@ resourcegroup(
 
 jvm_library(
   name = "guava",
+  module_name = "intellij.libraries.guava",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":guava_resources"],
   exports = ["@lib//:guava"],
   runtime_deps = ["@lib//:guava"]
 )
+
+jvm_library(
+  name = "guava_test_lib",
+  module_name = "intellij.libraries.guava",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:guava"],
+  runtime_deps = [":guava"]
+)
 ### auto-generated section `build intellij.libraries.guava` end
+
+### auto-generated section `iml intellij.libraries.guava` start
+exports_files([
+  "intellij.libraries.guava.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.guava` end

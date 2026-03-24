@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.polySymbols.CompositePolySymbol
+import com.intellij.polySymbols.PolySymbol.HideFromCompletionProperty
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolKind
@@ -282,7 +283,7 @@ internal val PolySymbol.matchedNameOrName: String
   get() = (this as? PolySymbolMatch)?.matchedName ?: name
 
 val PolySymbol.hideFromCompletion: Boolean
-  get() = this[PolySymbol.PROP_HIDE_FROM_COMPLETION] == true
+  get() = this[HideFromCompletionProperty] == true
 
 val (PolySymbolNameSegment.MatchProblem?).isCritical: Boolean
   get() = this == PolySymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART || this == PolySymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL

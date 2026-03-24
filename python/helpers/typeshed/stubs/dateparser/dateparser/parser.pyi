@@ -1,10 +1,10 @@
-import collections
 import datetime
 import re
 from _typeshed import Incomplete
-from collections.abc import Callable, Generator
+from collections import OrderedDict
+from collections.abc import Callable, Iterable, Iterator
 from io import StringIO
-from typing import Any, Final, Literal, overload
+from typing import Final, Literal, overload
 
 from dateparser.conf import Settings
 
@@ -35,30 +35,32 @@ time_parser: _time_parser
 class _no_spaces_parser:
     period: dict[str, list[str]]
     date_formats: dict[str, list[str]]
-    def __init__(self, *args, **kwargs): ...
+    def __init__(self, *args, **kwargs) -> None: ...
     @classmethod
     def parse(cls, datestring: str, settings: Settings) -> tuple[datetime.datetime, str]: ...
 
 class _parser:
-    alpha_directives: collections.OrderedDict[str, list[str]]
+    alpha_directives: OrderedDict[str, list[str]]
     num_directives: dict[str, list[str]]
     settings: Settings
     tokens: list[tuple[Incomplete, Incomplete]]
     filtered_tokens: list[tuple[Incomplete, Incomplete, int]]
-    unset_tokens: list[Incomplete]
+    unset_tokens: list[tuple[Incomplete, Incomplete, Incomplete]]
     day: int | None
     month: int | None
     year: int | None
     time: Callable[[], datetime.time] | None
     auto_order: list[str]
-    ordered_num_directives: collections.OrderedDict[str, list[str]]
-    def __init__(self, tokens, settings: Settings): ...
+    ordered_num_directives: OrderedDict[str, list[str]]
+    def __init__(self, tokens: Iterable[Incomplete], settings: Settings) -> None: ...
     @classmethod
-    def parse(cls, datestring: str, settings: Settings, tz: datetime.tzinfo | None = None) -> tuple[Incomplete, Incomplete]: ...
+    def parse(
+        cls, datestring: str, settings: Settings, tz: datetime.tzinfo | None = None
+    ) -> tuple[datetime.datetime, str | None]: ...
 
 class tokenizer:
     digits: Literal["0123456789:"]
     letters: Literal["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"]
     instream: StringIO
     def __init__(self, ds: str) -> None: ...
-    def tokenize(self) -> Generator[tuple[str, Literal[0, 1, 2]], Any, None]: ...
+    def tokenize(self) -> Iterator[tuple[str, Literal[0, 1, 2]]]: ...

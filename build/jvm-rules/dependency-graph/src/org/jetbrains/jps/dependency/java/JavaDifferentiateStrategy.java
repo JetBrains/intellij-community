@@ -66,8 +66,8 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     for (JvmClass addedClass : addedClasses) {
       debug(context, "Class name: ", addedClass.getName());
 
-      // class duplication checks
-      if (!addedClass.isAnonymous() && !addedClass.isLocal() && !addedClass.isInnerClass()) {
+      // class duplication checks                                                           
+      if (!addedClass.isLibrary() && !addedClass.isAnonymous() && !addedClass.isLocal() && !addedClass.isInnerClass()) {
         if (affectNodeSourcesIfNotCompiled(context, asIterable(addedClass.getReferenceID()), present, "Possibly duplicated classes in the same compilation chunk; Scheduling for recompilation sources: ")) {
           affectSources(context, context.getDelta().getSources(addedClass.getReferenceID()), "Found conflicting class declarations ", true);
           continue; // if duplicates are found, do not perform further checks for classes with the same short name
@@ -451,7 +451,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     JvmClass changedClass = change.getPast();
     debug(context, "Processing removed methods: ");
     Supplier<Boolean> extendsLibraryClass = Utils.lazyValue(() -> {
-      return future.inheritsFromLibraryClass(changedClass);
+      return future.inheritsFromUnknownClass(changedClass);
     });
     for (JvmMethod removedMethod : removed) {
       debug(context, "Method ", removedMethod.getName());
@@ -499,7 +499,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
           for (JvmClass subClass : future.getNodes(id, JvmClass.class)) {
             Iterable<Pair<JvmClass, JvmMethod>> overriddenForSubclass = filter(future.getOverriddenMethods(subClass, removedMethod::isSameByJavaRules), p -> p.second.isAbstract() || removedMethod.isSame(p.second));
             boolean allOverriddenAbstract = !isEmpty(overriddenForSubclass) && isEmpty(filter(overriddenForSubclass, p -> !p.second.isAbstract()));
-            if (allOverriddenAbstract || future.inheritsFromLibraryClass(subClass)) {
+            if (allOverriddenAbstract || future.inheritsFromUnknownClass(subClass)) {
               debug(context, "Removed method is not abstract & overrides some abstract method which is not then over-overridden in subclass ", subClass.getName());
               affectNodeSources(context, subClass.getReferenceID(), "Affecting subclass source file: ", future);
               break;
@@ -599,7 +599,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
           for (JvmClass outerClass : flat(map(future.getNodes(subClassId, JvmClass.class), cl -> {
             return future.getNodes(new JvmNodeReferenceID(cl.getOuterFqName()), JvmClass.class);
           }))) {
-            if (future.isMethodVisible(outerClass, addedMethod)  || future.inheritsFromLibraryClass(outerClass)) {
+            if (future.isMethodVisible(outerClass, addedMethod)  || future.inheritsFromUnknownClass(outerClass)) {
               for (NodeSource source : filter(sources, context.getParams().affectionFilter())) {
                 debug(context, "Affecting file due to local overriding: ", source);
                 context.affectNodeSource(source);
@@ -884,6 +884,10 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
   @Override
   public boolean processNodesWithErrors(DifferentiateContext context, Iterable<JVMClassNode<?, ?>> nodes, Utils present) {
     for (JvmClass jvmClass : Graph.getNodesOfType(nodes, JvmClass.class)) {
+      if (!jvmClass.isPrivate() && jvmClass.isInnerClass()) {
+        context.affectUsage(new ClassUsage(jvmClass.getReferenceID()));
+        debug(context, "Affect usages of inner class defined in a source compiled with errors", jvmClass.getName());
+      }
       for (JvmField field : filter(jvmClass.getFields(), f -> !f.isPrivate() && f.isInlinable() && f.getValue() != null)) {
         if (context.getParams().isProcessConstantsIncrementally()) {
           debug(context, "Potentially inlined field is contained in a source compiled with errors => affecting field usages and static member import usages");

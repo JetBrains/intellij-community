@@ -20,6 +20,7 @@ import com.intellij.ui.content.Content
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.ui.TerminalContainer
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareTitle
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl
 
 internal class MoveTerminalSessionToEditorAction : ToolWindowContextMenuActionBase(), DumbAware {
@@ -56,7 +57,7 @@ internal class MoveTerminalSessionToEditorAction : ToolWindowContextMenuActionBa
   private fun performForClassicTerminal(project: Project, widget: TerminalWidget, content: Content) {
     val manager = TerminalToolWindowManager.getInstance(project)
     val file = TerminalSessionVirtualFileImpl(
-      widget.terminalTitle.buildTitle(),
+      widget.terminalTitle.buildSettingsAwareTitle(),
       widget,
       manager.terminalRunner.settingsProvider
     )

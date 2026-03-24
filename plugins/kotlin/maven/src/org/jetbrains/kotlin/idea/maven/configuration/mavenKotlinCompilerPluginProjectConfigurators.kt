@@ -17,6 +17,11 @@ import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Com
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 
 abstract class AbstractMavenKotlinCompilerPluginProjectConfigurator: KotlinCompilerPluginProjectConfigurator {
+    override fun isApplicable(module: Module): Boolean {
+        val xmlFile = findModulePomFile(module) as? XmlFile ?: return false
+        return PomFile.forFileOrNull(xmlFile) != null
+    }
+
     override fun configureModule(module: Module, configurationResultBuilder: ConfigurationResultBuilder) {
         val project = module.project
         val xmlFile = findModulePomFile(module) as? XmlFile ?: return
@@ -43,6 +48,7 @@ abstract class AbstractMavenKotlinCompilerPluginProjectConfigurator: KotlinCompi
                 pluginDependencyMavenId?.let {
                     pom.addPluginDependency(kotlinPlugin, it)
                 }
+                configurationResultBuilder.configuredModule(module)
             }
         }
     }

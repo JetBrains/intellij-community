@@ -27,6 +27,8 @@
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
   </component>
   <component name="copyright">
     <Base>

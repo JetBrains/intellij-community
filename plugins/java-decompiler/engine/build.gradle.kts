@@ -20,12 +20,20 @@ sourceSets {
 
 repositories {
   mavenCentral()
+  maven {
+    url = uri("https://www.jetbrains.com/intellij-repository/releases")
+  }
 }
 
 dependencies {
-  implementation("org.jetbrains:annotations:24.0.0")
-  testImplementation("junit:junit:4.13.2")
-  testImplementation("org.assertj:assertj-core:3.26.3")
+  implementation("org.jetbrains:annotations:26.1.0")
+  testImplementation(platform("org.junit:junit-bom:6.0.3"))
+  testImplementation("org.junit.jupiter:junit-jupiter")
+  testImplementation("org.junit.jupiter:junit-jupiter-params")
+  testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+  testImplementation("org.eclipse.jdt:ecj:3.31.0")
+  testImplementation("org.codehaus.groovy:groovy-all:3.0.25")
+  testImplementation("com.jetbrains.intellij.java:java-rt:253.31033.145") // Make it possible to use FileComparisonData
 }
 
 application {
@@ -44,5 +52,6 @@ tasks.jar {
 }
 
 tasks.test {
+  useJUnitPlatform()
   maxHeapSize = "1024m"
 }

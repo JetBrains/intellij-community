@@ -7,6 +7,7 @@ import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbol.InjectLanguageProperty
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.utils.asSingleSymbol
@@ -38,7 +39,8 @@ class HtmlSymbolsTextInjector : MultiHostInjector {
                 .exclude(PolySymbolModifier.ABSTRACT)
                 .run()
                 .getLanguageToInject(),
-              PsiModificationTracker.MODIFICATION_COUNT, queryExecutor
+              queryExecutor.namesProvider.modificationTracker,
+              PsiModificationTracker.MODIFICATION_COUNT
             )
           }
         }
@@ -58,7 +60,8 @@ class HtmlSymbolsTextInjector : MultiHostInjector {
                 .exclude(PolySymbolModifier.ABSTRACT)
                 .run()
                 .getLanguageToInject(),
-              PsiModificationTracker.MODIFICATION_COUNT, queryExecutor
+              queryExecutor.namesProvider.modificationTracker,
+              PsiModificationTracker.MODIFICATION_COUNT
             )
           }
         }
@@ -79,7 +82,7 @@ class HtmlSymbolsTextInjector : MultiHostInjector {
   private fun List<PolySymbol>.getLanguageToInject() =
     takeIf { it.isNotEmpty() && !it.hasOnlyStandardHtmlSymbols() }
       ?.asSingleSymbol()
-      ?.get(PolySymbol.PROP_INJECT_LANGUAGE)
+      ?.get(InjectLanguageProperty)
       ?.lowercase(Locale.US)
 
   private fun findLanguages(scriptLang: String): Sequence<Language> =

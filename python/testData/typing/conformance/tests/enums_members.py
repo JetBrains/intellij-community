@@ -72,7 +72,7 @@ class Pet4(Enum):
         return "mammal"
 
     def speak(self) -> None:  # Non-member method
-        print("meow" if self is Pet.CAT else "woof")
+        print("meow" if self is Pet4.CAT else "woof")
 
     class Nested: ...  # Non-member nested class
 

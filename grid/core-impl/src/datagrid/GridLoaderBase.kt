@@ -40,14 +40,14 @@ abstract class GridLoaderBase(protected val hookUp: GridDataHookUpBase<GridRow, 
   protected fun addRows(rows: List<GridRow>, rowsLoaded: Int): Int {
     if (rows.isEmpty()) return 0
     if (rowsLoaded == 0) pageModel.pageStart = rows[0].rowNum
-    pageModel.pageEnd = rows[rows.size - 1].rowNum
+    pageModel.pageEnd = rows.last().rowNum
     modelUpdater.setRows(rowsLoaded, rows, GridRequestSource(null))
     return rows.size
   }
 
   protected fun loadingStarted(offset: Int) {
     (hookUp.dataModel as? GridListModelBase)?.isUpdatingNow = true
-    pageModel.pageStart = offset + 1
+    pageModel.pageStart = offset + pageModel.firstRowIndex
     pageModel.pageEnd = offset
   }
 }

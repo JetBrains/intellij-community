@@ -1,4 +1,5 @@
 // "Remove EXPRESSION target" "true"
+// K2_ERROR: Expression annotations with retention other than SOURCE are prohibited.
 import kotlin.annotation.AnnotationTarget.*
 
 <caret>@Retention

@@ -3,12 +3,12 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Internal state of FileStatusMap.
@@ -30,5 +30,8 @@ sealed interface FileStatusMapState permits ClassicFileStatusMapState, Multivers
 
   @NotNull String toString(@NotNull Document document);
 
-  boolean allDirtyScopesAreNullFor(@NotNull List<? extends Document> documents);
+  boolean allDirtyScopesAreNullFor(@NotNull Document document);
+  boolean allDirtyScopesAreNull();
+
+  void markDefensivelyForAllPasses(@NotNull Project project);
 }

@@ -49,6 +49,8 @@ object StandardKotlinNames {
             }
             pkg + it
         }
+
+        @JvmField val IndexedValue: ClassId = ClassId.topLevel(FqName("kotlin.collections.IndexedValue"))
     }
 
     object Enum {
@@ -123,12 +125,17 @@ object StandardKotlinNames {
         @JvmField val putAll: CallableId = CallableId(mutableMapClassId, Name.identifier("putAll"))
     }
 
+    @JvmField val Pair: ClassId = ClassId.topLevel(FqName("kotlin.Pair"))
+    @JvmField val Triple: ClassId = ClassId.topLevel(FqName("kotlin.Triple"))
+
     @JvmField val also: FqName = BUILT_INS_PACKAGE_FQ_NAME + "also"
     @JvmField val lazy: FqName = BUILT_INS_PACKAGE_FQ_NAME + "lazy"
     @JvmField val let: FqName = BUILT_INS_PACKAGE_FQ_NAME + "let"
     @JvmField val run: FqName = BUILT_INS_PACKAGE_FQ_NAME + "run"
     @JvmField val takeIf: FqName = BUILT_INS_PACKAGE_FQ_NAME + "takeIf"
     @JvmField val takeUnless: FqName = BUILT_INS_PACKAGE_FQ_NAME + "takeUnless"
+
+    @JvmField val context: FqName = BUILT_INS_PACKAGE_FQ_NAME + "context"
 
     private val collectionTransformationFunctionNames = listOf(
         "chunked",

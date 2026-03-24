@@ -336,6 +336,8 @@ a:com.intellij.openapi.vcs.ProjectLevelVcsManager
 - a:isFileInContent(com.intellij.openapi.vfs.VirtualFile):Z
 - a:isIgnored(com.intellij.openapi.vcs.FilePath):Z
 - a:isIgnored(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isIgnoredUnderRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath):Z
+- a:isIgnoredUnderRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):Z
 - a:iterateVcsRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor):V
 - a:iterateVcsRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor,com.intellij.openapi.vcs.VirtualFileFilter):V
 - a:iterateVfUnderVcsRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor):V
@@ -497,6 +499,7 @@ a:com.intellij.openapi.vcs.VcsRootChecker
 - areChildrenValidMappings():Z
 - detectProjectMappings(com.intellij.openapi.project.Project,java.util.Collection,java.util.Set):java.util.Collection
 - a:getSupportedVcs():com.intellij.openapi.vcs.VcsKey
+- isIgnored(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):Z
 - isIgnored(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):Z
 - isRoot(com.intellij.openapi.vfs.VirtualFile):Z
 - isRoot(java.lang.String):Z
@@ -2031,6 +2034,24 @@ f:com.intellij.vcs.commit.CommitMode$PendingCommitMode
 - sf:INSTANCE:com.intellij.vcs.commit.CommitMode$PendingCommitMode
 - isCommitTwEnabled():Z
 - isDefaultCommitActionDisabled():Z
+com.intellij.vcs.commit.CommitToAmend
+f:com.intellij.vcs.commit.CommitToAmend$Last
+- com.intellij.vcs.commit.CommitToAmend
+- sf:INSTANCE:com.intellij.vcs.commit.CommitToAmend$Last
+f:com.intellij.vcs.commit.CommitToAmend$None
+- com.intellij.vcs.commit.CommitToAmend
+- sf:INSTANCE:com.intellij.vcs.commit.CommitToAmend$None
+f:com.intellij.vcs.commit.CommitToAmend$Specific
+- com.intellij.vcs.commit.CommitToAmend
+- <init>(com.intellij.vcs.log.Hash,java.lang.String):V
+- f:component1():com.intellij.vcs.log.Hash
+- f:component2():java.lang.String
+- f:copy(com.intellij.vcs.log.Hash,java.lang.String):com.intellij.vcs.commit.CommitToAmend$Specific
+- bs:copy$default(com.intellij.vcs.commit.CommitToAmend$Specific,com.intellij.vcs.log.Hash,java.lang.String,I,java.lang.Object):com.intellij.vcs.commit.CommitToAmend$Specific
+- equals(java.lang.Object):Z
+- f:getTargetHash():com.intellij.vcs.log.Hash
+- f:getTargetSubject():java.lang.String
+- hashCode():I
 com.intellij.vcs.commit.CommitWorkflowHandler
 - a:execute(com.intellij.openapi.vcs.changes.CommitExecutor):V
 - a:getAmendCommitHandler():com.intellij.vcs.commit.AmendCommitHandler

@@ -91,90 +91,12 @@ private val myHardSeparators: CharArray = hardSeparators.toCharArray()
   }
 
   override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<MatchedFragment>?): Int {
-    if (fragments == null) return Int.MIN_VALUE
-    if (fragments.isEmpty()) return 0
-
-    val first = fragments.first()
-    val startMatch = first.startOffset == 0
-    val valuedStartMatch = startMatch && valueStartCaseMatch
-
-    var matchingCase = 0
-    var p = -1
-
-    var skippedHumps = 0
-    var nextHumpStart = 0
-    var humpStartMatchedUpperCase = false
-    for (range in fragments) {
-      for (i in range.startOffset..<range.endOffset) {
-        val afterGap = i == range.startOffset && first !== range
-        var isHumpStart = false
-        while (nextHumpStart <= i) {
-          if (nextHumpStart == i) {
-            isHumpStart = true
-          }
-          else if (afterGap) {
-            skippedHumps++
-          }
-          nextHumpStart = nextWord(name, nextHumpStart)
-        }
-
-        val c = name[i]
-        p = indexOf(myPattern, c, p + 1, myPattern.size, ignoreCase = true)
-        if (p < 0) {
-          break
-        }
-
-        if (isHumpStart) {
-          humpStartMatchedUpperCase = c == myPattern[p] && isUpperCase[p]
-        }
-
-        matchingCase += evaluateCaseMatching(valuedStartMatch, p, humpStartMatchedUpperCase, i, afterGap, isHumpStart, c)
-      }
-    }
-
-    val startIndex = first.startOffset
-    val afterSeparator = indexOfAny(name, myHardSeparators, start = 0, end = startIndex) >= 0
-    val wordStart = startIndex == 0 || isWordStart(name, startIndex) && !isWordStart(name, startIndex - 1)
-    val finalMatch = fragments.last().endOffset == name.length
-
-    return (if (wordStart) 1000 else 0) +
-           matchingCase -
-           fragments.size + -skippedHumps * 10 +
-           (if (afterSeparator) 0 else 2) +
-           (if (startMatch) 1 else 0) +
-           (if (finalMatch) 1 else 0)
+    return NameUtil.calculateHumpedMatchingScore(myPattern, name, valueStartCaseMatch, fragments, isLowerCase, isUpperCase, myHardSeparators)
   }
 
   @Deprecated("use matchingDegree(String, Boolean, List<MatchedFragment>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments.map { MatchedFragment(it.startOffset, it.endOffset) })"))
   override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
     return matchingDegree(name, valueStartCaseMatch, fragments?.undeprecate())
-  }
-
-  private fun evaluateCaseMatching(
-    valuedStartMatch: Boolean,
-    patternIndex: Int,
-    humpStartMatchedUpperCase: Boolean,
-    nameIndex: Int,
-    afterGap: Boolean,
-    isHumpStart: Boolean,
-    nameChar: Char,
-  ): Int {
-    return when {
-      afterGap && isHumpStart && isLowerCase[patternIndex] -> -10 // disprefer when there's a hump but nothing in the pattern indicates the user meant it to be hump
-      nameChar == myPattern[patternIndex] -> {
-        when {
-          isUpperCase[patternIndex] -> 50 // strongly prefer user's uppercase matching uppercase: they made an effort to press Shift
-          nameIndex == 0 && valuedStartMatch -> 150 // the very first letter case distinguishes classes in Java etc
-          isHumpStart -> 1 // if lowercase matches lowercase hump start, that also means something
-          else -> 0
-        }
-      }
-      isHumpStart -> -1 // disfavor hump starts where pattern letter case doesn't match name case
-      isLowerCase[patternIndex] && humpStartMatchedUpperCase -> -1 // disfavor lowercase non-humps matching uppercase in the name
-      else -> {
-        0
-      }
-    }
   }
 
   override val pattern: String

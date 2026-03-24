@@ -21,14 +21,13 @@ import com.siyeh.ig.psiutils.CollectionUtils;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 @ApiStatus.Experimental
 public class ShowCollectionHistoryAction extends XFetchValueActionBase {
   @Override
-  public @Nullable ActionRemoteBehavior getBehavior() {
+  public @NotNull ActionRemoteBehavior getBehavior() {
     return ActionRemoteBehavior.Disabled;
   }
 

@@ -29,11 +29,15 @@ import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractKtCompilerSupe
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractFirMoveLeftRightTest
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractKotlinFirMoveStatementTest
 import org.jetbrains.kotlin.idea.k2.quickDoc.AbstractFirRenderingKDocTest
+import org.jetbrains.kotlin.idea.k2.selection.AbstractK2ExpressionSelectionTest
+import org.jetbrains.kotlin.idea.k2.selection.AbstractK2SmartSelectionTest
+import org.jetbrains.kotlin.idea.k2.selection.AbstractK2WordSelectionTest
 import org.jetbrains.kotlin.idea.k2.slicer.AbstractFirSlicerLeafGroupingTest
 import org.jetbrains.kotlin.idea.k2.slicer.AbstractFirSlicerMultiplatformTest
 import org.jetbrains.kotlin.idea.k2.slicer.AbstractFirSlicerNullnessGroupingTest
 import org.jetbrains.kotlin.idea.k2.slicer.AbstractFirSlicerTreeTest
 import org.jetbrains.kotlin.idea.k2.structureView.AbstractKotlinGoToSuperDeclarationsHandlerTest
+import org.jetbrains.kotlin.idea.k2.structureView.AbstractKotlinGotoSuperMultiModuleTest
 import org.jetbrains.kotlin.idea.k2.surroundWith.AbstractKotlinFirSurroundWithTest
 import org.jetbrains.kotlin.idea.k2.unwrap.AbstractKotlinFirUnwrapRemoveTest
 import org.jetbrains.kotlin.idea.navigation.AbstractKotlinGotoImplementationMultiModuleTest
@@ -43,7 +47,6 @@ import org.jetbrains.kotlin.idea.navigationToolbar.AbstractKotlinNavBarTest
 import org.jetbrains.kotlin.idea.refactoring.AbstractNameSuggestionProviderTest
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.CODE_INSIGHT
 import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
-import org.jetbrains.kotlin.testGenerator.model.Patterns
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
@@ -66,8 +69,25 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
 
     testGroup("code-insight/kotlin.code-insight.k2", category = CODE_INSIGHT) {
         testClass<AbstractKotlinGoToSuperDeclarationsHandlerTest> {
-            model("gotoSuperDeclarationsHandler", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
+            model("gotoSuperDeclarationsHandler", pattern = KT_WITHOUT_DOTS, passTestDataPath = false)
         }
+
+        testClass<AbstractK2ExpressionSelectionTest> {
+            model("../../../idea/tests/testData/expressionSelection", testMethodName = "doTestExpressionSelection", pattern = KT_OR_KTS)
+        }
+
+        testClass<AbstractK2SmartSelectionTest> {
+            model("../../../idea/tests/testData/smartSelection", testMethodName = "doTestSmartSelection", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractK2WordSelectionTest> {
+            model("../../../idea/tests/testData/wordSelection", pattern = DIRECTORY)
+        }
+
+        testClass<AbstractKotlinGotoSuperMultiModuleTest> {
+            model("../../../idea/tests/testData/navigation/gotoSuper/multiModule", isRecursive = false, pattern = DIRECTORY)
+        }
+
         testClass<AbstractKotlinGotoImplementationTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.navigation.KotlinGotoImplementationTestGenerated") {
             model("../../../idea/tests/testData/navigation/implementations", isRecursive = false)
         }
@@ -102,6 +122,9 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
             model("../../../idea/tests/testData/codeInsight/surroundWith/functionLiteral", testMethodName = "doTestWithFunctionLiteralSurrounder")
             model("../../../idea/tests/testData/codeInsight/surroundWith/withIfExpression", testMethodName = "doTestWithSurroundWithIfExpression")
             model("../../../idea/tests/testData/codeInsight/surroundWith/withIfElseExpression", testMethodName = "doTestWithSurroundWithIfElseExpression")
+            model("../../../idea/tests/testData/codeInsight/surroundWith/while", testMethodName = "doTestWithWhileSurrounder")
+            model("../../../idea/tests/testData/codeInsight/surroundWith/doWhile", testMethodName = "doTestWithDoWhileSurrounder")
+            model("../../../idea/tests/testData/codeInsight/surroundWith/for", testMethodName = "doTestWithForSurrounder")
         }
         testClass<AbstractKotlinFirBreadcrumbsTest> {
             model("../../../idea/tests/testData/codeInsight/breadcrumbs", pattern = KT_OR_KTS)

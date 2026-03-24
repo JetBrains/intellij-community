@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("GraphicsSetClipInspection")
 
 package com.intellij.toolWindow
@@ -244,7 +244,7 @@ class ToolWindowPane private constructor(
       }
     }
     else if (info.type == ToolWindowType.SLIDING) {
-      addSlidingComponent(decorator, info, dirtyMode)
+      addSlidingComponent(component = decorator, info = info, dirtyMode = dirtyMode)
     }
     else {
       throw IllegalArgumentException("Unknown window type: ${info.type}")
@@ -774,12 +774,14 @@ class ToolWindowPane private constructor(
       }
 
       // start animation
-      val surface = Surface(myTopImage = topImage,
-                            myBottomImage = bottomImage,
-                            bottomImageOffset = PaintUtil.negate(bottomImageOffset),
-                            direction = 1,
-                            anchor = info.anchor,
-                            desiredTimeToComplete = UISettings.ANIMATION_DURATION)
+      val surface = Surface(
+        topImage = topImage,
+        bottomImage = bottomImage,
+        bottomImageOffset = PaintUtil.negate(bottomImageOffset),
+        direction = 1,
+        anchor = info.anchor,
+        desiredTimeToComplete = UISettings.ANIMATION_DURATION,
+      )
       layeredPane.add(surface, PALETTE_LAYER, -1)
       surface.bounds = bounds
       layeredPane.validate()
@@ -954,12 +956,14 @@ internal open class FrameLayeredPane(splitter: JComponent, frame: JFrame) : JLay
   }
 }
 
-private class Surface(private val myTopImage: Image,
-                      private val myBottomImage: Image,
-                      bottomImageOffset: Point2D,
-                      private val  direction: Int,
-                      private val anchor: ToolWindowAnchor,
-                      private val desiredTimeToComplete: Int) : JComponent() {
+private class Surface(
+  private val topImage: Image,
+  private val bottomImage: Image,
+  bottomImageOffset: Point2D,
+  private val direction: Int,
+  private val anchor: ToolWindowAnchor,
+  private val desiredTimeToComplete: Int,
+) : JComponent() {
   private val bottomImageOffset = bottomImageOffset.clone() as Point2D
   private var offset = 0
 
@@ -1001,73 +1005,73 @@ private class Surface(private val myTopImage: Image,
         if (direction == 1) {
           g.setClip(null)
           g.clipRect(offset, 0, bounds.width - offset, bounds.height)
-          UIUtil.drawImage(g, myBottomImage, 0, 0, null)
+          UIUtil.drawImage(g, bottomImage, 0, 0, null)
           g.setClip(null)
           g.clipRect(0, 0, offset, bounds.height)
-          UIUtil.drawImage(g, myTopImage, offset - bounds.width, 0, null)
+          UIUtil.drawImage(g, topImage, offset - bounds.width, 0, null)
         }
         else {
           g.setClip(null)
           g.clipRect(bounds.width - offset, 0, offset, bounds.height)
-          UIUtil.drawImage(g, myBottomImage, 0, 0, null)
+          UIUtil.drawImage(g, bottomImage, 0, 0, null)
           g.setClip(null)
           g.clipRect(0, 0, bounds.width - offset, bounds.height)
-          UIUtil.drawImage(g, myTopImage, -offset, 0, null)
+          UIUtil.drawImage(g, topImage, -offset, 0, null)
         }
-        myTopImage.flush()
+        topImage.flush()
       }
       ToolWindowAnchor.RIGHT -> {
         if (direction == 1) {
           g.setClip(null)
           g.clipRect(0, 0, bounds.width - offset, bounds.height)
-          UIUtil.drawImage(g, myBottomImage, 0, 0, null)
+          UIUtil.drawImage(g, bottomImage, 0, 0, null)
           g.setClip(null)
           g.clipRect(bounds.width - offset, 0, offset, bounds.height)
-          UIUtil.drawImage(g, myTopImage, bounds.width - offset, 0, null)
+          UIUtil.drawImage(g, topImage, bounds.width - offset, 0, null)
         }
         else {
           g.setClip(null)
           g.clipRect(0, 0, offset, bounds.height)
-          UIUtil.drawImage(g, myBottomImage, 0, 0, null)
+          UIUtil.drawImage(g, bottomImage, 0, 0, null)
           g.setClip(null)
           g.clipRect(offset, 0, bounds.width - offset, bounds.height)
-          UIUtil.drawImage(g, myTopImage, offset, 0, null)
+          UIUtil.drawImage(g, topImage, offset, 0, null)
         }
       }
       ToolWindowAnchor.TOP -> {
         if (direction == 1) {
           g.setClip(null)
           g.clipRect(0, offset, bounds.width, bounds.height - offset)
-          UIUtil.drawImage(g, myBottomImage, 0, 0, null)
+          UIUtil.drawImage(g, bottomImage, 0, 0, null)
           g.setClip(null)
           g.clipRect(0, 0, bounds.width, offset)
-          UIUtil.drawImage(g, myTopImage, 0, -bounds.height + offset, null)
+          UIUtil.drawImage(g, topImage, 0, -bounds.height + offset, null)
         }
         else {
           g.setClip(null)
           g.clipRect(0, bounds.height - offset, bounds.width, offset)
-          UIUtil.drawImage(g, myBottomImage, 0, 0, null)
+          UIUtil.drawImage(g, bottomImage, 0, 0, null)
           g.setClip(null)
           g.clipRect(0, 0, bounds.width, bounds.height - offset)
-          UIUtil.drawImage(g, myTopImage, 0, -offset, null)
+          UIUtil.drawImage(g, topImage, 0, -offset, null)
         }
       }
       ToolWindowAnchor.BOTTOM -> {
         if (direction == 1) {
           g.setClip(null)
           g.clipRect(0, 0, bounds.width, bounds.height - offset)
-          UIUtil.drawImage(g, myBottomImage, 0, 0, null)
+          UIUtil.drawImage(g, bottomImage, 0, 0, null)
           g.setClip(null)
           g.clipRect(0, bounds.height - offset, bounds.width, offset)
-          UIUtil.drawImage(g, myTopImage, 0, bounds.height - offset, null)
+          UIUtil.drawImage(g, topImage, 0, bounds.height - offset, null)
         }
         else {
           g.setClip(null)
           g.clipRect(0, 0, bounds.width, offset)
-          UIUtil.drawImage(g, myBottomImage, 0, 0, null)
+          UIUtil.drawImage(g, bottomImage, 0, 0, null)
           g.setClip(null)
           g.clipRect(0, offset, bounds.width, bounds.height - offset)
-          UIUtil.drawImage(g, myTopImage, 0, offset, null)
+          UIUtil.drawImage(g, topImage, 0, offset, null)
         }
       }
     }

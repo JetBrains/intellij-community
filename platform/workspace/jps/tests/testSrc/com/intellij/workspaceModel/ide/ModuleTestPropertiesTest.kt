@@ -13,6 +13,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
+import com.intellij.workspace.ide.Source
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import org.junit.ClassRule

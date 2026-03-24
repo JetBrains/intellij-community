@@ -35,4 +35,24 @@ jvm_library(
     "@lib//:kotlinc-kotlin-dataframe-compiler-plugin",
   ]
 )
+
+jvm_library(
+  name = "compilerPlugins-support-bundled_test_lib",
+  module_name = "intellij.kotlin.compilerPlugins.support.bundled",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_compilerPlugins-support-bundled",
+  runtime_deps = [
+    ":compilerPlugins-support-bundled",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.compilerPlugins.support.bundled` end
+
+### auto-generated section `iml intellij.kotlin.compilerPlugins.support.bundled` start
+exports_files([
+  "intellij.kotlin.compilerPlugins.support.bundled.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.compilerPlugins.support.bundled` end

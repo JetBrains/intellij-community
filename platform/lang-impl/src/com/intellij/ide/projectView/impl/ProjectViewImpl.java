@@ -81,9 +81,9 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.ex.WelcomeScreenTabService;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -891,14 +891,41 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       selectSubID = content.getUserData(SUB_ID_KEY);
     }
 
-    // welcome screen pane must be opened no matter the saved result
-    @Nullable String welcomeScreenPaneId = WelcomeScreenTabService.Companion.getInstance(project).getProjectPaneToActivate();
-    if (welcomeScreenPaneId != null) {
-      selectID = welcomeScreenPaneId;
-      selectSubID = null;
+    // startup pane policy must be applied no matter the saved result
+    @Nullable String startupPaneId = null;
+    var startupUiPolicy = ApplicationManager.getApplication().getService(ProjectFrameCapabilitiesService.class).getUiPolicy(project);
+    if (startupUiPolicy != null) {
+      startupPaneId = startupUiPolicy.getProjectPaneToActivateId();
+    }
+    boolean startupPaneApplied = false;
+    if (startupPaneId != null && getProjectViewPaneById(startupPaneId) != null) {
+      String fallbackSelectID = selectID;
+      String fallbackSelectSubID = selectSubID;
+      ActionCallback startupPaneSelection = changeViewCB(startupPaneId, null);
+      if (startupPaneSelection.isRejected()) {
+        // currentViewId is null during the first call of this method,
+        // because `doAddUninitializedPanes` is called before `viewSelectionChanged` (which sets currentViewId)
+        // So, check if it is selected right in ContentManager
+        if (currentViewId == null) {
+          var selectedContent = contentManager.getSelectedContent();
+          if (selectedContent != null) {
+            startupPaneApplied = startupPaneId.equals(selectedContent.getUserData(ID_KEY));
+          }
+        } else {
+          startupPaneApplied = startupPaneId.equals(currentViewId);
+        }
+      }
+      else {
+        startupPaneApplied = true;
+        startupPaneSelection.doWhenRejected(() -> {
+          if (!project.isDisposed() && fallbackSelectID != null) {
+            changeView(fallbackSelectID, fallbackSelectSubID);
+          }
+        });
+      }
     }
 
-    if (selectID != null) {
+    if (!startupPaneApplied && selectID != null) {
       changeView(selectID, selectSubID);
     }
 

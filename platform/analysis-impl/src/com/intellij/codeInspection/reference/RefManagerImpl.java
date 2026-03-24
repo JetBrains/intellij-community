@@ -176,7 +176,7 @@ public class RefManagerImpl extends RefManager {
       refElement.accept(visitor);
     }
     List<RefModule> filteredModules =
-      ContainerUtil.filter(myModules.values(), refModule -> ReadAction.compute(() -> myScope.containsModule(refModule.getModule())));
+      ContainerUtil.filter(myModules.values(), refModule -> ReadAction.computeBlocking(() -> myScope.containsModule(refModule.getModule())));
     for (RefModule refModule : filteredModules) {
       refModule.accept(visitor);
     }
@@ -594,7 +594,7 @@ public class RefManagerImpl extends RefManager {
     }
     for (List<RefElement> elementsInFile : map.values()) {
       if (elementsInFile.size() > 1) {
-        ReadAction.run(() -> {
+        ReadAction.runBlocking(() -> {
           elementsInFile.sort(
             Comparator.comparing(o -> ObjectUtils.notNull(o.getPointer().getRange(), TextRange.EMPTY_RANGE),
                                  Segment.BY_START_OFFSET_THEN_END_OFFSET));
@@ -654,7 +654,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   private static @NotNull PsiAnchor createAnchor(@NotNull PsiElement element) {
-    return ReadAction.compute(() -> PsiAnchor.create(element));
+    return ReadAction.computeBlocking(() -> PsiAnchor.create(element));
   }
 
   public void initializeAnnotators() {
@@ -791,14 +791,14 @@ public class RefManagerImpl extends RefManager {
   }
 
   public @Nullable RefElement getReference(PsiElement elem, boolean ignoreScope) {
-    if (ReadAction.compute(() -> elem == null || !elem.isValid() ||
-                                 elem instanceof LightElement || !(elem instanceof PsiDirectory) && !belongsToScope(elem, ignoreScope))) {
+    if (ReadAction.computeBlocking(() -> elem == null || !elem.isValid() ||
+                                         elem instanceof LightElement || !(elem instanceof PsiDirectory) && !belongsToScope(elem, ignoreScope))) {
       return null;
     }
 
     return getFromRefTableOrCache(
       elem,
-      () -> ReadAction.compute(() -> {
+      () -> ReadAction.computeBlocking(() -> {
         final RefManagerExtension<?> extension = getExtension(elem.getLanguage());
         if (extension != null) {
           final RefElement refElement = extension.createRefElement(elem);
@@ -812,7 +812,7 @@ public class RefManagerImpl extends RefManager {
         }
         return null;
       }),
-      element -> ReadAction.run(() -> element.initializeIfNeeded()));
+      element -> ReadAction.runBlocking(() -> element.initializeIfNeeded()));
   }
 
   private RefManagerExtension<?> getExtension(Language language) {
@@ -899,14 +899,14 @@ public class RefManagerImpl extends RefManager {
   private boolean belongsToScope(PsiElement psiElement, boolean ignoreScope) {
     if (psiElement == null || !psiElement.isValid()) return false;
     if (psiElement instanceof PsiCompiledElement) return false;
-    final PsiFile containingFile = ReadAction.compute(psiElement::getContainingFile);
+    PsiFile containingFile = ReadAction.computeBlocking(psiElement::getContainingFile);
     if (containingFile == null) {
       return false;
     }
     for (RefManagerExtension<?> extension : myExtensions.values()) {
       if (!extension.belongsToScope(psiElement)) return false;
     }
-    final Boolean inProject = ReadAction.compute(() -> psiElement.getManager().isInProject(psiElement));
+    Boolean inProject = ReadAction.computeBlocking(() -> psiElement.getManager().isInProject(psiElement));
     return (inProject.booleanValue() || ScratchUtil.isScratch(containingFile.getVirtualFile())) &&
            (ignoreScope || getScope() == null || getScope().contains(psiElement));
   }

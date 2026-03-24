@@ -103,9 +103,9 @@ class RenameInvoker(private val project: Project,
                    ?: throw IllegalStateException("Can't find suggestions provider \"${strategy.suggestionsProvider}\"")
 
     return if (provider is ContextAwareSuggestionsProvider) {
-      provider.getSuggestions(expectedLine, editor, lang, this::comparator, strategy.collectContextOnly)
+      provider.getSuggestions(project, expectedLine, editor, lang, this::comparator, strategy.collectContextOnly)
     } else {
-      provider.getSuggestions(expectedLine, editor, lang, this::comparator)
+      provider.getSuggestions(project, expectedLine, editor, lang, this::comparator)
     }
   }
 

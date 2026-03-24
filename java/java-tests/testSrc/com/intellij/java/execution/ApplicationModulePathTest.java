@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -108,7 +108,7 @@ public class ApplicationModulePathTest extends BaseConfigurationTestCase {
 
   public void testLightModule() throws ExecutionException {
     ApplicationConfiguration configuration = setupConfiguration(getTestName(true), myModule);
-    configuration.MAIN_CLASS_NAME = "my.test.launcher.Launcher";
+    configuration.setMainClassName("my.test.launcher.Launcher");
 
     VirtualFile moduleInfoFile = getContentRoot(getTestName(true))
       .findFileByRelativePath("src/module-info.java");
@@ -128,6 +128,23 @@ public class ApplicationModulePathTest extends BaseConfigurationTestCase {
 
     assertEquals("my.test.launcher", params4Tests.getModuleName());
     assertTrue("The command line should contain the launcher from a light module", commandLine.contains("-m my.test.launcher/my.test.launcher.Launcher"));
+  }
+
+  public void testDisabledModulePath() throws ExecutionException {
+    ApplicationConfiguration configuration = setupConfiguration("additionalModules", myModule);
+    configuration.setUseModulePath(false);
+    ExecutionEnvironment environment =
+      ExecutionEnvironmentBuilder.create(myProject, DefaultRunExecutor.getRunExecutorInstance(), configuration).build();
+    Disposer.register(getTestRootDisposable(), environment);
+    JavaParameters params4Tests =
+      new ApplicationConfiguration.JavaApplicationCommandLineState<>(configuration, environment).createJavaParameters4Test();
+
+    assertEmpty("Module path should be empty when isUseModulePath is false",
+                params4Tests.getModulePath().getPathList());
+    assertNull("Module name should be null when isUseModulePath is false", params4Tests.getModuleName());
+    String commandLine = params4Tests.toCommandLine().getCommandLineString();
+    assertFalse("Command line should not contain --module-path when isUseModulePath is false",
+                commandLine.contains("-p ") || commandLine.contains("--module-path"));
   }
 
   private ApplicationConfiguration setupConfiguration(String sources, Module module) {

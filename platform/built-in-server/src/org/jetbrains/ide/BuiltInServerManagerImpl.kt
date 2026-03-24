@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.intellij.ide.ApplicationActivity
@@ -47,6 +47,9 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
   private var serverStartFuture: Job? = null
   private var server: BuiltInServer? = null
   private var portOverride: Int? = null
+
+  override val address: InetAddress
+    get() = server?.address ?: InetAddress.getLoopbackAddress()
 
   override val port: Int
     get() = portOverride ?: server?.port ?: getDefaultPort()
@@ -128,7 +131,7 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
     }
 
     // extensions may use registry to enable/disable URL handlers
-    RegistryManager.getInstanceAsync().awaitRegistryLoad()
+    RegistryManager.getInstanceAsync()
 
     try {
       server = BuiltInServer.start(firstPort = getDefaultPort(), portsCount = PORTS_COUNT, tryAnyPort = true)

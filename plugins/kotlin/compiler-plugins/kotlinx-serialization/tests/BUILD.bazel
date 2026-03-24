@@ -12,6 +12,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "tests",
+  module_name = "kotlin.compiler-plugins.kotlinx-serialization.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -19,7 +20,6 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
     "@lib//:kotlinc-kotlin-jps-common",
-    "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/base/fe10/analysis",
     "//plugins/kotlin/core",
     "//plugins/kotlin/idea",
@@ -42,25 +42,45 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:junit4",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/test-framework",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/plugin/k1",
+    "//plugins/kotlin/plugin/k1:k1_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
     "//plugins/kotlin/core",
+    "//plugins/kotlin/core:core_test_lib",
     "//plugins/kotlin/idea",
+    "//plugins/kotlin/idea:idea_test_lib",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
+    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common:common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/idea/tests",
     "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
   ],
   runtime_deps = [":tests"]
 )
 ### auto-generated section `build kotlin.compiler-plugins.kotlinx-serialization.tests` end
+
+### auto-generated section `iml kotlin.compiler-plugins.kotlinx-serialization.tests` start
+exports_files([
+  "kotlin.compiler-plugins.kotlinx-serialization.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.compiler-plugins.kotlinx-serialization.tests` end
 
 ### auto-generated section `test kotlin.compiler-plugins.kotlinx-serialization.tests` start
 load("@community//build:tests-options.bzl", "jps_test")

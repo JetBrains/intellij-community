@@ -21,7 +21,6 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -68,5 +67,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight.minimal" exported="" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
   </component>
 </module>

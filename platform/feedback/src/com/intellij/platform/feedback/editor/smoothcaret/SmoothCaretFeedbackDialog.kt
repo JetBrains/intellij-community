@@ -3,7 +3,7 @@ package com.intellij.platform.feedback.editor.smoothcaret
 
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
-import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
+import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.DescriptionBlock
@@ -18,7 +18,11 @@ import com.intellij.platform.feedback.dialog.uiBlocks.TopLabelBlock
 class SmoothCaretFeedbackDialog(
   project: Project,
   forTest: Boolean,
-) : BlockBasedFeedbackDialog<SmoothCaretUsageData>(project, forTest) {
+) : BlockBasedFeedbackDialogWithEmail<SmoothCaretUsageData>(project, forTest) {
+
+  override val zendeskTicketTitle: String = "Smooth Caret Feedback"
+
+  override val zendeskFeedbackType: String = "Smooth Caret Feedback"
 
   override val myFeedbackReportId: String = "smooth_caret"
 
@@ -27,7 +31,7 @@ class SmoothCaretFeedbackDialog(
   override suspend fun computeSystemInfoData(): SmoothCaretUsageData {
     val editorSettings = EditorSettingsExternalizable.getInstance()
     return SmoothCaretUsageData(
-      isAnimatedCaret = editorSettings.isAnimatedCaret,
+      isAnimatedCaret = editorSettings.isSmoothCaretMovement,
       caretEasing = editorSettings.caretEasing.name,
       smoothCaretBlinking = editorSettings.isSmoothBlinkCaret,
       systemInfo = CommonFeedbackSystemData.getCurrentData(),

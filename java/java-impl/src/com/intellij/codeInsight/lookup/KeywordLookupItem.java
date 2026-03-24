@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.psi.PsiElement;
@@ -7,11 +7,11 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.filters.FilterUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class KeywordLookupItem extends LookupElement implements TypedLookupItem {
-  private final PsiElement myPosition;
-  private final PsiKeyword myKeyword;
+public final class KeywordLookupItem extends LookupElement implements TypedLookupItem {
+  private final @NotNull PsiElement myPosition;
+  private final @NotNull PsiKeyword myKeyword;
 
-  public KeywordLookupItem(final PsiKeyword keyword, @NotNull PsiElement position) {
+  public KeywordLookupItem(@NotNull PsiKeyword keyword, @NotNull PsiElement position) {
     myKeyword = keyword;
     myPosition = position;
   }

@@ -238,5 +238,13 @@ open class PresentationData : ColoredItemPresentation, ComparableObject, Locatio
 
   override fun getLocationPrefix(): String = locationPrefix ?: FontUtil.spaceAndThinSpace()
 
+  fun setLocationPrefix(prefix: String?) {
+    locationPrefix = prefix
+  }
+
   override fun getLocationSuffix(): String = locationSuffix ?: ""
+
+  fun setLocationSuffix(suffix: String?) {
+    locationSuffix = suffix
+  }
 }

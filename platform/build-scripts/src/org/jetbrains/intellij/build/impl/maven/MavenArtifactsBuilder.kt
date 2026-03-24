@@ -24,7 +24,7 @@ import org.jetbrains.intellij.build.impl.createModuleSourcesNamesFilter
 import org.jetbrains.intellij.build.impl.getLibraryFilename
 import org.jetbrains.intellij.build.impl.libraries.isLibraryModule
 import org.jetbrains.intellij.build.isCommunityModule
-import org.jetbrains.intellij.build.productLayout.util.mapConcurrent
+import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.java.JavaResourceRootType

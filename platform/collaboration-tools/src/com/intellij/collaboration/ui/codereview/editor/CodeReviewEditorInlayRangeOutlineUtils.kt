@@ -4,8 +4,8 @@ import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.comment.CommentedCodeFrameRenderer
-import com.intellij.diff.util.DiffUtil
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel.Ranged.Adjustable.AdjustmentDisabledReason
+import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
 import com.intellij.ide.IdeTooltip
@@ -180,10 +180,7 @@ private class ResizableOutlineHandler private constructor(
         val handler = ResizableOutlineHandler(editor, inlayModel, initialRange, canCreateComment)
         try {
           editor.gutterComponentEx.mousePosition.let {
-            handler.updateCursorAndTooltip(editor.gutterComponentEx, it)
-            // set cursor to gutterComponentEx directly to get immediate cursor change
-            // as setting it on the glass pane in `updateCursorAndTooltip()` doesn't work in this case
-            editor.gutterComponentEx.setCursor(handler.resizeCursor)
+            handler.updateCursorAndTooltip(editor.gutterComponentEx, it, true)
           }
 
           handler.dragState.collectScoped { dragState ->
@@ -332,6 +329,7 @@ private class ResizableOutlineHandler private constructor(
   private fun DragState.withLineUnderYIfCommentable(y: Int): DragState? {
     val lineUnderY = editor.xyToLogicalPosition(Point(0, y)).line.coerceIn(0, DiffUtil.getLineCount(editor.document)-1)
     val isCurrentBoundary = lineUnderY == line
+    if (ReviewInEditorUtil.isLastBlankLine(editor.document, lineUnderY)) return null
     if (!canCreateComment(lineUnderY) && !isCurrentBoundary) return null
 
     return when (edge) {
@@ -346,7 +344,7 @@ private class ResizableOutlineHandler private constructor(
     }
   }
 
-  private fun updateCursorAndTooltip(component: Component? = null, point: Point? = null) {
+  private fun updateCursorAndTooltip(component: Component? = null, point: Point? = null, isInitial: Boolean = false) {
     if (component == null || point == null) {
       tooltipManager.hideTooltip()
       setEditorCursor(null)
@@ -359,19 +357,24 @@ private class ResizableOutlineHandler private constructor(
       return
     }
 
-    val onEdge = getEdgeAt(point) != null
-    if (onEdge) {
+    if (isInitial || isOnEdge(point)) {
       val adjustmentDisabledReason = inlayModel.adjustmentDisabledReason.value
       when (adjustmentDisabledReason) {
         AdjustmentDisabledReason.SUGGESTED_CHANGE -> {
           tooltipManager.showTooltip(component, point, OutlineTooltipManager.TooltipReason.SUGGESTION)
+          setEditorCursor(null, isInitial)
         }
         AdjustmentDisabledReason.SINGLE_COMMIT_REVIEW -> {
           tooltipManager.showTooltip(component, point, OutlineTooltipManager.TooltipReason.SINGLE_COMMIT_REVIEW)
+          setEditorCursor(null, isInitial)
+        }
+        AdjustmentDisabledReason.UNSUPPORTED_VERSION -> {
+          tooltipManager.showTooltip(component, point, OutlineTooltipManager.TooltipReason.UNSUPPORTED_VERSION)
+          setEditorCursor(null, isInitial)
         }
         else -> {
           tooltipManager.showTooltip(component, point, OutlineTooltipManager.TooltipReason.MLC_EXPLANATION)
-          setEditorCursor(resizeCursor)
+          setEditorCursor(resizeCursor, isInitial)
         }
       }
     }
@@ -380,6 +383,8 @@ private class ResizableOutlineHandler private constructor(
       setEditorCursor(null)
     }
   }
+
+  private fun isOnEdge(point: Point): Boolean = getEdgeAt(point) != null
 
   private fun getEdgeAt(point: Point): LineRangeEdge? {
     val yBorders = editor.yRangeForLogicalLineRange(currentRange.start, currentRange.end)
@@ -393,8 +398,13 @@ private class ResizableOutlineHandler private constructor(
     return null
   }
 
-  private fun setEditorCursor(cursor: Cursor?) {
+  private fun setEditorCursor(cursor: Cursor?, isInitial: Boolean = false) {
     editor.setCustomCursor(this, cursor)
+    if (isInitial) {
+      // set cursor to gutterComponentEx directly to get immediate cursor change
+      // as setting it on the glass pane doesn't work in this case
+      editor.gutterComponentEx.setCursor(cursor)
+    }
     // setting cursor in the gutter on glass pane, to avoid cursor changes from other sources while dragging
     try {
       IdeGlassPaneUtil.find(editor.gutterComponentEx).setCursor(cursor, this)
@@ -438,13 +448,15 @@ private class OutlineTooltipManager(private val editor: Editor) {
   enum class TooltipReason {
     SUGGESTION,
     MLC_EXPLANATION,
-    SINGLE_COMMIT_REVIEW;
+    SINGLE_COMMIT_REVIEW,
+    UNSUPPORTED_VERSION;
 
     companion object {
       fun getTooltipMessage(tooltipReason: TooltipReason) = when (tooltipReason) {
         SUGGESTION -> CollaborationToolsBundle.message("review.comments.code.outline.tooltip.suggestion.disabling")
         MLC_EXPLANATION -> CollaborationToolsBundle.message("review.comments.code.outline.tooltip.explanation")
         SINGLE_COMMIT_REVIEW -> CollaborationToolsBundle.message("review.comments.code.outline.tooltip.commit.review.disabling")
+        UNSUPPORTED_VERSION -> CollaborationToolsBundle.message("review.comments.code.outline.tooltip.version.not.supported.disabling")
       }
     }
   }

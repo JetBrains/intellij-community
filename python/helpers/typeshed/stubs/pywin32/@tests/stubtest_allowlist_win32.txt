@@ -8,12 +8,8 @@ win32com.client.combrowse
 win32com.client.tlbrowse
 
 # Utilities to generate python bindings
-win32com.client.build.*
 win32com.client.CLSIDToClass
 win32com.client.connect
-# "dynamic.CDipatch" is necessary for mypy to not throw AssertionError
-win32com.client.dynamic.*
-win32com.client.gencache.*
 win32com.client.genpy
 win32com.client.makepy
 win32com.client.selecttlb

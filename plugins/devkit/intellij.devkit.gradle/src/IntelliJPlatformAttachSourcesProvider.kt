@@ -8,10 +8,18 @@ import com.intellij.java.library.MavenCoordinates
 import com.intellij.java.library.getMavenCoordinates
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.psi.PsiFile
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
+import com.intellij.workspaceModel.ide.legacyBridge.findModule
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
 import org.jetbrains.idea.devkit.run.ProductInfo
@@ -47,6 +55,16 @@ internal enum class ApiSourceArchive(
  * To handle such a case, IntelliJ IDEA Community sources are attached.
  */
 internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
+
+  override fun getLibrariesActions(
+    libraryEntities: Collection<LibraryEntity>,
+    psiFile: PsiFile
+  ): Collection<AttachSourcesAction?> {
+    val storage = WorkspaceModel.getInstance(psiFile.project).currentSnapshot
+    return libraryEntities.mapNotNull { it.findLibraryBridge(storage)?.getMavenCoordinates() }
+      .firstNotNullOfOrNull { coordinates -> createAction(coordinates, psiFile) }
+      .let { listOfNotNull(it) }
+  }
 
   override fun getActions(orderEntries: List<LibraryOrderEntry>, psiFile: PsiFile) =
     orderEntries
@@ -159,9 +177,22 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         override fun getBusyText() = DevKitGradleBundle.message("attachSources.api.action.busyText", DevKitGradleBundle.message(apiSourceArchive.displayName))
 
         override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
+          val libraries = orderEntries.mapNotNull { entry -> entry.library }
+
+          return performInternal(libraries)
+        }
+
+        override fun perform(libraryEntities: Collection<LibraryEntity>, project: Project): ActionCallback {
+          val currentSnapshot = WorkspaceModel.getInstance(project).currentSnapshot
+          val libraries = libraryEntities.mapNotNull { it.findLibraryBridge(currentSnapshot) }
+
+          return performInternal(libraries)
+        }
+
+        private fun performInternal(libraries: Collection<Library>): ActionCallback {
           val executionResult = ActionCallback()
 
-          attachSources(it, orderEntries) {
+          attachSources(it, libraries) {
             executionResult.setDone()
           }
 
@@ -186,7 +217,23 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
       override fun getBusyText() = DevKitGradleBundle.message("attachSources.intellijPlatform.action.busyText")
 
       override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
-        val externalProjectPath = CachedModuleDataFinder.getGradleModuleData(orderEntries.first().ownerModule)?.directoryToRunTask
+        return performInternal(orderEntries.first().ownerModule, orderEntries.mapNotNull { it.library })
+      }
+
+      override fun perform(libraryEntities: Collection<LibraryEntity>, project: Project): ActionCallback {
+        val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
+        val module = libraryEntities.flatMap { snapshot.referrers(it.symbolicId, ModuleEntity::class.java) }
+          .firstOrNull()
+          ?.findModule(snapshot)
+        if (module != null) {
+          return performInternal(module, libraryEntities.mapNotNull { it.findLibraryBridge(snapshot) })
+        }
+        return ActionCallback.REJECTED
+      }
+
+
+      private fun performInternal(module: Module, libraries: Collection<Library>): ActionCallback {
+        val externalProjectPath = CachedModuleDataFinder.getGradleModuleData(module)?.directoryToRunTask
                                   ?: return ActionCallback.REJECTED
 
         val executionResult = ActionCallback()
@@ -203,7 +250,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
                                                     GradleDependencySourceDownloaderErrorHandler.Noop)
             .whenComplete { path, error ->
               when {
-                error == null && path != null -> attachSources(path, orderEntries) { executionResult.setDone() }
+                error == null && path != null -> attachSources(path, libraries) { executionResult.setDone() }
                 else -> onFailure()
               }
             }
@@ -232,8 +279,12 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    * Attaches sources jar to the specified libraries and executes the provided block of code.
    */
   private fun attachSources(path: Path, orderEntries: MutableList<out LibraryOrderEntry>, block: () -> Unit) {
+    return attachSources(path, orderEntries.mapNotNull { it.library }, block)
+  }
+
+  private fun attachSources(path: Path, libraries: Collection<Library>, block: () -> Unit) {
     ApplicationManager.getApplication().invokeLater {
-      InternetAttachSourceProvider.attachSourceJar(path, orderEntries.mapNotNull { it.library })
+      InternetAttachSourceProvider.attachSourceJar(path, libraries)
       block()
     }
   }

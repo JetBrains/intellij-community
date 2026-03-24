@@ -9,8 +9,23 @@ resourcegroup(
 
 jvm_library(
   name = "color-scheme-all_hallows_eve",
+  module_name = "intellij.color.scheme.all_hallows_eve",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":color-scheme-all_hallows_eve_resources"]
 )
+
+jvm_library(
+  name = "color-scheme-all_hallows_eve_test_lib",
+  module_name = "intellij.color.scheme.all_hallows_eve",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":color-scheme-all_hallows_eve"]
+)
 ### auto-generated section `build intellij.color.scheme.all_hallows_eve` end
+
+### auto-generated section `iml intellij.color.scheme.all_hallows_eve` start
+exports_files([
+  "intellij.color.scheme.all_hallows_eve.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.color.scheme.all_hallows_eve` end

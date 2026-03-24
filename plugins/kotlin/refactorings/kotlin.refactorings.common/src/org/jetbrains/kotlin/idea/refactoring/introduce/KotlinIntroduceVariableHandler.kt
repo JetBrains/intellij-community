@@ -24,9 +24,9 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHe
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.base.psi.isAssignmentLHS
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
-import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
@@ -241,10 +241,6 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
 
     protected companion object {
         val INTRODUCE_VARIABLE: String get() = KotlinBundle.message("introduce.variable")
-
-        fun PsiElement.isAssignmentLHS(): Boolean = parents.any {
-            KtPsiUtil.isAssignment(it) && (it as KtBinaryExpression).left == this
-        }
 
         fun showErrorHint(project: Project, editor: Editor?, @NlsContexts.DialogMessage message: String) {
             CommonRefactoringUtil.showErrorHint(project, editor, message, INTRODUCE_VARIABLE, HelpID.INTRODUCE_VARIABLE)

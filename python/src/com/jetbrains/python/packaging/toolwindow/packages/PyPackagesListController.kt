@@ -5,9 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.SimpleToolWindowPanel.LEFT_ALIGNMENT
-import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
@@ -15,8 +13,6 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingTreeView
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
-import com.jetbrains.python.packaging.toolwindow.model.ErrorNode
-import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
 import java.awt.BorderLayout
 import javax.swing.BoxLayout
@@ -42,30 +38,29 @@ internal class PyPackagesListController(val project: Project, val controller: Py
     horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
   }
 
-  private val loadingPanel = JBPanelWithEmptyText().apply {
-    emptyText.appendLine(AnimatedIcon.Default.INSTANCE, message("python.toolwindow.packages.description.panel.loading"), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES, null)
-  }
-
   private val noSdkPanel = JBPanelWithEmptyText().apply {
     emptyText.text = message("python.sdk.no.interpreter.selected")
   }
 
   val component: JPanel = JPanel(BorderLayout())
+  private var currentPanel: JComponent? = null
 
   init {
-    setLoadingState(false)
+    setContentPanel(scrollingPackageListComponent)
   }
 
   override fun dispose() {}
 
+  @RequiresEdt
   fun showSearchResult(installed: List<DisplayablePackage>, repoData: List<PyPackagesViewData>) {
+    showPackageList()
     tablesView.showSearchResult(installed, repoData)
-    setLoadingState(false)
   }
 
-  fun resetSearch(installed: List<InstalledPackage>, repos: List<PyPackagesViewData>, currentSdk: Sdk?) {
+  @RequiresEdt
+  fun resetSearch(installed: List<DisplayablePackage>, repos: List<PyPackagesViewData>, currentSdk: Sdk?) {
+    showPackageList()
     tablesView.resetSearch(installed, repos, currentSdk)
-    setLoadingState(false)
   }
 
   fun selectPackage(name: String) {
@@ -77,6 +72,7 @@ internal class PyPackagesListController(val project: Project, val controller: Py
   }
 
   fun startSdkInit() {
+    setContentPanel(scrollingPackageListComponent)
     setLoadingState(true)
   }
 
@@ -84,24 +80,23 @@ internal class PyPackagesListController(val project: Project, val controller: Py
     tablesView.collapseAll()
   }
 
-  fun showErrorResult(errorNode: ErrorNode) {
-    tablesView.showErrorResult(errorNode)
-  }
-
   @RequiresEdt
   internal fun showNoSdkMessage() {
     setContentPanel(noSdkPanel)
   }
 
-  @RequiresEdt
+  private fun showPackageList() {
+    setContentPanel(scrollingPackageListComponent)
+    setLoadingState(false)
+  }
+
   internal fun setLoadingState(isLoading: Boolean) {
-    val newPanel = if (isLoading) loadingPanel else scrollingPackageListComponent
-    setContentPanel(newPanel)
+    tablesView.setInstalledLoading(isLoading)
   }
 
   private fun setContentPanel(panel: JComponent) {
-    val currentComponent = component.components.firstOrNull()
-    if (currentComponent != panel) {
+    if (currentPanel != panel) {
+      currentPanel = panel
       component.removeAll()
       component.add(panel)
       component.revalidate()

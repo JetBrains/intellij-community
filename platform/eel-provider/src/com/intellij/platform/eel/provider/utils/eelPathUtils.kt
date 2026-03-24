@@ -24,6 +24,7 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDi
 import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder
 import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.fs.EelPosixFileInfoImpl
+import com.intellij.platform.eel.fs.EelWindowsFileInfo
 import com.intellij.platform.eel.fs.StreamingWriteResult
 import com.intellij.platform.eel.fs.WalkDirectoryEntry
 import com.intellij.platform.eel.fs.WalkDirectoryEntryPosix
@@ -1103,14 +1104,17 @@ object EelPathUtils {
     val isTargetLocal = targetRoot.descriptor === LocalEelDescriptor
     val sourceRoot = sourceRoot.asNioPath()
     val targetRoot = targetRoot.asNioPath()
-    val sourceQ = ArrayDeque<Path>()
-    val targetQ = ArrayDeque<Path>()
-    sourceQ.add(sourceRoot)
-    targetQ.add(targetRoot)
+    var sourceCurrentLayerQ = ArrayDeque<Path>()
+    var targetCurrentLayerQ = ArrayDeque<Path>()
+    sourceCurrentLayerQ.add(sourceRoot)
+    targetCurrentLayerQ.add(targetRoot)
 
-    while (sourceQ.isNotEmpty() || targetQ.isNotEmpty()) {
-      if (sourceQ.isNotEmpty() && targetQ.isEmpty()) {
-        val path = sourceQ.removeFirst()
+    var sourceNextLayerQ = ArrayDeque<Path>()
+    var targetNextLayerQ = ArrayDeque<Path>()
+
+    while (sourceCurrentLayerQ.isNotEmpty() || targetCurrentLayerQ.isNotEmpty()) {
+      if (sourceCurrentLayerQ.isNotEmpty() && targetCurrentLayerQ.isEmpty()) {
+        val path = sourceCurrentLayerQ.removeFirst()
         val relativeDirPath = path.relativeTo(sourceRoot)
         val targetDirPath = targetRoot.resolve(relativeDirPath)
 
@@ -1118,15 +1122,15 @@ object EelPathUtils {
         Files.deleteIfExists(targetDirPath)
 
         Files.createDirectory(targetDirPath)
-        sourceQ.addAll(listDirectories(path, isSourceLocal, sourceEelApi))
+        sourceNextLayerQ.addAll(listDirectories(path, isSourceLocal, sourceEelApi))
       }
-      else if (sourceQ.isEmpty() && targetQ.isNotEmpty()) {
-        val path = targetQ.removeFirst()
+      else if (sourceCurrentLayerQ.isEmpty() && targetCurrentLayerQ.isNotEmpty()) {
+        val path = targetCurrentLayerQ.removeFirst()
         targetEelApi.fs.delete(path.asEelPath(), true)
       }
       else {
-        val sourceRelativeDirPath = sourceQ.first().relativeTo(sourceRoot)
-        val targetRelativeDirPath = targetQ.first().relativeTo(targetRoot)
+        val sourceRelativeDirPath = sourceCurrentLayerQ.first().relativeTo(sourceRoot)
+        val targetRelativeDirPath = targetCurrentLayerQ.first().relativeTo(targetRoot)
         val comparison = compareRelativePathComponents(sourceRelativeDirPath, targetRelativeDirPath, ignoreCase)
 
         // new source directory
@@ -1137,18 +1141,22 @@ object EelPathUtils {
           Files.deleteIfExists(dirTargetPath)
 
           Files.createDirectory(dirTargetPath)
-          sourceQ.removeFirst()
+          sourceNextLayerQ.addAll(listDirectories(sourceCurrentLayerQ.removeFirst(), isSourceLocal, sourceEelApi))
         }
         // the source directory was deleted
         else if (comparison < 0) {
-          targetEelApi.fs.delete(targetQ.removeFirst().asEelPath(), true).getOrThrow()
+          targetEelApi.fs.delete(targetCurrentLayerQ.removeFirst().asEelPath(), true).getOrThrow()
         }
         else {
-          val sourcePath = sourceQ.removeFirst()
-          val targetPath = targetQ.removeFirst()
-          sourceQ.addAll(listDirectories(sourcePath, isSourceLocal, sourceEelApi))
-          targetQ.addAll(listDirectories(targetPath, isTargetLocal, targetEelApi))
+          sourceNextLayerQ.addAll(listDirectories(sourceCurrentLayerQ.removeFirst(), isSourceLocal, sourceEelApi))
+          targetNextLayerQ.addAll(listDirectories(targetCurrentLayerQ.removeFirst(), isTargetLocal, targetEelApi))
         }
+      }
+      if (sourceCurrentLayerQ.isEmpty() && targetCurrentLayerQ.isEmpty()) {
+        sourceCurrentLayerQ = sourceNextLayerQ
+        targetCurrentLayerQ = targetNextLayerQ
+        sourceNextLayerQ = ArrayDeque()
+        targetNextLayerQ = ArrayDeque()
       }
     }
   }
@@ -1685,6 +1693,21 @@ object EelPathUtils {
       }
       if (!canExecute) {
         return AccessMode.EXECUTE
+      }
+    }
+    return null
+  }
+
+  /**
+   * returns one of [modes] which is not satisfied, or `null` if all modes are satisfied
+   */
+  @ApiStatus.Internal
+  fun checkAccess(fileInfo: EelWindowsFileInfo, vararg modes: AccessMode): AccessMode? {
+    // TODO check other permissions
+    if (AccessMode.WRITE in modes) {
+      val canWrite = !fileInfo.permissions.isReadOnly
+      if (!canWrite) {
+        return AccessMode.WRITE
       }
     }
     return null

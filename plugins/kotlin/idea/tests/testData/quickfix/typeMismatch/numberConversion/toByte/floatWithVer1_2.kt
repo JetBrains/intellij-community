@@ -1,5 +1,6 @@
 // "Convert expression to 'Byte'" "true"
 // API_VERSION: 1.2
+// K2_ERROR: Argument type mismatch: actual type is 'Float', but 'Byte' was expected.
 fun byte(x: Byte) {}
 
 fun test(f: Float) {

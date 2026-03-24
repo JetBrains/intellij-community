@@ -35,7 +35,7 @@ internal object ProductXmlGenerator : PipelineNode {
       testProductSpecs = model.discovery.testProductSpecs,
       projectRoot = model.projectRoot,
       outputProvider = model.outputProvider,
-      strategy = model.xmlWritePolicy,
+      strategy = model.generatedArtifactWritePolicy,
     )
 
     ctx.publish(Slots.PRODUCTS, ProductsOutput(files = result.products))

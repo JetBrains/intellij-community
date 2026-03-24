@@ -49,10 +49,10 @@ interface ServiceModuleMapping {
               val currentPath = showPath(dependency, dependencyPath)
               val previousPath = showPath(dependency, dependencyPathToModule?.get(dependency))
               errors.add("""
-                |Modules from two plugins depend on module '${dependency.moduleId.stringId}': 
-                | '${previousGroup.mainModule.moduleId.stringId}'$previousPath and '${pluginGroup.mainModule.moduleId.stringId}'$currentPath
+                |Modules from two plugins depend on module '${dependency.moduleId.presentableName}': 
+                | '${previousGroup.mainModule.moduleId.presentableName}'$previousPath and '${pluginGroup.mainModule.moduleId.presentableName}'$currentPath
                 |Currently every module should belong to some plugin, but the system cannot automatically determine which plugin should be used.
-                |To fix the problem, register '${dependency.moduleId.stringId}' in some plugin explicitly or include it in the main module
+                |To fix the problem, register '${dependency.moduleId.presentableName}' in some plugin explicitly or include it in the main module
                 |in product-modules.xml.
                 """.trimMargin())
             }
@@ -74,7 +74,7 @@ interface ServiceModuleMapping {
     }
     
     private fun showPath(dependency: RuntimeModuleDescriptor, path: FList<RuntimeModuleDescriptor>?): String =
-      if (path != null) " (${path.prepend(dependency).joinToString(" <- ") { it.moduleId.stringId }})" else ""
+      if (path != null) " (${path.prepend(dependency).joinToString(" <- ") { it.moduleId.presentableName }})" else ""
   }
 }
 

@@ -5,7 +5,7 @@ import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.formatting.visualLayer.visualFormattingElementKey
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
@@ -107,8 +107,8 @@ private class CodeFoldingNecromancer(
     }
     if (foldingState != null) {
       withContext(Dispatchers.EDT) {
-        if (editor.foldingModel.isFoldingEnabled && modStamp == document.modificationStamp) {
-          runReadAction { // set to editor with RA IJPL-159083
+        if (editor.foldingModel.isFoldingEnabled && modStamp == document.modificationStamp && psiDocumentManager.isCommitted(document)) {
+          runReadActionBlocking { // set to editor with RA IJPL-159083
             SlowOperations.knownIssue("IJPL-165088").use {
               foldingState.run()
             }

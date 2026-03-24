@@ -1,15 +1,12 @@
-from pathlib import Path
-
 from behave import configuration
 
 from pycharm.behave_runner import _BehaveRunner
 from pycharm.behave_runner import _register_null_formatter
 
 
-def test_scenarios_to_run():
+def test_scenarios_to_run(helpers_test_resources_root):
     my_config = configuration.Configuration()
-    helpers_root = Path(__file__).parent.parent.parent.parent
-    path = helpers_root / "helpersTestResources" / "behave_examples" / "feature_with_rules"
+    path = helpers_test_resources_root / "behave_examples" / "feature_with_rules"
     my_config.paths = [str(path / "rule.feature")]
     base_dir = str(path)
 

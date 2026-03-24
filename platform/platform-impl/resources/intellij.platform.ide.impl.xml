@@ -18,9 +18,10 @@
     <module name="intellij.libraries.http.client"/>
     <module name="intellij.libraries.icu4j"/>
     <module name="intellij.libraries.imgscalr"/>
-    <module name="intellij.libraries.jackson"/>
-    <module name="intellij.libraries.jackson.databind"/>
-    <module name="intellij.libraries.jackson.jr.objects"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.jr.objects"/>
+    <module name="intellij.libraries.jackson3.module.kotlin"/>
     <module name="intellij.libraries.jbr"/>
     <module name="intellij.libraries.jcef"/>
     <module name="intellij.libraries.jgoodies.common"/>
@@ -49,25 +50,53 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.diff"/>
     <module name="intellij.platform.eel.impl"/>
+    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.core.plugins"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.locking.impl"/>
+    <module name="intellij.platform.projectFrame"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.welcomeScreen.impl"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.editor.interLineBreakpointConfigurationProvider"
+                    interface="com.intellij.openapi.editor.impl.InterLineBreakpointConfigurationProvider"
+                    dynamic="true"/>
+    <extensionPoint name="imageReaderWriterSpi"
+                    beanClass="com.intellij.util.imageio.ImageReaderWriterSpiBean"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="javax.imageio.spi.IIOServiceProvider"/>
+    </extensionPoint>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <ApplicationLoadListener implementation="com.intellij.util.imageio.ImageReaderWriterSpiRegistrar"/>
     <registryKey
       key="ide.project.frame.auto.fix.size.windows.interval"
       defaultValue="60"
       description="The interval between too-small window size checks on Windows and attempts to restore the size. Set to zero to disable"
     />
+    <registryKey
+      key="ide.windows.main.menu.focus.on.alt"
+      defaultValue="false"
+      description="Enable Alt key to focus the main menu bar on Windows"
+      restartRequired="true"
+    />
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.menu.MainMenuCollector"/>
   </extensions>
 </idea-plugin>

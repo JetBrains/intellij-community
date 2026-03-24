@@ -41,6 +41,7 @@
     <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.search.JavaNullMethodArgumentIndex"/>
+    <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.ExternalAnnotationsIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.JavaFunctionalExpressionIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex"/>
@@ -61,6 +62,9 @@
                     serviceImplementation="com.intellij.psi.impl.CompositeShortNamesCache"/>
     <projectService serviceInterface="com.intellij.openapi.roots.PackageIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectPackageIndexImpl"/>
+    <projectService serviceInterface="com.intellij.psi.impl.search.JavaFilesSearchScopeProvider"
+                    serviceImplementation="com.intellij.psi.impl.search.JavaFilesSearchScopeProviderImpl"
+                    open="true"/>
     <functionalExpressionSearch implementation="com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher"/>
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.MethodImplementationsSearch"/>
@@ -75,6 +79,7 @@
     <implicitClassSearch implementation="com.intellij.psi.impl.search.ImplicitClassesSearcher"/>
     <javaModuleSearch implementation="com.intellij.psi.impl.search.JavaModuleSearcher"/>
     <annotatedElementsSearch implementation="com.intellij.psi.impl.search.AnnotatedElementsSearcher"/>
+    <annotatedElementsSearch implementation="com.intellij.psi.impl.search.ExternalAnnotatedElementsSearcher"/>
     <allClassesSearch implementation="com.intellij.psi.impl.search.AllClassesSearchExecutor"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.VariableInIncompleteCodeSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.SimpleAccessorReferenceSearcher"/>

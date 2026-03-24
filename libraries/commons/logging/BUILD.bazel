@@ -9,10 +9,27 @@ resourcegroup(
 
 jvm_library(
   name = "logging",
+  module_name = "intellij.libraries.commons.logging",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":logging_resources"],
   exports = ["@lib//:libraries-commons-logging-commons-logging"],
   runtime_deps = ["@lib//:libraries-commons-logging-commons-logging"]
 )
+
+jvm_library(
+  name = "logging_test_lib",
+  module_name = "intellij.libraries.commons.logging",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-commons-logging-commons-logging"],
+  runtime_deps = [":logging"]
+)
 ### auto-generated section `build intellij.libraries.commons.logging` end
+
+### auto-generated section `iml intellij.libraries.commons.logging` start
+exports_files([
+  "intellij.libraries.commons.logging.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.commons.logging` end

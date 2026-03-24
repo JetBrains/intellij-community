@@ -9,8 +9,23 @@ resourcegroup(
 
 jvm_library(
   name = "color-scheme-vibrant_ink",
+  module_name = "intellij.color.scheme.vibrant_ink",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":color-scheme-vibrant_ink_resources"]
 )
+
+jvm_library(
+  name = "color-scheme-vibrant_ink_test_lib",
+  module_name = "intellij.color.scheme.vibrant_ink",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":color-scheme-vibrant_ink"]
+)
 ### auto-generated section `build intellij.color.scheme.vibrant_ink` end
+
+### auto-generated section `iml intellij.color.scheme.vibrant_ink` start
+exports_files([
+  "intellij.color.scheme.vibrant_ink.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.color.scheme.vibrant_ink` end

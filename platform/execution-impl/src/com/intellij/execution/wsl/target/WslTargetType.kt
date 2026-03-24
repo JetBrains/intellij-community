@@ -79,7 +79,7 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
     configuration.distribution?.let {
       val textAccessor = object : TextAccessor {
         override fun setText(text: String) = textComponentAccessor.setText(component, text)
-        override fun getText() = textComponentAccessor.getText(component)
+        override fun getText(): @NlsSafe String = textComponentAccessor.getText(component) ?: it.userHome ?: "/"
       }
       browseWslPath(textAccessor,
                     it,

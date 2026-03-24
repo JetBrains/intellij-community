@@ -25,7 +25,6 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -36,6 +35,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinBaseChangeSignatureUsage
@@ -264,7 +264,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         val kotlinChangeInfo = fromJavaChangeInfo(changeInfo, usageInfo, beforeMethodChange) ?: return false
         if (!beforeMethodChange) {
             if (usageInfo is KotlinBaseChangeSignatureUsage) {
-                usageInfo.processUsage(kotlinChangeInfo, element as KtElement, usages)?.let { shortenReferences(it, ShortenOptions.ALL_ENABLED) }
+                usageInfo.processUsage(kotlinChangeInfo, element as KtElement, usages)?.let { shortenReferences(it, ShortenOptionsForIde.ALL_ENABLED) }
             }
         }
         else {

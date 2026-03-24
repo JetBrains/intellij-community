@@ -8,6 +8,9 @@
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.platform.testFramework.core"/>
     <module name="intellij.platform.testFramework.common"/>
+    <module name="intellij.codeowners"/>
+    <module name="intellij.codeowners.monorepo.resolver"/>
+    <module name="intellij.codeowners.runtime.resolver"/>
     <module name="intellij.platform.testFramework.impl"/>
 
     <module name="intellij.lambda.sampleTestsWithFixtures._test"/>
@@ -24,7 +27,7 @@
     <module name="intellij.tools.testsBootstrap"/>
 
     <module name="intellij.station.comms.common.testFramework"/>
-    <module name="intellij.station.core._test"/>
+    <module name="intellij.station.core.tests"/>
   </content>
   <dependencies>
     <module name="intellij.lambda.testFramework"/>

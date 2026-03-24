@@ -21,7 +21,7 @@ TA5: TypeAlias = Callable[..., None]  # OK
 
 
 def func1(x: P) -> P:  # E
-    ...
+    raise NotImplementedError
 
 
 def func2(x: Concatenate[int, P]) -> int:  # E

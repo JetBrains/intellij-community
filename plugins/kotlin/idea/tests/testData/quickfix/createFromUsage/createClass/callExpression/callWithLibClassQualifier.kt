@@ -1,6 +1,7 @@
 // "Create class 'Foo'" "false"
 // ERROR: Unresolved reference: Foo
 // WITH_STDLIB
+// K2_ERROR: Unresolved reference 'Foo'.
 // K2_AFTER_ERROR: Unresolved reference 'Foo'.
 
 fun test() {

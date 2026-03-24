@@ -32,7 +32,7 @@ object PySdkFromEnvironmentVariable {
     EDT.assertIsEdt()
     val moduleSdk = PythonSdkUtil.findPythonSdk(module)
     if (pythonPath != projectSdk?.homePath || pythonPath != moduleSdk?.homePath) {
-      switchToSdk(module, sdk, moduleSdk)
+      module.pythonSdk = sdk
     }
   }
 }

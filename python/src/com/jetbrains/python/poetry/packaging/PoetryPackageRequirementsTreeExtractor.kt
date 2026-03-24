@@ -2,32 +2,36 @@
 package com.jetbrains.python.poetry.packaging
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageNode
+import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor
-import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor.Companion.parseTree
+import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor.Companion.parseTrees
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractorProvider
 import com.jetbrains.python.sdk.poetry.isPoetry
 import com.jetbrains.python.sdk.poetry.runPoetryWithSdk
 
-/**
- * Extracts package requirements tree using Poetry package manager.
- */
 internal class PoetryPackageRequirementsTreeExtractor(private val sdk: Sdk) : PythonPackageRequirementsTreeExtractor {
 
-  override suspend fun extract(pkg: PythonPackage): PackageNode {
-    val data = runPoetryWithSdk(sdk, "show", "--tree", pkg.name).getOr {
-      thisLogger().info("extracting requirements for package ${pkg.name}: error. Output: \n${it.error}")
-      return PackageNode(PyPackageName.from(pkg.name))
+  override suspend fun extract(declaredPackageNames: Set<String>): PackageStructureNode {
+    val allTrees = extractAllPackageTrees()
+    val declaredPackages = allTrees.filter { it.name.name in declaredPackageNames }
+    val undeclaredPackages = allTrees.filter { it.name.name !in declaredPackageNames }
+    return PackageCollectionPackageStructureNode(declaredPackages, undeclaredPackages)
+  }
+
+  private suspend fun extractAllPackageTrees(): List<PackageNode> {
+    val data = runPoetryWithSdk(sdk, "show", "--tree").getOr {
+      thisLogger().info("extracting all package trees: error. Output: \n${it.error}")
+      return emptyList()
     }
-    thisLogger().info("extracting requirements for package ${pkg.name}: \n${data.lines()}")
-    return parseTree(data.lines())
+    return parseTrees(data.lines())
   }
 }
 
 internal class PoetryPackageRequirementsTreeExtractorProvider : PythonPackageRequirementsTreeExtractorProvider {
-  override fun createExtractor(sdk: Sdk): PythonPackageRequirementsTreeExtractor? =
+  override fun createExtractor(sdk: Sdk, project: Project): PythonPackageRequirementsTreeExtractor? =
     if (sdk.isPoetry) PoetryPackageRequirementsTreeExtractor(sdk) else null
 }

@@ -1,5 +1,6 @@
 // "Add initializer" "true"
 // ERROR: Val cannot be reassigned
+// K2_ERROR: Property must be initialized, be final, or be abstract.
 // K2_AFTER_ERROR: 'val' cannot be reassigned.
 // COMPILER_ARGUMENTS: -XXLanguage:+ProhibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor -XXLanguage:+ProhibitOpenValDeferredInitialization
 open class Foo {

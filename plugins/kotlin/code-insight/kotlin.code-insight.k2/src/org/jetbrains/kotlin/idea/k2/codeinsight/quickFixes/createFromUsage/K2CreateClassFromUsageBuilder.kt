@@ -13,6 +13,7 @@ import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.components.isAnyType
 import org.jetbrains.kotlin.analysis.api.components.isUnitType
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -304,7 +305,7 @@ object K2CreateClassFromUsageBuilder {
             }
         }
         else if (qualifier is KaCallableSymbol) {
-            targetParents = listOfNotNull(qualifier.returnType.convertToClass())
+            targetParents = listOfNotNull(qualifier.returnType.expandedSymbol?.psi)
             inner = true
         }
         if (receiverExpression is KtThisExpression) {

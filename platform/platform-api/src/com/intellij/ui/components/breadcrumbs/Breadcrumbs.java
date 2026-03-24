@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.breadcrumbs;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -20,7 +20,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.MouseEventHandler;
-import org.intellij.lang.annotations.JdkConstants.FontStyle;
+import com.intellij.util.ui.JdkConstants.FontStyle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

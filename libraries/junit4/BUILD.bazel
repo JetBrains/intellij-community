@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "junit4",
+  module_name = "intellij.libraries.junit4",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":junit4_resources"],
@@ -21,4 +22,27 @@ jvm_library(
     "//libraries/hamcrest",
   ]
 )
+
+jvm_library(
+  name = "junit4_test_lib",
+  module_name = "intellij.libraries.junit4",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = [
+    "@lib//:junit4",
+    "//libraries/hamcrest",
+    "//libraries/hamcrest:hamcrest_test_lib",
+  ],
+  runtime_deps = [
+    ":junit4",
+    "//libraries/hamcrest:hamcrest_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.junit4` end
+
+### auto-generated section `iml intellij.libraries.junit4` start
+exports_files([
+  "intellij.libraries.junit4.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.junit4` end

@@ -1,5 +1,6 @@
 // "Generate 'toString()'" "true"
 // WITH_STDLIB
+// K2_ERROR: Abstract member cannot be accessed directly.
 
 interface I
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiBlockStatement;
 import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
@@ -44,13 +45,13 @@ public class JavaWithIfExpressionSurrounder extends JavaExpressionModCommandSurr
   public boolean isApplicable(PsiExpression expr) {
     PsiType type = expr.getType();
     if (!(type != null && (PsiTypes.booleanType().equals(type) || PsiTypes.booleanType().equals(PsiPrimitiveType.getUnboxedType(type))))) return false;
-    if (!expr.isPhysical()) return false;
     PsiElement expressionStatement = expr.getParent();
     if (!(expressionStatement instanceof PsiExpressionStatement)) return false;
 
     PsiElement statementParent = expressionStatement.getParent();
     if (!isElseBranch(expr, statementParent) &&
         !(statementParent instanceof PsiCodeBlock) &&
+        !(statementParent instanceof PsiCodeFragment) &&
         !(FileTypeUtils.isInServerPageFile(statementParent) && statementParent instanceof PsiFile)) {
       return false;
     }

@@ -1,4 +1,5 @@
 // "Import" "false"
+// K2_ERROR: Unresolved reference 'foo'.
 
 // ACTION: Convert to run
 // ACTION: Convert to with

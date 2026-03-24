@@ -12,6 +12,7 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WidthBasedLayout
@@ -54,11 +55,48 @@ internal suspend fun showDocumentationPopup(
   }
   val boundsHandler = popupContext.boundsHandler()
   val resized = popupUI.useStoredSize()
-  popupUI.updatePopup {
-    boundsHandler.updatePopup(popup, resized.get(), it)
+  val hideEmptyDoc = popupContext is LookupPopupContext
+                     && RegistryManager.getInstanceAsync().`is`("ide.completion.hide.empty.documentation")
+  var popupHidden = false
+  if (hideEmptyDoc) {
+    documentationUi.skipEmptyContent = true
+  }
+  popupUI.updatePopup { event ->
+    if (hideEmptyDoc && event is PopupUpdateEvent.ContentChanged) {
+      when (event.updateKind) {
+        ContentUpdateKind.NoDocumentation -> {
+          if (popupHidden) return@updatePopup
+          popupHidden = true
+          popup.setUiVisible(false)
+          return@updatePopup
+        }
+        ContentUpdateKind.InfoMessage -> {
+          return@updatePopup // don't change visibility or resize while fetching
+        }
+        ContentUpdateKind.DocumentationPageOpened,
+        ContentUpdateKind.DocumentationPageNavigated,
+          -> {
+          if (popupHidden) {
+            popupHidden = false
+            popup.setUiVisible(true)
+          }
+        }
+      }
+    }
+    else if (hideEmptyDoc && popupHidden) {
+      return@updatePopup // don't resize/reposition while hidden
+    }
+    boundsHandler.updatePopup(popup, resized.get(), event)
   }
   check(popup.canShow()) // sanity check
   boundsHandler.showPopup(popup)
+  if (hideEmptyDoc) {
+    val pageContent = popupUI.browser.page.contentFlow.replayCache.lastOrNull()
+    if (pageContent is DocumentationPageContent.Empty) {
+      popupHidden = true
+      popup.setUiVisible(false)
+    }
+  }
   return popup to documentationUi
 }
 

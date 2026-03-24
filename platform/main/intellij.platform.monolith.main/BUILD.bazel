@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "monolith-main",
+  module_name = "intellij.platform.monolith.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -18,6 +19,18 @@ jvm_library(
   module_name = "intellij.platform.monolith.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [":monolith-main"]
+  runtime_deps = [
+    ":monolith-main",
+    "//platform/main/intellij.platform.frontend.main:frontend-main_test_lib",
+    "//platform/main/intellij.platform.backend.main:backend-main_test_lib",
+    "//platform/monolith:monolith_test_lib",
+    "//platform/navbar/monolith:monolith_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.monolith.main` end
+
+### auto-generated section `iml intellij.platform.monolith.main` start
+exports_files([
+  "intellij.platform.monolith.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.monolith.main` end

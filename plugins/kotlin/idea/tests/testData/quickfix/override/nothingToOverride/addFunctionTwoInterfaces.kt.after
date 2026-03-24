@@ -1,4 +1,5 @@
 // "Add function to supertype…" "true"
+// K2_ERROR: 'foo' overrides nothing.
 interface A {
     fun foo()
 }

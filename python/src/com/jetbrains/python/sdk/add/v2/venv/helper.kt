@@ -34,7 +34,6 @@ suspend fun <P : PathHolder> PythonMutableTargetAddInterpreterModel<P>.setupVirt
     moduleOrProject = moduleOrProject,
     pathToBasePython = baseSdkPath,
     pathToVenvHome = venvFolder,
-    existingSdks = existingSdks
   ).getOr { return it }
 
   return PyResult.success(newSdk.sdk)
@@ -44,7 +43,6 @@ private suspend fun <P : PathHolder> PythonAddInterpreterModel<P>.createSdkFromB
   moduleOrProject: ModuleOrProject,
   pathToBasePython: P,
   pathToVenvHome: P,
-  existingSdks: List<Sdk>,
 ): PyResult<SdkWrapper<P>> {
   val basePython = fileSystem.getBinaryToExec(pathToBasePython)
   val inheritSitePackages = venvViewModel.inheritSitePackages.get()
@@ -57,7 +55,6 @@ private suspend fun <P : PathHolder> PythonAddInterpreterModel<P>.createSdkFromB
 
   val sdkResult = detectedSelectableInterpreter.setupSdk(
     moduleOrProject = moduleOrProject,
-    allSdks = existingSdks,
     fileSystem = fileSystem,
     targetPanelExtension = state.targetPanelExtension.get(),
     isAssociateWithModule = !venvViewModel.makeAvailableForAllProjects.get()

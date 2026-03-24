@@ -49,11 +49,14 @@ import org.jetbrains.uast.UResolvable;
 import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.expressions.UInjectionHost;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -177,7 +180,7 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
   private static @Nullable Property getPropertyArgument(UCallExpression arg) {
     List<UExpression> args = arg.getValueArguments();
     if (!args.isEmpty()) {
-      return JavaI18nUtil.resolveProperty(args.get(0));
+      return JavaI18nUtil.resolveProperty(args.getFirst());
     }
     return null;
   }
@@ -248,12 +251,31 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
   }
 
   interface Value {
+    Pattern HTML_PATTERN = Pattern.compile("<[^>]*+>", Pattern.MULTILINE);
+    
     @Override
     @NotNull String toString();
     boolean isSatisfied(@NotNull Nls.Capitalization capitalization);
 
     default @NotNull String fixCapitalization(@NotNull Nls.Capitalization capitalization) {
-      return NlsCapitalizationUtil.fixValue(toString(), capitalization);
+      String string = toString();
+      Matcher matcher = HTML_PATTERN.matcher(string);
+      StringBuilder withoutTags = new StringBuilder();
+      record Tag(int pos, String content) {
+      }
+      List<Tag> tags = new ArrayList<>();
+      while (matcher.find()) {
+        tags.add(new Tag(matcher.start(), matcher.group()));
+        matcher.appendReplacement(withoutTags, "");
+      }
+      matcher.appendTail(withoutTags);
+      String result = NlsCapitalizationUtil.fixValue(withoutTags.toString(), capitalization);
+      for (Tag tag: tags) {
+        if (tag.pos <= result.length()) {
+          result = result.substring(0, tag.pos) + tag.content + result.substring(tag.pos);
+        }
+      }
+      return result;
     }
 
     default boolean canFix() { return true; }

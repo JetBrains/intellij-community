@@ -1,13 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 pub mod utils;
 
 #[cfg(test)]
 mod tests {
     use crate::utils::*;
-    use std::path::PathBuf;
     use std::sync::Mutex;
-    use xplat_launcher::{get_caches_home, get_config_home, jvm_property};
+    use xplat_launcher::jvm_property;
 
     /// Tests depending on the shared user config directory cannot run concurrently.
     static USER_DIR_LOCK: Mutex<usize> = Mutex::new(0);
@@ -51,6 +50,6 @@ mod tests {
         test.create_user_config_file(vm_options_name, "-Dcustom.property=custom.value\n", get_custom_config_dir());
 
         let result = run_launcher(LauncherRunSpec::standard().with_args(&["custom-command"]).assert_status());
-        assert!(result.stdout.contains("Custom command: product.property=product.value, custom.property=custom.value"), "Custom system property is not set: {:?}", result);
+        assert!(result.stdout.contains("Custom command: product.property=product.value, custom.property=custom.value"), "Custom system property is not set: {result:?}");
     }
 }

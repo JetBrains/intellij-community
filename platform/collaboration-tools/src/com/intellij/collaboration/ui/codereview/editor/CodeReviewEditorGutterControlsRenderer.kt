@@ -390,6 +390,7 @@ private constructor(
       }
 
       val commentable: Boolean by lazy {
+        if (ReviewInEditorUtil.isLastBlankLine(editor.document, logicalLine)) return@lazy false
         state.isLineCommentable(logicalLine)
       }
     }

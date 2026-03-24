@@ -75,6 +75,10 @@ final class ProcessPopup {
     myContentPanel = new JBScrollPane(myIndicatorPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
     updateContentUI();
   }
+  
+  boolean isBannerPresent() {
+    return myAnalyzingBannerDecorator.isBannerPresent();
+  }
 
   public void addIndicator(@NotNull ProgressComponent indicator) {
     JComponent component = indicator.getComponent();

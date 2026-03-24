@@ -14,6 +14,10 @@ import org.jetbrains.annotations.NonNls
 
 /**
  * Describes additional data stored in [Module][com.intellij.openapi.module.Module] instance.
+ *
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
  */
 @Internal
 interface ModuleCustomImlDataEntity : WorkspaceEntity {
@@ -72,6 +76,10 @@ val ModuleEntity.customImlData: ModuleCustomImlDataEntity?
 /**
  * Describes [explicit module group][com.intellij.openapi.module.ModuleManager.getModuleGroupPath]. Note that explicit module groups are
  * deprecated, so this entity should be used for compatibility with old code only.
+ *
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
  */
 @Internal
 interface ModuleGroupPathEntity : WorkspaceEntity {
@@ -124,6 +132,10 @@ val ModuleEntity.groupPath: ModuleGroupPathEntity?
 
 /**
  * Describes options for a [Module][com.intellij.openapi.module.Module] imported from some external project system (Maven, Gradle).
+ *
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
  */
 @Internal
 interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
@@ -181,6 +193,10 @@ val ModuleEntity.exModuleOptions: ExternalSystemModuleOptionsEntity?
 
 /**
  * Provides reference to [production module][com.intellij.openapi.roots.TestModuleProperties.getProductionModule].
+ *
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
  */
 @Internal
 interface TestModulePropertiesEntity : WorkspaceEntity {

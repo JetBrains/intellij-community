@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_funRedeclaration-a.kotlin_module
+  test/Fun2Kt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/funRedeclaration/a/fun2.kt
+End of files
+------------------------------------------
+Exit code: ERROR

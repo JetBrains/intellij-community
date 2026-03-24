@@ -96,7 +96,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
     TextAttributesKey fragmentKey = EditorColors.createInjectedLanguageFragmentKey(myFile.getLanguage());
     Set<@NotNull FileViewProvider> injected = ConcurrentCollectionFactory.createConcurrentSet();  // in case of concatenation, multiple hosts can return the same injected fragment. have to visit it only once
-    ManagedHighlighterRecycler.runWithRecycler(getHighlightingSession(), recycler -> {
+    ManagedHighlighterRecycler.runWithRecycler(getHighlightingSession(), "IGHP", recycler -> {
       processInjectedPsiFiles(allInsideElements, allOutsideElements, progress, injected,
                               (injectedPsi, places) ->
         runAnnotatorsAndVisitorsOnInjectedPsi(injectedLanguageManager, injectedPsi, places, fragmentKey, (toolId, psiElement, infos) -> {

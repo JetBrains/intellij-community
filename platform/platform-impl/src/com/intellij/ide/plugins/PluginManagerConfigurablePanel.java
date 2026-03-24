@@ -617,7 +617,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
   public @Nullable Runnable enableSearch(String option, boolean ignoreTagMarketplaceTab) {
     if (StringUtil.isEmpty(option) &&
-        (myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB || myInstalledTab.getInstalledSearchPanel().isEmpty())) {
+        (myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB || myInstalledTab.getInstalledSearchPanel().isQueryEmpty())) {
       return null;
     }
 
@@ -739,6 +739,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      List<String> oldRepoUrls = new ArrayList<>(UpdateSettings.getInstance().getStoredPluginHosts());
       if (ShowSettingsUtil.getInstance().editConfigurable(myCardPanel, new PluginHostsConfigurable())) {
         if (myPluginManagerCustomizer == null) {
           resetPanels();
@@ -746,7 +747,12 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
         PluginManagerCustomizer customizer = PluginManagerCustomizer.getInstance();
         if (customizer != null) {
-          customizer.updateCustomRepositories(UpdateSettings.getInstance().getStoredPluginHosts(), () -> {
+          List<String> newRepoUrls = UpdateSettings.getInstance().getStoredPluginHosts();
+          List<String> addedRepoUrls = new ArrayList<>(newRepoUrls);
+          addedRepoUrls.removeAll(oldRepoUrls);
+          List<String> removedRepoUrls = new ArrayList<>(oldRepoUrls);
+          removedRepoUrls.removeAll(newRepoUrls);
+          customizer.updateCustomRepositories(addedRepoUrls, removedRepoUrls, () -> {
             resetPanels();
             return null;
           });

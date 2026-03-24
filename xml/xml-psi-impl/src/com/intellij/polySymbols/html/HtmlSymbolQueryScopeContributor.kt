@@ -113,8 +113,6 @@ class HtmlSymbolQueryScopeContributor : PolySymbolQueryScopeContributor {
 
     override fun hashCode(): Int = tag.hashCode()
 
-    override fun getModificationCount(): Long = 0
-
     override fun createPointer(): Pointer<StandardHtmlSymbolScope> {
       val tag = SmartPointerManager.createPointer(this.tag)
       return Pointer {

@@ -4,6 +4,7 @@ package com.intellij.mcpserver.toolsets
 
 import com.intellij.mcpserver.McpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.SearchToolset
+import com.intellij.mcpserver.util.awaitExternalChangesAndIndexing
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -11,7 +12,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.junit5.fixture.virtualFileFixture
-import io.kotest.common.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -131,7 +133,7 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_file_returns_file_path() = runBlocking {
+  fun search_file_returns_file_path() = runBlocking(Dispatchers.Default) {
     DumbService.getInstance(project).waitForSmartMode()
     val fileName = searchFile.name
     testMcpTool(
@@ -154,7 +156,7 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_file_supports_explicit_globstar_prefix() = runBlocking {
+  fun search_file_supports_explicit_globstar_prefix() = runBlocking(Dispatchers.Default) {
     DumbService.getInstance(project).waitForSmartMode()
     val fileName = searchFile.name
     testMcpTool(
@@ -169,7 +171,7 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_file_supports_exact_subpath_queries() = runBlocking {
+  fun search_file_supports_exact_subpath_queries() = runBlocking(Dispatchers.Default) {
     DumbService.getInstance(project).waitForSmartMode()
     val fileName = scopedFileInSubdir1.name
     testMcpTool(
@@ -184,7 +186,7 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_file_respects_paths_scope() = runBlocking {
+  fun search_file_respects_paths_scope() = runBlocking(Dispatchers.Default) {
     DumbService.getInstance(project).waitForSmartMode()
     val fileName = scopedFileInSubdir1.name
     val otherFileName = scopedFileInSubdir2.name
@@ -203,7 +205,7 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_file_respects_paths_excludes() = runBlocking {
+  fun search_file_respects_paths_excludes() = runBlocking(Dispatchers.Default) {
     DumbService.getInstance(project).waitForSmartMode()
     val fileName = scopedFileInSubdir1.name
     testMcpTool(
@@ -223,7 +225,7 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_file_includes_excluded_files_when_requested() = runBlocking {
+  fun search_file_includes_excluded_files_when_requested() = runBlocking(Dispatchers.Default) {
     val excludedFile = createExcludedFile()
     DumbService.getInstance(project).waitForSmartMode()
     val fileName = excludedFile.name
@@ -251,7 +253,8 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_text_returns_snippet_details() = runBlocking {
+  fun search_text_returns_snippet_details() = runBlocking(Dispatchers.Default) {
+    awaitExternalChangesAndIndexing(project)
     val query = "Search Everywhere file content"
     testMcpTool(
       SearchToolset::search_text.name,
@@ -274,7 +277,8 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_text_returns_match_coordinates() = runBlocking {
+  fun search_text_returns_match_coordinates() = runBlocking(Dispatchers.Default) {
+    awaitExternalChangesAndIndexing(project)
     val query = "Search Everywhere file content"
     testMcpTool(
       SearchToolset::search_text.name,
@@ -295,7 +299,8 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_regex_returns_match_coordinates() = runBlocking {
+  fun search_regex_returns_match_coordinates() = runBlocking(Dispatchers.Default) {
+    awaitExternalChangesAndIndexing(project)
     testMcpTool(
       SearchToolset::search_regex.name,
       buildJsonObject {
@@ -315,7 +320,8 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_text_respects_paths_glob() = runBlocking {
+  fun search_text_respects_paths_glob() = runBlocking(Dispatchers.Default) {
+    awaitExternalChangesAndIndexing(project)
     val query = "Search Everywhere file mask content"
     testMcpTool(
       SearchToolset::search_text.name,
@@ -331,7 +337,9 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_text_respects_paths_and_exclude() = runBlocking {
+  fun search_text_respects_paths_and_exclude() = runBlocking(Dispatchers.Default) {
+    awaitExternalChangesAndIndexing(project)
+
     testMcpTool(
       SearchToolset::search_text.name,
       buildJsonObject {
@@ -350,7 +358,7 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_text_respects_directory_excludes() = runBlocking {
+  fun search_text_respects_directory_excludes() = runBlocking(Dispatchers.Default) {
     val excludedByPathsFile = createFileInSubdir1(pathExcludedDirName, pathExcludedFileName, "Scoped file content")
     DumbService.getInstance(project).waitForSmartMode()
     testMcpTool(
@@ -373,7 +381,8 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_regex_respects_paths_scope() = runBlocking {
+  fun search_regex_respects_paths_scope() = runBlocking(Dispatchers.Default) {
+    awaitExternalChangesAndIndexing(project)
     testMcpTool(
       SearchToolset::search_regex.name,
       buildJsonObject {
@@ -388,7 +397,7 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_symbol_returns_snippet_details() = runBlocking {
+  fun search_symbol_returns_snippet_details() = runBlocking(Dispatchers.Default) {
     DumbService.getInstance(project).waitForSmartMode()
     val query = "${symbolPrefix}Alpha"
     testMcpTool(
@@ -406,7 +415,7 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_symbol_accepts_directory_path_without_trailing_slash() = runBlocking {
+  fun search_symbol_accepts_directory_path_without_trailing_slash() = runBlocking(Dispatchers.Default) {
     val directoryName = "se_symbol_dir_4a1c"
     val fileName = "se_symbol_dir_4a1c.kt"
     val symbolName = "SeSymbolDir4a1c"
@@ -426,7 +435,7 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_symbol_respects_paths_scope() = runBlocking {
+  fun search_symbol_respects_paths_scope() = runBlocking(Dispatchers.Default) {
     DumbService.getInstance(project).waitForSmartMode()
     testMcpTool(
       SearchToolset::search_symbol.name,
@@ -442,7 +451,7 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_symbol_respects_paths_excludes() = runBlocking {
+  fun search_symbol_respects_paths_excludes() = runBlocking(Dispatchers.Default) {
     DumbService.getInstance(project).waitForSmartMode()
     testMcpTool(
       SearchToolset::search_symbol.name,
@@ -458,7 +467,7 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_symbol_respects_limit_and_sets_more() = runBlocking {
+  fun search_symbol_respects_limit_and_sets_more() = runBlocking(Dispatchers.Default) {
     DumbService.getInstance(project).waitForSmartMode()
     testMcpTool(
       SearchToolset::search_symbol.name,
@@ -478,7 +487,7 @@ class SearchToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun search_file_respects_limit_and_sets_more() = runBlocking {
+  fun search_file_respects_limit_and_sets_more() = runBlocking(Dispatchers.Default) {
     DumbService.getInstance(project).waitForSmartMode()
     val query = "se_max_results_8b1c_*.txt"
     testMcpTool(

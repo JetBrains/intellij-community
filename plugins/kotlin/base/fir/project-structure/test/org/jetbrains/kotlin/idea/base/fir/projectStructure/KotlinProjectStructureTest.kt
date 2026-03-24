@@ -58,7 +58,6 @@ import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleImpl
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
-import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureInsightsProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModuleOfType
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModuleOfTypeSafe
@@ -94,28 +93,6 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         get() = KotlinPluginMode.K2
 
     override fun getTestDataDirectory(): File = throw UnsupportedOperationException()
-
-    override fun setUp() {
-        super.setUp()
-
-        val testProjectStructureInsightsProvider = object : ProjectStructureInsightsProvider {
-            override fun isInSpecialSrcDirectory(psiElement: PsiElement): Boolean {
-                if (!RootKindFilter.Companion.projectSources.matches(psiElement)) return false
-                val containingFile = psiElement.containingFile as? KtFile ?: return false
-                val virtualFile = containingFile.virtualFile
-                val index = ProjectFileIndex.getInstance(psiElement.project)
-                val module = index.getModuleForFile(virtualFile) ?: return false
-                return module.name == "buildSrc"
-            }
-        }
-
-        ExtensionTestUtil.maskExtensions(
-          ProjectStructureInsightsProvider.Companion.EP_NAME,
-          ProjectStructureInsightsProvider.Companion.EP_NAME.extensionList +
-          listOf(testProjectStructureInsightsProvider),
-          testRootDisposable
-        )
-    }
 
     fun `test unrelated library`() {
         val moduleWithLibrary = createModule(
@@ -808,7 +785,6 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         }
     }
 
-    @OptIn(K1ModeProjectStructureApi::class)
     fun `test different jdks attached to project modules`() {
         val mockJdkA = IdeaTestUtil.getMockJdk17("module A JDK")
         val mockJdkB = IdeaTestUtil.getMockJdk17("module B JDK")
@@ -831,7 +807,9 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         }
 
         //a class from "jdk" which belongs to 2 order entries
-        val stringClass = JavaPsiFacade.getInstance(project).findClass("java.lang.String", GlobalSearchScope.allScope(project))!!
+        val stringClass = JavaPsiFacade.getInstance(project).findClasses("java.lang.String", GlobalSearchScope.allScope(project))
+            // default module is created with jdk 11 and as it's un
+            .find { it.containingFile.virtualFile.path.contains("1.7") }!!
 
         val contextualModuleB = moduleB.toKaSourceModuleForProduction()!!
         val module1 = stringClass.getKaModuleOfTypeSafe<KaLibraryModule>(project, contextualModuleB)

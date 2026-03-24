@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -535,7 +536,12 @@ public final class GenerateMembersUtil {
       List<PsiClassType> substitutedSupers = ContainerUtil.map(typeParameter.getSuperTypes(), t -> ObjectUtils.notNull(toClassType(substitutor.substitute(t)), t));
       return factory.createTypeParameter(Objects.requireNonNull(typeParameter.getName()), substitutedSupers.toArray(PsiClassType.EMPTY_ARRAY));
     }
-    final PsiElement copy = ObjectUtils.notNull(typeParameter instanceof PsiCompiledElement ? ((PsiCompiledElement)typeParameter).getMirror() : typeParameter, typeParameter).copy();
+    //todo fix IDEA-387050
+    final PsiElement copy =
+      BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() ->
+                                                                    ObjectUtils.notNull(typeParameter instanceof PsiCompiledElement
+                                                                                        ? ((PsiCompiledElement)typeParameter).getMirror()
+                                                                                        : typeParameter, typeParameter).copy());
     LOG.assertTrue(copy != null, typeParameter);
     final Map<PsiElement, PsiElement> replacementMap = new HashMap<>();
     copy.accept(new JavaRecursiveElementVisitor() {
@@ -638,7 +644,7 @@ public final class GenerateMembersUtil {
     final PsiElement navigationElement = source.getNavigationElement();
     if (navigationElement instanceof PsiDocCommentOwner) {
       final PsiDocComment docComment = ((PsiDocCommentOwner)navigationElement).getDocComment();
-      if (docComment != null) {
+      if (docComment != null && !(docComment instanceof PsiCompiledElement)) {
         target.addAfter(factory.createDocCommentFromText(docComment.getText()), null);
       }
     }

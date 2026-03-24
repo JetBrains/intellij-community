@@ -22,6 +22,25 @@ public interface AnnotationPackageSupport {
   ExtensionPointName<AnnotationPackageSupport> EP_NAME = ExtensionPointName.create("com.intellij.lang.jvm.annotationPackageSupport");
 
   /**
+   * Returns a partially applied function that returns nullability by container annotations, depending on context.
+   * Implementations may override this to detect conflicting annotations (e.g., JSpecify's @NullMarked + @NullUnmarked).
+   *
+   * @param annotations  all annotations from a container
+   * @param types        target types
+   * @param superPackage if true, then the annotations are applied to a super-package
+   * @return {@code ContextNullabilityInfo} which returns nullability by container annotations for a given context
+   */
+  default @NotNull ContextNullabilityInfo getNullabilityByContainerAnnotations(@NotNull List<@NotNull PsiAnnotation> annotations,
+                                                                               PsiAnnotation.TargetType @NotNull [] types,
+                                                                               boolean superPackage) {
+    ContextNullabilityInfo result = ContextNullabilityInfo.EMPTY;
+    for (PsiAnnotation anno : annotations) {
+      result = result.orElse(getNullabilityByContainerAnnotation(anno, types, superPackage));
+    }
+    return result;
+  }
+
+  /**
    * Returns a partially applied function that returns nullability by a container annotation, depending on context
    *
    * @param anno         annotation to check
@@ -65,5 +84,13 @@ public interface AnnotationPackageSupport {
    */
   default boolean canAnnotateLocals() {
     return true;
+  }
+
+  /**
+   * @return true if the non-null annotation reported by this support is used for the instrumentation or code generation.
+   * In this case, it won't be reported as redundant if it appears in the scope of container non-null annotation.
+   */
+  default boolean isNonNullUsedForInstrumentation() {
+    return false;
   }
 }

@@ -52,7 +52,10 @@
     <orderEntry type="module" module-name="intellij.platform.threadDumpParser" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
   </component>
 </module>

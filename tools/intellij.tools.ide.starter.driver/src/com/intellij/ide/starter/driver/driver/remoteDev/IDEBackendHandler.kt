@@ -47,6 +47,7 @@ internal class IDEBackendHandler(
     expectedKill: Boolean,
     expectedExitCode: Int,
     collectNativeThreads: Boolean,
+    pauseOnIndexing: Duration? = null,
     configure: IDERunContext.() -> Unit = {},
   ): BackgroundRun {
     if (ConfigurationStorage.useInstaller()) {
@@ -62,7 +63,8 @@ internal class IDEBackendHandler(
                                                 launchName = launchName,
                                                 expectedKill = expectedKill,
                                                 expectedExitCode = expectedExitCode,
-                                                collectNativeThreads = collectNativeThreads) {
+                                                collectNativeThreads = collectNativeThreads,
+                                                pauseOnIndexing = pauseOnIndexing) {
       configure(this)
     }
   }
@@ -83,7 +85,7 @@ internal class IDEBackendHandler(
   }
 
   @Remote(value = "com.jetbrains.rdserver.unattendedHost.connection.UnattendedModeManagerImpl",
-          plugin = "com.jetbrains.codeWithMe")
+          plugin = "com.jetbrains.remoteDevelopment")
   interface UnattendedModeManagerImpl {
     fun remoteDevDirectLink(): String?
   }

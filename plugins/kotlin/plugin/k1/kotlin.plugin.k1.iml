@@ -134,9 +134,9 @@
     <orderEntry type="module" module-name="kotlin.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.spellchecker" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.testng" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.uast.base" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-base" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.uast.idea.base" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.featuresTrainer" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" scope="RUNTIME" />
@@ -161,7 +161,6 @@
     <orderEntry type="module" module-name="kotlin.base.injection" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding.gradle" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.kotlin.onboarding.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight.minimal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" />
     <orderEntry type="module" module-name="intellij.kotlin.formatter.minimal" />

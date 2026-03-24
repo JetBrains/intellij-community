@@ -64,7 +64,9 @@ internal object GHPRReviewThreadCommentComponentFactory {
     val commentPane = GHPRReviewCommentBodyComponentFactory.createIn(cs, vm.bodyVm, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
     val editableText = EditableComponentFactory.create(cs, commentPane, vm.editVm) { editVm ->
       val actions = createEditActionsConfig(editVm)
-      CodeReviewCommentTextFieldFactory.createIn(this, editVm, actions).let { pane ->
+      CodeReviewCommentTextFieldFactory.createIn(this, editVm, actions) { editor ->
+        editor.putUserData(GHViewModelWithTextCompletion.MENTIONS_COMPLETION_KEY, vm)
+      }.let { pane ->
         CollaborationToolsUIUtil
           .wrapWithLimitedSize(pane, DimensionRestrictions.ScalingConstant(width = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH))
       }

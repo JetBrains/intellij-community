@@ -178,7 +178,7 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
       return switch (this) {
         case YES -> true;
         case NO -> false;
-        case INFER -> //noinspection TestOnlyProblems
+        case INFER ->
           Cancellation.currentJob() != null;
       };
     }

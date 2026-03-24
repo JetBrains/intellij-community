@@ -4,6 +4,7 @@ package org.jetbrains.jps.dependency.java;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
+import org.jetbrains.jps.dependency.impl.GraphElementInterner;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
@@ -13,7 +14,7 @@ public final class JvmField extends ProtoMember implements DiffCapable<JvmField,
   private static final JVMFlags INLINABLE_FIELD_FLAGS = new JVMFlags(Opcodes.ACC_FINAL);
   
   public JvmField(JVMFlags flags, String signature, String name, String descriptor, @NotNull Iterable<ElementAnnotation> annotations, Object value) {
-    super(flags, signature, name, TypeRepr.getType(descriptor), annotations, value);
+    super(flags, signature, name, TypeRepr.getType(GraphElementInterner.intern(descriptor)), annotations, value);
   }
 
   public JvmField(GraphDataInput in) throws IOException {

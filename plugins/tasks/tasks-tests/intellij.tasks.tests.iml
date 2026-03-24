@@ -4,6 +4,7 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -25,7 +26,6 @@
     <orderEntry type="module" module-name="intellij.libraries.xml.rpc" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.debugger" />
-    <orderEntry type="module" module-name="intellij.xslt.debugger" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.tasks.jira" scope="TEST" />
@@ -46,5 +46,11 @@
     <orderEntry type="module" module-name="intellij.vcs.git.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tasks.trac" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vcs.git.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vcs.hg.tests" scope="TEST" />
   </component>
 </module>

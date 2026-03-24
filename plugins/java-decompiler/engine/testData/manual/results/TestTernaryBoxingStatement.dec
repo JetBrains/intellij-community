@@ -1,0 +1,50 @@
+public class TestTernaryBoxingStatement {
+   public static void main(String[] args) {
+   }// 5
+
+   public void foo(Object o) {
+      Boolean b0 = false;// 8
+      byte a1 = 4;// 9
+      byte a2 = 34;// 10
+      Byte var10000 = b0 ? a1 : 34;// 11
+   }// 12
+}
+
+class 'TestTernaryBoxingStatement' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      2
+   }
+
+   method 'foo (Ljava/lang/Object;)V' {
+      0      5
+      1      5
+      2      5
+      3      5
+      4      5
+      5      6
+      6      6
+      7      7
+      8      7
+      9      7
+      a      7
+      b      8
+      c      8
+      d      8
+      e      8
+      f      8
+      12      8
+      16      8
+      18      8
+      19      8
+      1a      8
+      1d      9
+   }
+}
+
+Lines mapping:
+5 <-> 3
+8 <-> 6
+9 <-> 7
+10 <-> 8
+11 <-> 9
+12 <-> 10

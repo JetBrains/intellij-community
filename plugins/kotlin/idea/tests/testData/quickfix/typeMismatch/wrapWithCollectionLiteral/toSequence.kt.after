@@ -1,5 +1,6 @@
 // "Wrap element with 'sequenceOf()' call" "true"
 // WITH_STDLIB
+// K2_ERROR: Argument type mismatch: actual type is 'String', but 'Sequence<String>' was expected.
 
 fun foo(a: String) {
     bar(sequenceOf(a)<caret>)

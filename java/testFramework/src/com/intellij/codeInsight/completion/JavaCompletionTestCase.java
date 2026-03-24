@@ -9,6 +9,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -36,7 +37,7 @@ public abstract class JavaCompletionTestCase extends DaemonAnalyzerTestCase {
   }
 
   @Override
-  protected void configureByFile(String filePath) throws Exception {
+  protected void configureByFile(@NotNull String filePath) throws Exception {
     super.configureByFile(filePath);
 
     complete();

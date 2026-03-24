@@ -9,6 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "hamcrest-more-matchers",
+  module_name = "intellij.libraries.hamcrest.more.matchers",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":hamcrest-more-matchers_resources"],
@@ -18,4 +19,22 @@ jvm_library(
     "@lib//:libraries-hamcrest-more-matchers-github-seregamorph-hamcrest-more-matchers",
   ]
 )
+
+jvm_library(
+  name = "hamcrest-more-matchers_test_lib",
+  module_name = "intellij.libraries.hamcrest.more.matchers",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:libraries-hamcrest-more-matchers-github-seregamorph-hamcrest-more-matchers"],
+  runtime_deps = [
+    ":hamcrest-more-matchers",
+    "//libraries/hamcrest:hamcrest_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.hamcrest.more.matchers` end
+
+### auto-generated section `iml intellij.libraries.hamcrest.more.matchers` start
+exports_files([
+  "intellij.libraries.hamcrest.more.matchers.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.hamcrest.more.matchers` end

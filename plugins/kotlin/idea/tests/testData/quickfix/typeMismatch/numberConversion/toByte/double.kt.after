@@ -1,4 +1,5 @@
 // "Convert expression to 'Byte'" "true"
+// K2_ERROR: Argument type mismatch: actual type is 'Double', but 'Byte' was expected.
 fun byte(x: Byte) {}
 
 fun test(d: Double) {

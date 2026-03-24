@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.recentFiles.frontend
 
 import com.intellij.codeInsight.hint.HintUtil
@@ -25,8 +25,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -385,11 +384,11 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
       }
       uiUpdateScope.launch(CoroutineName("Switcher hint popup updater")) {
         selectedValueFlow.collectLatest { selectedValue ->
-          withContext(Dispatchers.UiWithModelAccess) { // can't use STRICT because updatePopup needs a WIRA
+          withContext(Dispatchers.UI) {
             val hint = hint
             val popupUpdater = if (hint == null || !hint.isVisible) null else hint.getUserData(PopupUpdateProcessorBase::class.java)
             if (selectedValue != null && popupUpdater != null) {
-              writeIntentReadAction {
+              withContext(Dispatchers.EDT) {
                 popupUpdater.updatePopup(CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(this@SwitcherPanel)))
               }
             }
@@ -471,7 +470,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
       }
 
       if (alreadyReleasedKeys?.isNotEmpty() == true) {
-        uiUpdateScope.launch(Dispatchers.EDT) { // using EDT because some navigate() stuff inside may need the WIL
+        uiUpdateScope.launch(Dispatchers.UI) {
           for (event in alreadyReleasedKeys) {
             onKeyRelease.keyReleased(event)
           }
@@ -572,7 +571,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
 
     private fun scheduleUiUpdate(update: () -> Unit) {
       cancelScheduledUiUpdate()
-      uiUpdateScope.launch(context = Dispatchers.EDT) {
+      uiUpdateScope.launch(context = Dispatchers.UI) {
         delay(100.milliseconds)
         update()
       }
@@ -674,7 +673,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
       }
 
       cancel()
-      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.UI) {
         val focusDC = DataManager.getInstance().dataContextFromFocusAsync.await()
         val dataContext = CustomizedDataContext.withSnapshot(focusDC) { sink ->
           sink[PlatformDataKeys.PREDEFINED_TEXT] = fileName

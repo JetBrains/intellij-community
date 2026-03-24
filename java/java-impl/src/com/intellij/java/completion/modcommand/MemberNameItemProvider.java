@@ -7,8 +7,10 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcompletion.CommonCompletionItem;
 import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
+import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
@@ -70,7 +72,6 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -88,7 +89,7 @@ final class MemberNameItemProvider extends JavaModCompletionItemProvider {
   private static final int MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED = 50000;
 
   @Override
-  public void provideItems(CompletionContext parameters, Consumer<ModCompletionItem> sink) {
+  public void provideItems(CompletionContext parameters, ModCompletionResult sink) {
     if (parameters.getCompletionType() != CompletionType.BASIC && parameters.getCompletionType() != CompletionType.SMART ||
         parameters.getInvocationCount() == 0) {
       return;

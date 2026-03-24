@@ -1163,4 +1163,33 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       threadsUnderCanceledIndicator.remove(fake);
     }
   }
+
+  /**
+   * A utility method for diagnosing state of progress indicator in monitoring facilities, like JStack
+   */
+  @ApiStatus.Internal
+  public String getProgressStateRepresentation() {
+    synchronized (threadsUnderIndicator) {
+      StringBuilder result = new StringBuilder();
+      for (Map.Entry<ProgressIndicator, Set<Thread>> entry : threadsUnderIndicator.entrySet()) {
+        ProgressIndicator indicator = entry.getKey();
+        Set<Thread> threads = entry.getValue();
+        result.append("Indicator ").append(renderProgressIndicator(indicator)).append(" corresponds to the following threads:\n");
+        for (Thread thread : threads) {
+          result.append(" - ").append(thread).append(";\n");
+        }
+      }
+      return result.toString();
+    }
+  }
+
+  private static String renderProgressIndicator(ProgressIndicator indicator) {
+    String presentationBuilder = indicator.toString() +
+                                 " (canceled: " +
+                                 indicator.isCanceled() +
+                                 ", running:" +
+                                 indicator.isRunning() +
+                                 ")";
+    return presentationBuilder;
+  }
 }

@@ -1160,7 +1160,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     if (profile != null) {
       final Document document = textField.getDocument();
-      final String pattern = ReadAction.compute(() -> {
+      final String pattern = ReadAction.computeBlocking(() -> {
         final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         assert file != null;
         return profile.getCodeFragmentText(file);

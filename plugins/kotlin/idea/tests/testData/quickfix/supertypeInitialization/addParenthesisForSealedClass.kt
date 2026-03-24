@@ -1,5 +1,6 @@
 // "Change to constructor invocation" "true"
 // PRIORITY: HIGH
+// K2_ERROR: This type has a constructor, so it must be initialized here.
 sealed class A
 class B : A<caret>
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SuperClassNotInitialized$AddParenthesisFix

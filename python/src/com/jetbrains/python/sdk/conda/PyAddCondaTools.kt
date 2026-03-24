@@ -5,36 +5,30 @@ import com.intellij.execution.Platform
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.execution.process.ProcessOutput
-import com.intellij.execution.processTools.getResultStdoutStr
-import com.intellij.execution.processTools.mapFlat
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetPlatform
 import com.intellij.execution.target.TargetProgressIndicator
-import com.intellij.execution.target.TargetProgressIndicatorAdapter
 import com.intellij.execution.target.TargetedCommandLineBuilder
-import com.intellij.execution.target.createProcessWithResult
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.BinOnTarget
 import com.jetbrains.python.conda.loadLocalPythonCondaPath
 import com.jetbrains.python.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.asPythonResult
-import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.getOrThrow
-import com.jetbrains.python.onFailure
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
@@ -42,15 +36,14 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
-import com.jetbrains.python.sdk.flavors.conda.addCondaPythonToTargetCommandLine
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
-import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
+import kotlin.io.path.Path
 import kotlin.io.path.isExecutable
 import kotlin.io.path.pathString
 
@@ -67,21 +60,31 @@ val condaLatestSupportedLanguage: LanguageLevel
     condaSupportedLanguages.maxWith(LanguageLevel.VERSION_COMPARATOR)
 
 
-/**
- * See `com.jetbrains.env.python.conda.PyCondaSdkTest`
- */
+@Deprecated("Use `createCondaSdkFromExistingEnvironment` instead")
 suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(
   condaIdentity: PyCondaEnvIdentity,
   existingSdks: List<Sdk>,
   project: Project?,
-): Sdk {
+): Sdk = createCondaSdkFromExistingEnvironment(condaIdentity, existingSdks, project).getOrThrow()
+
+
+/**
+ * See `com.jetbrains.env.python.conda.PyCondaSdkTest`
+ */
+suspend fun PyCondaCommand.createCondaSdkFromExistingEnvironment(
+  condaIdentity: PyCondaEnvIdentity,
+  existingSdks: List<Sdk>,
+  project: Project?,
+): PyResult<Sdk> {
   val condaEnv = PyCondaEnv(condaIdentity, fullCondaPathOnTarget)
   val flavorAndData = PyFlavorAndData(PyCondaFlavorData(condaEnv), CondaEnvSdkFlavor)
+  val interpreterPath = getCondaPythonBinaryPath(condaEnv, targetConfig).getOr { return it }
 
   val (additionalData, customSdkSuggestedName) = when (targetConfig) {
     null -> PythonSdkAdditionalData(flavorAndData) to condaIdentity.userReadableName
     else -> {
       val data = PyTargetAwareAdditionalData(flavorAndData, targetConfig)
+      data.interpreterPath = interpreterPath
       val name = PythonInterpreterTargetEnvironmentFactory.findDefaultSdkName(project, data, condaIdentity.userReadableName)
       data to name
     }
@@ -95,16 +98,14 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(
   sdkModificator.sdkAdditionalData = additionalData
   // homePath is not required by conda, but used by lots of tools all over the code and required by CondaPathFix
   // Because homePath is not set yet, CondaPathFix does not work
-  sdkModificator.homePath = getCondaPythonBinaryPath(project, condaEnv, targetConfig).onFailure {
-    ShowingMessageErrorSync.emit(it, project)
-  }.getOrThrow()
+  sdkModificator.homePath = interpreterPath
   edtWriteAction {
     sdkModificator.commitChanges()
   }
   if (targetConfig == null) {
     saveLocalPythonCondaPath(Path.of(fullCondaPathOnTarget))
   }
-  return sdk
+  return PyResult.success(sdk)
 }
 
 private const val PRINT_SYS_EXECUTABLE_SCRIPT = "import sys; print(sys.executable)"
@@ -113,34 +114,16 @@ private const val PRINT_SYS_EXECUTABLE_SCRIPT = "import sys; print(sys.executabl
  * @return path to Conda interpreter binary on target
  */
 private suspend fun getCondaPythonBinaryPath(
-  project: Project?,
   condaEnv: PyCondaEnv,
   targetConfig: TargetEnvironmentConfiguration?,
-): PyResult<FullPathOnTarget> =
-  getCondaInterpreterOutput(project, condaEnv, EmptyProgressIndicator(), PRINT_SYS_EXECUTABLE_SCRIPT, targetConfig).mapSuccess { it.trim() }
-
-/**
- * Runs python [command] and returns stdout or error
- */
-private suspend fun getCondaInterpreterOutput(
-  project: Project?,
-  condaEnv: PyCondaEnv,
-  indicator: ProgressIndicator,
-  command: String,
-  targetConfig: TargetEnvironmentConfiguration?,
-): PyResult<String> {
-  val targetEnvRequest = targetConfig?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest()
-
-  val cmdBuilder = TargetedCommandLineBuilder(targetEnvRequest)
-  addCondaPythonToTargetCommandLine(cmdBuilder, condaEnv, sdk = null)
-  cmdBuilder.addParameter("-c")
-  cmdBuilder.addParameter(command)
-  val cmd = cmdBuilder.build()
-
-  val environment = targetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
-  return withContext(Dispatchers.IO) {
-    environment.createProcessWithResult(cmd).mapFlat { it.getResultStdoutStr() }.asPythonResult()
+): PyResult<FullPathOnTarget> {
+  val binaryToExec = when (targetConfig) {
+    null -> BinOnEel(Path(condaEnv.fullCondaPathOnTarget))
+    else -> BinOnTarget(condaEnv.fullCondaPathOnTarget, targetConfig)
   }
+  return CondaExecutor.runPythonInCondaEnv(
+    binaryToExec, condaEnv.envIdentity, "-c", PRINT_SYS_EXECUTABLE_SCRIPT
+  ).mapSuccess { it.trim() }
 }
 
 /**
@@ -152,11 +135,11 @@ suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
   project: Project,
 ): PyResult<Sdk> {
   PyCondaEnv.createEnv(this, newCondaEnvInfo).getOr { return it }
-  val sdk = createCondaSdkFromExistingEnv(
+  val sdk = createCondaSdkFromExistingEnvironment(
     condaIdentity = newCondaEnvInfo.toIdentity(),
     existingSdks = existingSdks,
     project = project,
-  )
+  ).getOr { return it }
   if (targetConfig == null) {
     saveLocalPythonCondaPath(Path.of(this@createCondaSdkAlongWithNewEnv.fullCondaPathOnTarget))
   }
@@ -180,7 +163,10 @@ suspend fun suggestCondaPath(filter: (FullPathOnTarget) -> Boolean = { true }): 
 /**
  * Detects conda binary in well-known locations on target
  */
-internal suspend fun suggestCondaPath(targetCommandExecutor: TargetCommandExecutor, filter: (FullPathOnTarget) -> Boolean = { true }): FullPathOnTarget? {
+internal suspend fun suggestCondaPath(
+  targetCommandExecutor: TargetCommandExecutor,
+  filter: (FullPathOnTarget) -> Boolean = { true },
+): FullPathOnTarget? {
   val targetPlatform = withContext(Dispatchers.IO) {
     targetCommandExecutor.targetPlatform.await()
   }

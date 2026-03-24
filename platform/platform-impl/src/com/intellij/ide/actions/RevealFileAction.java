@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
+import com.intellij.platform.eel.provider.LocalEelMachine;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.system.OS;
 import com.sun.jna.Native;
@@ -53,11 +54,9 @@ import java.util.stream.Stream;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.Objects.requireNonNullElseGet;
 
-/**
- * This helpful action opens a file or directory in a system file manager.
- *
- * @see ShowFilePathAction
- */
+/// This helpful action opens a file or directory in a system file manager.
+///
+/// @see ShowFilePathAction
 public class RevealFileAction extends DumbAwareAction implements LightEditCompatible, ActionRemoteBehaviorSpecification.Disabled {
   private static final Logger LOG = Logger.getInstance(RevealFileAction.class);
 
@@ -84,13 +83,12 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   @Override
   public void update(@NotNull AnActionEvent e) {
     var editor = e.getData(CommonDataKeys.EDITOR);
-    e.getPresentation().setEnabledAndVisible(
-      isSupported() &&
-      getFile(e) != null &&
-      (!e.isFromContextMenu() ||
-       editor == null ||
-       !editor.getSelectionModel().hasSelection() ||
-       EditorUtil.contextMenuInvokedOutsideOfSelection(e)));
+    e.getPresentation().setEnabledAndVisible(isSupported() && getFile(e) != null && (
+      !e.isFromContextMenu() ||
+      editor == null ||
+      !editor.getSelectionModel().hasSelection() ||
+      EditorUtil.contextMenuInvokedOutsideOfSelection(e)
+    ));
     e.getPresentation().setText(getActionName(e.getPlace()));
   }
 
@@ -111,14 +109,14 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return findLocalFile(e.getData(CommonDataKeys.VIRTUAL_FILE));
   }
 
-  /** Whether a system is able to open a directory in a file manager and highlight a file in it. */
+  /// Whether a system is able to open a directory in a file manager and highlight a file in it.
   public static boolean isSupported() {
-    return OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS || Holder.fileManagerApp != null;
+    return OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS || Holder.fileManagerApp != null || PathEnvironmentVariableUtil.isOnPath("gdbus");
   }
 
-  /** Whether a system is able to open a directory in a file manager. */
+  /// Whether a system is able to open a directory in a file manager.
   public static boolean isDirectoryOpenSupported() {
-    return OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS || Holder.fileManagerApp != null;
+    return isSupported() || PathEnvironmentVariableUtil.isOnPath("xdg-open");
   }
 
   public static @ActionText @NotNull String getActionName() {
@@ -168,17 +166,17 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return null;
   }
 
-  /** Please use #openFile(Path) */
+  /// Please use [#openFile(Path)] instead.
   @ApiStatus.Obsolete
   @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"})
   public static void openFile(@NotNull java.io.File file) {
     openFile(file.toPath());
   }
 
-  /**
-   * Opens a system file manager with the given file's parent directory loaded and the file highlighted in it
-   * (note that some platforms do not support the file highlighting).
-   */
+  /// Opens a system file manager with the given file's parent directory loaded and the file highlighted in it
+  /// (note that some platforms do not support the file highlighting).
+  ///
+  /// @see #isSupported()
   public static void openFile(@NotNull Path file) {
     var parent = canonicalize(file).getParent();
     if (parent != null) {
@@ -189,23 +187,25 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
   }
 
-  /** Please use #openDirectory(Path) */
+  /// Please use [#openDirectory(Path)] instead.
   @ApiStatus.Obsolete
   @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"})
   public static void openDirectory(@NotNull java.io.File directory) {
     doOpen(directory.toPath(), null);
   }
 
-  /**
-   * Opens a system file manager with the given directory loaded in it.
-   */
+  /// Opens a system file manager with the given directory loaded in it.
+  ///
+  /// @see #isDirectoryOpenSupported()
   public static void openDirectory(@NotNull Path directory) {
     doOpen(directory, null);
   }
 
   private static void doOpen(@NotNull Path _dir, @Nullable Path _toSelect) {
-    var dir = canonicalize(_dir).normalize().toString();
-    var toSelect = _toSelect != null ? canonicalize(_toSelect).normalize().toString() : null;
+    _dir = canonicalize(_dir).normalize();
+    _toSelect = _toSelect != null ? canonicalize(_toSelect).normalize() : null;
+    var dir = _dir.toString();
+    var toSelect = _toSelect != null ? _toSelect.toString() : null;
     String fmApp;
 
     if (OS.CURRENT == OS.Windows) {
@@ -234,6 +234,14 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       else {
         spawn(fmApp, toSelect != null ? toSelect : dir);
       }
+    }
+    else if (PathEnvironmentVariableUtil.isOnPath("gdbus")) {
+      var method = "org.freedesktop.FileManager1." + (toSelect != null ? "ShowItems" : "ShowFolders");
+      var uri = (_toSelect != null ? _toSelect : _dir).toUri().toString();
+      spawn(
+        "gdbus", "call", "--session", "--dest", "org.freedesktop.FileManager1", "--object-path", "/org/freedesktop/FileManager1",
+        "--method", method, "['" + uri + "']", ""
+      );
     }
     else if (toSelect == null && PathEnvironmentVariableUtil.isOnPath("xdg-open")) {
       spawn("xdg-open", dir);
@@ -277,18 +285,20 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     });
   }
 
-  private static Path canonicalize(@NotNull Path path) {
-    try {
-      return path.toRealPath();
+  private static Path canonicalize(Path path) {
+    if (!LocalEelMachine.INSTANCE.ownsPath(path)) {
+      try {
+        return path.toRealPath();
+      }
+      catch (IOException e) {
+        LOG.info("Could not convert " + path + " to canonical path", e);
+      }
     }
-    catch (IOException e) {
-      LOG.info("Could not convert " + path + " to canonical path", e);
-      return path.toAbsolutePath();
-    }
+    return path.toAbsolutePath();
   }
 
   private static void openViaExplorerCall(String dir, @Nullable String toSelect) {
-    spawn(toSelect != null ? "explorer /select,\"" + toSelect + '"' : "explorer /root,\"" + dir + '"');
+    spawn("explorer", toSelect != null ? "/select,\"" + toSelect + '"' : "/root,\"" + dir + '"');
   }
 
   private interface Shell32Ex extends StdCallLibrary {
@@ -304,7 +314,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
 
     ProcessIOExecutorService.INSTANCE.execute(() -> {
       try {
-        var process = OS.CURRENT == OS.Windows ? Runtime.getRuntime().exec(command[0]) : new ProcessBuilder(command).start();
+        var process = new ProcessBuilder(command).start();
         new CapturingProcessHandler.Silent(process, null, command[0])
           .runProcess(10000, false)
           .checkSuccess(LOG);
@@ -330,15 +340,14 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
               .filter(Files::exists)
               .findFirst();
             if (desktopFile.isPresent()) {
-              var lines = Files.readAllLines(desktopFile.get());
-              fmApp = lines.stream()
-                .filter(line -> line.startsWith("Exec="))
-                .map(line -> getExecCommand(line.substring(5)))
-                .findFirst().orElse(null);
-              fmName = lines.stream()
-                .filter(line -> line.startsWith("Name="))
-                .map(line -> line.substring(5))
-                .findFirst().orElse(null);
+              for (var line : Files.readAllLines(desktopFile.get())) {
+                if (line.startsWith("Exec=")) {
+                  fmApp = getExecCommand(line.substring(5));
+                }
+                else if (line.startsWith("Name=")) {
+                  fmName = line.substring(5);
+                }
+              }
             }
           }
         }

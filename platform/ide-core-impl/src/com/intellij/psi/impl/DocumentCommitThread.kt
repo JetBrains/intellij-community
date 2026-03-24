@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl
 
 import com.intellij.codeInsight.multiverse.isEventSystemEnabled
@@ -7,6 +7,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.lang.FileASTNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EditorLockFreeTyping
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ReadAndWriteScope
@@ -211,8 +212,11 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     if (!synchronously) {
       ApplicationManager.getApplication().assertIsNonDispatchThread()
     }
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-    val document = task.myDocumentRef.get()?: return {}
+    val document = task.myDocumentRef.get()
+    if (!EditorLockFreeTyping.isInElfScope(document)) {
+      ApplicationManager.getApplication().assertReadAccessAllowed()
+    }
+    if (document == null) return {}
     val project = task.myProject
     val finishProcessors = SmartList<BooleanRunnable>()
     val reparseInjectedProcessors = SmartList<BooleanRunnable>()
@@ -431,7 +435,9 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     if (!synchronously) {
       ApplicationManager.getApplication().assertIsNonDispatchThread()
     }
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    if (!EditorLockFreeTyping.isInElfScope(document)) {
+      ApplicationManager.getApplication().assertReadAccessAllowed()
+    }
     val newDocumentText = document.getImmutableCharSequence()
 
     val data = document.getUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY)

@@ -30,8 +30,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
-import org.jetbrains.plugins.gitlab.api.data.GitLabSnippetBlobActionEnum
-import org.jetbrains.plugins.gitlab.api.data.GitLabVisibilityLevel
+import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobActionEnum
+import org.jetbrains.plugins.gitlab.api.dto.GitLabVisibilityLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser

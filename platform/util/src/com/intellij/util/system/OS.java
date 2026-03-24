@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.system;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -26,54 +26,53 @@ import java.util.stream.Stream;
 public enum OS {
   Windows, macOS, Linux, FreeBSD, Other;
 
-  /**
-   * A string representation of the OS version.
-   * The format is system-dependent ("major.minor" for Windows and macOS, kernel version for Linux, etc.)
-   */
-  @SuppressWarnings("MethodMayBeStatic")
-  public final @NotNull String version() {
-    return VersionHolder.STR;
-  }
+  /// Represents an operating system this JVM is running on.
+  ///
+  /// @see LowLevelLocalMachineAccess
+  @LowLevelLocalMachineAccess
+  public static final OS CURRENT = fromString(System.getProperty("os.name"));
 
-  /**
-   * Returns the OS version string parsed as a {@link Version} object ("major.minor.bugfix" triple).
-   */
-  @SuppressWarnings("MethodMayBeStatic")
-  public final @NotNull Version parsedVersion() {
-    return VersionHolder.VAL;
-  }
-
-  /** @deprecated use {@link #version()} instead */
+  /// @deprecated use [#version()] instead
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   @SuppressWarnings("FieldMayBeStatic")
   public final @NotNull String version = VersionHolder.STR;
 
-  /**
-   * Checks whether the current OS version is at least the specified major and minor versions.
-   * If the current OS version has only major number (e.g., Windows 11), pass {@code 0} as the minor version.
-   */
+  /// A string representation of the OS version.
+  /// The format is system-dependent ("major.minor" for Windows and macOS, kernel version for Linux, etc.)
+  @SuppressWarnings("MethodMayBeStatic")
+  public final @NotNull String version() {
+    return VersionHolder.STR;
+  }
+
+  /// Returns the OS version string parsed as a [Version] object ("major.minor.bugfix" triple).
+  @SuppressWarnings("MethodMayBeStatic")
+  public final @NotNull Version parsedVersion() {
+    return VersionHolder.VAL;
+  }
+
+  /// Checks whether the current OS version is at least the specified major and minor versions.
+  /// If the current OS version has only major number (e.g., Windows 11), pass `0` as the minor version.
   @SuppressWarnings("MethodMayBeStatic")
   public final boolean isAtLeast(int major, int minor) {
     if (major <= 0 || minor < 0) throw new IllegalArgumentException();
     return VersionHolder.VAL.compareTo(new Version(major, minor, 0)) >= 0;
   }
 
-  /**
-   * Returns an instance of {@link OsInfo} for the current OS.
-   */
+  /// Returns an instance of [OsInfo] for the current OS.
   public final @NotNull OsInfo getOsInfo() {
-    return
+    return (
       this == Windows ? WindowsInfo.INSTANCE :
       this == macOS ? MacOsInfo.INSTANCE :
       this == Linux ? LinuxInfo.INSTANCE :
-      UnixInfo.INSTANCE;
+      UnixInfo.INSTANCE
+    );
   }
 
-  /** Represents an operating system this JVM is running on */
-  public static final OS CURRENT = fromString(System.getProperty("os.name"));
+  public @NotNull Platform getPlatform() {
+    return this == Windows ? Platform.WINDOWS : Platform.UNIX;
+  }
 
-  @SuppressWarnings("SpellCheckingInspection")
   public static @NotNull OS fromString(@Nullable String os) {
     if (os != null) {
       os = os.toLowerCase(Locale.ENGLISH);
@@ -84,6 +83,14 @@ public enum OS {
     }
     return Other;
   }
+
+  /// Returns `true` if the current operating system is a generic Unix-like system (not Windows or macOS).
+  public static boolean isGenericUnix() {
+    return CURRENT != Windows && CURRENT != macOS;
+  }
+
+  @ReviseWhenPortedToJDK(value = "17", description = "Seal")
+  public interface OsInfo { }
 
   private static final class VersionHolder {
     private static final String STR;
@@ -108,29 +115,13 @@ public enum OS {
     }
   }
 
-  public @NotNull Platform getPlatform() {
-    return this == Windows ? Platform.WINDOWS : Platform.UNIX;
-  }
-
-  /**
-   * Returns {@code true} if the current operating system is a generic Unix-like system (not Windows or macOS).
-   */
-  public static boolean isGenericUnix() {
-    return CURRENT != Windows && CURRENT != macOS;
-  }
-
-  @ReviseWhenPortedToJDK(value = "17", description = "Seal")
-  public interface OsInfo { }
-
   public static final class WindowsInfo implements OsInfo {
     private static final WindowsInfo INSTANCE = new WindowsInfo();
 
     private WindowsInfo() { }
 
-    /**
-     * Build number is the only more or less stable approach to get comparable Windows versions.
-     * See <a href="https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions">list of builds</a>.
-     */
+    /// Build number is the only more or less stable approach to get comparable Windows versions.
+    /// See [list of builds](https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions).
     public @Nullable Long getBuildNumber() {
       return WinBuildNumber.getWinBuildNumber();
     }

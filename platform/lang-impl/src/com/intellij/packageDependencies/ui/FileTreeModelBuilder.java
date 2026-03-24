@@ -256,7 +256,7 @@ public final class FileTreeModelBuilder {
     Runnable buildingRunnable = () -> {
       for (final PsiFile file : files) {
         if (file != null) {
-          ReadAction.run(() -> buildFileNode(file.getVirtualFile(), null));
+          ReadAction.runBlocking(() -> buildFileNode(file.getVirtualFile(), null));
         }
       }
     };
@@ -664,7 +664,7 @@ public final class FileTreeModelBuilder {
 
     @Override
     public boolean processFile(@NotNull VirtualFile fileOrDir) {
-      ReadAction.run(() -> {
+      ReadAction.runBlocking(() -> {
         if (!fileOrDir.isDirectory()) {
           if (lastParent != null && !Comparing.equal(dir, fileOrDir.getParent())) {
             lastParent = null;

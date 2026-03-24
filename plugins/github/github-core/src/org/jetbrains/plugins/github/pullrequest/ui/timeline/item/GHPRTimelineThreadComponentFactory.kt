@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline.item
 import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.launchNowIn
-import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.ComponentListPanelFactory
@@ -34,7 +33,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.supervisorScope
-import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadComponentFactory
@@ -177,11 +175,10 @@ internal object GHPRTimelineThreadComponentFactory {
 
   private fun CoroutineScope.createCollapsedThreadCommentBody(vm: GHPRReviewThreadCommentViewModel): JComponent {
     val cs = this
-    val project = vm.bodyVm.project
     val textPane = SimpleHtmlPane(addBrowserListener = false).apply {
       addGithubHyperlinkListener(vm.bodyVm::openPullRequestInfoAndTimeline)
       foreground = UIUtil.getContextHelpForeground()
-      bindTextIn(cs, vm.bodyVm.body.mapState { it.convertToHtml(project) })
+      bindTextIn(cs, vm.bodyVm.bodyHtml)
     }.let { pane ->
       CollaborationToolsUIUtil
         .wrapWithLimitedSize(pane, DimensionRestrictions.LinesHeight(pane, 2, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH))

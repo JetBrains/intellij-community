@@ -37,7 +37,7 @@ public class IndentsModelCaretListener implements CaretListener {
         myCurrentHint = null;
       }
 
-      if (newGuide != null && shouldShowHint(newGuide)) {
+      if (newGuide != null && shouldShowHint(myEditor, newGuide.startLine)) {
         showHint(newGuide);
       }
     }
@@ -49,10 +49,11 @@ public class IndentsModelCaretListener implements CaretListener {
     }
   }
 
-  private boolean shouldShowHint(@NotNull IndentGuideDescriptor descriptor) {
-    final Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
-    boolean isLineBeforeVisibleArea = myEditor.logicalLineToY(descriptor.startLine) < visibleArea.y;
-    return isLineBeforeVisibleArea && !myEditor.shouldSuppressEditorFragmentHint(descriptor.startLine);
+  @ApiStatus.Internal
+  public static boolean shouldShowHint(@NotNull EditorImpl editor, int startLine) {
+    final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    boolean isLineBeforeVisibleArea = editor.logicalLineToY(startLine) < visibleArea.y;
+    return isLineBeforeVisibleArea && !editor.shouldSuppressEditorFragmentHint(startLine);
   }
 
   protected @Nullable IndentGuideDescriptor getCaretIndentGuide(final @NotNull CaretEvent event) {

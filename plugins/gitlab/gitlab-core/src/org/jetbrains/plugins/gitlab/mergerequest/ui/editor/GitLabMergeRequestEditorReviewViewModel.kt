@@ -30,7 +30,9 @@ import com.intellij.util.EventDispatcher
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
+import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.localCommitsSyncStatus
+import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitCurrentBranchPresenter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -55,6 +57,7 @@ import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
@@ -63,7 +66,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.createDiffDataFlow
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUtil
-import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.util.EventListener
 
@@ -73,7 +75,8 @@ private val LOG = logger<GitLabMergeRequestEditorReviewViewModel>()
 class GitLabMergeRequestEditorReviewViewModel internal constructor(
   parentCs: CoroutineScope,
   private val project: Project,
-  private val projectMapping: GitLabProjectMapping,
+  gitRemote: GitRemoteUrlCoordinates,
+  private val actualProjectCoordinates: GitLabProjectCoordinates,
   currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
   private val discussionsVms: GitLabMergeRequestDiscussionsViewModels,
@@ -87,6 +90,8 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
   if (project.service<GitLabMergeRequestsPreferences>().editorReviewEnabled) DiscussionsViewOption.UNRESOLVED_ONLY else DiscussionsViewOption.DONT_SHOW
 ), CodeReviewInEditorViewModel {
   private val preferences = project.service<GitLabMergeRequestsPreferences>()
+
+  private val gitRepository: GitRepository = gitRemote.repository
 
   val mergeRequestIid: String = mergeRequest.iid
 
@@ -138,7 +143,7 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   val localRepositorySyncStatus: StateFlow<ComputedResult<GitBranchSyncStatus?>?> by lazy {
-    val repository = projectMapping.remote.repository
+    val repository = gitRepository
     _actualChangesState.map {
       (it as? ChangesState.Loaded)?.changes?.commits?.map { it.sha }
     }.distinctUntilChanged().transformLatest {
@@ -188,7 +193,7 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
   override fun updateBranch() {
     cs.launch {
       val details = mergeRequest.refreshDataNow()
-      GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(projectMapping, details)
+      GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(gitRepository, actualProjectCoordinates.serverPath, details)
     }
   }
 
@@ -238,7 +243,7 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
    */
   fun getFileStateFlow(virtualFile: VirtualFile): Flow<FileReviewState> {
     if (!virtualFile.isValid || virtualFile.isDirectory ||
-        !VfsUtilCore.isAncestor(projectMapping.remote.repository.root, virtualFile, true)) {
+        !VfsUtilCore.isAncestor(gitRepository.root, virtualFile, true)) {
       return flowOf(FileReviewState.NotInReview)
     }
     val filePath = VcsContextFactory.getInstance().createFilePathOn(virtualFile)

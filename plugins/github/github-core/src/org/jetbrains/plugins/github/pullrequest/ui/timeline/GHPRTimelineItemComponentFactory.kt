@@ -42,6 +42,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewStat
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState.PENDING
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsPickerComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
@@ -152,7 +153,9 @@ internal class GHPRTimelineItemComponentFactory(private val project: Project,
     val textPane = createHtmlPane(comment.bodyHtml)
     val content = EditableComponentFactory.create(cs, textPane, comment.editVm) {
       val actions = createEditActionsConfig(it)
-      val editor = CodeReviewCommentTextFieldFactory.createIn(this, it, actions)
+      val editor = CodeReviewCommentTextFieldFactory.createIn(this, it, actions) { editor ->
+        editor.putUserData(GHViewModelWithTextCompletion.MENTIONS_COMPLETION_KEY, comment)
+      }
       it.requestFocus()
       editor
     }

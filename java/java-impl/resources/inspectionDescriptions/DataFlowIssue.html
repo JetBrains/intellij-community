@@ -37,6 +37,8 @@ Integer square(@Nullable Integer input) {
   <li>Use the <b>Ignore assert statements</b> option to control how the inspection treats <code>assert</code> statements. By default, the option
     is disabled, which means that the assertions are assumed to be executed (-ea mode). If the option is enabled, the assertions will be completely ignored
     (-da mode).</li>
+  <li>Use the <b>Reports patterns that may throw MatchException</b> option to report patterns that may throw
+    <code>MatchException</code> at runtime due to null values in deconstruction patterns.</li>
   <li>Use the <b>Report problems that happen only on some code paths</b> option to control whether to report problems that may happen only
     on some code path. If this option is disabled, warnings like <i>exception is possible</i> will not be reported. The inspection will report
     only warnings like <i>exception will definitely occur</i>. This mode may greatly reduce the number of false-positives, especially if the code

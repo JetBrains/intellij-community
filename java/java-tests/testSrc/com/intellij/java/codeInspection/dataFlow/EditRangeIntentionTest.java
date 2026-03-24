@@ -11,6 +11,7 @@ import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.modcommand.ModEditOptions;
 import com.intellij.modcommand.ModUpdateFileText;
 import com.intellij.modcommand.Presentation;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -41,7 +42,7 @@ public final class EditRangeIntentionTest extends LightJavaCodeInsightFixtureTes
                                             PsiTypes.intType().equals(ctr.getParameterList().getParameter(1).getType()));
     assertNotNull(constructor);
     PsiParameter parameter = constructor.getParameterList().getParameters()[1];
-    int offset = parameter.getTextRange().getStartOffset();
+    int offset = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> parameter.getTextRange().getStartOffset());
     ActionContext ctx = new ActionContext(getProject(), parameter.getContainingFile(), offset, TextRange.create(offset, offset), null);
     Presentation presentation = intention.getPresentation(ctx);
     assertNotNull(presentation);

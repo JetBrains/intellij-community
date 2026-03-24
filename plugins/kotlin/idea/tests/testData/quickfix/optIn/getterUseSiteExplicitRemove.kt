@@ -1,4 +1,5 @@
 // "Remove annotation" "true"
+// K2_ERROR: Opt-in requirement marker annotation cannot be used on getter.
 
 @RequiresOptIn
 annotation class SomeOptInAnnotation

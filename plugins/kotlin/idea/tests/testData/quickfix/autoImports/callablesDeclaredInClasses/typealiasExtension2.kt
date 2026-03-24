@@ -1,4 +1,5 @@
 // "Import extension function 'Obj.ext'" "true"
+// K2_ERROR: Unresolved reference 'ext'.
 package p
 
 object Obj

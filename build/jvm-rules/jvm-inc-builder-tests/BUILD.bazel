@@ -75,6 +75,7 @@ kt_jvm_library(
         "@bazel_tools//tools/java/runfiles",
         "//:annotations_import",
         "//:asm-all_import",
+        "//:kotlin-metadata-jvm_import",
         "//:junit4",
         "//dependency-graph",
         "//jps-builders-6:build-javac-rt",

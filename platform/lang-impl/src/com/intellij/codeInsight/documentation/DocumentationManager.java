@@ -184,7 +184,7 @@ import static com.intellij.lang.documentation.DocumentationMarkup.PRE_ELEMENT;
 /**
  * Replaced by {@link com.intellij.lang.documentation.ide.impl.DocumentationManager}
  *
- * @deprecated Unused in v2 implementation. Unsupported: use at own risk.
+ * @deprecated Unused in v2 implementation. Unsupported: use at your own risk.
  */
 @SuppressWarnings("removal")
 @Deprecated(forRemoval = true)
@@ -715,7 +715,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                                    boolean onAutoUpdate) {
     if (!myProject.isOpen()) return;
 
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       assertSameProject(element);
       storeOriginalElement(myProject, originalElement, element);
     });
@@ -895,7 +895,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     if (myEditor == null) {
-      // subsequent invocation of javadoc popup from completion will have myEditor == null because of cancel invoked,
+      // subsequent invocation of Javadoc popup from completion will have myEditor == null because of cancel invoked,
       // so reevaluate the editor for proper popup placement
       Lookup lookup = LookupManager.getInstance(myProject).getActiveLookup();
       myEditor = lookup != null ? lookup.getEditor() : null;
@@ -985,7 +985,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   /**
-   * in case index is not ready will throw IndexNotReadyException
+   * in case the index is not ready will throw IndexNotReadyException
    */
   private @Nullable PsiElement findTargetElementUnsafe(Editor editor, int offset, @Nullable PsiFile file, PsiElement contextElement) {
     if (LookupManager.getInstance(myProject).getActiveLookup() != null) {
@@ -1051,7 +1051,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (element == null && contextElement == null) {
       return null;
     }
-    // Allow context doc over xml tag content
+    // Allow context doc over XML tag content
     PsiElement adjusted = util.adjustElement(editor, util.getAllAccepted(), element, contextElement);
     return adjusted != null ? adjusted : element;
   }
@@ -1120,7 +1120,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     JBPopup hint = myDocInfoHintRef.get();
     if (hint == null || !hint.isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
       if (hint != null) {
-        // hint's window might've been hidden by AWT without notifying us
+        // AWT might've hidden hint's window without notifying us
         // dispose to remove the popup from IDE hierarchy and avoid leaking components
         hint.cancel();
       }
@@ -1174,7 +1174,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       LOG.debug("Started fetching documentation...");
 
       PsiElement element = collector.getElement(true);
-      if (element == null || !ReadAction.compute(() -> element.isValid())) {
+      if (element == null || !ReadAction.computeBlocking(() -> element.isValid())) {
         LOG.debug("Element for which documentation was requested is not available anymore");
         ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), () -> {
           component.setText(CodeInsightBundle.message("no.documentation.found"), null, collector.provider);
@@ -1183,7 +1183,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         return;
       }
 
-      Language elementLanguage = ReadAction.compute(() -> element.getLanguage());
+      Language elementLanguage = ReadAction.computeBlocking(() -> element.getLanguage());
       DocToolWindowManager toolWindowManager = DocToolWindowManager.LANGUAGE_MANAGER.forLanguage(elementLanguage);
       if (toolWindowManager != null) {
         if (collector.onAutoUpdate && !toolWindowManager.isAutoUpdateAvailable()) {
@@ -1203,7 +1203,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           LOG.debug("Setting precalculated documentation:\n", precalculatedDocumentation);
           text = precalculatedDocumentation;
           PsiElement originalElement = getOriginalElement(collector, element);
-          provider = ReadAction.compute(() -> getProviderFromElement(element, originalElement));
+          provider = ReadAction.computeBlocking(() -> getProviderFromElement(element, originalElement));
         }
         else {
           text = collector.getDocumentation();
@@ -1226,7 +1226,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
       LOG.debug("Documentation fetched successfully:\n", text);
 
-      final @Nls String decoratedText = ReadAction.compute(() -> {
+      final @Nls String decoratedText = ReadAction.computeBlocking(() -> {
         if (text == null) {
           return decorate(element, CodeInsightBundle.message("no.documentation.found"), null, provider);
         }
@@ -1729,7 +1729,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       if (element == null) {
         return null;
       }
-      provider = ReadAction.compute(() -> getProviderFromElement(element, originalElement));
+      provider = ReadAction.computeBlocking(() -> getProviderFromElement(element, originalElement));
       LOG.debug("Using provider ", provider);
 
       if (provider instanceof ExternalDocumentationProvider) {

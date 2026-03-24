@@ -1,7 +1,8 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.gradle.kotlin.dsl.invoke
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
-    kotlin("jvm") version "1.8.0"
+    kotlin("jvm") version "2.2.0"
 }
 
 group = "org.example"
@@ -10,7 +11,17 @@ version = "1.0-SNAPSHOT"
 repositories {
     mavenCentral()
 }
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    languageVersion = "1.8"
+
+dependencies {
+    testImplementation(kotlin("test"))
+}
+
+kotlin {
+    compilerOptions {
+        languageVersion.set(KotlinVersion.KOTLIN_2_1)
+    }
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

@@ -9,7 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.refactoring.RefactoringBundle
@@ -73,9 +73,9 @@ internal fun CoroutineScope.appendUsages(
   })
   launch(CoroutineName("appendUsages")) {
     for (pointer: UsagePointer in channel) {
-      runReadAction {
-        val renameUsage: RenameUsage = pointer.dereference() ?: return@runReadAction
-        val usageViewUsage: Usage = asUsage(renameUsage, newName) ?: return@runReadAction
+      runReadActionBlocking {
+        val renameUsage: RenameUsage = pointer.dereference() ?: return@runReadActionBlocking
+        val usageViewUsage: Usage = asUsage(renameUsage, newName) ?: return@runReadActionBlocking
         usageView.appendUsage(usageViewUsage)
       }
     }

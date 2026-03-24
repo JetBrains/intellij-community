@@ -118,9 +118,9 @@ public abstract class StubTreeLoader {
       msg += ", file.class=" + psiFile.getClass();
       msg += ", file.lang=" + psiFile.getLanguage();
       msg += ", modStamp=" + psiFile.getModificationStamp();
-      msg += ", psi.length=" + psiFile.getTextLength();
 
       if (!compiled) {
+        msg += ", psi.length=" + psiFile.getTextLength();
         String text = psiFile.getText();
         PsiFile fromText =
           PsiFileFactory.getInstance(psiFile.getProject()).createFileFromText(psiFile.getName(), psiFile.getFileType(), text);

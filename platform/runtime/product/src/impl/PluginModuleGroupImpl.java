@@ -1,16 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.impl;
 
-import com.intellij.platform.runtime.product.IncludedRuntimeModule;
 import com.intellij.platform.runtime.product.PluginModuleGroup;
 import com.intellij.platform.runtime.product.ProductMode;
-import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule;
-import com.intellij.platform.runtime.product.serialization.RawIncludedRuntimeModule;
 import com.intellij.platform.runtime.product.serialization.ResourceFileResolver;
 import com.intellij.platform.runtime.product.serialization.impl.PluginXmlReader;
+import com.intellij.platform.runtime.repository.IncludedRuntimeModule;
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
+import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule;
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
+import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -90,6 +90,6 @@ public final class PluginModuleGroupImpl implements PluginModuleGroup {
 
   @Override
   public String toString() {
-    return "PluginModuleGroup{mainModule=" + myMainModule.getModuleId().getStringId() + "}";
+    return "PluginModuleGroup{mainModule=" + myMainModule.getModuleId().getPresentableName() + "}";
   }
 }

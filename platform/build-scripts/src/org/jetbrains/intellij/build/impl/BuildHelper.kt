@@ -6,19 +6,16 @@ import com.intellij.util.system.OS
 import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
@@ -66,10 +63,37 @@ internal fun getCommandLineArgumentsForOpenPackages(context: CompilationContext,
   return JavaModuleOptions.readOptions(file, os)
 }
 
+interface SuspendingLazy<T> {
+  suspend fun await(): T
+}
+
 /**
- * [GlobalScope] is required not to hang a caller, see [CoroutineStart.LAZY]
+ * Computes a value on the first `await()` and shares the result with all concurrent awaiters.
+ *
+ * Cancellation evicts the in-flight computation so the next call retries, while successful values and ordinary failures are reused.
  */
-@OptIn(DelicateCoroutinesApi::class)
-internal fun <T> asyncLazy(coroutineName: String, initializer: suspend CoroutineScope.() -> T): Deferred<T> {
-  return GlobalScope.async(Dispatchers.Unconfined + CoroutineName(coroutineName), CoroutineStart.LAZY, initializer)
+fun <T> suspendingLazy(coroutineName: String, initializer: suspend CoroutineScope.() -> T): SuspendingLazy<T> {
+  return AsyncCacheBackedSuspendingLazy(coroutineName = coroutineName, initializer = initializer)
+}
+
+private class AsyncCacheBackedSuspendingLazy<T>(
+  private val coroutineName: String,
+  private val initializer: suspend CoroutineScope.() -> T,
+) : SuspendingLazy<T> {
+  private val key = NamedSuspendingLazyKey(coroutineName)
+  private val cache = AsyncCache<NamedSuspendingLazyKey, T>()
+
+  override suspend fun await(): T {
+    return cache.getOrPut(key) {
+      withContext(CoroutineName(coroutineName)) {
+        coroutineScope {
+          initializer(this)
+        }
+      }
+    }
+  }
+}
+
+private class NamedSuspendingLazyKey(private val name: String) {
+  override fun toString(): String = name
 }

@@ -102,7 +102,7 @@ public final class OfflineDescriptorResolveResult {
                                                          @NotNull InspectionToolPresentation presentation) {
     RefEntity element = descriptor.getRefElement(presentation.getContext().getRefManager());
     CommonProblemDescriptor resolvedDescriptor =
-      ReadAction.compute(() -> createDescriptor(element, descriptor, wrapper, presentation));
+      ReadAction.computeBlocking(() -> createDescriptor(element, descriptor, wrapper, presentation));
     return new OfflineDescriptorResolveResult(element, resolvedDescriptor);
   }
 

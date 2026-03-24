@@ -104,7 +104,7 @@ final class LineMarkersUtil {
   private static void createOrReuseLineMarker(@NotNull LineMarkerInfo<?> lineMarkerInfo,
                                               @NotNull Project project,
                                               @NotNull MarkupModelEx markupModel,
-                                              @NotNull Long2ObjectMap<List<RangeHighlighterEx>> toReuse,
+                                              @NotNull Long2ObjectMap<? extends List<RangeHighlighterEx>> toReuse,
                                               @NotNull CodeInsightContext context) {
     LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer<?>)lineMarkerInfo.createGutterRenderer();
     List<RangeHighlighterEx> list = toReuse.get(TextRangeScalarUtil.toScalarRange(lineMarkerInfo.startOffset, lineMarkerInfo.endOffset));
@@ -139,7 +139,7 @@ final class LineMarkersUtil {
   private static @NotNull Consumer<RangeHighlighterEx> changeAttributes(@NotNull LineMarkerInfo<?> info,
                                                                         @NotNull Project project,
                                                                         boolean rendererChanged,
-                                                                        LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer,
+                                                                        @Nullable LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer,
                                                                         @NotNull CodeInsightContext context,
                                                                         boolean lineSeparatorColorChanged,
                                                                         boolean lineSeparatorPlacementChanged) {

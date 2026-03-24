@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -17,8 +17,11 @@ import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.TemplateSubstitutor;
 import com.intellij.lang.Language;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -61,8 +64,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
-
-import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.filterTemplatesByPrefix;
 
 public final class TemplateManagerImpl extends TemplateManager implements Disposable {
   private final @NotNull Project myProject;
@@ -498,7 +499,16 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
   private static Set<TemplateContextType> getDirectlyApplicableContextTypes(@NotNull TemplateActionContext templateActionContext) {
     Set<TemplateContextType> set = new LinkedHashSet<>();
     for (TemplateContextType contextType : getAllContextTypes()) {
-      if (contextType.isInContext(templateActionContext)) {
+      boolean isInContext = false;
+      try {
+        isInContext = contextType.isInContext(templateActionContext);
+      } catch (RuntimeException e) {
+        if (!EditorLockFreeTyping.isEnabled()) {
+          // TODO: PolyContextDiscoveryKt.forPsiLocation asserts for RA
+          throw e;
+        }
+      }
+      if (isInContext) {
         set.add(contextType);
       }
     }
@@ -597,7 +607,9 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
   public static boolean isApplicableTemplatePresent(@NotNull PsiFile file, @NotNull Editor editor) {
     TemplateActionContext context = TemplateActionContext.expanding(file, editor);
     int offset = editor.getCaretModel().getOffset();
-    Map<TemplateImpl, String> templates = filterTemplatesByPrefix(listApplicableTemplates(context), editor, offset, true, false);
+    @NotNull Collection<? extends TemplateImpl> applicableTemplates = listApplicableTemplates(context);
+    Map<TemplateImpl, String> templates =
+      ListTemplatesHandler.filterTemplatesByPrefix(applicableTemplates, editor.getDocument(), offset, true, false);
     if (!templates.isEmpty()) {
       return true;
     }
@@ -681,5 +693,20 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     OffsetsInFile hostOffsets = offsetMap.toTopLevelFile();
     OffsetsInFile hostCopy = hostOffsets.copyWithReplacement(getStartOffset(hostOffsets), getEndOffset(hostOffsets), replacement);
     return hostCopy.toInjectedIfAny(getStartOffset(hostCopy));
+  }
+
+  /**
+   * Executes the template within ModCommand context. The template is not actually executed,
+   * but contributes to {@link ModPsiUpdater} to form the final {@link ModCommand}.
+   * <p>
+   *   Note that not all the template behavior is implemented yet, and not everything is supported in ModCommands at all,
+   *   so expect that complex templates that use rare features may not work correctly.
+   * </p>
+   *
+   * @param template template to execute.
+   * @param updater {@link ModPsiUpdater} to use.
+   */
+  public static void updateTemplate(@NotNull TemplateImpl template, @NotNull ModPsiUpdater updater) {
+    template.update(updater, new InteractiveTemplateStateProcessor());
   }
 }

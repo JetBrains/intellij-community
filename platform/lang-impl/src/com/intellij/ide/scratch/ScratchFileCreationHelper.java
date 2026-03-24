@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -35,10 +36,16 @@ public abstract class ScratchFileCreationHelper {
   }
   
   public void beforeCreate(@NotNull Project project, @NotNull Context context) {
-  } 
+  }
+
+  public void afterCreate(@NotNull Project project, @NotNull Context context, PsiFile scratchFile) {
+  }
   
   public static final class Context {
     public @NotNull String text = "";
+    public @Nullable PsiFile sourceFile;
+    public @Nullable TextRange selectionRange;
+
     public Language language;
     public int caretOffset;
     

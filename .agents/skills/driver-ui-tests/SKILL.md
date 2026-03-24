@@ -1,6 +1,6 @@
 ---
 name: driver-ui-tests
-description: Guide for writing UI tests using IDE Starter and UI Driver frameworks. Use when creating or modifying UI tests.
+description: Guide for writing UI tests using IDE Starter and UI Driver frameworks. Use when creating or modifying UI tests or when user ask to implement test case from testops.
 ---
 
 # Driver UI Tests Guide
@@ -118,13 +118,65 @@ ui.keyboard { hotKey(KeyEvent.VK_META, KeyEvent.VK_COMMA) }  // Cmd+,
 
 ## Writing Tests
 
+### Required Annotations
+
+Every UI test **must** have the following annotations at the class level:
+
+| Annotation | Purpose | TestOps Custom Field |
+|------------|---------|---------------------|
+| `@Subsystems.*` | Categorizes the test by subsystem | `Subsystem` |
+| `@Features.*` | Specifies the feature being tested | `Feature` |
+| `@Components.*` | Identifies the component under test | `Component` |
+
+**For tests linked to TestOps test cases**, also add:
+- `@AllureId("test_case_id")` - Links the test to the TestOps test case ID
+
+The annotation values should match the corresponding TestOps custom fields (Subsystem, Feature, Component).
+
+**Available annotations:** See `tests/intellij.ide.starter.extended.allure/src/com/intellij/ide/starter/extended/allure/Annotations.kt`
+
+**Example with TestOps test case:**
+
+```kotlin
+@Subsystems.Java
+@Features.Completion
+@Components.Editor
+class MyTestFromTestOps {
+
+    @Test
+    @AllureId("318541")  // Required when test case exists in TestOps
+    fun `my test from testops`(testInfo: TestInfo) {
+        // ...
+    }
+}
+```
+
+**Example for new test (not yet in TestOps):**
+
+```kotlin
+@Subsystems.UI
+@Features.PluginManager
+@Components.Miscellaneous
+class MyNewTest {
+
+    @Test
+    fun `my new test`(testInfo: TestInfo) {
+        // ...
+    }
+}
+```
+
 ### Basic Test Structure
 
 ```kotlin
+@Subsystems.Java
+@Features.Completion
+@Components.Editor
 class MyTest {
     val testCase = TestCase(IdeProductProvider.IU, myProject)
 
     @Test
+    @AllureId("123456")  // Required if test case exists in TestOps
     fun `my test name`(testInfo: TestInfo) {
         val context = Starter.newContext(testName = "TestName", testCase = testCase)
 
@@ -134,7 +186,7 @@ class MyTest {
 
         context.runIdeTest(testName = testInfo.displayName) {
             waitForIndicators(5.minutes)  // Wait for indexing to complete
-            
+
             step("Step description") {
                 // Test actions here
             }

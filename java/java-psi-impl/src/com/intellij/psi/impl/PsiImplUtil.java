@@ -96,7 +96,6 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.ServerPageFile;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.ThreadLocalTypes;
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -113,8 +112,6 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.processor.FilterScopeProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PackageScope;
@@ -255,12 +252,6 @@ public final class PsiImplUtil {
     }
     LOG.error(typeParameter + " in " + typeParameterList);
     return -1;
-  }
-
-  public static Object @NotNull [] getReferenceVariantsByFilter(@NotNull PsiJavaCodeReferenceElement reference, @NotNull ElementFilter filter) {
-    FilterScopeProcessor processor = new FilterScopeProcessor(filter);
-    PsiScopesUtil.resolveAndWalk(processor, reference, null, true);
-    return processor.getResults().toArray();
   }
 
   public static boolean processDeclarationsInMethod(@NotNull PsiMethod method,
@@ -638,11 +629,18 @@ public final class PsiImplUtil {
 
   public static @Nullable PsiJavaDocumentedElement findDocCommentOwner(@NotNull PsiDocComment comment) {
     PsiElement parent = comment.getParent();
+    PsiJavaDocumentedElement owner = null;
     if (parent instanceof PsiJavaDocumentedElement) {
-      PsiJavaDocumentedElement owner = (PsiJavaDocumentedElement)parent;
-      if (owner.getDocComment() == comment) {
-        return owner;
+      owner = (PsiJavaDocumentedElement)parent;
+    }
+    else if (parent instanceof PsiFile) {
+      PsiElement sibling = PsiTreeUtil.skipWhitespacesForward(comment);
+      if (sibling instanceof PsiJavaDocumentedElement) {
+        owner = (PsiJavaDocumentedElement)sibling;
       }
+    }
+    if (owner != null && owner.getDocComment() == comment) {
+      return owner;
     }
     return null;
   }
@@ -1020,5 +1018,29 @@ public final class PsiImplUtil {
       }
     }
     return element;
+  }
+
+  /**
+   * @return true if ref is a type qualifier of a static member
+   */
+  @ApiStatus.Internal
+  public static boolean isTypeQualifierOfStaticMember(@NotNull PsiJavaCodeReferenceElement ref) {
+    PsiElement parent = ref.getParent();
+    while (parent instanceof PsiJavaCodeReferenceElement) {
+      PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)parent;
+      PsiElement qualified = referenceElement.resolve();
+      if (qualified instanceof PsiMember) {
+        if (((PsiMember)qualified).hasModifierProperty(PsiModifier.STATIC)) {
+          return true;
+        }
+      }
+      if (qualified instanceof PsiClass) {
+        parent = parent.getParent();
+      }
+      else {
+        break;
+      }
+    }
+    return false;
   }
 }

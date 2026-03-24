@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.navigation">
+<idea-plugin package="org.jetbrains.kotlin.idea.navigation" visibility="internal">
   <extensions defaultExtensionNs="com.intellij">
 
     <applicationService

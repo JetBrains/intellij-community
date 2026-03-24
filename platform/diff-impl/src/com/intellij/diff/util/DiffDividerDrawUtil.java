@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.diff.util.DiffDrawUtil.MarkerRange;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -54,15 +53,13 @@ public final class DiffDividerDrawUtil {
                                      @NotNull Editor editor1,
                                      @NotNull Editor editor2,
                                      @NotNull DividerSeparatorPaintable paintable) {
-    ReadAction.run(() -> {
-      List<DividerSeparator> polygons = createVisibleSeparators(editor1, editor2, paintable, gg.getClipBounds());
+    List<DividerSeparator> polygons = createVisibleSeparators(editor1, editor2, paintable, gg.getClipBounds());
 
-      GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
-      for (DividerSeparator polygon : polygons) {
-        polygon.paint(gg, width);
-      }
-      config.restore();
-    });
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
+    for (DividerSeparator polygon : polygons) {
+      polygon.paint(gg, width);
+    }
+    config.restore();
   }
 
   public static void paintPolygons(@NotNull Graphics2D gg,
@@ -79,15 +76,13 @@ public final class DiffDividerDrawUtil {
                                    @NotNull Editor editor1,
                                    @NotNull Editor editor2,
                                    @NotNull DividerPaintable paintable) {
-    ReadAction.run(() -> {
-      List<DividerPolygon> polygons = createVisiblePolygons(editor1, editor2, paintable, gg.getClipBounds());
+    List<DividerPolygon> polygons = createVisiblePolygons(editor1, editor2, paintable, gg.getClipBounds());
 
-      GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
-      for (DividerPolygon polygon : polygons) {
-        polygon.paint(gg, width, curved);
-      }
-      config.restore();
-    });
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
+    for (DividerPolygon polygon : polygons) {
+      polygon.paint(gg, width, curved);
+    }
+    config.restore();
   }
 
   private static @NotNull List<DividerPolygon> createVisiblePolygons(@NotNull Editor editor1,
@@ -181,11 +176,9 @@ public final class DiffDividerDrawUtil {
     int yStart = visibleAreaYOffset + yRange.first;
     int yEnd = visibleAreaYOffset + yRange.second;
     if (yStart >= yEnd) return new LineRange(0, 0);
-    return ReadAction.compute(() -> {
-      LogicalPosition position1 = editor.xyToLogicalPosition(new Point(0, yStart));
-      LogicalPosition position2 = editor.xyToLogicalPosition(new Point(0, yEnd));
-      return new LineRange(position1.line, position2.line);
-    });
+    LogicalPosition position1 = editor.xyToLogicalPosition(new Point(0, yStart));
+    LogicalPosition position2 = editor.xyToLogicalPosition(new Point(0, yEnd));
+    return new LineRange(position1.line, position2.line);
   }
 
   public interface DividerPaintable {

@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.maven.completion` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "completion_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "completion",
+  module_name = "intellij.maven.completion",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":completion_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/maven",
+    "//plugins/repository-search/common",
+    "//xml/xml-psi-api:psi",
+    "//platform/analysis-impl",
+    "//platform/lang-impl",
+    "//platform/backend/observation",
+    "//jps/model-api:model",
+    "//platform/util/concurrency",
+  ]
+)
+
+jvm_library(
+  name = "completion_test_lib",
+  module_name = "intellij.maven.completion",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":completion",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/maven:maven_test_lib",
+    "//plugins/repository-search/common:common_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/backend/observation:observation_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+  ]
+)
+### auto-generated section `build intellij.maven.completion` end
+
+### auto-generated section `iml intellij.maven.completion` start
+exports_files([
+  "intellij.maven.completion.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.maven.completion` end

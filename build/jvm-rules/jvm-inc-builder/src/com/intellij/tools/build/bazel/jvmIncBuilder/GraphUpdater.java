@@ -4,7 +4,13 @@ package com.intellij.tools.build.bazel.jvmIncBuilder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.BuildDiagnosticCollector;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.SnapshotDeltaImpl;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.Delta;
+import org.jetbrains.jps.dependency.DependencyGraph;
+import org.jetbrains.jps.dependency.DifferentiateParameters;
+import org.jetbrains.jps.dependency.DifferentiateResult;
+import org.jetbrains.jps.dependency.Graph;
+import org.jetbrains.jps.dependency.LogConsumer;
+import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
 
 import java.io.File;
@@ -15,7 +21,9 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.contains;
+import static org.jetbrains.jps.util.Iterators.filter;
 
 public final class GraphUpdater {
   private static final String MODULE_INFO_FILE_NAME = "module-info.java";
@@ -113,15 +121,14 @@ public final class GraphUpdater {
       return nextSnapshotDelta;
     }
 
-    if (!errorsDetected && params.isCalculateAffected()) {
+    if (isAfterCompilation && !errorsDetected && params.isCalculateAffected()) {
       // some compilers (and compiler plugins) may produce different outputs for the same set of inputs.
       // This might cause corresponding graph Nodes to be considered as always 'changed'. In some scenarios this may lead to endless build loops
       // This fallback logic detects such loops and recompiles the whole module chunk instead.
       Set<NodeSource> affectedForChunk = collect(filter(diffResult.getAffectedSources(), params.belongsToCurrentCompilationChunk()), new HashSet<>());
       if (!affectedForChunk.isEmpty() && !myAllAffectedSources.addAll(affectedForChunk)) {
         // all affected files in this round have already been affected in previous rounds. This might indicate a build cycle => recompiling whole chunk
-        // todo: diagnostic
-        //LOG.info("Build cycle detected for " + chunk.getName() + "; recompiling whole module chunk");
+        params.logConsumer().consume("Build 'recompile cycle' detected for " + myTargetName + "; recompiling whole target");
         // turn on non-incremental mode for the current target  => next time the whole target is recompiled and affected files won't be calculated anymore
         nextSnapshotDelta.markRecompileAll();
         return nextSnapshotDelta;

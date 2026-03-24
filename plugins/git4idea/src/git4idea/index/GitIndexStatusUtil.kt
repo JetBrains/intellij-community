@@ -74,10 +74,9 @@ fun getFileStatus(
   withRenames: Boolean,
   withUntracked: Boolean,
   withIgnored: Boolean,
-  statusCommand: GitCommand = GitCommand.STATUS,
 ): List<LightFileStatus.StatusRecord> {
   val h = GitUtil.createHandlerWithPaths(files) {
-    val h = GitLineHandler(project, root, statusCommand)
+    val h = GitLineHandler(project, root, GitCommand.STATUS)
     h.setSilent(true)
     h.appendParameters(GitExecutableManager.getInstance().tryGetVersion(project) ?: GitVersion.NULL,
                        withRenames = withRenames, withUntracked = withUntracked, withIgnored = withIgnored)

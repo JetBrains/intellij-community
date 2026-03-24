@@ -3,6 +3,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -39,12 +40,12 @@ public class VcsExecutablePathSelector {
   private @Nullable String mySavedPath;
   private @Nullable String myAutoDetectedPath = null;
 
-  public VcsExecutablePathSelector(@NotNull @Nls String vcsName, @Nullable Disposable disposable, @NotNull ExecutableHandler handler) {
+  public VcsExecutablePathSelector(@Nullable Project project, @NotNull @Nls String vcsName, @Nullable Disposable disposable, @NotNull ExecutableHandler handler) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, 0);
 
     myPathSelector = new TextFieldWithBrowseButton(null, disposable);
     var descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(VcsBundle.message("executable.select.title"));
-    myPathSelector.addBrowseFolderListener(null, descriptor, new MyTextComponentAccessor(handler));
+    myPathSelector.addBrowseFolderListener(project, descriptor, new MyTextComponentAccessor(handler));
     myPathSelector.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {

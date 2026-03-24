@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ClientProperty;
@@ -31,6 +32,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.InplaceButton;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.awt.RelativePoint;
@@ -236,6 +238,21 @@ public final class WindowTabsComponent extends JBTabsImpl {
       }
 
       @Override
+      protected int getDropTargetArc() {
+        return JBUI.scale(JBUI.getInt("Island.arc", 10));
+      }
+
+      @Override
+      public int getDropTargetTopOffset() {
+        return 0;
+      }
+
+      @Override
+      public int getDropTargetBottomOffset() {
+        return 0;
+      }
+
+      @Override
       public Dimension getPreferredSize() {
         return new Dimension(super.getPreferredSize().width, JBUI.scale(TAB_HEIGHT));
       }
@@ -310,6 +327,13 @@ public final class WindowTabsComponent extends JBTabsImpl {
   protected @NotNull TabPainterAdapter createTabPainterAdapter() {
     return new TabPainterAdapter() {
       private final JBTabPainter myTabPainter = new JBDefaultTabPainter(new DefaultTabTheme() {
+        @Override
+        public @Nullable Color getBackground() {
+          return IslandsState.Companion.isEnabled()
+                 ? JBColor.namedColor("MainWindow.background", JBColor.PanelBackground)
+                 : super.getBackground();
+        }
+
         @Override
         public int getTopBorderThickness() {
           return 0;
@@ -443,7 +467,10 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
   private void createTabItem(@NotNull IdeFrameImpl tabFrame, int index, boolean selection) {
     TabInfo info = new TabInfo(new JLabel());
-    info.setObject(tabFrame).setText(tabFrame.getTitle()).setTooltipText(tabFrame.getTitle()); //NON-NLS
+    String tabTitle = tabFrame.getTitle(); //NON-NLS
+    info.setObject(tabFrame)
+      .setText(tabTitle)
+      .setTooltipText(HtmlChunk.text(tabTitle));
     info.setTabLabelActions(createTabActions(tabFrame), ActionPlaces.UNKNOWN);
     info.setDefaultForeground(JBUI.CurrentTheme.MainWindow.Tab.foreground(selection, false));
 
@@ -467,7 +494,10 @@ public final class WindowTabsComponent extends JBTabsImpl {
       Disposer.register(myParentDisposable, () -> tabFrame.removeWindowListener(listener));
     }
 
-    PropertyChangeListener listener = event -> info.setText((String)event.getNewValue()).setTooltipText((String)event.getNewValue());
+    PropertyChangeListener listener = event -> {
+      String title = (String)event.getNewValue();
+      info.setText(title).setTooltipText(HtmlChunk.text(title));
+    };
     tabFrame.addPropertyChangeListener("title", listener);
     info.getComponent().putClientProperty(TITLE_LISTENER_KEY, listener);
 

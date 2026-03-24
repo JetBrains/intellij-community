@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.execution.AlternativeSdkRootsProvider;
@@ -397,6 +397,11 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   public void setImplicitClassConfiguration(boolean value) { getOptions().setImplicitClassConfiguration(value); }
 
   @Override
+  public boolean isUseModulePath() { return getOptions().isUseModulePath(); }
+
+  public void setUseModulePath(boolean value) { getOptions().setUseModulePath(value); }
+
+  @Override
   public Collection<Module> getValidModules() {
     return JavaRunConfigurationModule.getModulesForClass(getProject(), getMainClassName());
   }
@@ -477,6 +482,11 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     @TestOnly
     public JavaParameters createJavaParameters4Test() throws ExecutionException {
       return createJavaParameters();
+    }
+
+    @Override
+    protected boolean useModulePath() {
+      return myConfiguration.isUseModulePath();
     }
 
     @Override

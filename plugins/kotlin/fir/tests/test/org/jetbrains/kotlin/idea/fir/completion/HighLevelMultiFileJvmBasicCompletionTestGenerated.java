@@ -205,6 +205,31 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/FileRefInStringLiteralNoPrefix/");
     }
 
+    @TestMetadata("FlexibleType")
+    public void testFlexibleType() throws Exception {
+        runTest("../../completion/testData/basic/multifile/FlexibleType/");
+    }
+
+    @TestMetadata("FlexibleTypeCompanionObjectValues")
+    public void testFlexibleTypeCompanionObjectValues() throws Exception {
+        runTest("../../completion/testData/basic/multifile/FlexibleTypeCompanionObjectValues/");
+    }
+
+    @TestMetadata("FlexibleTypeEnum")
+    public void testFlexibleTypeEnum() throws Exception {
+        runTest("../../completion/testData/basic/multifile/FlexibleTypeEnum/");
+    }
+
+    @TestMetadata("FlexibleTypeNotNull")
+    public void testFlexibleTypeNotNull() throws Exception {
+        runTest("../../completion/testData/basic/multifile/FlexibleTypeNotNull/");
+    }
+
+    @TestMetadata("FlexibleTypeSealed")
+    public void testFlexibleTypeSealed() throws Exception {
+        runTest("../../completion/testData/basic/multifile/FlexibleTypeSealed/");
+    }
+
     @TestMetadata("GroovyClassNameCompletionFromDefaultPackage")
     public void testGroovyClassNameCompletionFromDefaultPackage() throws Exception {
         runTest("../../completion/testData/basic/multifile/GroovyClassNameCompletionFromDefaultPackage/");
@@ -543,6 +568,56 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
     @TestMetadata("PropertyKeysWithPrefix")
     public void testPropertyKeysWithPrefix() throws Exception {
         runTest("../../completion/testData/basic/multifile/PropertyKeysWithPrefix/");
+    }
+
+    @TestMetadata("RerunStaticFromAnnotation")
+    public void testRerunStaticFromAnnotation() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticFromAnnotation/");
+    }
+
+    @TestMetadata("RerunStaticFromClass")
+    public void testRerunStaticFromClass() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticFromClass/");
+    }
+
+    @TestMetadata("RerunStaticFromEnum")
+    public void testRerunStaticFromEnum() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticFromEnum/");
+    }
+
+    @TestMetadata("RerunStaticFromGeneric")
+    public void testRerunStaticFromGeneric() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticFromGeneric/");
+    }
+
+    @TestMetadata("RerunStaticFromInterface")
+    public void testRerunStaticFromInterface() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticFromInterface/");
+    }
+
+    @TestMetadata("RerunStaticFromNested")
+    public void testRerunStaticFromNested() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticFromNested/");
+    }
+
+    @TestMetadata("RerunStaticFromRecord")
+    public void testRerunStaticFromRecord() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticFromRecord/");
+    }
+
+    @TestMetadata("RerunStaticOtherPackage")
+    public void testRerunStaticOtherPackage() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticOtherPackage/");
+    }
+
+    @TestMetadata("RerunStaticPrivateOuter")
+    public void testRerunStaticPrivateOuter() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticPrivateOuter/");
+    }
+
+    @TestMetadata("RerunStaticSamePackage")
+    public void testRerunStaticSamePackage() throws Exception {
+        runTest("../../completion/testData/basic/multifile/RerunStaticSamePackage/");
     }
 
     @TestMetadata("StaticMembersOfImportedClassFromJava")

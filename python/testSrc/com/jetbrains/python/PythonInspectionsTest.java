@@ -179,15 +179,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyInitNewSignatureInspection() {
-    final String folderPath = "inspections/" + getTestName(false) + "/";
-
-    myFixture.copyDirectoryToProject(folderPath, "");
-    myFixture.configureFromTempProjectFile("test.py");
-    myFixture.enableInspections(PyInitNewSignatureInspection.class);
-    myFixture.checkHighlighting(true, false, true);
-  }
-
   private void doHighlightingTest(final Class<? extends PyInspection> inspectionClass) {
     myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
     myFixture.enableInspections(inspectionClass);

@@ -79,7 +79,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.codeInsight.CommentUtilCore;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndex.AllKeysQuery;
 import com.intellij.util.indexing.IndexingBundle;
@@ -117,6 +116,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+
+import static com.intellij.util.indexing.DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE;
 
 public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final ExtensionPointName<ScopeOptimizer> USE_SCOPE_OPTIMIZER_EP_NAME = ExtensionPointName.create("com.intellij.useScopeOptimizer");
@@ -374,7 +375,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public @NotNull SearchCostResult isCheapEnoughToSearch(@NotNull String name,
                                                          @NotNull GlobalSearchScope scope,
                                                          @Nullable PsiFile psiFileToIgnoreOccurrencesIn) {
-    if (!ReadAction.compute(() -> scope.getUnloadedModulesBelongingToScope().isEmpty())) {
+    if (!ReadAction.computeBlocking(() -> scope.getUnloadedModulesBelongingToScope().isEmpty())) {
       return SearchCostResult.TOO_MANY_OCCURRENCES;
     }
 
@@ -456,7 +457,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     List<List<VirtualFile>> priorities = new ArrayList<>();
 
-    List<VirtualFile> targets = ReadAction.compute(() -> ContainerUtil.filter(session.getTargetVirtualFiles(), scope::contains));
+    List<VirtualFile> targets = ReadAction.computeBlocking(() -> ContainerUtil.filter(session.getTargetVirtualFiles(), scope::contains));
     List<@NotNull VirtualFile> directories;
     if (targets.isEmpty()) {
       directories = Collections.emptyList();
@@ -474,7 +475,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
       };
 
-      List<VirtualFile> directoryNearTargetFiles = ReadAction.compute(() ->
+      List<VirtualFile> directoryNearTargetFiles = ReadAction.computeBlocking(() ->
         ContainerUtil.filter(allFiles, f -> directoryNearTargetScope.contains(f) && !targets.contains(f))
       );
       if (!directoryNearTargetFiles.isEmpty()) {
@@ -787,7 +788,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     int dollarIndex = qName.lastIndexOf('$');
     int maxIndex = Math.max(dotIndex, dollarIndex);
     String wordToSearch = maxIndex >= 0 ? qName.substring(maxIndex + 1) : qName;
-    GlobalSearchScope theSearchScope = ReadAction.compute(() -> {
+    GlobalSearchScope theSearchScope = ReadAction.computeBlocking(() -> {
       if (originalElement != null && myManager.isInProject(originalElement) && initialScope.isSearchInLibraries()) {
         return initialScope.intersectWith(GlobalSearchScope.projectScope(myManager.getProject()));
       }
@@ -814,7 +815,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           return true;
         }
 
-        CharSequence text = ReadAction.compute(() -> psiFile.getViewProvider().getContents());
+        CharSequence text = ReadAction.computeBlocking(() -> psiFile.getViewProvider().getContents());
 
         LowLevelSearchUtil.processTexts(text, 0, text.length(), searcher, index -> {
           boolean isReferenceOK = myDumbService.runReadActionInSmartMode(() -> {
@@ -884,40 +885,42 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     Map<SearchRequestCollector, Processor<? super PsiReference>> collectors = new HashMap<>();
     collectors.put(collector, processor);
 
-    ProgressIndicator progress = getOrCreateIndicator();
-    if (appendCollectorsFromQueryRequests(progress, collectors) == QueryRequestsRunResult.STOPPED) {
-      return false;
-    }
-    do {
-      Map<TextIndexQuery, Collection<RequestWithProcessor>> globals = new HashMap<>();
-      List<Computable<Boolean>> customs = new ArrayList<>();
-      Set<RequestWithProcessor> locals = new LinkedHashSet<>();
-      Map<RequestWithProcessor, Processor<? super CandidateFileInfo>> localProcessors = new HashMap<>();
-      distributePrimitives(collectors, locals, globals, customs, localProcessors);
-      if (!processGlobalRequestsOptimized(globals, progress, localProcessors)) {
+    return ConcurrencyUtils.runWithIndicatorOrContextCancellation((__) -> {
+      ProgressIndicator progress = getOrCreateIndicator();
+      if (appendCollectorsFromQueryRequests(progress, collectors) == QueryRequestsRunResult.STOPPED) {
         return false;
       }
-      for (RequestWithProcessor local : locals) {
-        progress.checkCanceled();
-        if (!processSingleRequest(local.request, local.refProcessor)) {
+      do {
+        Map<TextIndexQuery, Collection<RequestWithProcessor>> globals = new HashMap<>();
+        List<Computable<Boolean>> customs = new ArrayList<>();
+        Set<RequestWithProcessor> locals = new LinkedHashSet<>();
+        Map<RequestWithProcessor, Processor<? super CandidateFileInfo>> localProcessors = new HashMap<>();
+        distributePrimitives(collectors, locals, globals, customs, localProcessors);
+        if (!processGlobalRequestsOptimized(globals, progress, localProcessors)) {
           return false;
         }
-      }
-      for (Computable<Boolean> custom : customs) {
-        progress.checkCanceled();
-        if (!custom.compute()) {
+        for (RequestWithProcessor local : locals) {
+          progress.checkCanceled();
+          if (!processSingleRequest(local.request, local.refProcessor)) {
+            return false;
+          }
+        }
+        for (Computable<Boolean> custom : customs) {
+          progress.checkCanceled();
+          if (!custom.compute()) {
+            return false;
+          }
+        }
+        QueryRequestsRunResult result = appendCollectorsFromQueryRequests(progress, collectors);
+        if (result == QueryRequestsRunResult.STOPPED) {
           return false;
         }
+        else if (result == QueryRequestsRunResult.UNCHANGED) {
+          return true;
+        }
       }
-      QueryRequestsRunResult result = appendCollectorsFromQueryRequests(progress, collectors);
-      if (result == QueryRequestsRunResult.STOPPED) {
-        return false;
-      }
-      else if (result == QueryRequestsRunResult.UNCHANGED) {
-        return true;
-      }
-    }
-    while (true);
+      while (true);
+    });
   }
 
   private static @NotNull ProgressIndicator getOrCreateIndicator() {
@@ -1006,7 +1009,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       FileRankerMlService fileRankerService = FileRankerMlService.getInstance();
       boolean useOldImpl = (fileRankerService == null || fileRankerService.shouldUseOldImplementation());
       List<String> queryNames = new ArrayList<>(allWords);
-      List<VirtualFile> queryFiles = ReadAction.compute(
+      List<VirtualFile> queryFiles = ReadAction.computeBlocking(
         () -> ContainerUtil.flatMap(localProcessors.keySet(), requestInfo -> requestInfo.getSearchSession().getTargetVirtualFiles()));
       if (useOldImpl) {
         // This is the original implementation for processing files before introducing FileRankerMlService.
@@ -1190,7 +1193,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       Collection<T> processors = entry.getValue();
       GlobalSearchScope commonScope = uniteScopes(processors);
       // files which are target of the search
-      Set<VirtualFile> thisTargetFiles = ReadAction.compute(() -> {
+      Set<VirtualFile> thisTargetFiles = ReadAction.computeBlocking(() -> {
         return processors.stream().flatMap(p -> {
             List<VirtualFile> files = p.getSearchSession().getTargetVirtualFiles();
             return files.stream();
@@ -1416,7 +1419,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return computeQueries(scope, processor, textIndexQueries);
     }
 
-    return ReadAction.compute(() -> DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> computeQueries(scope, processor, textIndexQueries)));
+    return ReadAction.computeBlocking(() -> RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> computeQueries(scope, processor, textIndexQueries)));
   }
 
   private static boolean computeQueries(@NotNull GlobalSearchScope scope,

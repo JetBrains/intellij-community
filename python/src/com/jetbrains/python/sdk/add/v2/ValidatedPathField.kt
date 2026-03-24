@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.and
@@ -317,6 +318,7 @@ internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePath
   missingExecutableText: @Nls String?,
   installAction: ActionLink? = null,
   isFileSelectionMode: Boolean = true,
+  venvExistenceValidationState: ObservableProperty<VenvExistenceValidationState>? = null,
 ): ValidatedPathField<T, P, VP> {
 
   val validatedPathField = ValidatedPathField(
@@ -335,15 +337,28 @@ internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePath
     ).visibleIf(pathValidator.backProperty.transform { it?.pathHolder == null }.and(pathValidator.isDirtyValue.not()))
   }
 
+  val initialValidationRequestor = (validationRequestor
+    and WHEN_PROPERTY_CHANGED(pathValidator.isDirtyValue)
+    and WHEN_PROPERTY_CHANGED(pathValidator.backProperty))
+
+  val finalValidationRequestor = if (venvExistenceValidationState != null) {
+    initialValidationRequestor and WHEN_PROPERTY_CHANGED(venvExistenceValidationState)
+  }
+  else initialValidationRequestor
+
   row(labelText) {
     cell(validatedPathField)
       .align(AlignX.FILL)
-      .validationRequestor(validationRequestor
-                             and WHEN_PROPERTY_CHANGED(pathValidator.isDirtyValue)
-                             and WHEN_PROPERTY_CHANGED(pathValidator.backProperty)
-      )
+      .validationRequestor(finalValidationRequestor)
       .validationOnInput { component ->
         if (!component.isVisible) return@validationOnInput null
+
+        val isVenvOverridden = when (venvExistenceValidationState?.get()) {
+          is VenvExistenceValidationState.Warning -> true
+          is VenvExistenceValidationState.Invisible, is VenvExistenceValidationState.Error, null -> false
+        }
+
+        if (isVenvOverridden) return@validationOnInput null
 
         val pyErrorMessage = pathValidator.backProperty.get()?.validationResult?.errorOrNull?.message
 

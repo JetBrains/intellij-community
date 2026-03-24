@@ -1,5 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.google.common.primitives.Ints;
@@ -93,7 +92,6 @@ import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageLimitUtil;
@@ -1708,10 +1706,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
               @Override
               protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
                 tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
-                if (elementsArray.size() > UsageLimitUtil.USAGES_LIMIT - myMaximumListSizeLimit && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
-                  UsageViewManagerImpl.showTooManyUsagesWarningLater(getProject(), tooManyUsagesStatus, indicator, null,
-                                                                     () -> UsageViewBundle.message("find.excessive.usage.count.prompt"),
-                                                                     null);
+                if (elementsArray.size() > UsageLimitUtil.getSearchResultLimit() - myMaximumListSizeLimit 
+                    && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
+                  UsageViewManagerImpl.showTooManyUsagesWarningLater(getProject(), tooManyUsagesStatus, indicator, null, null, null);
                 }
                 return false;
               }

@@ -17,6 +17,10 @@ data class LibraryTypeId(val name: @NonNls String)
 /**
  * Describes a [Library][com.intellij.openapi.roots.libraries.Library].
  * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
+ *
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
  */
 interface LibraryEntity : WorkspaceEntityWithSymbolicId {
     val name: @NlsSafe String

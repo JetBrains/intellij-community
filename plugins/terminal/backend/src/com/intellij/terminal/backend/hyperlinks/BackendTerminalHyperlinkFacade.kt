@@ -15,9 +15,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfo
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigationInterceptor
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksHeartbeatEvent
@@ -31,9 +33,10 @@ class BackendTerminalHyperlinkFacade(
   coroutineScope: CoroutineScope,
   outputModel: TerminalOutputModel,
   isInAlternateBuffer: Boolean,
+  filterContext: TerminalHyperlinkFilterContext?,
 ) {
 
-  private val highlighter = BackendTerminalHyperlinkHighlighter(project, coroutineScope, outputModel, isInAlternateBuffer)
+  private val highlighter = BackendTerminalHyperlinkHighlighter(project, coroutineScope, outputModel, isInAlternateBuffer, filterContext)
   private val model = TerminalHyperlinksModel(if (isInAlternateBuffer) "Backend AltBuf" else "Backend Output", outputModel)
 
   val heartbeatFlow: Flow<TerminalHyperlinksHeartbeatEvent> get() = highlighter.heartbeatFlow
@@ -64,6 +67,10 @@ class BackendTerminalHyperlinkFacade(
 
   suspend fun hyperlinkClicked(hyperlinkId: TerminalHyperlinkId, mouseEvent: EditorMouseEvent?) {
     val hyperlink = model.getHyperlink(hyperlinkId)?.hyperlinkInfo ?: return
+    if (TerminalHyperlinkNavigationInterceptor.intercept(project, hyperlink, mouseEvent)) {
+      ReworkedTerminalUsageCollector.logHyperlinkFollowed(hyperlink.javaClass)
+      return
+    }
     withContext(Dispatchers.EDT) { // navigation might need the WIL
       SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
         if (hyperlink is HyperlinkInfoBase && mouseEvent != null) {

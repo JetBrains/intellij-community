@@ -1,12 +1,17 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 @file:JvmName("CodeInsightContextUtil")
+
 package com.intellij.codeInsight.multiverse
 
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 
 val FileViewProvider.codeInsightContext: CodeInsightContext
@@ -50,6 +55,23 @@ fun List<FileViewProvider>.isEventSystemEnabled(): Boolean {
   return value
 }
 
+/**
+ * @return true if `context` is still relevant for the `file`. It's relevant if [)][CodeInsightContextManager.getCodeInsightContexts]
+ * contain `context` or if `context` is `default` or `any`.
+ */
+@RequiresReadLock
+fun isContextRelevant(file: VirtualFile, context: CodeInsightContext, project: Project): Boolean {
+  if (!isSharedSourceSupportEnabled(project)) {
+    return true
+  }
+
+  if (context === anyContext() || file is LightVirtualFile) {
+    return true
+  }
+
+  val contexts = CodeInsightContextManager.getInstance(project).getCodeInsightContexts(file)
+  return contexts.contains(context)
+}
 
 private val log = fileLogger()
 

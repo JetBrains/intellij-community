@@ -52,5 +52,20 @@ import kotlin.coroutines.CoroutineContext
 interface McpToolset {
   companion object {
     val EP: ExtensionPointName<McpToolset> = ExtensionPointName<McpToolset>("com.intellij.mcpServer.mcpToolset")
+
+    val enabledToolsets: List<McpToolset>
+      get() = EP.extensionList.filter { it.isEnabled() }
   }
+
+  fun isEnabled(): Boolean = true
+  
+  fun isExperimental(): Boolean = true
+
+  /*
+   * If true, then tools from this toolset are always included in the list of directly accessible MCP tools,
+   * even in "Universal tool-router mode".
+   * It's strongly recommended to use this flag only AFTER EVALUATION of the performance of the tools in the toolset,
+   * because otherwise they would needlessly pollute the common context, decreasing the performance of all tools.
+   */
+  fun alwaysIncluded(): Boolean = false
 }

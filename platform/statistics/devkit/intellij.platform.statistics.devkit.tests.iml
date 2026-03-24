@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/testSrc">
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.json.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.uploader" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.devkit" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.platform.statistics.devkit" />
+</module>

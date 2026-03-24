@@ -3,10 +3,10 @@ package com.intellij.codeInsight.completion.command.configuration
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.completion.group.GroupedCompletionContributor
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
+import com.intellij.ui.components.Badge
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
@@ -60,7 +60,7 @@ class CommandCompletionConfigurableProvider : ConfigurableProvider() {
                             { r -> settings.state.myReadOnlyEnabled = r })
               .gap(RightGap.SMALL)
               .enabledIf(completionEnabledCheckBox.selected)
-            icon(AllIcons.General.Beta)
+            icon(Badge.beta)
           }
         }
       }

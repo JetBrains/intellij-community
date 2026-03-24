@@ -7,7 +7,6 @@ import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
-import org.jetbrains.idea.reposearch.DependencySearchService
 
 open class MavenArtifactCoordinatesGroupIdConverter : MavenArtifactCoordinatesConverter(), MavenSmartConverter<String?> {
   override fun doIsValid(id: MavenId, manager: MavenIndicesManager, context: ConvertContext): Boolean {
@@ -39,7 +38,7 @@ open class MavenArtifactCoordinatesGroupIdConverter : MavenArtifactCoordinatesCo
     return hasLocalGroupId
   }
 
-  override fun doGetVariants(id: MavenId, searchService: DependencySearchService): Set<String> {
+  override fun doGetVariants(id: MavenId): Set<String> {
     return emptySet()
   }
 

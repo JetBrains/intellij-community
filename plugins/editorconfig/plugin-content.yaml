@@ -8,6 +8,9 @@
   files:
   - name: $MAVEN_REPOSITORY$/org/ec4j/core/ec4j-core/0/ec4j-core-0.jar
   reason: <- intellij.editorconfig.backend
+- name: lib/modules/intellij.editorconfig.backend.spellchecking.jar
+  contentModules:
+  - name: intellij.editorconfig.backend.spellchecking
 - name: lib/modules/intellij.editorconfig.common.jar
   contentModules:
   - name: intellij.editorconfig.common

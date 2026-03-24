@@ -49,11 +49,11 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyAnnotationOwnerStub;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyFunctionType;
-import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PySelfType;
 import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyTupleType;
@@ -250,7 +250,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         if (context.maySwitchToAST(this)) {
           final PyExpression defaultValue = getDefaultValue();
           if (defaultValue != null) {
-            final PyType type = PyLiteralType.upcastLiteralToClass(context.getType(defaultValue));
+            final PyType type = PyTypeUtil.widenLiteralAndNumeric(context.getType(defaultValue));
             if (type != null && !isNoneType(type)) {
               if (type instanceof PyTupleType) {
                 return PyUnionType.createWeakType(type);
@@ -299,7 +299,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         }
       }
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   @Override

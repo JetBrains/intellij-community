@@ -22,6 +22,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.javadoc.PsiMarkdownLink;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,6 +39,11 @@ public final class JavaDocAnnotator implements Annotator {
           holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(tagValue).textAttributes(JavaHighlightingColors.DOC_COMMENT_TAG_VALUE).create();
         }
       }
+    }
+
+    if (element instanceof PsiMarkdownLink) {
+      holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(element).textAttributes(JavaHighlightingColors.DOC_COMMENT_MARKUP)
+        .create();
     }
   }
 }

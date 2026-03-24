@@ -1,10 +1,30 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.rpc"/>
-    <module name="intellij.platform.execution.serviceView"/>
     <module name="intellij.platform.debugger"/>
     <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.execution.serviceView"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.runDashboardManagerProxy"
                     interface="com.intellij.execution.dashboard.RunDashboardManagerProxy" dynamic="true"/>
@@ -14,7 +34,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <legacyRunDashboardServiceSubstitutor implementation="com.intellij.platform.execution.dashboard.splitApi.LegacyRunDashboardServiceSubstitutorImpl"/>
-    <remote.customDataContextSerializer implementation="com.intellij.platform.execution.dashboard.RunDashboardServiceDataContextSerializer"/>
     <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.execution.dashboard.splitApi.frontend.RunContentSyncListener"/>
 
     <runDashboardManagerProxy

@@ -41,6 +41,8 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         return unpackedDistDir.toFile();
     }
 
+    public void testRootClassIsNotEmpty() {}
+
     @TestMetadata("pureKotlin")
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
@@ -978,6 +980,12 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             runTest("classHierarchyAffected/propertyNullabilityChanged/");
         }
 
+
+        @TestMetadata("removeImportedClass")
+        public void testRemoveImportedClass() throws Exception {
+            runTest("classHierarchyAffected/removeImportedClass/");
+        }
+
         @TestMetadata("sealedClassImplAdded")
         public void testSealedClassImplAdded() throws Exception {
             runTest("classHierarchyAffected/sealedClassImplAdded/");
@@ -1060,11 +1068,6 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         @TestMetadata("function")
         public void testFunction() throws Exception {
             runTest("inlineFunCallSite/function/");
-        }
-
-        @TestMetadata("functionIndirect")
-        public void testFunctionIndirect() throws Exception {
-            runTest("inlineFunCallSite/functionIndirect/");
         }
 
         @TestMetadata("getter")
@@ -3141,11 +3144,19 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
         }
 
-        // todo: do we need to run other two tests in this cathegory?
-
         @TestMetadata("protectedBecomesInternal")
         public void testProtectedBecomesInternal() throws Exception {
             runTest("scopeExpansion/protectedBecomesInternal");
+        }
+
+        @TestMetadata("changeTypeAliasAndUsage")
+        public void testChangeTypeAliasAndUsage() throws Exception {
+            runTest("scopeExpansion/changeTypeAliasAndUsage");
+        }
+
+        @TestMetadata("protectedBecomesPublicAccessedTroughChild")
+        public void testProtectedBecomesPublicAccessedTroughChild() throws Exception {
+            runTest("scopeExpansion/protectedBecomesPublicAccessedTroughChild");
         }
     }
 

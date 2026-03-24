@@ -1,4 +1,5 @@
 // "Change return type of called function 'A.plus' to '() -> Int'" "true"
+// K2_ERROR: Return type mismatch: expected '() -> Int', actual 'String'.
 interface A {
     operator fun plus(a: A): () -> Int
 }

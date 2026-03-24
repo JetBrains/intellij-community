@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -152,7 +153,7 @@ internal suspend fun buildDistribution(
     if (context.useModularLoader || context.generateRuntimeModuleRepository) {
       launch(CoroutineName("generate runtime module repository")) {
         spanBuilder("generate runtime module repository").use {
-          generateRuntimeModuleRepositoryForDistribution(contentReport.bundled(), context)
+          generateRuntimeModuleRepositoryForDistribution(contentReport, context, platformLayout)
         }
       }
     }
@@ -589,7 +590,7 @@ internal suspend fun layoutDistribution(
     }
 
     tasks
-  }.flatMap { it.getCompleted() }
+  }.awaitAll().flatten()
 
   return entries to targetDir
 }

@@ -2334,6 +2334,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("alreadyImportedClasses.kt")
+        public void testAlreadyImportedClasses() throws Exception {
+            runTest("testData/intentions/addWhenRemainingBranches/alreadyImportedClasses.kt");
+        }
+
+        @TestMetadata("alreadyImportedEnums.kt")
+        public void testAlreadyImportedEnums() throws Exception {
+            runTest("testData/intentions/addWhenRemainingBranches/alreadyImportedEnums.kt");
+        }
+
         @TestMetadata("emptyWhen.kt")
         public void testEmptyWhen() throws Exception {
             runTest("testData/intentions/addWhenRemainingBranches/emptyWhen.kt");
@@ -5758,6 +5768,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/convertForEachToForLoop/returnFromNestedForLoop.kt");
             }
 
+            @TestMetadata("returnFromNestedLambda.kt")
+            public void testReturnFromNestedLambda() throws Exception {
+                runTest("testData/intentions/convertForEachToForLoop/returnFromNestedLambda.kt");
+            }
+
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("testData/intentions/convertForEachToForLoop/simple.kt");
@@ -8387,6 +8402,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("annotatedExprInParentheses.kt")
         public void testAnnotatedExprInParentheses() throws Exception {
             runTest("testData/intentions/convertToBlockBody/annotatedExprInParentheses.kt");
+        }
+
+        @TestMetadata("annotatedExprIsExpression.kt")
+        public void testAnnotatedExprIsExpression() throws Exception {
+            runTest("testData/intentions/convertToBlockBody/annotatedExprIsExpression.kt");
         }
 
         @TestMetadata("comment.kt")
@@ -17455,6 +17475,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("notSam.kt")
         public void testNotSam() throws Exception {
             runTest("testData/intentions/samConversionToAnonymousObject/notSam.kt");
+        }
+
+        @TestMetadata("nullableReturnType.kt")
+        public void testNullableReturnType() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/nullableReturnType.kt");
         }
 
         @TestMetadata("parameterError.kt")

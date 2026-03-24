@@ -6,14 +6,15 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.components.isFunctionType
 import org.jetbrains.kotlin.analysis.api.components.isSuspendFunctionType
+import org.jetbrains.kotlin.analysis.api.components.isVisibleInClass
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.components.usesContextSensitiveResolution
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -28,19 +29,23 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.isLocal
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.references.KDocReference
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPropertyDelegate
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 
 internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol) {
@@ -130,6 +135,13 @@ private fun isAccessibleAsMemberCallable(
         // approximation until KT-70521 is fixed,
         // and dispatcher receiver can be analyzed for such cases
         return true
+    }
+
+    if (element is KDocName) {
+        val ownerClassSymbol = element.ownerClassSymbol()
+
+        @OptIn(KaExperimentalApi::class)
+        return ownerClassSymbol != null && symbol.isVisibleInClass(ownerClassSymbol)
     }
 
     val dispatchReceiver = resolveDispatchReceiver(element) ?: return false
@@ -234,10 +246,8 @@ private fun resolveExtensionReceiverForFunctionalTypeVariable(
         return null
     }
 
-    val parentCallInfo = parentCall.resolveToCall()?.singleCallOrNull<KaSimpleFunctionCall>() ?: return null
-    if (!parentCallInfo.isImplicitInvoke) return null
-
-    return parentCallInfo.partiallyAppliedSymbol.extensionReceiver as? KaExplicitReceiverValue
+    val parentCallInfo = parentCall.resolveToCall()?.singleCallOrNull<KaImplicitInvokeCall>() ?: return null
+    return parentCallInfo.extensionReceiver as? KaExplicitReceiverValue
 }
 
 context(_: KaSession)
@@ -251,6 +261,13 @@ private fun canBeResolvedViaImport(reference: KDocReference, target: KaSymbol): 
     } else {
         false
     }
+}
+
+context(_: KaSession)
+private fun KDocName.ownerClassSymbol(): KaClassSymbol? {
+    val owner = getContainingDoc().owner ?: return null
+    val ownerClassOrObject = (owner as? KtClassOrObject) ?: owner.containingClassOrObject ?: return null
+    return ownerClassOrObject.classSymbol
 }
 
 private fun KtElement.callableReferenceExpressionForCallableReference(): KtCallableReferenceExpression? =

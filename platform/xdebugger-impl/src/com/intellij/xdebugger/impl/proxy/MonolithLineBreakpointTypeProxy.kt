@@ -22,6 +22,7 @@ internal class MonolithLineBreakpointTypeProxy @Deprecated("Use type.asProxy() i
     get() = breakpointType.temporaryIcon
 
   override val priority: Int get() = breakpointType.priority
+  override fun supportsInterLinePlacement(): Boolean = breakpointType.supportsInterLinePlacement()
 
   override suspend fun canPutAt(editor: Editor, line: Int, project: Project): Boolean {
     return readAction {

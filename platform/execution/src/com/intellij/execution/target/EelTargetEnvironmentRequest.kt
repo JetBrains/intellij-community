@@ -118,7 +118,7 @@ class EelTargetType : TargetEnvironmentType<EelTargetEnvironmentRequest.Configur
 @ApiStatus.Internal
 class EelTargetEnvironmentRequest(
   override val configuration: Configuration,
-) : BaseTargetEnvironmentRequest(), VolumeCopyingRequest {
+) : BaseTargetEnvironmentRequest() {
   class Configuration private constructor(
     eelDescriptor: EelDescriptor?,
   ) : TargetEnvironmentConfiguration(TARGET_TYPE_NAME), TargetConfigurationWithLocalFsAccess, PersistentStateComponent<Configuration.PersistentState> {
@@ -169,8 +169,6 @@ class EelTargetEnvironmentRequest(
     environmentPrepared(env, progressIndicator)
     return env
   }
-
-  override var shouldCopyVolumes: Boolean = false
 }
 
 @ApiStatus.Internal

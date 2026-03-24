@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "benchmark",
+  module_name = "intellij.platform.util.immutableKeyValueStore.benchmark",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
@@ -17,13 +18,23 @@ jvm_library(
     "@lib//:jmh-generator-annprocess",
     "@lib//:kotlin-stdlib",
     "//platform/util/zip",
+    "//platform/util/zip:zip_test_lib",
     "//platform/util/rt-java8",
+    "//platform/util/rt-java8:rt-java8_test_lib",
     "@community//build:zip",
+    "@community//build:zip_test_lib",
     "//libraries/hash4j",
+    "//libraries/hash4j:hash4j_test_lib",
   ],
   runtime_deps = [":benchmark"]
 )
 ### auto-generated section `build intellij.platform.util.immutableKeyValueStore.benchmark` end
+
+### auto-generated section `iml intellij.platform.util.immutableKeyValueStore.benchmark` start
+exports_files([
+  "intellij.platform.util.immutableKeyValueStore.benchmark.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.util.immutableKeyValueStore.benchmark` end
 
 ### auto-generated section `test intellij.platform.util.immutableKeyValueStore.benchmark` start
 load("@community//build:tests-options.bzl", "jps_test")

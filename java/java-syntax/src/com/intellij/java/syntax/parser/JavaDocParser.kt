@@ -169,7 +169,7 @@ class JavaDocParser(
       parseCodeBlock()
     }
     else if (tokenType === JavaDocSyntaxTokenType.DOC_LBRACKET) {
-      parseMarkdownReferenceChecked()
+      parseMarkdownReferenceOrLink()
     }
     else if (tokenType === JavaDocSyntaxTokenType.DOC_COMMENT_DATA || (isWhiteSpace(tokenType) && !isEolToken(tokenType, builder.tokenText))) {
       parseCommentData()
@@ -253,8 +253,8 @@ class JavaDocParser(
     tag.done(JavaDocSyntaxElementType.DOC_MARKDOWN_CODE_BLOCK)
   }
 
-  /** Ensure a reference link is good before parsing it  */
-  private fun parseMarkdownReferenceChecked() {
+  /** Ensure a link is good before parsing it  */
+  private fun parseMarkdownReferenceOrLink() {
     var hasLabel = true
     var tag = builder.mark()
 
@@ -288,10 +288,10 @@ class JavaDocParser(
     val firstReferenceToken = findInlineToken(JavaDocSyntaxTokenType.DOC_LBRACKET, JavaDocSyntaxTokenType.DOC_SPACE, false)
     if (firstReferenceToken !== JavaDocSyntaxTokenType.DOC_LBRACKET) {
       hasLabel = false
-      // The label is actually a reference, verify brackets balance or if we have a normal markdown link
+      // The label may actually be a reference, verify brackets balance or if we have a normal Markdown link
       if (leftBracketCount > 1 || firstReferenceToken === JavaDocSyntaxTokenType.DOC_LPAREN) {
         tag.rollbackTo()
-        builder.advanceLexer()
+        parseMarkdownLink()
         return
       }
     }
@@ -369,18 +369,31 @@ class JavaDocParser(
     }
     moduleMarker?.done(JavaDocSyntaxElementType.DOC_TAG_VALUE_ELEMENT)
     val refStart = builder.mark()
-
+    var isMethodFieldOrRef = false
     if (!referenceEnded && getTokenType() !== JavaDocSyntaxTokenType.DOC_SHARP && getTokenType() !== JavaDocSyntaxTokenType.DOC_DOUBLE_SHARP) {
-      builder.remapCurrentToken(JavaDocSyntaxElementType.DOC_REFERENCE_HOLDER)
-      builder.advanceLexer()
+      // Javadoc methods references may not have the # token if it is alone, rely on the existence of () to assign the proper type.
+      // In practice, () is not mandatory, and fields have the same issue but cannot be separated from class names on parsing
+      if (builder.lookAhead(1) == JavaDocSyntaxTokenType.DOC_LPAREN) {
+        isMethodFieldOrRef = true
+      }
+      else {
+        builder.remapCurrentToken(JavaDocSyntaxElementType.DOC_REFERENCE_HOLDER)
+        builder.advanceLexer()
+      }
     }
 
-    if (!referenceEnded && getTokenType() === JavaDocSyntaxTokenType.DOC_SHARP) {
-      // Existing integration require this token for auto completion
-      builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN)
+    if (!referenceEnded && !isMethodFieldOrRef) {
+      isMethodFieldOrRef = getTokenType() === JavaDocSyntaxTokenType.DOC_SHARP
+      if (isMethodFieldOrRef) {
+        // Existing integration require this token for auto completion
+        builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN)
 
+        builder.advanceLexer()
+      }
+    }
+
+    if (!referenceEnded && isMethodFieldOrRef) {
       // method/variable name
-      builder.advanceLexer()
       builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN)
 
       // A method only has parenthesis, comment data which may be the type, the optional argument name and commas  
@@ -403,7 +416,7 @@ class JavaDocParser(
           else if (type !== JavaDocSyntaxTokenType.DOC_COMMA) {
             break
           } else {
-            dataSinceComma = false;
+            dataSinceComma = false
           }
           builder.advanceLexer()
         }
@@ -452,6 +465,42 @@ class JavaDocParser(
     }
   }
 
+  /** Simple parse function that will wrap a Markdown link in an element */
+  private fun parseMarkdownLink() {
+    val fallback = builder.mark()
+    if (builder.tokenType !== JavaDocSyntaxTokenType.DOC_LBRACKET) {
+      fallback.rollbackTo()
+      return builder.advanceLexer()
+    }
+    builder.advanceLexer()
+    val label = builder.mark()
+    findInlineToken(JavaDocSyntaxTokenType.DOC_RBRACKET, JavaDocSyntaxTokenType.DOC_LBRACKET, true)
+    fakeCollapse(label, JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
+
+    if (builder.tokenType !== JavaDocSyntaxTokenType.DOC_RBRACKET) {
+      fallback.rollbackTo()
+      return builder.advanceLexer()
+    }
+
+    builder.advanceLexer()
+    if (builder.tokenType !== JavaDocSyntaxTokenType.DOC_LPAREN) {
+      fallback.rollbackTo()
+      return builder.advanceLexer()
+    }
+
+    builder.advanceLexer()
+    val link = builder.mark()
+    findInlineToken(JavaDocSyntaxTokenType.DOC_RPAREN)
+
+    if (builder.tokenType !== JavaDocSyntaxTokenType.DOC_RPAREN) {
+      fallback.rollbackTo()
+      return builder.advanceLexer()
+    }
+
+    fakeCollapse(link, JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
+    builder.advanceLexer()
+    fallback.done(JavaDocSyntaxElementType.DOC_MARKDOWN_LINK)
+  }
 
   private fun findInlineToken(needle: SyntaxElementType?): SyntaxElementType? {
     return findInlineToken(needle, null, false)
@@ -591,6 +640,10 @@ class JavaDocParser(
     attribute.done(JavaDocSyntaxElementType.DOC_SNIPPET_ATTRIBUTE)
   }
 
+  /**
+   * Parse the reference inside a tag (like `@link` and `@see`)
+   * @param allowBareFieldReference Whether bare references are **always** considered method/field refs
+   */
   private fun parseSeeTagValue(allowBareFieldReference: Boolean) {
     val moduleMarker = parseModuleRef(builder.mark())
 
@@ -612,7 +665,9 @@ class JavaDocParser(
       else if (getTokenType() === JavaDocSyntaxTokenType.DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN) {
         parseFragmentRef(refStart)
       }
-      else if (allowBareFieldReference) {
+      // Javadoc methods references may not have the # token if it is alone, rely on the existence of () to assign the proper type.
+      // In practice, () is not mandatory, and fields have the same issue but cannot be separated from class names on parsing
+      else if (allowBareFieldReference || getTokenType() == JavaDocSyntaxTokenType.DOC_TAG_VALUE_LPAREN) {
         refStart.rollbackTo()
         builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN)
         parseMethodRef(builder.mark())

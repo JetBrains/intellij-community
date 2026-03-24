@@ -71,6 +71,61 @@ jvm_library(
     "//plugins/kotlin/formatter/minimal",
     "//platform/code-style-api:codeStyle",
     "//plugins/kotlin/kotlin.searching",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-completion-impl_test_lib",
+  module_name = "intellij.kotlin.completion.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-completion-impl",
+  runtime_deps = [
+    ":kotlin-completion-impl",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
+    "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared_test_lib",
+    "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement_test_lib",
+    "//plugins/kotlin/completion/api:api_test_lib",
+    "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/text-matching:text-matching_test_lib",
+    "//plugins/kotlin/code-insight/utils:utils_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//plugins/kotlin/jvm-debugger/evaluation:evaluation_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//plugins/kotlin/base/kotlin.base.serialization:kotlin.base.serialization_test_lib",
+    "//plugins/kotlin/formatter/minimal:minimal_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//plugins/kotlin/kotlin.searching:kotlin.searching_test_lib",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.completion.impl` end
+
+### auto-generated section `iml intellij.kotlin.completion.impl` start
+exports_files([
+  "intellij.kotlin.completion.impl.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.completion.impl` end

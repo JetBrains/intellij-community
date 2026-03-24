@@ -96,9 +96,4 @@ abstract class TestIdeaPluginDescriptor : IdeaPluginDescriptor {
   override fun isEnabled(): Boolean {
     throw AssertionError("unexpected call")
   }
-  
-  @Deprecated("Deprecated in Java")
-  override fun setEnabled(enabled: Boolean) {
-    throw AssertionError("unexpected call")
-  }
 }

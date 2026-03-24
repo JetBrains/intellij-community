@@ -511,6 +511,7 @@ suspend fun <T> Flow<Deferred<T>>.awaitCompleted(): T =
 /**
  * Maps values in the flow to successful results and catches and wraps any exception into a failure result.
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("This doesn't work as we expected it to. `Flow.catch` doesn't actually prevent the flow from stopping")
 fun <T> Flow<T>.asResultFlow(): Flow<Result<T>> =
   map { Result.success(it) }.catch { emit(Result.failure(it)) }

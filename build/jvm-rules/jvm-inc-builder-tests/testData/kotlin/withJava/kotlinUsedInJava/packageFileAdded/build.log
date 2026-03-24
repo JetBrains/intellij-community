@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_kotlinUsedInJava_packageFileAdded-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/packageFileAdded/a/b.kt
+End of files
+Cleaning output files:
+  Usage.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/packageFileAdded/a/Usage.java
+End of files
+------------------------------------------
+Exit code: OK

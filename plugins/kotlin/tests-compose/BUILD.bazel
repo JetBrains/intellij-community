@@ -3,6 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests-compose",
+  module_name = "kotlin.tests-compose",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = ["@lib//:kotlin-stdlib"]
@@ -17,6 +18,12 @@ jvm_library(
   runtime_deps = [":tests-compose"]
 )
 ### auto-generated section `build kotlin.tests-compose` end
+
+### auto-generated section `iml kotlin.tests-compose` start
+exports_files([
+  "kotlin.tests-compose.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml kotlin.tests-compose` end
 
 ### auto-generated section `test kotlin.tests-compose` start
 load("@community//build:tests-options.bzl", "jps_test")

@@ -57,6 +57,10 @@ fun IDETestContext.setUseTypesFromServer(value: Boolean): IDETestContext = apply
   addSystemProperty("typescript.compiler.evaluation", value.toString())
 }
 
+fun IDETestContext.setUseWorkspaceFileIndexForPartialScanning(value: Boolean): IDETestContext = applyVMOptionsPatch {
+  addSystemProperty("use.workspace.file.index.for.partial.scanning", value.toString())
+}
+
 fun IDETestContext.setAbortTypeScriptCompilerRequestsOutsideProject(value: Boolean): IDETestContext = applyVMOptionsPatch {
   addSystemProperty("typescript.service.abort.requests.outside.project", value.toString())
 }

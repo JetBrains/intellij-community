@@ -279,7 +279,7 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
     final boolean target = myConstraint instanceof MatchVariableConstraint &&
                            ((MatchVariableConstraint)myConstraint).isPartOfSearchResults();
     myTableModel.setItems(new SmartList<>());
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       for (FilterAction filter : myFilters) {
         initFilter(filter, nodes, completePattern, target);
       }

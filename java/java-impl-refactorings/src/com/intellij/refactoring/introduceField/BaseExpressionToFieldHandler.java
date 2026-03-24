@@ -65,7 +65,6 @@ import com.intellij.psi.PsiTypes;
 import com.intellij.psi.SmartTypePointer;
 import com.intellij.psi.SmartTypePointerManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.FileTypeUtils;
@@ -431,7 +430,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   private static PsiField createField(String fieldName,
                                       PsiType type,
-                                      PsiExpression initializerExpr,
                                       boolean includeInitializer, final PsiClass parentClass) {
     @NonNls StringBuilder pattern = new StringBuilder();
     pattern.append("private int ");
@@ -757,7 +755,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         boolean includeInitializer = initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null;
         myField = mySettings.isIntroduceEnumConstant()
                   ? EnumConstantsUtil.createEnumConstant(destClass, myFieldName, initializer)
-                  : createField(myFieldName, type.getType(), initializer, includeInitializer, myParentClass);
+                  : createField(myFieldName, type.getType(), includeInitializer, myParentClass);
 
         setModifiers(myField, mySettings);
         PsiElement finalAnchorElement = null;
@@ -792,6 +790,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         }
         myField = appendField(initializer, initializerPlace, destClass, myParentClass, myField, anchorMember);
         if (includeInitializer) {
+          // It's important that we append field before adding the initializer to make sure that the replacement takes into account the
+          // context of the file
+          LOG.assertTrue(myField.getInitializer() != null);
           myField.getInitializer().replace(initializer);
         }
         if (!mySettings.isIntroduceEnumConstant()) {

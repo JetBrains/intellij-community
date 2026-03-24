@@ -308,20 +308,35 @@ object CollaborationToolsUIUtil {
    * A text label with a rounded rectangle as a background
    * To be used for various tags and badges
    */
-  fun createTagLabel(text: @Nls String): JComponent = createTagLabel(SingleValueModel(text))
+  @JvmOverloads
+  fun createTagLabel(
+    text: @Nls String,
+    textColor: Color = CodeReviewColorUtil.Review.stateForeground,
+    backgroundColor: Color = CodeReviewColorUtil.Review.stateBackground,
+    compact: Boolean = true,
+  ): JComponent = createTagLabel(SingleValueModel(text), textColor, backgroundColor, compact)
 
-  fun createTagLabel(model: SingleValueModel<@Nls String?>): JComponent =
+  @JvmOverloads
+  fun createTagLabel(
+    model: SingleValueModel<@Nls String?>,
+    textColor: Color = CodeReviewColorUtil.Review.stateForeground,
+    backgroundColor: Color = CodeReviewColorUtil.Review.stateBackground,
+    compact: Boolean = true,
+  ): JComponent =
     JLabel(model.value).apply {
-      font = JBFont.small()
-      foreground = CodeReviewColorUtil.Review.stateForeground
+      if (compact) {
+        font = JBFont.small()
+      }
+      foreground = textColor
       border = JBUI.Borders.empty(0, 4)
       model.addListener {
         text = it
       }
     }.let {
       BackgroundRoundedPanel(4, SingleComponentCenteringLayout()).apply {
+        fillBorder = false
         border = JBUI.Borders.empty()
-        background = CodeReviewColorUtil.Review.stateBackground
+        background = backgroundColor
         add(it)
       }
     }

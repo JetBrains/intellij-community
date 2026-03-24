@@ -51,6 +51,8 @@ com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement$Pres
 - a:isVisible():Z
 - a:render(com.intellij.openapi.editor.Editor,I):V
 - a:startOffset():java.lang.Integer
+f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurable
+- com.intellij.openapi.options.SearchableConfigurable
 com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion
 - com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 - sf:Companion:com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion$Companion

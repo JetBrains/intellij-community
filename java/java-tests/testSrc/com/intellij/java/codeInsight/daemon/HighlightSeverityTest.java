@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class HighlightSeverityTest extends LightDaemonAnalyzerTestCase {
-  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/highlightSeverity";
+  @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/highlightSeverity";
 
 
   public void testErrorLikeUnusedSymbol() {

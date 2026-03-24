@@ -1,7 +1,10 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <module name="intellij.platform.jewel.foundation" />
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.compose.foundation.desktop"/>
     <module name="intellij.libraries.compose.runtime.desktop"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.jewel.foundation"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

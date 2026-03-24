@@ -1,4 +1,4 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.impl
 
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -92,7 +92,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     isComputable = false,
                     isKey = false,
                     isOpen = false,
-                    name = "compilationConfiguration",
+                    name = "compilationConfigurationData",
                     valueType = ValueTypeMetadata.SimpleType.CustomType(
                         isNullable = false,
                         typeMetadata = FinalClassMetadata.ClassMetadata(
@@ -212,7 +212,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     override fun initializeMetadataHash() {
         addMetadataHash(
             typeFqn = "org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntity",
-            metadataHash = 25748778
+            metadataHash = 774000416
         )
         addMetadataHash(
             typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationData",

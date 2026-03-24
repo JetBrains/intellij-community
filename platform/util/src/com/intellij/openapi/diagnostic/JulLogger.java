@@ -114,15 +114,19 @@ public class JulLogger extends Logger {
   }
 
   @Override
-  public void setLevel(@NotNull LogLevel level) {
-    myLogger.setLevel(level.getLevel());
+  public void setLevel(@Nullable LogLevel level) {
+    myLogger.setLevel(level==null?null:level.getLevel());
+  }
+  public LogLevel getLevel() {
+    Level level = myLogger.getLevel();
+    return level==null?null:LogLevel.from(level);
   }
 
   public static void clearHandlers() {
     clearHandlers(java.util.logging.Logger.getLogger(""));
   }
 
-  public static void clearHandlers(java.util.logging.Logger logger) {
+  public static void clearHandlers(@NotNull java.util.logging.Logger logger) {
     for (Handler handler : logger.getHandlers()) {
       logger.removeHandler(handler);
     }
@@ -156,13 +160,13 @@ public class JulLogger extends Logger {
     }
   }
 
-  private static Handler configureAttachmentHandler(Path path, @Nullable Filter filter) {
+  private static @NotNull Handler configureAttachmentHandler(@NotNull Path path, @Nullable Filter filter) {
     AttachmentHandler handler = new AttachmentHandler(path);
     if (filter != null) handler.setFilter(filter);
     return handler;
   }
 
-  private static Handler configureConsoleHandler(boolean showDateInConsole, IdeaLogRecordFormatter layout, @Nullable Filter filter) {
+  private static @NotNull Handler configureConsoleHandler(boolean showDateInConsole, @NotNull IdeaLogRecordFormatter layout, @Nullable Filter filter) {
     OptimizedConsoleHandler consoleHandler = new OptimizedConsoleHandler();
     consoleHandler.setFormatter(new IdeaLogRecordFormatter(showDateInConsole, layout));
     boolean useSevereLogLevel = Boolean.parseBoolean(System.getProperty("intellij.console.use.severe.log.level", "false"));
@@ -172,7 +176,7 @@ public class JulLogger extends Logger {
     return consoleHandler;
   }
 
-  private static Handler configureInMemoryHandler(Path logFilePath, @Nullable Filter filter) {
+  private static @NotNull Handler configureInMemoryHandler(@NotNull Path logFilePath, @Nullable Filter filter) {
     InMemoryHandler inMemoryHandler = new InMemoryHandler(logFilePath);
     inMemoryHandler.setFormatter(new IdeaLogRecordFormatter());
     inMemoryHandler.setLevel(Level.FINEST);
@@ -180,13 +184,13 @@ public class JulLogger extends Logger {
     return inMemoryHandler;
   }
 
-  private static Handler configureFileHandler(
-    Path logFilePath,
+  private static @NotNull Handler configureFileHandler(
+    @NotNull Path logFilePath,
     boolean appendToFile,
     @Nullable Runnable onRotate,
     @SuppressWarnings("SameParameterValue") long limit,
     @SuppressWarnings("SameParameterValue") int count,
-    IdeaLogRecordFormatter layout,
+    @NotNull IdeaLogRecordFormatter layout,
     @Nullable Filter filter
   ) {
     RollingFileHandler fileHandler = new RollingFileHandler(logFilePath, limit, count, appendToFile, onRotate);

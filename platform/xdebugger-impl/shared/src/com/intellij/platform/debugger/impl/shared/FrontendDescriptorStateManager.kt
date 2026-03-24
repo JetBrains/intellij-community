@@ -5,6 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.frame.XDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
@@ -23,7 +24,7 @@ interface FrontendDescriptorStateManagerExtension {
     private val EP_NAME = ExtensionPointName.create<FrontendDescriptorStateManagerExtension>("com.intellij.xdebugger.descriptorStateManager")
 
     fun createState(descriptor: XDescriptor, cs: CoroutineScope): Any? {
-      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createState(descriptor, cs) }
+      return EP_NAME.computeSafeIfAny { it.createState(descriptor, cs) }
     }
   }
 }
@@ -32,6 +33,7 @@ interface FrontendDescriptorStateManagerExtension {
 @Service(Service.Level.PROJECT)
 class FrontendDescriptorStateManager {
   private val states = ConcurrentHashMap<XDescriptor, Any>()
+  private val processDescriptors = ConcurrentHashMap<XDebugSessionId, XDescriptor>()
 
   fun registerDescriptor(descriptor: XDescriptor, cs: CoroutineScope) {
     val state = FrontendDescriptorStateManagerExtension.createState(descriptor, cs) ?: return
@@ -39,7 +41,18 @@ class FrontendDescriptorStateManager {
     cs.coroutineContext.job.invokeOnCompletion { states.remove(descriptor) }
   }
 
+  fun registerProcessDescriptor(sessionId: XDebugSessionId, descriptor: XDescriptor, cs: CoroutineScope) {
+    registerDescriptor(descriptor, cs)
+    processDescriptors[sessionId] = descriptor
+    cs.coroutineContext.job.invokeOnCompletion { processDescriptors.remove(sessionId) }
+  }
+
   fun getState(descriptor: XDescriptor): Any? {
+    return states[descriptor]
+  }
+
+  fun getProcessDescriptorState(sessionId: XDebugSessionId): Any? {
+    val descriptor = processDescriptors[sessionId] ?: return null
     return states[descriptor]
   }
 

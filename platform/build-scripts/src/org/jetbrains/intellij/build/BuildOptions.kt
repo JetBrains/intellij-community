@@ -47,6 +47,7 @@ data class BuildOptions(
    */
   @JvmField var isInDevelopmentMode: Boolean = getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null && System.getenv("GITHUB_ACTIONS") == null),
   @JvmField var useCompiledClassesFromProjectOutput: Boolean = getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode),
+  @JvmField var isLanguageServer: Boolean = getBooleanProperty("intellij.build.lsp.mode", false),
 
   /**
    * In addition to production compilation sources, allow various functions to use and traverse test output.
@@ -200,6 +201,9 @@ data class BuildOptions(
     const val WIN_SIGN_STEP: String = "windows_sign"
 
     const val LOCALIZE_STEP: String = "localize"
+
+    /** Copy product bin dir contents */
+    const val PRODUCT_BIN_DIR_STEP: String = "product_bin_dir"
 
     @JvmField
     @Internal

@@ -1,4 +1,5 @@
 // "Change function signature to 'fun f(a: Int): Int'" "true"
+// K2_ERROR: 'f' overrides nothing. Potential signatures for overriding:<br>fun f(a: Int): Int
 open class A {
     open fun f(a: Int): Int {
         return 0

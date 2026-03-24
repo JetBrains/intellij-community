@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.diagnostic.telemetry.jar
+  modules:
+  - name: intellij.platform.diagnostic.telemetry

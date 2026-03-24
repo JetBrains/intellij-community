@@ -65,7 +65,7 @@ class GitLabMergeRequestDiffNewDiscussionViewModel internal constructor(
   private val base: NewGitLabNoteViewModelWithAdjustablePosition,
   private val diffData: GitTextFilePatchWithHistory,
   discussionsViewOption: StateFlow<DiscussionsViewOption>
-) : NewGitLabNoteViewModel by base {
+) : NewGitLabNoteViewModelWithAdjustablePosition by base {
   val location: StateFlow<GitLabNoteLocation?> = base.position.mapState { it.mapToLocation(diffData) }
   val isVisible: StateFlow<Boolean> = discussionsViewOption.mapState { it != DiscussionsViewOption.DONT_SHOW }
   fun updateLineRange(startLocation: DiffLineLocation, endLocation: DiffLineLocation) {

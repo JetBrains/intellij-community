@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.test.util
 
 
 import com.intellij.navigation.NavigationItem
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPackage
@@ -34,8 +35,10 @@ fun PsiElement.renderAsGotoImplementation(renderModule: Boolean = false): String
     val presentation = (navigationElement as NavigationItem).presentation
 
     if (presentation == null) {
-        val elementText = text
-        return elementText ?: navigationElement.text
+        return BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation {
+            val elementText = text
+            elementText ?: navigationElement.text
+        }
     }
 
     val presentableText = presentation.presentableText

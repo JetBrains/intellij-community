@@ -40,6 +40,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
@@ -129,7 +130,6 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     if (getAnnotationLineMarkerType(nonCodeAnnotations) != myLineMarkerType) {
       return null;
     }
-
     String tooltip = XmlStringUtil.wrapInHtml(
       "<p>" + NonCodeAnnotationGenerator.getNonCodeHeaderAvailable(nonCodeAnnotations) + CommonXmlStrings.NBSP + JavaBundle.message("non.code.annotations.explanation.full.signature") + "\n" +
       CODE_BLOCK_PREFIX + JavaDocInfoGeneratorFactory.create(owner.getProject(), owner).generateSignature(owner).replaceAll("</?code>", "") + CODE_BLOCK_SUFFIX);
@@ -143,7 +143,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     PsiElement owner = element.getParent();
     if (!(owner instanceof PsiModifierListOwner) || !(owner instanceof PsiNameIdentifierOwner)) return null;
     if (owner instanceof PsiParameter || owner instanceof PsiLocalVariable) return null;
-
+    if (owner instanceof PsiTypeParameter) return null;  // should be a part of their owners
     // support non-Java languages where getNameIdentifier may return non-physical psi with the same range
     PsiElement nameIdentifier = ((PsiNameIdentifierOwner)owner).getNameIdentifier();
     if (nameIdentifier == null || !nameIdentifier.getTextRange().equals(element.getTextRange())) return null;

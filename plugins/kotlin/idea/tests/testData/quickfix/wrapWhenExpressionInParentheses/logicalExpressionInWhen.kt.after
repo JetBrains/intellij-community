@@ -1,5 +1,7 @@
 // "Wrap expression in parentheses" "true"
 // ERROR: 'when' expression must be exhaustive, add necessary 'true', 'false' branches or 'else' branch instead
+// K2_ERROR: 'when' expression must be exhaustive. Add the 'true', 'false' branches or an 'else' branch.
+// K2_ERROR: Logical expression in when-with-subject. The branch will be matched by comparing the result of the logical expression with the subject. To suppress the diagnostic, wrap the expression with parentheses.
 // K2_AFTER_ERROR: 'when' expression must be exhaustive. Add the 'true', 'false' branches or an 'else' branch.
 interface A {
     operator fun contains(other: A): Boolean

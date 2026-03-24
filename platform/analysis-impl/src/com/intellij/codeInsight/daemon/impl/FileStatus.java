@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 final class FileStatus {
   static final TextRange WHOLE_FILE_TEXT_RANGE = new UnfairTextRange(-1, -1);
-  private static final Logger LOG = Logger.getInstance(FileStatus.class);
+  static final Logger LOG = Logger.getInstance(FileStatus.class);
 
   /**
    * The file was marked dirty without knowledge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
@@ -40,9 +40,10 @@ final class FileStatus {
 
   FileStatus(@NotNull Project project) {
     markWholeFileDirty(project);
+    LOG.debug("new FileStatus()");
   }
 
-  int @NotNull [] getAllKnownPassIds(@NotNull Project project) {
+  static int @NotNull [] getAllKnownPassIds(@NotNull Project project) {
     IntList r = IntArrayList.of(Pass.UPDATE_ALL, Pass.EXTERNAL_TOOLS, Pass.LOCAL_INSPECTIONS, Pass.LINE_MARKERS, Pass.SLOW_LINE_MARKERS, Pass.INJECTED_GENERAL);
     TextEditorHighlightingPassRegistrarEx registrar = (TextEditorHighlightingPassRegistrarEx)TextEditorHighlightingPassRegistrar.getInstance(project);
     for (DirtyScopeTrackingHighlightingPassFactory factory : registrar.getDirtyScopeTrackingFactories()) {
@@ -76,7 +77,7 @@ final class FileStatus {
       this.defensivelyMarked.remove(passId);
     }
   }
-  void markDefensivelyMarkedForAllPasses(@NotNull Project project) {
+  void markDefensivelyForAllPasses(@NotNull Project project) {
     for (int passId : getAllKnownPassIds(project)) {
       setDefensivelyMarked(true, passId);
     }
@@ -95,8 +96,8 @@ final class FileStatus {
     return true;
   }
 
-  void combineScopesWith(@NotNull TextRange scope, @NotNull Document document) {
-    dirtyScopes.replaceAll((__, oldScope) -> combineScopes(oldScope, scope, document));
+  void combineScopesWith(@NotNull TextRange newScope, @NotNull Document document) {
+    dirtyScopes.replaceAll((__, oldScope) -> combineScopes(oldScope, newScope, document));
   }
 
   @Nullable RangeMarker getDirtyScope(int passId) {
@@ -154,10 +155,10 @@ final class FileStatus {
   }
 
   void setDirtyScope(int passId, @Nullable RangeMarker scope) {
-    RangeMarker marker = dirtyScopes.get(passId);
-    if (marker != scope) {
-      if (marker != null) {
-        marker.dispose();
+    RangeMarker oldMarker = dirtyScopes.get(passId);
+    if (oldMarker != scope) {
+      if (oldMarker != null) {
+        oldMarker.dispose();
       }
       if (LOG.isDebugEnabled()) {
         LOG.debug("FileStatus.setDirtyScope("+passId+", "+scope+")");

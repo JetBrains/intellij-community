@@ -4,9 +4,7 @@ package org.jetbrains.idea.devkit.themes;
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
 import com.intellij.json.psi.JsonElementGenerator;
 import com.intellij.json.psi.JsonFile;
-import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
-import com.intellij.json.psi.JsonValue;
 import com.intellij.json.psi.impl.JsonPsiImplUtils;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -23,9 +21,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.CachedValueProvider.Result;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorLineMarkerProvider;
 import com.intellij.ui.ColorUtil;
@@ -37,9 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import java.awt.Color;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -199,25 +192,11 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
       }
     }
 
-    private static Map<String, String> getNamedColorsMap(@NotNull JsonFile file) {
-      return CachedValuesManager.getCachedValue(file, () -> {
-        Map<String, String> namedColorsMap = new HashMap<>();
-        List<JsonProperty> colors = ThemeJsonUtil.getNamedColors(file);
-        for (JsonProperty property : colors) {
-          JsonValue value = property.getValue();
-          if (value instanceof JsonStringLiteral) {
-            namedColorsMap.put(property.getName(), ((JsonStringLiteral)value).getValue());
-          }
-        }
-        return Result.create(Map.copyOf(namedColorsMap), PsiModificationTracker.MODIFICATION_COUNT);
-      });
-    }
-
     private @Nullable Color findNamedColor(@NotNull String colorText) {
       PsiFile file = myLiteral.getContainingFile();
       if (!(file instanceof JsonFile)) return null;
 
-      Map<String, String> namedColorsMap = getNamedColorsMap((JsonFile)file);
+      Map<String, ColorValueDefinition> namedColorsMap = ThemeJsonUtil.getNamedColorsMap((JsonFile)file);
       String colorValue = findNamedColorValue(colorText, namedColorsMap, new HashSet<>());
       if (colorValue == null || !colorValue.startsWith("#")) {
         return null;
@@ -227,12 +206,14 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
     }
 
     private static @Nullable String findNamedColorValue(@NotNull String colorName,
-                                                        @NotNull Map<String, String> namedColorsMap,
+                                                        @NotNull Map<String, ColorValueDefinition> namedColorsMap,
                                                         @NotNull Set<String> visited) {
       if (!visited.add(colorName)) return null; // cycle detected in resolve!
 
-      String colorValue = namedColorsMap.get(colorName);
-      if (colorValue == null) return null;
+      var def = namedColorsMap.get(colorName);
+      if (def == null) return null;
+
+      var colorValue = def.colorValue();
 
       if (colorValue.startsWith("#")) {
         return colorValue;

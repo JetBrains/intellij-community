@@ -48,7 +48,9 @@ f:com.intellij.platform.eel.provider.utils.EelChannelUtilsKt
 - *sf:consumeAsEelChannel(java.nio.channels.ReadableByteChannel):com.intellij.platform.eel.channels.EelReceiveChannel
 - *sf:consumeAsInputStream(com.intellij.platform.eel.channels.EelReceiveChannel,kotlin.coroutines.CoroutineContext):java.io.InputStream
 - *bs:consumeAsInputStream$default(com.intellij.platform.eel.channels.EelReceiveChannel,kotlin.coroutines.CoroutineContext,I,java.lang.Object):java.io.InputStream
+- *sf:readAllBytes(com.intellij.platform.eel.channels.EelReceiveChannel,I,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:readAllBytes(com.intellij.platform.eel.channels.EelReceiveChannel,kotlin.coroutines.Continuation):java.lang.Object
+- *bs:readAllBytes$default(com.intellij.platform.eel.channels.EelReceiveChannel,I,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 *f:com.intellij.platform.eel.provider.utils.EelPathUtilsKt
 - *sf:Path(java.lang.String,com.intellij.platform.eel.EelDescriptor):java.nio.file.Path
 *f:com.intellij.platform.eel.provider.utils.EelProcessExecutionResult

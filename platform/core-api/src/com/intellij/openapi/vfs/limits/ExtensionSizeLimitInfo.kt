@@ -1,10 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.limits
 
-import org.jetbrains.annotations.ApiStatus
-
 /** @see FileSizeLimit */
-@ApiStatus.Internal
 data class ExtensionSizeLimitInfo(
   /**
    * Don't load the file content if larger.
@@ -21,4 +18,10 @@ data class ExtensionSizeLimitInfo(
    * (editor may show a truncated read-only view of the file)
    */
   val preview: Int? = null,
-)
+  /**
+   * Maximum number of bytes to use for charset/encoding detection.
+   */
+  val encodingDetectionLimit: Int? = null,
+) {
+  constructor(content: Int? = null, intellijSense: Int? = null, preview: Int? = null) : this(content, intellijSense, preview, null)
+}

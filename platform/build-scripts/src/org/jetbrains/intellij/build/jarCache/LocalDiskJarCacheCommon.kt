@@ -13,25 +13,22 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 
 internal const val entriesDirName = "entries"
-internal const val stripedLockFileName = "striped-lock-slots.lck"
 internal const val metadataFileSuffix = ".meta"
 internal const val markedForCleanupFileSuffix = ".mark"
 internal const val entryNameSeparator = "__"
 internal const val cleanupMarkerFileName = ".last.cleanup.marker"
 internal const val cleanupScanCursorFileName = ".cleanup.scan.cursor"
-internal const val lockSlotCount = 4096
 internal const val legacyJarSuffix = ".jar"
 internal const val legacyMetadataSuffix = ".m"
 internal const val metadataMagic = 0x4A434D31
 internal const val metadataSchemaVersion = 2
 internal const val legacyPurgeMarkerPrefix = ".legacy-format-purged."
-internal val cleanupEveryDuration = 1.days
+internal val defaultCleanupEveryDuration = 1.days
 internal val metadataTouchMinInterval = 15.minutes
 internal val legacyFlatMetadataPattern = Regex(".+-\\d+-[0-9a-z]+-[0-9a-z]+\\.m")
 internal val legacyVersionDirectoryPattern = Regex("v\\d+")
 private const val maxTargetFileNameLengthInEntryName = 80
 private const val maxCacheFileNameLength = 255
-private const val lockSlotMask = lockSlotCount - 1L
 private val maxEntryStemLength = maxCacheFileNameLength - maxOf(metadataFileSuffix.length, markedForCleanupFileSuffix.length)
 private val allowedCacheFileNameChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-".toSet()
 
@@ -67,25 +64,29 @@ internal fun getCacheKeyFromEntryStem(entryStem: String): String? {
   return entryStem.substring(0, separatorIndex)
 }
 
-internal fun getStripedLockFile(versionedCacheDir: Path): Path {
-  return versionedCacheDir.resolve(stripedLockFileName)
+internal fun getTargetNameFromEntryStem(entryStem: String): String? {
+  val separatorIndex = entryStem.indexOf(entryNameSeparator)
+  if (separatorIndex <= 0) {
+    return null
+  }
+
+  val targetNameStartIndex = separatorIndex + entryNameSeparator.length
+  if (targetNameStartIndex >= entryStem.length) {
+    return null
+  }
+  return entryStem.substring(targetNameStartIndex)
 }
 
-internal fun getLockSlot(leastSignificantBits: Long): Long {
-  return leastSignificantBits and lockSlotMask
-}
-
-internal fun parseLockSlotFromKey(key: String): Long? {
+internal fun parseLeastSignificantBitsFromKey(key: String): Long? {
   // Keys are persisted as "<lsb>-<msb>" with unsigned radix-36 numbers.
-  // Cleanup does not have original hashValue128, so it must decode the stored lsb prefix.
-  // Re-hashing the entire key string selects a different stripe than computeIfAbsent.
+  // Cleanup does not have original hashValue128, so it must decode the stored lsb prefix
+  // and feed it directly into StripedMutex.getLockByHash.
   val separatorIndex = key.indexOf('-')
   if (separatorIndex <= 0) {
     return null
   }
 
-  val leastSignificantBits = key.substring(0, separatorIndex).toULongOrNull(Character.MAX_RADIX)?.toLong() ?: return null
-  return getLockSlot(leastSignificantBits)
+  return key.substring(0, separatorIndex).toULongOrNull(Character.MAX_RADIX)?.toLong()
 }
 
 internal fun longToString(v: Long): String = java.lang.Long.toUnsignedString(v, Character.MAX_RADIX)

@@ -18,3 +18,5 @@ com.intellij.ide.actions.ReportFeedbackService
 com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 com.intellij.formatting.service.AsyncFormattingService
 com.jetbrains.rdclient.actions.base.EditorActionHandlersCustomization
+com.intellij.refactoring.rename.RenameHandlerRegistry
+com.intellij.platform.ide.customization.ExternalProductResourceUrls

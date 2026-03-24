@@ -9,8 +9,23 @@ resourcegroup(
 
 jvm_library(
   name = "toml",
+  module_name = "intellij.toml",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":toml_resources"]
 )
+
+jvm_library(
+  name = "toml_test_lib",
+  module_name = "intellij.toml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":toml"]
+)
 ### auto-generated section `build intellij.toml` end
+
+### auto-generated section `iml intellij.toml` start
+exports_files([
+  "intellij.toml.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.toml` end

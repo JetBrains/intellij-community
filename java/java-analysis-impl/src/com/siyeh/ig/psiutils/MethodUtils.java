@@ -611,9 +611,11 @@ public final class MethodUtils {
           PsiAnnotation myAnnotation = null;
           
           @Override
-          public void process(@NotNull PsiAnnotation annotation, boolean superPackage) {
-            if (fqAnnotationNames.contains(annotation.getQualifiedName())) {
-              myAnnotation = annotation;
+          public void processAll(@NotNull List<@NotNull PsiAnnotation> annotations, boolean superPackage) {
+            for (PsiAnnotation annotation : annotations) {
+              if (fqAnnotationNames.contains(annotation.getQualifiedName())) {
+                myAnnotation = annotation;
+              }
             }
           }
         };

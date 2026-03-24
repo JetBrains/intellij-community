@@ -47,13 +47,30 @@ object CommonScope {
     CoroutineScope(SupervisorJob() + Dispatchers.IO + CoroutineName("Test's supervisor scope"))
 
   /**
-   * Lifespan is limited to the duration of the test class. By the end of the test class whole coroutines tree will be cancelled.
+   * Lifespan is limited to the duration of the test class. By the end of the test container, a whole coroutines tree will be canceled.
+   * In a simple case a test container is the same as a class, in case when we have a base class and several classes extend it, the test container is over when all tests extending the base class are over.
    */
   val perClassSupervisorScope = CoroutineScope(SupervisorJob() + Dispatchers.IO + CoroutineName("Test class's supervisor scope"))
 
-  /**
-   * In case of unhandled exception in child coroutines, all the coroutines tree (parents and other branches) will be canceled.
-   * In most scenarios you don't need that behavior.
+  var scopeForProcesses: CoroutineScope = perClassSupervisorScope
+    private set
+
+  /*
+    Processes started in ProcessExecutor and by various runWithDriver will be launched on per suite scope.
+    It means that they will be stopped when the whole test suite is finished and not after each test container.
    */
-  val simpleScope = CoroutineScope(Job() + Dispatchers.IO + CoroutineName("Simple scope"))
+  fun perSuiteScopeForIdeActivities() {
+    scopeForProcesses = testSuiteSupervisorScope
+  }
+
+  /*
+    Restores the default process scope.
+    Processes started in ProcessExecutor and by various runWithDriver will be launched on per class scope.
+    It means that they will be stopped when the current test container is finished.
+   */
+  fun perClassScopeForIdeActivities() {
+    scopeForProcesses = perClassSupervisorScope
+  }
+
+  fun shouldKillOutdatedProcessesBetweenContainers(): Boolean = scopeForProcesses == perClassSupervisorScope
 }

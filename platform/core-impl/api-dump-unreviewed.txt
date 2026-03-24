@@ -379,7 +379,6 @@ f:com.intellij.ide.plugins.PluginManager
 - s:getPlugins():com.intellij.ide.plugins.IdeaPluginDescriptor[]
 - s:isPluginInstalled(com.intellij.openapi.extensions.PluginId):Z
 f:com.intellij.ide.plugins.PluginManagerCore
-- sf:ALL_MODULES_MARKER:com.intellij.openapi.extensions.PluginId
 - sf:CORE_ID:com.intellij.openapi.extensions.PluginId
 - sf:CORE_PLUGIN_ID:java.lang.String
 - sf:DISABLE:java.lang.String
@@ -391,11 +390,8 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - sf:META_INF:java.lang.String
 - sf:PLUGIN_XML:java.lang.String
 - sf:PLUGIN_XML_PATH:java.lang.String
-- sf:SPECIAL_IDEA_PLUGIN_ID:com.intellij.openapi.extensions.PluginId
 - sf:VENDOR_JETBRAINS:java.lang.String
 - sf:VENDOR_JETBRAINS_SRO:java.lang.String
-- s:isIgnoreCompatibility:Z
-- s:isUnitTestMode:Z
 - sf:addDisablePluginListener(java.lang.Runnable):V
 - sf:checkBuildNumberCompatibility(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.BuildNumber):com.intellij.ide.plugins.PluginNonLoadReason
 - sf:disablePlugin(com.intellij.openapi.extensions.PluginId):Z
@@ -1589,7 +1585,6 @@ a:com.intellij.psi.AbstractFileViewProvider
 - pf:isIgnored():Z
 - isPhysical():Z
 - f:markInvalidated():V
-- f:markPossiblyInvalidated():V
 - f:onContentReload():V
 - f:registerAsCopy(com.intellij.psi.AbstractFileViewProvider):V
 - rootChanged(com.intellij.psi.PsiFile):V
@@ -2422,20 +2417,6 @@ f:com.intellij.psi.impl.meta.MetaRegistry
 - s:getMeta(com.intellij.psi.PsiElement):com.intellij.psi.meta.PsiMetaData
 - s:getMetaBase(com.intellij.psi.PsiElement):com.intellij.psi.meta.PsiMetaData
 - registerMetaData(com.intellij.psi.filters.ElementFilter,java.lang.Class):V
-a:com.intellij.psi.impl.smartPointers.Identikit
-- <init>():V
-- a:findPsiElement(com.intellij.psi.PsiFile,I,I):com.intellij.psi.PsiElement
-- s:fromPsi(com.intellij.psi.PsiElement,com.intellij.lang.Language):com.intellij.psi.impl.smartPointers.Identikit$ByType
-- a:getFileLanguage():com.intellij.lang.Language
-- a:isForPsiFile():Z
-f:com.intellij.psi.impl.smartPointers.Identikit$ByType
-- com.intellij.psi.impl.smartPointers.Identikit
-- equals(java.lang.Object):Z
-- findInside(com.intellij.psi.PsiElement,I,I):com.intellij.psi.PsiElement
-- findPsiElement(com.intellij.psi.PsiFile,I,I):com.intellij.psi.PsiElement
-- getFileLanguage():com.intellij.lang.Language
-- hashCode():I
-- isForPsiFile():Z
 a:com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V

@@ -39,7 +39,8 @@ internal fun processUnhandledException(
         val application = ApplicationManager.getApplication()
         val messagePool = MessagePool.getInstance()
 
-        val showError = Registry.get("ide.exceptions.show.interactive").asBoolean()
+        val showError = application != null // Early stage: app and registry aren't initialized yet
+                        && Registry.`is`("ide.exceptions.show.interactive", false)
                         && !application.isHeadlessEnvironment
                         // Sunsetting app might produce lots of errors due to races.
                         // While all of them needs to be fixed, no need to bother user with them,

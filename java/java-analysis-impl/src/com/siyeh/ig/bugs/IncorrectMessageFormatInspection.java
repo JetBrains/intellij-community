@@ -9,6 +9,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiArrayType;
@@ -28,6 +29,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.format.MessageFormatUtil;
@@ -42,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -177,7 +180,7 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
         if (!notFoundArguments.isEmpty()) {
           if (notFoundArguments.size() == 1) {
             holder.registerProblem(identifier, InspectionGadgetsBundle.message("inspection.incorrect.message.format.not.found.argument",
-                                                                               notFoundArguments.iterator().next()));
+                                                                               notFoundArguments.getFirst()));
           }
           else {
             StringJoiner joiner = new StringJoiner(", ");
@@ -233,7 +236,8 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
           pattern = value;
         }
 
-        MessageFormatUtil.MessageFormatResult result = MessageFormatUtil.checkFormat(pattern);
+        LanguageLevel level = PsiUtil.getLanguageLevel(expression);
+        MessageFormatUtil.MessageFormatResult result = MessageFormatUtil.checkFormat(pattern, level);
         if (result.valid()) {
           return result.placeholders();
         }
@@ -316,6 +320,21 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
       case UNPARSED_INDEX, INDEX_NEGATIVE ->
         InspectionGadgetsBundle.message("inspection.incorrect.message.format.incorrect.index", relatedText);
       case UNKNOWN_FORMAT_TYPE -> InspectionGadgetsBundle.message("inspection.incorrect.message.format.unknown.format.type", relatedText);
+      case UNKNOWN_FORMAT_TYPE_LANGUAGE_LEVEL -> {
+        String defaultUnknownMessageText = InspectionGadgetsBundle.message("inspection.incorrect.message.format.unknown.format.type", relatedText);
+        try {
+          MessageFormatUtil.MessageFormatType formatType = MessageFormatUtil.MessageFormatType.valueOf(relatedText.trim().toUpperCase(Locale.ROOT));
+          LanguageLevel level = formatType.requiredLanguageLevel;
+          if (level == null) {
+            yield defaultUnknownMessageText;
+          }
+          yield InspectionGadgetsBundle.message("inspection.incorrect.message.format.unknown.format.language.level.type",
+                                                relatedText, level.getPresentableText());
+        }
+        catch (IllegalArgumentException e) {
+          yield defaultUnknownMessageText;
+        }
+      }
       case UNCLOSED_BRACE_PLACEHOLDER -> InspectionGadgetsBundle.message("inspection.incorrect.message.format.unclosed.brace");
       case UNPAIRED_QUOTE -> InspectionGadgetsBundle.message("inspection.incorrect.message.format.unpaired.quote");
       case UNMATCHED_BRACE -> InspectionGadgetsBundle.message("inspection.incorrect.message.format.unmatched.brace");

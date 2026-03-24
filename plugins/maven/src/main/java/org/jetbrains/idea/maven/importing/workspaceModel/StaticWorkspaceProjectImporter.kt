@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
+import org.jetbrains.idea.maven.buildtool.MavenSyncSession
 import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil
 import org.jetbrains.idea.maven.importing.MavenStaticSyncAware
@@ -16,12 +17,11 @@ import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 
 internal class StaticWorkspaceProjectImporter(
-  projectsTree: MavenProjectsTree,
+  syncSession: MavenSyncSession,
   projectsToImport: List<MavenProject>,
   importingSettings: MavenImportingSettings,
   modifiableModelsProvider: IdeModifiableModelsProvider,
-  project: Project
-) : WorkspaceProjectImporter(projectsTree, projectsToImport, importingSettings, modifiableModelsProvider, project) {
+) : WorkspaceProjectImporter(syncSession, projectsToImport, importingSettings, modifiableModelsProvider) {
 
   override fun workspaceConfigurators(): List<MavenWorkspaceConfigurator> {
     return super.workspaceConfigurators().filter { it is MavenStaticSyncAware }

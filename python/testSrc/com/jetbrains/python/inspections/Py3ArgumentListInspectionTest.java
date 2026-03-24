@@ -667,4 +667,18 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
       NonWorkingClass().add_two(<warning descr="Parameter 'x' unfilled"><warning descr="Parameter 'y' unfilled">)</warning></warning>
       """);
   }
+
+  public void testPropertyMethodCallSet() {
+    doTestByText("""
+                   class A:
+                       def get_f(self) -> int:
+                           return 1
+                       def set_f(self, x: int):
+                           pass
+                   
+                       f = property(get_f, set_f)
+                   
+                   A().set_f(1)
+                   """);
+  }
 }

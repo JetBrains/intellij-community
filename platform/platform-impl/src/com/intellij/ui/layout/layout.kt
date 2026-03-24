@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("DEPRECATION")
+
 package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.DialogPanel
@@ -37,8 +39,6 @@ inline fun panel(vararg constraints: LCFlags, @NlsContexts.DialogTitle title: St
 @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.ERROR)
 internal fun initPanel(builder: LayoutBuilder, panel: DialogPanel) {
   panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
-  panel.validateCallbacks = builder.builder.validateCallbacks
-  panel.componentValidateCallbacks = builder.builder.componentValidateCallbacks
 }
 
 @ApiStatus.ScheduledForRemoval
@@ -46,6 +46,4 @@ internal fun initPanel(builder: LayoutBuilder, panel: DialogPanel) {
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun initPanelInternal(builder: LayoutBuilder, panel: DialogPanel) {
   panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
-  panel.validateCallbacks = builder.builder.validateCallbacks
-  panel.componentValidateCallbacks = builder.builder.componentValidateCallbacks
 }

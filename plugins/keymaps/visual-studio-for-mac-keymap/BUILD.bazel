@@ -9,8 +9,23 @@ resourcegroup(
 
 jvm_library(
   name = "keymap-visualStudioForMac",
+  module_name = "intellij.keymap.visualStudioForMac",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":keymap-visualStudioForMac_resources"]
 )
+
+jvm_library(
+  name = "keymap-visualStudioForMac_test_lib",
+  module_name = "intellij.keymap.visualStudioForMac",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":keymap-visualStudioForMac"]
+)
 ### auto-generated section `build intellij.keymap.visualStudioForMac` end
+
+### auto-generated section `iml intellij.keymap.visualStudioForMac` start
+exports_files([
+  "intellij.keymap.visualStudioForMac.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.keymap.visualStudioForMac` end

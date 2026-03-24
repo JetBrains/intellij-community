@@ -6,12 +6,12 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
-import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 abstract class StandardHtmlSymbol : MdnDocumentedSymbol(), PsiSourcedPolySymbol, PolySymbolScope {
+
   abstract val project: Project?
-  override fun getModificationCount(): Long = project?.let { PsiModificationTracker.getInstance(it).modificationCount } ?: 0
+
   abstract override fun createPointer(): Pointer<out StandardHtmlSymbol>
 }

@@ -64,7 +64,7 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
   }
 
   @VisibleForTesting
-  public static PsiElement @Nullable [] findSymbolTypes(@NotNull Editor editor, int offset) {
+  public static @Nullable PsiElement @Nullable [] findSymbolTypes(@NotNull Editor editor, int offset) {
     return findSymbolTypes(editor, offset, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
                                            TargetElementUtil.ELEMENT_NAME_ACCEPTED |
                                            TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
@@ -75,7 +75,7 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
   /// This function is the highest-level way to trigger the "Go to Type Declaration" action.
   /// It's composed of a couple of lower-level functions.
   @ApiStatus.Internal
-  public static PsiElement @Nullable [] findSymbolTypes(@NotNull Editor editor,
+  public static @Nullable PsiElement @Nullable [] findSymbolTypes(@NotNull Editor editor,
                                                         int offset,
                                                         @MagicConstant(flagsFromClass = TargetElementUtil.class) int flags) {
     PsiElement targetElement = TargetElementUtil.getInstance().findTargetElement(editor, flags, offset);

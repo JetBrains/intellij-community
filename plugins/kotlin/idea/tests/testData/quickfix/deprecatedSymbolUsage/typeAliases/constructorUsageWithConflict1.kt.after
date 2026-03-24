@@ -1,4 +1,5 @@
 // "Replace with 'NewClass(12)'" "true"
+// K2_ERROR: 'constructor(): OldClass' uses 'constructor(): OldClass', which is an error. Use NewClass(12).
 
 @Deprecated("Use NewClass", replaceWith = ReplaceWith("NewClass"))
 class OldClass @Deprecated("Use NewClass(12)", level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("NewClass(12)")) constructor()

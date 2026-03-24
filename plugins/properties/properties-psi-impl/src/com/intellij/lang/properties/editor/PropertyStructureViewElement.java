@@ -7,12 +7,14 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesHighlighter;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,10 +40,12 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
     myGrouped = grouped;
   }
 
+  @RequiresReadLock
   public @Nullable IProperty getProperty() {
     return getPsiElement() != null ? myProperty : null;
   }
 
+  @RequiresReadLock
   public @Nullable PsiElement getPsiElement() {
     PsiElement element = myProperty.getPsiElement();
     return element.isValid() ? element : null;
@@ -49,7 +53,7 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
 
   @Override
   public IProperty @NotNull [] getProperties() {
-    return new IProperty[] {myProperty};
+    return new IProperty[]{myProperty};
   }
 
   @Override
@@ -67,7 +71,7 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
 
   @Override
   public IProperty getValue() {
-    return getProperty();
+    return ReadAction.computeBlocking(this::getProperty);
   }
 
   @Override
@@ -90,14 +94,16 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
 
       @Override
       public String getPresentableText() {
-        IProperty property = getProperty();
-        if (property == null) return null;
         String presentableName = getPresentableName();
-        if (presentableName == null) {
-          return property.getName();
+        if (presentableName != null) {
+          return presentableName.isEmpty()
+                 ? PropertiesBundle.message("structure.view.empty.property.presentation")
+                 : presentableName;
         }
-        return !presentableName.isEmpty() ? presentableName 
-                                          : PropertiesBundle.message("structure.view.empty.property.presentation");
+        return ReadAction.computeBlocking(() -> {
+          IProperty property = getProperty();
+          return property == null ? null : property.getName();
+        });
       }
 
       @Override
@@ -108,16 +114,11 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
       @Override
       public TextAttributes getTextAttributes(EditorColorsScheme colorsScheme) {
         final TextAttributesKey baseAttrKey = (getPresentableName() != null && getPresentableName().isEmpty())
-          ? GROUP_KEY
-          : PropertiesHighlighter.PropertiesComponent.PROPERTY_KEY.getTextAttributesKey();
+                                              ? GROUP_KEY
+                                              : PropertiesHighlighter.PropertiesComponent.PROPERTY_KEY.getTextAttributesKey();
         final TextAttributes baseAttrs = colorsScheme.getAttributes(baseAttrKey);
-        if (getPsiElement() != null) {
-          TextAttributes highlightingAttributes = getErrorTextAttributes(colorsScheme);
-          if (highlightingAttributes != null) {
-            return TextAttributes.merge(baseAttrs, highlightingAttributes);
-          }
-        }
-        return baseAttrs;
+        TextAttributes highlightingAttributes = ReadAction.computeBlocking(() -> getPsiElement() == null ? null : getErrorTextAttributes(colorsScheme));
+        return TextAttributes.merge(baseAttrs, highlightingAttributes);
       }
     };
   }

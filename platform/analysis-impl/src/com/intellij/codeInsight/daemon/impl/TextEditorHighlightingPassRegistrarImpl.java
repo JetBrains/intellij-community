@@ -225,7 +225,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
         else {
           // init with editor's color scheme
           pass.setColorsScheme(editor.getColorsScheme());
-          pass.setContext(context);
+          pass.setContext(psiFileContext);
 
           IntList ids = passConfig.completionPredecessorIds.length == 0 ? IntList.of() : new IntArrayList(passConfig.completionPredecessorIds.length);
           for (int id : passConfig.completionPredecessorIds) {
@@ -251,12 +251,12 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     FileStatusMap statusMap = daemonCodeAnalyzer.getFileStatusMap();
     for (int i = 0; i < passesRefusedToCreate.size(); i++) {
       int id = passesRefusedToCreate.getInt(i);
-      statusMap.markFileUpToDate(document, context, id, indicator);
+      statusMap.markFileUpToDate(document, psiFileContext, id, indicator);
     }
     if (!shouldHighlightFile) {
       // in case when some extension prohibited highlighting, return empty pass to distinguish from error during pass creation and endless restart
       ProgressableTextEditorHighlightingPass.EmptyPass emptyPass = new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, document);
-      emptyPass.setContext(context);
+      emptyPass.setContext(psiFileContext);
       result.add(emptyPass);
     }
     return result;

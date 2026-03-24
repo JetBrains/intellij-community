@@ -66,6 +66,14 @@ internal data class EntityPointerImpl<E : WorkspaceEntity>(internal val id: Enti
   override fun hashCode(): Int {
     return id.hashCode()
   }
+
+  override fun isPointerToEntityOfSameTypeAs(other: EntityPointer<*>): Boolean {
+    return other is EntityPointerImpl && id.clazz == other.id.clazz
+  }
+
+  override fun classHashcode(): Int {
+    return id.clazz.hashCode()
+  }
 }
 
 // companion object in EntityStorageSnapshotImpl is initialized too late
@@ -195,7 +203,9 @@ internal class MutableEntityStorageImpl(
 
   override fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E> = getEntitiesTimeMs.addMeasuredTime {
     @Suppress("UNCHECKED_CAST")
-    entitiesByType[entityClass.toClassId()]?.all()?.map { it.createEntity(this) } as? Sequence<E> ?: emptySequence()
+    entitiesByType[entityClass.toClassId()]?.all()?.map {
+      it.createEntity(this) // we have to wrap entity data with the link to the entity storage to be able to resolve parent/children
+    } as? Sequence<E> ?: emptySequence()
   }
 
   override fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> referrers(

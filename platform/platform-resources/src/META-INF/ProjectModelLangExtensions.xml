@@ -8,11 +8,6 @@
                     serviceImplementation="com.intellij.configurationStore.ProjectWithModulesStoreReloadManagerImpl"
                     overrides="true"/>
 
-    <projectPreInit
-      id="moduleBridgeLoaderService"
-      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService"
-      order="before workspaceFileIndexInitializer"/>
-    <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer"/>
     <projectService serviceInterface="com.intellij.openapi.module.AutomaticModuleUnloader"
                     serviceImplementation="com.intellij.openapi.module.impl.AutomaticModuleUnloaderImpl" overrides="true"/>
     <notificationGroup id="Automatic Module Unloading" displayType="BALLOON" bundle="messages.ProjectBundle"
@@ -22,7 +17,7 @@
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker"/>
-    <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.SdkDetector" open="true"/>
+    <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.SdkDetector"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.SdkPopupFactory"
                         serviceImplementation="com.intellij.openapi.roots.ui.configuration.PlatformSdkPopupFactory"/>

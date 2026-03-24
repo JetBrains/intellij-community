@@ -1,4 +1,5 @@
 // "Create property 'parameter4' as constructor parameter" "true"
+// K2_ERROR: No parameter with name 'parameter4' found.
 
 data class MyDto(
     val parameter1: String,

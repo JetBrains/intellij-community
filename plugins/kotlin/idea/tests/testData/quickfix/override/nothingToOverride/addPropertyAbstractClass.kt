@@ -1,4 +1,5 @@
 // "Add 'abstract val hoge: Int' to 'Foo'" "true"
+// K2_ERROR: 'hoge' overrides nothing.
 abstract class Foo
 
 class Bar: Foo() {

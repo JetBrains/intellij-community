@@ -1,4 +1,5 @@
 // "Add non-null asserted (test!!) call" "true"
+// K2_ERROR: Non-nullable value required to call an 'iterator()' method in a for-loop.
 class Some {
     operator fun iterator(): Iterator<Int> = null!!
 }

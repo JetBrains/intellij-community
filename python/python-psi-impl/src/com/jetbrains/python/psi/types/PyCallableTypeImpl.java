@@ -26,14 +26,30 @@ import java.util.Map;
 import java.util.Objects;
 
 public class PyCallableTypeImpl implements PyCallableType {
-  private final @Nullable List<PyCallableParameter> myParameters;
+  private final @Nullable PyCallableParameterVariadicType myParametersType;
   private final @Nullable PyType myReturnType;
   private final @Nullable PyCallable myCallable;
   private final @Nullable PyFunction.Modifier myModifier;
   private final int myImplicitOffset;
 
+  public PyCallableTypeImpl(@Nullable PyCallableParameterVariadicType parametersType, @Nullable PyType returnType) {
+    this(parametersType, returnType, null, null, 0);
+  }
+
+  public PyCallableTypeImpl(@Nullable PyCallableParameterVariadicType parametersType,
+                            @Nullable PyType returnType,
+                            @Nullable PyCallable callable,
+                            @Nullable PyFunction.Modifier modifier,
+                            int offset) {
+    myParametersType = parametersType;
+    myReturnType = returnType;
+    myCallable = callable;
+    myModifier = modifier;
+    myImplicitOffset = offset;
+  }
+
   public PyCallableTypeImpl(@Nullable List<PyCallableParameter> parameters, @Nullable PyType returnType) {
-    this(parameters, returnType, null, null, 0);
+    this(parameters != null ? new PyCallableParameterListTypeImpl(parameters) : null, returnType, null, null, 0);
   }
 
   public PyCallableTypeImpl(@Nullable List<PyCallableParameter> parameters,
@@ -41,11 +57,7 @@ public class PyCallableTypeImpl implements PyCallableType {
                             @Nullable PyCallable callable,
                             @Nullable PyFunction.Modifier modifier,
                             int offset) {
-    myParameters = parameters;
-    myReturnType = returnType;
-    myCallable = callable;
-    myModifier = modifier;
-    myImplicitOffset = offset;
+    this(parameters != null ? new PyCallableParameterListTypeImpl(parameters) : null, returnType, callable, modifier, offset);
   }
 
   @Override
@@ -62,7 +74,7 @@ public class PyCallableTypeImpl implements PyCallableType {
     final var fullMapping = PyCallExpressionHelper.mapArguments(callSite, this, context);
     final var actualParameters = fullMapping.getMappedParameters();
     final var allParameters = ContainerUtil.notNullize(getParameters(context));
-    final var receiver = callSite.getReceiver(this.myCallable);
+    final var receiver = callSite.getReceiver(myCallable);
     return analyzeCallType(myReturnType, actualParameters, allParameters, receiver, callSite, context);
   }
 
@@ -81,7 +93,19 @@ public class PyCallableTypeImpl implements PyCallableType {
 
   @Override
   public @Nullable List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    return myParameters;
+    if (myParametersType instanceof PyCallableParameterListType parameterListType) {
+      return parameterListType.getParameters();
+    }
+    // For backward compatibility with code that expects a single parameter wrapping ParamSpec/Concatenate
+    if (myParametersType instanceof PyParamSpecType || myParametersType instanceof PyConcatenateType) {
+      return Collections.singletonList(PyCallableParameterImpl.nonPsi(myParametersType));
+    }
+    return null;
+  }
+
+  @Override
+  public @Nullable PyCallableParameterVariadicType getParametersType(@NotNull TypeEvalContext context) {
+    return myParametersType;
   }
 
   @Override
@@ -138,6 +162,10 @@ public class PyCallableTypeImpl implements PyCallableType {
 
   @Override
   public @NotNull PyCallableType dropSelf(@NotNull TypeEvalContext context) {
+    if (!(myParametersType instanceof PyCallableParameterListType)) {
+      return this;
+    }
+
     final List<PyCallableParameter> parameters = getParameters(context);
     if (parameters != null && myCallable instanceof PyFunction function) {
       final List<PyCallableParameter> functionParameters = function.getParameters(context);
@@ -157,7 +185,7 @@ public class PyCallableTypeImpl implements PyCallableType {
     if (o == null || getClass() != o.getClass()) return false;
     PyCallableTypeImpl type = (PyCallableTypeImpl)o;
     return myImplicitOffset == type.myImplicitOffset &&
-           Objects.equals(myParameters, type.myParameters) &&
+           Objects.equals(myParametersType, type.myParametersType) &&
            Objects.equals(myReturnType, type.myReturnType) &&
            Objects.equals(myCallable, type.myCallable) &&
            myModifier == type.myModifier;
@@ -165,6 +193,6 @@ public class PyCallableTypeImpl implements PyCallableType {
 
   @Override
   public int hashCode() {
-    return Objects.hash(myParameters, myReturnType, myCallable, myModifier, myImplicitOffset);
+    return Objects.hash(myParametersType, myReturnType, myCallable, myModifier, myImplicitOffset);
   }
 }

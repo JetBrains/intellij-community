@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.toolwindow
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
 import com.intellij.diagnostic.logging.DefaultLogFormatter
 import com.intellij.diagnostic.logging.LogFilterModel
 import com.intellij.execution.process.ProcessOutputType
@@ -11,6 +8,10 @@ import com.intellij.json.highlighting.JsonSyntaxHighlighterFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.ui.JBColor
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.ObjectReadContext
+import tools.jackson.core.json.JsonFactory
 import java.awt.Color
 
 /**
@@ -73,7 +74,7 @@ class StatisticsEventLogFormatter(private val model: LogFilterModel) : DefaultLo
 
   private fun parseEventData(eventData: String): List<Pair<String, String>> {
     val fieldValueList = mutableListOf<Pair<String, String>>()
-    val parser: JsonParser = JsonFactory().createParser(eventData)
+    val parser: JsonParser = JsonFactory().createParser(ObjectReadContext.empty(), eventData)
     var startEventDataOffset = 0
     var endEventDataOffset: Int
     var isFieldValueInProgress = false
@@ -101,7 +102,7 @@ class StatisticsEventLogFormatter(private val model: LogFilterModel) : DefaultLo
           isFieldValueInProgress = false
         }
 
-        JsonToken.FIELD_NAME -> {
+        JsonToken.PROPERTY_NAME -> {
           isFieldValueInProgress = true
           if (bracketsCount > 0) continue
           if (startEventDataOffset != 0) {

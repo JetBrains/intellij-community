@@ -70,6 +70,7 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
     synchronized(LOCK) {
       val currentIdePlugins = PluginManagerProxy.getInstance().getPlugins()
       val currentIdePluginIds = currentIdePlugins.map { it.pluginId }.toSet()
+      val disabledPluginIds = PluginManagerProxy.getInstance().getDisabledPluginIds()
 
       val oldPlugins = lastSavedPluginsState?.plugins ?: emptyMap()
       val newPlugins = oldPlugins.toMutableMap()
@@ -119,7 +120,7 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
             LOG.debug("Skipped syncing ultimate plugin ${plugin.pluginId}")
           }
         }
-        else if (shouldSaveState(plugin)) {
+        else if (shouldSaveState(plugin, disabledPluginIds)) {
           newPlugins[id] = getPluginData(plugin)
         }
         else {
@@ -333,8 +334,8 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
     return true
   }
 
-  private fun shouldSaveState(plugin: IdeaPluginDescriptor): Boolean {
-    return isPluginSyncEnabled(plugin) && (!plugin.isBundled || !plugin.isEnabled)
+  private fun shouldSaveState(plugin: IdeaPluginDescriptor, disabledPluginIds: Set<PluginId>): Boolean {
+    return isPluginSyncEnabled(plugin) && (!plugin.isBundled || plugin.pluginId in disabledPluginIds)
   }
 
   private fun isPluginSyncEnabled(plugin: IdeaPluginDescriptor) =
@@ -364,7 +365,7 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
       LOG.info("Installed plugin ${pluginId.idString}")
       synchronized(LOCK) {
         sessionUninstalledPlugins.remove(pluginId.idString)
-        if (shouldSaveState(descriptor)) {
+        if (shouldSaveState(descriptor, PluginManagerProxy.getInstance().getDisabledPluginIds())) {
           val oldPlugins = state.plugins
           val newPlugins = oldPlugins + (pluginId to getPluginData(descriptor))
           state = SettingsSyncPluginsState(newPlugins)
@@ -378,7 +379,7 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
       LOG.info("Uninstalled plugin $pluginId")
       synchronized(LOCK) {
         sessionUninstalledPlugins.add(pluginId.idString)
-        if (shouldSaveState(descriptor)) {
+        if (shouldSaveState(descriptor, PluginManagerProxy.getInstance().getDisabledPluginIds())) {
           val oldPlugins = state.plugins
           val newPlugins = oldPlugins + (pluginId to getPluginData(descriptor))
           state = SettingsSyncPluginsState(newPlugins)
@@ -398,6 +399,7 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
         synchronized(LOCK) {
           val oldPlugins = state.plugins
           val newPlugins = oldPlugins.toMutableMap()
+          val disabledPluginIds = PluginManagerProxy.getInstance().getDisabledPluginIds()
           for (pluginDescriptor in pluginDescriptors) {
             val plugin = PluginManagerProxy.getInstance().findPlugin(pluginDescriptor.pluginId)
             if (plugin == null) {
@@ -412,9 +414,9 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
               LOG.info("State of plugin ${pluginDescriptor.pluginId} is inconsistent: received ${ed(enable)} event, " +
                        "but plugin is ${ed(plugin.isEnabled)}d. Probably, a restart is required.")
             }
-            if (plugin.isBundled && enable) {
+            if (!shouldSaveState(plugin, disabledPluginIds)) {
               newPlugins.remove(pluginDescriptor.pluginId)
-              LOG.info("Bundled plugin ${pluginDescriptor.pluginId} is ${ed(enable)}d. Will remove its info from ${SettingsSnapshotZipSerializer.PLUGINS}")
+              LOG.info("Bundled plugin ${pluginDescriptor.pluginId} is not explicitly disabled. Will remove its info from ${SettingsSnapshotZipSerializer.PLUGINS}")
             }
             else {
               newPlugins[pluginDescriptor.pluginId] = getPluginData(pluginDescriptor, enable)

@@ -158,9 +158,6 @@ import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 import static com.siyeh.ig.psiutils.MethodCallUtils.getQualifierMethodCall;
 
-/**
- * @author Tagir Valeev
- */
 public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher COLLECTION_STREAM = instanceCall(JAVA_UTIL_COLLECTION, "stream").parameterCount(0);
   private static final CallMatcher COLLECTION_SIZE_CHECK = instanceCall(JAVA_UTIL_COLLECTION, "size", "isEmpty").parameterCount(0);

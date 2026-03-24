@@ -13,5 +13,4 @@ fun test2() {
     test(Foo.EMPTY<caret>, "")
 }
 
-// IGNORE_K2
 // ELEMENT: EMPTY

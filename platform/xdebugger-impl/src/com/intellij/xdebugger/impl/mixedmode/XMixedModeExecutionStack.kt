@@ -17,6 +17,7 @@ import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
@@ -49,10 +50,10 @@ class XMixedModeExecutionStack(
   private val myStackDescriptor: CompletableFuture<XDescriptor?> = coroutineScope.future {
     val highStackDescriptor = highLevelExecutionStack?.xExecutionStackDescriptorAsync?.await()
     val lowStackDescriptor = lowLevelExecutionStack.xExecutionStackDescriptorAsync?.await()
-    val descriptor = XMixedModeExecutionStackDescriptor(
-      highStackDescriptor,
-      lowStackDescriptor
-    )
+
+    // getTopFrame method is not adequate for us since in the split debugger the first call of getTopFrame will be cached forever,
+    // but RiderJumpToStatementHandler needs a real position
+    val descriptor = XMixedModeExecutionStackDescriptor(highStackDescriptor, lowStackDescriptor)
     //FrontendDescriptorStateManager.getInstance(session.project).registerDescriptor(descriptor, coroutineScope)
     descriptor
   }
@@ -70,13 +71,21 @@ class XMixedModeExecutionStack(
   }
 
   override fun getTopFrame(): XStackFrame? {
-    return if (!computedFramesMap.isCompleted)
-      lowLevelExecutionStack.topFrame
-    else {
-      val entries = computedFramesMap.getCompleted().entries
-      val topFrame = entries.firstOrNull()
-      return topFrame?.value ?: topFrame?.key ?: lowLevelExecutionStack.topFrame
-    }
+    return if (!computedFramesMap.isCompleted) lowLevelExecutionStack.topFrame else getCalculatedTopFrame()
+  }
+
+  override fun getTopFrameAsync(): CompletableFuture<XStackFrame?> = coroutineScope.future {
+    computedFramesMap.await()
+    getCalculatedTopFrame()
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun getCalculatedTopFrame(): XStackFrame? {
+    assert(computedFramesMap.isCompleted)
+
+    val entries = computedFramesMap.getCompleted().entries
+    val topFrame = entries.firstOrNull()
+    return topFrame?.value ?: topFrame?.key ?: lowLevelExecutionStack.topFrame
   }
 
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {

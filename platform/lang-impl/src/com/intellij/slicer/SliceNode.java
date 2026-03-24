@@ -173,7 +173,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   public boolean isValid() {
-    return ReadAction.compute(() -> getValue().isValid());
+    return ReadAction.computeBlocking(() -> getValue().isValid());
   }
 
   @Override
@@ -216,7 +216,6 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
 
   @Override
   public String toString() {
-    return ReadAction.compute(() -> getValue() == null ? "<null>" : getValue().toString());
+    return ReadAction.computeBlocking(() -> getValue() == null ? "<null>" : getValue().toString());
   }
-
 }

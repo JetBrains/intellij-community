@@ -1,4 +1,5 @@
 // "Create parameter 'name'" "true"
+// K2_ERROR: Unresolved reference 'name'.
 fun f() {
     object : A(<caret>name) {
 

@@ -19,9 +19,12 @@ import com.jetbrains.python.psi.PyCaseClause;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyConditionalExpression;
 import com.jetbrains.python.psi.PyConditionalStatementPart;
+import com.jetbrains.python.psi.PyDisjointBaseUtil;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyGeneratorExpression;
+import com.jetbrains.python.psi.PyKnownDecorator;
+import com.jetbrains.python.psi.PyKnownDecoratorUtil;
 import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.PyMatchStatement;
 import com.jetbrains.python.psi.PyParenthesizedExpression;
@@ -40,8 +43,10 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyInstantiableType;
+import com.jetbrains.python.psi.types.PyIntersectionType;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyNeverType;
+import com.jetbrains.python.psi.types.PyNoneTypeKt;
 import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -103,26 +108,47 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   private static boolean isSafeForNegativeAssertion(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    expression = PyPsiUtils.flattenParens(expression);
+    final List<PyExpression> elements = expandClassInfoExpressions(expression);
+    if (elements.isEmpty()) return false;
+    for (PyExpression element : elements) {
+      if (!isSafeClassInfoReference(element, context)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  public static List<PyExpression> expandClassInfoExpressions(@NotNull PyExpression expression) {
+    final PyExpression flattened = PyPsiUtils.flattenParens(expression);
+    if (flattened == null) return List.of();
+    if (flattened instanceof PyTupleExpression tuple) {
+      final List<PyExpression> result = new ArrayList<>();
+      for (PyExpression element : tuple.getElements()) {
+        result.addAll(expandClassInfoExpressions(element));
+      }
+      return result;
+    }
+    // Keep in mind that `isinstance` will only accept `A | B` expression if all operands are classinfo, so no parameterized generics
+    if (flattened instanceof PyBinaryExpression binary && binary.getOperator() == PyTokenTypes.OR) {
+      final PyExpression left = binary.getLeftExpression();
+      final PyExpression right = binary.getRightExpression();
+      final List<PyExpression> result = new ArrayList<>(expandClassInfoExpressions(left));
+      if (right != null) {
+        result.addAll(expandClassInfoExpressions(right));
+      }
+      return result;
+    }
+    return List.of(flattened);
+  }
+
+  private static boolean isSafeClassInfoReference(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     if (expression instanceof PyReferenceExpression ref) {
-      // Here we check that the reference resolves to a class, not a target in assignment or function parameter. 
+      // Here we check that the reference resolves to a class, not a target in assignment or function parameter.
       // This is done to avoid cases like Py3TypeTest.testIsInstanceNegativeNarrowing
       final List<@Nullable PsiElement> resolvedElements = PyUtil.multiResolveTopPriority(ref, PyResolveContext.defaultContext(context));
       return ContainerUtil.getOnlyItem(resolvedElements) instanceof PyClass;
-    }
-    if (expression instanceof PyTupleExpression tuple) {
-      for (PyExpression element : tuple.getElements()) {
-        if (!isSafeForNegativeAssertion(element, context)) {
-          return false;
-        }
-      }
-      return true;
-    }
-    // Keep in mind that `isinstance` will only accept `A | B` expression if all operands are classinfo, so no parameterized generics
-    if (expression instanceof PyBinaryExpression binary && binary.getOperator() == PyTokenTypes.OR) {
-      final PyExpression left = binary.getLeftExpression();
-      final PyExpression right = binary.getRightExpression();
-      return isSafeForNegativeAssertion(left, context) && right != null && isSafeForNegativeAssertion(right, context);
     }
     return false;
   }
@@ -283,7 +309,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
                                                           initialSubtype -> match(initialSubtype, suggestedSubtype, context)));
 
       List<PyType> types = StreamEx.of(initialSubtypes).append(suggestedSubtypes).toList();
-      return Ref.create(types.isEmpty() ? intersect(initial, suggested) : PyUnionType.union(types));
+      return Ref.create(types.isEmpty() ? intersect(initial, suggested, context) : PyUnionType.union(types));
     }
     else {
       if (initial instanceof PyUnionType unionType) {
@@ -345,13 +371,48 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     return null;
   }
 
-  private static @Nullable PyType intersect(@Nullable PyType initial, @Nullable PyType suggested) {
-    // TODO: if we had IntersectionType, here it would be created. Also, final classes can be handled here
-    if (initial instanceof PyNeverType) {
+
+  private static boolean isFinal(@NotNull PyClassType classType, @NotNull TypeEvalContext context) {
+    var deco = PyKnownDecoratorUtil.getKnownDecorators(classType.getPyClass(), context);
+    return deco.contains(PyKnownDecorator.TYPING_FINAL) || deco.contains(PyKnownDecorator.TYPING_FINAL_EXT);
+  }
+
+  private static boolean isLiteralOrNoneType(@Nullable PyType type) {
+    return type instanceof PyLiteralType || PyNoneTypeKt.isNoneType(type);
+  }
+
+  private static @Nullable PyType intersect(@Nullable PyType initial,
+                                            @Nullable PyType suggested,
+                                            @NotNull TypeEvalContext context) {
+    if (isLiteralOrNoneType(initial) && PyTypeChecker.match(suggested, initial, context)) {
       return initial;
     }
-    // While we don't have IntersectionType, return suggested
-    return suggested;
+    if (isLiteralOrNoneType(suggested) && PyTypeChecker.match(initial, suggested, context)) {
+      return suggested;
+    }
+    
+    if (initial instanceof PyClassType classType1 && suggested instanceof PyClassType classType2) {
+      if (PyDisjointBaseUtil.areDisjoint(classType1, classType2, context)) {
+        return PyNeverType.NEVER;
+      }
+      if (isFinal(classType1, context) || isFinal(classType2, context)) {
+        if (!PyTypeChecker.match(classType1, classType2, context) && !PyTypeChecker.match(classType2, classType1, context)) {
+          return PyNeverType.NEVER;
+        }
+      }
+      return PyIntersectionType.intersection(initial, suggested);
+    }
+
+    if (initial instanceof PyUnionType unionType && unionType.getMembers().size() <= 5) {
+      return unionType.map(member -> intersect(member, suggested, context));
+    }
+    if (suggested instanceof PyUnionType unionType && unionType.getMembers().size() <= 5) {
+      return unionType.map(member -> intersect(initial, member, context));
+    }
+    if (isLiteralOrNoneType(initial) || isLiteralOrNoneType(suggested)) {
+      return PyNeverType.NEVER;
+    }
+    return PyIntersectionType.intersection(initial, suggested);
   }
 
   private static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context) {
