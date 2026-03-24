@@ -343,7 +343,7 @@ private fun preprocessArgs(args: Array<String>): List<String> {
       exitProcess(0)
     }
 
-    "--version" -> {
+    "--version", "-version" -> {
       val appInfo = ApplicationInfoImpl.getShadowInstance()
       val edition = ApplicationNamesInfo.getInstance().editionName?.let { " (${it})" } ?: ""
       println("${appInfo.fullApplicationName}${edition}\nBuild #${appInfo.build.asString()}")

@@ -31,7 +31,6 @@
     <appStarter id="keymap" implementation="com.intellij.help.impl.KeymapGenerator"/>
     <appStarter id="intentions" implementation="com.intellij.help.impl.IntentionDump"/>
     <appStarter id="inspections" implementation="com.intellij.help.impl.InspectionDump"/>
-    <appStarter id="-version" implementation="com.intellij.help.impl.ShowProductVersion"/>
     <appStarter id="listBundledPlugins" implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
     <appStarter id="installPlugins" implementation="com.intellij.ide.plugins.HeadlessPluginsInstaller"/>
     <appStarter id="generateEnvironmentKeysFile" implementation="com.intellij.ide.environment.impl.EnvironmentKeyStubGenerator"/>
