@@ -64,6 +64,7 @@ import com.intellij.vcs.commit.CommitOptions;
 import com.intellij.vcs.commit.CommitOptionsKt;
 import com.intellij.vcs.commit.CommitOptionsPanel;
 import com.intellij.vcs.commit.CommitOptionsUi;
+import com.intellij.vcs.commit.CommitWorkflowListener;
 import com.intellij.vcs.commit.CommitWorkflowUiStateListener;
 import com.intellij.vcs.commit.ShowNotificationCommitResultHandler;
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflow;
@@ -280,6 +281,14 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     myWorkflow = workflow;
     myProject = myWorkflow.getProject();
     Disposer.register(getDisposable(), this);
+
+    myWorkflow.addListener(new CommitWorkflowListener() {
+      @Override
+      public void executionStarted() { updateButtons(); }
+
+      @Override
+      public void executionEnded() { updateButtons(); }
+    }, this);
 
     List<? extends CommitExecutor> executors = myWorkflow.getCommitExecutors();
     if (!isDefaultCommitEnabled() && ContainerUtil.isEmpty(executors)) {
@@ -598,7 +607,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   private void updateButtons() {
     if (myDisposed || myUpdateDisabled) return;
-    boolean enabled = hasDiffs();
+    boolean enabled = hasDiffs() && !myWorkflow.isExecuting();
     if (myCommitAction != null) {
       myCommitAction.setEnabled(enabled);
     }
