@@ -12004,17 +12004,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.dokka/analysis-kotlin-descriptors-2.0.0.jar_copy",
-  src = "@org_jetbrains_dokka-analysis-kotlin-descriptors-2_0_0_http//file",
-  out = "org.jetbrains.dokka/analysis-kotlin-descriptors-2.0.0.jar",
+  name = "org.jetbrains.dokka/analysis-kotlin-descriptors-2.1.0.jar_copy",
+  src = "@org_jetbrains_dokka-analysis-kotlin-descriptors-2_1_0_http//file",
+  out = "org.jetbrains.dokka/analysis-kotlin-descriptors-2.1.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-dokka-jetbrains-dokka-analysis-kotlin-descriptors",
-  jar = "@org_jetbrains_dokka-analysis-kotlin-descriptors-2_0_0_http//file",
-  source_jar = "@org_jetbrains_dokka-analysis-kotlin-descriptors-2_0_0-sources_http//file",
+  jar = "@org_jetbrains_dokka-analysis-kotlin-descriptors-2_1_0_http//file",
+  source_jar = "@org_jetbrains_dokka-analysis-kotlin-descriptors-2_1_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -12026,17 +12026,17 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.dokka/dokka-cli-2.0.0.jar_copy",
-  src = "@org_jetbrains_dokka-dokka-cli-2_0_0_http//file",
-  out = "org.jetbrains.dokka/dokka-cli-2.0.0.jar",
+  name = "org.jetbrains.dokka/dokka-cli-2.1.0.jar_copy",
+  src = "@org_jetbrains_dokka-dokka-cli-2_1_0_http//file",
+  out = "org.jetbrains.dokka/dokka-cli-2.1.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-dokka-jetbrains-dokka-cli",
-  jar = "@org_jetbrains_dokka-dokka-cli-2_0_0_http//file",
-  source_jar = "@org_jetbrains_dokka-dokka-cli-2_0_0-sources_http//file",
+  jar = "@org_jetbrains_dokka-dokka-cli-2_1_0_http//file",
+  source_jar = "@org_jetbrains_dokka-dokka-cli-2_1_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -12048,25 +12048,25 @@ java_library(
 )
 
 copy_file(
-  name = "org.jetbrains.dokka/javadoc-plugin-2.0.0.jar_copy",
-  src = "@org_jetbrains_dokka-javadoc-plugin-2_0_0_http//file",
-  out = "org.jetbrains.dokka/javadoc-plugin-2.0.0.jar",
+  name = "org.jetbrains.dokka/javadoc-plugin-2.1.0.jar_copy",
+  src = "@org_jetbrains_dokka-javadoc-plugin-2_1_0_http//file",
+  out = "org.jetbrains.dokka/javadoc-plugin-2.1.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.dokka/dokka-base-2.0.0.jar_copy",
-  src = "@org_jetbrains_dokka-dokka-base-2_0_0_http//file",
-  out = "org.jetbrains.dokka/dokka-base-2.0.0.jar",
+  name = "org.jetbrains.dokka/dokka-base-2.1.0.jar_copy",
+  src = "@org_jetbrains_dokka-dokka-base-2_1_0_http//file",
+  out = "org.jetbrains.dokka/dokka-base-2.1.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.dokka/kotlin-as-java-plugin-2.0.0.jar_copy",
-  src = "@org_jetbrains_dokka-kotlin-as-java-plugin-2_0_0_http//file",
-  out = "org.jetbrains.dokka/kotlin-as-java-plugin-2.0.0.jar",
+  name = "org.jetbrains.dokka/kotlin-as-java-plugin-2.1.0.jar_copy",
+  src = "@org_jetbrains_dokka-kotlin-as-java-plugin-2_1_0_http//file",
+  out = "org.jetbrains.dokka/kotlin-as-java-plugin-2.1.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -12090,10 +12090,10 @@ copy_file(
 java_library(
   name = "libraries-dokka-jetbrains-dokka-javadoc-plugin",
   exports = [
-    ":org_jetbrains_dokka-javadoc-plugin-2_0_0_http_import",
-    ":org_jetbrains_dokka-dokka-base-2_0_0_http_import",
+    ":org_jetbrains_dokka-javadoc-plugin-2_1_0_http_import",
+    ":org_jetbrains_dokka-dokka-base-2_1_0_http_import",
     ":org_freemarker-freemarker-2_3_32_http_import",
-    ":org_jetbrains_dokka-kotlin-as-java-plugin-2_0_0_http_import",
+    ":org_jetbrains_dokka-kotlin-as-java-plugin-2_1_0_http_import",
     ":com_soywiz_korlibs_korte-korte-jvm-4_0_10_http_import",
     ":org_jetbrains_kotlinx-kotlinx-html-jvm-0_9_1_http_import",
   ],
@@ -12101,21 +12101,21 @@ java_library(
 )
 
 jvm_import(
-  name = "org_jetbrains_dokka-javadoc-plugin-2_0_0_http_import",
-  jar = "@org_jetbrains_dokka-javadoc-plugin-2_0_0_http//file",
-  source_jar = "@org_jetbrains_dokka-javadoc-plugin-2_0_0-sources_http//file"
+  name = "org_jetbrains_dokka-javadoc-plugin-2_1_0_http_import",
+  jar = "@org_jetbrains_dokka-javadoc-plugin-2_1_0_http//file",
+  source_jar = "@org_jetbrains_dokka-javadoc-plugin-2_1_0-sources_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_dokka-dokka-base-2_0_0_http_import",
-  jar = "@org_jetbrains_dokka-dokka-base-2_0_0_http//file",
-  source_jar = "@org_jetbrains_dokka-dokka-base-2_0_0-sources_http//file"
+  name = "org_jetbrains_dokka-dokka-base-2_1_0_http_import",
+  jar = "@org_jetbrains_dokka-dokka-base-2_1_0_http//file",
+  source_jar = "@org_jetbrains_dokka-dokka-base-2_1_0-sources_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_dokka-kotlin-as-java-plugin-2_0_0_http_import",
-  jar = "@org_jetbrains_dokka-kotlin-as-java-plugin-2_0_0_http//file",
-  source_jar = "@org_jetbrains_dokka-kotlin-as-java-plugin-2_0_0-sources_http//file"
+  name = "org_jetbrains_dokka-kotlin-as-java-plugin-2_1_0_http_import",
+  jar = "@org_jetbrains_dokka-kotlin-as-java-plugin-2_1_0_http//file",
+  source_jar = "@org_jetbrains_dokka-kotlin-as-java-plugin-2_1_0-sources_http//file"
 )
 
 jvm_import(

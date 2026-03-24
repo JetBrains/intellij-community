@@ -9366,52 +9366,52 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_dokka-analysis-kotlin-descriptors-2_0_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/analysis-kotlin-descriptors/2.0.0/analysis-kotlin-descriptors-2.0.0.jar",
-  sha256 = "829788c40891a2a3c4b9435cb9ec80d645560d926e9fbbd08ccc29e8e4f1eb7c",
-  downloaded_file_path = "analysis-kotlin-descriptors-2.0.0.jar"
+  name = "org_jetbrains_dokka-analysis-kotlin-descriptors-2_1_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/analysis-kotlin-descriptors/2.1.0/analysis-kotlin-descriptors-2.1.0.jar",
+  sha256 = "0c5c7a44668623a2664cad5d998b4063fd25cab3f747469b38880398828535d0",
+  downloaded_file_path = "analysis-kotlin-descriptors-2.1.0.jar"
 )
 
 http_file(
-  name = "org_jetbrains_dokka-analysis-kotlin-descriptors-2_0_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/analysis-kotlin-descriptors/2.0.0/analysis-kotlin-descriptors-2.0.0-sources.jar",
+  name = "org_jetbrains_dokka-analysis-kotlin-descriptors-2_1_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/analysis-kotlin-descriptors/2.1.0/analysis-kotlin-descriptors-2.1.0-sources.jar",
   sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
-  downloaded_file_path = "analysis-kotlin-descriptors-2.0.0-sources.jar"
+  downloaded_file_path = "analysis-kotlin-descriptors-2.1.0-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_dokka-dokka-cli-2_0_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/dokka-cli/2.0.0/dokka-cli-2.0.0.jar",
-  sha256 = "5f70f358160b48ef9763b2ced4e96037f1bfc8d0122de692550ca320ab4b9f20",
-  downloaded_file_path = "dokka-cli-2.0.0.jar"
+  name = "org_jetbrains_dokka-dokka-cli-2_1_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/dokka-cli/2.1.0/dokka-cli-2.1.0.jar",
+  sha256 = "442bbf1817c12fb323bb38f33f3bc51e4d847ed8784bab5d4a017cbc02378baf",
+  downloaded_file_path = "dokka-cli-2.1.0.jar"
 )
 
 http_file(
-  name = "org_jetbrains_dokka-dokka-cli-2_0_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/dokka-cli/2.0.0/dokka-cli-2.0.0-sources.jar",
+  name = "org_jetbrains_dokka-dokka-cli-2_1_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/dokka-cli/2.1.0/dokka-cli-2.1.0-sources.jar",
   sha256 = "2a485a3c336a8d8483c2309e8b643181e8f49c1b7ef2bfb1168a4cf2625d1160",
-  downloaded_file_path = "dokka-cli-2.0.0-sources.jar"
+  downloaded_file_path = "dokka-cli-2.1.0-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_dokka-javadoc-plugin-2_0_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/javadoc-plugin/2.0.0/javadoc-plugin-2.0.0.jar",
-  sha256 = "41055e59e3f0a6e04b77557641b9a2db0311e99f81c5bc7b1fcc3409bb23d99b",
-  downloaded_file_path = "javadoc-plugin-2.0.0.jar"
+  name = "org_jetbrains_dokka-javadoc-plugin-2_1_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/javadoc-plugin/2.1.0/javadoc-plugin-2.1.0.jar",
+  sha256 = "c52e40ae390877fee050068fecfe701cd5464354dd83d1b1880e0e17f884aa6e",
+  downloaded_file_path = "javadoc-plugin-2.1.0.jar"
 )
 
 http_file(
-  name = "org_jetbrains_dokka-dokka-base-2_0_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/dokka-base/2.0.0/dokka-base-2.0.0.jar",
-  sha256 = "0411d1c38a1d100cbd346c6340c3c4b5f154a48a9c119ed11893d6fae94c91aa",
-  downloaded_file_path = "dokka-base-2.0.0.jar"
+  name = "org_jetbrains_dokka-dokka-base-2_1_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/dokka-base/2.1.0/dokka-base-2.1.0.jar",
+  sha256 = "063d55def82bae03cc03968c91d6daaeda9a2850b354384925695176728af12e",
+  downloaded_file_path = "dokka-base-2.1.0.jar"
 )
 
 http_file(
-  name = "org_jetbrains_dokka-kotlin-as-java-plugin-2_0_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/kotlin-as-java-plugin/2.0.0/kotlin-as-java-plugin-2.0.0.jar",
-  sha256 = "3d8931b3c03f84edbf72f67348265205d819d327bb110043ab11d840d59bde41",
-  downloaded_file_path = "kotlin-as-java-plugin-2.0.0.jar"
+  name = "org_jetbrains_dokka-kotlin-as-java-plugin-2_1_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/kotlin-as-java-plugin/2.1.0/kotlin-as-java-plugin-2.1.0.jar",
+  sha256 = "f156ffe6155554c0c3bea4f3628e2a124737be3cc17f2d336c0235e6db14c48d",
+  downloaded_file_path = "kotlin-as-java-plugin-2.1.0.jar"
 )
 
 http_file(
@@ -9429,24 +9429,24 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_dokka-javadoc-plugin-2_0_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/javadoc-plugin/2.0.0/javadoc-plugin-2.0.0-sources.jar",
-  sha256 = "db6021566a05bd46ef41972e2f9b08e9cdffa3655fdb9d479ae68644d587eca7",
-  downloaded_file_path = "javadoc-plugin-2.0.0-sources.jar"
+  name = "org_jetbrains_dokka-javadoc-plugin-2_1_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/javadoc-plugin/2.1.0/javadoc-plugin-2.1.0-sources.jar",
+  sha256 = "4ef95c84b4a246ef59b2e8b8fc0762d0837864e7477f70d6a71300a72d613e1d",
+  downloaded_file_path = "javadoc-plugin-2.1.0-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_dokka-dokka-base-2_0_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/dokka-base/2.0.0/dokka-base-2.0.0-sources.jar",
-  sha256 = "5d325e704e57e83152f398b4159ae4a91065f738057f3220c9bf20e7a87f8eca",
-  downloaded_file_path = "dokka-base-2.0.0-sources.jar"
+  name = "org_jetbrains_dokka-dokka-base-2_1_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/dokka-base/2.1.0/dokka-base-2.1.0-sources.jar",
+  sha256 = "57c69cd659ed7e713c381eebee53e02f34904157a4894cfe96d4e4e6470430a8",
+  downloaded_file_path = "dokka-base-2.1.0-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_dokka-kotlin-as-java-plugin-2_0_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/kotlin-as-java-plugin/2.0.0/kotlin-as-java-plugin-2.0.0-sources.jar",
-  sha256 = "5baf3dd2b3993531e148af42b3a5db4c99174af2aa3be07db17a1fbbbff9e502",
-  downloaded_file_path = "kotlin-as-java-plugin-2.0.0-sources.jar"
+  name = "org_jetbrains_dokka-kotlin-as-java-plugin-2_1_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/kotlin-as-java-plugin/2.1.0/kotlin-as-java-plugin-2.1.0-sources.jar",
+  sha256 = "ea20b8dadb509aec6416edb3b509439e00f81f3b0c364651dba2f5748af76350",
+  downloaded_file_path = "kotlin-as-java-plugin-2.1.0-sources.jar"
 )
 
 http_file(
