@@ -335,7 +335,7 @@ private fun preprocessArgs(args: Array<String>): List<String> {
           println("=== ${if (plugin.pluginId == PluginManagerCore.CORE_ID) "Built-in" else plugin.name} commands")
           starters.forEach { starter ->
             val message = starterHelp(plugin, starter).replace("\n", "\n  ")
-            println("${starter.orderId}\n  ${message}")
+            println("\n${starter.orderId}\n  ${message}")
           }
           println()
         }
@@ -362,6 +362,9 @@ private fun starterHelp(plugin: PluginMainDescriptor, starter: ExtensionDescript
     if (bundle != null && key != null) {
       return DynamicBundle.getResourceBundle(classLoader, bundle).getString(key)
     }
+  }
+  if (starter.element?.attributes?.get("internal").toBoolean()) {
+    return "internal command; consult with the source code"
   }
   return "(no description)"
 }
