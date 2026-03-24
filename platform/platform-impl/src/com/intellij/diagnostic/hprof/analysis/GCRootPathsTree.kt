@@ -314,7 +314,7 @@ class GCRootPathsTree(
       // in the subtree is more than minimumObjectSize.
       // Always show at least two paths.
       rootList
-        .sortedByDescending { it.second.pathsSize }
+        .sortedByDescending { it.second.totalSizeInDwords }
         .filterIndexed { index, (_, node, _) ->
           index < treeDisplayOptions.minimumPaths ||
           node.pathsCount >= minimumObjectsForReport ||
@@ -366,15 +366,15 @@ class GCRootPathsTree(
                 currentNodeEdges
                   .entries
                   .sortedWith { a, b ->
-                    // First: by paths size, descending
-                    val compareByPathsSizeDesc = b.value.pathsSize.compareTo(a.value.pathsSize)
-                    if (compareByPathsSizeDesc != 0) return@sortedWith compareByPathsSizeDesc
-
-                    // Second, if paths sizes are the same: by total size, descending
+                    // First: by total size, descending
                     val compareByTotalSizeDesc = b.value.totalSizeInDwords.compareTo(a.value.totalSizeInDwords)
                     if (compareByTotalSizeDesc != 0) return@sortedWith compareByTotalSizeDesc
 
-                    // Third, if total sizes are the same: by ref index
+                    // Second, if total sizes are the same: by paths size, descending
+                    val compareByPathsSizeDesc = b.value.pathsSize.compareTo(a.value.pathsSize)
+                    if (compareByPathsSizeDesc != 0) return@sortedWith compareByPathsSizeDesc
+
+                    // Third, if subtree sizes are the same: by ref index
                     val compareByRefIndex = a.key.refIndex.compareTo(b.key.refIndex)
                     if (compareByRefIndex != 0) return@sortedWith compareByRefIndex
 
