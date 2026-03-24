@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util
 
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
@@ -15,7 +16,6 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.Nls
@@ -56,7 +56,14 @@ object GradleArtifactDownloader {
     errorHandler: GradleDependencySourceDownloaderErrorHandler,
   ): CompletableFuture<Path?> {
     return project.gradleCoroutineScope.async {
-      downloadArtifactImpl(project, executionName, artifactNotation, projectPath, errorHandler)
+      try {
+        downloadArtifactImpl(project, executionName, artifactNotation, projectPath)
+      }
+      catch (exception: Exception) {
+        rethrowControlFlowException(exception)
+        errorHandler.handle(project, projectPath, artifactNotation, exception)
+        null
+      }
     }.asCompletableFuture()
   }
 
@@ -65,8 +72,7 @@ object GradleArtifactDownloader {
     executionName: @Nls String,
     artifactNotation: String,
     projectPath: String,
-    errorHandler: GradleDependencySourceDownloaderErrorHandler,
-  ): Path? {
+  ): Path {
     val eel = project.getEelDescriptor().toEelApi()
     val taskOutputEelPath = createTaskOutputFile(eel)
     val taskOutputPath = taskOutputEelPath.asNioPath()
@@ -99,13 +105,6 @@ object GradleArtifactDownloader {
         throw IllegalStateException("Incorrect file header: $downloadedArtifactPath. Unable to process downloaded file as a JAR file")
       }
       return downloadedArtifactPath
-    }
-    catch (ce: CancellationException) {
-      throw ce
-    }
-    catch (e: Exception) {
-      errorHandler.handle(project, projectPath, artifactNotation, e)
-      return null
     }
     finally {
       taskOutputPath.deleteIfExists()

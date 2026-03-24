@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 
 /**
- * Co-routine friendly warpper over [ExternalSystemUtil.runTask]
+ * Co-routine friendly wrapper over [ExternalSystemUtil.runTask]
  *
  * Simplifies error result handling
  * Throws [java.util.concurrent.CancellationException] on external task cancellation
