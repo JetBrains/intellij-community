@@ -37,6 +37,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.features.PyRunToolParameters
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.target.PathMapping
+import com.jetbrains.python.run.target.PathPythonHelpersMapping
 import com.jetbrains.python.run.target.tryResolveAsPythonHelperDir
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkType
@@ -128,6 +129,7 @@ fun PythonExecution.buildTargetedCommandLine(
   }
   return commandLineBuilder.build()
 }
+
 
 private fun applyRunToolAsync(
   commandLineBuilder: TargetedCommandLineBuilder,
@@ -231,7 +233,7 @@ fun addHelperEntriesToPythonPath(envs: MutableMap<String, TargetEnvironmentFunct
                                  failOnError: Boolean = true): List<PathMapping> {
   val targetPlatform = helpersAwareTargetRequest.targetEnvironmentRequest.targetPlatform
   val pythonHelpersMappings = helpersAwareTargetRequest.preparePyCharmHelpers()
-  val pythonHelpersRoots = pythonHelpersMappings.helpers.map(PathMapping::localPath)
+  val pythonHelpersRoots = pythonHelpersMappings.helpers.map(PathPythonHelpersMapping::localPath)
   val targetPathSeparator = targetPlatform.platform.pathSeparator
 
   fun <T> T?.onResolutionFailure(message: String): T? {
