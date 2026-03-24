@@ -220,6 +220,31 @@ internal class JpsModuleToBazel {
       }
     }
 
+    @Serializable
+    data class LibraryDescription(
+      val target: String,
+      val jars: List<String>,
+      val jarTargets: List<String>,
+      val sourceJars: List<String>,
+    )
+
+    @Serializable
+    data class TargetsFileModuleDescription(
+      val productionTargets: List<String>,
+      val productionJars: List<String>,
+      val testTargets: List<String>,
+      val testJars: List<String>,
+      val exports: List<String>,
+      val moduleLibraries: Map<String, LibraryDescription>,
+    )
+
+    @Serializable
+    data class TargetsFile(
+      val modules: Map<String, TargetsFileModuleDescription>,
+      val imlTargets: List<String>,
+      val projectLibraries: Map<String, LibraryDescription>,
+    )
+
     @OptIn(ExperimentalSerializationApi::class)
     fun saveTargets(
       file: Path,
@@ -231,32 +256,7 @@ internal class JpsModuleToBazel {
       projectRoot: Path,
       assertAllModuleOutputsExist: Boolean,
       bazelOutputBase: Path?,
-    ) {
-      @Serializable
-      data class LibraryDescription(
-        val target: String,
-        val jars: List<String>,
-        val jarTargets: List<String>,
-        val sourceJars: List<String>,
-      )
-
-      @Serializable
-      data class TargetsFileModuleDescription(
-        val productionTargets: List<String>,
-        val productionJars: List<String>,
-        val testTargets: List<String>,
-        val testJars: List<String>,
-        val exports: List<String>,
-        val moduleLibraries: Map<String, LibraryDescription>,
-      )
-
-      @Serializable
-      data class TargetsFile(
-        val modules: Map<String, TargetsFileModuleDescription>,
-        val imlTargets: List<String>,
-        val projectLibraries: Map<String, LibraryDescription>,
-      )
-
+    ): TargetsFile {
       data class ImlPackageDescription(
         val packagePrefix: String,
       )
@@ -423,44 +423,46 @@ internal class JpsModuleToBazel {
         .filter { it.target.moduleLibraryModuleName != null }
         .groupBy { it.target.moduleLibraryModuleName }
 
-      val fileContent = jsonSerializer.encodeToString(
-        serializer = jsonSerializer.serializersModule.serializer(),
-        value = TargetsFile(
-          modules = targets.associateTo(TreeMap()) { moduleTarget ->
-            val moduleName = moduleTarget.moduleDescriptor.module.name
-            moduleName to TargetsFileModuleDescription(
-              productionTargets = moduleTarget.productionTargets.map { "$it.jar" },
-              productionJars = moduleTarget.productionJars.map { adjustJarPath(it) },
-              testTargets = moduleTarget.testTargets.map { "$it.jar" },
-              testJars = moduleTarget.testJars.map { adjustJarPath(it) },
-              exports = moduleList.deps[moduleTarget.moduleDescriptor]?.exports?.map { it.label } ?: emptyList(),
-              moduleLibraries = module2Libraries[moduleName]
-                ?.associateTo(TreeMap()) { it.target.jpsName to makeLibraryDescription(it) } ?: emptyMap(),
-            ).also {
-              if (assertAllModuleOutputsExist) {
-                for (outputPath in it.productionJars + it.testJars) {
-                  val absolutePath = projectRoot.resolve(outputPath)
-                  check(absolutePath.exists()) { "Production target output does not exist: $absolutePath" }
-                }
+      val targetsFileValue = TargetsFile(
+        modules = targets.associateTo(TreeMap()) { moduleTarget ->
+          val moduleName = moduleTarget.moduleDescriptor.module.name
+          moduleName to TargetsFileModuleDescription(
+            productionTargets = moduleTarget.productionTargets.map { "$it.jar" },
+            productionJars = moduleTarget.productionJars.map { adjustJarPath(it) },
+            testTargets = moduleTarget.testTargets.map { "$it.jar" },
+            testJars = moduleTarget.testJars.map { adjustJarPath(it) },
+            exports = moduleList.deps[moduleTarget.moduleDescriptor]?.exports?.map { it.label } ?: emptyList(),
+            moduleLibraries = module2Libraries[moduleName]
+                                ?.associateTo(TreeMap()) { it.target.jpsName to makeLibraryDescription(it) } ?: emptyMap(),
+          ).also {
+            if (assertAllModuleOutputsExist) {
+              for (outputPath in it.productionJars + it.testJars) {
+                val absolutePath = projectRoot.resolve(outputPath)
+                check(absolutePath.exists()) { "Production target output does not exist: $absolutePath" }
               }
             }
-          } + skippedModules.associateWith { emptyModule },
+          }
+        } + skippedModules.associateWith { emptyModule },
 
-          imlTargets = moduleList.allModules.asSequence()
-            .map { makeImlTarget(it) }
-            .distinct()
-            .sorted()
-            .toList(),
-          projectLibraries = libs.asSequence().distinctBy { it.target.jpsName }.mapNotNull {  // community project libraries are listed first, don't overwrite them with ultimate ones
-            if (it.target.moduleLibraryModuleName != null) return@mapNotNull null
-            return@mapNotNull it.target.jpsName to makeLibraryDescription(it)
-          }.toMap(TreeMap())
-        )
+        imlTargets = moduleList.allModules.asSequence()
+          .map { makeImlTarget(it) }
+          .distinct()
+          .sorted()
+          .toList(),
+        projectLibraries = libs.asSequence().distinctBy { it.target.jpsName }.mapNotNull {  // community project libraries are listed first, don't overwrite them with ultimate ones
+          if (it.target.moduleLibraryModuleName != null) return@mapNotNull null
+          return@mapNotNull it.target.jpsName to makeLibraryDescription(it)
+        }.toMap(TreeMap())
+      )
+
+      val fileContent = jsonSerializer.encodeToString(
+        serializer = jsonSerializer.serializersModule.serializer(),
+        value = targetsFileValue,
       )
 
       if (file.isRegularFile() && file.readText() == fileContent) {
         println("No changes in $file")
-        return
+        return targetsFileValue
       }
 
       println("Writing targets info to $file")
@@ -472,6 +474,8 @@ internal class JpsModuleToBazel {
       } finally {
         tempFile.deleteIfExists()
       }
+
+      return targetsFileValue
     }
 
     fun searchCommunityRoot(start: Path): Path {

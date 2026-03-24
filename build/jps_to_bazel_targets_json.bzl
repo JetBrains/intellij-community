@@ -46,14 +46,20 @@ def _jps_to_bazel_targets_json_impl(ctx):
 
     ctx.actions.write(manifest, "\n".join(sorted(manifest_lines)) + "\n")
 
+    args = ctx.actions.args()
+    args.add("--manifest=" + manifest.path)
+    args.add("--output=" + output.path)
+    args.add_all(ctx.attr.starlark_production_targets, format_each = "--starlark-production=%s")
+    args.add_all(ctx.attr.starlark_test_targets, format_each = "--starlark-test=%s")
+    args.add_all(ctx.attr.starlark_library_targets, format_each = "--starlark-library=%s")
+    args.add_all(ctx.attr.starlark_iml_targets, format_each = "--starlark-iml=%s")
+    args.use_param_file("@%s", use_always = True)
+
     ctx.actions.run(
         inputs = ctx.files.srcs + [manifest],
         outputs = [output],
         executable = ctx.executable.tool,
-        arguments = [
-          "--manifest=" + manifest.path,
-          "--output=" + output.path,
-        ],
+        arguments = [args],
         mnemonic = "JpsToBazelTargetsJson",
         progress_message = "Generating bazel-targets.json for %s" % ctx.label,
     )
@@ -78,6 +84,22 @@ jps_to_bazel_targets_json = rule(
             allow_files = False,
             mandatory = True,
             doc = "Hermetic bazel-targets.json generator executable.",
+        ),
+        "starlark_production_targets": attr.string_list(
+            default = [],
+            doc = "Starlark-derived production targets for parity assertion.",
+        ),
+        "starlark_test_targets": attr.string_list(
+            default = [],
+            doc = "Starlark-derived test targets for parity assertion.",
+        ),
+        "starlark_library_targets": attr.string_list(
+            default = [],
+            doc = "Starlark-derived library targets for parity assertion.",
+        ),
+        "starlark_iml_targets": attr.string_list(
+            default = [],
+            doc = "Starlark-derived IML targets for parity assertion.",
         ),
     },
 )
