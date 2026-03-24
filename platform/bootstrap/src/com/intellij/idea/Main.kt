@@ -4,29 +4,37 @@
 @file:OptIn(LowLevelLocalMachineAccess::class)
 package com.intellij.idea
 
+import com.intellij.DynamicBundle
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.BootstrapBundle
+import com.intellij.ide.plugins.PluginMainDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.project.impl.P3SupportInstaller
 import com.intellij.platform.bootstrap.initMarketplace
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.bootstrap.AppStarter
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter
+import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.ide.bootstrap.startApplication
 import com.intellij.platform.impl.toolkit.IdeFontManager
 import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment
 import com.intellij.platform.impl.toolkit.IdeToolkit
+import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.ui.TextLayoutUtil
 import com.jetbrains.JBR
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -284,37 +292,78 @@ private fun preprocessArgs(args: Array<String>): List<String> {
     return listOf()
   }
 
-  if (AppMode.HELP_OPTION in args) {
-    println("""
-        Some of the common commands and options (sorry, the full list is not yet supported):
-          --help      prints a short list of commands and options
-          --version   shows version information
-          /project/dir
-            opens a project from the given directory
-          [/project/dir|--temp-project] [--wait] [--line <line>] [--column <column>] file
-            opens the file, either in a context of the given project or as a temporary single-file project,
-            optionally waiting until the editor tab is closed
-          diff <left> <right>
-            opens a diff window between <left> and <right> files/directories
-          merge <local> <remote> [base] <merged>
-            opens a merge window between <local> and <remote> files (with optional common <base>), saving the result to <merged>
-        """.trimIndent())
-    exitProcess(0)
-  }
-
-  if (AppMode.VERSION_OPTION in args) {
-    val appInfo = ApplicationInfoImpl.getShadowInstance()
-    val edition = ApplicationNamesInfo.getInstance().editionName?.let { " (${it})" } ?: ""
-    println("${appInfo.fullApplicationName}${edition}\nBuild #${appInfo.build.asString()}")
-    exitProcess(0)
-  }
-
-  val (propertyArgs, otherArgs) = args.partition { it.startsWith("-D") && it.contains('=') }
+  val (propertyArgs, args) = args.partition { it.startsWith("-D") && it.contains('=') }
   for (arg in propertyArgs) {
     val (option, value) = arg.removePrefix("-D").split('=', limit = 2)
     System.setProperty(option, value)
   }
-  return otherArgs
+
+  when (ApplicationStartArguments.stripKnownArguments(args).firstOrNull()) {
+    "--help" -> {
+      println("""
+        Basic commands and options:
+        --help           prints the short list of basic commands and options
+        --list-commands  prints the full list of commands available in this installation
+        --version        shows version information
+
+        /project/dir
+          opens a project from the given directory
+
+        [/project/dir|--temp-project] [--wait] [--line <line>] [--column <column>] file
+          opens the file, either in a context of the given project or as a temporary single-file project,
+          optionally waiting until the editor tab is closed
+        """.trimIndent()
+      )
+      exitProcess(0)
+    }
+
+    "--list-commands" -> {
+      @Suppress("RAW_RUN_BLOCKING")
+      val pluginSet = runBlocking {
+        val zipPoolDeferred = CompletableDeferred(ZipFilePoolImpl().apply { ZipFilePool.PATH_CLASSLOADER_POOL = this })
+        PluginManagerCore.scheduleDescriptorLoading(
+          coroutineScope = this, zipPoolDeferred, mainClassLoaderDeferred = null, logDeferred = null
+        ).await()
+      }
+      val isInternal = System.getProperty(ApplicationManagerEx.IS_INTERNAL_PROPERTY).toBoolean()
+      pluginSet.enabledPlugins.forEach { plugin ->
+        val starters = (sequenceOf(plugin) + plugin.contentModules.asSequence())
+          .flatMap { it.extensions["com.intellij.appStarter"] ?: emptyList() }
+          .filter { isInternal || !it.element?.attributes?.get("internal").toBoolean() }
+          .toList()
+        if (starters.isNotEmpty()) {
+          println("=== ${if (plugin.pluginId == PluginManagerCore.CORE_ID) "Built-in" else plugin.name} commands")
+          starters.forEach { starter ->
+            val message = starterHelp(plugin, starter).replace("\n", "\n  ")
+            println("${starter.orderId}\n  ${message}")
+          }
+          println()
+        }
+      }
+      exitProcess(0)
+    }
+
+    "--version" -> {
+      val appInfo = ApplicationInfoImpl.getShadowInstance()
+      val edition = ApplicationNamesInfo.getInstance().editionName?.let { " (${it})" } ?: ""
+      println("${appInfo.fullApplicationName}${edition}\nBuild #${appInfo.build.asString()}")
+      exitProcess(0)
+    }
+  }
+
+  return args
+}
+
+private fun starterHelp(plugin: PluginMainDescriptor, starter: ExtensionDescriptor): String {
+  val classLoader = plugin.pluginClassLoader
+  if (classLoader != null) {
+    val bundle = starter.element?.attributes?.get("bundle")
+    val key = starter.element?.attributes?.get("key")
+    if (bundle != null && key != null) {
+      return DynamicBundle.getResourceBundle(classLoader, bundle).getString(key)
+    }
+  }
+  return "(no description)"
 }
 
 private fun runMarketplaceCommandsInActionScript() {

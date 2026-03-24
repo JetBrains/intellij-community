@@ -3,9 +3,9 @@
   <extensionPoints>
     <extensionPoint name="projectStoreClassProvider" interface="com.intellij.openapi.project.impl.ProjectStoreFactory" dynamic="false"/>
 
-    <extensionPoint name="appStarter"
-                    interface="com.intellij.openapi.application.ApplicationStarter"
-                    dynamic="true"/>
+    <extensionPoint name="appStarter" beanClass="com.intellij.openapi.application.ApplicationStarterEP" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.openapi.application.ApplicationStarter"/>
+    </extensionPoint>
 
     <extensionPoint name="projectTypesProvider" interface="com.intellij.openapi.project.ProjectTypesProvider" dynamic="true"/>
     <extensionPoint name="errorHandler" interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter" dynamic="true"/>

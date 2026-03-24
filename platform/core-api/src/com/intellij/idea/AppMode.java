@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.openapi.project.Project;
@@ -16,9 +16,6 @@ import java.util.List;
 @ApiStatus.Internal
 public final class AppMode {
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
-
-  public static final String HELP_OPTION = "--help";
-  public static final String VERSION_OPTION = "--version";
 
   private static final String AWT_HEADLESS = "java.awt.headless";
 
