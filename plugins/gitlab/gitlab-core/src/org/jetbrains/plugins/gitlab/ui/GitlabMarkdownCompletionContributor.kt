@@ -12,6 +12,7 @@ import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.onFailure
 import com.intellij.collaboration.util.onSuccess
+import com.intellij.collaboration.util.consumeIncrementally
 import com.intellij.icons.AllIcons.General.Groups
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -74,35 +75,22 @@ internal class GitlabMarkdownCompletionContributor : CompletionContributor(), Du
       runBlockingCancellable {
         val userType = GitLabBundle.message("popup.completion.type.user")
         launch {
-          var counter = 0
-          vm.participants.takeWhile { value ->
-            val batches = value.valueOrNull
-            if (batches != null && batches.size > counter) {
-              val userSequence = batches.subList(counter, batches.size).asSequence()
-              val newElements = userSequence.map {
-                // author's avatar url differs from the same participant's avatar url (not sure why), so there will be two entries if we add both
-                val priority = if (it.username == vm.author.username) AUTHOR_PRIORITY else PARTICIPANT_PRIORITY
-                val icon = vm.avatarIconsProvider.getIcon(it, Avatar.Sizes.SMALL)
-                createLookupElement(it, it.username, icon, it.name, userType, priority)
-              }.toList()
+          val author = vm.author
+          vm.participants.consumeIncrementally(
+            batchConsumer = { users ->
+              val newElements = users.map { user ->
+                val priority = if (user.username == vm.author.username) AUTHOR_PRIORITY else PARTICIPANT_PRIORITY
+                val icon = vm.avatarIconsProvider.getIcon(user, Avatar.Sizes.SMALL)
+                createLookupElement(user, user.username, icon, user.name, userType, priority)
+              }
               customResult.addAllElements(newElements)
-              counter = batches.size
-            }
-            if (value.isComplete) {
-              return@takeWhile false
-            }
-
-            if (value.exceptionOrNull != null) {
-              val author = vm.author
+            },
+            onError = {
               val icon = vm.avatarIconsProvider.getIcon(author, Avatar.Sizes.SMALL)
-              customResult.addElement(
-                createLookupElement(author, author.username, icon, author.name, userType, AUTHOR_PRIORITY)
-              )
-              LOG.error("Error fetching GitLab users for completion", value.exceptionOrNull)
-              return@takeWhile false
-            }
-            true
-          }.collect()
+              customResult.addElement(createLookupElement(author, author.username, icon, author.name, userType, AUTHOR_PRIORITY))
+              LOG.error("Error fetching GitLab users for completion", it)
+            },
+          )
         }
 
         val searchPrefix = text.substring(1)
