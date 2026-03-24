@@ -2,16 +2,19 @@
 package com.intellij.workspaceModel
 
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectRootPersistentStateComponent
 import com.intellij.openapi.project.impl.ProjectRootsSynchronizer
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.project.stateStore
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.createTestOpenProjectOptions
@@ -27,6 +30,7 @@ import org.junit.ClassRule
 import org.junit.Test
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
+import kotlin.io.path.name
 import kotlin.time.Duration.Companion.milliseconds
 
 class ProjectRootEntityTest {
@@ -34,6 +38,25 @@ class ProjectRootEntityTest {
     @ClassRule
     @JvmField
     val appRule: ApplicationRule = ApplicationRule()
+  }
+
+  @Test
+  fun `test project root entity is updated when file is renamed`(): Unit = runBlocking {
+    val name = "new project"
+    val projectFile = TemporaryDirectory.generateTemporaryPath(name).createDirectories()
+    val renamedProjectFile = projectFile.resolveSibling("${projectFile.fileName}-renamed")
+    val options = createTestOpenProjectOptions().copy(projectName = name)
+
+    ProjectUtil.openOrImportAsync(projectFile, options)!!.useProjectAsync { project ->
+      val projectRoot = VfsUtil.findFile(projectFile, true)!!
+      runWriteActionAndWait {
+        projectRoot.rename(this@ProjectRootEntityTest, renamedProjectFile.name)
+      }
+      VfsTestUtil.syncRefresh()
+
+      val updatedRoots = project.workspaceModel.currentSnapshot.entities(ProjectRootEntity::class.java).toList()
+      assertThat(updatedRoots.map { it.root }).containsExactly(renamedProjectFile.toVirtualFileUrl(project))
+    }
   }
 
   @Test
