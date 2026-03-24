@@ -39,6 +39,12 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test punctuation`() = doTest()
 
+  fun `test reflow parenthesized text`() = doTest()
+
+  fun `test reflow short parenthesized text`() = doTest()
+
+  fun `test reflow closing parenthesis`() = doTest()
+
   fun `test emphasis`() = doTest()
 
   override fun getTestDataPath(): String {
