@@ -29,8 +29,26 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.Color;
 import java.awt.Font;
 
+
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting/right")
 public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
+  private record SelectionState(boolean enabled, boolean islands) {}
+
+  private static SelectionState setNewSelectionEnabled(boolean enabled) {
+    var value = Registry.get("editor.old.full.horizontal.selection.enabled");
+    var islands = IslandsState.Companion.isEnabled();
+
+    var state = new SelectionState(enabled, islands);
+    value.setValue(!enabled);
+    IslandsState.Companion.setEnabled(enabled, false);
+    return state;
+  }
+
+  private static void restoreSelectionState(SelectionState state) {
+    Registry.get("editor.old.full.horizontal.selection.enabled").setValue(!state.enabled());
+    IslandsState.Companion.setEnabled(state.islands(), false);
+  }
+
   @Override
   protected void initText(@NotNull String fileText) {
     super.initText(fileText);
@@ -113,28 +131,36 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
   }
 
   public void testSelectionInsideLine() throws Exception {
-    Registry.get("editor.old.full.horizontal.selection.enabled").setValue(true);
-    IslandsState.Companion.setEnabled(false, false);
-    initText("first line\nsecond line");
-    getEditor().getSelectionModel().setSelection(6, 12);
-    checkResult();
+    var state = setNewSelectionEnabled(false);
+    try {
+      initText("first line\nsecond line");
+      getEditor().getSelectionModel().setSelection(6, 12);
+      checkResult();
+    } finally {
+      restoreSelectionState(state);
+    }
   }
 
   public void testSelectionInsideLineNewSelection() throws Exception {
-    Registry.get("editor.old.full.horizontal.selection.enabled").setValue(false);
-    IslandsState.Companion.setEnabled(true, false);
-    initText("first longer line\nsecond line");
-    getEditor().getSelectionModel().setSelection(13, 19);
-    checkResult();
+    var state = setNewSelectionEnabled(true);
+    try {
+      initText("first longer line\nsecond line");
+      getEditor().getSelectionModel().setSelection(13, 19);
+      checkResult();
+    } finally {
+      restoreSelectionState(state);
+    }
   }
 
   public void testSelectionInsideLineNewSelection2() throws Exception {
-    Registry.get("editor.old.full.horizontal.selection.enabled").setValue(false);
-    IslandsState.Companion.setEnabled(true, false);
-
-    initText("first longer line\nsecond line");
-    getEditor().getSelectionModel().setSelection(18, 21);
-    checkResult();
+    var state = setNewSelectionEnabled(true);
+    try {
+      initText("first longer line\nsecond line");
+      getEditor().getSelectionModel().setSelection(18, 21);
+      checkResult();
+    } finally {
+      restoreSelectionState(state);
+    }
   }
 
   public void testCaretAfterEmptyLine() throws Exception {
