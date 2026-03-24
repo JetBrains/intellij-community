@@ -23,6 +23,7 @@ import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.unscramble.DumpItem
+import com.intellij.unscramble.joinFirstLineAndBody
 import com.intellij.util.BitUtil
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import fleet.rpc.core.util.map
@@ -105,7 +106,7 @@ private fun ThreadDumpWithAwaitingDependencies.toDumpItems(): List<DumpItem> {
   val attributesCache = attributes.map { it.attributes() }
 
   val feDumpItems = items.map {
-    FrontendDumpItem(it, iconsCache, attributesCache, stackTraces, exportedStackTraces, stateDescriptions, iconToolTips)
+    FrontendDumpItem(it, iconsCache, attributesCache, stackTraceBodies, exportedStackTraceBodies, stateDescriptions, iconToolTips)
   }
   for ((index, awaitingIndices) in awaitingDependencies) {
     val awaitingItems = awaitingIndices.map { feDumpItems[it] }.toHashSet()
@@ -118,8 +119,8 @@ private class FrontendDumpItem(
   private val itemDto: JavaThreadDumpItemDto,
   private val iconsCache: List<Icon>,
   private val attributesCache: List<SimpleTextAttributes>,
-  private val stackTracesCache: List<@NlsSafe String>,
-  private val exportedStackTracesCache: List<@NlsSafe String>,
+  private val stackTraceBodiesCache: List<@NlsSafe String>,
+  private val exportedStackTraceBodiesCache: List<@NlsSafe String>,
   private val stateDescriptionsCache: List<@NlsSafe String>,
   private val iconToolTipsCache: List<@Nls String?>,
 ) : DumpItem {
@@ -127,8 +128,12 @@ private class FrontendDumpItem(
 
   override val name: @NlsSafe String get() = itemDto.name
   override val stateDesc: @NlsSafe String get() = stateDescriptionsCache[itemDto.stateDescriptionIndex]
-  override val stackTrace: @NlsSafe String get() = "${itemDto.firstLine}\n${stackTracesCache[itemDto.stackTraceIndex]}"
-  override val exportedStackTrace: @NlsSafe String get() = exportedStackTracesCache[itemDto.exportedStackTraceIndex]
+  override val stackTrace: @NlsSafe String
+    get() = joinFirstLineAndBody(itemDto.firstLine,
+                                 stackTraceBodiesCache[itemDto.stackTraceBodyIndex])
+  override val exportedStackTrace: @NlsSafe String
+    get() = joinFirstLineAndBody(itemDto.exportedFirstLine,
+                                 exportedStackTraceBodiesCache[itemDto.exportedStackTraceBodyIndex])
   override val iconToolTip: @Nls String? get() = iconToolTipsCache[itemDto.iconToolTipIndex.toUInt().toInt()]
   override val interestLevel: Int get() = itemDto.interestLevel
   override val icon: Icon get() = iconsCache[itemDto.iconIndex.toUInt().toInt()]
