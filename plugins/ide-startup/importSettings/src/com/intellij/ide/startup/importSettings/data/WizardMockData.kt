@@ -133,7 +133,7 @@ class WizardPluginImpl(
   override val icon: Icon,
   override val name: String,
   override val description: String? = null,
-  override val tag: String? = null,
+  override val badge: String? = null,
   override val id: String = UUID.randomUUID().toString(),
 ) : WizardPlugin
 
