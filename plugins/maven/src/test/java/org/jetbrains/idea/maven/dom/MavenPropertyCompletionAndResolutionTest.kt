@@ -282,14 +282,16 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
   @Test
   fun testResolutionToProjectParent() = runBlocking {
-    updateProjectPom("""
-                       <groupId>test</groupId<artifactId>project</artifactId>
+    updateProjectPom($$"""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
                        <version>1</version>
                        <parent>
-                         <groupId>test</groupId  <artifactId>parent</artifactId>
+                         <groupId>test</groupId>
+                         <artifactId>parent</artifactId>
                          <version>1</version>
                        </parent>
-                       <name>${'$'}{<caret>project.parent.version}</name>
+                       <name>${<caret>project.parent.version}</name>
                        """.trimIndent())
 
     assertResolved(projectPom, findTag("project.parent.version"))
