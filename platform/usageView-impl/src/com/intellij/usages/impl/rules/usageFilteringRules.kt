@@ -27,6 +27,7 @@ fun platformUsageFilteringRules(project: Project): List<UsageFilteringRule> {
   if (ImportFilteringRule.EP_NAME.hasAnyExtensions()) {
     result.add(ImportUsageFilteringRule)
   }
+  result.add(CommentUsageFilteringRule)
   return result
 }
 
