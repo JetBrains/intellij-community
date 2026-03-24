@@ -199,7 +199,47 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     if (index >= 0) {
       return typeString.substring(0, index);
     }
+
+    // Match ", default None" with various separators and spacings:
+    //   ", default None", ", default=None", ", default:None",
+    //   ", default: None", ", default = None", etc.
+    int defaultIndex = findDefaultSuffixStart(typeString);
+    if (defaultIndex >= 0 && isDefaultValueNone(typeString, defaultIndex)) {
+      return typeString.substring(0, defaultIndex);
+    }
+
     return null;
+  }
+
+  /**
+   * Strips ", default <value>" from the type string regardless of the default value.
+   * Returns the original string when no such suffix is present.
+   * Unlike {@link #cleanupOptional}, this does not imply the parameter is Optional.
+   */
+  public static @NotNull String stripDefaultValue(@NotNull String typeString) {
+    int index = findDefaultSuffixStart(typeString);
+    return index >= 0 ? typeString.substring(0, index) : typeString;
+  }
+
+  private static int findDefaultSuffixStart(@NotNull String typeString) {
+    int index = typeString.indexOf(", default");
+    if (index < 0) return -1;
+    int after = index + ", default".length();
+    if (after >= typeString.length()) return -1;
+    char nextChar = typeString.charAt(after);
+    return (nextChar == ' ' || nextChar == '=' || nextChar == ':') ? index : -1;
+  }
+
+  private static boolean isDefaultValueNone(@NotNull String typeString, int defaultStart) {
+    int pos = defaultStart + ", default".length();
+    while (pos < typeString.length() && Character.isWhitespace(typeString.charAt(pos))) pos++;
+    if (pos < typeString.length() && (typeString.charAt(pos) == '=' || typeString.charAt(pos) == ':')) {
+      pos++;
+      while (pos < typeString.length() && Character.isWhitespace(typeString.charAt(pos))) pos++;
+    }
+    if (!typeString.startsWith("None", pos)) return false;
+    if (pos + 4 == typeString.length()) return true;
+    return !Character.isJavaIdentifierPart(typeString.charAt(pos + 4));
   }
 
   public static @NotNull List<String> getNumpyUnionType(@NotNull String typeString) {
@@ -370,6 +410,9 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     final Set<PyType> types = new LinkedHashSet<>();
     if (withoutOptional != null) {
       typeString = withoutOptional;
+    }
+    else {
+      typeString = stripDefaultValue(typeString);
     }
     for (String typeName : getNumpyUnionType(typeString)) {
       PyType parsedType = parseSingleNumpyDocType(anchor, typeName);
