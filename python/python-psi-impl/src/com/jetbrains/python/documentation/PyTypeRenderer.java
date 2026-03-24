@@ -39,6 +39,7 @@ import com.jetbrains.python.psi.types.PyTypeParameterType;
 import com.jetbrains.python.psi.types.PyTypeVarType;
 import com.jetbrains.python.psi.types.PyTypeVisitorExt;
 import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.PyUnpackedTupleType;
 import com.jetbrains.python.psi.types.PyUnsafeUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
@@ -597,6 +598,24 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     if (typeParameterType instanceof PyTypeVarType typeVarType && typeVarType.isDefinition()) {
       return wrapInTypingType(result.toFragment());
     }
+    return result.toFragment();
+  }
+
+  @Override
+  public HtmlChunk visitPyUnpackedTupleType(@NotNull PyUnpackedTupleType unpackedTupleType) {
+    HtmlBuilder result = new HtmlBuilder();
+    result.append("*");
+    result.append(styled(isRenderingFqn() ? "builtins.tuple" : "tuple", PyHighlighter.PY_BUILTIN_NAME)); //NON-NLS
+    result.append(styled("[", PyHighlighter.PY_BRACKETS));
+    if (unpackedTupleType.isUnbound()) {
+      result.append(render(unpackedTupleType.getElementTypes().getFirst()));
+      result.append(styled(", ", PyHighlighter.PY_COMMA));
+      result.append(styled("...", PyHighlighter.PY_DOT));
+    }
+    else {
+      result.append(renderList(ContainerUtil.map(unpackedTupleType.getElementTypes(), this::render)));
+    }
+    result.append(styled("]", PyHighlighter.PY_BRACKETS));
     return result.toFragment();
   }
 
