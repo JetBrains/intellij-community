@@ -219,7 +219,7 @@ class SegmentedButtonTest {
     val panel = panel {
       row {
         segmentedButton = segmentedButton(listOf("a", "b", "c")) { text = it }
-          .bind(MutableProperty({ property }, { property = it }))
+          .bind(MutableProperty({ property }, { property = it }).toNullableProperty())
           .apply { maxButtonsCount(3) }
       }
     }

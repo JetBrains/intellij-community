@@ -158,11 +158,11 @@ internal class SegmentedButtonImpl<T>(
     return this
   }
 
-  override fun bind(prop: MutableProperty<T>): SegmentedButton<T> {
+  override fun bind(prop: MutableProperty<T?>): SegmentedButton<T> {
     selectedItem = prop.get()
 
     dialogPanelConfig.applyCallbacks.list(null).add {
-      selectedItem?.let { prop.set(it) }
+      prop.set(selectedItem)
     }
     dialogPanelConfig.resetCallbacks.list(null).add {
       selectedItem = prop.get()
