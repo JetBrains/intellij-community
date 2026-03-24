@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -308,6 +309,11 @@ class NotebookCellInlayManager private constructor(
         intervals.forEach { interval ->
           notebook.addCell(pointerFactory.create(interval))
         }
+
+        //Forcefully synchronize components and inlays height
+        editor.contentComponent.components
+          .filterIsInstance<EditorEmbeddedComponentManager.FullEditorWidthRenderer>()
+          .forEach { it.doLayout() }
       }
     }
   }
