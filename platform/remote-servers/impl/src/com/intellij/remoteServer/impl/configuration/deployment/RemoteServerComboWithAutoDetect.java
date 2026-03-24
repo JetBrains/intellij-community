@@ -4,6 +4,7 @@ package com.intellij.remoteServer.impl.configuration.deployment;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
@@ -22,8 +23,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class RemoteServerComboWithAutoDetect<S extends ServerConfiguration> extends RemoteServerCombo<S> {
   private AutoDetectedItem myAutoDetectedItem;
 
-  public RemoteServerComboWithAutoDetect(@NotNull ServerType<S> serverType) {
-    super(serverType);
+  public RemoteServerComboWithAutoDetect(@NotNull ServerType<S> serverType, @NotNull Project project) {
+    super(serverType, project);
   }
 
   @Override
