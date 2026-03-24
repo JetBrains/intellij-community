@@ -15,13 +15,13 @@ import javax.swing.Icon;
 import java.util.Objects;
 
 class JavaMethodReferenceElement extends LookupElement implements TypedLookupItem {
-  private final PsiMethod myMethod;
-  private final PsiElement myRefPlace;
-  private final PsiType myType;
+  private final @NotNull PsiMethod myMethod;
+  private final @NotNull PsiElement myRefPlace;
+  private final @Nullable PsiType myType;
   private final Icon myIcon;
-  private final String myReferenceName;
+  private final @NotNull String myReferenceName;
 
-  JavaMethodReferenceElement(PsiMethod method, PsiElement refPlace, @Nullable PsiType type) {
+  JavaMethodReferenceElement(@NotNull PsiMethod method, @NotNull PsiElement refPlace, @Nullable PsiType type) {
     myMethod = method;
     myRefPlace = refPlace;
     myType = type;
