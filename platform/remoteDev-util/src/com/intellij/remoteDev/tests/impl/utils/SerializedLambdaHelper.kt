@@ -19,8 +19,6 @@ import kotlin.use
  */
 
 data class SerializedLambda(
-  val clazzName: String,
-  val methodName: String,
   val serializedDataBase64: String,
   val parametersBase64: List<String>,
   val classPath: Set<File>,

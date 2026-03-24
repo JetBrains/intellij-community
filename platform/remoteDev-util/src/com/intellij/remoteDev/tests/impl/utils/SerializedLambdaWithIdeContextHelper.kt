@@ -35,8 +35,6 @@ class SerializedLambdaWithIdeContextHelper: SerializedLambdaHelper() {
     }
 
     return SerializedLambda(
-      clazzName = obj.javaClass.name,
-      methodName = "runSerializedLambda",
       serializedDataBase64 = persistedLambda,
       parametersBase64 = parameters.map { serialize(it) },
       classPath = clazzPath
