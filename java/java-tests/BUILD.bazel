@@ -352,3 +352,57 @@ jps_test(
   runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `test intellij.java.tests` end
+
+### auto-generated section `build intellij.java.tests.main` start
+resourcegroup(
+  name = "tests-main_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "tests-main",
+  module_name = "intellij.java.tests.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "tests-main_test_lib",
+  module_name = "intellij.java.tests.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":tests-main_test_resources"],
+  runtime_deps = [
+    ":tests-main",
+    "//plugins/java-decompiler/engine:java-decompiler-engine-tests",
+    "//plugins/java-decompiler/engine:java-decompiler-engine-tests_test_lib",
+    "//plugins/java-decompiler/plugin:java-decompiler-tests",
+    "//plugins/java-decompiler/plugin:java-decompiler-tests_test_lib",
+    "//java/java-features-trainer:featuresTrainer-tests",
+    "//java/java-features-trainer:featuresTrainer-tests_test_lib",
+    "//java/ide-customization:ide-customization-tests",
+    "//java/ide-customization:ide-customization-tests_test_lib",
+    "//plugins/rareJavaRefactorings:java-rareRefactorings-tests",
+    "//plugins/rareJavaRefactorings:java-rareRefactorings-tests_test_lib",
+    "//java/structuralsearch-java:structuralSearch-tests",
+    "//java/structuralsearch-java:structuralSearch-tests_test_lib",
+    "//java/java-terminal:terminal-tests",
+    "//java/java-terminal:terminal-tests_test_lib",
+    "//java/java-tests:tests",
+    "//java/java-tests:tests_test_lib",
+    "//jvm/jvm-analysis-java-tests:analysis-java-tests",
+    "//jvm/jvm-analysis-java-tests:analysis-java-tests_test_lib",
+    "//plugins/lombok:lombok-tests",
+    "//plugins/lombok:lombok-tests_test_lib",
+    "//uast/uast-tests:tests",
+    "//uast/uast-tests:tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.java.tests.main` end
+
+### auto-generated section `iml intellij.java.tests.main` start
+exports_files([
+  "intellij.java.tests.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.java.tests.main` end

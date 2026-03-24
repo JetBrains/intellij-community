@@ -1086,6 +1086,8 @@ jvm_library(
     "//plugins/maven/src/test:maven-tests-main_test_lib",
     "//platform/vcs-tests:vcs-tests-main",
     "//platform/vcs-tests:vcs-tests-main_test_lib",
+    "//java/java-tests:tests-main",
+    "//java/java-tests:tests-main_test_lib",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main.tests` end

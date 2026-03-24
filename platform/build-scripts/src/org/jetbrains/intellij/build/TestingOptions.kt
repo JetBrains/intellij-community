@@ -13,7 +13,7 @@ private val OLD_PLATFORM_PREFIX = System.getProperty("idea.platform.prefix")
  * Options available for tests running on TeamCity.
  * If you want to run it locally, see [CommunityRunTestsBuildTarget] or [IdeaUltimateRunTestsBuildTarget].
  *
- * When running tests locally, specify the necessary options as VM arguments, e.g. `-Dintellij.build.test.groups=JAVA_TESTS`
+ * When running tests locally, specify the necessary options as VM arguments, e.g. `-Dintellij.build.test.groups=COMMUNITY_JAVA_TESTS`
  */
 open class TestingOptions {
   companion object {
