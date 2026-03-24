@@ -1,5 +1,5 @@
 // "Remove 'const' modifier" "true"
-// K2_ERROR: Const 'val' is only allowed on top level, in named objects, or in companion objects.
+// K2_ERROR: Const 'val' is only allowed on top level, in named objects, in companion objects or companion blocks.
 class Foo {
     val s = "s"
 }

@@ -2,7 +2,6 @@
 // AFTER-WARNING: Variable 'n' is never used
 
 sealed class <caret>MyEnum(val s: String = "") {
-
     fun foo() {
 
     }

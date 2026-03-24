@@ -1,5 +1,5 @@
 enum class MyEnum(val s: String = "") {
-     ;
+    ;
 
     fun foo() {
 

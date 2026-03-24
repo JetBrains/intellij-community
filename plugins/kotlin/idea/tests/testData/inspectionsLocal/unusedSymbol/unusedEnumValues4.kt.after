@@ -1,4 +1,5 @@
 enum class SomeEnum {
+    ;
 
     companion object {
         fun values(a: Int) {

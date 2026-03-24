@@ -72,6 +72,16 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
             runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/interface2.kt");
         }
 
+        @TestMetadata("lastEnumEntry1.kt")
+        public void testLastEnumEntry1() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/lastEnumEntry1.kt");
+        }
+
+        @TestMetadata("lastEnumEntry2.kt")
+        public void testLastEnumEntry2() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/lastEnumEntry2.kt");
+        }
+
         @TestMetadata("localClass1.kt")
         public void testLocalClass1() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/localClass1.kt");

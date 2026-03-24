@@ -346,6 +346,7 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
         is KaFirDiagnostic.UselessCast -> true
         is KaFirDiagnostic.UselessElvis -> true
         is KaFirDiagnostic.UselessIsCheck -> true
+        is KaFirDiagnostic.RedundantOpenInInterface -> true
         else -> false
     }
 

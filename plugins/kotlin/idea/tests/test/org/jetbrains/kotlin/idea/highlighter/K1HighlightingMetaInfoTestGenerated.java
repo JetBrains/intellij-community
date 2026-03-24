@@ -53,6 +53,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/diagnostics/mppIsNotEnabled.kt");
         }
 
+        @TestMetadata("redundantOpenFunctionInInterfaceDiagnostic.kt")
+        public void testRedundantOpenFunctionInInterfaceDiagnostic() throws Exception {
+            runTest("testData/highlighterMetaInfo/diagnostics/redundantOpenFunctionInInterfaceDiagnostic.kt");
+        }
+
         @TestMetadata("uselessCast.kt")
         public void testUselessCast() throws Exception {
             runTest("testData/highlighterMetaInfo/diagnostics/uselessCast.kt");

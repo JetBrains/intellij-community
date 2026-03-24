@@ -7,7 +7,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.psi.mustHaveOnlyPropertiesInPrimaryConstructor
@@ -17,7 +16,6 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdate
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.lexer.KtTokens.THIS_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.VARARG_KEYWORD
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
@@ -33,11 +31,9 @@ import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder
 import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder.Target.CONSTRUCTOR
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
-import org.jetbrains.kotlin.psi.getOrCreateBody
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class ConvertPrimaryConstructorToSecondaryIntention :
@@ -170,9 +166,6 @@ class ConvertPrimaryConstructorToSecondaryIntention :
         commentSaver.restore(secondaryConstructor)
 
         convertValueParametersToProperties(primaryCtor, element, psiFactory, lastEnumEntry)
-        if (element.isEnum()) {
-            addSemicolonIfNotExist(element, psiFactory, lastEnumEntry)
-        }
 
         for (anonymousInitializer in element.getAnonymousInitializers()) {
             anonymousInitializer.delete()
@@ -196,14 +189,6 @@ class ConvertPrimaryConstructorToSecondaryIntention :
                 null
             )
             if (anchorBefore == null) klass.addDeclarationBefore(property, null) else klass.addDeclarationAfter(property, anchorBefore)
-        }
-    }
-
-    private fun addSemicolonIfNotExist(klass: KtClass, factory: KtPsiFactory, lastEnumEntry: KtEnumEntry?) {
-        if (lastEnumEntry == null) {
-            klass.getOrCreateBody().let { it.addAfter(factory.createSemicolon(), it.lBrace) }
-        } else if (lastEnumEntry.getChildrenOfType<LeafPsiElement>().none { it.elementType == KtTokens.SEMICOLON }) {
-            lastEnumEntry.add(factory.createSemicolon())
         }
     }
 }

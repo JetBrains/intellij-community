@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.idea.core.expectActual
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.elementType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -54,6 +56,7 @@ import org.jetbrains.kotlin.psi.KtSuperTypeEntry
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.createPrimaryConstructorIfAbsent
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
@@ -245,6 +248,12 @@ object ExpectActualGenerationUtils {
         }.apply {
             declarations.forEach(KtDeclaration::delete)
             primaryConstructor?.delete()
+
+            if (this is KtClass && isEnum()) {
+                // if this is an enum that had enum entries and some other code, there's a big chance there might be semicolons left
+                // after we cleaned up the declarations; this code cleans those up as well
+                this.body?.allChildren?.filter { it.elementType == KtTokens.SEMICOLON }?.forEach(PsiElement::delete)
+            }
         }
     }
 
