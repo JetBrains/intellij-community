@@ -615,6 +615,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/compiler/instrumentation-util/intellij.java.compiler.instrumentationUtil.iml" filepath="$PROJECT_DIR$/java/compiler/instrumentation-util/intellij.java.compiler.instrumentationUtil.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/instrumentation-util-8/intellij.java.compiler.instrumentationUtil.java8.iml" filepath="$PROJECT_DIR$/java/compiler/instrumentation-util-8/intellij.java.compiler.instrumentationUtil.java8.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/intellij.java.compiler.tests.iml" filepath="$PROJECT_DIR$/java/compiler/intellij.java.compiler.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/compiler/intellij.java.compiler.tests.main.iml" filepath="$PROJECT_DIR$/java/compiler/intellij.java.compiler.tests.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-copyright/intellij.java.copyright.iml" filepath="$PROJECT_DIR$/java/java-copyright/intellij.java.copyright.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/coverage/intellij.java.coverage.iml" filepath="$PROJECT_DIR$/plugins/coverage/intellij.java.coverage.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/coverage/coverage_rt/intellij.java.coverage.rt.iml" filepath="$PROJECT_DIR$/plugins/coverage/coverage_rt/intellij.java.coverage.rt.iml" />
