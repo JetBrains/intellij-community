@@ -615,6 +615,7 @@ platform/execution.serviceView
 platform/execution.serviceView/backend
 platform/execution.serviceView/frontend
 platform/experiment
+platform/exploratory-tests
 platform/extensions
 platform/external-process-auth-helper
 platform/external-process-auth-helper/rt

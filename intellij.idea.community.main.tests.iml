@@ -277,5 +277,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.tests.main" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.tests.main" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.tests.main" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.exploratory.tests.main" scope="TEST" />
   </component>
 </module>
