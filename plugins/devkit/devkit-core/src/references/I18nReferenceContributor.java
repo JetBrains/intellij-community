@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean;
@@ -6,6 +6,7 @@ import com.intellij.codeInspection.InspectionEP;
 import com.intellij.ide.TypeNameEP;
 import com.intellij.notification.impl.NotificationGroupEP;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationStarterEP;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SchemeConvertorEPBase;
@@ -48,6 +49,7 @@ final class I18nReferenceContributor extends PsiReferenceContributor {
   private static final @NonNls String SYNONYM_TAG = "synonym";
 
   private static @NonNls class Holder {
+    private static final String APP_STARTER_EP = ApplicationStarterEP.class.getName();
     private static final String GROUP_CONFIGURABLE_EP = "com.intellij.openapi.options.ex.ConfigurableGroupEP";
     private static final String CONFIGURABLE_EP = ConfigurableEP.class.getName();
     private static final String INSPECTION_EP = InspectionEP.class.getName();
@@ -77,6 +79,11 @@ final class I18nReferenceContributor extends PsiReferenceContributor {
   }
 
   private static void registerKeyProviders(PsiReferenceRegistrar registrar) {
+    registrar.registerReferenceProvider(
+      extensionAttributePattern(new String[]{"key"}, Holder.APP_STARTER_EP),
+      new PropertyKeyReferenceProvider(false, null, null)
+    );
+
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"key", "groupKey"},
                                                                   Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP,
                                                                   Holder.NOTIFICATION_GROUP_EP),
@@ -202,6 +209,11 @@ final class I18nReferenceContributor extends PsiReferenceContributor {
 
   private static void registerBundleNameProviders(PsiReferenceRegistrar registrar) {
     final PsiReferenceProvider bundleReferenceProvider = new ResourceBundlePsiReferenceProvider();
+
+    registrar.registerReferenceProvider(
+      extensionAttributePattern(new String[]{"bundle"}, Holder.APP_STARTER_EP),
+      bundleReferenceProvider
+    );
 
     final XmlTagPattern.Capture resourceBundleTagPattern =
       xmlTag().withLocalName("resource-bundle").
