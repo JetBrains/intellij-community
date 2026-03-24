@@ -30,7 +30,6 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
-import org.jetbrains.intellij.build.impl.languageServer.generateLspServerLaunchData
 import org.jetbrains.intellij.build.impl.macOS.MachOUuid
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.generateEmbeddedFrontendLaunchData
@@ -421,17 +420,15 @@ class MacDistributionBuilder(
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch),
           mainClass = context.ideMainClassName,
-          customCommands = when {
-            context.isLanguageServer -> listOf(
-              generateLspServerLaunchData(context)
-            )
-            else -> listOfNotNull(
+          customCommands = run {
+            val base = listOfNotNull(
               generateEmbeddedFrontendLaunchData(arch, OsFamily.MACOS, context) {
                 "${toRoot}bin/${it.productProperties.baseFileName}.vmoptions"
               },
               generateQodanaLaunchData(context, arch, OsFamily.MACOS),
               generateStdioMcpRunnerLaunchData(context, OsFamily.MACOS)
             )
+            context.productProperties.launcherCommandsCustomizer?.invoke(base, context) ?: base
           }
         )
       ),

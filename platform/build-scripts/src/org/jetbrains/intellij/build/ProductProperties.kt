@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
 import com.intellij.platform.buildData.productInfo.CustomProperty
 import com.intellij.platform.runtime.product.ProductMode
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
@@ -292,6 +293,11 @@ abstract class ProductProperties {
    * Paths to directories, the content of which should be added to the 'license' directory of IDE distribution.
    */
   var additionalDirectoriesWithLicenses: List<Path> = emptyList()
+
+  /**
+   * Launcher commands customizer
+   */
+  var launcherCommandsCustomizer: ((List<CustomCommandLaunchData>, BuildContext) -> List<CustomCommandLaunchData>)? = null
 
   /**
    * Base file name (without an extension) for product archives and installers (*.exe, *.tar.gz, *.dmg).

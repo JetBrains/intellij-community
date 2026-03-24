@@ -28,7 +28,6 @@ import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
-import org.jetbrains.intellij.build.impl.languageServer.generateLspServerLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.generateEmbeddedFrontendLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
@@ -524,17 +523,15 @@ private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture,
         bootClassPathJarNames = context.bootClassPathJarNames,
         additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
         mainClass = context.ideMainClassName,
-        customCommands = when {
-          context.isLanguageServer -> listOf(
-            generateLspServerLaunchData(context)
-          )
-          else -> listOfNotNull(
+        customCommands = run {
+          val base = listOfNotNull(
             generateEmbeddedFrontendLaunchData(arch, OsFamily.WINDOWS, context) {
               "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
             },
             generateQodanaLaunchData(context, arch, OsFamily.WINDOWS),
             generateStdioMcpRunnerLaunchData(context, OsFamily.WINDOWS)
           )
+          context.productProperties.launcherCommandsCustomizer?.invoke(base, context) ?: base
         },
       )
     ),
