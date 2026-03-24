@@ -117,7 +117,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 ) {
   private val additionalConfigurables: ClearableLazyValue<List<UnnamedConfigurable>> = ClearableLazyValue.create {
     @Suppress("DEPRECATION")
-    val old = LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getBlockTerminalConfigurable(project) }
+    val old = LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getConfigurable(project) }
     val new = TerminalSettingsProvider.EP_NAME.extensionList.mapNotNull { it.createConfigurable(project) }
     new + old
   }
