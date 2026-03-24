@@ -414,6 +414,8 @@ jvm_library(
     "//plugins/gradle:gradle-tests_test_lib",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
+    "//plugins/gradle/native/tooling:gradle-native-tooling-tests",
+    "//plugins/gradle/native/tooling:gradle-native-tooling-tests_test_lib",
   ]
 )
 ### auto-generated section `build intellij.gradle.tests.main` end

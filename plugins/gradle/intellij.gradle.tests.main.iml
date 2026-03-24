@@ -11,5 +11,6 @@
     <orderEntry type="module" module-name="intellij.gradle.jps.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.native.tooling.tests" scope="TEST" />
   </component>
 </module>
