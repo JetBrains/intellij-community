@@ -6692,31 +6692,31 @@ http_file(
 )
 
 http_file(
-  name = "org_jruby_joni-joni-2_2_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jruby/joni/joni/2.2.3/joni-2.2.3.jar",
-  sha256 = "7ea54221f5f91deff2e860fe986eefe208b59fa04300e54c505c5c0c08d55e9a",
-  downloaded_file_path = "joni-2.2.3.jar"
+  name = "org_jruby_joni-joni-2_2_7_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jruby/joni/joni/2.2.7/joni-2.2.7.jar",
+  sha256 = "6054ab5bbf2dcc633fe62a359f1b39518e591fa76c90f9d50c7abb987d1f6774",
+  downloaded_file_path = "joni-2.2.7.jar"
 )
 
 http_file(
-  name = "org_jruby_jcodings-jcodings-1_0_61_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jruby/jcodings/jcodings/1.0.61/jcodings-1.0.61.jar",
-  sha256 = "3238c68a2f86cec53cc184ad26df8352db87bb22a419bd17fb4acdfbb0bc40f0",
-  downloaded_file_path = "jcodings-1.0.61.jar"
+  name = "org_jruby_jcodings-jcodings-1_0_64_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jruby/jcodings/jcodings/1.0.64/jcodings-1.0.64.jar",
+  sha256 = "0b4d0b0c1e2f1bdf17f4c30ecf5261bf62763af6f18b0fd1e743226c994ccf96",
+  downloaded_file_path = "jcodings-1.0.64.jar"
 )
 
 http_file(
-  name = "org_jruby_joni-joni-2_2_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jruby/joni/joni/2.2.3/joni-2.2.3-sources.jar",
-  sha256 = "32955919ba01468d8104f7dd1d6602f314624e5b3dd209053eb7b6112ce3772b",
-  downloaded_file_path = "joni-2.2.3-sources.jar"
+  name = "org_jruby_joni-joni-2_2_7-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jruby/joni/joni/2.2.7/joni-2.2.7-sources.jar",
+  sha256 = "b6e681a3ba0a71f5484f1a20e9acb08a32510ac3b12f851a30cb2be4d235269f",
+  downloaded_file_path = "joni-2.2.7-sources.jar"
 )
 
 http_file(
-  name = "org_jruby_jcodings-jcodings-1_0_61-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jruby/jcodings/jcodings/1.0.61/jcodings-1.0.61-sources.jar",
-  sha256 = "863aa9337bc85ac0b6bfe3544c21cb0c8ef3c39328862f2091fee361b4ccae2c",
-  downloaded_file_path = "jcodings-1.0.61-sources.jar"
+  name = "org_jruby_jcodings-jcodings-1_0_64-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jruby/jcodings/jcodings/1.0.64/jcodings-1.0.64-sources.jar",
+  sha256 = "67aeddc35800a1ae92f1d9bc3300af0ab7daa8c52bd2302d5d673836a0edafaf",
+  downloaded_file_path = "jcodings-1.0.64-sources.jar"
 )
 
 http_file(

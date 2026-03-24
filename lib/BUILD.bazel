@@ -8330,17 +8330,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jruby.joni/joni-2.2.3.jar_copy",
-  src = "@org_jruby_joni-joni-2_2_3_http//file",
-  out = "org.jruby.joni/joni-2.2.3.jar",
+  name = "org.jruby.joni/joni-2.2.7.jar_copy",
+  src = "@org_jruby_joni-joni-2_2_7_http//file",
+  out = "org.jruby.joni/joni-2.2.7.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jruby.jcodings/jcodings-1.0.61.jar_copy",
-  src = "@org_jruby_jcodings-jcodings-1_0_61_http//file",
-  out = "org.jruby.jcodings/jcodings-1.0.61.jar",
+  name = "org.jruby.jcodings/jcodings-1.0.64.jar_copy",
+  src = "@org_jruby_jcodings-jcodings-1_0_64_http//file",
+  out = "org.jruby.jcodings/jcodings-1.0.64.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -8348,22 +8348,22 @@ copy_file(
 java_library(
   name = "joni",
   exports = [
-    ":org_jruby_joni-joni-2_2_3_http_import",
-    ":org_jruby_jcodings-jcodings-1_0_61_http_import",
+    ":org_jruby_joni-joni-2_2_7_http_import",
+    ":org_jruby_jcodings-jcodings-1_0_64_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jruby_joni-joni-2_2_3_http_import",
-  jar = "@org_jruby_joni-joni-2_2_3_http//file",
-  source_jar = "@org_jruby_joni-joni-2_2_3-sources_http//file"
+  name = "org_jruby_joni-joni-2_2_7_http_import",
+  jar = "@org_jruby_joni-joni-2_2_7_http//file",
+  source_jar = "@org_jruby_joni-joni-2_2_7-sources_http//file"
 )
 
 jvm_import(
-  name = "org_jruby_jcodings-jcodings-1_0_61_http_import",
-  jar = "@org_jruby_jcodings-jcodings-1_0_61_http//file",
-  source_jar = "@org_jruby_jcodings-jcodings-1_0_61-sources_http//file"
+  name = "org_jruby_jcodings-jcodings-1_0_64_http_import",
+  jar = "@org_jruby_jcodings-jcodings-1_0_64_http//file",
+  source_jar = "@org_jruby_jcodings-jcodings-1_0_64-sources_http//file"
 )
 
 copy_file(
