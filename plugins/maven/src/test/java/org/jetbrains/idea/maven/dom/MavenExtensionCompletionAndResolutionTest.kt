@@ -133,7 +133,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
                        </build>
                        """.trimIndent())
 
-    val pluginVersion = getDefaultPluginVersion("org.apache.maven:maven-compiler-plugin")
+    val pluginVersion = projectsManager.projects[0].plugins.first { it.artifactId == "maven-compiler-plugin" }.version
     val pluginPath =
       "plugins/org/apache/maven/plugins/maven-compiler-plugin/$pluginVersion/maven-compiler-plugin-$pluginVersion.pom"
     val filePath = myIndicesFixture!!.repositoryHelper.getTestData(pluginPath)
