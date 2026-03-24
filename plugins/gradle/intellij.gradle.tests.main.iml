@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/testResources">
+      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.gradle.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.jps.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
+  </component>
+</module>

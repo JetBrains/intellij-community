@@ -1080,6 +1080,8 @@ jvm_library(
     "//plugins/xpath:xpath-tests_test_lib",
     "//java/compiler:compiler-tests-main",
     "//java/compiler:compiler-tests-main_test_lib",
+    "//plugins/gradle:gradle-tests-main",
+    "//plugins/gradle:gradle-tests-main_test_lib",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main.tests` end
