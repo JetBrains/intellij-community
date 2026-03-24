@@ -273,5 +273,6 @@
     <orderEntry type="module" module-name="intellij.xpath.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.compiler.tests.main" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.tests.main" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.maven.tests.main" scope="TEST" />
   </component>
 </module>
