@@ -170,8 +170,6 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return fixture.editor
   }
 
-  protected suspend fun getEditorOffset() = getEditorOffset(projectPom)
-
   protected suspend fun getEditorOffset(f: VirtualFile): Int {
     val editor = getEditor(f)
     return readAction { editor.caretModel.offset }
@@ -207,6 +205,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   protected suspend fun findTag(file: VirtualFile, path: String, clazz: Class<out MavenDomElement> = MavenDomProjectModel::class.java): XmlTag {
+    configTest(file)
     return readAction {
       val model = MavenDomUtil.getMavenDomModel(project, file, clazz)
       assertNotNull("Model is not of $clazz", model)

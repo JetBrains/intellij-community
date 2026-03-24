@@ -679,17 +679,18 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        </profiles>
                        """.trimIndent())
 
-    updateProjectPom("""
+    updateProjectPom($$"""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <name>${'$'}{foo}</name>
+                       <name>${foo}</name>
                        """.trimIndent())
 
     readWithProfiles("two")
 
-    moveCaretTo(projectPom, "<name>${'$'}{<caret>foo}</name>")
-    assertResolved(projectPom, findTag(profiles, "settings.profiles[1].properties.foo", MavenDomSettingsModel::class.java))
+    val tag = findTag(profiles, "settings.profiles[1].properties.foo", MavenDomSettingsModel::class.java)
+    moveCaretTo(projectPom, $$"<name>${<caret>foo}</name>")
+    assertResolved(projectPom, tag)
   }
 
   @Test
