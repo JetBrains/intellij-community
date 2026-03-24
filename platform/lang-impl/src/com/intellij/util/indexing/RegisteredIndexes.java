@@ -112,7 +112,7 @@ public final class RegisteredIndexes {
   }
 
   void waitUntilIndicesAreInitialized() {
-    awaitWithCheckCanceled((Future<?>)myStateFuture);
+    awaitWithCheckCanceled(myStateFuture);
   }
 
   void extensionsDataWasLoaded() {
