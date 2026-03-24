@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -673,7 +674,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
       }
 
       cancel()
-      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.UI) {
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.UiWithModelAccess) {
         val focusDC = DataManager.getInstance().dataContextFromFocusAsync.await()
         val dataContext = CustomizedDataContext.withSnapshot(focusDC) { sink ->
           sink[PlatformDataKeys.PREDEFINED_TEXT] = fileName
