@@ -52,12 +52,14 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import java.awt.Component;
 import java.awt.event.InputEvent;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector.wrapDataContextWithActionStartData;
 import static com.intellij.openapi.ui.playback.commands.ActionCommand.getInputEvent;
@@ -355,6 +357,15 @@ public class SearchEverywhereCommand extends AbstractCommand {
     assert popupInstance != null;
     Span insertSpan = PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_items_loaded").startSpan();
     Span firstBatchAddedSpan = PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_first_elements_added").startSpan();
+    Span elementsAdded5Span = PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_elements_added_5").startSpan();
+    Span elementsAdded10Span = PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_elements_added_10").startSpan();
+    Span elementsAdded15Span = PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_elements_added_15").startSpan();
+    Map<Integer, Ref<Span>> elementsAddedSpans = new HashMap<>();
+    elementsAddedSpans.put(5, new Ref<>(elementsAdded5Span));
+    elementsAddedSpans.put(10, new Ref<>(elementsAdded10Span));
+    elementsAddedSpans.put(15, new Ref<>(elementsAdded15Span));
+
+    AtomicInteger totalElementsAdded = new AtomicInteger(0);
     if (popupInstance instanceof SearchEverywhereUI) {
       popupInstance.addSearchListener(new SearchAdapter() {
         @Override
@@ -362,6 +373,8 @@ public class SearchEverywhereCommand extends AbstractCommand {
           super.elementsAdded(list);
           firstBatchAddedSpan.setAttribute("number", list.size());
           firstBatchAddedSpan.end();
+          int total = totalElementsAdded.addAndGet(list.size());
+          reportElementsAddedToSpans(elementsAddedSpans, total);
         }
       });
     }
@@ -372,6 +385,8 @@ public class SearchEverywhereCommand extends AbstractCommand {
           super.elementsAdded(uuidToElement);
           firstBatchAddedSpan.setAttribute("number", uuidToElement.size());
           firstBatchAddedSpan.end();
+          int total = totalElementsAdded.addAndGet(uuidToElement.size());
+          reportElementsAddedToSpans(elementsAddedSpans, total);
         }
       });
     }
@@ -397,12 +412,24 @@ public class SearchEverywhereCommand extends AbstractCommand {
     Ref<Boolean> isTypingFinished = new Ref<>(false);
     Ref<Span> oneLetterSpan = new Ref<>();
     Ref<Span> firstBatchAddedSpan = new Ref<>();
+    Ref<Span> elementsAdded5Span = new Ref<>();
+    Ref<Span> elementsAdded10Span = new Ref<>();
+    Ref<Span> elementsAdded15Span = new Ref<>();
+
+    Map<Integer, Ref<Span>> elementsAddedSpans = new HashMap<>();
+    elementsAddedSpans.put(5, elementsAdded5Span);
+    elementsAddedSpans.put(10, elementsAdded10Span);
+    elementsAddedSpans.put(15, elementsAdded15Span);
+
+    AtomicInteger totalElementsAdded = new AtomicInteger(0);
     if (popupInstance instanceof SearchEverywhereUI) {
       popupInstance.addSearchListener(new SearchAdapter() {
         @Override
         public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
           firstBatchAddedSpan.get().setAttribute("number", list.size());
           firstBatchAddedSpan.get().end();
+          int total = totalElementsAdded.addAndGet(list.size());
+          reportElementsAddedToSpans(elementsAddedSpans, total);
         }
 
         @Override
@@ -426,6 +453,8 @@ public class SearchEverywhereCommand extends AbstractCommand {
         public void elementsAdded(@NotNull Map<@NotNull String, ?> uuidToElement) {
           firstBatchAddedSpan.get().setAttribute("number", uuidToElement.size());
           firstBatchAddedSpan.get().end();
+          int total = totalElementsAdded.addAndGet(uuidToElement.size());
+          reportElementsAddedToSpans(elementsAddedSpans, total);
         }
 
         @Override
@@ -461,6 +490,8 @@ public class SearchEverywhereCommand extends AbstractCommand {
               PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_items_loaded").startSpan()
                 .setAttribute("text", String.valueOf(currentChar)));
             firstBatchAddedSpan.set(PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_first_elements_added").startSpan());
+            totalElementsAdded.set(0);
+            startElementsAddedSpans(elementsAddedSpans, warmup);
             document.insertString(document.getLength(), String.valueOf(currentChar), null);
             if (index == typingText.length() - 1) {
               isTypingFinished.set(true);
@@ -471,6 +502,27 @@ public class SearchEverywhereCommand extends AbstractCommand {
           }
         }));
       }));
+    }
+  }
+
+  private static void reportElementsAddedToSpans(Map<Integer, Ref<Span>> numToSpan, int total) {
+    for (Map.Entry<Integer, Ref<Span>> entry : numToSpan.entrySet()) {
+      int num = entry.getKey();
+      Ref<Span> span = entry.getValue();
+
+      if (total > num && span.get().isRecording()) {
+        span.get().setAttribute("number", total);
+        span.get().end();
+      }
+    }
+  }
+
+  private static void startElementsAddedSpans(Map<Integer, Ref<Span>> numToSpan, boolean warmup) {
+    for (Map.Entry<Integer, Ref<Span>> entry : numToSpan.entrySet()) {
+      int num = entry.getKey();
+      Ref<Span> span = entry.getValue();
+
+      span.set(PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_elements_added_" + num).startSpan());
     }
   }
 
