@@ -282,6 +282,16 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   open suspend fun extractDependencies(): PyResult<List<PythonPackage>>? = null
 
   /**
+   * Returns all packages that are declared in the project configuration or are transitive
+   * dependencies of declared packages. Used by the UI to distinguish "declared" packages from
+   * standalone-installed ones.
+   *
+   * Returns null if this package manager doesn't support this operation.
+   */
+  @ApiStatus.Internal
+  open suspend fun allDeclaredPackages(): List<PythonPackage>? = null
+
+  /**
    * Extracts project top-level dependencies with caching based on dependency file modification time.
    * Returns cached result if dependency file hasn't changed since last extraction.
    * Uses Platform's CachedValuesManager with the dependency file as an invalidation dependency.
