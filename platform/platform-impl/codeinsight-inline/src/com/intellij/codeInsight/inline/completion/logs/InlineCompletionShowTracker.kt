@@ -13,6 +13,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.impl.editorIdOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 
@@ -95,11 +96,12 @@ internal class InlineCompletionShowTracker(
 
   fun inserted() {
     potentiallySelectedIndex?.let {
-      service<InsertedStateTracker>().track(
+      val project = request.editor.project ?: return
+      project.service<InsertedStateTracker>().track(
         requestId,
         language,
         fileLanguage,
-        request.editor,
+        request.editor.editorIdOrNull() ?: return,
         initialOffset = request.endOffset,
         insertOffset = lastOffset,
         variantStates[it].finalSuggestion,
