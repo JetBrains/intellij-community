@@ -73,6 +73,7 @@ import org.jetbrains.kotlin.idea.fir.folding.AbstractFirFoldingTest
 import org.jetbrains.kotlin.idea.fir.formatter.AbstractK2FormatterTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2AutoImportTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2FilteringAutoImportTest
+import org.jetbrains.kotlin.idea.fir.imports.AbstractK2AddImportAliasTest53
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2AddImportTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2JsOptimizeImportsTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2JvmOptimizeImportsTest
@@ -236,6 +237,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
 
         testClass<AbstractK2AddImportTest> {
             model("addImport", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractK2AddImportAliasTest53> {
+            model("addImportAlias", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractFirReferenceResolveTest> {
