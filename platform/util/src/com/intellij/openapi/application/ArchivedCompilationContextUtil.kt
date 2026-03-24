@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.util.bazelEnvironment.BazelRunfiles
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -77,23 +78,45 @@ object ArchivedCompilationContextUtil {
     return mapping
   }
 
+  private const val BAZEL_TARGETS_JSON_FILE_PROPERTY = "intellij.build.bazel.targets.json.file"
+
+  fun getBazelTargetsJsonPath(projectRoot: Path): Path {
+    if (BazelRunfiles.isRunningFromBazel) {
+      val location = System.getProperty(BAZEL_TARGETS_JSON_FILE_PROPERTY)
+                     ?: error("Missing property $BAZEL_TARGETS_JSON_FILE_PROPERTY, it's required when running under Bazel")
+      log("Running under Bazel, using targets file from Bazel dependencies: rlocationpath=$location")
+
+      val path = BazelRunfiles.resolveRunfilePath(location)
+      log("Running under Bazel, using targets file from Bazel dependencies: path=$path")
+
+      return path
+    }
+    else {
+      val path = projectRoot.resolve("build").resolve("bazel-targets.json")
+      log("Standalone run not under Bazel, using targets file from project: $path")
+      return path
+    }
+  }
+
   private fun computeArchivedCompiledClassesMappingIfIsRunningFromBazelOut(): Map<String, String>? {
+    val projectRoot = PathManager.getHomeDir()
+
     val targetsFile: BazelTargetsInfo.TargetsFile
     try {
-      targetsFile = BazelTargetsInfo.loadTargetsFileFromBazelTargetsJson(PathManager.getHomeDir())
+      targetsFile = BazelTargetsInfo.loadTargetsFile(getBazelTargetsJsonPath(projectRoot))
     }
-    catch (_: Exception) {
-      log("Failed to load targets info from bazel-targets.json")
+    catch (e: Exception) {
+      log("Failed to load targets info from bazel-targets.json: " + e.stackTraceToString())
       return null
     }
 
     val mapping: MutableMap<String, String> = mutableMapOf()
     targetsFile.modules.forEach { (moduleName, targetsFileModuleDescription) ->
       if (targetsFileModuleDescription.productionJars.isNotEmpty()) {
-        mapping["production/$moduleName"] = targetsFileModuleDescription.productionJars.map { PathManager.getHomeDir().resolve(it).toString() }.single()
+        mapping["production/$moduleName"] = targetsFileModuleDescription.productionJars.map { projectRoot.resolve(it).toString() }.single()
       }
       if (targetsFileModuleDescription.testJars.isNotEmpty()) {
-        mapping["test/$moduleName"] = targetsFileModuleDescription.testJars.map { PathManager.getHomeDir().resolve(it).toString() }.single()
+        mapping["test/$moduleName"] = targetsFileModuleDescription.testJars.map { projectRoot.resolve(it).toString() }.single()
       }
     }
     return mapping
@@ -104,10 +127,11 @@ object ArchivedCompilationContextUtil {
   }
 
   private object BazelTargetsInfo {
+    private val json = Json { ignoreUnknownKeys = true }
+
     @OptIn(ExperimentalSerializationApi::class)
-    fun loadTargetsFileFromBazelTargetsJson(projectRoot: Path): TargetsFile {
-      val bazelTargetsJsonFile = projectRoot.resolve("build").resolve("bazel-targets.json")
-      return bazelTargetsJsonFile.inputStream().use { Json { ignoreUnknownKeys = true }.decodeFromStream<TargetsFile>(it) }
+    fun loadTargetsFile(file: Path): TargetsFile {
+      return file.inputStream().use { json.decodeFromStream<TargetsFile>(it) }
     }
 
     @Serializable

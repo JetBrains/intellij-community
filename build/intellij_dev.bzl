@@ -67,7 +67,7 @@ DEFAULT_JVM_FLAGS = [
     "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
 ]
 
-def intellij_dev_binary(name, visibility, data, jvm_flags, env, platform_prefix, config_path, system_path, additional_modules, program_args):
+def intellij_dev_binary(name, visibility, data, jvm_flags, env, platform_prefix, bazel_targets_json, config_path, system_path, additional_modules, program_args):
     all_jvm_flags = DEFAULT_JVM_FLAGS + jvm_flags
 
     if platform_prefix:
@@ -80,6 +80,7 @@ def intellij_dev_binary(name, visibility, data, jvm_flags, env, platform_prefix,
     all_jvm_flags = all_jvm_flags + [
         "-Didea.config.path=" + effective_config_path,
         "-Didea.system.path=" + effective_system_path,
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % bazel_targets_json,
     ]
 
     # Allow to reset classpath from META-INF/MANIFEST.MF if classpath .jar due to classpath length limitations on Windows
@@ -97,7 +98,7 @@ def intellij_dev_binary(name, visibility, data, jvm_flags, env, platform_prefix,
         visibility = visibility,
         runtime_deps = ["@community//platform/bootstrap/dev"],
         main_class = "org.jetbrains.intellij.build.devServer.DevMainKt",
-        data = data,
+        data = data + [bazel_targets_json],
         jvm_flags = all_jvm_flags,
         env = env,
         add_opens = INTELLIJ_ADD_OPENS,

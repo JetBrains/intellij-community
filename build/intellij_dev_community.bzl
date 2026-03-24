@@ -16,6 +16,7 @@ intellij_dev_binary_community = macro(
         "jvm_flags": attr.string_list(default = [], configurable = False, doc = "Additional JVM flags."),
         "env": attr.string_dict(default = {}, configurable = False, doc = "Environment variables to set when running the binary."),
         "platform_prefix": attr.string(configurable = False, doc = "Value for -Didea.platform.prefix (e.g., 'idea', 'GoLand')."),
+        "bazel_targets_json": attr.label(default = "//build:bazel_targets_json", allow_single_file = True, configurable = False, doc = "bazel-targets.json generated from JPS project model (community)"),
         "config_path": attr.string(configurable = False, doc = "Path for -Didea.config.path. Defaults to out/dev-data/{name}/config."),
         "system_path": attr.string(configurable = False, doc = "Path for -Didea.system.path. Defaults to out/dev-data/{name}/system."),
         "additional_modules": attr.string(configurable = False, doc = "Value for -Dadditional.modules flag (optional)."),

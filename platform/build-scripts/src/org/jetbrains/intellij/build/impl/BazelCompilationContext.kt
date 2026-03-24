@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.util.io.URLUtil
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineScope
@@ -127,11 +128,10 @@ internal class BazelTargetsInfo {
   companion object {
     private val bazelTargetsJson = Json { ignoreUnknownKeys = true }
 
-    fun bazelTargetsJsonFile(projectHome: Path): Path = projectHome.resolve("build").resolve("bazel-targets.json")
-
     @OptIn(ExperimentalSerializationApi::class)
     fun loadBazelTargetsJson(projectRoot: Path): TargetsFile {
-      val targetsFile = bazelTargetsJsonFile(projectRoot).inputStream().use { bazelTargetsJson.decodeFromStream<TargetsFile>(it) }
+      val targetsFilePath = ArchivedCompilationContextUtil.getBazelTargetsJsonPath(projectRoot)
+      val targetsFile = targetsFilePath.inputStream().use { bazelTargetsJson.decodeFromStream<TargetsFile>(it) }
       return targetsFile
     }
   }
