@@ -39,7 +39,7 @@ class AgentPromptTestFailuresContextRendererBridge : AgentPromptContextRendererB
     val statusCounts = extractStatusCounts(item, entries)
     val label = composeTestsGroupLabel(statusCounts)
     val includeStatusPrefix = shouldIncludeStatusPrefix(statusCounts)
-    val focusedOutput = extractFocusedOutput(item)
+    val consoleOutput = extractConsoleOutput(item)
     return buildString {
       append(label)
       append(renderTruncationSuffix(item))
@@ -47,15 +47,15 @@ class AgentPromptTestFailuresContextRendererBridge : AgentPromptContextRendererB
         append('\n')
         append(entries.joinToString(separator = "\n") { entry -> renderEntryLine(entry, includeStatusPrefix) })
       }
-      if (focusedOutput != null) {
+      if (consoleOutput != null) {
         if (entries.isNotEmpty()) {
           append("\n\n")
         }
         else {
           append('\n')
         }
-        append("focused failure output:\n")
-        append(appendCodeBlock(content = focusedOutput))
+        append("failure console output:\n")
+        append(appendCodeBlock(content = consoleOutput))
       }
     }
   }
@@ -177,9 +177,9 @@ class AgentPromptTestFailuresContextRendererBridge : AgentPromptContextRendererB
     return computeTestStatusCounts(entries.map { entry -> entry.status })
   }
 
-  private fun extractFocusedOutput(item: AgentPromptContextItem): String? {
+  private fun extractConsoleOutput(item: AgentPromptContextItem): String? {
     return item.payload.objOrNull()
-      ?.string("focusedOutput")
+      ?.string("consoleOutput")
       ?.takeIf { it.isNotBlank() }
   }
 

@@ -22,7 +22,7 @@ import com.intellij.openapi.editor.Editor
 
 private const val MAX_INCLUDED_SELECTION_TESTS = 5
 private const val MAX_ASSERTION_HINT_CHARS = 180
-private const val MAX_FOCUSED_OUTPUT_CHARS = 4_000
+private const val MAX_CONSOLE_OUTPUT_CHARS = 4_000
 private val WHITESPACE_REGEX = Regex("\\s+")
 
 private data class SelectedTestContext(
@@ -34,7 +34,7 @@ private data class SelectedTestContext(
   @JvmField val isDefect: Boolean,
 )
 
-private data class FocusedOutputExcerpt(
+private data class ConsoleOutputExcerpt(
   @JvmField val text: String,
   @JvmField val fromSelection: Boolean,
   @JvmField val originalChars: Int,
@@ -56,7 +56,7 @@ internal class AgentPromptTestSelectionContextContributor : AgentPromptContextCo
     if (!isTestOwnedInvocation(dataContext)) {
       return emptyList()
     }
-    val focusedOutput = extractFocusedOutput(dataContext)
+    val consoleOutput = extractConsoleOutput(dataContext)
 
     val included = normalizedSelection.take(MAX_INCLUDED_SELECTION_TESTS)
     if (included.isEmpty()) {
@@ -91,12 +91,12 @@ internal class AgentPromptTestSelectionContextContributor : AgentPromptContextCo
       "includedCount" to AgentPromptPayload.num(included.size),
       "statusCounts" to toPayloadStatusCounts(statusCounts),
     )
-    focusedOutput?.let { excerpt ->
-      payloadFields["focusedOutput"] = AgentPromptPayload.str(excerpt.text)
-      payloadFields["focusedOutputFromSelection"] = AgentPromptPayload.bool(excerpt.fromSelection)
+    consoleOutput?.let { excerpt ->
+      payloadFields["consoleOutput"] = AgentPromptPayload.str(excerpt.text)
+      payloadFields["consoleOutputFromSelection"] = AgentPromptPayload.bool(excerpt.fromSelection)
     }
     val payload = AgentPromptPayloadValue.Obj(payloadFields)
-    val outputWasTruncated = focusedOutput?.let { excerpt ->
+    val outputWasTruncated = consoleOutput?.let { excerpt ->
       excerpt.originalChars > excerpt.includedChars
     } == true
     val summaryWasTruncated = normalizedSelection.size > included.size
@@ -110,8 +110,8 @@ internal class AgentPromptTestSelectionContextContributor : AgentPromptContextCo
         itemId = "testRunner.selection",
         source = "testRunner",
         truncation = AgentPromptContextTruncation(
-          originalChars = fullContent.length + (focusedOutput?.originalChars ?: 0),
-          includedChars = content.length + (focusedOutput?.includedChars ?: 0),
+          originalChars = fullContent.length + (consoleOutput?.originalChars ?: 0),
+          includedChars = content.length + (consoleOutput?.includedChars ?: 0),
           reason = if (summaryWasTruncated || outputWasTruncated) {
             AgentPromptContextTruncationReason.SOURCE_LIMIT
           }
@@ -143,23 +143,23 @@ internal class AgentPromptTestSelectionContextContributor : AgentPromptContextCo
     return ConsoleViewUtil.isConsoleViewEditor(editor)
   }
 
-  private fun extractFocusedOutput(dataContext: DataContext): FocusedOutputExcerpt? {
-    val editor = focusedConsoleEditor(dataContext) ?: return null
+  private fun extractConsoleOutput(dataContext: DataContext): ConsoleOutputExcerpt? {
+    val editor = consoleEditor(dataContext) ?: return null
     val selectedText = editor.selectionModel.selectedText
-      ?.let(::normalizeFocusedOutput)
+      ?.let(::normalizeConsoleOutput)
       ?.takeIf { it.isNotEmpty() }
     if (selectedText != null) {
-      return truncateFocusedOutput(selectedText, fromSelection = true)
+      return truncateConsoleOutput(selectedText, fromSelection = true)
     }
 
-    val documentText = normalizeFocusedOutput(editor.document.text)
+    val documentText = normalizeConsoleOutput(editor.document.text)
     if (documentText.isEmpty()) {
       return null
     }
-    return truncateFocusedOutput(documentText, fromSelection = false)
+    return truncateConsoleOutput(documentText, fromSelection = false)
   }
 
-  private fun focusedConsoleEditor(dataContext: DataContext): Editor? {
+  private fun consoleEditor(dataContext: DataContext): Editor? {
     val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: return null
     return editor.takeIf { candidate -> ConsoleViewUtil.isConsoleViewEditor(candidate) }
   }
@@ -262,7 +262,7 @@ internal class AgentPromptTestSelectionContextContributor : AgentPromptContextCo
   }
 }
 
-private fun normalizeFocusedOutput(rawText: String): String {
+private fun normalizeConsoleOutput(rawText: String): String {
   val normalizedNewlines = rawText
     .replace("\r\n", "\n")
     .replace('\r', '\n')
@@ -275,14 +275,14 @@ private fun normalizeFocusedOutput(rawText: String): String {
   return lines.subList(firstNonBlank, lastNonBlank + 1).joinToString(separator = "\n")
 }
 
-private fun truncateFocusedOutput(text: String, fromSelection: Boolean): FocusedOutputExcerpt {
-  val includedText = if (text.length <= MAX_FOCUSED_OUTPUT_CHARS) {
+private fun truncateConsoleOutput(text: String, fromSelection: Boolean): ConsoleOutputExcerpt {
+  val includedText = if (text.length <= MAX_CONSOLE_OUTPUT_CHARS) {
     text
   }
   else {
-    text.take(MAX_FOCUSED_OUTPUT_CHARS)
+    text.take(MAX_CONSOLE_OUTPUT_CHARS)
   }
-  return FocusedOutputExcerpt(
+  return ConsoleOutputExcerpt(
     text = includedText,
     fromSelection = fromSelection,
     originalChars = text.length,

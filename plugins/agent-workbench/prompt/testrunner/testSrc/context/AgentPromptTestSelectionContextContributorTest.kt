@@ -88,8 +88,8 @@ class AgentPromptTestSelectionContextContributorTest {
         val item = result.single()
         val payload = item.payload.objOrNull()!!
         assertThat(item.body).isEqualTo("failed: testSingle | assertion: single failure")
-        assertThat(payload.string("focusedOutput")).isEqualTo("AssertionError: boom")
-        assertThat(payload.bool("focusedOutputFromSelection")).isFalse()
+        assertThat(payload.string("consoleOutput")).isEqualTo("AssertionError: boom")
+        assertThat(payload.bool("consoleOutputFromSelection")).isFalse()
       }
       finally {
         editorFactory.releaseEditor(editor)
@@ -118,10 +118,10 @@ class AgentPromptTestSelectionContextContributorTest {
 
         assertThat(result).hasSize(1)
         val payload = result.single().payload.objOrNull()!!
-        assertThat(payload.string("focusedOutput")).isEqualTo(
+        assertThat(payload.string("consoleOutput")).isEqualTo(
           "AssertionError: boom\n  at MainTest.test(MainTest.kt:42)"
         )
-        assertThat(payload.bool("focusedOutputFromSelection")).isTrue()
+        assertThat(payload.bool("consoleOutputFromSelection")).isTrue()
       }
       finally {
         editorFactory.releaseEditor(editor)
@@ -272,8 +272,8 @@ class AgentPromptTestSelectionContextContributorTest {
         assertThat(result).hasSize(1)
         val item = result.single()
         val payload = item.payload.objOrNull()!!
-        assertThat(payload.string("focusedOutput")).hasSize(4_000)
-        assertThat(payload.bool("focusedOutputFromSelection")).isFalse()
+        assertThat(payload.string("consoleOutput")).hasSize(4_000)
+        assertThat(payload.bool("consoleOutputFromSelection")).isFalse()
         assertThat(item.truncation.reason).isEqualTo(AgentPromptContextTruncationReason.SOURCE_LIMIT)
       }
       finally {

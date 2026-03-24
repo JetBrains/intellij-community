@@ -79,7 +79,7 @@ class AgentPromptTestFailuresContextRendererBridgeTest {
             "status" to AgentPromptPayload.str("failed"),
           ),
         ),
-        "focusedOutput" to AgentPromptPayload.str("AssertionError: boom\nat Suite.testA(Suite.kt:42)"),
+        "consoleOutput" to AgentPromptPayload.str("AssertionError: boom\nat Suite.testA(Suite.kt:42)"),
       )
     )
 
@@ -88,7 +88,7 @@ class AgentPromptTestFailuresContextRendererBridgeTest {
     assertThat(rendered).isEqualTo(
       "failed tests\n" +
       "Suite#testA\n\n" +
-      "focused failure output:\n" +
+      "failure console output:\n" +
       "```text\n" +
       "AssertionError: boom\n" +
       "at Suite.testA(Suite.kt:42)\n" +
@@ -148,7 +148,7 @@ class AgentPromptTestFailuresContextRendererBridgeTest {
             "status" to AgentPromptPayload.str("failed"),
           ),
         ),
-        "focusedOutput" to AgentPromptPayload.str("AssertionError: boom"),
+        "consoleOutput" to AgentPromptPayload.str("AssertionError: boom"),
       )
     )
 
