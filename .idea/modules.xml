@@ -1623,6 +1623,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-api/shared/intellij.platform.vcs.shared.iml" filepath="$PROJECT_DIR$/platform/vcs-api/shared/intellij.platform.vcs.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.testFramework.iml" filepath="$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.tests.iml" filepath="$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.tests.main.iml" filepath="$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.tests.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/warmup/intellij.platform.warmup.iml" filepath="$PROJECT_DIR$/platform/warmup/intellij.platform.warmup.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/warmup/performanceTesting/intellij.platform.warmup.performanceTesting.iml" filepath="$PROJECT_DIR$/platform/warmup/performanceTesting/intellij.platform.warmup.performanceTesting.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/welcome-screen/intellij.platform.welcomeScreen.iml" filepath="$PROJECT_DIR$/platform/welcome-screen/intellij.platform.welcomeScreen.iml" />

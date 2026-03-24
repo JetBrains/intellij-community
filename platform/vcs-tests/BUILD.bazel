@@ -196,3 +196,57 @@ jps_test(
   runtime_deps = [":vcs-tests_test_lib"]
 )
 ### auto-generated section `test intellij.platform.vcs.tests` end
+
+### auto-generated section `build intellij.platform.vcs.tests.main` start
+load("@rules_jvm//:jvm.bzl", "resourcegroup")
+
+resourcegroup(
+  name = "vcs-tests-main_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "vcs-tests-main",
+  module_name = "intellij.platform.vcs.tests.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "vcs-tests-main_test_lib",
+  module_name = "intellij.platform.vcs.tests.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":vcs-tests-main_test_resources"],
+  runtime_deps = [
+    ":vcs-tests-main",
+    "//platform/vcs-impl:vcs-impl-tests",
+    "//platform/vcs-impl:vcs-impl-tests_test_lib",
+    "//platform/vcs-log/graph:vcs-log-graph-impl-tests",
+    "//platform/vcs-log/graph:vcs-log-graph-impl-tests_test_lib",
+    "//platform/vcs-log/impl:vcs-log-impl-tests",
+    "//platform/vcs-log/impl:vcs-log-impl-tests_test_lib",
+    "//platform/vcs-tests",
+    "//platform/vcs-tests:vcs-tests_test_lib",
+    "//plugins/tasks/tasks-tests:tests",
+    "//plugins/tasks/tasks-tests:tests_test_lib",
+    "//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage-tests",
+    "//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage-tests_test_lib",
+    "//plugins/git4idea/terminal:vcs-git-terminal-tests",
+    "//plugins/git4idea/terminal:vcs-git-terminal-tests_test_lib",
+    "//plugins/git4idea:vcs-git-tests",
+    "//plugins/git4idea:vcs-git-tests_test_lib",
+    "//plugins/hg4idea:vcs-hg-tests",
+    "//plugins/hg4idea:vcs-hg-tests_test_lib",
+    "//plugins/svn4idea:vcs-svn-tests",
+    "//plugins/svn4idea:vcs-svn-tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.vcs.tests.main` end
+
+### auto-generated section `iml intellij.platform.vcs.tests.main` start
+exports_files([
+  "intellij.platform.vcs.tests.main.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.platform.vcs.tests.main` end
