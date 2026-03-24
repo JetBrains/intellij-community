@@ -300,10 +300,10 @@ class NotebookCellInlayManager private constructor(
   private suspend fun handleRefreshedDocument() {
     notebook.clear()
     val pointerFactory = NotebookIntervalPointerFactory.get(editor)
+    val intervals = readAction { notebookCellLines.intervals }
 
-    readAction {
-      val intervals = notebookCellLines.intervals
-
+    // consider migration
+    performOnEdtThread {
       update(keepScrollingPosition = false) {
         intervals.forEach { interval ->
           notebook.addCell(pointerFactory.create(interval))

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization
 
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.CustomFoldRegionRenderer
 import com.intellij.openapi.editor.Editor
@@ -25,10 +26,13 @@ class UpdateContext(val force: Boolean = false) {
     if (editor.isDisposed) return
 
     if (foldingOperations.isNotEmpty()) {
-      val foldingModel = RemovalTrackingFoldingModel(editor.foldingModel as FoldingModelImpl)
-      foldingModel.runBatchFoldingOperation({
-                                              foldingOperations.forEach { it(foldingModel) }
-                                            }, true, false)
+      runInEdt {
+        if (editor.isDisposed) return@runInEdt
+        val foldingModel = RemovalTrackingFoldingModel(editor.foldingModel as FoldingModelImpl)
+        foldingModel.runBatchFoldingOperation({
+                                                foldingOperations.forEach { it(foldingModel) }
+                                              }, true, false)
+      }
     }
 
     if (inlayOperations.isNotEmpty()) {
