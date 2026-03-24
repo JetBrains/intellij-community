@@ -427,19 +427,28 @@ public final class BuildDataManager {
         DependencyGraph depGraph = myDepGraph;
         if (depGraph == null) {
           if (deleteExisting) {
-            FileUtil.delete(mappingsRoot);
+            NioFiles.deleteRecursively(mappingsRoot);
           }
           GraphElementInterner.setImplementation(new ElementInternerImpl());
           myDepGraph = asSynchronizedGraph(new DependencyGraphImpl(new PersistentMapletFactory(mappingsRoot.toString())));
         }
         else {
-          try {
-            depGraph.close();
-          }
-          finally {
-            if (deleteExisting) {
-              FileUtil.delete(mappingsRoot);
+          if (deleteExisting) {
+            try {
+              depGraph.close();
             }
+            catch (Throwable suppressed) {
+              // the existing graph storage is going to be deleted, so suppressing any errors is fine
+              LOG.info("Error closing dependency graph", suppressed);
+            }
+            finally {
+              NioFiles.deleteRecursively(mappingsRoot);
+              myDepGraph = asSynchronizedGraph(new DependencyGraphImpl(new PersistentMapletFactory(mappingsRoot.toString())));
+            }
+          }
+          else {
+            // just re-create the graph
+            depGraph.close();
             myDepGraph = asSynchronizedGraph(new DependencyGraphImpl(new PersistentMapletFactory(mappingsRoot.toString())));
           }
         }
