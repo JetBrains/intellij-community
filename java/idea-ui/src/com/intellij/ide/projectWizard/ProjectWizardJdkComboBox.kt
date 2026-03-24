@@ -31,6 +31,7 @@ import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DefaultProjectFactory
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -542,7 +543,10 @@ private fun selectAndAddJdk(combo: ProjectWizardJdkComboBox) {
   else {
     Path.of(System.getProperty("user.home"))
   }
-  SdkConfigurationUtil.selectSdkHome(JavaSdk.getInstance(), null, path, null) { path: String ->
+  val project = ProjectManager.getInstance().openProjects.firstOrNull { project ->
+    project.projectFilePath?.let { Path.of(it).root } == path.root
+  }
+  SdkConfigurationUtil.selectSdkHome(JavaSdk.getInstance(), null, path, project) { path: String ->
     val version = JavaSdk.getInstance().getVersionString(path)
     val comboItem = DetectedJdk(version ?: "", path, containsSymbolicLink(path))
     combo.addItem(comboItem)
