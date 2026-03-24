@@ -4540,5 +4540,21 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    l2.append(<warning descr="Expected type 'Overload[(x: int) -> int, (x: str) -> str, (x: float) -> float]' (matched generic type '_T'), got 'Overload[(x: str) -> str, (x: int) -> int]' instead">few_overloads</warning>)
                    """);
   }
+
+  @TestFor(issues = "PY-88578")
+  public void testEllipsisInOverload() {
+    doTestByText("""
+                   from typing import overload
+                   
+                   @overload
+                   def f(a: str): ...
+                   
+                   @overload
+                   def f(a: None = (...)): ...
+                   
+                   def f(a:str | None = <warning>...</warning>):
+                       print(a)
+                   """);
+  }
 }
 
