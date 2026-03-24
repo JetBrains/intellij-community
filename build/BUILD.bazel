@@ -4,7 +4,7 @@ load("//build:jps_to_bazel_targets_json.bzl", "jps_to_bazel_targets_json")
 
 load("//build:intellij_dev_community.bzl", "intellij_dev_binary_community")
 load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_TEST_COMMUNITY_TARGETS")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_TEST_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY")
 
 load(":jps_library_derivation_test.bzl", "jps_library_derivation_test_suite")
 jps_library_derivation_test_suite(name = "jps_library_derivation_test")
@@ -12,8 +12,9 @@ jps_library_derivation_test_suite(name = "jps_library_derivation_test")
 load(":jps_library_derivation_pipeline_test.bzl", "jps_library_derivation_pipeline_test_suite")
 jps_library_derivation_pipeline_test_suite(name = "jps_library_derivation_pipeline_test")
 
+# == BAZEL_TARGETS_JSON_COMMUNITY
 jps_to_bazel_targets_json(
-  name = "bazel_targets_json",
+  name = "community_bazel_targets_json",
   mode = "community",
   srcs = [
     "//:jps_to_bazel_community_model_root_files",
@@ -32,7 +33,10 @@ java_binary(
   runtime_deps = [":build"],
   main_class = "OpenSourceCommunityInstallersBuildTarget",
   add_opens = INTELLIJ_ADD_OPENS,
-  data = ALL_COMMUNITY_TARGETS,
+  jvm_flags = [
+    "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
+  ],
+  data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
 )
 
 java_binary(
@@ -46,9 +50,10 @@ java_binary(
     # Reduce output which is not strictly required to run tests, but keep it discoverable
     # it prints where all debug logs are in org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl.setDebugLogPath
     "-Dintellij.build.console.messages.verbose=false",
+    "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
   ],
   add_opens = INTELLIJ_ADD_OPENS,
-  data = ALL_COMMUNITY_TARGETS,
+  data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
 )
 
 java_binary(
@@ -56,7 +61,10 @@ java_binary(
   runtime_deps = [":build"],
   main_class = "JewelMavenArtifactsBuildTarget",
   add_opens = INTELLIJ_ADD_OPENS,
-  data = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_LIBRARY_COMMUNITY_TARGETS,
+  jvm_flags = [
+    "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
+  ],
+  data = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_LIBRARY_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
 )
 
 # Dev-build targets for running IDEs locally via `bazel run //build:<target>`

@@ -28,6 +28,7 @@ def _generate_targets_bzl(production_targets, test_targets, library_targets, iml
     content.append(_format_target_list("ALL_TEST_COMMUNITY_TARGETS", test_targets))
     content.append(_format_target_list("ALL_LIBRARY_COMMUNITY_TARGETS", library_targets))
     content.append(_format_target_list("ALL_COMMUNITY_IML_TARGETS", iml_targets))
+    content.append("BAZEL_TARGETS_JSON_COMMUNITY = \"@community//build:community_bazel_targets_json\"")
     content.append("ALL_COMMUNITY_TARGETS = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_TEST_COMMUNITY_TARGETS + ALL_LIBRARY_COMMUNITY_TARGETS")
     return "\n".join(content)
 

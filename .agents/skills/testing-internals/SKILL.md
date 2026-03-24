@@ -333,12 +333,13 @@ java_binary(
   name = "idea_ultimate_run_tests_build_target",
   runtime_deps = [":build"],
   main_class = "IdeaUltimateRunTestsBuildTarget",
-  data = ALL_ULTIMATE_TARGETS,
+  data = ALL_ULTIMATE_TARGETS + [BAZEL_TARGETS_JSON_ULTIMATE],
   jvm_flags = [
     "-Dintellij.build.console.exporter.to.temp.file=true",
     "-Dintellij.build.console.messages.verbose=false",
     "-Dintellij.build.clean.output.root=false",      # Reuse compiled classes
     "-Dintellij.build.use.compiled.classes=true",    # Skip recompilation
+    "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_ULTIMATE,
   ],
   add_opens = INTELLIJ_ADD_OPENS,
 )
