@@ -490,8 +490,12 @@ public class PyTypeCheckerInspection extends PyInspection {
         return;
       }
 
-      final PyType expected = myTypeEvalContext.getType(node);
-      final PyType actual = tryPromotingType(defaultValue, expected);
+      // we use `PyTypingTypeProvider.getType` of the annotation directly, instead of `node.getType`,
+      //  because otherwise `PyTypingTypeProvider` will inject the type of `None`
+      final var expectedRef = PyTypingTypeProvider.getType(node.getAnnotation().getValue(), myTypeEvalContext);
+      if (expectedRef == null) return;
+      final var expected = expectedRef.get();
+      final var actual = tryPromotingType(defaultValue, expected);
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
         final String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
         final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
