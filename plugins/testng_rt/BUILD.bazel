@@ -8,7 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = [
-    "@lib//:test_n_g",
+    "@lib//:test_n_g-provided",
     "//java/java-runtime:rt",
   ]
 )
@@ -21,6 +21,7 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   runtime_deps = [
     ":testng-rt",
+    "@lib//:test_n_g-provided",
     "//java/java-runtime:rt_test_lib",
   ]
 )

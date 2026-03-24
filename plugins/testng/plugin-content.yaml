@@ -1,3 +1,6 @@
+- name: lib/intellij.libraries.testng.jar
+  contentModules:
+  - name: intellij.libraries.testng
 - name: lib/testng-plugin.jar
   modules:
   - name: intellij.testng
