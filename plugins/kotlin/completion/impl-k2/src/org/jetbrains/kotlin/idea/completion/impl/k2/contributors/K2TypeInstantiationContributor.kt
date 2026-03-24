@@ -64,6 +64,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isAbstract
+import org.jetbrains.kotlin.utils.addIfNotNull
 
 /**
  * This contributor is responsible for completing type instantiation items for Kotlin classes and objects.
@@ -143,9 +144,6 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
 
         val inheritingClasses = expectedType.symbol.psi?.findAllInheritorsWithJavaAnalogs() ?: return
         for (inheritor in inheritingClasses) {
-            // findAllInheritorsWithJavaAnalogs may return classes that cannot be analyzed by the
-            // analysis API because they are not part of the loaded project
-            if (!inheritor.canBeAnalysed()) continue
             completeElementsForSymbol(
                 symbolPsi = inheritor,
                 expectedType = expectedType,
@@ -187,10 +185,6 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
             return
         }
 
-        val javaFqName = (symbol.psi as? PsiClass)
-            ?.namedClassSymbol?.classId
-            ?.asSingleFqName()
-
         // If we have an alias in scope, then we do not need to import anything, just use the alias name.
         val importStrategy = if (aliasName == null) {
             // Note: we explicitly do this for the original symbol rather than the kotlinAlias because
@@ -198,12 +192,7 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
             context.importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol)
         } else ImportStrategy.DoNothing
 
-        val kotlinAliasSymbolOrSelf = javaFqName?.let {
-            val apiVersion = context.completionContext.originalFile.languageVersionSettings.apiVersion
-            val kotlinAliasFqName = ImportMapper.findCorrespondingKotlinFqName(it, apiVersion) ?: return@let null
-            buildClassType(ClassId.topLevel(kotlinAliasFqName)).symbol
-        } ?: symbol
-
+        val kotlinAliasSymbolOrSelf = symbol.mapJavaToKotlinAliasOrSelf()
         val substitutionResult = substituteTypeArgumentsToMatchExpectedSupertype(
             inheritorSymbol = kotlinAliasSymbolOrSelf,
             expectedSuperTypeParameterMapping = expectedTypeParamMap,
@@ -452,6 +441,29 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
     }
 
     /**
+     * Given the [FqName], if it is a Kotlin FqName that is mapped to a Java class (e.g., typealiases or `Throwable`),
+     * returns the corresponding original Java PsiElement, or null otherwise.
+     */
+    context(_: KaSession)
+    private fun FqName.mapToJavaElement(): PsiElement? {
+        val mappedJavaType = JavaToKotlinClassMap.mapKotlinToJava(toUnsafe()) ?: return null
+        return buildClassType(mappedJavaType).symbol?.psi
+    }
+
+    /**
+     * Given the [KaClassLikeSymbol], if it is a JVM class mapped to a Kotlin class, returns
+     * the corresponding Kotlin symbol. Otherwise, the original [KaClassLikeSymbol] is returned.
+     */
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
+    private fun KaClassLikeSymbol.mapJavaToKotlinAliasOrSelf(): KaClassLikeSymbol {
+        if (psi !is PsiClass) return this // not a Java class
+        val javaFqName = classId?.asSingleFqName() ?: return this
+        val apiVersion = context.completionContext.originalFile.languageVersionSettings.apiVersion
+        val kotlinAliasFqName = ImportMapper.findCorrespondingKotlinFqName(javaFqName, apiVersion) ?: return this
+        return buildClassType(ClassId.topLevel(kotlinAliasFqName)).symbol ?: this
+    }
+
+    /**
      * Returns a sequence of all inheritors of [this], taking into account that some classes
      * might be defined in Kotlin source code but actually do not exist during runtime on the JVM.
      * Such a case is `kotlin.Throwable`, which is defined as its own class in Kotlin stdlib source code,
@@ -463,10 +475,9 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
     private fun PsiElement.findAllInheritorsWithJavaAnalogs(): Sequence<PsiElement> = sequence {
         val seenFqNames = mutableSetOf<FqName>()
         for (inheritor in findAllInheritors()) {
+            if (!inheritor.canBeAnalysed()) continue
             yield(inheritor)
-            inheritor.kotlinFqName?.let {
-                seenFqNames.add(it)
-            }
+            seenFqNames.addIfNotNull(inheritor.kotlinFqName)
         }
 
         val componentPlatforms = session.useSiteModule.targetPlatform.componentPlatforms
@@ -475,16 +486,13 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
             return@sequence
         }
 
-        val kotlinFqName = kotlinFqName
         // Since the above might not get all inheritors due to what is described in the description of this function,
         // we need to re-run finding the inheritors for the mapped java class.
         // Because this might lead to duplicates, we also filter out any duplicates here.
-        val mappedJavaType = kotlinFqName?.let { fqName ->
-            JavaToKotlinClassMap.mapKotlinToJava(fqName.toUnsafe())
-        } ?: return@sequence
-        val originalJavaPsi = buildClassType(mappedJavaType).symbol?.psi ?: return@sequence
+        val originalJavaPsi = kotlinFqName?.mapToJavaElement() ?: return@sequence
 
         for (inheritor in originalJavaPsi.findAllInheritors()) {
+            if (!inheritor.canBeAnalysed()) continue
             if (inheritor.kotlinFqName in seenFqNames) continue
             yield(inheritor)
         }
