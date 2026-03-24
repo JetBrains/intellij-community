@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.bazelEnvironment
 
+import com.intellij.util.bazelEnvironment.BazelRunfilesManifest
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import java.nio.file.Files

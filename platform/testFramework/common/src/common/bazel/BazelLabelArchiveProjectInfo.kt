@@ -3,7 +3,7 @@ package com.intellij.testFramework.common.bazel
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.common.BazelTestUtil
-import org.jetbrains.intellij.bazelEnvironment.BazelLabel
+import com.intellij.util.bazelEnvironment.BazelLabel
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFileToCacheLocation
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.extractZip

@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common
 
+import com.intellij.util.bazelEnvironment.BazelLabel
+import com.intellij.util.bazelEnvironment.BazelRunfiles
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.bazelEnvironment.BazelLabel
-import org.jetbrains.intellij.bazelEnvironment.BazelRunfiles
 import java.nio.file.Path
 import kotlin.io.path.absolute
 import kotlin.io.path.isDirectory

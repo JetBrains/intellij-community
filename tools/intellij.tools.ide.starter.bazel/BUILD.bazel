@@ -22,6 +22,7 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
     "//platform/testFramework/common",
     "//platform/build-scripts/downloader",
+    "//platform/util",
   ]
 )
 
@@ -39,6 +40,7 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/testFramework/common:common_test_lib",
     "//platform/build-scripts/downloader:downloader_test_lib",
+    "//platform/util:util_test_lib",
   ]
 )
 ### auto-generated section `build intellij.tools.ide.starter.bazel` end

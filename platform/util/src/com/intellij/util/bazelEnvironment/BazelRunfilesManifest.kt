@@ -1,11 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.bazelEnvironment
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.bazelEnvironment
 
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.useLines
 import kotlin.math.max
 
+@ApiStatus.Internal
 class BazelRunfilesManifest(val manifestFile: String? = System.getenv(RUNFILES_MANIFEST_FILE_ENV_NAME)) {
   private companion object {
     // https://fuchsia.googlesource.com/fuchsia/+/HEAD/build/bazel/BAZEL_RUNFILES.md?format%2F%2F#how-runfiles-libraries-really-work

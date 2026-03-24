@@ -3,9 +3,9 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.bazelEnvironment.BazelLabel
+import com.intellij.util.bazelEnvironment.BazelRunfiles
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.intellij.bazelEnvironment.BazelLabel
-import org.jetbrains.intellij.bazelEnvironment.BazelRunfiles
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.jps.model.module.JpsModule
