@@ -189,6 +189,8 @@ jvm_library(
   resources = [":maven-tests-main_test_resources"],
   runtime_deps = [
     ":maven-tests-main",
+    "//platform/bootstrap/coroutine",
+    "//platform/bootstrap/coroutine:coroutine_test_lib",
     "//aether-dependency-resolver:java-aetherDependencyResolver-tests",
     "//aether-dependency-resolver:java-aetherDependencyResolver-tests_test_lib",
     "//java/idea-ui:ui-tests",

@@ -406,6 +406,8 @@ jvm_library(
   resources = [":gradle-tests-main_test_resources"],
   runtime_deps = [
     ":gradle-tests-main",
+    "//platform/bootstrap/coroutine",
+    "//platform/bootstrap/coroutine:coroutine_test_lib",
     "//plugins/gradle/java:java-tests",
     "//plugins/gradle/java:java-tests_test_lib",
     "//plugins/gradle/jps-plugin:jps-tests",

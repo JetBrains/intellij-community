@@ -375,6 +375,8 @@ jvm_library(
   resources = [":tests-main_test_resources"],
   runtime_deps = [
     ":tests-main",
+    "//platform/bootstrap/coroutine",
+    "//platform/bootstrap/coroutine:coroutine_test_lib",
     "//plugins/java-decompiler/engine:java-decompiler-engine-tests",
     "//plugins/java-decompiler/engine:java-decompiler-engine-tests_test_lib",
     "//plugins/java-decompiler/plugin:java-decompiler-tests",

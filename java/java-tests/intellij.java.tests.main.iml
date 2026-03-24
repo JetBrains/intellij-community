@@ -7,6 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.bootstrap.coroutine" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.decompiler.engine.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.decompiler.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.featuresTrainer.tests" scope="TEST" />

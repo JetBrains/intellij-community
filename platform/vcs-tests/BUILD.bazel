@@ -221,6 +221,8 @@ jvm_library(
   resources = [":vcs-tests-main_test_resources"],
   runtime_deps = [
     ":vcs-tests-main",
+    "//platform/bootstrap/coroutine",
+    "//platform/bootstrap/coroutine:coroutine_test_lib",
     "//platform/vcs-impl:vcs-impl-tests",
     "//platform/vcs-impl:vcs-impl-tests_test_lib",
     "//platform/vcs-log/graph:vcs-log-graph-impl-tests",

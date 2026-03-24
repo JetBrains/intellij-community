@@ -401,6 +401,8 @@ jvm_library(
   resources = [":groovy-tests-main_test_resources"],
   runtime_deps = [
     ":groovy-tests-main",
+    "//platform/bootstrap/coroutine",
+    "//platform/bootstrap/coroutine:coroutine_test_lib",
     "//plugins/groovy:groovy-tests",
     "//plugins/groovy:groovy-tests_test_lib",
     "//plugins/groovy/groovy-uast-tests:uast-tests",
