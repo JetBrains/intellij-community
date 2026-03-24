@@ -6,21 +6,18 @@ import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTrac
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.lang.Language
-import com.intellij.openapi.Disposable
+import com.intellij.codeInsight.inline.completion.utils.EditorDisposableCoroutineScope
+import com.intellij.codeInsight.inline.completion.utils.storeInUserDataHolderByTheKey
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.text.EditDistance
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -136,48 +133,18 @@ class InsertedStateTracker(private val cs: CoroutineScope) {
   }
 
   /**
-   * Returns a per-editor child scope for delayed inserted-state tracking.
+   * Reuses one editor-bound child scope for all delayed tracking jobs.
    *
-   * Why this is needed:
-   * - all tracking jobs for the same editor should share one lifecycle;
-   * - the scope must be canceled on editor disposal;
-   * - once the scope is completed, it should be detached from editor user data.
-   *
-   * The method uses a double-check under editor synchronization to avoid creating
-   * multiple scopes concurrently for the same editor.
+   * The scope wrapper is stored in editor user data and canceled on editor disposal,
+   * so service-level coroutine scope does not retain editor references.
    */
   private fun getOrCreateEditorScope(editor: Editor): CoroutineScope {
-    editor.getUserData(EDITOR_TRACKER_SCOPE_KEY)?.let { scope ->
-      if (scope.coroutineContext[Job]?.isActive == true) return scope
-    }
-    synchronized(editor) {
-      editor.getUserData(EDITOR_TRACKER_SCOPE_KEY)?.let { scope ->
-        if (scope.coroutineContext[Job]?.isActive == true) return scope
-      }
-
-      val scopeJob = SupervisorJob(cs.coroutineContext[Job])
-      @Suppress("RAW_SCOPE_CREATION")
-      val editorScope = CoroutineScope(cs.coroutineContext + scopeJob)
-      val editorScopeDisposable = Disposable { scopeJob.cancel() }
-      EditorUtil.disposeWithEditor(editor, editorScopeDisposable)
-
-      scopeJob.invokeOnCompletion {
-        // We no longer need editor disposal callback once the scope is complete.
-        Disposer.dispose(editorScopeDisposable)
-        synchronized(editor) {
-          // Clear only if this exact scope is still attached.
-          if (editor.getUserData(EDITOR_TRACKER_SCOPE_KEY) === editorScope) {
-            editor.putUserData(EDITOR_TRACKER_SCOPE_KEY, null)
-          }
-        }
-      }
-
-      editor.putUserData(EDITOR_TRACKER_SCOPE_KEY, editorScope)
-      return editorScope
-    }
+    return editor.storeInUserDataHolderByTheKey(EDITOR_TRACKER_SCOPE_KEY) {
+      EditorDisposableCoroutineScope(cs)
+    }.scope
   }
 
   private companion object {
-    private val EDITOR_TRACKER_SCOPE_KEY = Key.create<CoroutineScope>("inline.completion.inserted.state.tracker.scope")
+    private val EDITOR_TRACKER_SCOPE_KEY = Key.create<EditorDisposableCoroutineScope>("inline.completion.inserted.state.tracker.scope")
   }
 }
