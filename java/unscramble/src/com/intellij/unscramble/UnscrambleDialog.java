@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -470,10 +470,7 @@ public class UnscrambleDialog extends DialogWrapper {
       unscrambleSupport == null ? textToUnscramble : unscrambleSupport.unscramble(project, textToUnscramble, logName, settings);
     if (unscrambledTrace == null) return null;
     ThreadDumpState threadDumpState = IntelliJThreadDumpParserKt.parseIntelliJThreadDump(unscrambledTrace);
-    if (threadDumpState != null) {
-      return UnscrambleUtils.addConsole(project, threadDumpState, unscrambledTrace);
-    }
-    return UnscrambleUtils.addConsole(project, ThreadDumpParser.parse(unscrambledTrace), unscrambledTrace);
+    return UnscrambleUtils.addConsole(project, threadDumpState, unscrambledTrace);
   }
 
   @Override

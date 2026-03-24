@@ -1,13 +1,10 @@
 # This dump may be opened in IntelliJ IDEA using Analyze Stack Trace or Thread Dump...
 # Full thread dump
 
-"main@101" #1 prio=5 tid=0x1 nid=0x1 runnable
+"main@101" #1 prio=5 tid=0x1 nid=0x1 runnable ["id":101,]
    java.lang.Thread.State: RUNNABLE
 	at example.main.run(main.java:1)
 
-"worker-1@201" #2 tid=0x2 nid=0x2 virtual runnable
+"worker-1@201" #2 tid=0x2 nid=0x2 virtual runnable ["id":201,"parentId":]
    java.lang.Thread.State: RUNNABLE
 	at example.worker-1.run(worker-1.java:2)
-
-============ INTELLIJ META_DATA ============
-{broken

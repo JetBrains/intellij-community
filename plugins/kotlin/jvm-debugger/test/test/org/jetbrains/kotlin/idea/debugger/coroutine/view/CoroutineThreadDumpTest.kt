@@ -74,7 +74,7 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     @Test
-    fun `coroutine header state is restored from serialized state without exact synthetic prefix match`() {
+    fun `coroutine header state is restored from inline metadata`() {
         val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(loadThreadDump("coroutineHeaderStateWithoutSyntheticPrefix.txt")))
 
         val dumpItem = parsedThreadDump.dumpItems().single { !it.isContainer }
@@ -85,11 +85,11 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
             "\"scope:1\" RUNNING [Dispatchers.Default]\n    at example.Parent.one(Parent.kt:1)",
             dumpItem.stackTrace,
         )
-        assertTrue(dumpItem.exportedStackTrace.startsWith("\"scope:1@300\" virtual tid=0x0 nid=NA running [Coroutine] [dispatcher=Dispatchers.Default]"))
+        assertTrue(dumpItem.serialize().startsWith("\"scope:1@300\" virtual tid=0x0 nid=NA running [\"type\":\"coroutine\",\"id\":300,\"dispatcher\":\"Dispatchers.Default\"]"))
     }
 
     @Test
-    fun `coroutine dump item exposes clean ui stacktrace and synthetic exported stacktrace`() {
+    fun `coroutine dump item exposes clean ui stacktrace and structured exported stacktrace`() {
         val coroutineInfo = CoroutineInfoData(
             name = "scope",
             id = 1L,
@@ -114,8 +114,8 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
         assertFalse(dumpItem.stackTrace.contains("virtual tid=0x0"))
         assertFalse(dumpItem.stackTrace.contains("[Coroutine]"))
         assertEquals(
-            "\"scope:1@300\" virtual tid=0x0 nid=NA suspended [Coroutine] [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}]\n",
-            dumpItem.exportedStackTrace,
+            "\"scope:1@300\" virtual tid=0x0 nid=NA suspended [\"type\":\"coroutine\",\"id\":300,\"dispatcher\":\"Dispatchers.Default\",\"job\":\"StandaloneCoroutine{Active}\"]",
+            dumpItem.serialize(),
         )
     }
 
@@ -128,8 +128,8 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
             dumpItem.stackTrace,
         )
         assertEquals(
-            "\"scope:300@300\" virtual tid=0x0 nid=NA running [Coroutine] [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}, runningThread=UNKNOWN_THREAD]\n",
-            dumpItem.exportedStackTrace,
+            "\"scope:300@300\" virtual tid=0x0 nid=NA running [\"type\":\"coroutine\",\"id\":300,\"dispatcher\":\"Dispatchers.Default\",\"job\":\"StandaloneCoroutine{Active}\",\"runningThread\":\"UNKNOWN_THREAD\"]",
+            dumpItem.serialize(),
         )
     }
 
@@ -139,7 +139,7 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
 
         val serializedDump = serializeIntelliJThreadDump(listOf(dumpItem), listOf("Full thread dump"))
 
-        assertTrue(serializedDump.contains(dumpItem.exportedStackTrace))
+        assertTrue(serializedDump.contains(dumpItem.serialize()))
         assertFalse(serializedDump.contains(dumpItem.stackTrace))
     }
 

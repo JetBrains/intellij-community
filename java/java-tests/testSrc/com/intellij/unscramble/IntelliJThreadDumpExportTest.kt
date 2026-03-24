@@ -42,6 +42,13 @@ internal class IntelliJThreadDumpExportTest {
         dumpItem(
           name = "Scope Root",
           stackTrace = "",
+          serializedStackTrace = serializeThreadDumpItem(
+            itemHeader = "\"Scope Root\" tid=0x0 nid=NA container",
+            stackTraceBody = "",
+            id = 400L,
+            parentId = null,
+            type = IntelliJThreadDumpMetadata.CONTAINER_TYPE,
+          ),
           treeId = 400L,
           parentTreeId = null,
           isContainer = true,
@@ -49,6 +56,13 @@ internal class IntelliJThreadDumpExportTest {
         dumpItem(
           name = "Scope A",
           stackTrace = "",
+          serializedStackTrace = serializeThreadDumpItem(
+            itemHeader = "\"Scope A\" tid=0x0 nid=NA container",
+            stackTraceBody = "",
+            id = 300L,
+            parentId = 400L,
+            type = IntelliJThreadDumpMetadata.CONTAINER_TYPE,
+          ),
           treeId = 300L,
           parentTreeId = 400L,
           isContainer = true,
@@ -56,28 +70,39 @@ internal class IntelliJThreadDumpExportTest {
         dumpItem(
           name = "Scope B",
           stackTrace = "",
+          serializedStackTrace = serializeThreadDumpItem(
+            itemHeader = "\"Scope B\" tid=0x0 nid=NA container",
+            stackTraceBody = "",
+            id = 500L,
+            parentId = 400L,
+            type = IntelliJThreadDumpMetadata.CONTAINER_TYPE,
+          ),
           treeId = 500L,
           parentTreeId = 400L,
           isContainer = true,
         ),
         dumpItem(
           name = "main",
-          stackTrace = """
-            "main@101" #1 prio=5 tid=0x1 nid=0x1 runnable
-               java.lang.Thread.State: RUNNABLE
-            	at example.main.run(main.java:1)
-          """.trimIndent(),
+          stackTrace = "\"main@101\" #1 prio=5 tid=0x1 nid=0x1 runnable\n   java.lang.Thread.State: RUNNABLE\n\tat example.main.run(main.java:1)",
+          serializedStackTrace = serializeThreadDumpItem(
+            itemHeader = "\"main@101\" #1 prio=5 tid=0x1 nid=0x1 runnable",
+            stackTraceBody = "   java.lang.Thread.State: RUNNABLE\n\tat example.main.run(main.java:1)",
+            id = 101L,
+            parentId = 300L,
+          ),
           treeId = 101L,
           parentTreeId = 300L,
           isContainer = false,
         ),
         dumpItem(
           name = "worker-1",
-          stackTrace = """
-            "worker-1@201" #2 tid=0x2 nid=0x2 virtual runnable
-               java.lang.Thread.State: RUNNABLE
-            	at example.worker-1.run(worker-1.java:2)
-          """.trimIndent(),
+          stackTrace = "\"worker-1@201\" #2 tid=0x2 nid=0x2 virtual runnable\n   java.lang.Thread.State: RUNNABLE\n\tat example.worker-1.run(worker-1.java:2)",
+          serializedStackTrace = serializeThreadDumpItem(
+            itemHeader = "\"worker-1@201\" #2 tid=0x2 nid=0x2 virtual runnable",
+            stackTraceBody = "   java.lang.Thread.State: RUNNABLE\n\tat example.worker-1.run(worker-1.java:2)",
+            id = 201L,
+            parentId = 500L,
+          ),
           treeId = 201L,
           parentTreeId = 500L,
           isContainer = false,
@@ -91,61 +116,13 @@ internal class IntelliJThreadDumpExportTest {
   }
 
   @Test
-  fun `serializer writes metadata, includes info items, and skips containers without ids`() {
-    val actualDumpText = serializeIntelliJThreadDump(
-      listOf(
-        dumpItem(
-          name = "No Id",
-          stackTrace = "",
-          treeId = null,
-          parentTreeId = null,
-          isContainer = true,
-        ),
-        dumpItem(
-          name = "Zero Id",
-          stackTrace = "",
-          treeId = 0L,
-          parentTreeId = 0L,
-          isContainer = true,
-        ),
-        InfoDumpItem("Thread dump unavailable", "Collection of extended dump was disabled."),
-      ),
-    )
-
-    assertThat(actualDumpText).isEqualTo(
-      """
-      # This dump may be opened in IntelliJ IDEA using Analyze Stack Trace or Thread Dump...
-      
-      Collection of extended dump was disabled.
-      
-      ${IntelliJThreadDumpMetadata.META_DATA_MARKER}
-      {
-          "version": 1,
-          "tree_links": [
-              {
-                  "tree_id": 0,
-                  "parent_tree_id": 0
-              }
-          ],
-          "containers": [
-              {
-                  "name": "Zero Id",
-                  "tree_id": 0
-              }
-          ]
-      }
-      """.trimIndent(),
-    )
-  }
-
-  @Test
   fun `serializer prefers exported stack trace over ui stack trace`() {
     val actualDumpText = serializeIntelliJThreadDump(
       listOf(
         dumpItem(
           name = "scope:1",
-          stackTrace = "\"scope:1@300\"\n[dispatcher=Dispatchers.Default]",
-          exportedStackTrace = "\"scope:1@300\" virtual tid=0x0 nid=NA suspended [Coroutine] [dispatcher=Dispatchers.Default]",
+          stackTrace = "\"scope:1\" SUSPENDED [Dispatchers.Default]",
+          serializedStackTrace = "\"scope:1@300\" virtual tid=0x0 nid=NA suspended [\"type\":\"coroutine\",\"id\":300,\"dispatcher\":\"Dispatchers.Default\"]",
           treeId = 300L,
           parentTreeId = null,
           isContainer = false,
@@ -153,8 +130,8 @@ internal class IntelliJThreadDumpExportTest {
       ),
     )
 
-    assertThat(actualDumpText).contains("\"scope:1@300\" virtual tid=0x0 nid=NA suspended [Coroutine] [dispatcher=Dispatchers.Default]")
-    assertThat(actualDumpText).doesNotContain("\"scope:1@300\"\n[dispatcher=Dispatchers.Default]")
+    assertThat(actualDumpText).contains("\"scope:1@300\" virtual tid=0x0 nid=NA suspended [\"type\":\"coroutine\",\"id\":300,\"dispatcher\":\"Dispatchers.Default\"]")
+    assertThat(actualDumpText).doesNotContain("\"scope:1\" SUSPENDED [Dispatchers.Default]")
   }
 
   private fun createDumpItemsForExport(): List<DumpItem> {
@@ -174,7 +151,7 @@ internal class IntelliJThreadDumpExportTest {
   private fun dumpItem(
     name: String,
     stackTrace: String,
-    exportedStackTrace: String = stackTrace,
+    serializedStackTrace: String = stackTrace,
     treeId: Long?,
     parentTreeId: Long?,
     isContainer: Boolean,
@@ -183,7 +160,6 @@ internal class IntelliJThreadDumpExportTest {
       override val name: String = name
       override val stateDesc: String = ""
       override val stackTrace: String = stackTrace
-      override val exportedStackTrace: String = exportedStackTrace
       override val interestLevel: Int = 0
       override val icon: Icon = AllIcons.Actions.Resume
       override val iconToolTip: String? = null
@@ -194,6 +170,7 @@ internal class IntelliJThreadDumpExportTest {
       override val parentTreeId: Long? = parentTreeId
       override val isContainer: Boolean = isContainer
       override val canBeHidden: Boolean = false
+      override fun serialize(): String = serializedStackTrace
     }
   }
 }

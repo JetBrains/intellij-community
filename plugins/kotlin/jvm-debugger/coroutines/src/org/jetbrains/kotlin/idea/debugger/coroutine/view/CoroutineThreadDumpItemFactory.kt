@@ -4,18 +4,11 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.view
 import com.intellij.threadDumpParser.ThreadState
 import com.intellij.unscramble.MergeableDumpItem
 import com.intellij.unscramble.ThreadDumpItemFactory
+import com.intellij.unscramble.splitFirstLineAndBody
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.State
 
-private val coroutineHeaderPattern = Regex(
-    """
-    ^"[^"]+"
-    \s[^\r\n]+\s(?<coroutineState>[^\s\[]+)\s\Q[Coroutine]\E
-    (?:\s(?<coroutineContext>\[[^\r\n]*]))?
-    $
-    """.trimIndent(),
-    setOf(RegexOption.IGNORE_CASE, RegexOption.COMMENTS),
-)
+internal const val COROUTINE_THREAD_DUMP_TYPE: String = "coroutine"
 
 @ApiStatus.Internal
 internal class CoroutineThreadDumpItemFactory : ThreadDumpItemFactory {
@@ -23,17 +16,18 @@ internal class CoroutineThreadDumpItemFactory : ThreadDumpItemFactory {
 }
 
 private fun createCoroutineDumpItem(threadState: ThreadState): CoroutineDumpItem? {
-    val stackTrace = threadState.stackTrace?.trim() ?: return null
-    val header = stackTrace.lineSequence().firstOrNull() ?: return null
-    val headerMatch = coroutineHeaderPattern.matchEntire(header) ?: return null
-    val coroutineState = headerMatch.groups["coroutineState"]?.value ?: return null
+    if (threadState.type != COROUTINE_THREAD_DUMP_TYPE) {
+        return null
+    }
+    val stackTrace = threadState.stackTrace?.trimEnd() ?: return null
+    val stackTraceBody = splitFirstLineAndBody(stackTrace).body
     return CoroutineDumpItem(
         name = restoreCoroutineName(threadState),
         treeId = threadState.uniqueId,
         parentTreeId = threadState.threadContainerUniqueId,
-        coroutineState = State.fromString(coroutineState),
-        coroutineContextInfo = DumpItemCoroutineContextInfo.parse(headerMatch.groups["coroutineContext"]?.value),
-        stackTraceBody = stackTrace.substringAfter('\n'),
+        coroutineState = State.fromString(threadState.state),
+        coroutineContextInfo = DumpItemCoroutineContextInfo.fromMetadata(threadState.metadata),
+        stackTraceBody = stackTraceBody,
     )
 }
 

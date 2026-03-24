@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.threadDumpParser;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -11,7 +11,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @ApiStatus.Internal
@@ -27,6 +29,8 @@ public class ThreadState {
   private boolean isVirtual;
   private Long uniqueId;
   private Long threadContainerUniqueId;
+  private String type;
+  private @NotNull Map<String, String> metadata = Collections.emptyMap();
   private final Set<ThreadState> myThreadsWaitingForMyLock = new HashSet<>();
   private final Set<ThreadState> myDeadlockedThreads = new HashSet<>();
   private String ownableSynchronizers;
@@ -207,9 +211,35 @@ public class ThreadState {
 
   public @Nullable Long getUniqueId() { return uniqueId; }
 
-  public void setUniqueId(@Nullable Long id) { uniqueId = id; }
+  public void setUniqueId(@Nullable Long id) {
+    uniqueId = id;
+  }
 
   public Long getThreadContainerUniqueId() { return threadContainerUniqueId; }
 
-  public void setThreadContainerUniqueId(Long id) { threadContainerUniqueId = id; }
+  public void setThreadContainerUniqueId(Long id) {
+    threadContainerUniqueId = id;
+  }
+
+  public @Nullable String getType() {
+    return type;
+  }
+
+  public void setType(@Nullable String type) {
+    this.type = type;
+  }
+
+  public @NotNull Map<String, String> getMetadata() {
+    return metadata;
+  }
+
+  public void setMetadata(@Nullable Map<String, String> metadata) {
+    if (metadata == null || metadata.isEmpty()) {
+      this.metadata = Collections.emptyMap();
+      return;
+    }
+
+    Map<String, String> copy = new HashMap<>(metadata);
+    this.metadata = Collections.unmodifiableMap(copy);
+  }
 }

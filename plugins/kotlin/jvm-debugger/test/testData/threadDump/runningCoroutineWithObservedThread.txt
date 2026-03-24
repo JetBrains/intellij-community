@@ -1,7 +1,4 @@
-"scope:1@300" virtual tid=0x0 nid=NA running [Coroutine] [dispatcher=Dispatchers.Default, runningThread=DefaultDispatcher-worker-1]
-    at example.Shared.run(Shared.kt:1)
+# This dump may be opened in IntelliJ IDEA using Analyze Stack Trace or Thread Dump...
 
-============ INTELLIJ META_DATA ============
-{
-    "version": 1
-}
+"scope:1@300" virtual tid=0x0 nid=NA running ["type":"coroutine","id":300,"dispatcher":"Dispatchers.Default","runningThread":"DefaultDispatcher-worker-1"]
+    at example.Shared.run(Shared.kt:1)
