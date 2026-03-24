@@ -10,18 +10,15 @@ import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.grazie.text.CheckerRunner
-import com.intellij.grazie.text.ProblemFilter
 import com.intellij.grazie.text.ProofreadingService.Companion.registerProblems
 import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContent.TextDomain
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.text.TextProblem
-import com.intellij.grazie.text.TextProblemAggregator
-import com.intellij.grazie.text.TreeRuleChecker
-import com.intellij.grazie.utils.EXTRACTOR_SOURCE
 import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.HighlightingUtil.isInspectionEnabled
+import com.intellij.grazie.utils.getAllProblems
 import com.intellij.grazie.utils.isGrammar
 import com.intellij.grazie.utils.isSpelling
 import com.intellij.lang.Language
@@ -79,32 +76,15 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
         if (psiFile != file) return
         if (areChecksDisabled(psiFile)) return
 
-        val texts = HighlightingUtil.getAllFileTexts(file.viewProvider)
-          .filter { ProblemFilter.allIgnoringFilters(it).findAny().isEmpty }
-        texts.forEach { text -> require(text.getUserData(EXTRACTOR_SOURCE) != null) { "Inspection requires text's source element" } }
-        if (texts.sumOf { it.length } > MAX_TEXT_LENGTH_IN_FILE) return
-
-        getAllProblems(texts)
-          .flatMap { (text, problems) -> TextProblemAggregator.aggregate(text.toString(), problems) }
+        getAllProblems(file, checkedDomains, checkers)
           .also { problems -> file.registerProblems(problems) }
           .forEach { reportProblem(it, holder) }
-      }
-
-      private fun getAllProblems(texts: List<TextContent>): Map<TextContent, List<TextProblem>> {
-        val textsWithProblems = mutableMapOf<TextContent, MutableList<TextProblem>>()
-        CheckerRunner.checkText(checkers, texts, checkedDomains).forEach { problem ->
-          textsWithProblems.computeIfAbsent(problem.text) { ArrayList() }.add(problem)
-        }
-        TreeRuleChecker.checkTextLevelProblems(file).forEach { problem ->
-          textsWithProblems.computeIfAbsent(problem.text) { ArrayList() }.add(problem)
-        }
-        return textsWithProblems
       }
     }
   }
 
   private fun reportProblem(problem: TextProblem, holder: ProblemsHolder) {
-    CheckerRunner(problem.text).toProblemDescriptors(problem, holder.isOnTheFly)
+    CheckerRunner.toProblemDescriptors(problem, holder.isOnTheFly)
       .forEach { holder.registerProblem(it) }
   }
 
@@ -133,7 +113,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
     private val spellCheckingInspections: List<LocalInspectionTool> = listOf(GrazieSpellCheckingInspection())
 
     internal const val MAX_TEXT_LENGTH_IN_PSI_ELEMENT: Int = 50_000
-    private const val MAX_TEXT_LENGTH_IN_FILE = 200_000
+    internal const val MAX_TEXT_LENGTH_IN_FILE = 200_000
     const val GRAMMAR_INSPECTION: String = "GrazieInspection"
     const val STYLE_INSPECTION: String = "GrazieStyle"
     const val RUNNER: String = "GrazieInspectionRunner"
@@ -152,6 +132,9 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
      * This method should be used if [texts] are extracted from some [PsiElement]
      */
     @JvmStatic
+    @Suppress("unused")
+    @Deprecated("Use MAX_TEXT_LENGTH_IN_FILE or MAX_TEXT_LENGTH_IN_PSI_ELEMENT")
+    @ApiStatus.ScheduledForRemoval
     fun skipCheckingTooLargeTexts(texts: Collection<TextContent>): Boolean {
       val checkedDomains = checkedDomains()
       val checkedTexts = texts.filter { it.domain in checkedDomains }

@@ -1,9 +1,9 @@
 package com.intellij.grazie.text
 
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.spellcheck.TypoProblem
-import com.intellij.grazie.utils.HighlightingUtil
+import com.intellij.grazie.utils.HighlightingUtil.checkedDomains
+import com.intellij.grazie.utils.getAllProblems
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -31,15 +31,7 @@ class ProofreadingService {
      */
     @JvmStatic
     fun covering(file: PsiFile, range: TextRange): List<TextProblem> {
-      val texts = HighlightingUtil.getCheckedFileTexts(file.viewProvider)
-        .filter { text -> range.isEmpty || text.rangesInFile.any { it.intersects(range) } }
-      if (GrazieInspection.skipCheckingTooLargeTexts(texts)) return emptyList()
-      val problems = texts.flatMap { text ->
-        CheckerRunner(text).run()
-          .filter { range.isEmpty || it.intersects(range) }
-          .filter { it.hasSuggestions() }
-      }
-      return problems + TreeRuleChecker.checkTextLevelProblems(file)
+      return getAllProblems(file, checkedDomains())
         .filter { problem -> range.isEmpty || problem.intersects(range) || problem.text.rangesInFile.any { it.intersects(range) } }
         .filter { it.hasSuggestions() }
     }

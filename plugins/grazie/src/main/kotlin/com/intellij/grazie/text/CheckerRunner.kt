@@ -63,24 +63,6 @@ class CheckerRunner(val text: TextContent) {
   fun run(): List<TextProblem> = run(TextChecker.allCheckers(), TextDomain.ALL)
   fun run(allCheckers: List<TextChecker>, checkedDomains: Set<TextDomain>): List<TextProblem> = run(allCheckers, text, checkedDomains)
 
-  fun toProblemDescriptors(problem: TextProblem, isOnTheFly: Boolean): List<ProblemDescriptor> {
-    val parent = problem.text.commonParent
-    val tooltip = problem.tooltipTemplate
-    val description = problem.getDescriptionTemplate(isOnTheFly)
-    return problem.fileHighlightRanges.mapNotNull { range ->
-      val rangeInElement = range.shiftLeft(parent.startOffset)
-      validateRangeInElement(parent, rangeInElement, problem)
-      val grazieDescriptor = GrazieProblemDescriptor(parent, description, rangeInElement, isOnTheFly, tooltip)
-      if (isOnTheFly) {
-        grazieDescriptor.quickFixes = toFixes(problem, grazieDescriptor)
-      }
-      val shortName = getShortName(problem)
-      val descriptor = ProblemDescriptorWithReporterName(grazieDescriptor, shortName)
-      descriptor.problemGroup = ProblemGroup { shortName }
-      descriptor
-    }
-  }
-
   // a non-anonymous class to work around KT-48784
   private class GrazieProblemDescriptor(psi: PsiElement,
                                         @InspectionMessage descriptionTemplate: String,
@@ -100,34 +82,15 @@ class CheckerRunner(val text: TextContent) {
   @ApiStatus.Experimental
   fun findSentence(problem: TextProblem): String? = CheckerRunner.findSentence(problem)
 
-  fun toFixes(problem: TextProblem, descriptor: ProblemDescriptor): Array<LocalQuickFix> {
-    val file = text.containingFile
-    val result = arrayListOf<LocalQuickFix>()
-    val spm = SmartPointerManager.getInstance(file.project)
-    val underline = problem.fileHighlightRanges.map { spm.createSmartPsiFileRangePointer(file, it) }
+  @Suppress("unused")
+  @Deprecated("Use static version instead")
+  @ApiStatus.ScheduledForRemoval
+  fun toProblemDescriptors(problem: TextProblem, isOnTheFly: Boolean): List<ProblemDescriptor> = CheckerRunner.toProblemDescriptors(problem, isOnTheFly)
 
-    if (problem !is TypoProblem && problem.suggestions.isNotEmpty()) {
-      GrazieFUSCounter.typoFound(problem)
-      result.addAll(GrazieReplaceTypoQuickFix.getReplacementFixes(problem, underline))
-    }
-
-    problem.customFixes.forEachIndexed { index, fix -> result.add(GrazieCustomFixWrapper(problem, fix, descriptor, index)) }
-
-    if (problem !is TypoProblem) {
-      val suppressionPattern = defaultSuppressionPattern(problem, findSentence(problem))
-      result.add(object : GrazieAddExceptionQuickFix(suppressionPattern, underline) {
-        override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
-          GrazieFUSCounter.exceptionAdded(project, AcceptanceRateTracker(problem))
-          super.applyFix(project, psiFile, editor)
-        }
-      })
-      result.add(GrazieRuleSettingsAction(problem.rule, problem.text.getTextDomain()))
-    }
-    result.add(GrazieMassApplyAction())
-    result.add(GrazieYtReportAction(problem))
-    result.add(GrazieEnableCloudAction())
-    return result.toTypedArray()
-  }
+  @Suppress("unused")
+  @Deprecated("Use static version instead")
+  @ApiStatus.ScheduledForRemoval
+  fun toFixes(problem: TextProblem, descriptor: ProblemDescriptor): Array<LocalQuickFix> = CheckerRunner.toFixes(problem, descriptor)
 
   // used in rider
   @ApiStatus.Experimental
@@ -145,7 +108,55 @@ class CheckerRunner(val text: TextContent) {
         .toList()
     }
 
-    fun checkText(allCheckers: List<TextChecker>, texts: List<TextContent>, checkedDomains: Set<TextDomain>): List<TextProblem> {
+    fun toProblemDescriptors(problem: TextProblem, isOnTheFly: Boolean): List<ProblemDescriptor> {
+      val parent = problem.text.commonParent
+      val tooltip = problem.tooltipTemplate
+      val description = problem.getDescriptionTemplate(isOnTheFly)
+      return problem.fileHighlightRanges.mapNotNull { range ->
+        val rangeInElement = range.shiftLeft(parent.startOffset)
+        validateRangeInElement(parent, rangeInElement, problem)
+        val grazieDescriptor = GrazieProblemDescriptor(parent, description, rangeInElement, isOnTheFly, tooltip)
+        if (isOnTheFly) {
+          grazieDescriptor.quickFixes = toFixes(problem, grazieDescriptor)
+        }
+        val shortName = getShortName(problem)
+        val descriptor = ProblemDescriptorWithReporterName(grazieDescriptor, shortName)
+        descriptor.problemGroup = ProblemGroup { shortName }
+        descriptor
+      }
+    }
+
+    fun toFixes(problem: TextProblem, descriptor: ProblemDescriptor): Array<LocalQuickFix> {
+      val file = problem.text.containingFile
+      val result = arrayListOf<LocalQuickFix>()
+      val spm = SmartPointerManager.getInstance(file.project)
+      val underline = problem.fileHighlightRanges.map { spm.createSmartPsiFileRangePointer(file, it) }
+
+      if (problem !is TypoProblem && problem.suggestions.isNotEmpty()) {
+        GrazieFUSCounter.typoFound(problem)
+        result.addAll(GrazieReplaceTypoQuickFix.getReplacementFixes(problem, underline))
+      }
+
+      problem.customFixes.forEachIndexed { index, fix -> result.add(GrazieCustomFixWrapper(problem, fix, descriptor, index)) }
+
+      if (problem !is TypoProblem) {
+        val suppressionPattern = defaultSuppressionPattern(problem, findSentence(problem))
+        result.add(object : GrazieAddExceptionQuickFix(suppressionPattern, underline) {
+          override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
+            GrazieFUSCounter.exceptionAdded(project, AcceptanceRateTracker(problem))
+            super.applyFix(project, psiFile, editor)
+          }
+        })
+        result.add(GrazieRuleSettingsAction(problem.rule, problem.text.getTextDomain()))
+      }
+      result.add(GrazieMassApplyAction())
+      result.add(GrazieYtReportAction(problem))
+      result.add(GrazieEnableCloudAction())
+      return result.toTypedArray()
+    }
+
+    @JvmStatic
+    fun checkTexts(allCheckers: List<TextChecker>, texts: List<TextContent>, checkedDomains: Set<TextDomain>): List<TextProblem> {
       if (allCheckers.isEmpty() || texts.isEmpty() || texts.all { it.isBlank() }) return emptyList()
       val checkers = if (texts.all { it.domain !in checkedDomains }) allCheckers.filter { it.isSpelling() } else allCheckers
       return doRun(checkers, texts.toProofreadingContext(isLanguageDetectionRequired(checkers)))
