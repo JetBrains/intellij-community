@@ -164,8 +164,11 @@ internal abstract class GitApplyChangesProcess(
         addSuccessfulCommits(successfulCommits, toAdd)
         when {
           conflictDetector.isDetected -> {
-            val mergeCompleted = GitApplyChangesConflictResolver(project, repository.root, stoppedAtCommit.id.toShortString(),
-                                                                 VcsUserUtil.getShortPresentation(stoppedAtCommit.author), stoppedAtCommit.subject,
+            val mergeCompleted = GitApplyChangesConflictResolver(project,
+                                                                 repository.root,
+                                                                 stoppedAtCommit.id.toShortString(),
+                                                                 VcsUserUtil.getShortPresentation(stoppedAtCommit.author),
+                                                                 stoppedAtCommit.subject,
                                                                  operationName).merge()
 
             refreshStagedVfs(repository.root) // `ConflictResolver` only refreshes conflicted files
@@ -193,12 +196,18 @@ internal abstract class GitApplyChangesProcess(
           untrackedFilesDetector.isDetected -> {
             val description = getSuccessfulCommitDetailsIfAny(successfulCommits)
 
-            GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, repository.root,
-                                                                      untrackedFilesDetector.relativeFilePaths, operationName, description)
+            GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project,
+                                                                      repository.root,
+                                                                      untrackedFilesDetector.relativeFilePaths,
+                                                                      operationName,
+                                                                      description)
             return false
           }
           localChangesOverwrittenDetector.isDetected -> {
-            handleLocalChangesDetected(repository, stoppedAtCommit.takeIf { localChangesOverwrittenDetector.byMerge }, successfulCommits, alreadyPicked)
+            handleLocalChangesDetected(repository,
+                                       stoppedAtCommit.takeIf { localChangesOverwrittenDetector.byMerge },
+                                       successfulCommits,
+                                       alreadyPicked)
             return false
           }
           isEmptyCommit(result) -> {
@@ -224,11 +233,12 @@ internal abstract class GitApplyChangesProcess(
     successfulCommits: Set<VcsCommitMetadata>,
     alreadyPicked: Set<VcsCommitMetadata>,
   ) {
-    val notification = GitApplyChangesLocalChangesDetectedNotification(operationName, failedOnCommit, successfulCommits.toList(), repository) { saver ->
-      val alreadyPickedSet = alreadyPicked + successfulCommits
-      LOG.info("Re-trying $operationName, skipping ${alreadyPickedSet.size} already processed commits")
-      execute(saver, commits.filter { commit -> !alreadyPickedSet.contains(commit) })
-    }
+    val notification =
+      GitApplyChangesLocalChangesDetectedNotification(operationName, failedOnCommit, successfulCommits.toList(), repository) { saver ->
+        val alreadyPickedSet = alreadyPicked + successfulCommits
+        LOG.info("Re-trying $operationName, skipping ${alreadyPickedSet.size} already processed commits")
+        execute(saver, commits.filter { commit -> !alreadyPickedSet.contains(commit) })
+      }
     vcsNotifier.notify(notification)
   }
 
@@ -247,7 +257,7 @@ internal abstract class GitApplyChangesProcess(
 
   protected abstract fun findStoppedCommitInSequence(
     repository: GitRepository,
-    commits: List<VcsCommitMetadata>
+    commits: List<VcsCommitMetadata>,
   ): VcsCommitMetadata
 
   protected abstract fun applyChanges(
@@ -263,10 +273,15 @@ internal abstract class GitApplyChangesProcess(
 
   private fun notifyResult(successfulCommits: Collection<VcsCommitMetadata>, skipped: Collection<VcsCommitMetadata>) = when {
     skipped.isEmpty() -> {
-      vcsNotifier.notifySuccess(GitNotificationIdsHolder.APPLY_CHANGES_SUCCESS, GitBundle.message("apply.changes.operation.successful", operationName.capitalize()), successfulCommits.getCommitsDetails())
+      vcsNotifier.notifySuccess(GitNotificationIdsHolder.APPLY_CHANGES_SUCCESS,
+                                GitBundle.message("apply.changes.operation.successful", operationName.capitalize()),
+                                successfulCommits.getCommitsDetails())
     }
     successfulCommits.isNotEmpty() -> {
-      val title = GitBundle.message("apply.changes.applied.for.commits", appliedWord.capitalize(), successfulCommits.size, successfulCommits.size + skipped.size)
+      val title = GitBundle.message("apply.changes.applied.for.commits",
+                                    appliedWord.capitalize(),
+                                    successfulCommits.size,
+                                    successfulCommits.size + skipped.size)
       val description = successfulCommits.getCommitsDetails() + UIUtil.HR + formSkippedDescription(skipped, true)
       vcsNotifier.notifySuccess(GitNotificationIdsHolder.APPLY_CHANGES_SUCCESS, title, description)
     }
@@ -280,10 +295,9 @@ internal abstract class GitApplyChangesProcess(
     commit: VcsCommitMetadata,
     successfulCommits: Collection<VcsCommitMetadata>,
   ) {
-    val description = commit.commitDetails() +
-                      UIUtil.BR +
-                      GitBundle.message("apply.changes.unresolved.conflicts.text") +
-                      getSuccessfulCommitDetailsIfAny(successfulCommits)
+    val description =
+      commit.commitDetails() + UIUtil.BR + GitBundle.message("apply.changes.unresolved.conflicts.text") + getSuccessfulCommitDetailsIfAny(
+        successfulCommits)
     vcsNotifier.notify(GitApplyChangesConflictNotification(operationName, description, commit, repository, abortCommand))
   }
 
@@ -292,8 +306,11 @@ internal abstract class GitApplyChangesProcess(
     failedCommit: Collection<VcsCommitMetadata>,
     successfulCommits: Collection<VcsCommitMetadata>,
   ) {
-    val description = failedCommit.joinToString { it.commitDetails() } + UIUtil.BR + content + getSuccessfulCommitDetailsIfAny(successfulCommits)
-    vcsNotifier.notifyError(GitNotificationIdsHolder.APPLY_CHANGES_ERROR, GitBundle.message("apply.changes.operation.failed", operationName.capitalize()), description)
+    val description =
+      failedCommit.joinToString { it.commitDetails() } + UIUtil.BR + content + getSuccessfulCommitDetailsIfAny(successfulCommits)
+    vcsNotifier.notifyError(GitNotificationIdsHolder.APPLY_CHANGES_ERROR,
+                            GitBundle.message("apply.changes.operation.failed", operationName.capitalize()),
+                            description)
   }
 
   private fun notifyCommitCancelled(
@@ -302,7 +319,9 @@ internal abstract class GitApplyChangesProcess(
     @Nls operationName: String,
   ) {
     val description = commit.commitDetails() + getSuccessfulCommitDetailsIfAny(successfulCommits, operationName = operationName)
-    vcsNotifier.notifyMinorWarning(GitNotificationIdsHolder.COMMIT_CANCELLED, GitBundle.message("apply.changes.operation.canceled", operationName.capitalize()), description)
+    vcsNotifier.notifyMinorWarning(GitNotificationIdsHolder.COMMIT_CANCELLED,
+                                   GitBundle.message("apply.changes.operation.canceled", operationName.capitalize()),
+                                   description)
   }
 
   @Nls
@@ -312,8 +331,7 @@ internal abstract class GitApplyChangesProcess(
   @Nls
   private fun formSkippedDescription(skipped: Collection<VcsCommitMetadata>, but: Boolean): String {
     val hashes = skipped.joinToString { it.id.toShortString() }
-    return if (but)
-      GitBundle.message("apply.changes.skipped", hashes, skipped.size, appliedWord)
+    return if (but) GitBundle.message("apply.changes.skipped", hashes, skipped.size, appliedWord)
     else GitBundle.message("apply.changes.everything.applied", hashes, appliedWord)
   }
 
@@ -331,13 +349,12 @@ internal abstract class GitApplyChangesProcess(
     @NlsSafe
     internal fun getSuccessfulCommitDetailsIfAny(successfulCommits: Collection<VcsCommitMetadata>, operationName: String) =
       if (successfulCommits.isEmpty()) ""
-      else
-        buildString {
-          append(UIUtil.HR)
-          append(GitBundle.message("apply.changes.operation.successful.for.commits", operationName, successfulCommits.size))
-          append(UIUtil.BR)
-          append(successfulCommits.getCommitsDetails())
-        }
+      else buildString {
+        append(UIUtil.HR)
+        append(GitBundle.message("apply.changes.operation.successful.for.commits", operationName, successfulCommits.size))
+        append(UIUtil.BR)
+        append(successfulCommits.getCommitsDetails())
+      }
 
     @NlsSafe
     internal fun Collection<VcsCommitMetadata>.getCommitsDetails() = joinToString(separator = UIUtil.BR) { it.commitDetails() }

@@ -50,7 +50,7 @@ internal class ChangeListGitApplyChangesCommit(
   private val repository: GitRepository,
   private val gitApplyChangesProcess: GitApplyChangesProcess,
   private val commit: VcsCommitMetadata,
-  private  val commitMessage: @NlsSafe String,
+  private val commitMessage: @NlsSafe String,
   private val preserveCommitMetadata: Boolean,
 ) : GitApplyChangesCommitStrategy(repository.project) {
   lateinit var changeList: LocalChangeList
@@ -84,7 +84,16 @@ internal class ChangeListGitApplyChangesCommit(
     onSuccessfulCommit: (VcsCommitMetadata) -> Unit,
     onSkippedCommit: (VcsCommitMetadata) -> Unit,
     onCancelledCommit: (VcsCommitMetadata) -> Unit,
-  ): Boolean = commitChangelist(repository, gitApplyChangesProcess, changeListManager, commit, commitMessage, changeListManager.defaultChangeList, vcsHelper, onSuccessfulCommit = onSuccessfulCommit, onSkippedCommit = onSkippedCommit, onCancelledCommit = onCancelledCommit)
+  ): Boolean = commitChangelist(repository,
+                                gitApplyChangesProcess,
+                                changeListManager,
+                                commit,
+                                commitMessage,
+                                changeListManager.defaultChangeList,
+                                vcsHelper,
+                                onSuccessfulCommit = onSuccessfulCommit,
+                                onSkippedCommit = onSkippedCommit,
+                                onCancelledCommit = onCancelledCommit)
 }
 
 internal class SimplifiedGitApplyChangesCommit(
@@ -99,7 +108,16 @@ internal class SimplifiedGitApplyChangesCommit(
     onSuccessfulCommit: (VcsCommitMetadata) -> Unit,
     onSkippedCommit: (VcsCommitMetadata) -> Unit,
     onCancelledCommit: (VcsCommitMetadata) -> Unit,
-  ): Boolean = commitChangelist(repository, gitApplyChangesProcess, changeListManager, commit, commitMessage, changeListManager.defaultChangeList, vcsHelper, onSuccessfulCommit = onSuccessfulCommit, onSkippedCommit = onSkippedCommit, onCancelledCommit = onCancelledCommit)
+  ): Boolean = commitChangelist(repository,
+                                gitApplyChangesProcess,
+                                changeListManager,
+                                commit,
+                                commitMessage,
+                                changeListManager.defaultChangeList,
+                                vcsHelper,
+                                onSuccessfulCommit = onSuccessfulCommit,
+                                onSkippedCommit = onSkippedCommit,
+                                onCancelledCommit = onCancelledCommit)
 
   override fun afterChangesRefreshed(stoppedAtCommit: VcsCommitMetadata, commitMessage: String) {
     val list = changeListManager.defaultChangeList
@@ -166,7 +184,8 @@ private fun commitChangelist(
   }
 }
 
-private fun VcsCommitMetadata.toChangeListData(): ChangeListData = ChangeListData(author = author, date = Date(authorTime), automatic = true)
+private fun VcsCommitMetadata.toChangeListData(): ChangeListData =
+  ChangeListData(author = author, date = Date(authorTime), automatic = true)
 
 private fun ChangeListManager.getAllChangesInLogFriendlyPresentation() = changeLists.map { "[${it.name}] ${it.changes}" }
 
