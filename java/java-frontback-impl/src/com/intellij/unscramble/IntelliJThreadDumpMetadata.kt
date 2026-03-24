@@ -2,6 +2,8 @@
 package com.intellij.unscramble
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -84,4 +86,38 @@ object IntelliJThreadDumpMetadata {
     val threadLinks: List<TreeLink> = emptyList(),
     val containers: List<Container> = emptyList(),
   )
+}
+
+@ApiStatus.Internal
+data class SeparatedThreadDumpText(
+  val firstLine: @NlsSafe String,
+  val body: @NlsSafe String,
+)
+
+@ApiStatus.Internal
+fun splitFirstLineAndBody(text: String): SeparatedThreadDumpText {
+  val normalized = StringUtil.convertLineSeparators(text)
+  if (normalized.isEmpty()) {
+    return SeparatedThreadDumpText("", "")
+  }
+
+  val firstLineEnd = normalized.indexOf('\n')
+  return if (firstLineEnd < 0) {
+    SeparatedThreadDumpText(normalized, "")
+  }
+  else {
+    SeparatedThreadDumpText(
+      firstLine = normalized.substring(0, firstLineEnd),
+      body = normalized.substring(firstLineEnd + 1),
+    )
+  }
+}
+
+@ApiStatus.Internal
+fun joinFirstLineAndBody(firstLine: String, body: String): String {
+  return when {
+    firstLine.isEmpty() -> body
+    body.isEmpty() -> firstLine
+    else -> "$firstLine\n$body"
+  }
 }
