@@ -403,6 +403,8 @@ jvm_library(
     ":groovy-tests-main",
     "//plugins/groovy:groovy-tests",
     "//plugins/groovy:groovy-tests_test_lib",
+    "//plugins/groovy/groovy-uast-tests:uast-tests",
+    "//plugins/groovy/groovy-uast-tests:uast-tests_test_lib",
   ]
 )
 ### auto-generated section `build intellij.groovy.tests.main` end
