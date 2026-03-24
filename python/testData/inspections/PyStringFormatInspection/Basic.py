@@ -82,6 +82,8 @@ def bar():
 
 a = ('a', 1) if 1 else ('b', 2)
 "%s is %d" % a # ok, must infer unified tuple type
+#  Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 #PY-3064, because original type of a is tuple, not list
 a = (1,2,3)
 print '%d:%d' % a[:2]
@@ -101,7 +103,7 @@ print '%d, %d, %d, %d' % <warning descr="Too few arguments for format string">my
 # PY-12801
 print '%d %s' % ((42,) + ('spam',))
 print '%d %s' % (<warning descr="Unexpected type (Literal['ham'], Literal['spam'])">('ham',) + ('spam',)</warning>)
-print '%d %s' % (<warning descr="Too few arguments for format string"><warning descr="Unexpected type (Literal[42])">(42,) + ()</warning></warning>)
+print '%d %s' % (<warning descr="Too few arguments for format string"><warning descr="Unexpected type (Literal[42],)">(42,) + ()</warning></warning>)
 print '%d' % (<warning descr="Too many arguments for format string"><warning descr="Unexpected type (Literal[42], Literal['spam'])">(42,) + ('spam',)</warning></warning>)
 
 # PY-11274

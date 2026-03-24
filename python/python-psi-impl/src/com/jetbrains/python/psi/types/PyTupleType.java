@@ -52,7 +52,9 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
     if (myUnpackedTupleType.isUnbound()) {
       return "(" + (getTypeName(getIteratedItemType())) + ", ...)";
     }
-    return "(" + StringUtil.join(myUnpackedTupleType.getElementTypes(), PyTupleType::getTypeName, ", ") + ")";
+    var elementTypes = myUnpackedTupleType.getElementTypes();
+    var suffix = elementTypes.size() == 1 ? ",)" : ")";
+    return "(" + StringUtil.join(elementTypes, PyTupleType::getTypeName, ", ") + suffix;
   }
 
   private static @Nullable String getTypeName(@Nullable PyType type) {
