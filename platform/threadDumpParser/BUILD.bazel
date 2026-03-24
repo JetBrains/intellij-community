@@ -14,6 +14,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//libraries/jackson3/jackson:libraries-jackson3",
     "//libraries/jackson3/databind",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
   ]
 )
 
@@ -34,6 +36,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
     "//libraries/jackson3/databind:databind_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
     "@lib//:junit4",
   ]
 )

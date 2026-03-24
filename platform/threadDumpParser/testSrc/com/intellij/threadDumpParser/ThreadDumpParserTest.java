@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.threadDumpParser;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -744,7 +744,7 @@ public class ThreadDumpParserTest {
   public void testOurDebuggerExportFormatWithVirtualThreads() {
     // Note, that virtual threads have no priority.
     String text = """
-      "main@1" prio=5 tid=0x1 nid=NA runnable
+      "main@1" prio=5 tid=0x1 nid=NA runnable ["id":1]
         java.lang.Thread.State: RUNNABLE
       	at java.lang.Throwable.fillInStackTrace(Throwable.java:-1)
       	at java.lang.Throwable.fillInStackTrace(Throwable.java:820)
@@ -762,7 +762,7 @@ public class ThreadDumpParserTest {
       	at java.util.concurrent.ThreadPerTaskExecutor.submit(ThreadPerTaskExecutor.java:293)
       	at VirtualThreadsDemo.main(VirtualThreadsDemo.java:30)
       
-      "ForkJoinPool-1-worker-1@934" daemon prio=5 tid=0x1a nid=NA waiting
+      "ForkJoinPool-1-worker-1@934" daemon prio=5 tid=0x1a nid=NA waiting ["id":934]
         java.lang.Thread.State: WAITING
       	at jdk.internal.vm.Continuation.run(Continuation.java:248)
       	at java.lang.VirtualThread.runContinuation(VirtualThread.java:221)
@@ -775,7 +775,7 @@ public class ThreadDumpParserTest {
       	at java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1808)
       	at java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188)
       
-      "@960" tid=0x19 nid=NA virtual runnable
+      "@960" tid=0x19 nid=NA virtual runnable ["id":960,"parentId":300]
         java.lang.Thread.State: RUNNABLE
       	at java.base/java.lang.VirtualThread.parkNanos(VirtualThread.java:621)
       	at java.base/java.lang.VirtualThread.sleepNanos(VirtualThread.java:791)
@@ -786,7 +786,7 @@ public class ThreadDumpParserTest {
       	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java)
       	at java.base/java.lang.VirtualThread.run(VirtualThread.java:309)
       
-      "@957" tid=0x1c nid=NA virtual runnable
+      "@957" tid=0x1c nid=NA virtual runnable ["id":957,"parentId":300]
         java.lang.Thread.State: RUNNABLE
       	at java.base/java.lang.VirtualThread.parkNanos(VirtualThread.java:621)
       	at java.base/java.lang.VirtualThread.sleepNanos(VirtualThread.java:791)
@@ -796,32 +796,53 @@ public class ThreadDumpParserTest {
       	at java.base/java.util.concurrent.FutureTask.run$$$capture(FutureTask.java:317)
       	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java)
       	at java.base/java.lang.VirtualThread.run(VirtualThread.java:309)
+
+      "Scope A" tid=0x0 nid=NA container ["type":"container","id":300]
       """;
     List<ThreadState> threads = ThreadDumpParser.parse(text);
-    assertEquals(4, threads.size());
+    assertEquals(5, threads.size());
 
-    assertEquals("main@1", threads.get(0).getName());
-    assertNull(threads.get(0).getUniqueId());
-    assertEquals("ForkJoinPool-1-worker-1@934", threads.get(1).getName());
-    assertNull(threads.get(1).getUniqueId());
-    assertEquals("{unnamed}@960", threads.get(2).getName());
-    assertNull(threads.get(2).getUniqueId());
-    assertEquals("{unnamed}@957", threads.get(3).getName());
-    assertNull(threads.get(3).getUniqueId());
-    assertTrue(threads.get(3).isVirtual());
+    ThreadState main = ContainerUtil.find(threads, thread -> "main@1".equals(thread.getName()));
+    assertNotNull(main);
+    assertEquals(Long.valueOf(1L), main.getUniqueId());
+    assertNull(main.getType());
+    assertTrue(main.getMetadata().isEmpty());
+    assertFalse(main.getStackTrace().contains("[\"id\":1]"));
+
+    ThreadState worker = ContainerUtil.find(threads, thread -> "ForkJoinPool-1-worker-1@934".equals(thread.getName()));
+    assertNotNull(worker);
+    assertEquals(Long.valueOf(934L), worker.getUniqueId());
+
+    ThreadState unnamedVirtual = ContainerUtil.find(threads, thread -> "{unnamed}@960".equals(thread.getName()));
+    assertNotNull(unnamedVirtual);
+    assertEquals(Long.valueOf(960L), unnamedVirtual.getUniqueId());
+    assertEquals(Long.valueOf(300L), unnamedVirtual.getThreadContainerUniqueId());
+    assertFalse(unnamedVirtual.getStackTrace().contains("[\"id\":960"));
+
+    ThreadState unnamedVirtualSibling = ContainerUtil.find(threads, thread -> "{unnamed}@957".equals(thread.getName()));
+    assertNotNull(unnamedVirtualSibling);
+    assertEquals(Long.valueOf(957L), unnamedVirtualSibling.getUniqueId());
+    assertEquals(Long.valueOf(300L), unnamedVirtualSibling.getThreadContainerUniqueId());
+    assertTrue(unnamedVirtualSibling.isVirtual());
+
+    ThreadState container = ContainerUtil.find(threads, thread -> "Scope A".equals(thread.getName()));
+    assertNotNull(container);
+    assertEquals(Long.valueOf(300L), container.getUniqueId());
+    assertEquals("container", container.getType());
+    assertTrue(container.getMetadata().isEmpty());
   }
 
   @Test
   public void testOurDebuggerExportFormatWithCoroutines() {
     String text = """
-      "main@1" prio=5 tid=0x1 nid=NA runnable
+      "main@1" prio=5 tid=0x1 nid=NA runnable ["id":1]
         java.lang.Thread.State: RUNNABLE
         at Main.main(Main.java:1)
 
-      "scope:1@300" virtual tid=0x0 nid=NA suspended [Coroutine] [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}]
+      "scope:1@300" virtual tid=0x0 nid=NA suspended ["type":"coroutine","id":300,"dispatcher":"Dispatchers.Default","job":"StandaloneCoroutine{Active}"]
         at example.Parent.one(Parent.kt:1)
 
-      "scope:2@301" virtual tid=0x0 nid=NA running [Coroutine]
+      "scope:2@301" virtual tid=0x0 nid=NA running ["type":"coroutine","id":301,"parentId":300]
         at example.Child.two(Child.kt:2)
       """;
     List<ThreadState> threads = ThreadDumpParser.parse(text);
@@ -836,13 +857,54 @@ public class ThreadDumpParserTest {
     assertNotNull(suspendedCoroutine);
     assertNull(suspendedCoroutine.getJavaThreadState());
     assertEquals("suspended", suspendedCoroutine.getState());
+    assertEquals(Long.valueOf(300L), suspendedCoroutine.getUniqueId());
+    assertEquals("coroutine", suspendedCoroutine.getType());
+    assertEquals("Dispatchers.Default", suspendedCoroutine.getMetadata().get("dispatcher"));
+    assertEquals("StandaloneCoroutine{Active}", suspendedCoroutine.getMetadata().get("job"));
     assertTrue(suspendedCoroutine.isVirtual());
 
     ThreadState runningCoroutine = ContainerUtil.find(threads, thread -> "scope:2@301".equals(thread.getName()));
     assertNotNull(runningCoroutine);
     assertNull(runningCoroutine.getJavaThreadState());
     assertEquals("running", runningCoroutine.getState());
+    assertEquals(Long.valueOf(301L), runningCoroutine.getUniqueId());
+    assertEquals(Long.valueOf(300L), runningCoroutine.getThreadContainerUniqueId());
+    assertEquals("coroutine", runningCoroutine.getType());
+    assertTrue(runningCoroutine.getMetadata().isEmpty());
     assertTrue(runningCoroutine.isVirtual());
+  }
+
+  @Test
+  public void testInlineMetadataWithQuotedValuesAndCommas() {
+    String text = """
+      "worker@101" tid=0x1 nid=NA runnable ["id":101,"dispatcher":"Dispatchers, Default","note":"say [\\"hi\\"], then use \\\\"]
+        java.lang.Thread.State: RUNNABLE
+      \tat java.base/java.lang.Thread.run(Thread.java:1)
+      """;
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(1, threads.size());
+
+    ThreadState thread = threads.getFirst();
+    assertEquals(Long.valueOf(101L), thread.getUniqueId());
+    assertEquals("Dispatchers, Default", thread.getMetadata().get("dispatcher"));
+    assertEquals("say [\"hi\"], then use \\", thread.getMetadata().get("note"));
+    assertFalse(thread.getStackTrace().contains("[\"id\":101"));
+  }
+
+  @Test
+  public void testMalformedInlineMetadataDoesNotBreakThreadParsing() {
+    String text = """
+      "worker@101" tid=0x1 nid=NA runnable ["id":101,"dispatcher":]
+        java.lang.Thread.State: RUNNABLE
+      \tat java.base/java.lang.Thread.run(Thread.java:1)
+      """;
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(1, threads.size());
+
+    ThreadState thread = threads.getFirst();
+    assertEquals("worker@101", thread.getName());
+    assertNull(thread.getUniqueId());
+    assertTrue(thread.getMetadata().isEmpty());
   }
 
   @Test

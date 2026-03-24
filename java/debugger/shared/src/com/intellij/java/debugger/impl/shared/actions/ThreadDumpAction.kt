@@ -128,12 +128,7 @@ private class FrontendDumpItem(
 
   override val name: @NlsSafe String get() = itemDto.name
   override val stateDesc: @NlsSafe String get() = stateDescriptionsCache[itemDto.stateDescriptionIndex]
-  override val stackTrace: @NlsSafe String
-    get() = joinFirstLineAndBody(itemDto.firstLine,
-                                 stackTraceBodiesCache[itemDto.stackTraceBodyIndex])
-  override val exportedStackTrace: @NlsSafe String
-    get() = joinFirstLineAndBody(itemDto.exportedFirstLine,
-                                 exportedStackTraceBodiesCache[itemDto.exportedStackTraceBodyIndex])
+  override val stackTrace: @NlsSafe String get() = joinFirstLineAndBody(itemDto.firstLine, stackTraceBodiesCache[itemDto.stackTraceBodyIndex])
   override val iconToolTip: @Nls String? get() = iconToolTipsCache[itemDto.iconToolTipIndex.toUInt().toInt()]
   override val interestLevel: Int get() = itemDto.interestLevel
   override val icon: Icon get() = iconsCache[itemDto.iconIndex.toUInt().toInt()]
@@ -144,6 +139,9 @@ private class FrontendDumpItem(
   override val parentTreeId: Long? get() = itemDto.parentTreeId
   override val isContainer: Boolean get() = itemDto.isContainer
   override val canBeHidden: Boolean get() = itemDto.canBeHidden
+
+  override fun serialize(): @NlsSafe String =
+    joinFirstLineAndBody(itemDto.exportedFirstLine, exportedStackTraceBodiesCache[itemDto.exportedStackTraceBodyIndex])
 
   fun setAwaitingItems(items: Set<DumpItem>) {
     internalAwaitingItems = items

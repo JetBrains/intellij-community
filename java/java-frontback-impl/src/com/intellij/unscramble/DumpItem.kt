@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.util.Objects
 import javax.swing.Icon
-import kotlin.compareTo
 
 @ApiStatus.Internal
 interface DumpItem {
@@ -21,13 +20,6 @@ interface DumpItem {
   val stateDesc: @NlsSafe String
 
   val stackTrace: @NlsSafe String
-
-  /**
-   * Serialized [stackTrace] used when exporting the [DumpItem].
-   * Defaults to the same text that is shown in the UI.
-   */
-  val exportedStackTrace: String
-    get() = stackTrace
 
   val interestLevel: Int
 
@@ -64,6 +56,12 @@ interface DumpItem {
    * May be used in the UI to hide some items from the dump.
    */
   val canBeHidden: Boolean
+
+  /**
+   * Serialized representation used when exporting the [DumpItem].
+   * It may differ from [stackTrace] when export requires additional inline metadata.
+   */
+  fun serialize(): @NlsSafe String
 
   companion object {
     @JvmField
@@ -284,6 +282,18 @@ internal class JavaThreadDumpItem(private val threadState: ThreadState) : Mergea
 
   override val mergeableToken: MergeableToken get() = JavaMergeableToken()
 
+  override fun serialize(): @NlsSafe String {
+    val separatedText = splitFirstLineAndBody(stackTrace)
+    return serializeThreadDumpItem(
+      itemHeader = separatedText.firstLine,
+      stackTraceBody = separatedText.body,
+      id = treeId,
+      parentId = parentTreeId,
+      type = threadState.type,
+      additionalMetadata = threadState.metadata,
+    )
+  }
+
   private inner class JavaMergeableToken : MergeableToken {
     private val comparableStackTrace: String =
       stackTrace.substringAfter("\n").replace("<0x\\d+>\\s".toRegex(), "<merged>")
@@ -355,6 +365,15 @@ private class JavaThreadContainerItem(private val containerName: String, overrid
 
   override val mergeableToken: MergeableToken = MergeableToken.Unique(this)
 
+  override fun serialize(): @NlsSafe String =
+    serializeThreadDumpItem(
+      itemHeader = "\"$containerName\" tid=0x0 nid=NA container",
+      stackTraceBody = "",
+      id = treeId,
+      parentId = parentTreeId,
+      type = IntelliJThreadDumpMetadata.CONTAINER_TYPE,
+    )
+
   companion object {
     // see jdk.internal.vm.ThreadContainers.RootContainer.name
     const val ROOT = "<root>"
@@ -401,4 +420,6 @@ class InfoDumpItem(private val title: @Nls String, private val details: @NlsSafe
     get() = null
 
   override val mergeableToken: MergeableToken = MergeableToken.Unique(this)
+
+  override fun serialize(): @NlsSafe String = details
 }

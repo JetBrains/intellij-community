@@ -1,16 +1,7 @@
-"scope:1@300" virtual tid=0x0 nid=NA suspended [Coroutine] [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}]
+# This dump may be opened in IntelliJ IDEA using Analyze Stack Trace or Thread Dump...
+
+"scope:1@300" virtual tid=0x0 nid=NA suspended ["type":"coroutine","id":300,"dispatcher":"Dispatchers.Default","job":"StandaloneCoroutine{Active}"]
 	at example.Parent.one(Parent.kt:1)
 
-"scope:2@301" virtual tid=0x0 nid=NA running [Coroutine]
+"scope:2@301" virtual tid=0x0 nid=NA running ["type":"coroutine","id":301,"parentId":300]
 	at example.Child.two(Child.kt:2)
-
-============ INTELLIJ META_DATA ============
-{
-    "version": 1,
-    "tree_links": [
-        {
-            "tree_id": 301,
-            "parent_tree_id": 300
-        }
-    ]
-}

@@ -1,8 +1,5 @@
-"worker[Coroutine]@101" #1 prio=5 tid=0x1 nid=0x1 runnable
-   java.lang.Thread.State: RUNNABLE
-    at example.CoroutineSupport[Coroutine].run(CoroutineSupport.java:1)
+# This dump may be opened in IntelliJ IDEA using Analyze Stack Trace or Thread Dump...
 
-============ INTELLIJ META_DATA ============
-{
-    "version": 1
-}
+"worker[Coroutine]@101" #1 prio=5 tid=0x1 nid=0x1 runnable ["id":101]
+    java.lang.Thread.State: RUNNABLE
+    at example.CoroutineSupport[Coroutine].run(CoroutineSupport.java:1)

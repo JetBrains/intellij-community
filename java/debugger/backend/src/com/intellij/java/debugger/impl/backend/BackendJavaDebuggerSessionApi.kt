@@ -189,7 +189,7 @@ private fun dumpItemDtos(allDumpItems: List<DumpItem>, maxItems: Int): ThreadDum
   }
 
   val (stackTraceBodies, itemToStackTrace) = deduplicateTextBodies(dumpItems) { it.stackTrace }
-  val (exportedStackTraceBodies, itemToExportedStackTrace) = deduplicateTextBodies(dumpItems) { it.exportedStackTrace }
+  val (exportedStackTraceBodies, itemToExportedStackTrace) = deduplicateTextBodies(dumpItems) { it.serialize() }
 
   val items = dumpItems.map {
     val (firstLine, stackTraceBodyIndex) = itemToStackTrace[it]!!

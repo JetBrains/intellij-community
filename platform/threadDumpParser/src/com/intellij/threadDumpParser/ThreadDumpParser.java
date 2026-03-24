@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.threadDumpParser;
 
 import com.intellij.diagnostic.EventCountDumper;
@@ -16,10 +16,17 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.diagnostic.CoroutineDumperKt.isCoroutineDumpHeader;
+import static com.intellij.threadDumpParser.ThreadDumpInlineMetadataKt.ID_KEY;
+import static com.intellij.threadDumpParser.ThreadDumpInlineMetadataKt.PARENT_ID_KEY;
+import static com.intellij.threadDumpParser.ThreadDumpInlineMetadataKt.TYPE_KEY;
+import static com.intellij.threadDumpParser.ThreadDumpInlineMetadataKt.parseMetadataSuffix;
+import static com.intellij.threadDumpParser.ThreadDumpInlineMetadataKt.stripMetadataSuffix;
 
 @ApiStatus.Internal
 public final class ThreadDumpParser {
@@ -138,7 +145,7 @@ public final class ThreadDumpParser {
         threads.add(lastThreadState);
         lastThreadStack.setLength(0);
         haveNonEmptyStackTrace = false;
-        lastThreadStack.append(line).append("\n");
+        lastThreadStack.append(stripMetadataSuffix(line)).append("\n");
         expectingThreadState = true;
       }
       else {
@@ -318,12 +325,15 @@ public final class ThreadDumpParser {
       if (line.contains(" virtual ")) {
         state.setVirtual(true);
       }
+      applyInlineMetadata(line, state);
       return state;
     }
 
     m = ourForcedThreadStartPattern.matcher(line);
     if (m.matches()) {
-      return new ThreadState(m.group(1), m.group(2));
+      ThreadState state = new ThreadState(m.group(1), m.group(2));
+      applyInlineMetadata(line, state);
+      return state;
     }
 
     m = ourJcmdThreadStartPattern.matcher(line);
@@ -331,6 +341,7 @@ public final class ThreadDumpParser {
       var state = new ThreadState(m.group(1), "unknown");
       var suffix = m.group(2);
       state.setVirtual(suffix.contains(" virtual"));
+      applyInlineMetadata(line, state);
       return state;
     }
 
@@ -343,9 +354,33 @@ public final class ThreadDumpParser {
     if (m != null) {
       ThreadState state = new ThreadState(m.group(1), m.group(2));
       state.setDaemon(daemon);
+      applyInlineMetadata(line, state);
       return state;
     }
     return null;
+  }
+
+  private static void applyInlineMetadata(@NotNull String line, @NotNull ThreadState state) {
+    Map<String, String> metadata = parseMetadataSuffix(line);
+    if (metadata != null) {
+      Map<String, String> additionalMetadata = new HashMap<>(metadata);
+      state.setType(additionalMetadata.remove(TYPE_KEY));
+      state.setUniqueId(parseLong(additionalMetadata.remove(ID_KEY)));
+      state.setThreadContainerUniqueId(parseLong(additionalMetadata.remove(PARENT_ID_KEY)));
+      state.setMetadata(additionalMetadata);
+    }
+  }
+
+  private static @Nullable Long parseLong(@Nullable String value) {
+    if (value == null) {
+      return null;
+    }
+    try {
+      return Long.parseLong(value);
+    }
+    catch (NumberFormatException ignored) {
+      return null;
+    }
   }
 
   private static @Nullable Matcher matchYourKit(String line) {

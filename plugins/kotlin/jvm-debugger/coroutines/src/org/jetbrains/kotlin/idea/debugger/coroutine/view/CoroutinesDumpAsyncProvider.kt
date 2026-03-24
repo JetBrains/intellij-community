@@ -17,6 +17,7 @@ import com.intellij.unscramble.DumpItem
 import com.intellij.unscramble.IconsCache
 import com.intellij.unscramble.MergeableDumpItem
 import com.intellij.unscramble.MergeableToken
+import com.intellij.unscramble.serializeThreadDumpItem
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
@@ -24,8 +25,6 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.data.State
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
 import java.util.Objects
 import javax.swing.Icon
-
-private const val COROUTINE_MARKER = "[Coroutine]"
 
 /**
  * Provides the dump of coroutines in the Debug mode.
@@ -98,27 +97,6 @@ class CoroutineDumpItem internal constructor(
         append(stackTraceBody)
     }
 
-    override val exportedStackTrace: @NlsSafe String = buildString {
-        val coroutineName = if (treeId == null) name else "$name@$treeId"
-        val coroutineContext = coroutineContextInfo?.serialize()
-        val header = buildString {
-            append("\"$coroutineName\"")
-            // additional information for the old ThreadDumpParsers
-            append(" virtual tid=0x0 nid=NA ")
-            append(coroutineState.name.lowercase())
-            append(' ')
-            // Marker for the CoroutineThreadDumpItemFactory
-            append(COROUTINE_MARKER)
-            coroutineContext?.let {
-                append(' ')
-                append(it)
-            }
-        }
-        append(header)
-        appendLine()
-        append(stackTraceBody)
-    }
-
     override val stateDesc: String = " (${coroutineState.name.lowercase()})"
 
     override val iconToolTip: String
@@ -156,6 +134,21 @@ class CoroutineDumpItem internal constructor(
     override val canBeHidden: Boolean get() = true
 
     override val mergeableToken: MergeableToken get() = CoroutinesMergeableToken()
+
+    override fun serialize(): @NlsSafe String =
+        serializeThreadDumpItem(
+            itemHeader = buildString {
+                val coroutineName = if (treeId == null) name else "$name@$treeId"
+                append("\"$coroutineName\"")
+                append(" virtual tid=0x0 nid=NA ")
+                append(coroutineState.name.lowercase())
+            },
+            stackTraceBody = stackTraceBody,
+            id = treeId,
+            parentId = parentTreeId,
+            type = COROUTINE_THREAD_DUMP_TYPE,
+            additionalMetadata = coroutineContextInfo?.toMetadata().orEmpty(),
+        )
 
     private inner class CoroutinesMergeableToken : MergeableToken {
         private val comparableStackTrace: String =
@@ -235,4 +228,6 @@ private object CoroutineRootDumpItem : MergeableDumpItem {
     override val canBeHidden: Boolean get() = true
 
     override val mergeableToken: MergeableToken = MergeableToken.Unique(this)
+
+    override fun serialize(): String = ""
 }

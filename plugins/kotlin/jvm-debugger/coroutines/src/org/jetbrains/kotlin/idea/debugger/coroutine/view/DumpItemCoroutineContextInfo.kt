@@ -28,27 +28,12 @@ internal data class DumpItemCoroutineContextInfo(
         }
 
         /**
-         * Parses the serialized dump-item fragment, for example
-         * `"[dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}]"`.
+         * Restores dump-item context info from parsed inline metadata.
          */
-        fun parse(serialized: String?): DumpItemCoroutineContextInfo? {
-            val rawInfo = serialized?.trim() ?: return null
-            if (rawInfo.firstOrNull() != '[' || rawInfo.lastOrNull() != ']') {
-                return null
-            }
-
-            var dispatcher: String? = null
-            var job: String? = null
-            var runningThread: String? = null
-            // TODO: if dispatcher/job/runningThread will have , in the name, we will parse it in a wrong way
-            //   so we need to escape ',' during serialization
-            for (entry in rawInfo.removePrefix("[").removeSuffix("]").split(", ")) {
-                when {
-                    entry.startsWith("dispatcher=") -> dispatcher = entry.removePrefix("dispatcher=")
-                    entry.startsWith("job=") -> job = entry.removePrefix("job=")
-                    entry.startsWith("runningThread=") -> runningThread = entry.removePrefix("runningThread=")
-                }
-            }
+        fun fromMetadata(metadata: Map<String, String>): DumpItemCoroutineContextInfo? {
+            val dispatcher = metadata["dispatcher"]
+            val job = metadata["job"]
+            val runningThread = metadata["runningThread"]
             if (dispatcher == null && job == null && runningThread == null) {
                 return null
             }
@@ -65,13 +50,12 @@ internal fun DumpItemCoroutineContextInfo.presentableString(): String {
 }
 
 /**
- * Serializes this context info back into the dump-item header format.
- * Example: "[dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}, runningThread=DefaultDispatcher-worker-1]"
+ * Serializes this context info into inline metadata entries.
  */
-internal fun DumpItemCoroutineContextInfo.serialize(): String {
-    return buildList {
-        dispatcher?.let { add("dispatcher=$it") }
-        job?.let { add("job=$it") }
-        runningThread?.let { add("runningThread=$it") }
-    }.joinToString(prefix = "[", separator = ", ", postfix = "]")
+internal fun DumpItemCoroutineContextInfo.toMetadata(): Map<String, String> {
+    return buildMap {
+        dispatcher?.let { put("dispatcher", it) }
+        job?.let { put("job", it) }
+        runningThread?.let { put("runningThread", it) }
+    }
 }

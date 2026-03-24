@@ -5,11 +5,9 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import kotlin.io.path.Path
 
@@ -40,19 +38,22 @@ internal class IntelliJThreadDumpImportTest {
   }
 
   @Test
-  fun `plain text dump falls back to legacy parser when metadata footer is missing`() {
+  fun `plain text dump with comments is parsed without hierarchy metadata`() {
     val dumpText = loadThreadDump("plainWithComments.txt")
 
-    assertNull(parseIntelliJThreadDump(dumpText))
+    val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(dumpText))
+
+    assertDumpItem(parsedThreadDump, "main@101", null, null, false)
+    assertDumpItem(parsedThreadDump, "worker-1@201", null, null, false)
   }
 
   @Test
-  fun `parser drops unknown parent links`() {
+  fun `parser keeps inline parent ids even when parent item is missing`() {
     val dumpText = loadThreadDump("unknownParent.txt")
 
     val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(dumpText))
 
-    assertDumpItem(parsedThreadDump, "worker-1@201", 201L, null, false)
+    assertDumpItem(parsedThreadDump, "worker-1@201", 201L, 999L, false)
     assertDumpItem(parsedThreadDump, "Scope A", 300L, null, true)
   }
 
@@ -65,8 +66,10 @@ internal class IntelliJThreadDumpImportTest {
     val workerThread = findDumpItem(importedDumpItems, "worker-1@201")
 
     assertThat(mainThread.stackTrace).contains("\"main@101\"")
+    assertThat(mainThread.stackTrace).doesNotContain("[\"id\":101]")
     assertThat(mainThread.stackTrace).contains("example.main.run(main.java:1)")
     assertThat(workerThread.stackTrace).contains("\"worker-1@201\"")
+    assertThat(workerThread.stackTrace).doesNotContain("[\"id\":201,\"parentId\":300]")
     assertThat(workerThread.stackTrace).contains("example.worker-1.run(worker-1.java:2)")
     assertEquals(" (runnable)", mainThread.stateDesc)
     assertEquals(" (virtual runnable)", workerThread.stateDesc)
@@ -80,8 +83,9 @@ internal class IntelliJThreadDumpImportTest {
     assertThat(importedDumpItems.filter { !it.isContainer }.map { it.name }).containsExactly("main@101", "worker-1@201")
 
     val serializedDump = serializeIntelliJThreadDump(importedDumpItems, listOf("Full thread dump"))
-    assertThat(serializedDump).contains("\"main@101\"")
-    assertThat(serializedDump).contains("\"worker-1@201\"")
+    assertThat(serializedDump).contains("[\"id\":101]")
+    assertThat(serializedDump).contains("[\"id\":201,\"parentId\":300]")
+    assertThat(serializedDump).contains("[\"type\":\"container\",\"id\":300]")
 
     val reparsedDump = requireNotNull(parseIntelliJThreadDump(serializedDump))
     assertDumpItem(reparsedDump, "main@101", 101L, null, false)
@@ -104,49 +108,30 @@ internal class IntelliJThreadDumpImportTest {
   }
 
   @Test
-  fun `parser returns null without footer marker`() {
+  fun `plain text dump without comments is parsed without hierarchy metadata`() {
     val plainDumpText = loadThreadDump("plainWithoutFooterMarker.txt")
-    val dumpText = loadThreadDump("commonIntelliJFormat.txt")
+    val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(plainDumpText))
 
-    assertNull(parseIntelliJThreadDump(plainDumpText))
-    assertNotNull(parseIntelliJThreadDump(dumpText))
+    assertDumpItem(parsedThreadDump, "main@101", null, null, false)
   }
 
   @Test
-  fun `parser returns null when footer marker is not on a separate line`() {
-    val dumpText = """
-      "main@101" #1 prio=5 tid=0x1 nid=0x1 runnable
-         java.lang.Thread.State: RUNNABLE
-      	at example.main.run(main.java:1)${IntelliJThreadDumpMetadata.META_DATA_MARKER}
-      {
-          "version": 1
-      }
-    """.trimIndent()
-
-    assertNull(parseIntelliJThreadDump(dumpText))
-  }
-
-  @Test
-  fun `parser keeps threads visible with invalid metadata`() {
+  fun `parser keeps threads visible with invalid inline metadata`() {
     val dumpText = loadThreadDump("invalidMetadata.txt")
 
     val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(dumpText))
+    val dumpItems = parsedThreadDump.dumpItems().filter { !it.isContainer }
 
-    assertThat(parsedThreadDump.dumpItems().filter { !it.isContainer }.map { it.name }).containsExactly("main@101", "worker-1@201")
-    assertTrue(parsedThreadDump.dumpItems().none { it.isContainer })
+    assertThat(dumpItems.map { it.name }).containsExactly("main@101", "worker-1@201")
+    assertThat(dumpItems.map { it.treeId }).containsOnlyNulls()
   }
 
   @Test
   fun `parser extracts unique id from explicitly unnamed thread`() {
     val dumpText = """
-      "{unnamed}@555" #1 tid=0x1 nid=0x1 runnable
+      "@555" #1 tid=0x1 nid=0x1 runnable ["id":555]
          java.lang.Thread.State: RUNNABLE
       	at example.main.run(main.java:1)
-
-      ${IntelliJThreadDumpMetadata.META_DATA_MARKER}
-      {
-          "version": 1
-      }
     """.trimIndent()
 
     val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(dumpText))
@@ -155,59 +140,13 @@ internal class IntelliJThreadDumpImportTest {
   }
 
   @Test
-  fun `parser leaves threads without id detached from containers`() {
-    val dumpText = """
-      "main" #1 prio=5 tid=0x1 nid=0x1 runnable
-         java.lang.Thread.State: RUNNABLE
-      	at example.main.run(main.java:1)
-
-      ${IntelliJThreadDumpMetadata.META_DATA_MARKER}
-      {
-          "version": 1,
-          "tree_links": [
-              {
-                  "tree_id": 101,
-                  "parent_tree_id": 300
-              }
-          ],
-          "containers": [
-              {
-                  "name": "Scope A",
-                  "tree_id": 300
-              }
-          ]
-      }
-    """.trimIndent()
-
-    val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(dumpText))
-
-    assertDumpItem(parsedThreadDump, "main", null, null, false)
-    assertDumpItem(parsedThreadDump, "Scope A", 300L, null, true)
-  }
-
-  @Test
   fun `thread may be a parent to a container`() {
     val dumpText = """
-      "main@101" #1 prio=5 tid=0x1 nid=0x1 runnable
+      "main@101" #1 prio=5 tid=0x1 nid=0x1 runnable ["id":101]
          java.lang.Thread.State: RUNNABLE
       	at example.main.run(main.java:1)
 
-      ${IntelliJThreadDumpMetadata.META_DATA_MARKER}
-      {
-          "version": 1,
-          "tree_links": [
-              {
-                  "tree_id": 300,
-                  "parent_tree_id": 101
-              }
-          ],
-          "containers": [
-              {
-                  "name": "Scope A",
-                  "tree_id": 300
-              }
-          ]
-      }
+      "Scope A" tid=0x0 nid=NA container ["type":"container","id":300,"parentId":101]
     """.trimIndent()
 
     val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(dumpText))
