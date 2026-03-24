@@ -83,7 +83,15 @@ abstract class TraceableTargetEnvironmentFunction<R> : TargetEnvironmentFunction
  */
 fun <T> constant(value: T): TargetEnvironmentFunction<T> = Constant(value)
 
-private data class Constant<T>(private val value: T) : TraceableTargetEnvironmentFunction<T>() {
+@ApiStatus.Internal
+fun <T> constantExplicit(value: T): ConstantFun<T> = Constant(value)
+
+@ApiStatus.Internal
+interface ConstantFun<T>: TargetEnvironmentFunction<T> {
+  val value: T
+}
+
+private data class Constant<T>(override val value: T) : TraceableTargetEnvironmentFunction<T>(), ConstantFun<T> {
   override fun applyInner(t: TargetEnvironment): T = value
 }
 
