@@ -239,6 +239,10 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
   }
 
   private fun checkOptions(mainModule: String?) {
+    if (options.testGroups != System.getProperty("intellij.build.test.groups")) {
+      context.messages.warning("Test group is temporarily remapped to '${options.testGroups}', ignore 'intellij.build.test.groups' value: '${System.getProperty("intellij.build.test.groups")}'")
+    }
+
     if (options.testConfigurations != null) {
       val testConfigurationsOptionName = "intellij.build.test.configurations"
       if (options.testPatterns != null) {
