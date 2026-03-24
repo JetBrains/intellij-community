@@ -4,6 +4,7 @@ package com.intellij.internal.ui.sandbox.components
 import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.openapi.Disposable
 import com.intellij.ui.JBColor
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.Badge
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
@@ -15,6 +16,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -49,8 +51,8 @@ internal class BadgePanel : UISandboxPanel {
       group("Badges in the List") {
         row {
           val renderer = listCellRenderer<Badge> {
-            icon(value)
             text("Item $index")
+            icon(value)
           }
 
           cell(JBList(allColorTypeBadges)).applyToComponent {
@@ -63,9 +65,9 @@ internal class BadgePanel : UISandboxPanel {
         row {
           val tabs = JBTabsImpl(project = null, disposable)
 
-          tabs.addTab(TabInfo(createTabContent("Regular tab content")).setText("Settings"))
-          tabs.addTab(TabInfo(createTabContent("Beta feature content")).setText("Feature").setIcon(Badge.beta))
-          tabs.addTab(TabInfo(createTabContent("New feature content")).setText("New Feature").setIcon(Badge.new))
+          tabs.addTab(createTabContent("Regular tab content"), "Settings")
+          tabs.addTab(createTabContent("Beta feature content"), "Feature", Badge.beta)
+          tabs.addTab(createTabContent("New feature content"), "New Feature", Badge.new)
 
           val wrapper = Wrapper(tabs)
           wrapper.border = JBUI.Borders.customLine(JBColor.border())
@@ -73,6 +75,18 @@ internal class BadgePanel : UISandboxPanel {
           cell(wrapper).align(AlignX.FILL)
         }
       }
+    }
+  }
+
+  private fun JBTabsImpl.addTab(content: JComponent, text: String, icon: Icon? = null) {
+    val tabInfo = TabInfo(content)
+      .setText(text)
+      .setIcon(icon)
+    addTab(tabInfo)
+
+    if (icon != null) {
+      val tabLabel = getTabLabel(tabInfo)?.labelComponent as? SimpleColoredComponent ?: return
+      tabLabel.isIconOnTheRight = true
     }
   }
 
