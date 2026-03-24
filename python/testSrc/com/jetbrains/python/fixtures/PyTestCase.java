@@ -85,6 +85,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -309,6 +310,35 @@ public abstract class PyTestCase extends UsefulTestCase {
       modificator.commitChanges();
     });
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+  }
+
+  protected void enableTestDataTypeshedStubsForPackages(String @NotNull ... packageNames) throws IOException {
+    final String absPath = getTestDataPath() + "/resolve/typeshed/stubs";
+    final VirtualFile sourceThirdPartyStubRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(absPath);
+    assertNotNull("Third-party typeshed root '" + absPath + "' not found", sourceThirdPartyStubRoot);
+
+    final VirtualFile targetThirdPartyStubRoot = PyTypeShed.INSTANCE.getThirdPartyStubRoot();
+    assertNotNull("Bundled third-party typeshed root not found", targetThirdPartyStubRoot);
+
+    final List<VirtualFile> copiedStubRoots = new ArrayList<>();
+    WriteAction.run(() -> {
+      for (String packageName : packageNames) {
+        final VirtualFile sourceStubRoot = sourceThirdPartyStubRoot.findChild(packageName);
+        assertNotNull("Stub package root for " + packageName + " not found under " + absPath, sourceStubRoot);
+
+        final VirtualFile existingStubRoot = targetThirdPartyStubRoot.findChild(packageName);
+        if (existingStubRoot != null) {
+          VfsTestUtil.deleteFile(existingStubRoot);
+        }
+
+        final VirtualFile targetStubRoot = VfsTestUtil.createDir(targetThirdPartyStubRoot, packageName);
+        VfsUtil.copyDirectory(this, sourceStubRoot, targetStubRoot, null);
+        copiedStubRoots.add(targetStubRoot);
+      }
+    });
+
+    Disposer.register(getTestRootDisposable(), () -> WriteAction.run(() -> copiedStubRoots.forEach(VfsTestUtil::deleteFile)));
+    enablePyiStubsForPackages(packageNames);
   }
 
   protected void enablePyiStubsForPackages(String @NotNull ... packageNames) {

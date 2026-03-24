@@ -52,5 +52,7 @@
     <orderEntry type="module" module-name="intellij.libraries.hdr.histogram" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.python.requirements" />
+    <orderEntry type="module" module-name="intellij.toml" />
+    <orderEntry type="module" module-name="intellij.toml.core" />
   </component>
 </module>

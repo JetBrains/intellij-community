@@ -1,14 +1,22 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.StackOverflowPreventedException;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -23,6 +31,8 @@ import com.jetbrains.python.psi.impl.PyNamedParameterImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
+
+import java.io.IOException;
 
 
 public class Py3ResolveTest extends PyResolveTestCase {
@@ -732,9 +742,23 @@ public class Py3ResolveTest extends PyResolveTestCase {
     );
   }
 
-  // TODO: this should be fixed after introducing an ability to check visited paths while resolving some qualified name
-  // PY-30942
-  public void _testNoInlinePackageInsteadStubPackage() {
+  // PY-55589
+  public void testPyInsteadPartialStubPackageAnotherImport() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+        assertInstanceOf(element, PyFunction.class);
+        assertEquals("foo.py", element.getContainingFile().getName());
+      }
+    );
+  }
+
+  // PY-55589
+  public void testNoRuntimeMembersInsteadPartialStubPackageModule() {
     final String path = "resolve/" + getTestName(false);
     myFixture.configureByFile(path + "/main.py");
 
@@ -744,11 +768,216 @@ public class Py3ResolveTest extends PyResolveTestCase {
     );
   }
 
-  // TODO: this should be fixed after introducing an ability to check visited paths while resolving some qualified name
   // PY-30942
-  public void _testNoInlinePackageInsteadStubPackageAnotherImport() {
+  public void testNoInlinePackageInsteadStubPackage() {
     final String path = "resolve/" + getTestName(false);
     myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+    );
+  }
+
+  // PY-30942
+  public void testNoInlinePackageInsteadStubPackageAnotherImport() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+    );
+  }
+
+  // PY-55589
+  public void testNoPyInsteadNonPartialStubPackageMarker() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+    );
+  }
+
+  // PY-55589
+  public void testPyInsteadNamespaceStubPackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+        assertInstanceOf(element, PyFunction.class);
+        assertEquals("foo.py", element.getContainingFile().getName());
+      }
+    );
+  }
+
+  // PY-55589
+  public void testPyInsteadPartialUserStubPackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.copyDirectoryToProject(path + "/project", "");
+    myFixture.configureByFile("main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+        assertInstanceOf(element, PyFunction.class);
+        assertEquals("foo.py", element.getContainingFile().getName());
+      }
+    );
+  }
+
+  // PY-55589
+  public void testPyInsteadPartialUserStubPackageSourceRoot() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.copyDirectoryToProject(path, "");
+    myFixture.configureByFile("main.py");
+
+    final Module module = myFixture.getModule();
+    final VirtualFile sourceRoot = myFixture.findFileInTempDir("stubs");
+    assertNotNull(sourceRoot);
+
+    PsiTestUtil.addSourceRoot(module, sourceRoot);
+    try {
+      final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+      assertInstanceOf(element, PyFunction.class);
+      assertEquals("mymodule.py", element.getContainingFile().getName());
+    }
+    finally {
+      PsiTestUtil.removeSourceRoot(module, sourceRoot);
+    }
+  }
+
+  // PY-55589
+  public void testPyInsteadNestedPartialUserStubPackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.copyDirectoryToProject(path, "");
+    myFixture.configureByFile("main.py");
+
+    final Module module = myFixture.getModule();
+    final VirtualFile sourceRoot = myFixture.findFileInTempDir("stubs");
+    assertNotNull(sourceRoot);
+
+    PsiTestUtil.addSourceRoot(module, sourceRoot);
+    try {
+      final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+      assertInstanceOf(element, PyFunction.class);
+      assertEquals("mymodule.py", element.getContainingFile().getName());
+    }
+    finally {
+      PsiTestUtil.removeSourceRoot(module, sourceRoot);
+    }
+  }
+
+  // PY-55589
+  public void testEditingPyTypedInvalidatesPartialUserStubPackageResolveCache() {
+    final String path = "resolve/PyInsteadPartialUserStubPackage";
+    myFixture.copyDirectoryToProject(path + "/project", "");
+    myFixture.configureByFile("main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement initial = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+        assertInstanceOf(initial, PyFunction.class);
+        assertEquals("foo.py", initial.getContainingFile().getName());
+
+        final VirtualFile pyTyped = myFixture.findFileInTempDir("pkg/py.typed");
+        assertNotNull(pyTyped);
+
+        WriteAction.run(() -> {
+          try {
+            VfsUtil.saveText(pyTyped, "");
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        });
+        PlatformTestUtil.waitForAlarm(300);
+
+        assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve());
+      }
+    );
+  }
+
+  // PY-55589
+  public void testEditingUnsavedPyTypedInvalidatesPartialUserStubPackageResolveCache() {
+    final String path = "resolve/PyInsteadPartialUserStubPackage";
+    myFixture.copyDirectoryToProject(path + "/project", "");
+    myFixture.configureByFile("main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement initial = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+        assertInstanceOf(initial, PyFunction.class);
+        assertEquals("foo.py", initial.getContainingFile().getName());
+
+        final VirtualFile pyTyped = myFixture.findFileInTempDir("pkg/py.typed");
+        assertNotNull(pyTyped);
+
+        final Document pyTypedDocument = FileDocumentManager.getInstance().getDocument(pyTyped);
+        assertNotNull(pyTypedDocument);
+
+        WriteAction.run(() -> pyTypedDocument.setText(""));
+        assertTrue(FileDocumentManager.getInstance().isDocumentUnsaved(pyTypedDocument));
+        PlatformTestUtil.waitForAlarm(300);
+
+        assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve());
+      }
+    );
+  }
+
+  // PY-55589
+  public void testNoPyInsteadCompleteUserStubPackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.copyDirectoryToProject(path + "/project", "");
+    myFixture.configureByFile("main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+    );
+  }
+
+  // PY-65967
+  public void testPyInsteadPartialTypeShed() throws IOException {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+    enableTestDataTypeshedStubsForPackages("pycharm-test-partial-typeshed");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+        assertInstanceOf(element, PyFunction.class);
+        assertEquals("shortcuts.py", element.getContainingFile().getName());
+      }
+    );
+  }
+
+  // PY-65967
+  public void testNoPyInsteadCompleteTypeShed() throws IOException {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+    enableTestDataTypeshedStubsForPackages("pycharm-test-complete-typeshed");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+    );
+  }
+
+  // PY-65967
+  public void testNoPyInsteadFalsePartialTypeShed() throws IOException {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+    enableTestDataTypeshedStubsForPackages("pycharm-test-false-partial-typeshed");
 
     runWithAdditionalClassEntryInSdkRoots(
       path + "/lib",

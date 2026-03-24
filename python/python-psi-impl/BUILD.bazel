@@ -66,6 +66,8 @@ jvm_library(
         "//libraries/hdr-histogram",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//python/python-requirements:requirements",
+        "//plugins/toml",
+        "//plugins/toml/core",
     ],
 )
 
@@ -128,6 +130,8 @@ jvm_library(
         "//libraries/hdr-histogram:hdr-histogram_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//python/python-requirements:requirements_test_lib",
+        "//plugins/toml:toml_test_lib",
+        "//plugins/toml/core:core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.psi.impl` end
