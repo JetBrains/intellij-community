@@ -12,6 +12,7 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
@@ -23,6 +24,7 @@ import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManager.Companion.PackageManagerErrorMessage
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
+import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.management.resolvePyProjectToml
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
@@ -100,6 +102,11 @@ internal class UvPackageManager(project: Project, sdk: Sdk, uvExecutionContextDe
 
   override suspend fun extractDependencies(): PyResult<List<PythonPackage>> {
     return listAllTopLevelPackages()
+  }
+
+  override suspend fun allDeclaredPackages(): List<PythonPackage> {
+    val output = withUv { uv -> uv.listProjectStructureTree() }.getOrNull() ?: return emptyList()
+    return PythonPackageRequirementsTreeExtractor.collectAllPackages(output)
   }
 
   private suspend fun listAllTopLevelPackages(): PyResult<List<PythonPackage>> {
