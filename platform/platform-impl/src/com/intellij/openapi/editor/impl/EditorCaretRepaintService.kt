@@ -66,6 +66,7 @@ internal class EditorCaretRepaintService(coroutineScope: CoroutineScope) {
         }
       }
     }
+    restart()
   }
 
   fun restart() {

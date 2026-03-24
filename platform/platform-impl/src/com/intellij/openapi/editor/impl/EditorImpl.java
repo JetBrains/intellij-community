@@ -1318,12 +1318,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     mySoftWrapModel.reinitSettings();
     myCaretModel.reinitSettings();
     mySelectionModel.reinitSettings();
-    synchronized (caretRepaintService) {
-      caretRepaintService.setEditor(this);
-      caretRepaintService.setBlinking(mySettings.isBlinkCaret());
-      caretRepaintService.setBlinkPeriod(mySettings.getCaretBlinkPeriod());
-      caretRepaintService.restart();
-    }
+    caretRepaintService.setBlinking(mySettings.isBlinkCaret());
+    caretRepaintService.setBlinkPeriod(mySettings.getCaretBlinkPeriod());
+    caretRepaintService.restart();
 
     myView.reinitSettings();
     if (myAdView != null) myAdView.reinitSettings();
