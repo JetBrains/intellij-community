@@ -166,18 +166,6 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
       marker.model.notifyRemoved(marker)
     }
   }
-
-  companion object {
-    @JvmStatic
-    fun create(editor: EditorImpl): CustomWrapModel {
-      return if (Registry.`is`("editor.custom.soft.wraps.support.enabled")) {
-        CustomWrapModelImpl(editor)
-      }
-      else {
-        EmptyCustomWrapModel
-      }
-    }
-  }
 }
 
 private val CUSTOM_WRAP_COMPARATOR = compareBy<CustomWrapImpl> { it.offset }.thenBy { it.priority }
