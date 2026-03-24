@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyComprehensionElement;
 import com.jetbrains.python.psi.PyComprehensionForComponent;
+import com.jetbrains.python.psi.PyEllipsisLiteralExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyForStatement;
 import com.jetbrains.python.psi.PyFunction;
@@ -49,6 +50,7 @@ import com.jetbrains.python.psi.PyWithStatement;
 import com.jetbrains.python.psi.PyYieldExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyABCUtil;
@@ -75,6 +77,7 @@ import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnpackedTupleType;
 import com.jetbrains.python.psi.types.PyUnpackedTupleTypeImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -480,14 +483,15 @@ public class PyTypeCheckerInspection extends PyInspection {
     public void visitPyNamedParameter(@NotNull PyNamedParameter node) {
       if (!hasExplicitType(node)) return;
 
-      final PyExpression defaultValue = node.getDefaultValue();
+      final PyExpression defaultValue = PyPsiUtils.flattenParens(node.getDefaultValue());
       if (defaultValue == null) return;
+
+      if (defaultValue instanceof PyEllipsisLiteralExpression && (isProtocolMethodParameter(node) || isOverloadSignature(node))) {
+        return;
+      }
 
       final PyType expected = myTypeEvalContext.getType(node);
       final PyType actual = tryPromotingType(defaultValue, expected);
-      if (Objects.equals(actual, PyBuiltinCache.getInstance(node).getEllipsisType()) && isProtocolMethodParameter(node)) {
-        return;
-      }
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
         final String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
         final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
@@ -508,6 +512,17 @@ public class PyTypeCheckerInspection extends PyInspection {
           if (classType instanceof PyClassLikeType classLikeType && PyProtocolsKt.isProtocol(classLikeType, myTypeEvalContext)) {
             return true;
           }
+        }
+      }
+      return false;
+    }
+
+    private boolean isOverloadSignature(@NotNull PyNamedParameter node) {
+      PsiElement parent = node.getParent();
+      if (parent instanceof PyParameterList parameterList) {
+        PyCallable containingCallable = parameterList.getContainingCallable();
+        if (containingCallable instanceof PyFunction function) {
+          return PyiUtil.isOverload(function, myTypeEvalContext);
         }
       }
       return false;
