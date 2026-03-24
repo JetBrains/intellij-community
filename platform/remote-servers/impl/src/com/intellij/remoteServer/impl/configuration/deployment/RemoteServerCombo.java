@@ -2,6 +2,7 @@
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.RecursionManager;
@@ -28,7 +29,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -40,17 +40,21 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     Comparator.comparing(RemoteServer::getName, String.CASE_INSENSITIVE_ORDER);
 
   private final ServerType<S> myServerType;
+  private final @NotNull Project myProject;
   private final List<ChangeListener> myChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final CollectionComboBoxModel<ServerItem> myServerListModel;
   private String myServerNameReminder;
 
-  public RemoteServerCombo(@NotNull ServerType<S> serverType) {
-    this(serverType, new CollectionComboBoxModel<>());
+  public RemoteServerCombo(@NotNull ServerType<S> serverType, @NotNull Project project) {
+    this(serverType, project, new CollectionComboBoxModel<>());
   }
 
-  private RemoteServerCombo(@NotNull ServerType<S> serverType, @NotNull CollectionComboBoxModel<ServerItem> model) {
+  private RemoteServerCombo(@NotNull ServerType<S> serverType,
+                            @NotNull Project project,
+                            @NotNull CollectionComboBoxModel<ServerItem> model) {
     super(new ComboBox<>(model));
     myServerType = serverType;
+    myProject = project;
     myServerListModel = model;
 
     refillModel(null);
@@ -216,9 +220,10 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
   }
 
   protected @NotNull List<RemoteServer<S>> getSortedServers() {
-    List<RemoteServer<S>> result = new ArrayList<>(RemoteServersManager.getInstance().getServers(myServerType));
-    result.sort(SERVERS_COMPARATOR);
-    return result;
+    return RemoteServersManager.getInstance().getServers(myServerType).stream()
+      .filter(server -> server.getConfiguration().isVisibleInProject(myProject))
+      .sorted(SERVERS_COMPARATOR)
+      .toList();
   }
 
   @Override
