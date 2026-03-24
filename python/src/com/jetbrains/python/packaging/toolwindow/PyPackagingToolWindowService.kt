@@ -471,17 +471,24 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   }
 
   private suspend fun refreshInstalledPackagesImpl(context: SdkContext) {
-    val declaredPackageNames = if (context.manager.installedMightBeTransitive) {
+    val dependencyPackageNames = if (context.manager.installedMightBeTransitive) {
       context.manager.extractDependenciesCached()?.getOrNull() ?: emptyList()
     }
     else {
       context.manager.listInstalledPackages()
     }.mapTo(mutableSetOf()) { it.name }
 
+    val declaredPackageNames = if (context.manager.installedMightBeTransitive) {
+      context.manager.allDeclaredPackages()?.map { it.name }?.toSet() ?: emptySet()
+    }
+    else {
+      context.manager.listInstalledPackages().map { it.name }.toSet()
+    }
+
     val packageIndex = PackageIndex(context.manager)
     val treeExtractor = PythonPackageRequirementsTreeExtractor.forSdk(context.sdk, project)
 
-    val treeNode = treeExtractor?.extract(declaredPackageNames)
+    val treeNode = treeExtractor?.extract(dependencyPackageNames)
 
     withContext(Dispatchers.Default) {
       val allPackages = if (treeNode != null) {

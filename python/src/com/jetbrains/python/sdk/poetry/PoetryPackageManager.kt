@@ -14,9 +14,11 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
+import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor
 import com.jetbrains.python.packaging.management.resolvePyProjectToml
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.packaging.pyRequirement
@@ -178,6 +180,12 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
 
   private fun PythonRepositoryPackageSpecification.getPackageWithVersionInPoetryFormat(): String {
     return versionSpec?.let { "$name@${it.presentableText}" } ?: name
+  }
+
+  @ApiStatus.Internal
+  override suspend fun allDeclaredPackages(): List<PythonPackage> {
+    val output = runPoetryWithSdk(sdk, "show", "--tree").getOrNull() ?: return emptyList()
+    return PythonPackageRequirementsTreeExtractor.collectAllPackages(output)
   }
 
   override fun getDependencyFile(): VirtualFile? {
