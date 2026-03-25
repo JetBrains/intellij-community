@@ -36,3 +36,9 @@ jvm_library(
   ]
 )
 ### auto-generated section `build intellij.searchEverywhereLucene.performanceTesting` end
+
+### auto-generated section `iml intellij.searchEverywhereLucene.performanceTesting` start
+exports_files([
+  "intellij.searchEverywhereLucene.performanceTesting.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.searchEverywhereLucene.performanceTesting` end
