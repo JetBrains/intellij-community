@@ -18,21 +18,16 @@
 
         <extensionPoint qualifiedName="com.intellij.exportable" interface="java.lang.Runnable"/>
         <extensionPoint qualifiedName="com.intellij.completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP" dynamic="true">
-          <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionContributor"/>
+            <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionContributor"/>
         </extensionPoint>
 
-        <extensionPoint name="experimentalApiEP" interface="foo.MyExperimentalEP"
-                        dynamic="true"/>
-        <extensionPoint name="scheduledForRemovalApiEP" beanClass="foo.MyScheduledForRemovalEP"
-                        dynamic="true"/>
-        <extensionPoint name="internalApiEP" interface="foo.MyInternalEP"
-                        dynamic="true"/>
-        <extensionPoint name="obsoleteApiEP" interface="foo.MyObsoleteEP"
-                        dynamic="true"/>
+        <extensionPoint name="experimentalApiEP" interface="foo.MyExperimentalEP" dynamic="true"/>
+        <extensionPoint name="scheduledForRemovalApiEP" beanClass="foo.MyScheduledForRemovalEP" dynamic="true"/>
+        <extensionPoint name="internalApiEP" interface="foo.MyInternalEP" dynamic="true"/>
+        <extensionPoint name="obsoleteApiEP" interface="foo.MyObsoleteEP" dynamic="true"/>
 
-        <extensionPoint name="intentionAction"
-                        beanClass="com.intellij.codeInsight.intention.IntentionActionBean">
-          <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
+        <extensionPoint name="intentionAction" beanClass="com.intellij.codeInsight.intention.IntentionActionBean">
+            <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
         </extensionPoint>
     </extensionPoints>
 
@@ -40,7 +35,6 @@
     <depends config-file="../ExtensionsHighlighting-via-depends.xml">com.myplugin.depends</depends>
 
     <xi:include href="ExtensionsHighlighting-included.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
 
     <extensions defaultExtensionNs="com.intellij">
         <<error descr="'implementation' attribute should be defined">myPlugin.ext</error>/>
@@ -87,17 +81,16 @@
                    myClassName="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
         />
 
-        <myService serviceImplementation="foo.MyRunnable"
-                   canBeEmptyString=""/>
+        <myService serviceImplementation="foo.MyRunnable" canBeEmptyString=""/>
 
         <myPlugin.foo.bar implementation="java.util.ArrayList" os="<error descr="Unknown enum value 'INVALID_VALUE'">INVALID_VALUE</error>"/>
         <completion.contributor language=""/>
         <custom.custom/>
         <indirect.indirect/>
 
-
         <<error descr="Cannot resolve extension point 'com.intellij.custom.error' in dependencies (Reference: Plugin Dependencies)">custom.error</error>
-                <error descr="Attribute customAttribute is not allowed here">customAttribute</error>=""/>
+
+        <error descr="Attribute customAttribute is not allowed here">customAttribute</error>=""/>
 
         <<error descr="Missing dependency declaration for using extension point 'com.intellij.notincluded.notInDependencies'">notincluded.notInDependencies</error>/>
     </extensions>

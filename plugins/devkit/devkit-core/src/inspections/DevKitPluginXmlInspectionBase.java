@@ -1,14 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.RemoveDomElementQuickFix;
@@ -23,7 +21,6 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
  * Do NOT invoke {@code super.checkDomElement()}.
  */
 public abstract class DevKitPluginXmlInspectionBase extends BasicDomElementsInspection<IdeaPlugin> {
-
   protected DevKitPluginXmlInspectionBase() {
     super(IdeaPlugin.class);
   }
@@ -33,14 +30,16 @@ public abstract class DevKitPluginXmlInspectionBase extends BasicDomElementsInsp
   }
 
   protected static boolean hasMissingAttribute(DomElement element, @NonNls String attributeName) {
-    final GenericAttributeValue<?> attribute = DevKitDomUtil.getAttribute(element, attributeName);
+    var attribute = DevKitDomUtil.getAttribute(element, attributeName);
     return attribute != null && !DomUtil.hasXml(attribute);
   }
 
-  protected static void highlightRedundant(DomElement element,
-                                           @InspectionMessage String message,
-                                           ProblemHighlightType highlightType,
-                                           DomElementAnnotationHolder holder) {
+  protected static void highlightRedundant(
+    DomElement element,
+    @InspectionMessage String message,
+    ProblemHighlightType highlightType,
+    DomElementAnnotationHolder holder
+  ) {
     holder.createProblem(element, highlightType, message, null, new RemoveDomElementQuickFix(element)).highlightWholeElement();
   }
 
@@ -48,9 +47,8 @@ public abstract class DevKitPluginXmlInspectionBase extends BasicDomElementsInsp
    * Additional check to {@link #isAllowed(DomElementAnnotationHolder)} as quite a few descriptors in the IJ project are not "real" production.
    */
   protected static boolean isUnderProductionSources(DomElement domElement, @NotNull Module module) {
-    VirtualFile virtualFile = DomUtil.getFile(domElement).getVirtualFile();
-    return virtualFile != null &&
-           ModuleRootManager.getInstance(module).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION);
+    var file = DomUtil.getFile(domElement).getVirtualFile();
+    return file != null && ModuleRootManager.getInstance(module).getFileIndex().isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.PRODUCTION);
   }
 
   @Override
