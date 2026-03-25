@@ -392,6 +392,13 @@ object Diagnostics {
     errorSerializer = DiagnosticServerCancellationData.serializer().nullable,
   )
 
+  val DocumentCompilationErrorsRequestType: RequestType<DocumentDiagnosticParams, DocumentDiagnosticReport, DiagnosticServerCancellationData?> = RequestType(
+    method = "textDocument/compilationErrors",
+    paramsSerializer = DocumentDiagnosticParams.serializer(),
+    resultSerializer = DocumentDiagnosticReport.serializer(),
+    errorSerializer = DiagnosticServerCancellationData.serializer().nullable,
+  )
+
   /**
    * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnostic_refresh">workspace/diagnostic/refresh (LSP spec)</a>
    */
