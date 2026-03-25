@@ -119,6 +119,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testExtensionI18n() {
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(getProject(), true);
     doHighlightingTest("extensionI18n.xml", "MyBundle.properties", "AnotherBundle.properties");
   }
 
