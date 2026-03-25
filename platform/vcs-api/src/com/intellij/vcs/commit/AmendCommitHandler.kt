@@ -2,6 +2,7 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.vcs.log.Hash
 import org.jetbrains.annotations.ApiStatus
@@ -9,6 +10,7 @@ import java.util.EventListener
 
 @ApiStatus.Experimental
 interface AmendCommitHandler {
+  val project: Project
   var commitToAmend: CommitToAmend
   val isAmendCommitMode: Boolean
     get() = commitToAmend !is CommitToAmend.None

@@ -31,7 +31,7 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
 
   private val workflow get() = workflowHandler.workflow
   protected val commitContext: CommitContext get() = workflow.commitContext
-  protected val project: Project get() = workflow.project
+  override val project: Project get() = workflow.project
 
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)
 
