@@ -1,12 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.folding
+package org.jetbrains.kotlin.idea.fir.folding
 
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.testFramework.EditorTestUtil
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer
+import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
+import org.jetbrains.kotlin.idea.imports.KotlinFirImportOptimizer
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -16,6 +18,8 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/folding/afterOptimizeImports")
 @RunWith(JUnit38ClassRunner::class)
 class FoldingAfterOptimizeImportsTest : AbstractKotlinFoldingTest() {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+
     fun testFoldingAfterOptimizeImports() = doTest()
     fun testFoldingAfterOptimizeImportsRemoveFirst() = doTest()
 
@@ -31,7 +35,7 @@ class FoldingAfterOptimizeImportsTest : AbstractKotlinFoldingTest() {
 
             myFixture.project.executeWriteCommand(
                 "Optimize import in tests"
-            ) { KotlinImportOptimizer().processFile(myFixture.file).run() }
+            ) { KotlinFirImportOptimizer().processFile(myFixture.file).run() }
 
             getFoldingRegion(0).checkRegion(false, findStringWithPrefixes("// REGION AFTER: "))
         }

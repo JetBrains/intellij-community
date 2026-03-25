@@ -1,6 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.stubs;
+package org.jetbrains.kotlin.idea.fir.stubs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -14,8 +14,9 @@ import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex;
 import org.jetbrains.kotlin.idea.test.AstAccessControl;
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndMultiplatformStdlibDescriptor;
 import org.jetbrains.kotlin.psi.KtBlockCodeFragmentType;
 import org.jetbrains.kotlin.psi.KtDeclaration;
@@ -33,7 +34,12 @@ import java.util.List;
 import static org.jetbrains.kotlin.idea.test.AstAccessControl.dropPsiAndTestWithControlledAccessToAst;
 
 @RunWith(JUnit38ClassRunner.class)
-public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase {
+public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase implements ExpectedPluginModeProvider {
+    @Override
+      public @NotNull KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K2;
+      }
+
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {
