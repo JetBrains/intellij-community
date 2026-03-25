@@ -2,9 +2,11 @@
 package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.Key
 import com.sun.jdi.Method
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinMethodSmartStepTarget
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.SmartStepIntoContext
+import java.nio.file.Path
 
 /**
  * A debugger extension that allows to implement dex specific
@@ -25,5 +27,7 @@ interface DexBytecodeInspector {
     companion object {
         internal val EP: ExtensionPointName<DexBytecodeInspector> =
             ExtensionPointName.create("com.intellij.debugger.dexBytecodeInspector")
+
+        val DEX_FILES_KEY: Key<List<Path>> = Key("DEX_FILES_KEY")
     }
 }
