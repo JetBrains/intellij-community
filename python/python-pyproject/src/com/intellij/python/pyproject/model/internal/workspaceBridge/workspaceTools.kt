@@ -1,5 +1,6 @@
 package com.intellij.python.pyproject.model.internal.workspaceBridge
 
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
@@ -65,6 +66,14 @@ private val logger = fileLogger()
 
 
 internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWithToml) {
+  logger.debug {
+    buildString {
+      appendLine("Build request for files count ${files.tomlFiles.size}")
+      for (file in files.tomlFiles.keys) {
+        appendLine("Building model for file $file")
+      }
+    }
+  }
   changeWorkspaceMutex.withLock {
     val entries = generatePyProjectTomlEntries(files)
     // No pyproject.toml files, no need to touch model at all
@@ -76,6 +85,15 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWith
 
       renameSameModuleAndMoveSources(syncStorage, projectStorage)
       relocateFacetAndSdk(syncStorage, projectStorage)
+      logger.debug {
+        buildString {
+          val entities = syncStorage.entities<ModuleEntity>().toList()
+          appendLine("Entities count: ${entities.size}")
+          for (entity in entities) {
+            appendLine("New entity ${entity.name}")
+          }
+        }
+      }
       projectStorage.replaceBySource({ it.isPythonEntity }, syncStorage)
       ensureNoSrcIntersectsWithOtherRoots(projectStorage)
     }
@@ -139,12 +157,26 @@ private fun renameSameModuleAndMoveSources(syncStorage: EntityStorage, projectSt
     for (projectModuleEntity in projectStorage.entities<ModuleEntity>()) {
       if (ModuleAnchor(syncModuleEntity).sameAs(ModuleAnchor(projectModuleEntity))) {
         projectStorage.modifyModuleEntity(projectModuleEntity) {
+          logger.debug {
+              buildString {
+                appendLine("modify module entity:")
+                appendLine("name: ${syncModuleEntity.name}")
+                appendLine("source: ${syncModuleEntity.entitySource}")
+              }
+          }
           name = syncModuleEntity.name
           entitySource = syncModuleEntity.entitySource
         }
         for (projectRootEntity in projectModuleEntity.contentRoots.toList()) {
           projectStorage.modifyContentRootEntity(projectRootEntity) {
             entitySource = syncModuleEntity.entitySource
+            logger.debug {
+              buildString {
+                appendLine("modify content root:")
+                appendLine("root: ${projectRootEntity.url}")
+                appendLine("source: ${syncModuleEntity.entitySource}")
+              }
+            }
           }
         }
       }
