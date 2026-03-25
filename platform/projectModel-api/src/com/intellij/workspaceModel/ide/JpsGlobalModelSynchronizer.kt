@@ -41,6 +41,8 @@ interface JpsGlobalModelSynchronizer {
   suspend fun saveGlobalEntities() {
   }
 
+  fun dropCaches()
+
   companion object {
     fun getInstance(): JpsGlobalModelSynchronizer = service()
   }

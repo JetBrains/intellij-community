@@ -511,6 +511,7 @@ class GlobalWorkspaceModelRegistry {
   @TestOnly
   fun dropCaches() {
     environmentToModel.clear()
+    JpsGlobalModelSynchronizer.getInstance().dropCaches()
   }
 
 }
