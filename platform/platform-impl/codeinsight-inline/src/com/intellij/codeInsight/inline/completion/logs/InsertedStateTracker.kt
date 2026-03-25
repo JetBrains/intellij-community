@@ -10,6 +10,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.text.EditDistance
@@ -26,7 +27,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Service(Service.Level.PROJECT)
 internal class InsertedStateTracker(
   cs: CoroutineScope
-) : AbstractEditorTrackingService(cs, InsertedStateTracker::class.java.name) {
+) : AbstractEditorTrackingService(cs, EDITOR_TRACKER_SCOPE_KEY) {
 
   @Deprecated("Replaced with trackV2")
   fun track(requestId: Long,
@@ -130,4 +131,7 @@ internal class InsertedStateTracker(
     }
   }
 
+  private companion object {
+    private val EDITOR_TRACKER_SCOPE_KEY = Key.create<EditorTrackingScope>("inline.completion.inserted.state.tracker.scope")
+  }
 }
