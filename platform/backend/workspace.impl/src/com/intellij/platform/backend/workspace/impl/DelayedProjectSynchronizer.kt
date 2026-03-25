@@ -9,8 +9,8 @@ import com.intellij.platform.backend.observation.ActivityKey
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.ProjectSynchronizerUtil
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import com.intellij.workspaceModel.ide.impl.jps.serialization.ProjectSynchronizerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -57,7 +57,7 @@ class DelayedProjectSynchronizer : ProjectActivity {
 
     logJpsEntities("Before Util.doSync")
     project.trackActivity(ProjectSynchronizerActivityKey) {
-      ProjectSynchronizerUtil.doSync(project, workspaceModel)
+      project.serviceAsync<ProjectSynchronizerUtil>().applyJpsModelToProjectModel()
     }
     logJpsEntities("After Util.doSync")
   }

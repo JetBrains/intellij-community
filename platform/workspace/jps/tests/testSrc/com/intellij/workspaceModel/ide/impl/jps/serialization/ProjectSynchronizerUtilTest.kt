@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
@@ -38,6 +39,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.useProject
+import com.intellij.workspaceModel.ide.ProjectSynchronizerUtil
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
@@ -246,7 +248,7 @@ class ProjectSynchronizerUtilTest {
     Disposer.register(disposableRule.disposable, Disposable {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     })
-    ProjectSynchronizerUtil.backgroundPostStartupProjectLoading(project)
+    project.serviceAsync<ProjectSynchronizerUtil>().backgroundPostStartupProjectLoading()
     return project
   }
 

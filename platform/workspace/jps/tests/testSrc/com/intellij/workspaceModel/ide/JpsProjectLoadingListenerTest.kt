@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -19,7 +20,6 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
-import com.intellij.workspaceModel.ide.impl.jps.serialization.ProjectSynchronizerUtil
 import com.intellij.workspaceModel.ide.impl.jps.serialization.LoadedProjectData
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
 import kotlinx.coroutines.runBlocking
@@ -114,7 +114,7 @@ class JpsProjectLoadingListenerTest {
     Disposer.register(disposableRule.disposable, Disposable {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     })
-    ProjectSynchronizerUtil.backgroundPostStartupProjectLoading(project)
+    project.serviceAsync<ProjectSynchronizerUtil>().backgroundPostStartupProjectLoading()
     return project
   }
 
