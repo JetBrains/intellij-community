@@ -45,6 +45,7 @@ public abstract class JavaRunConfigurationBase extends ModuleBasedConfiguration<
   }
 
   public @Nullable String findJavaModuleName(boolean inTests) {
+    if (!isUseModulePath()) return null;
     Module module = getConfigurationModule().getModule();
     if (module == null) return null;
     PsiJavaModule javaModule = JavaPsiModuleUtil.findDescriptorByModule(module, inTests);

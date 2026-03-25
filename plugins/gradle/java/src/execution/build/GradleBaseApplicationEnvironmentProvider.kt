@@ -93,7 +93,7 @@ abstract class GradleBaseApplicationEnvironmentProvider : GradleExecutionEnviron
       getConfigurationRunName(runProfile)
     } ?: return null
     val module = runProfile.configurationModule.module ?: return null
-    val javaModuleName = if (runProfile.isUseModulePath()) runProfile.findJavaModuleName(isTestModule(module)) else null
+    val javaModuleName = runProfile.findJavaModuleName(isTestModule(module))
 
     val gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module) ?: return null
     val externalProjectPath = gradleModuleData.directoryToRunTask
