@@ -133,6 +133,31 @@ private fun getLambdaExpression(element: KtCallExpression): KtLambdaExpression? 
     element.lambdaArguments.firstOrNull()?.getLambdaExpression()
         ?: element.valueArguments.firstOrNull()?.getArgumentExpression() as? KtLambdaExpression
 
+/**
+ * Returns `true` if the callee resolves to a type alias whose expanded
+ * type contains a variance projection (`in`, `out`, or `*`).
+ *
+ * Converting such a SAM lambda to an anonymous object is invalid: the projected
+ * type cannot legally appear as a supertype, whether through the alias or with it
+ * inlined. The SAM constructor call form is accepted by the compiler even when the
+ * alias expands to a projected type, but neither `object : IInA<Int>` nor
+ * `object : I<in Int>` compiles.
+ *
+ * ```kotlin
+ * fun interface I<A> { fun foo(a: A): Int }
+ * typealias IInA<A> = I<in A>
+ *
+ * IInA<Int> { x -> x }       // OK: the projection is hidden inside the type alias — writing
+ *                             //     I<in Int> { x -> x } directly would be a compile error
+ *                             //     (PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT)
+ *
+ * object : IInA<Int> { ... }  // ERROR: CONSTRUCTOR_OR_SUPERTYPE_ON_TYPEALIAS_WITH_TYPE_PROJECTION_ERROR
+ * object : I<in Int> { ... }  // ERROR: PROJECTION_IN_IMMEDIATE_ARGUMENT_TO_SUPERTYPE
+ *                             //     (rejected at type-checking: `in Int` means "some supertype of Int",
+ *                             //     so the type of the override parameter would be unknowable)
+ * ```
+ * @see: [org.jetbrains.kotlin.idea.k2.intentions.tests.K2IntentionTestGenerated.SamConversionToAnonymousObject.testTypeArgument7]
+ */
 context(_: KaSession)
 private fun KtExpression.isAliasedWithVariance(): Boolean {
     val resolvedSymbol = mainReference?.resolveToSymbol() as? KaSamConstructorSymbol ?: return false
