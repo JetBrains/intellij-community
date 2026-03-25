@@ -469,6 +469,13 @@ com.intellij.openapi.application.ApplicationStarter
 - main(java.util.List):V
 - premain(java.util.List):V
 - processExternalCommandLine(java.util.List,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.openapi.application.ApplicationStarterEP
+- com.intellij.serviceContainer.LazyExtensionInstance
+- com.intellij.openapi.extensions.PluginAware
+- bundle:java.lang.String
+- implementation:java.lang.String
+- isInternal:Z
+- key:java.lang.String
 com.intellij.openapi.fileTypes.FileTypeConsumer
 - sf:EXTENSION_DELIMITER:java.lang.String
 - a:consume(com.intellij.openapi.fileTypes.FileType):V

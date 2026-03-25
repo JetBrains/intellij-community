@@ -10,8 +10,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public final class ApplicationStarterEP extends LazyExtensionInstance<ApplicationStarter> implements PluginAware {
+  private ApplicationStarterEP() { }
+
   /// The starter implementation class.
   @RequiredElement
   @Attribute("implementation")
@@ -37,11 +38,12 @@ public final class ApplicationStarterEP extends LazyExtensionInstance<Applicatio
   }
 
   @Override
+  @ApiStatus.Internal
   public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
   }
 
-  public @NotNull ApplicationStarter get() {
+  @NotNull ApplicationStarter get() {
     return getInstance(ApplicationManager.getApplication(), myPluginDescriptor);
   }
 }
