@@ -7,7 +7,6 @@ import com.intellij.unscramble.CompoundDumpItem
 import com.intellij.unscramble.dumpItems
 import com.intellij.unscramble.parseIntelliJThreadDump
 import com.intellij.unscramble.serializeIntelliJThreadDump
-import junit.framework.TestCase.assertEquals
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.test.DEBUGGER_TESTDATA_PATH_BASE
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -26,16 +25,22 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
     fun `imported coroutine dump items are restored properly`() {
         val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(loadThreadDump("importedCoroutineDumpItems.txt")))
 
-        val dumpItems = parsedThreadDump.dumpItems().filter { !it.isContainer }
-        assertEquals(2, dumpItems.size)
+        val dumpItems = parsedThreadDump.dumpItems()
+        val coroutineRoot = dumpItems.single { it.treeId == Long.MIN_VALUE }
+        assertEquals("Dumped Coroutines", coroutineRoot.name)
+        assertTrue(coroutineRoot.isContainer)
 
-        val parentCoroutine = dumpItems.single { it.treeId == 300L }
+        val coroutineDumpItems = dumpItems.filter { !it.isContainer }
+        assertEquals(2, coroutineDumpItems.size)
+
+        val parentCoroutine = coroutineDumpItems.single { it.treeId == 300L }
         assertTrue(parentCoroutine is CoroutineDumpItem)
         assertEquals("scope:1", parentCoroutine.name)
+        assertEquals(Long.MIN_VALUE, parentCoroutine.parentTreeId)
         assertEquals(" (suspended)", parentCoroutine.stateDesc)
         assertEquals("Coroutine", parentCoroutine.iconToolTip)
 
-        val childCoroutine = dumpItems.single { it.treeId == 301L }
+        val childCoroutine = coroutineDumpItems.single { it.treeId == 301L }
         assertTrue(childCoroutine is CoroutineDumpItem)
         assertEquals("scope:2", childCoroutine.name)
         assertEquals(300L, childCoroutine.parentTreeId)
@@ -46,14 +51,16 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
     fun `imported coroutine hierarchy and dispatcher context are preserved`() {
         val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(loadThreadDump("importedCoroutineHierarchy.txt")))
 
-        val dumpItems = parsedThreadDump.dumpItems().filter { !it.isContainer }
-        val parentCoroutine = dumpItems.single { it.treeId == 300L }
-        val childCoroutine = dumpItems.single { it.treeId == 301L }
-        val otherDispatcherCoroutine = dumpItems.single { it.treeId == 302L }
+        val dumpItems = parsedThreadDump.dumpItems()
+        val coroutineDumpItems = dumpItems.filter { !it.isContainer }
+        val parentCoroutine = coroutineDumpItems.single { it.treeId == 300L }
+        val childCoroutine = coroutineDumpItems.single { it.treeId == 301L }
+        val otherDispatcherCoroutine = coroutineDumpItems.single { it.treeId == 302L }
 
         assertTrue(parentCoroutine is CoroutineDumpItem)
         assertTrue(childCoroutine is CoroutineDumpItem)
         assertTrue(otherDispatcherCoroutine is CoroutineDumpItem)
+        assertEquals(Long.MIN_VALUE, parentCoroutine.parentTreeId)
         assertEquals(300L, childCoroutine.parentTreeId)
         assertEquals(300L, otherDispatcherCoroutine.parentTreeId)
         assertEquals(childCoroutine.mergeableToken, parentCoroutine.mergeableToken)
