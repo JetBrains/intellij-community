@@ -44,13 +44,11 @@ class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
 
         override fun getItems(suspendContext: SuspendContextImpl?): List<MergeableDumpItem> {
             return (
-              if (!enabled) emptyList()
+              if (!enabled || suspendContext == null) emptyList()
               else {
-                val coroutinesCache = CoroutineDebugProbesProxy(suspendContext!!).dumpCoroutinesWithHierarchy()
-                if (coroutinesCache.isOk()) coroutinesCache.cache.map { info ->
-                    if (info.parentJobId == null) info.parentJobId = CoroutineRootDumpItem.treeId
-                    CoroutineDumpItem(info)
-                } + CoroutineRootDumpItem else emptyList()
+                  val coroutinesCache = CoroutineDebugProbesProxy(suspendContext).dumpCoroutinesWithHierarchy()
+                  val coroutineDumpItems = if (coroutinesCache.isOk()) coroutinesCache.cache.map { info -> CoroutineDumpItem(info) } else emptyList()
+                if (coroutineDumpItems.isNotEmpty()) coroutineDumpItems + CoroutineRootDumpItem else coroutineDumpItems
               })
               .also {
                 DebuggerStatistics.logCoroutineDump(context.project, it.size)
@@ -72,7 +70,7 @@ class CoroutineDumpItem internal constructor(
     constructor(info: CoroutineInfoData) : this(
         name = "${info.name}:${info.id}",
         treeId = info.jobId,
-        parentTreeId = info.parentJobId,
+        parentTreeId = info.parentJobId ?: CoroutineRootDumpItem.treeId,
         coroutineState = info.state,
         coroutineContextInfo = DumpItemCoroutineContextInfo.from(info),
         stackTraceBody = buildStackTraceBody(info),
@@ -144,7 +142,7 @@ class CoroutineDumpItem internal constructor(
             },
             stackTraceBody = stackTraceBody,
             id = treeId,
-            parentId = parentTreeId,
+            parentId = parentTreeId.takeUnless { it == CoroutineRootDumpItem.treeId },
             type = COROUTINE_THREAD_DUMP_TYPE,
             additionalMetadata = coroutineContextInfo?.toMetadata().orEmpty(),
         )
@@ -194,7 +192,7 @@ private fun buildStackTraceBody(info: CoroutineInfoData): String {
     }
 }
 
-private object CoroutineRootDumpItem : MergeableDumpItem {
+internal object CoroutineRootDumpItem : MergeableDumpItem {
 
     override val name: String = "Dumped Coroutines"
 
@@ -228,5 +226,12 @@ private object CoroutineRootDumpItem : MergeableDumpItem {
 
     override val mergeableToken: MergeableToken = MergeableToken.Unique(this)
 
-    override fun serialize(): String = ""
+    override fun serialize(): String =
+        serializeThreadDumpItem(
+            itemHeader = "\"$name\" tid=0x0 nid=NA coroutineRoot",
+            stackTraceBody = "",
+            id = null,
+            parentId = null,
+            type = COROUTINE_ROOT_THREAD_DUMP_TYPE,
+        )
 }

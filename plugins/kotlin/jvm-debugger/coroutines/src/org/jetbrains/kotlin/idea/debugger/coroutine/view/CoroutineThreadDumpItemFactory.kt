@@ -9,10 +9,15 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.State
 
 internal const val COROUTINE_THREAD_DUMP_TYPE: String = "coroutine"
+internal const val COROUTINE_ROOT_THREAD_DUMP_TYPE: String = "coroutineRoot"
 
 @ApiStatus.Internal
 internal class CoroutineThreadDumpItemFactory : ThreadDumpItemFactory {
-    override fun createDumpItem(threadState: ThreadState): MergeableDumpItem? = createCoroutineDumpItem(threadState)
+    override fun createDumpItem(threadState: ThreadState): MergeableDumpItem? = when (threadState.type) {
+        COROUTINE_THREAD_DUMP_TYPE -> createCoroutineDumpItem(threadState)
+        COROUTINE_ROOT_THREAD_DUMP_TYPE -> CoroutineRootDumpItem
+        else -> null
+    }
 }
 
 private fun createCoroutineDumpItem(threadState: ThreadState): CoroutineDumpItem? {
@@ -24,7 +29,7 @@ private fun createCoroutineDumpItem(threadState: ThreadState): CoroutineDumpItem
     return CoroutineDumpItem(
         name = restoreCoroutineName(threadState),
         treeId = threadState.uniqueId,
-        parentTreeId = threadState.threadContainerUniqueId,
+        parentTreeId = threadState.threadContainerUniqueId ?: CoroutineRootDumpItem.treeId,
         coroutineState = State.fromString(threadState.state),
         coroutineContextInfo = DumpItemCoroutineContextInfo.fromMetadata(threadState.metadata),
         stackTraceBody = stackTraceBody,

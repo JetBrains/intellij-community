@@ -8,3 +8,5 @@
 
 "scope:3@302" virtual tid=0x0 nid=NA suspended ["type":"coroutine","id":302,"parentId":300,"dispatcher":"Dispatchers.IO"]
     at example.Shared.run(Shared.kt:1)
+
+"Dumped Coroutines" tid=0x0 nid=NA coroutineRoot ["type":"coroutineRoot"]

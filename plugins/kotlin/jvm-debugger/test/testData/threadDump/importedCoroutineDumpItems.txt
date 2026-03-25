@@ -5,3 +5,5 @@
 
 "scope:2@301" virtual tid=0x0 nid=NA running ["type":"coroutine","id":301,"parentId":300]
 	at example.Child.two(Child.kt:2)
+
+"Dumped Coroutines" tid=0x0 nid=NA coroutineRoot ["type":"coroutineRoot"]
