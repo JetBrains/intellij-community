@@ -310,8 +310,9 @@ fn adjust_to_musl(exe_path: &Path, jre_home: &Path) -> Result<()> {
     }
 
     debug!("*** restarting with LD_LIBRARY_PATH={new_ld_lib_path:?} LD_PRELOAD={new_ld_preload:?}");
+    let args: Vec<String> = env::args().collect();
     Err(std::process::Command::new(exe_path)
-        .args(env::args())
+        .args(args[1..].to_vec())
         .env("LD_LIBRARY_PATH", new_ld_lib_path)
         .env("LD_PRELOAD", new_ld_preload)
         .exec().into())
