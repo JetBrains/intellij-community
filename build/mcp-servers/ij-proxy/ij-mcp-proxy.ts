@@ -22,6 +22,7 @@ import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
 import {createProxyTooling} from './proxy-tools/tooling'
 import {extractItems, extractTextFromResult} from './proxy-tools/shared'
 import type {SearchItem, ToolArgs, ToolSpecLike} from './proxy-tools/types'
+import {detectContainerSession} from './container-session'
 
 // Proxy JetBrains MCP Streamable HTTP to stdio and inject the cwd as project_path.
 const explicitMcpUrl = env.JETBRAINS_MCP_STREAM_URL
@@ -101,8 +102,24 @@ function resolveProjectPath(rawValue: string | undefined): {projectPath: string;
 
 const explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH
 const projectPathResolution = resolveProjectPath(explicitProjectPath)
-const projectPath = projectPathResolution.projectPath
-const defaultProjectPathKey = 'project_path'
+let projectPath = projectPathResolution.projectPath
+// Matches the IntelliJ MCP server's `projectPathParameterName` default (see
+// community/plugins/mcp-server/.../schema.util.kt). Used as the fallback BEFORE the
+// upstream tools/list scan has run — for example right after container-session
+// detection recreates the project-path manager. If the scan later discovers a tool
+// with `project_path` in its schema, that overrides this for calls to that tool.
+const defaultProjectPathKey = 'projectPath'
+
+// Lazy: re-detect on each updateProxyTooling() call since the file may appear after startup
+let containerSession = detectContainerSession(projectPath)
+// Apply overrides from container session file (mcpStreamUrl, projectPath)
+let explicitMcpUrlOverride: string | undefined
+if (containerSession?.mcpStreamUrl) {
+  explicitMcpUrlOverride = containerSession.mcpStreamUrl
+}
+if (containerSession?.projectPath) {
+  projectPath = containerSession.projectPath
+}
 
 const REPLACED_TOOL_NAMES = getReplacedToolNames()
 const BASE_BLOCKED_TOOL_NAMES = new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES])
@@ -135,15 +152,43 @@ function primaryUpstream(): UpstreamConnection {
 }
 
 function updateProxyTooling(): void {
+  // Re-detect container session — the file may appear after ij-proxy starts
+  if (!containerSession) {
+    containerSession = detectContainerSession(projectPath)
+    if (containerSession) {
+      note(`Container session detected (lazy): id=${containerSession.sessionId}, workspace=${containerSession.workspacePath}`)
+      if (containerSession.projectPath) projectPath = containerSession.projectPath
+      if (containerSession.mcpStreamUrl && containerSession.mcpStreamUrl !== explicitMcpUrlOverride) {
+        explicitMcpUrlOverride = containerSession.mcpStreamUrl
+        note(`MCP stream URL override: ${explicitMcpUrlOverride} — reconnecting upstream`)
+        // Drop stale upstream connected to the wrong IDE instance (e.g., main IDE instead of dev-run).
+        // performDiscovery() will reconnect using the correct URL.
+        ideaUpstream = null
+        riderUpstream = null
+        discoveryPromise = null
+      }
+      // In container mode, `.container-sessions.jsonl` is the source of truth for
+      // routing. Make every upstream tool call carry project_path so the IDE can pin
+      // the request to the correct open project (otherwise its dispatcher falls back
+      // to prompting when multiple projects are open).
+      ideaUpstream?.setForceInjectProjectPath(projectPath, true)
+      if (riderUpstream) {
+        riderUpstream.setForceInjectProjectPath(path.join(projectPath, RIDER_PROJECT_SUBPATH), true)
+      }
+    }
+  }
+
   let ideaSpecs: ToolSpecLike[] = []
   let ideaNames: Set<string> = new Set()
   if (ideaUpstream) {
     const tooling = createProxyTooling({
       projectPath,
       callUpstreamTool: (name, args) => ideaUpstream!.callTool(name, args),
+      callUpstreamToolRaw: (name, args) => ideaUpstream!.callToolRaw(name, args),
       searchCapabilities: ideaUpstream.searchCapabilities,
       readCapabilities: ideaUpstream.readCapabilities,
-      ideVersion: ideaUpstream.ideVersion
+      ideVersion: ideaUpstream.ideVersion,
+      containerSession
     })
     ideaSpecs = tooling.proxyToolSpecs
     ideaNames = tooling.proxyToolNames
@@ -159,9 +204,11 @@ function updateProxyTooling(): void {
     const tooling = createProxyTooling({
       projectPath: riderProjectPath,
       callUpstreamTool: (name, args) => riderUpstream!.callTool(name, args),
+      callUpstreamToolRaw: (name, args) => riderUpstream!.callToolRaw(name, args),
       searchCapabilities: riderUpstream.searchCapabilities,
       readCapabilities: riderUpstream.readCapabilities,
-      ideVersion: riderUpstream.ideVersion
+      ideVersion: riderUpstream.ideVersion,
+      containerSession
     })
     riderSpecs = tooling.proxyToolSpecs
     riderNames = tooling.proxyToolNames
@@ -196,14 +243,32 @@ function buildInstructions(): string | undefined {
     const version = riderUpstream.ideVersion
     ides.push(version ? `${name} ${version}` : name)
   }
-  if (ides.length === 0) return undefined
-  return `Connected IDEs: ${ides.join(', ')}.`
+  if (ides.length === 0 && !containerSession) return undefined
+  const parts: string[] = []
+  if (ides.length > 0) {
+    parts.push(`Connected IDEs: ${ides.join(', ')}.`)
+  }
+  if (containerSession) {
+    parts.push(
+      `CONTAINER MODE ACTIVE: This session operates on a Docker container (session ${containerSession.sessionId}).`,
+      `All file and search operations (read_file, apply_patch, search_text, search_regex, search_file, list_dir) are routed to the container.`,
+      `Semantic tools (search_symbol, lint_files, get_file_problems, rename) use the host IDE index.`,
+      `Use the "bash" tool for ALL shell commands — it executes inside the container. Do NOT use your built-in Bash tool or execute_terminal_command, as they run on the host, not in the container.`,
+      `The container has: git, curl, ripgrep (rg), patch, java (JBR 21), bazel (via Bazelisk). All tools are in PATH.`,
+      `IMPORTANT: Before completing your task, verify your changes compile by running the build command inside the container${containerSession.buildCommand ? `: \`${containerSession.buildCommand}\`` : ''}. Fix any compilation errors before finishing.`,
+    )
+  }
+  return parts.join('\n')
 }
 
 void clearLogFile()
 
 if (projectPathResolution.warning) {
   warn(projectPathResolution.warning)
+}
+
+if (containerSession) {
+  note(`Container session detected: id=${containerSession.sessionId}, workspace=${containerSession.workspacePath}`)
 }
 
 // --- Discovery ---
@@ -229,6 +294,7 @@ function createUpstreamForUrl(url: string): UpstreamConnection {
     transport,
     projectPath,
     defaultProjectPathKey,
+    forceInjectProjectPath: containerSession != null,
     toolCallTimeoutMs,
     buildTimeoutMs,
     warn
@@ -277,9 +343,10 @@ async function ensureDiscovered(): Promise<void> {
 
 async function performDiscovery(): Promise<void> {
   try {
-    if (explicitMcpUrl) {
+    const effectiveMcpUrl = explicitMcpUrlOverride ?? explicitMcpUrl
+    if (effectiveMcpUrl) {
       // Explicit URL: single upstream, identify type after connect
-      const conn = createUpstreamForUrl(explicitMcpUrl)
+      const conn = createUpstreamForUrl(effectiveMcpUrl)
       await conn.connect()
       const name = conn.client.getServerVersion()?.name ?? ''
       if (isRiderServerName(name)) {
@@ -362,10 +429,13 @@ proxyServer.setRequestHandler(InitializeRequestSchema, async () => {
   await performDiscovery()
 
   const instructions = buildInstructions()
+  const effectiveServerInfo = containerSession
+    ? {name: `ij-mcp-proxy [container:${containerSession.sessionId}]`, version: '1.0.0'}
+    : serverInfo
   return {
     protocolVersion: LATEST_PROTOCOL_VERSION,
     capabilities: serverCapabilities,
-    serverInfo: serverInfo,
+    serverInfo: effectiveServerInfo,
     ...(instructions && {instructions})
   }
 })
@@ -381,11 +451,28 @@ proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
 })
 
 proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
+  // Lazy container session detection — file may appear after startup
+  if (!containerSession) {
+    const detected = detectContainerSession(projectPath)
+    if (detected) {
+      containerSession = detected
+      note(`Container session detected on tool call: id=${detected.sessionId}`)
+      updateProxyTooling()
+      // If updateProxyTooling dropped the upstream (URL changed), reconnect now
+      await ensureDiscovered()
+      await proxyServer.sendToolListChanged()
+    }
+  }
+
   const toolName = typeof request.params?.name === 'string' ? request.params.name : ''
   const rawArgs = request.params?.arguments
   const args: ToolArgs = rawArgs && typeof rawArgs === 'object'
     ? {...(rawArgs as ToolArgs)}
     : {}
+
+  if (containerSession) {
+    note(`Tool call: ${toolName} [container:${containerSession.sessionId}, proxy:${proxyToolNames.has(toolName)}, hasUpstream:${!!ideaUpstream}]`)
+  }
 
   if (!toolName) {
     return makeToolError('Tool name is required')

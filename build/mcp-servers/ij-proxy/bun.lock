@@ -5,14 +5,14 @@
     "": {
       "name": "ij-mcp-proxy",
       "dependencies": {
-        "@modelcontextprotocol/sdk": "^1.25.3",
+        "@modelcontextprotocol/sdk": "^1.27.1",
         "is-port-reachable": "^4.0.0",
         "p-retry": "^7.1.1",
         "picomatch": "^4.0.3",
         "zod": "^4.3.6",
       },
       "devDependencies": {
-        "@types/node": "^25.1.0",
+        "@types/node": "^25.3.3",
       },
     },
   },

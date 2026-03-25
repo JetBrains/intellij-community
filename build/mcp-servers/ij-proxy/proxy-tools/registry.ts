@@ -6,6 +6,15 @@ import {handleReadTool} from './handlers/read'
 import {handleRenameTool} from './handlers/rename'
 import {handleSearchFileTool, handleSearchRegexTool, handleSearchSymbolTool, handleSearchTextTool} from './handlers/search'
 import {
+  handleContainerApplyPatch,
+  handleContainerBash,
+  handleContainerListDir,
+  handleContainerReadFile,
+  handleContainerSearchFile,
+  handleContainerSearchRegex,
+  handleContainerSearchText
+} from './container-handlers'
+import {
   createApplyPatchSchema,
   createListDirSchema,
   createReadSchema,
@@ -15,14 +24,29 @@ import {
   createSearchSymbolSchema,
   createSearchTextSchema
 } from './schemas'
-import type {ReadCapabilities, SearchCapabilities, ToolArgs, ToolInputSchema, ToolSpecLike, UpstreamToolCaller, WorkaroundChecker} from './types'
+import type {
+  AnalysisCapabilities,
+  ContainerSessionConfig,
+  ReadCapabilities,
+  SearchCapabilities,
+  ToolAnnotationsLike,
+  ToolArgs,
+  ToolInputSchema,
+  ToolSpecLike,
+  UpstreamToolCaller,
+  WorkaroundChecker
+} from './types'
 
 interface ToolContext {
   projectPath: string
   callUpstreamTool: UpstreamToolCaller
+  /** Calls upstream WITHOUT projectPath injection — for container tools that don't need project context. */
+  callUpstreamToolRaw: UpstreamToolCaller
   searchCapabilities: SearchCapabilities
+  analysisCapabilities: AnalysisCapabilities
   readCapabilities: ReadCapabilities
   shouldApplyWorkaround: WorkaroundChecker
+  containerSession: ContainerSessionConfig | null
 }
 
 type ToolHandler = (args: ToolArgs) => Promise<unknown>
@@ -35,6 +59,7 @@ interface ToolVariant {
   description: ToolDescription
   schemaFactory: (context: ToolContext) => ToolInputSchema
   handlerFactory: (context: ToolContext) => ToolHandler
+  annotations?: ToolAnnotationsLike
   upstreamNames?: string[]
   expose?: ToolExpose
 }
@@ -51,6 +76,7 @@ const EXTRA_REPLACED_TOOL_NAMES = [
   'execute_terminal_command'
 ]
 const RENAME_TOOL_DESCRIPTION = 'Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use edit/apply_patch for renames.'
+const READ_ONLY_TOOL_ANNOTATIONS: ToolAnnotationsLike = {readOnlyHint: true, openWorldHint: false}
 
 function resolveToolDescription(description: ToolDescription, context: ToolContext): string {
   return typeof description === 'function' ? description(context) : description
@@ -66,51 +92,65 @@ function buildToolSpec(
   name: string,
   description: ToolDescription,
   inputSchema: ToolInputSchema,
+  annotations: ToolAnnotationsLike | undefined,
   context: ToolContext
 ): ToolSpecLike {
   return {
     name,
     description: resolveToolDescription(description, context),
-    inputSchema
+    inputSchema,
+    ...(annotations ? {annotations} : {})
   }
 }
 
 const TOOL_VARIANTS: ToolVariant[] = [
   {
     name: 'read_file',
-    description: 'Reads a local file with 1-indexed line numbers, supporting slice and indentation-aware block modes.',
+    description: 'Reads a local file and returns numbered lines (1-indexed) as text. Supports slice, lines, line_columns, offsets, and indentation modes.',
     schemaFactory: () => createReadSchema(true),
-    handlerFactory: ({projectPath, callUpstreamTool, readCapabilities}) => (args) =>
-      handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, {format: 'numbered'}),
+    handlerFactory: ({projectPath, callUpstreamTool, callUpstreamToolRaw, readCapabilities, containerSession}) => {
+      if (containerSession) return (args) => handleContainerReadFile(args, projectPath, callUpstreamToolRaw, containerSession)
+      return (args) => handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, {format: 'numbered'})
+    },
+    annotations: READ_ONLY_TOOL_ANNOTATIONS,
     upstreamNames: ['get_file_text_by_path'],
-    expose: ({readCapabilities}) => !readCapabilities.hasReadFile
+    expose: ({readCapabilities, containerSession}) => containerSession != null || !readCapabilities.hasReadFile
   },
   {
     name: 'search_text',
     description: 'Search for a text substring in project files.',
     schemaFactory: () => createSearchTextSchema(),
-    handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities}) => (args) =>
-      handleSearchTextTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    handlerFactory: ({projectPath, callUpstreamTool, callUpstreamToolRaw, searchCapabilities, containerSession}) => {
+      if (containerSession) return (args) => handleContainerSearchText(args, projectPath, callUpstreamToolRaw, containerSession)
+      return (args) => handleSearchTextTool(args, projectPath, callUpstreamTool, searchCapabilities)
+    },
+    annotations: READ_ONLY_TOOL_ANNOTATIONS,
     upstreamNames: ['search_text'],
-    expose: ({searchCapabilities}) => !searchCapabilities.hasSearchText && searchCapabilities.supportsText
+    expose: ({searchCapabilities, containerSession}) => containerSession != null || (!searchCapabilities.hasSearchText && searchCapabilities.supportsText)
   },
   {
     name: 'search_regex',
     description: 'Search for a regular expression in project files.',
     schemaFactory: () => createSearchRegexSchema(),
-    handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities, shouldApplyWorkaround}) => (args) =>
-      handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities, shouldApplyWorkaround),
+    handlerFactory: ({projectPath, callUpstreamTool, callUpstreamToolRaw, searchCapabilities, shouldApplyWorkaround, containerSession}) => {
+      if (containerSession) return (args) => handleContainerSearchRegex(args, projectPath, callUpstreamToolRaw, containerSession)
+      return (args) => handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities, shouldApplyWorkaround)
+    },
+    annotations: READ_ONLY_TOOL_ANNOTATIONS,
     upstreamNames: ['search_regex'],
-    expose: ({searchCapabilities}) => !searchCapabilities.hasSearchRegex && searchCapabilities.supportsRegex
+    expose: ({searchCapabilities, containerSession}) => containerSession != null || (!searchCapabilities.hasSearchRegex && searchCapabilities.supportsRegex)
   },
   {
     name: 'search_file',
     description: 'Search for files using a glob pattern.',
     schemaFactory: () => createSearchFileSchema(),
-    handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities}) => (args) =>
-      handleSearchFileTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    handlerFactory: ({projectPath, callUpstreamTool, callUpstreamToolRaw, searchCapabilities, containerSession}) => {
+      if (containerSession) return (args) => handleContainerSearchFile(args, projectPath, callUpstreamToolRaw, containerSession)
+      return (args) => handleSearchFileTool(args, projectPath, callUpstreamTool, searchCapabilities)
+    },
+    annotations: READ_ONLY_TOOL_ANNOTATIONS,
     upstreamNames: ['search_file'],
-    expose: ({searchCapabilities}) => !searchCapabilities.hasSearchFile && searchCapabilities.supportsFile
+    expose: ({searchCapabilities, containerSession}) => containerSession != null || (!searchCapabilities.hasSearchFile && searchCapabilities.supportsFile)
   },
   {
     name: 'search_symbol',
@@ -118,6 +158,7 @@ const TOOL_VARIANTS: ToolVariant[] = [
     schemaFactory: () => createSearchSymbolSchema(),
     handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities}) => (args) =>
       handleSearchSymbolTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    annotations: READ_ONLY_TOOL_ANNOTATIONS,
     upstreamNames: ['search_symbol'],
     expose: ({searchCapabilities}) => !searchCapabilities.hasSearchSymbol && searchCapabilities.supportsSymbol
   },
@@ -125,18 +166,23 @@ const TOOL_VARIANTS: ToolVariant[] = [
     name: 'list_dir',
     description: 'Lists entries in a local directory with 1-indexed entry numbers and simple type labels.',
     schemaFactory: () => createListDirSchema(),
-    handlerFactory: ({projectPath, callUpstreamTool}) => (args) =>
-      handleListDirTool(args, projectPath, callUpstreamTool),
+    handlerFactory: ({projectPath, callUpstreamTool, callUpstreamToolRaw, containerSession}) => {
+      if (containerSession) return (args) => handleContainerListDir(args, projectPath, callUpstreamToolRaw, containerSession)
+      return (args) => handleListDirTool(args, projectPath, callUpstreamTool)
+    },
+    annotations: READ_ONLY_TOOL_ANNOTATIONS,
     upstreamNames: ['list_directory_tree']
   },
   {
     name: 'apply_patch',
-    description: 'Apply a patch using the Codex apply_patch format.',
+    description: 'Apply a patch using the Codex apply_patch format or unified git diff format.',
     schemaFactory: () => createApplyPatchSchema(),
-    handlerFactory: ({projectPath, callUpstreamTool}) => (args) =>
-      handleApplyPatchTool(args, projectPath, callUpstreamTool),
+    handlerFactory: ({projectPath, callUpstreamTool, callUpstreamToolRaw, containerSession}) => {
+      if (containerSession) return (args) => handleContainerApplyPatch(args, projectPath, callUpstreamToolRaw, containerSession)
+      return (args) => handleApplyPatchTool(args, projectPath, callUpstreamTool)
+    },
     upstreamNames: ['get_file_text_by_path'],
-    expose: ({readCapabilities}) => !readCapabilities.hasApplyPatch
+    expose: ({readCapabilities, containerSession}) => containerSession != null || !readCapabilities.hasApplyPatch
   },
   {
     name: 'rename',
@@ -145,6 +191,23 @@ const TOOL_VARIANTS: ToolVariant[] = [
     handlerFactory: ({projectPath, callUpstreamTool}) => (args) =>
       handleRenameTool(args, projectPath, callUpstreamTool),
     upstreamNames: ['rename_refactoring']
+  },
+  {
+    name: 'bash',
+    description: 'Execute a bash command in the project workspace (runs inside Docker container when container session is active).',
+    schemaFactory: () => ({
+      type: 'object' as const,
+      properties: {
+        command: {type: 'string', description: 'The bash command to execute'},
+        timeout: {type: 'number', description: 'Timeout in seconds (default: 900). Use 1200+ for build commands.'}
+      },
+      required: ['command']
+    }),
+    handlerFactory: ({projectPath, callUpstreamToolRaw, containerSession}) => {
+      if (!containerSession) throw new Error('bash tool is only available in container mode')
+      return (args) => handleContainerBash(args, projectPath, callUpstreamToolRaw, containerSession)
+    },
+    expose: ({containerSession}) => containerSession != null
   }
 ]
 
@@ -153,7 +216,10 @@ function isExposedVariant(tool: ToolVariant, context: ToolContext): boolean {
 }
 
 function isExposedVariantByDefault(tool: ToolVariant): boolean {
-  return tool.expose !== false
+  // Only include tools that are unconditionally exposed (undefined or true).
+  // Tools with function-typed expose (conditional on context like containerSession)
+  // are excluded from the default set.
+  return tool.expose === undefined || tool.expose === true
 }
 
 export function buildProxyToolingData(context: ToolContext): {
@@ -168,7 +234,7 @@ export function buildProxyToolingData(context: ToolContext): {
   }
   return {
     proxyToolSpecs: variants.map((tool) =>
-      buildToolSpec(tool.name, tool.description, tool.schemaFactory(context), context)
+      buildToolSpec(tool.name, tool.description, tool.schemaFactory(context), tool.annotations, context)
     ),
     proxyToolNames: new Set(variants.map((tool) => tool.name)),
     handlers

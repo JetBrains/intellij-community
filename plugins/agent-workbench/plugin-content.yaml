@@ -6,6 +6,7 @@
   - name: intellij.agent.workbench.claude.common
   - name: intellij.agent.workbench.claude.sessions
   - name: intellij.agent.workbench.codex.common
+  - name: intellij.agent.workbench.container
   - name: intellij.agent.workbench.filewatch
   - name: intellij.agent.workbench.codex.sessions
   - name: intellij.agent.workbench.sessions.core
@@ -18,3 +19,9 @@
   - name: intellij.agent.workbench.sessions.actions
   - name: intellij.agent.workbench.sessions.toolwindow
   - name: intellij.agent.workbench
+- name: lib/modules/intellij.agent.workbench.container.mcp.jar
+  contentModules:
+  - name: intellij.agent.workbench.container.mcp
+- name: lib/modules/intellij.agent.workbench.container.eel.jar
+  contentModules:
+  - name: intellij.agent.workbench.container.eel

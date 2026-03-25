@@ -12,10 +12,19 @@ interface ProjectPathManager {
 
 export function createProjectPathManager({
   projectPath,
-  defaultProjectPathKey = 'project_path'
+  defaultProjectPathKey = 'projectPath',
+  forceInject = false
 }: {
   projectPath: string
   defaultProjectPathKey?: ProjectPathKey
+  /**
+   * When `true`, `project_path` / `projectPath` is injected into every upstream tool call
+   * regardless of whether the tool declared it in its schema. Used when a container
+   * session is active: the host IDE uses the configured project path to disambiguate
+   * between multiple open projects, and tools that don't declare the parameter would
+   * otherwise fall back to "which project?" errors.
+   */
+  forceInject?: boolean
 }): ProjectPathManager {
   let projectPathKey: ProjectPathKey | null = null
   let hasSeenToolsList = false
@@ -41,6 +50,7 @@ export function createProjectPathManager({
   }
 
   function shouldInjectProjectPath(toolName: string | undefined): boolean {
+    if (forceInject) return true
     if (!hasSeenToolsList) return true
     if (!hasProjectPathTools) return false
     if (!toolName) return true

@@ -2,7 +2,15 @@
 
 import {buildProxyToolingData} from './registry'
 import {shouldApplyWorkaround} from '../workarounds'
-import type {ReadCapabilities, SearchCapabilities, ToolArgs, ToolSpecLike, UpstreamToolCaller} from './types'
+import type {
+  AnalysisCapabilities,
+  ContainerSessionConfig,
+  ReadCapabilities,
+  SearchCapabilities,
+  ToolArgs,
+  ToolSpecLike,
+  UpstreamToolCaller
+} from './types'
 
 const DISABLE_NEW_SEARCH_ENV = 'JETBRAINS_MCP_PROXY_DISABLE_NEW_SEARCH'
 
@@ -56,21 +64,50 @@ export function resolveReadCapabilities(
     if (name) names.add(name)
   }
 
-  return {capabilities: {hasReadFile: names.has('read_file')}}
+  return {
+    capabilities: {
+      hasReadFile: names.has('read_file'),
+      hasApplyPatch: names.has('apply_patch')
+    }
+  }
+}
+
+export function resolveAnalysisCapabilities(
+  upstreamTools: ToolSpecLike[] | undefined
+): {capabilities: AnalysisCapabilities} {
+  const names = new Set<string>()
+  for (const tool of upstreamTools ?? []) {
+    const name = typeof tool?.name === 'string' ? tool.name : ''
+    if (name) names.add(name)
+  }
+
+  const hasLintFiles = names.has('lint_files')
+  return {
+    capabilities: {
+      hasLintFiles,
+      supportsLintFiles: hasLintFiles || names.has('get_file_problems')
+    }
+  }
 }
 
 export function createProxyTooling({
   projectPath,
   callUpstreamTool,
+  callUpstreamToolRaw,
   searchCapabilities,
+  analysisCapabilities,
   readCapabilities,
-  ideVersion
+  ideVersion,
+  containerSession
 }: {
   projectPath: string
   callUpstreamTool: UpstreamToolCaller
+  callUpstreamToolRaw?: UpstreamToolCaller
   searchCapabilities: SearchCapabilities
+  analysisCapabilities: AnalysisCapabilities
   readCapabilities: ReadCapabilities
   ideVersion?: string | null
+  containerSession?: ContainerSessionConfig | null
 }): {
   proxyToolSpecs: ToolSpecLike[]
   proxyToolNames: Set<string>
@@ -80,9 +117,12 @@ export function createProxyTooling({
   const {proxyToolSpecs, proxyToolNames, handlers} = buildProxyToolingData({
     projectPath,
     callUpstreamTool,
+    callUpstreamToolRaw: callUpstreamToolRaw ?? callUpstreamTool,
     searchCapabilities,
+    analysisCapabilities,
     readCapabilities,
-    shouldApplyWorkaround: (key) => shouldApplyWorkaround(key, boundVersion)
+    shouldApplyWorkaround: (key) => shouldApplyWorkaround(key, boundVersion),
+    containerSession: containerSession ?? null
   })
 
   async function runProxyToolCall(toolName: string, args: ToolArgs): Promise<unknown> {

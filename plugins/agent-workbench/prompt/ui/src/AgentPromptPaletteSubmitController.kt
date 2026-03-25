@@ -39,6 +39,7 @@ internal class AgentPromptPaletteSubmitController(
   private val onWorkingProjectPathSelected: (String) -> Unit,
   private val onSubmitBlocked: (@Nls String) -> Unit,
   private val onSubmitSucceeded: () -> Unit,
+  private val isContainerModeSelected: () -> Boolean = { false },
 ) {
   fun canSubmit(): Boolean = launchState.canSubmitNow
 
@@ -186,6 +187,7 @@ internal class AgentPromptPaletteSubmitController(
       ),
       targetThreadId = targetThreadId,
       preferredDedicatedFrame = null,
+      containerMode = isContainerModeSelected() && activeExtensionTab() == null,
     )
 
     val result = launcherBridge.launch(request)

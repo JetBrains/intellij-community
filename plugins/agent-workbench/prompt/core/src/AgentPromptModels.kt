@@ -92,6 +92,21 @@ data class AgentPromptLaunchRequest(
     @JvmField val initialMessageRequest: AgentPromptInitialMessageRequest,
     @JvmField val targetThreadId: String? = null,
     @JvmField val preferredDedicatedFrame: Boolean? = null,
+    @JvmField val containerMode: Boolean = false,
+    /**
+     * Extra environment variables to inject into the terminal launch spec.
+     * Used by the EEL container flow to pass `AGENT_CONTAINER_SESSION_ID` and
+     * `AGENT_CONTAINER_WORKSPACE_PATH` to the Claude Code process on the host.
+     * Merged into the launch spec after standard augmentation.
+     */
+    @JvmField val containerSessionEnvVariables: Map<String, String> = emptyMap(),
+    /**
+     * Extra command-line arguments appended to the agent CLI command.
+     * Used by the EEL container flow to add `--disallowedTools` so that
+     * Claude Code's built-in file/bash tools are disabled, forcing all
+     * operations through the ij-proxy MCP tools (which route to the container).
+     */
+    @JvmField val containerSessionExtraArgs: List<String> = emptyList(),
 )
 
 data class AgentPromptProjectPathCandidate(

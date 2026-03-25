@@ -32,6 +32,7 @@ import java.awt.event.ContainerEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.DefaultListModel
+import javax.swing.JCheckBox
 import javax.swing.JEditorPane
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
@@ -61,6 +62,7 @@ internal data class AgentPromptPaletteView(
   @JvmField val existingTaskScrollPane: JBScrollPane,
   @JvmField val footerLabel: JBLabel,
   @JvmField val providerOptionsPanel: JPanel?,
+  @JvmField val containerModeCheckBox: JCheckBox,
 )
 
 private class ComposerContextActionLink(text: @Nls String) : ActionLink(text) {
@@ -250,11 +252,27 @@ internal fun createAgentPromptPaletteView(
     isOpaque = true
   }
 
+  val containerModeCheckBox = JCheckBox(AgentPromptBundle.message("popup.option.container.mode")).apply {
+    isOpaque = false
+    isFocusable = false
+    font = JBUI.Fonts.smallFont()
+    foreground = JBUI.CurrentTheme.Advertiser.foreground()
+    border = JBUI.Borders.emptyLeft(4)
+  }
+
+  val footerPanel = JPanel(BorderLayout()).apply {
+    isOpaque = true
+    background = JBUI.CurrentTheme.Advertiser.background()
+    border = JBUI.CurrentTheme.Advertiser.border()
+    add(containerModeCheckBox, BorderLayout.WEST)
+    add(footerLabel, BorderLayout.CENTER)
+  }
+
   val bottomPanel = BorderLayoutPanel().apply {
     background = JBUI.CurrentTheme.Popup.BACKGROUND
     border = JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 1, 0, 0, 0)
     addToCenter(existingTaskScrollPane)
-    addToBottom(footerLabel)
+    addToBottom(footerPanel)
   }
   installComposerContextVisibilitySync(
     contextChipsPanel = contextChipsPanel,
@@ -289,6 +307,7 @@ internal fun createAgentPromptPaletteView(
     existingTaskScrollPane = existingTaskScrollPane,
     footerLabel = footerLabel,
     providerOptionsPanel = providerOptionsPanel,
+    containerModeCheckBox = containerModeCheckBox,
   )
 }
 

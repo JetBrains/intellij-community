@@ -159,6 +159,15 @@ interface AgentSessionProviderDescriptor {
 data class AgentSessionTerminalLaunchSpec(
   @JvmField val command: List<String>,
   @JvmField val envVariables: Map<String, String> = emptyMap(),
+  /**
+   * When set, this session targets a Docker container managed by [ContainerSessionManager].
+   * The ij-proxy MCP server routes file I/O and bash tool calls through the container
+   * instead of the local filesystem. Semantic tools (search_symbol, get_file_problems)
+   * fall back to the host IDE index.
+   *
+   * The ID is also passed to Claude Code as `AGENT_CONTAINER_SESSION_ID` env var.
+   */
+  @JvmField val containerSessionId: String? = null,
 )
 
 data class AgentSessionLaunchSpec(

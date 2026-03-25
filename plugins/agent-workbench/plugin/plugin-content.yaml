@@ -28,6 +28,22 @@
 - name: lib/modules/intellij.agent.workbench.common.jar
   contentModules:
   - name: intellij.agent.workbench.common
+- name: lib/modules/intellij.agent.workbench.container.eel.jar
+  contentModules:
+  - name: intellij.agent.workbench.container.eel
+- name: lib/modules/intellij.agent.workbench.container.jar
+  contentModules:
+  - name: intellij.agent.workbench.container
+- name: lib/modules/intellij.agent.workbench.container.mcp.jar
+  contentModules:
+  - name: intellij.agent.workbench.container.mcp
+  library: io.modelcontextprotocol.kotlin.sdk
+  files:
+  - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0/kotlin-sdk-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0/kotlin-sdk-client-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0/kotlin-sdk-server-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0/kotlin-sdk-core-jvm-0.jar
+  reason: <- intellij.agent.workbench.container.mcp
 - name: lib/modules/intellij.agent.workbench.filewatch.jar
   contentModules:
   - name: intellij.agent.workbench.filewatch
