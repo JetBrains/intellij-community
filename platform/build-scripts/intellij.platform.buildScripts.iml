@@ -212,6 +212,9 @@
     <orderEntry type="module" module-name="intellij.libraries.snakeyaml.engine" scope="RUNTIME" />
     <orderEntry type="library" name="netty-tcnative-boringssl" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.platform.util.multiplatform" />
+    <orderEntry type="module" module-name="intellij.platform.util.base.multiplatform" />
+    <orderEntry type="module" module-name="intellij.platform.util.base" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
     <orderEntry type="library" name="com.jetbrains.fus.reporting.fus-api" level="project" />
     <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />

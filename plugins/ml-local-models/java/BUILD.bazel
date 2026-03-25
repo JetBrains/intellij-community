@@ -16,6 +16,8 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/java-impl:impl",
+    "//java/java-psi-api:psi",
+    "//java/java-frontback-psi-api:frontback-psi",
     "//platform/analysis-api:analysis",
     "//platform/backend/workspace",
     "//plugins/ml-local-models:ml-models-local",
@@ -24,6 +26,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/workspace/jps",
     "//platform/lang-api:lang",
+    "//platform/ide-core",
   ]
 )
 
@@ -35,6 +38,8 @@ jvm_library(
   runtime_deps = [
     ":java",
     "//java/java-impl:impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/backend/workspace:workspace_test_lib",
     "//plugins/ml-local-models:ml-models-local_test_lib",
@@ -43,6 +48,7 @@ jvm_library(
     "//platform/workspace/storage:storage_test_lib",
     "//platform/workspace/jps:jps_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.ml.models.local.java` end

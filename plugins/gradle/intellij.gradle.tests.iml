@@ -31,6 +31,7 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
@@ -52,7 +53,10 @@
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.boot" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" scope="TEST" />
@@ -65,6 +69,7 @@
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.syntax" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.eelJava" scope="TEST" />
@@ -75,6 +80,7 @@
     <orderEntry type="module" module-name="intellij.gradle.completion" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.tests" scope="TEST" />
   </component>
 </module>

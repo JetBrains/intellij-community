@@ -51,6 +51,7 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//platform/platform-util-io:ide-util-io",
     "//platform/util-ex",
     "//platform/platform-impl:ide-impl",
     "//platform/core-impl",
@@ -80,6 +81,7 @@ jvm_library(
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/execution",
     "//platform/ide-core",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -112,6 +114,7 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-util-io-impl:ide-util-io-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
     "//platform/util-ex:util-ex_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/core-impl:core-impl_test_lib",
@@ -141,6 +144,7 @@ jvm_library(
     "//platform/remote-topics/shared:rpc-topics_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/ide-core:ide-core_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl` end
@@ -222,6 +226,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//platform/platform-util-io:ide-util-io",
     "//platform/util-ex",
     "//platform/util-ex:util-ex_test_lib",
     "//platform/platform-impl:ide-impl",
@@ -239,6 +244,8 @@ jvm_library(
     "//platform/util/text-matching:text-matching_test_lib",
     "//platform/util/coroutines",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
     "//platform/ide-core-impl",
     "//platform/platform-impl/rpc",
     "//platform/editor-ui-ex:editor-ex",
@@ -278,6 +285,7 @@ jvm_library(
     ":debugger-impl-tests",
     "//platform/observable:observable_test_lib",
     "//platform/platform-util-io-impl:ide-util-io-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/platform-impl/rpc:rpc_test_lib",

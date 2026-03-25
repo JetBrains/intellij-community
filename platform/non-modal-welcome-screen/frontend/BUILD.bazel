@@ -25,6 +25,7 @@ jvm_library(
     "//platform/project/shared:project",
     "//fleet/rpc",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
   ],
   plugins = ["@lib//:compose-plugin"]
 )
@@ -46,6 +47,7 @@ jvm_library(
     "//platform/project/shared:project_test_lib",
     "//fleet/rpc:rpc_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

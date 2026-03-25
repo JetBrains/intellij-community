@@ -25,6 +25,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/vcs-impl",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/platform-impl:ide-impl",
     "//libraries/guava",
     "//platform/forms_rt:java-guiForms-rt",
@@ -44,6 +45,8 @@ jvm_library(
     "//libraries/fastutil",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/lang-core",
+    "//platform/util:util-ui",
+    "//platform/util-ex",
   ]
 )
 
@@ -67,6 +70,7 @@ jvm_library(
     "//platform/platform-api:ide_test_lib",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//libraries/guava:guava_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
@@ -88,6 +92,8 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//platform/lang-core:lang-core_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
   ]
 )
 ### auto-generated section `build intellij.vcs.hg` end
@@ -138,6 +144,7 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/platform-impl:ide-impl",
     "//libraries/guava",
     "//libraries/guava:guava_test_lib",
@@ -164,6 +171,8 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/coroutines",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
     "//platform/dvcs-impl/shared",
     "//platform/dvcs-impl/shared:shared_test_lib",
     "//platform/vcs-impl/shared",
@@ -182,6 +191,7 @@ jvm_library(
   runtime_deps = [
     ":vcs-hg-tests",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
   ]

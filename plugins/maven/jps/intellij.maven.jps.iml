@@ -33,6 +33,8 @@
     <orderEntry type="module" module-name="intellij.libraries.plexus.utils" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.util.base.multiplatform" />
+    <orderEntry type="module" module-name="intellij.platform.util.base" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />

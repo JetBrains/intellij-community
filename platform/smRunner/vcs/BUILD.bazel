@@ -29,9 +29,12 @@ jvm_library(
     "//platform/vcs-impl",
     "//libraries/kotlinx/coroutines/core",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/util/progress",
+    "//platform/util:util-ui",
     "//platform/lang-impl",
     "//platform/execution",
+    "//platform/testRunner",
   ]
 )
 
@@ -56,9 +59,12 @@ jvm_library(
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/util/progress:progress_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/execution:execution_test_lib",
+    "//platform/testRunner:testRunner_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.smRunner.vcs` end

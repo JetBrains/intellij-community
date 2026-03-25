@@ -55,6 +55,7 @@
     <orderEntry type="module" module-name="intellij.textmate.plugin" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="io.mockk.jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ideLafBridge" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.jewel.ideLafBridge" />
 </module>

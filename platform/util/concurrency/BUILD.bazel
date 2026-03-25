@@ -14,6 +14,8 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/diagnostic",
     "//platform/util/coroutines",
+    "//platform/util/multiplatform",
+    "//platform/util/base",
   ]
 )
 
@@ -30,6 +32,8 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/diagnostic:diagnostic_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
     "@lib//:assert_j",
     "@lib//:junit5",
   ]

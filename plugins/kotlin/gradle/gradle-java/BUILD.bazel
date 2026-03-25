@@ -36,6 +36,7 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-gradle-plugin-idea-proto",
     "@lib//:kotlin-gradle-plugin-idea",
@@ -75,8 +76,11 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/core-ui",
+    "//platform/core-impl",
     "//platform/platform-util-io:ide-util-io",
     "//java/java-impl:impl",
+    "//java/java-psi-api:psi",
+    "//java/java-syntax:syntax",
     "//java/idea-ui:ui",
     "//java/execution/impl",
     "//java/compiler/impl",
@@ -94,6 +98,9 @@ jvm_library(
     "//platform/execution",
     "//plugins/kotlin/base/indices",
     "//platform/util/jdom",
+    "//platform/util:util-ui",
+    "//platform/statistics",
+    "//platform/testRunner",
   ]
 )
 
@@ -112,6 +119,7 @@ jvm_library(
     "//platform/execution-impl:execution-impl_test_lib",
     "//platform/external-system-impl:externalSystem-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//libraries/guava:guava_test_lib",
     "//jps/model-api:model_test_lib",
@@ -147,8 +155,11 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/xdebugger-api:debugger_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
     "//java/java-impl:impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//java/java-syntax:syntax_test_lib",
     "//java/idea-ui:ui_test_lib",
     "//java/execution/impl:impl_test_lib",
     "//java/compiler/impl:impl_test_lib",
@@ -167,6 +178,9 @@ jvm_library(
     "//platform/execution:execution_test_lib",
     "//plugins/kotlin/base/indices:indices_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/testRunner:testRunner_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java` end

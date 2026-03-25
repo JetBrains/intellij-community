@@ -32,6 +32,7 @@ jvm_library(
     "//libraries/guava",
     "//platform/kernel/shared:kernel",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/statistics",
     "//platform/indexing-api:indexing",
     "//platform/lang-impl",
@@ -43,6 +44,7 @@ jvm_library(
     "//platform/eel-provider",
     "//libraries/caffeine",
     "//platform/observable",
+    "//platform/progress/shared:ide-progress",
     "//libraries/kotlinx/datetime",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
@@ -51,6 +53,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/lang-api:lang",
     "//platform/remote-topics/shared:rpc-topics",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -79,6 +82,7 @@ jvm_library(
     "//libraries/guava:guava_test_lib",
     "//platform/kernel/shared:kernel_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//platform/indexing-api:indexing_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
@@ -90,6 +94,7 @@ jvm_library(
     "//platform/eel-provider:eel-provider_test_lib",
     "//libraries/caffeine:caffeine_test_lib",
     "//platform/observable:observable_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//libraries/kotlinx/datetime:datetime_test_lib",
     "//libraries/kotlinx/serialization/core:core_test_lib",
     "//libraries/kotlinx/serialization/json:json_test_lib",
@@ -98,6 +103,7 @@ jvm_library(
     "//platform/util/jdom:jdom_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//platform/remote-topics/shared:rpc-topics_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.terminal.frontend` end

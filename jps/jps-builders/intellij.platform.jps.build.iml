@@ -65,6 +65,9 @@
     <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" />
     <orderEntry type="module" module-name="intellij.platform.tracing.rt" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
+    <orderEntry type="module" module-name="intellij.platform.util.multiplatform" />
+    <orderEntry type="module" module-name="intellij.platform.util.base.multiplatform" />
+    <orderEntry type="module" module-name="intellij.platform.util.base" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.dependencyGraph" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />

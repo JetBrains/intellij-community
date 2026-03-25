@@ -26,9 +26,11 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
+    "//platform/util:util-ui",
     "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
@@ -36,6 +38,7 @@ jvm_library(
     "//java/openapi:java",
     "//java/compiler/impl",
     "//platform/core-ui",
+    "//platform/core-impl",
     "//java/java-frontback-psi-impl:frontback-psi-impl",
   ]
 )
@@ -53,9 +56,11 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/util:util_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/platform-api:ide_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//java/java-psi-api:psi_test_lib",
@@ -65,6 +70,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
     "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
   ]
 )
@@ -130,6 +136,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//java/java-frontback-psi-impl:frontback-psi-impl",
     "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
   ],

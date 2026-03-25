@@ -15,10 +15,14 @@ jvm_library(
   resources = [":java-uast-ide_resources"],
   deps = [
     "//java/java-impl:impl",
+    "//java/java-psi-api:psi",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//uast/uast-java:java-uast",
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//uast/uast-common-ide:ide",
   ],
   exports = ["//uast/uast-java:java-uast"]
 )
@@ -35,10 +39,14 @@ jvm_library(
   runtime_deps = [
     ":java-uast-ide",
     "//java/java-impl:impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//uast/uast-java:java-uast_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
+    "//uast/uast-common-ide:ide_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.uast.ide` end

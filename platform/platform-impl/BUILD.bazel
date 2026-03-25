@@ -39,6 +39,7 @@ jvm_library(
     "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
+    "//platform/welcome-screen",
     "//platform/welcome-screen-impl:welcomeScreen-impl",
     "//libraries/oro-matcher",
     "//jps/model-api:model",
@@ -103,6 +104,7 @@ jvm_library(
     "//platform/util/xmlDom",
     "//platform/ide-core-impl",
     "//platform/ide-core/plugins",
+    "//platform/ide-core",
     "//platform/platform-util-netty:ide-util-netty",
     "//libraries/aalto-xml",
     "//libraries/jbr",
@@ -162,10 +164,7 @@ jvm_library(
     "//libraries/rd/core",
     "//platform/forms_rt:java-guiForms-rt",
   ],
-  exports = [
-    "//platform/platform-api:ide",
-    "//platform/util:util-ui",
-  ],
+  exports = ["//platform/platform-api:ide"],
   runtime_deps = [
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
@@ -198,8 +197,6 @@ jvm_library(
   exports = [
     "//platform/platform-api:ide",
     "//platform/platform-api:ide_test_lib",
-    "//platform/util:util-ui",
-    "//platform/util:util-ui_test_lib",
   ],
   runtime_deps = [
     ":ide-impl",
@@ -210,6 +207,7 @@ jvm_library(
     "//platform/credential-store:credential-store_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/platform-api:ide_test_lib",
+    "//platform/welcome-screen:welcome-screen_test_lib",
     "//platform/welcome-screen-impl:welcomeScreen-impl_test_lib",
     "//libraries/oro-matcher:oro-matcher_test_lib",
     "//jps/model-api:model_test_lib",
@@ -272,6 +270,7 @@ jvm_library(
     "//platform/util/xmlDom:xmlDom_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/ide-core/plugins:plugins_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/platform-util-netty:ide-util-netty_test_lib",
     "//libraries/aalto-xml:aalto-xml_test_lib",
     "//libraries/jgoodies/common:common_test_lib",
@@ -354,10 +353,7 @@ jvm_library(
   module_name = "intellij.platform.ide.impl.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  exports = [
-    "//platform/platform-api:ide",
-    "//platform/util:util-ui",
-  ],
+  exports = ["//platform/platform-api:ide"],
   runtime_deps = [
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
@@ -520,6 +516,7 @@ jvm_library(
     "//platform/util/xmlDom:xmlDom_test_lib",
     "//platform/ide-core-impl",
     "//platform/ide-core/plugins",
+    "//platform/ide-core",
     "//platform/platform-util-netty:ide-util-netty",
     "//libraries/aalto-xml",
     "//libraries/aalto-xml:aalto-xml_test_lib",
@@ -630,8 +627,6 @@ jvm_library(
   exports = [
     "//platform/platform-api:ide",
     "//platform/platform-api:ide_test_lib",
-    "//platform/util:util-ui",
-    "//platform/util:util-ui_test_lib",
   ],
   runtime_deps = [
     ":ide-impl-tests",
@@ -641,6 +636,7 @@ jvm_library(
     "//libraries/protobuf:protobuf_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
     "//platform/ide-core/plugins:plugins_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/platform-util-netty:ide-util-netty_test_lib",
     "//libraries/jgoodies/common:common_test_lib",
     "//libraries/jgoodies/forms:forms_test_lib",

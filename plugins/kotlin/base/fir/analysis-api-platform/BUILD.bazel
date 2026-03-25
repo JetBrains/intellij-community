@@ -194,6 +194,8 @@ jvm_library(
     "//java/openapi:java_test_lib",
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-api:externalSystem_test_lib",
+    "//java/java-syntax:syntax",
+    "//java/java-syntax:syntax_test_lib",
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/project-configuration:project-configuration_test_lib",
     "//plugins/kotlin/base/facet",

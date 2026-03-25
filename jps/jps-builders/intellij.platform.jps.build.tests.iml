@@ -81,5 +81,7 @@
     <orderEntry type="module" module-name="intellij.libraries.mvstore" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.syntax" scope="TEST" />
   </component>
 </module>

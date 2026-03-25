@@ -42,11 +42,13 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.facet" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" />
     <orderEntry type="module" module-name="intellij.kotlin.base.platforms" />
     <orderEntry type="module" module-name="intellij.kotlin.base.resources" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
@@ -56,7 +58,9 @@
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java.syntax" />
     <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.java.analysis" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
@@ -68,5 +72,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight.minimal" exported="" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
   </component>
 </module>

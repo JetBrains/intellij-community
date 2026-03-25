@@ -44,6 +44,7 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.libraries.pty4j" />
     <orderEntry type="library" name="jna" level="project" />
@@ -116,7 +117,9 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.platform.rpc.topics" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
   </component>
 </module>

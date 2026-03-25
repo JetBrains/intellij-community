@@ -23,6 +23,8 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/core-ui",
     "//platform/platform-impl/rpc",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
     "//platform/util/coroutines",
     "//platform/analysis-api:analysis",
     "//platform/dvcs-impl/shared",
@@ -30,6 +32,7 @@ jvm_library(
     "//fleet/kernel",
     "//platform/searchEverywhere/frontend",
     "//platform/scopes",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -48,6 +51,8 @@ jvm_library(
     "//platform/project/shared:project_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/dvcs-impl/shared:shared_test_lib",
@@ -55,6 +60,7 @@ jvm_library(
     "//fleet/kernel:kernel_test_lib",
     "//platform/searchEverywhere/frontend:frontend_test_lib",
     "//platform/scopes:scopes_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.vcs.git.frontend` end

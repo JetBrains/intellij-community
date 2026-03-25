@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="intellij.completionMlRanking" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module-library">

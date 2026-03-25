@@ -20,11 +20,13 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/analysis-impl",
     "//platform/core-ui",
+    "//platform/core-impl",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/util:util-ui",
     "//platform/lang-impl",
     "//java/java-frontback-psi-impl:frontback-psi-impl",
     "//platform/platform-api:ide",
+    "//platform/ide-core",
   ],
   runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
 )
@@ -41,12 +43,14 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/analysis-impl:analysis-impl_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
     "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
     "//platform/util:util-ui_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
     "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
     "//platform/platform-api:ide_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.highlighting.minimal` end

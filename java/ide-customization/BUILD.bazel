@@ -15,6 +15,7 @@ jvm_library(
   resources = [":ide-customization_resources"],
   deps = [
     "//java/java-psi-api:psi",
+    "//java/java-frontback-psi-api:frontback-psi",
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/lang-api:lang",
@@ -41,6 +42,7 @@ jvm_library(
   runtime_deps = [
     ":ide-customization",
     "//java/java-psi-api:psi_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
@@ -102,6 +104,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/lang-api:lang_test_lib",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/lang-core",
     "//platform/lang-core:lang-core_test_lib",
     "@lib//:junit5",
@@ -122,6 +125,7 @@ jvm_library(
     "//platform/testRunner:testRunner_test_lib",
     "//notebooks/visualization:visualization_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.ide.customization.tests` end

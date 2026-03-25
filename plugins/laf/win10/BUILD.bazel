@@ -18,8 +18,10 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "@lib//:java_compatibility",
     "//platform/core-ui",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -33,7 +35,9 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.laf.win10` end

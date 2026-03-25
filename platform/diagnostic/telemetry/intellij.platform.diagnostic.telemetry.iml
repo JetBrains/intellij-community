@@ -30,6 +30,7 @@
     <orderEntry type="library" scope="PROVIDED" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.util.base" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" exported="" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinTestAssertionsCoreJvm" scope="TEST" />

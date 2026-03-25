@@ -60,7 +60,7 @@
     <orderEntry type="module" module-name="intellij.regexp" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.usageView" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.testRunner" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />

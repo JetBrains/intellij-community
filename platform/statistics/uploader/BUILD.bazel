@@ -25,8 +25,7 @@ jvm_library(
     "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
     "@lib//:com-jetbrains-fus-reporting-fus-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
-  ],
-  exports = ["//platform/statistics/config"]
+  ]
 )
 
 jvm_library(
@@ -34,10 +33,6 @@ jvm_library(
   module_name = "intellij.platform.statistics.uploader",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  exports = [
-    "//platform/statistics/config",
-    "//platform/statistics/config:config_test_lib",
-  ],
   runtime_deps = [
     ":uploader",
     "//platform/statistics/config:config_test_lib",

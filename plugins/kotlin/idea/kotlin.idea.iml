@@ -34,7 +34,9 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
@@ -97,9 +99,10 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="intellij.platform.statistics" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.jvm.analysis" />
     <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java.syntax" />
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="module" module-name="intellij.java.execution" />
@@ -116,10 +119,12 @@
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.libraries.jsoup" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" />
@@ -136,10 +141,13 @@
     <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" />
     <orderEntry type="module" module-name="intellij.kotlin.searching.base" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="kotlin.code-insight.line-markers.shared" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections.shared" />
     <orderEntry type="module" module-name="intellij.kotlin.ide" />

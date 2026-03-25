@@ -15,8 +15,10 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.platform.uast" />
     <orderEntry type="module" module-name="intellij.platform.diff" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
   </component>
 </module>

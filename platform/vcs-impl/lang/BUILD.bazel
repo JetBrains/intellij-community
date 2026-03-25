@@ -21,6 +21,7 @@ jvm_library(
     "//platform/diff-api:diff",
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/indexing-api:indexing",
     "//platform/core-impl",
     "//platform/indexing-impl",
@@ -43,6 +44,7 @@ jvm_library(
     "//platform/vcs-impl/shared",
     "//platform/lang-api:lang",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -60,6 +62,7 @@ jvm_library(
     "//platform/diff-api:diff_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/indexing-api:indexing_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//platform/indexing-impl:indexing-impl_test_lib",
@@ -82,6 +85,7 @@ jvm_library(
     "//platform/vcs-impl/shared:shared_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.lang` end

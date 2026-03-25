@@ -32,6 +32,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/code-style-api:codeStyle",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
     "//platform/execution",
     "//platform/refactoring",
     "//platform/forms_rt:java-guiForms-rt",
@@ -41,7 +42,10 @@ jvm_library(
     "//libraries/fastutil",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ],
-  exports = ["//platform/platform-api:ide"]
+  exports = [
+    "//platform/platform-api:ide",
+    "@lib//:kotlin-stdlib",
+  ]
 )
 
 jvm_library(
@@ -52,6 +56,7 @@ jvm_library(
   exports = [
     "//platform/platform-api:ide",
     "//platform/platform-api:ide_test_lib",
+    "@lib//:kotlin-stdlib",
   ],
   runtime_deps = [
     ":lang",
@@ -76,6 +81,7 @@ jvm_library(
     "//platform/core-ui:core-ui_test_lib",
     "//platform/code-style-api:codeStyle_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/refactoring:refactoring_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",

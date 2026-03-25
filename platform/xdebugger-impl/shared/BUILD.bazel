@@ -19,6 +19,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/core-ui",
+    "//platform/util:util-ui",
     "//platform/platform-api:ide",
     "//platform/kernel/shared:kernel",
     "//platform/util/concurrency",
@@ -40,6 +41,7 @@ jvm_library(
     "//platform/execution",
     "//platform/statistics",
     "//platform/platform-impl/internal",
+    "//platform/ide-core",
   ]
 )
 
@@ -54,6 +56,7 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//platform/platform-api:ide_test_lib",
     "//platform/kernel/shared:kernel_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
@@ -75,6 +78,7 @@ jvm_library(
     "//platform/execution:execution_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//platform/platform-impl/internal:internal_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.shared` end

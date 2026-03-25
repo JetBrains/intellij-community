@@ -38,6 +38,8 @@ jvm_library(
     "//platform/code-style-api:codeStyle_test_lib",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",

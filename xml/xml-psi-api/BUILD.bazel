@@ -19,6 +19,8 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/analysis-api:analysis",
     "//platform/util",
+    "//platform/util/multiplatform",
+    "//platform/util/base",
     "//platform/editor-ui-api:editor-ui",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
@@ -37,6 +39,8 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/util:util_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]

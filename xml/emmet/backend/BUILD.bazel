@@ -28,6 +28,11 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
+  name = "platform_editor-ui_provided",
+  lib = "//platform/editor-ui-api:editor-ui"
+)
+
+jvm_provided_library(
   name = "platform_java-guiForms-rt_provided",
   lib = "//platform/forms_rt:java-guiForms-rt"
 )
@@ -69,6 +74,7 @@ jvm_library(
     ":platform_ide-core_provided",
     ":platform_lang-impl_provided",
     ":platform_util-ui_provided",
+    ":platform_editor-ui_provided",
     ":platform_java-guiForms-rt_provided",
     ":platform_projectModel_provided",
     ":platform_analysis_provided",
@@ -94,6 +100,8 @@ jvm_library(
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/util:util-ui",
     "//platform/util:util-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//platform/projectModel-api:projectModel",

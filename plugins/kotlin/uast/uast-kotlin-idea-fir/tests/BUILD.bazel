@@ -21,6 +21,8 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/plugin/k2:k2_test_lib",
     "@lib//:junit4",

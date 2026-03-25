@@ -34,6 +34,7 @@
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="library" name="vavr" level="project" />
     <orderEntry type="library" name="javax-inject" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core" />
@@ -53,9 +54,13 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.java.analysis" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi" />
     <orderEntry type="module" module-name="intellij.kotlin.base.statistics" />
     <orderEntry type="library" name="kotlinc.analysis-api-impl-base" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />

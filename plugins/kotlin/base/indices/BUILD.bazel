@@ -14,12 +14,14 @@ jvm_library(
     "//plugins/kotlin/base/psi",
     "//platform/core-impl",
     "//platform/indexing-api:indexing",
+    "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",
     "//java/manifest",
     "//platform/indexing-impl",
     "//platform/ide-core",
     "//platform/analysis-api:analysis",
     "//java/openapi:java",
+    "//java/java-frontback-psi-api:frontback-psi",
     "//plugins/kotlin/base/plugin",
   ]
 )
@@ -36,12 +38,14 @@ jvm_library(
     "//plugins/kotlin/base/psi:psi_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//platform/indexing-api:indexing_test_lib",
+    "//java/java-psi-api:psi_test_lib",
     "//java/java-psi-impl:psi-impl_test_lib",
     "//java/manifest:manifest_test_lib",
     "//platform/indexing-impl:indexing-impl_test_lib",
     "//platform/ide-core:ide-core_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//java/openapi:java_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
   ]
 )

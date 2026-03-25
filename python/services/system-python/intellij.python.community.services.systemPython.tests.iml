@@ -37,6 +37,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.services.systemPython" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.python.community.services.systemPython" />
 </module>

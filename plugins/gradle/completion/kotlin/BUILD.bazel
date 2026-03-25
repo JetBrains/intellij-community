@@ -16,6 +16,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//platform/util",
     "//platform/analysis-api:analysis",
     "//plugins/repository-search/completion",
@@ -40,6 +41,7 @@ jvm_library(
   runtime_deps = [
     ":kotlin",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/util:util_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//plugins/repository-search/completion:completion_test_lib",

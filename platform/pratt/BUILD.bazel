@@ -17,6 +17,8 @@ jvm_library(
     "//platform/core-api:core",
     "@lib//:jetbrains-annotations",
     "//platform/util",
+    "//platform/util/multiplatform",
+    "//platform/util/base",
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
@@ -32,6 +34,8 @@ jvm_library(
     ":pratt",
     "//platform/core-api:core_test_lib",
     "//platform/util:util_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]

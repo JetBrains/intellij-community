@@ -10,6 +10,7 @@ jvm_library(
   deps = [
     "//platform/util",
     "//platform/util/jdom",
+    "//platform/util/base",
     "//jps/model-serialization",
   ]
 )
@@ -24,6 +25,7 @@ jvm_library(
     ":common",
     "//platform/util:util_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util/base:base_test_lib",
     "//jps/model-serialization:model-serialization_test_lib",
   ]
 )

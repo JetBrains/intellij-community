@@ -36,8 +36,10 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/lang-impl",
     "//platform/core-ui",
+    "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//java/java-impl:impl",
+    "//java/java-psi-api:psi",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
@@ -46,6 +48,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//plugins/kotlin/base/kotlin.base.serialization",
     "//platform/lang-api:lang",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -72,8 +75,10 @@ jvm_library(
     "//platform/analysis-impl:analysis-impl_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//java/java-impl:impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
     "//plugins/kotlin/base/code-insight:code-insight_test_lib",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
     "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
@@ -82,6 +87,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json:json_test_lib",
     "//plugins/kotlin/base/kotlin.base.serialization:kotlin.base.serialization_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.completion.impl.shared` end

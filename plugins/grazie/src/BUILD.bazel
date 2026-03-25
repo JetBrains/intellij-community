@@ -89,6 +89,8 @@ jvm_library(
     "//platform/diff-impl",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
   ],
   exports = [
     "@lib//:grazie-core-ai-grazie-api-gateway-client-jvm",
@@ -174,6 +176,8 @@ jvm_library(
     "//platform/diff-impl:diff-impl_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
   ]
 )
 ### auto-generated section `build intellij.grazie.core` end

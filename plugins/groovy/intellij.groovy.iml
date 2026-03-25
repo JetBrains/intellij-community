@@ -25,6 +25,8 @@
     <orderEntry type="module" module-name="intellij.xml.dom" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java.syntax" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.java.debugger" />
     <orderEntry type="module" module-name="intellij.groovy.rt" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
@@ -33,6 +35,7 @@
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" />
@@ -71,6 +74,8 @@
     <orderEntry type="module" module-name="intellij.libraries.asm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
@@ -80,8 +85,11 @@
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.java.unscramble" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" />
     <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
   </component>
 </module>

@@ -39,5 +39,7 @@
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.platform.util.base.multiplatform" />
+    <orderEntry type="module" module-name="intellij.platform.util.base" />
   </component>
 </module>

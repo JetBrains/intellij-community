@@ -41,12 +41,18 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/editor-ui-api:editor-ui",
     "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//plugins/grazie",
@@ -56,6 +62,8 @@ jvm_library(
     "@lib//:kotlin-test",
     "//java/testFramework",
     "//java/testFramework:testFramework_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
     "@lib//:grazie-tests-ai-grazie-spell-hunspell-de",
     "@lib//:grazie-tests-ai-grazie-spell-hunspell-ru",
     "@lib//:grazie-tests-ai-grazie-spell-hunspell-uk",
@@ -78,6 +86,8 @@ jvm_library(
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//xml/xml-psi-api:psi",
     "//xml/xml-psi-api:psi_test_lib",
+    "//xml/xml-parser:parser",
+    "//xml/xml-parser:parser_test_lib",
     "//plugins/grazie/java",
     "//plugins/grazie/java:java_test_lib",
     "//platform/vcs-api:vcs",
@@ -104,6 +114,7 @@ jvm_library(
     "//RegExpSupport:regexp-tests_test_lib",
     "//platform/xdebugger-impl:debugger-impl-tests",
     "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+    "//platform/ide-core",
     "//libraries/fastutil",
     "//libraries/fastutil:fastutil_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
@@ -116,7 +127,10 @@ jvm_library(
     "@lib//:grazie-tests-ai-grazie-spell-hunspell-ru",
     "@lib//:grazie-tests-ai-grazie-spell-hunspell-uk",
   ],
-  runtime_deps = [":grazie-tests"]
+  runtime_deps = [
+    ":grazie-tests",
+    "//platform/ide-core:ide-core_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.grazie.tests` end
 

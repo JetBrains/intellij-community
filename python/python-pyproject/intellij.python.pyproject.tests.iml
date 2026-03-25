@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.toml.core" scope="TEST" />
     <orderEntry type="library" exported="" scope="TEST" name="tuweni-toml" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />

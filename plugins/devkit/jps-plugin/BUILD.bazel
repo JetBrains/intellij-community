@@ -23,6 +23,7 @@ jvm_library(
     "//platform/util/jdom",
     "@community//build:build-javac-rt",
     "//platform/util",
+    "//platform/util/base",
     "@lib//:jetbrains-annotations",
   ]
 )
@@ -43,6 +44,7 @@ jvm_library(
     "//platform/util/jdom:jdom_test_lib",
     "@community//build:build-javac-rt_test_lib",
     "//platform/util:util_test_lib",
+    "//platform/util/base:base_test_lib",
   ]
 )
 ### auto-generated section `build intellij.devkit.jps` end
@@ -75,6 +77,8 @@ jvm_library(
     "//plugins/devkit/jps-plugin:jps_test_lib",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//jps/model-api:model",
     "//jps/model-api:model_test_lib",
     "//jps/model-impl",

@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="intellij.platform.workspace.storage.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage.testEntities" scope="TEST" />
@@ -33,12 +34,15 @@
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.projectStructure" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.workspace.jps" />
 </module>

@@ -57,5 +57,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="module" module-name="intellij.platform.usageView.impl" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

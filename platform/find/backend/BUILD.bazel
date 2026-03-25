@@ -26,6 +26,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -47,6 +48,7 @@ jvm_library(
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.find.backend` end

@@ -48,6 +48,9 @@ jvm_library(
     "//libraries/commons/compress",
     "//libraries/commons/io",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/util:util-ui",
+    "//platform/util-ex",
+    "//jps/model-serialization",
   ],
   exports = [
     "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands",
@@ -87,6 +90,9 @@ jvm_library(
     "//libraries/commons/compress:compress_test_lib",
     "//libraries/commons/io:io_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
   ]
 )
 ### auto-generated section `build intellij.tools.ide.starter` end

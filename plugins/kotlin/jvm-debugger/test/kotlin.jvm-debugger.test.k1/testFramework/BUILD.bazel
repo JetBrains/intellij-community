@@ -54,6 +54,8 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/execution",
     "//platform/execution:execution_test_lib",
     "//platform/external-system-api:externalSystem",

@@ -28,6 +28,7 @@ jvm_library(
     "//platform/remote-topics/shared:rpc-topics",
     "//libraries/kotlinx/serialization/core",
     "//platform/platform-api:ide",
+    "//platform/ide-core",
   ]
 )
 
@@ -45,6 +46,7 @@ jvm_library(
     "//platform/remote-topics/shared:rpc-topics_test_lib",
     "//libraries/kotlinx/serialization/core:core_test_lib",
     "//platform/platform-api:ide_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.common` end

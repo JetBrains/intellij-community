@@ -11,14 +11,18 @@
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.grazie" exported="" />
     <orderEntry type="module" module-name="intellij.grazie.core" scope="TEST" />
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" />
+    <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
     <orderEntry type="module-library" exported="" scope="TEST">
       <library name="ai.grazie.spell.hunspell.de" type="repository">
         <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-de:0.2.336">
@@ -355,6 +359,7 @@
     <orderEntry type="module" module-name="intellij.regexp" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.parser" scope="TEST" />
     <orderEntry type="module" module-name="intellij.grazie.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.markdown" scope="TEST" />
@@ -369,6 +374,7 @@
     <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
   </component>

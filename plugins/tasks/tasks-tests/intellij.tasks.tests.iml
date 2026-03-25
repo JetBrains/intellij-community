@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tasks" />
     <orderEntry type="module" module-name="intellij.tasks.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tasks.java" />
@@ -20,6 +21,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
@@ -41,7 +43,9 @@
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.stream" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.bookmarks" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" scope="TEST" />

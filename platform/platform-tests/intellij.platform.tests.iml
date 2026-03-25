@@ -45,6 +45,7 @@
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.plugins" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
@@ -86,6 +87,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
@@ -129,6 +131,7 @@
     <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.io.storages" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.platform.buildData" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="ktor-server-cio" level="project" />
@@ -146,6 +149,7 @@
     <orderEntry type="module" module-name="intellij.platform.bookmarks" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.pluginSystem.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.config" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.bootstrap.eel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.projectStructure" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.pluginSystem.parser.impl" scope="TEST" />
@@ -153,8 +157,10 @@
     <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.fus-api" level="project" />
     <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl.wsl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.syntax.psi.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.parser" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.locking.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.highlighting" scope="TEST" />

@@ -26,7 +26,7 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.usageView" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.statistics" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ml.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
@@ -184,6 +184,7 @@
     <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.searchEverywhere.frontend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.core" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.searchEverywhereMl.ranking.core" />

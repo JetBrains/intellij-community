@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module-library">
       <library name="jetbrains.ml.models.python.imports.ranking.model" type="repository">
         <properties include-transitive-deps="false" maven-id="com.jetbrains.ml.models:python-imports-ranking-model:coral-panda-republished-6">

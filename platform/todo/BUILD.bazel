@@ -29,6 +29,7 @@ jvm_library(
     "//platform/platform-impl/concurrency",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl/rpc",
+    "//platform/ide-core",
     "//platform/project/shared:project",
     "//platform/projectModel-api:projectModel",
     "//platform/structure-view-impl:structureView-impl",
@@ -42,6 +43,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/util/jdom",
     "//libraries/fastutil",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -66,6 +68,7 @@ jvm_library(
     "//platform/platform-impl/concurrency:concurrency_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/project/shared:project_test_lib",
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/structure-view-impl:structureView-impl_test_lib",
@@ -79,6 +82,7 @@ jvm_library(
     "//platform/lang-api:lang_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.todo` end

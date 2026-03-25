@@ -15,11 +15,14 @@ jvm_library(
   resources = [":structureView_resources"],
   deps = [
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/structure-view-impl:structureView-impl",
+    "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",
     "//platform/util:util-ui",
     "//java/java-analysis-impl:analysis-impl",
+    "//java/java-frontback-psi-api:frontback-psi",
     "//platform/platform-api:ide",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
@@ -33,11 +36,14 @@ jvm_library(
   runtime_deps = [
     ":structureView",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/structure-view-impl:structureView-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
     "//java/java-psi-impl:psi-impl_test_lib",
     "//platform/util:util-ui_test_lib",
     "//java/java-analysis-impl:analysis-impl_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//platform/platform-api:ide_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]

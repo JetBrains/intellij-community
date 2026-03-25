@@ -42,6 +42,7 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/diagnostic/telemetry.exporters",
     "//platform/util/coroutines",
+    "//platform/util/base",
     "//platform/diagnostic/telemetry/rt",
     "//libraries/guava",
   ],
@@ -78,6 +79,7 @@ jvm_library(
     "//platform/diagnostic:diagnostic_test_lib",
     "//platform/diagnostic/telemetry.exporters:telemetry.exporters_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util/base:base_test_lib",
     "//platform/diagnostic/telemetry/rt:rt_test_lib",
     "//libraries/guava:guava_test_lib",
   ]

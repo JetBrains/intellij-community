@@ -78,7 +78,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.jr.objects" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.util.ui" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.instanceContainer" scope="TEST" />
@@ -108,6 +108,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.plugins" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.aalto.xml" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jgoodies.common" scope="RUNTIME" />

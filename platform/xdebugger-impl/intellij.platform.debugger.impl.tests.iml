@@ -57,6 +57,7 @@
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
@@ -66,6 +67,7 @@
     <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" scope="TEST" />

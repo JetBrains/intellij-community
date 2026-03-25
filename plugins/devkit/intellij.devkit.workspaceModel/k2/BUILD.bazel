@@ -40,6 +40,7 @@ jvm_library(
     "@lib//:workspace-model-codegen",
     "//platform/core-impl",
     "//java/openapi:java",
+    "//java/java-psi-api:psi",
     "//plugins/kotlin/base/psi",
     "//platform/analysis-api:analysis",
   ]
@@ -64,6 +65,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common-provided",
     "//platform/core-impl:core-impl_test_lib",
     "//java/openapi:java_test_lib",
+    "//java/java-psi-api:psi_test_lib",
     "//plugins/kotlin/base/psi:psi_test_lib",
     "//plugins/devkit/intellij.devkit.workspaceModel/tests",
     "//plugins/devkit/intellij.devkit.workspaceModel/tests:tests_test_lib",

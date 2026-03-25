@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.ide" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="PROVIDED" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />

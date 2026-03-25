@@ -9,6 +9,8 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util",
+    "//platform/util/base/multiplatform",
+    "//platform/util/base",
     "//platform/platform-impl:ide-impl",
     "//libraries/jackson3/jackson:libraries-jackson3",
     "//libraries/jackson3/databind",
@@ -23,6 +25,8 @@ jvm_library(
   runtime_deps = [
     ":threadDumpParser",
     "//platform/util:util_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
@@ -61,6 +65,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/util",
     "//platform/util:util_test_lib",
+    "//platform/util/base",
+    "//platform/util/base:base_test_lib",
     "//platform/platform-impl:ide-impl",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",

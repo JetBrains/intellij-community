@@ -24,6 +24,10 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/execution",
     "//platform/execution:execution_test_lib",
+    "//java/java-syntax:syntax",
+    "//java/java-syntax:syntax_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
     "//platform/execution-impl",
     "//platform/execution-impl:execution-impl_test_lib",
     "//jps/model-api:model",
@@ -51,10 +55,14 @@ jvm_library(
     "//plugins/testng_rt:testng-rt",
     "//plugins/testng_rt:testng-rt_test_lib",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
   ],
   runtime_deps = [
     ":tests",
     "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.testng.rt.tests` end

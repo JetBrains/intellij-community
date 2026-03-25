@@ -34,8 +34,10 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl/rpc",
+    "//platform/ide-core",
     "//platform/util/coroutines",
     "//platform/execution.serviceView",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -65,8 +67,10 @@ jvm_library(
     "//platform/util/jdom:jdom_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
     "//platform/execution.serviceView:execution.serviceView_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.dashboard.backend` end

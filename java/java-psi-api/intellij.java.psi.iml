@@ -26,7 +26,9 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="module" module-name="intellij.java.frontback.psi" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util.multiplatform" />
+    <orderEntry type="module" module-name="intellij.platform.util.base" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.java.syntax" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />

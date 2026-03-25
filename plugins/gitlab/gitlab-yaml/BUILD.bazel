@@ -18,6 +18,7 @@ jvm_library(
     "//plugins/yaml/backend",
     "@lib//:kotlin-stdlib",
     "//platform/util/base",
+    "//platform/util/base/multiplatform",
     "//plugins/yaml",
     "//platform/analysis-impl",
   ]
@@ -37,6 +38,7 @@ jvm_library(
     "//plugins/gitlab/gitlab-core:vcs-gitlab_test_lib",
     "//plugins/yaml/backend:backend_test_lib",
     "//platform/util/base:base_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
     "//plugins/yaml:yaml_test_lib",
     "//platform/analysis-impl:analysis-impl_test_lib",
     "//platform/testFramework",

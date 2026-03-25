@@ -27,6 +27,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//java/openapi:java",
     "//java/openapi:java_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
     "//plugins/kotlin/navigation",
     "//plugins/kotlin/navigation:navigation_test_lib",
     "//java/testFramework",
@@ -47,6 +49,7 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/ide-core",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
@@ -58,7 +61,10 @@ jvm_library(
     "//plugins/kotlin/intellij.kotlin.base.test:base-test",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ],
-  runtime_deps = [":tests"]
+  runtime_deps = [
+    ":tests",
+    "//platform/ide-core:ide-core_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.kotlin.navigation.tests` end
 

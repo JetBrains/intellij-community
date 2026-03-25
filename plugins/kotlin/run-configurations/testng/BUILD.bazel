@@ -34,6 +34,8 @@ jvm_library(
     "//java/java-impl:impl",
     "//plugins/kotlin/base/plugin",
     "//platform/execution",
+    "//platform/ide-core",
+    "//platform/testRunner",
   ]
 )
 
@@ -62,6 +64,8 @@ jvm_library(
     "//java/java-impl:impl_test_lib",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//platform/execution:execution_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/testRunner:testRunner_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.runConfigurations.testng` end

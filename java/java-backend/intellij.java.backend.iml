@@ -8,10 +8,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.java.syntax" exported="" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.frontback.psi" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.syntax" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" exported="" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.psi" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.psi" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.frontback.impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.indexing" exported="" scope="RUNTIME" />

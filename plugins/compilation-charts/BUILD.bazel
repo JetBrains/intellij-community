@@ -20,6 +20,7 @@ jvm_library(
     "//jps/jps-builders:build",
     "//platform/extensions",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//libraries/rd/framework",
     "//platform/core-api:core",
     "//jps/model-api:model",
@@ -42,6 +43,7 @@ jvm_library(
     "//java/idea-ui:ui",
     "//platform/platform-impl:ide-impl",
     "//platform/execution",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -58,6 +60,7 @@ jvm_library(
     "//jps/jps-builders:build_test_lib",
     "//platform/extensions:extensions_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//libraries/rd/framework:framework_test_lib",
     "//platform/core-api:core_test_lib",
     "//jps/model-api:model_test_lib",
@@ -79,6 +82,7 @@ jvm_library(
     "//java/idea-ui:ui_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/execution:execution_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.compilation.charts` end

@@ -52,8 +52,10 @@
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.vcs.shared" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
   </component>
 </module>

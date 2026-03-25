@@ -9,6 +9,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/util/base",
+    "//platform/util/base/multiplatform",
     "//platform/util-rt",
     "@lib//:kotlin-stdlib",
   ]
@@ -22,6 +23,7 @@ jvm_library(
   runtime_deps = [
     ":text-matching",
     "//platform/util/base:base_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
     "//platform/util-rt:util-rt_test_lib",
     "@lib//:kotlin-test",
     "@lib//:kotlin-test-junit5",
@@ -56,6 +58,8 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/util/base",
     "//platform/util/base:base_test_lib",
+    "//platform/util/base/multiplatform",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
     "//platform/util-rt",
     "//platform/util-rt:util-rt_test_lib",
     "@lib//:kotlin-stdlib",

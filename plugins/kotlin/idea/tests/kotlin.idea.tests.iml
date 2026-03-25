@@ -32,10 +32,13 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.indexing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
     <orderEntry type="library" scope="TEST" name="vavr" level="project" />
@@ -77,6 +80,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.native" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-cli" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-ir" level="project" />
@@ -114,6 +118,7 @@
     <orderEntry type="module" module-name="intellij.gradle.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.regexp" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.duplicates.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="TEST" />
@@ -156,9 +161,12 @@
     <orderEntry type="library" name="kotlinc.kotlin-script-runtime" level="project" />
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.impl.inspections" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.syntax" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.resources" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections.shared" scope="TEST" />
@@ -166,6 +174,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.searching.base" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.old.post-processing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ide.customization" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
@@ -195,8 +204,10 @@
     <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.fe10.project-structure" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.parser" scope="TEST" />
   </component>
 </module>

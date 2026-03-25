@@ -21,6 +21,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/core-impl",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//libraries/kotlinx/serialization/core",
     "//platform/observable",
     "//libraries/kotlinx/serialization/json",
@@ -29,7 +30,9 @@ jvm_library(
     "//platform/util/xmlDom",
     "//platform/statistics",
     "//platform/core-ui",
+    "//platform/util:util-ui",
     "//platform/platform-impl/internal",
+    "//platform/progress/shared:ide-progress",
     "@lib//:jna",
   ]
 )
@@ -48,6 +51,7 @@ jvm_library(
     "//platform/lang-api:lang_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//libraries/kotlinx/serialization/core:core_test_lib",
     "//platform/observable:observable_test_lib",
     "//libraries/kotlinx/serialization/json:json_test_lib",
@@ -56,7 +60,9 @@ jvm_library(
     "//platform/util/xmlDom:xmlDom_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//platform/platform-impl/internal:internal_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.feedback` end

@@ -29,6 +29,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
   ]
 )
 
@@ -55,6 +56,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.devkit.debugger` end

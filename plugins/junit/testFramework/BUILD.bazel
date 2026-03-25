@@ -11,16 +11,16 @@ jvm_library(
     "//plugins/junit",
     "//java/java-frontback-psi-api:frontback-psi",
     "//java/testFramework",
+    "//java/java-syntax:syntax",
+    "//java/java-psi-api:psi",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//jps/model-api:model",
     "//platform/testFramework",
     "//platform/projectModel-api:projectModel",
   ],
-  exports = [
-    "//plugins/junit",
-    "//java/java-frontback-psi-api:frontback-psi",
-  ]
+  exports = ["//plugins/junit"]
 )
 
 jvm_library(
@@ -31,8 +31,6 @@ jvm_library(
   exports = [
     "//plugins/junit",
     "//plugins/junit:junit_test_lib",
-    "//java/java-frontback-psi-api:frontback-psi",
-    "//java/java-frontback-psi-api:frontback-psi_test_lib",
   ],
   runtime_deps = [
     ":testFramework",
@@ -40,8 +38,11 @@ jvm_library(
     "//plugins/junit:junit_test_lib",
     "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//java/testFramework:testFramework_test_lib",
+    "//java/java-syntax:syntax_test_lib",
+    "//java/java-psi-api:psi_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
     "//jps/model-api:model_test_lib",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/projectModel-api:projectModel_test_lib",

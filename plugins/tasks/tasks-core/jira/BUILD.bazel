@@ -21,6 +21,7 @@ jvm_library(
     "//plugins/tasks/tasks-compatibility:compatibility",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/lang-impl",
     "//platform/tasks-platform-impl:tasks-impl",
     "//plugins/tasks/tasks-api:tasks",
@@ -28,6 +29,7 @@ jvm_library(
     "//libraries/gson",
     "//platform/core-ui",
     "//platform/util/jdom",
+    "//platform/util:util-ui",
     "//platform/core-impl",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
@@ -47,6 +49,7 @@ jvm_library(
     "//plugins/tasks/tasks-compatibility:compatibility_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/tasks-platform-impl:tasks-impl_test_lib",
     "//plugins/tasks/tasks-api:tasks_test_lib",
@@ -54,6 +57,7 @@ jvm_library(
     "//libraries/gson:gson_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
   ]

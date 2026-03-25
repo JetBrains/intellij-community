@@ -42,8 +42,11 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/platform-api:ide_test_lib",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/util/diff",
     "//platform/util/diff:diff_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
     "//platform/diff-impl",
     "//platform/diff-impl:diff-impl_test_lib",
     "//libraries/mockito",
@@ -63,6 +66,7 @@ jvm_library(
   runtime_deps = [
     ":tests",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.diff.tests` end

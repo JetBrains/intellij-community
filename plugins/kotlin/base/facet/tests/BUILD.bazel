@@ -20,6 +20,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/core-impl",
     "//platform/lang-core",
+    "//platform/lang-api:lang",
     "//platform/projectModel-api:projectModel",
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",
@@ -71,6 +72,8 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//platform/lang-core",
     "//platform/lang-core:lang-core_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/external-system-api:externalSystem",
@@ -87,6 +90,7 @@ jvm_library(
     "//platform/backend/workspace:workspace_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/ide-core",
     "//java/testFramework",
     "//java/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/facet",
@@ -101,6 +105,7 @@ jvm_library(
   runtime_deps = [
     ":tests",
     "//plugins/kotlin/plugin/k2:k2_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.facet.tests` end

@@ -22,6 +22,8 @@ jvm_library(
     "//jps/model-serialization",
     "//libraries/plexus-utils",
     "//platform/util/jdom",
+    "//platform/util/base/multiplatform",
+    "//platform/util/base",
     "//libraries/hash4j",
     "//libraries/fastutil",
   ]
@@ -46,6 +48,8 @@ jvm_library(
     "//jps/model-serialization:model-serialization-tests",
     "//jps/model-serialization:model-serialization-tests_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
     "//jps/jps-builders:build-tests",
     "//jps/jps-builders:build-tests_test_lib",
     "//libraries/hash4j:hash4j_test_lib",

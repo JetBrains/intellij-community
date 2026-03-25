@@ -25,6 +25,8 @@ jvm_library(
     "//libraries/gson",
     "//libraries/fastutil",
     "//platform/util/jdom",
+    "//platform/util/base/multiplatform",
+    "//platform/util/base",
     "//libraries/hash4j",
   ]
 )
@@ -49,6 +51,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
     "//jps/jps-builders:build-tests",
     "//jps/jps-builders:build-tests_test_lib",
     "//libraries/hash4j:hash4j_test_lib",

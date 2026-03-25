@@ -31,6 +31,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//plugins/devkit/api-dump",
     "//java/java-impl:impl",
+    "//java/java-psi-api:psi",
   ]
 )
 
@@ -56,6 +57,7 @@ jvm_library(
     "//platform/analysis-impl:analysis-impl_test_lib",
     "//plugins/devkit/api-dump:api-dump_test_lib",
     "//java/java-impl:impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ]

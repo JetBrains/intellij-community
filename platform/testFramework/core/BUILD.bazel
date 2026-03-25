@@ -21,6 +21,8 @@ jvm_library(
   deps = [
     "//platform/util",
     "//platform/util-class-loader:util-classLoader",
+    "//platform/util/base/multiplatform",
+    "//platform/util/base",
     "//platform/boot",
     "//platform/testFramework/bootstrap:tools-testsBootstrap",
     "@lib//:opentest4j",
@@ -48,6 +50,8 @@ jvm_library(
     ":core",
     "//platform/util:util_test_lib",
     "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
     "//platform/boot:boot_test_lib",
     "//platform/testFramework/bootstrap:tools-testsBootstrap_test_lib",
     "//libraries/junit4",

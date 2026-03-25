@@ -42,11 +42,14 @@ jvm_library(
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
     "//platform/util/jdom",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/util/concurrency",
+    "//platform/util:util-ui",
+    "//platform/util-ex",
   ],
   runtime_deps = ["//xml/dom-impl"]
 )
@@ -92,6 +95,7 @@ jvm_library(
     "//platform/core-ui:core-ui_test_lib",
     "//platform/code-style-impl:codeStyle-impl_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
@@ -99,6 +103,8 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
   ]
 )
 ### auto-generated section `build intellij.xpath` end

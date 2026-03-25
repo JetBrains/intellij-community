@@ -22,6 +22,7 @@ jvm_library(
     "//plugins/javaFX/common",
     "//jps/model-impl",
     "//platform/util/jdom",
+    "//platform/util/base/multiplatform",
     "@lib//:jetbrains-annotations",
   ]
 )
@@ -41,6 +42,7 @@ jvm_library(
     "//plugins/javaFX/common:common_test_lib",
     "//jps/model-impl:model-impl_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
   ]
 )
 ### auto-generated section `build intellij.javaFX.jps` end

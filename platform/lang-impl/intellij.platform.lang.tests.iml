@@ -55,6 +55,7 @@
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
@@ -96,6 +97,8 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.projectStructure" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="mockito-kotlin" level="project" />
     <orderEntry type="library" scope="TEST" name="mockito-junit-jupiter" level="project" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />

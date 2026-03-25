@@ -29,6 +29,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/platform-impl:ide-impl",
     "//platform/diff-api:diff",
     "//platform/diff-impl",
@@ -41,6 +42,7 @@ jvm_library(
     "//platform/vcs-impl/shared",
     "@lib//:jetbrains-annotations",
     "//platform/projectModel-impl",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -65,6 +67,7 @@ jvm_library(
     "//platform/lang-api:lang_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/diff-api:diff_test_lib",
     "//platform/diff-impl:diff-impl_test_lib",
@@ -84,6 +87,7 @@ jvm_library(
     "//platform/projectModel-impl:projectModel-impl_test_lib",
     "//platform/lang-core",
     "//platform/lang-core:lang-core_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.lvcs.impl` end
@@ -139,6 +143,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/platform-impl:ide-impl",
     "//platform/diff-api:diff",
     "//platform/diff-api:diff_test_lib",
@@ -173,6 +178,7 @@ jvm_library(
   runtime_deps = [
     ":lvcs-impl-tests",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
   ]
 )

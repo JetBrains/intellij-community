@@ -23,6 +23,8 @@ jvm_library(
     "//platform/workspace/storage:storage_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/util/base/multiplatform",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
     "//libraries/kotlin/reflect",
     "//libraries/kotlin/reflect:reflect_test_lib",
   ],

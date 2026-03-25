@@ -17,13 +17,14 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/util",
+    "//platform/util/multiplatform",
+    "//platform/util/base",
     "//java/java-frontback-psi-api:frontback-psi",
     "@lib//:kotlin-stdlib",
     "//java/java-syntax:syntax",
     "//libraries/fastutil",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-  ],
-  exports = ["//java/java-frontback-psi-api:frontback-psi"]
+  ]
 )
 
 jvm_library(
@@ -32,14 +33,12 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = [
-    "//java/java-frontback-psi-api:frontback-psi",
-    "//java/java-frontback-psi-api:frontback-psi_test_lib",
-  ],
   runtime_deps = [
     ":psi",
     "//platform/core-api:core_test_lib",
     "//platform/util:util_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
     "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//java/java-syntax:syntax_test_lib",
     "//libraries/fastutil:fastutil_test_lib",

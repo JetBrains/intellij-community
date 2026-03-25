@@ -70,6 +70,7 @@ jvm_library(
   resources = [":backend_resources"],
   deps = [
     "@lib//:jetbrains-annotations-provided",
+    "//platform/ide-core",
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
@@ -113,6 +114,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/platform-api:ide",
     "//platform/platform-api:ide_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/editor-ui-api:editor-ui",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/core-ui",

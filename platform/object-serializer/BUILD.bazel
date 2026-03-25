@@ -21,6 +21,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "//platform/util/xmlDom",
+    "//platform/util/base",
     "//platform/settings",
   ]
 )
@@ -59,6 +60,8 @@ jvm_library(
     "//libraries/kotlinx/serialization/json:json_test_lib",
     "//platform/util/xmlDom",
     "//platform/util/xmlDom:xmlDom_test_lib",
+    "//platform/util/base",
+    "//platform/util/base:base_test_lib",
     "//platform/settings",
     "//platform/settings:settings_test_lib",
   ]
@@ -136,6 +139,8 @@ jvm_library(
     "//platform/object-serializer:object-serializer_test_lib",
     "//platform/util-ex",
     "//platform/util-ex:util-ex_test_lib",
+    "//platform/util/base",
+    "//platform/util/base:base_test_lib",
     "//platform/object-serializer:objectSerializer-annotations",
     "//platform/object-serializer:objectSerializer-annotations_test_lib",
     "//libraries/ion",

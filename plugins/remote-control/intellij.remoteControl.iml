@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />

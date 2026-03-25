@@ -26,6 +26,7 @@ jvm_library(
     "//json/backend",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/workspace/jps",
     "//platform/execution-impl",
     "//platform/configuration-store-impl:configurationStore-impl",
@@ -58,6 +59,7 @@ jvm_library(
     "//json/backend:backend_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/workspace/jps:jps_test_lib",
     "//platform/execution-impl:execution-impl_test_lib",
     "//platform/testFramework",
@@ -118,10 +120,14 @@ jvm_library(
     "@lib//:assert_j",
     "//platform/lang-impl",
     "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/ide-core",
     "//plugins/configuration-script:configurationScript-tests",
     "//plugins/configuration-script:configurationScript-tests_test_lib",
   ],
-  runtime_deps = [":configurationScript-test-java"]
+  runtime_deps = [
+    ":configurationScript-test-java",
+    "//platform/ide-core:ide-core_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.configurationScript.test.java` end
 

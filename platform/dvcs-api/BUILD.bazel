@@ -21,6 +21,7 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//platform/extensions",
     "//platform/platform-api:ide",
+    "//platform/ide-core",
     "//platform/vcs-log/api:vcs-log",
     "@lib//:kotlin-stdlib",
     "//platform/dvcs-impl/shared",
@@ -41,6 +42,7 @@ jvm_library(
     "//platform/vcs-api:vcs_test_lib",
     "//platform/extensions:extensions_test_lib",
     "//platform/platform-api:ide_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/vcs-log/api:vcs-log_test_lib",
     "//platform/dvcs-impl/shared:shared_test_lib",
   ]

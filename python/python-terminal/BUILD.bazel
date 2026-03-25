@@ -22,6 +22,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//python/python-sdk:sdk",
     "//platform/lang-api:lang",
+    "//platform/ide-core",
   ]
 )
 
@@ -58,6 +59,7 @@ jvm_library(
     "@lib//:junit5Pioneer",
     "//platform/testFramework/common",
     "//platform/testFramework/common:common_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//python/python-test-env/junit5",
     "//python/python-test-env/junit5:junit5_test_lib",
   ]

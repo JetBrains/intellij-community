@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="PROVIDED" />

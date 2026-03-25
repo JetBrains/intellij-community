@@ -35,11 +35,13 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.analysis-api-platform-interface" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
@@ -60,6 +62,7 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.projectStructure" scope="TEST" />

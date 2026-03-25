@@ -22,6 +22,8 @@ jvm_library(
     "//plugins/ide-features-trainer:featuresTrainer",
     "//platform/core-ui",
     "//platform/new-users-onboarding",
+    "//platform/ide-core",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -39,6 +41,8 @@ jvm_library(
     "//plugins/ide-features-trainer:featuresTrainer_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/new-users-onboarding:new-users-onboarding_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.featuresTrainer.onboarding` end

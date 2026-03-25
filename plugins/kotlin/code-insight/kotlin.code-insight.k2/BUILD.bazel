@@ -60,6 +60,7 @@ jvm_library(
     "//platform/lang-core",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
+    "//platform/core-impl",
     "//platform/util:util-ui",
     "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",
@@ -76,8 +77,11 @@ jvm_library(
     "//plugins/kotlin/formatter/minimal",
     "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
     "//java/openapi:java",
+    "//java/java-frontback-psi-api:frontback-psi",
     "//plugins/kotlin/kotlin.searching/base",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/kotlin.ide",
     "//libraries/velocity",
@@ -90,6 +94,8 @@ jvm_library(
     "//plugins/kotlin/base/statistics",
     "//platform/editor-ui-ex:editor-ex",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/lang-api:lang",
+    "//platform/statistics",
     ":plugins_kotlin_code-insight_descriptions_provided",
   ]
 )
@@ -126,6 +132,7 @@ jvm_library(
     "//platform/lang-core:lang-core_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/util:util-ui_test_lib",
     "//java/java-psi-api:psi_test_lib",
     "//java/java-psi-impl:psi-impl_test_lib",
@@ -140,8 +147,11 @@ jvm_library(
     "//plugins/kotlin/formatter/minimal:minimal_test_lib",
     "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings_test_lib",
     "//java/openapi:java_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//plugins/kotlin/kotlin.searching/base:base_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//plugins/kotlin/base/indices:indices_test_lib",
     "//plugins/kotlin/kotlin.ide:kotlin.ide_test_lib",
     "//libraries/velocity:velocity_test_lib",
@@ -156,6 +166,8 @@ jvm_library(
     "//plugins/kotlin/code-insight/descriptions",
     "//plugins/kotlin/code-insight/descriptions:descriptions_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/statistics:statistics_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight` end
@@ -252,9 +264,13 @@ jvm_library(
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/lang-core",
     "//platform/lang-core:lang-core_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/util:util-ui",
     "//platform/util:util-ui_test_lib",
     "//java/java-psi-api:psi",
@@ -288,6 +304,7 @@ jvm_library(
     "//plugins/kotlin/kotlin.searching/base",
     "//plugins/kotlin/kotlin.searching/base:base_test_lib",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/indices",
@@ -333,6 +350,7 @@ jvm_library(
     ":kotlin-codeInsight-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.tests` end

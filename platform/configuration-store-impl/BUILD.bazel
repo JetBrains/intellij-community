@@ -21,6 +21,7 @@ jvm_library(
     "//jps/model-serialization",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
+    "//platform/util:util-ui",
     "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//platform/projectModel-impl",
@@ -32,6 +33,7 @@ jvm_library(
     "//platform/object-serializer",
     "//platform/service-container",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//libraries/snakeyaml-engine",
     "//platform/statistics",
     "//libraries/fastutil",
@@ -40,6 +42,7 @@ jvm_library(
     "//libraries/aalto-xml",
     "//platform/util/xmlDom",
     "//platform/util/jdom",
+    "//platform/util-ex",
     "//libraries/hash4j",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
@@ -50,6 +53,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//libraries/kotlinx/serialization/json",
     "//platform/platform-impl/initial-config-import",
+    "//platform/progress/shared:ide-progress",
     "//platform/eel-provider",
   ]
 )
@@ -67,6 +71,7 @@ jvm_library(
     "//jps/model-serialization:model-serialization_test_lib",
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/util:util_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/platform-api:ide_test_lib",
     "//platform/projectModel-impl:projectModel-impl_test_lib",
@@ -78,6 +83,7 @@ jvm_library(
     "//platform/object-serializer:object-serializer_test_lib",
     "//platform/service-container:service-container_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//libraries/snakeyaml-engine:snakeyaml-engine_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//libraries/fastutil:fastutil_test_lib",
@@ -86,6 +92,7 @@ jvm_library(
     "//libraries/aalto-xml:aalto-xml_test_lib",
     "//platform/util/xmlDom:xmlDom_test_lib",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
     "//libraries/hash4j:hash4j_test_lib",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/backend/workspace:workspace_test_lib",
@@ -94,6 +101,7 @@ jvm_library(
     "//platform/workspace/storage:storage_test_lib",
     "//libraries/kotlinx/serialization/json:json_test_lib",
     "//platform/platform-impl/initial-config-import:initial-config-import_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//platform/eel-provider:eel-provider_test_lib",
   ]
 )
@@ -137,6 +145,8 @@ jvm_library(
     "//platform/code-style-api:codeStyle_test_lib",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/ide-core/plugins",
     "@lib//:assert_j",
     "//jps/model-api:model",
@@ -154,6 +164,7 @@ jvm_library(
     "//platform/service-container",
     "//platform/service-container:service-container_test_lib",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/statistics",
@@ -162,6 +173,8 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
     "//platform/settings",
     "//platform/settings:settings_test_lib",
     "//platform/settings-local",
@@ -181,6 +194,7 @@ jvm_library(
     ":configurationStore-tests",
     "//platform/ide-core/plugins:plugins_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.configurationStore.tests` end

@@ -28,11 +28,13 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/core-ui",
     "//platform/platform-impl/concurrency",
+    "//platform/ide-core",
     "//platform/util/concurrency",
     "//platform/util",
     "//platform/statistics",
     "//platform/lang-api:lang",
     "//platform/remote-topics/shared:rpc-topics",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -56,11 +58,13 @@ jvm_library(
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-impl/concurrency:concurrency_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/util:util_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//platform/remote-topics/shared:rpc-topics_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.structureView.backend` end

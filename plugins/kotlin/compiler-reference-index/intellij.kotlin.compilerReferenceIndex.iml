@@ -28,10 +28,14 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.java.indexing.impl" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.gradle" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" />
   </component>

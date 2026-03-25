@@ -142,12 +142,16 @@ jvm_library(
     "//platform/testFramework/junit5/eel:eel_test_lib",
     "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests",
     "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests_test_lib",
+    "//platform/ide-core",
   ],
   exports = [
     "//python/services/shared",
     "//python/services/shared:shared_test_lib",
   ],
-  runtime_deps = [":python-community-services-systemPython-tests"]
+  runtime_deps = [
+    ":python-community-services-systemPython-tests",
+    "//platform/ide-core:ide-core_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.python.community.services.systemPython.tests` end
 

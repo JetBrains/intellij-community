@@ -11,7 +11,9 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/core-ui",
+    "//platform/util:util-ui",
     "//platform/statistics",
     "//platform/util/concurrency",
   ]
@@ -28,7 +30,9 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
   ]

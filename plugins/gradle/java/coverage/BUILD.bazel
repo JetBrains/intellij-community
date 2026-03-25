@@ -19,6 +19,9 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/execution",
     "//platform/smRunner",
+    "//platform/lang-api:lang",
+    "//platform/ide-core",
+    "//platform/testRunner",
     "//plugins/gradle",
     "//plugins/coverage",
   ]
@@ -34,6 +37,9 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/smRunner:smRunner_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/testRunner:testRunner_test_lib",
     "//plugins/gradle:gradle_test_lib",
     "//plugins/coverage:coverage_test_lib",
   ]

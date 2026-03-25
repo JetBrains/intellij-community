@@ -108,10 +108,12 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="module" module-name="intellij.platform.collaborationTools" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.performanceTesting" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" />
@@ -124,6 +126,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.ide.recentProjects" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl.wsl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />

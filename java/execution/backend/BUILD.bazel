@@ -31,6 +31,7 @@ jvm_library(
     "//platform/smRunner",
     "//platform/core-ui",
     "//platform/execution",
+    "//platform/testRunner",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -60,6 +61,7 @@ jvm_library(
     "//platform/smRunner:smRunner_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/execution:execution_test_lib",
+    "//platform/testRunner:testRunner_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.execution.impl.backend` end

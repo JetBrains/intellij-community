@@ -92,6 +92,8 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//platform/util/coroutines",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
     "//platform/platform-impl/internal",
     "//plugins/sh/plugin",
     "//plugins/sh/plugin:plugin_test_lib",

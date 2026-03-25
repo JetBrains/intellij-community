@@ -48,6 +48,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.project" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.structureView.impl" />
@@ -61,5 +62,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
   </component>
 </module>

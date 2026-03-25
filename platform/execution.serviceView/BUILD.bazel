@@ -33,6 +33,7 @@ jvm_library(
     "//fleet/rpc",
     "//platform/kernel/rpc",
     "//platform/platform-impl/rpc",
+    "//platform/ide-core",
     "//platform/project/shared:project",
     "//platform/object-serializer",
     "//libraries/kotlinx/serialization/core",
@@ -41,6 +42,7 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/execution",
     "//libraries/fastutil",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -70,6 +72,7 @@ jvm_library(
     "//fleet/rpc:rpc_test_lib",
     "//platform/kernel/rpc:rpc_test_lib",
     "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/project/shared:project_test_lib",
     "//platform/object-serializer:object-serializer_test_lib",
     "//libraries/kotlinx/serialization/core:core_test_lib",
@@ -78,6 +81,7 @@ jvm_library(
     "//platform/kernel/shared:kernel_test_lib",
     "//platform/execution:execution_test_lib",
     "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.serviceView` end

@@ -34,9 +34,11 @@
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.common" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" />
@@ -51,5 +53,6 @@
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.terminal" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
   </component>
 </module>

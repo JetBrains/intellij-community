@@ -142,6 +142,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
   ],
   exports = ["@lib//:kotlin-tooling-core"],
   runtime_deps = [

@@ -25,6 +25,7 @@ jvm_library(
     "//plugins/toml/core",
     "@lib//:kotlin-stdlib",
     "//json/backend",
+    "//platform/util:util-ui",
     "//libraries/stream",
   ],
   exports = ["//json/backend"],
@@ -53,6 +54,7 @@ jvm_library(
     "//plugins/toml/core:core_test_lib",
     "//json/backend:backend_test_lib",
     "//platform/backend:backend_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//libraries/stream:stream_test_lib",
   ]
 )

@@ -52,6 +52,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//libraries/compose-foundation-desktop",
     "//platform/platform-api:ide",
+    "//platform/util:util-ui",
     ":platform_jewel_markdown_extensions_gfm-alerts_provided",
     ":platform_jewel_markdown_extensions_gfm-tables_provided",
   ],
@@ -97,6 +98,7 @@ jvm_library(
     "//libraries/compose-foundation-desktop-junit",
     "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
     "//platform/platform-api:ide_test_lib",
+    "//platform/util:util-ui_test_lib",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

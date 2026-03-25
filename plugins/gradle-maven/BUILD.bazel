@@ -27,7 +27,10 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//plugins/repository-search/common",
     "//plugins/gradle/java/groovy",
+    "//java/java-psi-api:psi",
     "//platform/util/concurrency",
+    "//platform/lang-api:lang",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -53,7 +56,10 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/gradle/java/groovy:groovy_test_lib",
+    "//java/java-psi-api:psi_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.gradle.java.maven` end
@@ -100,6 +106,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-api:projectModel_test_lib",
     "//plugins/repository-search/common",

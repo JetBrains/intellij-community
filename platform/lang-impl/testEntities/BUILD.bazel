@@ -25,6 +25,8 @@ jvm_library(
     "//platform/workspace/storage:storage_test_lib",
     "//platform/projectModel-impl",
     "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/util/base/multiplatform",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
   ],
   runtime_deps = [":testEntities"]
 )

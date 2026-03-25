@@ -38,6 +38,8 @@ jvm_library(
     "//platform/observable",
     "//platform/usageView-impl",
     "//platform/analysis-api:analysis",
+    "//platform/util:util-ui",
+    "//platform/statistics",
   ],
   exports = ["//platform/searchEverywhere/shared:searchEverywhere"]
 )
@@ -75,6 +77,8 @@ jvm_library(
     "//platform/observable:observable_test_lib",
     "//platform/usageView-impl:usageView-impl_test_lib",
     "//platform/analysis-api:analysis_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/statistics:statistics_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.searchEverywhere.frontend` end

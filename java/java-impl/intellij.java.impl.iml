@@ -62,6 +62,7 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.jsp" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.jsp.spi" />
     <orderEntry type="module" module-name="intellij.java.execution" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" />
@@ -69,6 +70,7 @@
     <orderEntry type="module" module-name="intellij.platform.icons" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.frontback.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi" />
     <orderEntry type="module" module-name="intellij.regexp" />
     <orderEntry type="module" module-name="intellij.java.indexing.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
@@ -106,20 +108,26 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
-    <orderEntry type="module" module-name="intellij.platform.statistics" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.completionMlRanking" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.ml" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
+    <orderEntry type="module" module-name="intellij.platform.ide.favoritesTreeView" />
     <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
     <orderEntry type="module" module-name="intellij.libraries.markdown" />
     <orderEntry type="module" module-name="intellij.platform.threadDumpParser" />
@@ -129,12 +137,14 @@
     <orderEntry type="module" module-name="intellij.java.codeserver.highlighting" />
     <orderEntry type="module" module-name="intellij.java.codeserver.core" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
+    <orderEntry type="module" module-name="intellij.xml.parser" />
     <orderEntry type="module" module-name="intellij.java.syntax" />
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
   </component>
   <component name="copyright">
     <Base>

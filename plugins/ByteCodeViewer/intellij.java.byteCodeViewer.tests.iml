@@ -39,6 +39,7 @@
     <orderEntry type="module" module-name="intellij.java.compiler.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.byteCodeViewer" scope="TEST" />
   </component>

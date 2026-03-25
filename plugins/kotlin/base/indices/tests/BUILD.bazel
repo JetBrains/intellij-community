@@ -35,6 +35,7 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/ide-core",
     "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/openapi:java",
@@ -46,7 +47,10 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
   ],
-  runtime_deps = [":tests"]
+  runtime_deps = [
+    ":tests",
+    "//platform/ide-core:ide-core_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.kotlin.base.indices.tests` end
 

@@ -26,6 +26,8 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.log.graph.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
@@ -59,5 +61,6 @@
     <orderEntry type="module" module-name="intellij.libraries.mockito" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.bookmarks" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
   </component>
 </module>

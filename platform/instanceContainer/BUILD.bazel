@@ -12,6 +12,7 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/util",
     "//platform/util/coroutines",
+    "//platform/util/base",
   ]
 )
 
@@ -26,6 +27,7 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//platform/util:util_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util/base:base_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.instanceContainer` end

@@ -23,6 +23,7 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/diff-impl",
     "//platform/util/jdom",
     "//platform/kernel/shared:kernel",
@@ -55,6 +56,7 @@ jvm_library(
     "//platform/diagnostic:diagnostic_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/diff-impl:diff-impl_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//platform/kernel/shared:kernel_test_lib",
@@ -112,6 +114,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/diff-impl",
     "//platform/diff-impl:diff-impl_test_lib",
     "//platform/util/jdom",
@@ -146,6 +149,7 @@ jvm_library(
   runtime_deps = [
     ":vcs-impl-frontend-tests",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.frontend.tests` end

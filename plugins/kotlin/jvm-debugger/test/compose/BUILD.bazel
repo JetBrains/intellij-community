@@ -42,6 +42,8 @@ jvm_library(
   deps = [
     "//platform/core-ui",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/plugin/k2:k2_test_lib",
     "//plugins/kotlin/base/test",

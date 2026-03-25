@@ -27,6 +27,8 @@ jvm_library(
     "//python:python-community-impl",
     "//plugins/ide-features-trainer:featuresTrainer",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
     "//platform/xdebugger-api:debugger",
     "//platform/usageView",
     "//platform/lang-impl",
@@ -36,6 +38,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "//python/services/system-python",
+    "//platform/util:util-ui",
     "//libraries/stream",
   ]
 )
@@ -59,6 +62,8 @@ jvm_library(
     "//python:python-community-impl_test_lib",
     "//plugins/ide-features-trainer:featuresTrainer_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//platform/xdebugger-api:debugger_test_lib",
     "//platform/usageView:usageView_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
@@ -76,6 +81,7 @@ jvm_library(
     "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//python/python-venv:venv",
     "//python/python-venv:venv_test_lib",
     "//python/services/internal-impl:python-community-services-internal-impl",

@@ -17,7 +17,9 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="module" module-name="intellij.java" exported="" />
+    <orderEntry type="module" module-name="intellij.java.syntax" />
     <orderEntry type="module" module-name="intellij.maven.server" exported="" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
@@ -46,6 +48,7 @@
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
     <orderEntry type="module" module-name="intellij.maven.artifactResolver.m31" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
@@ -90,8 +93,10 @@
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module-library">
       <library name="jetbrains.idea.maven.indexer.api.rt" type="repository">
@@ -112,6 +117,8 @@
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
     <orderEntry type="module" module-name="intellij.libraries.asm" />
@@ -122,10 +129,12 @@
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.xml.analysis" />
+    <orderEntry type="module" module-name="intellij.xml.parser" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
   </component>
   <component name="copyright">

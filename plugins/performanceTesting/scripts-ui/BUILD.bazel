@@ -22,10 +22,12 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//platform/core-ui",
     "//platform/forms_rt:java-guiForms-rt",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/util/concurrency",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -44,12 +46,14 @@ jvm_library(
     "//platform/analysis-impl:analysis-impl_test_lib",
     "//platform/platform-api:ide_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.performanceTesting.ui` end

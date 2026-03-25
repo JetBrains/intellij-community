@@ -34,6 +34,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/ui.jcef",
     "//platform/core-ui",
+    "//platform/util:util-ui",
   ],
   exports = [
     "//platform/remote-driver/core:driver-impl",
@@ -71,6 +72,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ui.jcef:ui.jcef_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.performanceTesting.remoteDriver` end

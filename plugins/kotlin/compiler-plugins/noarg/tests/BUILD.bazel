@@ -46,6 +46,8 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//plugins/kotlin/plugin/k1",
     "//plugins/kotlin/plugin/k1:k1_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
     "//plugins/kotlin/tests-common:common-tests",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/base/plugin",

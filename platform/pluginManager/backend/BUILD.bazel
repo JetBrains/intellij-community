@@ -27,6 +27,7 @@ jvm_library(
     "//platform/pluginManager/shared",
     "//platform/project/shared:project",
     "//platform/platform-impl/update-checker",
+    "//platform/ide-core",
   ]
 )
 
@@ -49,6 +50,7 @@ jvm_library(
     "//platform/pluginManager/shared:shared_test_lib",
     "//platform/project/shared:project_test_lib",
     "//platform/platform-impl/update-checker:update-checker_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.pluginManager.backend` end

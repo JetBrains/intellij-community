@@ -38,6 +38,8 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/editor-ui-api:editor-ui",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//plugins/kotlin/base/util",
@@ -50,6 +52,8 @@ jvm_library(
     "//plugins/kotlin/base/facet:facet_test_lib",
     "//java/testFramework",
     "//java/testFramework:testFramework_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/analysis:analysis_test_lib",
     "//platform/external-system-impl:externalSystem-tests",
@@ -98,6 +102,10 @@ jvm_library(
     "//RegExpSupport:regexp-tests_test_lib",
     "//platform/xdebugger-impl:debugger-impl-tests",
     "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
+    "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
   ],
   runtime_deps = [":kotlin-gradle-multiplatform-tests"]
 )

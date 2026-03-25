@@ -39,6 +39,8 @@ jvm_library(
     "@lib//:opentelemetry-semconv",
     "//platform/diagnostic/telemetry",
     "//platform/util/coroutines",
+    "//platform/util/base/multiplatform",
+    "//platform/util/base",
   ]
 )
 
@@ -61,6 +63,8 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+    "//platform/util/base:base_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.workspace.jps` end

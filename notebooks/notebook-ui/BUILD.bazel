@@ -33,6 +33,7 @@ jvm_library(
     "//platform/observable",
     "//platform/code-style-api:codeStyle",
     "//platform/core-ui",
+    "//platform/util:util-ui",
     "//platform/projectModel-impl",
     "//platform/editor-ui-ex:editor-ex",
   ]
@@ -54,6 +55,7 @@ jvm_library(
     "//platform/observable:observable_test_lib",
     "//platform/code-style-api:codeStyle_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//platform/projectModel-impl:projectModel-impl_test_lib",
     "//platform/editor-ui-ex:editor-ex_test_lib",
   ]

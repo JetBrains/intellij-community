@@ -53,6 +53,8 @@ jvm_library(
     "//platform/util/jdom:jdom_test_lib",
     "//platform/util-ex",
     "//platform/util-ex:util-ex_test_lib",
+    "//platform/util/base",
+    "//platform/util/base:base_test_lib",
     "@community//build:zip",
     "@community//build:zip_test_lib",
     "//libraries/netty/buffer",

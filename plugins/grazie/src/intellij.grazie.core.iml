@@ -733,5 +733,7 @@
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
   </component>
 </module>

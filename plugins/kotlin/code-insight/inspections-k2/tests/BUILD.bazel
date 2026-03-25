@@ -75,6 +75,8 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "@lib//:kotlinc-kotlin-scripting-common",
@@ -90,7 +92,11 @@ jvm_library(
     "//plugins/kotlin/fir/testFramework",
     "//plugins/kotlin/fir/testFramework:testFramework_test_lib",
   ],
-  runtime_deps = [":tests"]
+  runtime_deps = [
+    ":tests",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.inspections.tests` end
 

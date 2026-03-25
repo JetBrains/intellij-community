@@ -84,6 +84,7 @@
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.plugins" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />

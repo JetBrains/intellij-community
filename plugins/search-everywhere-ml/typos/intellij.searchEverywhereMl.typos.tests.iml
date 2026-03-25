@@ -20,11 +20,13 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.ai.grazie.spell.gec.engine.local" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ml.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module-library" scope="TEST">
       <library name="ai.grazie.spell.gec.engine.local.jvm" type="repository">
         <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-engine-local:0.8.122">

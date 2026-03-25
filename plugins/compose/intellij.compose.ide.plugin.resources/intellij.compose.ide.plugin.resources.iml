@@ -35,6 +35,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.compose.ide.plugin.gradleTooling.rt" />
     <orderEntry type="module" module-name="intellij.compose.ide.plugin.shared" />
@@ -44,6 +45,7 @@
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />

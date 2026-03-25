@@ -38,6 +38,7 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/util/jdom",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/diagnostic/telemetry",
     "//platform/core-impl",
     "//platform/diff-api:diff",
@@ -73,6 +74,7 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//platform/diff-api:diff_test_lib",
@@ -146,6 +148,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/testFramework",
@@ -159,6 +162,7 @@ jvm_library(
     "//platform/platform-impl/rpc:rpc_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.shared.tests` end

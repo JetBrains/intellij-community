@@ -23,11 +23,13 @@ jvm_library(
     "//platform/core-ui",
     "//platform/ide-core",
     "//platform/platform-impl:ide-impl",
+    "//platform/progress/shared:ide-progress",
     "//platform/lang-impl",
     "//platform/util/jdom",
     "@lib//:cloud-config-client",
     "//platform/statistics",
     "//platform/util/progress",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -46,6 +48,7 @@ jvm_library(
     "//platform/core-ui:core-ui_test_lib",
     "//platform/ide-core:ide-core_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//platform/statistics:statistics_test_lib",
@@ -54,6 +57,7 @@ jvm_library(
     "//libraries/mockito",
     "//libraries/mockito:mockito_test_lib",
     "//platform/util/progress:progress_test_lib",
+    "//platform/util:util-ui_test_lib",
     "//libraries/kotlinx/coroutines/test",
     "//libraries/kotlinx/coroutines/test:test_test_lib",
   ]

@@ -25,9 +25,11 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="intellij.java.debugger" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.base.util" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.core" />
@@ -40,6 +42,7 @@
     <orderEntry type="module" module-name="kotlin.j2k.k1.old" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="intellij.java.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi" />
     <orderEntry type="module" module-name="intellij.kotlin.base.psi" />
     <orderEntry type="module" module-name="kotlin.j2k.shared" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
@@ -56,5 +59,6 @@
     <orderEntry type="library" name="kotlinc.scripting-compiler-plugin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.rpc" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

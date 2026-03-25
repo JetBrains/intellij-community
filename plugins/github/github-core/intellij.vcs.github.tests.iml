@@ -84,6 +84,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" scope="TEST" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="io.mockk" level="project" />
@@ -134,6 +135,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />

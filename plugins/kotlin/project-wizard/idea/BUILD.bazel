@@ -31,6 +31,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/frontend-agnostic",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/compiler-configuration",
     "//plugins/kotlin/base/plugin",
@@ -42,6 +43,7 @@ jvm_library(
     "//plugins/kotlin/formatter",
     "//plugins/kotlin/project-wizard/core",
     "//platform/core-ui",
+    "//platform/core-impl",
     "//platform/lang-impl",
     "//platform/vcs-impl",
     "//platform/external-system-api:externalSystem",
@@ -54,7 +56,11 @@ jvm_library(
     "//plugins/gradle",
     "//plugins/kotlin/base/indices",
     "//platform/platform-api:ide",
+    "//platform/progress/shared:ide-progress",
     "//plugins/kotlin/code-insight/api",
+    "//platform/lang-api:lang",
+    "//platform/statistics",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -78,6 +84,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//plugins/kotlin/base/util:util_test_lib",
     "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
@@ -89,6 +96,7 @@ jvm_library(
     "//plugins/kotlin/formatter:formatter_test_lib",
     "//plugins/kotlin/project-wizard/core:core_test_lib",
     "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/external-system-api:externalSystem_test_lib",
@@ -101,7 +109,11 @@ jvm_library(
     "//plugins/gradle:gradle_test_lib",
     "//plugins/kotlin/base/indices:indices_test_lib",
     "//platform/platform-api:ide_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//plugins/kotlin/code-insight/api:api_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.projectWizard.idea` end

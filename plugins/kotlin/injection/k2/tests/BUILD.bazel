@@ -23,6 +23,8 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/plugin/k2:k2_test_lib",
     "//plugins/kotlin/test-framework",
@@ -41,6 +43,8 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/testFramework",
     "//java/testFramework:testFramework_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",

@@ -25,6 +25,8 @@ jvm_library(
     "//plugins/grazie/src:core",
     "//platform/projectModel-api:projectModel",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
     "//libraries/ai.grazie.spell.gec.engine.local",
     "//platform/statistics",
     "//plugins/search-everywhere-ml",
@@ -55,6 +57,8 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//libraries/ai.grazie.spell.gec.engine.local:ai.grazie.spell.gec.engine.local_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//plugins/search-everywhere-ml:search-everywhere-ml_test_lib",
@@ -111,6 +115,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//libraries/ai.grazie.spell.gec.engine.local",
     "//libraries/ai.grazie.spell.gec.engine.local:ai.grazie.spell.gec.engine.local_test_lib",
     "//platform/statistics",
@@ -121,11 +126,14 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/ml-impl",
     "//platform/ml-impl:ml-impl_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
     "@lib//:search_everywhere_ml-typos-tests-ai-grazie-spell-gec-engine-local-jvm",
   ],
   runtime_deps = [
     ":searchEverywhereMl-typos-tests",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.searchEverywhereMl.typos.tests` end

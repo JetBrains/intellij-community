@@ -22,6 +22,7 @@ jvm_library(
     "//jps/model-api:model",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
+    "//platform/platform-util-io:ide-util-io",
     "//platform/remote-servers/api:remoteServers",
     "//platform/core-impl",
     "//platform/forms_rt:java-guiForms-rt",
@@ -32,9 +33,11 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//platform/ide-core",
     "//platform/util/jdom",
     "//platform/util-ex",
     "//platform/execution",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -53,6 +56,7 @@ jvm_library(
     "//jps/model-api:model_test_lib",
     "//platform/lang-core:lang-core_test_lib",
     "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
     "//platform/remote-servers/api:remoteServers_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
@@ -63,9 +67,11 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-util-io-impl:ide-util-io-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/util/jdom:jdom_test_lib",
     "//platform/util-ex:util-ex_test_lib",
     "//platform/execution:execution_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.remoteServers.impl` end

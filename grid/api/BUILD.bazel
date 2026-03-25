@@ -15,6 +15,7 @@ jvm_library(
   resources = [":grid_resources"],
   deps = [
     "//platform/util",
+    "//platform/util/base",
     "//platform/core-api:core",
   ]
 )
@@ -27,6 +28,7 @@ jvm_library(
   runtime_deps = [
     ":grid",
     "//platform/util:util_test_lib",
+    "//platform/util/base:base_test_lib",
     "//platform/core-api:core_test_lib",
   ]
 )

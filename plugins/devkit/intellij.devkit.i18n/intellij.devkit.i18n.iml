@@ -13,15 +13,19 @@
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.properties.psi" />
     <orderEntry type="module" module-name="intellij.properties.backend.psi" />
     <orderEntry type="module" module-name="intellij.java.i18n" />
+    <orderEntry type="module" module-name="intellij.java.syntax" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.jvm.analysis" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.xml.dom" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
+    <orderEntry type="module" module-name="intellij.xml.parser" />
     <orderEntry type="module" module-name="intellij.xml.analysis" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="module" module-name="intellij.devkit.core" />
@@ -30,5 +34,6 @@
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="intellij.grazie.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
   </component>
 </module>

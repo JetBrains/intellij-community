@@ -15,6 +15,8 @@ jvm_library(
   resources = [":java-execution_resources"],
   deps = [
     "//java/openapi:java",
+    "//java/java-syntax:syntax",
+    "//java/java-frontback-psi-api:frontback-psi",
     "//java/java-indexing-api:indexing",
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -29,6 +31,10 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/execution",
+    "//platform/platform-api:ide",
+    "//platform/ide-core",
+    "//platform/lang-api:lang",
+    "//java/java-psi-api:psi",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -42,6 +48,8 @@ jvm_library(
     ":java-execution",
     "//platform/backend:backend_test_lib",
     "//java/openapi:java_test_lib",
+    "//java/java-syntax:syntax_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
     "//java/java-indexing-api:indexing_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
@@ -55,6 +63,10 @@ jvm_library(
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-util-io:ide-util-io_test_lib",
     "//platform/execution:execution_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//java/java-psi-api:psi_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.execution` end

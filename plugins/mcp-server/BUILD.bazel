@@ -59,6 +59,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/core-impl",
     "//platform/ide-core-impl",
+    "//platform/progress/shared:ide-progress",
     "//plugins/mcp-server/mcpserver.stdio",
     "//platform/statistics",
     "//platform/util/concurrency",
@@ -77,6 +78,8 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "//platform/util/coroutines",
     "//platform/util-class-loader:util-classLoader",
+    "//platform/util:util-ui",
+    "//platform/util-ex",
     "//platform/vcs-impl",
     "//platform/eel-provider",
   ]
@@ -125,6 +128,7 @@ jvm_library(
     "//platform/indexing-api:indexing_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
     "//plugins/mcp-server/mcpserver.stdio:mcpserver.stdio_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
@@ -142,6 +146,8 @@ jvm_library(
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
     "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/eel-provider:eel-provider_test_lib",
   ]

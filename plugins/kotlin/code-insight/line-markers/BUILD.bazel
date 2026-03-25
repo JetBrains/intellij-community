@@ -47,11 +47,13 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/code-insight/line-markers-shared:kotlin-code-insight-line-markers-shared",
     "//java/java-indexing-api:indexing",
     "//plugins/kotlin/base/project-structure",
     "//platform/lang-api:lang",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -82,11 +84,13 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
     "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//plugins/kotlin/base/indices:indices_test_lib",
     "//plugins/kotlin/code-insight/line-markers-shared:kotlin-code-insight-line-markers-shared_test_lib",
     "//java/java-indexing-api:indexing_test_lib",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.lineMarkers` end

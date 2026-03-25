@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.java.psi" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
   </component>
 </module>

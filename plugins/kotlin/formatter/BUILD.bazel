@@ -32,6 +32,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/statistics",
+    "//platform/ide-core",
     "//plugins/kotlin/formatter/minimal",
   ],
   exports = ["//plugins/kotlin/formatter/minimal"]
@@ -64,6 +65,7 @@ jvm_library(
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/code-style-impl:codeStyle-impl_test_lib",
     "//platform/statistics:statistics_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//plugins/kotlin/formatter/minimal:minimal_test_lib",
   ]
 )

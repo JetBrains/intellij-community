@@ -16,6 +16,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util",
+    "//platform/util/base",
     "//platform/core-api:core",
     "//python/python-parser:parser",
     "//platform/core-impl",
@@ -32,6 +33,7 @@ jvm_library(
   runtime_deps = [
     ":ast",
     "//platform/util:util_test_lib",
+    "//platform/util/base:base_test_lib",
     "//platform/core-api:core_test_lib",
     "//python/python-parser:parser_test_lib",
     "//platform/core-impl:core-impl_test_lib",

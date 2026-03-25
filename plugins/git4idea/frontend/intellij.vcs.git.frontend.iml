@@ -42,6 +42,8 @@
     <orderEntry type="module" module-name="intellij.platform.project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" />
@@ -49,5 +51,6 @@
     <orderEntry type="module" module-name="fleet.kernel" />
     <orderEntry type="module" module-name="intellij.platform.searchEverywhere.frontend" />
     <orderEntry type="module" module-name="intellij.platform.scopes" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
   </component>
 </module>

@@ -15,8 +15,7 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/coroutines/debug",
     "//platform/util/base/multiplatform",
-  ],
-  exports = ["//platform/util/base/multiplatform"]
+  ]
 )
 
 jvm_library(
@@ -25,10 +24,6 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = [
-    "//platform/util/base/multiplatform",
-    "//platform/util/base/multiplatform:multiplatform_test_lib",
-  ],
   runtime_deps = [
     ":base",
     "//platform/util-rt:util-rt_test_lib",

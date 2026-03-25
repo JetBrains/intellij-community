@@ -63,6 +63,8 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//platform/indexing-api:indexing",
     "//platform/indexing-api:indexing_test_lib",
     "//platform/projectModel-api:projectModel",
@@ -116,6 +118,7 @@ jvm_library(
     "//plugins/kotlin/fir/testFramework:testFramework_test_lib",
     "//jps/model-api:model",
     "//jps/model-api:model_test_lib",
+    "//platform/ide-core",
     "//plugins/groovy:groovy-tests",
     "//plugins/groovy:groovy-tests_test_lib",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests",
@@ -123,7 +126,10 @@ jvm_library(
     "//java/java-runtime:rt",
     "//java/java-runtime:rt_test_lib",
   ],
-  runtime_deps = [":kotlin-gradle-java-tests"]
+  runtime_deps = [
+    ":kotlin-gradle-java-tests",
+    "//platform/ide-core:ide-core_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.java.tests` end
 

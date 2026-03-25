@@ -16,6 +16,7 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/projectModel-impl",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/diff-api:diff",
     "//platform/analysis-api:analysis",
     "@lib//:junit4",
@@ -26,6 +27,7 @@ jvm_library(
     "//platform/testFramework/junit5/eel",
     "//platform/lang-api:lang",
     "//platform/lang-core",
+    "//platform/util-ex",
   ]
 )
 
@@ -44,6 +46,7 @@ jvm_library(
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/projectModel-impl:projectModel-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/diff-api:diff_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/indexing-impl:indexing-impl_test_lib",
@@ -53,6 +56,7 @@ jvm_library(
     "//platform/testFramework/junit5/eel:eel_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//platform/lang-core:lang-core_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.testFramework` end
@@ -107,6 +111,8 @@ jvm_library(
     "//platform/indexing-api:indexing_test_lib",
     "//jps/model-api:model",
     "//jps/model-api:model_test_lib",
+    "//jps/model-serialization",
+    "//jps/model-serialization:model-serialization_test_lib",
     "//platform/lang-core",
     "//platform/lang-core:lang-core_test_lib",
     "//platform/projectModel-api:projectModel",
@@ -128,6 +134,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
     "//platform/ide-core-impl",
+    "//platform/ide-core",
     "//platform/projectModel-impl",
     "//platform/projectModel-impl:projectModel-impl_test_lib",
     "@lib//:junit4",
@@ -154,6 +161,8 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/util/jdom",
     "//platform/util/jdom:jdom_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
     "//xml/xml-psi-api:psi",
     "//xml/xml-psi-api:psi_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
@@ -178,6 +187,7 @@ jvm_library(
   runtime_deps = [
     ":vcs-tests",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.tests` end

@@ -66,6 +66,7 @@
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
+    <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
     <orderEntry type="module" module-name="intellij.platform.collaborationTools" />
     <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
@@ -84,6 +85,8 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="io.mockk" level="project" />
@@ -134,6 +137,8 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang" />

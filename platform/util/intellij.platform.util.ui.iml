@@ -46,6 +46,9 @@
     <orderEntry type="module" module-name="intellij.libraries.jbr" />
     <orderEntry type="module" module-name="intellij.libraries.jsvg" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
+    <orderEntry type="module" module-name="intellij.platform.util.multiplatform" />
+    <orderEntry type="module" module-name="intellij.platform.util.base.multiplatform" />
+    <orderEntry type="module" module-name="intellij.platform.util.base" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />

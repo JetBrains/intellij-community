@@ -33,9 +33,11 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/util/text-matching",
     "//platform/platform-impl/ui",
+    "//platform/ide-core",
     "//platform/diagnostic/telemetry",
     "@lib//:opentelemetry",
     "//platform/vcs-api/shared",
+    "//platform/util:util-ui",
   ]
 )
 
@@ -64,8 +66,10 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//platform/util/text-matching:text-matching_test_lib",
     "//platform/platform-impl/ui:ui_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/vcs-api/shared:shared_test_lib",
+    "//platform/util:util-ui_test_lib",
   ]
 )
 ### auto-generated section `build intellij.vcs.git.shared` end
