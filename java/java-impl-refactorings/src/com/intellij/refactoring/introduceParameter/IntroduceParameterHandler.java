@@ -88,6 +88,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.ui.JBUI;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NonNls;
@@ -251,6 +252,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     list.setCellRenderer(new MethodCellRenderer());
     list.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setSelectedIndex(0);
+    list.setBorder(JBUI.Borders.empty(0, 5));
     final List<RangeHighlighter> highlighters = new ArrayList<>();
     list.addListSelectionListener(__ -> {
       final PsiMethod selectedMethod = list.getSelectedValue();
