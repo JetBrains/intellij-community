@@ -4,9 +4,27 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.model.RdTarget
+import com.intellij.openapi.diagnostic.logger
+import kotlin.time.Duration.Companion.seconds
 
 fun Driver.getRunContentManager(project: Project): RunContentManager {
   return service<RunContentManager>(project, RdTarget.BACKEND)
+}
+
+fun Driver.tryToKillAllStartedProcesses() {
+  getOpenProjects(RdTarget.BACKEND).forEach { project ->
+    getRunContentManager(project).getAllDescriptors().forEach {
+      val process = it.getProcessHandler()
+      if (process != null) {
+        runCatching {
+          process.destroyProcess()
+          process.waitFor(5.seconds.inWholeMilliseconds)
+        }.onFailure {
+          logger<Driver>().warn("failed to kill process: $process")
+        }
+      }
+    }
+  }
 }
 
 @Remote("com.intellij.execution.ui.RunContentManager")
