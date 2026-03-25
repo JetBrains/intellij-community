@@ -2,10 +2,13 @@
 package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
@@ -53,9 +56,18 @@ abstract class AbstractEditorTrackingService(
 
 @ApiStatus.Internal
 class EditorTrackingScope(parentScope: CoroutineScope) : Disposable {
-  val scope: CoroutineScope = parentScope.childScope("EditorTrackingScope", supervisor = true)
+  private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+    if (throwable is CancellationException) return@CoroutineExceptionHandler
+    LOG.warn("Editor tracking coroutine failed", throwable)
+  }
+
+  val scope: CoroutineScope = parentScope.childScope("EditorTrackingScope", context = exceptionHandler, supervisor = true)
 
   override fun dispose() {
     scope.cancel()
+  }
+
+  companion object {
+    private val LOG = logger<EditorTrackingScope>()
   }
 }
