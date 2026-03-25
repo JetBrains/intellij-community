@@ -312,6 +312,10 @@ private fun preprocessArgs(args: Array<String>): List<String> {
         [/project/dir|--temp-project] [--wait] [--line <line>] [--column <column>] file
           opens the file, either in a context of the given project or as a temporary single-file project,
           optionally waiting until the editor tab is closed
+
+        -e [--wait] /some/file
+        --edit [--wait] /some/file
+          opens the file in the LightEdit mode, optionally waiting until the editor tab is closed
         """.trimIndent()
       )
       exitProcess(0)
