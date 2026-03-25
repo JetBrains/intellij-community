@@ -226,25 +226,24 @@ public class EditorImplTest extends AbstractEditorTest {
       initText("short");
       EditorImpl editor = (EditorImpl)getEditor();
       DocumentEx document = editor.getDocument();
-      Ref<Boolean> forcedDuringBulkUpdate = Ref.create(false);
-      document.addDocumentListener(new DocumentListener() {
-        @Override
-        public void documentChanged(@NotNull DocumentEvent event) {
-          if (document.isInBulkUpdate() && Boolean.TRUE.equals(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS))) {
-            forcedDuringBulkUpdate.set(true);
-          }
-        }
-      }, getTestRootDisposable());
+      setEditorVisibleSize(10, 1);
 
       assertFalse(editor.getSettings().isUseSoftWraps());
       assertNull(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS));
+      assertTrue(editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()).isEmpty());
 
       String longLine = StringUtil.repeat("1234567890", 3);
-      runWriteCommand(() -> DocumentUtil.executeInBulk(document, () -> document.setText(longLine)));
+      runWriteCommand(() -> DocumentUtil.executeInBulk(document, () -> {
+        document.setText(longLine);
 
-      assertFalse(forcedDuringBulkUpdate.get());
+        assertFalse(editor.getSettings().isUseSoftWraps());
+        assertNull(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS));
+        assertTrue(editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()).isEmpty());
+      }));
+
       assertTrue(editor.getSettings().isUseSoftWraps());
       assertEquals(Boolean.TRUE, editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS));
+      assertFalse(editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()).isEmpty());
     }
     finally {
       AdvancedSettings.setInt("editor.soft.wrap.force.limit", oldForceLimit);
