@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
@@ -112,13 +112,11 @@ public class JavaElementActionsFactory : JvmElementActionsFactory() {
     }
   }
 
-  internal class ChangeModifierFix(declaration: PsiModifierListOwner,
-                                   @FileModifier.SafeFieldForPreview val request: ChangeModifierRequest) :
-    ModifierFix(declaration, request.modifier.toPsiModifier(), request.shouldBePresent(), true, 
+  private class ChangeModifierFix(declaration: PsiModifierListOwner, @FileModifier.SafeFieldForPreview val request: ChangeModifierRequest) :
+    ModifierFix(declaration, request.modifier.toPsiModifier(), request.shouldBePresent(), true,
                 if (request.processHierarchy()) ThreeState.UNSURE else ThreeState.NO) {
     override fun getPresentation(context: ActionContext, element: PsiModifierListOwner): Presentation? {
-      if (!request.isValid) return null
-      return super.getPresentation(context, element)
+      return if (request.isValid) super.getPresentation(context, element) else null
     }
   }
 

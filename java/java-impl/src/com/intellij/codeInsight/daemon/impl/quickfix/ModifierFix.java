@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -9,6 +9,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -143,11 +144,14 @@ public class ModifierFix extends PsiBasedModCommandAction<PsiModifierListOwner> 
     final PsiModifierList modifierList = element.getModifierList();
     if (modifierList == null) return null;
     PsiFile containingFile = modifierList.getContainingFile();
-    if (containingFile == null) return null;
-    if (containingFile.getVirtualFile() == null) return null;
+    if (containingFile == null || containingFile.getVirtualFile() == null) return null;
     PsiVariable variable = ObjectUtils.tryCast(element, PsiVariable.class);
-    boolean isAvailable = modifierList.hasExplicitModifier(myModifier) != myShouldHave && !(variable instanceof SyntheticElement);
-    if (!isAvailable) return null;
+    if (PsiModifier.STATIC.equals(myModifier) && myShouldHave && element instanceof PsiMethod method
+        && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, element)) {
+      PsiClass aClass = method.getContainingClass();
+      if (aClass != null && aClass.isInterface()) return null;
+    }
+    if (!(modifierList.hasExplicitModifier(myModifier) != myShouldHave && !(variable instanceof SyntheticElement))) return null;
 
     String name = myName;
     if (myShowContainingClass) {
@@ -202,8 +206,7 @@ public class ModifierFix extends PsiBasedModCommandAction<PsiModifierListOwner> 
       modifierList = owner.getModifierList();
     }
     if (modifierList == null) return;
-    changeModifierList(modifierList);
-    if (myShouldHave && owner instanceof final PsiMethod method) {
+    if (myShouldHave && owner instanceof PsiMethod method) {
       if (PsiModifier.ABSTRACT.equals(myModifier)) {
         final PsiClass aClass = method.getContainingClass();
         if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -227,7 +230,7 @@ public class ModifierFix extends PsiBasedModCommandAction<PsiModifierListOwner> 
         }
         else if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
           PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, false);
-          CreateFromUsageUtils.setupMethodBody(method);
+          if (method.getBody() == null) CreateFromUsageUtils.setupMethodBody(method);
         }
       }
     }
@@ -235,6 +238,7 @@ public class ModifierFix extends PsiBasedModCommandAction<PsiModifierListOwner> 
       adjustVisibilityOfProtectedMembers(aClass);
       removeFinalModifierFromMethods(aClass);
     }
+    changeModifierList(modifierList);
   }
 
   private static void adjustVisibilityOfProtectedMembers(PsiClass aClass) {
