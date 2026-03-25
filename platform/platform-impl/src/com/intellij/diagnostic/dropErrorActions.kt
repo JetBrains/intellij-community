@@ -1,16 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.TimeoutUtil
 import java.awt.event.ActionEvent.CTRL_MASK
+import java.awt.event.ActionEvent.META_MASK
 import java.awt.event.ActionEvent.SHIFT_MASK
 import java.io.RandomAccessFile
 import java.util.Random
@@ -86,15 +88,21 @@ internal class DropAnOutOfMemoryErrorAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
-    if (e.modifiers and SHIFT_MASK == 0) {
-      val array = arrayOfNulls<Any>(Integer.MAX_VALUE)
-      for (i in array.indices) {
-        array[i] = arrayOfNulls<Any>(Integer.MAX_VALUE)
-      }
-      throw OutOfMemoryError()
+    if (e.modifiers and SHIFT_MASK != 0) {
+      throw OutOfMemoryError("Metaspace")
+    }
+    else if (e.modifiers and (if (ClientSystemInfo.isMac()) META_MASK else CTRL_MASK) != 0) {
+      throw OutOfMemoryError("Java heap space")
     }
     else {
-      throw OutOfMemoryError("foo Metaspace foo")
+      exhaustJavaHeap()
+    }
+  }
+
+  private fun exhaustJavaHeap(): Nothing {
+    val chunks = ArrayList<ByteArray>()
+    while (true) {
+      chunks.add(ByteArray(8 * 8 * 1024 * 1024))
     }
   }
 }

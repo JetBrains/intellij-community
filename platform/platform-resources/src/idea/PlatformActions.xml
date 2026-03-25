@@ -1373,7 +1373,7 @@
         <action id="DropPluginError" internal="true" class="com.intellij.diagnostic.DropPluginErrorAction"
                 text="Drop an Error in a Random Plugin" description="Hold down SHIFT for 3rd-party plugins only"/>
         <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"
-                text="Drop an OutOfMemoryError" description="Hold down SHIFT for OOME in Metaspace"/>
+                text="Drop an OutOfMemoryError" description="No modifier to exhaust heap, CTRL/CMD to throw heap OOME, SHIFT to throw Metaspace OOME"/>
       </group>
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
