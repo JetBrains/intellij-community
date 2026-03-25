@@ -49,7 +49,6 @@ import org.jetbrains.idea.maven.model.MavenResource
 import org.jetbrains.idea.maven.plugins.groovy.MavenGroovyPomCompletionContributor
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -554,15 +553,7 @@ object MavenDomUtil {
 
   @JvmStatic
   fun getMavenVersion(file: VirtualFile?, project: Project): String? {
-    val directory = file?.getParent()
-    val distribution: MavenDistribution?
-    if (directory == null) {
-      distribution = MavenDistributionsCache.getInstance(project).getSettingsDistribution()
-    }
-    else {
-      distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(directory.getPath())
-    }
-    return distribution.version
+    return MavenDistributionsCache.getInstance(project).getMavenVersion(file)
   }
 
   @JvmStatic

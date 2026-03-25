@@ -31,9 +31,9 @@ class MavenModelVersionConverter : MavenConstantListConverter(false) {
     }
   }
 
-  override fun getErrorMessage(s: String?, context: ConvertContext): String? {
+  override fun getErrorMessage(s: String?, context: ConvertContext): String {
     val project = context.project
-    val version = MavenDistributionsCache.getInstance(project).getMavenDistribution(context.file.virtualFile).version
+    val version = MavenDistributionsCache.getInstance(project).getMavenVersion(context.file.virtualFile)
     return MavenDomBundle.message("inspection.message.unsupported.model.version.only.version.supported", getValues(context), version)
   }
 
