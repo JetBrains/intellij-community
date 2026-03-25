@@ -1,12 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.testIntegration
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.fir.testIntegration
+
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+
 
 import com.intellij.openapi.editor.Document
 import com.intellij.testIntegration.JvmTestDiffUpdateTest
 import org.intellij.lang.annotations.Language
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 @Suppress("NewClassNamingConvention", "SameParameterValue")
-class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest() {
+class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
+
     private fun checkHasNoDiff(
         @Language("kotlin") before: String,
         testClass: String,

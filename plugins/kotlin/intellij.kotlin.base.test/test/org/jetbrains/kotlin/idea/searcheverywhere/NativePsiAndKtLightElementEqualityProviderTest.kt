@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.searcheverywhere
 
@@ -8,12 +8,11 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.utils.addToStdlib.cast
 
 /**
  * @see KtSearchEverywhereEqualityProvider
  */
-class NativePsiAndKtLightElementEqualityProviderTest : KotlinSearchEverywhereTestCase() {
+open class NativePsiAndKtLightElementEqualityProviderTest : KotlinSearchEverywhereTestCase() {
     fun `test only class presented`() {
         val file = myFixture.configureByText("MyKotlinClassWithStrangeName.kt", "class MyKotlinClassWithStrangeName")
         val klass = file.findElementAt(myFixture.caretOffset)?.parentOfType<KtClass>()!!
@@ -52,7 +51,7 @@ class NativePsiAndKtLightElementEqualityProviderTest : KotlinSearchEverywhereTes
 
         val klass = file.findElementAt(myFixture.caretOffset)?.parentOfType<KtClass>()!!
         val ulc = klass.toLightClass()!!
-        val syntheticClass = file.declarations.last().cast<KtNamedFunction>().toLightMethods().single().parent
+        val syntheticClass = (file.declarations.last() as KtNamedFunction).toLightMethods().single().parent
         findPsiByPattern("MyKotlinClassWithStrangeName") { results ->
             assertTrue(results.toString(), results.size == 1)
             assertTrue(klass in results)

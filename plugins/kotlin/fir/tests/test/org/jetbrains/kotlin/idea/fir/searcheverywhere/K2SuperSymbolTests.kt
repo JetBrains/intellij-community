@@ -1,13 +1,24 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.searcheverywhere
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.fir.searcheverywhere
 
-class SuperSymbolTests : KotlinSearchEverywhereTestCase() {
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.searcheverywhere.KotlinSearchEverywhereTestCase
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
+
+class K2SuperSymbolTests : KotlinSearchEverywhereTestCase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
+
     fun `test super class`(): Unit = doTest(
         text = """
             open class A
             class B<caret> : A()
         """.trimIndent(),
-        action = "Go to Super Class",
+        action = "Super Class",
     )
 
     fun `test super interface`(): Unit = doTest(
@@ -15,7 +26,7 @@ class SuperSymbolTests : KotlinSearchEverywhereTestCase() {
             interface A
             class B<caret> : A
         """.trimIndent(),
-        action = "Go to Super Interface",
+        action = "Super Class",
     )
 
     fun `test super several interfaces`(): Unit = doTest(
@@ -24,7 +35,7 @@ class SuperSymbolTests : KotlinSearchEverywhereTestCase() {
             interface C
             class B<caret> : A, C
         """.trimIndent(),
-        action = "Go to Super Interface",
+        action = "Super Class",
     )
 
     fun `test super class and interface `(): Unit = doTest(
@@ -33,7 +44,7 @@ class SuperSymbolTests : KotlinSearchEverywhereTestCase() {
             class C
             class B<caret> : A, C()
         """.trimIndent(),
-        action = "Go to Super Class or Interface",
+        action = "Super Class",
     )
 
     fun `test super method`(): Unit = doTest(
@@ -45,7 +56,7 @@ class SuperSymbolTests : KotlinSearchEverywhereTestCase() {
               override fun f<caret>oo() = Unit
             }
         """.trimIndent(),
-        action = "Go to Super Method",
+        action = "Super Method",
     )
 
     fun `test super property`(): Unit = doTest(
@@ -57,7 +68,7 @@ class SuperSymbolTests : KotlinSearchEverywhereTestCase() {
               override val a<caret>: Int = 5
             }
         """.trimIndent(),
-        action = "Go to Super Property",
+        action = "Super Property",
     )
 
     fun `test super property from getter`(): Unit = doTest(
@@ -70,7 +81,7 @@ class SuperSymbolTests : KotlinSearchEverywhereTestCase() {
                 g<caret>et() = 5
             }
         """.trimIndent(),
-        action = "Go to Super Property",
+        action = "Super Property",
     )
 
     private fun doTest(text: String, action: String): Unit = configureAndCheckActions(

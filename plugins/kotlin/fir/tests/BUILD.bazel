@@ -247,6 +247,8 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
+    "//java/java-tests:tests",
+    "//java/java-tests:tests_test_lib",
   ],
   runtime_deps = [
     ":tests",
