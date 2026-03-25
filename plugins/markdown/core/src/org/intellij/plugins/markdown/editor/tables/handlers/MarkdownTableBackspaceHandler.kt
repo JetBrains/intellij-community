@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables.handlers
 
 import com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate
@@ -35,6 +35,7 @@ internal class MarkdownTableBackspaceHandler: BackspaceHandlerDelegate() {
     val text = document.charsSequence
     executeCommand(table.project) {
       table.modifyColumn(
+        document,
         cellIndex,
         transformSeparator = { updateSeparator(document, it, width.coerceAtLeast(1)) },
         transformCell = { cell ->

@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
+import com.intellij.util.DocumentUtil
 import com.intellij.util.containers.ContainerUtil
 import org.intellij.plugins.markdown.editor.tables.TableUtils.calculateActualTextRange
 import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsCount
@@ -28,6 +29,7 @@ object TableModificationUtils {
    * [transformSeparator] on corresponding separator cell.
    */
   fun MarkdownTable.modifyColumn(
+    document: Document,
     columnIndex: Int,
     transformSeparator: (TextRange) -> Unit,
     transformCell: (MarkdownTableCell) -> Unit
@@ -35,8 +37,10 @@ object TableModificationUtils {
     val separatorRange = separatorRow?.getCellRange(columnIndex) ?: return false
     val headerCell = headerRow?.getCell(columnIndex) ?: return false
     val cells = getColumnCells(columnIndex, withHeader = false)
-    for (cell in cells.asReversed()) {
-      transformCell.invoke(cell)
+    DocumentUtil.executeInBulk(document, cells.size > 100) {
+      for (cell in cells.asReversed()) {
+        transformCell.invoke(cell)
+      }
     }
     transformSeparator.invoke(separatorRange)
     transformCell.invoke(headerCell)
@@ -186,6 +190,7 @@ object TableModificationUtils {
 
   fun MarkdownTable.updateColumnAlignment(document: Document, columnIndex: Int, alignment: CellAlignment) {
     modifyColumn(
+      document,
       columnIndex,
       transformSeparator = { separatorRow?.updateAlignment(document, columnIndex, alignment) },
       transformCell = { it.updateAlignment(document, alignment) }
