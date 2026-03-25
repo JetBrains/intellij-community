@@ -199,6 +199,7 @@
     <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.concurrency.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.nonModalWelcomeScreen.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.usages.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ijent.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.images.build.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.inspect.tests" scope="TEST" />
