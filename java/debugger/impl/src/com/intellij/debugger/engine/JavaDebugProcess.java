@@ -57,6 +57,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.debugger.impl.shared.CoroutineUtilsKt;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -90,8 +91,10 @@ import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.LocatableEvent;
+import kotlinx.coroutines.flow.Flow;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
@@ -633,6 +636,11 @@ public class JavaDebugProcess extends XDebugProcess {
   public String getCurrentStateMessage() {
     String description = myJavaSession.getStateDescription();
     return description != null ? description : super.getCurrentStateMessage();
+  }
+
+  @Override
+  public @Nullable Flow<@Nls String> getCurrentStateMessageFlow() {
+    return CoroutineUtilsKt.mapFlow(myJavaSession.getSessionStateFlow(), __ -> getCurrentStateMessage());
   }
 
   @Override

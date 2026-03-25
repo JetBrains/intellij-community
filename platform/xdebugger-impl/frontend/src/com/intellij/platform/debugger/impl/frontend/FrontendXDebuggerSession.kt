@@ -95,6 +95,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.event.HyperlinkListener
@@ -218,8 +219,12 @@ class FrontendXDebuggerSession(
           ?: consoleView?.createConsoleActions()?.toList()
           ?: emptyList()
   override val coroutineScope: CoroutineScope = cs
+
+  private val _currentStateMessageState: StateFlow<String>? = createMessageStateFlowIfNeeded()
+
   override val currentStateMessage: String
-    get() = if (isStopped) XDebuggerBundle.message("debugger.state.message.disconnected") else XDebuggerBundle.message("debugger.state.message.connected") // TODO
+    get() = _currentStateMessageState?.value ?: defaultStateMessage()
+
   override val currentStateHyperlinkListener: HyperlinkListener?
     get() = null // TODO
 
@@ -266,6 +271,24 @@ class FrontendXDebuggerSession(
       tabInfoInitialized = true
       initTabInfo(tabDto)
     }
+  }
+
+  private fun createMessageStateFlowIfNeeded(): StateFlow<@Nls String>? {
+    val rpcFlow = sessionDto.currentStateMessageFlow ?: return null
+    val mutableStateFlow = MutableStateFlow(sessionDto.initialStateMessage)
+    tabScope.launch {
+      rpcFlow.toFlow().collect { message ->
+        mutableStateFlow.value = message
+      }
+    }
+    return mutableStateFlow
+  }
+
+  private fun defaultStateMessage(): String = if (isStopped) {
+    XDebuggerBundle.message("debugger.state.message.disconnected")
+  }
+  else {
+    XDebuggerBundle.message("debugger.state.message.connected")
   }
 
   private fun XDebuggerSessionEvent.updateCurrents() {
