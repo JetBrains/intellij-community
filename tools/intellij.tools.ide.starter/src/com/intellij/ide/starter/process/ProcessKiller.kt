@@ -1,11 +1,9 @@
 package com.intellij.ide.starter.process
 
-import com.intellij.ide.starter.process.ProcessKiller.killProcessUsingHandle
-import com.intellij.ide.starter.process.exec.ExecOutputRedirect
-import com.intellij.ide.starter.process.exec.ProcessExecutor
+import com.intellij.execution.Platform
+import com.intellij.execution.process.OSProcessUtil
 import com.intellij.ide.starter.utils.catchAll
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.tools.ide.util.common.logOutput
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -13,114 +11,170 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
-import java.nio.file.Path
+import kotlinx.coroutines.withTimeout
+import kotlin.jvm.optionals.getOrNull
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * Termination helpers for child processes spawned by tests/ide from tests.
+ *
+ * To remember while editing:
+ * - On Windows, killing descendants should not be done by iterating descendants — PID rotation can happen (see MRI-4085).
+ *   Use [OSProcessUtil.killProcessTree] (which goes through WinP/Job-Objects) instead.
+ *
+ * - TW-71208: many processes on Linux TC (java/python) ignore SIGINT and only react to SIGTERM,
+ *   SIGTERM is sent by `processHandle.destroy()`.
+ *
+ * - SIGTERM does NOT propagate through shells like dash/xvfb-run to their children, so we must
+ *   signal each descendant explicitly. We cannot rely on process groups either: Java's
+ *   ProcessBuilder on Linux does not call setsid(), so the wrapper inherits the test JVM's PGID
+ *   and `kill(-wrapperPid, ...)` targets a non-existing group.
+ */
 object ProcessKiller {
-  private val logger = Logger.getInstance(ProcessKiller::class.java)
+
+  private fun logOutput(message: String) {
+    com.intellij.tools.ide.util.common.logOutput("[ProcessKiller] $message")
+  }
+
+  private fun processHandleToString(processHandle: ProcessHandle) =
+    "Process[${processHandle.pid()}] '${processHandle.info()?.command()?.getOrNull() ?: "unknown command"}'"
+
+  // Better to keep the sum of these two below default timeoutRunBlocking (10 sec)
+  // so if someone tries to kill the process(that we can't kill) inside timeoutRunBlocking, it works without throwing an exception
+  private val DEFAULT_GRACEFUL_TIMEOUT = 6.seconds
+  private val DEFAULT_FORCEFUL_TIMEOUT = 2.seconds
+
+  //When we have java.lang.Process reference, it means we started this process, and we have rights to kill it.
+  // It may be an IDE we afford to wait longer.
+  private val DEFAULT_GRACEFUL_OWN_PROCESS_TIMEOUT = 20.seconds
 
   /**
-   * Returns true if the processes were killed successfully or found in a killed state.
+   * Returns true if every targeted process was confirmed dead.
+   * Entries with a null [ProcessInfo.processHandle] are treated as already exited.
    */
   suspend fun killProcesses(
     processInfosToKill: List<ProcessInfo>,
-    workDir: Path? = null,
-    timeout: Duration = 1.minutes,
-  ): Boolean = coroutineScope {
-    check(processInfosToKill.isNotEmpty())
-    val results = processInfosToKill.map { processInfo ->
-      async {
-        if (processInfo.processHandle != null) {
-          if (!killProcessUsingHandle(processInfo.processHandle, timeout)) {
-            killProcessUsingCommandLine(processInfo.pid, workDir, timeout)
+    cleanUpDescendants: Boolean = true,
+    gracefulTimeout: Duration = DEFAULT_GRACEFUL_TIMEOUT,
+    forcefulTimeout: Duration = DEFAULT_FORCEFUL_TIMEOUT,
+  ): Boolean {
+    check(processInfosToKill.isNotEmpty()) { "processInfosToKill shouldn't be empty" }
+    return coroutineScope {
+      withTimeout(5.minutes) {
+        processInfosToKill.map { info ->
+          async {
+            val handle = info.processHandle ?: run {
+              logOutput("Process[${info.pid}] Can't resolve ProcessHandler of this process. " +
+                        "It either already finished or we don't have rights to kill it.")
+              return@async true
+            }
+            killProcess(handle, cleanUpDescendants, gracefulTimeout = gracefulTimeout, forcefulTimeout = forcefulTimeout)
           }
-          else {
-            true
+        }.awaitAll().all { it }
+      }
+    }
+  }
+
+  /**
+   * Kills [process] and optionally kills its descendants according to [cleanUpDescendants].
+   *
+   * Returns true if confirmed dead.
+   */
+  suspend fun killProcess(
+    process: Process,
+    cleanUpDescendants: Boolean = true,
+    gracefullyAtFirst: Boolean = true,
+    gracefulTimeout: Duration = DEFAULT_GRACEFUL_OWN_PROCESS_TIMEOUT,
+    forcefulTimeout: Duration = DEFAULT_FORCEFUL_TIMEOUT,
+  ): Boolean {
+    val processHandle = process.toHandle()
+    return killProcess(
+      processHandle = processHandle,
+      cleanUpDescendants = cleanUpDescendants,
+      gracefullyAtFirst = gracefullyAtFirst,
+      gracefulTimeout = gracefulTimeout,
+      forcefulTimeout = forcefulTimeout,
+    )
+  }
+
+  @OptIn(LowLevelLocalMachineAccess::class)
+  private suspend fun gracefulStop(processHandle: ProcessHandle, gracefulTimeout: Duration, cleanUpDescendants: Boolean) {
+    runCatching {
+      when {
+        OS.CURRENT.platform == Platform.UNIX -> {
+          if (cleanUpDescendants) {
+            val descendants = processHandle.descendants().toList()
+            descendants.asReversed().forEach {
+              logOutput("${processHandleToString(processHandle)}: Stopping descendant ${processHandleToString(it)} gracefully by `destroy` [SIGTERM]")
+              it.destroy()
+            }
+          }
+          logOutput("${processHandleToString(processHandle)}: Stopping gracefully by `destroy` [SIGTERM]")
+          processHandle.destroy()
+        }
+        else -> {
+          logOutput("${processHandleToString(processHandle)}: Stopping gracefully `OSProcessUtil.terminateProcessGracefully` [Ctrl+C]")
+          OSProcessUtil.terminateProcessGracefully(processHandle.pid().toInt())
+        }
+      }
+    }
+      .onFailure {
+        logOutput("${processHandleToString(processHandle)}: Graceful stop failed: $it")
+      }
+      .onSuccess {
+        catchAll("${processHandleToString(processHandle)}: Waiting for graceful exit with $gracefulTimeout timeout") {
+          withTimeout(gracefulTimeout) { processHandle.onExit().await() }
+        }
+      }
+  }
+
+  private suspend fun forcefulKill(processHandle: ProcessHandle, forcefulTimeout: Duration, cleanUpDescendants: Boolean = true) {
+    runCatching {
+      if (cleanUpDescendants) {
+        logOutput("${processHandleToString(processHandle)}: Killing process tree")
+        return@runCatching OSProcessUtil.killProcessTree(processHandle.pid())
+      }
+
+      if (processHandle.isAlive) {
+        logOutput("${processHandleToString(processHandle)}: Killing forcibly")
+        return@runCatching processHandle.destroyForcibly()
+      }
+
+      return@runCatching true
+    }
+      .onFailure {
+        logOutput("${processHandleToString(processHandle)}: Forceful kill failed: $it")
+      }.onSuccess { successFulForceKill ->
+        if (successFulForceKill) {
+          catchAll("${processHandleToString(processHandle)}: Waiting for exit after Forceful kill with $forcefulTimeout timeout") {
+            withTimeout(forcefulTimeout) { processHandle.onExit().await() }
           }
         }
         else {
-          // According to the Doc, a process handle is null only for the non-existing processes
-          true
+          logOutput("${processHandleToString(processHandle)}: Forceful kill returned false")
         }
       }
-    }
 
-    results.awaitAll().all { it }
   }
 
-  /**
-   * Kills a process using the command line.
-   * IF possible it's better to use [killProcessUsingHandle].
-   * Returns true if the process was killed successfully or found in a killed state.
-   */
-  suspend fun killProcessUsingCommandLine(
-    pid: Long,
-    workDir: Path? = null,
-    timeout: Duration,
-  ): Boolean {
-    logOutput("Killing process $pid using command line")
+  suspend fun killProcess(
+    processHandle: ProcessHandle,
+    cleanUpDescendants: Boolean = true,
+    gracefullyAtFirst: Boolean = true,
+    gracefulTimeout: Duration = DEFAULT_GRACEFUL_TIMEOUT,
+    forcefulTimeout: Duration = DEFAULT_FORCEFUL_TIMEOUT,
+  ): Boolean = withContext(Dispatchers.IO) {
 
-    val args: List<String> = if (OS.CURRENT == OS.Windows) {
-      listOf("taskkill", "/pid", pid.toString(), "/f")
-    }
-    else {
-      listOf("kill", "-9", pid.toString())
+    if (gracefullyAtFirst) {
+      gracefulStop(processHandle, gracefulTimeout, cleanUpDescendants)
     }
 
-    val stdout = ExecOutputRedirect.ToStdOutAndString("[kill-pid-${pid}]")
-    val stderr = ExecOutputRedirect.ToStdOutAndString("[kill-pid-${pid}]")
-
-    ProcessExecutor(
-      presentableName = "Kill Process $pid",
-      workDir = workDir,
-      timeout = timeout,
-      args = args,
-      stdoutRedirect = stdout,
-      stderrRedirect = stderr,
-    ).startCancellable()
-
-    val errorMsg = stderr.read()
-    return if (errorMsg.isNotEmpty()) {
-      if (errorMsg.contains("No such process")) {
-        logger.warn("Process $pid is already terminated")
-        return true
-      }
-      logger.warn("Process kill command reported errors: $errorMsg")
-      false
-    }
-    else {
-      true
-    }
-  }
-
-  /**
-   * Kills a process using the [ProcessHandle].
-   * Waits for the process to exit for up to [timeout].
-   * Returns true if the process was killed successfully or found in a killed state.
-   */
-  suspend fun killProcessUsingHandle(processHandle: ProcessHandle, timeout: Duration = 30.seconds): Boolean = withContext(Dispatchers.IO) {
-    logOutput("Kill process '${processHandle.pid()} ${processHandle.info().command()}' using ProcessHandle")
-    if (processHandle.destroy()) {
-      catchAll("Waiting on exit for process '${processHandle.pid()}'") {
-        // Usually daemons wait 2 requests for 10 seconds after ide shutdown
-        withTimeoutOrNull(timeout) {
-          processHandle.onExit().await()
-        }
-        return@withContext true
-      }
+    if (processHandle.isAlive) {
+      forcefulKill(processHandle, forcefulTimeout, cleanUpDescendants)
     }
 
-    processHandle.destroyForcibly()
-    catchAll("Waiting on exit for process '${processHandle.pid()}' after forcible termination") {
-      withTimeoutOrNull(2.seconds) {
-        processHandle.onExit().await()
-      }
-      return@withContext true
-    }
-
-    false
+    return@withContext !processHandle.isAlive
   }
 }

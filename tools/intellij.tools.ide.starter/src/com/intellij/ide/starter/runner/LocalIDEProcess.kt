@@ -89,11 +89,11 @@ class LocalIDEProcess : IDEProcess {
             onProcessCreated = { process, pid ->
               span.addEvent("process created")
               runInterruptible {
-                EventsBus.postAndWaitProcessing(IdeLaunchEvent(runContext = this, ideProcess = IDEProcessHandle(process.toHandle())))
+                EventsBus.postAndWaitProcessing(IdeLaunchEvent(runContext = this, ideProcess = IDEProcessHandle(process)))
               }
               getIdeProcessIdWithRetry(process.toProcessInfo(), runContext)?.let {
                 ideProcessId = it
-                startCollectThreadDumpsLoop(logsDir, IDEProcessHandle(process.toHandle()), jdkHome,
+                startCollectThreadDumpsLoop(logsDir, IDEProcessHandle(process), jdkHome,
                                             startConfig.workDir, it, "ide")
               }
             },
