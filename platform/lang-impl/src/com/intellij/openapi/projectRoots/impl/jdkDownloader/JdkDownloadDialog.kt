@@ -381,6 +381,7 @@ internal class JdkDownloadDialog(
     selectedPath = path
 
     setModel(WslPath.isWslUncPath(path))
+    initValidation()
   }
 
   private fun onVendorActionItemSelected(it: JdkVersionVendorItem?) {
