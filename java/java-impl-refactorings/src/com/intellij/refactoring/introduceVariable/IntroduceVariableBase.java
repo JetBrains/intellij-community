@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -260,48 +260,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     return invokeImpl(project, findExpressionInRange(project, file, startOffset, endOffset), editor);
-  }
-
-  public @NotNull Pair<List<PsiElement>, List<PsiExpression>> getPossibleAnchorsAndOccurrences(final Project project, final PsiExpression expr) {
-    OccurrencesInfo occurrencesInfo = buildOccurrencesInfo(project, expr);
-
-    final LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap = occurrencesInfo.buildOccurrencesMap(expr);
-    List<PsiElement> anchors = occurrencesMap.values().stream()
-      .map(o -> getAnchor(o.toArray(PsiExpression.EMPTY_ARRAY)))
-      .filter(Objects::nonNull)
-      .flatMap(anchor -> IntroduceVariableTargetBlockChooser.getContainers(anchor, expr).stream())
-      .distinct()
-      .collect(Collectors.toList());
-    return Pair.create(anchors, occurrencesInfo.myOccurrences);
-  }
-
-  public @NotNull Map<String, JavaReplaceChoice> getPossibleReplaceChoices(final Project project, final PsiExpression expr) {
-    OccurrencesInfo occurrencesInfo = buildOccurrencesInfo(project, expr);
-    final LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap = occurrencesInfo.buildOccurrencesMap(expr);
-    return occurrencesMap.entrySet().stream().collect(Collectors.toMap(
-      entry -> entry.getKey().formatDescription(entry.getValue().size()),
-      entry -> entry.getKey()
-    ));
-  }
-
-  private @NotNull OccurrencesInfo buildOccurrencesInfo(Project project, PsiExpression expr) {
-    final PsiElement anchorStatement = getAnchor(expr);
-    ErrorOrContainer result = getTempContainer(anchorStatement);
-
-    final PsiElement tempContainer = switch (result) {
-      case Container container -> {
-        yield container.element();
-      }
-      case ErrorOrContainer.Error error -> {
-        showErrorMessage(project, null, error.message());
-        yield null;
-      }
-    };
-
-    final ExpressionOccurrenceManager occurrenceManager = createOccurrenceManager(expr, tempContainer);
-    final PsiExpression[] occurrences = occurrenceManager.getOccurrences();
-
-    return new OccurrencesInfo(occurrences);
   }
 
   private static @Nullable JavaReplaceChoice findChoice(@NotNull LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap,
