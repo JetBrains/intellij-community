@@ -133,20 +133,27 @@ internal class LegacyProjectModelListenersBridge(
       is EntityChange.Replaced -> {
         val oldId = change.oldEntity.symbolicId
         val newId = change.newEntity.symbolicId
+        val isImlDirectoryChanged = getImlFileDirectory(change.oldEntity) != getImlFileDirectory(change.newEntity)
+        val newModuleFileUrl = getModuleVirtualFileUrl(change.newEntity)
 
         if (oldId != newId) {
           removeUnloadedModuleWithId(newId)
           val module = change.oldEntity.findModule(event.storageBefore)
           if (module != null) {
-            module.rename(newId.name, getModuleVirtualFileUrl(change.newEntity), true)
             oldModuleNames[module] = oldId.name
+            if (isImlDirectoryChanged && newModuleFileUrl != null) {
+              module.rename(newId.name, false)
+              module.onImlFileMoved(newModuleFileUrl)
+            }
+            else {
+              module.rename(newId.name, newModuleFileUrl, true)
+            }
           }
         }
-        else if (getImlFileDirectory(change.oldEntity) != getImlFileDirectory(change.newEntity)) {
+        else if (isImlDirectoryChanged) {
           val module = change.newEntity.findModule(event.storageBefore)
-          val imlFilePath = getModuleVirtualFileUrl(change.newEntity)
-          if (module != null && imlFilePath != null) {
-            module.onImlFileMoved(imlFilePath)
+          if (module != null && newModuleFileUrl != null) {
+            module.onImlFileMoved(newModuleFileUrl)
           }
         }
       }
