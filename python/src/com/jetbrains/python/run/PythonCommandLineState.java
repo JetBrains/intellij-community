@@ -1140,7 +1140,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   protected @NotNull UrlFilter createUrlFilter(ProcessHandler handler) {
-    return new UrlFilter();
+    return new UrlFilter(myConfig.getProject());
   }
 
   protected @NotNull Function<TargetEnvironment, String> getTargetPath(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
