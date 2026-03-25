@@ -347,7 +347,7 @@ public interface Git {
   GitCommandResult deleteWorkingTree(@NotNull Project project, @NotNull GitWorkingTree tree);
 
   @NotNull
-  GitCommandResult listWorktrees(@NotNull GitRepository repository, GitLineHandlerListener @NotNull ... listeners);
+  List<GitWorkingTree> listWorktrees(@NotNull GitRepository repository) throws VcsException;
 
   @NotNull
   GitCommandResult createWorkingTree(@NotNull GitRepository repository,

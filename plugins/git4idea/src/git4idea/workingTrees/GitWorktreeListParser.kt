@@ -1,19 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.workingTrees
 
-import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsException
 import git4idea.GitWorkingTree
-import git4idea.commands.GitLineHandlerListener
-import git4idea.repo.GitRepository
+import git4idea.config.GitExecutable
 import git4idea.util.StringScanner
 import kotlinx.collections.immutable.toImmutableList
+import java.nio.file.Path
 
-internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineHandlerListener {
-  private val currentRoot = repository.root.path
+internal class GitWorktreeListParser(private val executable: GitExecutable, private val currentRoot: Path) {
   private var badLineReported = 0
   private var currentWorktreePath: String? = null
   private var branchFullName: String? = null
@@ -21,25 +17,20 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
   private var isLocked = false
   private var isPrunable = false
   private var isFirst = true
-  val trees: List<GitWorkingTree>
-    get() = _trees.toImmutableList()
   private val _trees: MutableList<GitWorkingTree> = mutableListOf()
 
-  fun report(line: String, e: VcsException? = null) {
-    badLineReported++
-    if (badLineReported < 5) {
-      thisLogger().warn("Unexpected worktree output: $line", e)
-    }
+  fun parseOrEmpty(lines: List<String>): List<GitWorkingTree> {
+    lines.forEach(::handleLine)
+    return _trees.toImmutableList()
   }
 
-  override fun onLineAvailable(line: @NlsSafe String, outputType: Key<*>) {
+  private fun handleLine(line: String) {
     if (line.isBlank()) {
       createWorkingTree(currentWorktreePath, branchFullName, isDetached, isFirst, isLocked, isPrunable)
       return
     }
 
     try {
-      if (outputType == ProcessOutputType.STDOUT) {
         if (line == "detached") {
           isDetached = true
           return
@@ -68,7 +59,6 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
           }
           else -> report(line)
         }
-      }
     }
     catch (e: VcsException) {
       report(line, e)
@@ -84,13 +74,14 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
     prunable: Boolean,
   ) {
     if (path == null) {
-      thisLogger().warn("'worktree' wasn't reported for branch ${branch ?: "<detached>"}")
+      LOG.warn("'worktree' wasn't reported for branch ${branch ?: "<detached>"}")
     }
     else if (!detached && branch == null) {
-      thisLogger().warn("'branch' wasn't reported for path $path")
+      LOG.warn("'branch' wasn't reported for path $path")
     }
     else {
-      _trees.add(GitWorkingTree(path, branch, main, path == currentRoot, locked, prunable))
+      val convertedPath = executable.convertFilePathBack(path, currentRoot)
+      _trees.add(GitWorkingTree(path, branch, main, convertedPath == currentRoot, locked, prunable))
     }
     currentWorktreePath = null
     branchFullName = null
@@ -98,5 +89,16 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
     isLocked = false
     isPrunable = false
     isFirst = false
+  }
+
+  private fun report(line: String, e: VcsException? = null) {
+    badLineReported++
+    if (badLineReported < 5) {
+      LOG.warn("Unexpected worktree output: $line", e)
+    }
+  }
+
+  companion object {
+    private val LOG = thisLogger()
   }
 }

@@ -95,10 +95,7 @@ internal abstract class GitWorkingTreeTest : GitWorkingTreeTestBase() {
   }
 
   fun listTrees(): List<GitWorkingTree> {
-    val listener = GitListWorktreeLineListener(repo)
-    val commandResult = Git.getInstance().listWorktrees(repo, listener)
-    commandResult.throwOnError()
-    return listener.trees
+    return Git.getInstance().listWorktrees(repo)
   }
 
   fun `test creating a worktree with new branch`() {
