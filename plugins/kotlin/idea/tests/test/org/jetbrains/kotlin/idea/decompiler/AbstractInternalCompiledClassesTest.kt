@@ -2,10 +2,13 @@
 
 package org.jetbrains.kotlin.idea.decompiler
 
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
-import org.jetbrains.kotlin.idea.decompiler.textBuilder.findTestLibraryRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.name.ClassId
@@ -63,5 +66,16 @@ abstract class AbstractInternalCompiledClassesTest : KotlinLightCodeInsightFixtu
             }
         }
     }
+}
+
+fun findTestLibraryRoot(module: Module): VirtualFile? {
+    for (orderEntry in ModuleRootManager.getInstance(module).orderEntries) {
+        if (orderEntry is LibraryOrderEntry &&
+            orderEntry.libraryName?.startsWith("@kotlin_test_deps//:annotations") != true &&
+            orderEntry.libraryName?.startsWith("org.jetbrains:annotations") != true) {
+            return orderEntry.getRootFiles(OrderRootType.CLASSES)[0]
+        }
+    }
+    return null
 }
 
