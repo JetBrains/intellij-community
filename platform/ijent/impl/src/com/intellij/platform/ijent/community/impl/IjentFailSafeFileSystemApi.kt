@@ -8,6 +8,7 @@ import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.EelUserWindowsInfo
+import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
 import com.intellij.platform.eel.fs.EelOpenedFile
@@ -203,6 +204,9 @@ private class IjentFailSafeFileSystemPosixApiImpl(
       streamingRead(path)
     }
 
+  override suspend fun prefetchDirectories(roots: Collection<EelPath>): Flow<Pair<EelPath, EelFileInfo>> =
+    holder.withDelegateRetrying { prefetchDirectories(roots) }
+
   override suspend fun listDirectory(
     path: EelPath,
   ): EelResult<Collection<String>, EelFileSystemApi.ListDirectoryError> =
@@ -370,6 +374,9 @@ private class IjentFailSafeFileSystemWindowsApiImpl(
     holder.withDelegateRetrying {
       streamingRead(path)
     }
+
+  override suspend fun prefetchDirectories(roots: Collection<EelPath>): Flow<Pair<EelPath, EelFileInfo>> =
+    holder.withDelegateRetrying { prefetchDirectories(roots) }
 
   override suspend fun listDirectory(
     path: EelPath,

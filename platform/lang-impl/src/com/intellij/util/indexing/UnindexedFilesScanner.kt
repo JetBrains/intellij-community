@@ -25,6 +25,7 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.openapi.vfs.impl.local.withPrefetchForRemoteRoots
 import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.platform.diagnostic.telemetry.Indexes
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
@@ -461,8 +462,14 @@ class UnindexedFilesScanner (
        * because of `indexableFilesDeduplicateFilter`, and therefore the `FilePropertyPusher`s will not run for that file.
        */
       val (genericContentEntityProviders, otherProviders) = providers.partition { provider -> provider.origin is GenericContentEntityOrigin }
-      collectIndexableFilesConcurrently(otherProviders, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
-      collectIndexableFilesConcurrently(genericContentEntityProviders, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
+
+      withPrefetchForRemoteRoots(otherProviders.toRoots(project)) {
+        collectIndexableFilesConcurrently(otherProviders, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
+      }
+
+      withPrefetchForRemoteRoots(genericContentEntityProviders.toRoots(project)) {
+        collectIndexableFilesConcurrently(genericContentEntityProviders, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
+      }
     }
 
     private fun collectIndexableFilesConcurrently(
@@ -489,6 +496,19 @@ class UnindexedFilesScanner (
               }
             }
           }
+        }
+      }
+    }
+
+    private fun List<IndexableFilesIterator>.toRoots(project: Project): List<VirtualFile> {
+      return flatMap { it.getRootUrls(project) }.mapNotNull { url ->
+        try {
+          val vf = com.intellij.openapi.vfs.VirtualFileManager.getInstance().findFileByUrl(url) ?: return@mapNotNull null
+          val localFile = com.intellij.openapi.vfs.VfsUtil.getLocalFile(vf)
+          if (localFile.isDirectory) localFile else localFile.parent
+        }
+        catch (_: Exception) {
+          null
         }
       }
     }
