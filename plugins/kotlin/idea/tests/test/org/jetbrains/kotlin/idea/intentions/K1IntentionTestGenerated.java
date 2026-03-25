@@ -17556,6 +17556,21 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         public void testUsedSameFunction() throws Exception {
             runTest("testData/intentions/samConversionToAnonymousObject/usedSameFunction.kt");
         }
+
+        @TestMetadata("usedSameFunctionGeneric.kt")
+        public void testUsedSameFunctionGeneric() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/usedSameFunctionGeneric.kt");
+        }
+
+        @TestMetadata("usedSameFunctionGenericAlias.kt")
+        public void testUsedSameFunctionGenericAlias() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/usedSameFunctionGenericAlias.kt");
+        }
+
+        @TestMetadata("usedSameFunctionGenericNested.kt")
+        public void testUsedSameFunctionGenericNested() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/usedSameFunctionGenericNested.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

@@ -69,17 +69,18 @@ internal class SamConversionToAnonymousObjectIntention :
 
         val lambdaSymbol = functionLiteral.symbol
         val samParameters = samMethod.valueParameters
-        if (samParameters.size != lambdaSymbol.valueParameters.size) return null
+        val lambdaParameters = lambdaSymbol.valueParameters
+        if (samParameters.size != lambdaParameters.size) return null
 
-        if (lambdaSymbol.valueParameters.any { it.returnType is KaErrorType }) return null
+        if (lambdaParameters.any { it.returnType is KaErrorType }) return null
 
         val samName = samMethod.name.asString()
         val hasRecursiveCall = functionLiteral.anyDescendantOfType<KtCallExpression> { call ->
             if (call.calleeExpression?.text != samName) return@anyDescendantOfType false
             val callArguments = call.valueArguments
-            if (callArguments.size != samParameters.size) return@anyDescendantOfType false
+            if (callArguments.size != lambdaParameters.size) return@anyDescendantOfType false
 
-            callArguments.zip(samParameters).all { (arg, param) ->
+            callArguments.zip(lambdaParameters).all { (arg, param) ->
                 val argType = arg.getArgumentExpression()?.expressionType ?: return@all false
                 argType.isSubtypeOf(param.returnType)
             }
