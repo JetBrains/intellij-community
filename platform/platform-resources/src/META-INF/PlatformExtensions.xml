@@ -2072,7 +2072,7 @@
                  description="Show the notification about the native Wayland toolkit after this many minutes have passed since the previous user activity" />
     <notificationGroup id="Wayland" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.wayland" isLogByDefault="true"/>
 
-    <registryKey key="editor.custom.soft.wraps.support.enabled" defaultValue="true"
+    <registryKey key="editor.custom.soft.wraps.support.enabled" defaultValue="false"
                  description="Enables support for custom soft wraps in the editor. Only takes effect if editor.use.new.soft.wraps.impl=true." restartRequired="true"/>
     <registryKey key="editor.use.new.soft.wraps.impl" defaultValue="true"
                  description="Use the new custom-wrap aware soft wraps implementation (in favor of the legacy implementation)."
