@@ -25,6 +25,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.PythonDocumentationHighlightingService;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.decorator.PyFunctoolsWrapsDecoratedFunctionTypeProvider;
@@ -497,7 +498,10 @@ public final class PyDocumentationBuilder {
       StringUtil.notNullize(formatterInput), myFormatterFragments), List.of(PyStructuredDocstringFormatter.FORMATTER_FRAGMENTS_FLAG));
 
     if (output != null) {
-      myContent.appendRaw(output.getBody());
+      String htmlBody = output.getBody();
+      String highlightedHtmlBody = PythonDocumentationHighlightingService.getInstance().highlightCodeBlockInHtml(myElement.getProject(), htmlBody);
+
+      myContent.appendRaw(highlightedHtmlBody);
       fillFormattedSections(output.getFragments());
     }
     else {

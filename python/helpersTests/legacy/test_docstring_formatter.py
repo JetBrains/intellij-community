@@ -206,3 +206,6 @@ class DocstringFormatterTest(HelpersTestCase):
 
     def test_rest_fragments_functional(self):
         self.launch_helper_with_fragments()
+
+    def test_rest_codeblock_python(self):
+        self._test()
