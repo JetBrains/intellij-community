@@ -18,7 +18,7 @@ data class WalkDirectoryEntryPosixImpl(
   override val lastAccessTime: ZonedDateTime?,
 ) : WalkDirectoryEntryPosix {
   object Directory : WalkDirectoryEntry.Type.Directory
-  data class Regular(override val hash: Long?) : WalkDirectoryEntry.Type.Regular
+  data class Regular(override val hash: Long?, override val size: Long? = null) : WalkDirectoryEntry.Type.Regular
   data class SymlinkAbsolute(override val symlinkAbsolutePath: EelPath) : WalkDirectoryEntry.Type.Symlink.Absolute
   data class SymlinkRelative(override val symlinkRelativePath: String) : WalkDirectoryEntry.Type.Symlink.Relative
   object Other : WalkDirectoryEntry.Type.Other
