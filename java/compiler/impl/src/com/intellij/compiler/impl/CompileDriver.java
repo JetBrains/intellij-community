@@ -12,7 +12,6 @@ import com.intellij.compiler.progress.CompilerMessagesService;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.DefaultMessageHandler;
-import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.java.JavaBundle;
@@ -31,7 +30,6 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompileTask;
-import com.intellij.openapi.compiler.CompilerFilter;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -149,9 +147,8 @@ public final class CompileDriver {
     myProject = project;
   }
 
-  @SuppressWarnings({"deprecation", "unused"})
-  public void setCompilerFilter(@SuppressWarnings("unused") CompilerFilter compilerFilter) {
-  }
+  @SuppressWarnings({"unused", "removal", "UnnecessaryFullyQualifiedName"})
+  public void setCompilerFilter(com.intellij.openapi.compiler.CompilerFilter compilerFilter) { }
 
   public void rebuild(CompileStatusNotification callback, boolean cleanSystemData) {
     ProjectCompileScope scope = new ProjectCompileScope(myProject);
@@ -201,7 +198,7 @@ public final class CompileDriver {
           }
         }
       }
-      catch (ProcessCanceledException ignored) {
+      catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException ignored) {
         compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, ExitStatus.CANCELLED);
       }
       catch (Throwable e) {
@@ -547,7 +544,6 @@ public final class CompileDriver {
       Tracer.Span compileWorkSpan = Tracer.start("compileWork");
       CompilerCacheManager compilerCacheManager = CompilerCacheManager.getInstance(myProject);
       final BuildManager buildManager = BuildManager.getInstance();
-      final Ref<TaskFutureAdapter<Void>> buildSystemDataCleanupTask = new Ref<>(null);
       try {
         buildManager.postponeBackgroundTasks();
         buildManager.cancelAutoMakeTasks(myProject);
@@ -569,15 +565,10 @@ public final class CompileDriver {
 
             if (canCleanBuildSystemData) {
               cancelPreload.waitFor();
-              TaskFutureAdapter<Void> cleanupTask = new TaskFutureAdapter<>(ProcessIOExecutorService.INSTANCE.submit(() -> {
-                for (Path path : NioFiles.list(buildManager.getProjectSystemDir(myProject))) {
-                  //noinspection UseOptimizedEelFunctions
-                  NioFiles.deleteRecursively(path);
-                }
-                return null;
-              }));
-              buildSystemDataCleanupTask.set(cleanupTask);
-              cleanupTask.waitFor();
+              for (Path path : NioFiles.list(buildManager.getProjectSystemDir(myProject))) {
+                //noinspection UseOptimizedEelFunctions
+                NioFiles.deleteRecursively(path);
+              }
             }
             else {
               if (cleanBuildRequested) {
@@ -619,7 +610,7 @@ public final class CompileDriver {
           COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.ERRORS);
         }
       }
-      catch (ProcessCanceledException ignored) {
+      catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException ignored) {
         compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, ExitStatus.CANCELLED);
       }
       catch (Throwable e) {
@@ -643,10 +634,6 @@ public final class CompileDriver {
         );
         if (status == ExitStatus.SUCCESS) {
           BuildUsageCollector.logBuildCompleted(duration, isRebuild, false);
-        }
-        TaskFutureAdapter<Void> cleanupTask = buildSystemDataCleanupTask.get();
-        if (cleanupTask != null) {
-          cleanupTask.waitFor();
         }
       }
     };
@@ -778,7 +765,7 @@ public final class CompileDriver {
       try {
         task.execute(compileContext);
       }
-      catch (ProcessCanceledException ex) {
+      catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException ex) {
         // suppressed
       }
       finally {
@@ -861,7 +848,7 @@ public final class CompileDriver {
       }
       return runWithReadAccess(progress, () -> validateOutputs(modulesWithSources) && validateCyclicDependencies(scopeModules.first));
     }
-    catch (ProcessCanceledException e) {
+    catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException e) {
       return false;
     }
     catch (Throwable e) {
