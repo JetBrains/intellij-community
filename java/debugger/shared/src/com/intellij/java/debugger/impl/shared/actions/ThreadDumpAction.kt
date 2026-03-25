@@ -129,10 +129,10 @@ private class FrontendDumpItem(
   override val name: @NlsSafe String get() = itemDto.name
   override val stateDesc: @NlsSafe String get() = stateDescriptionsCache[itemDto.stateDescriptionIndex]
   override val stackTrace: @NlsSafe String get() = joinFirstLineAndBody(itemDto.firstLine, stackTraceBodiesCache[itemDto.stackTraceBodyIndex])
-  override val iconToolTip: @Nls String? get() = iconToolTipsCache[itemDto.iconToolTipIndex.toUInt().toInt()]
+  override val iconToolTip: @Nls String? get() = iconToolTipsCache[itemDto.iconToolTipIndex.toUByte().toInt()]
   override val interestLevel: Int get() = itemDto.interestLevel
-  override val icon: Icon get() = iconsCache[itemDto.iconIndex.toUInt().toInt()]
-  override val attributes: SimpleTextAttributes get() = attributesCache[itemDto.attributesIndex.toInt().toUInt().toInt()]
+  override val icon: Icon get() = iconsCache[itemDto.iconIndex.toUByte().toInt()]
+  override val attributes: SimpleTextAttributes get() = attributesCache[itemDto.attributesIndex.toUByte().toInt()]
   override val isDeadLocked: Boolean get() = itemDto.isDeadLocked
   override val awaitingDumpItems: Set<DumpItem> get() = internalAwaitingItems
   override val treeId: Long? get() = itemDto.treeId
