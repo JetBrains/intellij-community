@@ -3,29 +3,155 @@
 GOTO :CMDSCRIPT
 ::CMDLITERAL
 
-# tests.cmd builds and runs IDEA Community tests in way suitable for calling from CI/CD like TeamCity
+[ -z "$BASH_VERSION" ] && exec /bin/bash "$0" "$@"
+
+# tests.cmd builds and runs IDEA Ultimate tests in way suitable for calling from CI/CD like TeamCity
 # THIS SCRIPTS WORKS FOR ALL SYSTEMS Linux/Windows/macOS
-# See README.md for usage scenarios
+# See community/README.md for usage scenarios
 
 # Arguments are passed as JVM options
 # and used in org.jetbrains.intellij.build.BuildOptions and org.jetbrains.intellij.build.TestingOptions
 
-# To debug build scripts (CommunityRunTestsBuildTarget) use: --debug
-# To debug tests use: -Dintellij.build.test.debug.suspend=true -Dintellij.build.test.debug.port=5005
+show_help() {
+  echo "Usage: tests.cmd --module <module> --test <pattern> [options]"
+  echo ""
+  echo "Required:"
+  echo "  --module <module>    Name of the JPS module which contains the test classes"
+  echo "  --test <pattern>     Full test class name (FQN) or wild card pattern (e.g. com.intellij.*Test)"
+  echo ""
+  echo "Options:"
+  echo "  --debug              Debug build scripts JVM process"
+  echo "  --help               Show this help message"
+  echo ""
+  echo "Additional options are passed as JVM flags to org.jetbrains.intellij.build.TestingOptions"
+  echo "  Example: -Dintellij.build.test.debug.suspend=true -Dintellij.build.test.debug.port=5005"
+}
 
 set -eu
 root="$(cd "$(dirname "$0")"; pwd)"
 
-exec "$root/build/run_build_target.sh" "$root" //build:run_tests_build_target "$@"
+module=""
+test_pattern=""
+extra_args=()
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --help|-h)
+      show_help
+      exit 0
+      ;;
+    --module)
+      module="$2"
+      shift 2
+      ;;
+    --test)
+      test_pattern="$2"
+      shift 2
+      ;;
+    *)
+      extra_args+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [ -z "$module" ]; then
+  echo "Error: --module is required" >&2
+  echo >&2
+  show_help >&2
+  exit 1
+fi
+
+if [ -z "$test_pattern" ]; then
+  echo "Error: --test is required" >&2
+  echo >&2
+  show_help >&2
+  exit 1
+fi
+
+# See java_stub_template.txt on how bazel java wrapper works
+args=()
+for arg in "-Dintellij.build.test.main.module=$module" "-Dintellij.build.test.patterns=$test_pattern" "${extra_args[@]+"${extra_args[@]}"}"; do
+  if [ "$arg" = "--debug" ]; then
+    args+=("--debug")
+  else
+    args+=("--jvm_flag=$arg")
+  fi
+done
+
+cd "$root"
+echo "Running: $root/bazel.cmd run //build:idea_ultimate_run_tests_build_target -- ${args[*]}"
+exec /bin/bash "$root/bazel.cmd" run //build:idea_ultimate_run_tests_build_target -- "${args[@]}"
 
 :CMDSCRIPT
 
 set "ROOT=%~dp0"
 set "ROOT=%ROOT:~0,-1%"
 
-"%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe" ^
-  -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass ^
-  -File "%~dp0build\run_build_target.ps1" ^
-  "%ROOT%" ^
-  "@community//build:run_tests_build_target" ^
-  %*
+set "MODULE="
+set "TEST_PATTERN="
+set "BAZEL_EXTRA="
+
+:PARSE_LOOP
+if "%~1"=="--help" goto :DO_HELP
+if "%~1"=="-h" goto :DO_HELP
+if "%~1"=="--module" goto :SET_MODULE
+if "%~1"=="--test" goto :SET_TEST
+if "%~1"=="" goto :CHECK_REQUIRED
+if "%~1"=="--debug" (
+  set "BAZEL_EXTRA=%BAZEL_EXTRA% --debug"
+) else (
+  set "BAZEL_EXTRA=%BAZEL_EXTRA% --jvm_flag=%~1"
+)
+shift
+goto :PARSE_LOOP
+
+:SET_MODULE
+set "MODULE=%~2"
+shift
+shift
+goto :PARSE_LOOP
+
+:SET_TEST
+set "TEST_PATTERN=%~2"
+shift
+shift
+goto :PARSE_LOOP
+
+:CHECK_REQUIRED
+if not defined MODULE (
+  echo Error: --module is required 1>&2
+  echo. 1>&2
+  call :PRINT_HELP 1>&2
+  exit /b 1
+)
+if not defined TEST_PATTERN (
+  echo Error: --test is required 1>&2
+  echo. 1>&2
+  call :PRINT_HELP 1>&2
+  exit /b 1
+)
+
+cd /d "%ROOT%"
+echo Running: %ROOT%\bazel.cmd run //build:idea_ultimate_run_tests_build_target -- "--jvm_flag=-Dintellij.build.test.main.module=%MODULE%" "--jvm_flag=-Dintellij.build.test.patterns=%TEST_PATTERN%"%BAZEL_EXTRA%
+"%ROOT%\bazel.cmd" run //build:idea_ultimate_run_tests_build_target -- "--jvm_flag=-Dintellij.build.test.main.module=%MODULE%" "--jvm_flag=-Dintellij.build.test.patterns=%TEST_PATTERN%"%BAZEL_EXTRA%
+exit /b %ERRORLEVEL%
+
+:DO_HELP
+call :PRINT_HELP
+exit /b 0
+
+:PRINT_HELP
+echo Usage: tests.cmd --module ^<module^> --test ^<pattern^> [options]
+echo.
+echo Required:
+echo   --module ^<module^>    Name of the JPS module which contains the test classes
+echo   --test ^<pattern^>     Full test class name (FQN) or wild card pattern (e.g. com.intellij.*Test)
+echo.
+echo Options:
+echo   --debug              Debug build scripts JVM process
+echo   --help               Show this help message
+echo.
+echo Additional options are passed as JVM flags to org.jetbrains.intellij.build.TestingOptions
+echo   Example: -Dintellij.build.test.debug.suspend=true -Dintellij.build.test.debug.port=5005
+exit /b 0
