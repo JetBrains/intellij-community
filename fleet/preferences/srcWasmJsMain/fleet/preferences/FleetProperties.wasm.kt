@@ -2,7 +2,7 @@
 package fleet.preferences
 
 import fleet.util.multiplatform.Actual
-import js.core.JsPrimitives.toKotlinString
+import js.string.JsStrings.toKotlinString
 import web.window.window
 import web.window.Window
 import web.url.URL
