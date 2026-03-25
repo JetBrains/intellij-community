@@ -13,10 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 abstract class AbstractEditorTrackingService(
   private val parentScope: CoroutineScope,
-  scopeKeyName: String,
+  private val editorScopeKey: Key<EditorTrackingScope>,
 ) {
-  private val editorScopeKey = Key.create<EditorTrackingScope>(scopeKeyName)
-
   /**
    * Reuses one child scope per editor for delayed tracking jobs.
    *
@@ -51,14 +49,15 @@ abstract class AbstractEditorTrackingService(
 
     return value
   }
+}
 
-  private class EditorTrackingScope(parentScope: CoroutineScope) : Disposable {
-    private val scopeJob = SupervisorJob(parentScope.coroutineContext[Job])
-    @Suppress("RAW_SCOPE_CREATION")
-    val scope: CoroutineScope = CoroutineScope(parentScope.coroutineContext + scopeJob)
+@ApiStatus.Internal
+class EditorTrackingScope(parentScope: CoroutineScope) : Disposable {
+  private val scopeJob = SupervisorJob(parentScope.coroutineContext[Job])
+  @Suppress("RAW_SCOPE_CREATION")
+  val scope: CoroutineScope = CoroutineScope(parentScope.coroutineContext + scopeJob)
 
-    override fun dispose() {
-      scopeJob.cancel()
-    }
+  override fun dispose() {
+    scopeJob.cancel()
   }
 }
