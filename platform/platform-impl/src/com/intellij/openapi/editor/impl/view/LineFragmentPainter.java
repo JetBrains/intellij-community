@@ -16,11 +16,11 @@ interface LineFragmentPainter {
   );
 
   void paint(
-    IterationState iterationState,
     VisualLineFragmentsIterator.Fragment fragment,
     int start,
     int end,
     TextAttributes attributes,
+    boolean isSelection,
     float xStart,
     float xEnd,
     int y
