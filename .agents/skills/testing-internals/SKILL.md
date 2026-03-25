@@ -16,7 +16,7 @@ tests.cmd → Bazel → IdeaUltimateRunTestsBuildTarget → TestingTasksImpl →
 
 Key components:
 - **tests.cmd**: Shell script that invokes Bazel with test parameters
-- **Bazel target**: `//build:idea_ultimate_run_tests_build_target`
+- **Bazel target**: `//build:local_idea_ultimate_run_tests_build_target`
 - **TestingOptions**: Parses `-Dintellij.build.test.*` system properties
 - **TestingTasksImpl**: Orchestrates classpath assembly and JVM setup
 - **JUnit runners**: Execute tests in a forked JVM process
@@ -132,7 +132,7 @@ Then attach debugger to port 5005.
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  3. BAZEL                                                                   │
-│     bazel run //build:idea_ultimate_run_tests_build_target                  │
+│     bazel run //build:local_idea_ultimate_run_tests_build_target            │
 │     (defined in build/BUILD.bazel)                                          │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
@@ -330,7 +330,7 @@ The test target is defined in `build/BUILD.bazel`:
 
 ```python
 java_binary(
-  name = "idea_ultimate_run_tests_build_target",
+  name = "local_idea_ultimate_run_tests_build_target",
   runtime_deps = [":build"],
   main_class = "IdeaUltimateRunTestsBuildTarget",
   data = ALL_ULTIMATE_TARGETS + [BAZEL_TARGETS_JSON_ULTIMATE],
