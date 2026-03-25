@@ -31,7 +31,10 @@ interface ApplicationStarter {
     const val ANY_MODALITY: Int = 2
     const val NOT_IN_EDT: Int = 3
 
-    private val EP_NAME = ExtensionPointName<ApplicationStarterEP>("com.intellij.appStarter")
+    @ApiStatus.Internal
+    const val EP_FQN: String = "com.intellij.appStarter"
+
+    private val EP_NAME = ExtensionPointName<ApplicationStarterEP>(EP_FQN)
 
     @ApiStatus.Internal
     @JvmStatic

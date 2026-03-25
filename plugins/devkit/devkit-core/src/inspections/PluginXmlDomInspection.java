@@ -15,6 +15,8 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationStarter;
+import com.intellij.openapi.application.ApplicationStarterEP;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.LoadingOrder;
@@ -754,6 +756,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
     annotateExtensionPointStatus(holder, extension, extensionPoint, effectiveQualifiedName, module);
     annotateErrorHandler(holder, extension, effectiveQualifiedName, module);
+    annotateAppStarter(holder, extension, extensionPoint);
 
     for (var attributeDescription : extension.getGenericInfo().getAttributeChildrenDescriptions()) {
       var attributeValue = attributeDescription.getDomAttributeValue(extension);
@@ -852,6 +855,18 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
             }
           }
         }
+      }
+    }
+  }
+
+  private static void annotateAppStarter(DomElementAnnotationHolder holder, Extension extension, ExtensionPoint extensionPoint) {
+    if (
+      ApplicationStarter.EP_FQN.equals(extensionPoint.getEffectiveQualifiedName()) &&
+      ApplicationStarterEP.class.getName().equals(extensionPoint.getBeanClass().getStringValue())  // skipping pre-262 extensions
+    ) {
+      var tag = extension.getXmlTag();
+      if (tag.getAttribute("internal") == null && (tag.getAttribute("bundle") == null || tag.getAttribute("key") == null)) {
+        holder.createProblem(extension, ProblemHighlightType.WARNING, DevKitBundle.message("inspections.plugin.xml.help.wanted"), null);
       }
     }
   }

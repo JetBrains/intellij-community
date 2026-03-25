@@ -29,6 +29,10 @@
         <extensionPoint name="intentionAction" beanClass="com.intellij.codeInsight.intention.IntentionActionBean">
             <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
         </extensionPoint>
+
+        <extensionPoint qualifiedName="com.intellij.appStarter" beanClass="com.intellij.openapi.application.ApplicationStarterEP" dynamic="true">
+            <with attribute="implementation" implements="com.intellij.openapi.application.ApplicationStarter"/>
+        </extensionPoint>
     </extensionPoints>
 
     <depends>com.intellij.custom</depends>
@@ -93,5 +97,8 @@
         <error descr="Attribute customAttribute is not allowed here">customAttribute</error>=""/>
 
         <<error descr="Missing dependency declaration for using extension point 'com.intellij.notincluded.notInDependencies'">notincluded.notInDependencies</error>/>
+
+        <<warning descr="Please specify 'bundle' and 'key' attributes for the command line help, or add 'internal=\"true\"'.">appStarter</warning> id="apps" implementation="foo.MyAppStarter"/>
+        <appStarter id="apps-int" implementation="foo.MyAppStarter" internal="true"/>
     </extensions>
 </idea-plugin>
