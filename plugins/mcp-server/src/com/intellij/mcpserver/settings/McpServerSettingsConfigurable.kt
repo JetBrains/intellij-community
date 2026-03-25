@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
@@ -39,6 +40,7 @@ import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValueComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.ui.ColorizeProxyIcon
 import com.intellij.util.ui.TextTransferable
 import com.intellij.util.ui.launchOnShow
@@ -47,16 +49,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.ide.RestService.Companion.getLastFocusedOrOpenedProject
 import java.awt.event.ActionEvent
+import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.AbstractAction
-import javax.swing.Action
 import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
+import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 
@@ -371,12 +375,17 @@ fun configureAdditionalActions(mcpClient: McpClient, cell: Cell<JBOptionButton>,
   }
 }
 
-private fun openFileInEditor(filePath: Path) {
-  val project = getLastFocusedOrOpenedProject()
+@ApiStatus.Internal
+internal fun openFileInEditor(filePath: Path, project: Project? = getLastFocusedOrOpenedProject()) {
   if (project == null) {
     return
   }
-  val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath.toString())
+  val definitelyCreatedFile = if (!Files.exists(filePath)) {
+    filePath.createParentDirectories().createFile()
+  } else {
+    filePath
+  }
+  val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(definitelyCreatedFile)
   virtualFile?.let { file ->
     FileEditorManager.getInstance(project).openFile(file, true)
   }
