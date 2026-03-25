@@ -2,13 +2,11 @@
 // LANGUAGE_VERSION: 1.8
 // K2_ERROR: Argument type mismatch: actual type is 'T (of fun <T> Foo<T>.bar)', but 'T (of fun <T> Foo<T>.bar) & Any' was expected.
 class Foo<T>(val x: T) {
-    fun foo(y: T) {}
+    fun foo(y: T & Any) {}
 }
 
 fun <T> Foo<T>.bar(x: T) {
-    foo(this.x)
+    foo(<caret>this.x)
 }
 
-// IGNORE_K1
-// For K1-specific behavior, see changePrimaryConstructorParameterTypeWhenExplicitThisK1.kt
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeParameterTypeFix

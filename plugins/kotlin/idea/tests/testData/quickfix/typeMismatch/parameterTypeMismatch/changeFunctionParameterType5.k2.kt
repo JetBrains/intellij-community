@@ -2,13 +2,12 @@
 // LANGUAGE_VERSION: 1.8
 // K2_ERROR: Argument type mismatch: actual type is 'T#1 (of fun <T> bar)', but 'uninferred T (of fun <T> foo)' was expected.
 // K2_ERROR: Cannot infer type for type parameter 'T'. Specify it explicitly.
+package a
 
 fun <T> foo(x: T & Any) {}
 
 fun <T> bar(x: T) {
-    foo((<caret>x))
+    foo(x<caret>)
 }
 
-// IGNORE_K1
-// For K1-specific behaviour, see changeFunctionParameterTypeParenthesisK1.kt
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeParameterTypeFix

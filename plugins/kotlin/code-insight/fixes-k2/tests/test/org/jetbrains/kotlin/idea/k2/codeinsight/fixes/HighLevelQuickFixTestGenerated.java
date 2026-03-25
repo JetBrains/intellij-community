@@ -16146,24 +16146,14 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType4.kt");
             }
 
-            @TestMetadata("changeFunctionParameterType5K1.kt")
-            public void testChangeFunctionParameterType5K1() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType5K1.kt");
+            @TestMetadata("changeFunctionParameterType5.kt")
+            public void testChangeFunctionParameterType5() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType5.kt");
             }
 
-            @TestMetadata("changeFunctionParameterType5K2.kt")
-            public void testChangeFunctionParameterType5K2() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType5K2.kt");
-            }
-
-            @TestMetadata("changeFunctionParameterTypeParenthesisK1.kt")
-            public void testChangeFunctionParameterTypeParenthesisK1() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterTypeParenthesisK1.kt");
-            }
-
-            @TestMetadata("changeFunctionParameterTypeParenthesisK2.kt")
-            public void testChangeFunctionParameterTypeParenthesisK2() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterTypeParenthesisK2.kt");
+            @TestMetadata("changeFunctionParameterTypeParenthesis.kt")
+            public void testChangeFunctionParameterTypeParenthesis() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterTypeParenthesis.kt");
             }
 
             @TestMetadata("changeFunctionParameterTypeVararg.kt")
@@ -16191,14 +16181,9 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changePrimaryConstructorParameterTypeOnPropertyDelegate.kt");
             }
 
-            @TestMetadata("changePrimaryConstructorParameterTypeWhenExplicitThisK1.kt")
-            public void testChangePrimaryConstructorParameterTypeWhenExplicitThisK1() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changePrimaryConstructorParameterTypeWhenExplicitThisK1.kt");
-            }
-
-            @TestMetadata("changePrimaryConstructorParameterTypeWhenExplicitThisK2.kt")
-            public void testChangePrimaryConstructorParameterTypeWhenExplicitThisK2() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changePrimaryConstructorParameterTypeWhenExplicitThisK2.kt");
+            @TestMetadata("changePrimaryConstructorParameterTypeWhenExplicitThis.kt")
+            public void testChangePrimaryConstructorParameterTypeWhenExplicitThis() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changePrimaryConstructorParameterTypeWhenExplicitThis.kt");
             }
 
             @TestMetadata("char.kt")
