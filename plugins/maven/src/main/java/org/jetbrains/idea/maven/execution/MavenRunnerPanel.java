@@ -1,34 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.target.LanguageRuntimeConfiguration;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
-import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.UserActivityWatcher;
-import com.intellij.util.ui.JBFont;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import java.awt.BorderLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,15 +26,7 @@ public class MavenRunnerPanel {
   protected final Project myProject;
   private final boolean myRunConfigurationMode;
 
-  private JCheckBox myDelegateToMavenCheckbox;
-  private RawCommandLineEditor myVMParametersEditor;
-  private EnvironmentVariablesComponent myEnvVariablesComponent;
-  private JLabel myJdkLabel;
-  private ExternalSystemJdkComboBox myJdkCombo;
-  private ComboBox<String> myTargetJdkCombo;
-
-  private JCheckBox mySkipTestsCheckBox;
-  private MavenPropertiesPanel myPropertiesPanel;
+  private MavenRunnerUi ui;
 
   private Map<String, String> myProperties;
   private String myTargetName;
@@ -60,95 +37,11 @@ public class MavenRunnerPanel {
   }
 
   public JComponent createComponent() {
-    JPanel panel = new JPanel(new GridBagLayout());
-
-    GridBagConstraints c = new GridBagConstraints();
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.anchor = GridBagConstraints.WEST;
-    c.insets.bottom = 5;
-
-    myDelegateToMavenCheckbox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.delegate"));
-
-    if (!myRunConfigurationMode) {
-      c.gridx = 0;
-      c.gridy++;
-      c.weightx = 1;
-      c.gridwidth = GridBagConstraints.REMAINDER;
-
-      panel.add(myDelegateToMavenCheckbox, c);
-    }
-    c.gridwidth = 1;
-
-    JLabel labelVMParameters = new JLabel(MavenConfigurableBundle.message("maven.settings.runner.vm.options"));
-    labelVMParameters.setLabelFor(myVMParametersEditor = new RawCommandLineEditor());
-    myVMParametersEditor.setDialogCaption(labelVMParameters.getText());
-
-    c.gridx = 0;
-    c.gridy++;
-    c.weightx = 0;
-    panel.add(labelVMParameters, c);
-
-    c.gridx = 1;
-    c.weightx = 1;
-    c.insets.left = 10;
-    panel.add(myVMParametersEditor, c);
-
-    JLabel labelOverrideJvmConfig = new JLabel(MavenConfigurableBundle.message("maven.settings.vm.options.tooltip"));
-    labelOverrideJvmConfig.setFont(JBFont.small());
-    c.gridx = 1;
-    c.gridy++;
-    c.weightx = 1;
-    c.insets.left = 20;
-    panel.add(labelOverrideJvmConfig, c);
-    c.insets.left = 0;
-
-    myJdkLabel = new JLabel(MavenConfigurableBundle.message("maven.settings.runner.jre"));
-    myJdkLabel.setLabelFor(myJdkCombo = new ExternalSystemJdkComboBox(myProject));
-    c.gridx = 0;
-    c.gridy++;
-    c.weightx = 0;
-    panel.add(myJdkLabel, c);
-    c.gridx = 1;
-    c.weightx = 1;
-    c.insets.left = 10;
-    c.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(myJdkCombo, c);
-    myTargetJdkCombo = new ComboBox<>();
-    ComponentUtil.putClientProperty(myTargetJdkCombo, UserActivityWatcher.DO_NOT_WATCH, true);
-    myTargetJdkCombo.setVisible(false);
-    panel.add(myTargetJdkCombo, c);
-    c.insets.left = 0;
-
-    myEnvVariablesComponent = new EnvironmentVariablesComponent();
-    myEnvVariablesComponent.setPassParentEnvs(true);
-    myEnvVariablesComponent.setLabelLocation(BorderLayout.WEST);
-    c.gridx = 0;
-    c.gridy++;
-    c.weightx = 1;
-    c.gridwidth = 2;
-    panel.add(myEnvVariablesComponent, c);
-    c.gridwidth = 1;
-
-    JPanel propertiesPanel = new JPanel(new BorderLayout());
-    propertiesPanel.setBorder(
-      IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.runner.properties"), false));
-
-    propertiesPanel.add(mySkipTestsCheckBox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.skip.tests")),
-                        BorderLayout.NORTH);
-
     collectProperties();
-    propertiesPanel.add(myPropertiesPanel = new MavenPropertiesPanel(myProperties), BorderLayout.CENTER);
-    myPropertiesPanel.getTable().setShowGrid(false);
-    myPropertiesPanel.getEmptyText().setText(MavenConfigurableBundle.message("maven.settings.runner.properties.not.defined"));
 
-    c.gridx = 0;
-    c.gridy++;
-    c.weightx = c.weighty = 1;
-    c.gridwidth = c.gridheight = GridBagConstraints.REMAINDER;
-    c.fill = GridBagConstraints.BOTH;
-    panel.add(propertiesPanel, c);
+    ui = new MavenRunnerUi(myProject, myRunConfigurationMode, myProperties);
 
-    return panel;
+    return ui.panel;
   }
 
   private void collectProperties() {
@@ -166,33 +59,33 @@ public class MavenRunnerPanel {
   }
 
   protected void getData(MavenRunnerSettings data) {
-    myDelegateToMavenCheckbox.setSelected(data.isDelegateBuildToMaven());
-    myVMParametersEditor.setText(data.getVmOptions());
-    mySkipTestsCheckBox.setSelected(data.isSkipTests());
+    ui.delegateToMavenCheckbox.setSelected(data.isDelegateBuildToMaven());
+    ui.vmParametersEditor.setText(data.getVmOptions());
+    ui.skipTestsCheckBox.setSelected(data.isSkipTests());
 
-    myJdkCombo.refreshData(data.getJreName());
-    myTargetJdkCombo.setSelectedItem(data.getJreName());
+    ui.jdkCombo.refreshData(data.getJreName());
+    ui.targetJdkCombo.setSelectedItem(data.getJreName());
 
-    myPropertiesPanel.setDataFromMap(data.getMavenProperties());
+    ui.propertiesPanel.setDataFromMap(data.getMavenProperties());
 
-    myEnvVariablesComponent.setEnvs(data.getEnvironmentProperties());
-    myEnvVariablesComponent.setPassParentEnvs(data.isPassParentEnv());
+    ui.envVariablesComponent.setEnvs(data.getEnvironmentProperties());
+    ui.envVariablesComponent.setPassParentEnvs(data.isPassParentEnv());
   }
 
 
   protected void setData(MavenRunnerSettings data) {
-    data.setDelegateBuildToMaven(myDelegateToMavenCheckbox.isSelected());
-    data.setVmOptions(myVMParametersEditor.getText().trim());
-    data.setSkipTests(mySkipTestsCheckBox.isSelected());
+    data.setDelegateBuildToMaven(ui.delegateToMavenCheckbox.isSelected());
+    data.setVmOptions(ui.vmParametersEditor.getText().trim());
+    data.setSkipTests(ui.skipTestsCheckBox.isSelected());
     if (myTargetName == null) {
-      data.setJreName(myJdkCombo.getSelectedValue());
+      data.setJreName(ui.jdkCombo.getSelectedValue());
     }
     else {
-      data.setJreName(StringUtil.notNullize(myTargetJdkCombo.getItem(), MavenRunnerSettings.USE_PROJECT_JDK));
+      data.setJreName(StringUtil.notNullize(ui.targetJdkCombo.getItem(), MavenRunnerSettings.USE_PROJECT_JDK));
     }
-    data.setMavenProperties(myPropertiesPanel.getDataAsMap());
-    data.setEnvironmentProperties(myEnvVariablesComponent.getEnvs());
-    data.setPassParentEnv(myEnvVariablesComponent.isPassParentEnvs());
+    data.setMavenProperties(ui.propertiesPanel.getDataAsMap());
+    data.setEnvironmentProperties(ui.envVariablesComponent.getEnvs());
+    data.setPassParentEnv(ui.envVariablesComponent.isPassParentEnvs());
   }
 
   public Project getProject() {
@@ -207,7 +100,7 @@ public class MavenRunnerPanel {
       myTargetName = targetName;
       updateJdkComponents(targetName);
       if (localTarget) {
-        myJdkCombo.refreshData(null);
+        ui.jdkCombo.refreshData(null);
       }
     }
     else if (!localTarget) {
@@ -217,11 +110,10 @@ public class MavenRunnerPanel {
 
   private void updateJdkComponents(@Nullable String targetName) {
     boolean localTarget = targetName == null;
-    myTargetJdkCombo.setVisible(!localTarget);
-    myJdkCombo.setVisible(localTarget);
+    ui.setState(localTarget);
     if (!localTarget) {
-      List<String> items = IntStream.range(0, myTargetJdkCombo.getItemCount())
-        .mapToObj(i -> myTargetJdkCombo.getItemAt(i))
+      List<String> items = IntStream.range(0, ui.targetJdkCombo.getItemCount())
+        .mapToObj(i -> ui.targetJdkCombo.getItemAt(i))
         .toList();
 
       List<String> targetItems = new ArrayList<>();
@@ -237,13 +129,9 @@ public class MavenRunnerPanel {
       }
 
       if (!items.equals(targetItems)) {
-        myTargetJdkCombo.removeAllItems();
-        targetItems.forEach(myTargetJdkCombo::addItem);
+        ui.targetJdkCombo.removeAllItems();
+        targetItems.forEach(ui.targetJdkCombo::addItem);
       }
-      myJdkLabel.setLabelFor(myTargetJdkCombo);
-    }
-    else {
-      myJdkLabel.setLabelFor(myJdkCombo);
     }
   }
 }
