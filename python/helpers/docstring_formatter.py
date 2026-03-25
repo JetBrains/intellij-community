@@ -39,6 +39,30 @@ def format_rest(docstring):
     from docutils.parsers.rst.directives.admonitions import BaseAdmonition
     from docutils.writers import Writer
     from docutils.writers.html4css1 import HTMLTranslator, Writer as HTMLWriter
+    from docutils.parsers.rst.directives.body import CodeBlock
+
+    SUPPORTED_LANGUAGES = frozenset([
+        'python', 'python3', 'py', 'java', 'javascript', 'js',
+        'xml', 'html', 'css', 'json', 'yaml', 'sql', 'shell',
+        'bash', 'c', 'cpp', 'csharp', 'ruby', 'go', 'rust',
+        'kotlin', 'scala', 'swift'
+    ])
+
+    class ExtendedCodeBlock(CodeBlock):
+        """CodeBlock with additional Sphinx options support."""
+        option_spec = CodeBlock.option_spec.copy()
+        option_spec.update({
+            'caption': directives.unchanged,
+            'linenos': directives.flag,
+            'lineno-start': directives.nonnegative_int,
+            'emphasize-lines': directives.unchanged,
+            'dedent': directives.nonnegative_int,
+            'force': directives.flag,
+        })
+
+    directives.register_directive('code-block', ExtendedCodeBlock)
+    directives.register_directive('code', ExtendedCodeBlock)
+    directives.register_directive('sourcecode', ExtendedCodeBlock)
 
     # Copied from the Sphinx' sources. Docutils doesn't handle "seealso" directives by default.
     class seealso(nodes.Admonition, nodes.Element):
@@ -219,6 +243,53 @@ def format_rest(docstring):
                     self.body.append('&nbsp;' * (len(token) - 1) + ' ')
             self.body.append('</tt>')
             raise nodes.SkipNode
+
+        def visit_literal_block(self, node):
+            classes = node.get('classes', [])
+            language = None
+
+            for cls in classes:
+                if cls == 'code':
+                    continue
+
+                norm_language = cls.lower()
+                if norm_language in SUPPORTED_LANGUAGES:
+                    language = cls
+                    break
+
+            attrs = {}
+            if language:
+                class_str = 'code-block language-' + language
+                attrs['class'] = class_str
+                attrs['data-language'] = language
+            else:
+                attrs['class'] = 'literal-block'
+
+            self.body.append(self.starttag(node, 'pre', '', **attrs))
+
+            if language:
+                self.body.append('<code class="language-' + language + '">')
+
+            for child in node.traverse(condition=lambda n: isinstance(n, Text)):
+                text = child.astext()
+                encoded = self.encode(text)
+                self.body.append(encoded)
+
+            if language:
+                self.body.append('</code>')
+            self.body.append('</pre>\n')
+
+            raise nodes.SkipNode
+
+        def depart_literal_block(self, node):
+            classes = node.get('classes', [])
+
+            norm_language = cls.lower()
+            has_language = any(norm_language in SUPPORTED_LANGUAGES for cls in classes)
+
+            if has_language:
+                self.body.append('</code>')
+            self.body.append('</pre>\n')
 
     class _DocumentPseudoWriter(Writer):
         def __init__(self):
