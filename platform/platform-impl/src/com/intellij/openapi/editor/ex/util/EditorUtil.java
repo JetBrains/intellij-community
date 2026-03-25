@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.CaretActionListener;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.CustomWrap;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
@@ -1325,10 +1326,28 @@ public final class EditorUtil {
       if (!logicalPosition.equals(editor.offsetToLogicalPosition(offset))) return false; // virtual space
       List<Inlay<?>> inlays = editor.getInlayModel().getInlineElementsInRange(offset, offset);
       if (!inlays.isEmpty()) {
-        VisualPosition inlaysStart = editor.offsetToVisualPosition(offset);
-        if (inlaysStart.line == visualPosition.line) {
-          int relX = point.x - editor.visualPositionToXY(inlaysStart).x;
-          if (relX >= 0 && relX < inlays.stream().mapToInt(i -> i.getWidthInPixels()).sum()) return false; // inline inlay
+        List<CustomWrap> customWraps = editor.getCustomWrapModel().getWrapsAtOffset(offset);
+        VisualPosition inlaysStart = editor.offsetToVisualPosition(offset, false, false);
+        if (customWraps.isEmpty()) {
+          if (inlaysStart.line == visualPosition.line) {
+            int relX = point.x - editor.visualPositionToXY(inlaysStart).x;
+            if (relX >= 0 && relX < inlays.stream().mapToInt(i -> i.getWidthInPixels()).sum()) return false; // inline inlay
+          }
+        }
+        else {
+          if (inlaysStart.line == visualPosition.line) {
+            int relX = point.x - editor.visualPositionToXY(inlaysStart).x;
+            if (relX >= 0 && relX < inlays.stream().filter(i -> !i.isRelatedToPrecedingText()).mapToInt(i -> i.getWidthInPixels()).sum()) {
+              return false; // inline inlay after custom wrap
+            }
+          }
+          else if (inlaysStart.line - 1 == visualPosition.line) {
+            inlaysStart = editor.offsetToVisualPosition(offset, false, true);
+            int relX = point.x - editor.visualPositionToXY(inlaysStart).x;
+            if (relX >= 0 && relX < inlays.stream().filter(i -> i.isRelatedToPrecedingText()).mapToInt(i -> i.getWidthInPixels()).sum()) {
+              return false; // inline inlay before custom wrap
+            }
+          }
         }
       }
       return true;

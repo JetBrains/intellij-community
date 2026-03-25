@@ -215,6 +215,14 @@ public class EditorModificationUtilEx {
       return columnNumber;
     }
 
+    List<CustomWrap> customWraps = editor.getCustomWrapModel().getWrapsAtOffset(caretOffset);
+    if (!customWraps.isEmpty()) {
+      VisualPosition beforeWrap = editor.offsetToVisualPosition(caretOffset, true, true);
+      if (beforeWrap.line == visualPosition.line) {
+        return visualPosition.column - beforeWrap.column;
+      }
+    }
+
     int anchorLineEndOffset = document.getLineEndOffset(lineNumber);
     List<? extends SoftWrap> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(logicalPosition.line);
     for (SoftWrap softWrap : softWraps) {

@@ -146,6 +146,7 @@ f:com.intellij.openapi.actionSystem.Presentation
 - a:getOffset():I
 - a:getPriority():I
 *:com.intellij.openapi.editor.CustomWrapModel
+- *sf:Companion:com.intellij.openapi.editor.CustomWrapModel$Companion
 - a:addListener(com.intellij.openapi.editor.CustomWrapModel$Listener,com.intellij.openapi.Disposable):V
 - a:addWrap(I,I,I):com.intellij.openapi.editor.CustomWrap
 - bs:addWrap$default(com.intellij.openapi.editor.CustomWrapModel,I,I,I,I,java.lang.Object):com.intellij.openapi.editor.CustomWrap
@@ -153,7 +154,10 @@ f:com.intellij.openapi.actionSystem.Presentation
 - a:getWrapsAtOffset(I):java.util.List
 - a:getWrapsInRange(I,I):java.util.List
 - a:hasWraps():Z
+- s:isCustomWrapsSupportEnabled():Z
 - a:removeWrap(com.intellij.openapi.editor.CustomWrap):V
+*f:com.intellij.openapi.editor.CustomWrapModel$Companion
+- f:isCustomWrapsSupportEnabled():Z
 *:com.intellij.openapi.editor.CustomWrapModel$Listener
 - customWrapAdded(com.intellij.openapi.editor.CustomWrap):V
 - customWrapRemoved(com.intellij.openapi.editor.CustomWrap):V

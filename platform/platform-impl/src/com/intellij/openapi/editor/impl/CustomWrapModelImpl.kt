@@ -6,12 +6,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.CustomWrap
 import com.intellij.openapi.editor.CustomWrapModel
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.EmptyCustomWrapModel
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.impl.customwrap.CustomWrapImpl
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NonNls
 
@@ -89,7 +87,7 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
 
   override fun hasWraps(): Boolean = tree.size() > 0
 
-  private var wrapAtCaret: List<CustomWrapImpl> = emptyList()
+  private var wrapsAtCaret: List<CustomWrapImpl> = emptyList()
 
   override fun beforeDocumentChange(event: DocumentEvent) {
     if (editor.document.isInBulkUpdate) return
@@ -99,7 +97,7 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
       // text is being inserted at caret offset
       val wraps = getWrapsAtOffset(offset)
       if (wraps.isNotEmpty()) {
-        wrapAtCaret = wraps
+        wrapsAtCaret = wraps
         val caretVisualLine = editor.caretModel.visualPosition.line
         val softWrapVisualLine = editor.offsetToVisualLine(offset, true)
         val shouldStickToRight = caretVisualLine == softWrapVisualLine
@@ -109,8 +107,8 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
   }
 
   override fun documentChanged(event: DocumentEvent) {
-    wrapAtCaret.forEach { it.isStickingToRight = false }
-    wrapAtCaret = emptyList()
+    wrapsAtCaret.forEach { it.isStickingToRight = false }
+    wrapsAtCaret = emptyList()
   }
 
   override fun getPriority(): Int {
@@ -127,7 +125,8 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
       key: CustomWrapImpl,
       start: Int,
       end: Int,
-    ) : RMNode<CustomWrapImpl>(rangeMarkerTree, key, start, end, false, false, false) {
+      stickingToRight: Boolean,
+    ) : RMNode<CustomWrapImpl>(rangeMarkerTree, key, start, end, false, false, stickingToRight) {
       override fun addIntervalsFrom(otherNode: IntervalNode<CustomWrapImpl>) {
         super.addIntervalsFrom(otherNode)
         intervals.firstOrNull()?.get()?.model?.notifyMerged()
@@ -159,7 +158,7 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
       stickingToRight: Boolean,
       layer: Int,
     ): RMNode<CustomWrapImpl> {
-      return Node(this, key, start, end)
+      return Node(this, key, start, end, stickingToRight)
     }
 
     override fun fireBeforeRemoved(marker: CustomWrapImpl) {

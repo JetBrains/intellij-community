@@ -5,6 +5,7 @@ import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CustomWrap;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.EditorThreading;
@@ -119,11 +120,40 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
       if (inlayCount > 0) {
         VisualPosition inlaysStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
         VisualPosition caretPosition = myEditor.getCaretModel().getVisualPosition();
-        if (inlaysStartPosition.line == caretPosition.line &&
-            caretPosition.column >= inlaysStartPosition.column && caretPosition.column <= inlaysStartPosition.column + inlayCount) {
-          myInlaysAtCaret = inlays;
-          for (int i = 0; i < inlayCount; i++) {
-            ((InlayImpl<?, ?>)inlays.get(i)).setStickingToRight(i >= caretPosition.column - inlaysStartPosition.column);
+        List<CustomWrap> customWraps = myEditor.getCustomWrapModel().getWrapsAtOffset(offset);
+        if (customWraps.isEmpty()) {
+          if (inlaysStartPosition.line == caretPosition.line &&
+              caretPosition.column >= inlaysStartPosition.column && caretPosition.column <= inlaysStartPosition.column + inlayCount) {
+            myInlaysAtCaret = inlays;
+            for (int i = 0; i < inlayCount; i++) {
+              ((InlayImpl<?, ?>)inlays.get(i)).setStickingToRight(i >= caretPosition.column - inlaysStartPosition.column);
+            }
+          }
+        }
+        else {
+          // inlays at the same offset are sorted by their relatesToPrecedingText
+          int firstRelatedToPrecedingIndex = ContainerUtil.indexOf(inlays, inlay -> inlay.isRelatedToPrecedingText());
+          firstRelatedToPrecedingIndex = firstRelatedToPrecedingIndex >= 0 ? firstRelatedToPrecedingIndex : inlays.size();
+          if (inlaysStartPosition.line == caretPosition.line &&
+              caretPosition.column >= inlaysStartPosition.column &&
+              caretPosition.column <= inlaysStartPosition.column + firstRelatedToPrecedingIndex) {
+            myInlaysAtCaret = inlays;
+            for (int i = 0; i < firstRelatedToPrecedingIndex; i++) {
+              ((InlayImpl<?, ?>)inlays.get(i)).setStickingToRight(i >= caretPosition.column - inlaysStartPosition.column);
+            }
+          }
+          else if (inlaysStartPosition.line - 1 == caretPosition.line) {
+            inlaysStartPosition = myEditor.offsetToVisualPosition(offset, false, true);
+            if (caretPosition.column >= inlaysStartPosition.column &&
+                caretPosition.column <= inlaysStartPosition.column + inlayCount - firstRelatedToPrecedingIndex) {
+              myInlaysAtCaret = inlays;
+              for (int i = 0; i < firstRelatedToPrecedingIndex; i++) {
+                ((InlayImpl<?, ?>)inlays.get(i)).setStickingToRight(true);
+              }
+              for (int i = firstRelatedToPrecedingIndex; i < inlayCount; i++) {
+                ((InlayImpl<?, ?>)inlays.get(i)).setStickingToRight(i - firstRelatedToPrecedingIndex >= caretPosition.column - inlaysStartPosition.column);
+              }
+            }
           }
         }
       }
@@ -410,9 +440,31 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     List<Inlay<?>> inlays = getInlineElementsInRange(offset, offset);
     if (inlays.isEmpty()) return null;
     VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
-    if (visualPosition.line != inlayStartPosition.line) return null;
-    int inlayIndex = visualPosition.column - inlayStartPosition.column;
-    return inlayIndex >= 0 && inlayIndex < inlays.size() ? inlays.get(inlayIndex) : null;
+    List<CustomWrap> customWraps = myEditor.getCustomWrapModel().getWrapsAtOffset(offset);
+    if (customWraps.isEmpty()) {
+      if (visualPosition.line != inlayStartPosition.line) return null;
+      int inlayIndex = visualPosition.column - inlayStartPosition.column;
+      return inlayIndex >= 0 && inlayIndex < inlays.size() ? inlays.get(inlayIndex) : null;
+    }
+    else {
+      // inlays at the same offset are sorted by their relatesToPrecedingText
+      int firstRelatedToPrecedingIndex = ContainerUtil.indexOf(inlays, inlay -> inlay.isRelatedToPrecedingText());
+      firstRelatedToPrecedingIndex = firstRelatedToPrecedingIndex >= 0 ? firstRelatedToPrecedingIndex : inlays.size();
+      if (inlayStartPosition.line == visualPosition.line) {
+        // visualPosition is after wrap
+        int inlayIndex = visualPosition.column - inlayStartPosition.column;
+        return inlayIndex >= 0 && inlayIndex < firstRelatedToPrecedingIndex ? inlays.get(inlayIndex) : null;
+      }
+      else if (inlayStartPosition.line - 1 == visualPosition.line) {
+        // visualPosition is before wrap
+        VisualPosition beforeWrapPosition = myEditor.offsetToVisualPosition(offset, false, true);
+        int inlayIndex = visualPosition.column - beforeWrapPosition.column + firstRelatedToPrecedingIndex;
+        return inlayIndex >= firstRelatedToPrecedingIndex && inlayIndex < inlays.size() ? inlays.get(inlayIndex) : null;
+      }
+      else {
+        return null;
+      }
+    }
   }
 
   @Override
@@ -473,11 +525,33 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
           int offset = location.getOffset();
           List<Inlay<?>> inlays = getInlineElementsInRange(offset, offset);
           if (!inlays.isEmpty()) {
-            VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
+            VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset, false, false);
             Point inlayPoint = myEditor.visualPositionToXY(startVisualPosition);
-            if (point.y < inlayPoint.y || point.y >= inlayPoint.y + myEditor.getLineHeight()) return null;
-            Inlay<?> inlay = findInlay(inlays, point.x, inlayPoint.x);
-            if (inlay != null) return inlay;
+            List<CustomWrap> customWraps = myEditor.getCustomWrapModel().getWrapsAtOffset(offset);
+            if (customWraps.isEmpty()) {
+              if (point.y < inlayPoint.y || point.y >= inlayPoint.y + myEditor.getLineHeight()) return null;
+              Inlay<?> inlay = findInlay(inlays, point.x, inlayPoint.x);
+              if (inlay != null) return inlay;
+            }
+            else {
+              // inlays at the same offset are sorted by their relatesToPrecedingText
+              int firstRelatedToPrecedingIndex = ContainerUtil.indexOf(inlays, inlay -> inlay.isRelatedToPrecedingText());
+              firstRelatedToPrecedingIndex = firstRelatedToPrecedingIndex >= 0 ? firstRelatedToPrecedingIndex : inlays.size();
+              if (point.y >= inlayPoint.y + myEditor.getLineHeight()) return null;
+              if (point.y >= inlayPoint.y) {
+                // points after wrap
+                Inlay<?> inlay = findInlay(inlays, 0, firstRelatedToPrecedingIndex, point.x, inlayPoint.x);
+                if (inlay != null) return inlay;
+              }
+              else {
+                // points before wrap
+                startVisualPosition = myEditor.offsetToVisualPosition(offset, false, true);
+                inlayPoint = myEditor.visualPositionToXY(startVisualPosition);
+                if (point.y < inlayPoint.y || point.y >= inlayPoint.y + myEditor.getLineHeight()) return null;
+                Inlay<?> inlay = findInlay(inlays, firstRelatedToPrecedingIndex, inlays.size(), point.x, inlayPoint.x);
+                if (inlay != null) return inlay;
+              }
+            }
           }
         }
       }
@@ -500,7 +574,12 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   }
 
   private static Inlay<?> findInlay(List<? extends Inlay<?>> inlays, int x, int startX) {
-    for (Inlay<?> inlay : inlays) {
+    return findInlay(inlays, 0, inlays.size(), x, startX);
+  }
+
+  private static Inlay<?> findInlay(List<? extends Inlay<?>> inlays, int startIndex, int endIndex, int x, int startX) {
+    for (; startIndex < endIndex; startIndex++) {
+      Inlay<?> inlay = inlays.get(startIndex);
       int endX = startX + inlay.getWidthInPixels();
       if (x >= startX && x < endX) return inlay;
       startX = endX;
