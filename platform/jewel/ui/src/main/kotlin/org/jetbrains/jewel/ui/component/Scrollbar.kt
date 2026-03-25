@@ -51,8 +51,13 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -467,25 +472,67 @@ private val IntRange.size
     get() = last + 1 - first
 
 private fun verticalMeasurePolicy(sliderAdapter: SliderAdapter, setContainerSize: (Int) -> Unit, thumbThickness: Int) =
-    MeasurePolicy { measurables, constraints ->
-        setContainerSize(constraints.maxHeight)
-        val pixelRange = sliderAdapter.thumbPixelRange
-        val placeable =
-            measurables.first().measure(Constraints.fixed(constraints.constrainWidth(thumbThickness), pixelRange.size))
-        layout(placeable.width, constraints.maxHeight) { placeable.place(0, pixelRange.first) }
+    object : MeasurePolicy {
+        override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+            setContainerSize(constraints.maxHeight)
+            val pixelRange = sliderAdapter.thumbPixelRange
+            val placeable =
+                measurables
+                    .first()
+                    .measure(Constraints.fixed(constraints.constrainWidth(thumbThickness), pixelRange.size))
+            return layout(placeable.width, constraints.maxHeight) { placeable.place(0, pixelRange.first) }
+        }
+
+        // The scrollbar's cross-axis intrinsic size is simply its track thickness. Returning it
+        // here avoids the default fallback that re-runs the measure block with Int.MAX_VALUE as
+        // the height, which would crash when trying to call layout(w, Int.MAX_VALUE).
+        override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
+            thumbThickness
+
+        override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
+            thumbThickness
+
+        // The vertical scrollbar has no natural height — it always fills its container. Returning
+        // 0 prevents the default fallback from re-running the measure block with Int.MAX_VALUE,
+        // which would crash at layout(w, Int.MAX_VALUE) when queried via modifier chains (e.g.
+        // padding) that propagate intrinsic measurements.
+        override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int =
+            0
+
+        override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int =
+            0
     }
 
 private fun horizontalMeasurePolicy(
     sliderAdapter: SliderAdapter,
     setContainerSize: (Int) -> Unit,
     thumbThickness: Int,
-) = MeasurePolicy { measurables, constraints ->
-    setContainerSize(constraints.maxWidth)
-    val pixelRange = sliderAdapter.thumbPixelRange
-    val placeable =
-        measurables.first().measure(Constraints.fixed(pixelRange.size, constraints.constrainHeight(thumbThickness)))
-    layout(constraints.maxWidth, placeable.height) { placeable.place(pixelRange.first, 0) }
-}
+) =
+    object : MeasurePolicy {
+        override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+            setContainerSize(constraints.maxWidth)
+            val pixelRange = sliderAdapter.thumbPixelRange
+            val placeable =
+                measurables
+                    .first()
+                    .measure(Constraints.fixed(pixelRange.size, constraints.constrainHeight(thumbThickness)))
+            return layout(constraints.maxWidth, placeable.height) { placeable.place(pixelRange.first, 0) }
+        }
+
+        // The scrollbar's cross-axis intrinsic size is simply its track thickness.
+        override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int =
+            thumbThickness
+
+        override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int =
+            thumbThickness
+
+        // The horizontal scrollbar has no natural width — it always fills its container.
+        override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
+            0
+
+        override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
+            0
+    }
 
 @Suppress("ModifierComposed") // To fix in JEWEL-921
 private fun Modifier.scrollbarDrag(

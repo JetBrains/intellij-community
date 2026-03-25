@@ -25,8 +25,13 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -816,102 +821,218 @@ private fun ScrollableContainerImpl(
                 Box(Modifier.layoutId(ID_HORIZONTAL_SCROLLBAR)) { horizontalScrollbar() }
             }
         },
-        modifier,
-    ) { measurables, incomingConstraints ->
-        val verticalScrollbarMeasurable = measurables.find { it.layoutId == ID_VERTICAL_SCROLLBAR }
-        val horizontalScrollbarMeasurable = measurables.find { it.layoutId == ID_HORIZONTAL_SCROLLBAR }
+        modifier = modifier,
+        measurePolicy =
+            object : MeasurePolicy {
+                override fun MeasureScope.measure(
+                    measurables: List<Measurable>,
+                    constraints: Constraints,
+                ): MeasureResult {
+                    if (verticalScrollbar != null) {
+                        check(constraints.hasBoundedHeight) {
+                            "VerticallyScrollableContainer was measured with an unbounded maximum " +
+                                "height, which is not supported. One of the common reasons is " +
+                                "nesting it inside another vertically scrollable layout such as " +
+                                "Column(Modifier.verticalScroll()) or another " +
+                                "VerticallyScrollableContainer. Use Modifier.height(), " +
+                                "Modifier.fillMaxHeight(), or Modifier.weight(1f) inside a Column " +
+                                "to provide a bounded height."
+                        }
+                    }
+                    if (horizontalScrollbar != null) {
+                        check(constraints.hasBoundedWidth) {
+                            "HorizontallyScrollableContainer was measured with an unbounded maximum " +
+                                "width, which is not supported. One of the common reasons is " +
+                                "nesting it inside another horizontally scrollable layout such as " +
+                                "Row(Modifier.horizontalScroll()) or another " +
+                                "HorizontallyScrollableContainer. Use Modifier.width(), " +
+                                "Modifier.fillMaxWidth(), or Modifier.weight(1f) inside a Row to " +
+                                "provide a bounded width."
+                        }
+                    }
 
-        // Leaving the bottom-end corner empty when both scrollbars visible at the same time
-        val accountForVerticalScrollbar = verticalScrollbarMeasurable != null && verticalScrollbarVisible
-        val accountForHorizontalScrollbar = horizontalScrollbarMeasurable != null && horizontalScrollbarVisible
-        val sizeOffsetWhenBothVisible =
-            if (accountForVerticalScrollbar && accountForHorizontalScrollbar) {
-                scrollbarStyle.scrollbarVisibility.trackThicknessExpanded.roundToPx()
-            } else {
-                0
-            }
+                    val verticalScrollbarMeasurable = measurables.find { it.layoutId == ID_VERTICAL_SCROLLBAR }
+                    val horizontalScrollbarMeasurable = measurables.find { it.layoutId == ID_HORIZONTAL_SCROLLBAR }
 
-        val verticalScrollbarPlaceable =
-            if (accountForVerticalScrollbar) {
-                val verticalScrollbarConstraints =
-                    Constraints.fixedHeight(incomingConstraints.maxHeight - sizeOffsetWhenBothVisible)
-                verticalScrollbarMeasurable.measure(verticalScrollbarConstraints)
-            } else {
-                null
-            }
+                    // Leaving the bottom-end corner empty when both scrollbars visible at the same time
+                    val accountForVerticalScrollbar = verticalScrollbarMeasurable != null && verticalScrollbarVisible
+                    val accountForHorizontalScrollbar =
+                        horizontalScrollbarMeasurable != null && horizontalScrollbarVisible
+                    val sizeOffsetWhenBothVisible =
+                        if (accountForVerticalScrollbar && accountForHorizontalScrollbar) {
+                            scrollbarStyle.scrollbarVisibility.trackThicknessExpanded.roundToPx()
+                        } else {
+                            0
+                        }
 
-        val horizontalScrollbarPlaceable =
-            if (accountForHorizontalScrollbar) {
-                val horizontalScrollbarConstraints =
-                    Constraints.fixedWidth(incomingConstraints.maxWidth - sizeOffsetWhenBothVisible)
-                horizontalScrollbarMeasurable.measure(horizontalScrollbarConstraints)
-            } else {
-                null
-            }
+                    // Query scrollbar intrinsic sizes instead of measuring them upfront. This breaks
+                    // the layout dependency cycle that would crash when incomingConstraints are
+                    // unbounded (e.g., inside a Column with IntrinsicSize): measuring a scrollbar
+                    // with fixedHeight/fixedWidth of Int.MAX_VALUE is illegal, but querying its
+                    // intrinsic size is always safe.
+                    val vScrollbarIntrinsicWidth =
+                        if (accountForVerticalScrollbar) {
+                            verticalScrollbarMeasurable.maxIntrinsicWidth(constraints.maxHeight)
+                        } else {
+                            0
+                        }
 
-        val isMacOs = hostOs == OS.MacOS
-        val contentMeasurable = measurables.find { it.layoutId == ID_CONTENT } ?: error("Content not provided")
-        val contentConstraints =
-            computeContentConstraints(
-                scrollbarStyle,
-                isMacOs,
-                incomingConstraints,
-                verticalScrollbarPlaceable,
-                horizontalScrollbarPlaceable,
-            )
-        val contentPlaceable = contentMeasurable.measure(contentConstraints)
+                    val hScrollbarIntrinsicHeight =
+                        if (accountForHorizontalScrollbar) {
+                            horizontalScrollbarMeasurable.maxIntrinsicHeight(constraints.maxWidth)
+                        } else {
+                            0
+                        }
 
-        val isAlwaysVisible = scrollbarStyle.scrollbarVisibility is AlwaysVisible
-        val vScrollbarWidth =
-            when {
-                !isMacOs -> 0
-                isAlwaysVisible -> verticalScrollbarPlaceable?.width ?: 0
-                else -> 0
-            }
-        val width = contentPlaceable.width + vScrollbarWidth
+                    val isMacOs = hostOs == OS.MacOS
+                    val contentMeasurable =
+                        measurables.find { it.layoutId == ID_CONTENT } ?: error("Content not provided")
+                    val contentConstraints =
+                        computeContentConstraints(
+                            scrollbarStyle,
+                            isMacOs,
+                            constraints,
+                            vScrollbarIntrinsicWidth,
+                            hScrollbarIntrinsicHeight,
+                        )
+                    val contentPlaceable = contentMeasurable.measure(contentConstraints)
 
-        val hScrollbarHeight =
-            when {
-                !isMacOs -> 0
-                isAlwaysVisible -> horizontalScrollbarPlaceable?.height ?: 0
-                else -> 0
-            }
-        val height = contentPlaceable.height + hScrollbarHeight
+                    val isAlwaysVisible = scrollbarStyle.scrollbarVisibility is AlwaysVisible
+                    val vScrollbarWidth =
+                        when {
+                            !isMacOs -> 0
+                            isAlwaysVisible -> vScrollbarIntrinsicWidth
+                            else -> 0
+                        }
+                    val width = contentPlaceable.width + vScrollbarWidth
 
-        layout(width, height) {
-            contentPlaceable.placeRelative(x = 0, y = 0, zIndex = 0f)
-            verticalScrollbarPlaceable?.placeRelative(
-                x =
-                    when (verticalScrollbarPosition) {
-                        ScrollbarPosition.Start -> 0
-                        ScrollbarPosition.End -> width - verticalScrollbarPlaceable.width
-                    },
-                y = 0,
-                zIndex = 1f,
-            )
-            horizontalScrollbarPlaceable?.placeRelative(
-                x = 0,
-                y =
-                    when (horizontalScrollbarPosition) {
-                        ScrollbarPosition.Start -> 0
-                        ScrollbarPosition.End -> height - horizontalScrollbarPlaceable.height
-                    },
-                zIndex = 1f,
-            )
-        }
-    }
+                    val hScrollbarHeight =
+                        when {
+                            !isMacOs -> 0
+                            isAlwaysVisible -> hScrollbarIntrinsicHeight
+                            else -> 0
+                        }
+                    val height = contentPlaceable.height + hScrollbarHeight
+
+                    // Now that content is measured and the container dimensions are known (bounded
+                    // even if incomingConstraints were unbounded), measure the scrollbars with
+                    // concrete sizes.
+                    val verticalScrollbarPlaceable =
+                        if (accountForVerticalScrollbar) {
+                            val verticalScrollbarConstraints =
+                                Constraints.fixedHeight(height - sizeOffsetWhenBothVisible)
+                            verticalScrollbarMeasurable.measure(verticalScrollbarConstraints)
+                        } else {
+                            null
+                        }
+
+                    val horizontalScrollbarPlaceable =
+                        if (accountForHorizontalScrollbar) {
+                            val horizontalScrollbarConstraints =
+                                Constraints.fixedWidth(width - sizeOffsetWhenBothVisible)
+                            horizontalScrollbarMeasurable.measure(horizontalScrollbarConstraints)
+                        } else {
+                            null
+                        }
+
+                    return layout(width, height) {
+                        contentPlaceable.placeRelative(x = 0, y = 0, zIndex = 0f)
+                        verticalScrollbarPlaceable?.placeRelative(
+                            x =
+                                when (verticalScrollbarPosition) {
+                                    ScrollbarPosition.Start -> 0
+                                    ScrollbarPosition.End -> width - verticalScrollbarPlaceable.width
+                                },
+                            y = 0,
+                            zIndex = 1f,
+                        )
+                        horizontalScrollbarPlaceable?.placeRelative(
+                            x = 0,
+                            y =
+                                when (horizontalScrollbarPosition) {
+                                    ScrollbarPosition.Start -> 0
+                                    ScrollbarPosition.End -> height - horizontalScrollbarPlaceable.height
+                                },
+                            zIndex = 1f,
+                        )
+                    }
+                }
+
+                // Intrinsic overrides prevent the default fallback from re-running the measure
+                // block with Constraints.Infinity, which would trip the bounded-constraints checks
+                // above. They also provide correct values for IntrinsicSize parents.
+                //
+                // Cross-axis (the axis the container sizes itself to match its content):
+                //   - VerticallyScrollableContainer   → width  delegates to content + scrollbar
+                //   - HorizontallyScrollableContainer → height delegates to content + scrollbar
+                // Scroll-axis (must be bounded by the parent — no natural size):
+                //   - Always returns 0
+
+                override fun IntrinsicMeasureScope.maxIntrinsicWidth(
+                    measurables: List<IntrinsicMeasurable>,
+                    height: Int,
+                ): Int {
+                    val contentWidth = measurables[0].maxIntrinsicWidth(height)
+                    if (verticalScrollbar == null) return contentWidth
+                    val isMacOs = hostOs == OS.MacOS
+                    val isAlwaysVisible = scrollbarStyle.scrollbarVisibility is AlwaysVisible
+                    if (!isMacOs || !isAlwaysVisible) return contentWidth
+                    // Vertical scrollbar is always at index 1 when present
+                    return contentWidth + measurables[1].maxIntrinsicWidth(height)
+                }
+
+                override fun IntrinsicMeasureScope.minIntrinsicWidth(
+                    measurables: List<IntrinsicMeasurable>,
+                    height: Int,
+                ): Int {
+                    val contentWidth = measurables[0].minIntrinsicWidth(height)
+                    if (verticalScrollbar == null) return contentWidth
+                    val isMacOs = hostOs == OS.MacOS
+                    val isAlwaysVisible = scrollbarStyle.scrollbarVisibility is AlwaysVisible
+                    if (!isMacOs || !isAlwaysVisible) return contentWidth
+                    return contentWidth + measurables[1].minIntrinsicWidth(height)
+                }
+
+                override fun IntrinsicMeasureScope.maxIntrinsicHeight(
+                    measurables: List<IntrinsicMeasurable>,
+                    width: Int,
+                ): Int {
+                    if (verticalScrollbar != null) return 0
+                    val contentHeight = measurables[0].maxIntrinsicHeight(width)
+                    if (horizontalScrollbar == null) return contentHeight
+                    val isMacOs = hostOs == OS.MacOS
+                    val isAlwaysVisible = scrollbarStyle.scrollbarVisibility is AlwaysVisible
+                    if (!isMacOs || !isAlwaysVisible) return contentHeight
+                    // Horizontal scrollbar is at index 1 when only horizontal is present
+                    return contentHeight + measurables[1].maxIntrinsicHeight(width)
+                }
+
+                override fun IntrinsicMeasureScope.minIntrinsicHeight(
+                    measurables: List<IntrinsicMeasurable>,
+                    width: Int,
+                ): Int {
+                    if (verticalScrollbar != null) return 0
+                    val contentHeight = measurables[0].minIntrinsicHeight(width)
+                    if (horizontalScrollbar == null) return contentHeight
+                    val isMacOs = hostOs == OS.MacOS
+                    val isAlwaysVisible = scrollbarStyle.scrollbarVisibility is AlwaysVisible
+                    if (!isMacOs || !isAlwaysVisible) return contentHeight
+                    return contentHeight + measurables[1].minIntrinsicHeight(width)
+                }
+            },
+    )
 }
 
 private fun computeContentConstraints(
     scrollbarStyle: ScrollbarStyle,
     isMacOs: Boolean,
     incomingConstraints: Constraints,
-    verticalScrollbarPlaceable: Placeable?,
-    horizontalScrollbarPlaceable: Placeable?,
+    verticalScrollbarWidth: Int,
+    horizontalScrollbarHeight: Int,
 ): Constraints {
     val visibility = scrollbarStyle.scrollbarVisibility
-    val scrollbarWidth = verticalScrollbarPlaceable?.width ?: 0
-    val scrollbarHeight = horizontalScrollbarPlaceable?.height ?: 0
+    val scrollbarWidth = verticalScrollbarWidth
+    val scrollbarHeight = horizontalScrollbarHeight
 
     val maxWidth = incomingConstraints.maxWidth
     val maxHeight = incomingConstraints.maxHeight
