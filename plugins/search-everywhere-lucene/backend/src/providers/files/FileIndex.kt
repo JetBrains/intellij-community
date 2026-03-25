@@ -50,7 +50,7 @@ import kotlin.time.Duration.Companion.seconds
 class FileIndex(val project: Project, coroutineScope: CoroutineScope) : Disposable {
   private val luceneIndex = LuceneIndex(project,SearchEverywhereLuceneProviderIdUtils.LUCENE_FILES,LOG)
   private val scheduledIndexingOps = Channel<LuceneFileIndexOperation>(capacity = Channel.UNLIMITED)
-  val initialIndexingCompleted = CompletableDeferred<Unit>()
+  val initialIndexingCompleted: CompletableDeferred<Unit> = CompletableDeferred()
 
   init {
     Disposer.register(SearchEverywhereLucenePluginDisposable.getInstance(project),this)
@@ -182,7 +182,7 @@ class FileIndex(val project: Project, coroutineScope: CoroutineScope) : Disposab
     }
   }
 
-  suspend fun awaitInitialIndexing() = initialIndexingCompleted.await()
+  suspend fun awaitInitialIndexing(): Unit = initialIndexingCompleted.await()
 
   fun scheduleIndexingOp(op: LuceneFileIndexOperation) {
     // Since the channel is unbounded, the sending must succeed.
