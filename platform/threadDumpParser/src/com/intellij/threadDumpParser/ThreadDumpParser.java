@@ -15,9 +15,10 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,6 +48,7 @@ public final class ThreadDumpParser {
   private static final String AT_JAVA_LANG_OBJECT_WAIT = "java.lang.Object.wait(";
   private static final String ourLockedOwnableSynchronizersHeader = "Locked ownable synchronizers";
   private static final Pattern ourLockedOwnableSynchronizersPattern = Pattern.compile("- <(0x[\\da-f]+)> \\(.*\\)");
+  private static final Set<String> ourIgnoredThreadStateParts = Set.of("virtual");
 
   private static final String[] IMPORTANT_THREAD_DUMP_WORDS = ContainerUtil.ar("tid", "nid", "wait", "parking", "prio", "os_prio", "java");
 
@@ -77,7 +79,7 @@ public final class ThreadDumpParser {
     for (JsonNode container : containers.values()) {
       for (JsonNode thread : container.path("threads").values()) {
         var name = thread.path("name").asString();
-        var threadState = new ThreadState(name, "unknown");
+        var threadState = createThreadState(name, "unknown");
 
         var rawStackTrace = new StringBuilder();
         for (JsonNode ste : thread.path("stack").values()) {
@@ -197,7 +199,7 @@ public final class ThreadDumpParser {
 
     StringBuilder coroutineDump = result.coroutineDump;
     if (coroutineDump != null) {
-      ThreadState coroutineState = new ThreadState("Coroutine dump", "undefined");
+      ThreadState coroutineState = createThreadState("Coroutine dump", "undefined");
       coroutineState.setStackTrace(coroutineDump.toString(), false);
       threads.add(coroutineState);
     }
@@ -318,7 +320,7 @@ public final class ThreadDumpParser {
   private static @Nullable ThreadState tryParseThreadStart(String line) {
     Matcher m = ourThreadStartPattern.matcher(line);
     if (m.find()) {
-      final ThreadState state = new ThreadState(m.group(1), m.group(3));
+      final ThreadState state = createThreadState(m.group(1), m.group(3));
       if (line.contains(" daemon ")) {
         state.setDaemon(true);
       }
@@ -331,14 +333,14 @@ public final class ThreadDumpParser {
 
     m = ourForcedThreadStartPattern.matcher(line);
     if (m.matches()) {
-      ThreadState state = new ThreadState(m.group(1), m.group(2));
+      ThreadState state = createThreadState(m.group(1), m.group(2));
       applyInlineMetadata(line, state);
       return state;
     }
 
     m = ourJcmdThreadStartPattern.matcher(line);
     if (m.matches()) {
-      var state = new ThreadState(m.group(1), "unknown");
+      var state = createThreadState(m.group(1), "unknown");
       var suffix = m.group(2);
       state.setVirtual(suffix.contains(" virtual"));
       applyInlineMetadata(line, state);
@@ -352,12 +354,20 @@ public final class ThreadDumpParser {
 
     m = matchYourKit(line);
     if (m != null) {
-      ThreadState state = new ThreadState(m.group(1), m.group(2));
+      ThreadState state = createThreadState(m.group(1), m.group(2));
       state.setDaemon(daemon);
       applyInlineMetadata(line, state);
       return state;
     }
     return null;
+  }
+
+  private static @NotNull ThreadState createThreadState(@NotNull String name, @NotNull String state) {
+    String normalizedState = StringUtil.join(
+      ContainerUtil.filter(StringUtil.split(state, " "), part -> !ourIgnoredThreadStateParts.contains(part)),
+      " "
+    );
+    return new ThreadState(name, normalizedState);
   }
 
   private static void applyInlineMetadata(@NotNull String line, @NotNull ThreadState state) {

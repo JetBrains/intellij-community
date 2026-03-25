@@ -72,7 +72,7 @@ internal class IntelliJThreadDumpImportTest {
     assertThat(workerThread.stackTrace).doesNotContain("[\"id\":201,\"parentId\":300]")
     assertThat(workerThread.stackTrace).contains("example.worker-1.run(worker-1.java:2)")
     assertEquals(" (runnable)", mainThread.stateDesc)
-    assertEquals(" (virtual runnable)", workerThread.stateDesc)
+    assertEquals(" (runnable)", workerThread.stateDesc)
     assertTrue(workerThread.canBeHidden)
   }
 

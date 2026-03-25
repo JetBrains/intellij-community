@@ -818,12 +818,14 @@ public class ThreadDumpParserTest {
     assertNotNull(unnamedVirtual);
     assertEquals(Long.valueOf(960L), unnamedVirtual.getUniqueId());
     assertEquals(Long.valueOf(300L), unnamedVirtual.getThreadContainerUniqueId());
+    assertEquals("runnable", unnamedVirtual.getState());
     assertFalse(unnamedVirtual.getStackTrace().contains("[\"id\":960"));
 
     ThreadState unnamedVirtualSibling = ContainerUtil.find(threads, thread -> "{unnamed}@957".equals(thread.getName()));
     assertNotNull(unnamedVirtualSibling);
     assertEquals(Long.valueOf(957L), unnamedVirtualSibling.getUniqueId());
     assertEquals(Long.valueOf(300L), unnamedVirtualSibling.getThreadContainerUniqueId());
+    assertEquals("runnable", unnamedVirtualSibling.getState());
     assertTrue(unnamedVirtualSibling.isVirtual());
 
     ThreadState container = ContainerUtil.find(threads, thread -> "Scope A".equals(thread.getName()));
@@ -922,6 +924,7 @@ public class ThreadDumpParserTest {
     ThreadState thread = threads.getFirst();
     assertEquals("scope@worker@957", thread.getName());
     assertNull(thread.getUniqueId());
+    assertEquals("runnable", thread.getState());
     assertTrue(thread.isVirtual());
   }
 
@@ -938,6 +941,7 @@ public class ThreadDumpParserTest {
     ThreadState thread = threads.getFirst();
     assertEquals("{unnamed}@4343", thread.getName());
     assertNull(thread.getUniqueId());
+    assertEquals("runnable", thread.getState());
     assertTrue(thread.isVirtual());
   }
 
