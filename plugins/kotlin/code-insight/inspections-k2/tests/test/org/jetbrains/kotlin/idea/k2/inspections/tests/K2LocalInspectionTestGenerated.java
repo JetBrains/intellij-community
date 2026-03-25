@@ -4439,6 +4439,26 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSetOfAny.kt");
         }
 
+        @TestMetadata("plusIterableAndList.kt")
+        public void testPlusIterableAndList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusIterableAndList.kt");
+        }
+
+        @TestMetadata("plusIterableOfPathAndPath.kt")
+        public void testPlusIterableOfPathAndPath() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusIterableOfPathAndPath.kt");
+        }
+
+        @TestMetadata("plusListAndIterable.kt")
+        public void testPlusListAndIterable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListAndIterable.kt");
+        }
+
+        @TestMetadata("plusListAndIterableFromElvis.kt")
+        public void testPlusListAndIterableFromElvis() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListAndIterableFromElvis.kt");
+        }
+
         @TestMetadata("plusListAndSequence.kt")
         public void testPlusListAndSequence() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListAndSequence.kt");
