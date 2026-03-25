@@ -449,8 +449,8 @@ internal suspend fun cleanOutput(context: CompilationContext, keepCompilationSta
       addAll(compilationState)
     }
   }
+  val outDir = context.paths.buildOutputDir
   spanBuilder("clean output").use { span ->
-    val outDir = context.paths.buildOutputDir
     for (dir in outputDirectoriesToKeep) {
       val path = dir.relativeToOrNull(outDir) ?: dir
       span.addEvent("skip cleaning", Attributes.of(AttributeKey.stringKey("dir"), path.toString()))
@@ -474,6 +474,29 @@ internal suspend fun cleanOutput(context: CompilationContext, keepCompilationSta
       }
     }
     Files.createDirectories(context.paths.tempDir)
+  }
+
+  spanBuilder("list output dirs after clean").use { span ->
+    span.addEvent(
+      "out absolute path",
+      Attributes.of(AttributeKey.stringKey("dir"), "${outDir.toAbsolutePath()}")
+    )
+
+    Files.list(outDir).use { stream ->
+      stream
+        .filter { Files.isDirectory(it) }
+        .forEach { subDir ->
+          val empty = Files.newDirectoryStream(subDir).use { !it.iterator().hasNext() }
+          val relativeToOut = outDir.relativize(subDir)
+          span.addEvent(
+            "out subdir",
+            Attributes.of(
+              AttributeKey.stringKey("empty"), "$empty",
+              AttributeKey.stringKey("dir"), "$relativeToOut",
+            )
+          )
+        }
+    }
   }
 }
 
