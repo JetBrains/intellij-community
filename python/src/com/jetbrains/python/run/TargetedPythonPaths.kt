@@ -39,7 +39,8 @@ import java.nio.file.Path
  * Append PYTHONPATH from system environment for local target if it is necessary
  * checkPythonPathInEnvs flag used for optionally checking envs already contains PYTHONPATH
  */
-fun initPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
+@ApiStatus.Internal
+internal fun initPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
                    passParentEnvs: Boolean,
                    pythonPathList: MutableCollection<TargetEnvironmentFunction<String>>,
                    targetEnvironmentRequest: TargetEnvironmentRequest,
@@ -114,7 +115,8 @@ private fun collectPythonPath(context: Context,
 /**
  * List of [target->targetPath] functions. TargetPaths are to be added to ``PYTHONPATH`` because user did so
  */
-fun getAddedPaths(sdkAdditionalData: SdkAdditionalData): List<TargetEnvironmentFunction<String>> {
+@ApiStatus.Internal
+internal fun getAddedPaths(sdkAdditionalData: SdkAdditionalData): List<TargetEnvironmentFunction<String>> {
   val pathList: MutableList<TargetEnvironmentFunction<String>> = ArrayList()
   if (sdkAdditionalData is PythonSdkAdditionalData) {
     val addedPaths = if (sdkAdditionalData is RemoteSdkProperties) {

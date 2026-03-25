@@ -10,11 +10,14 @@ import com.intellij.remote.ProcessControlWithMappings
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
 import com.jetbrains.python.run.target.targetEnvironment
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 fun ProcessHandler.guessPathMapper(): PathMapper? =
   (this as? ProcessControlWithMappings)?.mappingSettings ?: targetEnvironment?.collectAllPathMappings()
 
-fun TargetEnvironment.collectAllPathMappings(): PathMappingSettings {
+@ApiStatus.Internal
+internal fun TargetEnvironment.collectAllPathMappings(): PathMappingSettings {
   val pathMappings = mutableListOf<PathMappingSettings.PathMapping>()
   if (this is ExternallySynchronized) {
     pathMappings += synchronizedVolumes.map(TargetEnvironment.SynchronizedVolume::toPathMapping)

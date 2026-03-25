@@ -4,10 +4,12 @@ package com.jetbrains.python.run.target
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.constantExplicit
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
-class HelpersAwareLocalTargetEnvironmentRequest : HelpersAwareTargetEnvironmentRequest {
+@ApiStatus.Internal
+internal class HelpersAwareLocalTargetEnvironmentRequest : HelpersAwareTargetEnvironmentRequest {
   override val targetEnvironmentRequest: TargetEnvironmentRequest = LocalTargetEnvironmentRequest()
 
   override fun preparePyCharmHelpers(): PythonHelpersMappings =
