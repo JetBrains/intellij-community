@@ -57,8 +57,8 @@ public final class SerializedStubTree {
 
     synchronized void setRestoredMap(Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> restoredMap) {
       if (myState == RestoreState.NOT_RESTORED || myState == RestoreState.INCOMPLETE) {
-        myState = RestoreState.RESTORED;
         myMap = Collections.unmodifiableMap(restoredMap);
+        myState = RestoreState.RESTORED;
       }
     }
 
@@ -67,8 +67,8 @@ public final class SerializedStubTree {
         return;
       }
       if (myState == RestoreState.NOT_RESTORED) {
-        myState = RestoreState.INCOMPLETE;
         myMap = new HashMap<>(1);
+        myState = RestoreState.INCOMPLETE;
       }
       Objects.requireNonNull(myMap).put(stubIndexKey, partialMap);
     }
