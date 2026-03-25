@@ -4,3 +4,4 @@
     at example.Parent.one(Parent.kt:1)
 
 "Dumped Coroutines" tid=0x0 nid=NA coroutineRoot ["type":"coroutineRoot"]
+   Carrying virtual thread #0

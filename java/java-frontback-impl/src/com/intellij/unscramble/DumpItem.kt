@@ -368,7 +368,8 @@ private class JavaThreadContainerItem(private val containerName: String, overrid
   override fun serialize(): @NlsSafe String =
     serializeThreadDumpItem(
       itemHeader = "\"$containerName\" tid=0x0 nid=NA container",
-      stackTraceBody = "",
+      // add "Carrying virtual thread" so old ThreadDumpParser will parse it as thread group, not as a runnable thread.
+      stackTraceBody = "   Carrying virtual thread #0",
       id = treeId,
       parentId = parentTreeId,
       type = IntelliJThreadDumpMetadata.CONTAINER_TYPE,

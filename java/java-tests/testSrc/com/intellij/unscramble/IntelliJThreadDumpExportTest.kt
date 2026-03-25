@@ -44,7 +44,7 @@ internal class IntelliJThreadDumpExportTest {
           stackTrace = "",
           serializedStackTrace = serializeThreadDumpItem(
             itemHeader = "\"Scope Root\" tid=0x0 nid=NA container",
-            stackTraceBody = "",
+            stackTraceBody = "   Carrying virtual thread #0",
             id = 400L,
             parentId = null,
             type = IntelliJThreadDumpMetadata.CONTAINER_TYPE,
@@ -58,7 +58,7 @@ internal class IntelliJThreadDumpExportTest {
           stackTrace = "",
           serializedStackTrace = serializeThreadDumpItem(
             itemHeader = "\"Scope A\" tid=0x0 nid=NA container",
-            stackTraceBody = "",
+            stackTraceBody = "   Carrying virtual thread #0",
             id = 300L,
             parentId = 400L,
             type = IntelliJThreadDumpMetadata.CONTAINER_TYPE,
@@ -72,7 +72,7 @@ internal class IntelliJThreadDumpExportTest {
           stackTrace = "",
           serializedStackTrace = serializeThreadDumpItem(
             itemHeader = "\"Scope B\" tid=0x0 nid=NA container",
-            stackTraceBody = "",
+            stackTraceBody = "   Carrying virtual thread #0",
             id = 500L,
             parentId = 400L,
             type = IntelliJThreadDumpMetadata.CONTAINER_TYPE,
