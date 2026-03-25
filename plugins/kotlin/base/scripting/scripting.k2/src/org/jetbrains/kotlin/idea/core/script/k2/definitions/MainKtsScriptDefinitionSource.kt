@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.scriptEntityProvider
-import org.jetbrains.kotlin.idea.core.script.v1.NewScriptFileInfo
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.script.v1.kotlinScriptTemplateInfo
 import org.jetbrains.kotlin.idea.core.script.v1.loggingReporter
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -38,11 +38,12 @@ class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
                 }.with {
                     ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
                     ide {
-                        kotlinScriptTemplateInfo(NewScriptFileInfo().apply {
+                        kotlinScriptTemplateInfo {
                             id = "main-kts"
                             title = ".main.kts"
                             templateName = "Kotlin Script MainKts"
-                        })
+                            description = KotlinBundle.message("action.new.script.description.main.kts")
+                        }
                         scriptEntityProvider {
                             mainKtsConfigurationProvider
                         }

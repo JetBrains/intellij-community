@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.idea.core.script.v1
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.Nls
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -18,7 +20,9 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import javax.swing.Icon
 import kotlin.script.experimental.api.IdeScriptCompilationConfigurationKeys
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.util.PropertiesCollection
 
 fun indexSourceRootsEagerly(): Boolean = Registry.`is`("kotlin.scripting.index.dependencies.sources", false)
@@ -41,9 +45,12 @@ fun loggingReporter(severity: ScriptDiagnostic.Severity, message: String) {
     }
 }
 
-
 class NewScriptFileInfo(
-    var id: String = "", var title: String = "", var templateName: String = "Kotlin Script", var icon: Icon = KotlinIcons.SCRIPT
+    var id: String = "",
+    @NlsContexts.ListItem var title: String = "",
+    var templateName: String = "Kotlin Script",
+    var icon: Icon = KotlinIcons.SCRIPT,
+    @param:Nls var description: String = ""
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -60,6 +67,10 @@ class NewScriptFileInfo(
 }
 
 val IdeScriptCompilationConfigurationKeys.kotlinScriptTemplateInfo: PropertiesCollection.Key<NewScriptFileInfo> by PropertiesCollection.key()
+
+fun ScriptCompilationConfiguration.Builder.kotlinScriptTemplateInfo(init: NewScriptFileInfo.() -> Unit) {
+    ide.kotlinScriptTemplateInfo(NewScriptFileInfo().apply(init))
+}
 
 fun Project.getKtFile(virtualFile: VirtualFile?, ktFile: KtFile? = null): KtFile? {
     if (virtualFile == null) return null

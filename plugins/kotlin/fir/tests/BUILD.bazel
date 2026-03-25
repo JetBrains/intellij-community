@@ -229,6 +229,10 @@ jvm_library(
     "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections_test_lib",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "//plugins/kotlin/base/scripting/scripting.shared",
+    "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
   ],
   runtime_deps = [":tests"]
 )
