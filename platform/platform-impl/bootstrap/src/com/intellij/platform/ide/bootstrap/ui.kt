@@ -1,4 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(LowLevelLocalMachineAccess::class)
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -22,6 +23,7 @@ import com.intellij.ui.icons.CoreIconManager
 import com.intellij.ui.isWindowIconAlreadyExternallySet
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.updateAppWindowIcon
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.StartupUiUtil
