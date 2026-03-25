@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -264,19 +264,17 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     scrollPane.setBorder(null);
     panel.add(scrollPane, BorderLayout.CENTER);
 
-    final List<Pair<ActionListener, KeyStroke>>
-      keyboardActions = Collections.singletonList(Pair.create(__ -> {
-        final PsiMethod methodToSearchIn = list.getSelectedValue();
-        if (myEnclosingMethodsPopup != null && myEnclosingMethodsPopup.isVisible()) {
-          myEnclosingMethodsPopup.cancel();
-        }
+    final List<Pair<ActionListener, KeyStroke>> keyboardActions = Collections.singletonList(Pair.create(__ -> {
+      final PsiMethod methodToSearchIn = list.getSelectedValue();
+      if (myEnclosingMethodsPopup != null && myEnclosingMethodsPopup.isVisible()) {
+        myEnclosingMethodsPopup.cancel();
+      }
 
-        final PsiMethod methodToSearchFor = superMethod.isEnabled() && superMethod.isSelected()
-                                            ? methodToSearchIn.findDeepestSuperMethod() : methodToSearchIn;
       WriteIntentReadAction.run(() -> {
+          superMethod.isEnabled() && superMethod.isSelected() ? methodToSearchIn.findDeepestSuperMethod() : methodToSearchIn;
         consumer.consume(methodToSearchIn, methodToSearchFor);
       });
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)));
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)));
     myEnclosingMethodsPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)
       .setTitle(RefactoringBundle.message("refactoring.introduce.parameter.popup.title"))
       .setMovable(false)
