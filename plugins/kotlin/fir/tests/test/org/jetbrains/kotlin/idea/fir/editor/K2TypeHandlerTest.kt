@@ -516,6 +516,10 @@ class K2TypeHandlerTest : KotlinLightCodeInsightFixtureTestCase() {
         doLtGtTest("fun some(a : HashSet<caret>)")
     }
 
+    fun testTypeLtInClassDeclarationAtEndOfFile() {
+        doLtGtTest("class Some<caret>")
+    }
+
     fun testTypeLtInFun() {
         doLtGtTestNoAutoClose("fun some() { <<caret> }")
     }

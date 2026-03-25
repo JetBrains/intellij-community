@@ -37,7 +37,7 @@ final class LtGtTypingUtils {
             return false;
         }
 
-        if (iterator.getStart() > 0) {
+        if (offset != iterator.getEnd() && iterator.getStart() > 0) {
             iterator.retreat();
         }
 
