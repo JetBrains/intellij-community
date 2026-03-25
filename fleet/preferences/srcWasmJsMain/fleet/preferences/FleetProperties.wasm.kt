@@ -6,6 +6,8 @@ import js.string.JsStrings.toKotlinString
 import web.window.window
 import web.window.Window
 import web.url.URL
+import js.objects.ReadonlyRecord
+import js.string.JsStrings.toKotlinString
 
 private val urlParameters by lazy {
   buildMap {
@@ -18,13 +20,13 @@ private val urlParameters by lazy {
 @Actual
 fun fleetPropertyWasmJs(name: String, defaultValue: String?): String? {
   val name = name.removePrefix("fleet.")
-  return getJsConfigProperty(window, name)?.toString()
+  return getJsConfigProperty(window, name)
          ?: urlParameters[name.replace('.', '_')]
          ?: defaultValue
 }
 
-private fun getJsConfigProperty(obj: Window, name: String): JsString? {
-  js("return (obj['__airConfig'] || {})[name];")
+private fun getJsConfigProperty(obj: Window, name: String): String? {
+  return window["__airConfig"]?.unsafeCast<ReadonlyRecord<JsString, JsString>>()?.get(name.toJsString())?.toKotlinString()
 }
 
 @Actual

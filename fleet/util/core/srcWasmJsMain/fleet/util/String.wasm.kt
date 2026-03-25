@@ -2,6 +2,9 @@
 package fleet.util
 
 import fleet.util.multiplatform.Actual
+import js.uri.decodeURIComponent
+import js.uri.encodeURIComponent
+import web.url.URL
 
 @Actual
 fun String.capitalizeWithCurrentLocaleWasmJs(): String = replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
@@ -13,25 +16,16 @@ fun String.lowercaseWithCurrentLocaleWasmJs(): String = lowercase()
 fun String.uppercaseWithCurrentLocaleWasmJs(): String = uppercase()
 
 @Actual
-fun String.encodeUriComponentWasmJs(): String = encodeUriComponentImpl(this)
-
-private fun encodeUriComponentImpl(value: String): String =
-  js("encodeURIComponent(value)")
+fun String.encodeUriComponentWasmJs(): String = encodeURIComponent(this)
 
 @Actual
-fun String.decodeUriComponentWasmJs(): String = decodeUriComponentImpl(this)
-
-private fun decodeUriComponentImpl(value: String): String =
-  js("decodeURIComponent(value)")
+fun String.decodeUriComponentWasmJs(): String = decodeURIComponent(this)
 
 @Actual
 fun String.isValidUriStringWasmJs(): Boolean = try {
-  tryParseUrl(this)
+  URL(this)
   true
 }
 catch (e: Throwable) {
   false
 }
-
-private fun tryParseUrl(value: String): Unit =
-  js("new URL(value)")
