@@ -73,6 +73,11 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(object : DocumentListener {
       override fun beforeDocumentChange(event: DocumentEvent) {
         val document = event.document
+        if (!document.isInBulkUpdate) {
+          clearCache(document)
+        }
+      }
+      override fun bulkUpdateStarting(document: Document) {
         clearCache(document)
       }
     }, this)
