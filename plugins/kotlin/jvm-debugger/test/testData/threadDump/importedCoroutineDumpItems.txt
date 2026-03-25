@@ -7,3 +7,4 @@
 	at example.Child.two(Child.kt:2)
 
 "Dumped Coroutines" tid=0x0 nid=NA coroutineRoot ["type":"coroutineRoot"]
+   Carrying virtual thread #0

@@ -29,6 +29,7 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
         val coroutineRoot = dumpItems.single { it.treeId == Long.MIN_VALUE }
         assertEquals("Dumped Coroutines", coroutineRoot.name)
         assertTrue(coroutineRoot.isContainer)
+        assertTrue(coroutineRoot.serialize().contains("Carrying virtual thread #0"))
 
         val coroutineDumpItems = dumpItems.filter { !it.isContainer }
         assertEquals(2, coroutineDumpItems.size)

@@ -229,7 +229,8 @@ internal object CoroutineRootDumpItem : MergeableDumpItem {
     override fun serialize(): String =
         serializeThreadDumpItem(
             itemHeader = "\"$name\" tid=0x0 nid=NA coroutineRoot",
-            stackTraceBody = "",
+            // add "Carrying virtual thread" so old ThreadDumpParser will parse it as thread group, not as a runnable thread.
+            stackTraceBody = "   Carrying virtual thread #0",
             id = null,
             parentId = null,
             type = COROUTINE_ROOT_THREAD_DUMP_TYPE,

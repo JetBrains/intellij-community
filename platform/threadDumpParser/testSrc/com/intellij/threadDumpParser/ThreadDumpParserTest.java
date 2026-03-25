@@ -798,6 +798,7 @@ public class ThreadDumpParserTest {
       	at java.base/java.lang.VirtualThread.run(VirtualThread.java:309)
 
       "Scope A" tid=0x0 nid=NA container ["type":"container","id":300]
+         Carrying virtual thread #0
       """;
     List<ThreadState> threads = ThreadDumpParser.parse(text);
     assertEquals(5, threads.size());
@@ -830,6 +831,7 @@ public class ThreadDumpParserTest {
     assertEquals(Long.valueOf(300L), container.getUniqueId());
     assertEquals("container", container.getType());
     assertTrue(container.getMetadata().isEmpty());
+    assertEquals(ThreadOperation.CARRYING_VTHREAD, container.getOperation());
   }
 
   @Test

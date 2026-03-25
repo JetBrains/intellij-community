@@ -10,5 +10,6 @@
 	at example.worker-1.run(worker-1.java:2)
 
 "Scope A" tid=0x0 nid=NA container ["type":"container","id":300]
+   Carrying virtual thread #0
 
 Collection of extended dump was disabled.

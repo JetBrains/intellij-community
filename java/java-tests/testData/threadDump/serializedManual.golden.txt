@@ -2,10 +2,13 @@
 # Full thread dump
 
 "Scope Root" tid=0x0 nid=NA container ["type":"container","id":400]
+   Carrying virtual thread #0
 
 "Scope A" tid=0x0 nid=NA container ["type":"container","id":300,"parentId":400]
+   Carrying virtual thread #0
 
 "Scope B" tid=0x0 nid=NA container ["type":"container","id":500,"parentId":400]
+   Carrying virtual thread #0
 
 "main@101" #1 prio=5 tid=0x1 nid=0x1 runnable ["id":101,"parentId":300]
    java.lang.Thread.State: RUNNABLE
