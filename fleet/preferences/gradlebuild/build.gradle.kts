@@ -25,8 +25,8 @@ fleetModule {
 @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
 kotlin {
   sourceSets.wasmJsMain.dependencies {
-    implementation("org.jetbrains.kotlin-wrappers:kotlin-web:2026.2.21")
-    implementation("org.jetbrains.kotlin-wrappers:kotlin-browser:2026.2.21")
+    implementation(libs.kotlin.wrappers.web)
+    implementation(libs.kotlin.wrappers.browser)
   }
 
   // KOTLIN__MARKER_START
