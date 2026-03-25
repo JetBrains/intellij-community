@@ -18,7 +18,7 @@ interface JpsGlobalModelSynchronizer {
     mutableStorage: MutableEntityStorage,
     initialEntityStorage: VersionedEntityStorage,
     loadedFromCache: Boolean,
-  ): () -> Unit
+  ): () -> Job
 
   /**
    * Adds a job that must complete before the delayed global workspace model loading can proceed.

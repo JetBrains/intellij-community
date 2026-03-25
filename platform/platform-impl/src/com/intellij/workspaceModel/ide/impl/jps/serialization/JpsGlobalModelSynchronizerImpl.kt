@@ -34,6 +34,7 @@ import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalEntityBridgeAndEventHandler
 import io.opentelemetry.api.metrics.Meter
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -88,7 +89,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
     mutableStorage: MutableEntityStorage,
     initialEntityStorage: VersionedEntityStorage,
     loadedFromCache: Boolean,
-  ): () -> Unit = jpsLoadInitialStateMs.addMeasuredTime {
+  ): () -> Job = jpsLoadInitialStateMs.addMeasuredTime {
     if (loadedFromCache) {
       val callback = bridgesInitializationCallback(
         eelMachine,
@@ -107,13 +108,14 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
       }
     }
     else {
-      loadGlobalEntitiesToEmptyStorage(
+      val callback = loadGlobalEntitiesToEmptyStorage(
         eelMachine,
         environmentName = environmentName,
         mutableStorage = mutableStorage,
         initialEntityStorage = initialEntityStorage,
         initializeBridges = true,
       )
+      return@addMeasuredTime { callback(); CompletableDeferred(Unit) }
     }
   }
 
@@ -315,6 +317,10 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
     }
     loadedFromDisk[environmentName] = true
     return callback
+  }
+
+  override fun dropCaches() {
+    loadedFromDisk.clear()
   }
 
   private fun createSerializers(environmentName: InternalEnvironmentName): List<JpsFileEntityTypeSerializer<WorkspaceEntity>> {
