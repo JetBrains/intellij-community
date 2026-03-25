@@ -113,16 +113,19 @@ fun LibraryDescriptorProvider.Companion.default(): LibraryDescriptorProvider =
  * are contained in the [names].
  * The names that are checked are references or function calls that are not part of a dot qualified expression.
  */
-fun LibraryReferenceTester.Companion.knownNames(vararg names: String) = LibraryReferenceTester { ref ->
-    val referenceExpression = ref.element as? KtReferenceExpression ?: return@LibraryReferenceTester false
-    if (referenceExpression.parent is KtQualifiedExpression) return@LibraryReferenceTester false
-    referenceExpression.text in names
+fun LibraryReferenceTester.Companion.knownNames(vararg names: String): LibraryReferenceTester {
+    val strings = hashSetOf(*names)
+    return LibraryReferenceTester { ref ->
+        val referenceExpression = ref.element as? KtReferenceExpression ?: return@LibraryReferenceTester false
+        if (referenceExpression.parent is KtQualifiedExpression) return@LibraryReferenceTester false
+        referenceExpression.text in strings
+    }
 }
 
 /**
  * Will check if the provided [fqn] is available as class in the given module
  */
-fun LibraryAvailabilityTester.Companion.knownClassFqn(fqn: String) = LibraryAvailabilityTester { module ->
+fun LibraryAvailabilityTester.Companion.knownClassFqn(fqn: String): LibraryAvailabilityTester = LibraryAvailabilityTester { module ->
     val scope = ModulesScope.moduleWithDependenciesAndLibrariesScope(module)
     JavaPsiFacade.getInstance(module.project).findClasses(fqn, scope).isNotEmpty() ||
             KotlinFullClassNameIndex[fqn, module.project, scope].isNotEmpty()

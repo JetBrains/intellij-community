@@ -3,17 +3,15 @@ package org.jetbrains.kotlin.idea.configuration.inspections
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.command.executeCommand
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandQuickFix
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.IncompleteModelUtil.isIncompleteModel
 import com.intellij.util.indexing.DumbModeAccessType
@@ -25,11 +23,8 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.hasKotlinJvmRuntime
-import org.jetbrains.kotlin.idea.configuration.ConfigurationResultBuilder
 import org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator.Companion.compilerPluginProjectConfigurators
-import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
-import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -66,18 +61,21 @@ abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompil
 
     protected abstract fun isCompilerPluginRequired(file: KtFile): Boolean
 
-    inner class AddCompilerPluginFix : LocalQuickFix {
+    inner class AddCompilerPluginFix : ModCommandQuickFix() {
         override fun getFamilyName(): @IntentionFamilyName String =
             this@AbstractKotlinCompilerPluginInspection.familyName
 
         override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo =
             IntentionPreviewInfo.EMPTY
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        override fun perform(
+            project: Project,
+            descriptor: ProblemDescriptor
+        ): ModCommand {
             val element = descriptor.psiElement
-            val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
+            ModuleUtilCore.findModuleForPsiElement(element) ?: return ModCommand.nop()
 
-            configureCompilerPlugin(project, module, kotlinCompilerPluginId)
+            return ModCommand.updateOption(element, "KotlinCompilerPlugin.compilerPluginId", kotlinCompilerPluginId)
         }
     }
 
@@ -114,30 +112,6 @@ abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompil
             if (!hasKotlinJvmRuntime) return false
 
             return isAvailableForFileInModule(ktFile, module)
-        }
-
-        fun configureCompilerPlugin(project: Project, module: Module, kotlinCompilerPluginId: String) {
-            val configurators =
-                compilerPluginProjectConfigurators(kotlinCompilerPluginId, module).ifEmpty { return }
-
-            val configurationResultBuilder = ConfigurationResultBuilder()
-            val configurationService = KotlinProjectConfigurationService.getInstance(project)
-            configurationService.coroutineScope.launchTracked {
-                edtWriteAction {
-                    executeCommand(
-                        project,
-                        KotlinProjectConfigurationBundle.message("command.name.configure.kotlin.compiler.plugin.0", kotlinCompilerPluginId)
-                    ) {
-                        for (configurator in configurators) {
-                            configurator.configureModule(module, configurationResultBuilder)
-                        }
-                    }
-                    val result = configurationResultBuilder.build()
-                    if (result.configuredModules.isNotEmpty()) {
-                        configurationService.queueSyncIfPossible()
-                    }
-                }
-            }
         }
     }
 

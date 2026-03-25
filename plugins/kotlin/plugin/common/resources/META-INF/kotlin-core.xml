@@ -353,6 +353,7 @@
             implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor"/>
 
     <lang.inspectionSuppressor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.suppress.KotlinInspectionSuppressor"/>
+    <optionController implementation="org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProvider"/>
   </extensions>
 
   <!-- Editing -->
