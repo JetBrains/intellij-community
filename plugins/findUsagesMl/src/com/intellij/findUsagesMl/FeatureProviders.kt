@@ -35,7 +35,7 @@ object FindUsagesFileRankerFeatures : FeatureContainer {
 class FindUsagesFileRankerFeatureProvider : FeatureProvider<FindUsagesRankingFileInfo>(FindUsagesFileRankerFeatures) {
 
   override fun computeFeatures(instance: FindUsagesRankingFileInfo, requiredOutput: FeatureSet): List<Feature> = buildLazyFeaturesList(requiredOutput) {
-    if (instance.candidateFile != null) {
+    if (instance.candidateFile != null && instance.queryFiles.isNotEmpty()) {
       add(FindUsagesFileRankerFeatures.QUERY_JARO_WINKLER_SIMILARITY) {
         instance.queryNames.maxOfOrNull {
           JaroWinklerSimilarity().apply(it, instance.candidateFile.nameWithoutExtension)
