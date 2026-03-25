@@ -885,7 +885,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   boolean isInFocus() {
-    return myIsInFocus;
+    return true;
   }
 
   private void queueErrorStipeRepaintRequest(int start, int end) {

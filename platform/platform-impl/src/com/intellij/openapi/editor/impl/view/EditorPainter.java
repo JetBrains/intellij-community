@@ -544,8 +544,8 @@ public final class EditorPainter implements TextDrawingCallback {
           }
 
           @Override
-          public void paint(IterationState it, VisualLineFragmentsIterator.Fragment fragment, int start, int end,
-                            TextAttributes attributes, float xStart, float xEnd, int y) {
+          public void paint(VisualLineFragmentsIterator.Fragment fragment, int start, int end,
+                            TextAttributes attributes, boolean isSelection, float xStart, float xEnd, int y) {
             if (dryRun) return;
             FoldRegion foldRegion = fragment.getCurrentFoldRegion();
             TextAttributes foldRegionInnerAttributes =
@@ -553,7 +553,7 @@ public final class EditorPainter implements TextDrawingCallback {
             if (foldRegionInnerAttributes == null ||
                 !paintFoldingBackground(foldRegionInnerAttributes, xStart, y, xEnd - xStart, foldRegion)) {
               paintBackground(attributes, xStart, y, xEnd - xStart);
-              if (it != null && it.isInSelection(false) && shouldUseNewSelection()) {
+              if (isSelection && shouldUseNewSelection()) {
                 mySelectionLinePainter.paintSelection(new Rectangle2D.Float(
                   xStart, y, xEnd - xStart, myLineHeight
                 ));
@@ -1754,9 +1754,10 @@ public final class EditorPainter implements TextDrawingCallback {
               it.advance();
             }
             TextAttributes attributes = it.getStartOffset() == start ? it.getBreakAttributes() : it.getMergedAttributes();
+            boolean isSelection = it.isInSelection(it.getStartOffset() == start);
             float xNew = fragment.getEndX();
             if (xNew >= myClip.getMinX()) {
-              painter.paint(it, fragment, 0, 0, attributes, x, xNew, y);
+              painter.paint(fragment, 0, 0, attributes, isSelection, x, xNew, y);
             }
             x = xNew;
           }
@@ -1767,13 +1768,14 @@ public final class EditorPainter implements TextDrawingCallback {
                 it.advance();
               }
               TextAttributes attributes = it.getMergedAttributes();
+              boolean isSelection = it.isInSelection(false);
               int curEnd = fragment.isRtl() ? Math.max(it.getEndOffset(), end) : Math.min(it.getEndOffset(), end);
               float xNew = fragment.offsetToX(x, start, curEnd);
               if (xNew >= myClip.getMinX()) {
-                painter.paint(it, fragment,
+                painter.paint(fragment,
                               fragment.isRtl() ? fragmentStartOffset - start : start - fragmentStartOffset,
                               fragment.isRtl() ? fragmentStartOffset - curEnd : curEnd - fragmentStartOffset,
-                              attributes, x, xNew, y);
+                              attributes, isSelection, x, xNew, y);
               }
               x = xNew;
               start = curEnd;
@@ -1791,7 +1793,7 @@ public final class EditorPainter implements TextDrawingCallback {
         else {
           float xNew = fragment.getEndX();
           if (xNew >= myClip.getMinX()) {
-            painter.paint(it, fragment, 0, fragment.getVisualLength(), getFoldRegionAttributes(foldRegion), x, xNew, y);
+            painter.paint(fragment, 0, fragment.getVisualLength(), getFoldRegionAttributes(foldRegion), isSelected(foldRegion), x, xNew, y);
           }
           x = xNew;
           prevEndOffset = -1;
