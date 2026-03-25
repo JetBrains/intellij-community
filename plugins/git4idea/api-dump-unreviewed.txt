@@ -1192,7 +1192,7 @@ git4idea.commands.Git
 - a:ignoredFilePaths(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.Collection):java.util.Set
 - a:ignoredFilePathsNoChunk(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List):java.util.Set
 - a:init(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
-- a:listWorktrees(git4idea.repo.GitRepository,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
+- a:listWorktrees(git4idea.repo.GitRepository):java.util.List
 - a:lsRemote(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,git4idea.repo.GitRemote,java.lang.String[]):git4idea.commands.GitCommandResult
 - lsRemote(com.intellij.openapi.project.Project,java.io.File,java.lang.String):git4idea.commands.GitCommandResult
 - a:lsRemote(com.intellij.openapi.project.Project,java.nio.file.Path,java.lang.String):git4idea.commands.GitCommandResult
@@ -1435,7 +1435,7 @@ c:git4idea.commands.GitImpl
 - ignoredFilePaths(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.Collection):java.util.Set
 - ignoredFilePathsNoChunk(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List):java.util.Set
 - init(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
-- listWorktrees(git4idea.repo.GitRepository,git4idea.commands.GitLineHandlerListener[]):git4idea.commands.GitCommandResult
+- listWorktrees(git4idea.repo.GitRepository):java.util.List
 - lsRemote(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,git4idea.repo.GitRemote,java.lang.String[]):git4idea.commands.GitCommandResult
 - lsRemote(com.intellij.openapi.project.Project,java.nio.file.Path,java.lang.String):git4idea.commands.GitCommandResult
 - lsRemoteRefs(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,git4idea.repo.GitRemote,java.util.List,java.lang.String[]):git4idea.commands.GitCommandResult
