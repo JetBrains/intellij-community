@@ -1,5 +1,6 @@
 package fleet.net
 
+import fleet.util.Os
 import fleet.util.logging.logger
 import fleet.util.multiplatform.linkToActual
 import io.ktor.client.HttpClient
@@ -29,7 +30,9 @@ fun defaultHttpClient(engine: HttpClientEngine, proxyConfiguration: HttpProxyCon
   FleetHttp.logger.debug { "creating default HttpClient" }
   return HttpClient(engine) {
     install(DefaultRequest) {
-      header("User-Agent", "Fleet/1.0")
+      if (!Os.INSTANCE.isWasm) {
+        header("User-Agent", "Fleet/1.0")
+      }
     }
     install(ProxyAuthenticationPlugin) {
       httpConfiguration = proxyConfiguration
