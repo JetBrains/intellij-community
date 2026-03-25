@@ -155,6 +155,163 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
     assertEquals(setOf("group:m1", "group:m2"), parameters.projectsCmdOptionValues.toSet())
   }
 
+  @Test
+  fun `test task goal version is updated after plugin version change`() = runBlocking {
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.8.1</version>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """.trimIndent())
+
+    val oldGoal = "org.apache.maven.plugins:maven-compiler-plugin:3.8.1:compile"
+    addCompileTask(projectPom.path, oldGoal)
+
+    val tasksManager = MavenTasksManager.getInstance(project)
+    assertTrue(tasksManager.isCompileTaskOfPhase(MavenCompilerTask(projectPom.path, oldGoal),
+                                                 MavenTasksManager.Phase.BEFORE_COMPILE))
+
+    // Update plugin version and re-sync
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.8.2</version>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """.trimIndent())
+
+    val newGoal = "org.apache.maven.plugins:maven-compiler-plugin:3.8.2:compile"
+    assertFalse("Stale task with old version should be gone",
+                tasksManager.isCompileTaskOfPhase(MavenCompilerTask(projectPom.path, oldGoal),
+                                                  MavenTasksManager.Phase.BEFORE_COMPILE))
+    assertTrue("Task with updated version should exist",
+               tasksManager.isCompileTaskOfPhase(MavenCompilerTask(projectPom.path, newGoal),
+                                                 MavenTasksManager.Phase.BEFORE_COMPILE))
+  }
+
+  @Test
+  fun `test qualified task goal is removed when plugin is removed from project`() = runBlocking {
+    // maven-assembly-plugin has no default lifecycle binding, so it is truly absent when removed from the POM
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-assembly-plugin</artifactId>
+                          <version>3.3.0</version>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """.trimIndent())
+
+    val goal = "org.apache.maven.plugins:maven-assembly-plugin:3.3.0:single"
+    addCompileTask(projectPom.path, goal)
+
+    val tasksManager = MavenTasksManager.getInstance(project)
+    assertTrue(tasksManager.isCompileTaskOfPhase(MavenCompilerTask(projectPom.path, goal),
+                                                 MavenTasksManager.Phase.BEFORE_COMPILE))
+
+    // Remove the plugin declaration and re-sync; the plugin has no default binding so it disappears from the model
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """.trimIndent())
+
+    assertFalse("Task for removed plugin should be dropped",
+                tasksManager.isCompileTaskOfPhase(MavenCompilerTask(projectPom.path, goal),
+                                                  MavenTasksManager.Phase.BEFORE_COMPILE))
+  }
+
+  @Test
+  fun `test unqualified task goals are not changed after sync`() = runBlocking {
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """.trimIndent())
+
+    addCompileTask(projectPom.path, "clean")
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.8.2</version>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """.trimIndent())
+
+    assertTrue(MavenTasksManager.getInstance(project)
+                 .isCompileTaskOfPhase(MavenCompilerTask(projectPom.path, "clean"),
+                                       MavenTasksManager.Phase.BEFORE_COMPILE))
+  }
+
+  @Test
+  fun `test tasks are dropped when maven project is removed from structure`() = runBlocking {
+    createProjectPom("""
+                    <groupId>test</groupId>
+                    <artifactId>parent</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                      <module>m1</module>
+                    </modules>
+                    """.trimIndent())
+    val m1File = createModulePom("m1", """
+                    <artifactId>m1</artifactId>
+                    <version>1</version>
+                    <parent>
+                      <groupId>test</groupId>
+                      <artifactId>parent</artifactId>
+                      <version>1</version>
+                    </parent>
+                    """.trimIndent())
+    importProjectAsync()
+
+    val tasksManager = MavenTasksManager.getInstance(project)
+    addCompileTask(m1File.path, "clean")
+    assertTrue(tasksManager.isCompileTaskOfPhase(MavenCompilerTask(m1File.path, "clean"),
+                                                 MavenTasksManager.Phase.BEFORE_COMPILE))
+
+    // Remove m1 from parent modules list, re-sync
+    updateProjectPom("""
+                    <groupId>test</groupId>
+                    <artifactId>parent</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    """.trimIndent())
+    importProjectAsync()
+
+    assertFalse("Task for removed project should be dropped",
+                tasksManager.isCompileTaskOfPhase(MavenCompilerTask(m1File.path, "clean"),
+                                                  MavenTasksManager.Phase.BEFORE_COMPILE))
+  }
+
   private fun addCompileTask(pomPath: String, goal: String) {
     val mavenTasksManager = MavenTasksManager.getInstance(project)
     val task = MavenCompilerTask(pomPath, goal)
