@@ -47,7 +47,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @Service(Service.Level.PROJECT)
-internal class FileIndex(val project: Project, coroutineScope: CoroutineScope) : Disposable {
+class FileIndex(val project: Project, coroutineScope: CoroutineScope) : Disposable {
   private val luceneIndex = LuceneIndex(project,SearchEverywhereLuceneProviderIdUtils.LUCENE_FILES,LOG)
   private val scheduledIndexingOps = Channel<LuceneFileIndexOperation>(capacity = Channel.UNLIMITED)
   val initialIndexingCompleted = CompletableDeferred<Unit>()
