@@ -112,6 +112,8 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/jewel/markdown/core",
     "//platform/jewel/markdown/core:core_test_lib",
+    "//platform/jewel/markdown/core:jewel-markdown-core-tests",
+    "//platform/jewel/markdown/core:jewel-markdown-core-tests_test_lib",
     "//platform/jewel/ui",
     "//platform/jewel/ui:ui_test_lib",
     "//platform/jewel/foundation",
