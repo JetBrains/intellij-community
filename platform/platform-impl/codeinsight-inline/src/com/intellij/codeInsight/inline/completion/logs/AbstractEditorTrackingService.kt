@@ -5,9 +5,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.util.Key
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -53,11 +53,9 @@ abstract class AbstractEditorTrackingService(
 
 @ApiStatus.Internal
 class EditorTrackingScope(parentScope: CoroutineScope) : Disposable {
-  private val scopeJob = SupervisorJob(parentScope.coroutineContext[Job])
-  @Suppress("RAW_SCOPE_CREATION")
-  val scope: CoroutineScope = CoroutineScope(parentScope.coroutineContext + scopeJob)
+  val scope: CoroutineScope = parentScope.childScope("EditorTrackingScope", supervisor = true)
 
   override fun dispose() {
-    scopeJob.cancel()
+    scope.cancel()
   }
 }
