@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("TargetProcessHandlers")
 
-package com.jetbrains.python.run.target
+package com.intellij.execution.target
 
 import com.intellij.execution.process.ProcessHandler
-import com.intellij.execution.target.TargetEnvironment
 import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 

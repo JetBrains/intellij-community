@@ -6,10 +6,10 @@ package com.jetbrains.python.run
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.target.ExternallySynchronized
 import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.targetEnvironment
 import com.intellij.remote.ProcessControlWithMappings
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
-import com.jetbrains.python.run.target.targetEnvironment
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
