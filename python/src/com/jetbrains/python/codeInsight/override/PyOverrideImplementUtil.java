@@ -164,7 +164,16 @@ public final class PyOverrideImplementUtil {
     final PyStatementList statementList = cls.getStatementList();
     final TypeEvalContext context = TypeEvalContext.userInitiated(cls.getProject(), cls.getContainingFile());
 
-    final PyFunction function = buildOverriddenFunction(cls, baseFunction, implement).addFunctionAfter(statementList, anchor);
+    final PyFunction function;
+    final PyFunction newFunction = buildOverriddenFunction(cls, baseFunction, implement).buildFunction();
+    if (anchor != null) {
+      function = (PyFunction)statementList.addAfter(newFunction, anchor);
+    }
+    else {
+      // When the statement list is still on the same line as the colon (e.g. the class body is not created yet),
+      // inserting via plain PSI operations may lead to incorrect indentation (especially for nested classes).
+      function = (PyFunction)PyPsiRefactoringUtil.addElementToStatementList(newFunction, statementList, true);
+    }
     PyClassRefactoringUtil.transplantImportsFromSignature(baseFunction, function);
 
     PyiUtil
