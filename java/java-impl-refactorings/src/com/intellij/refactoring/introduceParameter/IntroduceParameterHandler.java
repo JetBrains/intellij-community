@@ -118,7 +118,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   private InplaceIntroduceParameterPopup myInplaceIntroduceParameterPopup;
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     ElementToWorkOn.processElementToWorkOn(editor, file, getRefactoringName(), HelpID.INTRODUCE_PARAMETER, project,
@@ -129,7 +129,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                                              }
 
                                              @Override
-                                             public void pass(final ElementToWorkOn elementToWorkOn) {
+                                             public void pass(ElementToWorkOn elementToWorkOn) {
                                                if (elementToWorkOn == null) {
                                                  return;
                                                }
@@ -161,8 +161,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     return invoke(editor, project, null, localVariable, true);
   }
 
-  private boolean invoke(final Editor editor, final Project project, final PsiExpression expr,
-                         PsiLocalVariable localVar, boolean invokedOnDeclaration) {
+  private boolean invoke(Editor editor, Project project, PsiExpression expr, PsiLocalVariable localVar, boolean invokedOnDeclaration) {
     LOG.assertTrue(!PsiDocumentManager.getInstance(project).hasUncommitedDocuments());
     PsiMethod method;
     if (expr != null) {
@@ -219,7 +218,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return false;
 
     final Introducer introducer = new Introducer(project, expr, localVar, editor);
-    final AbstractInplaceIntroducer inplaceIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
+    final AbstractInplaceIntroducer<?, ?> inplaceIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
     if (inplaceIntroducer instanceof InplaceIntroduceParameterPopup introduceParameterPopup) {
       introducer.introduceParameter(introduceParameterPopup.getMethodToIntroduceParameter(),
                                     introduceParameterPopup.getMethodToSearchFor());
@@ -232,12 +231,12 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     return true;
   }
 
-  private void chooseMethodToIntroduceParameter(final Editor editor,
+  private void chooseMethodToIntroduceParameter(Editor editor,
                                                 @NotNull List<? extends PsiMethod> validEnclosingMethods,
                                                 @NotNull PairConsumer<? super PsiMethod, ? super PsiMethod> consumer) {
     final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (validEnclosingMethods.size() == 1 || unitTestMode) {
-      final PsiMethod methodToIntroduceParameterTo = validEnclosingMethods.get(0);
+      final PsiMethod methodToIntroduceParameterTo = validEnclosingMethods.getFirst();
       if (methodToIntroduceParameterTo.findDeepestSuperMethod() == null || unitTestMode) {
         consumer.consume(methodToIntroduceParameterTo, methodToIntroduceParameterTo);
         return;
@@ -259,7 +258,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       dropHighlighters(highlighters);
       updateView(selectedMethod, editor, highlighters, superMethod);
     });
-    updateView(validEnclosingMethods.get(0), editor, highlighters, superMethod);
+    updateView(validEnclosingMethods.getFirst(), editor, highlighters, superMethod);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list);
     scrollPane.setBorder(null);
     panel.add(scrollPane, BorderLayout.CENTER);
@@ -271,6 +270,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       }
 
       WriteIntentReadAction.run(() -> {
+        final PsiMethod methodToSearchFor =
           superMethod.isEnabled() && superMethod.isSelected() ? methodToSearchIn.findDeepestSuperMethod() : methodToSearchIn;
         consumer.consume(methodToSearchIn, methodToSearchFor);
       });
@@ -312,10 +312,10 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     highlighters.clear();
   }
 
-  static @NotNull NameSuggestionsGenerator createNameSuggestionGenerator(final PsiExpression expr,
-                                                                         final String propName,
-                                                                         final Project project,
-                                                                         final String enteredName) {
+  static @NotNull NameSuggestionsGenerator createNameSuggestionGenerator(PsiExpression expr,
+                                                                         String propName,
+                                                                         Project project,
+                                                                         String enteredName) {
     return type -> {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, propName, expr != null && expr.isValid() ? expr : null, type);
@@ -339,19 +339,14 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     /* do nothing */
   }
 
-
   private class Introducer {
 
     private final Project myProject;
-
     private PsiExpression myExpr;
     private PsiLocalVariable myLocalVar;
     private final Editor myEditor;
 
-    Introducer(Project project,
-                      PsiExpression expr,
-                      PsiLocalVariable localVar,
-                      Editor editor) {
+    Introducer(Project project, PsiExpression expr, PsiLocalVariable localVar, Editor editor) {
       myProject = project;
       myExpr = expr;
       myLocalVar = localVar;
@@ -370,13 +365,12 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
       if (myExpr != null && AbstractInplaceIntroducer.getActiveIntroducer(myEditor) == null) {
         IntroduceVariableBase.OccurrencesInfo occurrencesInfo = new IntroduceVariableBase.OccurrencesInfo(occurrences, false);
-        LinkedHashMap<IntroduceVariableBase.JavaReplaceChoice, List<PsiExpression>> occurrencesMap = occurrencesInfo.buildOccurrencesMap(myExpr);
-        IntroduceVariableBase.createOccurrencesChooser(myEditor).showChooser(occurrencesMap,
-                                                                             RefactoringBundle.message("replace.multiple.occurrences.found"),
-                                                                             choice -> {
-                                                                               PsiExpression[] selectedOccurrences = choice.filter(occurrenceManager);
-                                                                               introduceParameter(method, methodToSearchFor, selectedOccurrences, choice);
-                                                                             });
+        LinkedHashMap<IntroduceVariableBase.JavaReplaceChoice, List<PsiExpression>> occurrencesMap = 
+          occurrencesInfo.buildOccurrencesMap(myExpr);
+        IntroduceVariableBase.createOccurrencesChooser(myEditor)
+          .showChooser(occurrencesMap,
+                       RefactoringBundle.message("replace.multiple.occurrences.found"),
+                       choice -> introduceParameter(method, methodToSearchFor, choice.filter(occurrenceManager), choice));
       }
       else {
         introduceParameter(method, methodToSearchFor, occurrences, IntroduceVariableBase.JavaReplaceChoice.ALL);
@@ -426,12 +420,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
       if (isInplaceAvailableOnDataContext && activeIntroducer == null) {
         myInplaceIntroduceParameterPopup =
-          new InplaceIntroduceParameterPopup(myProject, myEditor,
-                                             createTypeSelectorManager(occurrences, initializerType),
+          new InplaceIntroduceParameterPopup(myProject, myEditor, createTypeSelectorManager(occurrences, initializerType),
                                              myExpr, myLocalVar, method, methodToSearchFor, occurrences,
-                                             getParamsToRemove(method, occurrences),
-                                             mustBeFinal, 
-                                             replaceChoice);
+                                             getParamsToRemove(method, occurrences), mustBeFinal, replaceChoice);
         if (myInplaceIntroduceParameterPopup.startInplaceIntroduceTemplate()) {
           return;
         }
@@ -470,7 +461,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       final IntroduceParameterDialog dialog =
         new IntroduceParameterDialog(myProject, classMemberRefs, occurrences, myLocalVar, myExpr,
                                      nameSuggestionGenerator,
-                                     createTypeSelectorManager(occurrences, initializerType), methodToSearchFor, method, getParamsToRemove(method, occurrences), mustBeFinal);
+                                     createTypeSelectorManager(occurrences, initializerType), methodToSearchFor, method, 
+                                     getParamsToRemove(method, occurrences), mustBeFinal);
       dialog.setReplaceAllOccurrences(replaceChoice);
       dialog.setGenerateDelegate(delegate);
       if (dialog.showAndGet()) {
@@ -499,12 +491,12 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   }
 
   @Override
-  public AbstractInplaceIntroducer getInplaceIntroducer() {
+  public InplaceIntroduceParameterPopup getInplaceIntroducer() {
     return myInplaceIntroduceParameterPopup;
   }
 
   @VisibleForTesting
-  private boolean introduceStrategy(final Project project, final Editor editor, PsiFile file) {
+  private boolean introduceStrategy(Project project, Editor editor, PsiFile file) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
       final PsiElement[] elements = CodeInsightUtil.findStatementsInRange(file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
@@ -514,9 +506,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   }
 
   @VisibleForTesting
-  public boolean introduceStrategy(@NotNull Project project, final Editor editor, @NotNull PsiFile file, final PsiElement @NotNull [] elements) {
+  public boolean introduceStrategy(@NotNull Project project, Editor editor, @NotNull PsiFile file, PsiElement @NotNull [] elements) {
     if (elements.length > 0) {
-      final AbstractInplaceIntroducer inplaceIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
+      final AbstractInplaceIntroducer<?, ?> inplaceIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
       if (inplaceIntroducer instanceof InplaceIntroduceParameterPopup) {
         return false;
       }
@@ -561,17 +553,14 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
           final PsiType returnType = emptyMethod.getReturnType();
           LOG.assertTrue(returnType != null);
           final String title = RefactoringBundle.message("refactoring.introduce.parameter.interface.chooser.popup.title",
-                                                             methodSignature, returnType.getPresentableText());
-          new PsiTargetNavigator<>(psiClasses).createPopup(project, title,
-                                               new PsiElementProcessor<>() {
-                                                 @Override
-                                                 public boolean execute(@NotNull PsiClass psiClass) {
-                                                   functionalInterfaceSelected(classes.get(psiClass), enclosingMethods, project, editor,
-                                                                               processor,
-                                                                               elements);
-                                                   return true;
-                                                 }
-                                               }).showInBestPositionFor(editor);
+                                                         methodSignature, returnType.getPresentableText());
+          new PsiTargetNavigator<>(psiClasses).createPopup(project, title, new PsiElementProcessor<>() {
+            @Override
+            public boolean execute(@NotNull PsiClass psiClass) {
+              functionalInterfaceSelected(classes.get(psiClass), enclosingMethods, project, editor, processor, elements);
+              return true;
+            }
+          }).showInBestPositionFor(editor);
           return true;
         }
 
@@ -609,12 +598,12 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     return elementsCopy;
   }
 
-  private void functionalInterfaceSelected(final PsiType selectedType,
-                                           final List<? extends PsiMethod> enclosingMethods,
-                                           final Project project,
-                                           final Editor editor,
-                                           final MyExtractMethodProcessor processor,
-                                           final PsiElement[] elements) {
+  private void functionalInterfaceSelected(PsiType selectedType,
+                                           List<? extends PsiMethod> enclosingMethods,
+                                           Project project,
+                                           Editor editor,
+                                           MyExtractMethodProcessor processor,
+                                           PsiElement[] elements) {
     final PairConsumer<PsiMethod, PsiMethod> consumer =
       (methodToIntroduceParameter, methodToSearchFor) -> introduceWrappedCodeBlockParameter(methodToIntroduceParameter, methodToSearchFor, editor, project, selectedType, processor, elements);
     chooseMethodToIntroduceParameter(editor, enclosingMethods, consumer);
@@ -622,10 +611,10 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
   private void introduceWrappedCodeBlockParameter(PsiMethod methodToIntroduceParameter,
                                                   PsiMethod methodToSearchFor, Editor editor,
-                                                  final Project project,
-                                                  final PsiType selectedType,
-                                                  final ExtractMethodProcessor processor,
-                                                  final PsiElement[] elements) {
+                                                  Project project,
+                                                  PsiType selectedType,
+                                                  ExtractMethodProcessor processor,
+                                                  PsiElement[] elements) {
     if (!elements[0].isValid()) {
       return;
     }
@@ -766,7 +755,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
         List<VariableData> datas = new ArrayList<>();
         for (VariableData data : inputVariables.getInputVariables()) {
           final PsiVariable variable = data.variable;
-          if (variable instanceof PsiParameter && myTopEnclosingMethod.equals(((PsiParameter)variable).getDeclarationScope())) {
+          if (variable instanceof PsiParameter parameter && myTopEnclosingMethod.equals(parameter.getDeclarationScope())) {
             continue;
           }
           datas.add(data);
