@@ -37,8 +37,16 @@ public class EditorMouseFixture {
   }
 
   public EditorMouseFixture pressAtLineNumbers(int visualLine) {
+    return pressAtLineNumbers(visualLine, false);
+  }
+
+  public EditorMouseFixture pressAtLineNumbers(int visualLine, boolean lineCenter) {
     assert myEditor.getSettings().isLineNumbersShown();
-    return pressAt(myEditor.getGutterComponentEx(), 1, new Point(myEditor.getGutterComponentEx().getLineNumberAreaOffset(), myEditor.visualLineToY(visualLine)));
+    int[] range = myEditor.visualLineToYRange(visualLine);
+    assert range != null;
+    assert range.length == 2;
+    int y = lineCenter ? (range[0] + range[1]) / 2 : range[0];
+    return pressAt(myEditor.getGutterComponentEx(), 1, new Point(myEditor.getGutterComponentEx().getLineNumberAreaOffset(), y));
   }
 
   private EditorMouseFixture pressAt(int clickCount, Point p) {
