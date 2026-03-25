@@ -218,7 +218,9 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
       }
     }
     referredTestEntityContributor.numberOfCalls.set(0)
-
+    readAction {
+      assertTrue(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
+    }
 
     (model as WorkspaceModelImpl).updateUnderWriteAction("Rename entity and rename it back") {
       val newEntity = it.modifyEntity(ReferredTestEntityBuilder::class.java, referredTestEntity) {
@@ -228,9 +230,12 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
         name = "ReferredTestEntity"
       }
     }
-    // now we call it once for "New Name" entity change
-    // even though we already did it when first created a reference
-    referredTestEntityContributor.assertNumberOfCalls(1)
+    // After we started resolving entities by id in processAddedSymbolicEntityId and processRemovedSymbolicEntityId
+    // Now we can see entity in old storage and new, so we call the contributor twice
+    referredTestEntityContributor.assertNumberOfCalls(2)
+    readAction {
+      assertTrue(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
+    }
   }
 
   @Test
