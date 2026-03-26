@@ -10,6 +10,7 @@ import training.featuresSuggester.FeatureSuggesterTestUtils.pasteFromClipboard
 import training.featuresSuggester.FeatureSuggesterTestUtils.selectBetweenLogicalPositions
 import training.featuresSuggester.FeatureSuggesterTestUtils.testInvokeLater
 import training.featuresSuggester.FeatureSuggesterTestUtils.typeAndCommit
+import com.intellij.openapi.util.registry.Registry
 import training.featuresSuggester.IntroduceVariableSuggesterTest
 
 /**
@@ -20,6 +21,27 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
   override val testingCodeFileName = "PythonCodeExample.py"
 
   override fun getTestDataPath() = PythonSuggestersTestUtils.testDataPath
+
+  override fun setUp() {
+    super.setUp()
+    // Incremental reparse of PyStatementList produces the same PSI tree as full reparse, but the
+    // platform DiffTree algorithm generates a different sequence of ChildAdded/ChildReplaced events
+    // when diffing a replaced statement list vs a fully reparsed file. The IFS state machine is
+    // sensitive to event ordering, so disable incremental reparse to get the same events as full reparse.
+    Registry.get("python.statement.lists.incremental.reparse").setValue(false)
+  }
+
+  override fun tearDown() {
+    try {
+      Registry.get("python.statement.lists.incremental.reparse").resetToDefault()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
+  }
 
   override fun `testIntroduce expression from IF and get suggestion`() {
     with(myFixture) {
