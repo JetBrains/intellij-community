@@ -469,7 +469,10 @@ public class UnscrambleDialog extends DialogWrapper {
     String unscrambledTrace =
       unscrambleSupport == null ? textToUnscramble : unscrambleSupport.unscramble(project, textToUnscramble, logName, settings);
     if (unscrambledTrace == null) return null;
-    ThreadDumpState threadDumpState = IntelliJThreadDumpParserKt.parseIntelliJThreadDump(unscrambledTrace);
+    ThreadDumpState threadDumpState = JcmdJsonThreadDumpParserKt.parseJcmdJsonThreadDump(unscrambledTrace);
+    if (threadDumpState == null) {
+      threadDumpState = IntelliJThreadDumpParserKt.parseIntelliJThreadDump(unscrambledTrace);
+    }
     return UnscrambleUtils.addConsole(project, threadDumpState, unscrambledTrace);
   }
 

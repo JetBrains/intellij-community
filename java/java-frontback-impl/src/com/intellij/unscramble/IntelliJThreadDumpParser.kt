@@ -14,7 +14,12 @@ import org.jetbrains.annotations.ApiStatus
 data class ThreadDumpState(
   val threadStates: List<ThreadState>,
   val threadContainerDescriptors: List<JavaThreadContainerDesc>,
-)
+) {
+  companion object {
+    @JvmStatic
+    val EMPTY: ThreadDumpState = ThreadDumpState(emptyList(), emptyList())
+  }
+}
 
 /**
  * Converts parsed threads and containers into dump items consumed by the thread dump UI.
