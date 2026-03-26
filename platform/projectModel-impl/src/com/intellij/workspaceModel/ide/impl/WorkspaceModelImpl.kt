@@ -486,7 +486,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       JpsProjectLoadingManager.getInstance(project).jpsProjectLoaded { deferred.complete(Unit) }
 
       if (!deferred.isCompleted && ApplicationManager.getApplication().isUnitTestMode) {
-        project.serviceAsync<ProjectSynchronizerUtil>().backgroundPostStartupProjectLoading()
+        project.serviceAsync<ProjectSynchronizerUtil>().applyJpsModelToProjectModel()
       }
 
       // Safety net: if the callback is never invoked (e.g. due to a platform bug), unblock waiters after a timeout.

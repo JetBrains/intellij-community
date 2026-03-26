@@ -2,13 +2,9 @@
 package com.intellij.workspaceModel.ide
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 interface ProjectSynchronizerUtil {
   @ApiStatus.Internal
   suspend fun applyJpsModelToProjectModel()
-
-  @TestOnly
-  suspend fun backgroundPostStartupProjectLoading()
 }

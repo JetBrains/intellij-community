@@ -6,7 +6,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.JpsMetrics
@@ -15,7 +14,6 @@ import com.intellij.workspaceModel.ide.ProjectSynchronizerUtil
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import kotlin.system.measureTimeMillis
 
 /**
@@ -47,15 +45,6 @@ class ProjectSynchronizerUtilImpl(val project: Project) : ProjectSynchronizerUti
       "Workspace model loaded from cache. Syncing real project state into workspace model in $loadingTime ms. ${Thread.currentThread()}"
     )
   }
-
-  @TestOnly
-  override suspend fun backgroundPostStartupProjectLoading() {
-    // Due to making [DelayedProjectSynchronizer] as backgroundPostStartupActivity, we should have this hack because
-    // background activity doesn't start in the tests
-    project.serviceAsync<StartupManager>().allActivitiesPassedFuture.join()
-    applyJpsModelToProjectModel()
-  }
-
 }
 
 @Service(Service.Level.APP)
