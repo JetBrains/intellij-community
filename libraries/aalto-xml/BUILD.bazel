@@ -13,8 +13,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":aalto-xml_resources"],
-  exports = ["@lib//:aalto-xml"],
-  runtime_deps = ["@lib//:aalto-xml"]
+  exports = ["@lib//:libraries-aalto-xml-aalto-xml"],
+  runtime_deps = ["@lib//:libraries-aalto-xml-aalto-xml"]
 )
 
 jvm_library(
@@ -23,7 +23,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:aalto-xml"],
+  exports = ["@lib//:libraries-aalto-xml-aalto-xml"],
   runtime_deps = [":aalto-xml"]
 )
 ### auto-generated section `build intellij.libraries.aalto.xml` end

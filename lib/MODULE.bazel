@@ -21,34 +21,6 @@ http_jvm_lib(
 
 ### auto-generated section `maven libs` start
 http_file(
-  name = "com_fasterxml-aalto-xml-1_3_4_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/aalto-xml/1.3.4/aalto-xml-1.3.4.jar",
-  sha256 = "f4ac68d91184a28b4204cef6b124b8aaf439b23d3f13f5821b5ce7a6754f5f20",
-  downloaded_file_path = "aalto-xml-1.3.4.jar"
-)
-
-http_file(
-  name = "org_codehaus_woodstox-stax2-api-4_2_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/woodstox/stax2-api/4.2.2/stax2-api-4.2.2.jar",
-  sha256 = "a61c48d553efad78bc01fffc4ac528bebbae64cbaec170b2a5e39cf61eb51abe",
-  downloaded_file_path = "stax2-api-4.2.2.jar"
-)
-
-http_file(
-  name = "com_fasterxml-aalto-xml-1_3_4-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/aalto-xml/1.3.4/aalto-xml-1.3.4-sources.jar",
-  sha256 = "0b00806764f8602701ec721fa0e0e0f4cec4870918841333e0eede30bc5ed3b9",
-  downloaded_file_path = "aalto-xml-1.3.4-sources.jar"
-)
-
-http_file(
-  name = "org_codehaus_woodstox-stax2-api-4_2_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/woodstox/stax2-api/4.2.2/stax2-api-4.2.2-sources.jar",
-  sha256 = "d20d4c7af14adf8025f719f8e6255659495e4836256b5b1b816be30b5e76f1b7",
-  downloaded_file_path = "stax2-api-4.2.2-sources.jar"
-)
-
-http_file(
   name = "com_android_tools_build-aapt2-proto-8_1_0-10154469_http",
   url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/com/android/tools/build/aapt2-proto/8.1.0-10154469/aapt2-proto-8.1.0-10154469.jar",
   sha256 = "6d8d14b91285cc7c1b73460f413bb3f80672dc34dc506ed578fba1f6dde8661e",
@@ -8257,6 +8229,34 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib/16.0.1/layoutlib-16.0.1.jar",
   sha256 = "8460773e25756838521ccfe06cd13eee11bf55a0a272785890988b9d45eca937",
   downloaded_file_path = "layoutlib-16.0.1.jar"
+)
+
+http_file(
+  name = "com_fasterxml-aalto-xml-1_3_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/aalto-xml/1.3.4/aalto-xml-1.3.4.jar",
+  sha256 = "f4ac68d91184a28b4204cef6b124b8aaf439b23d3f13f5821b5ce7a6754f5f20",
+  downloaded_file_path = "aalto-xml-1.3.4.jar"
+)
+
+http_file(
+  name = "org_codehaus_woodstox-stax2-api-4_2_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/woodstox/stax2-api/4.2.2/stax2-api-4.2.2.jar",
+  sha256 = "a61c48d553efad78bc01fffc4ac528bebbae64cbaec170b2a5e39cf61eb51abe",
+  downloaded_file_path = "stax2-api-4.2.2.jar"
+)
+
+http_file(
+  name = "com_fasterxml-aalto-xml-1_3_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/aalto-xml/1.3.4/aalto-xml-1.3.4-sources.jar",
+  sha256 = "0b00806764f8602701ec721fa0e0e0f4cec4870918841333e0eede30bc5ed3b9",
+  downloaded_file_path = "aalto-xml-1.3.4-sources.jar"
+)
+
+http_file(
+  name = "org_codehaus_woodstox-stax2-api-4_2_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/woodstox/stax2-api/4.2.2/stax2-api-4.2.2-sources.jar",
+  sha256 = "d20d4c7af14adf8025f719f8e6255659495e4836256b5b1b816be30b5e76f1b7",
+  downloaded_file_path = "stax2-api-4.2.2-sources.jar"
 )
 
 http_file(
