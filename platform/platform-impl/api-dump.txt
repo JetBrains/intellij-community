@@ -873,6 +873,8 @@ com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 - register(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent,com.intellij.openapi.Disposable):V
 f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$DefaultImpls
 - s:isApplicableAsync(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider,com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
+c:com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
+- p:getRecentPathsStorageKey():java.lang.String
 com.intellij.openapi.fileChooser.ex.FileDrop$Target
 - a:dropFiles(java.util.List):V
 - a:getDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -894,6 +896,8 @@ com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile
 - a:setMacro(java.lang.String):V
 com.intellij.openapi.fileChooser.ex.FileLookup$LookupFilter
 - a:isAccepted(com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile):Z
+f:com.intellij.openapi.fileChooser.impl.FileChooserUtil
+- sf:RECENT_FILES:java.lang.String
 a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - updateFileName(com.intellij.openapi.vfs.VirtualFile):V
 com.intellij.openapi.fileEditor.ex.FileEditorProviderManager

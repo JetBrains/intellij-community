@@ -67,6 +67,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,7 +186,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   @ApiStatus.Internal
   void storeSelection(@Nullable VirtualFile file) {
     if (file != null) {
-      FileChooserUtil.updateRecentPaths(myProject, file);
+      FileChooserUtil.updateRecentPaths(myProject, file, getRecentPathsStorageKey(), this::getPresentableUrl);
     }
   }
 
@@ -254,7 +255,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       toolbarPanel.add(extraToolbarPanel, BorderLayout.SOUTH);
     }
 
-    myPath = new ComboBox<>(getFilteredRecentPaths().toArray(ArrayUtilRt.EMPTY_STRING_ARRAY));
+    myPath = new ComboBox<>(getApplicableRecentPaths().toArray(ArrayUtilRt.EMPTY_STRING_ARRAY));
     myPath.setEditable(true);
     myPath.setRenderer(SimpleListCellRenderer.create((var label, @NlsContexts.Label var value, var index) -> {
       label.setText(value);
@@ -310,8 +311,14 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     return panel;
   }
 
-  private @NotNull List<String> getFilteredRecentPaths() {
-    return FileChooserUtil.getRecentPaths().stream().filter(
+  @NonNls @NotNull
+  protected String getRecentPathsStorageKey() {
+    return FileChooserUtil.RECENT_FILES;
+  }
+
+  @NotNull
+  private List<String> getApplicableRecentPaths() {
+    return FileChooserUtil.getRecentPaths(getRecentPathsStorageKey()).stream().filter(
       path -> FileChooserCustomizer.Util.isPathVisible(myProject, Path.of(path))
     ).toList();
   }
