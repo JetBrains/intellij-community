@@ -24,7 +24,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.editor.impl.softwrap.CustomWrapToSoftWrapAdapter.*;
+import static com.intellij.openapi.editor.impl.softwrap.CustomWrapToSoftWrapAdapter.Type;
 
 /**
  * Class that calculates soft wrap positions for a given text fragment and available visible width.
@@ -201,7 +201,8 @@ public final class SoftWrapEngine {
       if (position != -1) return position;
     }
 
-    int wrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(myDocument, myEditor.getProject(), minOffset - 1, maxOffset + 1, maxOffset + 1,
+    int wrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(myDocument, myEditor.getProject(),
+                                                                      minOffset - 1, maxOffset + 1, maxOffset + 1,
                                                                       false, true);
     if (wrapOffset < 0) return preferMinOffset ? minOffset : maxOffset;
     if (wrapOffset < minOffset) return minOffset;
@@ -219,7 +220,7 @@ public final class SoftWrapEngine {
    */
   @ApiStatus.Internal
   public static int findWrapPosition(CharSequence text, int maxOffset, int minOffset, LineWrapPositionStrategy strategy) {
-    if (strategy.canWrapLineAtOffset(text, maxOffset))  return maxOffset;
+    if (strategy.canWrapLineAtOffset(text, maxOffset)) return maxOffset;
     for (int i = 0, offset = maxOffset; i < BASIC_LOOK_BACK_LENGTH && offset >= minOffset; i++) {
       int prevOffset = Character.offsetByCodePoints(text, offset, -1);
       if (strategy.canWrapLineAtOffset(text, prevOffset)) return offset;
