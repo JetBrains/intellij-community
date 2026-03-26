@@ -1,34 +1,54 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.runtimeModuleRepository.generator.tests
 
+import com.intellij.devkit.runtimeModuleRepository.generator.JpsCompilationResourcePathsSchema
+import com.intellij.devkit.runtimeModuleRepository.generator.NoContentModuleDetector
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
+import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryValidator
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
-import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
+import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
 import com.intellij.testFramework.UsefulTestCase
+import org.jetbrains.jps.model.JpsProject
 import java.nio.file.Path
-import java.util.ArrayList
-
-fun checkRuntimeModuleRepository(outputDir: Path,
-                                 expected: RawDescriptorListBuilder.() -> Unit) {
-  val jarPath = outputDir.resolve(RuntimeModuleRepositoryGenerator.JAR_REPOSITORY_FILE_NAME)
-  checkRuntimeModuleRepository(RuntimeModuleRepositorySerialization.loadFromJar(jarPath), expected)
-  val compactPath = outputDir.resolve(RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME)
-  checkRuntimeModuleRepository(RuntimeModuleRepositorySerialization.loadFromCompactFile(compactPath), expected)
-}
 
 private fun checkRuntimeModuleRepository(
   buildRepositoryData: RawRuntimeModuleRepositoryData,
   expected: RawDescriptorListBuilder.() -> Unit,
 ) {
-  val actualIds = buildRepositoryData.allModuleIds.filter { it != RUNTIME_REPOSITORY_MARKER_MODULE && it != RUNTIME_REPOSITORY_TESTS_MARKER_MODULE }
   val builder = RawDescriptorListBuilder()
   builder.expected()
-  UsefulTestCase.assertSameElements(actualIds, builder.descriptors.map { it.moduleId })
+  UsefulTestCase.assertSameElements(buildRepositoryData.allModuleIds, builder.descriptors.map { it.moduleId })
   for (expectedDescriptor in builder.descriptors) {
     UsefulTestCase.assertEquals("Different data for '${expectedDescriptor.moduleId.presentableName}'.", expectedDescriptor, buildRepositoryData.findDescriptor(expectedDescriptor.moduleId)!!)
   }
+}
+
+internal fun buildAndCheck(project: JpsProject, basePath: Path, expected: RawDescriptorListBuilder.() -> Unit) {
+  val generatedDescriptors = buildAndValidateRuntimeModuleRepository(project)
+  val moduleDescriptors = generatedDescriptors.associateBy { it.moduleId }
+  val pluginHeaders = emptyList<RawRuntimePluginHeader>()
+  val rawData = RawRuntimeModuleRepositoryData.create(moduleDescriptors, pluginHeaders, basePath)
+  checkRuntimeModuleRepository(rawData, expected)
+}
+
+internal fun buildAndValidateRuntimeModuleRepository(project: JpsProject): List<RawRuntimeModuleDescriptor> {
+  val resourcePathsSchema = JpsCompilationResourcePathsSchema(project)
+  val generatedDescriptors =
+    RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptorsForWholeProject(project,
+                                                                                     resourcePathsSchema,
+                                                                                     NoContentModuleDetector)
+  validate(generatedDescriptors)
+  return generatedDescriptors
+}
+
+private fun validate(descriptors: List<RawRuntimeModuleDescriptor>) {
+  RuntimeModuleRepositoryValidator.validate(descriptors,  object : RuntimeModuleRepositoryValidator.ErrorReporter {
+    override fun reportDuplicatingId(moduleId: RuntimeModuleId) {
+      error("Duplicating module id: $moduleId")
+    }
+  })
 }
 
 class RawDescriptorListBuilder {
@@ -49,6 +69,3 @@ class RawDescriptorListBuilder {
     descriptors.add(RawRuntimeModuleDescriptor.create(RuntimeModuleId.raw(id), resources, dependencies.map { RuntimeModuleId.raw(it) }))
   }
 }
-
-internal val RUNTIME_REPOSITORY_MARKER_MODULE: RuntimeModuleId = RuntimeModuleId.module("intellij.idea.community.main")
-internal val RUNTIME_REPOSITORY_TESTS_MARKER_MODULE: RuntimeModuleId = RuntimeModuleId.moduleTests("intellij.idea.community.main")

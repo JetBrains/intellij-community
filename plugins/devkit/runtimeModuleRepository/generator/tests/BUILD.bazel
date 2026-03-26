@@ -13,7 +13,6 @@ jvm_library(
     "//jps/model-api:model",
     "//jps/model-serialization",
     "//platform/util",
-    "//jps/jps-builders:build",
   ]
 )
 
@@ -34,16 +33,10 @@ jvm_library(
     "//jps/model-serialization:model-serialization_test_lib",
     "//platform/util",
     "//platform/util:util_test_lib",
-    "//jps/jps-builders:build",
-    "//jps/jps-builders:build_test_lib",
-    "//jps/jps-builders:build-tests",
-    "//jps/jps-builders:build-tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-    "//plugins/devkit/runtimeModuleRepository/jps",
-    "//plugins/devkit/runtimeModuleRepository/jps:jps_test_lib",
     "@lib//:junit5",
   ],
   runtime_deps = [":tests"]
