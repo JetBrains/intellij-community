@@ -1300,7 +1300,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val runtime = getRuntimeExecutablePath().toString()
 
     context.messages.info("Starting tests on runtime $runtime")
-    val builder = ProcessBuilder(runtime, "@" + argFile.absolutePath)
+    val builder = ProcessBuilder(runtime, "@" + argFile.absolutePath).apply {
+      removeBazelEnvironmentVariables(environment())  // to prevent treating the test process as BazelRunfiles#isRunningFromBazel
+    }
     builder.environment().putAll(environment)
     builder.inheritIO()
     val exitCode = builder.start().awaitExit()
@@ -1355,6 +1357,18 @@ private val ignoredPrefixes = listOf(
 private fun removeStandardJvmOptions(vmOptions: List<String>): List<String> {
   return vmOptions.filter { option -> ignoredPrefixes.none(option::startsWith) }
 }
+
+private fun removeBazelEnvironmentVariables(environment: MutableMap<String, String>) = listOf(
+  "BUILD_WORKING_DIRECTORY",
+  "BUILD_WORKSPACE_DIRECTORY",
+  "JAVA_RUNFILES",
+  "RUNFILES_DIR",
+  "RUNFILES_MANIFEST_FILE",
+  "RUNFILES_MANIFEST_ONLY",
+  "SELF_LOCATION",
+  "TEST_SRCDIR",
+  "TEST_TMPDIR",
+).forEach { environment.remove(it) }
 
 private suspend fun publishTestDiscovery(messages: BuildMessages, file: String?) {
   val serverUrl = System.getProperty("intellij.test.discovery.url")
