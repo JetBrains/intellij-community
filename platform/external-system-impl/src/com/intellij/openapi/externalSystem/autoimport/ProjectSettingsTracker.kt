@@ -2,7 +2,7 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Companion.isAsyncChangesProcessing
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
@@ -57,6 +57,7 @@ class ProjectSettingsTracker(
   private fun calculateSettingsFilesCRC(settingsFiles: Set<String>): Map<String, Long> {
     val localFileSystem = LocalFileSystem.getInstance()
     return settingsFiles
+      .asSequence()
       .mapNotNull { localFileSystem.findFileByPath(it) }
       .mapNotNull {
         val crc = calculateCrc(it)
@@ -208,9 +209,9 @@ class ProjectSettingsTracker(
       // Therefore, the operation stamp cannot be taken earlier than VFS refresh for the settings files.
       // @see the AsyncFileChangesListener#apply function for details
       val operationStamp = Stamp.nextStamp()
-      val newSettingsFilesCRC = runReadActionBlocking {
+      val newSettingsFilesCRC = ReadAction.nonBlocking<Map<String, Long>> {
         calculateSettingsFilesCRC(settingsPaths)
-      }
+      }.expireWith(parentDisposable).executeSynchronously()
       val settingsFilesStatus = updateSettingsFilesStatus(operationName, newSettingsFilesCRC, context.reloadStatus)
       updateProjectStatus(operationStamp, context.syncEvent, context.changeEvent, settingsFilesStatus)
       context.callback?.invoke()
