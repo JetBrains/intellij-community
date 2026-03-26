@@ -178,15 +178,16 @@ enum class PythonSupportedEnvironmentManagers(
   val toolId: ToolId,
   val nameKey: String,
   val icon: Icon,
+  val sshAutoUploadRequired: Boolean,
   val isFSSupported: (FileSystem<*>) -> Boolean = { (it as? FileSystem.Eel)?.eelApi == localEel },
 ) {
-  VIRTUALENV(VENV_TOOL_ID, "sdk.create.custom.virtualenv", PythonVenvIcons.VirtualEnv, { true }),
-  CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonCommunityImplCondaIcons.Anaconda, { true }),
-  POETRY(POETRY_TOOL_ID, "sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry),
-  PIPENV(PIPENV_TOOL_ID, "sdk.create.custom.pipenv", PIPENV_ICON),
-  UV(UV_TOOL_ID, "sdk.create.custom.uv", PythonCommunityImplUVCommonIcons.UV, { true }),
-  HATCH(HATCH_TOOL_ID, "sdk.create.custom.hatch", PythonHatchIcons.Logo, { it is FileSystem.Eel }),
-  PYTHON(VENV_TOOL_ID, "sdk.create.custom.python", PythonParserIcons.PythonFile, { true })
+  VIRTUALENV(VENV_TOOL_ID, "sdk.create.custom.virtualenv", PythonVenvIcons.VirtualEnv, sshAutoUploadRequired = false, { true }),
+  CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonCommunityImplCondaIcons.Anaconda, sshAutoUploadRequired = false, { true }),
+  POETRY(POETRY_TOOL_ID, "sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry, sshAutoUploadRequired = false),
+  PIPENV(PIPENV_TOOL_ID, "sdk.create.custom.pipenv", PIPENV_ICON, sshAutoUploadRequired = false),
+  UV(UV_TOOL_ID, "sdk.create.custom.uv", PythonCommunityImplUVCommonIcons.UV, sshAutoUploadRequired = true, { true }),
+  HATCH(HATCH_TOOL_ID, "sdk.create.custom.hatch", PythonHatchIcons.Logo, sshAutoUploadRequired = false, { it is FileSystem.Eel }),
+  PYTHON(VENV_TOOL_ID, "sdk.create.custom.python", PythonParserIcons.PythonFile, sshAutoUploadRequired = false, { true })
 }
 
 enum class PythonInterpreterSelectionMode(val nameKey: String) {

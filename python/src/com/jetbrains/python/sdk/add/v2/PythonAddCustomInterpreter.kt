@@ -174,11 +174,11 @@ internal class PythonAddCustomInterpreter<P : PathHolder>(
             }
 
             fun updateAutoUploadRequired() {
-              val isUv = when (selectionMethod.get()) {
-                PythonInterpreterSelectionMethod.CREATE_NEW -> newInterpreterManager.get() == UV
-                PythonInterpreterSelectionMethod.SELECT_EXISTING -> existingInterpreterManager.get() == UV
+              val autoUploadRequired = when (selectionMethod.get()) {
+                PythonInterpreterSelectionMethod.CREATE_NEW -> newInterpreterManager.get().sshAutoUploadRequired
+                PythonInterpreterSelectionMethod.SELECT_EXISTING -> existingInterpreterManager.get().sshAutoUploadRequired
               }
-              extension.setAutoUploadRequired(isUv)
+              extension.setAutoUploadRequired(autoUploadRequired)
             }
             selectionMethod.afterChange { updateAutoUploadRequired() }
             newInterpreterManager.afterChange { updateAutoUploadRequired() }
