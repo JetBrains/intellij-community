@@ -27,7 +27,6 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.workspaceModel.ide.JpsGlobalModelLoadedListener
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
@@ -93,10 +92,8 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
     if (loadedFromCache) {
       val callback = bridgesInitializationCallback(
         eelMachine,
-        environmentName = environmentName,
         mutableStorage = mutableStorage,
         initialEntityStorage = initialEntityStorage,
-        notifyListeners = false,
       )
 
       return@addMeasuredTime {
@@ -285,8 +282,6 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
         builder.replaceBySource({ it is JpsGlobalFileEntitySource }, mutableStorage)
       }
     }
-    // Notify the listeners that synchronization process completed
-    ApplicationManager.getApplication().messageBus.syncPublisher(JpsGlobalModelLoadedListener.LOADED).loaded(environmentName)
   }
 
   private fun loadGlobalEntitiesToEmptyStorage(
@@ -310,7 +305,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
       newEntities.exception?.let { throw it }
     }
     val callback = if (initializeBridges) {
-      bridgesInitializationCallback(eelMachine, environmentName, mutableStorage, initialEntityStorage, true)
+      bridgesInitializationCallback(eelMachine, mutableStorage, initialEntityStorage)
     }
     else {
       { }
@@ -331,19 +326,13 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
 
   private fun bridgesInitializationCallback(
     eelMachine: EelMachine,
-    environmentName: InternalEnvironmentName,
     mutableStorage: MutableEntityStorage,
     initialEntityStorage: VersionedEntityStorage,
-    notifyListeners: Boolean,
   ): () -> Unit {
     val callbacks = GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers(eelMachine)
       .map { it.initializeBridgesAfterLoading(mutableStorage, initialEntityStorage) }
     return {
       callbacks.forEach { it.invoke() }
-      if (notifyListeners) {
-        // Notify the listeners that synchronization process completed
-        ApplicationManager.getApplication().messageBus.syncPublisher(JpsGlobalModelLoadedListener.LOADED).loaded(environmentName)
-      }
     }
   }
 

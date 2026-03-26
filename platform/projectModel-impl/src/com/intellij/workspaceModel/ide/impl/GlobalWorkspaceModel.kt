@@ -327,7 +327,8 @@ class GlobalWorkspaceModel internal constructor(
   }
 
   /**
-   * Use [com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal.awaitSynchronizationWithJpsModel] instead.
+   * Consider using [com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal.awaitSynchronizationWithJpsModel] if you want to
+   * use project-level WSM.
    */
   @ApiStatus.Internal
   suspend fun awaitSynchronizationWithJpsModel() {
