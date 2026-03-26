@@ -35,6 +35,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiReferenceParameterList;
 import com.intellij.psi.PsiResolveHelper;
@@ -231,8 +232,13 @@ public class PreferByKindWeigher extends LookupElementWeigher {
   public @NotNull MyResult weigh(@NotNull LookupElement item) {
     final Object object = item.getObject();
 
-    if (object instanceof PsiKeyword) {
-      ThreeState result = isProbableKeyword(((PsiKeyword)object).getText());
+    String keywordText = switch (object) {
+      case PsiKeyword kw -> kw.getText();
+      case PsiPrimitiveType type -> type.getKind().getName();
+      default -> null;
+    };
+    if (keywordText != null) {
+      ThreeState result = isProbableKeyword(keywordText);
       if (result == ThreeState.YES) return MyResult.probableKeyword;
       if (result == ThreeState.NO) return MyResult.improbableKeyword;
     }
