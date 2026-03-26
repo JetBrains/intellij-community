@@ -206,37 +206,37 @@ public class ModifierFix extends PsiBasedModCommandAction<PsiModifierListOwner> 
       modifierList = owner.getModifierList();
     }
     if (modifierList == null) return;
-    if (myShouldHave && owner instanceof PsiMethod method) {
-      if (PsiModifier.ABSTRACT.equals(myModifier)) {
-        final PsiClass aClass = method.getContainingClass();
-        if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          PsiModifierList classModifierList = aClass.getModifierList();
-          if (classModifierList != null) {
-            changeModifierList(classModifierList);
+    if (myShouldHave) {
+      if (owner instanceof PsiMethod method) {
+        if (PsiModifier.ABSTRACT.equals(myModifier)) {
+          final PsiClass aClass = method.getContainingClass();
+          if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            PsiModifierList classModifierList = aClass.getModifierList();
+            if (classModifierList != null) {
+              changeModifierList(classModifierList);
+            }
+          }
+        }
+        else if (PsiModifier.PUBLIC.equals(myModifier) && method.getBody() != null && !method.hasModifierProperty(PsiModifier.STATIC)) {
+          PsiClass containingClass = method.getContainingClass();
+          if (containingClass != null && containingClass.isInterface()) {
+            modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
+          }
+        }
+        else if (PsiModifier.STATIC.equals(myModifier)) {
+          if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
+            modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
+          }
+          else if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, false);
+            if (method.getBody() == null) CreateFromUsageUtils.setupMethodBody(method);
           }
         }
       }
-      else if (PsiModifier.PUBLIC.equals(myModifier) &&
-               method.getBody() != null &&
-               !method.hasModifierProperty(PsiModifier.STATIC)) {
-        PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null && containingClass.isInterface()) {
-          modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
-        }
+      else if (PsiModifier.FINAL.equals(myModifier) && owner instanceof PsiClass aClass) {
+        adjustVisibilityOfProtectedMembers(aClass);
+        removeFinalModifierFromMethods(aClass);
       }
-      else if (PsiModifier.STATIC.equals(myModifier)) {
-        if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
-          modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
-        }
-        else if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, false);
-          if (method.getBody() == null) CreateFromUsageUtils.setupMethodBody(method);
-        }
-      }
-    }
-    else if (PsiModifier.FINAL.equals(myModifier) && owner instanceof PsiClass aClass) {
-      adjustVisibilityOfProtectedMembers(aClass);
-      removeFinalModifierFromMethods(aClass);
     }
     changeModifierList(modifierList);
   }
