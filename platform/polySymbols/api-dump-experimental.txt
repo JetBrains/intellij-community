@@ -1019,6 +1019,7 @@
 *f:com.intellij.polySymbols.references.PsiPolySymbolReferenceCacheInfoProvider$Companion
 *:com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
 - *sf:Companion:com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider$Companion
+- canReference(com.intellij.model.Symbol):Z
 - getOffsetsToReferencedSymbols(com.intellij.model.psi.PsiExternalReferenceHost):java.util.Map
 - getReferencedSymbol(com.intellij.model.psi.PsiExternalReferenceHost):com.intellij.polySymbols.PolySymbol
 - getReferencedSymbolNameOffset(com.intellij.model.psi.PsiExternalReferenceHost):I
