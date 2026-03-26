@@ -344,6 +344,8 @@ jvm_library(
     "//plugins/git4idea:vcs-git-tests_test_lib",
     "//platform/collaboration-tools:collaborationTools-tests",
     "//platform/collaboration-tools:collaborationTools-tests_test_lib",
+    "//platform/testFramework/junit5/codeInsight",
+    "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
   ],
   runtime_deps = [
     ":vcs-github-tests",

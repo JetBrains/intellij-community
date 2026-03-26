@@ -5,16 +5,34 @@ import com.intellij.collaboration.util.IncrementallyComputedValue
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.FileTypes
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
+import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelMentionCompletion
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
 
-class GithubMarkdownCompletionContributorTest : BasePlatformTestCase() {
+@TestApplication
+class GithubMarkdownCompletionContributorTest {
 
+  private val tempPath = tempPathFixture()
+  private val project = projectFixture(openAfterCreation = true)
+  @Suppress("unused") // need to register the module for code insight tests
+  private val moduleForCodeInsight = project.moduleFixture(tempPath)
+  private val codeInsightFixture by codeInsightFixture(project, tempPath)
+
+  @Test
   fun `test mention completion filters users by prefix matching login or name`() {
     val vm = createMockViewModel(
       participants = listOf(
@@ -29,12 +47,13 @@ class GithubMarkdownCompletionContributorTest : BasePlatformTestCase() {
     )
 
     configure("Test comment @par<caret>", vm)
-    val completeBasic = myFixture.completeBasic()
+    val completeBasic = codeInsightFixture.completeBasic()
     assertNotNull(completeBasic!!)
     assertSameElements(completeBasic.map { it.lookupString },
                        listOf("@participant1", "@participant2", "@user3"))
   }
 
+  @Test
   fun `test mention completion works after newlines when @ symbol is present`() {
     val vm = createMockViewModel(
       participants = listOf(
@@ -49,12 +68,13 @@ class GithubMarkdownCompletionContributorTest : BasePlatformTestCase() {
     )
 
     configure("Test comment\n\n@par<caret>", vm)
-    val completeBasic = myFixture.completeBasic()
+    val completeBasic = codeInsightFixture.completeBasic()
     assertNotNull(completeBasic!!)
     assertSameElements(completeBasic.map { it.lookupString },
                        listOf("@participant1", "@participant2", "@user3"))
   }
 
+  @Test
   fun `test no completion suggestions appear when @ symbol is missing from text`() {
     val vm = createMockViewModel(
       participants = listOf(createUser("testuser", "Test User")),
@@ -62,10 +82,11 @@ class GithubMarkdownCompletionContributorTest : BasePlatformTestCase() {
     )
 
     configure("Comment test<caret>", vm)
-    val result = myFixture.completeBasic()
+    val result = codeInsightFixture.completeBasic()
     assertEmpty(result)
   }
 
+  @Test
   fun `test no completion suggestions appear at empty caret position without @ symbol`() {
     val vm = createMockViewModel(
       participants = listOf(createUser("testuser", "Test User")),
@@ -73,10 +94,11 @@ class GithubMarkdownCompletionContributorTest : BasePlatformTestCase() {
     )
 
     configure("Comment <caret>", vm)
-    val result = myFixture.completeBasic()
+    val result = codeInsightFixture.completeBasic()
     assertEmpty(result)
   }
 
+  @Test
   fun `test mention completion includes mentionable users when filtering by prefix`() {
     val vm = createMockViewModel(
       participants = listOf(createUser("testuser", "Test User")),
@@ -89,13 +111,14 @@ class GithubMarkdownCompletionContributorTest : BasePlatformTestCase() {
     )
 
     configure("@men<caret>", vm)
-    val lookupElements = myFixture.completeBasic()
+    val lookupElements = codeInsightFixture.completeBasic()
 
     assertNotNull(lookupElements!!)
     assertSameElements(lookupElements.map { it.lookupString },
                        listOf("@mentionable1", "@mentionable2", "@mentionable3"))
   }
 
+  @Test
   fun `test completion shows both participants and mentionable users when @ symbol is typed`() {
     val vm = createMockViewModel(
       participants = listOf(createUser("participant", "Participant User")),
@@ -103,13 +126,14 @@ class GithubMarkdownCompletionContributorTest : BasePlatformTestCase() {
     )
 
     configure("@<caret>", vm)
-    val lookupElements = myFixture.completeBasic()
+    val lookupElements = codeInsightFixture.completeBasic()
 
     assertNotNull(lookupElements!!)
     assertSameElements(lookupElements.map { it.lookupString },
                        listOf("@participant", "@mentionable"))
   }
 
+  @Test
   fun `test mention completion works with text after caret position`() {
     val vm = createMockViewModel(
       participants = listOf(createUser("participant1", "Participant One"),
@@ -118,13 +142,14 @@ class GithubMarkdownCompletionContributorTest : BasePlatformTestCase() {
     )
 
     configure("@part<caret> test", vm)
-    val lookupElements = myFixture.completeBasic()
+    val lookupElements = codeInsightFixture.completeBasic()
 
     assertNotNull(lookupElements!!)
     assertSameElements(lookupElements.map { it.lookupString },
                        listOf("@participant1", "@participant2"))
   }
 
+  @Test
   fun `test mention insertion adds space after username at end of text`() {
     val vm = createMockViewModel(
       participants = listOf(createUser("testuser", "Test User")),
@@ -132,13 +157,14 @@ class GithubMarkdownCompletionContributorTest : BasePlatformTestCase() {
     )
 
     configure("@test<caret>", vm)
-    myFixture.completeBasic()
-    myFixture.type('\n')
+    codeInsightFixture.completeBasic()
+    codeInsightFixture.type('\n')
 
-    val text = myFixture.editor.document.text
+    val text = codeInsightFixture.editor.document.text
     assertTrue(text.contains("@testuser "))
   }
 
+  @Test
   fun `test mention insertion replaces prefix and preserves text after caret`() {
     val vm = createMockViewModel(
       participants = listOf(createUser("participant1", "Participant One"),
@@ -147,13 +173,14 @@ class GithubMarkdownCompletionContributorTest : BasePlatformTestCase() {
     )
 
     configure("@part<caret> test", vm)
-    myFixture.completeBasic()
-    myFixture.type('\n')
+    codeInsightFixture.completeBasic()
+    codeInsightFixture.type('\n')
 
-    val text = myFixture.editor.document.text
+    val text = codeInsightFixture.editor.document.text
     assertEquals("@participant1 test", text)
   }
 
+  @Test
   fun `test mention insertion replaces prefix and adds space before adjacent text`() {
     val vm = createMockViewModel(
       participants = listOf(createUser("participant1", "Participant One"),
@@ -162,10 +189,10 @@ class GithubMarkdownCompletionContributorTest : BasePlatformTestCase() {
     )
 
     configure("@part<caret>test", vm)
-    myFixture.completeBasic()
-    myFixture.type('\n')
+    codeInsightFixture.completeBasic()
+    codeInsightFixture.type('\n')
 
-    val text = myFixture.editor.document.text
+    val text = codeInsightFixture.editor.document.text
     assertEquals("@participant1 test", text)
   }
 
@@ -173,8 +200,8 @@ class GithubMarkdownCompletionContributorTest : BasePlatformTestCase() {
 
     val fileType = FileTypeRegistry.getInstance().getFileTypeByExtension("md").takeIf { it != FileTypes.UNKNOWN } ?: FileTypes.PLAIN_TEXT
 
-    myFixture.configureByText(fileType, text)
-    myFixture.editor.putUserData(GHViewModelWithTextCompletion.MENTIONS_COMPLETION_KEY, vm)
+    codeInsightFixture.configureByText(fileType, text)
+    codeInsightFixture.editor.putUserData(GHViewModelWithTextCompletion.MENTIONS_COMPLETION_KEY, vm)
   }
 
   private fun createMockViewModel(
@@ -200,17 +227,5 @@ class GithubMarkdownCompletionContributorTest : BasePlatformTestCase() {
 
   private fun createUser(login: String, name: String?): GHUser {
     return GHUser(login, login, "https://github.com/$login", "https://avatars.githubusercontent.com/$login", name)
-  }
-
-  override fun tearDown() {
-    try {
-      myFixture.editor?.putUserData(GHViewModelWithTextCompletion.MENTIONS_COMPLETION_KEY, null)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
   }
 }
