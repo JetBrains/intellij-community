@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus
  * If possible, try not to use this manager as it's related to the JPS model, and we may try to get rid of JPS in non-IJ IDEs in the future.
  */
 @ApiStatus.Internal
+@Deprecated("Use WorkspaceModelInternal.awaitSynchronizationWithJpsModel instead")
 interface JpsProjectLoadingManager {
   /**
    * Schedule a task that should be executed after a JPS project model will be loaded.
