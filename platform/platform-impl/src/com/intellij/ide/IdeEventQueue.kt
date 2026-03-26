@@ -1276,6 +1276,7 @@ private fun cancelCellEditing(): Boolean {
 
 private class WindowsAltSuppressor : IdeEventQueue.NonLockedEventDispatcher {
   private var waitingForAltRelease = false
+  private var altPressedOnly = false
   private var robot: Robot? = null
 
   override fun dispatch(e: AWTEvent): Boolean = e is KeyEvent && dispatchKeyEvent(e)
@@ -1285,6 +1286,9 @@ private class WindowsAltSuppressor : IdeEventQueue.NonLockedEventDispatcher {
     val pureAlt = ke.keyCode == KeyEvent.VK_ALT && ke.modifiers or InputEvent.ALT_MASK == InputEvent.ALT_MASK
     if (!pureAlt) {
       waitingForAltRelease = false
+      if (altPressedOnly && ke.id == KeyEvent.KEY_PRESSED) {
+        altPressedOnly = false
+      }
       return false
     }
 
@@ -1302,13 +1306,14 @@ private class WindowsAltSuppressor : IdeEventQueue.NonLockedEventDispatcher {
     var dispatch = true
     if (ke.id == KeyEvent.KEY_PRESSED) {
       dispatch = !waitingForAltRelease
+      altPressedOnly = true
     }
     else if (ke.id == KeyEvent.KEY_RELEASED) {
       if (waitingForAltRelease) {
         waitingForAltRelease = false
         dispatch = false
       }
-      else if (component != null) {
+      else if (component != null && altPressedOnly) {
         EventQueue.invokeLater {
           try {
             val window = ComponentUtil.getWindow(component)
@@ -1327,6 +1332,8 @@ private class WindowsAltSuppressor : IdeEventQueue.NonLockedEventDispatcher {
           }
         }
       }
+
+      altPressedOnly = false
     }
     return !dispatch
   }
