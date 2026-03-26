@@ -118,7 +118,6 @@ import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -672,12 +671,12 @@ public final class CreateFromUsageUtils {
     for (PsiExpression expr : collectExpressions(expression, PsiMember.class, PsiFile.class)) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(expr.getParent());
 
-      if (!(parent instanceof PsiReferenceExpression)) {
-        boolean isAssignmentToFunctionalExpression = PsiUtil.isOnAssignmentLeftHand(expr) &&
-                                                     ((PsiAssignmentExpression)PsiUtil.skipParenthesizedExprUp(parent)).getRExpression() instanceof PsiFunctionalExpression;
+      if (!(parent instanceof PsiReferenceExpression referenceExpression)) {
+        boolean assignsFunctionalExpression = parent instanceof PsiAssignmentExpression a &&
+                                              PsiTreeUtil.isAncestor(a.getLExpression(), expr, false) &&
+                                              PsiUtil.skipParenthesizedExprDown(a.getRExpression()) instanceof PsiFunctionalExpression;
         PsiElement gParent = parent.getParent();
-        PsiExpressionList expressionList = ObjectUtils
-          .tryCast(PsiUtil.skipParenthesizedExprUp(isAssignmentToFunctionalExpression ? gParent : parent), PsiExpressionList.class);
+        PsiExpressionList expressionList = (assignsFunctionalExpression ? gParent : parent) instanceof PsiExpressionList l ? l : null;
         boolean forCompletion;
         if (expressionList != null) {
           forCompletion = true;
