@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.theoryinpractice.testng.configuration;
 
@@ -37,7 +37,6 @@ import com.theoryinpractice.testng.model.TestType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.testng.CommandLineArgs;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,6 +47,10 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGConfiguration> {
+  private static final String COMMAND_LINE_ARGS_OUTPUT_DIRECTORY = "-d";
+  private static final String COMMAND_LINE_ARGS_USE_DEFAULT_LISTENERS = "-usedefaultlisteners";
+  private static final String COMMAND_LINE_ARGS_LISTENER = "-listener";
+
   private static final Logger LOG = Logger.getInstance("TestNG Runner");
   private static final String TESTNG_TEST_FRAMEWORK_NAME = "TestNG";
   private final TestNGConfiguration config;
@@ -85,7 +88,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = super.createJavaParameters();
     if (javaParameters.getMainClass() == null) { // for custom main class, e.g. overridden by JUnitDevKitUnitTestingSettings.Companion#apply
-      javaParameters.setMainClass("com.intellij.rt.testng.RemoteTestNGStarter");
+      javaParameters.setMainClass(RemoteTestNGStarter.class.getName());
     }
 
     try {
@@ -98,17 +101,17 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     final TestData data = getConfiguration().getPersistantData();
 
     if (data.getOutputDirectory() != null && !data.getOutputDirectory().isEmpty()) {
-      javaParameters.getProgramParametersList().add(CommandLineArgs.OUTPUT_DIRECTORY, data.getOutputDirectory());
+      javaParameters.getProgramParametersList().add(COMMAND_LINE_ARGS_OUTPUT_DIRECTORY, data.getOutputDirectory());
     }
 
-    javaParameters.getProgramParametersList().add(CommandLineArgs.USE_DEFAULT_LISTENERS, String.valueOf(data.USE_DEFAULT_REPORTERS));
+    javaParameters.getProgramParametersList().add(COMMAND_LINE_ARGS_USE_DEFAULT_LISTENERS, String.valueOf(data.USE_DEFAULT_REPORTERS));
 
     final @NonNls StringBuilder buf = new StringBuilder();
     if (data.TEST_LISTENERS != null && !data.TEST_LISTENERS.isEmpty()) {
       buf.append(StringUtil.join(data.TEST_LISTENERS, ";"));
     }
     collectListeners(javaParameters, buf, IDEATestNGListener.EP_NAME, ";");
-    if (!buf.isEmpty()) javaParameters.getProgramParametersList().add(CommandLineArgs.LISTENER, buf.toString());
+    if (!buf.isEmpty()) javaParameters.getProgramParametersList().add(COMMAND_LINE_ARGS_LISTENER, buf.toString());
 
     createServerSocket(javaParameters);
     createTempFiles(javaParameters);

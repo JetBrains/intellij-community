@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -22,11 +22,12 @@ import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.testng.annotations.DataProvider;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import static com.theoryinpractice.testng.util.TestNGUtil.DATA_PROVIDER_ANNOTATION_FQN;
 
 /**
  * @author Dmitry Batkovich
@@ -41,12 +42,10 @@ public class DuplicatedDataProviderNamesInspection extends AbstractBaseJavaLocal
           .findClass(TestNGUtil.TEST_ANNOTATION_FQN, aClass.getResolveScope()) == null) {
       return null;
     }
-    final String dataProviderFqn = DataProvider.class.getCanonicalName();
-
     final MultiMap<String, PsiMethod> dataProvidersByName = new MultiMap<>();
     for (HierarchicalMethodSignature signature : aClass.getVisibleSignatures()) { //include only visible signatures to hide overridden methods
       PsiMethod method = signature.getMethod();
-      final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, dataProviderFqn);
+      final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, DATA_PROVIDER_ANNOTATION_FQN);
       if (annotation != null) {
         final PsiAnnotationMemberValue value = annotation.findAttributeValue(NAME_ATTRIBUTE);
         if (value != null) {
@@ -67,7 +66,7 @@ public class DuplicatedDataProviderNamesInspection extends AbstractBaseJavaLocal
           if (method.getContainingClass() != aClass) continue; //don't highlight methods in super class
           final String description =
             TestngBundle.message("inspection.message.data.provider.with.name.already.exists.in.context", entry.getKey());
-          final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, dataProviderFqn);
+          final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, DATA_PROVIDER_ANNOTATION_FQN);
           LOG.assertTrue(annotation != null);
           final PsiAnnotationMemberValue nameElement = annotation.findAttributeValue(NAME_ATTRIBUTE);
           LOG.assertTrue(nameElement != null);
