@@ -26,7 +26,8 @@ class SeFilesTabFactory : SeEssentialTabFactory {
                                  session,
                                  "Files",
                                  listOf(SeProviderId(SeProviderIdUtils.FILES_ID),
-                                        SeProviderId(SeProviderIdUtils.NON_INDEXABLE_FILES_ID)),
+                                        SeProviderId(SeProviderIdUtils.NON_INDEXABLE_FILES_ID),
+                                        SeProviderId(SeProviderIdUtils.FUZZY_FILES_ID)),
                                  initEvent,
                                  scope)
 

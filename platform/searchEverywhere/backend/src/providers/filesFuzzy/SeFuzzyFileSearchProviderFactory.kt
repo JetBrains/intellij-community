@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 class SeFuzzyFileSearchProviderFactory : SeItemsProviderFactory {
-  override val id: String = "FuzzyFileSearch"
+  override val id: String = SeProviderIdUtils.FUZZY_FILES_ID
 
   override suspend fun getItemsProvider(
     project: Project?,
@@ -33,6 +34,6 @@ class SeFuzzyFileSearchProviderFactory : SeItemsProviderFactory {
       return null
     }
 
-    return SeFuzzyFileSearchProvider(project)
+    return SeFuzzyFileSearchProvider(project, dataContext)
   }
 }

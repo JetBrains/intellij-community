@@ -1,7 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.backend.providers.filesFuzzy
 
+import com.intellij.ide.actions.GotoActionBase
+import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
+import com.intellij.ide.util.gotoByName.FileTypeRef
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
@@ -11,8 +15,16 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
+import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
+import com.intellij.platform.searchEverywhere.providers.SeScopeById
+import com.intellij.platform.searchEverywhere.providers.SeScopeByIdFiles
+import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
+import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
+import com.intellij.platform.searchEverywhere.utils.suspendLazy
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiManager
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
@@ -47,10 +59,21 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class SeFuzzyFileSearchProvider(
   private val project: Project,
+  dataContext: DataContext,
 ) : SeItemsProvider {
 
-  override val id: String = "FuzzyFileSearch"
+  override val id: String = SeProviderIdUtils.FUZZY_FILES_ID
   override val displayName: String = "Files (fuzzy)"
+
+  private val scopeById: SuspendLazyProperty<SeScopeById> = suspendLazy {
+    val psiContext = readAction {
+      GotoActionBase.getPsiContext(dataContext)?.let { context ->
+        SmartPointerManager.getInstance(project).createSmartPsiElementPointer(context)
+      }
+    }
+
+    SeScopeByIdFiles(project, psiContext)
+  }
 
   override suspend fun collectItems(
     params: SeParams,
@@ -59,9 +82,24 @@ class SeFuzzyFileSearchProvider(
     val query = params.inputQuery.trim()
     if (query.isBlank()) return@coroutineScope
 
-    val searchScope = GlobalSearchScope.projectScope(project)
-    val isEverywhere = true
-    val namesProcessor = NamesProcessor(this, searchScope, query, project, collector)
+    val (scopeDescriptor, hiddenTypes) = SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
+      scopeById.getValue()[isEverywhere] to null
+    } ?: run {
+      val targetsFilter = SeTargetsFilter.from(params.filter)
+
+      targetsFilter.selectedScopeId?.let {
+        scopeById.getValue()[it]
+      } to targetsFilter.hiddenTypes
+    }
+
+    val searchScope = scopeDescriptor?.scope as? GlobalSearchScope ?: GlobalSearchScope.projectScope(project)
+    val isEverywhere = searchScope.isSearchInLibraries
+
+    val hiddenTypeRefs = hiddenTypes?.toSet()?.let { hiddenTypes ->
+      FileSearchEverywhereContributor.getAllFileTypes().filter { hiddenTypes.contains(it.displayName) }
+    }?.toSet() ?: emptySet()
+
+    val namesProcessor = NamesProcessor(this, searchScope, hiddenTypeRefs, query, project, collector)
 
     ReadAction.nonBlocking<Boolean> {
       FilenameIndex.processAllFileNames(namesProcessor, searchScope, IdFilter.getProjectIdFilter(project, isEverywhere))
@@ -95,6 +133,7 @@ class SeFuzzyFileSearchProvider(
   private class NamesProcessor(
     val coroutineScope: CoroutineScope,
     val searchScope: GlobalSearchScope,
+    val hiddenTypes: Set<FileTypeRef>,
     query: String,
     val project: Project,
     val collector: SeItemsProvider.Collector,
@@ -110,6 +149,8 @@ class SeFuzzyFileSearchProvider(
         for ((name, matchingResult) in channel) {
           val files = readAction {
             FilenameIndex.getVirtualFilesByName(name, searchScope).mapNotNull { file ->
+              if (FileTypeRef.forFileType(file.fileType) in hiddenTypes) return@mapNotNull null
+
               psiManager.findFile(file)?.let { psiFile ->
                 PSIPresentationBgRendererWrapper.PsiItemWithPresentation(
                   psiFile,
