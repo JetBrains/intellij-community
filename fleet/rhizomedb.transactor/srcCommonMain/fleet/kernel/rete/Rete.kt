@@ -528,20 +528,6 @@ fun <T, R> Flow<Match<T>>.flatMapLatestMatch(transform: suspend (value: T) -> Fl
   }
 
 /**
- * Returns a flow that applies the given [transform] function to each emitted [Match] value under [Match.withMatch]
- * and flattens the resulting flow.
- * When new match arrives, the previous work is cancelled, see [Flow.collectLatest]
- */
-fun <T, R> Flow<Match<T>>.flatMapMatchLatestMatch(transform: suspend (value: T) -> Flow<Match<R>>): Flow<Match<R>> =
-  transformLatest { outerMatch ->
-    outerMatch.withMatch {
-      transform(it).collect { match ->
-        emit(outerMatch.combine(match) { _, v -> v })
-      }
-    }
-  }
-
-/**
  * Runs collector with each match, under [Match.withMatch]
  * */
 suspend fun <T> Flow<Match<T>>.collectMatches(collector: suspend CoroutineScope.(T) -> Unit) {
