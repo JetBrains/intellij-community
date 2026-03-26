@@ -3,27 +3,30 @@ package fleet.util.async
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
-import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 suspend fun <T : Any> spin(delayStrategy: DelayStrategy, body: suspend CoroutineScope.(attempt: Int) -> T?): T {
-  var curDelayMs = 0L
+  var curDelay = Duration.ZERO
   var attempt = 0
-  while (coroutineContext.job.isActive) {
+  while (currentCoroutineContext().job.isActive) {
     val res = coroutineScope {
       launch {
-        curDelayMs = delayStrategy.nextDelay(curDelayMs)
-        delay(curDelayMs)
-        attempt++
+        curDelay = delayStrategy.nextDelay(curDelay)
+        delay(curDelay)
       }.use { job ->
         val res = coroutineScope { body(attempt) }
         if (res == null) {
           job.join()
         }
         res
+      }.also {
+        attempt++
       }
     }
     if (res != null) {
@@ -35,12 +38,15 @@ suspend fun <T : Any> spin(delayStrategy: DelayStrategy, body: suspend Coroutine
 }
 
 fun interface DelayStrategy {
-  fun nextDelay(delay: Long): Long
+  fun nextDelay(delay: Duration): Duration
 
   companion object {
-    fun exponential(minDelayMs: Long, maxDelayMs: Long): DelayStrategy =
-      DelayStrategy { delay -> (delay * 2).coerceIn(minDelayMs, maxDelayMs) }
+    fun linear(minDelay: Duration = 1.seconds, maxDelay: Duration = Duration.INFINITE, step: Duration = 1.seconds): DelayStrategy =
+      DelayStrategy { delay -> (delay + step).coerceIn(minDelay, maxDelay) }
 
-    fun constant(constant: Long) = DelayStrategy { constant }
+    fun exponential(minDelay: Duration = 1.seconds, maxDelay: Duration = Duration.INFINITE, multiplier: Double = 2.0): DelayStrategy =
+      DelayStrategy { delay -> (delay * multiplier).coerceIn(minDelay, maxDelay) }
+
+    fun constant(delay: Duration) = DelayStrategy { delay }
   }
 }
