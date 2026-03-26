@@ -62,6 +62,7 @@ import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
+import kotlin.collections.set
 import kotlin.time.Duration.Companion.milliseconds
 import java.lang.Long as JLong
 
@@ -198,10 +199,6 @@ class ThreadDumpAction {
       }
     }
   }
-}
-
-private fun renderLockedObject(monitor: ObjectReference): String {
-  return "locked " + renderObject(monitor)
 }
 
 private fun renderObject(monitor: ObjectReference): String {
@@ -440,68 +437,32 @@ private fun buildThreadStates(
     val collectMonitorsInfo = virtualThreadInfo == null ||
                               virtualThreads.size < Registry.intValue("debugger.thread.dump.virtual.threads.with.monitors.max.count", 1000)
     try {
+      // 1. Collect info about owned monitors (including stack depth at which this monitor was acquired by the owning thread if possible)
       if (collectMonitorsInfo && vmProxy.canGetOwnedMonitorInfo() && vmProxy.canGetMonitorInfo()) {
-        val list = threadReference.ownedMonitors()
-        for (reference in list) {
-          if (!vmProxy.canGetMonitorFrameInfo()) { // java 5 and earlier
-            buffer.append("\n\t ").append(renderLockedObject(reference))
+        if (vmProxy.canGetMonitorFrameInfo()) {
+          for (m in threadReference.ownedMonitorsAndFrames()) {
+            if (m is MonitorInfo) { // see JRE-937
+              threadState.addOwnedMonitorAtDepth(renderObject(m.monitor()), m.stackDepth())
+            }
           }
-          val waiting = reference.waitingThreads()
-          for (thread in waiting) {
-            val waitingThreadName = threadName(thread)
-            waitingMap[waitingThreadName] = threadName
-            buffer.append("\n\t blocks ").append(waitingThreadName)
+        }
+        else {  // java 5 and earlier, no frames info
+          for (ownedMonitor in threadReference.ownedMonitors()) {
+            threadState.addOwnedMonitor(renderObject(ownedMonitor))
           }
         }
       }
 
-      val waitedMonitor = if (collectMonitorsInfo && vmProxy.canGetCurrentContendedMonitor()) threadReference.currentContendedMonitor() else null
-      if (waitedMonitor != null) {
-        if (vmProxy.canGetMonitorInfo()) {
-          val waitedMonitorOwner = waitedMonitor.owningThread()
-          if (waitedMonitorOwner != null) {
-            val monitorOwningThreadName = threadName(waitedMonitorOwner)
-            waitingMap[threadName] = monitorOwningThreadName
-            buffer.append("\n\t waiting for ").append(monitorOwningThreadName)
-              .append(" to release lock on ").append(waitedMonitor)
-          }
-        }
-      }
-
-      val lockedAt = mutableMapOf<Int, MutableList<ObjectReference>>()
-      if (collectMonitorsInfo && vmProxy.canGetMonitorFrameInfo()) {
-        for (m in threadReference.ownedMonitorsAndFrames()) {
-          if (m is MonitorInfo) { // see JRE-937
-            val monitors = lockedAt.getOrPut(m.stackDepth()) { mutableListOf() }
-            monitors += m.monitor()
-          }
-        }
-      }
-
-      if (lockedAt.isEmpty()) {
-        buffer.append('\n').append(rawStackTrace)
-      }
-      else {
-        val lines = rawStackTrace.lines()
-        lines.forEachIndexed { index, line ->
-          buffer.append('\n').append(line)
-          lockedAt.remove(index)?.forEach { monitor ->
-            buffer.append("\n\t  - ").append(renderLockedObject(monitor))
-          }
-        }
-
-        // Dump remaining monitors in case of corrupted stack trace.
-        for (monitors in lockedAt.values) {
-          for (monitor in monitors) {
-            buffer.append("\n\t  - ").append(renderLockedObject(monitor))
-          }
-        }
-      }
+      // 2. Set contended monitor
+      val contendedMonitor =
+        if (collectMonitorsInfo && vmProxy.canGetCurrentContendedMonitor()) threadReference.currentContendedMonitor() else null
+      threadState.contendedMonitor = contendedMonitor?.let { renderObject(it) }
     }
     catch (_: IncompatibleThreadStateException) {
       buffer.append("\n\t Incompatible thread state: thread not suspended")
     }
 
+    buffer.append('\n').append(rawStackTrace)
     val hasEmptyStack = rawStackTrace.isEmpty()
     threadState.setStackTrace(buffer.toString(), hasEmptyStack)
   }
@@ -522,24 +483,13 @@ private fun buildThreadStates(
     processOne(it.thread, it)
   }
 
-  for ((waiting, awaited) in waitingMap) {
-    val waitingThread = nameToThreadMap[waiting] ?: continue // continue if zombie
-    val awaitedThread = nameToThreadMap[awaited] ?: continue // continue if zombie
-    awaitedThread.addWaitingThread(waitingThread)
   for (threadState in result) {
     ThreadDumpParser.inferThreadStateDetail(threadState)
   }
 
-  // detect simple deadlocks
-  for (thread in result) {
-    ProgressManager.checkCanceled()
-    for (awaitingThread in thread.awaitingThreads) {
-      if (awaitingThread.isAwaitedBy(thread)) {
-        thread.addDeadlockedThread(awaitingThread)
-        awaitingThread.addDeadlockedThread(thread)
-      }
-    }
-  }
+  ThreadDumpParser.enrichStackTraceWithLockInfo(result)
+
+  ThreadDumpParser.detectWaitingAndDeadlockedThreads(result)
 
   ThreadDumpParser.sortThreads(result)
   return result
