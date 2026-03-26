@@ -173,7 +173,7 @@ internal object WinAltKeyProcessor : IdeEventQueue.NonLockedEventDispatcher {
     }
 
     if (e.keyCode != KeyEvent.VK_ALT) {
-      if (altPressed && e.id == KeyEvent.KEY_PRESSED) {
+      if (altPressed && (e.id == KeyEvent.KEY_PRESSED || e.id == KeyEvent.KEY_RELEASED)) {
         altPressedOnly = false
       }
       return false
