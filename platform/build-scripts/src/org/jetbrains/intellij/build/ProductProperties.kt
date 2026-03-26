@@ -195,6 +195,11 @@ abstract class ProductProperties {
   var contentModulesToScramble: List<String> = emptyList()
 
   /**
+   * The list of classes to check for scrambling.
+   */
+  var requiredScrambledClasses: List<String> = emptyList()
+
+  /**
    * Path to an alternative scramble script which will should be used for a product.
    */
   var alternativeScrambleStubPath: Path? = null
