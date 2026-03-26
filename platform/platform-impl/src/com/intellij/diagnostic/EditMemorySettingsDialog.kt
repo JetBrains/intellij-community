@@ -31,7 +31,7 @@ private const val HEAP_DEFAULT_MB = 2048
 private const val HEAP_INCREMENT_MB = 512
 private const val OTHER_MIN_MB = 256
 
-internal open class EditMemorySettingsDialog(
+internal class EditMemorySettingsDialog(
   private val file: Path,
   private val memoryKind: MemoryKind,
   private val memoryLow: Boolean
