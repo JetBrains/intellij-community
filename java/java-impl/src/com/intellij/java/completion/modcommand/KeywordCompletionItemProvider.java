@@ -665,7 +665,9 @@ final class KeywordCompletionItemProvider extends JavaModCompletionItemProvider 
 
     private void addInstanceof() {
       if (JavaKeywordCompletion.isInstanceofPlace(myPosition)) {
-        addKeyword(createKeyword(JavaKeywords.INSTANCEOF).withAdditionalUpdater((startOffset, updater, insertionContext) -> {
+        addKeyword(createKeyword(JavaKeywords.INSTANCEOF)
+                     .withInsertCharacterSuppressed(ic -> ic.insertionCharacter() == '!')
+                     .withAdditionalUpdater((startOffset, updater, insertionContext) -> {
           Document document = updater.getDocument();
           int offset = updater.getCaretOffset();
           ModNavigatorTailType tailType = humbleSpaceBeforeWordType();
@@ -689,7 +691,6 @@ final class KeywordCompletionItemProvider extends JavaModCompletionItemProvider 
               }
             }
             else if ('!' == insertionContext.insertionCharacter()) {
-              // TODO: suppress ! typing
               String space = CodeStyle.getLanguageSettings(file).SPACE_WITHIN_PARENTHESES ? " " : "";
               document.insertString(expr.getTextRange().getStartOffset(), "!(" + space);
               document.insertString(updater.getCaretOffset(), space + ")");
@@ -1318,7 +1319,7 @@ final class KeywordCompletionItemProvider extends JavaModCompletionItemProvider 
       if (aClass == null || aClass.isEnum() || !aClass.hasModifierProperty(PsiModifier.SEALED)) return;
 
       for (PsiClass inheritor : SealedUtils.findSameFileInheritorsClasses(aClass)) {
-        //we don't check hierarchy here, because it is time-consuming
+        //we don't check hierarchy here because it is time-consuming
         if (containedLabels.contains(inheritor.getQualifiedName())) {
           continue;
         }

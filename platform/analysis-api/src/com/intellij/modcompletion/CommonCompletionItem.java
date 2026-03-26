@@ -14,8 +14,10 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,6 +32,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
   private final InsertionAwareUpdateHandler myAdditionalUpdater;
   private final AutoCompletionPolicy myPolicy;
   private final double myPriority;
+  private final @Nullable Predicate<InsertionContext> mySuppressCharacterPredicate;
 
   public CommonCompletionItem(@NlsSafe String text) {
     super(text, text);
@@ -39,11 +42,12 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
     myPriority = 0;
     myAdditionalUpdater = (UpdateHandler)(start, updater) -> { };
     myPolicy = AutoCompletionPolicy.SETTINGS_DEPENDENT;
+    mySuppressCharacterPredicate = null;
   }
   
   private CommonCompletionItem(@NlsSafe String text, Set<String> additionalStrings, Object object, ModCompletionItemPresentation presentation,
                                ModNavigatorTailType tail, double priority, InsertionAwareUpdateHandler additionalUpdater,
-                               AutoCompletionPolicy policy) {
+                               AutoCompletionPolicy policy, @Nullable Predicate<InsertionContext> suppressCharacterPredicate) {
     super(text, object);
     myAdditionalStrings = additionalStrings;
     myPresentation = presentation;
@@ -51,6 +55,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
     myPriority = priority;
     myAdditionalUpdater = additionalUpdater;
     myPolicy = policy;
+    mySuppressCharacterPredicate = suppressCharacterPredicate;
   }
 
   @Override
@@ -67,7 +72,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
    */
   public CommonCompletionItem withTail(ModNavigatorTailType tail) {
     return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), myPresentation, tail, myPriority,
-                                    myAdditionalUpdater, myPolicy);
+                                    myAdditionalUpdater, myPolicy, mySuppressCharacterPredicate);
   }
 
   /**
@@ -84,7 +89,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
    */
   public CommonCompletionItem withPresentation(ModCompletionItemPresentation presentation) {
     return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), presentation, myTail, myPriority,
-                                    myAdditionalUpdater, myPolicy);
+                                    myAdditionalUpdater, myPolicy, mySuppressCharacterPredicate);
   }
 
   /**
@@ -93,7 +98,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
    */
   public CommonCompletionItem withObject(Object object) {
     return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, object, myPresentation, myTail, myPriority,
-                                    myAdditionalUpdater, myPolicy);
+                                    myAdditionalUpdater, myPolicy, mySuppressCharacterPredicate);
   }
 
   /**
@@ -102,7 +107,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
    */
   public CommonCompletionItem withPriority(double priority) {
     return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), myPresentation, myTail, priority,
-                                    myAdditionalUpdater, myPolicy);
+                                    myAdditionalUpdater, myPolicy, mySuppressCharacterPredicate);
   }
 
   /**
@@ -111,7 +116,8 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
    * @return a new completion item with the given updater
    */
   public CommonCompletionItem withAdditionalUpdater(InsertionAwareUpdateHandler updater) {
-    return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), myPresentation, myTail, myPriority, updater, myPolicy);
+    return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), myPresentation, myTail, myPriority, updater, myPolicy,
+                                    mySuppressCharacterPredicate);
   }
 
   /**
@@ -119,7 +125,8 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
    * @return a new completion item with the given updater
    */
   public CommonCompletionItem withAdditionalUpdater(UpdateHandler updater) {
-    return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), myPresentation, myTail, myPriority, updater, myPolicy);
+    return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), myPresentation, myTail, myPriority, updater, myPolicy,
+                                    mySuppressCharacterPredicate);
   }
 
   /**
@@ -138,7 +145,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
   public CommonCompletionItem addLookupString(String string) {
     Set<String> additionalStrings = Stream.concat(myAdditionalStrings.stream(), Stream.of(string)).collect(Collectors.toUnmodifiableSet());
     return new CommonCompletionItem(mainLookupString(), additionalStrings, contextObject(), myPresentation, myTail,
-                                    myPriority, myAdditionalUpdater, myPolicy);
+                                    myPriority, myAdditionalUpdater, myPolicy, mySuppressCharacterPredicate);
   }
 
   /**
@@ -147,7 +154,12 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
    */
   public CommonCompletionItem withAutoCompletionPolicy(AutoCompletionPolicy policy) {
     return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), myPresentation, myTail, myPriority,
-                                    myAdditionalUpdater, policy);
+                                    myAdditionalUpdater, policy, mySuppressCharacterPredicate);
+  }
+  
+  public CommonCompletionItem withInsertCharacterSuppressed(Predicate<InsertionContext> condition) {
+    return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), myPresentation, myTail,
+                                    myPriority, myAdditionalUpdater, myPolicy, condition);
   }
 
   @Override
@@ -175,6 +187,11 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
     manager.commitDocument(document);
     manager.doPostponedOperationsAndUnblockDocument(document);
     myTail.processTail(updater, updater.getCaretOffset());
+  }
+
+  @Override
+  protected boolean shouldAddCompletionChar(InsertionContext context) {
+    return super.shouldAddCompletionChar(context) && (mySuppressCharacterPredicate == null || !mySuppressCharacterPredicate.test(context));
   }
 
   /**

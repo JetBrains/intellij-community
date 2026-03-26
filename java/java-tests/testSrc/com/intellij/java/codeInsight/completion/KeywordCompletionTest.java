@@ -389,11 +389,6 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
       selectItem(myItems[0]);
       checkResultByTestName();
     }
-
-    @Override
-    public void testInstanceofNegation() {
-      // skip; TODO: support custom completion chars
-    }
   }
 
 }

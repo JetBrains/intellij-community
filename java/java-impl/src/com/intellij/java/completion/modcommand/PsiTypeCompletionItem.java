@@ -103,6 +103,13 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem<PsiType
   }
 
   @Override
+  protected boolean shouldAddCompletionChar(InsertionContext context) {
+    return super.shouldAddCompletionChar(context) &&
+           context.insertionCharacter() != '[' &&
+           context.insertionCharacter() != '<';
+  }
+  
+  @Override
   public void update(ActionContext actionContext, InsertionContext insertionContext, ModPsiUpdater updater) {
     PsiFile file = updater.getPsiFile();
     PsiClass psiClass = PsiUtil.resolveClassInType(getType());
