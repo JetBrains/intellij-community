@@ -49,6 +49,7 @@ public final class ThreadDumpParser {
   private static final String ourLockedOwnableSynchronizersHeader = "Locked ownable synchronizers";
   private static final Pattern ourLockedOwnableSynchronizersPattern = Pattern.compile("- <(0x[\\da-f]+)> \\(.*\\)");
   private static final Set<String> ourIgnoredThreadStateParts = Set.of("virtual");
+  private static final Pattern ourLockedPattern = Pattern.compile("- locked (?:<(.+?)>|(\\S+))");
 
   private static final String[] IMPORTANT_THREAD_DUMP_WORDS = ContainerUtil.ar("tid", "nid", "wait", "parking", "prio", "os_prio", "java");
 
@@ -180,21 +181,9 @@ public final class ThreadDumpParser {
     List<ThreadState> threads = result.threads;
     for(ThreadState threadState: threads) {
       inferThreadStateDetail(threadState);
+      extractJstackLockInfo(threadState);
     }
-    for(ThreadState threadState: threads) {
-      String lockId = findWaitingForLock(threadState.getStackTrace());
-      ThreadState lockOwner = findLockOwner(threads, lockId, true);
-      if (lockOwner == null) {
-        lockOwner = findLockOwner(threads, lockId, false);
-      }
-      if (lockOwner != null) {
-        if (threadState.isAwaitedBy(lockOwner)) {
-          threadState.addDeadlockedThread(lockOwner);
-          lockOwner.addDeadlockedThread(threadState);
-        }
-        lockOwner.addWaitingThread(threadState);
-      }
-    }
+    detectWaitingAndDeadlockedThreads(threads);
     sortThreads(threads);
 
     StringBuilder coroutineDump = result.coroutineDump;
@@ -207,14 +196,16 @@ public final class ThreadDumpParser {
     return threads;
   }
 
-  private static @Nullable ThreadState findLockOwner(List<? extends ThreadState> lockOwners, String lockId, boolean ignoreWaiting) {
-    for(ThreadState lockOwner : lockOwners) {
-      String trace = lockOwner.getStackTrace();
-      if (!ignoreWaiting || !trace.contains(AT_JAVA_LANG_OBJECT_WAIT)) {
-        return lockOwner;
+  private static @Nullable ThreadState findLockOwner(@Nullable List<? extends ThreadState> lockOwners, List<? extends ThreadState> threadStates, String lockId, boolean ignoreWaiting) {
+    if (lockOwners != null) {
+      for(ThreadState lockOwner : lockOwners) {
+        String trace = lockOwner.getStackTrace();
+        if (!ignoreWaiting || !trace.contains(AT_JAVA_LANG_OBJECT_WAIT)) {
+          return lockOwner;
+        }
       }
     }
-    for(ThreadState lockOwner : lockOwners) {
+    for(ThreadState lockOwner : threadStates) {
       if (lockOwner.getOwnableSynchronizers() != null && lockOwner.getOwnableSynchronizers().equals(lockId)) {
         return lockOwner;
       }
@@ -244,11 +235,10 @@ public final class ThreadDumpParser {
       String waitedMonitor = threadState.getContendedMonitor();
       if (waitedMonitor == null) continue;
       var monitorOwners = monitorToOwners.get(waitedMonitor);
-      if (monitorOwners == null) continue;
 
-      ThreadState lockOwner = findLockOwner(monitorOwners, waitedMonitor, true);
+      ThreadState lockOwner = findLockOwner(monitorOwners, threadStates, waitedMonitor, true);
       if (lockOwner == null) {
-        lockOwner = findLockOwner(monitorOwners, waitedMonitor, false);
+        lockOwner = findLockOwner(monitorOwners, threadStates, waitedMonitor, false);
       }
       if (lockOwner != null) {
         if (threadState.isAwaitedBy(lockOwner)) {
@@ -369,6 +359,23 @@ public final class ThreadDumpParser {
   private static boolean isStackFrame(String line) {
     return line.trim().startsWith("at ");
   }
+
+  private static void extractJstackLockInfo(ThreadState threadState) {
+    String trace = threadState.getStackTrace();
+    if (trace == null) return;
+
+    String waitingForLock = findWaitingForLock(trace);
+    threadState.setContendedMonitor(waitingForLock);
+
+    Matcher m = ourLockedPattern.matcher(trace);
+    while (m.find()) {
+      var monitor = m.group(1) != null ? m.group(1) : m.group(2);
+      threadState.addOwnedMonitor(monitor);
+    }
+
+    threadState.setOwnableSynchronizers(findLockedOwnableSynchronizers(threadState.getStackTrace())); // todo check ownableSynchronizers
+  }
+
   private static @Nullable String findLockedOwnableSynchronizers(final String stackTrace) {
     if (!stackTrace.contains(ourLockedOwnableSynchronizersHeader)) {
       // It's a fast path, otherwise regex below takes too much time.
@@ -453,7 +460,6 @@ public final class ThreadDumpParser {
       }
       threadState.setExtraState("modality level " + modality);
     }
-    threadState.setOwnableSynchronizers(findLockedOwnableSynchronizers(threadState.getStackTrace()));
   }
 
   private static @Nullable ThreadState tryParseThreadStart(String line) {
