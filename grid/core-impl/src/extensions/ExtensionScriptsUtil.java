@@ -12,6 +12,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -123,7 +124,7 @@ public final class ExtensionScriptsUtil {
     ThreadingAssertions.assertEventDispatchThread();
 
     // a script itself, or some files it uses can be open in editor(s)
-    FileDocumentManager.getInstance().saveAllDocuments();
+    WriteAction.run(() -> FileDocumentManager.getInstance().saveAllDocuments());
   }
 
   public static @NotNull String loadScript(@Nullable Project project, @NotNull Path script) throws IOException {

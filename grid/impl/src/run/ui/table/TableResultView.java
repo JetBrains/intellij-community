@@ -187,7 +187,7 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.IntUnaryOperator;
-
+import static com.intellij.database.datagrid.GridUtilKt.isArrayCell;
 import static com.intellij.database.datagrid.GridUtilKt.setupDynamicRowHeight;
 import static com.intellij.database.run.ui.DataAccessType.DATA_WITH_MUTATIONS;
 import static com.intellij.database.run.ui.EditMaximizedViewKt.EDIT_MAXIMIZED_GRID_KEY;
@@ -1447,9 +1447,24 @@ public final class TableResultView extends JBTableWithResizableCells
   private boolean shouldDisplayValueEditor(int row, int column) {
     var tableModel = getModel();
     var cellValue = tableModel.getValueAt(row, column);
-    return (cellValue instanceof LobInfo.ClobInfo clob && clob.isFullyReloaded()) ||
-           (cellValue instanceof LobInfo.BlobInfo blob && blob.isFullyReloaded()) ||
-           (Registry.is("database.new.arrays.editor") && cellValue.getClass().isArray());
+    if ((cellValue instanceof LobInfo.ClobInfo clob && clob.isFullyReloaded()) ||
+        (cellValue instanceof LobInfo.BlobInfo blob && blob.isFullyReloaded()) ||
+        isArrayViewCell(row, column)) {
+      return true;
+    }
+    return false;
+  }
+
+  private boolean isArrayViewCell(int row, int column) {
+    var settings = GridUtil.getSettings(myResultPanel);
+    if (Registry.is("database.new.arrays.editor") && (settings != null && !settings.isEditArrayAsText())) {
+      int modelColumnIdx = convertColumnIndexToModel(column);
+      int modelRowIdx = convertRowIndexToModel(row);
+      var columnIndex = ModelIndex.forColumn(myResultPanel, modelColumnIdx);
+      var rowIndex = ModelIndex.forRow(myResultPanel, modelRowIdx);
+      return isArrayCell(rowIndex, columnIndex, myResultPanel);
+    }
+    return false;
   }
 
   private void showValueEditor(EventObject e) {

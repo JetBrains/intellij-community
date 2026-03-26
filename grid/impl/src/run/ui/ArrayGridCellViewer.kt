@@ -9,16 +9,17 @@ import com.intellij.database.datagrid.GridRequestSource
 import com.intellij.database.datagrid.GridRow
 import com.intellij.database.datagrid.GridUtil
 import com.intellij.database.datagrid.ModelIndex
+import com.intellij.database.datagrid.isArrayCell
 import com.intellij.database.datagrid.mutating.CellMutation
 import com.intellij.database.run.ui.grid.CellAttributesKey
 import com.intellij.database.run.ui.grid.editors.GridCellEditorFactoryProvider
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.database.run.actions.GridAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.CommonActionsPanel
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
@@ -28,7 +29,6 @@ import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Component
-import java.sql.Types
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -72,14 +72,26 @@ class ArrayGridViewer(private val grid: DataGrid) : CellViewer {
   private var displayedState: ArrayCellState? = null
   private var displayedIsEditable: Boolean = false
 
+  var hideDeleted: Boolean = GridUtil.getSettings(grid)?.isHideDeletedInArrayGrid ?: false
+    private set
+
+  fun setHideDeleted(hide: Boolean) {
+    if (hideDeleted == hide) return
+    hideDeleted = hide
+    GridUtil.getSettings(grid)?.setHideDeletedInArrayGrid(hide)
+    val state = displayedState ?: return
+    showTable(state, displayedIsEditable)
+  }
+
   override val component: JComponent = panel
   override val preferedFocusComponent: JComponent? = null
 
   override fun update(event: UpdateEvent?) {
     rowIdx    = grid.selectionModel.leadSelectionRow
     columnIdx = grid.selectionModel.leadSelectionColumn
-    if (!rowIdx.isValid(grid) || !columnIdx.isValid(grid) || !isArrayColumn()) {
-      showEmpty(); return
+    if (!rowIdx.isValid(grid) || !columnIdx.isValid(grid) || !isArrayCell(rowIdx, columnIdx, grid)) {
+      showEmpty()
+      return
     }
 
     val storedState = (grid.dataHookup.mutator as? GridMutator.DatabaseMutator<GridRow, GridColumn>)
@@ -121,12 +133,15 @@ class ArrayGridViewer(private val grid: DataGrid) : CellViewer {
     clearCenter()
     displayedState = state
     displayedIsEditable = isEditable
-    val rows = state.rows
+    val allRows = state.rows
+    val displayedRows: MutableList<ArrayRow> =
+      if (hideDeleted) allRows.filterNot { it.isDeleted }.toMutableList()
+      else allRows
     val committed = state.committedElements
-    val model = ArrayTableModel(rows, isEditable) { propagateToGrid(state) }
+    val model = ArrayTableModel(displayedRows, isEditable) { propagateToGrid(state) }
     val table = object : JBTable(model) {
       override fun prepareRenderer(renderer: TableCellRenderer, row: Int, column: Int): Component {
-        val arrayRow = rows[row]
+        val arrayRow = displayedRows[row]
         val c = renderer.getTableCellRendererComponent(this, arrayRow.value, isRowSelected(row), false, row, column)
         if (c is JComponent) {
           if (!isRowSelected(row)) {
@@ -148,25 +163,63 @@ class ArrayGridViewer(private val grid: DataGrid) : CellViewer {
     table.setShowVerticalLines(false)
     (grid.resultView as? ResultViewWithRows)?.rowHeight?.let { table.rowHeight = it }
     val decorator = ToolbarDecorator.createDecorator(table)
-    val revertAction = object : DumbAwareAction(DataGridBundle.message("EditMaximized.ArrayGrid.revert"), null, AllIcons.General.Reset) {
+    val addAction = object : DumbAwareAction(DataGridBundle.message("EditMaximized.ArrayGrid.add"), null, AllIcons.General.Add), GridAction {
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-      override fun update(e: AnActionEvent) {
-        val i = table.selectedRow
-        if (i < 0) {
-          e.presentation.isEnabled = false; return
+      override fun update(e: AnActionEvent) { e.presentation.isEnabled = isEditable }
+      override fun actionPerformed(e: AnActionEvent) {
+        val newRow = ArrayRow(null, isAdded = true, isDeleted = false, committedIndex = -1)
+        val insertAt = if (table.selectedRow >= 0) table.selectedRow + 1 else displayedRows.size
+        if (displayedRows !== allRows) {
+          val allInsertAt = if (table.selectedRow >= 0) allRows.indexOf(displayedRows[table.selectedRow]) + 1 else allRows.size
+          allRows.add(allInsertAt, newRow)
         }
-        val row = rows[i]
-        e.presentation.isEnabled = row.isAdded || row.isDeleted ||
-                                   (row.committedIndex < committed.size && row.value != committed[row.committedIndex])
+        displayedRows.add(insertAt, newRow)
+        model.fireTableRowsInserted(insertAt, insertAt)
+        table.selectionModel.setSelectionInterval(insertAt, insertAt)
+        table.editCellAt(insertAt, 0)
+        propagateToGrid(state)
       }
-
+    }
+    val removeAction = object : DumbAwareAction(DataGridBundle.message("EditMaximized.ArrayGrid.remove"), null, AllIcons.General.Remove), GridAction {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+      override fun update(e: AnActionEvent) { e.presentation.isEnabled = isEditable && table.selectedRow >= 0 }
       override fun actionPerformed(e: AnActionEvent) {
         val i = table.selectedRow
         if (i < 0) return
-        val row = rows[i]
+        val row = displayedRows[i]
+        if (row.isAdded) {
+          if (displayedRows !== allRows) allRows.remove(row)
+          displayedRows.removeAt(i)
+          model.fireTableRowsDeleted(i, i)
+        } else {
+          row.isDeleted = !row.isDeleted
+          if (hideDeleted && row.isDeleted) {
+            displayedRows.removeAt(i)
+            model.fireTableRowsDeleted(i, i)
+          } else {
+            model.fireTableRowsUpdated(i, i)
+          }
+        }
+        propagateToGrid(state)
+      }
+    }
+    val revertAction = object : DumbAwareAction(DataGridBundle.message("EditMaximized.ArrayGrid.revert"), null, AllIcons.General.Reset), GridAction {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+      override fun update(e: AnActionEvent) {
+        val i = table.selectedRow
+        if (i < 0) { e.presentation.isEnabled = false; return }
+        val row = displayedRows[i]
+        e.presentation.isEnabled = row.isAdded || row.isDeleted ||
+                                   (row.committedIndex < committed.size && row.value != committed[row.committedIndex])
+      }
+      override fun actionPerformed(e: AnActionEvent) {
+        val i = table.selectedRow
+        if (i < 0) return
+        val row = displayedRows[i]
         when {
           row.isAdded -> {
-            rows.removeAt(i); model.fireTableRowsDeleted(i, i)
+            if (displayedRows !== allRows) allRows.remove(row)
+            displayedRows.removeAt(i); model.fireTableRowsDeleted(i, i)
           }
           row.isDeleted -> {
             row.isDeleted = false; model.fireTableRowsUpdated(i, i)
@@ -180,35 +233,21 @@ class ArrayGridViewer(private val grid: DataGrid) : CellViewer {
       }
     }
     decorator
-      .setAddAction {
-        val insertAt = if (table.selectedRow >= 0) table.selectedRow + 1 else rows.size
-        rows.add(insertAt, ArrayRow(null, isAdded = true, isDeleted = false, committedIndex = -1))
-        model.fireTableRowsInserted(insertAt, insertAt)
-        table.selectionModel.setSelectionInterval(insertAt, insertAt)
-        propagateToGrid(state)
-      }
-      .setRemoveAction {
-        val i = table.selectedRow
-        if (i < 0) return@setRemoveAction
-        val row = rows[i]
-        if (row.isAdded) {
-          rows.removeAt(i)
-          model.fireTableRowsDeleted(i, i)
-        }
-        else {
-          row.isDeleted = !row.isDeleted
-          model.fireTableRowsUpdated(i, i)
-        }
-        propagateToGrid(state)
-      }
+      .addExtraAction(addAction)
+      .addExtraAction(removeAction)
       .addExtraAction(revertAction)
 
     val decoratorPanel = decorator.createPanel()
+    addAction.registerCustomShortcutSet(ActionManager.getInstance().getAction("Console.TableResult.AddRow").shortcutSet, table)
+    removeAction.registerCustomShortcutSet(ActionManager.getInstance().getAction("Console.TableResult.DeleteRows").shortcutSet, table)
+    revertAction.registerCustomShortcutSet(ActionManager.getInstance().getAction("ChangesView.Revert").shortcutSet, table)
+    val escapeAction = object : DumbAwareAction() {
+      override fun actionPerformed(e: AnActionEvent) = grid.resultView.component.requestFocus()
+    }
+    escapeAction.registerCustomShortcutSet(java.awt.event.KeyEvent.VK_ESCAPE, 0, table)
     decoratorPanel.border = JBUI.Borders.empty()
     panel.add(decoratorPanel, BorderLayout.CENTER)
     decorator.actionsPanel?.apply {
-      setCustomShortcuts(CommonActionsPanel.Buttons.ADD, CustomShortcutSet.EMPTY)
-      setCustomShortcuts(CommonActionsPanel.Buttons.REMOVE, CustomShortcutSet.EMPTY)
       border = JBUI.Borders.compound(IdeBorderFactory.createBorder(JBColor.border(), SideBorder.BOTTOM),
                                      BorderFactory.createEmptyBorder(0, 8, 0, 8))
     }
@@ -243,11 +282,6 @@ class ArrayGridViewer(private val grid: DataGrid) : CellViewer {
     )
   }
 
-  private fun isArrayColumn(): Boolean {
-    val col = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getColumn(columnIdx) ?: return false
-    return isArrayColumnType(col)
-  }
-
   override fun dispose(): Unit = Unit
 }
 
@@ -256,23 +290,11 @@ class ArrayGridCellViewerFactory : CellViewerFactory {
     if (!Registry.`is`("database.new.arrays.editor", false)) return Suitability.NONE
     if (GridUtil.getSettings(grid)?.isEditArrayAsText ?: false) return Suitability.NONE
     if (!row.isValid(grid) || !column.isValid(grid)) return Suitability.NONE
-    val col = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getColumn(column) ?: return Suitability.NONE
-    if (!isArrayColumnType(col)) return Suitability.NONE
-    val value = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getValueAt(row, column)
-    if (isMultiDimensional(value)) return Suitability.NONE
+    if (!isArrayCell(row, column, grid)) return Suitability.NONE
     return Suitability.MAX
   }
 
   override fun createViewer(grid: DataGrid): CellViewer = ArrayGridViewer(grid)
-}
-
-private fun isMultiDimensional(value: Any?): Boolean {
-  val iterable: Iterable<*> = when (value) {
-    is Array<*>      -> value.asIterable()
-    is Collection<*> -> value
-    else             -> return false
-  }
-  return iterable.any { it is Array<*> || it is Collection<*> }
 }
 
 private fun toList(value: Any?): List<Any?>? = when (value) {
@@ -280,13 +302,6 @@ private fun toList(value: Any?): List<Any?>? = when (value) {
   is List<*> -> value
   is Set<*> -> value.toList()
   else -> null
-}
-
-// TODO: use better way to check type
-private fun isArrayColumnType(col: GridColumn): Boolean {
-  if (col.type == Types.ARRAY) return true
-  val name = col.typeName?.lowercase() ?: return false
-  return "array" in name || name.startsWith("list<") || name.startsWith("set<")
 }
 
 private fun parseElement(text: String, original: Any?): Any? = when {

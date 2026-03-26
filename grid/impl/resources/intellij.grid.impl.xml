@@ -417,6 +417,8 @@
             icon="AllIcons.Table.Pagination"/>
     <action id="Console.TableResult.EditMaximized.MoveToRight" class="com.intellij.database.actions.MoveEditMaximizedAction$MoveEditMaximizedToRightAction" icon="AllIcons.Actions.MoveToRightTop"/>
     <action id="Console.TableResult.EditMaximized.MoveToBottom" class="com.intellij.database.actions.MoveEditMaximizedAction$MoveEditMaximizedToBottomAction" icon="AllIcons.Actions.MoveToBottomRight"/>
+    <action id="Console.TableResult.EditMaximized.ArrayGrid.ToggleHideDeleted"
+            class="com.intellij.database.actions.ToggleHideDeletedInArrayAction"/>
     <group id="Console.TableResult.EditMaximized.Value.Group">
       <action id="Console.TableResult.EditMaximized.ToggleFormattedMode" class="com.intellij.database.actions.ToggleFormattedModeInEditMaximize" icon="AllIcons.Actions.PrettyPrint"/>
       <action id="Console.TableResult.EditMaximized.ToggleSoftWrap" class="com.intellij.database.actions.ToggleSoftWrapsInEditMaximize" icon="AllIcons.Actions.ToggleSoftWrap"/>
@@ -424,6 +426,8 @@
       <group popup="true" icon="AllIcons.General.GearPlain">
         <reference ref="Console.TableResult.EditMaximized.MoveToRight"/>
         <reference ref="Console.TableResult.EditMaximized.MoveToBottom"/>
+        <separator/>
+        <reference ref="Console.TableResult.EditMaximized.ArrayGrid.ToggleHideDeleted"/>
       </group>
       <reference ref="Console.TableResult.HideEditMaximized"/>
     </group>

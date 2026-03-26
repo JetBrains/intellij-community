@@ -161,4 +161,10 @@ public interface DataGridSettings {
   }
 
   default void setEditArrayAsText(boolean value) { }
+
+  default boolean isHideDeletedInArrayGrid() {
+    return false;
+  }
+
+  default void setHideDeletedInArrayGrid(boolean value) { }
 }
