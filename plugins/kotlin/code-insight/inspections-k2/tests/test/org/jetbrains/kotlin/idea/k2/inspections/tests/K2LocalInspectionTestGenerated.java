@@ -13749,6 +13749,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/superclass.kt");
             }
 
+            @TestMetadata("typeAlias.kt")
+            public void testTypeAlias() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/typeAlias.kt");
+            }
+
             @TestMetadata("typeParameter.kt")
             public void testTypeParameter() throws Exception {
                 runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/typeParameter.kt");
@@ -13861,6 +13866,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("superclass.kt")
             public void testSuperclass() throws Exception {
                 runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/superclass.kt");
+            }
+
+            @TestMetadata("typeAlias.kt")
+            public void testTypeAlias() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/typeAlias.kt");
             }
 
             @TestMetadata("typeParameter.kt")
