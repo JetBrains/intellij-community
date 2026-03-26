@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.actions
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProfileManager
 
@@ -8,6 +10,8 @@ import com.intellij.profile.codeInspection.InspectionProfileManager
  * Utility for enabling/disabling Python typing-related inspections in the user's current inspection profile.
  */
 object PyTypingInspectionsUtil {
+
+  private const val UNRESOLVED_REFERENCES_ID = "PyUnresolvedReferencesInspection"
 
   private val TYPING_INSPECTION_IDS = listOf(
     "PyArgumentListInspection",
@@ -30,7 +34,6 @@ object PyTypingInspectionsUtil {
     "PyTypeCheckerInspection",
     "PyTypeHintsInspection",
     "PyTypedDictInspection",
-    "PyUnresolvedReferencesInspection",
   )
 
   /**
@@ -48,6 +51,12 @@ object PyTypingInspectionsUtil {
         if (model.getToolsOrNull(inspectionId, project) != null) {
           model.setToolEnabled(inspectionId, enabled, project)
         }
+      }
+
+      // PyUnresolvedReferencesInspection: keep enabled but switch to errors-only mode when typing inspections are disabled
+      val key = HighlightDisplayKey.find(UNRESOLVED_REFERENCES_ID)
+      if (key != null && model.getToolsOrNull(UNRESOLVED_REFERENCES_ID, project) != null) {
+        model.setErrorLevel(key, if (enabled) HighlightDisplayLevel.WARNING else HighlightDisplayLevel.ERROR, project)
       }
     }
   }

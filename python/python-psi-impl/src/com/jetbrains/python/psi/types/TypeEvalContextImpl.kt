@@ -189,7 +189,8 @@ open class TypeEvalContextImpl internal constructor(
     return RecursionManager.doPreventingRecursion(element to this, false) {
       val type = if (typeEngine != null && typeEngine.isSupportedForResolve(element)) {
         val (result, duration) = measureTimedValue {
-          typeEngine.resolveType(element, this is LibraryTypeEvalContext)?.get()
+          val isUserInitiated = constraints.myAllowStubToAST && constraints.myAllowDataFlow
+          typeEngine.resolveType(element, this is LibraryTypeEvalContext, isUserInitiated)?.get()
         }
         PyTypeEvaluationAggregatesCollector.recordHybridTypeEngineTime(typeEngine.name, duration.inWholeMilliseconds)
         result
