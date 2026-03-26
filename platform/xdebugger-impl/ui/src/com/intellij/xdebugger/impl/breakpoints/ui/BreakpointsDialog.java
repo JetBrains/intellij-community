@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
+import com.intellij.codeInsight.actions.ReaderModeMatcher;
+import com.intellij.codeInsight.actions.ReaderModeProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.TreeState;
@@ -16,14 +18,18 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
@@ -74,6 +80,8 @@ import java.util.TreeSet;
 
 @ApiStatus.Internal
 public class BreakpointsDialog extends DialogWrapper {
+  private static final Key<Boolean> BREAKPOINT_PREVIEW_EDITOR = Key.create("xdebugger.breakpoint.preview.editor");
+
   private final @NotNull Project myProject;
 
   private final @Nullable XBreakpointId myInitialBreakpointId;
@@ -159,7 +167,14 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   private JComponent createDetailView() {
-    DetailViewImpl detailView = new DetailViewImpl(myProject);
+    DetailViewImpl detailView = new DetailViewImpl(myProject) {
+      @Override
+      protected @NotNull Editor createEditor(Project project, Document document, @NotNull VirtualFile file) {
+        Editor editor = super.createEditor(project, document, file);
+        editor.putUserData(BREAKPOINT_PREVIEW_EDITOR, Boolean.TRUE);
+        return editor;
+      }
+    };
     detailView.setEmptyLabel(XDebuggerBundle.message("xbreakpoint.label.empty"));
     detailView.addEditorChangedListener(newEditor -> {
       if (newEditor != null && !isDisposed()) {
@@ -565,6 +580,19 @@ public class BreakpointsDialog extends DialogWrapper {
       }
       myBreakpoint.setUserDescription(description);
       myTreeController.rebuildTree(myBreakpointItems);
+    }
+  }
+
+  static final class BreakpointPreviewReaderModeMatcher implements ReaderModeMatcher {
+    @Override
+    public @Nullable Boolean matches(@NotNull Project project,
+                                     @NotNull VirtualFile file,
+                                     @Nullable Editor editor,
+                                     @NotNull ReaderModeProvider.ReaderMode mode) {
+      if (editor == null) {
+        return null;
+      }
+      return editor.getUserData(BREAKPOINT_PREVIEW_EDITOR) == Boolean.TRUE ? Boolean.FALSE : null;
     }
   }
 }

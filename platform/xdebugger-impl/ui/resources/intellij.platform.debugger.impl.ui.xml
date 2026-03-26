@@ -69,6 +69,7 @@
     <xdebugger.breakpointGroupingRule implementation="com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointGroupingByTypeRule"/>
     <xdebugger.breakpointGroupingRule implementation="com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule"/>
     <xdebugger.breakpointGroupingRule implementation="com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointCustomGroupingRule"/>
+    <readerModeMatcher implementation="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialog$BreakpointPreviewReaderModeMatcher"/>
 
     <xdebugger.configurableProvider implementation="com.intellij.xdebugger.impl.settings.XDebuggerConfigurableProvider" order="first"/>
 
