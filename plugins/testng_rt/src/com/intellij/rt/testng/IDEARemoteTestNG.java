@@ -78,6 +78,19 @@ public class IDEARemoteTestNG extends TestNG {
     }
   }
 
+  private static final boolean HAS_ADD_LISTENER_BY_INTERFACE;
+
+  static {
+    boolean result = false;
+    try {
+      TestNG.class.getMethod("addListener", Class.forName("org.testng.ITestNGListener"));
+      result = true;
+    }
+    catch (ReflectiveOperationException ignored) {
+    }
+    HAS_ADD_LISTENER_BY_INTERFACE = result;
+  }
+
   private void attachListeners(IDEATestNGRemoteListener listener) {
     List<ITestNGListener> listeners = new ArrayList<>();
     listeners.add(getListenerIfExists(() -> new IDEATestNGSuiteListener(listener)));
@@ -87,7 +100,12 @@ public class IDEARemoteTestNG extends TestNG {
 
     for (ITestNGListener l : listeners) {
       if (l == null) continue;
-      addListener((Object)l);
+      if (HAS_ADD_LISTENER_BY_INTERFACE) {
+        addListener(l);
+      }
+      else {
+        addListener((Object)l);
+      }
     }
 
     for (Object l : listeners) {
