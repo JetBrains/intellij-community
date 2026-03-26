@@ -21,7 +21,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
-class RuntimeModuleRepositoryBuilderTest {
+class RuntimeModuleRepositoryGeneratorTest {
   @JvmField
   @RegisterExtension
   val tempDirectory = TempDirectoryExtension()
@@ -271,7 +271,7 @@ class RuntimeModuleRepositoryBuilderTest {
   }
 
   private fun buildAndCheck(expected: RawDescriptorListBuilder.() -> Unit) {
-    buildAndCheck(project, tempDirectory.rootPath, expected)
+    generateAndCheck(project, tempDirectory.rootPath, expected)
   }
 
   private fun getUrl(relativePath: String): String {

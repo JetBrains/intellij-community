@@ -25,15 +25,15 @@ private fun checkRuntimeModuleRepository(
   }
 }
 
-internal fun buildAndCheck(project: JpsProject, basePath: Path, expected: RawDescriptorListBuilder.() -> Unit) {
-  val generatedDescriptors = buildAndValidateRuntimeModuleRepository(project)
+internal fun generateAndCheck(project: JpsProject, basePath: Path, expected: RawDescriptorListBuilder.() -> Unit) {
+  val generatedDescriptors = generateAndValidateRuntimeModuleRepository(project)
   val moduleDescriptors = generatedDescriptors.associateBy { it.moduleId }
   val pluginHeaders = emptyList<RawRuntimePluginHeader>()
   val rawData = RawRuntimeModuleRepositoryData.create(moduleDescriptors, pluginHeaders, basePath)
   checkRuntimeModuleRepository(rawData, expected)
 }
 
-internal fun buildAndValidateRuntimeModuleRepository(project: JpsProject): List<RawRuntimeModuleDescriptor> {
+internal fun generateAndValidateRuntimeModuleRepository(project: JpsProject): List<RawRuntimeModuleDescriptor> {
   val resourcePathsSchema = JpsCompilationResourcePathsSchema(project)
   val generatedDescriptors =
     RuntimeModuleRepositoryGenerator.generateRuntimeModuleDescriptorsForWholeProject(project,

@@ -8,11 +8,11 @@ import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 
-class BuildModuleRepositoryForIntelliJProjectTest {
+class RuntimeModuleRepositoryForIntelliJProjectGenerationTest {
   @Test
   fun `test community project`() {
     val project = JpsSerializationManager.getInstance().loadProject(PathManager.getCommunityHomePath(), emptyMap<String, String>())
-    buildAndValidateRuntimeModuleRepository(project)
+    generateAndValidateRuntimeModuleRepository(project)
   }
 
   @Test
@@ -20,6 +20,6 @@ class BuildModuleRepositoryForIntelliJProjectTest {
     val ultimateRoot = Path(PathManager.getCommunityHomePath()).parent
     if (!Files.exists(ultimateRoot.resolve(".idea"))) return
     val project = JpsSerializationManager.getInstance().loadProject(ultimateRoot.pathString, emptyMap<String, String>())
-    buildAndValidateRuntimeModuleRepository(project)
+    generateAndValidateRuntimeModuleRepository(project)
   }
 }
