@@ -39,6 +39,8 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/lang-api:lang",
     "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/ide-core",
   ]
 )
 
@@ -70,6 +72,8 @@ jvm_library(
     "//platform/util/jdom:jdom_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//platform/analysis-api:analysis_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.projectView.backend` end
