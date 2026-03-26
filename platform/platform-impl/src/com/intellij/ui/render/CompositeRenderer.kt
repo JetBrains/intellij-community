@@ -16,7 +16,8 @@ import javax.swing.ListCellRenderer
 @ApiStatus.Internal
 abstract class CompositeRenderer<T> : ListCellRenderer<T?>, ExperimentalUI.NewUIComboBoxRenderer {
 
-  final override fun getListCellRendererComponent(
+  // todo final
+  override fun getListCellRendererComponent(
     list: JList<out T?>,
     value: T?,
     index: Int,
