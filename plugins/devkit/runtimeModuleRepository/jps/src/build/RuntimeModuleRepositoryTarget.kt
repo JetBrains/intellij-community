@@ -36,7 +36,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import kotlin.system.measureTimeMillis
 
-internal class RuntimeModuleRepositoryTarget(
+class RuntimeModuleRepositoryTarget(
   val project: JpsProject,
 ) : BuildTarget<BuildRootDescriptor>(RuntimeModuleRepositoryTarget), BuildTargetHashSupplier {
   override fun getId(): String {

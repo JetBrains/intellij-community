@@ -656,6 +656,8 @@ jvm_library(
     "//platform/runtime/repository/tests:tests_test_lib",
     "//platform/runtime/product/tests",
     "//platform/runtime/product/tests:tests_test_lib",
+    "//plugins/devkit/runtimeModuleRepository/generator/tests",
+    "//plugins/devkit/runtimeModuleRepository/generator/tests:tests_test_lib",
     "//plugins/htmltools:html-tools-tests",
     "//plugins/htmltools:html-tools-tests_test_lib",
     "//plugins/lombok",

@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.devkit.runtimeModuleRepository.jps.build
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.devkit.runtimeModuleRepository.generator.tests
 
+import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryTarget
 import com.intellij.openapi.application.PathManager
 import org.jetbrains.jps.builders.CompileScopeTestBuilder
 import org.jetbrains.jps.builders.JpsBuildTestCase

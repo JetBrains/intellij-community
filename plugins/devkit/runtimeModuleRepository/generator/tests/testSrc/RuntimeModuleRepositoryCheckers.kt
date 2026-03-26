@@ -1,13 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.devkit.runtimeModuleRepository.jps.build
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.devkit.runtimeModuleRepository.generator.tests
 
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
-import org.jetbrains.jps.builders.JpsBuildTestCase
+import com.intellij.testFramework.UsefulTestCase
 import java.nio.file.Path
+import java.util.ArrayList
 
 fun checkRuntimeModuleRepository(outputDir: Path,
                                  expected: RawDescriptorListBuilder.() -> Unit) {
@@ -24,9 +25,9 @@ private fun checkRuntimeModuleRepository(
   val actualIds = buildRepositoryData.allModuleIds.filter { it != RUNTIME_REPOSITORY_MARKER_MODULE && it != RUNTIME_REPOSITORY_TESTS_MARKER_MODULE }
   val builder = RawDescriptorListBuilder()
   builder.expected()
-  JpsBuildTestCase.assertSameElements(actualIds, builder.descriptors.map { it.moduleId })
+  UsefulTestCase.assertSameElements(actualIds, builder.descriptors.map { it.moduleId })
   for (expectedDescriptor in builder.descriptors) {
-    JpsBuildTestCase.assertEquals("Different data for '${expectedDescriptor.moduleId.presentableName}'.", expectedDescriptor, buildRepositoryData.findDescriptor(expectedDescriptor.moduleId)!!)
+    UsefulTestCase.assertEquals("Different data for '${expectedDescriptor.moduleId.presentableName}'.", expectedDescriptor, buildRepositoryData.findDescriptor(expectedDescriptor.moduleId)!!)
   }
 }
 
