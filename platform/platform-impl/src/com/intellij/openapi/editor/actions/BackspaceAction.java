@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CustomWrap;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -19,6 +20,8 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public final class BackspaceAction extends TextComponentEditorAction implements LatencyAwareEditorAction, HintManagerImpl.ActionToIgnore {
   public BackspaceAction() {
@@ -45,10 +48,18 @@ public final class BackspaceAction extends TextComponentEditorAction implements 
       return;
     }
 
+    int offset = editor.getCaretModel().getOffset();
+    List<CustomWrap> customWraps = editor.getCustomWrapModel().getWrapsAtOffset(offset);
+    if (!customWraps.isEmpty() && caretPosition.line == editor.offsetToVisualLine(offset, false)) {
+      for (CustomWrap customWrap : customWraps) {
+        editor.getCustomWrapModel().removeWrap(customWrap);
+      }
+      return;
+    }
+
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
     int colNumber = editor.getCaretModel().getLogicalPosition().column;
     Document document = editor.getDocument();
-    int offset = editor.getCaretModel().getOffset();
     if(colNumber > 0) {
       if(EditorModificationUtil.calcAfterLineEnd(editor) > 0) {
         int columnShift = -1;

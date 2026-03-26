@@ -915,8 +915,6 @@
                          order="after backspace.lookup, before backspace.for.selection"/>
     <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler"
                          id="backspace.for.selection" order="after backspace.lookup"/>
-    <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.openapi.editor.actions.CustomWrapBackspaceHandler"
-                         id="backspace.custom.wrap" order="before backspace.lang"/>
     <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteInColumnModeHandler"
                          id="delete.in.column.mode"/>
     <editorActionHandler
