@@ -40,6 +40,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
@@ -156,6 +157,7 @@ suspend fun <T, S:Any> withStorage(
               }
           }
         }
+        .conflate()
         .debounce(autoSaveDebounceMs)
         .collectLatest { db ->
           Storage.logger.debug { "saving snapshot $storageKey" }
