@@ -305,6 +305,11 @@ abstract class ProductProperties {
   var launcherCommandsCustomizer: ((List<CustomCommandLaunchData>, BuildContext) -> List<CustomCommandLaunchData>)? = null
 
   /**
+   * Custom frontend module filter
+   */
+  var frontendModuleFilter: (suspend (BuildContext) -> FrontendModuleFilter)? = null
+
+  /**
    * Base file name (without an extension) for product archives and installers (*.exe, *.tar.gz, *.dmg).
    */
   abstract fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String

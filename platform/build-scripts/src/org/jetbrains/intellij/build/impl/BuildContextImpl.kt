@@ -45,7 +45,6 @@ import org.jetbrains.intellij.build.findProductModulesFile
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.runProcess
-import org.jetbrains.intellij.build.isLanguageServer
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
@@ -324,7 +323,7 @@ class BuildContextImpl internal constructor(
       FrontendModuleFilterImpl.createFrontendModuleFilter(project = project, productModules = productModules, outputProvider = outputProvider)
     }
     else {
-      EmptyFrontendModuleFilter
+      productProperties.frontendModuleFilter?.invoke(this@BuildContextImpl) ?: EmptyFrontendModuleFilter
     }
   }
 
