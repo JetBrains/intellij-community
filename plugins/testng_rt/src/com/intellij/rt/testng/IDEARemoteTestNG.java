@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.testng;
 
 
 import org.testng.CommandLineArgs;
+import org.testng.ITestNGListener;
 import org.testng.TestNG;
 import org.testng.collections.Lists;
 import org.testng.xml.XmlClass;
@@ -17,6 +18,7 @@ import java.util.List;
 public class IDEARemoteTestNG extends TestNG {
 
   private final String myParam;
+
   public IDEARemoteTestNG(String param) {
     myParam = param;
   }
@@ -34,13 +36,13 @@ public class IDEARemoteTestNG extends TestNG {
   }
 
   @Override
-   public void run() {
+  public void run() {
     try {
       initializeSuitesAndJarFile();
 
       List<XmlSuite> suites = Lists.newArrayList();
       calculateAllSuites(m_suites, suites);
-      if(!suites.isEmpty()) {
+      if (!suites.isEmpty()) {
         for (XmlSuite suite : suites) {
           final List<XmlTest> tests = suite.getTests();
           for (XmlTest test : tests) {
@@ -70,27 +72,39 @@ public class IDEARemoteTestNG extends TestNG {
       }
       System.exit(0);
     }
-    catch(Throwable cause) {
+    catch (Throwable cause) {
       cause.printStackTrace(System.err);
       System.exit(-1);
     }
   }
 
   private void attachListeners(IDEATestNGRemoteListener listener) {
-    addListener((Object)new IDEATestNGSuiteListener(listener));
-    addListener((Object)new IDEATestNGTestListener(listener));
-    try {
-      Class<?> configClass = Class.forName("com.intellij.rt.testng.IDEATestNGConfigurationListener");
-      Object configurationListener = configClass.getConstructor(new Class[] {IDEATestNGRemoteListener.class}).newInstance(listener);
-      addListener(configurationListener);
+    List<ITestNGListener> listeners = new ArrayList<>();
+    listeners.add(getListenerIfExists(() -> new IDEATestNGSuiteListener(listener)));
+    listeners.add(getListenerIfExists(() -> new IDEATestNGTestListener(listener)));
+    listeners.add(getListenerIfExists(() -> new IDEATestNGConfigurationListener(listener)));
+    listeners.add(getListenerIfExists(() -> new IDEATestNGInvokedMethodListener(listener)));
 
-      Class<?> invokeClass = Class.forName("com.intellij.rt.testng.IDEATestNGInvokedMethodListener");
-      Object invokedMethodListener = invokeClass.getConstructor(new Class[]{IDEATestNGRemoteListener.class}).newInstance(listener);
-      addListener(invokedMethodListener);
-
-      //start with configuration started if invoke method listener was not added, otherwise with
-      configClass.getMethod("setIgnoreStarted").invoke(configurationListener);
+    for (ITestNGListener l : listeners) {
+      if (l == null) continue;
+      addListener((Object)l);
     }
-    catch (Throwable ignored) {}
+
+    for (Object l : listeners) {
+      if (l instanceof Startable) ((Startable)l).start();
+    }
+  }
+
+  private static ITestNGListener getListenerIfExists(ThrowableSupplier<ITestNGListener> factory) {
+    try {
+      return factory.get();
+    }
+    catch (Throwable ignored) {
+      return null;
+    }
+  }
+
+  private interface ThrowableSupplier<T> {
+    T get() throws Throwable;
   }
 }
