@@ -152,7 +152,7 @@ fun extractCalledInternalApiMethods(psiElement: PsiElement): List<PsiMethod> {
   return apiMethods.filter { isInternalApiMethod(it, psiElement) }
 }
 
-private fun isInternalApiMethod(method: PsiMethod, fromWhereCalled: PsiElement): Boolean {
+fun isInternalApiMethod(method: PsiMethod, fromWhereCalled: PsiElement): Boolean {
   if (isInTheSameFile(method, fromWhereCalled)) return true
   val project = method.project
   val containingFile = method.containingFile?.virtualFile ?: return false
@@ -166,7 +166,7 @@ private fun isInTheSameFile(method: PsiMethod, fromWhereCalled: PsiElement): Boo
 }
 
 
-private fun extractMethodCallExpressionsFromMethods(
+fun extractMethodCallExpressionsFromMethods(
   psiElement: PsiElement,
 ): List<PsiCallExpression> {
   val result: MutableList<PsiCallExpression> = mutableListOf()

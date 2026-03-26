@@ -49,6 +49,9 @@ class JavaChatCodeGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVis
           put(EXTERNAL_API_CALLS_PROPERTY, externalApiCalls.distinct().sorted().joinToString("\n"))
           put(INTERNAL_RELEVANT_FILES_PROPERTY, internalRelevantFiles.distinct().joinToString("\n"))
           put(METHOD_NAME_PROPERTY, method.name)
+          QualifiedNameProviderUtil.getQualifiedName(method)?.let {
+            put(TokenLocationProperty.METHOD_QUALIFIED_NAME.key, it)
+          }
         })
     )
   }
