@@ -21,16 +21,12 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.ui.TextFieldWithAutoCompletion.StringsCompletionProvider;
-import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -93,9 +89,6 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
                                          configuration -> !configuration.isUseModulePath(),
                                          (configuration, value) -> configuration.setUseModulePath(!value));
       fragments.add(fragment);
-      ReadAction.nonBlocking(() -> fragment.setRemovable(
-        FilenameIndex.getFilesByName(getProject(), PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(getProject())).length > 0))
-        .expireWith(fragment).submit(NonUrgentExecutor.getInstance());
     }
 
     fragments.add(commonParameterFragments.programArguments());

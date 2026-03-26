@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit2.configuration;
 
 import com.intellij.execution.ExecutionBundle;
@@ -16,14 +16,9 @@ import com.intellij.execution.ui.SettingsEditorFragment;
 import com.intellij.execution.ui.TagButton;
 import com.intellij.execution.ui.TargetPathFragment;
 import com.intellij.execution.ui.VariantTagFragment;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiJavaModule;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
-import com.intellij.util.concurrency.NonUrgentExecutor;
 
 import javax.swing.JTextField;
 import java.awt.BorderLayout;
@@ -55,9 +50,6 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
                                          configuration -> !configuration.isUseModulePath(),
                                          (configuration, value) -> configuration.setUseModulePath(!value));
       fragments.add(fragment);
-      ReadAction.nonBlocking(() -> fragment.setRemovable(
-        FilenameIndex.getFilesByName(getProject(), PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(getProject())).length > 0))
-        .expireWith(fragment).submit(NonUrgentExecutor.getInstance());
     }
 
     ConfigurationModuleSelector moduleSelector = new ConfigurationModuleSelector(getProject(), moduleClasspath.component());
