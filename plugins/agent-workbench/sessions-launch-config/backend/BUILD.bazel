@@ -27,55 +27,50 @@ jvm_library(
     "//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml",
   ]
 )
+### auto-generated section `build intellij.agent.workbench.sessions.launch.config.backend` end
+
+### auto-generated section `build intellij.agent.workbench.sessions.launch.config.backend.tests` start
+jvm_library(
+  name = "agent-workbench-sessions-launch-config-backend-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
 
 jvm_library(
-  name = "backend_test_lib",
+  name = "agent-workbench-sessions-launch-config-backend-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":backend"],
+  associates = ["//plugins/agent-workbench/sessions-launch-config/backend"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/backend",
-    "//platform/backend:backend_test_lib",
     "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
     "//platform/util",
-    "//platform/util:util_test_lib",
     "//platform/platform-util-io:ide-util-io",
     "//platform/eel-provider",
-    "//platform/eel-provider:eel-provider_test_lib",
     "//plugins/agent-workbench/common",
-    "//plugins/agent-workbench/common:common_test_lib",
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
-    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
     "//libraries/jackson/jackson",
-    "//libraries/jackson/jackson:jackson_test_lib",
     "//libraries/jackson/databind",
-    "//libraries/jackson/databind:databind_test_lib",
     "//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml",
-    "//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml_test_lib",
     "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
     "//libraries/junit5-params",
-    "//libraries/junit5-params:junit5-params_test_lib",
     "//libraries/junit4",
-    "//libraries/junit4:junit4_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//libraries/assertj-core",
-    "//libraries/assertj-core:assertj-core_test_lib",
   ],
-  runtime_deps = ["//platform/platform-util-io:ide-util-io_test_lib"]
+  runtime_deps = [":agent-workbench-sessions-launch-config-backend-tests"]
 )
-### auto-generated section `build intellij.agent.workbench.sessions.launch.config.backend` end
+### auto-generated section `build intellij.agent.workbench.sessions.launch.config.backend.tests` end
 
-### auto-generated section `test intellij.agent.workbench.sessions.launch.config.backend` start
+### auto-generated section `test intellij.agent.workbench.sessions.launch.config.backend.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "backend_test",
-  runtime_deps = [":backend_test_lib"]
+  name = "agent-workbench-sessions-launch-config-backend-tests_test",
+  runtime_deps = [":agent-workbench-sessions-launch-config-backend-tests_test_lib"]
 )
-### auto-generated section `test intellij.agent.workbench.sessions.launch.config.backend` end
+### auto-generated section `test intellij.agent.workbench.sessions.launch.config.backend.tests` end

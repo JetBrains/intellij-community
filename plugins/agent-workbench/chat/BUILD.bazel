@@ -1,3 +1,9 @@
+### auto-generated section `iml intellij.agent.workbench.chat` start
+exports_files([
+  "intellij.agent.workbench.chat.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.chat` end
+
 ### auto-generated section `build intellij.agent.workbench.chat` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
@@ -23,6 +29,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
     "//plugins/agent-workbench/common",
+    "//plugins/agent-workbench/prompt/core",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
     "//libraries/jackson/jackson",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
@@ -32,53 +40,11 @@ jvm_library(
     "//plugins/terminal",
   ]
 )
-
-jvm_library(
-  name = "chat_test_lib",
-  module_name = "intellij.agent.workbench.chat",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":chat",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/ide-core-impl:ide-core-impl_test_lib",
-    "//plugins/agent-workbench/common:common_test_lib",
-    "//plugins/agent-workbench/prompt/core:core_test_lib",
-    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
-    "//libraries/jackson/jackson:jackson_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/util:util_test_lib",
-    "//platform/platform-util-io:ide-util-io_test_lib",
-    "//platform/execution-impl:execution-impl_test_lib",
-    "//plugins/terminal/frontend:frontend_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
-    "//libraries/assertj-core",
-    "//libraries/assertj-core:assertj-core_test_lib",
-    "//plugins/terminal:terminal_test_lib",
-  ]
-)
 ### auto-generated section `build intellij.agent.workbench.chat` end
-
-### auto-generated section `iml intellij.agent.workbench.chat` start
-exports_files([
-  "intellij.agent.workbench.chat.iml",
-], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.agent.workbench.chat` end
 
 ### auto-generated section `build intellij.agent.workbench.chat.tests` start
 jvm_library(
   name = "agent-workbench-chat-tests",
-  module_name = "intellij.agent.workbench.chat.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
@@ -87,44 +53,44 @@ jvm_library(
   name = "agent-workbench-chat-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":chat"],
+  associates = ["//plugins/agent-workbench/chat"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/serialization/core",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl",
     "//plugins/agent-workbench/common",
-    "//plugins/agent-workbench/common:common_test_lib",
+    "//plugins/agent-workbench/prompt/core",
+    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
     "//libraries/jackson/jackson",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/platform-util-io:ide-util-io",
     "//platform/execution-impl",
-    "//platform/execution-impl:execution-impl_test_lib",
     "//platform/editor-ui-api:editor-ui",
-    "//platform/editor-ui-api:editor-ui_test_lib",
     "//plugins/terminal/frontend",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
     "//libraries/assertj-core",
-  ]
+    "//plugins/terminal",
+  ],
+  runtime_deps = [":agent-workbench-chat-tests"]
 )
-### auto-generated section `build intellij.agent.workbench.chat` end
+### auto-generated section `build intellij.agent.workbench.chat.tests` end
 
-### auto-generated section `test intellij.agent.workbench.chat` start
+### auto-generated section `test intellij.agent.workbench.chat.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "chat_test",
-  runtime_deps = [":chat_test_lib"]
+  name = "agent-workbench-chat-tests_test",
+  runtime_deps = [":agent-workbench-chat-tests_test_lib"]
 )
-### auto-generated section `test intellij.agent.workbench.chat` end
+### auto-generated section `test intellij.agent.workbench.chat.tests` end

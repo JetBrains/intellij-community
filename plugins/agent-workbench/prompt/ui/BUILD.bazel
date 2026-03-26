@@ -1,3 +1,17 @@
+### auto-generated section `iml intellij.agent.workbench.prompt.ui` start
+exports_files([
+  "intellij.agent.workbench.prompt.ui.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.prompt.ui` end
+
+
+
+### auto-generated section `iml intellij.agent.workbench.prompt.ui.tests` start
+exports_files([
+  "intellij.agent.workbench.prompt.ui.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.prompt.ui.tests` end
+
 ### auto-generated section `build intellij.agent.workbench.prompt.ui` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
@@ -22,6 +36,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/platform-api:ide",
+    "//platform/structure-view-impl:structureView-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl/concurrency",
     "//platform/lang-api:lang",
@@ -35,56 +50,11 @@ jvm_library(
     "//platform/markdown-utils",
   ]
 )
-
-jvm_library(
-  name = "ui_test_lib",
-  module_name = "intellij.agent.workbench.prompt.ui",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":ui",
-    "//libraries/kotlinx/serialization/core:core_test_lib",
-    "//libraries/hash4j:hash4j_test_lib",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/util/concurrency:concurrency_test_lib",
-    "//platform/core-api:core_test_lib",
-    "//platform/core-ui:core-ui_test_lib",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/platform-impl/concurrency:concurrency_test_lib",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/util:util_test_lib",
-    "//plugins/agent-workbench/common:common_test_lib",
-    "//plugins/agent-workbench/prompt/core:core_test_lib",
-    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
-    "//plugins/markdown/core:markdown_test_lib",
-    "//platform/markdown-utils:markdown-utils_test_lib",
-    "//plugins/agent-workbench/prompt/vcs",
-    "//plugins/agent-workbench/prompt/vcs:vcs_test_lib",
-    "//libraries/junit5",
-    "//libraries/junit5:junit5_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//libraries/assertj-core",
-    "//libraries/assertj-core:assertj-core_test_lib",
-  ]
-)
 ### auto-generated section `build intellij.agent.workbench.prompt.ui` end
-
-### auto-generated section `iml intellij.agent.workbench.prompt.ui` start
-exports_files([
-  "intellij.agent.workbench.prompt.ui.iml",
-], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.agent.workbench.prompt.ui` end
 
 ### auto-generated section `build intellij.agent.workbench.prompt.ui.tests` start
 jvm_library(
   name = "agent-workbench-prompt-ui-tests",
-  module_name = "intellij.agent.workbench.prompt.ui.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
@@ -93,62 +63,42 @@ jvm_library(
   name = "agent-workbench-prompt-ui-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [
-    "//plugins/agent-workbench/prompt/ui",
-    "//plugins/agent-workbench/prompt/ui:ui_test_lib",
-  ],
+  associates = ["//plugins/agent-workbench/prompt/ui"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/serialization/core",
     "//libraries/hash4j",
     "//platform/analysis-api:analysis",
-    "//platform/analysis-api:analysis_test_lib",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-impl/concurrency",
+    "//platform/platform-impl/concurrency:concurrency_test_lib",
     "//platform/lang-api:lang",
-    "//platform/lang-api:lang_test_lib",
     "//platform/lang-impl",
-    "//platform/lang-impl:lang-impl_test_lib",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//plugins/agent-workbench/common",
-    "//plugins/agent-workbench/common:common_test_lib",
     "//plugins/agent-workbench/prompt/core",
-    "//plugins/agent-workbench/prompt/core:core_test_lib",
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
-    "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
     "//plugins/markdown/core:markdown",
-    "//plugins/markdown/core:markdown_test_lib",
     "//platform/markdown-utils",
     "//platform/markdown-utils:markdown-utils_test_lib",
     "//plugins/agent-workbench/prompt/vcs",
-    "//plugins/agent-workbench/prompt/vcs:vcs_test_lib",
     "//libraries/junit5",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//libraries/assertj-core",
-    "//libraries/assertj-core:assertj-core_test_lib",
   ],
-  runtime_deps = [
-    ":agent-workbench-prompt-ui-tests",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/platform-impl/concurrency:concurrency_test_lib",
-  ]
+  runtime_deps = [":agent-workbench-prompt-ui-tests"]
 )
 ### auto-generated section `build intellij.agent.workbench.prompt.ui.tests` end
-
-### auto-generated section `iml intellij.agent.workbench.prompt.ui.tests` start
-exports_files([
-  "intellij.agent.workbench.prompt.ui.tests.iml",
-], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.agent.workbench.prompt.ui.tests` end
 
 ### auto-generated section `test intellij.agent.workbench.prompt.ui.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
