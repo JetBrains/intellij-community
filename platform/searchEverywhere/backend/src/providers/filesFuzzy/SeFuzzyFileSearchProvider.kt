@@ -7,7 +7,6 @@ import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrappe
 import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -101,10 +100,9 @@ class SeFuzzyFileSearchProvider(
 
     val namesProcessor = NamesProcessor(this, searchScope, hiddenTypeRefs, query, project, collector)
 
-    ReadAction.nonBlocking<Boolean> {
+    readAction {
       FilenameIndex.processAllFileNames(namesProcessor, searchScope, IdFilter.getProjectIdFilter(project, isEverywhere))
-      true
-    }.executeSynchronously()
+    }
 
     namesProcessor.close()
   }
