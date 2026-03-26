@@ -83,7 +83,7 @@ public final class IncrementalCacheUpdateEvent {
   // but since this is needed while recalculating the data needed for that (soft-wraps),
   // it is not possible. need to bootstrap.
   private static VisualLineInfo getVisualLineInfo(@NotNull EditorImpl editor, int offset, boolean beforeSoftWrap) {
-    Document document = editor.getUiDocument();
+    Document document = editor.getElfDocument();
     int textLength = document.getTextLength();
     if (offset <= 0 || textLength == 0) return new VisualLineInfo(0, false);
     offset = Math.min(offset, textLength);

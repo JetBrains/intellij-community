@@ -52,7 +52,7 @@ public final class SoftWrapEngine {
                         int visibleWidth,
                         int relativeIndent) {
     myEditor = editor;
-    myDocument = editor.getUiDocument();
+    myDocument = editor.getElfDocument();
     myText = myDocument.getImmutableCharSequence();
     myView = editor.myView;
     myStorage = storage;

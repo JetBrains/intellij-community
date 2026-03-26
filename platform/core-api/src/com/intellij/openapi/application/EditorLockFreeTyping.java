@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 @Internal
 public final class EditorLockFreeTyping {
-  private static final Key<Boolean> USE_UI_PSI_FOR_DOCUMENT_KEY = Key.create("USE_UI_PSI_FOR_DOCUMENT_KEY");
+  private static final Key<Boolean> USE_ELF_PSI_IN_SCOPE_KEY = Key.create("USE_ELF_PSI_IN_SCOPE_KEY");
 
   public static boolean isEnabled() {
     return Registry.is("editor.lockfree.typing.enabled", false);
@@ -28,13 +28,13 @@ public final class EditorLockFreeTyping {
   public static void withElfScope(@NotNull Document elfDocument, @NotNull Runnable action) {
     if (isEnabled()) {
       VirtualFile elfVirtualFile = FileDocumentManager.getInstance().getFile(elfDocument);
-      USE_UI_PSI_FOR_DOCUMENT_KEY.set(elfVirtualFile, true);
-      USE_UI_PSI_FOR_DOCUMENT_KEY.set(elfDocument, true);
+      USE_ELF_PSI_IN_SCOPE_KEY.set(elfVirtualFile, true);
+      USE_ELF_PSI_IN_SCOPE_KEY.set(elfDocument, true);
       try {
         action.run();
       } finally {
-        USE_UI_PSI_FOR_DOCUMENT_KEY.set(elfVirtualFile, null);
-        USE_UI_PSI_FOR_DOCUMENT_KEY.set(elfDocument, null);
+        USE_ELF_PSI_IN_SCOPE_KEY.set(elfVirtualFile, null);
+        USE_ELF_PSI_IN_SCOPE_KEY.set(elfDocument, null);
       }
     } else {
       action.run();
@@ -42,11 +42,11 @@ public final class EditorLockFreeTyping {
   }
 
   public static boolean isInElfScope(@Nullable Document document) {
-    return document != null && EDT.isCurrentThreadEdt() && USE_UI_PSI_FOR_DOCUMENT_KEY.isIn(document);
+    return document != null && EDT.isCurrentThreadEdt() && USE_ELF_PSI_IN_SCOPE_KEY.isIn(document);
   }
 
   public static boolean isInElfScope(@Nullable VirtualFile virtualFile) {
-    return virtualFile != null && EDT.isCurrentThreadEdt() && USE_UI_PSI_FOR_DOCUMENT_KEY.isIn(virtualFile);
+    return virtualFile != null && EDT.isCurrentThreadEdt() && USE_ELF_PSI_IN_SCOPE_KEY.isIn(virtualFile);
   }
 
   public static void assertReadAccess(@NotNull VirtualFile virtualFile) {

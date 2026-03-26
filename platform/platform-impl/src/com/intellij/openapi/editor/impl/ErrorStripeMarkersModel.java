@@ -76,7 +76,7 @@ final class ErrorStripeMarkersModel {
   private int countErrorStripeMarkers(@NotNull MarkupModel model) {
     AtomicInteger c = new AtomicInteger();
     try (MarkupIterator<RangeHighlighterEx> iterator =
-      ((MarkupModelEx)model).overlappingErrorStripeIterator(0, myEditor.getUiDocument().getTextLength())) {
+      ((MarkupModelEx)model).overlappingErrorStripeIterator(0, myEditor.getElfDocument().getTextLength())) {
       ContainerUtil.process(iterator, __ -> c.getAndIncrement() >= 0);
     }
     return c.get();

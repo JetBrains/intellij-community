@@ -324,7 +324,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @ApiStatus.Internal
   public static final Key<CodeStyleSettings> CODE_STYLE_SETTINGS = Key.create("editor.code.style.settings");
   private final @NotNull DocumentEx myDocument;
-  private final @Nullable DocumentEx myUiDocument;
+  private final @Nullable DocumentEx myElfDocument;
 
   private final JPanel myPanel;
   private final @NotNull MyScrollPane myScrollPane;
@@ -555,7 +555,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     assertIsDispatchThread();
     myProject = project;
     myDocument = (DocumentEx)document;
-    myUiDocument = ElfTheManager.getInstance().getElfDocument(document);
+    myElfDocument = ElfTheManager.getInstance().getElfDocument(document);
     myVirtualFile = file;
     myState = new EditorState();
     myState.refreshAll();
@@ -707,12 +707,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorFilteringMarkupModel.addMarkupModelListener(myCaretModel, myMarkupModelListener);
     myMarkupModel.addMarkupModelListener(myCaretModel, myMarkupModelListener);
-    getUiDocument().addDocumentListener(myFoldingModel, myCaretModel);
-    getUiDocument().addDocumentListener(myCaretModel, myCaretModel);
+    getElfDocument().addDocumentListener(myFoldingModel, myCaretModel);
+    getElfDocument().addDocumentListener(myCaretModel, myCaretModel);
 
-    getUiDocument().addDocumentListener(new EditorDocumentAdapter(), myCaretModel);
-    getUiDocument().addDocumentListener(mySoftWrapModel, myCaretModel);
-    getUiDocument().addDocumentListener(myMarkupModel, myCaretModel);
+    getElfDocument().addDocumentListener(new EditorDocumentAdapter(), myCaretModel);
+    getElfDocument().addDocumentListener(mySoftWrapModel, myCaretModel);
+    getElfDocument().addDocumentListener(myMarkupModel, myCaretModel);
 
     myFoldingModel.addListener(mySoftWrapModel, myCaretModel);
 
@@ -725,7 +725,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
         if (myState.isStickySelection()) {
-          int selectionStart = Math.min(myStickySelectionStart, getUiDocument().getTextLength());
+          int selectionStart = Math.min(myStickySelectionStart, getElfDocument().getTextLength());
           mySelectionModel.setSelection(selectionStart, myCaretModel.getVisualPosition(), myCaretModel.getOffset());
         }
       }
@@ -911,7 +911,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final AtomicReference<HighlighterChange> myCompositeHighlighterChange = new AtomicReference<>();
   private void onHighlighterChanged(@NotNull RangeHighlighterEx highlighter,
                                     boolean canImpactGutterSize, boolean fontStyleChanged, boolean foregroundColorChanged) {
-    DocumentEx document = getUiDocument();
+    DocumentEx document = getElfDocument();
     int textLength = document.getTextLength();
     int hstart = MathUtil.clamp(highlighter.getAffectedAreaStartOffset(), 0, textLength);
     int hend = MathUtil.clamp(highlighter.getAffectedAreaEndOffset(), hstart, textLength);
@@ -967,7 +967,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void onInlayUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
-    DocumentEx document = getUiDocument();
+    DocumentEx document = getElfDocument();
     if (document.isInBulkUpdate() || myInlayModel.isInBatchMode()) return;
     if ((changeFlags & InlayModel.ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED) != 0) updateGutterSize();
     if (document.isInEventsHandling() ||
@@ -1738,7 +1738,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     assertIsDispatchThread();
     WriteIntentReadAction.run(() -> {
-      Document document = getUiDocument();
+      Document document = getElfDocument();
       Disposer.dispose(myHighlighterDisposable);
 
       myHighlighterDisposable = Disposer.newDisposable();
@@ -2032,7 +2032,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private boolean isDocumentInBulkUpdate() {
-    return getUiDocument().isInBulkUpdate();
+    return getElfDocument().isInBulkUpdate();
   }
 
   private boolean isShowing() {
@@ -2294,8 +2294,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull DocumentEx getDocument() {
-    if (EditorLockFreeTyping.isInElfScope(myUiDocument)) {
-      return myUiDocument;
+    if (EditorLockFreeTyping.isInElfScope(myElfDocument)) {
+      return myElfDocument;
     }
     return myDocument;
   }
@@ -2635,7 +2635,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private @NotNull Color getBackgroundIgnoreForced() {
     Color color = myScheme.getDefaultBackground();
-    if (getUiDocument().isWritable()) {
+    if (getElfDocument().isWritable()) {
       return color;
     }
     Color readOnlyColor = myScheme.getColor(EditorColors.READONLY_BACKGROUND_COLOR);
@@ -2841,21 +2841,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private int offsetToLogicalLine(int offset) {
-    int textLength = getUiDocument().getTextLength();
+    int textLength = getElfDocument().getTextLength();
     if (textLength == 0) return 0;
 
     if (offset > textLength || offset < 0) {
       throw new IndexOutOfBoundsException("Wrong offset: " + offset + " textLength: " + textLength);
     }
 
-    int lineIndex = getUiDocument().getLineNumber(offset);
-    LOG.assertTrue(lineIndex >= 0 && lineIndex < getUiDocument().getLineCount());
+    int lineIndex = getElfDocument().getLineNumber(offset);
+    LOG.assertTrue(lineIndex >= 0 && lineIndex < getElfDocument().getLineCount());
 
     return lineIndex;
   }
 
   private @NotNull VisualPosition getTargetPosition(int x, int y, boolean trimToLineWidth, @Nullable Caret targetCaret) {
-    if (getUiDocument().getLineCount() == 0) {
+    if (getElfDocument().getLineCount() == 0) {
       return new VisualPosition(0, 0);
     }
     if (x < 0) {
@@ -2876,7 +2876,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     if (trimToLineWidth && !mySettings.isVirtualSpace()) {
       LogicalPosition logicalPosition = visualToLogicalPosition(visualPosition);
-      LogicalPosition lineEndPosition = offsetToLogicalPosition(getUiDocument().getLineEndOffset(logicalPosition.line));
+      LogicalPosition lineEndPosition = offsetToLogicalPosition(getElfDocument().getLineEndOffset(logicalPosition.line));
       if (logicalPosition.column > lineEndPosition.column) {
         visualPosition = logicalToVisualPosition(lineEndPosition.leanForward(true));
       }
@@ -3072,8 +3072,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // further dragging (if any).
       if (myDragOnGutterSelectionStartLine >= 0) {
         mySelectionModel.removeSelection();
-        myCaretModel.moveToOffset(myDragOnGutterSelectionStartLine < getUiDocument().getLineCount()
-                                  ? getUiDocument().getLineStartOffset(myDragOnGutterSelectionStartLine) : getUiDocument().getTextLength());
+        myCaretModel.moveToOffset(myDragOnGutterSelectionStartLine < getElfDocument().getLineCount()
+                                  ? getElfDocument().getLineStartOffset(myDragOnGutterSelectionStartLine) : getElfDocument().getTextLength());
       }
       myDragOnGutterSelectionStartLine = -1;
     }
@@ -3328,7 +3328,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private int validateOffset(int offset) {
     if (offset < 0) return 0;
-    if (offset > getUiDocument().getTextLength()) return getUiDocument().getTextLength();
+    if (offset > getElfDocument().getTextLength()) return getElfDocument().getTextLength();
     return offset;
   }
 
@@ -4558,7 +4558,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             else {
               runUndoTransparent(() -> EditorModificationUtilEx.insertStringAtCaret(EditorImpl.this, composedString, false, false));
               composedRangeMarker =
-                getUiDocument().createRangeMarker(getCaretModel().getOffset(), getCaretModel().getOffset() + composedString.length(), true);
+                getElfDocument().createRangeMarker(getCaretModel().getOffset(), getCaretModel().getOffset() + composedString.length(), true);
             }
           }
         }
@@ -5852,9 +5852,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @ApiStatus.Internal
   @Override
-  public @NotNull DocumentEx getUiDocument() {
-    if (myUiDocument != null) {
-      return myUiDocument;
+  public @NotNull DocumentEx getElfDocument() {
+    if (myElfDocument != null) {
+      return myElfDocument;
     }
     return getDocument();
   }

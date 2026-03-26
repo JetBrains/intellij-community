@@ -81,13 +81,13 @@ object RelativeLineHelper {
   }
 
   private fun getOffsetAtFoldStart(editor: Editor, line: Int): Int {
-    val document = editor.uiDocument
+    val document = editor.elfDocument
     val lineStartOffset = document.getLineStartOffset(line)
     return EditorUtil.getNotFoldedLineStartOffset(editor, lineStartOffset)
   }
 
   private fun checkIfShouldCheckForFolds(editor: Editor, caretLine: Int, step: Int): Boolean {
-    val document = editor.uiDocument
+    val document = editor.elfDocument
     val foldingModelImpl = editor.foldingModel as FoldingModelImpl
     val caretLineOffset = if (step < 0) document.getLineEndOffset(caretLine) else document.getLineStartOffset(caretLine)
     if (foldingModelImpl.isOffsetCollapsed(caretLineOffset)) return true
@@ -120,7 +120,7 @@ object RelativeLineHelper {
    * @param line a logical line inside the visual line
    */
   private fun getLogicalLineRangeInVisualLine(editor: Editor, line: Int): IntRange {
-    val lineOffset = editor.uiDocument.getLineStartOffset(line)
+    val lineOffset = editor.elfDocument.getLineStartOffset(line)
     val foldRegionStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, lineOffset)
     val foldRegionEndOffset = EditorUtil.getNotFoldedLineEndOffset(editor, lineOffset)
 

@@ -26,7 +26,7 @@ public class WrapElementIterator {
   private int myLogicalLine;
 
   public WrapElementIterator(EditorEx editor, int startOffset, int endOffset) {
-    myDocument = editor.getUiDocument();
+    myDocument = editor.getElfDocument();
     myText = myDocument.getImmutableCharSequence();
     myIterationState = new IterationState(editor, startOffset, endOffset, null, false, true, true, false);
     myLogicalLine = myDocument.getLineNumber(startOffset);

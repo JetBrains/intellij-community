@@ -32,7 +32,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   @SuppressWarnings("AbstractMethodCallInConstructor")
   InlayImpl(@NotNull EditorImpl editor, int offset, boolean relatesToPrecedingText, @NotNull R renderer) {
-    super(editor.getUiDocument(), offset, offset, false, true);
+    super(editor.getElfDocument(), offset, offset, false, true);
     myEditor = editor;
     myRelatedToPrecedingText = relatesToPrecedingText;
     myRenderer = renderer;
@@ -75,7 +75,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   @Override
   public void repaint() {
-    if (isValid() && !myEditor.isDisposed() && !myEditor.getUiDocument().isInBulkUpdate() && !myEditor.getInlayModel().isInBatchMode()) {
+    if (isValid() && !myEditor.isDisposed() && !myEditor.getElfDocument().isInBulkUpdate() && !myEditor.getInlayModel().isInBatchMode()) {
       JComponent contentComponent = myEditor.getContentComponent();
       if (contentComponent.isShowing()) {
         Rectangle bounds = getBounds();

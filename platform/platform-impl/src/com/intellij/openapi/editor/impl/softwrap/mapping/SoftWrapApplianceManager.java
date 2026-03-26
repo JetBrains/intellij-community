@@ -106,7 +106,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
   {
     myStorage = storage;
     myEditor = editor;
-    myDocument = editor.getUiDocument();
+    myDocument = editor.getElfDocument();
     myPainter = painter;
     myDataMapper = dataMapper;
     myWidthProvider = new DefaultVisibleAreaWidthProvider();

@@ -318,7 +318,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   EditorGutterComponentImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
-    myDocument = editor.getUiDocument();
+    myDocument = editor.getElfDocument();
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       installDnD();
     }

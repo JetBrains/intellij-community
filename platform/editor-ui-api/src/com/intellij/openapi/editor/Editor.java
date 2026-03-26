@@ -458,7 +458,7 @@ public interface Editor extends UserDataHolder {
   }
 
   @ApiStatus.Internal
-  default @NotNull Document getUiDocument() {
+  default @NotNull Document getElfDocument() {
     return getDocument();
   }
 

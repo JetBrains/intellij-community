@@ -56,7 +56,7 @@ public interface LineNumberConverter {
 
     @Override
     public Integer getMaxLineNumber(@NotNull Editor editor) {
-      return editor.getUiDocument().getLineCount();
+      return editor.getElfDocument().getLineCount();
     }
   };
 
@@ -67,7 +67,7 @@ public interface LineNumberConverter {
   interface Increasing extends LineNumberConverter {
     @Override
     default @Nullable Integer getMaxLineNumber(@NotNull Editor editor) {
-      for (int i = editor.getUiDocument().getLineCount(); i > 0; i--) {
+      for (int i = editor.getElfDocument().getLineCount(); i > 0; i--) {
         Integer number = convert(editor, i);
         if (number != null) return number;
       }

@@ -153,7 +153,7 @@ public final class ImmediatePainter {
 
   private void paintImmediately(final Graphics2D g, final int offset, final char c2) {
     final EditorImpl editor = myEditor;
-    final Document document = editor.getUiDocument();
+    final Document document = editor.getElfDocument();
     final LexerEditorHighlighter highlighter = (LexerEditorHighlighter)myEditor.getHighlighter();
 
     final EditorSettings settings = editor.getSettings();

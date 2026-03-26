@@ -47,7 +47,7 @@ public abstract class TypedAction {
     assertLocalEditorSupport(editor);
     if (rawHandler instanceof TypedActionHandlerEx rawHandlerEx) {
       EditorLockFreeTyping.withElfScope(
-        editor.getUiDocument(),
+        editor.getElfDocument(),
         () -> rawHandlerEx.beforeExecute(editor, c, context, plan)
       );
     }
@@ -57,7 +57,7 @@ public abstract class TypedAction {
     assertLocalEditorSupport(editor);
     try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       EditorLockFreeTyping.withElfScope(
-        editor.getUiDocument(),
+        editor.getElfDocument(),
         () -> rawHandler.execute(editor, charTyped, dataContext)
       );
     }

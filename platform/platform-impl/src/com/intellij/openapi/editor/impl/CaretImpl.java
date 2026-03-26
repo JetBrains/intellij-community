@@ -102,7 +102,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
 
   CaretImpl(@NotNull EditorImpl editor, @NotNull CaretModelImpl caretModel) {
     myEditor = editor;
-    myDocument = editor.getUiDocument();
+    myDocument = editor.getElfDocument();
     myCaretModel = caretModel;
     myCaretId = new CaretId();
 

@@ -96,7 +96,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
 
   InlayModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
-    myDocument = editor.getUiDocument();
+    myDocument = editor.getElfDocument();
     myInlineElementsTree = new InlineElementsTree(myDocument);
     myBlockElementsTree = new BlockElementsTree(myDocument);
     myAfterLineEndElementsTree = new AfterLineEndElementTree(myDocument);
