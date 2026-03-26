@@ -48,7 +48,7 @@ class ProjectSynchronizerUtilImpl(val project: Project) : ProjectSynchronizerUti
 }
 
 @Service(Service.Level.APP)
-class ProjectSynchronizerTimeReporter {
+internal class ProjectSynchronizerTimeReporter {
   private val syncTimeMs = MillisecondsMeasurer()
 
   init {
