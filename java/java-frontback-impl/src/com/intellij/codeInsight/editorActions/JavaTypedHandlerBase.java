@@ -10,12 +10,12 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
+import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -413,7 +413,7 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
       return false;
     }
 
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    EditorThreading.assertWriteAllowed();
 
     // Note, this feature may be rewritten using only lexer if needed.
     // In that case accuracy will not be 100%, but good enough.
