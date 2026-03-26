@@ -42,13 +42,14 @@ public final class ThreadDumpParser {
   private static final Pattern ourThreadStateCarryingVirtualPattern = Pattern.compile("Carrying virtual thread #(\\d+)");
   private static final Pattern ourWaitingForLockPattern = Pattern.compile("- waiting (on|to lock) <(.+)>");
   private static final Pattern ourParkingToWaitForLockPattern = Pattern.compile("- parking to wait for {2}<(.+)>");
+  private static final Pattern ourWaitingForReleasePattern = Pattern.compile("waiting for .+ to release lock on (.+)");
   private static final @NonNls String PUMP_EVENT = "java.awt.EventDispatchThread.pumpOneEventForFilters";
   private static final Pattern ourIdleTimerThreadPattern = Pattern.compile("java\\.lang\\.Object\\.wait\\([^()]+\\)\\s+at java\\.util\\.TimerThread\\.mainLoop");
   private static final Pattern ourIdleSwingTimerThreadPattern = Pattern.compile("java\\.lang\\.Object\\.wait\\([^()]+\\)\\s+at javax\\.swing\\.TimerQueue\\.run");
   private static final String AT_JAVA_LANG_OBJECT_WAIT = "java.lang.Object.wait(";
   private static final String ourLockedOwnableSynchronizersHeader = "Locked ownable synchronizers";
   private static final Pattern ourLockedOwnableSynchronizersPattern = Pattern.compile("- <(0x[\\da-f]+)> \\(.*\\)");
-  private static final Set<String> ourIgnoredThreadStateParts = Set.of("virtual");
+  private static final Set<String> ourIgnoredThreadStateParts = Set.of("virtual", "unmounted");
   private static final Pattern ourLockedPattern = Pattern.compile("- locked (?:<(.+?)>|(\\S+))");
 
   private static final String[] IMPORTANT_THREAD_DUMP_WORDS = ContainerUtil.ar("tid", "nid", "wait", "parking", "prio", "os_prio", "java");
@@ -395,6 +396,10 @@ public final class ThreadDumpParser {
       return m.group(2);
     }
     m = ourParkingToWaitForLockPattern.matcher(stackTrace);
+    if (m.find()) {
+      return m.group(1);
+    }
+    m = ourWaitingForReleasePattern.matcher(stackTrace);
     if (m.find()) {
       return m.group(1);
     }
