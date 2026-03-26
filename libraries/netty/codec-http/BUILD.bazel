@@ -13,9 +13,9 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":libraries-netty-codec-http_resources"],
-  exports = ["@lib//:netty-codec-http"],
+  exports = ["@lib//:libraries-netty-codec-http-netty-codec-http"],
   runtime_deps = [
-    "@lib//:netty-codec-http",
+    "@lib//:libraries-netty-codec-http-netty-codec-http",
     "//libraries/netty/buffer",
   ]
 )
@@ -26,7 +26,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:netty-codec-http"],
+  exports = ["@lib//:libraries-netty-codec-http-netty-codec-http"],
   runtime_deps = [
     ":libraries-netty-codec-http",
     "//libraries/netty/buffer:buffer_test_lib",

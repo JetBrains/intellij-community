@@ -483,6 +483,7 @@ libraries/netty/buffer
 libraries/netty/codec-compression
 libraries/netty/codec-http
 libraries/netty/handler-proxy
+libraries/netty/tcnative-boringssl
 libraries/opencsv
 libraries/opentelemetry-exporter-otlp
 libraries/opentelemetry-exporter-sender-jdk

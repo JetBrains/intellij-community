@@ -7,7 +7,61 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="netty-codec-http" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="netty-codec-http" type="repository">
+        <properties maven-id="io.netty:netty-codec-http2:4.2.10.Final">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-http2/4.2.10.Final/netty-codec-http2-4.2.10.Final.jar">
+              <sha256sum>ac0962cb4bc795baa2217bdbe192e0e9f2dd97bb4ddcdd87f1ec4bbc21d781f2</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.2.10.Final/netty-transport-4.2.10.Final.jar">
+              <sha256sum>aaff8b2958eea0e94d3e5521d795e65ea91faf58fa1152e45584b36348a81abd</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.2.10.Final/netty-resolver-4.2.10.Final.jar">
+              <sha256sum>14dfad791466ab2cc87316841c1c976af140bdb8c6ed5f84725e1225a1e0bbe6</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-base/4.2.10.Final/netty-codec-base-4.2.10.Final.jar">
+              <sha256sum>2a420ee609c1c4ad750609b6d7e2ee9f26a0431a8bbd7f48afb8ac576f1c40b9</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.2.10.Final/netty-handler-4.2.10.Final.jar">
+              <sha256sum>769fecbfbca5756c52a442da35563218ced4d6cc179da2a8e782aae6ce8a187b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-unix-common/4.2.10.Final/netty-transport-native-unix-common-4.2.10.Final.jar">
+              <sha256sum>6bea060f5ffe953acab6c922236d284ca8f1e8c6a59d8a13eaba053fa280a88f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.2.10.Final/netty-codec-http-4.2.10.Final.jar">
+              <sha256sum>faf833d3f557921264328c933ffeb055e9885e0d258a021355aa88a62181b540</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="io.netty:netty-common" />
+            <dependency maven-id="io.netty:netty-buffer" />
+            <dependency maven-id="io.netty:netty-codec-compression" />
+            <dependency maven-id="io.netty:netty-codec-protobuf" />
+            <dependency maven-id="io.netty:netty-codec-marshalling" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http2/4.2.10.Final/netty-codec-http2-4.2.10.Final.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.2.10.Final/netty-transport-4.2.10.Final.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.2.10.Final/netty-resolver-4.2.10.Final.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-base/4.2.10.Final/netty-codec-base-4.2.10.Final.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.2.10.Final/netty-handler-4.2.10.Final.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-unix-common/4.2.10.Final/netty-transport-native-unix-common-4.2.10.Final.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.2.10.Final/netty-codec-http-4.2.10.Final.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http2/4.2.10.Final/netty-codec-http2-4.2.10.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.2.10.Final/netty-transport-4.2.10.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.2.10.Final/netty-resolver-4.2.10.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-base/4.2.10.Final/netty-codec-base-4.2.10.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.2.10.Final/netty-handler-4.2.10.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-unix-common/4.2.10.Final/netty-transport-native-unix-common-4.2.10.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.2.10.Final/netty-codec-http-4.2.10.Final-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
   </component>
 </module>

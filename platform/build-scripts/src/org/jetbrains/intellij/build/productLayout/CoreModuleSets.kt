@@ -3,14 +3,6 @@
 
 package org.jetbrains.intellij.build.productLayout
 
-import org.jetbrains.intellij.build.productLayout.CoreModuleSets.coreIde
-import org.jetbrains.intellij.build.productLayout.CoreModuleSets.coreLang
-import org.jetbrains.intellij.build.productLayout.CoreModuleSets.corePlatform
-import org.jetbrains.intellij.build.productLayout.CoreModuleSets.fleet
-import org.jetbrains.intellij.build.productLayout.CoreModuleSets.librariesIde
-import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcBackend
-import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcMinimal
-
 /**
  * Core platform module sets forming the foundation of IntelliJ products.
  *
@@ -122,10 +114,12 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.lz4")
     embeddedModule("intellij.libraries.markdown")
     embeddedModule("intellij.libraries.mvstore")
+
     embeddedModule("intellij.libraries.netty.buffer")
     embeddedModule("intellij.libraries.netty.codec.compression")
     embeddedModule("intellij.libraries.netty.codec.http")
     embeddedModule("intellij.libraries.netty.handler.proxy")
+
     embeddedModule("intellij.libraries.oro.matcher")
     embeddedModule("intellij.libraries.protobuf")
     embeddedModule("intellij.libraries.proxy.vole")

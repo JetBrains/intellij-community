@@ -1,0 +1,12 @@
+- name: dist.all/lib/intellij.libraries.netty.tcnative.boringssl.jar
+  modules:
+  - name: intellij.libraries.netty.tcnative.boringssl
+    libraries:
+      netty-tcnative-boringssl:
+      - name: $MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2/netty-tcnative-boringssl-static-2.jar
+      - name: $MAVEN_REPOSITORY$/io/netty/netty-tcnative-classes/2/netty-tcnative-classes-2.jar
+      - name: $MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2/netty-tcnative-boringssl-static-2-linux-x86_64.jar
+      - name: $MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2/netty-tcnative-boringssl-static-2-linux-aarch_64.jar
+      - name: $MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2/netty-tcnative-boringssl-static-2-osx-x86_64.jar
+      - name: $MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2/netty-tcnative-boringssl-static-2-osx-aarch_64.jar
+      - name: $MAVEN_REPOSITORY$/io/netty/netty-tcnative-boringssl-static/2/netty-tcnative-boringssl-static-2-windows-x86_64.jar

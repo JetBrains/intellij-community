@@ -58,6 +58,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "intellij.libraries.plexus.utils",
     "intellij.libraries.protobuf",
     "intellij.libraries.netty.buffer",
+    "intellij.libraries.netty.codec.http",
     "intellij.libraries.maven.resolver.provider",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "util.jar", reason = null) })
 
@@ -107,7 +108,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "jna",
     "Log4J",
     "Eclipse",
-    "netty-codec-http",
     "netty-codec-protobuf",
     "slf4j-api",
     "jetbrains-annotations",
