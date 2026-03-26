@@ -1,125 +1,148 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diagnostic;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.diagnostic
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.options.OptionsBundle;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.UIBundle;
-import com.intellij.util.ui.IoErrorText;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diagnostic.VMOptions.MemoryKind
+import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.options.OptionsBundle
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBTextField
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.text
+import com.intellij.ui.dsl.validation.Level
+import com.intellij.util.ui.IoErrorText
+import com.sun.management.OperatingSystemMXBean
+import java.awt.event.ActionEvent
+import java.lang.management.ManagementFactory
+import java.nio.file.Path
+import javax.swing.Action
+import javax.swing.JComponent
 
-import javax.swing.Action;
-import javax.swing.JComponent;
-import java.awt.event.ActionEvent;
-import java.io.IOException;
+private const val HEAP_MIN_MB = 512
+private const val HEAP_DEFAULT_MB = 2048
+private const val HEAP_INCREMENT_MB = 512
+private const val OTHER_MIN_MB = 256
 
-@ApiStatus.Internal
-@ApiStatus.NonExtendable
-public class EditMemorySettingsDialog extends DialogWrapper {
-  private static final int MIN_VALUE = 256, HEAP_INCREMENT = 512;
+internal open class EditMemorySettingsDialog(
+  private val file: Path,
+  private val memoryKind: MemoryKind,
+  private val memoryLow: Boolean
+) : DialogWrapper(true) {
+  private val current = VMOptions.readOption(memoryKind, /*effective =*/ true)
+  private val minValue = if (memoryKind == MemoryKind.HEAP) HEAP_MIN_MB else OTHER_MIN_MB
+  private val memoryTotal = (ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean).totalMemorySize.ushr(20).toInt()
 
-  private final VMOptions.MemoryKind myOption;
-  private final int myLowerBound;
-  private final EditMemorySettingsPanel content;
-  private Action mySaveAndExitAction, mySaveAction;
+  private lateinit var newValueField: JBTextField
+  private lateinit var saveAndExitAction: Action
+  private lateinit var saveAndCloseAction: Action
 
-  EditMemorySettingsDialog() {
-    this(VMOptions.MemoryKind.HEAP, false);
+  init {
+    title = DiagnosticBundle.message("change.memory.title")
+    init()
   }
 
-  EditMemorySettingsDialog(@NotNull VMOptions.MemoryKind option) {
-    this(option, true);
-  }
-
-  private EditMemorySettingsDialog(VMOptions.MemoryKind option, boolean memoryLow) {
-    super(true);
-    myOption = option;
-    myLowerBound = Math.max(option == VMOptions.MemoryKind.HEAP ? VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, false) : 0, MIN_VALUE);
-    setTitle(DiagnosticBundle.message("change.memory.title"));
-    content = new EditMemorySettingsPanel(option, memoryLow, getSuggestedValue(memoryLow, myOption));
-    init();
-    initValidation();
-  }
-
-  private static int getSuggestedValue(boolean memoryLow, VMOptions.MemoryKind option) {
-    var current = VMOptions.readOption(option, true);
-    var suggested = 0;
-    if (memoryLow && option == VMOptions.MemoryKind.HEAP) {
-      var cap = Registry.intValue("max.suggested.heap.size");
-      if (current > 0) {
-        suggested = current + HEAP_INCREMENT;
-        if (suggested > cap) suggested = Math.max(cap, current);
-      }
-      else {
-        suggested = cap;
-      }
+  private fun getSuggestedValue(): Int {
+    val suggested = if (memoryLow && memoryKind == MemoryKind.HEAP) {
+      if (current > 0) current + HEAP_INCREMENT_MB else HEAP_DEFAULT_MB
     }
     else {
-      suggested = VMOptions.readOption(option, false);
-      if (suggested <= 0) suggested = current;
-      if (suggested <= 0) suggested = MIN_VALUE;
+      val configured = VMOptions.readOption(memoryKind, /*effective =*/ false)
+      if (configured > 0) configured else current
     }
-    return suggested;
+    return suggested.coerceIn(minValue, memoryTotal)
   }
 
-  @Override
-  protected JComponent createCenterPanel() {
-    return content.panel;
-  }
-
-  @Override
-  protected Action @NotNull [] createActions() {
-    var canRestart = ApplicationManager.getApplication().isRestartCapable();
-    mySaveAndExitAction = new DialogWrapperAction(DiagnosticBundle.message(canRestart ? "change.memory.apply" : "change.memory.exit")) {
-      @Override
-      protected void doAction(ActionEvent e) {
-        if (save()) {
-          ((ApplicationEx)ApplicationManager.getApplication()).restart(true);
+  override fun createCenterPanel(): JComponent = panel {
+    if (memoryLow) {
+      row {
+        if (memoryKind == MemoryKind.HEAP) {
+          val free = Runtime.getRuntime().freeMemory().ushr(20)
+          val max = Runtime.getRuntime().maxMemory().ushr(20)
+          label(DiagnosticBundle.message("change.memory.usage", free.toString(), max.toString()))
+        }
+        else {
+          label(DiagnosticBundle.message("change.memory.message"))
         }
       }
-    };
-    mySaveAction = new DialogWrapperAction(IdeBundle.message("button.save")) {
-      @Override
-      protected void doAction(ActionEvent e) {
+    }
+
+    row {
+      label(DiagnosticBundle.message("change.memory.act"))
+    }
+
+    @Suppress("UseHtmlChunkToolTip")
+    val optionLabel = JBLabel(memoryKind.label() + ':').apply { toolTipText = '-' + memoryKind.optionName }
+    row(optionLabel) {
+      newValueField = textField()
+        .text(getSuggestedValue().toString())
+        .columns(5)
+        .gap(RightGap.SMALL)
+        .focused()
+        .cellValidation {
+          addInputRule(DiagnosticBundle.message("change.memory.low", minValue)) {
+            val value = it.text.toIntOrNull()
+            val invalid = value == null || value < minValue
+            saveAndExitAction.isEnabled = !invalid
+            saveAndCloseAction.isEnabled = !invalid
+            invalid
+          }
+          addInputRule(DiagnosticBundle.message("change.memory.high", memoryTotal.toString()), level = Level.WARNING) {
+            val value = it.text.toIntOrNull()
+            value != null && value > memoryTotal
+          }
+        }
+        .component
+
+      val formatted = if (current == -1) DiagnosticBundle.message("change.memory.unknown") else current.toString()
+      text(DiagnosticBundle.message("change.memory.units", formatted))
+    }
+
+    row {
+      icon(AllIcons.General.Information)
+        .align(AlignY.TOP)
+        .gap(RightGap.SMALL)
+      text(DiagnosticBundle.message("change.memory.file", file.toString()), maxLineLength = MAX_LINE_LENGTH_NO_WRAP)
+    }
+  }
+
+  override fun createActions(): Array<Action?> {
+    val canRestart = ApplicationManager.getApplication().isRestartCapable()
+    saveAndExitAction = object : DialogWrapperAction(DiagnosticBundle.message(if (canRestart) "change.memory.apply" else "change.memory.exit")) {
+      override fun doAction(e: ActionEvent?) {
         if (save()) {
-          close(OK_EXIT_CODE);
+          (ApplicationManager.getApplication() as ApplicationEx).restart(true)
         }
       }
-    };
-    return new Action[]{mySaveAndExitAction, mySaveAction, getCancelAction()};
+    }
+    saveAndCloseAction = object : DialogWrapperAction(IdeBundle.message("button.save")) {
+      override fun doAction(e: ActionEvent?) {
+        if (save()) {
+          close(OK_EXIT_CODE)
+        }
+      }
+    }
+    return arrayOf(saveAndExitAction, saveAndCloseAction, cancelAction)
   }
 
-  @Override
-  protected @Nullable ValidationInfo doValidate() {
-    ValidationInfo info = null;
-    try {
-      var value = Integer.parseInt(content.newValueField.getText());
-      if (value <= myLowerBound) info = new ValidationInfo(DiagnosticBundle.message("change.memory.low", myLowerBound), content.newValueField);
-    }
-    catch (NumberFormatException e) {
-      info = new ValidationInfo(UIBundle.message("please.enter.a.number"), content.newValueField);
-    }
-    mySaveAndExitAction.setEnabled(info == null);
-    mySaveAction.setEnabled(info == null);
-    return info;
-  }
+  override fun getPreferredFocusedComponent(): JComponent = newValueField
 
-  private boolean save() {
+  private fun save(): Boolean {
     try {
-      var value = Integer.parseInt(content.newValueField.getText());
-      EditMemorySettingsService.getInstance().save(myOption, value);
-      return true;
+      val value = newValueField.getText().toInt()
+      EditMemorySettingsService.getInstance().save(memoryKind, value)
+      return true
     }
-    catch (IOException e) {
-      Messages.showErrorDialog(content.newValueField, IoErrorText.message(e), OptionsBundle.message("cannot.save.settings.default.dialog.title"));
-      return false;
+    catch (e: Exception) {
+      Messages.showErrorDialog(newValueField, IoErrorText.message(e), OptionsBundle.message("cannot.save.settings.default.dialog.title"))
+      return false
     }
   }
 }

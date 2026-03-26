@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -131,9 +131,12 @@ public final class LowMemoryNotifier implements Disposable {
                                      HeapDumpSnapshotRunnable.AnalysisOption.SCHEDULE_ON_NEXT_START).run()));
     }
 
-    if (VMOptions.canWriteOptions()) {
-      notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("low.memory.notification.action"),
-                                                                     () -> new EditMemorySettingsDialog(kind).show()));
+    var userOptionsFile = EditMemorySettingsService.getInstance().getUserOptionsFile();
+    if (userOptionsFile != null) {
+      notification.addAction(NotificationAction.createSimpleExpiring(
+        IdeBundle.message("low.memory.notification.action"),
+        () -> new EditMemorySettingsDialog(userOptionsFile, kind, true).show()
+      ));
     }
 
     notification.whenExpired(() -> notifications.remove(kind));
