@@ -31,13 +31,13 @@ internal class GitLabCiIncludeFusCollectorUnknownCasesTest {
     @Test
     fun test() = runBlocking {
       val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
-      stats.assertExplicitLocalNotFound()
-      stats.assertExplicitRemoteNotFound()
-      stats.assertImplicitLocalOrRemoteNotFound()
-      stats.assertTemplateNotFound()
-      stats.assertComponentNotFound()
-      stats.assertProjectNotFound()
-      stats.assertUnknownFound()
+      assertExplicitLocalNotFound(stats)
+      assertExplicitRemoteNotFound(stats)
+      assertImplicitLocalOrRemoteNotFound(stats)
+      assertTemplateNotFound(stats)
+      assertComponentNotFound(stats)
+      assertProjectNotFound(stats)
+      assertUnknownFound(stats)
     }
   }
 
@@ -56,13 +56,13 @@ internal class GitLabCiIncludeFusCollectorUnknownCasesTest {
     @Test
     fun test() = runBlocking {
       val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
-      stats.assertExplicitLocalNotFound()
-      stats.assertExplicitRemoteNotFound()
-      stats.assertImplicitLocalOrRemoteNotFound()
-      stats.assertTemplateNotFound()
-      stats.assertComponentNotFound()
-      stats.assertProjectNotFound()
-      stats.assertUnknownFound()
+      assertExplicitLocalNotFound(stats)
+      assertExplicitRemoteNotFound(stats)
+      assertImplicitLocalOrRemoteNotFound(stats)
+      assertTemplateNotFound(stats)
+      assertComponentNotFound(stats)
+      assertProjectNotFound(stats)
+      assertUnknownFound(stats)
     }
   }
 
@@ -80,13 +80,13 @@ internal class GitLabCiIncludeFusCollectorUnknownCasesTest {
     @Test
     fun test() = runBlocking {
       val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
-      stats.assertExplicitLocalFound(hasRules = false, hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = false)
-      stats.assertExplicitRemoteNotFound()
-      stats.assertImplicitLocalOrRemoteNotFound()
-      stats.assertTemplateNotFound()
-      stats.assertComponentNotFound()
-      stats.assertProjectNotFound()
-      stats.assertUnknownFound()
+        assertExplicitLocalFound(actualStats = stats, hasRules = false, hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = false)
+      assertExplicitRemoteNotFound(stats)
+      assertImplicitLocalOrRemoteNotFound(stats)
+      assertTemplateNotFound(stats)
+      assertComponentNotFound(stats)
+      assertProjectNotFound(stats)
+      assertUnknownFound(stats)
     }
   }
 }

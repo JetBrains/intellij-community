@@ -47,16 +47,16 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
     @Test
     fun test() = runBlocking {
       val result = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
-      result.assertQuality(filesAnalyzed = 2, filesFailed = 0, timeoutHappened = false)
+      assertQuality(actualResult = result, filesAnalyzed = 2, filesFailed = 0, timeoutHappened = false)
 
       val stats = result.includeStats
-      stats.assertExplicitLocalFound(hasRules = false, hasEnvVar = true, hasSingleAsterisk = true, hasDoubleAsterisk = true)
-      stats.assertExplicitRemoteNotFound()
-      stats.assertImplicitLocalOrRemoteNotFound()
-      stats.assertTemplateNotFound()
-      stats.assertComponentNotFound()
-      stats.assertProjectNotFound()
-      stats.assertUnknownNotFound()
+      assertExplicitLocalFound(actualStats = stats, hasRules = false, hasEnvVar = true, hasSingleAsterisk = true, hasDoubleAsterisk = true)
+      assertExplicitRemoteNotFound(stats)
+      assertImplicitLocalOrRemoteNotFound(stats)
+      assertTemplateNotFound(stats)
+      assertComponentNotFound(stats)
+      assertProjectNotFound(stats)
+      assertUnknownNotFound(stats)
     }
   }
 
@@ -94,16 +94,16 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
     @Test
     fun test() = runBlocking {
       val result = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
-      result.assertQuality(filesAnalyzed = 1, filesFailed = 0, timeoutHappened = false)
+      assertQuality(actualResult = result, filesAnalyzed = 1, filesFailed = 0, timeoutHappened = false)
 
       val stats = result.includeStats
-      stats.assertExplicitLocalFound(hasRules = false, hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = false)
-      stats.assertExplicitRemoteNotFound()
-      stats.assertImplicitLocalOrRemoteNotFound()
-      stats.assertTemplateNotFound()
-      stats.assertComponentNotFound()
-      stats.assertProjectNotFound()
-      stats.assertUnknownNotFound()
+      assertExplicitLocalFound(actualStats = stats, hasRules = false, hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = false)
+      assertExplicitRemoteNotFound(stats)
+      assertImplicitLocalOrRemoteNotFound(stats)
+      assertTemplateNotFound(stats)
+      assertComponentNotFound(stats)
+      assertProjectNotFound(stats)
+      assertUnknownNotFound(stats)
     }
   }
 
@@ -170,17 +170,22 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
     @Test
     fun test() = runBlocking {
       val result = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
-      result.assertQuality(filesAnalyzed = 3, filesFailed = 0, timeoutHappened = false)
+      assertQuality(actualResult = result, filesAnalyzed = 3, filesFailed = 0, timeoutHappened = false)
 
       val stats = result.includeStats
 
-      stats.assertExplicitLocalFound(hasRules = true, hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = true)
-      stats.assertExplicitRemoteFound(hasRules = false, hasEnvVar = true, hasCache = true)
-      stats.assertImplicitLocalOrRemoteNotFound()
-      stats.assertTemplateFound(hasRules = true, hasEnvVar = false)
-      stats.assertComponentNotFound()
-      stats.assertProjectFound(hasRules = true, hasEnvVar = true, hasRef = true, hasSingleAsterisk = true, hasDoubleAsterisk = true)
-      stats.assertUnknownNotFound()
+      assertExplicitLocalFound(actualStats = stats, hasRules = true, hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = true)
+      assertExplicitRemoteFound(actualStats = stats, hasRules = false, hasEnvVar = true, hasCache = true)
+      assertImplicitLocalOrRemoteNotFound(stats)
+      assertTemplateFound(actualStats = stats, hasRules = true, hasEnvVar = false)
+      assertComponentNotFound(stats)
+      assertProjectFound(actualStats = stats,
+                         hasRules = true,
+                         hasEnvVar = true,
+                         hasRef = true,
+                         hasSingleAsterisk = true,
+                         hasDoubleAsterisk = true)
+      assertUnknownNotFound(stats)
     }
   }
 
@@ -246,16 +251,21 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
     @Test
     fun test() = runBlocking {
       val result = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
-      result.assertQuality(filesAnalyzed = 4, filesFailed = 0, timeoutHappened = false)
+      assertQuality(actualResult = result, filesAnalyzed = 4, filesFailed = 0, timeoutHappened = false)
 
       val stats = result.includeStats
-      stats.assertExplicitLocalFound(hasRules = true, hasEnvVar = false, hasSingleAsterisk = true, hasDoubleAsterisk = false)
-      stats.assertExplicitRemoteFound(hasRules = false, hasEnvVar = true, hasCache = true)
-      stats.assertImplicitLocalOrRemoteFound(hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = true)
-      stats.assertTemplateFound(hasRules = false, hasEnvVar = false)
-      stats.assertComponentFound(hasRules = true, hasEnvVar = false)
-      stats.assertProjectFound(hasRules = false, hasEnvVar = false, hasRef = true, hasSingleAsterisk = false, hasDoubleAsterisk = false)
-      stats.assertUnknownNotFound()
+      assertExplicitLocalFound(actualStats = stats, hasRules = true, hasEnvVar = false, hasSingleAsterisk = true, hasDoubleAsterisk = false)
+      assertExplicitRemoteFound(actualStats = stats, hasRules = false, hasEnvVar = true, hasCache = true)
+      assertImplicitLocalOrRemoteFound(actualStats = stats, hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = true)
+      assertTemplateFound(actualStats = stats, hasRules = false, hasEnvVar = false)
+      assertComponentFound(actualStats = stats, hasRules = true, hasEnvVar = false)
+      assertProjectFound(actualStats = stats,
+                         hasRules = false,
+                         hasEnvVar = false,
+                         hasRef = true,
+                         hasSingleAsterisk = false,
+                         hasDoubleAsterisk = false)
+      assertUnknownNotFound(stats)
     }
   }
 
@@ -331,16 +341,21 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
     @Test
     fun test() = runBlocking {
       val result = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
-      result.assertQuality(filesAnalyzed = 4, filesFailed = 0, timeoutHappened = false)
+      assertQuality(actualResult = result, filesAnalyzed = 4, filesFailed = 0, timeoutHappened = false)
 
       val stats = result.includeStats
-      stats.assertExplicitLocalFound(hasRules = true, hasEnvVar = true, hasSingleAsterisk = true, hasDoubleAsterisk = true)
-      stats.assertExplicitRemoteFound(hasRules = true, hasEnvVar = true, hasCache = true)
-      stats.assertImplicitLocalOrRemoteFound(hasEnvVar = true, hasSingleAsterisk = true, hasDoubleAsterisk = true)
-      stats.assertTemplateFound(hasRules = true, hasEnvVar = true)
-      stats.assertComponentFound(hasRules = true, hasEnvVar = true)
-      stats.assertProjectFound(hasRules = true, hasEnvVar = true, hasRef = true, hasSingleAsterisk = true, hasDoubleAsterisk = true)
-      stats.assertUnknownFound()
+      assertExplicitLocalFound(actualStats = stats, hasRules = true, hasEnvVar = true, hasSingleAsterisk = true, hasDoubleAsterisk = true)
+      assertExplicitRemoteFound(actualStats = stats, hasRules = true, hasEnvVar = true, hasCache = true)
+      assertImplicitLocalOrRemoteFound(actualStats = stats, hasEnvVar = true, hasSingleAsterisk = true, hasDoubleAsterisk = true)
+      assertTemplateFound(actualStats = stats, hasRules = true, hasEnvVar = true)
+      assertComponentFound(actualStats = stats, hasRules = true, hasEnvVar = true)
+      assertProjectFound(actualStats = stats,
+                         hasRules = true,
+                         hasEnvVar = true,
+                         hasRef = true,
+                         hasSingleAsterisk = true,
+                         hasDoubleAsterisk = true)
+      assertUnknownFound(stats)
     }
   }
 }

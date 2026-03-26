@@ -32,13 +32,13 @@ internal class GitLabCiIncludeFusCollectorExplicitRemoteCasesTest {
     @Test
     fun test() = runBlocking {
       val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
-      stats.assertExplicitLocalNotFound()
-      stats.assertExplicitRemoteFound(hasRules = false, hasEnvVar = false, hasCache = false)
-      stats.assertImplicitLocalOrRemoteNotFound()
-      stats.assertTemplateNotFound()
-      stats.assertComponentNotFound()
-      stats.assertProjectNotFound()
-      stats.assertUnknownNotFound()
+        assertExplicitLocalNotFound(stats)
+      assertExplicitRemoteFound(actualStats = stats, hasRules = false, hasEnvVar = false, hasCache = false)
+      assertImplicitLocalOrRemoteNotFound(stats)
+      assertTemplateNotFound(stats)
+      assertComponentNotFound(stats)
+      assertProjectNotFound(stats)
+      assertUnknownNotFound(stats)
     }
   }
 
@@ -61,13 +61,13 @@ internal class GitLabCiIncludeFusCollectorExplicitRemoteCasesTest {
     @Test
     fun test() = runBlocking {
       val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
-      stats.assertExplicitLocalNotFound()
-      stats.assertExplicitRemoteFound(hasRules = true, hasEnvVar = false, hasCache = true)
-      stats.assertImplicitLocalOrRemoteNotFound()
-      stats.assertTemplateNotFound()
-      stats.assertComponentNotFound()
-      stats.assertProjectNotFound()
-      stats.assertUnknownNotFound()
+        assertExplicitLocalNotFound(stats)
+      assertExplicitRemoteFound(actualStats = stats, hasRules = true, hasEnvVar = false, hasCache = true)
+      assertImplicitLocalOrRemoteNotFound(stats)
+      assertTemplateNotFound(stats)
+      assertComponentNotFound(stats)
+      assertProjectNotFound(stats)
+      assertUnknownNotFound(stats)
     }
   }
 
@@ -84,13 +84,13 @@ internal class GitLabCiIncludeFusCollectorExplicitRemoteCasesTest {
     @Test
     fun test() = runBlocking {
       val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
-      stats.assertExplicitLocalNotFound()
-      stats.assertExplicitRemoteFound(hasRules = false, hasEnvVar = true, hasCache = false)
-      stats.assertImplicitLocalOrRemoteNotFound()
-      stats.assertTemplateNotFound()
-      stats.assertComponentNotFound()
-      stats.assertProjectNotFound()
-      stats.assertUnknownNotFound()
+        assertExplicitLocalNotFound(stats)
+      assertExplicitRemoteFound(actualStats = stats, hasRules = false, hasEnvVar = true, hasCache = false)
+      assertImplicitLocalOrRemoteNotFound(stats)
+      assertTemplateNotFound(stats)
+      assertComponentNotFound(stats)
+      assertProjectNotFound(stats)
+      assertUnknownNotFound(stats)
     }
   }
 
@@ -114,13 +114,13 @@ internal class GitLabCiIncludeFusCollectorExplicitRemoteCasesTest {
     @Test
     fun test() = runBlocking {
       val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
-      stats.assertExplicitLocalNotFound()
-      stats.assertExplicitRemoteFound(hasRules = true, hasEnvVar = true, hasCache = true)
-      stats.assertImplicitLocalOrRemoteNotFound()
-      stats.assertTemplateNotFound()
-      stats.assertComponentNotFound()
-      stats.assertProjectNotFound()
-      stats.assertUnknownNotFound()
+        assertExplicitLocalNotFound(stats)
+      assertExplicitRemoteFound(actualStats = stats, hasRules = true, hasEnvVar = true, hasCache = true)
+      assertImplicitLocalOrRemoteNotFound(stats)
+      assertTemplateNotFound(stats)
+      assertComponentNotFound(stats)
+      assertProjectNotFound(stats)
+      assertUnknownNotFound(stats)
     }
   }
 }

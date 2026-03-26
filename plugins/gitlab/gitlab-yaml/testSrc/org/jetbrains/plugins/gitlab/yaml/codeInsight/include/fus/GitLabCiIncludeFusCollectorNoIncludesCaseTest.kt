@@ -29,13 +29,13 @@ internal class GitLabCiIncludeFusCollectorNoIncludesCaseTest {
     @Test
     fun test() = runBlocking {
       val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
-      stats.assertExplicitLocalNotFound()
-      stats.assertExplicitRemoteNotFound()
-      stats.assertImplicitLocalOrRemoteNotFound()
-      stats.assertTemplateNotFound()
-      stats.assertComponentNotFound()
-      stats.assertProjectNotFound()
-      stats.assertUnknownNotFound()
+        assertExplicitLocalNotFound(stats)
+      assertExplicitRemoteNotFound(stats)
+      assertImplicitLocalOrRemoteNotFound(stats)
+      assertTemplateNotFound(stats)
+      assertComponentNotFound(stats)
+      assertProjectNotFound(stats)
+      assertUnknownNotFound(stats)
     }
   }
 }

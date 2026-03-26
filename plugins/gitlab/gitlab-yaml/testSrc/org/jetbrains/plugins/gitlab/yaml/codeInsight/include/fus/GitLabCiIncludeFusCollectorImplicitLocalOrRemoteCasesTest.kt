@@ -32,13 +32,13 @@ internal class GitLabCiIncludeFusCollectorImplicitLocalOrRemoteCasesTest {
     @Test
     fun test() = runBlocking {
       val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
-      stats.assertExplicitLocalNotFound()
-      stats.assertExplicitRemoteNotFound()
-      stats.assertImplicitLocalOrRemoteFound(hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = false)
-      stats.assertTemplateNotFound()
-      stats.assertComponentNotFound()
-      stats.assertProjectNotFound()
-      stats.assertUnknownNotFound()
+        assertExplicitLocalNotFound(stats)
+      assertExplicitRemoteNotFound(stats)
+      assertImplicitLocalOrRemoteFound(actualStats = stats, hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = false)
+      assertTemplateNotFound(stats)
+      assertComponentNotFound(stats)
+      assertProjectNotFound(stats)
+      assertUnknownNotFound(stats)
     }
   }
 
@@ -56,13 +56,13 @@ internal class GitLabCiIncludeFusCollectorImplicitLocalOrRemoteCasesTest {
     @Test
     fun test() = runBlocking {
       val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
-      stats.assertExplicitLocalNotFound()
-      stats.assertExplicitRemoteNotFound()
-      stats.assertImplicitLocalOrRemoteFound(hasEnvVar = true, hasSingleAsterisk = false, hasDoubleAsterisk = true)
-      stats.assertTemplateNotFound()
-      stats.assertComponentNotFound()
-      stats.assertProjectNotFound()
-      stats.assertUnknownNotFound()
+        assertExplicitLocalNotFound(stats)
+      assertExplicitRemoteNotFound(stats)
+      assertImplicitLocalOrRemoteFound(actualStats = stats, hasEnvVar = true, hasSingleAsterisk = false, hasDoubleAsterisk = true)
+      assertTemplateNotFound(stats)
+      assertComponentNotFound(stats)
+      assertProjectNotFound(stats)
+      assertUnknownNotFound(stats)
     }
   }
 
@@ -80,13 +80,13 @@ internal class GitLabCiIncludeFusCollectorImplicitLocalOrRemoteCasesTest {
     @Test
     fun test() = runBlocking {
       val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
-      stats.assertExplicitLocalNotFound()
-      stats.assertExplicitRemoteNotFound()
-      stats.assertImplicitLocalOrRemoteFound(hasEnvVar = false, hasSingleAsterisk = true, hasDoubleAsterisk = false)
-      stats.assertTemplateNotFound()
-      stats.assertComponentNotFound()
-      stats.assertProjectNotFound()
-      stats.assertUnknownNotFound()
+        assertExplicitLocalNotFound(stats)
+      assertExplicitRemoteNotFound(stats)
+      assertImplicitLocalOrRemoteFound(actualStats = stats, hasEnvVar = false, hasSingleAsterisk = true, hasDoubleAsterisk = false)
+      assertTemplateNotFound(stats)
+      assertComponentNotFound(stats)
+      assertProjectNotFound(stats)
+      assertUnknownNotFound(stats)
     }
   }
 
@@ -105,13 +105,13 @@ internal class GitLabCiIncludeFusCollectorImplicitLocalOrRemoteCasesTest {
     @Test
     fun test() = runBlocking {
       val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
-      stats.assertExplicitLocalNotFound()
-      stats.assertExplicitRemoteNotFound()
-      stats.assertImplicitLocalOrRemoteFound(hasEnvVar = true, hasSingleAsterisk = true, hasDoubleAsterisk = true)
-      stats.assertTemplateNotFound()
-      stats.assertComponentNotFound()
-      stats.assertProjectNotFound()
-      stats.assertUnknownNotFound()
+        assertExplicitLocalNotFound(stats)
+      assertExplicitRemoteNotFound(stats)
+      assertImplicitLocalOrRemoteFound(actualStats = stats, hasEnvVar = true, hasSingleAsterisk = true, hasDoubleAsterisk = true)
+      assertTemplateNotFound(stats)
+      assertComponentNotFound(stats)
+      assertProjectNotFound(stats)
+      assertUnknownNotFound(stats)
     }
   }
 
@@ -131,13 +131,13 @@ internal class GitLabCiIncludeFusCollectorImplicitLocalOrRemoteCasesTest {
     @Test
     fun test() = runBlocking {
       val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
-      stats.assertExplicitLocalNotFound()
-      stats.assertExplicitRemoteNotFound()
-      stats.assertImplicitLocalOrRemoteFound(hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = false)
-      stats.assertTemplateNotFound()
-      stats.assertComponentNotFound()
-      stats.assertProjectNotFound()
-      stats.assertUnknownNotFound()
+        assertExplicitLocalNotFound(stats)
+      assertExplicitRemoteNotFound(stats)
+      assertImplicitLocalOrRemoteFound(actualStats = stats, hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = false)
+      assertTemplateNotFound(stats)
+      assertComponentNotFound(stats)
+      assertProjectNotFound(stats)
+      assertUnknownNotFound(stats)
     }
   }
 }
