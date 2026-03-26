@@ -1,0 +1,186 @@
+{
+  "threadDump": {
+    "processId": "16746",
+    "time": "2026-03-23T14:31:03.619361Z",
+    "runtimeVersion": "25.0.2+10-69",
+    "threadContainers": [
+      {
+        "container": "<root>",
+        "parent": null,
+        "owner": null,
+        "threads": [
+          {
+            "tid": "3",
+            "time": "2026-03-23T14:31:03.632865Z",
+            "name": "main",
+            "state": "WAITING",
+            "waitingOn": "java.lang.Thread@48b647c3",
+            "stack": [
+              "java.base\/java.lang.Object.wait0(Native Method)",
+              "java.base\/java.lang.Object.wait(Object.java:389)",
+              "java.base\/java.lang.Thread.join(Thread.java:1887)",
+              "java.base\/java.lang.Thread.join(Thread.java:1963)",
+              "MultiLockExample.main(MultiLockExample.java:24)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 2,
+                "locks": [
+                  "java.lang.Thread@48b647c3"
+                ]
+              }
+            ]
+          },
+          {
+            "tid": "15",
+            "time": "2026-03-23T14:31:03.636136Z",
+            "name": "Reference Handler",
+            "state": "RUNNABLE",
+            "stack": [
+              "java.base\/java.lang.ref.Reference.waitForReferencePendingList(Native Method)",
+              "java.base\/java.lang.ref.Reference.processPendingReferences(Reference.java:246)",
+              "java.base\/java.lang.ref.Reference$ReferenceHandler.run(Reference.java:208)"
+            ]
+          },
+          {
+            "tid": "16",
+            "time": "2026-03-23T14:31:03.636255Z",
+            "name": "Finalizer",
+            "state": "WAITING",
+            "waitingOn": "java.lang.ref.ReferenceQueue$Lock@3a18b798",
+            "stack": [
+              "java.base\/java.lang.Object.wait0(Native Method)",
+              "java.base\/java.lang.Object.wait(Object.java:389)",
+              "java.base\/java.lang.Object.wait(Object.java:351)",
+              "java.base\/java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:137)",
+              "java.base\/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:215)",
+              "java.base\/java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:165)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 4,
+                "locks": [
+                  "java.lang.ref.ReferenceQueue$Lock@3a18b798"
+                ]
+              }
+            ]
+          },
+          {
+            "tid": "17",
+            "time": "2026-03-23T14:31:03.636487Z",
+            "name": "Signal Dispatcher",
+            "state": "RUNNABLE",
+            "stack": [
+            ]
+          },
+          {
+            "tid": "35",
+            "time": "2026-03-23T14:31:03.636546Z",
+            "name": "Common-Cleaner",
+            "state": "TIMED_WAITING",
+            "waitingOn": "java.lang.ref.ReferenceQueue$Lock@969d74e",
+            "stack": [
+              "java.base\/java.lang.Object.wait0(Native Method)",
+              "java.base\/java.lang.Object.wait(Object.java:389)",
+              "java.base\/java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:123)",
+              "java.base\/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:201)",
+              "java.base\/jdk.internal.ref.CleanerImpl.run(CleanerImpl.java:146)",
+              "java.base\/java.lang.Thread.run(Thread.java:1474)",
+              "java.base\/jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:148)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 3,
+                "locks": [
+                  "java.lang.ref.ReferenceQueue$Lock@969d74e"
+                ]
+              }
+            ]
+          },
+          {
+            "tid": "36",
+            "time": "2026-03-23T14:31:03.636798Z",
+            "name": "IntelliJ Suspend Helper",
+            "state": "TIMED_WAITING",
+            "stack": [
+              "java.base\/java.lang.Thread.sleepNanos0(Native Method)",
+              "java.base\/java.lang.Thread.sleepNanos(Thread.java:509)",
+              "java.base\/java.lang.Thread.sleep(Thread.java:540)",
+              "com.intellij.rt.debugger.agent.SuspendHelper.suspendHelperLoopBody(SuspendHelper.java:29)",
+              "com.intellij.rt.debugger.agent.SuspendHelper.access$000(SuspendHelper.java:5)",
+              "com.intellij.rt.debugger.agent.SuspendHelper$1.run(SuspendHelper.java:15)",
+              "java.base\/java.lang.Thread.run(Thread.java:1474)"
+            ]
+          },
+          {
+            "tid": "37",
+            "time": "2026-03-23T14:31:03.636942Z",
+            "name": "Notification Thread",
+            "state": "RUNNABLE",
+            "stack": [
+            ]
+          },
+          {
+            "tid": "38",
+            "time": "2026-03-23T14:31:03.636993Z",
+            "name": "CoarseTimer",
+            "state": "TIMED_WAITING",
+            "stack": [
+              "java.base\/jdk.internal.misc.Unsafe.park(Native Method)",
+              "java.base\/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:408)",
+              "com.intellij.rt.debugger.agent.OverheadDetector$CoarseTimer$1.run(OverheadDetector.java:87)",
+              "java.base\/java.lang.Thread.run(Thread.java:1474)"
+            ]
+          },
+          {
+            "tid": "39",
+            "time": "2026-03-23T14:31:03.637104Z",
+            "name": "multi-lock-thread",
+            "state": "TIMED_WAITING",
+            "stack": [
+              "java.base\/java.lang.Thread.sleepNanos0(Native Method)",
+              "java.base\/java.lang.Thread.sleepNanos(Thread.java:509)",
+              "java.base\/java.lang.Thread.sleep(Thread.java:540)",
+              "MultiLockExample.lambda$main$0(MultiLockExample.java:14)",
+              "java.base\/java.lang.Thread.run(Thread.java:1474)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 3,
+                "locks": [
+                  "java.lang.Object@79177b4a",
+                  "java.lang.Object@300ce97d",
+                  "java.lang.Object@4fd73c93"
+                ]
+              }
+            ]
+          },
+          {
+            "tid": "40",
+            "time": "2026-03-23T14:31:03.637280Z",
+            "name": "Attach Listener",
+            "state": "RUNNABLE",
+            "stack": [
+              "java.base\/jdk.internal.vm.ThreadSnapshot.create(Native Method)",
+              "java.base\/jdk.internal.vm.ThreadSnapshot.of(ThreadSnapshot.java:60)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThread(ThreadDumper.java:316)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThreads(ThreadDumper.java:291)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThreadsToJson(ThreadDumper.java:266)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThreadsToFile(ThreadDumper.java:131)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThreadsToJson(ThreadDumper.java:89)"
+            ]
+          }
+        ],
+        "threadCount": "10"
+      },
+      {
+        "container": "java.util.concurrent.ThreadPoolExecutor@2b05039f",
+        "parent": "<root>",
+        "owner": null,
+        "threads": [
+        ],
+        "threadCount": "0"
+      }
+    ]
+  }
+}

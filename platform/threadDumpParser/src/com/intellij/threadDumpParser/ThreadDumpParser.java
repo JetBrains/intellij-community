@@ -207,18 +207,15 @@ public final class ThreadDumpParser {
     return threads;
   }
 
-  private static @Nullable ThreadState findLockOwner(List<? extends ThreadState> result, @Nullable String lockId, boolean ignoreWaiting) {
-    if (lockId == null) return null;
-
-    final String marker = "- locked <" + lockId + ">";
-    for(ThreadState lockOwner : result) {
+  private static @Nullable ThreadState findLockOwner(List<? extends ThreadState> lockOwners, String lockId, boolean ignoreWaiting) {
+    for(ThreadState lockOwner : lockOwners) {
       String trace = lockOwner.getStackTrace();
-      if (trace.contains(marker) && (!ignoreWaiting || !trace.contains(AT_JAVA_LANG_OBJECT_WAIT))) {
+      if (!ignoreWaiting || !trace.contains(AT_JAVA_LANG_OBJECT_WAIT)) {
         return lockOwner;
       }
     }
-    for(ThreadState lockOwner : result) {
-      if(lockOwner.getOwnableSynchronizers() != null && lockOwner.getOwnableSynchronizers().equals(lockId)){
+    for(ThreadState lockOwner : lockOwners) {
+      if (lockOwner.getOwnableSynchronizers() != null && lockOwner.getOwnableSynchronizers().equals(lockId)) {
         return lockOwner;
       }
     }
@@ -230,6 +227,148 @@ public final class ThreadDumpParser {
     result.sort((o1, o2) -> getInterestLevel(o2) - getInterestLevel(o1));
   }
 
+  /**
+   * Links threads that are waiting on monitors owned by other threads and detects deadlocks.
+   * Populates {@link ThreadState#addWaitingThread} and {@link ThreadState#addDeadlockedThread}.
+   */
+  public static void detectWaitingAndDeadlockedThreads(List<? extends ThreadState> threadStates) {
+    Map<String, List<ThreadState>> monitorToOwners = new HashMap<>();
+
+    for (ThreadState threadState : threadStates) {
+      for (String lockId : threadState.getOwnedMonitors()) {
+        monitorToOwners.computeIfAbsent(lockId, k -> new ArrayList<>()).add(threadState);
+      }
+    }
+
+    for (ThreadState threadState : threadStates) {
+      String waitedMonitor = threadState.getContendedMonitor();
+      if (waitedMonitor == null) continue;
+      var monitorOwners = monitorToOwners.get(waitedMonitor);
+      if (monitorOwners == null) continue;
+
+      ThreadState lockOwner = findLockOwner(monitorOwners, waitedMonitor, true);
+      if (lockOwner == null) {
+        lockOwner = findLockOwner(monitorOwners, waitedMonitor, false);
+      }
+      if (lockOwner != null) {
+        if (threadState.isAwaitedBy(lockOwner)) {
+          threadState.addDeadlockedThread(lockOwner);
+          lockOwner.addDeadlockedThread(threadState);
+        }
+        lockOwner.addWaitingThread(threadState);
+      }
+    }
+  }
+
+  /**
+   * Enriches the raw stack trace of the given {@param threadStates} with information about acquired monitors.
+   * <p>
+   * Adds the following information to the stack trace for each thread:
+   * <ul>
+   *   <li>{@code "blocks <threadName>"} — for every monitor owned by this thread,
+   *   lists all threads currently waiting to acquire it.</li>
+   *   <li>{@code "waiting for <threadName> to release lock on <monitor>"} — if this thread
+   *   has a contended monitor, names the thread that currently owns it.</li>
+   *   <li>{@code "- locked <monitor>"} — inlined after the stack frame at which the monitor
+   *   was acquired. If frame depth information is not available, the lock annotations
+   *   are appended at the bottom of the stack trace.</li>
+   * </ul>
+   * <p>
+   *
+   * Note: Not needed for parsed jstack dump, this info will already be present in the trace.
+   */
+  public static void enrichStackTraceWithLockInfo(List<? extends ThreadState> threadStates) {
+    // monitorId → names of threads that are blocked/waiting on this monitor
+    Map<String, List<String>> monitorToWaitingThreadNames = new HashMap<>();
+    // monitorId → name of the thread that owns this monitor
+    Map<String, String> monitorToOwnerThreadName = new HashMap<>();
+
+    for (ThreadState threadState : threadStates) {
+      String contended = threadState.getContendedMonitor();
+      if (contended != null) {
+        monitorToWaitingThreadNames.computeIfAbsent(contended, k -> new ArrayList<>()).add(threadState.getName());
+      }
+      for (String monitor : threadState.getOwnedMonitors()) {
+        monitorToOwnerThreadName.putIfAbsent(monitor, threadState.getName());
+      }
+    }
+
+    for (ThreadState threadState : threadStates) {
+      enrichOneThreadStackTrace(threadState, monitorToWaitingThreadNames, monitorToOwnerThreadName);
+    }
+  }
+
+  private static void enrichOneThreadStackTrace(
+    ThreadState threadState,
+    Map<String, List<String>> monitorToWaitingThreads,
+    Map<String, String> monitorToOwnerThread
+  ) {
+    String contended = threadState.getContendedMonitor();
+    Set<String> allOwnedMonitors = threadState.getOwnedMonitors();
+
+    if (contended == null && allOwnedMonitors.isEmpty()) return;
+
+    String stackTrace = threadState.getStackTrace();
+    if (stackTrace == null) return;
+    var lines = stackTrace.lines().toList();
+
+    var buffer = new StringBuilder();
+    // Insert information about at which stack depth the monitor was acquired by the owning thread
+    int frameIndex = 0;
+    for (int i = 0; i < lines.size(); i++) {
+      var line = lines.get(i);
+      boolean isFrame = isStackFrame(line);
+
+      if (!isFrame) {
+        buffer.append(line).append('\n');
+        continue;
+      }
+
+      // Insert "blocks <thread>" and "waiting for <thread> to release <monitor>" lines before the first stack frame
+      if (frameIndex == 0) {
+        for (String monitor : allOwnedMonitors) {
+          List<String> waitingNames = monitorToWaitingThreads.get(monitor);
+          if (waitingNames != null) {
+            for (String name : waitingNames) {
+              buffer.append("\t blocks ").append(name).append('\n');
+            }
+          }
+        }
+        if (contended != null) {
+          String ownerName = monitorToOwnerThread.get(contended);
+          if (ownerName != null) {
+            buffer.append("\t waiting for ").append(ownerName)
+              .append(" to release lock on ").append(contended).append('\n');
+          }
+        }
+      }
+
+      buffer.append(line).append('\n');
+
+      List<String> monitors = threadState.getOwnedMonitorsAtDepth(frameIndex);
+      if (monitors != null) {
+        for (String monitor : monitors) {
+          buffer.append("\t  - locked ").append(monitor).append('\n');
+        }
+      }
+
+      frameIndex++;
+    }
+
+    // Append monitors with unknown depth (-1) at the end
+    List<String> unknownDepth = threadState.getOwnedMonitorsAtDepth(-1);
+    if (unknownDepth != null) {
+      for (String monitor : unknownDepth) {
+        buffer.append("\t  - locked <").append(monitor).append(">").append('\n');
+      }
+    }
+
+    threadState.setStackTrace(buffer.toString(), threadState.isEmptyStackTrace());
+  }
+
+  private static boolean isStackFrame(String line) {
+    return line.trim().startsWith("at ");
+  }
   private static @Nullable String findLockedOwnableSynchronizers(final String stackTrace) {
     if (!stackTrace.contains(ourLockedOwnableSynchronizersHeader)) {
       // It's a fast path, otherwise regex below takes too much time.
