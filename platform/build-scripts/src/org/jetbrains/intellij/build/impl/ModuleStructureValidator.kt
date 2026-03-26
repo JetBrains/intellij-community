@@ -203,7 +203,6 @@ class ModuleStructureValidator(
         metadataBuilder = { sb ->
           sb.append("  <id>com.intellij</id>\n")
         },
-        isUltimateBuild = context.productProperties.platformPrefix != "Idea",
       )
 
       // Parse generated XML and validate it

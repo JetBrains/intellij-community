@@ -146,7 +146,6 @@ class ModelBuildingStageTest {
         ),
         outputProvider = createTestModuleOutputProvider(jps.project),
         projectRoot = tempDir,
-        isUltimateBuild = false,
         skipXIncludePaths = emptySet(),
         xIncludePrefixFilter = { null },
       )
@@ -200,7 +199,6 @@ class ModelBuildingStageTest {
         ),
         outputProvider = createTestModuleOutputProvider(jps.project),
         projectRoot = tempDir,
-        isUltimateBuild = false,
         skipXIncludePaths = emptySet(),
         xIncludePrefixFilter = { null },
       )

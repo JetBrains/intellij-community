@@ -792,7 +792,6 @@ internal fun testGenerationModel(
     ),
     projectRoot = Path.of("."),
     outputProvider = effectiveOutputProvider,
-    isUltimateBuild = false,
     descriptorCache = ModuleDescriptorCache(effectiveOutputProvider),
     pluginContentCache = effectivePluginContentCache,
     fileUpdater = effectiveFileUpdater,

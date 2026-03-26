@@ -12,9 +12,6 @@
     <xi:fallback/>
   </xi:include>
   <xi:include href="/META-INF/pycharm-core.xml"/>
-  <xi:include href="/META-INF/community-extensions.xml">
-    <xi:fallback/>
-  </xi:include>
   <xi:include href="/META-INF/pycharm-core-customization.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>

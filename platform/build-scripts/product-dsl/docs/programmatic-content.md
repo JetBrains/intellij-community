@@ -58,11 +58,6 @@ override fun getProductContentModules(): ProductModulesContentSpec {
     deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
     deprecatedInclude("intellij.gateway", "META-INF/Gateway.xml")
     
-    // Ultimate-only includes (only included in Ultimate builds)
-    // When inlining: Skipped in Community builds
-    // When NOT inlining: Generates xi:include with xi:fallback for graceful handling
-    deprecatedInclude("intellij.platform.extended.community.impl", "META-INF/community-extensions.xml", ultimateOnly = true)
-
     // Include module sets
     moduleSet(CommunityModuleSets.essential())
     moduleSet(CommunityModuleSets.vcs())
@@ -226,10 +221,6 @@ override fun getProductContentModules(): ProductModulesContentSpec {
 
 The content is generated into `/remote-dev/gateway/resources/META-INF/plugin.xml`.
 
-## Ultimate-Only Includes
-
-The `ultimateOnly` flag on `deprecatedInclude()` enables conditional inclusion of resources that only exist in Ultimate builds.
-
 ### Behavior
 
 **When inlining** (`inlineXmlIncludes = true`):
@@ -253,11 +244,6 @@ override fun getProductContentModules(): ProductModulesContentSpec {
   return productModules {
     // Regular include - always processed
     deprecatedInclude("intellij.pycharm.community", "META-INF/pycharm-core.xml")
-    
-    // Ultimate-only - conditionally processed
-    deprecatedInclude("intellij.platform.extended.community.impl", 
-                     "META-INF/community-extensions.xml", 
-                     ultimateOnly = true)
   }
 }
 ```
@@ -275,21 +261,6 @@ override fun getProductContentModules(): ProductModulesContentSpec {
 <xi:include href="/META-INF/pycharm-core.xml"/>
 <xi:include href="/META-INF/community-extensions.xml"/>
 ```
-
-### Use Cases
-
-Use `ultimateOnly = true` when:
-
-1. **The included XML file exists only in Ultimate repository**
-   - The module or resource is not available in community builds
-
-2. **Multiple products share the same descriptor**
-   - Both Community and Ultimate variants use the same `getProductContentDescriptor()`
-   - Ultimate variant needs additional functionality
-
-3. **Backward compatibility during migration**
-   - `xi:fallback` allows runtime resolution
-   - Community builds gracefully skip missing files
 
 ## Implementation Details
 

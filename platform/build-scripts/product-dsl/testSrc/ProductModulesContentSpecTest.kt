@@ -43,7 +43,6 @@ class ProductModulesContentSpecTest {
       inlineXmlIncludes = false,
       inlineModuleSets = true,
       metadataBuilder = TEST_METADATA_BUILDER,
-      isUltimateBuild = false
     )
 
     assertThat(result.xml).contains("module.a")
@@ -75,7 +74,6 @@ class ProductModulesContentSpecTest {
         inlineXmlIncludes = false,
         inlineModuleSets = true,
         metadataBuilder = TEST_METADATA_BUILDER,
-        isUltimateBuild = false
       )
     }
       .isInstanceOf(IllegalStateException::class.java)
@@ -117,7 +115,6 @@ class ProductModulesContentSpecTest {
         inlineXmlIncludes = false,
         inlineModuleSets = true,
         metadataBuilder = TEST_METADATA_BUILDER,
-        isUltimateBuild = false
       )
     }
       .isInstanceOf(IllegalStateException::class.java)
@@ -146,7 +143,6 @@ class ProductModulesContentSpecTest {
       inlineXmlIncludes = false,
       inlineModuleSets = true,
       metadataBuilder = TEST_METADATA_BUILDER,
-      isUltimateBuild = false
     )
 
     assertThat(result.xml).contains("module.a")
@@ -177,7 +173,6 @@ class ProductModulesContentSpecTest {
         inlineXmlIncludes = false,
         inlineModuleSets = true,
         metadataBuilder = TEST_METADATA_BUILDER,
-        isUltimateBuild = false
       )
     }
       .isInstanceOf(IllegalStateException::class.java)
@@ -217,7 +212,6 @@ class ProductModulesContentSpecTest {
       inlineXmlIncludes = false,
       inlineModuleSets = false,
       metadataBuilder = TEST_METADATA_BUILDER,
-      isUltimateBuild = false
     )
 
     // Should inline parent modules with loading attributes
@@ -254,7 +248,6 @@ class ProductModulesContentSpecTest {
       inlineXmlIncludes = false,
       inlineModuleSets = true,
       metadataBuilder = TEST_METADATA_BUILDER,
-      isUltimateBuild = false
     )
 
     // Verify embedded modules have loading attribute
@@ -315,7 +308,6 @@ class ProductModulesContentSpecTest {
       inlineXmlIncludes = false,
       inlineModuleSets = false,
       metadataBuilder = TEST_METADATA_BUILDER,
-      isUltimateBuild = false
     )
 
     // Verify rdCommon modules appear exactly ONCE with loading attributes
@@ -377,7 +369,6 @@ class ProductModulesContentSpecTest {
       inlineXmlIncludes = false,
       inlineModuleSets = true,  // Full inlining mode
       metadataBuilder = TEST_METADATA_BUILDER,
-      isUltimateBuild = false
     )
 
     // Verify rd modules have loading="embedded" attribute
@@ -420,7 +411,6 @@ class ProductModulesContentSpecTest {
         sb.append("  <id>test.plugin</id>\n")
         sb.append("  <name>Test Plugin</name>\n")
       },
-      isUltimateBuild = true
     )
 
     // Verify module set modules are present
@@ -456,7 +446,6 @@ class ProductModulesContentSpecTest {
       inlineXmlIncludes = true,
       inlineModuleSets = true,
       metadataBuilder = TEST_METADATA_BUILDER,
-      isUltimateBuild = true
     )
 
     // Both parent and nested modules should be inlined

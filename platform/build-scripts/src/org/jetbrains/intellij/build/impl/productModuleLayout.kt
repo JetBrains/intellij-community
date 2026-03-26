@@ -62,7 +62,6 @@ internal suspend fun processAndGetProductPluginContentModules(
       metadataBuilder = { sb ->
         sb.append("  <id>com.intellij</id>\n")
       },
-      isUltimateBuild = context.paths.projectHome != context.paths.communityHomeDir
     )
     Span.current().addEvent("Generated ${buildResult.contentBlocks.size} content blocks with ${buildResult.contentBlocks.sumOf { it.modules.size }} total modules")
 
