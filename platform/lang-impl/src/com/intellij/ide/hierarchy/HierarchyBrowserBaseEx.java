@@ -106,11 +106,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   public static final DataKey<HierarchyBrowserBaseEx> HIERARCHY_BROWSER = DataKey.create("HIERARCHY_BROWSER");
 
-  public static final String SCOPE_PROJECT = "Production";
-  public static final String SCOPE_ALL = "All";
-  public static final String SCOPE_CLASS = "This Class";
-  public static final String SCOPE_MODULE = "This Module";
-  public static final String SCOPE_TEST = "Test";
+  public static final String SCOPE_PROJECT = HierarchyBrowserScopes.SCOPE_PROJECT;
+  public static final String SCOPE_ALL = HierarchyBrowserScopes.SCOPE_ALL;
+  public static final String SCOPE_CLASS = HierarchyBrowserScopes.SCOPE_CLASS;
+  public static final String SCOPE_MODULE = HierarchyBrowserScopes.SCOPE_MODULE;
+  public static final String SCOPE_TEST = HierarchyBrowserScopes.SCOPE_TEST;
 
   public static final String HELP_ID = "reference.toolWindows.hierarchy";
 

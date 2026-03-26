@@ -764,6 +764,13 @@ f:com.intellij.ide.fileTemplates.VelocityWrapper
 - <init>():V
 f:com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl
 - getDefaultContextMap():java.util.Map
+f:com.intellij.ide.hierarchy.HierarchyBrowserScopes
+- sf:SCOPE_ALL:java.lang.String
+- sf:SCOPE_CLASS:java.lang.String
+- sf:SCOPE_MODULE:java.lang.String
+- sf:SCOPE_PROJECT:java.lang.String
+- sf:SCOPE_TEST:java.lang.String
+- <init>():V
 com.intellij.ide.highlighter.custom.CustomHighlighterColors
 - sf:CUSTOM_INVALID_STRING_ESCAPE:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:CUSTOM_KEYWORD1_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
