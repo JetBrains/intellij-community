@@ -15,14 +15,12 @@ import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.ide.setToolTipText
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.DialogUtil
@@ -174,13 +172,13 @@ internal class AgentPromptProviderSelector(
     val provider = selectedProvider
     if (provider == null) {
       providerIconLabel.icon = AllIcons.Toolwindows.ToolWindowMessages
-      providerIconLabel.setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.provider.selector.tooltip")))
+      providerIconLabel.toolTipText = AgentPromptBundle.message("popup.provider.selector.tooltip")
       updateProviderOptionsPresentation()
       return
     }
 
     providerIconLabel.icon = getIcon(provider.icon, selectedLaunchMode)
-    providerIconLabel.setToolTipText(HtmlChunk.text(provider.displayName))
+    providerIconLabel.toolTipText = provider.displayName
     updateProviderOptionsPresentation()
   }
 

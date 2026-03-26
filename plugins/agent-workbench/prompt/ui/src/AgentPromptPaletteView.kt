@@ -5,9 +5,7 @@ package com.intellij.agent.workbench.prompt.ui
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.setToolTipText
 import com.intellij.markdown.utils.convertMarkdownToHtml
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.ActionLink
@@ -87,7 +85,7 @@ internal fun createAgentPromptPaletteView(
 ): AgentPromptPaletteView {
   val providerIconLabel = JBLabel().apply {
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.provider.selector.tooltip")))
+    toolTipText = AgentPromptBundle.message("popup.provider.selector.tooltip")
     border = JBUI.Borders.empty()
     addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent?) {
@@ -119,7 +117,7 @@ internal fun createAgentPromptPaletteView(
 
   val previewToggle = JBLabel(AllIcons.Actions.Preview).apply {
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.preview.toggle.tooltip")))
+    toolTipText = AgentPromptBundle.message("popup.preview.toggle.tooltip")
     border = JBUI.Borders.empty()
     addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent?) {
@@ -143,9 +141,8 @@ internal fun createAgentPromptPaletteView(
   }
 
   lateinit var tabbedPane: JBTabbedPane
-  val headerControlsInsets = JBUI.CurrentTheme.BigPopup.headerToolbarInsets()
-  val controlsLeftGap = headerControlsInsets.left
-  val controlToIconGap = headerControlsInsets.right
+  val controlsLeftGap = JBUI.scale(18)
+  val controlToIconGap = JBUI.scale(9)
   val spacer = JPanel().apply {
     isOpaque = false
   }
