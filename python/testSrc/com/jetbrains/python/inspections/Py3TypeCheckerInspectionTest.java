@@ -5218,4 +5218,74 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    func1(a=td1, b=td2, <warning descr="Expected type 'TD1', got 'str' instead">c="wrong"</warning>)
                    """);
   }
+
+  // PY-76847
+  public void testParamSpecSubstitutedWithUnpackedTypedDictKwargs() {
+    doTestByText("""
+                   from typing import Callable, TypedDict, Unpack
+                   
+                   def g[**P](fn: Callable[P, None]) -> Callable[P, None]:
+                       return fn
+                   
+                   class Person(TypedDict):
+                       name: str
+                       age: int
+                   
+                   def create_person(**kwargs: Unpack[Person]):
+                       pass
+                   
+                   g(create_person)(**<warning descr="TypedDict 'Person' has missing key: 'age'">{"name": ""}</warning>)
+                   g(create_person)(name=""<warning descr="Parameter 'age' unfilled (from ParamSpec 'P')">)
+                   """);
+  }
+
+  // PY-76847
+  public void testParamSpecSubstitutedWithUnpackedTypedDictKwargsInClass() {
+    doTestByText("""
+                   from typing import Callable, TypedDict, Unpack
+                   
+                   
+                   class Person(TypedDict):
+                       name: str
+                       age: int
+                   
+                   class Factory[**P]:
+                       fn: Callable[P, None]
+                   
+                       def __init__(self, fn: Callable[P, None]):
+                           self.fn = fn
+                   
+                   
+                   def create_person(**kwargs: Unpack[Person]):
+                       pass
+                   
+                   
+                   Factory(create_person).fn(**<warning descr="TypedDict 'Person' has missing key: 'age'">{"name": ""}</warning>)
+                   Factory(create_person).fn(name=""<warning descr="Parameter 'age' unfilled (from ParamSpec 'P')">)</warning>
+                   """);
+  }
+
+  // PY-76847
+  public void testParamSpecSubstitutedWithUnpackedTypedDictKwargsInSameCall() {
+    doTestByText("""
+                   from typing import Callable, TypedDict, Unpack
+                   
+                   
+                   def g[**P](fn: Callable[P, None], *args: P.args, **kwargs: P.kwargs) -> Callable[P, None]:
+                       return fn
+                   
+                   
+                   class Person(TypedDict):
+                       name: str
+                       age: int
+                   
+                   
+                   def create_person(**kwargs: Unpack[Person]):
+                       pass
+                   
+                   
+                   g(create_person, **<warning descr="TypedDict 'Person' has missing key: 'age'">{"name": ""}</warning>)
+                   g(create_person, name=""<warning descr="Parameter 'age' unfilled (from ParamSpec 'P')">)</warning>
+                   """);
+  }
 }
