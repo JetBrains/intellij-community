@@ -538,7 +538,7 @@ suspend fun <T> Flow<Match<T>>.collectMatches(collector: suspend CoroutineScope.
  * Runs collector with each match, under [Match.withMatch]
  * when new match arrives, the previous work is cancelled, see [Flow.collectLatest]
  * */
-suspend fun <T> Flow<Match<T>>.collectLatestMatch(collector: suspend CoroutineScope.(T) -> Unit) {
+private suspend fun <T> Flow<Match<T>>.collectLatestMatch(collector: suspend CoroutineScope.(T) -> Unit) {
   collectLatest { match -> match.withMatch(collector) }
 }
 
