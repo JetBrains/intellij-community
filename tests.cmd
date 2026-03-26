@@ -5,7 +5,7 @@ GOTO :CMDSCRIPT
 
 [ -z "$BASH_VERSION" ] && exec /bin/bash "$0" "$@"
 
-# tests.cmd builds and runs IDEA Ultimate tests in way suitable for calling from CI/CD like TeamCity
+# tests.cmd builds and runs IDEA Community tests in way suitable for calling from CI/CD like TeamCity
 # THIS SCRIPTS WORKS FOR ALL SYSTEMS Linux/Windows/macOS
 # See community/README.md for usage scenarios
 
@@ -17,7 +17,7 @@ show_help() {
   echo ""
   echo "Required:"
   echo "  --module <module>    Name of the JPS module which contains the test classes"
-  echo "  --test <pattern>     Full test class name (FQN) or wild card pattern (e.g. com.intellij.*Test)"
+  echo "  --test <pattern>     Full test class name (FQN) or wild card pattern (e.g. com.intellij.*Test) or exact FQN#methodName"
   echo ""
   echo "Options:"
   echo "  --debug              Debug build scripts JVM process"
@@ -70,8 +70,15 @@ if [ -z "$test_pattern" ]; then
 fi
 
 # See java_stub_template.txt on how bazel java wrapper works
+# '#' means method selector (e.g. com.example.MyTest#myMethod), use intellij.build.test.simple.patterns for exact matching
+if [[ "$test_pattern" == *"#"* ]]; then
+  test_pattern_prop="intellij.build.test.simple.patterns"
+else
+  test_pattern_prop="intellij.build.test.patterns"
+fi
+
 args=()
-for arg in "-Dintellij.build.test.main.module=$module" "-Dintellij.build.test.patterns=$test_pattern" "${extra_args[@]+"${extra_args[@]}"}"; do
+for arg in "-Dintellij.build.test.main.module=$module" "-D$test_pattern_prop=$test_pattern" "${extra_args[@]+"${extra_args[@]}"}"; do
   if [ "$arg" = "--debug" ]; then
     args+=("--debug")
   else
@@ -80,8 +87,8 @@ for arg in "-Dintellij.build.test.main.module=$module" "-Dintellij.build.test.pa
 done
 
 cd "$root"
-echo "Running: $root/bazel.cmd run //build:idea_ultimate_run_tests_build_target -- ${args[*]}"
-exec /bin/bash "$root/bazel.cmd" run //build:idea_ultimate_run_tests_build_target -- "${args[@]}"
+echo "Running: $root/bazel.cmd run //build:run_tests_build_target -- ${args[*]}"
+exec /bin/bash "$root/bazel.cmd" run //build:run_tests_build_target -- "${args[@]}"
 
 :CMDSCRIPT
 
@@ -132,9 +139,13 @@ if not defined TEST_PATTERN (
   exit /b 1
 )
 
+rem '#' means method selector (e.g. com.example.MyTest#myMethod), use intellij.build.test.simple.patterns for exact matching
+set "TEST_PATTERN_PROP=intellij.build.test.patterns"
+echo %TEST_PATTERN% | findstr /C:"#" >nul 2>&1 && set "TEST_PATTERN_PROP=intellij.build.test.simple.patterns"
+
 cd /d "%ROOT%"
-echo Running: %ROOT%\bazel.cmd run //build:idea_ultimate_run_tests_build_target -- "--jvm_flag=-Dintellij.build.test.main.module=%MODULE%" "--jvm_flag=-Dintellij.build.test.patterns=%TEST_PATTERN%"%BAZEL_EXTRA%
-"%ROOT%\bazel.cmd" run //build:idea_ultimate_run_tests_build_target -- "--jvm_flag=-Dintellij.build.test.main.module=%MODULE%" "--jvm_flag=-Dintellij.build.test.patterns=%TEST_PATTERN%"%BAZEL_EXTRA%
+echo Running: %ROOT%\bazel.cmd run //build:run_tests_build_target -- "--jvm_flag=-Dintellij.build.test.main.module=%MODULE%" "--jvm_flag=-D%TEST_PATTERN_PROP%=%TEST_PATTERN%"%BAZEL_EXTRA%
+"%ROOT%\bazel.cmd" run //build:run_tests_build_target -- "--jvm_flag=-Dintellij.build.test.main.module=%MODULE%" "--jvm_flag=-D%TEST_PATTERN_PROP%=%TEST_PATTERN%"%BAZEL_EXTRA%
 exit /b %ERRORLEVEL%
 
 :DO_HELP
@@ -146,7 +157,7 @@ echo Usage: tests.cmd --module ^<module^> --test ^<pattern^> [options]
 echo.
 echo Required:
 echo   --module ^<module^>    Name of the JPS module which contains the test classes
-echo   --test ^<pattern^>     Full test class name (FQN) or wild card pattern (e.g. com.intellij.*Test)
+echo   --test ^<pattern^>     Full test class name (FQN) or wild card pattern (e.g. com.intellij.*Test) or exact FQN#methodName
 echo.
 echo Options:
 echo   --debug              Debug build scripts JVM process
