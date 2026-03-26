@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang.test
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.testFramework.monorepo.processProductionOutput
-import com.intellij.project.IntelliJProjectConfiguration
+import com.intellij.project.loadIntelliJProject
 import org.junit.Assert
 import org.junit.Test
 import kotlin.io.path.exists
@@ -25,9 +25,9 @@ class UrlClassLoaderSplitPackageTest {
     val knownClassesFromOtherModules = setOf(
       "CompoundRuntimeException",
       "JavaVersion",
-      "JavaVersion\$Companion",
+      $$"JavaVersion$Companion",
     )
-    val project = IntelliJProjectConfiguration.loadIntelliJProject(PathManager.getHomePath())
+    val project = loadIntelliJProject(PathManager.getHomeDir())
     project.modules.filterNot { it.name in platformLoaderModules }.forEach { module ->
       module.processProductionOutput { outputRoot -> 
         urlClassLoaderPackages.forEach { packageName ->

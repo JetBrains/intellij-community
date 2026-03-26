@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.project.IntelliJProjectConfiguration
+import com.intellij.project.loadIntelliJProject
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.nio.file.Files
@@ -23,7 +23,7 @@ object JitWatchConfigGenerator {
       }
     }
 
-    val project: JpsProject by lazy { IntelliJProjectConfiguration.loadIntelliJProject(PathManager.getHomePath()) }
+    val project: JpsProject by lazy { loadIntelliJProject(PathManager.getHomeDir()) }
     val sources = project.modules.asSequence()
       .filter { !isExcludedModule(it.name) }
       .flatMap { module ->

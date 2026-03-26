@@ -39,7 +39,7 @@ import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.vfs.writeText
 import com.intellij.platform.eel.codegen.BuilderRequest.Ownership
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
-import com.intellij.project.IntelliJProjectConfiguration
+import com.intellij.project.loadIntelliJProject
 import com.intellij.project.stateStore
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
@@ -115,7 +115,6 @@ import java.nio.file.Path
 import java.util.Optional
 import java.util.TreeSet
 import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.pathString
 import kotlin.io.path.readText
 import kotlin.io.path.walk
 import kotlin.jvm.optionals.getOrNull
@@ -335,7 +334,7 @@ class BuildersGeneratorTest {
     moduleName: String,
   ): Pair<Module, Path> {
     var genSrcDirName: Path? = null
-    val ultimateProject: JpsProject = IntelliJProjectConfiguration.loadIntelliJProject(Path.of(PathManager.getHomePath()).pathString)
+    val ultimateProject: JpsProject = loadIntelliJProject(PathManager.getHomeDir())
 
     val libraries = mutableSetOf<JpsLibrary>()
 

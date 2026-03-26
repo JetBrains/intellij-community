@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -195,7 +195,7 @@ internal val bazelOutputRoot: Path? by lazy {
 val CompilationContextImpl.asBazelIfNeeded: CompilationContext
   get() = toBazelIfNeeded(scope = null)
 
-internal fun CompilationContextImpl.toBazelIfNeeded(scope: CoroutineScope?): CompilationContext {
+fun CompilationContextImpl.toBazelIfNeeded(scope: CoroutineScope?): CompilationContext {
   return when {
     isRunningFromBazelOut() -> BazelCompilationContext(delegate = this, scope = scope)
     else -> this

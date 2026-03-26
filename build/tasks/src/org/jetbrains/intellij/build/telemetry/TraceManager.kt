@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build.telemetry
@@ -35,6 +35,7 @@ import kotlin.time.Duration.Companion.seconds
 // don't use JaegerJsonSpanExporter - not needed for clients, should be enabled only if needed to avoid writing a ~500KB JSON file
 fun withTracer(serviceName: String, traceFile: Path? = null, block: suspend () -> Unit): Unit = runBlocking(Dispatchers.Default) {
   val batchSpanProcessorScope = CoroutineScope(SupervisorJob(parent = coroutineContext.job)) + CoroutineName("BatchSpanProcessor")
+
   @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
   val spanProcessor = BatchSpanProcessor(
     coroutineScope = batchSpanProcessorScope,
@@ -101,6 +102,10 @@ private var traceManagerInitializer: () -> Pair<Tracer, BatchSpanProcessor?> = {
 }
 
 object TraceManager {
+  private val tracerLock = Any()
+  private val tracerOverrideStack = ArrayDeque<TracerOverrideHandle>()
+
+  @Volatile
   private var tracer: Tracer
   private val batchSpanProcessor: BatchSpanProcessor?
   private val isEnabled = System.getProperty("intellij.build.export.opentelemetry.spans")?.toBoolean() ?: false
@@ -112,10 +117,21 @@ object TraceManager {
   }
 
   fun setTracer(tracer: Tracer) {
-    this.tracer = tracer
+    synchronized(tracerLock) {
+      setActiveTracer(tracer)
+    }
   }
 
   fun spanBuilder(spanName: String): SpanBuilder = tracer.spanBuilder(spanName)
+
+  fun pushTracer(tracer: Tracer): AutoCloseable {
+    synchronized(tracerLock) {
+      val handle = TracerOverrideHandle(previousTracer = this.tracer)
+      tracerOverrideStack.addLast(handle)
+      setActiveTracer(tracer)
+      return handle
+    }
+  }
 
   suspend fun flush() {
     batchSpanProcessor?.flush()
@@ -128,6 +144,31 @@ object TraceManager {
   suspend fun scheduleExportPendingSpans() {
     if (isEnabled) {
       batchSpanProcessor?.scheduleFlush()
+    }
+  }
+
+  private fun setActiveTracer(tracer: Tracer) {
+    this.tracer = tracer
+    BuildDependenciesDownloader.TRACER = tracer
+  }
+
+  private class TracerOverrideHandle(
+    private val previousTracer: Tracer,
+  ) : AutoCloseable {
+    private val isClosed = AtomicBoolean()
+
+    override fun close() {
+      if (!isClosed.compareAndSet(false, true)) {
+        return
+      }
+
+      synchronized(tracerLock) {
+        check(tracerOverrideStack.isNotEmpty() && tracerOverrideStack.last() === this) {
+          "TraceManager tracer overrides must be closed in LIFO order"
+        }
+        tracerOverrideStack.removeLast()
+        setActiveTracer(previousTracer)
+      }
     }
   }
 }
