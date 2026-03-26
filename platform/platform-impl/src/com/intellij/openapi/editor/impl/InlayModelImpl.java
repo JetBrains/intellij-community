@@ -141,6 +141,9 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
             for (int i = 0; i < firstRelatedToPrecedingIndex; i++) {
               ((InlayImpl<?, ?>)inlays.get(i)).setStickingToRight(i >= caretPosition.column - inlaysStartPosition.column);
             }
+            for (int i = firstRelatedToPrecedingIndex; i < inlayCount; i++) {
+              ((InlayImpl<?, ?>)inlays.get(i)).setStickingToRight(false);
+            }
           }
           else if (inlaysStartPosition.line - 1 == caretPosition.line) {
             inlaysStartPosition = myEditor.offsetToVisualPosition(offset, false, true);
