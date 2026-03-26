@@ -26,6 +26,7 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.params.ParameterizedTest
+import kotlin.test.assertTrue
 
 @UseK2PluginMode
 @GradleProjectTestApplication
@@ -49,7 +50,6 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     @BeforeEach
     fun `replace completion service`() {
         application.replaceService(DependencyCompletionService::class.java, testCompletionService, testRootDisposable)
-        removeOtherCompletionContributors()
     }
 
     // TODO review expected suggestions when "org.jetbrains.kotlin.jvm" plugin is applied
@@ -70,6 +70,20 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
     @BaseGradleVersionSource
     @TestMetadata("configurationOnTopLevelPartialInput.test")
     fun `test configuration completion on top level partial input`(gradleVersion: GradleVersion) = verifyCompletion(gradleVersion)
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test second completion invocation shows unfiltered input`(gradleVersion: GradleVersion) =
+    test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
+      val file = writeTextAndCommit("build.gradle.kts", "dependencies { cla<caret> }")
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(file)
+        repeat(times = 2) {
+          codeInsightFixture.completeBasic()
+        }
+        assertTrue { codeInsightFixture.lookupElementStrings!!.contains("class") }
+      }
+    }
 
     @ParameterizedTest
     @BaseGradleVersionSource

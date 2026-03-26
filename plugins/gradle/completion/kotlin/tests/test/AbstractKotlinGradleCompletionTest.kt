@@ -1,14 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.completion.kotlin
 
-import com.intellij.codeInsight.completion.CompletionContributor
-import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.gradle.completion.kotlin.KotlinGradleScriptCompletionContributor
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.extensions.DefaultPluginDescriptor
-import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
@@ -67,17 +62,6 @@ abstract class AbstractKotlinGradleCompletionTest : AbstractGradleCodeInsightTes
                 maybeCheckResult()
             }
         }
-    }
-
-    protected fun removeOtherCompletionContributors() {
-        val pluginDescriptor = DefaultPluginDescriptor("registerCompletionContributor")
-        val contributor =
-            CompletionContributorEP("any", KotlinGradleScriptCompletionContributor::class.java.getName(), pluginDescriptor)
-        ExtensionTestUtil.maskExtensions(
-            CompletionContributor.EP,
-            listOf(contributor),
-            testRootDisposable
-        )
     }
 
     /**

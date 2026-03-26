@@ -68,6 +68,8 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
       return
     }
 
+    maybeIgnoreOtherCompletionContributors(result, parameters)
+
     val positionElement = parameters.position
     when {
 
@@ -177,9 +179,12 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     }.map { it.name }
   }
 
-  private fun filterResultsFromOtherContributors(result: CompletionResultSet, parameters: CompletionParameters) {
-    result.runRemainingContributors(parameters) { _ ->
-      // don't call other contributors
+  /**
+   * In the first completion invocation and zero (autocompletion), show only cleaned Gradle completion.
+   * Otherwise, show also other results from other contributors - e.g., Kotlin completion.
+   */
+  private fun maybeIgnoreOtherCompletionContributors(result: CompletionResultSet, parameters: CompletionParameters) {
+    if (parameters.invocationCount <= 1) {
       result.stopHere()
     }
   }
@@ -193,8 +198,6 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
   ) {
     val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
     loadingAdvertiser.showSearchingServer() // should be invoked early because filterResultsFromOtherContributors takes a while
-
-    filterResultsFromOtherContributors(result, parameters)
 
     val documentText = parameters.editor.document.text
     val offset = parameters.offset
@@ -247,8 +250,6 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
   ) {
     val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
     loadingAdvertiser.showSearchingServer() // should be invoked early because filterResultsFromOtherContributors takes a while
-
-    filterResultsFromOtherContributors(result, parameters)
 
     val dummyText = parameters.position.parent.text
     val text = removeDummySuffix(dummyText)
