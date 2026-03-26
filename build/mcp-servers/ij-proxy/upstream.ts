@@ -13,6 +13,7 @@ export interface UpstreamConnectionOptions {
   projectPath: string
   defaultProjectPathKey: 'project_path' | 'projectPath'
   toolCallTimeoutMs: number
+  buildTimeoutMs: number
   warn: (message: string) => void
 }
 
@@ -39,6 +40,7 @@ export class UpstreamConnection {
   private _projectPathManager: ReturnType<typeof createProjectPathManager>
   private readonly _defaultProjectPathKey: 'project_path' | 'projectPath'
   private readonly _toolCallTimeoutMs: number
+  private readonly _buildTimeoutMs: number
   private readonly _warn: (message: string) => void
 
   private _connectedPromise: Promise<void> | null = null
@@ -54,6 +56,7 @@ export class UpstreamConnection {
   constructor(options: UpstreamConnectionOptions) {
     this._transport = options.transport
     this._toolCallTimeoutMs = options.toolCallTimeoutMs
+    this._buildTimeoutMs = options.buildTimeoutMs
     this._warn = options.warn
     this._defaultProjectPathKey = options.defaultProjectPathKey
     this._projectPathManager = createProjectPathManager({
@@ -149,7 +152,8 @@ export class UpstreamConnection {
       await this.getTools()
       const callArgs = {...args}
       this._projectPathManager.injectProjectPathArgs(toolName, callArgs)
-      const options = this._toolCallTimeoutMs > 0 ? {timeout: this._toolCallTimeoutMs} : undefined
+      const timeoutMs = this._resolveTimeoutMs(toolName)
+      const options = timeoutMs > 0 ? {timeout: timeoutMs} : undefined
       const result = normalizeToolResult(
         await this.client.callTool({name: toolName, arguments: callArgs}, undefined, options)
       )
@@ -167,10 +171,17 @@ export class UpstreamConnection {
       await this.connect()
       await this.getTools()
       this._projectPathManager.injectProjectPathArgs(toolName, args)
-      const options = this._toolCallTimeoutMs > 0 ? {timeout: this._toolCallTimeoutMs} : undefined
+      const timeoutMs = this._resolveTimeoutMs(toolName)
+      const options = timeoutMs > 0 ? {timeout: timeoutMs} : undefined
       const result = await this.client.callTool({name: toolName, arguments: args}, undefined, options)
       return normalizeToolResult(result)
     })
+  }
+
+  private static readonly _LONG_TIMEOUT_TOOLS = new Set(['build_project'])
+
+  private _resolveTimeoutMs(toolName: string): number {
+    return UpstreamConnection._LONG_TIMEOUT_TOOLS.has(toolName) ? this._buildTimeoutMs : this._toolCallTimeoutMs
   }
 
   /** Forward arbitrary request to upstream. */

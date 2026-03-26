@@ -40,6 +40,7 @@ const connectTimeoutMs = parseEnvSeconds('JETBRAINS_MCP_CONNECT_TIMEOUT_S', 10)
 const scanTimeoutMs = parseEnvSeconds('JETBRAINS_MCP_SCAN_TIMEOUT_S', 1)
 const queueLimit = parseEnvNonNegativeInt('JETBRAINS_MCP_QUEUE_LIMIT', 100)
 const toolCallTimeoutMs = parseEnvSeconds('JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S', 60)
+const buildTimeoutMs = parseEnvSeconds('JETBRAINS_MCP_BUILD_TIMEOUT_S', 20 * 60)
 const queueWaitTimeoutMs = parseEnvSeconds(
   'JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S',
   toolCallTimeoutMs > 0 ? Math.round(toolCallTimeoutMs / 1000) : 0
@@ -229,6 +230,7 @@ function createUpstreamForUrl(url: string): UpstreamConnection {
     projectPath,
     defaultProjectPathKey,
     toolCallTimeoutMs,
+    buildTimeoutMs,
     warn
   })
 
