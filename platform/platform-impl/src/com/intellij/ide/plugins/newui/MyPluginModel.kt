@@ -295,7 +295,9 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     modalityState: ModalityState,
     actionDescriptor: PluginUiModel,
   ): InstallPluginResult {
-    prepareToInstall(installPluginInfo, installationScope)
+    withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+      prepareToInstall(installPluginInfo, installationScope)
+    }
     val customPlugins = customRepoPlugins?.toList()
     val result = controller.installOrUpdatePlugin(sessionId, parentComponent, descriptor, updateDescriptor, myInstallSource, modalityState, null, customPlugins)
     if (result.disabledPlugins.isEmpty() && result.disabledDependants.isEmpty()) {

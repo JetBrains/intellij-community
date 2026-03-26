@@ -2,6 +2,8 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
@@ -13,6 +15,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Alexander Lobas
@@ -20,6 +23,7 @@ import javax.swing.JComponent;
 @ApiStatus.Internal
 public class OneLineProgressIndicator extends InlineProgressIndicator {
   private Runnable myCancelRunnable;
+  private final AtomicBoolean myUpdateQueued = new AtomicBoolean();
 
   public OneLineProgressIndicator() {
     this(true);
@@ -47,6 +51,24 @@ public class OneLineProgressIndicator extends InlineProgressIndicator {
 
   public void setCancelRunnable(@NotNull Runnable runnable) {
     myCancelRunnable = runnable;
+  }
+
+  @Override
+  protected void queueProgressUpdate() {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      myUpdateQueued.set(false);
+      updateAndRepaint();
+      return;
+    }
+
+    if (!myUpdateQueued.compareAndSet(false, true)) {
+      return;
+    }
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      myUpdateQueued.set(false);
+      updateAndRepaint();
+    }, ModalityState.any());
   }
 
   @Override
