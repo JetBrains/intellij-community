@@ -172,6 +172,18 @@ internal class PythonAddCustomInterpreter<P : PathHolder>(
               extension.extendDialogPanelWithOptionalFields(this)
               model.state.targetPanelExtension.set(extension)
             }
+
+            fun updateAutoUploadRequired() {
+              val isUv = when (selectionMethod.get()) {
+                PythonInterpreterSelectionMethod.CREATE_NEW -> newInterpreterManager.get() == UV
+                PythonInterpreterSelectionMethod.SELECT_EXISTING -> existingInterpreterManager.get() == UV
+              }
+              extension.setAutoUploadRequired(isUv)
+            }
+            selectionMethod.afterChange { updateAutoUploadRequired() }
+            newInterpreterManager.afterChange { updateAutoUploadRequired() }
+            existingInterpreterManager.afterChange { updateAutoUploadRequired() }
+            updateAutoUploadRequired()
           }
         }
       }
