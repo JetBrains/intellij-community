@@ -2,7 +2,6 @@
 package git4idea.checkin
 
 import com.intellij.dvcs.commit.AmendCommitService
-import com.intellij.dvcs.repo.isHead
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -43,16 +42,19 @@ internal class GitAmendCommitService(project: Project, scope: CoroutineScope) : 
     return Git.getInstance().runCommand(h).getOutputOrThrow()
   }
 
-  override suspend fun getAmendSpecificCommitTargets(root: VirtualFile): List<CommitToAmend.Specific> =
+  override suspend fun getAmendSpecificCommitTargets(root: VirtualFile): List<CommitToAmend.Resolved> =
     withContext(Dispatchers.Default) {
       val repo = GitRepositoryManager.getInstance(project).repositories.singleOrNull() ?: return@withContext emptyList()
       val commits: List<VcsCommitMetadata> = recentCommitsProvider.getRecentCommits(repo.root)
 
-      commits
-        .dropWhile { repo.isHead(it.id) } // don't include last commit
-        .map { metadata ->
+      commits.mapIndexed { index, metadata ->
+        if (index == 0) {
+          CommitToAmend.Last.Known(metadata.id, metadata.subject)
+        }
+        else {
           CommitToAmend.Specific(metadata.id, metadata.subject)
         }
+      }
     }
 
   private fun getCommitMessageFormatPattern(): @NonNls String =

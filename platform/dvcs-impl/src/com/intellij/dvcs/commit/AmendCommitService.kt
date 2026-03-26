@@ -42,12 +42,12 @@ abstract class AmendCommitService(protected val project: Project) : AmendCommitA
     val logData = vcsLog.dataManager ?: return rejected(DvcsBundle.message("error.message.amend.no.vcs.log.available"))
 
     val commitHash = when (commitToAmend) {
-      is CommitToAmend.Last -> {
+      is CommitToAmend.Resolved -> commitToAmend.hash
+      CommitToAmend.Last.Unknown -> {
         val lastCommitId =
           repository.currentRevision ?: return rejected(DvcsBundle.message("error.message.amend.repository.is.empty.for.root", root))
         vcsLogObjectsFactory.createHash(lastCommitId)
       }
-      is CommitToAmend.Specific -> commitToAmend.targetHash
       is CommitToAmend.None -> throw IllegalArgumentException("Cannot return commit details for CommitToAmend.None")
     }
 

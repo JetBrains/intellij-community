@@ -66,7 +66,7 @@ internal class GitChangesViewWorkflowManagerAmendMode : GitSingleRepoTest() {
 
   private fun toggleAmendCommitMode(workflowManager: ChangesViewWorkflowManager, value: Boolean) {
     runInEdtAndWait {
-      workflowManager.commitWorkflowHandler!!.amendCommitHandler.commitToAmend = if (value) CommitToAmend.Last else CommitToAmend.None
+      workflowManager.commitWorkflowHandler!!.amendCommitHandler.commitToAmend = if (value) CommitToAmend.Last.Unknown else CommitToAmend.None
     }
   }
 }

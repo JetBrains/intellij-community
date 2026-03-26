@@ -46,7 +46,7 @@ class ToggleAmendCommitModeAction : CheckboxAction(), DumbAware {
     val handler = getAmendCommitHandler(e)!!
     handler.commitToAmend = if (state) {
       check(handler.commitToAmend is CommitToAmend.None)
-      CommitToAmend.Last
+      CommitToAmend.Last.Unknown
     }
     else CommitToAmend.None
 

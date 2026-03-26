@@ -20,7 +20,7 @@ interface AmendCommitHandler {
   fun isAmendSpecificCommitSupported(): Boolean
   fun addAmendCommitModeListener(listener: AmendCommitModeListener, parent: Disposable)
 
-  suspend fun getAmendSpecificCommitTargets(): List<CommitToAmend.Specific> = emptyList()
+  suspend fun getAmendSpecificCommitTargets(): List<CommitToAmend.Resolved> = emptyList()
 }
 
 interface AmendCommitModeListener : EventListener {
@@ -29,6 +29,23 @@ interface AmendCommitModeListener : EventListener {
 
 sealed interface CommitToAmend {
   object None : CommitToAmend
-  object Last : CommitToAmend
-  data class Specific(val targetHash: Hash, val targetSubject: @NlsSafe String) : CommitToAmend
+
+  sealed interface Resolved : CommitToAmend {
+    val hash: Hash
+    val subject: @NlsSafe String
+  }
+
+  sealed interface Last : CommitToAmend {
+    data class Known(
+      override val hash: Hash,
+      override val subject: @NlsSafe String
+    ) : Resolved, Last
+    
+    object Unknown : Last
+  }
+  
+  data class Specific(
+    override val hash: Hash,
+    override val subject: @NlsSafe String
+  ) : Resolved
 }
