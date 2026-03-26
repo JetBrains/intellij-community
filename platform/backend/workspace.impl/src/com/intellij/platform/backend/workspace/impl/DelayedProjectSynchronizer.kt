@@ -57,7 +57,7 @@ class DelayedProjectSynchronizer : ProjectActivity {
 
     logJpsEntities("Before Util.doSync")
     project.trackActivity(ProjectSynchronizerActivityKey) {
-      project.serviceAsync<ProjectSynchronizerUtil>().applyJpsModelToProjectModel()
+      ProjectSynchronizerUtil.getInstance(project).applyJpsModelToProjectModel()
     }
     logJpsEntities("After Util.doSync")
   }

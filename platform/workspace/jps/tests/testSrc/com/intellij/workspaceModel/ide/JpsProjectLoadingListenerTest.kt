@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.ide
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -114,7 +113,7 @@ class JpsProjectLoadingListenerTest {
     Disposer.register(disposableRule.disposable, Disposable {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     })
-    project.serviceAsync<ProjectSynchronizerUtil>().applyJpsModelToProjectModel()
+    ProjectSynchronizerUtil.getInstance(project).applyJpsModelToProjectModel()
     return project
   }
 

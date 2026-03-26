@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
@@ -486,7 +485,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       JpsProjectLoadingManager.getInstance(project).jpsProjectLoaded { deferred.complete(Unit) }
 
       if (!deferred.isCompleted && ApplicationManager.getApplication().isUnitTestMode) {
-        project.serviceAsync<ProjectSynchronizerUtil>().applyJpsModelToProjectModel()
+        ProjectSynchronizerUtil.getInstance(project).applyJpsModelToProjectModel()
       }
 
       // Safety net: if the callback is never invoked (e.g. due to a platform bug), unblock waiters after a timeout.
