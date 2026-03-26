@@ -31,7 +31,11 @@ class GradleEnvironmentTest : GradleImportingTestCase() {
 
     importAndRunTask(passedEnv, gradleEnv)
 
-    TestCase.assertEquals(DefaultGroovyMethods.toMapString(passedEnv), gradleEnv.toString().trim { it <= ' ' })
+    val output = gradleEnv.toString().lines()
+      .filter { !it.startsWith("Starting Gradle Daemon") && !it.startsWith("Gradle Daemon started") }
+      .joinToString("\n")
+      .trim()
+    TestCase.assertEquals(DefaultGroovyMethods.toMapString(passedEnv), output)
   }
 
   @Throws(IOException::class)
