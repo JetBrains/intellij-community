@@ -430,33 +430,11 @@ private fun buildThreadStates(
     result += threadState
 
     val buffer = StringBuilder()
-    buffer.append('"').append(threadName).append('"')
+    threadState.isDaemon = isDaemon
+    threadState.isVirtual = isVirtual
 
-    if (isDaemon) {
-      buffer.append(" daemon")
-      threadState.isDaemon = true
-    }
-    if (prio != null) {
-      buffer.append(" prio=").append(prio)
-    }
-    if (tid != null) {
-      buffer.append(" tid=${tid.toThreadIdString()}")
-      buffer.append(" nid=NA")
-    }
-    if (isVirtual) {
-      buffer.append(" virtual")
-      threadState.isVirtual = true
-
-      if (carrierId != null) {
-        buffer.append(" carrierId=${carrierId.toThreadIdString()}")
-      } else {
-        buffer.append(" unmounted")
-      }
-    }
-
-    buffer.append(" ").append(threadState.state)
-
-    buffer.append("\n  java.lang.Thread.State: ").append(threadState.javaThreadState)
+    // TODO: extract header creation to a function, which can be called from thread dump parsers, see JcmdJsonThreadDumpParser
+    buffer.append(threadState.createHeader(threadName, prio, tid, carrierId))
 
     // There could be too many virtual threads and it's too expensive to collect locking information for all of them.
     val collectMonitorsInfo = virtualThreadInfo == null ||
@@ -526,7 +504,6 @@ private fun buildThreadStates(
 
     val hasEmptyStack = rawStackTrace.isEmpty()
     threadState.setStackTrace(buffer.toString(), hasEmptyStack)
-    ThreadDumpParser.inferThreadStateDetail(threadState)
   }
 
   // For the sake of better UX (i.e., showing platform threads immediately and only then evaluating extended dump)
@@ -549,6 +526,8 @@ private fun buildThreadStates(
     val waitingThread = nameToThreadMap[waiting] ?: continue // continue if zombie
     val awaitedThread = nameToThreadMap[awaited] ?: continue // continue if zombie
     awaitedThread.addWaitingThread(waitingThread)
+  for (threadState in result) {
+    ThreadDumpParser.inferThreadStateDetail(threadState)
   }
 
   // detect simple deadlocks
@@ -567,6 +546,41 @@ private fun buildThreadStates(
 }
 
 private fun Long.toThreadIdString(): String = "0x" + JLong.toHexString(this)
+
+private fun ThreadState.createHeader(
+  threadName: String,
+  prio: Int?,
+  tid: Long?,
+  carrierId: Long?
+): String {
+  val buffer = StringBuilder()
+  buffer.append('"').append(threadName).append('"')
+
+  if (isDaemon) {
+    buffer.append(" daemon")
+  }
+  if (prio != null) {
+    buffer.append(" prio=").append(prio)
+  }
+  if (tid != null) {
+    buffer.append(" tid=").append(tid.toThreadIdString())
+    buffer.append(" nid=NA")
+  }
+  if (isVirtual) {
+    buffer.append(" virtual")
+
+    if (carrierId != null) {
+      buffer.append(" carrierId=${carrierId.toThreadIdString()}")
+    } else {
+      buffer.append(" unmounted")
+    }
+  }
+
+  buffer.append(" ").append(state)
+
+  buffer.append("\n  java.lang.Thread.State: ").append(javaThreadState)
+  return buffer.toString()
+}
 
 private fun getRootThreadContainer(vm: VirtualMachineProxyImpl): ObjectReference? {
   val type = vm.classesByName("jdk.internal.vm.ThreadContainers").firstOrNull() as? ClassType
