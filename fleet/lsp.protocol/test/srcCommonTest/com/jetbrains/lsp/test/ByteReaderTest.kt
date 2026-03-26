@@ -10,7 +10,7 @@ import io.ktor.utils.io.writeStringUtf8
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.withIndex
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.io.Source
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -22,7 +22,7 @@ class ByteReaderTest {
 
   @Test
   fun `readUTF8Line reads an LF-terminated line`() {
-    runBlocking {
+    runTest {
       val message = "Hello, world!"
       val channel = ByteChannel()
       val reader = ByteChannelReader(channel)
@@ -37,13 +37,13 @@ class ByteReaderTest {
 
   @Test
   fun `readUTF8Line reads an LF-terminated line sent byte by byte`() {
-    runBlocking {
+    runTest {
       val message = "Hello, world!"
       val channel = ByteChannel()
       val reader = ByteChannelReader(channel)
 
       val line = async { reader.readUTF8Line() }
-      message.toByteArray(Charsets.UTF_8).forEach { byte ->
+      message.encodeToByteArray().forEach { byte ->
         channel.writeByte(byte)
         channel.flush()
       }
@@ -56,13 +56,13 @@ class ByteReaderTest {
 
   @Test
   fun `readUTF8Line reads a CRLF-terminated line sent byte by byte`() {
-    runBlocking {
+    runTest {
       val message = "Hello, world!"
       val channel = ByteChannel()
       val reader = ByteChannelReader(channel)
 
       val line = async { reader.readUTF8Line() }
-      message.toByteArray(Charsets.UTF_8).forEach { byte ->
+      message.encodeToByteArray().forEach { byte ->
         channel.writeByte(byte)
         channel.flush()
       }
@@ -75,7 +75,7 @@ class ByteReaderTest {
 
   @Test
   fun `readUTF8Line reads several LF-terminated lines`() {
-    runBlocking {
+    runTest {
       val messages = listOf(
         "Hello", "world", "how", "are", "you", "doing"
       )
