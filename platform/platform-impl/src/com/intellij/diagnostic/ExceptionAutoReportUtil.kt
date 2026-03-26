@@ -18,6 +18,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.impl.diagnostic.errorsDialog.ErrorMessageClustering
+import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -36,11 +37,28 @@ object ExceptionAutoReportUtil {
     get() = !autoReportIsForbiddenForProduct && Registry.`is`("ea.auto.report.feature.visible", false)
 
   @JvmStatic
+  val isAutoReportForced: Boolean
+    get() = getForcedAutoReportLevel() != ForcedReportLevel.NONE
+
+  @JvmStatic
   val isAutoReportEnabled: Boolean
     get() {
       if (!isAutoReportVisible) return false
       return isAutoReportAllowedByUser()
     }
+
+  fun getAutoReportTag(): String? {
+    return Registry.stringValue("ea.auto.report.forced.tag").nullize()
+  }
+
+  internal fun getForcedAutoReportLevel(): ForcedReportLevel {
+    return try {
+      ForcedReportLevel.valueOf(Registry.stringValue("ea.auto.report.forced").uppercase())
+    }
+    catch (_: IllegalArgumentException) {
+      return ForcedReportLevel.NONE
+    }
+  }
 
   private val isDevelopmentEnvironment: Boolean
     get() = ApplicationManagerEx.isInIntegrationTest()
@@ -49,6 +67,8 @@ object ExceptionAutoReportUtil {
 
   private fun isAutoReportAllowedByUser(): Boolean {
     if (isDevelopmentEnvironment) return ENABLED_FOR_DEVELOPMENT
+
+    if (isAutoReportForced) return true // set by provisioning
     if (ConsentOptions.getInstance().isEAP) {
       return ExceptionEAPAutoReportManager.getInstance().enabledInEAP
     }
@@ -63,6 +83,7 @@ object ExceptionAutoReportUtil {
       if (!isAutoReportVisible) return false
 
       if (isDevelopmentEnvironment) return ENABLED_FOR_DEVELOPMENT
+      if (isAutoReportForced) return true // set by provisioning
       if (ConsentOptions.getInstance().isEAP) {
         return ExceptionEAPAutoReportManager.getInstance().enabledInEAP
       }
@@ -81,9 +102,8 @@ object ExceptionAutoReportUtil {
 
   fun shouldOfferEnablingAutoReport(): Boolean {
     if (!isAutoReportVisible || ConsentOptions.getInstance().isEAP) return false
-    if (isDevelopmentEnvironment) {
-      return false
-    }
+    if (isDevelopmentEnvironment) return false
+    if (isAutoReportForced) return false
 
     val (consent, needsReconfirm) = getConsentAndNeedsReconfirm()
     if (consent == null) return false
@@ -110,6 +130,11 @@ object ExceptionAutoReportUtil {
    * Checks only [message], not the state of functionality
    */
   suspend fun isAutoReportableException(message: AbstractMessage): Boolean {
+    val level = getForcedAutoReportLevel()
+    if (level == ForcedReportLevel.FREEZES && message.throwable !is Freeze) return false // limited to freezes only
+
+    // if level is ALL or NONE, then we report exceptions based on regular rules
+    // ALL flips consent forcibly
     return getRelevantData(message) != null
   }
 
@@ -154,4 +179,8 @@ internal class ReporterIdLoggerActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     thisLogger().info(DiagnosticBundle.message("about.dialog.text.ea.reporting.id", ITNProxy.DEVICE_ID))
   }
+}
+
+internal enum class ForcedReportLevel {
+  ALL, FREEZES, NONE
 }
