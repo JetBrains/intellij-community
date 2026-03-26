@@ -1,71 +1,72 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.importing;
+package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.ProcessOutputType;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.module.Module;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
-
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalProjectPath;
+import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.process.ProcessOutputType
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.util.NlsSafe
+import junit.framework.TestCase
+import org.codehaus.groovy.runtime.DefaultGroovyMethods
+import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.junit.Test
+import java.io.IOException
+import java.util.Collections
 
 /**
  * @author Vladislav.Soroka
  */
-public class GradleEnvironmentTest extends GradleImportingTestCase {
-
+class GradleEnvironmentTest : GradleImportingTestCase() {
   @Test
-  public void testGradleEnvCustomization() throws Exception {
-    Map<String, String> passedEnv = Collections.singletonMap("FOO", "foo value");
-    StringBuilder gradleEnv = new StringBuilder();
+  @Throws(Exception::class)
+  fun testGradleEnvCustomization() {
+    val passedEnv = Collections.singletonMap("FOO", "foo value")
+    val gradleEnv = StringBuilder()
 
-    importAndRunTask(passedEnv, gradleEnv);
+    importAndRunTask(passedEnv, gradleEnv)
 
-    assertEquals(DefaultGroovyMethods.toMapString(passedEnv), gradleEnv.toString().trim());
+    TestCase.assertEquals(DefaultGroovyMethods.toMapString(passedEnv), gradleEnv.toString().trim { it <= ' ' })
   }
 
-  private void importAndRunTask(@NotNull Map<String, String> passedEnv, StringBuilder gradleEnv) throws IOException {
-    importProject("""
+  @Throws(IOException::class)
+  private fun importAndRunTask(passedEnv: MutableMap<String?, String?>, gradleEnv: StringBuilder) {
+    importProject(
+      """
                     task printEnv() {
                       doLast { println System.getenv().toMapString()}
-                    }""");
+                    }
+                    """.trimIndent()
+    )
 
-    ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
-    Module module = getModule("project");
-    settings.setExternalProjectPath(getExternalProjectPath(module));
-    settings.setTaskNames(Collections.singletonList("printEnv"));
-    settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
-    settings.setScriptParameters("--quiet");
-    settings.setPassParentEnvs(false);
-    settings.setEnv(passedEnv);
-    ExternalSystemProgressNotificationManager notificationManager =
-      ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
-    ExternalSystemTaskNotificationListener listener = new ExternalSystemTaskNotificationListener() {
-      @Override
-      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType processOutputType) {
-        gradleEnv.append(text);
+    val settings = ExternalSystemTaskExecutionSettings()
+    val module = getModule("project")
+    settings.externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module)
+    settings.taskNames = mutableListOf<@NlsSafe String?>("printEnv")
+    settings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
+    settings.scriptParameters = "--quiet"
+    settings.isPassParentEnvs = false
+    settings.env = passedEnv
+    val notificationManager = ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager::class.java)
+    val listener: ExternalSystemTaskNotificationListener = object : ExternalSystemTaskNotificationListener {
+      override fun onTaskOutput(id: ExternalSystemTaskId, text: String, processOutputType: ProcessOutputType) {
+        gradleEnv.append(text)
       }
-    };
-    notificationManager.addNotificationListener(listener);
+    }
+    notificationManager.addNotificationListener(listener)
     try {
-      ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, getMyProject(), GradleConstants.SYSTEM_ID, null,
-                                 ProgressExecutionMode.NO_PROGRESS_SYNC);
+      ExternalSystemUtil.runTask(
+        settings, DefaultRunExecutor.EXECUTOR_ID, myProject, GradleConstants.SYSTEM_ID, null,
+        ProgressExecutionMode.NO_PROGRESS_SYNC
+      )
     }
     finally {
-      notificationManager.removeNotificationListener(listener);
+      notificationManager.removeNotificationListener(listener)
     }
   }
 }
