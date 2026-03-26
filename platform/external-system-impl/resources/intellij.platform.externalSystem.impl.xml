@@ -17,6 +17,7 @@
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
@@ -25,6 +26,8 @@
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.testRunner"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
 

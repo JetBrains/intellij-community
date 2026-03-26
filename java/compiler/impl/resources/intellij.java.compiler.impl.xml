@@ -4,7 +4,6 @@
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
     <module name="intellij.platform.vcs"/>
-    <module name="intellij.platform.builtInServer.impl"/>
     <module name="intellij.platform.externalSystem"/>
     <module name="intellij.xml.psi"/>
     <module name="intellij.platform.jps.build.javac.rt"/>

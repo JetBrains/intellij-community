@@ -18,6 +18,7 @@
     <module name="intellij.platform.testFramework"/>
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.platform.testFramework.junit5.projectStructure"/>
+    <module name="intellij.platform.util.ex"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>
