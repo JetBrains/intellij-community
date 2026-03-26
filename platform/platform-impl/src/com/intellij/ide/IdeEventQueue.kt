@@ -55,6 +55,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter
+import com.intellij.platform.ide.menu.WinAltKeyProcessor
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.awt.RelativePoint
@@ -1308,7 +1309,7 @@ private class WindowsAltSuppressor : IdeEventQueue.NonLockedEventDispatcher {
         waitingForAltRelease = false
         dispatch = false
       }
-      else if (component != null && altPressedOnly) {
+      else if (component != null && (!WinAltKeyProcessor.isEnabled() || altPressedOnly)) {
         EventQueue.invokeLater {
           try {
             val window = ComponentUtil.getWindow(component)
