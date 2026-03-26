@@ -111,6 +111,8 @@
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.psi.PyLangLevelVirtualFileCustomDataProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.features.PyRunToolUsageCollector"/>
     <statistics.validation.customValidationRule implementation="com.jetbrains.python.run.features.PyRunToolIdValidator"/>
+
+    <postStartupActivity implementation="com.jetbrains.python.sdk.PostStartupAvailableSdkNotifier"/>
   </extensions>
 
 
@@ -121,6 +123,8 @@
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
     <listener class="com.jetbrains.python.inspections.interpreter.PyInterpreterNotificationFileOpenedListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    <listener class="com.jetbrains.python.sdk.AvailableSdkNotifier"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
   </projectListeners>
 
   <applicationListeners>
