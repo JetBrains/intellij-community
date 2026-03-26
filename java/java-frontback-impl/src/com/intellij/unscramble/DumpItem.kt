@@ -379,7 +379,7 @@ private class JavaThreadContainerItem(private val containerName: String, overrid
     // see jdk.internal.vm.ThreadContainers.RootContainer.name
     const val ROOT = "<root>"
     const val THREADS_ROOT_CONTAINER = "Root Container"
-    const val JUC_PACKAGE = "java.util.concurrent"
+    const val JUC_PACKAGE = "java.util.concurrent."
 
     fun formatThreadContainerName(name: String) = when {
       name == ROOT -> THREADS_ROOT_CONTAINER
