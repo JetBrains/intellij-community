@@ -6,12 +6,9 @@
  * etc.). 
  * 
  * <p>
- * Files containing information about modules, their resources and dependencies are generated during compilation by
- * {@link com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuilder}. 
+ * Files containing information about modules, their resources and dependencies are generated in build scripts using
+ * {@link com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator}.
  * The exact format of these files is an implementation detail, it may and will be changed in the future.
- * <br>
- * When build scripts produce archives containing distribution of the product, they will also generate an updated version of these files 
- * which will point to actual locations of JAR files corresponding to modules inside the distribution.
  * <br>
  * Code which configures classloaders and access resources at runtime may use information from 
  * {@link com.intellij.platform.runtime.repository.RuntimeModuleRepository the repository}. Currently this approach is used in

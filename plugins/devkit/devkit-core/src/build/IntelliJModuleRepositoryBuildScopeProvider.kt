@@ -9,6 +9,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PathUtil
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope
 
+/**
+ * This class is used to enable generation of the runtime module repository during JPS build.
+ * The actual implementation was provided via a library stored in the project configuration, and it isn't used since 262.
+ * However, this class is still needed to support building 261 and older branches from sources using JPS build.
+ */
 internal class IntelliJModuleRepositoryBuildScopeProvider : BuildTargetScopeProvider() {
   override fun getBuildTargetScopes(baseScope: CompileScope,
                                     project: Project,
@@ -32,9 +37,6 @@ internal class IntelliJModuleRepositoryBuildScopeProvider : BuildTargetScopeProv
   }
 
   companion object {
-    /**
-     * Must be equal to [com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.TARGET_TYPE_ID].
-     */
     private const val TARGET_TYPE_ID = "intellij-runtime-module-repository"
   }
 }

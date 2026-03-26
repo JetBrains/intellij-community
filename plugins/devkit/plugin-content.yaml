@@ -1,9 +1,6 @@
 - name: lib/devkit-jps.jar
   modules:
   - name: intellij.devkit.jps
-- name: lib/devkit-runtimeModuleRepository-jps.jar
-  modules:
-  - name: intellij.devkit.runtimeModuleRepository.jps
 - name: lib/devkit.jar
   modules:
   - name: intellij.devkit

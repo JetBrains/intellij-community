@@ -123,8 +123,6 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//java/compiler/impl",
     "//java/compiler/impl:impl_test_lib",
-    "//plugins/devkit/runtimeModuleRepository/jps",
-    "//plugins/devkit/runtimeModuleRepository/jps:jps_test_lib",
     "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/base/plugin",
