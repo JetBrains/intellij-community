@@ -17,8 +17,18 @@ internal class AlignmentMatrix(
   private val patternLength: Int,
   private val targetLength: Int
 ) {
+  companion object {
+    private const val ZERO = 0
+    private const val DIAGONAL = 1
+    private const val UP = 2
+    private const val LEFT = 3
+  }
+
   // Full matrix for traceback (row-major order)
   private val matrix = IntArray((patternLength + 1) * (targetLength + 1))
+
+  // Direction matrix for traceback (which direction produced the max score)
+  private val directions = IntArray((patternLength + 1) * (targetLength + 1))
 
   // Track maximum score and its position
   private var maxScore = 0
@@ -47,6 +57,14 @@ internal class AlignmentMatrix(
 
     val score = maxOf(0, diagonal, up, left)
     set(i, j, score)
+
+    // Store the direction that produced this score (prefer DIAGONAL > UP > LEFT > ZERO on ties)
+    directions[i * (targetLength + 1) + j] = when (score) {
+      0 -> ZERO
+      diagonal -> DIAGONAL
+      up -> UP
+      else -> LEFT
+    }
 
     // Track maximum score and position
     if (score > maxScore) {
@@ -96,24 +114,18 @@ internal class AlignmentMatrix(
     var j = maxCol
 
     // Traceback until we hit a zero score (start of local alignment)
-    while (i > 0 && j > 0 && get(i, j) > 0) {
-      val current = get(i, j)
-      val diagonal = get(i - 1, j - 1)
-      val up = get(i - 1, j)
-      val left = get(i, j - 1)
-
-      // Determine which direction we came from
-      if (pattern[i - 1] == target[j - 1] && current >= diagonal) {
-        // Match - came from diagonal
-        matchedIndices.add(j - 1)
-        i--
-        j--
-      } else if (current == up) {
-        // Came from above (gap in target)
-        i--
-      } else {
-        // Came from left (gap in pattern)
-        j--
+    while (i > 0 && j > 0) {
+      when (directions[i * (targetLength + 1) + j]) {
+        ZERO -> break
+        DIAGONAL -> {
+          if (pattern[i - 1] == target[j - 1]) {
+            matchedIndices.add(j - 1)
+          }
+          i--
+          j--
+        }
+        UP -> i--
+        LEFT -> j--
       }
     }
 

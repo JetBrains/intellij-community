@@ -148,4 +148,18 @@ class SmithWatermanAlgorithmTest {
     val actualNormalized = ownerExamples.sortedByDescending { SmithWatermanAlgorithm.match("owner", it).normalizedScore }
     assertEquals(expected, actualNormalized, "Shorter target normalized score should be higher than longer target normalized score")
   }
+
+  @Test
+  fun testTracebackSelectsCorrectPathWithLeftDirection() {
+    val result = SmithWatermanAlgorithm.match("xa", "xxa")
+    assertTrue(result.hasMatch())
+    assertEquals(listOf(0, 2), result.matchedIndices)
+  }
+
+  @Test
+  fun testTracebackSelectsCorrectPathForLongerPattern() {
+    val result = SmithWatermanAlgorithm.match("xab", "xxab")
+    assertTrue(result.hasMatch())
+    assertEquals(listOf(0, 2, 3), result.matchedIndices)
+  }
 }
