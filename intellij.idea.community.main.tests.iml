@@ -243,6 +243,7 @@
     <orderEntry type="module" module-name="intellij.remoteControl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.remoteDev.util.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.repository.search.common.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.searchEverywhere.backend.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.core.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.typos.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.settingsSync.core.tests" scope="TEST" />

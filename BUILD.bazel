@@ -1022,6 +1022,8 @@ jvm_library(
     "//platform/remoteDev-util:remoteDev-util-tests_test_lib",
     "//plugins/repository-search/common:repository-search-common-tests",
     "//plugins/repository-search/common:repository-search-common-tests_test_lib",
+    "//platform/searchEverywhere/backend:backend-tests",
+    "//platform/searchEverywhere/backend:backend-tests_test_lib",
     "//plugins/search-everywhere-ml/ranking/core:searchEverywhereMl-ranking-core-tests",
     "//plugins/search-everywhere-ml/ranking/core:searchEverywhereMl-ranking-core-tests_test_lib",
     "//plugins/search-everywhere-ml/typos:searchEverywhereMl-typos-tests",
