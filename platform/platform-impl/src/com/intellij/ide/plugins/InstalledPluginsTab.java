@@ -450,7 +450,14 @@ class InstalledPluginsTab extends PluginsTab {
         }
       }
       if (!myBundledUpdateGroup.getModels().isEmpty()) {
-        getInstalledPanel().addGroup(myBundledUpdateGroup, 0);
+        int insertPosition = 0;
+        if (Registry.is("ide.plugins.category.promotion.enabled")) {
+          List<UIPluginGroup> groups = getInstalledPanel().getGroups();
+          if (!groups.isEmpty() && groups.getFirst().promotionPanel != null) {
+            insertPosition = 1;
+          }
+        }
+        getInstalledPanel().addGroup(myBundledUpdateGroup, insertPosition);
         myBundledUpdateGroup.ui.isBundledUpdatesGroup = true;
 
         for (PluginUiModel descriptor : updates) {
