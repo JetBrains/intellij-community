@@ -19094,6 +19094,8 @@ class Protocol {
       clearTimeout(info.timeoutId), this._timeoutInfo.delete(messageId);
   }
   async connect(transport) {
+    if (this._transport)
+      throw Error("Already connected to a transport. Call close() before connecting to a new transport, or use a separate Protocol instance per connection.");
     this._transport = transport;
     let _onclose = this.transport?.onclose;
     this._transport.onclose = () => {
@@ -19118,6 +19120,9 @@ class Protocol {
   _onclose() {
     let responseHandlers = this._responseHandlers;
     this._responseHandlers = /* @__PURE__ */ new Map, this._progressHandlers.clear(), this._taskProgressTokens.clear(), this._pendingDebouncedNotifications.clear();
+    for (let controller of this._requestHandlerAbortControllers.values())
+      controller.abort();
+    this._requestHandlerAbortControllers.clear();
     let error48 = McpError.fromError(ErrorCode.ConnectionClosed, "Connection closed");
     this._transport = void 0, this.onclose?.();
     for (let handler of responseHandlers.values())
@@ -19160,12 +19165,16 @@ class Protocol {
       sessionId: capturedTransport?.sessionId,
       _meta: request.params?._meta,
       sendNotification: async (notification) => {
+        if (abortController.signal.aborted)
+          return;
         let notificationOptions = { relatedRequestId: request.id };
         if (relatedTaskId)
           notificationOptions.relatedTask = { taskId: relatedTaskId };
         await this.notification(notification, notificationOptions);
       },
       sendRequest: async (r, resultSchema, options) => {
+        if (abortController.signal.aborted)
+          throw new McpError(ErrorCode.ConnectionClosed, "Request was cancelled");
         let requestOptions = { ...options, relatedRequestId: request.id };
         if (relatedTaskId && !requestOptions.relatedTask)
           requestOptions.relatedTask = { taskId: relatedTaskId };
@@ -19693,6 +19702,49 @@ class ExperimentalServerTasks {
   }
   requestStream(request, resultSchema, options) {
     return this._server.requestStream(request, resultSchema, options);
+  }
+  createMessageStream(params, options) {
+    let clientCapabilities = this._server.getClientCapabilities();
+    if ((params.tools || params.toolChoice) && !clientCapabilities?.sampling?.tools)
+      throw Error("Client does not support sampling tools capability.");
+    if (params.messages.length > 0) {
+      let lastMessage = params.messages[params.messages.length - 1], lastContent = Array.isArray(lastMessage.content) ? lastMessage.content : [lastMessage.content], hasToolResults = lastContent.some((c) => c.type === "tool_result"), previousMessage = params.messages.length > 1 ? params.messages[params.messages.length - 2] : void 0, previousContent = previousMessage ? Array.isArray(previousMessage.content) ? previousMessage.content : [previousMessage.content] : [], hasPreviousToolUse = previousContent.some((c) => c.type === "tool_use");
+      if (hasToolResults) {
+        if (lastContent.some((c) => c.type !== "tool_result"))
+          throw Error("The last message must contain only tool_result content if any is present");
+        if (!hasPreviousToolUse)
+          throw Error("tool_result blocks are not matching any tool_use from the previous message");
+      }
+      if (hasPreviousToolUse) {
+        let toolUseIds = new Set(previousContent.filter((c) => c.type === "tool_use").map((c) => c.id)), toolResultIds = new Set(lastContent.filter((c) => c.type === "tool_result").map((c) => c.toolUseId));
+        if (toolUseIds.size !== toolResultIds.size || ![...toolUseIds].every((id) => toolResultIds.has(id)))
+          throw Error("ids of tool_result blocks and tool_use blocks from previous message do not match");
+      }
+    }
+    return this.requestStream({
+      method: "sampling/createMessage",
+      params
+    }, CreateMessageResultSchema, options);
+  }
+  elicitInputStream(params, options) {
+    let clientCapabilities = this._server.getClientCapabilities(), mode = params.mode ?? "form";
+    switch (mode) {
+      case "url": {
+        if (!clientCapabilities?.elicitation?.url)
+          throw Error("Client does not support url elicitation.");
+        break;
+      }
+      case "form": {
+        if (!clientCapabilities?.elicitation?.form)
+          throw Error("Client does not support form elicitation.");
+        break;
+      }
+    }
+    let normalizedParams = mode === "form" && params.mode === void 0 ? { ...params, mode: "form" } : params;
+    return this.requestStream({
+      method: "elicitation/create",
+      params: normalizedParams
+    }, ElicitResultSchema, options);
   }
   async getTask(taskId, options) {
     return this._server.getTask({ taskId }, options);
@@ -20668,16 +20720,31 @@ async function auth(provider, options) {
   }
 }
 async function authInternal(provider, { serverUrl, authorizationCode, scope, resourceMetadataUrl, fetchFn }) {
-  let resourceMetadata, authorizationServerUrl;
-  try {
-    if (resourceMetadata = await discoverOAuthProtectedResourceMetadata(serverUrl, { resourceMetadataUrl }, fetchFn), resourceMetadata.authorization_servers && resourceMetadata.authorization_servers.length > 0)
-      authorizationServerUrl = resourceMetadata.authorization_servers[0];
-  } catch {}
-  if (!authorizationServerUrl)
-    authorizationServerUrl = new URL("/", serverUrl);
-  let resource = await selectResourceURL(serverUrl, provider, resourceMetadata), metadata = await discoverAuthorizationServerMetadata(authorizationServerUrl, {
-    fetchFn
-  }), clientInformation = await Promise.resolve(provider.clientInformation());
+  let cachedState = await provider.discoveryState?.(), resourceMetadata, authorizationServerUrl, metadata, effectiveResourceMetadataUrl = resourceMetadataUrl;
+  if (!effectiveResourceMetadataUrl && cachedState?.resourceMetadataUrl)
+    effectiveResourceMetadataUrl = new URL(cachedState.resourceMetadataUrl);
+  if (cachedState?.authorizationServerUrl) {
+    if (authorizationServerUrl = cachedState.authorizationServerUrl, resourceMetadata = cachedState.resourceMetadata, metadata = cachedState.authorizationServerMetadata ?? await discoverAuthorizationServerMetadata(authorizationServerUrl, { fetchFn }), !resourceMetadata)
+      try {
+        resourceMetadata = await discoverOAuthProtectedResourceMetadata(serverUrl, { resourceMetadataUrl: effectiveResourceMetadataUrl }, fetchFn);
+      } catch {}
+    if (metadata !== cachedState.authorizationServerMetadata || resourceMetadata !== cachedState.resourceMetadata)
+      await provider.saveDiscoveryState?.({
+        authorizationServerUrl: String(authorizationServerUrl),
+        resourceMetadataUrl: effectiveResourceMetadataUrl?.toString(),
+        resourceMetadata,
+        authorizationServerMetadata: metadata
+      });
+  } else {
+    let serverInfo = await discoverOAuthServerInfo(serverUrl, { resourceMetadataUrl: effectiveResourceMetadataUrl, fetchFn });
+    authorizationServerUrl = serverInfo.authorizationServerUrl, metadata = serverInfo.authorizationServerMetadata, resourceMetadata = serverInfo.resourceMetadata, await provider.saveDiscoveryState?.({
+      authorizationServerUrl: String(authorizationServerUrl),
+      resourceMetadataUrl: effectiveResourceMetadataUrl?.toString(),
+      resourceMetadata,
+      authorizationServerMetadata: metadata
+    });
+  }
+  let resource = await selectResourceURL(serverUrl, provider, resourceMetadata), clientInformation = await Promise.resolve(provider.clientInformation());
   if (!clientInformation) {
     if (authorizationCode !== void 0)
       throw Error("Existing OAuth client information is required when exchanging an authorization code");
@@ -20880,6 +20947,21 @@ async function discoverAuthorizationServerMetadata(authorizationServerUrl, { fet
       return OpenIdProviderDiscoveryMetadataSchema.parse(await response.json());
   }
   return;
+}
+async function discoverOAuthServerInfo(serverUrl, opts) {
+  let resourceMetadata, authorizationServerUrl;
+  try {
+    if (resourceMetadata = await discoverOAuthProtectedResourceMetadata(serverUrl, { resourceMetadataUrl: opts?.resourceMetadataUrl }, opts?.fetchFn), resourceMetadata.authorization_servers && resourceMetadata.authorization_servers.length > 0)
+      authorizationServerUrl = resourceMetadata.authorization_servers[0];
+  } catch {}
+  if (!authorizationServerUrl)
+    authorizationServerUrl = String(new URL("/", serverUrl));
+  let authorizationServerMetadata = await discoverAuthorizationServerMetadata(authorizationServerUrl, { fetchFn: opts?.fetchFn });
+  return {
+    authorizationServerUrl,
+    authorizationServerMetadata,
+    resourceMetadata
+  };
 }
 async function startAuthorization(authorizationServerUrl, { metadata, clientInformation, redirectUrl, scope, state, resource }) {
   let authorizationUrl;
@@ -24474,6 +24556,7 @@ class UpstreamConnection {
   _projectPathManager;
   _defaultProjectPathKey;
   _toolCallTimeoutMs;
+  _buildTimeoutMs;
   _warn;
   _connectedPromise = null;
   _tools = null;
@@ -24482,7 +24565,7 @@ class UpstreamConnection {
   ideVersion = null;
   onStateChange;
   constructor(options) {
-    this._transport = options.transport, this._toolCallTimeoutMs = options.toolCallTimeoutMs, this._warn = options.warn, this._defaultProjectPathKey = options.defaultProjectPathKey, this._projectPathManager = createProjectPathManager({
+    this._transport = options.transport, this._toolCallTimeoutMs = options.toolCallTimeoutMs, this._buildTimeoutMs = options.buildTimeoutMs, this._warn = options.warn, this._defaultProjectPathKey = options.defaultProjectPathKey, this._projectPathManager = createProjectPathManager({
       projectPath: options.projectPath,
       defaultProjectPathKey: options.defaultProjectPathKey
     }), this.client = new Client({ name: "ij-mcp-proxy", version: "1.0.0" }), this.client.onerror = (error48) => {
@@ -24543,7 +24626,7 @@ class UpstreamConnection {
       await this.connect(), await this.getTools();
       let callArgs = { ...args };
       this._projectPathManager.injectProjectPathArgs(toolName, callArgs);
-      let options = this._toolCallTimeoutMs > 0 ? { timeout: this._toolCallTimeoutMs } : void 0, result = normalizeToolResult(await this.client.callTool({ name: toolName, arguments: callArgs }, void 0, options));
+      let timeoutMs = this._resolveTimeoutMs(toolName), options = timeoutMs > 0 ? { timeout: timeoutMs } : void 0, result = normalizeToolResult(await this.client.callTool({ name: toolName, arguments: callArgs }, void 0, options));
       if (result?.isError)
         throw Error(extractTextFromResult(result) || "Upstream tool error");
       return result;
@@ -24552,9 +24635,13 @@ class UpstreamConnection {
   async callToolForClient(toolName, args) {
     return await this.withReconnect(`tools/call ${toolName}`, async () => {
       await this.connect(), await this.getTools(), this._projectPathManager.injectProjectPathArgs(toolName, args);
-      let options = this._toolCallTimeoutMs > 0 ? { timeout: this._toolCallTimeoutMs } : void 0, result = await this.client.callTool({ name: toolName, arguments: args }, void 0, options);
+      let timeoutMs = this._resolveTimeoutMs(toolName), options = timeoutMs > 0 ? { timeout: timeoutMs } : void 0, result = await this.client.callTool({ name: toolName, arguments: args }, void 0, options);
       return normalizeToolResult(result);
     });
+  }
+  static _LONG_TIMEOUT_TOOLS = /* @__PURE__ */ new Set(["build_project"]);
+  _resolveTimeoutMs(toolName) {
+    return UpstreamConnection._LONG_TIMEOUT_TOOLS.has(toolName) ? this._buildTimeoutMs : this._toolCallTimeoutMs;
   }
   async forwardRequest(method, params) {
     return await this.withReconnect(method, async () => {
@@ -24676,7 +24763,7 @@ function extractPathArg(args) {
 }
 
 // community/build/mcp-servers/ij-proxy/ij-mcp-proxy.ts
-var explicitMcpUrl = env.JETBRAINS_MCP_STREAM_URL || env.MCP_STREAM_URL || env.JETBRAINS_MCP_URL || env.MCP_URL, defaultHost = "127.0.0.1", defaultPort = 64342, defaultPath = "/stream", defaultScanLimit = 10, portScanStartEnv = env.JETBRAINS_MCP_PORT_START, portScanStart = parseEnvInt("JETBRAINS_MCP_PORT_START", defaultPort), portScanLimit = parseEnvInt("JETBRAINS_MCP_PORT_SCAN_LIMIT", defaultScanLimit), preferredPorts = portScanStartEnv ? [portScanStart] : [defaultPort, 64344], connectTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_CONNECT_TIMEOUT_S", 10), scanTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_SCAN_TIMEOUT_S", 1), queueLimit = parseEnvNonNegativeInt("JETBRAINS_MCP_QUEUE_LIMIT", 100), toolCallTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S", 60), queueWaitTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S", toolCallTimeoutMs > 0 ? Math.round(toolCallTimeoutMs / 1000) : 0), STREAM_RETRY_ATTEMPTS = 3, STREAM_RETRY_BASE_DELAY_MS = 200;
+var explicitMcpUrl = env.JETBRAINS_MCP_STREAM_URL || env.MCP_STREAM_URL || env.JETBRAINS_MCP_URL || env.MCP_URL, defaultHost = "127.0.0.1", defaultPort = 64342, defaultPath = "/stream", defaultScanLimit = 10, portScanStartEnv = env.JETBRAINS_MCP_PORT_START, portScanStart = parseEnvInt("JETBRAINS_MCP_PORT_START", defaultPort), portScanLimit = parseEnvInt("JETBRAINS_MCP_PORT_SCAN_LIMIT", defaultScanLimit), preferredPorts = portScanStartEnv ? [portScanStart] : [defaultPort, 64344], connectTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_CONNECT_TIMEOUT_S", 10), scanTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_SCAN_TIMEOUT_S", 1), queueLimit = parseEnvNonNegativeInt("JETBRAINS_MCP_QUEUE_LIMIT", 100), toolCallTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S", 60), buildTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_BUILD_TIMEOUT_S", 1200), queueWaitTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S", toolCallTimeoutMs > 0 ? Math.round(toolCallTimeoutMs / 1000) : 0), STREAM_RETRY_ATTEMPTS = 3, STREAM_RETRY_BASE_DELAY_MS = 200;
 function parseEnvInt(name, fallback) {
   let raw = env[name];
   if (!raw)
@@ -24799,6 +24886,7 @@ function createUpstreamForUrl(url2) {
     projectPath,
     defaultProjectPathKey,
     toolCallTimeoutMs,
+    buildTimeoutMs,
     warn
   });
   return conn.onStateChange = () => updateProxyTooling(), conn;

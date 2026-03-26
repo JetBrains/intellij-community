@@ -55,6 +55,7 @@ Environment variables (optional):
 - `JETBRAINS_MCP_SCAN_TIMEOUT_S`: timeout for additional port probes after the default port fails (seconds). Default: `1`. Use `0` to disable.
 - `JETBRAINS_MCP_QUEUE_LIMIT`: max number of queued client messages before the stream endpoint is ready. Default: `100`. Use `0` for unlimited.
 - `JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S`: timeout for upstream tool calls after they are sent (seconds). Default: `60`. Use `0` to disable.
+- `JETBRAINS_MCP_BUILD_TIMEOUT_S`: timeout for `build_project` upstream calls (seconds). Default: `1200` (20 minutes). Use `0` to disable.
 - `JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S`: timeout for upstream tool calls waiting to be sent while the stream is unavailable (seconds). Defaults to the tool-call timeout when set; use `0` to disable.
 - `JETBRAINS_MCP_PROJECT_PATH`: override the injected project path (defaults to `process.cwd()`, relative paths resolve from the current working directory, and `file://` URIs are supported).
 - `MCP_LOG`: path to a log file for proxy progress (cleared on startup).
