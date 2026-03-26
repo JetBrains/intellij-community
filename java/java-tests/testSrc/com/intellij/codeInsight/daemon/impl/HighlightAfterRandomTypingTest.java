@@ -1,16 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package com.intellij.java.codeInsight.daemon;
+package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.ProductionLightDaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
-import com.intellij.codeInsight.daemon.impl.FileStatusMap;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoUpdater;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoUpdaterImpl;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInsight.highlighting.HyperlinkAnnotator;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -340,7 +334,7 @@ class X {
     FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
   }
 
-  private static boolean accessible(PsiClass aClass, Set<PsiClass> visited) {
+  private static boolean accessible(PsiClass aClass, Set<? super PsiClass> visited) {
     if (!visited.add(aClass)) return false;
     // this class and all its super- and containing- classes should be public
     if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) return false;

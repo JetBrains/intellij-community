@@ -57,7 +57,7 @@ import java.util.Objects;
  * For "heavyweight" tests use {@link AdvHighlightingTest}
  */
 public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
-  static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
+  public static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
 
   private UnusedDeclarationInspectionBase myUnusedDeclarationInspection;
 
