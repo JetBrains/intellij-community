@@ -20,6 +20,7 @@ class SmithWatermanMatcher(private val pattern: String) : GotoFileFuzzyMatcher {
   private val params = ScoringParameters()
   private val cache = mutableMapOf<String, FuzzyMatchResult>()
   private val extension = pattern.substringAfterLast('.', "")
+  private val normalizedPattern = if (extension.isNotEmpty()) pattern.substringBeforeLast('.') else pattern
 
   /**
    * Matches the pattern against the file name only.
@@ -40,7 +41,7 @@ class SmithWatermanMatcher(private val pattern: String) : GotoFileFuzzyMatcher {
 
       val normalizedFileName = if (extension.isNotEmpty()) fileName.substringBeforeLast('.') else fileName
 
-      SmithWatermanAlgorithm.match(pattern, normalizedFileName, params)
+      SmithWatermanAlgorithm.match(normalizedPattern, normalizedFileName, params)
     }
   }
 

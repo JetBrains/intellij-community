@@ -67,6 +67,21 @@ class SmithWatermanMatcherTest {
     assertTrue(fileNameResult.normalizedScore > 0.5)
   }
 
+  @Test
+  fun testPatternWithExtensionStrippedBeforeMatching() {
+    val matcher = SmithWatermanMatcher("Main.kt")
+
+    val resultWithExt = matcher.match("MainActivity.kt")
+    val matcherNoExt = SmithWatermanMatcher("Main")
+    val resultNoExt = matcherNoExt.match("MainActivity.kt")
+
+    assertTrue(resultWithExt.hasMatch())
+    assertEquals(resultNoExt.matchedIndices, resultWithExt.matchedIndices,
+      "Pattern 'Main.kt' should match same indices as 'Main' against 'MainActivity.kt' when extensions match")
+    assertTrue(resultWithExt.score >= resultNoExt.score,
+      "Pattern with extension should score at least as high (smaller length penalty on stripped filename)")
+  }
+
   private fun createMockFile(name: String, path: String): VirtualFile {
     val file = mock(VirtualFile::class.java)
     `when`(file.name).thenReturn(name)
