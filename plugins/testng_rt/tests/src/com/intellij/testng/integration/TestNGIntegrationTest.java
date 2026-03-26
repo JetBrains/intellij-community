@@ -8,8 +8,10 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
+import jetbrains.buildServer.messages.serviceMessages.BaseTestMessage;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,11 +29,14 @@ public class TestNGIntegrationTest extends AbstractTestFrameworkCompilingIntegra
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> data() {
     return Arrays.asList(
+      //createParams("5.14.10"), // the last version of 5.x branch (Feb 15, 2011), still used in some projects
       createParams("6.8"),
+      createParams("6.9.10"), // the popular version
       createParams("6.11"),
       createParams("6.10"),
       createParams("6.13.1"),
-      createParams("6.14.2")
+      createParams("6.14.3"), // the last version of 6.x branch (Apr 09, 2018), still used in some projects
+      createParams("7.12.0")
     );
   }
 
@@ -60,11 +65,22 @@ public class TestNGIntegrationTest extends AbstractTestFrameworkCompilingIntegra
     TestNGConfiguration configuration = createConfiguration(psiClass);
     ProcessOutput processOutput = doStartTestsProcess(configuration);
     String testOutput = processOutput.out.toString();
-    assertEmpty(processOutput.err);
+    assertEmpty(ContainerUtil.filter(processOutput.err, s -> !s.startsWith("SLF4J(W): ")));
     assertTrue(testOutput, testOutput.contains("sample output"));
 
-    String messages = processOutput.messages.stream().map(m -> m.asString()).collect(Collectors.joining("\n"));
-    assertTrue(messages, messages.contains("name='Test1.myName'"));
-    assertTrue(messages, messages.contains("name='Test1.simple2'"));
+    boolean supportedDisplayName = !myTestNGVersion.startsWith("5");
+    String testName = supportedDisplayName ? "Test1.myName" : "Test1.simple";
+
+    String messages = processOutput.messages.stream()
+      .filter(m -> m instanceof BaseTestMessage)
+      .map(m -> m.asString())
+      .map(s -> s.replaceAll(" duration='(.*?)'", ""))
+      .collect(Collectors.joining("\n"));
+
+    assertEquals("""
+                   ##teamcity[testStarted name='%s' locationHint='java:test://a.Test1/simple']
+                   ##teamcity[testFinished name='%s']
+                   ##teamcity[testStarted name='Test1.simple2' locationHint='java:test://a.Test1/simple2']
+                   ##teamcity[testFinished name='Test1.simple2']""".formatted(testName, testName), messages);
   }
 }
