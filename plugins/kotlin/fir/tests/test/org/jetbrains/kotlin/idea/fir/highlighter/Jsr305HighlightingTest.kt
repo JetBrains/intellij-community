@@ -1,13 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.highlighter
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.fir.highlighter
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
@@ -24,6 +26,8 @@ import kotlin.io.path.exists
 @TestMetadata("testData/highlighterJsr305/project")
 @RunWith(JUnit38ClassRunner::class)
 class Jsr305HighlightingTest : KotlinLightCodeInsightFixtureTestCase() {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+
     override fun getProjectDescriptor(): LightProjectDescriptor {
         val foreignAnnotationsJar = TestKotlinArtifacts.jsr305
         check(foreignAnnotationsJar.exists()) { "$foreignAnnotationsJar does not exist" }
@@ -33,17 +37,15 @@ class Jsr305HighlightingTest : KotlinLightCodeInsightFixtureTestCase() {
         ).compile().toPath()
 
         return object : KotlinJdkAndLibraryProjectDescriptor(listOf(TestKotlinArtifacts.kotlinStdlib, foreignAnnotationsJar, libraryJar)) {
-            override fun configureModule(module: Module, model: ModifiableRootModel) {
-                super.configureModule(module, model)
-                module.createFacet(JvmPlatforms.jvm8)
-                val facetSettings = KotlinFacetSettingsProvider.getInstance(module.project)?.getInitializedSettings(module)
+            override fun setUpProject(
+                project: Project,
+                handler: SetupHandler
+            ) {
+                super.setUpProject(project, handler)
 
-                facetSettings?.apply {
-                    val jsrStateByTestName =
-                        ReportLevel.findByDescription(getTestName(true)) ?: return@apply
-
-                    compilerSettings!!.additionalArguments += " -Xjsr305=${jsrStateByTestName.description}"
-                    updateMergedArguments()
+                val jsrStateByTestName = ReportLevel.findByDescription(getTestName(true)) ?: return
+                KotlinCompilerSettings.getInstance(project).update {
+                    additionalArguments += " -Xjsr305=${jsrStateByTestName.description}"
                 }
             }
         }

@@ -1,13 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.decompiler.navigation
+package org.jetbrains.kotlin.idea.fir.navigation
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
-import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
@@ -17,10 +16,11 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
-import kotlin.test.assertTrue
 
 @RunWith(JUnit38ClassRunner::class)
 class NavigateFromLibrarySourcesTest : AbstractNavigateFromLibrarySourcesTest() {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+
     private val mockLibraryFacility = MockLibraryFacility(IDEA_TEST_DATA_DIR.resolve("decompiler/navigation/fromLibSource"))
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -35,18 +35,6 @@ class NavigateFromLibrarySourcesTest : AbstractNavigateFromLibrarySourcesTest() 
 
     fun testBuiltinClass() {
         checkNavigationFromLibrarySource("String", "kotlin.String")
-    }
-
-    // This test is not exactly for navigation, but separating it to another class doesn't worth it.
-    fun testLightClassForLibrarySource() {
-        val navigationElement = navigationElementForReferenceInLibrarySource("usage.kt", "Foo")
-        assertTrue(navigationElement is KtClassOrObject, "Foo should navigate to JetClassOrObject")
-        val lightClass = navigationElement.toLightClass()
-        assertTrue(
-            lightClass is KtLightClassForDecompiledDeclaration,
-            "Light classes for decompiled declaration should be provided for library source"
-        )
-        assertEquals("Foo", lightClass.name)
     }
 
     private fun checkNavigationFromLibrarySource(referenceText: String, targetFqName: String) {

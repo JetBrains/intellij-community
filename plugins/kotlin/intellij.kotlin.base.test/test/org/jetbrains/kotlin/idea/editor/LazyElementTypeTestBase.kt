@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.editor
 
@@ -7,11 +7,20 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.EditorTestUtil.performTypingAction
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.Assert
 
 abstract class LazyElementTypeTestBase<T>(private val lazyElementClass: Class<T>) :
-    KotlinLightCodeInsightFixtureTestCaseBase() where T : PsiElement {
+    LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider where T : PsiElement {
+
+    override val pluginMode: KotlinPluginMode get() = KotlinPluginMode.K1
+
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
 
     protected fun reparse(text: String, char: Char): Unit = doTest(text, char, true)
     protected fun noReparse(text: String, char: Char): Unit = doTest(text, char, false)

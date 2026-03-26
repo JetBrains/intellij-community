@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
-internal class ConvertToStringTemplateInspection :
+class ConvertToStringTemplateInspection :
   KotlinApplicableInspectionBase.Simple<KtBinaryExpression, ConvertToStringTemplateInspection.Context>() {
 
     override fun buildVisitor(
