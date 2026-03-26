@@ -14,9 +14,11 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.augmentedByWarningLevelAnnotations
 import org.jetbrains.kotlin.analysis.api.components.isAnyType
 import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.smartCastInfo
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -66,6 +68,7 @@ import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.types.Variance
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -301,7 +304,7 @@ private fun isMultilineLocalProperty(element: PsiElement): Boolean {
 @OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalProperty: Boolean): KaType? =
-    calculateAllTypes<KaType>(element) { declarationType, allTypes, cannotBeNull ->
+    calculateAllTypes(element) { declarationType, allTypes, _ ->
         if (declarationType is KaErrorType) return@calculateAllTypes null
 
         if (declarationType.isUnitType && multilineLocalProperty) {
@@ -342,7 +345,7 @@ private fun isUnclearType(type: KaType, element: KtCallableDeclaration): Boolean
     if (initializer is KtUnaryExpression && initializer.baseExpression is KtConstantExpression) return false
     if (initializer.smartCastInfo != null) return true
 
-    if (isConstructorCall(initializer)) {
+    if (isConstructorLikeCall(type, initializer) || isConstructorCall(initializer)) {
         return false
     }
 
@@ -388,6 +391,15 @@ private fun isConstructorCall(initializer: KtExpression?): Boolean {
 
     val constructorCall = resolveCall.singleConstructorCallOrNull()
     return constructorCall != null && (constructorCall.symbol.typeParameters.isEmpty() || callExpression.typeArgumentList != null)
+}
+
+@OptIn(KaExperimentalApi::class)
+context(_: KaSession)
+private fun isConstructorLikeCall(type: KaType, initializer: KtExpression?): Boolean {
+    val callExpression = initializer as? KtCallExpression ?: return false
+    val name = (callExpression.calleeExpression as? KtNameReferenceExpression)?.getReferencedName() ?: return false
+    val typeString = type.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+    return name == typeString
 }
 
 context(_: KaSession)
