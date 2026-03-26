@@ -12,7 +12,6 @@ import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.processOutput.common.OutputKindDto
 import com.intellij.python.processOutput.common.OutputLineDto
 import com.intellij.python.processOutput.frontend.CoroutineNames
-import com.intellij.python.processOutput.frontend.LoggedProcess
 import com.intellij.python.processOutput.frontend.OutputFilter
 import com.intellij.python.processOutput.frontend.ProcessOutputControllerService
 import com.intellij.python.processOutput.frontend.ProcessOutputControllerServiceLimits
@@ -70,8 +69,21 @@ class ProcessOutputControllerServiceTest {
                 }
 
                 with(process.lines) {
-                    assertEquals(3, size)
-                    assert(get(0).text.split(" ")[1].toInt() >= over)
+                    assertEquals(
+                        3,
+                        size,
+                        buildString {
+                            appendLine("Test process output is expected to have 3 lines, but was $size.")
+                            appendLine("Lines preview:")
+                            append(process.lines.generatePreview(10))
+                        }
+                    )
+
+                    val testNumber = get(0).text.split(" ")[1].toInt()
+
+                    assert(testNumber >= over) {
+                       "Test process header ('test x') is expected to hold a number greater or equal to $over, but was $testNumber."
+                    }
 
                     val xLen =
                         LoggingLimits.MAX_OUTPUT_SIZE - (get(0).text.length + newLineLen)
@@ -81,20 +93,34 @@ class ProcessOutputControllerServiceTest {
                         find { elem ->
                             elem.text.startsWith("xxx") && elem.text.length == xLen
                         },
+                        buildString {
+                            appendLine("Test process output is expected to have a string of 'x' repeating $xLen amount of times.")
+                            appendLine("Lines preview:")
+                            append(process.lines.generatePreview(10))
+                        }
                     )
                     assertNotNull(
                         find { elem ->
                             elem.text.startsWith("yyy") && elem.text.length == yLen
                         },
+                        buildString {
+                            appendLine("Test process output is expected to have a string of 'y' repeating $yLen amount of times.")
+                            appendLine("Lines preview:")
+                            append(process.lines.generatePreview(10))
+                        }
                     )
                 }
 
                 count++
             }
 
+            val processesToCheck = ProcessOutputControllerServiceLimits.MAX_PROCESSES - 10
+
             // should expect to have found and asserted MAX_PROCESSES amount processes
             // 10 for margin of error
-            assert(count > ProcessOutputControllerServiceLimits.MAX_PROCESSES - 10)
+            assert(count > processesToCheck) {
+                "Call to `verifyCurrentProcesses` is expected to check at least $processesToCheck processes, but checked only $count."
+            }
         }
 
         edtWriteAction {
@@ -456,17 +482,20 @@ class ProcessOutputControllerServiceTest {
         assertEquals(nonAsciiText, lines?.last()?.text)
     }
 
-    private fun Map<Int, LoggedProcess>.remapByFirstLine(): Map<String?, LoggedProcess> =
-        mapOf(
-            *toList()
-                .map { (_, process) ->
-                    process.lines.firstOrNull()?.text to process
-                }
-                .toTypedArray(),
-        )
-
     companion object {
         const val MAIN_PY = "main.py"
+
+        fun List<OutputLineDto>.generatePreview(nLines: Int): String =
+            buildString {
+                for (line in this@generatePreview.take(nLines)) {
+                    when (line.kind) {
+                        OutputKindDto.OUT -> append("OUT: ")
+                        OutputKindDto.ERR -> append("ERR: ")
+                    }
+
+                    appendLine(line.text)
+                }
+            }
 
         suspend fun runBinWithInput(binOnEel: BinOnEel, args: Args): Process =
             ExecService().executeGetProcess(
