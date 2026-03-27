@@ -227,6 +227,7 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
         testClass<AbstractFirHierarchyTest> {
             model("../../../idea/tests/testData/hierarchy/calls/callers", pattern = DIRECTORY, isRecursive = false, testMethodName = "doCallerHierarchyTest")
             model("../../../idea/tests/testData/hierarchy/calls/callersJava", pattern = DIRECTORY, isRecursive = false, testMethodName = "doCallerJavaHierarchyTest")
+            model("../../../idea/tests/testData/hierarchy/calls/calleesJava", pattern = DIRECTORY, isRecursive = false, testMethodName = "doCalleeJavaHierarchyTest")
             model("../../../idea/tests/testData/hierarchy/calls/callees", pattern = DIRECTORY, isRecursive = false, testMethodName = "doCalleeHierarchyTest")
             model("../../../idea/tests/testData/hierarchy/class/type", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTypeClassHierarchyTest")
             model("../../../idea/tests/testData/hierarchy/class/super", pattern = DIRECTORY, isRecursive = false, testMethodName = "doSuperClassHierarchyTest")

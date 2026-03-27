@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.hierarchy;
 
@@ -179,6 +179,25 @@ public abstract class FirHierarchyTestGenerated extends AbstractFirHierarchyTest
         @TestMetadata("javaMethod")
         public void testJavaMethod() throws Exception {
             runTest("../../idea/tests/testData/hierarchy/calls/callersJava/javaMethod/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/hierarchy/calls/calleesJava")
+    public static class CalleesJava extends AbstractFirHierarchyTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doCalleeJavaHierarchyTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaMethod")
+        public void testJavaMethod() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/calls/calleesJava/javaMethod/");
         }
     }
 
