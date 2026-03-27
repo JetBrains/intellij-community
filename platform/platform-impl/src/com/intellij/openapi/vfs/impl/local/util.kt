@@ -335,6 +335,9 @@ fun withPrefetchForRemoteRoots(roots: Collection<@JvmWildcard VirtualFile>, bloc
       val descriptor = nioPath.getEelDescriptor()
       if (descriptor === LocalEelDescriptor) return@mapNotNull null
       val eelPath = nioPath.asEelPath(descriptor)
+      // Skip FS root — prefetching entire remote filesystem is wasteful,
+      // VFS refresh from root only checks cached children anyway
+      if (eelPath.parent == null) return@mapNotNull null
       // Skip paths with direct local mount — they bypass gRPC entirely
       if (eelPath.descriptor.mountProvider()?.getMountRoot(eelPath) != null) return@mapNotNull null
       descriptor to eelPath
