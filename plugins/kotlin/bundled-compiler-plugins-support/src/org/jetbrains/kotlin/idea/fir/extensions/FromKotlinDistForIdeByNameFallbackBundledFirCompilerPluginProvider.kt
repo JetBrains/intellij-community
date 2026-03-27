@@ -3,18 +3,6 @@ package org.jetbrains.kotlin.idea.fir.extensions
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
-import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.ALL_OPEN_COMPILER_PLUGIN
-import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.ASSIGNMENT_COMPILER_PLUGIN
-import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.COMPOSE_COMPILER_PLUGIN
-import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.DATAFRAME_COMPILER_PLUGIN
-import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.JS_PLAIN_OBJECTS_COMPILER_PLUGIN
-import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.KOTLINX_SERIALIZATION_COMPILER_PLUGIN
-import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.LOMBOK_COMPILER_PLUGIN
-import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.NO_ARG_COMPILER_PLUGIN
-import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.PARCELIZE_COMPILER_PLUGIN
-import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.SAM_WITH_RECEIVER_COMPILER_PLUGIN
-import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.SCRIPTING_COMPILER_PLUGIN
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
@@ -44,23 +32,3 @@ internal class FromKotlinDistForIdeByNameFallbackBundledFirCompilerPluginProvide
         return matchingPlugin?.bundledJarLocation
     }
 }
-
-/**
- * A name of the jar corresponding to [this] compiler plugin in the [KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX] folder,
- * or `null` if it's not expected to be present there.
- */
-private val KotlinK2BundledCompilerPlugins.defaultJarName: String?
-    get() = when (this) {
-        ALL_OPEN_COMPILER_PLUGIN -> KotlinArtifactNames.ALLOPEN_COMPILER_PLUGIN
-        NO_ARG_COMPILER_PLUGIN -> KotlinArtifactNames.NOARG_COMPILER_PLUGIN
-        SAM_WITH_RECEIVER_COMPILER_PLUGIN -> KotlinArtifactNames.SAM_WITH_RECEIVER_COMPILER_PLUGIN
-        ASSIGNMENT_COMPILER_PLUGIN -> KotlinArtifactNames.ASSIGNMENT_COMPILER_PLUGIN
-        KOTLINX_SERIALIZATION_COMPILER_PLUGIN -> KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN
-        LOMBOK_COMPILER_PLUGIN -> KotlinArtifactNames.LOMBOK_COMPILER_PLUGIN
-        PARCELIZE_COMPILER_PLUGIN -> KotlinArtifactNames.PARCELIZE_COMPILER_PLUGIN
-        SCRIPTING_COMPILER_PLUGIN -> KotlinArtifactNames.KOTLIN_SCRIPTING_COMPILER
-        DATAFRAME_COMPILER_PLUGIN -> KotlinArtifactNames.KOTLIN_DATAFRAME_COMPILER_PLUGIN
-
-        COMPOSE_COMPILER_PLUGIN -> null
-        JS_PLAIN_OBJECTS_COMPILER_PLUGIN -> null
-    }
