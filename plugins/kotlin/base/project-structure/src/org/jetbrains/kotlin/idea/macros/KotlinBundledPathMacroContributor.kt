@@ -25,7 +25,7 @@ const val KOTLIN_BUNDLED: @NonNls String = "KOTLIN_BUNDLED"
 /**
  * See also [com.jetbrains.analyzer.kotlin.AnalyzerKotlinBundledPathMacroContributor].
  */
-private class KotlinBundledPathMacroContributor : ProjectWidePathMacroContributor, ProjectCloseListener {
+internal class KotlinBundledPathMacroContributor : ProjectWidePathMacroContributor, ProjectCloseListener {
     private val cachedPaths = ConcurrentHashMap<String, Pair<String, FileTime>>()
 
     override fun getProjectPathMacros(projectFilePath: String): Map<String, String> {
