@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
@@ -447,8 +448,12 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     private void reportUnpackedTypedDictProblems(@NotNull PyUnpackedTypedDictType expectedType,
-                                                 @Nullable PyType argumentType,
                                                  @NotNull PyExpression expression) {
+      if (expression instanceof PyStarArgument starArgument) {
+        expression = PsiTreeUtil.findChildOfType(starArgument, PyExpression.class);
+      }
+      if (expression == null) return;
+      PyType argumentType = myTypeEvalContext.getType(expression);
       PyTypedDictType typedDictType = expectedType.getTypedDictType();
       if (PyTypedDictType.isDictExpression(expression, myTypeEvalContext)) {
         reportTypedDictProblems(typedDictType, expression);
@@ -947,7 +952,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           return true;
         }
         else if (parameterType instanceof PyUnpackedTypedDictType unpackedTypedDictType) {
-          reportUnpackedTypedDictProblems(unpackedTypedDictType, argumentType, argument);
+          reportUnpackedTypedDictProblems(unpackedTypedDictType, argument);
           return true;
         }
       }

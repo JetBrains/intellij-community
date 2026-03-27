@@ -1031,7 +1031,6 @@ public final class PyUtil {
   public static @Nullable PyExpression peelArgument(PyExpression expr) {
     while (expr instanceof PyParenthesizedExpression) expr = ((PyParenthesizedExpression)expr).getContainedExpression();
     if (expr instanceof PyKeywordArgument) expr = ((PyKeywordArgument)expr).getValueExpression();
-    if (expr instanceof PyStarArgument starArgument) expr = PsiTreeUtil.findChildOfType(starArgument, PyExpression.class);
     return expr;
   }
 
