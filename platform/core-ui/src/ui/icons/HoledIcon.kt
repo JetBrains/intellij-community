@@ -32,13 +32,12 @@ abstract class HoledIcon(val icon: Icon) : JBScalableIcon(), ReplaceableIcon {
     try {
       val hole = createHole(width, height)
       if (hole != null) {
-        val area = g.clip
+        val area = g.clip // save now before clipping to paint the hole itself
         if (g is Graphics2D) {
           g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
           g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE)
-          g.clip = hole
-          paintHole(g, width, height)
           g.clip(hole) // do not allow painting outside the hole
+          paintHole(g, width, height)
         }
         // subtract hole from old clip
         val path = Path2D.Float(Path2D.WIND_EVEN_ODD)
