@@ -1,11 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.search
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.fir.search
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.search.searches.AnnotatedMembersSearch
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
+import org.jetbrains.kotlin.search.AbstractSearcherTest
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.utils.PathUtil.getResourcePathForClass
@@ -19,6 +21,8 @@ import java.io.IOException
 @TestMetadata("testData/search/junit")
 @RunWith(JUnit38ClassRunner::class)
 class JUnitMembersSearcherTest : AbstractSearcherTest() {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+
     override fun getProjectDescriptor() = KotlinJdkAndLibraryProjectDescriptor(getResourcePathForClass(Assert::class.java).toPath())
 
     override val testDataDirectory: File

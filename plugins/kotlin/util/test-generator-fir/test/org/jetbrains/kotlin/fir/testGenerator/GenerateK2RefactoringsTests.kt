@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToEl
 import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToFqnTest
 import org.jetbrains.kotlin.idea.k2.refactoring.copy.AbstractK2CopyTest
 import org.jetbrains.kotlin.idea.k2.refactoring.copy.AbstractK2MultiModuleCopyTest
+import org.jetbrains.kotlin.idea.k2.refactoring.inline.AbstractInlineTestWithSomeDescriptors
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.AbstractKotlinFirInlineTest
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.AbstractKotlinFirMultiplatformTest
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.AbstractK2ExtractionTest
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
 import org.jetbrains.kotlin.testGenerator.model.Patterns
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS_WITHOUT_DOTS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 import org.jetbrains.kotlin.testGenerator.model.model
 import org.jetbrains.kotlin.testGenerator.model.testClass
@@ -90,6 +92,10 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
     testGroup("refactorings/kotlin.refactorings.tests.k2", category = INLINE_REFACTORING, testDataPath = "../../idea/tests/testData") {
         testClass<AbstractKotlinFirInlineTest> {
             model("refactoring/inline", pattern = Patterns.KT_WITHOUT_DOTS, excludedDirectories = listOf("withFullJdk"))
+        }
+
+        testClass<AbstractInlineTestWithSomeDescriptors> {
+            model("refactoring/inline/withFullJdk", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractKotlinFirMultiplatformTest> {

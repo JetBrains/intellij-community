@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.search
+package org.jetbrains.kotlin.idea.fir.search
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.search.AbstractSearcherTest
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -26,7 +27,7 @@ import org.junit.runner.RunWith
 class KotlinReferencesSearchTest : AbstractSearcherTest() {
 
     override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
+        get() = KotlinPluginMode.K2
 
     fun testPlus() {
         val refs = doTest<KtFunction>()
