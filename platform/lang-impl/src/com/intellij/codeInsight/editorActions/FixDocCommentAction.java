@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.documentation.DocCommentFixer;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.Commenter;
+import com.intellij.lang.DocumentationStubProviderKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.LanguageDocumentation;
@@ -94,37 +95,74 @@ public final class FixDocCommentAction extends EditorAction {
    * @param navigator   navigator to use to set caret position
    */
   public static void generateComment(final @NotNull PsiElement element, final @NotNull Project project, final @NotNull ModNavigator navigator) {
-    Language language = element.getLanguage();
-    final CodeDocumentationProvider docProvider = getDocumentationProvider(language);
-    if (docProvider == null) {
+    FixDocContext context = FixDocContext.find(element);
+    if (context == null || context.existingComment() != null) {
       return;
     }
-
-    final Pair<PsiElement, PsiComment> pair = docProvider.parseContext(element);
-    if (pair == null || pair.second != null) {
-      return;
-    }
-
-    Commenter c = LanguageCommenters.INSTANCE.forLanguage(language);
+    Commenter c = LanguageCommenters.INSTANCE.forLanguage(context.language());
     if (!(c instanceof CodeDocumentationAwareCommenter commenter)) {
       return;
     }
-    generateComment(pair.first, navigator, docProvider, commenter, project);
+    generateComment(context, navigator, commenter, project);
   }
 
   private static @Nullable CodeDocumentationProvider getDocumentationProvider(Language language) {
-    final CodeDocumentationProvider docProvider;
     final DocumentationProvider langDocumentationProvider = LanguageDocumentation.INSTANCE.forLanguage(language);
     if (langDocumentationProvider instanceof CompositeDocumentationProvider provider) {
-      docProvider = provider.getFirstCodeDocumentationProvider();
+      return provider.getFirstCodeDocumentationProvider();
     }
-    else if (langDocumentationProvider instanceof CodeDocumentationProvider provider) {
-      docProvider = provider;
+    if (langDocumentationProvider instanceof CodeDocumentationProvider provider) {
+      return provider;
     }
-    else {
-      docProvider = null;
+    return null;
+  }
+
+  private record FixDocContext(
+    @NotNull PsiElement anchor,
+    @Nullable PsiComment existingComment,
+    @Nullable CodeDocumentationProvider legacyProvider
+  ) {
+    @NotNull Language language() { return anchor.getLanguage(); }
+
+    boolean hasExistingComment() {
+      return existingComment != null && !existingComment.getTextRange().isEmpty();
     }
-    return docProvider;
+
+    static @Nullable FixDocCommentAction.FixDocContext find(@NotNull PsiElement element) {
+      PsiElement documented = DocumentationStubProviderKt.findDocumentedElement(element);
+      if (documented != null) {
+        return new FixDocContext(documented, DocumentationStubProviderKt.findDocComment(documented), null);
+      }
+      CodeDocumentationProvider provider = getDocumentationProvider(element.getLanguage());
+      if (provider == null) return null;
+      Pair<PsiElement, PsiComment> pair = provider.parseContext(element);
+      if (pair == null) return null;
+      return new FixDocContext(pair.first, pair.second, provider);
+    }
+
+    boolean insertStub(@NotNull Document document, int offset) {
+      if (DocumentationStubProviderKt.insertStub(anchor, document, offset)) return true;
+      if (legacyProvider == null) return false;
+      Pair<PsiElement, PsiComment> pair = legacyProvider.parseContext(anchor);
+      if (pair == null || pair.second == null) return false;
+      if (legacyProvider.insertDocumentationContentStub(pair.second, document, offset)) return true;
+      String stub = legacyProvider.generateDocumentationContentStub(pair.second);
+      if (stub != null) {
+        document.insertString(offset, stub);
+        return true;
+      }
+      return false;
+    }
+
+    @Nullable PsiComment findFreshComment() {
+      PsiComment fresh = DocumentationStubProviderKt.findDocComment(anchor);
+      if (fresh != null) return fresh;
+      if (legacyProvider != null) {
+        Pair<PsiElement, PsiComment> pair = legacyProvider.parseContext(anchor);
+        if (pair != null) return pair.second;
+      }
+      return null;
+    }
   }
 
   /**
@@ -135,33 +173,20 @@ public final class FixDocCommentAction extends EditorAction {
    * @param editor      target editor
    */
   public static void generateOrFixComment(final @NotNull PsiElement element, final @NotNull Project project, final @NotNull Editor editor) {
-    Language language = element.getLanguage();
-    final CodeDocumentationProvider docProvider = getDocumentationProvider(language);
-    if (docProvider == null) {
-      return;
-    }
-
-    final Pair<PsiElement, PsiComment> pair = docProvider.parseContext(element);
-    if (pair == null) {
-      return;
-    }
-
-    Commenter c = LanguageCommenters.INSTANCE.forLanguage(language);
-    if (!(c instanceof CodeDocumentationAwareCommenter commenter)) {
-      return;
-    }
+    FixDocContext ctx = FixDocContext.find(element);
+    if (ctx == null) return;
+    Commenter c = LanguageCommenters.INSTANCE.forLanguage(ctx.language());
+    if (!(c instanceof CodeDocumentationAwareCommenter commenter)) return;
     final Runnable task;
-    if (pair.second == null || pair.second.getTextRange().isEmpty()) {
-      task = () -> generateComment(pair.first, editor.asModNavigator(), docProvider, commenter, project);
+    if (ctx.hasExistingComment()) {
+      final DocCommentFixer fixer = DocCommentFixer.EXTENSION.forLanguage(ctx.language());
+      if (fixer == null) return;
+      PsiComment comment = ctx.existingComment();
+      if (comment == null) return;
+      task = () -> fixer.fixComment(project, editor, comment);
     }
     else {
-      final DocCommentFixer fixer = DocCommentFixer.EXTENSION.forLanguage(language);
-      if (fixer == null) {
-        return;
-      }
-      else {
-        task = () -> fixer.fixComment(project, editor, pair.second);
-      }
+      task = () -> generateComment(ctx, editor.asModNavigator(), commenter, project);
     }
     if (!element.isPhysical()) {
       task.run();
@@ -177,17 +202,16 @@ public final class FixDocCommentAction extends EditorAction {
    * It's assumed that this method {@link PsiDocumentManager#commitDocument(Document) syncs} all PSI-document
    * changes during the processing.
    *
-   * @param anchor      target element for which a comment should be generated
+   * @param ctx         context for which a comment should be generated
    * @param navigator   navigator to use
    * @param commenter   commenter to use
    * @param project     current project
    */
-  private static void generateComment(@NotNull PsiElement anchor,
+  private static void generateComment(@NotNull FixDocCommentAction.FixDocContext ctx,
                                       @NotNull ModNavigator navigator,
-                                      @NotNull CodeDocumentationProvider documentationProvider,
                                       @NotNull CodeDocumentationAwareCommenter commenter,
                                       @NotNull Project project) {
-    PsiFile anchorFile = anchor.getContainingFile();
+    PsiElement anchor = ctx.anchor();
     Document document = anchor.getContainingFile().getFileDocument();
     int commentStartOffset = anchor.getTextRange().getStartOffset();
     int lineStartOffset = document.getLineStartOffset(document.getLineNumber(commentStartOffset));
@@ -208,7 +232,7 @@ public final class FixDocCommentAction extends EditorAction {
     int caretLineOffset = 0;
     StringBuilder buffer = new StringBuilder();
 
-    if (preferDocumentationLineComment(anchorFile, null)) {
+    if (preferDocumentationLineComment(anchor.getContainingFile(), null)) {
       buffer.append(commenter.getDocumentationLineCommentPrefix()).append("\n");
       commentBodyRelativeOffset += Objects.requireNonNull(commenter.getDocumentationLineCommentPrefix()).length() + 1;
     }
@@ -242,35 +266,24 @@ public final class FixDocCommentAction extends EditorAction {
     PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
     docManager.commitDocument(document);
 
-    Pair<PsiElement, PsiComment> pair = documentationProvider.parseContext(anchor);
-    if (pair == null || pair.second == null) {
-      return;
-    }
-
     int insertionOffset = commentStartOffset + commentBodyRelativeOffset;
-    boolean inserted = documentationProvider.insertDocumentationContentStub(pair.second, document, insertionOffset);
-    if (!inserted) {
-      String stub = documentationProvider.generateDocumentationContentStub(pair.second);
-      if (stub != null) {
-        document.insertString(insertionOffset, stub);
-        inserted = true;
-      }
-    }
+
+    boolean inserted = ctx.insertStub(document, insertionOffset);
     if (inserted) {
       docManager.commitDocument(document);
-      pair = documentationProvider.parseContext(anchor);
     }
+
+    PsiComment docComment = ctx.findFreshComment();
 
     navigator.moveCaretTo(commentStartOffset);
     navigator.select(TextRange.from(commentStartOffset, 0));
 
-    if (pair == null || pair.second == null) {
+    if (docComment == null) {
       return;
     }
 
-    int start = Math.min(calcStartReformatOffset(pair.first), calcStartReformatOffset(pair.second));
-    int end = pair.second.getTextRange().getEndOffset();
-
+    int start = Math.min(calcStartReformatOffset(anchor), calcStartReformatOffset(docComment));
+    int end = docComment.getTextRange().getEndOffset();
     reformatCommentKeepingEmptyTags(anchor.getContainingFile(), project, start, end);
     int caretOffset = document.getLineEndOffset(document.getLineNumber(navigator.getCaretOffset()) + caretLineOffset);
     navigator.moveCaretTo(caretOffset);

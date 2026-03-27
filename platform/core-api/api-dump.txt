@@ -280,6 +280,18 @@ com.intellij.lang.CustomUncommenter
 - a:findMaximumCommentedRange(java.lang.CharSequence):com.intellij.openapi.util.TextRange
 - a:getCommentRangesToDelete(java.lang.CharSequence):java.util.Collection
 com.intellij.lang.DependentLanguage
+com.intellij.lang.DocumentationStubProvider
+- sf:Companion:com.intellij.lang.DocumentationStubProvider$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:documentationStub(com.intellij.psi.PsiElement):java.lang.String
+- a:findDocComment(com.intellij.psi.PsiElement):com.intellij.psi.PsiComment
+- findDocumentedElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- insertDocumentationStub(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document,I):Z
+f:com.intellij.lang.DocumentationStubProvider$Companion
+f:com.intellij.lang.DocumentationStubProviderKt
+- sf:findDocComment(com.intellij.psi.PsiElement):com.intellij.psi.PsiComment
+- sf:findDocumentedElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- sf:insertStub(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document,I):Z
 com.intellij.lang.FileASTNode
 - com.intellij.lang.ASTNode
 - a:getCharTable():com.intellij.util.CharTable

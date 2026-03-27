@@ -12,9 +12,11 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Defines support for JavaDoc-like documentation stub generation when invoked on "Enter within comment" actions in a custom language.
+ * @see com.intellij.platform.backend.documentation.DocumentationStubProvider
  * @author Maxim.Mossienko
  * @see com.intellij.lang.LanguageDocumentation
  */
+@ApiStatus.Obsolete
 public interface CodeDocumentationProvider extends DocumentationProvider {
   /**
    * Finds primary documentation comment within given context.
