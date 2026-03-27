@@ -152,6 +152,6 @@ private data class JcmdThread(
 
 @Serializable
 private data class JcmdMonitorInfo(
-  val depth: Int = 0,
+  val depth: Int = -1,
   val locks: List<String> = emptyList(),
 )
