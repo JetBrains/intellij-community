@@ -1060,13 +1060,17 @@ final class KeywordCompletionItemProvider extends JavaModCompletionItemProvider 
     }
 
     private void addStatementKeywords() {
-      if (psiElement()
+      if (myPrevLeaf != null && psiElement()
         .withText("}")
         .withParent(psiElement(PsiCodeBlock.class).withParent(or(psiElement(PsiTryStatement.class), psiElement(PsiCatchSection.class))))
         .accepts(myPrevLeaf)) {
+        List<ModCompletionItem> elements = CatchCompletionItem.create(myPrevLeaf);
+        for (ModCompletionItem element : elements) {
+          addKeyword(element);
+        }
         addKeyword(createKeyword(JavaKeywords.CATCH, JavaTailTypes.CATCH_LPARENTH));
         addKeyword(createKeyword(JavaKeywords.FINALLY, JavaTailTypes.FINALLY_LBRACE));
-        if (myPrevLeaf != null && myPrevLeaf.getParent().getNextSibling() instanceof PsiErrorElement) {
+        if (myPrevLeaf.getParent().getNextSibling() instanceof PsiErrorElement) {
           return;
         }
       }
