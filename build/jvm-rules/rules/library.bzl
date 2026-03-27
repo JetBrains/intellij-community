@@ -104,7 +104,7 @@ _jvm_transition_copy_jar = rule(
 )
 
 # Config setting labels for cross-repo select() compatibility.
-_RULES_KOTLIN_ENABLED = Label("//:rules_kotlin_enabled")
+#_RULES_KOTLIN_ENABLED = Label("//:rules_kotlin_enabled")
 
 def jvm_library(
         name,
@@ -149,8 +149,8 @@ def jvm_library(
         **kwargs: Additional arguments passed to both backends
     """
 
-    jps_name = "_%s__jps" % name
-    kt_name = "_%s__kt" % name
+    jps_name = name
+    #kt_name = "_%s__kt" % name
     effective_kotlinc_opts = kotlinc_opts if kotlinc_opts != None else Label("//:default-kotlinc-opts")
 
     # JPS implementation (always created)
@@ -169,52 +169,52 @@ def jvm_library(
         exported_compiler_plugins = exported_compiler_plugins,
         associates = associates,
         data = data,
-        visibility = ["//visibility:private"],
-        tags = tags + ["manual"],
+        visibility = visibility,
+        tags = tags,
         **kwargs
     )
 
     # rules_kotlin implementation
     # resourcegroup targets now also emit resource jars (DefaultInfo), so they can be forwarded via resource_jars.
-    kt_jvm_library(
-        name = kt_name,
-        srcs = srcs,
-        deps = deps,
-        exports = exports,
-        runtime_deps = runtime_deps,
-        resource_jars = resources,
-        neverlink = neverlink,
-        plugins = plugins,
-        module_name = module_name,
-        kotlinc_opts = effective_kotlinc_opts,
-        javac_opts = javac_opts,
-        exported_compiler_plugins = exported_compiler_plugins,
-        associates = associates,
-        data = data,
-        visibility = ["//visibility:private"],
-        tags = tags + ["manual"],
-        **kwargs
-    )
+    #kt_jvm_library(
+    #    name = kt_name,
+    #    srcs = srcs,
+    #    deps = deps,
+    #    exports = exports,
+    #    runtime_deps = runtime_deps,
+    #    resource_jars = resources,
+    #    neverlink = neverlink,
+    #    plugins = plugins,
+    #    module_name = module_name,
+    #    kotlinc_opts = effective_kotlinc_opts,
+    #    javac_opts = javac_opts,
+    #    exported_compiler_plugins = exported_compiler_plugins,
+    #    associates = associates,
+    #    data = data,
+    #    visibility = ["//visibility:private"],
+    #    tags = tags + ["manual"],
+    #    **kwargs
+    #)
 
     # In Bazel, it's impossible to conditionally create a target, so we always create both rules_jvm and rules_kotlin versions
     # and expose either one based on the flag
-    native.alias(
-        name = name,
-        actual = select({
-            _RULES_KOTLIN_ENABLED: ":" + kt_name,
-            "//conditions:default": ":" + jps_name,
-        }),
-        visibility = visibility,
-    )
+    #native.alias(
+    #    name = name,
+    #    actual = select({
+    #        _RULES_KOTLIN_ENABLED: ":" + kt_name,
+    #        "//conditions:default": ":" + jps_name,
+    #    }),
+    #    visibility = visibility,
+    #)
 
     # Expose jar with canonical name so that "name.jar" works as a target (it was an implicit output in rules_jvm-only world)
-    _jvm_transition_copy_jar(
-        name = name + ".jar",
-        src = select({
-            _RULES_KOTLIN_ENABLED: ":" + kt_name + ".jar",
-            "//conditions:default": ":" + jps_name + ".jar",
-        }),
-        out = name + ".jar",
-        visibility = visibility,
-        tags = tags + ["manual"],
-    )
+    #_jvm_transition_copy_jar(
+    #    name = name + ".jar",
+    #    src = select({
+    #        _RULES_KOTLIN_ENABLED: ":" + kt_name + ".jar",
+    #        "//conditions:default": ":" + jps_name + ".jar",
+    #    }),
+    #    out = name + ".jar",
+    #    visibility = visibility,
+    #    tags = tags + ["manual"],
+    #)
