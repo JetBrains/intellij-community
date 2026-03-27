@@ -391,7 +391,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     override fun initialize(toolWindow: ToolWindow) {
       val manager = TerminalToolWindowTabsManager.getInstance(toolWindow.project) as TerminalToolWindowTabsManagerImpl
 
-      if (ExperimentalUI.isNewUI() && TerminalOptionsProvider.instance.terminalEngine == TerminalEngine.REWORKED) {
+      if (shouldUseReworkedTerminal()) {
         scheduleTabsRestoring(manager)
       }
 
