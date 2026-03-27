@@ -15,7 +15,7 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PySdkCreator
 import com.jetbrains.python.sdk.configurePythonSdk
-import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
+import com.jetbrains.python.sdk.withSdkConfigurationLock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -47,10 +47,8 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
       }.getOr { return@coroutineScope it }
     }
 
-    val sdkResult = module.project.pythonSdkConfigurationMutex.withLock {
-      val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = withBackgroundProgress(project, PyBundle.message("python.sdk.creating.python.sdk")) {
-        getSdkAndInterpreter(module)
-      }.getOr { return@withLock it }
+    val sdkResult = withSdkConfigurationLock(module.project) {
+      val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = getSdkAndInterpreter(module).getOr { return@withSdkConfigurationLock it }
 
       configurePythonSdk(project, module, sdk)
       Result.success(Pair(sdk, interpreterStatistics))
