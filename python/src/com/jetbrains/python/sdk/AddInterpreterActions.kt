@@ -11,7 +11,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -63,6 +63,20 @@ abstract class DialogAction(
   val target: @Nls String,
 ) : AnAction(dynamicText, icon) {
   abstract fun createDialog(): DialogWrapper?
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    val project = e.project ?: return
+    e.presentation.isEnabled = !project.isSdkConfigurationInProgress.value
+  }
+
+  final override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
+    if (project.isSdkConfigurationInProgress.value) return
+    FileDocumentManager.getInstance().saveAllDocuments()
+    createDialog()?.show()
+  }
 }
 
 @ApiStatus.Internal
@@ -102,13 +116,6 @@ internal class AddLocalInterpreterAction(
   icon = AllIcons.Nodes.HomeFolder,
   target = PyBundle.message("sdk.create.targets.local"),
 ), DumbAware {
-  override fun actionPerformed(e: AnActionEvent) {
-    runInEdt {
-      FileDocumentManager.getInstance().saveAllDocuments()
-    }
-    createDialog().show()
-  }
-
   override fun createDialog(): PythonAddLocalInterpreterDialog {
     val dialogPresenter = PythonAddLocalInterpreterPresenter(
       moduleOrProject, errorSink = ShowingMessageErrorSync, bestGuessCreateSdkInfo = bestGuessCreateSdkInfo
@@ -133,10 +140,6 @@ internal class AddInterpreterOnTargetAction(
   icon = targetType.icon,
   target = targetType.displayName,
 ), DumbAware {
-  override fun actionPerformed(e: AnActionEvent) {
-    createDialog()?.show()
-  }
-
   override fun createDialog(): TargetEnvironmentWizard? {
     val wizard = TargetEnvironmentWizard.createWizard(project, targetType, PythonLanguageRuntimeType.Helper.getInstance())
 
