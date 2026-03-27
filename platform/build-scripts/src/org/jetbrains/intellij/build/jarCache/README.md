@@ -239,14 +239,14 @@ Run `jarCache` tests from repository root with the build-scripts test module exp
 
 ```bash
 ./tests.cmd \
-  -Dintellij.build.test.main.module=intellij.platform.buildScripts.tests \
-  '-Dintellij.build.test.patterns=org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManagerTest;org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheCleanupTest'
+  --module intellij.platform.buildScripts.tests \
+  --test 'org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManagerTest;org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheCleanupTest'
 ```
 
 Run a single class:
 
 ```bash
 ./tests.cmd \
-  -Dintellij.build.test.main.module=intellij.platform.buildScripts.tests \
-  -Dintellij.build.test.patterns=org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheCleanupTest
+  --module intellij.platform.buildScripts.tests \
+  --test org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheCleanupTest
 ```

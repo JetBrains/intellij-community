@@ -261,19 +261,19 @@ The `tests.cmd` script builds the IDE from sources and runs tests. **Recommended
 Example:
 ```bash
 ./tests.cmd \
-  -Dintellij.build.test.patterns=com.intellij.driver.tests.idea.java.FindAndGoToTest \
-  -Dintellij.build.test.main.module=intellij.driver.tests
+  --module intellij.driver.tests \
+  --test com.intellij.driver.tests.idea.java.FindAndGoToTest
 ```
 
 **Key parameters:**
-- `-Dintellij.build.test.patterns` - fully qualified test class name (or pattern)
-- `-Dintellij.build.test.main.module=intellij.driver.tests` - **required** for driver tests
+- `--test` - fully qualified test class name (or pattern)
+- `--module intellij.driver.tests` - **required** for driver tests
 
 **Example with specific test:**
 ```bash
 ./tests.cmd \
-  -Dintellij.build.test.patterns=com.intellij.driver.tests.idea.ultimate.httpclient.BuiltInHttpClientBrotliCompressionUiTest \
-  -Dintellij.build.test.main.module=intellij.driver.tests
+  --module intellij.driver.tests \
+  --test com.intellij.driver.tests.idea.ultimate.httpclient.BuiltInHttpClientBrotliCompressionUiTest
 ```
 
 ## Debugging Test Failures

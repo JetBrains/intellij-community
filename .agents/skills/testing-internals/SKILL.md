@@ -50,7 +50,8 @@ Key components:
 **Solution:** Increase heap size:
 ```bash
 ./tests.cmd \
-  -Dintellij.build.test.patterns=MyTest \
+  --module <module> \
+  --test MyTest \
   -Dintellij.build.test.jvm.memory.options=-Xmx8g
 ```
 
@@ -92,7 +93,8 @@ Key components:
 Enable debug mode to attach a debugger:
 ```bash
 ./tests.cmd \
-  -Dintellij.build.test.patterns=MyTest \
+  --module <module> \
+  --test MyTest \
   -Dintellij.build.test.debug.enabled=true \
   -Dintellij.build.test.debug.port=5005 \
   -Dintellij.build.test.debug.suspend=true
@@ -119,14 +121,14 @@ Then attach debugger to port 5005.
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  1. COMMAND LINE                                                            │
-│     ./tests.cmd -Dintellij.build.test.patterns=MyTest                       │
+│     ./tests.cmd --module <module> --test MyTest                             │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  2. SHELL SCRIPT                                                            │
 │     tests.cmd → community/build/run_build_target.sh                         │
-│     Converts args to --jvm_flag=<arg> format                                │
+│     Maps --module/--test to -D properties, wraps as --jvm_flag=<arg>        │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
@@ -247,7 +249,7 @@ Then attach debugger to port 5005.
 | RubyMine | `RubyRunTestsBuildTarget` | `intellij.idea.ultimate.tests.main` | `ruby/build/src/` |
 | CLion | `CLionRunTestsBuildTarget` | `intellij.idea.ultimate.tests.main` | `CIDR/clion-build/src/` |
 
-**Note:** Product entry points (RustRover, RubyMine, CLion) inherit `intellij.idea.ultimate.tests.main` as the default, but to run product-specific tests, use the dedicated test module with `-Dintellij.build.test.main.module`. See [TESTING.md](../testing/SKILL.md#known-test-modules-by-product) for the correct module per product.
+**Note:** Product entry points (RustRover, RubyMine, CLion) inherit `intellij.idea.ultimate.tests.main` as the default, but to run product-specific tests, use the dedicated test module via `--module`. See [TESTING.md](../testing/SKILL.md#known-test-modules-by-product) for the correct module per product.
 
 ### CI-Defined Test Modules
 
@@ -372,7 +374,7 @@ There are two mechanisms for passing JVM arguments to the test JVM process:
 For JVM memory settings like heap size, use the dedicated property:
 
 ```bash
-./tests.cmd -Dintellij.build.test.jvm.memory.options="-Xmx4g -Xms2g"
+./tests.cmd --module <module> --test <pattern> -Dintellij.build.test.jvm.memory.options="-Xmx4g -Xms2g"
 ```
 
 Multiple options are space-separated within quotes. These options are added to the beginning of the JVM arguments via `VmOptionsGenerator.generate()`.
@@ -395,7 +397,7 @@ jvmArgs.addAll(
 To pass arbitrary system properties to the test JVM, use the `pass.` prefix. The prefix is stripped before passing to the test process:
 
 ```bash
-./tests.cmd -Dpass.my.custom.property=value -Dpass.some.flag=true
+./tests.cmd --module <module> --test <pattern> -Dpass.my.custom.property=value -Dpass.some.flag=true
 ```
 
 Results in test JVM receiving:
@@ -418,7 +420,8 @@ This is a TeamCity convention for passing properties to nested processes.
 
 ```bash
 ./tests.cmd \
-  -Dintellij.build.test.patterns=MyTest \
+  --module <module> \
+  --test MyTest \
   -Dintellij.build.test.jvm.memory.options="-Xmx4g" \
   -Dpass.my.test.flag=enabled \
   -Dpass.debug.level=verbose
