@@ -8,6 +8,8 @@ import com.intellij.python.hatch.HatchConfiguration
 import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.resolveHatchWorkingDirectory
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.platform.util.progress.withProgressText
+import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createSdk
@@ -68,7 +70,9 @@ internal class HatchExistingEnvironmentSelector<P : PathHolder>(
       else -> {
         val (project, module) = moduleOrProject.destructured
         val workingDirectory = resolveHatchWorkingDirectory(project, module).getOr { return it }
-        environment.createSdk(workingDirectory)
+        withProgressText(message("python.sdk.progress.hatch.configuring")) {
+          environment.createSdk(workingDirectory)
+        }
       }
     }.onSuccess {
       when (val pathHolder = model.hatchViewModel.hatchExecutable.get()?.pathHolder) {
