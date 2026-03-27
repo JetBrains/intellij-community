@@ -106,6 +106,18 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
     return null;
   }
 
+  /**
+   * Returns the ID of the tool window where run content produced by this runner should be displayed.
+   * When non-null, this value takes priority over the executor's default tool window
+   * and the Services dashboard when resolving the target tool window in
+   * {@link com.intellij.execution.ui.RunContentManager#getContentDescriptorToolWindowId(ExecutionEnvironment)}.
+   *
+   * @return tool window ID, or {@code null} to use the default resolution logic.
+   */
+  default @Nullable String getContentToolWindowId(@NotNull ExecutionEnvironment environment) {
+    return null;
+  }
+
   void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException;
 
   /**

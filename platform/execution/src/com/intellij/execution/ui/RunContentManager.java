@@ -83,6 +83,11 @@ public interface RunContentManager {
    * @return Tool window id where content should be shown. Null if content tool window is determined by executor.
    */
   default @Nullable String getContentDescriptorToolWindowId(@NotNull ExecutionEnvironment environment) {
+    String runnerToolWindowId = environment.getRunner().getContentToolWindowId(environment);
+    if (runnerToolWindowId != null) {
+      return runnerToolWindowId;
+    }
+
     if (!RunDashboardUiManager.getInstance(environment.getProject()).isSupported(environment.getExecutor())) return null;
 
     RunProfile runProfile = environment.getRunProfile();
