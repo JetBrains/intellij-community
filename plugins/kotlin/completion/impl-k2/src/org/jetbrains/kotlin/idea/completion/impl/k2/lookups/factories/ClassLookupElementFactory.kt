@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.asSignature
 import org.jetbrains.kotlin.analysis.api.components.importableFqName
 import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.upperBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource.WITH_SHORT_NAMES
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -70,7 +71,7 @@ internal object ClassLookupElementFactory {
         val renderedFullTypeArgs = typeArguments?.takeIf { hasTypeArguments }?.joinToString(", ", "<", ">") {
             when (it) {
                 is KaStarTypeProjection -> "Any?"
-                is KaTypeArgumentWithVariance -> it.type.render(position = Variance.INVARIANT)
+                is KaTypeArgumentWithVariance -> it.type.upperBoundIfFlexible().render(position = Variance.INVARIANT)
             }
         }
 
@@ -78,7 +79,7 @@ internal object ClassLookupElementFactory {
         val renderedShortTypeArgs = typeArguments?.takeIf { hasTypeArguments }?.joinToString(", ", "<", ">") {
             when (it) {
                 is KaStarTypeProjection -> "Any?"
-                is KaTypeArgumentWithVariance -> it.type.render(renderer = WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                is KaTypeArgumentWithVariance -> it.type.upperBoundIfFlexible().render(renderer = WITH_SHORT_NAMES, position = Variance.INVARIANT)
             }
         }
 
