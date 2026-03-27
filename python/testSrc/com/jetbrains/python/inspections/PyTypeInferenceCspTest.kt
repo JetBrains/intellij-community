@@ -246,11 +246,11 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
     doTestByText("""
       from typing import Any, assert_type, Callable
   
-      def f2[T: (int, Callable[[str], None])](arg: T) -> T:
+      def f2[T: (int, Callable[[str], str])](arg: T) -> T:
         pass
   
       r = f2(lambda s: assert_type(s, str))
-      assert_type(r, Callable[[str], None])
+      assert_type(r, Callable[[str], str])
       """)
   }
 
@@ -570,6 +570,15 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
       def main[T = int](t: T) -> T:
           r = f(t)
           assert_type(r, T)
+      """)
+  }
+
+  @TestFor(issues = ["PY-88696"])
+  fun `test Error when incorrect type in generic function`() {
+    doTestByText("""
+      def f[T](t: T) -> T: ...
+      
+      a: str = <warning descr="Expected type 'str', got 'int' instead">f(1)</warning>
       """)
   }
 }
