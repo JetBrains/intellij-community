@@ -54,7 +54,7 @@ public abstract class LightToolWindowManager implements Disposable {
     CoroutineScope scope = myProject.getService(CoreUiCoroutineScopeHolder.class).coroutineScope;
 
     myWindowQueue = DebouncedUpdates.<DesignerEditorPanelFacade>forScope(scope, getComponentName(), 200)
-      .withContext(CoroutinesKt.getEDT(Dispatchers.INSTANCE))
+      .withContext(CoroutinesKt.getUI(Dispatchers.INSTANCE))
       .restartTimerOnAdd(true)
       .runLatest(designer -> bindToDesigner(designer))
       .cancelOnDispose(this);
