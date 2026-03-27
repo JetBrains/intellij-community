@@ -56,6 +56,7 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
+import com.jetbrains.python.psi.types.PyCallableParameterListType
 import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyCallableTypeImpl
 import com.jetbrains.python.psi.types.PyClassLikeType
@@ -805,8 +806,10 @@ object PyCallExpressionHelper {
   @JvmStatic
   fun mapArguments(expression: PyCallSiteExpression, callableType: PyCallableType, context: TypeEvalContext): PyArgumentsMapping {
     val arguments = expression.getArguments(callableType.callable)
-    val parameters = unpackParametersIfNeeded(callableType, arguments, context)
-                     ?: return PyArgumentsMapping.empty(expression)
+    val parameters = callableType.getParameters(context)
+      ?.let { unpackParametersIfNeeded(it, arguments, context) }
+
+    if (parameters == null) return PyArgumentsMapping.empty(expression)
 
     val safeImplicitOffset = min(callableType.implicitOffset, parameters.size)
     val explicitParameters = parameters.subList(safeImplicitOffset, parameters.size)
@@ -871,7 +874,8 @@ object PyCallExpressionHelper {
                        ?: return PyArgumentsMapping.empty(expression)
 
     val arguments = expression.getArguments(callable)
-    val parameters = unpackParametersIfNeeded(callableType, arguments, context)
+    val parameters = callableType.getParameters(context)
+      ?.let { unpackParametersIfNeeded(it, arguments, context) }
 
     if (parameters == null) return PyArgumentsMapping.empty(expression)
 
@@ -1085,6 +1089,16 @@ object PyCallExpressionHelper {
   }
 
   private fun isLegacyPositionalOnly(parameter: PyCallableParameter): Boolean = !parameter.isSelf && parameter.protectionLevel == ProtectionLevel.PRIVATE
+
+  @JvmStatic
+  fun analyzeArguments(
+    arguments: List<PyExpression>,
+    parametersType: PyCallableParameterListType,
+    context: TypeEvalContext,
+  ): ArgumentMappingResults {
+    val parameters = unpackParametersIfNeeded(parametersType.parameters, arguments, context)
+    return analyzeArguments(arguments, parameters, context)
+  }
 
   @JvmStatic
   fun analyzeArguments(
@@ -1482,22 +1496,16 @@ object PyCallExpressionHelper {
     return reserved
   }
 
-  @JvmStatic
-  fun needToUnpackTypedDict(arguments: List<PyExpression>): Boolean {
-    return filterVariadicKeywordArguments(arguments).isEmpty()
-  }
-
   private fun unpackParametersIfNeeded(
-    callableType: PyCallableType,
+    parameters: List<PyCallableParameter>,
     arguments: List<PyExpression>,
     context: TypeEvalContext,
-  ): List<PyCallableParameter>? {
-    return if (needToUnpackTypedDict(arguments)) {
-      callableType.getUnpackedParameters(context)
+  ): List<PyCallableParameter> {
+    // Has **kwargs unpack in arguments -> expand only tuples (keep **kwargs container for unpacked TypedDict as is)
+    return if (filterVariadicKeywordArguments(arguments).isEmpty()) {
+      ParamHelper.unpackContainerParameters(parameters, context)
     }
     else {
-      // Has **kwargs unpack in arguments -> expand only tuples (keep **kwargs container for unpacked TypedDict as is)
-      val parameters = callableType.getParameters(context) ?: return null
       ParamHelper.unpackPositionalContainerParameters(parameters, context)
     }
   }
