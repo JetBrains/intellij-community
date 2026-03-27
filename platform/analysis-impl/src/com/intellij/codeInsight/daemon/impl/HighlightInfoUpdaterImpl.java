@@ -265,7 +265,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         }
         while (!((UserDataHolderEx)document).replace(EVICTED_PSI_ELEMENTS, storedInfos, newInfos));
         if (LOG.isTraceEnabled()) {
-          LOG.trace("addEvictedInfos(" + document + "): stored " + debugRender(List.of(newInfos)));
+          LOG.trace("addEvictedInfos(" + document + "): stored " + debugRender(Arrays.asList(newInfos)));
         }
         if (newInfos.length != (storedInfos == null ? 0 : storedInfos.length)) {
           ReadAction.run(() -> {
