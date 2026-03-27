@@ -22,6 +22,9 @@ private val NOT_CACHED_YET_FILE_TIME: FileTime = FileTime.fromMillis(0L)
 private val FILE_DOESNT_EXIST_FILE_TIME: FileTime = FileTime.fromMillis(1L)
 const val KOTLIN_BUNDLED: @NonNls String = "KOTLIN_BUNDLED"
 
+/**
+ * See also [com.jetbrains.analyzer.kotlin.AnalyzerKotlinBundledPathMacroContributor].
+ */
 private class KotlinBundledPathMacroContributor : ProjectWidePathMacroContributor, ProjectCloseListener {
     private val cachedPaths = ConcurrentHashMap<String, Pair<String, FileTime>>()
 
