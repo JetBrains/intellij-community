@@ -6,18 +6,22 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -36,6 +40,8 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.runner.RunWith
 import java.io.File
 import java.nio.file.Path
+import java.util.concurrent.Callable
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.extension
 import kotlin.io.path.name
@@ -76,11 +82,11 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
                 val file = PsiManager.getInstance(project).findFile(it) ?: error("unable to locate PSI for $it")
                 val ktFile = file as? KtFile ?: error("file expected to be KtFile")
 
-                val decompiledText = runBlocking(Dispatchers.Default) {
-                    readAction {
-                        KotlinBytecodeDecompiler.decompile(ktFile) ?: error("Cannot decompile file $ktFile")
-                    }
-                }
+                val decompiledText =
+                    ReadAction.nonBlocking(Callable<String?> { KotlinBytecodeDecompiler.decompile(ktFile) })
+                        .submit(AppExecutorUtil.getAppExecutorService())
+                        .blockingGet(10, TimeUnit.SECONDS)
+                        ?: error("Cannot decompile file $ktFile")
 
                 KotlinBytecodeDecompilerTask(ktFile).generateDecompiledVirtualFile(decompiledText)
             }
