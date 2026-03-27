@@ -1,10 +1,5 @@
 package org.jetbrains.jewel.ui.component
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.horizontalScroll
@@ -36,7 +31,6 @@ import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.semantics.CollectionInfo
 import androidx.compose.ui.semantics.collectionInfo
-import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.util.fastRoundToInt
 import org.jetbrains.annotations.ApiStatus
@@ -148,30 +142,7 @@ public fun TabStrip(
             }
         }
 
-        val scrollbarVisibility = style.scrollbarStyle.scrollbarVisibility
-
-        AnimatedVisibility(
-            visible = tabStripState.isHovered,
-            enter =
-                fadeIn(
-                    tween(
-                        durationMillis = scrollbarVisibility.thumbColorAnimationDuration.inWholeMilliseconds.toInt(),
-                        delayMillis = 0,
-                        easing = LinearEasing,
-                    )
-                ),
-            exit =
-                fadeOut(
-                    tween(
-                        durationMillis = scrollbarVisibility.thumbColorAnimationDuration.inWholeMilliseconds.toInt(),
-                        delayMillis = scrollbarVisibility.lingerDuration.inWholeMilliseconds.toInt(),
-                        easing = LinearEasing,
-                    )
-                ),
-            modifier = Modifier.semantics { hideFromAccessibility() },
-        ) {
-            HorizontalScrollbar(scrollState, style = style.scrollbarStyle, modifier = Modifier.fillMaxWidth())
-        }
+        HorizontalScrollbar(scrollState, style = style.scrollbarStyle, modifier = Modifier.fillMaxWidth())
     }
 }
 

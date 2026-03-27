@@ -12,8 +12,8 @@ import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.dp
 import com.jetbrains.JBR
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.intui.standalone.window.macos.LocalMacPlatformServices
 import org.jetbrains.jewel.window.styling.TitleBarStyle
-import org.jetbrains.jewel.window.utils.macos.MacUtil
 
 public fun Modifier.newFullscreenControls(newControls: Boolean = true): Modifier =
     this then
@@ -55,6 +55,8 @@ internal fun DecoratedWindowScope.TitleBarOnMacOs(
     style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
     content: @Composable TitleBarScope.(DecoratedWindowState) -> Unit,
 ) {
+    val macPlatformServices = LocalMacPlatformServices.current
+
     val newFullscreenControls =
         modifier.foldOut(false) { e, r ->
             if (e is NewFullscreenControlsElement) {
@@ -70,7 +72,7 @@ internal fun DecoratedWindowScope.TitleBarOnMacOs(
             "apple.awt.newFullScreenControls.background",
             "${style.colors.fullscreenControlButtonsBackground.toArgb()}",
         )
-        MacUtil.updateColors(window)
+        macPlatformServices.updateColors(window)
     } else {
         System.clearProperty("apple.awt.newFullScreenControls")
         System.clearProperty("apple.awt.newFullScreenControls.background")
@@ -84,7 +86,7 @@ internal fun DecoratedWindowScope.TitleBarOnMacOs(
         style = style,
         applyTitleBar = { height, state ->
             if (state.isFullscreen) {
-                MacUtil.updateFullScreenButtons(window)
+                macPlatformServices.updateFullScreenButtons(window)
             }
             titleBar.height = height.value
             JBR.getWindowDecorations().setCustomTitleBar(window, titleBar)

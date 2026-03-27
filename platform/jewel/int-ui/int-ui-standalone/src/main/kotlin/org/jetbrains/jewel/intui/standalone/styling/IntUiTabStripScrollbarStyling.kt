@@ -6,10 +6,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration.Companion.milliseconds
+import org.jetbrains.jewel.intui.standalone.ScrollbarHelper
 import org.jetbrains.jewel.ui.component.styling.ScrollbarColors
 import org.jetbrains.jewel.ui.component.styling.ScrollbarMetrics
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
+import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.AlwaysVisible
+import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenScrolling
 import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 import org.jetbrains.skiko.hostOs
 
@@ -30,34 +33,42 @@ public fun ScrollbarStyle.Companion.tabStripDark(): ScrollbarStyle =
 public fun ScrollbarStyle.Companion.tabStripMacOsLight(
     colors: ScrollbarColors = ScrollbarColors.macOsLight(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.tabStripMacOs(),
-    trackClickBehavior: TrackClickBehavior = TrackClickBehavior.NextPage,
-    scrollbarVisibility: ScrollbarVisibility = ScrollbarVisibility.tabStrip(),
+    trackClickBehavior: TrackClickBehavior = ScrollbarHelper.trackClickBehavior,
+    scrollbarVisibility: ScrollbarVisibility = ScrollbarHelper.scrollbarVisibilityStyle,
 ): ScrollbarStyle =
     ScrollbarStyle(
         colors = colors,
         metrics = metrics,
         trackClickBehavior = trackClickBehavior,
-        scrollbarVisibility = scrollbarVisibility,
+        scrollbarVisibility =
+            when (scrollbarVisibility) {
+                is WhenScrolling -> WhenScrolling.tabStrip()
+                is AlwaysVisible -> AlwaysVisible.tabStrip()
+            },
     )
 
 public fun ScrollbarStyle.Companion.tabStripMacOsDark(
     colors: ScrollbarColors = ScrollbarColors.macOsDark(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.tabStripMacOs(),
-    trackClickBehavior: TrackClickBehavior = TrackClickBehavior.NextPage,
-    scrollbarVisibility: ScrollbarVisibility = ScrollbarVisibility.tabStrip(),
+    trackClickBehavior: TrackClickBehavior = ScrollbarHelper.trackClickBehavior,
+    scrollbarVisibility: ScrollbarVisibility = ScrollbarHelper.scrollbarVisibilityStyle,
 ): ScrollbarStyle =
     ScrollbarStyle(
         colors = colors,
         metrics = metrics,
         trackClickBehavior = trackClickBehavior,
-        scrollbarVisibility = scrollbarVisibility,
+        scrollbarVisibility =
+            when (scrollbarVisibility) {
+                is WhenScrolling -> WhenScrolling.tabStrip()
+                is AlwaysVisible -> AlwaysVisible.tabStrip()
+            },
     )
 
 public fun ScrollbarStyle.Companion.tabStripWindowsAndLinuxLight(
     colors: ScrollbarColors = ScrollbarColors.windowsAndLinuxLight(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.tabStripWindowsAndLinux(),
     trackClickBehavior: TrackClickBehavior = TrackClickBehavior.JumpToSpot,
-    scrollbarVisibility: ScrollbarVisibility = ScrollbarVisibility.tabStrip(),
+    scrollbarVisibility: ScrollbarVisibility = ScrollbarHelper.scrollbarVisibilityStyle,
 ): ScrollbarStyle =
     ScrollbarStyle(
         colors = colors,
@@ -70,7 +81,7 @@ public fun ScrollbarStyle.Companion.tabStripWindowsAndLinuxDark(
     colors: ScrollbarColors = ScrollbarColors.windowsAndLinuxDark(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.tabStripWindowsAndLinux(),
     trackClickBehavior: TrackClickBehavior = TrackClickBehavior.JumpToSpot,
-    scrollbarVisibility: ScrollbarVisibility = ScrollbarVisibility.tabStrip(),
+    scrollbarVisibility: ScrollbarVisibility = ScrollbarHelper.scrollbarVisibilityStyle,
 ): ScrollbarStyle =
     ScrollbarStyle(
         colors = colors,
@@ -98,13 +109,14 @@ public fun ScrollbarMetrics.Companion.tabStripWindowsAndLinux(
             "trackPaddingWithBorder = trackPaddingWithBorder" +
             ")"
     ),
+    level = DeprecationLevel.HIDDEN,
 )
-public fun ScrollbarVisibility.AlwaysVisible.Companion.tabStrip(
+public fun AlwaysVisible.Companion.tabStrip(
     trackThickness: Dp = 4.dp,
     trackPadding: PaddingValues = PaddingValues(),
     trackPaddingWithBorder: PaddingValues = trackPadding,
-): ScrollbarVisibility.AlwaysVisible =
-    ScrollbarVisibility.AlwaysVisible(
+): AlwaysVisible =
+    AlwaysVisible(
         trackThickness = trackThickness,
         trackPadding = trackPadding,
         trackPaddingWithBorder = trackPaddingWithBorder,
