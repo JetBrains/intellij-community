@@ -209,8 +209,7 @@
                      key="inspection.display.name.avoid.duplicate.repositories" groupKey="inspection.best.practices"
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDuplicateRepositoriesInspection"
-                     isInternal="true"/>
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDuplicateRepositoriesInspection"/>
 
   </extensions>
 </idea-plugin>
