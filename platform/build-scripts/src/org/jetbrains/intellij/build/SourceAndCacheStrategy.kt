@@ -76,6 +76,7 @@ private class MavenJarSourceAndCacheStrategy(override val source: ZipSource) : S
     val relativePath = MAVEN_REPO.relativize(source.file).invariantSeparatorsPathString
     hash = Hashing.xxh3_64().hashCharsToLong(relativePath)
     digest.putLong(hash).putInt(relativePath.length)
+    digest.putInt(if (source.isPreSignedAndExtractedCandidate) 1 else 0)
   }
 }
 
@@ -123,6 +124,7 @@ private class NonMavenJarSourceAndCacheStrategy(override val source: ZipSource) 
 
     digest.putString(source.file.fileName.toString())
     digest.putLong(hash)
+    digest.putInt(if (source.isPreSignedAndExtractedCandidate) 1 else 0)
   }
 }
 

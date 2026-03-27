@@ -310,6 +310,13 @@ abstract class ProductProperties {
   var frontendModuleFilter: (suspend (BuildContext) -> FrontendModuleFilter)? = null
 
   /**
+   * Maps each native library name (as extracted by `getLibNameBySourceFile`) to its output folder name under `lib/`.
+   * Libraries listed here have their native files extracted to `lib/<folderName>/` rather than embedded in JARs.
+   * Use the same string for key and value when no renaming is needed.
+   */
+  var presignedNativeLibs: Map<String, String> = emptyMap()
+
+  /**
    * Base file name (without an extension) for product archives and installers (*.exe, *.tar.gz, *.dmg).
    */
   abstract fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String

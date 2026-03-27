@@ -89,12 +89,6 @@ private val libsUsedInJps = setOf(
   "kotlin-stdlib",
 )
 
-private val presignedLibNames = setOf(
-  "pty4j", "jna", "sqlite-native", "async-profiler", "jetbrains.skiko.awt.runtime.all"
-)
-
-private fun isLibPreSigned(library: JpsLibrary) = presignedLibNames.contains(library.name)
-
 private val predefinedMergeRules = listOf<Pair<String, (String, FrontendModuleFilter) -> Boolean>>(
   "groovy.jar" to { it, _ -> it.startsWith("org.codehaus.groovy:") },
   "jsch-agent.jar" to { it, _ -> it.startsWith("jsch-agent") },
@@ -134,6 +128,9 @@ class JarPackager private constructor(
   private val copiedFiles = HashMap<CopiedForKey, CopiedFor>()
 
   private val helper = (context as BuildContextImpl).jarPackagerDependencyHelper
+
+  private fun isJarPreSigned(file: Path): Boolean =
+    context.productProperties.presignedNativeLibs.containsKey(getLibNameBySourceFile(file))
 
   companion object {
     suspend fun pack(includedModules: Collection<ModuleItem>, outputDir: Path, context: BuildContext) {
@@ -228,7 +225,7 @@ class JarPackager private constructor(
               nativeFiles = buildAssetResult.sourceToNativeFiles,
               dryRun = dryRun,
               context = context,
-              toRelativePath = { libName, fileName -> "lib/$libName/$fileName" },
+              toRelativePath = { libName, fileName -> "lib/${context.productProperties.presignedNativeLibs.getOrDefault(libName, libName)}/$fileName" },
             )
           }
         }
@@ -571,7 +568,7 @@ class JarPackager private constructor(
               )
             }
           },
-          isPreSignedAndExtractedCandidate = isLibPreSigned(library),
+          isPreSignedAndExtractedCandidate = isJarPreSigned(file),
           filter = ::defaultLibrarySourcesNamesFilter,
           moduleName = null,
         )
@@ -730,14 +727,13 @@ class JarPackager private constructor(
     }
 
     val sources = asset.sources
-    val isPreSignedCandidate = isRootDir && isLibPreSigned(library)
     val mavenPaths = library.getPaths(JpsOrderRootType.COMPILED).map { toCanonicalReportPath(it, context.paths) }
     for (file in files) {
       val canonicalPath = getCanonicalPath(mavenPaths, file)
       sources.add(
         ZipSource(
           file = file,
-          isPreSignedAndExtractedCandidate = isPreSignedCandidate,
+          isPreSignedAndExtractedCandidate = isRootDir && isJarPreSigned(file),
           optimizeConfigId = libraryName.takeIf { isRootDir && libraryName == "jsvg" },
           distributionFileEntryProducer = { size, hash, targetFile ->
             if (moduleName == null) {
