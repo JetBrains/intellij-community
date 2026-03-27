@@ -96,9 +96,9 @@ internal class IntelliJThreadDumpExportTest {
         ),
         dumpItem(
           name = "worker-1",
-          stackTrace = "\"worker-1@201\" #2 tid=0x2 nid=0x2 virtual runnable\n   java.lang.Thread.State: RUNNABLE\n\tat example.worker-1.run(worker-1.java:2)",
+          stackTrace = "\"worker-1@201\" #2 tid=0x2 nid=0x2 virtual carrierId=0x34 runnable\n   java.lang.Thread.State: RUNNABLE\n\tat example.worker-1.run(worker-1.java:2)",
           serializedStackTrace = serializeThreadDumpItem(
-            itemHeader = "\"worker-1@201\" #2 tid=0x2 nid=0x2 virtual runnable",
+            itemHeader = "\"worker-1@201\" #2 tid=0x2 nid=0x2 virtual carrierId=0x34 runnable",
             stackTraceBody = "   java.lang.Thread.State: RUNNABLE\n\tat example.worker-1.run(worker-1.java:2)",
             id = 201L,
             parentId = 500L,

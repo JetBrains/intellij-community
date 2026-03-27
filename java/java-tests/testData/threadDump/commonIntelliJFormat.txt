@@ -5,8 +5,12 @@
    java.lang.Thread.State: RUNNABLE
 	at example.main.run(main.java:1)
 
-"worker-1@201" #2 tid=0x2 nid=0x2 virtual runnable ["id":201,"parentId":300]
+"worker-1@201" #2 tid=0x2 nid=0x2 virtual carrierId=0x34 runnable ["id":201,"parentId":300]
    java.lang.Thread.State: RUNNABLE
 	at example.worker-1.run(worker-1.java:2)
+
+"worker-2@202" #3 tid=0x3 nid=0x3 virtual unmounted waiting ["id":202,"parentId":300]
+   java.lang.Thread.State: WAITING
+  at java.lang.Object.wait()
 
 "Scope A" tid=0x0 nid=NA container ["type":"container","id":300]
