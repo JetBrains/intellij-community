@@ -514,7 +514,7 @@ public final class ThreadDumpParser {
 
   private static @NotNull ThreadState createThreadState(@NotNull String name, @NotNull String state) {
     String normalizedState = StringUtil.join(
-      ContainerUtil.filter(StringUtil.split(state, " "), part -> !ourIgnoredThreadStateParts.contains(part)),
+      ContainerUtil.filter(StringUtil.split(state, " "), part -> !ourIgnoredThreadStateParts.contains(part) && !part.contains("=")),
       " "
     );
     return new ThreadState(name, normalizedState);

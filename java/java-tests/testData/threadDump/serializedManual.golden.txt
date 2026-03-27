@@ -14,7 +14,7 @@
    java.lang.Thread.State: RUNNABLE
 	at example.main.run(main.java:1)
 
-"worker-1@201" #2 tid=0x2 nid=0x2 virtual runnable ["id":201,"parentId":500]
+"worker-1@201" #2 tid=0x2 nid=0x2 virtual carrierId=0x34 runnable ["id":201,"parentId":500]
    java.lang.Thread.State: RUNNABLE
 	at example.worker-1.run(worker-1.java:2)
 

@@ -20,10 +20,10 @@ internal class IntelliJThreadDumpImportTest {
 
     val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(dumpText))
 
-    assertDumpItem(parsedThreadDump, "main@101", 101L, null, false)
-    assertDumpItem(parsedThreadDump, "worker-1@201", 201L, 300L, false)
-    assertDumpItem(parsedThreadDump, "Scope A", 300L, 400L, true)
-    assertDumpItem(parsedThreadDump, "Scope Root", 400L, null, true)
+    assertDumpItem(parsedThreadDump, "main@101", 101L, null, false, false)
+    assertDumpItem(parsedThreadDump, "worker-1@201", 201L, 300L, false, true)
+    assertDumpItem(parsedThreadDump, "Scope A", 300L, 400L, true, false)
+    assertDumpItem(parsedThreadDump, "Scope Root", 400L, null, true, false)
   }
 
   @Test
@@ -32,9 +32,9 @@ internal class IntelliJThreadDumpImportTest {
 
     val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(dumpText))
 
-    assertDumpItem(parsedThreadDump, "main@101", 101L, null, false)
-    assertDumpItem(parsedThreadDump, "worker-1@201", 201L, 300L, false)
-    assertDumpItem(parsedThreadDump, "Scope A", 300L, null, true)
+    assertDumpItem(parsedThreadDump, "main@101", 101L, null, false, false)
+    assertDumpItem(parsedThreadDump, "worker-1@201", 201L, 300L, false, true)
+    assertDumpItem(parsedThreadDump, "Scope A", 300L, null, true, false)
   }
 
   @Test
@@ -43,8 +43,8 @@ internal class IntelliJThreadDumpImportTest {
 
     val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(dumpText))
 
-    assertDumpItem(parsedThreadDump, "main@101", null, null, false)
-    assertDumpItem(parsedThreadDump, "worker-1@201", null, null, false)
+    assertDumpItem(parsedThreadDump, "main@101", null, null, false, false)
+    assertDumpItem(parsedThreadDump, "worker-1@201", null, null, false, true)
   }
 
   @Test
@@ -53,8 +53,8 @@ internal class IntelliJThreadDumpImportTest {
 
     val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(dumpText))
 
-    assertDumpItem(parsedThreadDump, "worker-1@201", 201L, 999L, false)
-    assertDumpItem(parsedThreadDump, "Scope A", 300L, null, true)
+    assertDumpItem(parsedThreadDump, "worker-1@201", 201L, 999L, false, true)
+    assertDumpItem(parsedThreadDump, "Scope A", 300L, null, true, false)
   }
 
   @Test
@@ -63,24 +63,34 @@ internal class IntelliJThreadDumpImportTest {
 
     val importedDumpItems = requireNotNull(parseIntelliJThreadDump(dumpText)).dumpItems()
     val mainThread = findDumpItem(importedDumpItems, "main@101")
-    val workerThread = findDumpItem(importedDumpItems, "worker-1@201")
+    val workerThread1 = findDumpItem(importedDumpItems, "worker-1@201")
+    val workerThread2 = findDumpItem(importedDumpItems, "worker-2@202")
 
     assertThat(mainThread.stackTrace).contains("\"main@101\"")
     assertThat(mainThread.stackTrace).doesNotContain("[\"id\":101]")
     assertThat(mainThread.stackTrace).contains("example.main.run(main.java:1)")
-    assertThat(workerThread.stackTrace).contains("\"worker-1@201\"")
-    assertThat(workerThread.stackTrace).doesNotContain("[\"id\":201,\"parentId\":300]")
-    assertThat(workerThread.stackTrace).contains("example.worker-1.run(worker-1.java:2)")
+
+    assertThat(workerThread1.stackTrace).contains("\"worker-1@201\"")
+    assertThat(workerThread1.stackTrace).contains("carrierId=0x34")
+    assertThat(workerThread1.stackTrace).doesNotContain("[\"id\":201,\"parentId\":300]")
+    assertThat(workerThread1.stackTrace).contains("example.worker-1.run(worker-1.java:2)")
     assertEquals(" (runnable)", mainThread.stateDesc)
-    assertEquals(" (runnable)", workerThread.stateDesc)
-    assertTrue(workerThread.canBeHidden)
+    assertEquals(" (runnable)", workerThread1.stateDesc)
+    assertTrue(workerThread1.canBeHidden)
+
+    assertThat(workerThread2.stackTrace).contains("\"worker-2@202\"")
+    assertThat(workerThread2.stackTrace).contains("unmounted")
+    assertThat(workerThread2.stackTrace).doesNotContain("[\"id\":202,\"parentId\":300]")
+    assertThat(workerThread2.stackTrace).contains("at java.lang.Object.wait()")
+    assertEquals(" (waiting)", workerThread2.stateDesc)
+    assertTrue(workerThread2.canBeHidden)
   }
 
   @Test
   fun `round trip from intellij style dump preserves hierarchy and keeps ids in dump item names`() {
     val importedDumpItems = requireNotNull(parseIntelliJThreadDump(loadThreadDump("commonIntelliJFormat.txt"))).dumpItems()
 
-    assertThat(importedDumpItems.filter { !it.isContainer }.map { it.name }).containsExactly("main@101", "worker-1@201")
+    assertThat(importedDumpItems.filter { !it.isContainer }.map { it.name }).containsExactly("main@101", "worker-1@201", "worker-2@202")
 
     val serializedDump = serializeIntelliJThreadDump(importedDumpItems, listOf("Full thread dump"))
     assertThat(serializedDump).contains("[\"id\":101]")
@@ -88,9 +98,9 @@ internal class IntelliJThreadDumpImportTest {
     assertThat(serializedDump).contains("[\"type\":\"container\",\"id\":300]")
 
     val reparsedDump = requireNotNull(parseIntelliJThreadDump(serializedDump))
-    assertDumpItem(reparsedDump, "main@101", 101L, null, false)
-    assertDumpItem(reparsedDump, "worker-1@201", 201L, 300L, false)
-    assertDumpItem(reparsedDump, "Scope A", 300L, null, true)
+    assertDumpItem(reparsedDump, "main@101", 101L, null, false, false)
+    assertDumpItem(reparsedDump, "worker-1@201", 201L, 300L, false, true)
+    assertDumpItem(reparsedDump, "Scope A", 300L, null, true, false)
   }
 
   @Test
@@ -99,7 +109,7 @@ internal class IntelliJThreadDumpImportTest {
     val serializedOnce = serializeIntelliJThreadDump(firstImportedDump.dumpItems(), listOf("Full thread dump"))
 
     val secondImportedDump = requireNotNull(parseIntelliJThreadDump(serializedOnce))
-    assertThat(secondImportedDump.dumpItems().filter { !it.isContainer }.map { it.name }).containsExactly("main@101", "worker-1@201")
+    assertThat(secondImportedDump.dumpItems().filter { !it.isContainer }.map { it.name }).containsExactly("main@101", "worker-1@201", "worker-2@202")
 
     val serializedTwice = serializeIntelliJThreadDump(secondImportedDump.dumpItems(), listOf("Full thread dump"))
     assertThat(serializedTwice).doesNotContain("@101@101")
@@ -112,7 +122,7 @@ internal class IntelliJThreadDumpImportTest {
     val plainDumpText = loadThreadDump("plainWithoutFooterMarker.txt")
     val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(plainDumpText))
 
-    assertDumpItem(parsedThreadDump, "main@101", null, null, false)
+    assertDumpItem(parsedThreadDump, "main@101", null, null, false, false)
   }
 
   @Test
@@ -136,7 +146,7 @@ internal class IntelliJThreadDumpImportTest {
 
     val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(dumpText))
 
-    assertDumpItem(parsedThreadDump, "{unnamed}@555", 555L, null, false)
+    assertDumpItem(parsedThreadDump, "{unnamed}@555", 555L, null, false, false)
   }
 
   @Test
@@ -151,7 +161,7 @@ internal class IntelliJThreadDumpImportTest {
 
     val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(dumpText))
 
-    assertDumpItem(parsedThreadDump, "Scope A", 300L, 101L, true)
+    assertDumpItem(parsedThreadDump, "Scope A", 300L, 101L, true, false)
   }
 
   private fun loadThreadDump(path: String): String {
@@ -164,8 +174,9 @@ internal class IntelliJThreadDumpImportTest {
     treeId: Long?,
     parentTreeId: Long?,
     isContainer: Boolean,
+    isVirtual: Boolean
   ) {
-    assertDumpItem(threadDumpState.dumpItems(), name, treeId, parentTreeId, isContainer)
+    assertDumpItem(threadDumpState.dumpItems(), name, treeId, parentTreeId, isContainer, isVirtual)
   }
 
   private fun assertDumpItem(
@@ -174,11 +185,13 @@ internal class IntelliJThreadDumpImportTest {
     treeId: Long?,
     parentTreeId: Long?,
     isContainer: Boolean,
+    isVirtual: Boolean
   ) {
     val dumpItem = findDumpItem(dumpItems, name)
     assertEquals(treeId, dumpItem.treeId)
     assertEquals(parentTreeId, dumpItem.parentTreeId)
     assertEquals(isContainer, dumpItem.isContainer)
+    assertEquals(isVirtual, dumpItem.stackTrace.contains("virtual"))
   }
 
   private fun findDumpItem(dumpItems: List<DumpItem>, name: String): DumpItem {
