@@ -91,9 +91,9 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
         Ok(class_path)
     }
 
-    fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
+    fn prepare_for_launch(&self, _: bool) -> Result<(PathBuf, &str, Option<PathBuf>)> {
         let jre_home = self.locate_runtime()?.strip_ns_prefix()?;
-        Ok((jre_home, &self.launch_info.mainClass))
+        Ok((jre_home, &self.launch_info.mainClass, None))
     }
 }
 

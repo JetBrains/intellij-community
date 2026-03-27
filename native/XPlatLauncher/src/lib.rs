@@ -165,14 +165,20 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool, sandbox_subp
     debug!("** Preparing launch configuration");
     let configuration = get_configuration(remote_dev, &exe_path.strip_ns_prefix()?, started_via_remote_dev_launcher).context("Cannot detect a launch configuration")?;
 
+    let is_musl = if cfg!(all(target_os = "linux", target_env = "gnu")) {
+        is_running_with_gcompat()
+    } else {
+        cfg!(all(target_os = "linux", target_env = "musl"))
+    };
+
     debug!("** Locating runtime");
-    let (jre_home, main_class) = configuration.prepare_for_launch().context("Cannot find a runtime")?;
+    let (jre_home, main_class, _extra_libs) = configuration.prepare_for_launch(is_musl).context("Cannot find a runtime")?;
     debug!("Resolved runtime: {jre_home:?}");
 
     #[cfg(all(target_os = "linux", target_env = "gnu"))]
     {
-        if is_running_with_gcompat() {
-            adjust_to_musl(&exe_path, &jre_home)?;
+        if is_musl {
+            adjust_to_musl(&exe_path, &jre_home, &_extra_libs)?;
         } else {
             call_mallopt();
         }
@@ -191,7 +197,8 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool, sandbox_subp
 
     debug!("** Launching JVM");
     let args = configuration.get_args();
-    java::run_jvm_and_event_loop(&jre_home, vm_options, main_class, args.to_vec(), debug_mode).context("Cannot start the runtime")?;
+    java::run_jvm_and_event_loop(&jre_home, vm_options, main_class, args.to_vec(), debug_mode, is_musl)
+        .context("Cannot start the runtime")?;
 
     Ok(())
 }
@@ -259,6 +266,11 @@ fn restore_working_directory() -> Result<()> {
     Ok(())
 }
 
+#[cfg(not(all(target_os = "linux", target_env = "gnu")))]
+fn is_running_with_gcompat() -> bool {
+    false
+}
+
 #[cfg(all(target_os = "linux", target_env = "gnu"))]
 fn is_running_with_gcompat() -> bool {
     unsafe {
@@ -282,17 +294,23 @@ extern "C" fn check_gcompat_callback(info: *mut dl_phdr_info, _size: size_t, _da
 }
 
 #[cfg(all(target_os = "linux", target_env = "gnu"))]
-fn adjust_to_musl(exe_path: &Path, jre_home: &Path) -> Result<()> {
-    let ext_lib_path = exe_path.parent_or_err()?.join("libgcompat-ext.so");
-    if !ext_lib_path.exists() {
-        debug!("gcompat extensions missing: {ext_lib_path:?}");
-        return Ok(());
-    }
+fn adjust_to_musl(exe_path: &Path, jre_home: &Path, extra_libs: &Option<PathBuf>) -> Result<()> {
+    let ext_lib_path = if cfg!(all(target_os = "linux", target_env = "gnu")) {
+        let ext_lib_path = exe_path.parent_or_err()?.join("libgcompat-ext.so");
+        if !ext_lib_path.exists() {
+            debug!("gcompat extensions missing: {ext_lib_path:?}");
+            None
+        } else {
+            Some(ext_lib_path)
+        }
+    } else {
+        None
+    };
 
     let jvm_dir = jre_home.join("lib/server");
     let ld_lib_path = env::var_os("LD_LIBRARY_PATH").unwrap_or_default();
     if env::split_paths(&ld_lib_path).any(|p| p == jvm_dir) {
-        debug!("gcompat patch already applied: LD_LIBRARY_PATH={ld_lib_path:?}");
+        debug!("musl patch already applied: LD_LIBRARY_PATH={ld_lib_path:?}");
         return Ok(());
     }
 
@@ -301,20 +319,29 @@ fn adjust_to_musl(exe_path: &Path, jre_home: &Path) -> Result<()> {
         new_ld_lib_path.push(":");
         new_ld_lib_path.push(ld_lib_path);
     };
-
-    let ld_preload = env::var_os("LD_PRELOAD").unwrap_or_default();
-    let mut new_ld_preload = std::ffi::OsString::from(ext_lib_path);
-    if !ld_preload.is_empty() {
-        new_ld_preload.push(":");
-        new_ld_preload.push(ld_preload);
+    if let Some(extra_libs) = extra_libs {
+        new_ld_lib_path.push(":");
+        new_ld_lib_path.push(extra_libs);
     }
 
-    debug!("*** restarting with LD_LIBRARY_PATH={new_ld_lib_path:?} LD_PRELOAD={new_ld_preload:?}");
+    let new_ld_preload = if let Some(ext_lib_path) = ext_lib_path {
+        let mut new_ld_preload = std::ffi::OsString::from(ext_lib_path);
+        let ld_preload = env::var_os("LD_PRELOAD").unwrap_or_default();
+        if !ld_preload.is_empty() {
+            new_ld_preload.push(":");
+            new_ld_preload.push(ld_preload);
+        }
+        Some(("LD_PRELOAD", new_ld_preload))
+    } else {
+        None
+    };
+
+    debug!("*** restarting with LD_LIBRARY_PATH={new_ld_lib_path:?} preload:{new_ld_preload:?}\n=====");
     let args: Vec<String> = env::args().collect();
     Err(std::process::Command::new(exe_path)
         .args(args[1..].to_vec())
         .env("LD_LIBRARY_PATH", new_ld_lib_path)
-        .env("LD_PRELOAD", new_ld_preload)
+        .envs(new_ld_preload)
         .exec().into())
 }
 
@@ -381,7 +408,7 @@ pub trait LaunchConfiguration {
     fn get_vm_options(&self) -> Result<Vec<String>>;
     fn get_custom_properties_file(&self) -> Result<PathBuf>;
     fn get_class_path(&self) -> Result<Vec<String>>;
-    fn prepare_for_launch(&self) -> Result<(PathBuf, &str)>;
+    fn prepare_for_launch(&self, is_musl: bool) -> Result<(PathBuf, &str, Option<PathBuf>)>;
 }
 
 fn get_configuration(is_remote_dev: bool, exe_path: &Path, started_via_remote_dev_launcher: bool) -> Result<Box<dyn LaunchConfiguration>> {
