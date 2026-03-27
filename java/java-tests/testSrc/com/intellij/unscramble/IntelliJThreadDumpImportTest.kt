@@ -164,6 +164,32 @@ internal class IntelliJThreadDumpImportTest {
     assertDumpItem(parsedThreadDump, "Scope A", 300L, 101L, true, false)
   }
 
+  @Test
+  fun `simple deadlock is detected`() {
+    val dumpText = loadThreadDump("simpleDeadlock.txt")
+
+    val parsedThreadStates = requireNotNull(parseIntelliJThreadDump(dumpText)).threadStates
+    val thread1 = parsedThreadStates.first { it.name.startsWith("Thread-1") }
+    val thread2 = parsedThreadStates.first { it.name.startsWith("Thread-2") }
+    assertTrue(thread1.isDeadlocked)
+    assertTrue(thread2.isDeadlocked)
+    assertThat(thread1.deadlockedThreads).contains(thread2)
+    assertThat(thread2.deadlockedThreads).contains(thread1)
+  }
+
+  @Test
+  fun `virtual threads deadlock is detected`() {
+    val dumpText = loadThreadDump("virtualThreadsDeadlock.txt")
+
+    val parsedThreadStates = requireNotNull(parseIntelliJThreadDump(dumpText)).threadStates
+    val thread1 = parsedThreadStates.first { it.name.startsWith("Scope-A-worker-0") }
+    val thread2 = parsedThreadStates.first { it.name.startsWith("Scope-B-worker-0") }
+    assertTrue(thread1.isDeadlocked)
+    assertTrue(thread2.isDeadlocked)
+    assertThat(thread1.deadlockedThreads).contains(thread2)
+    assertThat(thread2.deadlockedThreads).contains(thread1)
+  }
+
   private fun loadThreadDump(path: String): String {
     return Files.readString(Path(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/threadDump").resolve(path)).trim()
   }
