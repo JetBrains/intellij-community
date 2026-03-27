@@ -9,6 +9,7 @@ import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.ide.rpc.ComponentDirectTransferId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.execution.dashboard.BackendLuxedRunDashboardContentManager
@@ -38,27 +39,27 @@ internal class RunDashboardServiceRpcImpl : RunDashboardServiceRpc {
 
   override suspend fun getServices(projectId: ProjectId): Flow<List<RunDashboardServiceDto>> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
-    return RunDashboardManagerImpl.getInstance(project).servicesDto
+    return project.serviceAsync<RunDashboardManagerImpl>().servicesDto
   }
 
   override suspend fun getStatuses(projectId: ProjectId): Flow<ServiceStatusDto> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
-    return RunDashboardManagerImpl.getInstance(project).statusesDto
+    return project.serviceAsync<RunDashboardManagerImpl>().statusesDto
   }
 
   override suspend fun getCustomizations(projectId: ProjectId): Flow<ServiceCustomizationDto> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
-    return RunDashboardManagerImpl.getInstance(project).customizationsDto
+    return project.serviceAsync<RunDashboardManagerImpl>().customizationsDto
   }
 
   override suspend fun getConfigurationTypes(projectId: ProjectId): Flow<Set<String>> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
-    return RunDashboardManagerImpl.getInstance(project).configurationTypes;
+    return project.serviceAsync<RunDashboardManagerImpl>().configurationTypes
   }
 
   override suspend fun updateConfigurationFolderName(projectId: ProjectId, serviceIds: List<RunDashboardServiceId>, newGroupName: String?) {
     val project = projectId.findProjectOrNull() ?: return
-    val dashboardManagerImpl = RunDashboardManagerImpl.getInstance(project)
+    val dashboardManagerImpl = project.serviceAsync<RunDashboardManagerImpl>()
     val backendServices = serviceIds.mapNotNull { dashboardManagerImpl.findServiceById(it) }
 
     val runManager = RunManagerImpl.getInstanceImpl(project)
