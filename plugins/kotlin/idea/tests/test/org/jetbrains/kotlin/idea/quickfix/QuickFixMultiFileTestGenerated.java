@@ -1425,6 +1425,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractK1QuickFixM
                 runTest("testData/quickfix/autoImports/noneApplicableFromInstanceButExtension.before.Main.kt");
             }
 
+            @TestMetadata("notAnAnnotationClass.before.Main.kt")
+            public void testNotAnAnnotationClass() throws Exception {
+                runTest("testData/quickfix/autoImports/notAnAnnotationClass.before.Main.kt");
+            }
+
             @TestMetadata("notExcludedClass.before.Main.kt")
             public void testNotExcludedClass() throws Exception {
                 runTest("testData/quickfix/autoImports/notExcludedClass.before.Main.kt");
