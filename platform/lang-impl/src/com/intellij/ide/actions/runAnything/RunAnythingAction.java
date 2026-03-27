@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.Executor;
@@ -24,6 +24,7 @@ import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -42,8 +43,6 @@ import javax.swing.JComponent;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class RunAnythingAction extends AnAction implements CustomComponentAction, DumbAware {
   public static final String RUN_ANYTHING_ACTION_ID = "RunAnything";
@@ -104,7 +103,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   private static void updateShortcut(KeymapManager keymapManager) {
-    if (!getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID, keymapManager).hasShortcuts()) {
+    if (!KeymapUtil.INSTANCE.getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID, keymapManager).hasShortcuts()) {
       registerDblCtrlClick();
     }
     else if (ourDoubleCtrlRegistered) {

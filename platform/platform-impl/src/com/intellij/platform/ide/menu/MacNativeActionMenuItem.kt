@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.menu
 
 import com.intellij.featureStatistics.FeatureUsageTracker
@@ -33,12 +33,14 @@ import java.awt.event.InputEvent
 import javax.swing.Icon
 import javax.swing.KeyStroke
 
-internal class MacNativeActionMenuItem(action: AnAction,
-                                       private val place: String,
-                                       private val context: DataContext,
-                                       private val isMnemonicEnabled: Boolean,
-                                       private val insideCheckedGroup: Boolean,
-                                       private val useDarkIcons: Boolean) {
+internal class MacNativeActionMenuItem(
+  action: AnAction,
+  private val place: String,
+  private val context: DataContext,
+  private val isMnemonicEnabled: Boolean,
+  private val insideCheckedGroup: Boolean,
+  private val useDarkIcons: Boolean,
+) {
   private val actionRef = createActionRef(action)
   // do not expose presentation
   private val presentation = Presentation.newTemplatePresentation()
@@ -86,7 +88,7 @@ internal class MacNativeActionMenuItem(action: AnAction,
       // If the action has `Enter` shortcut, do not add it. Otherwise, user won't be able to choose any ActionMenuItem other than that
       if (!isEnterKeyStroke(firstKeyStroke)) {
         accelerator = firstKeyStroke
-        if (KeymapUtil.isSimplifiedMacShortcuts()) {
+        if (KeymapUtil.isSimplifiedMacShortcuts) {
           menuItemPeer.setAcceleratorText(KeymapUtil.getPreferredShortcutText(shortcuts))
         }
       }

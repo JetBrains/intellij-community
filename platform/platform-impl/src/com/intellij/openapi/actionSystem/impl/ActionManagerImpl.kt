@@ -2287,7 +2287,7 @@ private fun registerAction(actionId: String,
     return
   }
 
-  action.registerCustomShortcutSet(ProxyShortcutSet(actionId), null)
+  action.setShortcutSet(ProxyShortcutSet(actionId))
   val descriptor = state.idToDescriptor.computeIfAbsent(actionId) { ActionManagerStateActionItemDescriptor() }
   descriptor.index = if (oldIndex >= 0) oldIndex else state.registeredActionCount++
   if (pluginId != null) {

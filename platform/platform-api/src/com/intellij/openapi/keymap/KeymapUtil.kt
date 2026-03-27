@@ -1,64 +1,42 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.keymap;
+package com.intellij.openapi.keymap
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.MouseShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.actionSystem.ShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.util.registry.RegistryValueListener;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JdkConstants;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.MouseShortcut
+import com.intellij.openapi.actionSystem.Shortcut
+import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.util.ui.JdkConstants
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
+import java.awt.AWTKeyStroke
+import java.awt.Component
+import java.awt.EventQueue
+import java.awt.event.ActionEvent
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
+import javax.swing.AbstractAction
+import javax.swing.JComponent
+import javax.swing.KeyStroke
 
-import javax.swing.AbstractAction;
-import javax.swing.JComponent;
-import javax.swing.KeyStroke;
-import java.awt.AWTEvent;
-import java.awt.AWTKeyStroke;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.EventQueue;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+object KeymapUtil {
+  private val defaultKeymapTextContext = KeymapTextContext()
 
-import static java.awt.event.InputEvent.ALT_DOWN_MASK;
-import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
-
-public final class KeymapUtil {
-  private static final KeymapTextContext ourDefaultKeymapTextContext = new KeymapTextContext();
-
-  private static final Set<Integer> ourTooltipKeys = new HashSet<>();
-  private static final Set<Integer> ourOtherTooltipKeys = new HashSet<>();
-  private static RegistryValue ourTooltipKeysProperty;
-
-  private KeymapUtil() {
-  }
+  private val tooltipKeys: MutableSet<Int> = HashSet<Int>()
+  private val otherTooltipKeys: MutableSet<Int> = HashSet<Int>()
+  private var tooltipKeysProperty: RegistryValue? = null
 
   /**
    * Returns the text of some shortcut from the set, giving preference to keyboard shortcuts
@@ -66,419 +44,463 @@ public final class KeymapUtil {
    * @param set the shortcut set
    * @return the first keyboard shortcut text, if any, otherwise the first shortcut text, if any, otherwise an empty string
    */
-  public static @NotNull @NlsSafe String getShortcutText(@NotNull ShortcutSet set) {
-    var keyboardShortcut = getFirstKeyboardShortcutText(set);
+  @NlsSafe
+  @JvmStatic
+  fun getShortcutText(set: ShortcutSet): @NlsSafe String {
+    val keyboardShortcut = getFirstKeyboardShortcutText(set)
     if (!keyboardShortcut.isEmpty()) {
-      return keyboardShortcut;
+      return keyboardShortcut
     }
-    var firstShortcut = ArrayUtil.getFirstElement(set.getShortcuts());
-    if (firstShortcut != null) {
-      return getShortcutText(firstShortcut);
-    }
-    return "";
+    return getShortcutText(set.getShortcuts().firstOrNull() ?: return "")
   }
 
-  public static @NlsSafe @NotNull String getShortcutText(@NotNull @NonNls String actionId) {
-    return ourDefaultKeymapTextContext.getShortcutText(actionId);
+  @NlsSafe
+  @JvmStatic
+  fun getShortcutText(@NonNls actionId: @NonNls String): @NlsSafe String = defaultKeymapTextContext.getShortcutText(actionId)
+
+  @NlsSafe
+  @JvmStatic
+  fun getShortcutTextOrNull(@NonNls actionId: @NonNls String): @NlsSafe String? {
+    return getShortcutText(ActionManager.getInstance().getKeyboardShortcut(actionId) ?: return null)
   }
 
-  public static @NlsSafe @Nullable String getShortcutTextOrNull(@NotNull @NonNls String actionId) {
-    KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
-    if (shortcut == null) return null;
-    return getShortcutText(shortcut);
+  @NlsSafe
+  @JvmStatic
+  fun getShortcutText(shortcut: Shortcut): @NlsSafe String {
+    return defaultKeymapTextContext.getShortcutText(shortcut)
   }
 
-  public static @NotNull @NlsSafe String getShortcutText(@NotNull Shortcut shortcut) {
-    return ourDefaultKeymapTextContext.getShortcutText(shortcut);
+  @NlsSafe
+  @JvmStatic
+  fun getMouseShortcutText(shortcut: MouseShortcut): @NlsSafe String {
+    return defaultKeymapTextContext.getMouseShortcutText(shortcut)
   }
 
-  public static @NotNull @NlsSafe String getMouseShortcutText(@NotNull MouseShortcut shortcut) {
-    return ourDefaultKeymapTextContext.getMouseShortcutText(shortcut);
+  @NlsSafe
+  @JvmStatic
+  fun getKeystrokeText(accelerator: KeyStroke?): @NlsSafe String {
+    return defaultKeymapTextContext.getKeystrokeText(accelerator)
   }
 
-  public static @NotNull @NlsSafe String getKeystrokeText(KeyStroke accelerator) {
-    return ourDefaultKeymapTextContext.getKeystrokeText(accelerator);
+  @JvmStatic
+  fun getKeyText(code: Int): String {
+    return defaultKeymapTextContext.getKeyText(code)
   }
 
-  public static @NotNull String getKeyText(int code) {
-    return ourDefaultKeymapTextContext.getKeyText(code);
-  }
+  @JvmStatic
+  val isSimplifiedMacShortcuts: Boolean
+    get() = defaultKeymapTextContext.isSimplifiedMacShortcuts
 
-  public static boolean isSimplifiedMacShortcuts() {
-    return ourDefaultKeymapTextContext.isSimplifiedMacShortcuts();
-  }
-
-  public static @NotNull ShortcutSet getActiveKeymapShortcuts(@Nullable @NonNls String actionId) {
+  @JvmStatic
+  fun getActiveKeymapShortcuts(@NonNls actionId: @NonNls String?): ShortcutSet {
     if (actionId != null) {
-      KeymapManager keymapManager = KeymapManager.getInstance();
+      val keymapManager = KeymapManager.getInstance()
       if (keymapManager != null) {
-        ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+        val actionManager = serviceIfCreated<ActionManager>()
         if (actionManager != null) {
-          return getActiveKeymapShortcuts(actionId, keymapManager);
+          return getActiveKeymapShortcuts(actionId, keymapManager)
         }
       }
     }
-    return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
+    return CustomShortcutSet(*Shortcut.EMPTY_ARRAY)
   }
 
-  @ApiStatus.Internal
-  public static @NotNull ShortcutSet getActiveKeymapShortcuts(@NotNull @NonNls String actionId, @NotNull KeymapManager keymapManager) {
-    return new CustomShortcutSet(keymapManager.getActiveKeymap().getShortcuts(actionId));
+  @Internal
+  fun getActiveKeymapShortcuts(@NonNls actionId: @NonNls String, keymapManager: KeymapManager): ShortcutSet {
+    return CustomShortcutSet(*keymapManager.getActiveKeymap().getShortcuts(actionId))
   }
 
   /**
    * @param actionId action to find the shortcut for
    * @return first keyboard shortcut that activates given action in active keymap; null if not found
    */
-  public static @Nullable Shortcut getPrimaryShortcut(@Nullable @NonNls String actionId) {
-    KeymapManager keymapManager = KeymapManager.getInstance();
-    if (keymapManager == null || actionId == null) return null;
-    return ArrayUtil.getFirstElement(keymapManager.getActiveKeymap().getShortcuts(actionId));
+  @JvmStatic
+  fun getPrimaryShortcut(@NonNls actionId: @NonNls String?): Shortcut? {
+    if (actionId == null) {
+      return null
+    }
+
+    val keymapManager = KeymapManager.getInstance() ?: return null
+    return keymapManager.getActiveKeymap().getShortcuts(actionId).firstOrNull()
   }
 
-  public static @NotNull @NlsSafe String getFirstKeyboardShortcutText(@NotNull @NonNls String actionId) {
-    for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
-      if (shortcut instanceof KeyboardShortcut) {
-        return getShortcutText(shortcut);
+  @NlsSafe
+  @JvmStatic
+  fun getFirstKeyboardShortcutText(@NonNls actionId: @NonNls String): @NlsSafe String {
+    for (shortcut in getActiveKeymapShortcuts(actionId).getShortcuts()) {
+      if (shortcut is KeyboardShortcut) {
+        return getShortcutText(shortcut)
       }
     }
-    return "";
+    return ""
   }
 
-  public static @NotNull @NlsSafe String getFirstMouseShortcutText(@NotNull @NonNls String actionId) {
-    for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
-      if (shortcut instanceof MouseShortcut) {
-        return getShortcutText(shortcut);
+  @NlsSafe
+  @JvmStatic
+  fun getFirstMouseShortcutText(@NonNls actionId: @NonNls String): @NlsSafe String {
+    for (shortcut in getActiveKeymapShortcuts(actionId).getShortcuts()) {
+      if (shortcut is MouseShortcut) {
+        return getShortcutText(shortcut)
       }
     }
-    return "";
+    return ""
   }
 
-  public static boolean isEventForAction(@NotNull KeyEvent keyEvent, @NotNull @NonNls String actionId) {
-    for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
-      if (shortcut instanceof KeyboardShortcut && AWTKeyStroke.getAWTKeyStrokeForEvent(keyEvent) == ((KeyboardShortcut)shortcut).getFirstKeyStroke()) {
-        return true;
+  @JvmStatic
+  fun isEventForAction(keyEvent: KeyEvent, @NonNls actionId: @NonNls String): Boolean {
+    for (shortcut in getActiveKeymapShortcuts(actionId).getShortcuts()) {
+      if (shortcut is KeyboardShortcut && AWTKeyStroke.getAWTKeyStrokeForEvent(keyEvent) === shortcut.firstKeyStroke) {
+        return true
       }
     }
-    return false;
+    return false
   }
 
-  public static @NotNull @NlsSafe String getFirstKeyboardShortcutText(@NotNull AnAction action) {
-    return getFirstKeyboardShortcutText(action.getShortcutSet());
+  @NlsSafe
+  @JvmStatic
+  fun getFirstKeyboardShortcutText(action: AnAction): @NlsSafe String {
+    return getFirstKeyboardShortcutText(action.shortcutSet)
   }
 
-  public static @NotNull @NlsSafe String getFirstKeyboardShortcutText(@NotNull ShortcutSet set) {
-    Shortcut[] shortcuts = set.getShortcuts();
-    KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
-    return shortcut == null ? "" : getShortcutText(shortcut);
+  @NlsSafe
+  @JvmStatic
+  fun getFirstKeyboardShortcutText(set: ShortcutSet): @NlsSafe String {
+    val shortcuts = set.getShortcuts()
+    val shortcut = shortcuts.firstOrNull { it is KeyboardShortcut } as? KeyboardShortcut
+    return if (shortcut == null) "" else getShortcutText(shortcut)
   }
 
-  public static @NotNull @NlsSafe String getPreferredShortcutText(Shortcut @NotNull [] shortcuts) {
-    KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
-    return shortcut != null ? getShortcutText(shortcut) :
-           shortcuts.length > 0 ? getShortcutText(shortcuts[0]) : "";
-  }
-
-  public static @NotNull @NlsSafe String getShortcutsText(Shortcut @NotNull [] shortcuts) {
-    if (shortcuts.length == 0) {
-      return "";
+  @NlsSafe
+  @JvmStatic
+  fun getPreferredShortcutText(shortcuts: Array<Shortcut>): @NlsSafe String {
+    val shortcut = shortcuts.firstOrNull { it is KeyboardShortcut } as? KeyboardShortcut
+    if (shortcut == null) {
+      return if (shortcuts.isEmpty()) "" else getShortcutText(shortcuts[0])
     }
-    return Arrays.stream(shortcuts).map(KeymapUtil::getShortcutText).collect(Collectors.joining(" "));
+    else {
+      return getShortcutText(shortcut)
+    }
+  }
+
+  @NlsSafe
+  @JvmStatic
+  fun getShortcutsText(shortcuts: Array<Shortcut>): @NlsSafe String {
+    if (shortcuts.isEmpty()) {
+      return ""
+    }
+    return shortcuts.joinToString(" ") { getShortcutText(it) }
   }
 
   /**
-   * Factory method. It parses passed string and creates {@code MouseShortcut}.
+   * Factory method. It parses passed string and creates `MouseShortcut`.
    *
    * @param keystrokeString       target keystroke
    * @return                      shortcut for the given keystroke
-   * @throws InvalidDataException if {@code keystrokeString} doesn't represent valid {@code MouseShortcut}.
+   * @throws InvalidDataException if `keystrokeString` doesn't represent valid `MouseShortcut`.
    */
-  public static @NotNull MouseShortcut parseMouseShortcut(@NotNull String keystrokeString) throws InvalidDataException {
-    return ourDefaultKeymapTextContext.parseMouseShortcut(keystrokeString);
+  @Throws(InvalidDataException::class)
+  @JvmStatic
+  fun parseMouseShortcut(keystrokeString: String): MouseShortcut {
+    return defaultKeymapTextContext.parseMouseShortcut(keystrokeString)
   }
 
   /**
-   * Similar to {@link KeyStroke#getKeyStroke(String)} but allows keys in lower case.
+   * Similar to [KeyStroke.getKeyStroke] but allows keys in lower case.
    * For example, "control x" is accepted and interpreted as "control X".
    */
-  public static @Nullable KeyStroke getKeyStroke(@NotNull String s) {
-    KeyStroke result = null;
-    if (s.length() >= 2 && s.charAt(s.length() - 2) == ' ' && Character.isLowerCase(s.charAt(s.length() - 1))) {
+  @JvmStatic
+  fun getKeyStroke(s: String): KeyStroke? {
+    var s = s
+    var result: KeyStroke? = null
+    if (s.length >= 2 && s.get(s.length - 2) == ' ' && Character.isLowerCase(s.get(s.length - 1))) {
       // there's no java.awt.event.KeyEvent.VK_x, but there is VK_X
-      s = s.substring(0, s.length() - 1) + Character.toUpperCase(s.charAt(s.length() - 1));
+      s = s.substring(0, s.length - 1) + s.get(s.length - 1).uppercaseChar()
     }
     try {
-      result = KeyStroke.getKeyStroke(s);
+      result = KeyStroke.getKeyStroke(s)
     }
-    catch (Exception ex) {
+    catch (_: Exception) {
       //ok
     }
-    if (result == null && s.length() >= 2 && s.charAt(s.length() - 2) == ' ') {
+    if (result == null && s.length >= 2 && s.get(s.length - 2) == ' ') {
       try {
-        String s1 = s.substring(0, s.length() - 1) + Character.toUpperCase(s.charAt(s.length() - 1));
-        result = KeyStroke.getKeyStroke(s1);
+        val s1 = s.substring(0, s.length - 1) + s.get(s.length - 1).uppercaseChar()
+        result = KeyStroke.getKeyStroke(s1)
       }
-      catch (Exception ignored) {
+      catch (_: Exception) {
       }
     }
-    return result;
+    return result
   }
 
   /**
    * @return string representation of passed mouse shortcut. This method should
-   *         be used only for serializing of the {@code MouseShortcut}
+   * be used only for serializing of the `MouseShortcut`
    */
-  public static @NotNull String getMouseShortcutString(@NotNull MouseShortcut shortcut) {
-    return ourDefaultKeymapTextContext.getMouseShortcutString(shortcut);
+  @JvmStatic
+  fun getMouseShortcutString(shortcut: MouseShortcut): String {
+    return defaultKeymapTextContext.getMouseShortcutString(shortcut)
   }
 
-  public static boolean isTooltipRequest(@NotNull KeyEvent keyEvent) {
-    if (ourTooltipKeysProperty == null) {
-      ourTooltipKeysProperty = Registry.get("ide.forcedShowTooltip");
-      ourTooltipKeysProperty.addListener(new RegistryValueListener() {
-        @Override
-        public void afterValueChanged(@NotNull RegistryValue value) {
-          updateTooltipRequestKey(value);
+  @JvmStatic
+  fun isTooltipRequest(keyEvent: KeyEvent): Boolean {
+    if (tooltipKeysProperty == null) {
+      tooltipKeysProperty = Registry.get("ide.forcedShowTooltip")
+      tooltipKeysProperty!!.addListener(object : RegistryValueListener {
+        override fun afterValueChanged(value: RegistryValue) {
+          updateTooltipRequestKey(value)
         }
-      }, ApplicationManager.getApplication());
+      }, ApplicationManager.getApplication())
 
-      updateTooltipRequestKey(ourTooltipKeysProperty);
+      updateTooltipRequestKey(tooltipKeysProperty!!)
     }
 
-    if (keyEvent.getID() != KeyEvent.KEY_PRESSED) return false;
-
-    for (Integer each : ourTooltipKeys) {
-      if ((keyEvent.getModifiers() & each.intValue()) == 0) return false;
+    if (keyEvent.getID() != KeyEvent.KEY_PRESSED) {
+      return false
     }
 
-    for (Integer each : ourOtherTooltipKeys) {
-      if ((keyEvent.getModifiers() & each.intValue()) > 0) return false;
+    for (each in tooltipKeys) {
+      if ((keyEvent.getModifiers() and each) == 0) {
+        return false
+      }
     }
 
-    final int code = keyEvent.getKeyCode();
+    for (each in otherTooltipKeys) {
+      if ((keyEvent.getModifiers() and each) > 0) {
+        return false
+      }
+    }
 
-    return code == KeyEvent.VK_META || code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_SHIFT || code == KeyEvent.VK_ALT;
+    val code = keyEvent.getKeyCode()
+    return code == KeyEvent.VK_META || code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_SHIFT || code == KeyEvent.VK_ALT
   }
 
-  private static void updateTooltipRequestKey(@NotNull RegistryValue value) {
-    final String text = value.asString();
+  @Suppress("DEPRECATION")
+  private fun updateTooltipRequestKey(value: RegistryValue) {
+    val text = value.asString()
 
-    ourTooltipKeys.clear();
-    ourOtherTooltipKeys.clear();
+    tooltipKeys.clear()
+    otherTooltipKeys.clear()
 
-    processKey(text.contains("meta"), InputEvent.META_MASK);
-    processKey(text.contains("control") || text.contains("ctrl"), InputEvent.CTRL_MASK);
-    processKey(text.contains("shift"), InputEvent.SHIFT_MASK);
-    processKey(text.contains("alt"), InputEvent.ALT_MASK);
-
+    processKey(text.contains("meta"), InputEvent.META_MASK)
+    processKey(text.contains("control") || text.contains("ctrl"), InputEvent.CTRL_MASK)
+    processKey(text.contains("shift"), InputEvent.SHIFT_MASK)
+    processKey(text.contains("alt"), InputEvent.ALT_MASK)
   }
 
-  private static void processKey(boolean condition, int value) {
+  private fun processKey(condition: Boolean, value: Int) {
     if (condition) {
-      ourTooltipKeys.add(value);
-    } else {
-      ourOtherTooltipKeys.add(value);
+      tooltipKeys.add(value)
+    }
+    else {
+      otherTooltipKeys.add(value)
     }
   }
 
-  public static boolean isEmacsKeymap() {
-    return isEmacsKeymap(KeymapManager.getInstance().getActiveKeymap());
-  }
+  @JvmStatic
+  val isEmacsKeymap: Boolean
+    get() = isEmacsKeymap(KeymapManager.getInstance().getActiveKeymap())
 
-  public static boolean isEmacsKeymap(@Nullable Keymap keymap) {
-    for (; keymap != null; keymap = keymap.getParent()) {
-      if ("Emacs".equalsIgnoreCase(keymap.getName())) {
-        return true;
+  @JvmStatic
+  fun isEmacsKeymap(keymap: Keymap?): Boolean {
+    var keymap = keymap
+    while (keymap != null) {
+      if ("Emacs".equals(keymap.getName(), ignoreCase = true)) {
+        return true
       }
+      keymap = keymap.getParent()
     }
-    return false;
+    return false
   }
 
-  public static @Nullable KeyStroke getKeyStroke(final @NotNull ShortcutSet shortcutSet) {
-    final Shortcut[] shortcuts = shortcutSet.getShortcuts();
-    if (shortcuts.length == 0 || !(shortcuts[0] instanceof KeyboardShortcut shortcut)) return null;
-    if (shortcut.getSecondKeyStroke() != null) {
-      return null;
-    }
-    return shortcut.getFirstKeyStroke();
+  @JvmStatic
+  fun getKeyStroke(shortcutSet: ShortcutSet): KeyStroke? {
+    val shortcuts = shortcutSet.getShortcuts()
+    val shortcut = shortcuts.firstOrNull() as? KeyboardShortcut ?: return null
+    return if (shortcut.secondKeyStroke == null) shortcut.firstKeyStroke else null
   }
 
-  public static @NotNull Collection<KeyStroke> getKeyStrokes(@NotNull ShortcutSet shortcutSet) {
-    Shortcut[] shortcuts = shortcutSet.getShortcuts();
-    if (shortcuts.length == 0) {
-      return Collections.emptySet();
+  @JvmStatic
+  fun getKeyStrokes(shortcutSet: ShortcutSet): Collection<KeyStroke> {
+    val shortcuts = shortcutSet.getShortcuts()
+    if (shortcuts.isEmpty()) {
+      return emptySet()
     }
-    Set<KeyStroke> result = new HashSet<>();
-    for (Shortcut shortcut : shortcuts) {
-      if (!(shortcut instanceof KeyboardShortcut kbShortcut)) {
-        continue;
+
+    val result = HashSet<KeyStroke>()
+    for (shortcut in shortcuts) {
+      if (shortcut !is KeyboardShortcut) {
+        continue
       }
-      if (kbShortcut.getSecondKeyStroke() != null) {
-        continue;
+      if (shortcut.secondKeyStroke != null) {
+        continue
       }
-      result.add(kbShortcut.getFirstKeyStroke());
+      result.add(shortcut.firstKeyStroke)
     }
-    return result.isEmpty() ? Collections.emptySet() : result;
+    return if (result.isEmpty()) emptySet() else result
   }
 
-  public static @NotNull @NlsContexts.Tooltip String createTooltipText(@NotNull @NlsContexts.Tooltip String name, @NotNull @NonNls String actionId) {
-    String text = getFirstKeyboardShortcutText(actionId);
-    return text.isEmpty() ? name : name + " (" + text + ")";
+  @NlsContexts.Tooltip
+  @JvmStatic
+  fun createTooltipText(
+    @NlsContexts.Tooltip name: @NlsContexts.Tooltip String,
+    @NonNls actionId: @NonNls String,
+  ): @NlsContexts.Tooltip String {
+    val text = getFirstKeyboardShortcutText(actionId)
+    return if (text.isEmpty()) name else "$name ($text)"
   }
 
-  public static @NotNull @NlsSafe String createTooltipText(@Nullable String name, @NotNull AnAction action) {
-    String toolTipText = name == null ? "" : name;
-    while (StringUtil.endsWithChar(toolTipText, '.')) {
-      toolTipText = toolTipText.substring(0, toolTipText.length() - 1);
+  @NlsSafe
+  @JvmStatic
+  fun createTooltipText(name: String?, action: AnAction): @NlsSafe String {
+    var toolTipText = name ?: ""
+    while (toolTipText.endsWith('.')) {
+      toolTipText = toolTipText.substring(0, toolTipText.length - 1)
     }
-    String shortcutsText = getFirstKeyboardShortcutText(action);
+    val shortcutsText = getFirstKeyboardShortcutText(action)
     if (!shortcutsText.isEmpty()) {
-      toolTipText += " (" + shortcutsText + ")";
+      toolTipText += " ($shortcutsText)"
     }
-    return toolTipText;
+    return toolTipText
   }
 
-  /** @return text representation of the keymap modifiers, like Ctrl+Shift */
-  public static @NotNull String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
-    return ourDefaultKeymapTextContext.getModifiersText(KeymapTextContext.mapNewModifiers(modifiers), false);
+  /** @return text representation of the keymap modifiers, like Ctrl+Shift
+   */
+  @JvmStatic
+  fun getModifiersText(@JdkConstants.InputEventMask modifiers: Int): String {
+    return defaultKeymapTextContext.getModifiersText(KeymapTextContext.mapNewModifiers(modifiers), false)
   }
 
   /**
    * Checks that one of the mouse shortcuts assigned to the provided action has the same modifiers as provided
    */
-  public static boolean matchActionMouseShortcutsModifiers(@NotNull Keymap activeKeymap,
-                                                           @JdkConstants.InputEventMask int modifiers,
-                                                           @NotNull @NonNls String actionId) {
-    final MouseShortcut syntheticShortcut = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
-    for (Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
-      if (shortcut instanceof MouseShortcut mouseShortcut) {
-        if (mouseShortcut.getModifiers() == syntheticShortcut.getModifiers()) {
-          return true;
+  @JvmStatic
+  fun matchActionMouseShortcutsModifiers(
+    activeKeymap: Keymap,
+    @JdkConstants.InputEventMask modifiers: Int,
+    @NonNls actionId: @NonNls String,
+  ): Boolean {
+    val syntheticShortcut = MouseShortcut(MouseEvent.BUTTON1, modifiers, 1)
+    for (shortcut in activeKeymap.getShortcuts(actionId)) {
+      if (shortcut is MouseShortcut) {
+        if (shortcut.modifiers == syntheticShortcut.modifiers) {
+          return true
         }
       }
     }
-    return false;
+    return false
   }
 
   /**
    * Creates shortcut corresponding to a single-click event
    */
-  public static @NotNull MouseShortcut createMouseShortcut(@NotNull MouseEvent e) {
-    int button = MouseShortcut.getButton(e);
-    int modifiers = e.getModifiersEx();
+  @JvmStatic
+  fun createMouseShortcut(e: MouseEvent): MouseShortcut {
+    var button = MouseShortcut.getButton(e)
+    val modifiers = e.getModifiersEx()
     if (button == MouseEvent.NOBUTTON && e.getID() == MouseEvent.MOUSE_DRAGGED) {
       // mouse drag events don't have button field set due to some reason
-      if ((modifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
-        button = MouseEvent.BUTTON1;
+      if ((modifiers and InputEvent.BUTTON1_DOWN_MASK) != 0) {
+        button = MouseEvent.BUTTON1
       }
-      else if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0) {
-        button = MouseEvent.BUTTON2;
+      else if ((modifiers and InputEvent.BUTTON2_DOWN_MASK) != 0) {
+        button = MouseEvent.BUTTON2
       }
     }
-    return new MouseShortcut(button, modifiers, 1);
+    return MouseShortcut(button, modifiers, 1)
   }
 
   /**
    * @param component    target component to reassign previously mapped action (if any)
    * @param oldKeyStroke previously mapped keystroke (e.g. standard one that you want to use in some different way)
-   * @param newKeyStroke new keystroke to be assigned. {@code null} value means 'just unregister previously mapped action'
+   * @param newKeyStroke new keystroke to be assigned. `null` value means 'just unregister previously mapped action'
    * @param condition    one of
-   *                     <ul>
-   *                     <li>JComponent.WHEN_FOCUSED,</li>
-   *                     <li>JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT</li>
-   *                     <li>JComponent.WHEN_IN_FOCUSED_WINDOW</li>
-   *                     <li>JComponent.UNDEFINED_CONDITION</li>
-   *                     </ul>
-   * @return {@code true} if the action is reassigned successfully
+   *
+   *  * JComponent.WHEN_FOCUSED,
+   *  * JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+   *  * JComponent.WHEN_IN_FOCUSED_WINDOW
+   *  * JComponent.UNDEFINED_CONDITION
+   *
+   * @param muteOldKeystroke if `true` old keystroke wouldn't work anymore
+   * @return `true` if the action is reassigned successfully
    */
-  public static boolean reassignAction(@NotNull JComponent component,
-                                       @NotNull KeyStroke oldKeyStroke,
-                                       @Nullable KeyStroke newKeyStroke,
-                                       int condition) {
-    return reassignAction(component, oldKeyStroke, newKeyStroke, condition, true);
-  }
-  /**
-   * @param component    target component to reassign previously mapped action (if any)
-   * @param oldKeyStroke previously mapped keystroke (e.g. standard one that you want to use in some different way)
-   * @param newKeyStroke new keystroke to be assigned. {@code null} value means 'just unregister previously mapped action'
-   * @param condition    one of
-   *                     <ul>
-   *                     <li>JComponent.WHEN_FOCUSED,</li>
-   *                     <li>JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT</li>
-   *                     <li>JComponent.WHEN_IN_FOCUSED_WINDOW</li>
-   *                     <li>JComponent.UNDEFINED_CONDITION</li>
-   *                     </ul>
-   * @param muteOldKeystroke if {@code true} old keystroke wouldn't work anymore
-   * @return {@code true} if the action is reassigned successfully
-   */
-  public static boolean reassignAction(@NotNull JComponent component,
-                                       @NotNull KeyStroke oldKeyStroke,
-                                       @Nullable KeyStroke newKeyStroke,
-                                       int condition, boolean muteOldKeystroke) {
-    ActionListener action = component.getActionForKeyStroke(oldKeyStroke);
-    if (action == null) return false;
+  @JvmOverloads
+  @JvmStatic
+  fun reassignAction(
+    component: JComponent,
+    oldKeyStroke: KeyStroke,
+    newKeyStroke: KeyStroke?,
+    condition: Int,
+    muteOldKeystroke: Boolean = true,
+  ): Boolean {
+    val action = component.getActionForKeyStroke(oldKeyStroke) ?: return false
     if (newKeyStroke != null) {
-      component.registerKeyboardAction(action, newKeyStroke, condition);
+      component.registerKeyboardAction(action, newKeyStroke, condition)
     }
     if (muteOldKeystroke) {
-      component.registerKeyboardAction(new RedispatchEventAction(component), oldKeyStroke, condition);
+      component.registerKeyboardAction(RedispatchEventAction(component), oldKeyStroke, condition)
     }
-    return true;
+    return true
   }
 
-  private static final class RedispatchEventAction extends AbstractAction {
-    private final Component myComponent;
+  @JvmStatic
+  fun filterKeyStrokes(source: ShortcutSet, vararg toLeaveOut: KeyStroke?): ShortcutSet? {
+    val shortcuts = source.getShortcuts()
+    val keyStrokesToLeaveOut = toLeaveOut.toHashSet()
+    val filtered = ArrayList<Shortcut>(shortcuts.size)
+    for (shortcut in shortcuts) {
+      if (shortcut is KeyboardShortcut && shortcut.firstKeyStroke in keyStrokesToLeaveOut) {
+        continue
+      }
+      filtered.add(shortcut)
+    }
+    return if (filtered.isEmpty()) null else CustomShortcutSet(*filtered.toArray(Shortcut.EMPTY_ARRAY))
+  }
 
-    RedispatchEventAction(@NotNull Component component) {
-      myComponent = component;
+  @JvmStatic
+  fun getShortcutsForMnemonicChar(mnemonic: Char): CustomShortcutSet? {
+    return getShortcutsForMnemonicCode(KeyEvent.getExtendedKeyCodeForChar(mnemonic.code))
+  }
+
+  @JvmStatic
+  fun getShortcutsForMnemonicCode(mnemonic: Int): CustomShortcutSet? {
+    if (mnemonic == KeyEvent.VK_UNDEFINED) {
+      return null
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      AWTEvent event = EventQueue.getCurrentEvent();
-      if (event instanceof KeyEvent && event.getSource() == myComponent) {
-        Container parent = myComponent.getParent();
-        if (parent != null) {
-          KeyEvent keyEvent = (KeyEvent)event;
-          parent.dispatchEvent(new KeyEvent(parent, event.getID(), ((KeyEvent)event).getWhen(), keyEvent.getModifiers(), keyEvent.getKeyCode(), keyEvent.getKeyChar(), keyEvent
-            .getKeyLocation()));
-        }
+    val ctrlAltShortcut = KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, InputEvent.ALT_DOWN_MASK or InputEvent.CTRL_DOWN_MASK), null)
+    val altShortcut = KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, InputEvent.ALT_DOWN_MASK), null)
+    if (SystemInfoRt.isMac) {
+      if (Registry.`is`("ide.mac.alt.mnemonic.without.ctrl")) {
+        return CustomShortcutSet(ctrlAltShortcut, altShortcut)
+      }
+      else {
+        return CustomShortcutSet(ctrlAltShortcut)
       }
     }
-  }
-
-  public static @Nullable ShortcutSet filterKeyStrokes(@NotNull ShortcutSet source, KeyStroke...toLeaveOut) {
-    List<Shortcut> filtered = new ArrayList<>(Arrays.asList(source.getShortcuts()));
-    for (Shortcut shortcut : source.getShortcuts()) {
-      if (shortcut instanceof KeyboardShortcut) {
-        if (ArrayUtil.find(toLeaveOut, ((KeyboardShortcut)shortcut).getFirstKeyStroke()) != -1) {
-          filtered.remove(shortcut);
-        }
-      }
+    else {
+      return CustomShortcutSet(altShortcut)
     }
-    return filtered.isEmpty() ? null : new CustomShortcutSet(filtered.toArray(Shortcut.EMPTY_ARRAY));
+    return null
   }
+}
 
-  public static @Nullable CustomShortcutSet getShortcutsForMnemonicChar(char mnemonic) {
-    return getShortcutsForMnemonicCode(KeyEvent.getExtendedKeyCodeForChar(mnemonic));
-  }
-
-  public static @Nullable CustomShortcutSet getShortcutsForMnemonicCode(int mnemonic) {
-    if (mnemonic != KeyEvent.VK_UNDEFINED) {
-      KeyboardShortcut ctrlAltShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK | CTRL_DOWN_MASK), null);
-      KeyboardShortcut altShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK), null);
-      CustomShortcutSet shortcutSet;
-      if (SystemInfo.isMac) {
-        if (Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
-          shortcutSet = new CustomShortcutSet(ctrlAltShortcut, altShortcut);
-        } else {
-          shortcutSet = new CustomShortcutSet(ctrlAltShortcut);
-        }
-      } else {
-        shortcutSet = new CustomShortcutSet(altShortcut);
-      }
-      return shortcutSet;
+private class RedispatchEventAction(private val myComponent: Component) : AbstractAction() {
+  override fun actionPerformed(e: ActionEvent?) {
+    val event = EventQueue.getCurrentEvent()
+    if (event is KeyEvent && event.getSource() === myComponent) {
+      val parent = myComponent.getParent() ?: return
+      parent.dispatchEvent(
+        KeyEvent(
+          /* source = */ parent,
+          /* id = */ event.getID(),
+          /* when = */ event.getWhen(),
+          /* modifiers = */ event.getModifiers(),
+          /* keyCode = */ event.getKeyCode(),
+          /* keyChar = */ event.getKeyChar(),
+          /* keyLocation = */ event.getKeyLocation()
+        )
+      )
     }
-    return null;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui
 
 import com.intellij.openapi.actionSystem.KeyboardShortcut
@@ -31,7 +31,7 @@ internal class ShortcutTextList {
   private val elements = mutableListOf<ShortcutTextElement>()
 
   constructor(shortcuts: Array<Shortcut>?, abbreviations: Collection<String>?, tree: JComponent, g: Graphics2D) {
-    if ((shortcuts == null || shortcuts.isEmpty()) && (abbreviations == null || abbreviations.isEmpty())) {
+    if (shortcuts.isNullOrEmpty() && abbreviations.isNullOrEmpty()) {
       width = 0
       return
     }
@@ -45,17 +45,25 @@ internal class ShortcutTextList {
     val boldFont = font.asBold()
     val boldMetrics = tree.getFontMetrics(boldFont)
 
-    val shortcutPresentation = createPresentation(JBColor.namedColor("Shortcut.foreground", JBColor(0x0, 0xDFE1E5)),
-                                                  "Shortcut.background", "Shortcut.borderColor", boldFont)
+    val shortcutPresentation = createPresentation(
+      textColor = JBColor.namedColor("Shortcut.foreground", JBColor(0x0, 0xDFE1E5)),
+      fillColorKey = "Shortcut.background",
+      borderColorKey = "Shortcut.borderColor",
+      font = boldFont,
+    )
 
-    val abbreviationPresentation = createPresentation(JBColor.namedColor("Abbreviation.foreground", JBColor(0x5A5D6B2E, 0xB4B8BF40.toInt())),
-                                                      "Abbreviation.background", "Abbreviation.borderColor", boldFont)
+    val abbreviationPresentation = createPresentation(
+      textColor = JBColor.namedColor("Abbreviation.foreground", JBColor(0x5A5D6B2E, 0xB4B8BF40.toInt())),
+      fillColorKey = "Abbreviation.background",
+      borderColorKey = "Abbreviation.borderColor",
+      font = boldFont,
+    )
 
     val separatorText = KeyMapBundle.message("or.separator")
     val separatorPresentation = ShortcutTextPresentation(JBUI.CurrentTheme.Label.foreground(), null, null, font)
     val separatorElement = createTextElement(separatorText, 0, separatorGap, tree.getFontMetrics(font), separatorPresentation, g)
 
-    if (shortcuts != null && shortcuts.isNotEmpty()) {
+    if (!shortcuts.isNullOrEmpty()) {
       val lastShortcut = shortcuts.lastIndex
 
       for ((index, shortcut) in shortcuts.withIndex()) {
@@ -79,7 +87,7 @@ internal class ShortcutTextList {
       }
     }
 
-    if (abbreviations != null && abbreviations.isNotEmpty()) {
+    if (!abbreviations.isNullOrEmpty()) {
       if (elements.isNotEmpty()) {
         elements.add(separatorElement.copy())
       }
@@ -136,8 +144,8 @@ internal class ShortcutTextList {
 
   private fun addShortcutModifiers(result: MutableList<String>, modifiers: Int) {
     val modifiersText = KeymapUtil.getModifiersText(modifiers)
-    if (KeymapUtil.isSimplifiedMacShortcuts() || !ClientSystemInfo.isMac()) {
-      modifiersText.split("+").forEach { result.add(it.trim()) }
+    if (KeymapUtil.isSimplifiedMacShortcuts || !ClientSystemInfo.isMac()) {
+      modifiersText.splitToSequence('+').forEach { result.add(it.trim()) }
     }
     else {
       modifiersText.toCharArray().forEach {

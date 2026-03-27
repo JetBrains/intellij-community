@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.featureStatistics.FeatureUsageTracker
@@ -168,7 +168,7 @@ class ActionMenuItem internal constructor(action: AnAction,
         if (!isEnterKeyStroke(firstKeyStroke)) {
           setAccelerator(firstKeyStroke)
           screenMenuItemPeer?.setLabel(text, firstKeyStroke)
-          if (KeymapUtil.isSimplifiedMacShortcuts()) {
+          if (KeymapUtil.isSimplifiedMacShortcuts) {
             val shortcutText = KeymapUtil.getPreferredShortcutText(shortcuts)
             putClientProperty("accelerator.text", shortcutText)
             screenMenuItemPeer?.setAcceleratorText(shortcutText)
