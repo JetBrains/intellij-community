@@ -39,8 +39,4 @@ abstract class AbstractK2AddImportAliasTest53 : AbstractImportsTest() {
             "caret has to be placed at KtNameReferenceExpression, current position at $offset"
         }
     }
-
-    override fun registerClassImportFilterExtensions(classImportFilterVetoRegexRules: MutableList<String>) {
-        // Not supported in K2 Mode (KTIJ-37810)
-    }
 }

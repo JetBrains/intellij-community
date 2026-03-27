@@ -303,6 +303,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
         testClass<AbstractFirShortenRefsTest> {
             model("shortenRefsFir", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
             model("shortenRefs/this", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
+            model("shortenRefs/java", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
         }
 
         testClass<AbstractK2EnterHandlerTest> {

@@ -9,12 +9,4 @@ abstract class AbstractK1ImportsTest : AbstractImportsTest() {
     override fun updateScriptDependencies(psiFile: KtFile) {
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(psiFile)
     }
-
-    override fun registerClassImportFilterExtensions(classImportFilterVetoRegexRules: MutableList<String>) {
-        classImportFilterVetoRegexRules.forEach {
-            val regex = Regex(".*${it.trim()}.*")
-            val filterExtension = ClassImportFilter { classInfo, _ -> !classInfo.fqName.asString().matches(regex) }
-            ClassImportFilter.EP_NAME.point.registerExtension(filterExtension, testRootDisposable)
-        }
-    }
 }

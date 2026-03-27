@@ -17,9 +17,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
+import org.jetbrains.kotlin.idea.util.ClassImportFilter
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
@@ -233,11 +235,36 @@ private inline infix fun <A, B, C> ((A) -> B).andThen(
     crossinline function: (B) -> C,
 ): (A) -> C = { function(this(it)) }
 
+private fun ((KaClassLikeSymbol) -> ShortenStrategy).respectClassImportFilter(contextFile: KtFile): (KaClassLikeSymbol) -> ShortenStrategy =
+    fun(classLikeSymbol: KaClassLikeSymbol): ShortenStrategy {
+        val strategy = this(classLikeSymbol)
+        val classSymbol = classLikeSymbol as? KaNamedClassSymbol ?: return strategy
+        val classId = classSymbol.classId ?: return strategy
+
+        return when (strategy) {
+            ShortenStrategy.SHORTEN_AND_IMPORT, ShortenStrategy.SHORTEN_AND_STAR_IMPORT -> {
+                val allowClassImport = ClassImportFilter.allowClassImport(
+                    classId.asSingleFqName(),
+                    classSymbol.classKind,
+                    classSymbol.modality,
+                    classSymbol.visibility,
+                    classId.isNestedClass,
+                    contextFile
+                )
+                if (allowClassImport) strategy else ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED
+            }
+            else -> strategy
+        }
+    }
+
 /**
  * Collects possible references to shorten.
  *
  * Compared to [collectPossibleReferenceShortenings], uses [defaultClassShortenStrategyForIde] and [defaultCallableShortenStrategyForIde]
  * strategies for shortening by default, which respect Kotlin Code Style Settings from the IDE.
+ *
+ * [classShortenStrategy] is adjusted to respect [ClassImportFilter]: if the strategy would add an import for a class rejected by the filter,
+ * that class is shortened only if it is already imported.
  *
  * In the IDE, this function should be preferred to [collectPossibleReferenceShortenings] due to better defaults.
  *
@@ -257,7 +284,7 @@ fun collectPossibleReferenceShorteningsForIde(
         file,
         selection,
         shortenOptions.toShortenOptions(),
-        classShortenStrategy,
+        classShortenStrategy.respectClassImportFilter(file),
         callableShortenStrategy
     )
 
@@ -273,6 +300,9 @@ fun collectPossibleReferenceShorteningsForIde(
  * Compared to [collectPossibleReferenceShorteningsInElement], uses [defaultClassShortenStrategyForIde] and [defaultCallableShortenStrategyForIde]
  * strategies for shortening by default, which respect Kotlin Code Style Settings from the IDE.
  *
+ * [classShortenStrategy] is adjusted to respect [ClassImportFilter]: if the strategy would add an import for a class rejected by the filter,
+ * that class is shortened only if it is already imported.
+ *
  * In the IDE, this function should be preferred to [collectPossibleReferenceShorteningsInElement] due to better defaults.
  *
  * Overall, consider using more simple and straighforward [shortenReferences] functions,
@@ -286,10 +316,11 @@ fun collectPossibleReferenceShorteningsInElementForIde(
     classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategyForIde(element),
     callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategyForIde(element),
 ): ShortenCommandForIde {
+    val file = element.containingKtFile
     val shortenCommand = collectPossibleReferenceShorteningsInElement(
         element,
         shortenOptions.toShortenOptions(),
-        classShortenStrategy,
+        classShortenStrategy.respectClassImportFilter(file),
         callableShortenStrategy,
     )
 

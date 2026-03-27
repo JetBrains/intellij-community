@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.idea.util.ClassImportFilter
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
@@ -82,7 +83,11 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
                     codeStyleSettings.PACKAGES_TO_USE_STAR_IMPORTS.addEntry(KotlinPackageEntry(it.trim(), true))
                 }
 
-                registerClassImportFilterExtensions(InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// CLASS_IMPORT_FILTER_VETO_REGEX:"))
+                InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// CLASS_IMPORT_FILTER_VETO_REGEX:").forEach {
+                    val regex = Regex(".*${it.trim()}.*")
+                    val filterExtension = ClassImportFilter { classInfo, _ -> !classInfo.fqName.asString().matches(regex) }
+                    ClassImportFilter.EP_NAME.point.registerExtension(filterExtension, this.testRootDisposable)
+                }
 
                 val log = if (runTestInWriteCommand) {
                     project.executeWriteCommand<String?>("") { doTest(file) }
@@ -115,8 +120,6 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     protected open fun updateScriptDependencies(psiFile: KtFile) {}
-
-    protected abstract fun registerClassImportFilterExtensions(classImportFilterVetoRegexRules: MutableList<String>)
 
     // returns test log
     protected abstract fun doTest(file: KtFile): String?
