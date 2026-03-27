@@ -6,6 +6,8 @@ import com.intellij.codeInsight.documentation.DocumentationManagerProtocol.PSI_E
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
+import com.intellij.ui.components.JBScrollBar
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.CtrlMouseHintShown
 import com.intellij.lang.documentation.ide.impl.DocumentationManager
@@ -438,13 +440,28 @@ private fun wrapInScrollPaneIfNeeded(component: JComponent, editor: Editor): JCo
   if (preferredSize.width <= maxWidth && preferredSize.height <= maxHeight) {
     return component
   }
-  // We expect documentation providers to exercise good judgment in limiting the displayed information,
-  // but in any case, we don't want the hint to cover the whole screen, so we also implement certain limiting here.
   return ScrollPaneFactory.createScrollPane(component, true).also {
+    // We expect documentation providers to exercise good judgment in limiting the displayed information,
+    // but in any case, we don't want the hint to cover the whole screen, so we also implement certain limiting here.
     it.preferredSize = Dimension(
       min(preferredSize.width, maxWidth),
       min(preferredSize.height, maxHeight),
     )
+    // Cmd+Wheel doesn't scroll natively - handling by hand
+    it.addMouseWheelListener { mouseEvent ->
+      if (JBScrollPane.isScrollEvent(mouseEvent))
+        return@addMouseWheelListener
+
+      if (getCtrlMouseAction(mouseEvent.modifiersEx) == null)
+        return@addMouseWheelListener
+
+      val scrollBar = if (mouseEvent.isShiftDown) it.horizontalScrollBar else it.verticalScrollBar
+      if (scrollBar !is JBScrollBar || !scrollBar.isVisible)
+        return@addMouseWheelListener
+
+      if (scrollBar.handleMouseWheelEvent(mouseEvent))
+        mouseEvent.consume()
+    }
   }
 }
 
