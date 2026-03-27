@@ -2,7 +2,7 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyNames;
-import one.util.streamex.StreamEx;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -22,17 +22,7 @@ public final class PyCallableParameterListTypeImpl implements PyCallableParamete
 
   @Override
   public @NotNull List<PyCallableParameter> getUnpackedParameters(@NotNull TypeEvalContext context) {
-    return StreamEx.of(getParameters())
-      .flatMap(param -> {
-        // TODO Unpack *args: *tuple[T1, T2] into (__x1: T1, __x2: T2, /)
-        if (param.isKeywordContainer()) {
-          PyType paramType = param.getType(context);
-          if (paramType instanceof PyUnpackedTypedDictType unpackedTypedDictType) {
-            return StreamEx.of(unpackedTypedDictType.getUnpackedParameters());
-          }
-        }
-        return StreamEx.of(param);
-      }).toList();
+    return ParamHelper.unpackContainerParameters(myParameters, context);
   }
 
   @Override

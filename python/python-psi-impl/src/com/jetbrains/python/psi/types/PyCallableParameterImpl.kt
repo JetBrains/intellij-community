@@ -180,6 +180,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
     fun nonPsi(name: String?, type: PyType?, defaultValue: PyExpression?, declarationElement: PsiElement): PyCallableParameter =
       PyCallableParameterImpl(name, Ref(type), defaultValue, myDeclarationElement = declarationElement)
 
+    @JvmStatic
     fun positionalNonPsi(name: String?, type: PyType?): PyCallableParameter =
       PyCallableParameterImpl(name, Ref(type), myIsPositional = true)
 

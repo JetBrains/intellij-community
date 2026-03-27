@@ -1092,7 +1092,6 @@ object PyCallExpressionHelper {
     parameters: List<PyCallableParameter>,
   context: TypeEvalContext,
 ): ArgumentMappingResults {
-    //val parameters = originalParameters.unpackParametersIfNeeded(arguments, context)
     val hasSlashParameter = parameters.any { it.parameter is PySlashParameter }
     val firstExplicitParam = parameters.dropWhile { it.isSelf }.firstOrNull()
     val oldStylePositionalOnly = firstExplicitParam != null && isLegacyPositionalOnly(firstExplicitParam)
@@ -1114,6 +1113,8 @@ object PyCallExpressionHelper {
     val variadicKeywordArguments = filterVariadicKeywordArguments(arguments)
 
     val allPositionalArguments = positionalResults.allPositionalArguments
+
+    val reservedForPostArgs = reserveArgsForPostArgsParams(parameters, allPositionalArguments)
 
     for (parameter in parameters) {
       val psi = parameter.parameter
@@ -1149,6 +1150,21 @@ object PyCallExpressionHelper {
           keywordArguments.clear()
           variadicKeywordArguments.clear()
         }
+        else if (keywordOnlyMode && psi == null && isLegacyPositionalOnly(parameter) || positionalOnlyMode) {
+          // Positional-only parameter: consume from reserved post-*args arguments or from allPositionalArguments
+          val source = if (keywordOnlyMode) reservedForPostArgs else allPositionalArguments
+          val positionalArgument = source.next()
+          if (positionalArgument != null) {
+            mappedParameters[positionalArgument] = parameter
+          }
+          else if (!variadicPositionalArguments.isEmpty()) {
+            parametersMappedToVariadicPositionalArguments.add(parameter)
+            mappedVariadicArgumentsToParameters = true
+          }
+          else if (!parameter.hasDefaultValue()) {
+            unmappedParameters.add(parameter)
+          }
+        }
         else if (keywordOnlyMode) {
           val keywordArgument = removeKeywordArgument(keywordArguments, parameterName)
           if (keywordArgument != null) {
@@ -1156,19 +1172,6 @@ object PyCallExpressionHelper {
           }
           else if (!variadicKeywordArguments.isEmpty()) {
             parametersMappedToVariadicKeywordArguments.add(parameter)
-            mappedVariadicArgumentsToParameters = true
-          }
-          else if (!parameter.hasDefaultValue()) {
-            unmappedParameters.add(parameter)
-          }
-        }
-        else if (positionalOnlyMode) {
-          val positionalArgument = allPositionalArguments.next()
-          if (positionalArgument != null) {
-            mappedParameters[positionalArgument] = parameter
-          }
-          else if (!variadicPositionalArguments.isEmpty()) {
-            parametersMappedToVariadicPositionalArguments.add(parameter)
             mappedVariadicArgumentsToParameters = true
           }
           else if (!parameter.hasDefaultValue()) {
@@ -1454,8 +1457,33 @@ object PyCallExpressionHelper {
     return results
   }
 
+  /**
+   * Reserves positional arguments from the end of [allPositionalArguments] for synthetic post-`*args`
+   * positional-only parameters (created by tuple expansion, e.g. `*args: *tuple[int, *tuple[str, ...], /post-*args/ -> float]`).
+   */
+  private fun reserveArgsForPostArgsParams(
+    parameters: List<PyCallableParameter>,
+    allPositionalArguments: MutableList<PyExpression?>,
+  ): MutableList<PyExpression?> {
+    val reserved = mutableListOf<PyExpression?>()
+    val argsIdx = parameters.indexOfFirst { it.isPositionalContainer }
+    if (argsIdx >= 0) {
+      val postArgsPositionalCount = parameters.subList(argsIdx + 1, parameters.size)
+        .count { it.parameter == null && isLegacyPositionalOnly(it) }
+
+      if (postArgsPositionalCount > 0 && allPositionalArguments.size > postArgsPositionalCount) {
+        val reserveFrom = allPositionalArguments.size - postArgsPositionalCount
+        reserved.addAll(allPositionalArguments.subList(reserveFrom, allPositionalArguments.size))
+        repeat(postArgsPositionalCount) {
+          allPositionalArguments.removeLast()
+        }
+      }
+    }
+    return reserved
+  }
+
   @JvmStatic
-  fun needToUnpackParameters(arguments: List<PyExpression>): Boolean {
+  fun needToUnpackTypedDict(arguments: List<PyExpression>): Boolean {
     return filterVariadicKeywordArguments(arguments).isEmpty()
   }
 
@@ -1464,7 +1492,14 @@ object PyCallExpressionHelper {
     arguments: List<PyExpression>,
     context: TypeEvalContext,
   ): List<PyCallableParameter>? {
-    return if (needToUnpackParameters(arguments)) callableType.getUnpackedParameters(context) else callableType.getParameters(context)
+    return if (needToUnpackTypedDict(arguments)) {
+      callableType.getUnpackedParameters(context)
+    }
+    else {
+      // Has **kwargs unpack in arguments -> expand only tuples (keep **kwargs container for unpacked TypedDict as is)
+      val parameters = callableType.getParameters(context) ?: return null
+      ParamHelper.unpackPositionalContainerParameters(parameters, context)
+    }
   }
 
   @JvmStatic

@@ -453,6 +453,25 @@ class PyCallableParameterMappingTest : PyTestCase() {
     checkMatch("(*args: *tuple[int, ...], **kwargs: str)", "(a: int = 1, b: int = 1, *args: *tuple[int, ...], **kwargs: str)")
   }
 
+  // PY-88727
+  fun testFixedTupleExpansionToPositionalOnly() {
+    // *tuple[int, str] expands to __p0: int, __p1: str
+    checkMatch("(*args: *tuple[int, str])", "(a: int, b: str)")
+    checkNotMatch("(*args: *tuple[int, str])", "(a: str, b: int)")
+    checkMatch("(*args: *tuple[int, str])", "(a: int, b: str, /)")
+    checkMatch("(*args: *tuple[int, str])", "(*args: *tuple[int, str])")
+  }
+
+  // PY-88727
+  fun testFixedTupleWithVariadicInTheMiddleExpansion() {
+    // *tuple[int, *tuple[str, ...], float] expands to: __p0: int, *args: str, __p1: float
+    checkMatch("(*args: *tuple[int, *tuple[str, ...], float])", "(__a: int, *args: str, __b: float)")
+    checkNotMatch("(*args: *tuple[int, *tuple[str, ...], float])", "(a: int, *args: str, b: float)")
+    checkNotMatch("(*args: *tuple[int, *tuple[str, ...], float])", "(a: int, *args: bool, b: float)")
+    checkMatch("(*args: *tuple[int, *tuple[str, ...], float])", "(*args: *tuple[int, *tuple[str, ...], float])")
+    checkNotMatch("(*args: *tuple[int, *tuple[str, ...], float])", "(*args: *tuple[int, *tuple[int, ...], float])")
+  }
+
   fun testDefaultValueEdgeCases() {
     checkMatch("()", "(a: int = 0, b: str = 'default', c: float = 1.0)")
     checkMatch("(a: int)", "(a: int = 0, b: str = 'default', c: float = 1.0)")

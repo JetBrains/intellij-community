@@ -5288,4 +5288,42 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    g(create_person, name=""<warning descr="Parameter 'age' unfilled (from ParamSpec 'P')">)</warning>
                    """);
   }
+
+  // PY-88727
+  public void testFixedTupleArgsExpansion() {
+    doTestByText("""
+                   def foo(*args: *tuple[int, str]) -> None: ...
+
+                   foo(1, "hello")
+                   foo(<warning descr="Expected type 'int', got 'str' instead">"hello"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>)
+                   """);
+  }
+
+  // PY-88727
+  public void testFixedTupleArgsWithVariadicInTheMiddle() {
+    doTestByText("""
+                   def foo(*args: *tuple[int, *tuple[str, ...], float]) -> None: ...
+                   
+                   foo(1, "a", "b", 3.14)
+                   foo(1, 3.14)
+                   foo(<warning descr="Expected type 'int', got 'str' instead">"wrong"</warning>, "a", 3.14)
+                   foo(1, "a", "b", "c", <warning descr="Expected type 'float | int', got 'str' instead">"d"</warning>)
+                   """);
+  }
+
+  // PY-88727, PY-76847
+  public void testFixedTupleArgsCombinedWithUnpackedTypedDictKwargs() {
+    doTestByText("""
+                   from typing import TypedDict, Unpack
+
+                   class Movie(TypedDict):
+                       name: str
+
+                   def foo(*args: *tuple[int, str], **kwargs: Unpack[Movie]) -> None: ...
+
+                   foo(1, "hello", name="test")
+                   foo(<warning descr="Expected type 'int', got 'str' instead">"wrong"</warning>, "hello", name="test")
+                   foo(1, "hello", <warning descr="Expected type 'str', got 'int' instead">name=42</warning>)
+                   """);
+  }
 }

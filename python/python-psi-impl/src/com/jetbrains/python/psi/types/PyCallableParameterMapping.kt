@@ -267,34 +267,6 @@ object PyCallableParameterMapping {
   }
 
   /**
-   * Unwraps callable parameters that may contain unpacked positional
-   * or keyword containers into a flat list of parameters for matching purposes.
-   *
-   * Examples:
-   * - `*args: *tuple[T, T1]` will be unwrapped into a sequence of positional parameters: T, T1
-   * - `**kwargs: Unpack[TypedDict]` will be unpacked into a sequence of keyword-only parameters from TypedDict fields
-   *
-   * @param parameters the list of callable parameters to be unwrapped
-   * @param context the type evaluation context used to determine the types of the parameters
-   * @return a flattened list of callable parameters, with unpacked positional and keyword containers expanded into individual parameters
-   */
-  private fun unwrapParameters(parameters: List<PyCallableParameter>, context: TypeEvalContext): List<PyCallableParameter> {
-    val flattenedParameters = mutableListOf<PyCallableParameter>()
-    for (parameter in ParamHelper.unpackKeywordContainerParameters(parameters, context)) {
-      val parameterType = parameter.getType(context)
-      if (parameter.isPositionalContainer && parameterType is PyTupleType && !parameterType.asUnpackedTupleType().isUnbound()) {
-        val flattenedTypes = parameterType.elementTypes
-        val unwrappedArgParameters = flattenedTypes.map { type -> PyCallableParameterImpl.nonPsi(type) }
-        flattenedParameters.addAll(unwrappedArgParameters)
-      }
-      else {
-        flattenedParameters.add(parameter)
-      }
-    }
-    return flattenedParameters
-  }
-
-  /**
    * Special handling for keyword containers annotated with `Unpacked[TypedDict]` type:
    *
    * We must check if the actual input signature also contains a keyword container
@@ -326,7 +298,7 @@ object PyCallableParameterMapping {
    */
   private fun categorizeParameters(callableParameters: List<PyCallableParameter>, context: TypeEvalContext): List<Parameter>? {
     val parameters = mutableListOf<Parameter>()
-    val unwrappedParameters = unwrapParameters(callableParameters, context)
+    val unwrappedParameters = ParamHelper.unpackContainerParameters(callableParameters, context)
 
     var positionalContainer: Parameter? = null
     var keywordContainer: Parameter? = null
@@ -380,7 +352,12 @@ object PyCallableParameterMapping {
           if (name == null) {
             return null
           }
-          parameters.add(Parameter(param, ParameterKind.KEYWORD_ONLY))
+          if (state == ParameterState.POSITIONAL_CONTAINER && param.protectionLevel == ProtectionLevel.PRIVATE) {
+            parameters.add(Parameter(param, ParameterKind.POSITIONAL_ONLY))
+          }
+          else {
+            parameters.add(Parameter(param, ParameterKind.KEYWORD_ONLY))
+          }
         }
       }
     }

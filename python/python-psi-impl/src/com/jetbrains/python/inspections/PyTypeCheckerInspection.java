@@ -812,7 +812,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
 
       var mapping = PyCallExpressionHelper.analyzeArguments(arguments,
-                                                            PyCallExpressionHelper.needToUnpackParameters(arguments) ?
+                                                            PyCallExpressionHelper.needToUnpackTypedDict(arguments) ?
                                                             paramSpecSubst.getUnpackedParameters(myTypeEvalContext) :
                                                             paramSpecSubst.getParameters(),
                                                             myTypeEvalContext);
