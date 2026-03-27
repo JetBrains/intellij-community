@@ -28,9 +28,9 @@ import com.jetbrains.python.sdk.configuration.createSdk
 import com.jetbrains.python.sdk.findPythonSdk
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToPath
+import com.jetbrains.python.sdk.withSdkConfigurationLock
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -138,32 +138,31 @@ internal class ModulesSdkConfigurator private constructor(
    * Errors are logged.
    *
    */
-  suspend fun configureSdks(modulesOnly: Set<ModuleName>) = project.pythonSdkConfigurationMutex.withLock {
+  suspend fun configureSdks(modulesOnly: Set<ModuleName>) = withSdkConfigurationLock(project) {
     withContext(Dispatchers.Default) {
       val modulesMap = project.modules.associateBy { it.name }
       val modulesWithSameSdk = mutableMapOf<Module, Module>()
       for (module in modulesOnly.map { modulesMap[it] ?: error("No module $it, caller broke the contract") }) { // TODO: Run in parallel
-        withBackgroundProgress(project, PySdkConfiguratorBundle.message("intellij.python.sdk.configuring.module", module.name)) {
-          val createInfo = (modules[module.name] ?: error("No create info for module $module, caller broke the contract"))
-          when (createInfo) {
-            is ModuleCreateInfo.CreateSdkInfoWrapper -> {
-              when (val r = createInfo.createSdkInfo.createSdk(module)) {
-                is Result.Failure -> { //TODO: Show SDK creation error?
-                  logger.warn("Failed to create SDK for ${module.name}: ${r.error}")
-                }
-                is Result.Success -> {
-                  val sdk = r.result
-                  module.pythonSdk = sdk
-                }
+        val createInfo = (modules[module.name] ?: error("No create info for module $module, caller broke the contract"))
+        when (createInfo) {
+          is ModuleCreateInfo.CreateSdkInfoWrapper -> {
+            when (val r = createInfo.createSdkInfo.createSdk(module)) {
+              is Result.Failure -> { //TODO: Show SDK creation error?
+                logger.warn("Failed to create SDK for ${module.name}: ${r.error}")
+              }
+              is Result.Success -> {
+                val sdk = r.result
+                module.pythonSdk = sdk
               }
             }
-            is ModuleCreateInfo.SameAs -> {
-              val parentModuleName = createInfo.parentModule.name
-              val parent = modulesMap[parentModuleName] ?: error("No parent module named $parentModuleName")
-              modulesWithSameSdk[module] = parent
-            }
           }
-        } // Link workspace members with their workspace
+          is ModuleCreateInfo.SameAs -> {
+            val parentModuleName = createInfo.parentModule.name
+            val parent = modulesMap[parentModuleName] ?: error("No parent module named $parentModuleName")
+            modulesWithSameSdk[module] = parent
+          }
+        }
+        // Link workspace members with their workspace
         val reportedBrokenModules = mutableSetOf<Module>()
         for ((module, parentModule) in modulesWithSameSdk) {
           val parentSdk = PythonSdkUtil.findPythonSdk(module)
@@ -197,7 +196,7 @@ suspend fun configureSdkAutomatically(project: Project): Unit = withContext(Disp
   when (pythonModules.size) {
     0 -> return@withContext
     1 -> pythonModules.first().autoConfigureSdkIfNeeded()?.orLogException(logger)
-    else -> project.pythonSdkConfigurationMutex.withLock {
+    else -> withSdkConfigurationLock(project) {
       for (module in pythonModules) {
         if (module.findPythonSdk() != null) continue
         val sdkSuggestion = module.suggestSdk()

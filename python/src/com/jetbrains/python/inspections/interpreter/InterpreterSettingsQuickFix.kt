@@ -42,7 +42,7 @@ import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
+import com.jetbrains.python.sdk.withSdkConfigurationLock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
@@ -231,7 +231,7 @@ private suspend fun Module.getQuickFixBySdkSuggestion(i: ModuleCreateInfo?): Fin
       when (val parentResult = i.parentModule.getQuickFixBySdkSuggestion(i.parentModule.getModuleInfo())) {
         // This is the case when parent SDK was applied automatically (but it didn't exist at the time of autoConfigureSdkIfNeeded call),
         // and now we need to apply it to our module
-        is FindQuickFixResult.SdkAppliedAutomatically -> project.pythonSdkConfigurationMutex.withLock {
+        is FindQuickFixResult.SdkAppliedAutomatically -> {
           val parentModuleSdk = parentResult.sdk
           pythonSdk = parentModuleSdk
           FindQuickFixResult.SdkAppliedAutomatically(parentModuleSdk)

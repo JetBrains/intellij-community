@@ -20,11 +20,6 @@ import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.ide.progress.withModalProgress
-import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinaryToExec
@@ -98,7 +93,8 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
    */
   protected abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk>
 
-  protected suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk>  {
+  @ApiStatus.Internal
+  suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
     savePathToExecutableToProperties(null)
     val sdk = getOrCreateSdk(moduleOrProject).getOr { return it }
 
@@ -110,24 +106,6 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
     }
 
     return Result.success(sdk)
-  }
-
-  @ApiStatus.Internal
-  suspend fun getOrCreateSdkWithModal(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
-    return withModalProgress(ModalTaskOwner.guess(),
-                             message("python.sdk.progress.setting.up.environment"),
-                             TaskCancellation.cancellable()) {
-      setupSdk(moduleOrProject)
-    }
-  }
-
-  @ApiStatus.Internal
-  suspend fun getOrCreateSdkWithBackground(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
-    return withBackgroundProgress(moduleOrProject.project,
-                                  message("python.sdk.progress.setting.up.environment"),
-                                  TaskCancellation.cancellable()) {
-      setupSdk(moduleOrProject)
-    }
   }
 
   /**

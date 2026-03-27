@@ -13,10 +13,9 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.findPythonVirtualEnvironments
 import com.jetbrains.python.sdk.configuration.getSdkCreator
 import com.jetbrains.python.sdk.findPythonSdk
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
 import com.jetbrains.python.sdk.setAssociationToModule
+import com.jetbrains.python.sdk.withSdkConfigurationLock
 import com.jetbrains.python.venvReader.Directory
 import org.jetbrains.annotations.ApiStatus
 
@@ -105,16 +104,16 @@ private fun CreateSdkInfoWithTool.asDTO(moduleDir: Directory?): ModuleCreateInfo
  * Returns the configured SDK, or `null` if no SDK could be configured.
  */
 @ApiStatus.Internal
-suspend fun Module.autoConfigureSdkIfNeeded(): PyResult<Sdk>? = project.pythonSdkConfigurationMutex.withLock {
-  val moduleInfo = getModuleInfo() ?: return@withLock null
+suspend fun Module.autoConfigureSdkIfNeeded(): PyResult<Sdk>? = withSdkConfigurationLock(project) {
+  val module = this@autoConfigureSdkIfNeeded
 
-  when (moduleInfo) {
+  when (val moduleInfo = module.getModuleInfo()) {
     is ModuleCreateInfo.CreateSdkInfoWrapper -> {
       when (moduleInfo.createSdkInfo) {
         is CreateSdkInfo.ExistingEnv -> {
-          moduleInfo.createSdkInfo.getSdkCreator(this).createSdk().onSuccess {sdk ->
-            pythonSdk = sdk
-            sdk.setAssociationToModule(this)
+          moduleInfo.createSdkInfo.getSdkCreator(module).createSdk().onSuccess { sdk ->
+            module.pythonSdk = sdk
+            sdk.setAssociationToModule(module)
           }
         }
         is CreateSdkInfo.WillCreateEnv, is CreateSdkInfo.WillInstallTool -> null
@@ -122,9 +121,10 @@ suspend fun Module.autoConfigureSdkIfNeeded(): PyResult<Sdk>? = project.pythonSd
     }
     is ModuleCreateInfo.SameAs -> {
       moduleInfo.parentModule.findPythonSdk()?.let { parentSdk ->
-        pythonSdk = parentSdk
+        module.pythonSdk = parentSdk
         PyResult.success(parentSdk)
       }
     }
+    null -> null
   }
 }
