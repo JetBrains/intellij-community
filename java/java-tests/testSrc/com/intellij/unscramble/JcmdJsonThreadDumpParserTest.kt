@@ -210,6 +210,26 @@ internal class JcmdJsonThreadDumpParserTest {
   }
 
   @Test
+  fun `locked monitors at unknown depth are appended to the end of the stack trace`() {
+    val dumpText = loadThreadDump("multilock-unknownDepth.json")
+    val parsed = requireNotNull(parseJcmdJsonThreadDump(dumpText))
+
+    val thread = parsed.threadStates.first { it.name == "multi-lock-thread" }
+    assertEquals(
+      "\"multi-lock-thread\" tid=39 TIMED_WAITING\n" +
+      "\tat java.base/java.lang.Thread.sleepNanos0(Native Method)\n" +
+      "\tat java.base/java.lang.Thread.sleepNanos(Thread.java:509)\n" +
+      "\tat java.base/java.lang.Thread.sleep(Thread.java:540)\n" +
+      "\tat MultiLockExample.lambda\$main\$0(MultiLockExample.java:14)\n" +
+      "\tat java.base/java.lang.Thread.run(Thread.java:1474)\n" +
+      "\t  - locked java.lang.Object@79177b4a\n" +
+      "\t  - locked java.lang.Object@300ce97d\n" +
+      "\t  - locked java.lang.Object@4fd73c93\n",
+      thread.stackTrace
+    )
+  }
+
+  @Test
   fun `monitor relinquished via Object wait is excluded from owned monitors`() {
     val dumpText = loadThreadDump("multipleOwnedMonitors.json")
     val parsed = requireNotNull(parseJcmdJsonThreadDump(dumpText))

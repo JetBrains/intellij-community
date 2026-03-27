@@ -339,7 +339,7 @@ public final class ThreadDumpParser {
       List<String> monitors = threadState.getOwnedMonitorsAtDepth(frameIndex);
       if (monitors != null) {
         for (String monitor : monitors) {
-          buffer.append("\t  - locked ").append(monitor).append('\n');
+          buffer.append(lockedMonitor(monitor)).append('\n');
         }
       }
 
@@ -350,11 +350,15 @@ public final class ThreadDumpParser {
     List<String> unknownDepth = threadState.getOwnedMonitorsAtDepth(-1);
     if (unknownDepth != null) {
       for (String monitor : unknownDepth) {
-        buffer.append("\t  - locked <").append(monitor).append(">").append('\n');
+        buffer.append(lockedMonitor(monitor)).append('\n');
       }
     }
 
     threadState.setStackTrace(buffer.toString(), threadState.isEmptyStackTrace());
+  }
+
+  private static String lockedMonitor(String monitor) {
+    return "\t  - locked " + monitor;
   }
 
   private static boolean isStackFrame(String line) {
