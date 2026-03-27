@@ -201,6 +201,7 @@
   <technology name="json4s" root="json4s"/>
   <technology name="jsoniter-scala" root="jsoniter_scala"/>
   <technology name="jsoup" root="org.jsoup"/>
+  <technology name="jspecify" root="org.jspecify"/>
   <technology name="junit" root="org.junit"/>
   <technology name="junit3" root="junit.framework"/>
   <technology name="junit5" root="org.junit.jupiter"/>
