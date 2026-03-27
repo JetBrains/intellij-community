@@ -133,6 +133,7 @@
     <orderEntry type="module" module-name="intellij.java.rareRefactorings.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.lombok.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.ai.review.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.chat.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.sessions.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.sessions.tests" scope="TEST" />

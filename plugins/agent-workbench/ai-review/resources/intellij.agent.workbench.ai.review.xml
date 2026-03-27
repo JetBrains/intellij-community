@@ -1,0 +1,68 @@
+<idea-plugin visibility="public">
+  <resource-bundle>messages.AIReviewBundle</resource-bundle>
+
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.prompt.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <agent.workbench.promptPaletteExtension
+        implementation="com.intellij.agent.workbench.ai.review.prompt.AIReviewPaletteExtension"/>
+
+    <statistics.counterUsagesCollector
+        implementationClass="com.intellij.agent.workbench.ai.review.AIReviewCollector"/>
+
+    <registryKey key="ai.review.enabled"
+                 defaultValue="true"
+                 description="Enable AI Review in Agent Workbench"/>
+    <registryKey key="ai.review.allow.interactive.elements.in.problem.description.renderer"
+                 defaultValue="true"
+                 description="Allow interactive elements (hyperlinks, buttons) in AI Review problem description renderer"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.agent.workbench.ai.review.promptProvider"
+                    interface="com.intellij.agent.workbench.ai.review.prompt.AIReviewPromptProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <actions>
+    <action id="AIReviewFixAction"
+            icon="AllIcons.Actions.IntentionBulb"
+            class="com.intellij.agent.workbench.ai.review.actions.AIReviewFixAction"/>
+
+    <group id="AIReview.ToolWindow.Toolbar">
+      <reference ref="ProblemsView.Options"/>
+      <reference ref="AIReviewFixAction"/>
+      <reference ref="ProblemsView.QuickFixes"/>
+      <reference ref="ProblemsView.ShowPreview"/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
+      <action id="AIReviewExportAction"
+              icon="AllIcons.General.Export"
+              class="com.intellij.agent.workbench.ai.review.actions.AIReviewExportAction"/>
+      <action id="AIReviewCancelAction"
+              icon="AllIcons.Run.Stop"
+              class="com.intellij.agent.workbench.ai.review.actions.AIReviewCancelAction"/>
+    </group>
+
+    <group id="AIReview.ToolWindow.TreePopup">
+      <reference ref="AIReviewFixAction"/>
+      <reference ref="ProblemsView.ToolWindow.TreePopup"/>
+      <separator/>
+    </group>
+
+    <group id="AIReview.SeverityFilters"
+           class="com.intellij.agent.workbench.ai.review.ui.AIReviewSeverityFiltersActionGroup">
+      <separator key="separator.AIReview.show.text"/>
+      <add-to-group group-id="ProblemsView.Options" relative-to-action="ProblemsView.SeverityFilters" anchor="before"/>
+    </group>
+
+    <action id="AIReview.Like"
+            class="com.intellij.agent.workbench.ai.review.actions.AIReviewRateAction$Like"/>
+    <action id="AIReview.Dislike"
+            class="com.intellij.agent.workbench.ai.review.actions.AIReviewRateAction$Dislike"/>
+  </actions>
+</idea-plugin>

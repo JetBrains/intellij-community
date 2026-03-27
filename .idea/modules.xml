@@ -47,6 +47,8 @@
       <module fileurl="file://$PROJECT_DIR$/fleet/util/multiplatform/fleet.util.multiplatform.iml" filepath="$PROJECT_DIR$/fleet/util/multiplatform/fleet.util.multiplatform.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/util/network/fleet.util.network.iml" filepath="$PROJECT_DIR$/fleet/util/network/fleet.util.network.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/util/serialization/fleet.util.serialization.iml" filepath="$PROJECT_DIR$/fleet/util/serialization/fleet.util.serialization.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/ai-review/intellij.agent.workbench.ai.review.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/ai-review/intellij.agent.workbench.ai.review.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/ai-review/intellij.agent.workbench.ai.review.tests.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/ai-review/intellij.agent.workbench.ai.review.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/chat/intellij.agent.workbench.chat.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/chat/intellij.agent.workbench.chat.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/chat/intellij.agent.workbench.chat.tests.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/chat/intellij.agent.workbench.chat.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/claude/common/intellij.agent.workbench.claude.common.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/claude/common/intellij.agent.workbench.claude.common.iml" />

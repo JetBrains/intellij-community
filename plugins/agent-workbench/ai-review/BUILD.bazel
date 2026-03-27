@@ -1,0 +1,116 @@
+### auto-generated section `build intellij.agent.workbench.ai.review` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "agent-workbench-ai-review_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "agent-workbench-ai-review",
+  module_name = "intellij.agent.workbench.ai.review",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":agent-workbench-ai-review_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/platform-api:ide",
+    "//platform/ide-core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/lang-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/util",
+    "//platform/util:util-ui",
+    "//platform/platform-impl/concurrency",
+    "//platform/vcs-api:vcs",
+    "//platform/statistics",
+    "//platform/markdown-utils",
+    "//libraries/markdown",
+    "//plugins/agent-workbench/prompt/core",
+  ]
+)
+
+jvm_library(
+  name = "agent-workbench-ai-review_test_lib",
+  module_name = "intellij.agent.workbench.ai.review",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":agent-workbench-ai-review",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/platform-impl/concurrency:concurrency_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/markdown-utils:markdown-utils_test_lib",
+    "//libraries/markdown:markdown_test_lib",
+    "//plugins/agent-workbench/prompt/core:core_test_lib",
+  ]
+)
+### auto-generated section `build intellij.agent.workbench.ai.review` end
+
+### auto-generated section `iml intellij.agent.workbench.ai.review` start
+exports_files([
+  "intellij.agent.workbench.ai.review.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.ai.review` end
+
+### auto-generated section `build intellij.agent.workbench.ai.review.tests` start
+jvm_library(
+  name = "agent-workbench-ai-review-tests",
+  module_name = "intellij.agent.workbench.ai.review.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "agent-workbench-ai-review-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [
+    "//plugins/agent-workbench/ai-review:agent-workbench-ai-review",
+    "//plugins/agent-workbench/ai-review:agent-workbench-ai-review_test_lib",
+  ],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-api:ide",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/agent-workbench/prompt/core",
+    "//plugins/agent-workbench/prompt/core:core_test_lib",
+  ],
+  runtime_deps = [":agent-workbench-ai-review-tests"]
+)
+### auto-generated section `build intellij.agent.workbench.ai.review.tests` end
+
+### auto-generated section `iml intellij.agent.workbench.ai.review.tests` start
+exports_files([
+  "intellij.agent.workbench.ai.review.tests.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.agent.workbench.ai.review.tests` end
+
+### auto-generated section `test intellij.agent.workbench.ai.review.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "agent-workbench-ai-review-tests_test",
+  runtime_deps = [":agent-workbench-ai-review-tests_test_lib"]
+)
+### auto-generated section `test intellij.agent.workbench.ai.review.tests` end

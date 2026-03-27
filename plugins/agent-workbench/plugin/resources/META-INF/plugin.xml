@@ -34,6 +34,9 @@
     <module name="intellij.agent.workbench.sessions.toolwindow"/>
     <module name="intellij.agent.workbench.chat"/>
     <module name="intellij.agent.workbench.filewatch"/>
+    <module name="intellij.agent.workbench.ai.review"/>
+    <module name="intellij.agent.workbench.ai.review.agents"/>
+    <module name="intellij.agent.workbench.vcs.merge"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

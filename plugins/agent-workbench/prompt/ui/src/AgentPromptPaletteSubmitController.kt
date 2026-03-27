@@ -93,9 +93,21 @@ internal class AgentPromptPaletteSubmitController(
         val action = ActionManager.getInstance().getAction(actionId)
         if (action != null) {
           val baseDataContext = invocationData.dataContextOrNull() ?: DataManager.getInstance().getDataContext(promptArea)
+          val contextProjectBasePath = resolveContextProjectBasePath()
+          val contextSelection = resolveContextSelection(
+            buildVisibleContextEntries().map(ContextEntry::item),
+            contextProjectBasePath,
+          ) ?: return
+          val messageRequest = AgentPromptInitialMessageRequest(
+            prompt = promptArea.text.trim(),
+            projectPath = contextProjectBasePath,
+            contextItems = contextSelection.items,
+            contextEnvelopeSummary = contextSelection.summary,
+          )
           val dataContext = buildExtensionActionDataContext(
             baseDataContext = baseDataContext,
             selectedProviderId = providerSelector.selectedProvider?.bridge?.provider?.value,
+            messageRequest = messageRequest,
           )
           val event = AnActionEvent.createEvent(action, dataContext, null, invocationData.actionPlace ?: "", ActionUiKind.NONE, null)
           action.actionPerformed(event)

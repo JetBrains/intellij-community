@@ -7,4 +7,5 @@ const val AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY: String = "dataContext"
 const val AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY: String = "preferExtensionTabs"
 
 val AGENT_PROMPT_INITIAL_TEXT_DATA_KEY: DataKey<String> = DataKey.create("AgentPrompt.initialText")
+val AGENT_PROMPT_MESSAGE_REQUEST_DATA_KEY: DataKey<AgentPromptInitialMessageRequest> = DataKey.create("AgentPrompt.messageRequest")
 val AGENT_PROMPT_SELECTED_PROVIDER_ID_DATA_KEY: DataKey<String> = DataKey.create("AgentPrompt.selectedProviderId")

@@ -1,6 +1,12 @@
 - name: lib/agent-workbench-plugin.jar
   modules:
   - name: intellij.agent.workbench.plugin
+- name: lib/modules/intellij.agent.workbench.ai.review.agents.jar
+  contentModules:
+  - name: intellij.agent.workbench.ai.review.agents
+- name: lib/modules/intellij.agent.workbench.ai.review.jar
+  contentModules:
+  - name: intellij.agent.workbench.ai.review
 - name: lib/modules/intellij.agent.workbench.chat.jar
   contentModules:
   - name: intellij.agent.workbench.chat

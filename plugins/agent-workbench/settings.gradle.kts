@@ -42,6 +42,7 @@ include(":claude-common")
 include(":claude-sessions")
 include(":codex-common")
 include(":codex-sessions")
+include(":ai-review")
 
 project(":prompt-core").projectDir = file("prompt/core")
 project(":prompt-ui").projectDir = file("prompt/ui")
