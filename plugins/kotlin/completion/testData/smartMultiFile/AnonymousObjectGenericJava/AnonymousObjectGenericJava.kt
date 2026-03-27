@@ -3,5 +3,3 @@ fun f(){
 }
 
 // EXIST: { itemText: "object : Comparator<String?>{...}" }
-
-// IGNORE_K2
