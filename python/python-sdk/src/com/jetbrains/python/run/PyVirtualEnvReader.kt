@@ -49,7 +49,9 @@ internal class PyVirtualEnvReader(private val virtualEnvSdkPath: String) {
   fun readPythonEnv(): MutableMap<String, String> {
     try {
       if (OS.CURRENT != OS.Windows) {
-        val command = ShellEnvironmentReader.shellCommand(shell, activate?.first?.let { Path.of(it) }, activate?.second?.let { listOf(it) })
+        val activateScript = activate?.first?.let { Path.of(it) }
+        val args = activate?.second?.let { listOf(it) }
+        val command = ShellEnvironmentReader.shellCommand(shell, activateScript, /*interactive =*/ false, args)
         // pass shell environment for correct virtualenv environment setup (virtualenv expects to be executed from the terminal)
         command.environment().putAll(EnvironmentUtil.getEnvironmentMap())
         return ShellEnvironmentReader.readEnvironment(command, 0).first
