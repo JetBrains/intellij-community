@@ -78,9 +78,7 @@ internal class LegacyProjectModelListenersBridge(
       }
 
       val oldModuleNames = mutableMapOf<Module, String>()
-      for (change in changes) {
-        processModuleChange(change, oldModuleNames, event)
-      }
+      processModuleChange(changes, oldModuleNames, event)
 
       for (change in moduleLibraryChanges) {
         if (change is EntityChange.Added) processModuleLibraryChange(change, event)
@@ -102,70 +100,79 @@ internal class LegacyProjectModelListenersBridge(
     }
   }
 
-  private fun processModuleChange(change: EntityChange<ModuleEntity>, oldModuleNames: MutableMap<Module, String>,
-                                  event: VersionedStorageChange) {
-    when (change) {
-      is EntityChange.Removed -> {
-        // it's a possible case then idToModule doesn't contain an element e.g. if unloaded module was removed
-        val module = change.oldEntity.findModule(event.storageBefore)
-        if (module != null) {
-          fireEventAndDisposeModule(module)
-        }
-      }
-
-      is EntityChange.Added -> {
-        removeUnloadedModuleWithId(change.newEntity.symbolicId)
-        val alreadyCreatedModule = change.newEntity.findModule(event.storageAfter)
-        val module = if (alreadyCreatedModule != null) {
-          alreadyCreatedModule.entityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage
-          alreadyCreatedModule.diff = null
-          alreadyCreatedModule
-        }
-        else {
-          error("Module bridge should already be created")
-        }
-
-        if (project.isOpen) {
-          fireModuleAddedInWriteAction(module)
-        }
-      }
-
-      is EntityChange.Replaced -> {
-        val oldId = change.oldEntity.symbolicId
-        val newId = change.newEntity.symbolicId
-        val isImlDirectoryChanged = getImlFileDirectory(change.oldEntity) != getImlFileDirectory(change.newEntity)
-        val newModuleFileUrl = getModuleVirtualFileUrl(change.newEntity)
-
-        if (oldId != newId) {
-          removeUnloadedModuleWithId(newId)
+  private fun processModuleChange(
+    changes: List<EntityChange<ModuleEntity>>,
+    oldModuleNames: MutableMap<Module, String>,
+    event: VersionedStorageChange
+  ) {
+    val modulesToRemoveFromUnloadedStorage = HashSet<ModuleId>()
+    for (change in changes) {
+      when (change) {
+        is EntityChange.Removed -> {
+          // it's a possible case then idToModule doesn't contain an element e.g. if unloaded module was removed
           val module = change.oldEntity.findModule(event.storageBefore)
           if (module != null) {
-            oldModuleNames[module] = oldId.name
-            if (isImlDirectoryChanged && newModuleFileUrl != null) {
-              module.rename(newId.name, false)
-              module.onImlFileMoved(newModuleFileUrl)
-            }
-            else {
-              module.rename(newId.name, newModuleFileUrl, true)
-            }
+            fireEventAndDisposeModule(module)
           }
         }
-        else if (isImlDirectoryChanged) {
-          val module = change.newEntity.findModule(event.storageBefore)
-          if (module != null && newModuleFileUrl != null) {
-            module.onImlFileMoved(newModuleFileUrl)
+        is EntityChange.Added -> {
+          modulesToRemoveFromUnloadedStorage.add(change.newEntity.symbolicId)
+          val alreadyCreatedModule = change.newEntity.findModule(event.storageAfter)
+          val module = if (alreadyCreatedModule != null) {
+            alreadyCreatedModule.entityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage
+            alreadyCreatedModule.diff = null
+            alreadyCreatedModule
+          }
+          else {
+            error("Module bridge should already be created")
+          }
+
+          if (project.isOpen) {
+            fireModuleAddedInWriteAction(module)
+          }
+        }
+
+        is EntityChange.Replaced -> {
+          val oldId = change.oldEntity.symbolicId
+          val newId = change.newEntity.symbolicId
+          val isImlDirectoryChanged = getImlFileDirectory(change.oldEntity) != getImlFileDirectory(change.newEntity)
+          val newModuleFileUrl = getModuleVirtualFileUrl(change.newEntity)
+
+          if (oldId != newId) {
+            modulesToRemoveFromUnloadedStorage.add(newId)
+            val module = change.oldEntity.findModule(event.storageBefore)
+            if (module != null) {
+              oldModuleNames[module] = oldId.name
+              if (isImlDirectoryChanged && newModuleFileUrl != null) {
+                module.rename(newId.name, false)
+                module.onImlFileMoved(newModuleFileUrl)
+              }
+              else {
+                module.rename(newId.name, newModuleFileUrl, true)
+              }
+            }
+          }
+          else if (isImlDirectoryChanged) {
+            val module = change.newEntity.findModule(event.storageBefore)
+            if (module != null && newModuleFileUrl != null) {
+              module.onImlFileMoved(newModuleFileUrl)
+            }
           }
         }
       }
     }
+    removeUnloadedModuleWithId(modulesToRemoveFromUnloadedStorage)
   }
 
-  private fun removeUnloadedModuleWithId(moduleId: ModuleId) {
-    val unloadedEntity = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities.resolve(moduleId)
-    if (unloadedEntity != null) {
+  private fun removeUnloadedModuleWithId(modulesToRemove: Set<ModuleId>) {
+    val currentSnapshotOfUnloadedEntities = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities
+    val modulesToRemove = modulesToRemove.mapNotNull { it.resolve(currentSnapshotOfUnloadedEntities) }
+    if (modulesToRemove.isNotEmpty()) {
       (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).updateUnloadedEntities(
-        "Remove module '${moduleId.name}' from unloaded storage because a module with same name is added") {
-        it.removeEntity(unloadedEntity)
+        "Remove added modules from unloaded storage") {
+        for (module in modulesToRemove) {
+          it.removeEntity(module)
+        }
       }
     }
   }
