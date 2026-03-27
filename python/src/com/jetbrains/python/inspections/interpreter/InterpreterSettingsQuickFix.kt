@@ -41,11 +41,12 @@ import com.jetbrains.python.sdk.collectAddInterpreterActions
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration
+import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 
 /**
  * Executor that accepts at most one concurrent task.
@@ -175,10 +176,7 @@ internal class ConfigureInterpreterFix : InterpreterFix {
   }
 }
 
-private class UseProvidedInterpreterFix(
-  private val myCreateSdkInfo: CreateSdkInfoWithTool,
-  private val modulePath: Path?,
-) : InterpreterFix {
+private class UseProvidedInterpreterFix(private val myCreateSdkInfo: CreateSdkInfoWithTool) : InterpreterFix {
   override fun createActionLink(module: Module, project: Project, psiFile: PsiFile, executor: BusyGuardExecutor): ActionLink {
     return ActionLink(myCreateSdkInfo.createSdkInfo.intentionName) {
       executor.execute {
@@ -220,7 +218,7 @@ private suspend fun Module.getQuickFixBySdkSuggestion(i: ModuleCreateInfo?): Fin
         is CreateSdkInfo.ExistingEnv -> FindQuickFixResult.NoSuggestion // already handled by autoConfigureSdkIfNeeded
         is CreateSdkInfo.WillCreateEnv -> {
           logger.trace { "$this: Ask user as it is a heavy operation" }
-          FindQuickFixResult.ShowUserFix(UseProvidedInterpreterFix(CreateSdkInfoWithTool(createSdkInfo, i.toolId), i.moduleDir))
+          FindQuickFixResult.ShowUserFix(UseProvidedInterpreterFix(CreateSdkInfoWithTool(createSdkInfo, i.toolId)))
         }
         is CreateSdkInfo.WillInstallTool -> {
           logger.trace { "$this: Tool installation will be suggested to the user" }
@@ -228,7 +226,21 @@ private suspend fun Module.getQuickFixBySdkSuggestion(i: ModuleCreateInfo?): Fin
         }
       }
     }
-    is ModuleCreateInfo.SameAs, null -> FindQuickFixResult.NoSuggestion // SameAs already handled by autoConfigureSdkIfNeeded
+    is ModuleCreateInfo.SameAs -> {
+      // If SDK wasn't applied automatically before, it means there was no SDK at the time
+      when (val parentResult = i.parentModule.getQuickFixBySdkSuggestion(i.parentModule.getModuleInfo())) {
+        // This is the case when parent SDK was applied automatically (but it didn't exist at the time of autoConfigureSdkIfNeeded call),
+        // and now we need to apply it to our module
+        is FindQuickFixResult.SdkAppliedAutomatically -> project.pythonSdkConfigurationMutex.withLock {
+          val parentModuleSdk = parentResult.sdk
+          pythonSdk = parentModuleSdk
+          FindQuickFixResult.SdkAppliedAutomatically(parentModuleSdk)
+        }
+        // We should show the same suggestion as for a parent module
+        FindQuickFixResult.NoSuggestion, is FindQuickFixResult.ShowUserFix -> parentResult
+      }
+    }
+    null -> FindQuickFixResult.NoSuggestion
   }
 }
 
