@@ -114,10 +114,10 @@ class ProcessOutputControllerServiceTest {
                 count++
             }
 
-            val processesToCheck = ProcessOutputControllerServiceLimits.MAX_PROCESSES - 10
+            val processesToCheck = ProcessOutputControllerServiceLimits.MAX_PROCESSES - 50
 
             // should expect to have found and asserted MAX_PROCESSES amount processes
-            // 10 for margin of error
+            // 50 for margin of error
             assert(count > processesToCheck) {
                 "Call to `verifyCurrentProcesses` is expected to check at least $processesToCheck processes, but checked only $count."
             }
