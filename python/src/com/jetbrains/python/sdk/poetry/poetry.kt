@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.poetry
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
@@ -45,12 +46,14 @@ suspend fun createNewPoetrySdk(
 suspend fun createPoetrySdk(
   basePath: Path,
   pythonBinaryPath: PathHolder.Eel,
-): PyResult<Sdk> = createSdk(
-  pythonBinaryPath = pythonBinaryPath,
-  associatedModulePath = basePath.toString(),
-  suggestedSdkName = suggestedSdkName(basePath),
-  sdkAdditionalData = PyPoetrySdkAdditionalData(basePath)
-)
+): PyResult<Sdk> = withProgressText(PyBundle.message("python.sdk.progress.poetry.configuring")) {
+  createSdk(
+    pythonBinaryPath = pythonBinaryPath,
+    associatedModulePath = basePath.toString(),
+    suggestedSdkName = suggestedSdkName(basePath),
+    sdkAdditionalData = PyPoetrySdkAdditionalData(basePath)
+  )
+}
 
 internal val Sdk.isPoetry: Boolean
   get() {

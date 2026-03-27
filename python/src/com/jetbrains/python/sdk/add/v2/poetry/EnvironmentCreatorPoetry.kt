@@ -17,7 +17,9 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.platform.util.progress.withProgressText
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
@@ -118,13 +120,15 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
 
     service<PoetryConfigService>().updateExistingPoetryToml(moduleBasePath)
     return when (basePythonBinaryPath) {
-      is PathHolder.Eel -> createNewPoetrySdk(
-        moduleBasePath = moduleBasePath,
-        basePythonBinaryPath = basePythonBinaryPath.path,
-        installPackages = false,
-        errorSink = errorSink,
-        inProjectEnv = isInProjectEnvFlow.value,
-      )
+      is PathHolder.Eel -> withProgressText(message("python.sdk.progress.poetry.creating")) {
+        createNewPoetrySdk(
+          moduleBasePath = moduleBasePath,
+          basePythonBinaryPath = basePythonBinaryPath.path,
+          installPackages = false,
+          errorSink = errorSink,
+          inProjectEnv = isInProjectEnvFlow.value,
+        )
+      }
       else -> PyResult.localizedError(PyBundle.message("target.is.not.supported", basePythonBinaryPath))
     }
   }
