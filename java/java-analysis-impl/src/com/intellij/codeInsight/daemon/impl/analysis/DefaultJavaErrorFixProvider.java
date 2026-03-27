@@ -912,7 +912,17 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
   private void createExpressionFixes() {
     fix(NEW_EXPRESSION_QUALIFIED_MALFORMED, error -> myFactory.createRemoveNewQualifierFix(error.psi(), null));
     fix(NEW_EXPRESSION_QUALIFIED_STATIC_CLASS, 
-        error -> error.context().isEnum() ? null : removeModifierFix(error.context(), PsiModifier.STATIC));
+        error -> {
+          PsiClass context = error.context();
+          if (context.isEnum()) {
+            return null;
+          }
+          PsiClass containingClass = context.getContainingClass();
+          if (containingClass != null && containingClass.isInterface()) {
+            return null;
+          }
+          return removeModifierFix(context, PsiModifier.STATIC);
+        });
     fix(NEW_EXPRESSION_QUALIFIED_STATIC_CLASS, error -> myFactory.createRemoveNewQualifierFix(error.psi(), error.context()));
     fix(NEW_EXPRESSION_QUALIFIED_ANONYMOUS_IMPLEMENTS_INTERFACE, error -> myFactory.createRemoveNewQualifierFix(error.psi(), null));
     fix(NEW_EXPRESSION_QUALIFIED_QUALIFIED_CLASS_REFERENCE,
