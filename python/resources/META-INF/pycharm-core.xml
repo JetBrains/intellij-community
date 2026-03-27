@@ -7,10 +7,6 @@
        CommunityProductFragments.pycharmCoreFragment() in product definitions. -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
-    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
-    <postStartupActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsSchedulerProjectActivity"/>
-
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
 
     <projectAttachProcessor implementation="com.intellij.platform.ModuleAttachProcessor"/>

@@ -96,6 +96,8 @@ jvm_library(
     "//java/ide-customization:ide-customization_test_lib",
   ],
   deps = [
+    "//libraries/assertj-core",
+    "//libraries/assertj-core:assertj-core_test_lib",
     "//java/java-psi-api:psi",
     "//java/java-psi-api:psi_test_lib",
     "@lib//:kotlin-stdlib",
