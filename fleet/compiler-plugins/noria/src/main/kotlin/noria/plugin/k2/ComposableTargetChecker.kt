@@ -56,7 +56,7 @@ private class FirLambdaInferenceNode(val lambda: FirAnonymousFunctionExpression)
     override fun toString() = "<lambda:${lambda.source?.startOffset}>"
 }
 
-private class FirSamInferenceNode(val sam: FirSamConversionExpression): FirElementInferenceNode(sam) {
+private class FirSamInferenceNode(val sam: FirFunctionTypeConversionExpression): FirElementInferenceNode(sam) {
     override val kind: NodeKind get() = NodeKind.Lambda
     override val type: InferenceNodeType? =
         (sam.expression as? FirAnonymousFunctionExpression)?.let {
@@ -298,7 +298,7 @@ internal class ComposableTargetSessionStorage(session: FirSession) : FirExtensio
                 lambdaToExpression[element.anonymousFunction] = element
                 FirLambdaInferenceNode(element)
             }
-            is FirSamConversionExpression -> run {
+            is FirFunctionTypeConversionExpression if element.kind is FirFunctionConversionKind.Sam -> run {
                 (element.expression as? FirAnonymousFunctionExpression)?.let {
                     lambdaToExpression[it.anonymousFunction] = element
                 }
