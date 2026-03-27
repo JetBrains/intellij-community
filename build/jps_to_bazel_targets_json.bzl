@@ -55,11 +55,16 @@ def _jps_to_bazel_targets_json_impl(ctx):
     args.add_all(ctx.attr.starlark_iml_targets, format_each = "--starlark-iml=%s")
     args.use_param_file("@%s", use_always = True)
 
+    env = {}
+    if ctx.attr.jps_to_bazel_treat_kotlin_dev_version_as_snapshot:
+        env["JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT"] = ctx.attr.jps_to_bazel_treat_kotlin_dev_version_as_snapshot
+
     ctx.actions.run(
         inputs = ctx.files.srcs + [manifest],
         outputs = [output],
         executable = ctx.executable.tool,
         arguments = [args],
+        env = env,
         mnemonic = "JpsToBazelTargetsJson",
         progress_message = "Generating bazel-targets.json for %s" % ctx.label,
     )
@@ -100,6 +105,10 @@ jps_to_bazel_targets_json = rule(
         "starlark_iml_targets": attr.string_list(
             default = [],
             doc = "Starlark-derived IML targets for parity assertion.",
+        ),
+        "jps_to_bazel_treat_kotlin_dev_version_as_snapshot": attr.string(
+            default = "",
+            doc = "Kotlin dev version to treat as snapshot (forwarded as JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT env var to the tool).",
         ),
     },
 )
