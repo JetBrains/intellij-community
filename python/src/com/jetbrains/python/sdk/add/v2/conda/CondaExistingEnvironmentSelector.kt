@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
@@ -152,7 +153,9 @@ internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAdd
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
-    return model.selectCondaEnvironment(moduleOrProject, base = false)
+    return withProgressText(message("python.sdk.progress.conda.configuring")) {
+      model.selectCondaEnvironment(moduleOrProject, base = false)
+    }
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {

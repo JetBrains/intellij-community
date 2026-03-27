@@ -10,10 +10,12 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.impl.uv.common.UV_UI_INFO
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.PathUtil
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
@@ -324,7 +326,9 @@ suspend fun <P : PathHolder> setupNewUvSdkAndEnv(
   val mappedUvExecutable = ops.mapProbablyWslPath(uvExecutable)
 
   val uv = createUvLowLevel(workingDir, createUvCli(mappedUvExecutable, fileSystem).getOr { return it }, fileSystem, venvPath)
-  val pythonBinary = uv.initializeEnvironment(shouldInitProject, version).getOr { return it }
+  val pythonBinary = withProgressText(PyBundle.message("python.sdk.progress.uv.creating")) {
+    uv.initializeEnvironment(shouldInitProject, version)
+  }.getOr { return it }
 
   val sdk = setupExistingEnvAndSdk(
     pythonBinary = pythonBinary,
@@ -361,10 +365,10 @@ suspend fun <P : PathHolder> setupExistingEnvAndSdk(
   workingDir: Path,
   fileSystem: FileSystem<P>,
   usePip: Boolean,
-): PyResult<Sdk> {
+): PyResult<Sdk> = withProgressText(PyBundle.message("python.sdk.progress.uv.configuring")) {
   val ops = createUvPathOperations(workingDir, fileSystem)
   val sdkAdditionalData = ops.createSdkAdditionalData(workingDir, pythonBinary, usePip, uvPath)
   val sdkName = ops.suggestSdkName(sdkAdditionalData)
   val sdk = createSdk(pythonBinary, sdkName, sdkAdditionalData)
-  return sdk
+  sdk
 }
