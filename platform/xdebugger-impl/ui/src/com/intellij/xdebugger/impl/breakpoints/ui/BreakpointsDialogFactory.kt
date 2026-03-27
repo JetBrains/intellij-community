@@ -3,10 +3,13 @@ package com.intellij.xdebugger.impl.breakpoints.ui
 
 
 import com.intellij.idea.AppMode
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
@@ -34,6 +37,24 @@ class BreakpointsDialogFactory(private val project: Project, private val scope: 
 
   @VisibleForTesting
   var showingDialog: BreakpointsDialog? = null
+
+  init {
+    ApplicationManager.getApplication().messageBus.connect(scope).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      override fun projectClosingBeforeSave(project: Project) {
+        if (project !== this@BreakpointsDialogFactory.project) {
+          return
+        }
+
+        // Close the dialog while breakpoint editors can still save their state safely.
+        hideBalloon()
+        val dialog = showingDialog ?: return
+        val window = dialog.window
+        if (window != null && window.isDisplayable && !dialog.isDisposed) {
+          dialog.close(DialogWrapper.CANCEL_EXIT_CODE)
+        }
+      }
+    })
+  }
 
   fun setBalloonToHide(balloon: Balloon, breakpoint: Any?) {
     balloonToHide = balloon

@@ -463,11 +463,20 @@ public class BreakpointsDialog extends DialogWrapper {
 
   @Override
   protected void dispose() {
-    saveCurrentItem();
-    Disposer.dispose(myListenerDisposable);
-    saveBreakpointsDialogState();
-    disposeItems();
-    super.dispose();
+    try {
+      // Avoid PSI-backed editor state access once project disposal has started.
+      if (!myProject.isDisposed()) {
+        saveCurrentItem();
+        if (!myProject.isDisposed()) {
+          saveBreakpointsDialogState();
+        }
+      }
+    }
+    finally {
+      Disposer.dispose(myListenerDisposable);
+      disposeItems();
+      super.dispose();
+    }
   }
 
   private void disposeItems() {
@@ -480,6 +489,9 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   private void saveCurrentItem() {
+    if (myProject.isDisposed()) {
+      return;
+    }
     ItemWrapper item = myDetailController.getSelectedItem();
     if (item instanceof BreakpointItem) {
       ((BreakpointItem)item).saveState();
