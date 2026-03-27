@@ -204,7 +204,6 @@ import org.jetbrains.kotlin.idea.slicer.AbstractK1SlicerNullnessGroupingTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerTreeTest
 import org.jetbrains.kotlin.idea.structureView.AbstractK1KotlinFileStructureTest
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiFileHighlightingTest
-import org.jetbrains.kotlin.idea.stubs.AbstractStubBuilderTest
 import org.jetbrains.kotlin.nj2k.AbstractK1JavaToKotlinConverterMultiFileTest
 import org.jetbrains.kotlin.nj2k.AbstractK1JavaToKotlinConverterPartialTest
 import org.jetbrains.kotlin.nj2k.AbstractK1JavaToKotlinConverterSingleFileFullJDKTest
@@ -1129,9 +1128,6 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     }
 
     testGroup("idea/tests", category = UNCATEGORIZED) {
-        testClass<AbstractStubBuilderTest> {
-            model("stubs", pattern = KT_OR_KTS)
-        }
 
         testClass<AbstractMultiplatformAnalysisTest> {
             model("multiplatform", isRecursive = false, pattern = DIRECTORY, excludedDirectories = listOf("ambiguousActuals"))
