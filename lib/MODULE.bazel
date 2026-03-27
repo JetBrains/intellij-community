@@ -5719,6 +5719,20 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-262_28_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/262.28/intellij-deps-java-atk-wrapper-262.28.jar",
+  sha256 = "c5e6a7039331b81c974b317f5705942906e4486c47c6a489c1872fce09708cd0",
+  downloaded_file_path = "intellij-deps-java-atk-wrapper-262.28.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-262_28-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/262.28/intellij-deps-java-atk-wrapper-262.28-sources.jar",
+  sha256 = "87efdf282a40a574c0c21b878143e133975f3aa8c8dcdb238354fc79fb6cbc7f",
+  downloaded_file_path = "intellij-deps-java-atk-wrapper-262.28-sources.jar"
+)
+
+http_file(
   name = "org_jetbrains_intellij_deps-rwmutex-idea-0_0_10_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/rwmutex-idea/0.0.10/rwmutex-idea-0.0.10.jar",
   sha256 = "61cd5eee5367d10e0cca664afdc4bbde2ff7aab9c175c5b520aac8b5315d874d",

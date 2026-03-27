@@ -608,6 +608,19 @@ object CommunityLibraryLicenses {
       .apache("https://svn.apache.org/repos/asf/jakarta/oro/trunk/LICENSE")
       .suppliedByPersons("Daniel Savarese", "Jon S. Stevens", "Takashi Okamoto", "Mark Murphy", "Michael Davey", "Harald Kuhn"),
 
+    LibraryLicense(
+      name = "java-atk-wrapper",
+      libraryName = "jetbrains.intellij.deps.java.atk.wrapper.linux",
+      url = "https://github.com/JetBrains/intellij-deps-java-atk-wrapper",
+    )
+      .lgpl21("https://github.com/JetBrains/intellij-deps-java-atk-wrapper/blob/master/COPYING.LESSER")
+      .suppliedByOrganizations(Suppliers.JETBRAINS)
+      .forkedFrom(
+        groupId = "org.gnome",
+        artifactId = "java-atk-wrapper",
+        sourceCodeUrl = "https://gitlab.gnome.org/GNOME/java-atk-wrapper"
+      ),
+
     LibraryLicense(libraryName = "java-compatibility", url = "https://github.com/JetBrains/intellij-deps-java-compatibility")
       .gpl2ce("https://github.com/JetBrains/intellij-deps-java-compatibility/raw/master/LICENSE"),
 
