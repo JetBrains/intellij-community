@@ -43,7 +43,11 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test reflow short parenthesized text`() = doTest()
 
+  fun `test reflow opening parenthesis`() = doTest()
+
   fun `test reflow closing parenthesis`() = doTest()
+
+  fun `test reflow no extra new lines`() = doTest(rightMargin = 80)
 
   fun `test emphasis`() = doTest()
 
@@ -56,14 +60,14 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
     return name.trimStart().replace(' ', '_')
   }
 
-  private fun doTest() {
+  private fun doTest(rightMargin: Int = 40) {
     val before = getTestName(true) + "_before.md"
     val after = getTestName(true) + "_after.md"
     runWithTemporaryStyleSettings(project) { settings ->
       settings.apply {
         WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true
         getCommonSettings(MarkdownLanguage.INSTANCE).apply {
-          RIGHT_MARGIN = 40
+          RIGHT_MARGIN = rightMargin
         }
         getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).apply {
           WRAP_TEXT_IF_LONG = true
