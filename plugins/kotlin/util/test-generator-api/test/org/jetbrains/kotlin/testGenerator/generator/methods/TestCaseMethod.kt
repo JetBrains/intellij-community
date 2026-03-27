@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.testGenerator.generator.methods
 
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.testGenerator.generator.Code
 import org.jetbrains.kotlin.testGenerator.generator.TestMethod
@@ -10,13 +9,11 @@ import org.jetbrains.kotlin.testGenerator.generator.appendBlock
 import org.jetbrains.kotlin.testGenerator.model.TAnnotation
 import org.jetbrains.kotlin.testGenerator.model.makeJavaIdentifier
 import java.io.File
-import kotlin.io.path.name
 
 data class TestCaseMethod(
     private val methodNameBase: String,
     private val contentRootPath: String,
     private val localPath: String,
-    private val isCompilerTestData: Boolean,
     private val passTestDataPath: Boolean,
     val file: File,
     val ignored: Boolean,
@@ -35,7 +32,6 @@ data class TestCaseMethod(
             methodNameBase,
             contentRootPath,
             f.path.replace(File.separatorChar, '/'),
-            isCompilerTestData,
             passTestDataPath,
             f,
             ignored,
@@ -54,9 +50,6 @@ data class TestCaseMethod(
         appendBlock("public void $methodName() throws Exception") {
             if (!passTestDataPath) {
                 append("performTest();")
-            } else if (isCompilerTestData) {
-                val path = contentRootPath.substringAfter(TestKotlinArtifacts.compilerTestDataDir.name + "/")
-                append("runTest(${TestKotlinArtifacts::compilerTestData.name}(\"$path\"));")
             } else {
                 append("runTest(\"$contentRootPath\");")
             }

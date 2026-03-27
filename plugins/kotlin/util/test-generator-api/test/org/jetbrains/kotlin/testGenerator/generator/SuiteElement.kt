@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.testGenerator.generator
 
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.TestIndexingMode
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.test.TestMetadata
@@ -21,7 +20,6 @@ import org.junit.runner.RunWith
 import java.io.File
 import java.util.EnumSet
 import javax.lang.model.element.Modifier
-import kotlin.io.path.name
 
 fun File.toRelativeStringSystemIndependent(base: File): String = toRelativeString(base).toStringSystemIndependent()
 
@@ -87,7 +85,6 @@ class SuiteElement private constructor(
                     methodNameBase,
                     if (file.isDirectory) "$path/" else path,
                     file.toRelativeStringSystemIndependent(rootFile),
-                    group.isCompilerTestData,
                     model.passTestDataPath,
                     file,
                     model.ignored,
@@ -116,8 +113,10 @@ class SuiteElement private constructor(
                         allMethods += RunTestMethod(model)
                     }
 
-                    if (group.isCompilerTestData || model.setUpStatements.isNotEmpty()) {
-                        allMethods += SetUpMethod(createStatements(group, model))
+                    if (model.setUpStatements.isNotEmpty()) {
+                        allMethods += SetUpMethod(buildList {
+                            addAll(model.setUpStatements)
+                        })
                     }
                 }
 
@@ -161,24 +160,6 @@ class SuiteElement private constructor(
                 }
             }
             return false
-        }
-
-        private fun createStatements(
-            group: TGroup,
-            model: TModel,
-        ): List<String> = buildList {
-            if (group.isCompilerTestData) {
-                add(
-                    "${TestKotlinArtifacts::compilerTestData.name}(\"${
-                        File(
-                            group.testDataRoot,
-                            model.path
-                        ).toRelativeStringSystemIndependent(group.moduleRoot)
-                            .substringAfter(TestKotlinArtifacts.compilerTestDataDir.name + "/")
-                    }\");"
-                )
-            }
-            addAll(model.setUpStatements)
         }
 
         private fun flatten(element: SuiteElement): List<TestMethod> {
