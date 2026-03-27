@@ -2,8 +2,15 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.CustomWrapModel
+import com.intellij.openapi.util.registry.Registry
 
 class CustomWrapModelTest : AbstractEditorTest() {
+
+  override fun setUp() {
+    super.setUp()
+    Registry.get("editor.use.new.soft.wraps.impl").setValue(true, getTestRootDisposable())
+    Registry.get("editor.custom.soft.wraps.support.enabled").setValue(true, getTestRootDisposable())
+  }
 
   private val customWrapModel: CustomWrapModel
     get() = editor.customWrapModel
