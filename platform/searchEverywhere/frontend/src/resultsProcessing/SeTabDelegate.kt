@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.frontend.resultsProcessing
 
 import com.intellij.ide.rpc.rpcId
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
@@ -36,6 +37,7 @@ import com.intellij.platform.searchEverywhere.providers.areCommandsSupported
 import com.intellij.platform.searchEverywhere.providers.isExtendedInfoEnabled
 import com.intellij.platform.searchEverywhere.providers.isPreviewEnabled
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
+import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProvider
 import com.intellij.platform.searchEverywhere.toProviderId
 import com.intellij.platform.searchEverywhere.utils.SeResultsCountBalancer
 import com.intellij.platform.searchEverywhere.utils.initAsync
@@ -235,8 +237,9 @@ class SeTabDelegate(
 
     fun getItems(params: SeParams, disabledProviders: List<SeProviderId>, mapToResultEvent: suspend (SeEqualityChecker?, SeTransferEvent) -> SeResultEvent?): Flow<SeResultEvent> {
       return channelFlow {
+        val frontendEqualityChecker = SeEqualityChecker()
+
         launch {
-          val equalityChecker = SeEqualityChecker()
           val localProviders = localProviders.filterKeys { !disabledProviders.contains(it) }.values
 
           localProviders.asFlow().flatMapMerge { provider ->
@@ -246,7 +249,7 @@ class SeTabDelegate(
               emit(SeTransferEnd(provider.id))
             }
           }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND).mapNotNull { transferEvent ->
-            mapToResultEvent(equalityChecker, transferEvent)
+            mapToResultEvent(frontendEqualityChecker, transferEvent)
           }.collect {
             send(it)
           }
@@ -255,7 +258,15 @@ class SeTabDelegate(
         if (frontendProvidersFacade != null) {
           launch {
             frontendProvidersFacade.getItems(params, disabledProviders).mapNotNull {
-              mapToResultEvent(null, it)
+              val isHostTopHitInMonolith = AppMode.isMonolith()
+                                           && (it as? SeTransferItem)?.itemData?.providerId?.value == SeTopHitItemsProvider.id(true)
+
+              if (isHostTopHitInMonolith) {
+                // Actions provider is on the frontend, and host topHit provider is on the backend.
+                // This equality check helps to avoid duplicated actions.
+                mapToResultEvent(frontendEqualityChecker, it)
+              }
+              else mapToResultEvent(null, it)
             }.collect {
               send(it)
             }
