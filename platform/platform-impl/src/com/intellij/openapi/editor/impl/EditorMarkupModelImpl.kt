@@ -356,7 +356,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     
     toolbarForcingUpdateQueue = projectScope?.let { scope ->
       DebouncedUpdates.forScope<Unit>(scope, "toolbar-forcing-update", 50.milliseconds)
-        .withContext(Dispatchers.EDT)
+        .withContext(Dispatchers.UI + ModalityState.any().asContextElement())
         .runLatest {
           @Suppress("DEPRECATION")
           statusToolbar.updateActionsImmediately()
