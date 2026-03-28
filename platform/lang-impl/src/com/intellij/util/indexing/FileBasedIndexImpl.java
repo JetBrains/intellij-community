@@ -1893,11 +1893,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private void forceUpdate(@Nullable Project project,
                            boolean skipUpdatingIfNoNewUpdatesAvailable,
                            @NotNull ProjectFilesCondition filter) {
-    Collection<FileIndexingRequest> allFilesToUpdate = getAllFilesToUpdate();
     runIfHaveNewUpdatesFor(
       project,
       skipUpdatingIfNoNewUpdatesAvailable && USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES,
       () -> {
+        Collection<FileIndexingRequest> allFilesToUpdate = getAllFilesToUpdate();
         if (!allFilesToUpdate.isEmpty()) {
           List<FileIndexingRequest> virtualFilesToBeUpdatedForProject = ContainerUtil.filter(allFilesToUpdate, filter::acceptsRequest);
           if (!virtualFilesToBeUpdatedForProject.isEmpty()) {
