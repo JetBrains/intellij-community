@@ -26,7 +26,7 @@ public sealed interface InlineMarkdown {
 
         override fun hashCode(): Int = content.hashCode()
 
-        override fun toString(): String = "Code(content='$content')"
+        override fun toString(): String = "Code(content=$content)"
     }
 
     /**

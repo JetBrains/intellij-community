@@ -2,17 +2,13 @@
 // Apache 2.0 license.
 package org.jetbrains.jewel.detekt.rules
 
-import io.gitlab.arturbosch.detekt.api.CodeSmell
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.CorrectableCodeSmell
-import io.gitlab.arturbosch.detekt.api.Debt
-import io.gitlab.arturbosch.detekt.api.Entity
-import io.gitlab.arturbosch.detekt.api.Issue
-import io.gitlab.arturbosch.detekt.api.Rule
-import io.gitlab.arturbosch.detekt.api.Severity
-import io.gitlab.arturbosch.detekt.api.config
-import org.jetbrains.kotlin.com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.impl.source.tree.LeafPsiElement
+import dev.detekt.api.Config
+import dev.detekt.api.Configuration
+import dev.detekt.api.Entity
+import dev.detekt.api.Finding
+import dev.detekt.api.config
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFunction
@@ -26,22 +22,18 @@ import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
  * `equals()`, `hashCode()`, and `toString()` implementations.
  *
  * It checks if these functions are present and if they correctly use all the class's properties. If a function is
- * missing or incorrect, this rule will report a [CodeSmell].
+ * missing or incorrect, this rule will report a [Finding].
  *
  * This rule also supports auto-correction. It can generate the missing or incorrect functions, ensuring they are
  * correctly implemented based on the class's properties. Formatting of the auto-corrected code is left to the IDE's
  * formatter/ktfmt.
  */
-class EqualityMembersRule(config: Config) : Rule(config) {
-    override val issue: Issue =
-        Issue(
-            javaClass.simpleName,
-            Severity.Defect,
-            "This rule detects missing or incomplete equals/hashCode/toString functions.",
-            Debt.FIVE_MINS,
-        )
+class EqualityMembersRule(config: Config) :
+    JewelBaseRule(config, "This rule detects missing or incomplete equals/hashCode/toString functions.") {
 
     private val functionsToCheck: List<String> by config(defaultValue = listOf("equals", "hashCode", "toString"))
+
+    @Configuration("only check classes annotated with these annotations")
     private val annotated: List<String> by config(defaultValue = listOf("GenerateDataFunctions"))
 
     override fun visitClass(klass: KtClass) {
@@ -57,7 +49,9 @@ class EqualityMembersRule(config: Config) : Rule(config) {
         if (properties.isEmpty()) return
         val methodsToRegenerate = analyzeEqualityMembers(klass, functionsToCheck.toSet(), properties)
 
-        withAutoCorrect { generateEqualityMembers(klass, methodsToRegenerate.sorted(), properties) }
+        if (autoCorrect) {
+            generateEqualityMembers(klass, methodsToRegenerate.sorted(), properties)
+        }
     }
 
     private fun hasAnnotations(klass: KtClass, requiredAnnotations: Set<String>): Boolean {
@@ -94,11 +88,10 @@ class EqualityMembersRule(config: Config) : Rule(config) {
         if (missingFunctionNames.isNotEmpty()) {
             val functionNames = missingFunctionNames.joinToString(", ")
             report(
-                CorrectableCodeSmell(
-                    issue = issue,
+                Finding(
                     entity = Entity.from(klass),
                     message = "${klass.name} is missing required functions: $functionNames.",
-                    autoCorrectEnabled = autoCorrect,
+                    suppressReasons = listOfNotNull("Auto correct".takeIf { autoCorrect }),
                 )
             )
         }
@@ -116,10 +109,10 @@ class EqualityMembersRule(config: Config) : Rule(config) {
                             if (it == null) {
                                 hasAll = false
                                 report(
-                                    CodeSmell(
-                                        issue,
+                                    Finding(
                                         Entity.from(declaredFunction),
                                         "Function ${declaredFunction.name} is missing property $prop.",
+                                        suppressReasons = listOfNotNull("Auto correct".takeIf { autoCorrect }),
                                     )
                                 )
                             }
