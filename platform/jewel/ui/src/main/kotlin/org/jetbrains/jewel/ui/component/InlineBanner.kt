@@ -16,25 +16,27 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.annotations.Nls
-import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.ui.component.banner.BannerActionsRow
@@ -44,6 +46,9 @@ import org.jetbrains.jewel.ui.component.banner.BannerLinkActionScope
 import org.jetbrains.jewel.ui.component.styling.InlineBannerStyle
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.inlineBannerStyle
+
+private const val BANNER_ICON_SIZE = 16
+private const val BANNER_CONTENT_SPACING = 8
 
 /**
  * Displays an informational inline banner providing subtle, non-intrusive context or feedback.
@@ -1222,46 +1227,120 @@ private fun InlineBannerImpl(
     content: @Composable (() -> Unit),
 ) {
     val borderColor = style.colors.border
+    val layoutDirection = LocalLayoutDirection.current
+    val originalPadding = style.metrics.padding
+
+    val endPadding = if (actionIcons != null) 0.dp else originalPadding.calculateEndPadding(layoutDirection)
+    val adjustedPadding =
+        PaddingValues(
+            start = originalPadding.calculateStartPadding(layoutDirection),
+            top = originalPadding.calculateTopPadding(),
+            bottom = originalPadding.calculateBottomPadding(),
+            end = endPadding,
+        )
+
     RoundedCornerBox(
         modifier = modifier.testTag("InlineBanner"),
         borderColor = borderColor,
         backgroundColor = style.colors.background,
         contentColor = JewelTheme.contentColor,
-        borderWidth = 1.dp,
-        cornerSize = CornerSize(8.dp),
-        padding = PaddingValues(),
+        borderWidth = style.metrics.borderWidth,
+        cornerSize = style.metrics.cornerSize,
+        padding = adjustedPadding,
     ) {
-        Row(modifier = Modifier.padding(start = 12.dp)) {
-            if (icon != null) {
-                Box(modifier = Modifier.padding(top = 12.dp, bottom = 12.dp).size(16.dp)) { icon() }
-                Spacer(Modifier.width(8.dp))
-            }
+        SubcomposeLayout { constraints ->
+            val spacingPx = BANNER_CONTENT_SPACING.dp.roundToPx()
 
-            Column(
-                modifier =
-                    Modifier.weight(1f)
-                        .padding(top = 12.dp, bottom = 12.dp) // kftmt plz behave
-                        .thenIf(actionIcons == null) { padding(end = 12.dp) }
-            ) {
-                if (title != null) {
-                    Text(text = title, style = textStyle, fontWeight = Bold)
-                    Spacer(Modifier.height(8.dp))
-                }
-                content()
+            val unconstrained = constraints.copy(minWidth = 0)
+            val actionIconsPlaceables =
+                subcompose("actionIcons") {
+                        if (actionIcons != null) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) { actionIcons() }
+                        }
+                    }
+                    .map { it.measure(unconstrained) }
+            val actionIconsWidth = actionIconsPlaceables.maxOfOrNull { it.width } ?: 0
 
-                if (actions != null) {
-                    Spacer(Modifier.height(8.dp))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) { actions() }
-                }
-            }
+            val iconPlaceables =
+                subcompose("icon") {
+                        if (icon != null) {
+                            Box(modifier = Modifier.size(BANNER_ICON_SIZE.dp)) { icon() }
+                        }
+                    }
+                    .map { it.measure(unconstrained) }
+            val iconWidth = iconPlaceables.firstOrNull()?.width ?: 0
+            val iconHeight = iconPlaceables.firstOrNull()?.height ?: 0
 
-            if (actionIcons != null) {
-                Spacer(Modifier.width(8.dp))
-                Row(
-                    modifier = Modifier.align(Alignment.Top).padding(top = 8.dp, end = 8.dp, bottom = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    actionIcons()
+            // Calculate width available for the main content column
+            // Total - Icon - Spacing
+            val startOffset = if (iconWidth > 0) iconWidth + spacingPx else 0
+            val contentAvailableWidth = (constraints.maxWidth - startOffset).coerceAtLeast(0)
+
+            // Text MUST respect Action Icons (i.e, subtract their width)
+            val textConstraints =
+                constraints.copy(minWidth = 0, maxWidth = (contentAvailableWidth - actionIconsWidth).coerceAtLeast(0))
+            val textPlaceables =
+                subcompose("text") {
+                        Column {
+                            if (title != null) {
+                                Text(text = title, style = textStyle, fontWeight = Bold)
+                                Spacer(Modifier.height(BANNER_CONTENT_SPACING.dp))
+                            }
+                            content()
+                        }
+                    }
+                    .map { it.measure(textConstraints) }
+            val textHeight = textPlaceables.maxOfOrNull { it.height } ?: 0
+            val textWidth = textPlaceables.maxOfOrNull { it.width } ?: 0
+
+            // Link Actions must IGNORE Action Icons (use full available width)
+            // This allows buttons to render underneath the top-right icons
+            val linkConstraints = constraints.copy(minWidth = 0, maxWidth = contentAvailableWidth)
+            val linkPlaceables =
+                subcompose("links") {
+                        if (actions != null) {
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) { actions() }
+                        }
+                    }
+                    .map { it.measure(linkConstraints) }
+            val linksHeight = linkPlaceables.maxOfOrNull { it.height } ?: 0
+            val linksWidth = linkPlaceables.maxOfOrNull { it.width } ?: 0
+
+            val contentHeight = textHeight + (if (linksHeight > 0) spacingPx else 0) + linksHeight
+            val totalHeight = maxOf(iconHeight, contentHeight)
+            // calculating the width the banner actually wants to occupy, coerced to
+            // fit within the incoming minWidth/maxWidth constraints
+            val naturalWidth =
+                (startOffset + maxOf(textWidth + actionIconsWidth, linksWidth)).coerceIn(
+                    constraints.minWidth,
+                    constraints.maxWidth,
+                )
+
+            layout(naturalWidth, totalHeight) {
+                iconPlaceables.forEach { it.placeRelative(0, 0) }
+
+                // Starts after icon
+                textPlaceables.forEach { it.placeRelative(startOffset, 0) }
+
+                // Starts after icon, below text
+                val linkY = textHeight + (if (linksHeight > 0) spacingPx else 0)
+                linkPlaceables.forEach { it.placeRelative(startOffset, linkY) }
+
+                if (actionIconsPlaceables.isNotEmpty()) {
+                    // We always offset the action icon to half the padding
+                    val topPaddingPx = adjustedPadding.calculateTopPadding().roundToPx()
+                    val halfPaddingTop = (originalPadding.calculateTopPadding().toPx() / 2).toInt()
+                    val halfPaddingEnd = (originalPadding.calculateEndPadding(layoutDirection).toPx() / 2).toInt()
+
+                    // Offset Logic:
+                    val yPos = halfPaddingTop - topPaddingPx
+
+                    actionIconsPlaceables.forEach { placeable ->
+                        // For the X calculation, naturalWidth is the edge (since we killed end padding)
+                        // Move left by icon width + half original padding
+                        val xPos = naturalWidth - placeable.width - halfPaddingEnd
+                        placeable.placeRelative(x = xPos, y = yPos)
+                    }
                 }
             }
         }
@@ -1280,14 +1359,16 @@ private fun RoundedCornerBox(
     content: @Composable () -> Unit,
 ) {
     val shape = RoundedCornerShape(cornerSize)
-    Box(
+    Layout(
         modifier =
             modifier
                 .border(borderWidth, borderColor, shape)
                 .background(backgroundColor, shape)
                 .clip(shape)
-                .padding(padding)
-    ) {
-        CompositionLocalProvider(LocalContentColor provides contentColor) { content() }
+                .padding(padding),
+        content = { CompositionLocalProvider(LocalContentColor provides contentColor) { content() } },
+    ) { measurables, constraints ->
+        val placeable = measurables.first().measure(constraints)
+        layout(placeable.width, placeable.height) { placeable.placeRelative(0, 0) }
     }
 }
