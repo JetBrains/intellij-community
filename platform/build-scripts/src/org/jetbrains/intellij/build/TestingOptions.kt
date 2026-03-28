@@ -30,16 +30,7 @@ open class TestingOptions {
    * Test groups are defined in testGroups.properties files and there is an implicit [ALL_EXCLUDE_DEFINED_GROUP] group for tests which aren't
    * included into any group and 'ALL' group for all tests.
    */
-  var testGroups: String? = System.getProperty("intellij.build.test.groups").nullize(nullizeSpaces = true)?.let {
-    when (it) {  // temporarily remap the test group for TC compatibility
-      "COMPILER_TESTS" -> "COMMUNITY_COMPILER_TESTS;ULTIMATE_COMPILER_TESTS"
-      "GRADLE_INTEGRATION_TESTS" -> "COMMUNITY_GRADLE_INTEGRATION_TESTS;ULTIMATE_GRADLE_INTEGRATION_TESTS"
-      "JAVA_TESTS" -> if (System.getProperty("intellij.build.test.main.module") == "intellij.idea.community.main.tests") "COMMUNITY_JAVA_TESTS" else "COMMUNITY_JAVA_TESTS;ULTIMATE_JAVA_TESTS"
-      "MAVEN_INTEGRATION_TESTS" -> "COMMUNITY_MAVEN_INTEGRATION_TESTS;ULTIMATE_MAVEN_INTEGRATION_TESTS"
-      "VCS_TESTS" -> "COMMUNITY_VCS_TESTS;ULTIMATE_VCS_TESTS"
-      else -> it
-    }
-  }
+  var testGroups: String? = System.getProperty("intellij.build.test.groups").nullize(nullizeSpaces = true)
 
   /**
    * Semicolon-separated patterns for test class names which need to be executed. Wildcard '*' is supported. If this option is specified,
