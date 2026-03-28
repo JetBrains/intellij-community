@@ -16,9 +16,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.psi.util.CachedValue
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.cancelOnDispose
@@ -26,7 +23,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.extensions.toPsi
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackageManager
@@ -41,7 +37,6 @@ import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.sdk.readOnlyErrorMessage
 import com.jetbrains.python.sdk.refreshPaths
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -71,6 +66,9 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   internal val installedMightBeTransitive: Boolean = false,
 ) : Disposable.Default {
   private val isInited = AtomicBoolean(false)
+
+  private val dependencyCache = DependencyCache()
+
   private val initializationJob = PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
     initInstalledPackages()
   }.also {
@@ -85,19 +83,6 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   @ApiStatus.Internal
   @Volatile
   protected var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
-
-  private suspend fun createCachedDependencies(dependencyFile: VirtualFile): Deferred<PyResult<List<PythonPackage>>?> {
-    val psiFile = readAction { dependencyFile.toPsi(project) } ?: return CompletableDeferred(value = null)
-    return CachedValuesManager.getManager(project).getCachedValue(psiFile, CACHE_KEY, { extractDependenciesAsync(dependencyFile) }, false)
-  }
-
-  private fun extractDependenciesAsync(dependencyFile: VirtualFile): CachedValueProvider.Result<Deferred<PyResult<List<PythonPackage>>?>> {
-    val scope = PyPackageCoroutine.getScope(project)
-    val deferred = scope.async(NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
-      extractDependencies()
-    }
-    return CachedValueProvider.Result.create(deferred, dependencyFile)
-  }
 
   abstract val repositoryManager: PythonRepositoryManager
 
@@ -294,7 +279,6 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   /**
    * Extracts project top-level dependencies with caching based on dependency file modification time.
    * Returns cached result if dependency file hasn't changed since last extraction.
-   * Uses Platform's CachedValuesManager with the dependency file as an invalidation dependency.
    *
    * @return null if this package manager doesn't support dependency extraction,
    *         PyResult.Failure if extraction is supported but failed (e.g., parsing error),
@@ -303,7 +287,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   @ApiStatus.Experimental
   suspend fun extractDependenciesCached(): PyResult<List<PythonPackage>>? {
     val dependencyFile = getDependencyFile() ?: return null
-    return createCachedDependencies(dependencyFile).await()
+    return dependencyCache.getOrCompute(dependencyFile).await()
   }
 
   /**
@@ -354,9 +338,24 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     }
   }
 
-  companion object {
-    private val CACHE_KEY = Key.create<CachedValue<Deferred<PyResult<List<PythonPackage>>?>>>("PythonPackageManagerDependenciesCache")
+  private inner class DependencyCache {
+    private var entry: Entry? = null
 
+    @Synchronized
+    fun getOrCompute(dependencyFile: VirtualFile): Deferred<PyResult<List<PythonPackage>>?> {
+      val stamp = dependencyFile.modificationStamp
+      val cached = entry?.takeIf { it.file == dependencyFile && it.stamp == stamp }
+      return cached?.deferred ?: run {
+        PyPackageCoroutine.getScope(project).async(NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
+          extractDependencies()
+        }.also { entry = Entry(dependencyFile, stamp, it) }
+      }
+    }
+
+    private inner class Entry(val file: VirtualFile, val stamp: Long, val deferred: Deferred<PyResult<List<PythonPackage>>?>)
+  }
+
+  companion object {
     @Throws(AlreadyDisposedException::class)
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
       val pythonPackageManagerService = project.service<PythonPackageManagerService>()
