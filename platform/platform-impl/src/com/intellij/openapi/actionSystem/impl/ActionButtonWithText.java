@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -11,9 +11,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.keymap.KeymapUtilKt;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.SystemInfo;
@@ -296,9 +296,7 @@ public class ActionButtonWithText extends ActionButton {
     if (mnemonicIndex != -1) {
       return mnemonicIndex;
     }
-    final ShortcutSet shortcutSet = myAction.getShortcutSet();
-    final Shortcut[] shortcuts = shortcutSet.getShortcuts();
-    for (Shortcut shortcut : shortcuts) {
+    for (Shortcut shortcut : KeymapUtilKt.getShortcutSetForDisplay(myAction).getShortcuts()) {
       if (!(shortcut instanceof KeyboardShortcut keyboardShortcut)) continue;
 
       if (keyboardShortcut.getSecondKeyStroke() == null) { // we are interested only in "mnemonic-like" shortcuts

@@ -56,11 +56,19 @@ object KeymapUtil {
 
   @NlsSafe
   @JvmStatic
-  fun getShortcutText(@NonNls actionId: @NonNls String): @NlsSafe String = defaultKeymapTextContext.getShortcutText(actionId)
+  fun getShortcutText(@NonNls actionId: @NonNls String): @NlsSafe String {
+    if (serviceIfCreated<KeymapManager>() == null) {
+      return ""
+    }
+    return defaultKeymapTextContext.getShortcutText(actionId)
+  }
 
   @NlsSafe
   @JvmStatic
   fun getShortcutTextOrNull(@NonNls actionId: @NonNls String): @NlsSafe String? {
+    if (serviceIfCreated<KeymapManager>() == null) {
+      return null
+    }
     return getShortcutText(ActionManager.getInstance().getKeyboardShortcut(actionId) ?: return null)
   }
 
@@ -105,11 +113,6 @@ object KeymapUtil {
     return CustomShortcutSet(*Shortcut.EMPTY_ARRAY)
   }
 
-  @Internal
-  fun getActiveKeymapShortcuts(@NonNls actionId: @NonNls String, keymapManager: KeymapManager): ShortcutSet {
-    return CustomShortcutSet(*keymapManager.getActiveKeymap().getShortcuts(actionId))
-  }
-
   /**
    * @param actionId action to find the shortcut for
    * @return first keyboard shortcut that activates given action in active keymap; null if not found
@@ -127,6 +130,9 @@ object KeymapUtil {
   @NlsSafe
   @JvmStatic
   fun getFirstKeyboardShortcutText(@NonNls actionId: @NonNls String): @NlsSafe String {
+    if (serviceIfCreated<KeymapManager>() == null) {
+      return ""
+    }
     for (shortcut in getActiveKeymapShortcuts(actionId).getShortcuts()) {
       if (shortcut is KeyboardShortcut) {
         return getShortcutText(shortcut)
@@ -138,6 +144,9 @@ object KeymapUtil {
   @NlsSafe
   @JvmStatic
   fun getFirstMouseShortcutText(@NonNls actionId: @NonNls String): @NlsSafe String {
+    if (serviceIfCreated<KeymapManager>() == null) {
+      return ""
+    }
     for (shortcut in getActiveKeymapShortcuts(actionId).getShortcuts()) {
       if (shortcut is MouseShortcut) {
         return getShortcutText(shortcut)
@@ -159,7 +168,7 @@ object KeymapUtil {
   @NlsSafe
   @JvmStatic
   fun getFirstKeyboardShortcutText(action: AnAction): @NlsSafe String {
-    return getFirstKeyboardShortcutText(action.shortcutSet)
+    return getFirstKeyboardShortcutText(getShortcutSetForDisplay(action))
   }
 
   @NlsSafe
@@ -481,7 +490,6 @@ object KeymapUtil {
     else {
       return CustomShortcutSet(altShortcut)
     }
-    return null
   }
 }
 
@@ -504,3 +512,19 @@ private class RedispatchEventAction(private val myComponent: Component) : Abstra
     }
   }
 }
+
+@Internal
+fun getActiveKeymapShortcuts(@NonNls actionId: @NonNls String, keymapManager: KeymapManager): ShortcutSet {
+  return CustomShortcutSet(*keymapManager.getActiveKeymap().getShortcuts(actionId))
+}
+
+/**
+ * Returns shortcuts suitable for displaying action shortcuts without forcing keymap initialization.
+ */
+@Internal
+fun getShortcutSetForDisplay(action: AnAction): ShortcutSet {
+  val actionId = serviceIfCreated<ActionManager>()?.getId(action) ?: return action.shortcutSet
+  val keymapManager = serviceIfCreated<KeymapManager>() ?: return CustomShortcutSet.EMPTY
+  return getActiveKeymapShortcuts(actionId, keymapManager)
+}
+

@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
@@ -120,7 +119,7 @@ object ActionReferenceHighlighting {
   }
 
   @Suppress(<warning descr="[ERROR_SUPPRESSION] Suppression of error 'MISSING_DEPENDENCY_CLASS' might compile and work, but the compiler behavior is UNSPECIFIED and WILL NOT BE PRESERVED. Please report your use case to the Kotlin issue tracker instead: https://kotl.in/issue">"MISSING_DEPENDENCY_CLASS"</warning>)
-  fun testKeymapUtil(keymapManager: KeymapManager, keyEvent: KeyEvent, keymap: Keymap) {
+  fun testKeymapUtil(keyEvent: KeyEvent, keymap: Keymap) {
     KeymapUtil.getShortcutText("myAction")
     KeymapUtil.getShortcutText("<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>")
 
@@ -129,9 +128,6 @@ object ActionReferenceHighlighting {
 
     KeymapUtil.getActiveKeymapShortcuts("myAction")
     KeymapUtil.getActiveKeymapShortcuts("<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>")
-
-    KeymapUtil.getActiveKeymapShortcuts("myAction", keymapManager)
-    KeymapUtil.getActiveKeymapShortcuts("<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>", keymapManager)
 
     KeymapUtil.getPrimaryShortcut("myAction")
     KeymapUtil.getPrimaryShortcut("<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>")

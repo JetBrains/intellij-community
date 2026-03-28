@@ -24,7 +24,7 @@ import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
-import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.KeymapUtilKt;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -103,7 +103,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   private static void updateShortcut(KeymapManager keymapManager) {
-    if (!KeymapUtil.INSTANCE.getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID, keymapManager).hasShortcuts()) {
+    if (!KeymapUtilKt.getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID, keymapManager).hasShortcuts()) {
       registerDblCtrlClick();
     }
     else if (ourDoubleCtrlRegistered) {

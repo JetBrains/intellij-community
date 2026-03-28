@@ -24,6 +24,7 @@ import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.keymap.getShortcutSetForDisplay
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.icons.getMenuBarIcon
@@ -76,8 +77,7 @@ internal class MacNativeActionMenuItem(
 
     updateIcon(presentation, action, useDarkIcons, isToggleable, isToggled, insideCheckedGroup)
 
-    val id = ActionManager.getInstance().getId(action)
-    val shortcuts = if (id == null) action.shortcutSet.getShortcuts() else KeymapUtil.getActiveKeymapShortcuts(id).getShortcuts()
+    val shortcuts = getShortcutSetForDisplay(action).getShortcuts()
     var accelerator: KeyStroke? = null
     for (shortcut in shortcuts) {
       if (shortcut !is KeyboardShortcut) {

@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.keymap.getShortcutSetForDisplay
 import com.intellij.openapi.util.IconLoader.getDarkIcon
 import com.intellij.openapi.util.IconLoader.getDisabledIcon
 import com.intellij.openapi.util.NlsSafe
@@ -115,14 +116,7 @@ class ActionMenuItem internal constructor(action: AnAction,
 
   private fun updateAccelerator() {
     val action = actionRef.getAction()
-    val id = ActionManager.getInstance().getId(action)
-    if (id != null) {
-      setAcceleratorFromShortcuts(KeymapUtil.getActiveKeymapShortcuts(id).getShortcuts())
-    }
-    else {
-      val shortcutSet = action.shortcutSet
-      setAcceleratorFromShortcuts(shortcutSet.getShortcuts())
-    }
+    setAcceleratorFromShortcuts(getShortcutSetForDisplay(action).getShortcuts())
   }
 
   fun updateFromPresentation(presentation: Presentation) {
@@ -194,7 +188,7 @@ class ActionMenuItem internal constructor(action: AnAction,
   private var firstShortcutTextFromPresentation: @NlsSafe String? = null
 
   private val defaultFirstShortcutText: @NlsSafe String
-    get() = KeymapUtil.getShortcutText(actionRef.getAction().shortcutSet)
+    get() = KeymapUtil.getShortcutText(getShortcutSetForDisplay(actionRef.getAction()))
 
   val firstShortcutText: @NlsSafe String
     get() = firstShortcutTextFromPresentation ?: defaultFirstShortcutText
@@ -242,7 +236,7 @@ class ActionMenuItem internal constructor(action: AnAction,
     val isMainMenu = ActionPlaces.MAIN_MENU == place
     return when {
       isMainMenu && isShowNoIcons(actionRef.getAction(), presentation) -> null
-      !isAligned || !isAlignedInGroup -> return icon
+      !isAligned || !isAlignedInGroup -> icon
       isMainMenu && icon == null && MacMenuSettings.isSystemMenu -> EMPTY_MENU_ACTION_ICON
       else -> icon
     }
