@@ -18,7 +18,6 @@ DONT_TRACE_DIRS = {
     'pydevd_attach_to_process': PYDEV_FILE,
     'pydevd_concurrency_analyser': PYDEV_FILE,
     'pydevd_plugins': PYDEV_FILE,
-    'test_pydevd_reload': PYDEV_FILE,
 }
 
 LIB_FILES_IN_DONT_TRACE_DIRS = {
@@ -97,6 +96,7 @@ DONT_TRACE = {
     'pydevd_additional_thread_info.py': PYDEV_FILE,
     'pydevd_additional_thread_info_regular.py': PYDEV_FILE,
     'pydevd_api.py': PYDEV_FILE,
+    'pydevd_asyncio_provider.py': PYDEV_FILE,
     'pydevd_base_schema.py': PYDEV_FILE,
     'pydevd_breakpoints.py': PYDEV_FILE,
     'pydevd_bytecode_utils.py': PYDEV_FILE,
@@ -112,6 +112,7 @@ DONT_TRACE = {
     'pydevd_custom_frames.py': PYDEV_FILE,
     'pydevd_cython_wrapper.py': PYDEV_FILE,
     'pydevd_daemon_thread.py': PYDEV_FILE,
+    'pydevd_dataset.py': PYDEV_FILE,
     'pydevd_defaults.py': PYDEV_FILE,
     'pydevd_dont_trace.py': PYDEV_FILE,
     'pydevd_dont_trace_files.py': PYDEV_FILE,
@@ -127,22 +128,33 @@ DONT_TRACE = {
     'pydevd_frame_utils.py': PYDEV_FILE,
     'pydevd_gevent_integration.py': PYDEV_FILE,
     'pydevd_helpers.py': PYDEV_FILE,
+    'pydevd_image_loader.py': PYDEV_FILE,
     'pydevd_import_class.py': PYDEV_FILE,
     'pydevd_io.py': PYDEV_FILE,
     'pydevd_json_debug_options.py': PYDEV_FILE,
     'pydevd_line_validation.py': PYDEV_FILE,
+    'pydevd_matplotlib_image.py': PYDEV_FILE,
     'pydevd_modify_bytecode.py': PYDEV_FILE,
     'pydevd_net_command.py': PYDEV_FILE,
     'pydevd_net_command_factory_json.py': PYDEV_FILE,
     'pydevd_net_command_factory_xml.py': PYDEV_FILE,
+    'pydevd_numpy.py': PYDEV_FILE,
+    'pydevd_numpy_based.py': PYDEV_FILE,
+    'pydevd_numpy_based_image.py': PYDEV_FILE,
+    'pydevd_numpy_image.py': PYDEV_FILE,
+    'pydevd_pandas.py': PYDEV_FILE,
+    'pydevd_pillow_image.py': PYDEV_FILE,
     'pydevd_plugin_numpy_types.py': PYDEV_FILE,
     'pydevd_plugin_pandas_types.py': PYDEV_FILE,
+    'pydevd_plugin_repr_lib.py': PYDEV_FILE,
     'pydevd_plugin_utils.py': PYDEV_FILE,
     'pydevd_plugins_django_form_str.py': PYDEV_FILE,
+    'pydevd_polars.py': PYDEV_FILE,
     'pydevd_process_net_command.py': PYDEV_FILE,
     'pydevd_process_net_command_json.py': PYDEV_FILE,
     'pydevd_referrers.py': PYDEV_FILE,
     'pydevd_reload.py': PYDEV_FILE,
+    'pydevd_repr_utils.py': PYDEV_FILE,
     'pydevd_resolver.py': PYDEV_FILE,
     'pydevd_runpy.py': PYDEV_FILE,
     'pydevd_safe_repr.py': PYDEV_FILE,
@@ -154,6 +166,7 @@ DONT_TRACE = {
     'pydevd_stackless.py': PYDEV_FILE,
     'pydevd_suspended_frames.py': PYDEV_FILE,
     'pydevd_sys_monitoring.py': PYDEV_FILE,
+    'pydevd_tables.py': PYDEV_FILE,
     'pydevd_thread_lifecycle.py': PYDEV_FILE,
     'pydevd_thread_wrappers.py': PYDEV_FILE,
     'pydevd_timeout.py': PYDEV_FILE,
@@ -161,6 +174,7 @@ DONT_TRACE = {
     'pydevd_trace_dispatch_regular.py': PYDEV_FILE,
     'pydevd_traceproperty.py': PYDEV_FILE,
     'pydevd_tracing.py': PYDEV_FILE,
+    'pydevd_user_type_renderers_utils.py': PYDEV_FILE,
     'pydevd_utils.py': PYDEV_FILE,
     'pydevd_vars.py': PYDEV_FILE,
     'pydevd_vm_type.py': PYDEV_FILE,
@@ -174,5 +188,13 @@ DONT_TRACE['io.py'] = LIB_FILE
 DONT_TRACE['cp1252.py'] = LIB_FILE
 DONT_TRACE['utf_8.py'] = LIB_FILE
 DONT_TRACE['codecs.py'] = LIB_FILE
+
+# Don't trace JetBrains test runner helpers (PY-88433)
+DONT_TRACE['_jb_pytest_runner.py'] = PYDEV_FILE
+DONT_TRACE['_jb_unittest_runner.py'] = PYDEV_FILE
+DONT_TRACE['_jb_nosetest_runner.py'] = PYDEV_FILE
+DONT_TRACE['_jb_tox_runner.py'] = PYDEV_FILE
+DONT_TRACE['_jb_trialtest_runner.py'] = PYDEV_FILE
+DONT_TRACE['_jb_runner_tools.py'] = PYDEV_FILE
 
 # fmt: on
