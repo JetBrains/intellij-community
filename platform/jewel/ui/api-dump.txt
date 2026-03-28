@@ -1196,12 +1196,14 @@ f:org.jetbrains.jewel.ui.component.styling.ComboBoxIcons$Companion
 f:org.jetbrains.jewel.ui.component.styling.ComboBoxMetrics
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.ui.component.styling.ComboBoxMetrics$Companion
+- b:<init>(J,J,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,F,F,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - equals(java.lang.Object):Z
 - f:getArrowAreaSize-MYxV2XQ():J
 - f:getBorderWidth-D9Ej5fM():F
 - f:getContentPadding():androidx.compose.foundation.layout.PaddingValues
 - f:getCornerSize():androidx.compose.foundation.shape.CornerSize
 - f:getMaxPopupHeight-D9Ej5fM():F
+- f:getMaxPopupRowCount():I
 - f:getMinSize-MYxV2XQ():J
 - f:getPopupContentPadding():androidx.compose.foundation.layout.PaddingValues
 - hashCode():I
