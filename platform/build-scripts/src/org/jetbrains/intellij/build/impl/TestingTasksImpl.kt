@@ -8,6 +8,7 @@ import com.intellij.GroupBasedTestClassFilter
 import com.intellij.TestCaseLoader
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.idea.IJIgnore
+import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.testFramework.SkipInHeadlessEnvironment
+import com.intellij.util.bazelEnvironment.BazelRunfiles
 import com.intellij.util.io.awaitExit
 import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.CoroutineName
@@ -753,6 +755,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         context.saveMapping(file)
         systemProperties.put("intellij.test.jars.mapping.file", file.absolutePathString())
       }
+    }
+
+    if (BazelRunfiles.isRunningFromBazel) {
+      // tests.cmd doesn't call jps-to-bazel and there may be no build/bazel-targets.json file, use it from jps_to_bazel_targets_json rule
+      systemProperties.put(ArchivedCompilationContextUtil.BAZEL_TARGETS_JSON_FILE_PROPERTY, ArchivedCompilationContextUtil.getBazelTargetsJsonPath(context.paths.projectHome).absolutePathString())  // resolve against JAVA_RUNFILES or RUNFILES_MANIFEST_FILE
     }
   }
 

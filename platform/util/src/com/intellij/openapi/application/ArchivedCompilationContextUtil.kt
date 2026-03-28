@@ -9,6 +9,7 @@ import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.readLines
 
@@ -78,11 +79,11 @@ object ArchivedCompilationContextUtil {
     return mapping
   }
 
-  private const val BAZEL_TARGETS_JSON_FILE_PROPERTY = "intellij.build.bazel.targets.json.file"
+  const val BAZEL_TARGETS_JSON_FILE_PROPERTY: String = "intellij.build.bazel.targets.json.file"
 
   fun getBazelTargetsJsonPath(projectRoot: Path): Path {
     if (BazelRunfiles.isRunningFromBazel) {
-      val location = System.getProperty(BAZEL_TARGETS_JSON_FILE_PROPERTY)
+      val location = System.getProperty(BAZEL_TARGETS_JSON_FILE_PROPERTY)  // relative path, resolve against JAVA_RUNFILES or RUNFILES_MANIFEST_FILE
                      ?: error("Missing property $BAZEL_TARGETS_JSON_FILE_PROPERTY, it's required when running under Bazel")
       log("Running under Bazel, using targets file from Bazel dependencies: rlocationpath=$location")
 
@@ -92,7 +93,13 @@ object ArchivedCompilationContextUtil {
       return path
     }
     else {
-      val path = projectRoot.resolve("build").resolve("bazel-targets.json")
+      var path = System.getProperty(BAZEL_TARGETS_JSON_FILE_PROPERTY)?.let(Path::of)  // absolute path, JAVA_RUNFILES and RUNFILES_MANIFEST_FILE are not set
+      if (path != null) {
+        log("Standalone run not under Bazel, using targets file from Bazel dependencies: $path")
+        return path
+      }
+
+      path = projectRoot.resolve("build").resolve("bazel-targets.json")
       log("Standalone run not under Bazel, using targets file from project: $path")
       return path
     }
