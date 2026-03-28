@@ -107,9 +107,6 @@ class PluginMainDescriptor(
   override fun getPluginId(): PluginId = id
 
   override fun getName(): String {
-    PluginCardOverrides.getNameOverride(id)?.let {
-      return it
-    }
     return name
   }
 
@@ -142,10 +139,6 @@ class PluginMainDescriptor(
     var result = loadedDescriptionText
     if (result != null) {
       return result
-    }
-    PluginCardOverrides.getDescriptionOverride(pluginId)?.let {
-      loadedDescriptionText = it
-      return it
     }
     result = fromPluginBundle("plugin.$pluginId.description", rawDescription)
     loadedDescriptionText = result
