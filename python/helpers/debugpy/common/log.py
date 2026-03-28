@@ -26,6 +26,9 @@ log_dir = os.getenv("DEBUGPY_LOG_DIR")
 in the specified directory, where <pid> is the return value of os.getpid().
 """
 
+rolling = os.getenv("DEBUGPY_LOG_ROLLING", "").lower() in ("1", "true", "yes")
+"""If True, log file rolling is enabled (files are rotated when they exceed the size limit)."""
+
 timestamp_format = "09.3f"
 """Format spec used for timestamps. Can be changed to dial precision up or down.
 """
@@ -35,6 +38,8 @@ _tls = threading.local()
 _files = {}  # filename -> LogFile
 _levels = set()  # combined for all log files
 
+MAX_FILE_SIZE = 16 * 1024 * 1024
+MAX_ROLLED_FILES = 10
 
 def _update_levels():
     global _levels
@@ -48,6 +53,12 @@ class LogFile(object):
         self.file = file
         self.close_file = close_file
         self._levels = frozenset(levels)
+        self.max_rolled_files = MAX_ROLLED_FILES
+
+        if rolling and close_file:
+            self.max_file_size = MAX_FILE_SIZE
+        else:
+            self.max_file_size = None
 
         with _lock:
             _files[self.filename] = self
@@ -78,8 +89,38 @@ class LogFile(object):
             try:
                 self.file.write(output)
                 self.file.flush()
+                if self.max_file_size is not None and self.file.tell() > self.max_file_size:
+                    self._roll()
             except Exception:  # pragma: no cover
                 pass
+
+    def _roll(self):
+        self.file.close()
+
+        # Delete the oldest backup if it exists
+        oldest = "{}.{}".format(self.filename, MAX_ROLLED_FILES)
+        try:
+            os.remove(oldest)
+        except OSError:
+            pass
+
+        # Shift .{i} -> .{i+1}
+        for i in range(MAX_ROLLED_FILES - 1, 0, -1):
+            src = "{}.{}".format(self.filename, i)
+            dst = "{}.{}".format(self.filename, i + 1)
+            try:
+                os.replace(src, dst)
+            except OSError:
+                pass
+
+        # Rename current -> .1
+        try:
+            os.replace(self.filename, "{}.1".format(self.filename))
+        except OSError:
+            pass
+
+        # Reopen fresh file
+        self.file = io.open(self.filename, "w", encoding="utf-8")
 
     def close(self):
         with _lock:
@@ -372,12 +413,9 @@ def describe_environment(header):
     info("{0}", get_environment_description(header))
 
 
-stderr = LogFile(
-    "<stderr>",
-    sys.stderr,
-    levels=os.getenv("DEBUGPY_LOG_STDERR", "warning error").split(),
-    close_file=False,
-)
+stderr = LogFile("<stderr>", sys.stderr,
+                 levels=os.getenv("DEBUGPY_LOG_STDERR", "warning error").split(),
+                 close_file=False)
 
 
 @atexit.register

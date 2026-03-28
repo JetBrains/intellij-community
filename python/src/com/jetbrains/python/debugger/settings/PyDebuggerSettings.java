@@ -28,6 +28,7 @@ public final class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettin
   private volatile ValuesPolicy myValuesPolicy = ValuesPolicy.ASYNC;
   private volatile QuotingPolicy myQuotingPolicy = QuotingPolicy.SINGLE;
   private boolean myAlwaysDoSmartStepIntoEnabled = true;
+  private boolean myDebugpyLoggingEnabled = false;
 
   public PyDebuggerSettings() {
     super("python");
@@ -92,6 +93,14 @@ public final class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettin
 
   public boolean isAlwaysDoSmartStepInto() {
     return myAlwaysDoSmartStepIntoEnabled;
+  }
+
+  public boolean isDebugpyLoggingEnabled() {
+    return myDebugpyLoggingEnabled;
+  }
+
+  public void setDebugpyLoggingEnabled(boolean enabled) {
+    myDebugpyLoggingEnabled = enabled;
   }
 
   public @NotNull List<PySteppingFilter> getSteppingFilters() {
