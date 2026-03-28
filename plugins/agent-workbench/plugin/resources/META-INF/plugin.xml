@@ -36,7 +36,7 @@
     <module name="intellij.agent.workbench.filewatch"/>
     <module name="intellij.agent.workbench.ai.review"/>
     <module name="intellij.agent.workbench.ai.review.agents"/>
-    <module name="intellij.agent.workbench.vcs.merge"/>
+    <module name="intellij.agent.workbench.ai.review.space"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

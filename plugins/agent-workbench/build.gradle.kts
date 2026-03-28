@@ -124,6 +124,7 @@ tasks {
   // Strip them from plugin.xml so the sandbox IDE doesn't fail trying to resolve their descriptors.
   val monorepoOnlyModules = listOf(
     "intellij.agent.workbench.ai.review.agents",
+    "intellij.agent.workbench.ai.review.space",
   )
   named("patchPluginXml") {
     doLast {

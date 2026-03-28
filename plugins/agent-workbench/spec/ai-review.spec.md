@@ -6,6 +6,9 @@ targets:
   - ../ai-review/resources/*.xml
   - ../ai-review/resources/messages/*.properties
   - ../ai-review/intellij.agent.workbench.ai.review.iml
+  - ../../../../plugins/agent-workbench/ai-review-space/src/**/*.kt
+  - ../../../../plugins/agent-workbench/ai-review-space/resources/**/*.xml
+  - ../../../../plugins/agent-workbench/ai-review-space/resources/messages/*.properties
   - ../../../../plugins/agent-workbench/ai-review-agents/src/**/*.kt
   - ../../../../plugins/agent-workbench/ai-review-agents/resources/**/*.xml
   - ../../../../plugins/agent-workbench/ai-review-agents/resources/messages/*.properties
@@ -19,8 +22,9 @@ Date: 2026-03-27
 ## Summary
 Define the AI Review feature: an ACP-agent-powered code review system integrated into the Problems toolwindow via the Agent Workbench prompt popup, supporting multiple concurrent review sessions with independent result tabs.
 
-The feature is split into two modules:
+The feature is split into three modules:
 - **Core** (`intellij.agent.workbench.ai.review`) — community module owning data models, session management, Problems toolwindow UI. Content module of the Agent Workbench plugin.
+- **Space Bridge** (`intellij.agent.workbench.ai.review.space`) — optional ultimate module contributing Space draft-posting actions to AI Review tabs when the Space plugin is available. Content module of the Agent Workbench plugin.
 - **Agents Executor** (`intellij.agent.workbench.ai.review.agents`) — ultimate module providing `AIReviewAcpAgent` as a project-level `@Service` that executes reviews via ACP agents (Claude Code, Codex). Content module of the Agent Workbench plugin; depends on `intellij.ml.llm.agents.acp`.
 
 ## Goals
