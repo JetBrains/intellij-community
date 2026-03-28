@@ -1,17 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.foundation.search
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
+import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.search.SpeedSearchMatcher.Companion.patternMatcher
 import org.jetbrains.jewel.foundation.search.impl.ExactSubstringSpeedSearchMatcher
 import org.jetbrains.jewel.foundation.search.impl.PatternSpeedSearchMatcher
 
 public fun interface SpeedSearchMatcher {
-    /**
-     * Returns a [MatchResult.Match] with a list of ranges from the where the pattern matches, or [MatchResult.NoMatch]
-     * if the pattern does not match.
-     */
+    /** Returns a [MatchResult.Match] with a list of ranges where the pattern matches, or [MatchResult.NoMatch] */
     public fun matches(text: String?): MatchResult
+
+    /** Returns a [MatchResult.Match] with a list of ranges where the pattern matches, or [MatchResult.NoMatch] */
+    public fun matches(text: CharSequence?): MatchResult = matches(text?.toString())
 
     public companion object {
         /**
@@ -68,12 +70,16 @@ public fun interface SpeedSearchMatcher {
             caseSensitivity: MatchingCaseSensitivity = MatchingCaseSensitivity.None,
             ignoredSeparators: String = "",
         ): SpeedSearchMatcher =
-            PatternSpeedSearchMatcher(
-                basePattern = pattern.convertToPattern(matchFromBeginning),
-                options = caseSensitivity,
-                ignoredSeparators = ignoredSeparators,
-                containsMatcher = exactSubstringMatcher(pattern, caseSensitivity != MatchingCaseSensitivity.All),
-            )
+            if (pattern.isBlank()) {
+                EmptySpeedSearchMatcher
+            } else {
+                PatternSpeedSearchMatcher(
+                    basePattern = pattern.convertToPattern(matchFromBeginning),
+                    options = caseSensitivity,
+                    ignoredSeparators = ignoredSeparators,
+                    containsMatcher = exactSubstringMatcher(pattern, caseSensitivity != MatchingCaseSensitivity.All),
+                )
+            }
     }
 
     public sealed interface MatchResult {
@@ -100,6 +106,25 @@ public fun interface SpeedSearchMatcher {
                 if (ranges.isNullOrEmpty()) NoMatch else Match(ranges)
         }
     }
+}
+
+public fun SpeedSearchMatcher.cached(): SpeedSearchMatcher =
+    this as? EmptySpeedSearchMatcher
+        ?: object : SpeedSearchMatcher {
+            private val cache = LRUCache<CharSequence, SpeedSearchMatcher.MatchResult>(100)
+
+            override fun matches(text: String?): SpeedSearchMatcher.MatchResult = matches(text as? CharSequence)
+
+            override fun matches(text: CharSequence?): SpeedSearchMatcher.MatchResult =
+                if (text.isNullOrBlank()) {
+                    this@cached.matches(text)
+                } else {
+                    cache.getOrPut(text) { this@cached.matches(text) }
+                }
+        }
+
+private class LRUCache<K : Any, V : Any>(private val capacity: Int) : LinkedHashMap<K, V>(capacity, 0.75f, true) {
+    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>?): Boolean = size > capacity
 }
 
 /**
@@ -155,6 +180,106 @@ public enum class MatchingCaseSensitivity {
 }
 
 /**
+ * A [SpeedSearchMatcher] implementation that never matches any text.
+ *
+ * This matcher is used internally as a performance optimization when the search pattern is empty or invalid. Instead of
+ * creating a full matcher that would never match anything, this singleton provides a consistent [MatchResult.NoMatch]
+ * response for all inputs.
+ *
+ * **Internal API:** This object is automatically used by `SpeedSearchState` when the filter text is empty. Users should
+ * not instantiate or use this matcher directly. Instead, use [SpeedSearchMatcher.patternMatcher] or
+ * [SpeedSearchMatcher.exactSubstringMatcher] to create matchers with actual patterns.
+ *
+ * @see SpeedSearchMatcher for creating matchers with actual patterns
+ * @see filter for filtering collections that handle this matcher efficiently
+ */
+@InternalJewelApi
+@ApiStatus.Internal
+public object EmptySpeedSearchMatcher : SpeedSearchMatcher {
+    override fun matches(text: String?): SpeedSearchMatcher.MatchResult = matches(text as? CharSequence)
+
+    override fun matches(text: CharSequence?): SpeedSearchMatcher.MatchResult = SpeedSearchMatcher.MatchResult.NoMatch
+}
+
+/**
+ * Checks whether the given text matches the current [SpeedSearchMatcher] pattern.
+ *
+ * This is a convenience method that simplifies checking for matches by returning a boolean instead of requiring pattern
+ * matching on [SpeedSearchMatcher.MatchResult].
+ *
+ * Example:
+ * ```kotlin
+ * val matcher = SpeedSearchMatcher.patternMatcher("foo")
+ * matcher.matches("foobar") // true
+ * matcher.matches("baz") // false
+ * ```
+ *
+ * @param matcher The text to check for matches. If null, returns false.
+ * @return `true` if the text matches the pattern, `false` otherwise.
+ * @see SpeedSearchMatcher.matches for the underlying match result with ranges
+ */
+public fun CharSequence.matches(matcher: SpeedSearchMatcher): Boolean =
+    matcher.matches(this) != SpeedSearchMatcher.MatchResult.NoMatch
+
+/**
+ * Filters an iterable collection based on whether items match the given [SpeedSearchMatcher].
+ *
+ * For each item in the collection, the [textRepresentationProvider] function is used to extract a string
+ * representation, which is then matched against the [matcher]. Items that match are included in the returned list.
+ *
+ * If the [matcher] is [EmptySpeedSearchMatcher], all items are returned without filtering, optimizing the common case
+ * of an empty search query.
+ *
+ * Example:
+ * ```kotlin
+ * data class User(val name: String, val email: String)
+ * val users = listOf(
+ *     User("John Doe", "john@example.com"),
+ *     User("Jane Smith", "jane@example.com")
+ * )
+ *
+ * val matcher = SpeedSearchMatcher.patternMatcher("john")
+ * val filtered = users.filter(matcher) { it.name }
+ * // Returns: [User("John Doe", "john@example.com")]
+ * ```
+ *
+ * @param T The type of items in the collection.
+ * @param matcher The [SpeedSearchMatcher] to use for filtering.
+ * @param textRepresentationProvider A function that extracts a string representation from each item for matching.
+ * @return A list containing only the items that match the search pattern.
+ * @see matches for the underlying boolean match check
+ */
+public fun <T> Iterable<T>.filter(
+    matcher: SpeedSearchMatcher,
+    textRepresentationProvider: (T) -> CharSequence,
+): List<T> =
+    if (matcher is EmptySpeedSearchMatcher) {
+        toList()
+    } else {
+        filter { textRepresentationProvider(it).matches(matcher) }
+    }
+
+/**
+ * Filters an iterable collection of strings based on the given [SpeedSearchMatcher].
+ *
+ * This is a convenience overload of [filter] for working directly with string collections, eliminating the need to
+ * provide a string extraction function.
+ *
+ * Example:
+ * ```kotlin
+ * val frameworks = listOf("React", "Vue.js", "Angular", "Svelte")
+ * val matcher = SpeedSearchMatcher.patternMatcher("react")
+ * val filtered = frameworks.filter(matcher)
+ * // Returns: ["React"]
+ * ```
+ *
+ * @param matcher The [SpeedSearchMatcher] to use for filtering.
+ * @return A list containing only the strings that match the search pattern.
+ * @see filter for filtering collections of other types
+ */
+public fun <T : CharSequence> Iterable<T>.filter(matcher: SpeedSearchMatcher): List<T> = filter(matcher) { it }
+
+/**
  * Split the input into words based on case changes, digits, and special characters, and join them with the wildcard
  * ('*') character.
  *
@@ -183,6 +308,7 @@ internal fun String.convertToPattern(matchFromBeginning: Boolean): String {
                                 if (upperCaseCount > 0 || lowerCaseCount > 0 || specialCount > 0) break
                                 digitCount++
                             }
+
                             c.isUpperCase() -> {
                                 if (lowerCaseCount > 0 || digitCount > 0 || specialCount > 0) break
                                 if (
@@ -195,10 +321,12 @@ internal fun String.convertToPattern(matchFromBeginning: Boolean): String {
                                 }
                                 upperCaseCount++
                             }
+
                             c.isLowerCase() -> {
                                 if (digitCount > 0 || specialCount > 0) break
                                 lowerCaseCount++
                             }
+
                             else -> {
                                 if (upperCaseCount > 0 || lowerCaseCount > 0 || digitCount > 0) break
                                 specialCount++
