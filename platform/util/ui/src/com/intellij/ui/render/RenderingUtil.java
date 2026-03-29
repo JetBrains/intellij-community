@@ -15,7 +15,9 @@ import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.JTable;
 import javax.swing.JTree;
+import javax.swing.SwingUtilities;
 import java.awt.Color;
+import java.awt.Window;
 import java.util.function.Supplier;
 
 public final class RenderingUtil {
@@ -195,7 +197,10 @@ public final class RenderingUtil {
   }
 
   private static boolean isFocusedImpl(@NotNull JComponent component) {
-    return component.hasFocus() || ClientProperty.isTrue(component, ALWAYS_PAINT_SELECTION_AS_FOCUSED);
+    if (component.hasFocus()) return true;
+    if (!ClientProperty.isTrue(component, ALWAYS_PAINT_SELECTION_AS_FOCUSED)) return false;
+    Window window = SwingUtilities.getWindowAncestor(component);
+    return window == null || window.isActive();
   }
 
   private static JTable getTableFor(@NotNull JTree tree) {

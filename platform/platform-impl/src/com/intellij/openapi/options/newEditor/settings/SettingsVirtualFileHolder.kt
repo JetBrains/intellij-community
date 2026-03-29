@@ -205,7 +205,6 @@ internal class SettingsVirtualFileHolder private constructor(private val project
       val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */true)
         .takeIf { !it.configurables.isEmpty() }
       val configurableToSelect = ConfigurableVisitor.findById(configurableId, listOf(group)) ?: return
-      settingsEditor.setNavigatingNow()
       settingsEditor.select(configurableToSelect)
     }
   }

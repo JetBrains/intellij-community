@@ -13,9 +13,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -24,19 +21,14 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.ConfigurableWrapper
-import com.intellij.openapi.options.newEditor.SettingsDialog
 import com.intellij.openapi.options.newEditor.SettingsDialogFactory
-import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapperDialog
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.ui.navigation.Place
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
@@ -61,7 +53,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     @JvmStatic
     @Deprecated("Use showSettings instead")
     fun getDialog(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?): DialogWrapper {
-      return createDialogWrapper(project, groups, toSelect, filter = null, isModal = true)
+      return createDialogWrapper(project, groups, toSelect, filter = null)
     }
 
     @JvmStatic
@@ -139,24 +131,19 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
 
   @ApiStatus.Internal
   protected open fun doShow(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?, filter: String?) {
-    if (project != null &&
-        project != ProjectManager.getInstance().defaultProject &&
-        useNonModalSettingsWindow() &&
-        ModalityState.current() == ModalityState.nonModal()) {
-      runWithModalProgressBlocking(project, IdeBundle.message("settings.modal.opening.message")) {
-        val settingsFile = SettingsVirtualFileHolder.getInstance(project).getOrCreate(toSelect) {
-          val dialog = createDialogWrapper(project, groups, toSelect, filter, isModal = false) as SettingsDialog
-          dialog.peer.rootPane.isFocusCycleRoot = true
-          dialog.peer.rootPane.focusTraversalPolicy = IdeFocusTraversalPolicy()
-          dialog
-        }
-        val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
-        val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true, requestFocus = true)
-        fileEditorManager.openFile(settingsFile, options)
-      }
-    }
-    else {
-      createDialogWrapper(project, groups, toSelect, filter, isModal = true).show()
+    val isModal = !(project != null &&
+                    project != ProjectManager.getInstance().defaultProject &&
+                    useNonModalSettingsWindow() &&
+                    ModalityState.current() == ModalityState.nonModal())
+
+    val filteredGroups = filterEmptyGroups(groups)
+
+    if (!isModal) {
+      // Use FrameWrapper (JFrame) for non-modal mode, like tool windows in "Window" mode
+      val frame = com.intellij.openapi.options.newEditor.SettingsFrame.getOrCreate(project, filteredGroups, toSelect, filter)
+      frame.show()
+    } else {
+      createDialogWrapper(project, filteredGroups, toSelect, filter).show()
     }
   }
 
@@ -172,23 +159,15 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     // but actually rework the invocation to be performed not in EDT.
     ThreadingAssertions.assertBackgroundThread()
 
-    if (!project.isDefault && useNonModalSettingsWindow()) {
-      withModalProgress(project, title = IdeBundle.message("settings.modal.opening.message")) {
-        val settingsFile = SettingsVirtualFileHolder.getInstance(project).getOrCreate(toSelect = null) {
-          val dialog = createDialogWrapper(project, groups, toSelect = null, filter = null, isModal = false) as SettingsDialog
-          dialog.peer.rootPane.isFocusCycleRoot = true
-          dialog.peer.rootPane.focusTraversalPolicy = IdeFocusTraversalPolicy()
-          dialog
-        }
-        val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
-        val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true, requestFocus = true)
-        fileEditorManager.openFile(settingsFile, options)
-      }
-    }
-    else {
-      val settingsDialogFactory = serviceAsync<SettingsDialogFactory>()
-      withContext(Dispatchers.EDT) {
-        settingsDialogFactory.create(project, filterEmptyGroups(groups), configurable = null, filter = null, isModal = true).show()
+    val isModal = project.isDefault || !useNonModalSettingsWindow()
+    withContext(Dispatchers.EDT) {
+      if (!isModal) {
+        // Use FrameWrapper (JFrame) for non-modal mode, like tool windows in "Window" mode
+        val frame = com.intellij.openapi.options.newEditor.SettingsFrame.getOrCreate(project, filterEmptyGroups(groups), null, null)
+        frame.show()
+      } else {
+        val settingsDialogFactory = serviceAsync<SettingsDialogFactory>()
+        settingsDialogFactory.create(project, filterEmptyGroups(groups), null, null).show()
       }
     }
   }
@@ -308,15 +287,8 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   }
 
   override fun closeSettings(@NotNull project: Project, @NotNull component: Component) {
-    if (useNonModalSettingsWindow()) {
-      val virtualFile = SettingsVirtualFileHolder.getInstance(project).getVirtualFileIfExists() ?: return
-      val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
-      fileEditorManager.closeFile(virtualFile)
-    }
-    else {
-      val dialogWrapper = getDialogWrapperFor(component) ?: return
-      dialogWrapper.doCancelAction()
-    }
+    val dialogWrapper = getDialogWrapperFor(component) ?: return
+    dialogWrapper.doCancelAction()
   }
 }
 
@@ -330,10 +302,10 @@ private fun createDialogWrapper(
   groups: List<ConfigurableGroup>,
   toSelect: Configurable?,
   filter: String?,
-  isModal: Boolean,
 ): DialogWrapper {
   val project = currentOrDefaultProject(project)
-  return SettingsDialogFactory.getInstance().create(project, filterEmptyGroups(groups), toSelect, filter, isModal)
+  // Note: groups should already be filtered by the caller
+  return SettingsDialogFactory.getInstance().create(project, groups, toSelect, filter)
 }
 
 private fun findPreselectedByDisplayName(preselectedConfigurableDisplayName: String, groups: List<ConfigurableGroup>): Configurable? {
