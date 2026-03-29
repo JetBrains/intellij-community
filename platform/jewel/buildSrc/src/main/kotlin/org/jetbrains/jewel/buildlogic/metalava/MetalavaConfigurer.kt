@@ -92,6 +92,7 @@ internal class MetalavaConfigurer(private val project: Project, private val vers
         validateJewelVersion(targetVersion)
 
         val currentApiFileName = apiFileName("current", stableOnly)
+        val patchFileName = currentApiFileName.removeSuffix(".txt") + ".patch"
         val generateApiTask =
             tasks.register<GenerateMetalavaApiTask>("generateMetalava${taskDescriptor}Api") {
                 description = "Generates a new $taskDescriptor Metalava API dump file based on the current sources."
@@ -123,6 +124,7 @@ internal class MetalavaConfigurer(private val project: Project, private val vers
 
             currentApiFile.set(generateApiTask.flatMap { it.output })
             referenceApiFile.set(targetApiFile)
+            patchFile.set(layout.buildDirectory.file("reports/metalava/$patchFileName"))
 
             updateBaseline.set(updateBaselineForCheckTask)
             baselineFile.from(layout.projectDirectory.files("metalava/${baselineFileName(stableOnly)}"))

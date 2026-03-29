@@ -393,7 +393,7 @@ suspend fun branchExists(branch: String, directory: File): Boolean =
 val isWindows = "windows" in System.getProperty("os.name").lowercase()
 
 fun exitWithError(message: String): Nothing {
-    throw PrintMessage(message.asError(), printError = true)
+    throw PrintMessage(message.asError(), statusCode = 1, printError = true)
 }
 
 suspend fun getCurrentBranchName(directory: File): String =

@@ -110,8 +110,9 @@ Review the output. If API dumps are out of date, tell the user to run the approp
 cd platform/jewel && ./scripts/metalava-signatures.main.kts validate
 ```
 
-If Metalava reports new issues, tell the user they can update the baseline files with the `--update-baseline` parameter, then amend and
-re-validate.
+If Metalava reports an intentional API change, tell the user to update the API dumps and re-validate.
+If the finding should be suppressed instead, tell the user to update the baseline files with the `--update-baseline`
+parameter, then amend and re-validate.
 
 ### 4e. Bazel build/tests
 
@@ -182,15 +183,15 @@ You may also want to run:
 ## 5. Check for breaking API changes
 
 Changes may break source compat (although we should avoid it as much as possible!), but MUST NOT break binary compat. Look at the diff for
-`api-dump.txt` and `api-dump-experimental.txt` files:
+API dump files under module `metalava/` directories:
 
 ```bash
-git diff master -- '*.api-dump.txt' '*.api-dump-experimental.txt'
+git diff master -- 'platform/jewel/**/metalava/*.txt'
 ```
 
-- Removed/changed lines in `api-dump.txt` = potential breaking changes in stable API. Only acceptable if now annotated with a
-  `DeprecationLevel.HIDDEN` deprecation as it's still in the actual ABI, just marked as synthetic.
-- Removed/changed lines in `api-dump-experimental.txt` = experimental API changes. Can be allowed if and only if unavoidable and
+- Removed or changed lines in `*-api-stable-*.txt` = potential breaking changes in stable API. Only acceptable if now
+  annotated with a `DeprecationLevel.HIDDEN` deprecation as it's still in the actual ABI, just marked as synthetic.
+- Removed or changed lines in `*-api-*.txt` = experimental API changes. Can be allowed if and only if unavoidable and
   documented in the release notes.
 
 ## 6. Check for visual changes and screenshots
