@@ -99,6 +99,7 @@ public final class BranchFilterPopupComponent extends MultipleValueFilterPopupCo
   protected @NotNull ActionGroup createActionGroup() {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
 
+    actionGroup.add(createAllAction());
     actionGroup.add(createSelectMultipleValuesAction());
 
     VcsLogDataPack logData = myFilterModel.getDataPack();
