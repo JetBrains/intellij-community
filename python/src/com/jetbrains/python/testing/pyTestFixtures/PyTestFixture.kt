@@ -409,7 +409,8 @@ internal fun getFixtures(module: Module, forWhat: PyFunction, typeEvalContext: T
     (findDecoratorsByName(module, TEST_FIXTURE_DECORATOR_NAMES)
        .filter { it.target?.containingClass == null } //We need only top-level functions, class-based fixtures processed above
        .mapNotNull { createFixture(it) }
-     + getCustomFixtures(typeEvalContext, forWhat))
+     + getCustomFixtures(typeEvalContext, forWhat)
+     + listOf(PyTestFixture(null, null, REQUEST_FIXTURE))) // Always include request fixture
       .filterNot { fixture && it.name == forWhat.name }.toList()  // Do not suggest fixture for itself
   }
   else emptyList()
