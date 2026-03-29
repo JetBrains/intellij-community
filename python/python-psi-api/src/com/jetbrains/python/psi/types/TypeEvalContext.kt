@@ -8,7 +8,6 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -26,7 +25,6 @@ import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.engine.PyTypeEngine
-import com.jetbrains.python.psi.types.engine.PyTypeEngineProvider
 import com.jetbrains.python.psi.types.engine.PyTypeEngineProvider.Companion.createTypeResolver
 import com.jetbrains.python.pyi.PyiLanguageDialect
 import org.jetbrains.annotations.ApiStatus
@@ -203,14 +201,14 @@ sealed class TypeEvalContext(
           val isUserInitiated = constraints.myAllowStubToAST && constraints.myAllowDataFlow
           typeEngine.resolveType(element, this is LibraryTypeEvalContext, isUserInitiated)?.get()
         }
-        //PyTypeEvaluationAggregatesCollector.recordHybridTypeEngineTime(typeEngine.name, duration.inWholeMilliseconds)
+        PyTypeEvaluationStatisticsService.getInstance().logHybridTypeEngineTime(typeEngine.name, duration.inWholeMilliseconds)
         result
       }
       else {
         val (result, duration) = measureTimedValue {
           element.getType(this, KeyImpl)
         }
-        //PyTypeEvaluationAggregatesCollector.recordPyCharmTypeEngineTime(duration.inWholeMilliseconds)
+        PyTypeEvaluationStatisticsService.getInstance().logJBTypeEngineTime(duration.inWholeMilliseconds)
         result
       }
 
