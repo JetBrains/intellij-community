@@ -313,7 +313,6 @@ internal class JavaThreadDumpItem(private val threadState: ThreadState) : Mergea
       if (threadState.awaitingThreads != otherThreadState.awaitingThreads) return false
       if (threadState.deadlockedThreads != otherThreadState.deadlockedThreads) return false
       if (this.comparableStackTrace != other.comparableStackTrace) return false
-      if (this.item.parentTreeId != other.item.parentTreeId) return false
       return true
     }
 
@@ -327,8 +326,7 @@ internal class JavaThreadDumpItem(private val threadState: ThreadState) : Mergea
         threadState.extraState,
         threadState.awaitingThreads,
         threadState.deadlockedThreads,
-        comparableStackTrace,
-        parentTreeId
+        comparableStackTrace
       )
     }
   }
