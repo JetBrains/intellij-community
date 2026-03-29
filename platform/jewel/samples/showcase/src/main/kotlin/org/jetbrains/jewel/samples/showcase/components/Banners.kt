@@ -64,6 +64,7 @@ public fun Banners(modifier: Modifier = Modifier) {
                 GroupHeader("Default banner (aka editor banners)")
 
                 DefaultInformationBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     style = JewelTheme.defaultBannerStyle.information,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
                     linkActions = {
@@ -73,6 +74,7 @@ public fun Banners(modifier: Modifier = Modifier) {
                 )
 
                 DefaultInformationBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     style = JewelTheme.defaultBannerStyle.information,
                     iconActions = {
                         iconAction(
@@ -90,6 +92,7 @@ public fun Banners(modifier: Modifier = Modifier) {
                 )
 
                 DefaultInformationBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     style = JewelTheme.defaultBannerStyle.information,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
                     icon = null,
@@ -99,32 +102,40 @@ public fun Banners(modifier: Modifier = Modifier) {
                     },
                 )
 
-                DefaultInformationBanner(style = JewelTheme.defaultBannerStyle.information, text = LONG_IPSUM)
+                DefaultInformationBanner(
+                    modifier = Modifier.fillMaxWidth(),
+                    style = JewelTheme.defaultBannerStyle.information,
+                    text = LONG_IPSUM,
+                )
 
                 DefaultInformationBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     style = JewelTheme.defaultBannerStyle.information,
                     text = LONG_IPSUM,
                     icon = null,
                 )
 
                 DefaultInformationBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     style = JewelTheme.defaultBannerStyle.information,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
                 )
 
                 DefaultSuccessBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
                     style = JewelTheme.defaultBannerStyle.success,
                 )
 
                 DefaultWarningBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
                     style = JewelTheme.defaultBannerStyle.warning,
                 )
 
                 DefaultErrorBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
-                    modifier = Modifier,
                     icon = { Icon(AllIconsKeys.General.BalloonError, null) },
                     linkActions = {
                         action("Action A", onClick = { clickLabel = "Error default Action A clicked" })
@@ -166,6 +177,7 @@ public fun Banners(modifier: Modifier = Modifier) {
                 }
 
                 InlineInformationBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
                     title = optionalTitle,
                     icon = null,
@@ -173,6 +185,7 @@ public fun Banners(modifier: Modifier = Modifier) {
                 )
 
                 InlineInformationBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     title = optionalTitle,
                     icon = null,
                     iconActions = {
@@ -202,6 +215,7 @@ public fun Banners(modifier: Modifier = Modifier) {
                 }
 
                 InlineInformationBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     title = optionalTitle,
                     icon = null,
                     iconActions = { iconAction(AllIconsKeys.General.Refresh, "Restart", onClick = { restart += 1 }) },
@@ -210,6 +224,7 @@ public fun Banners(modifier: Modifier = Modifier) {
                 )
 
                 InlineInformationBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     icon = null,
                     style = JewelTheme.inlineBannerStyle.information,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
@@ -236,6 +251,7 @@ public fun Banners(modifier: Modifier = Modifier) {
                 )
 
                 InlineInformationBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
                     title = optionalTitle,
                     icon = null,
@@ -254,12 +270,14 @@ public fun Banners(modifier: Modifier = Modifier) {
                 )
 
                 InlineInformationBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
                     title = optionalTitle,
                     linkActions = null,
                     style = JewelTheme.inlineBannerStyle.information,
                 )
                 InlineErrorBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     style = JewelTheme.inlineBannerStyle.error,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
                     title = optionalTitle,
@@ -272,6 +290,7 @@ public fun Banners(modifier: Modifier = Modifier) {
                     },
                 )
                 InlineInformationBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     style = JewelTheme.inlineBannerStyle.information,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
                     title = optionalTitle,
@@ -281,6 +300,7 @@ public fun Banners(modifier: Modifier = Modifier) {
                     },
                 )
                 InlineSuccessBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     style = JewelTheme.inlineBannerStyle.success,
                     text = LONG_IPSUM,
                     title = optionalTitle,
@@ -312,6 +332,7 @@ public fun Banners(modifier: Modifier = Modifier) {
                     },
                 )
                 InlineWarningBanner(
+                    modifier = Modifier.fillMaxWidth(),
                     style = JewelTheme.inlineBannerStyle.warning,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
                     title = optionalTitle,
