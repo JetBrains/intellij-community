@@ -81,7 +81,7 @@ private fun GitRepositoryManager.collectRemotes(): Set<GitRemoteUrlCoordinates> 
 
   return repositories.flatMap { repo ->
     repo.remotes.flatMap { remote ->
-      remote.urls.map { url ->
+      (remote.urls + remote.pushUrls).distinct().map { url ->
         GitRemoteUrlCoordinates(url, remote, repo)
       }
     }
