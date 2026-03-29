@@ -26,9 +26,10 @@ public class GitStash extends GitRepositoryAction {
     VirtualFile selectedRoot = dialog.getSelectedRoot();
     String message = dialog.getMessage();
     boolean keepIndex = dialog.getKeepIndex();
+    boolean includeUntracked = dialog.getIncludeUntracked();
 
     GitStashOperations.runStashInBackground(project, Collections.singleton(selectedRoot), root -> {
-      return GitStashUtils.createStashHandler(project, root, keepIndex, message);
+      return GitStashUtils.createStashHandler(project, root, keepIndex, includeUntracked, message);
     });
   }
 
