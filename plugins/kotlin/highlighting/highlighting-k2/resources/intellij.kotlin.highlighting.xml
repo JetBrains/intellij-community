@@ -23,6 +23,7 @@
     <highlightErrorFilter implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinHighlightInjectionErrorFilter"/>
 
     <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighting.KotlinHighlightExitPointsHandlerFactory"/>
+    <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightImplicitItHandlerFactory"/>
 
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.highlighting.SupportAvailabilityNotificationProvider"/>
 

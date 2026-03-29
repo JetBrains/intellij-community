@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.Consumer
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameter
+import org.jetbrains.kotlin.idea.references.getCalleeByLambdaArgument
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -42,6 +43,9 @@ class KotlinHighlightImplicitItHandlerFactory : HighlightUsagesHandlerFactoryBas
                         override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                             if (expression is KtNameReferenceExpression && expression.getFunctionLiteralByImplicitLambdaParameter() == lambda) {
                                 addOccurrence(expression)
+                                lambda.getCalleeByLambdaArgument()?.also {
+                                    addOccurrence(it)
+                                }
                             }
                         }
                     }
