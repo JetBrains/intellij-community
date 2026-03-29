@@ -205,6 +205,50 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
              : CANCEL;
   }
 
+  @Override
+  public boolean showBranchAlreadyCheckedOutInWorktreeDialog(@NotNull String branchName, @NotNull String worktreePath) {
+    AtomicBoolean confirmed = new AtomicBoolean();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      String title = GitBundle.message("checkout.operation.worktree.checkout.title");
+      String message = GitBundle.message("checkout.operation.worktree.checkout.message", branchName, worktreePath);
+      String proceedButton = GitBundle.message("checkout.operation.worktree.checkout.proceed");
+      confirmed.set(YES == DialogManager.showOkCancelDialog(
+        myProject,
+        message,
+        title,
+        proceedButton,
+        getCancelButtonText(),
+        Messages.getWarningIcon()
+      ));
+    });
+    return confirmed.get();
+  }
+
+  @Override
+  public @NotNull DeleteWorktreeBranchDecision showBranchCheckedOutInWorktreeDeleteDialog(@NotNull String branchName, @NotNull String worktreePath) {
+    Ref<DeleteWorktreeBranchDecision> decision = Ref.create(DeleteWorktreeBranchDecision.CANCEL);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      String title = GitBundle.message("delete.branch.operation.worktree.delete.title");
+      String message = GitBundle.message("delete.branch.operation.worktree.delete.message", branchName, worktreePath);
+      int result = DialogManager.showYesNoCancelDialog(
+        myProject,
+        message,
+        title,
+        GitBundle.message("delete.branch.operation.worktree.delete.worktree.and.branch"),
+        GitBundle.message("delete.branch.operation.worktree.delete.worktree.only"),
+        getCancelButtonText(),
+        Messages.getWarningIcon()
+      );
+      if (result == Messages.YES) {
+        decision.set(DeleteWorktreeBranchDecision.DELETE_WORKTREE_AND_BRANCH);
+      }
+      else if (result == Messages.NO) {
+        decision.set(DeleteWorktreeBranchDecision.DELETE_WORKTREE_ONLY);
+      }
+    });
+    return decision.get();
+  }
+
   private static @NotNull @NlsContexts.DialogTitle String unmergedFilesErrorTitle(@NotNull String operationName) {
     return GitBundle.message("branch.ui.handler.can.not.operation.name.because.of.unmerged.files", operationName);
   }
