@@ -111,6 +111,10 @@ public sealed interface InlineMarkdown {
         public val source: String,
         public val alt: String,
         public val title: String?,
+        /** The width of the image, or `null` if not specified. */
+        public val width: DimensionSize? = null,
+        /** The height of the image, or `null` if not specified. */
+        public val height: DimensionSize? = null,
         override val inlineContent: List<InlineMarkdown>,
     ) : InlineMarkdown, WithInlineMarkdown {
         public constructor(
@@ -119,6 +123,13 @@ public sealed interface InlineMarkdown {
             title: String?,
             vararg inlineContent: InlineMarkdown,
         ) : this(source, alt, title, inlineContent.toList())
+
+        public constructor(
+            source: String,
+            alt: String,
+            title: String?,
+            inlineContent: List<InlineMarkdown>,
+        ) : this(source, alt, title, null, null, inlineContent)
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -130,6 +141,8 @@ public sealed interface InlineMarkdown {
             if (alt != other.alt) return false
             if (title != other.title) return false
             if (inlineContent != other.inlineContent) return false
+            if (width != other.width) return false
+            if (height != other.height) return false
 
             return true
         }
@@ -139,6 +152,8 @@ public sealed interface InlineMarkdown {
             result = 31 * result + alt.hashCode()
             result = 31 * result + (title?.hashCode() ?: 0)
             result = 31 * result + inlineContent.hashCode()
+            result = 31 * result + (width?.hashCode() ?: 0)
+            result = 31 * result + (height?.hashCode() ?: 0)
             return result
         }
 
@@ -147,7 +162,9 @@ public sealed interface InlineMarkdown {
                 "source='$source', " +
                 "alt='$alt', " +
                 "title=$title, " +
-                "inlineContent=$inlineContent" +
+                "inlineContent=$inlineContent, " +
+                "width=$width, " +
+                "height=$height" +
                 ")"
         }
     }
