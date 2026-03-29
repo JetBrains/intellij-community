@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.takeOrElse
 import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -433,6 +434,8 @@ public fun EditableListComboBox(
     var hoveredItemIndex by remember { mutableIntStateOf(-1) }
     val scope = rememberCoroutineScope()
 
+    val currentOnPopupVisibleChange by rememberUpdatedState(onPopupVisibleChange)
+
     LaunchedEffect(itemKeys) {
         // Select the first item in the list when creating
         listState.selectedKeys = setOf(itemKeys(selectedIndex, items.getOrNull(selectedIndex).orEmpty()))
@@ -511,7 +514,7 @@ public fun EditableListComboBox(
                 PopupManager(
                     onPopupVisibleChange = {
                         hoveredItemIndex = -1
-                        onPopupVisibleChange(it)
+                        currentOnPopupVisibleChange(it)
                     },
                     name = "EditableListComboBoxPopup",
                 )
@@ -751,11 +754,12 @@ internal fun <T : Any> ListComboBoxImpl(
 
     val popupMaxHeight = maxPopupHeight.takeOrElse { style.metrics.maxPopupHeight }
 
+    val currentOnPopupVisibleChange by rememberUpdatedState(onPopupVisibleChange)
     val popupManager = remember {
         PopupManager(
             onPopupVisibleChange = { visible ->
                 resetPreviewSelectedIndex()
-                onPopupVisibleChange(visible)
+                currentOnPopupVisibleChange(visible)
             },
             name = "ListComboBoxPopup",
         )
@@ -835,6 +839,7 @@ internal fun <T : Any> ListComboBoxImpl(
         horizontalPopupAlignment = horizontalPopupAlignment,
         popupStyle = popupStyle,
         popupPositionProvider = popupPositionProvider,
+        popupProperties = PopupProperties(focusable = false),
         labelContent = { labelContent(items.getOrNull(selectedIndex)) },
         popupContent = {
             PopupContent(

@@ -265,7 +265,6 @@ public class MenuItemColors(
 @GenerateDataFunctions
 public class MenuMetrics(
     public val cornerSize: CornerSize,
-    public val menuMargin: PaddingValues,
     public val contentPadding: PaddingValues,
     public val offset: DpOffset,
     public val shadowSize: Dp,
@@ -273,6 +272,28 @@ public class MenuMetrics(
     public val itemMetrics: MenuItemMetrics,
     public val submenuMetrics: SubmenuMetrics,
 ) {
+    // To avoid source/binary breaking change for clients that read this property
+    @Deprecated(message = "Use PopupContainerStyle.metrics.menuMargin instead.", level = DeprecationLevel.WARNING)
+    public val menuMargin: PaddingValues = PaddingValues()
+
+    @Suppress("UnusedPrivateProperty")
+    @Deprecated(
+        message =
+            "Please use the constructor without `menuMargin`. Update your code to set the value from this parameter " +
+                "to `PopupContainerStyle.menuMargin` instead.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    public constructor(
+        cornerSize: CornerSize,
+        menuMargin: PaddingValues,
+        contentPadding: PaddingValues,
+        offset: DpOffset,
+        shadowSize: Dp,
+        borderWidth: Dp,
+        itemMetrics: MenuItemMetrics,
+        submenuMetrics: SubmenuMetrics,
+    ) : this(cornerSize, contentPadding, offset, shadowSize, borderWidth, itemMetrics, submenuMetrics)
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -280,7 +301,6 @@ public class MenuMetrics(
         other as MenuMetrics
 
         if (cornerSize != other.cornerSize) return false
-        if (menuMargin != other.menuMargin) return false
         if (contentPadding != other.contentPadding) return false
         if (offset != other.offset) return false
         if (shadowSize != other.shadowSize) return false
@@ -293,7 +313,6 @@ public class MenuMetrics(
 
     override fun hashCode(): Int {
         var result = cornerSize.hashCode()
-        result = 31 * result + menuMargin.hashCode()
         result = 31 * result + contentPadding.hashCode()
         result = 31 * result + offset.hashCode()
         result = 31 * result + shadowSize.hashCode()
@@ -306,7 +325,6 @@ public class MenuMetrics(
     override fun toString(): String {
         return "MenuMetrics(" +
             "cornerSize=$cornerSize, " +
-            "menuMargin=$menuMargin, " +
             "contentPadding=$contentPadding, " +
             "offset=$offset, " +
             "shadowSize=$shadowSize, " +

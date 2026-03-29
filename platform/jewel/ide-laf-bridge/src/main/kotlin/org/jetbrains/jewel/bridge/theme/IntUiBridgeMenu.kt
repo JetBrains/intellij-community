@@ -78,7 +78,6 @@ internal fun readMenuStyle(): MenuStyle {
         metrics =
             MenuMetrics(
                 cornerSize = CornerSize(IdeaPopupMenuUI.CORNER_RADIUS.dp.safeValue()),
-                menuMargin = PaddingValues(vertical = 6.dp),
                 contentPadding = PaddingValues(vertical = 7.dp, horizontal = 2.dp),
                 offset = DpOffset(0.dp, 2.dp),
                 shadowSize = 12.dp,

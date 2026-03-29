@@ -138,6 +138,8 @@ public fun MenuItemColors.Companion.dark(
         keybindingTintHovered = keybindingTintHovered,
     )
 
+@Suppress("UnusedParameter")
+@Deprecated(message = "Please use the .defaults overload without `menuMargin`.", level = DeprecationLevel.HIDDEN)
 public fun MenuMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(8.dp),
     menuMargin: PaddingValues = PaddingValues(vertical = 6.dp),
@@ -147,8 +149,17 @@ public fun MenuMetrics.Companion.defaults(
     borderWidth: Dp = 1.dp,
     itemMetrics: MenuItemMetrics = MenuItemMetrics.defaults(),
     submenuMetrics: SubmenuMetrics = SubmenuMetrics.defaults(),
-): MenuMetrics =
-    MenuMetrics(cornerSize, menuMargin, contentPadding, offset, shadowSize, borderWidth, itemMetrics, submenuMetrics)
+): MenuMetrics = MenuMetrics(cornerSize, contentPadding, offset, shadowSize, borderWidth, itemMetrics, submenuMetrics)
+
+public fun MenuMetrics.Companion.defaults(
+    cornerSize: CornerSize = CornerSize(8.dp),
+    contentPadding: PaddingValues = PaddingValues(vertical = 7.dp, horizontal = 2.dp),
+    offset: DpOffset = DpOffset(0.dp, 2.dp),
+    shadowSize: Dp = 12.dp,
+    borderWidth: Dp = 1.dp,
+    itemMetrics: MenuItemMetrics = MenuItemMetrics.defaults(),
+    submenuMetrics: SubmenuMetrics = SubmenuMetrics.defaults(),
+): MenuMetrics = MenuMetrics(cornerSize, contentPadding, offset, shadowSize, borderWidth, itemMetrics, submenuMetrics)
 
 public fun MenuItemMetrics.Companion.defaults(
     selectionCornerSize: CornerSize = CornerSize(4.dp),
