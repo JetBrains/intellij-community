@@ -91,6 +91,15 @@ class LibraryEffectiveKindProviderImpl(private val project: Project): LibraryEff
     }
 
     override fun getEffectiveKind(library: LibraryEntity): PersistentLibraryKind<*>? {
+        // Respect explicitly set library kind from the workspace model entity.
+        // This mirrors the Library overload (which checks library.kind first)
+        // and is needed for non-Gradle build systems that explicitly set
+        // PersistentLibraryKind (e.g., KotlinNativeLibraryKind) on their libraries.
+        library.typeId?.let { typeId ->
+            val kind = LibraryKindRegistry.getInstance().findKindById(typeId.name)
+            if (kind is KotlinLibraryKind && kind is PersistentLibraryKind<*>) return kind
+        }
+
         val classRoots = library.roots.filter { it.type == LibraryRootTypeId.COMPILED }.mapNotNull { it.url.virtualFile }
         return getKind(classRoots.toTypedArray())
     }
