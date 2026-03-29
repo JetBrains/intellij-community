@@ -12,7 +12,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 fun KtNameReferenceExpression.isReferenceToImplicitLambdaParameter(): Boolean {
@@ -50,4 +52,23 @@ fun KaValueParameterSymbol.getFunctionLiteralByImplicitLambdaParameterSymbol(): 
     if (!isImplicitLambdaParameter) return null
     val lambda = containingDeclaration as? KaAnonymousFunctionSymbol ?: return null
     return lambda.psi as? KtFunctionLiteral
+}
+
+
+fun KtNameReferenceExpression.getLambdaFunctionLiteralByNameReference(): KtFunctionLiteral? {
+    val lambda = (this.parent as? KtCallExpression)?.lambdaArguments?.singleOrNull()?.getLambdaExpression() ?: return null
+    return lambda.functionLiteral
+}
+
+fun KtFunctionLiteral.getImplicitItLambdaParameterSymbol(): KaValueParameterSymbol? {
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    allowAnalysisOnEdt {
+        analyze(this) {
+            if (valueParameters.isNotEmpty() || symbol.valueParameters.size != 1 || !symbol.valueParameters.first().isImplicitLambdaParameter) {
+                return null
+            } else {
+                return symbol.valueParameters.first()
+            }
+        }
+    }
 }
