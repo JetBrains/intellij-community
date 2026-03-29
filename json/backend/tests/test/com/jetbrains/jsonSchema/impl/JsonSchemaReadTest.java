@@ -158,6 +158,34 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
     Assert.assertNull(nonTextualNode);
   }
 
+  public void testDraft202012ConstKeywordInSchemaIsValid() {
+    myFixture.enableInspections(new JsonSchemaComplianceInspection());
+    Disposer.register(getTestRootDisposable(), () -> JsonSchemaTestServiceImpl.setProvider(null));
+
+    myFixture.configureByFiles("schema202012ConstKeywordSchema.json");
+    final List<HighlightInfo> infos = myFixture.doHighlighting();
+    for (HighlightInfo info : infos) {
+      if (!HighlightSeverity.INFORMATION.equals(info.getSeverity())) {
+        fail(String.format("%s in: %s", info.getDescription(),
+                           myFixture.getEditor().getDocument().getText(TextRange.create(info))));
+      }
+    }
+  }
+
+  public void testDraft202012DynamicRefInSchemaIsValid() {
+    myFixture.enableInspections(new JsonSchemaComplianceInspection());
+    Disposer.register(getTestRootDisposable(), () -> JsonSchemaTestServiceImpl.setProvider(null));
+
+    myFixture.configureByFiles("schema202012DynamicRefSchema.json");
+    final List<HighlightInfo> infos = myFixture.doHighlighting();
+    for (HighlightInfo info : infos) {
+      if (!HighlightSeverity.INFORMATION.equals(info.getSeverity())) {
+        fail(String.format("%s in: %s", info.getDescription(),
+                           myFixture.getEditor().getDocument().getText(TextRange.create(info))));
+      }
+    }
+  }
+
   private void doTestSchemaReadNotHung(final File file) throws Exception {
     // because of threading
     if (Runtime.getRuntime().availableProcessors() < 2) return;
