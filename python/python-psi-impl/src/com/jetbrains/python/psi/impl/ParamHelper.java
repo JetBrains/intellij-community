@@ -275,7 +275,7 @@ public final class ParamHelper {
         if (param.isKeywordContainer()) {
           PyType paramType = param.getType(context);
           if (paramType instanceof PyUnpackedTypedDictType unpackedTypedDictType) {
-            return StreamEx.of(unpackedTypedDictType.getUnpackedParameters());
+            return StreamEx.of(unpackedTypedDictType.getUnpackedParameters(context));
           }
         }
         return StreamEx.of(param);

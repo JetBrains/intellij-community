@@ -29,7 +29,7 @@ import java.util.List;
 @ApiStatus.Experimental
 public interface PyUnpackedTypedDictType extends PyKeywordVariadicType {
 
-  @NotNull List<PyCallableParameter> getUnpackedParameters();
+  @NotNull List<PyCallableParameter> getUnpackedParameters(@NotNull TypeEvalContext context);
 
   @NotNull PyTypedDictType getTypedDictType();
 }

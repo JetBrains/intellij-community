@@ -285,7 +285,7 @@ object PyExpectedTypeJudgement {
           // ```
           declaration = mapping.callableType?.callable ?: return null
         )
-        return PyUnpackedTypedDictTypeImpl.fromTypedDict(typedDictType, ctx);
+        return PyUnpackedTypedDictTypeImpl(typedDictType)
       }
       // TODO merge the type of `**kwargs` with the types of other mapped parameters here
       else {
