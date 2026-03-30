@@ -55,9 +55,14 @@ class AnalyzeStacktraceUtil private constructor() {
 
     @JvmStatic
     fun printStacktrace(consoleView: ConsoleView, unscrambledTrace: String) {
+      printStacktrace(consoleView, unscrambledTrace, ConsoleViewContentType.ERROR_OUTPUT)
+    }
+
+    @JvmStatic
+    fun printStacktrace(consoleView: ConsoleView, unscrambledTrace: String, consoleViewContentType: ConsoleViewContentType) {
       ThreadingAssertions.assertEventDispatchThread()
       consoleView.clear()
-      consoleView.print(unscrambledTrace + "\n", ConsoleViewContentType.ERROR_OUTPUT)
+      consoleView.print(unscrambledTrace + "\n", consoleViewContentType)
       consoleView.scrollTo(0)
     }
 
