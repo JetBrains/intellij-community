@@ -20,6 +20,7 @@ import com.intellij.problems.ProblemListener;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNodeUpdater;
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
@@ -37,6 +38,8 @@ import javax.swing.tree.TreePath;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+
+import static com.intellij.ide.projectView.impl.AbstractProjectViewPane.REAL_SELECTION_IN_PROGRESS;
 
 @ApiStatus.Internal
 public abstract class ProjectViewPaneSupport {
@@ -213,7 +216,9 @@ public abstract class ProjectViewPaneSupport {
     }
     TreePath path = paths.get(0);
     tree.expandPath(path); // request to expand found path
+    ClientProperty.put(tree, REAL_SELECTION_IN_PROGRESS, true);
     TreeUtil.selectPaths(tree, path); // select and scroll to center
+    ClientProperty.put(tree, REAL_SELECTION_IN_PROGRESS, false);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Selected the only path: " + path);
     }
@@ -226,7 +231,9 @@ public abstract class ProjectViewPaneSupport {
   protected static boolean selectPaths(@NotNull JTree tree, @NotNull ProjectViewPaneSelectionHelper.SelectionDescriptor selectionDescriptor) {
     List<? extends TreePath> adjustedPaths = ProjectViewPaneSelectionHelper.getAdjustedPaths(selectionDescriptor);
     adjustedPaths.forEach(it -> tree.expandPath(it));
+    ClientProperty.put(tree, REAL_SELECTION_IN_PROGRESS, true);
     TreeUtil.selectPaths(tree, adjustedPaths);
+    ClientProperty.put(tree, REAL_SELECTION_IN_PROGRESS, false);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Selected paths adjusted according to " + selectionDescriptor + ": " + adjustedPaths);
     }

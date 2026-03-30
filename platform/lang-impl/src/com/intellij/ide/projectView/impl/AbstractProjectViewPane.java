@@ -62,6 +62,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -77,6 +78,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiAwareObject;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNode;
@@ -155,6 +157,16 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   private static final Logger LOG = Logger.getInstance(AbstractProjectViewPane.class);
   public static final ProjectExtensionPointName<AbstractProjectViewPane> EP
     = new ProjectExtensionPointName<>("com.intellij.projectViewPane");
+
+  /**
+   * Indicates that the tree is currently updating its selection as requested by the API.
+   * <p>
+   *   This is a hack to distinguish between selection changes caused by {@link #selectWithCallback(Object, VirtualFile, boolean)}
+   *   and all other selection changes (e.g., by clicking or changing selection in the tree selection model directly).
+   * </p>
+   */
+  @ApiStatus.Internal
+  public static final Key<Boolean> REAL_SELECTION_IN_PROGRESS = Key.create("REAL_SELECTION_IN_PROGRESS");
 
   protected final @NotNull Project myProject;
   protected DnDAwareTree myTree;
@@ -345,7 +357,9 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
       return async.selectCB(element, file, requestFocus);
     }
     else {
+      ClientProperty.put(myTree, REAL_SELECTION_IN_PROGRESS, true);
       select(element, file, requestFocus);
+      ClientProperty.put(myTree, REAL_SELECTION_IN_PROGRESS, false);
       return ActionCallback.DONE;
     }
   }

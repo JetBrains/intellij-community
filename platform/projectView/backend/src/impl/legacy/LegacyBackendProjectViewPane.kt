@@ -62,6 +62,7 @@ import com.intellij.platform.projectView.pane.projectViewNodePath
 import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.LoadingNode
 import com.intellij.ui.tree.AsyncTreeModel
@@ -183,8 +184,11 @@ private class LegacyBackendProjectViewPane(
         tree.addTreeSelectionListener(selectionListener)
         suspendCancellableCoroutine { continuation ->
           captureSelection.store { selectionPath ->
-            LOG.debug { "Selected $selectionPath" }
-            continuation.resume(selectionPath)
+            val isRealSelection = ClientProperty.isTrue(tree, AbstractProjectViewPane.REAL_SELECTION_IN_PROGRESS)
+            LOG.debug { "Selected (is real = $isRealSelection) $selectionPath" }
+            if (isRealSelection) {
+              continuation.resume(selectionPath)
+            }
           }
           if (editorChoice == EditorChoice.LAST_FOCUSED_ONLY && AppMode.isMonolith()) { // in remdev, "last focused" isn't very meaningful
             LOG.debug { "Selecting using the last focused editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
