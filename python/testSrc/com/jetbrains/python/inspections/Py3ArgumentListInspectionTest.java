@@ -819,4 +819,25 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    foo(1, "a", "b", "c", 3.14)
                    """);
   }
+
+  // PY-76847
+  public void testParamSpecSubstitutedWithUnpackedTypedDictKwargs() {
+    doTestByText("""
+                   from typing import Callable, TypedDict, Unpack
+                   
+                   def g[**P](fn: Callable[P, None]) -> Callable[P, None]:
+                       return fn
+                   
+                   class Person(TypedDict):
+                       name: str
+                       age: int
+                   
+                   def create_person(**kwargs: Unpack[Person]):
+                       pass
+                   
+                   g(create_person)(name=""<warning descr="Parameter 'age' unfilled">)</warning>
+                   g(create_person)(name="", age=30)
+                   g(create_person)(name="", age=30, <warning descr="Unexpected argument">position="CEO"</warning>)
+                   """);
+  }
 }

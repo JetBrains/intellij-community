@@ -5235,7 +5235,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                        pass
                    
                    g(create_person)(**<warning descr="TypedDict 'Person' has missing key: 'age'">{"name": ""}</warning>)
-                   g(create_person)(name=""<warning descr="Parameter 'age' unfilled (from ParamSpec 'P')">)
+                   g(create_person)(name="John", <warning descr="Expected type 'int', got 'str' instead">age="30"</warning>)
                    """);
   }
 
