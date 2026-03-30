@@ -10,6 +10,8 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.wm.impl.LinuxUiUtil.isGnomeScreenReaderSettingEnabled
+import com.intellij.openapi.wm.impl.LinuxUiUtil.isOrcaProcessRunning
 import com.intellij.ui.User32Ex
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.Foundation.NSAutoreleasePool
@@ -67,6 +69,7 @@ private var enable = false
 private fun isScreenReaderDetected(): Boolean = when (OS.CURRENT) {
   OS.Windows -> JnaLoader.isLoaded() && isWindowsScreenReaderEnabled()
   OS.macOS -> JnaLoader.isLoaded() && isMacVoiceOverEnabled()
+  OS.Linux -> JnaLoader.isLoaded() && isLinuxScreenReaderEnabled()
   else -> false
 }
 
@@ -101,6 +104,10 @@ private fun isWindowsScreenReaderEnabled(): Boolean {
   val isActive = WinDef.BOOLByReference()
   val retValue = User32Ex.INSTANCE.SystemParametersInfo(WinDef.UINT(0x0046), WinDef.UINT(0), isActive, WinDef.UINT(0))
   return retValue && isActive.value.booleanValue()
+}
+
+private fun isLinuxScreenReaderEnabled(): Boolean {
+  return isGnomeScreenReaderSettingEnabled() || isOrcaProcessRunning()
 }
 
 @ApiStatus.Internal
