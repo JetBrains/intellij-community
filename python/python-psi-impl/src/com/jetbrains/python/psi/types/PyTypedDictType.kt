@@ -37,19 +37,21 @@ class PyTypedDictType(
     return if (isDefinition) toInstance() else null
   }
 
-  override fun toInstance(): PyTypedDictType {
-    return if (isDefinition)
-      PyTypedDictType(name, fields, dictClass, false, declaration, isClosed, extraItemsType, extraItemsQualifiers)
-    else
-      this
+
+
+  private val cachedInstanceType: PyTypedDictType by lazy {
+    if (isDefinition) PyTypedDictType(name, fields, dictClass, false, declaration)
+    else this
   }
 
-  override fun toClass(): PyTypedDictType {
-    return if (isDefinition)
-      this
-    else
-      PyTypedDictType(name, fields, dictClass, true, declaration, isClosed, extraItemsType, extraItemsQualifiers)
+  override fun toInstance(): PyTypedDictType = cachedInstanceType
+
+  private val cachedClassType: PyTypedDictType by lazy {
+    if (isDefinition) this
+    else PyTypedDictType(name, fields, dictClass, true, declaration)
   }
+
+  override fun toClass(): PyTypedDictType = cachedClassType
 
   override val isBuiltin: Boolean = false
 
@@ -65,12 +67,12 @@ class PyTypedDictType(
       val singleStarParameter = PyCallableParameterImpl.psi(
         elementGenerator.createSingleStarParameter()
       )
-      
+
       val fieldParameters = fields.map { (key, value) ->
         val ellipsis = elementGenerator.createEllipsis()
-        if (value.qualifiers.isRequired == true) 
+        if (value.qualifiers.isRequired == true)
           PyCallableParameterImpl.nonPsi(key, value.type)
-        else 
+        else
           PyCallableParameterImpl.nonPsi(key, value.type, ellipsis)
       }
 
@@ -85,6 +87,8 @@ class PyTypedDictType(
   }
   else null
 }
+
+  override fun getParameters(context: TypeEvalContext): List<PyCallableParameter>? = cachedParameters
 
   override fun getParametersType(context: TypeEvalContext): PyCallableParameterVariadicType? {
     return getParameters(context)?.let { PyCallableParameterListTypeImpl(it) }
