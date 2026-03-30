@@ -36,3 +36,10 @@ d[<error descr="Cannot use unhashable type 'int | list' as a dict key">unhashabl
 
 hashable_union: int | str = 5
 d[hashable_union] = 0
+
+# PY-88434 class objects are always hashable (type.__hash__)
+d[bytearray] = 0
+d[list] = 0
+d[UnhashableClass] = 0
+
+class_set = {str, bytes, bytearray}
