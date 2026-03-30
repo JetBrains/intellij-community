@@ -109,6 +109,8 @@ import com.jetbrains.python.psi.types.PyTypeVarType;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnsafeUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.TypeEvalContextImpl;
+import com.jetbrains.python.psi.types.engine.PyTypeEngine;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -435,6 +437,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       }
     }
     ProblemHighlightType hlType;
+
     if (severity == HighlightSeverity.WARNING) {
       hlType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
     }
@@ -446,6 +449,12 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     }
     else {
       hlType = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
+    }
+    if (myTypeEvalContext instanceof TypeEvalContextImpl context) {
+      PyTypeEngine typeEngine = context.getTypeEngine();
+      if (typeEngine != null) {
+        hlType = ProblemHighlightType.INFORMATION;
+      }
     }
 
     ContainerUtil.addAll(fixes, getImportStatementQuickFixes(element));
