@@ -822,8 +822,8 @@ public class VarDefinitionHelper {
           if (DecompilerContext.getStructContext().instanceOf(fromMax.getValue(), toMin.getValue()))
             return fromMax;
         } else {//fromMin != null
-          if (DecompilerContext.getStructContext().instanceOf(toMin.getValue(), fromMin.getValue()))
-            return toMin;
+          if (DecompilerContext.getStructContext().instanceOf(fromMin.getValue(), toMin.getValue()))
+            return fromMin;
         }
       }
       return null;
