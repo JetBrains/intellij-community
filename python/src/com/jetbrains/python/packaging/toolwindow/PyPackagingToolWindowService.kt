@@ -311,13 +311,6 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       return
     }
 
-    withContext(Dispatchers.EDT) {
-      toolWindowPanel?.let {
-        it.startLoadingSdk()
-        it.syncSdkControllerSelection(sdk)
-      }
-    }
-
     val previousSdk = currentSdk
 
     if (sdk == null) {
@@ -330,6 +323,13 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       }
       showNoInterpreterMessage()
       return
+    }
+
+    withContext(Dispatchers.EDT) {
+      toolWindowPanel?.let {
+        it.startLoadingSdk(sdk.name)
+        it.syncSdkControllerSelection(sdk)
+      }
     }
 
     sdkContext = SdkContext(

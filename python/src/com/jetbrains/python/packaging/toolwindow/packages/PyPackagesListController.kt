@@ -14,6 +14,7 @@ import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingTreeView
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import javax.swing.BoxLayout
 import javax.swing.JComponent
@@ -69,6 +70,10 @@ internal class PyPackagesListController(val project: Project, val controller: Py
 
   fun getSelectedPackages(): List<DisplayablePackage> {
     return tablesView.getSelectedPackages()
+  }
+
+  fun setSdkName(@Nls sdkName: String) {
+    tablesView.setSdkName(sdkName)
   }
 
   fun startSdkInit() {
