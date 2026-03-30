@@ -57,6 +57,7 @@ import com.intellij.ui.treeStructure.TreeNodeWithPresentation
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.ui.tree.TreeUtil
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
@@ -150,13 +151,11 @@ internal abstract class TreeBasedFrontendProjectViewPane(
     when (event) {
       is ProjectViewChildrenLoaded -> {
         if (event.parentId == SUPER_ROOT_ID) {
-          val newNode = createNode(event.children.single())
-          treeModel.setRoot(newNode)
+          updateRoot(event.children)
         }
         else {
           val parent = getNodeById(event.parentId) ?: return
-          val children = event.children.map { createNode(it) }
-          treeModel.setChildren(parent, children)
+          updateChildren(parent, event.children)
         }
       }
       is ProjectViewNodeAdded -> {
@@ -205,6 +204,77 @@ internal abstract class TreeBasedFrontendProjectViewPane(
     updateEpoch.update { it + 1 }
   }
 
+  private fun updateRoot(newRootUserObjects: List<ProjectViewNodeModel>) {
+    // The model may provide fake nodes with cached presentations,
+    // so we need to take care to avoid cast exceptions.
+    val existingRoot = treeModel.root as? Node?
+    if (newRootUserObjects.isEmpty()) {
+      LOG.debug { "The root is removed" }
+      if (existingRoot != null) {
+        removeNode(existingRoot)
+      }
+      treeModel.setRoot(null)
+    }
+    else if (newRootUserObjects.size > 1) {
+      LOG.error("Got ${newRootUserObjects.size} roots: $newRootUserObjects")
+    }
+    else {
+      val newRootUserObject = newRootUserObjects.single()
+      if (existingRoot?.projectViewNode?.id != newRootUserObject.id) {
+        if (existingRoot != null) {
+          removeNode(existingRoot)
+        }
+        treeModel.setRoot(createNode(newRootUserObject))
+      }
+      else {
+        treeModel.updateNode(existingRoot, newRootUserObject)
+      }
+    }
+  }
+
+  private fun updateChildren(
+    parent: Node,
+    newChildUserObjects: List<ProjectViewNodeModel>,
+  ) {
+    // It's a bit tricky because updating children in the model will keep
+    // the existing nodes for already-present children.
+    // But we must maintain the nodeById map consistent.
+    // The easiest way is to remove everything and then add everything.
+    // But there's another tricky part: the removed-for-good nodes should be removed recursively.
+    // So we keep track of them and then remove once we're done.
+    val existingChildrenById = Long2ObjectOpenHashMap<Node>()
+    val removedChildrenById = Long2ObjectOpenHashMap<Node>()
+    // The existing children may be fake cached nodes,
+    // so we need to take care to avoid cast exceptions.
+    parent.children().asSequence().filterIsInstance<Node>().forEach { existingChild ->
+      existingChildrenById[existingChild.id] = existingChild
+      nodeById.remove(existingChild.id)
+      removedChildrenById[existingChild.id] = existingChild
+    }
+    // Now there are no child nodes in the nodeById map.
+    val newChildren = ArrayList<Node>()
+    newChildUserObjects.forEach { newChildUserObject ->
+      removedChildrenById.remove(newChildUserObject.id)
+      newChildren.add(Node(newChildUserObject))
+    }
+    // Now removedChildrenById contain only the children that are going to be permanently removed.
+
+    treeModel.updateChildren(parent, newChildren) { newChild ->
+      existingChildrenById[(newChild as Node).id] // safe cast: no cached nodes among the new ones
+    }
+    // Now the parent has the new children: some are reused nodes with updated user objects, some are now.
+
+    // Add back the new nodes.
+    parent.children().asSequence().forEach { newChild ->
+      nodeById[(newChild as Node).id] = newChild // safe cast: all cached children are gone
+    }
+
+    // Remove the permanently removed nodes now.
+    removedChildrenById.values.forEach { removedChild ->
+      removeNode(removedChild) // the node itself is already removed, but this will remove its descendants
+    }
+  }
+
   private fun getNodeById(id: Long): Node? {
     return nodeById[id]
   }
@@ -220,7 +290,7 @@ internal abstract class TreeBasedFrontendProjectViewPane(
   }
 
   private fun removeNode(node: Node) {
-    nodeById.remove(node.projectViewNode.id)
+    nodeById.remove(node.id)
     for (node in node.children()) {
       removeNode(node as Node)
     }
@@ -313,6 +383,9 @@ private class Node(
     set(value) {
       userObject = value
     }
+  
+  val id: Long
+    get() = projectViewNode.id
 
   override val presentation: TreeNodePresentation
     get() = projectViewNode.presentation

@@ -210,9 +210,9 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
     }
   }
 
-  fun updateNode(node: DefaultMutableTreeNode, newValue: Any) {
-    LOG.debug { "Update $node, new value: $newValue" }
-    node.userObject = newValue
+  fun updateNode(node: DefaultMutableTreeNode, newUserObject: Any) {
+    LOG.debug { "Update $node, new user object: $newUserObject" }
+    node.userObject = newUserObject
     delegate.nodeChanged(node)
   }
 
