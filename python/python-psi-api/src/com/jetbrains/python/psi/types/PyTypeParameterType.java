@@ -55,7 +55,7 @@ public interface PyTypeParameterType extends PyType {
    * in PEP 484.
    */
   default @Nullable PyType getBound() {
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   @ApiStatus.Internal

@@ -59,6 +59,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyABCUtil;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterListType;
 import com.jetbrains.python.psi.types.PyCallableType;
@@ -79,7 +80,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory;
 import com.jetbrains.python.psi.types.PyTypeParameterType;
-import com.jetbrains.python.psi.types.PyTypeUtilKt;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyTypedDictType;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnpackedTupleType;
@@ -299,10 +300,10 @@ public class PyTypeCheckerInspection extends PyInspection {
         if (generatorDesc != null) {
           return generatorDesc.returnType;
         }
-        return null;
+        return PyAnyType.getUnknown();
       }
       if (function.isAsync()) {
-        return Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(returnType));
+        return PyTypeUtil.derefOrUnknown(PyTypingTypeProvider.coroutineOrGeneratorElementType(returnType));
       }
       return returnType;
     }
@@ -542,7 +543,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       if (expectedRef == null) return;
       final var expected = expectedRef.get();
       final var actual = tryPromotingType(defaultValue, expected);
-      
+
       if (actual instanceof PySentinelType) return;
 
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {

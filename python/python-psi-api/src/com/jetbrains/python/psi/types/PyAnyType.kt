@@ -52,13 +52,14 @@ sealed class PyAnyType private constructor(override val name: String) : PyType {
     @JvmStatic
     val isEnabled: Boolean get() = Registry.`is`("python.type.any")
 
+    @JvmStatic
     fun validate(it: PyType?) {
       if (!ApplicationManager.getApplication().isInternal) return
 
       if (isEnabled && it == null)
-        throw AssertionError("a type with a value of `null` was encountered while `PyAnyType` was enabled")
+        throw AssertionError("a python type with a value of `null` was encountered while `PyAnyType` was enabled")
       if (!isEnabled && it is PyAnyType)
-        throw AssertionError("a type with a value of `PyAnyType` was encountered while `PyAnyType` was disabled")
+        throw AssertionError("a python type with a value of `PyAnyType` was encountered while `PyAnyType` was disabled")
     }
 
     @JvmStatic

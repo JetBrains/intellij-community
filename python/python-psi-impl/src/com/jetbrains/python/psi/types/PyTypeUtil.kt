@@ -191,7 +191,7 @@ object PyTypeUtil {
   @ApiStatus.Experimental
   fun Ref<out PyType?>?.derefOrUnknown(): PyType? =
     if (this == null) PyAnyType.unknown
-    else this.get()
+    else this.get().also { PyAnyType.validate(it) }
 
   /**
    * Returns a collector that combines a stream of `Ref<PyType>` back into a single `Ref<PyType>`

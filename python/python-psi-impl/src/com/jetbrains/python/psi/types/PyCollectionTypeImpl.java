@@ -30,6 +30,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAny;
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
+
 
 public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectionType {
   protected final @NotNull List<PyType> myElementTypes;
@@ -37,6 +40,9 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
 
   public PyCollectionTypeImpl(@NotNull PyClass source, boolean isDefinition, @NotNull List<? extends PyType> elementTypes) {
     super(source, isDefinition);
+    for (var argument : elementTypes) {
+      PyAnyType.validate(argument);
+    }
     myElementTypes = new ArrayList<>(elementTypes);
   }
 
@@ -46,7 +52,7 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
     if (isDefinition()) {
       return withUserDataCopy(new PyCollectionTypeImpl(getPyClass(), false, myElementTypes));
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   @Override
@@ -124,7 +130,7 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
   @Override
   public String toString() {
     return ((isValid() ? "" : "[INVALID] ") + "PyCollectionClassType: " + getClassQName()) +
-           "[" + StringUtil.join(getElementTypes(), item -> item == null ? "Any" : item.toString(), ", ") + "]";
+           "[" + StringUtil.join(getElementTypes(), item -> isUnknown(item) ? "Unknown" : isAny(item) ? "Any" : item.toString(), ", ") + "]";
   }
 
   @Override

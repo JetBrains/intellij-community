@@ -164,7 +164,7 @@ object PyTypeInferenceCspFactory {
     context: TypeEvalContext,
   ): PyType? {
     val promotedToLiteral = promoteToLiteral(argument, paramType, context, substitutions)
-    val actualArgType = promotedToLiteral ?: context.getType(argument)
+    val actualArgType = promotedToLiteral.takeIf { !it.isUnknown } ?: context.getType(argument)
     val argTypeSelfInstantiated = if (parameter.isSelf && actualArgType is PyClassLikeType && actualArgType.isDefinition)
       actualArgType.toInstance()
     else

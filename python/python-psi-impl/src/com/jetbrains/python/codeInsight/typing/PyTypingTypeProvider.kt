@@ -33,6 +33,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile
+import com.jetbrains.python.codeInsight.stdlib.getNamedTupleTypeForClass
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typeRepresentation.PyModuleTypeName
 import com.jetbrains.python.codeInsight.typeRepresentation.psi.PyFunctionTypeRepresentation
@@ -85,7 +86,6 @@ import com.jetbrains.python.psi.PyWithItem
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiFacadeImpl
-import com.jetbrains.python.codeInsight.stdlib.getNamedTupleTypeForClass
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -549,11 +549,11 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 
         val noneType: PyType? = PyBuiltinCache.getInstance(type.pyClass).noneType
 
-        var yieldType: PyType? = null
+        var yieldType: PyType? = PyAnyType.unknown
         var sendType = noneType
-        var returnType = if (isAsync) null else noneType
+        var returnType = if (isAsync) PyAnyType.unknown else noneType
         if (type is PyCollectionType) {
-          yieldType = type.elementTypes.getOrNull(0)
+          yieldType = type.elementTypes.getOrElse(0) { PyAnyType.unknown }
           sendType = type.elementTypes.getOrElse(1) { sendType }
           returnType = type.elementTypes.getOrElse(2) { returnType }
         }
@@ -578,12 +578,12 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
           val syncUpcast = type.convertToType("typing.Iterable", type.pyClass, context)
           if (syncUpcast is PyCollectionType) {
             yieldType = syncUpcast.iteratedItemType
-            return GeneratorTypeDescriptor(yieldType, null, null, false)
+            return GeneratorTypeDescriptor(yieldType, PyAnyType.unknown, PyAnyType.unknown, false)
           }
           val asyncUpcast = type.convertToType("typing.AsyncIterable", type.pyClass, context)
           if (asyncUpcast is PyCollectionType) {
             yieldType = asyncUpcast.iteratedItemType
-            return GeneratorTypeDescriptor(yieldType, null, null, true)
+            return GeneratorTypeDescriptor(yieldType, PyAnyType.unknown, PyAnyType.unknown, true)
           }
 
           // Here we try to understand a yield type by return type of __next__ method of protocol specified in annotation.
@@ -594,14 +594,14 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
           if (next != null) {
             yieldType = context.getReturnType(next)
             yieldType = PyTypeChecker.substitute(yieldType, PyTypeChecker.unifyReceiver(type, context), context)
-            return GeneratorTypeDescriptor(yieldType, null, null, false)
+            return GeneratorTypeDescriptor(yieldType, PyAnyType.unknown, PyAnyType.unknown, false)
           }
 
           val anext = type.pyClass.findMethodByName(PyNames.ANEXT, true, context)
           if (anext != null) {
             yieldType = Ref.deref<PyType?>(unwrapCoroutineReturnType(context.getReturnType(anext)))
             yieldType = PyTypeChecker.substitute(yieldType, PyTypeChecker.unifyReceiver(type, context), context)
-            return GeneratorTypeDescriptor(yieldType, null, null, true)
+            return GeneratorTypeDescriptor(yieldType, PyAnyType.unknown, PyAnyType.unknown, true)
           }
         }
         return null
@@ -2278,11 +2278,11 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         PyPsiUtils.flattenParens(PyUtil.createExpressionFromFragment(boundExpressionText, element))
       }
       val (boundType, constraints) = when (boundExpression) {
-        null -> null to emptyList()
+        null -> PyAnyType.unknown to emptyList()
 
-        is PyTupleExpression -> null to boundExpression.elements.map { getTypePreventingRecursion(it, context)?.get() }
+        is PyTupleExpression -> PyAnyType.unknown to boundExpression.elements.map { getTypePreventingRecursion(it, context)?.get() }
 
-        else -> getTypePreventingRecursion(boundExpression, context)?.get() to emptyList()
+        else -> getTypePreventingRecursion(boundExpression, context).derefOrUnknown() to emptyList()
       }
 
       val variance =
@@ -2480,14 +2480,14 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       }
       val indexExpression = element.indexExpression
       if (!(indexExpression is PyReferenceExpression || indexExpression is PySubscriptionExpression)) return null
-      return Ref(Ref.deref<PyType?>(getType(indexExpression, context)))
+      return Ref(getType(indexExpression, context).derefOrUnknown())
     }
 
     private fun getTypeFromStarExpression(element: PsiElement, context: TypeEvalContext): Ref<PyType?>? {
       if (element !is PyStarExpression) return null
       val starredExpression = element.expression
       if (!(starredExpression is PyReferenceExpression || starredExpression is PySubscriptionExpression)) return null
-      return Ref(Ref.deref<PyType?>(getType(starredExpression, context)))
+      return Ref(getType(starredExpression, context).derefOrUnknown())
     }
 
     private fun getIndexTypes(expression: PySubscriptionExpression, context: Context): MutableList<PyType?> {
@@ -2495,11 +2495,11 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       val indexExpr = PyPsiUtils.flattenParens(expression.indexExpression)
       if (indexExpr is PyTupleExpression) {
         for (expr in indexExpr.elements) {
-          types.add(Ref.deref<PyType?>(getType(expr, context)))
+          types.add(getType(expr, context).derefOrUnknown())
         }
       }
       else if (indexExpr != null) {
-        types.add(Ref.deref<PyType?>(getType(indexExpr, context)))
+        types.add(getType(indexExpr, context).derefOrUnknown())
       }
       return types
     }

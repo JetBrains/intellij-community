@@ -103,6 +103,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private static final Logger LOG = Logger.getInstance(PyReferenceExpressionImpl.class);
 
   private record ControlFlowTypeResult(@Nullable PyType type, boolean foundPrefixCall) {
+    private ControlFlowTypeResult {
+      PyAnyType.validate(type);
+    }
   }
 
   private volatile @Nullable QualifiedName myQualifiedName = null;
@@ -246,7 +249,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (!isUnknown(providedType)) {
       return providedType;
     }
-    
+
     if (qualified) {
       final Ref<PyType> qualifiedReferenceType = getQualifiedReferenceType(context);
       if (qualifiedReferenceType != null) {
@@ -334,7 +337,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     //
     // 3. If a CallInstruction involving just the `qualifier` as an argument is found on any path:
     //    - We assume the call *might* have affeted the tupe of `this_name`, and return UnsafeUnion[result_from_cfg, result_from_targets]
-    // 
+    //
     // (see PyDefUseUtil.getLatestDefs)
     //
     // Note on getType() behavior for PyTargetExpression:
@@ -371,7 +374,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         return context.getReturnType(method);
       }
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 
   private boolean isTargetAnnotated(@NotNull TypeEvalContext context) {
@@ -626,8 +629,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       .nonNull()
       .collect(PyTypeUtil.toUnionFromRef());
 
-    // If earlier definitions were not found, variable may be unbound. Choose Any as type.
-    PyType deducedType = Ref.deref(typeOfEarlierDefinitions);
+    // If earlier definitions were not found, variable may be unbound. Choose Unknown as type.
+    PyType deducedType = PyTypeUtil.derefOrUnknown(typeOfEarlierDefinitions);
 
     final boolean foundPrefixCall = defsResult.foundPrefixCall();
     final var laterDefs = StreamEx.of(defs).filter(def -> def.num() > thisInstruction.num()).toList();

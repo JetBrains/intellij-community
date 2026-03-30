@@ -242,10 +242,10 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           }
         }
         if (isKeywordContainer()) {
-          return PyTypeUtil.toKeywordContainerType(this, null);
+          return PyTypeUtil.toKeywordContainerType(this, PyAnyType.getUnknown());
         }
         if (isPositionalContainer()) {
-          return PyTypeUtil.toPositionalContainerType(this, null);
+          return PyTypeUtil.toPositionalContainerType(this, PyAnyType.getUnknown());
         }
         if (context.maySwitchToAST(this)) {
           final PyExpression defaultValue = getDefaultValue();

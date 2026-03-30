@@ -57,6 +57,7 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
     }
     else {
       result = doClone(type);
+      PyAnyType.validate(result);
       cloned.put(type, result);
     }
     //noinspection unchecked
@@ -65,7 +66,7 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
 
   private @Nullable PyType doClone(@Nullable PyType type) {
     if (!cloning.add(type)) {
-      return null;
+      return PyAnyType.getUnknown();
     }
     try {
       return visit(type, this);

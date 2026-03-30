@@ -218,7 +218,7 @@ open class TypeEvalContextImpl internal constructor(
       PyAnyType.validate(type)
       myEvaluatedReturn[callable] = type ?: PyNullType
       type
-    }
+    } ?: PyAnyType.unknown
   }
 
   @get:ApiStatus.Experimental

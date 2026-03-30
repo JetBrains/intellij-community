@@ -92,13 +92,13 @@ object PyTypeChecker {
     context: TypeEvalContext,
     substitutions: GenericSubstitutions,
   ): Boolean {
-    PyAnyType.validate(expected)
-    PyAnyType.validate(actual)
     return match(expected, actual, MatchContext(context, substitutions, false))
       .orElse(true)!!
   }
 
   private fun match(expected: PyType?, actual: PyType?, context: MatchContext): Optional<Boolean> {
+    PyAnyType.validate(expected)
+    PyAnyType.validate(actual)
     val result = RecursionManager.doPreventingRecursion(expected to actual, false) {
       matchImpl(expected, actual, context)
     }
@@ -344,7 +344,7 @@ object PyTypeChecker {
         substitutedRef = null
       }
     }
-    var bound = expected.bound
+    var bound = expected.bound ?: PyAnyType.unknown
     var constraints = expected.constraints
     // Promote int in Type[TypeVar('T', int)] to Type[int] before checking that bounds match
     if (expected.isDefinition) {
@@ -395,7 +395,7 @@ object PyTypeChecker {
       context.mySubstitutions.putTypeVar(expected, Ref(type), KeyImpl)
     }
     else {
-      val effectiveBound = expected.getEffectiveBound()
+      val effectiveBound = expected.effectiveBound
       if (!effectiveBound.isUnknown) {
         context.mySubstitutions.putTypeVar(expected, Ref(PyUnionType.createWeakType(effectiveBound)), KeyImpl)
       }
@@ -1549,9 +1549,9 @@ object PyTypeChecker {
           val substitution = substitutions.typeVars.keys.firstOrNull { typeVarType2 ->
             typeVarType2.declarationElement != null && (typeVarType.scopeOwner == null || (typeVarType2.scopeOwner === typeVarType.scopeOwner))
             && typeVarType2.declarationElement == typeVarType.declarationElement
-          }
+          } ?: PyAnyType.unknown
 
-          if (substitution != null) {
+          if (!substitution.isUnknown) {
             return clone(substitution)
           }
           return typeVarType
@@ -1560,8 +1560,8 @@ object PyTypeChecker {
         var substitution = substitutionRef.derefOrUnknown()
         if (substitutionRef == null) {
           val invertedTypeVar: PyInstantiableType<*> = typeVarType.invert()
-          val invertedSubstitution = Ref.deref(substitutions.typeVars[invertedTypeVar]) as? PyInstantiableType<*>
-          if (invertedSubstitution != null) {
+          val invertedSubstitution = substitutions.typeVars[invertedTypeVar].derefOrUnknown() as? PyInstantiableType<*>
+          if (!invertedSubstitution.isUnknown) {
             substitution = invertedSubstitution.invert()
           }
         }
@@ -2234,7 +2234,7 @@ object PyTypeChecker {
 
     @ApiStatus.Internal
     fun putTypeVar(typeVar: PyTypeVarType, substitute: Ref<PyType?>?, @Suppress("unused") key: Key, ifAbsent: Boolean = false) {
-      val safeSubstitute: Ref<PyType?>? = substitute?.let { Ref(PyNumericTowerUtil.enrich(Ref.deref(it))) }
+      val safeSubstitute: Ref<PyType?>? = substitute?.let { Ref(PyNumericTowerUtil.enrich(it.derefOrUnknown())) }
       if (ifAbsent) myTypeVars.putIfAbsent(typeVar, safeSubstitute)
       else myTypeVars[typeVar] = safeSubstitute
     }

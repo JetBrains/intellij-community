@@ -4696,6 +4696,30 @@ public class Py3TypeTest extends PyTestCase {
     });
   }
 
+  public void testMiscNewAny() {
+    withNewAnyTypeEnabled(() -> {
+      doTest("Unknown", "expr = x");
+      doTest("list[Unknown]", "expr = [x]");
+      doTest("Generator[Unknown, Unknown, Unknown]", """
+        def f():
+          a = yield x
+          return a
+
+        expr = f()
+        """);
+      doTest("list[Unknown]", """
+        def f[T](t: T) -> T: ...
+
+        expr = f([x])
+        """);
+      doTest("Unknown", """
+        def f[T](t: list[T]) -> T: ...
+
+        expr = f([x])
+        """);
+    });
+  }
+
   @TestFor(issues = "PY-84524")
   public void testBuiltinsCallable() {
     doTest("(...) -> object", """

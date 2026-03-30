@@ -16,6 +16,7 @@ object PyNumericTowerUtil {
 
   @JvmStatic
   fun enrich(type: PyType?): PyType? {
+    PyAnyType.validate(type)
     if (!isEnabled) return type
     return type.toStream().map(::expand).collect(PyTypeUtil.toUnion(type))
   }

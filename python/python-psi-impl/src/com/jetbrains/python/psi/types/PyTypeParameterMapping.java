@@ -199,7 +199,7 @@ public final class PyTypeParameterMapping {
       return Couple.of(unmatchedExpectedType, Ref.deref(typeParameterType.getDefaultType()));
     }
     else if (optionSet.contains(Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY)) {
-      return Couple.of(unmatchedExpectedType, null);
+      return Couple.of(unmatchedExpectedType, PyAnyType.getUnknown());
     }
     return null;
   }
