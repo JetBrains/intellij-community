@@ -1,0 +1,236 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.completion.kotlin
+
+import com.intellij.openapi.Disposable
+import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.LOCAL
+import com.intellij.repository.search.completion.api.DependencyCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionResult
+import com.intellij.repository.search.completion.api.DependencyCompletionService
+import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyPartCompletionResult
+import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
+import com.intellij.testFramework.fixtures.CompletionAutoPopupTester
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.replaceService
+import com.intellij.util.application
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
+import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.assertNull
+import org.junit.jupiter.params.ParameterizedTest
+
+class KotlinGradleDependenciesAutoPopupHandlerTest : K2GradleCodeInsightTestCase() {
+
+  private val testCompletionService = object : DependencyCompletionService {
+    override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> =
+      flowOf(DependencyCompletionResult("myGroup", "myArtifact", "1.0", source = LOCAL))
+
+    override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyPartCompletionResult> =
+      flowOf(DependencyPartCompletionResult("myGroup", LOCAL))
+
+    override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyPartCompletionResult> =
+      flowOf(DependencyPartCompletionResult("myArtifact", LOCAL))
+
+    override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyPartCompletionResult> =
+      flowOf(DependencyPartCompletionResult("1.0", LOCAL))
+  }
+
+  @TestDisposable
+  private lateinit var disposable: Disposable
+
+  private var _autoPopupTester: CompletionAutoPopupTester? = null
+  private val autoPopupTester: CompletionAutoPopupTester
+    get() = _autoPopupTester ?: error("autoPopupTester is not initialized")
+
+  override fun setUp() {
+    super.setUp()
+    _autoPopupTester = CompletionAutoPopupTester(codeInsightFixture)
+    application.replaceService(DependencyCompletionService::class.java, testCompletionService, disposable)
+  }
+
+  private fun runTest(gradleVersion: GradleVersion, test: () -> Unit) {
+    testKotlinDslEmptyProject(gradleVersion) { autoPopupTester.runWithAutoPopupEnabled { test() } }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testAutoPopupOnQuoteInDependencyGAV(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    codeInsightFixture.configureByText("build.gradle.kts", """
+      dependencies {
+          implementation(<caret>)
+      }
+    """.trimIndent())
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of dependency's GAV argument" }
+    assertEquals("myGroup:myArtifact:1.0", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testAutoPopupOnQuoteInDependencyNamedGroup(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    codeInsightFixture.configureByText("build.gradle.kts", """
+      dependencies {
+          implementation(group = <caret>, name = "myArtifact")
+      }
+    """.trimIndent())
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of dependency's group argument" }
+    assertEquals("myGroup", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testAutoPopupOnQuoteInDependencyPositionalGroup(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    codeInsightFixture.configureByText("build.gradle.kts", """
+      dependencies {
+          implementation(<caret>, "myArtifact")
+      }
+    """.trimIndent())
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of dependency's group argument" }
+    assertEquals("myGroup", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testAutoPopupOnQuoteInDependencyNamedName(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    codeInsightFixture.configureByText("build.gradle.kts", """
+      dependencies {
+          implementation(group = "myGroup", name = <caret>)
+      }
+    """.trimIndent())
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of dependency's name argument" }
+    assertEquals("myArtifact", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testAutoPopupOnQuoteInDependencyPositionalName(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    codeInsightFixture.configureByText("build.gradle.kts", """
+      dependencies {
+          implementation("myGroup", <caret>)
+      }
+    """.trimIndent())
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of dependency's name argument" }
+    assertEquals("myArtifact", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testAutoPopupOnQuoteInDependencyNamedVersion(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    codeInsightFixture.configureByText("build.gradle.kts", """
+      dependencies {
+          implementation(group = "myGroup", name = "myArtifact", version = <caret>)
+      }
+    """.trimIndent())
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of dependency's version argument" }
+    assertEquals("1.0", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testAutoPopupOnQuoteInDependencyPositionalVersion(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    codeInsightFixture.configureByText("build.gradle.kts", """
+      dependencies {
+          implementation("myGroup", "myArtifact", <caret>)
+      }
+    """.trimIndent())
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of dependency's version argument" }
+    assertEquals("1.0", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testAutoPopupOnQuoteInExcludeNamedGroup(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    codeInsightFixture.configureByText("build.gradle.kts", """
+      dependencies {
+          implementation("myGroup:myArtifact:1.0") {
+              exclude(group = <caret>)
+          }
+      }
+    """.trimIndent())
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of exclude's group argument" }
+    assertEquals("myGroup", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testAutoPopupOnQuoteInExcludePositionalGroup(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    codeInsightFixture.configureByText("build.gradle.kts", """
+      dependencies {
+          implementation("myGroup:myArtifact:1.0") {
+              exclude(<caret>)
+          }
+      }
+    """.trimIndent())
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of exclude's group argument" }
+    assertEquals("myGroup", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testAutoPopupOnQuoteInExcludeNamedModule(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    codeInsightFixture.configureByText("build.gradle.kts", """
+      dependencies {
+          implementation("myGroup:myArtifact:1.0") {
+              exclude(group = "myGroup", module = <caret>)
+          }
+      }
+    """.trimIndent())
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of exclude's module argument" }
+    assertEquals("myArtifact", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testAutoPopupOnQuoteInExcludePositionalModule(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    codeInsightFixture.configureByText("build.gradle.kts", """
+      dependencies {
+          implementation("myGroup:myArtifact:1.0") {
+              exclude("myGroup", <caret>)
+          }
+      }
+    """.trimIndent())
+    autoPopupTester.typeWithPauses("\"")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of exclude's module argument" }
+    assertEquals("myArtifact", autoPopupTester.lookup?.currentItem?.lookupString)
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNoAutoPopupOnClosingQuoteInDependencyGAV(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    codeInsightFixture.configureByText("build.gradle.kts", """
+      dependencies {
+          implementation("myArtifact:1.0<caret>")
+      }
+    """.trimIndent())
+    autoPopupTester.typeWithPauses("\"")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered when typing the closing quote" }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNoAutoPopupOnQuoteOutsideDependenciesBlock(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+    codeInsightFixture.configureByText("build.gradle.kts", """
+      tasks {
+          register("myTask") {
+              val x = <caret>
+          }
+      }
+    """.trimIndent())
+    autoPopupTester.typeWithPauses("\"")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered outside of dependencies block" }
+  }
+}
