@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl
 
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -10,10 +10,9 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.text.Strings
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.jetbrains.python.sdk.PySdkFromEnvironmentVariable
-import com.jetbrains.python.sdk.withSdkConfigurationLock
-import kotlinx.coroutines.CoroutineScope
+import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 private val LOGGER = logger<PySdkFromEnvironmentVariableConfigurator>()
@@ -28,21 +27,20 @@ internal class PySdkFromEnvironmentVariableConfigurator(private val project: Pro
     }
     LOGGER.info("Found $PySdkFromEnvironmentVariable.PYCHARM_PYTHON_PATH='${PySdkFromEnvironmentVariable.getPycharmPythonPathProperty()}' system property")
 
-    project.service<PySdkEnvVarConfiguratorScope>().scope.launch(Dispatchers.Default) {
+    runInEdt {
       checkAndSetSdk(project, pycharmPythonPathEnvVariable!!)
     }
   }
 
-  private suspend fun checkAndSetSdk(project: Project, pycharmPythonPathEnvVariable: String) = withSdkConfigurationLock(project) {
-    val sdk = PySdkFromEnvironmentVariable.findOrCreateSdkByPath(pycharmPythonPathEnvVariable) ?: return@withSdkConfigurationLock
+  private fun checkAndSetSdk(project: Project, pycharmPythonPathEnvVariable: String) = runWithSdkConfigurationLock(project) {
+    withContext(Dispatchers.EDT) {
+      val sdk = PySdkFromEnvironmentVariable.findOrCreateSdkByPath(pycharmPythonPathEnvVariable) ?: return@withContext
 
-    val projectSdk = ProjectRootManager.getInstance(project).projectSdk
+      val projectSdk = ProjectRootManager.getInstance(project).projectSdk
 
-    ModuleManager.getInstance(project).modules.forEach {
-      PySdkFromEnvironmentVariable.setModuleSdk(it, projectSdk, sdk, pycharmPythonPathEnvVariable)
+      ModuleManager.getInstance(project).modules.forEach {
+        PySdkFromEnvironmentVariable.setModuleSdk(it, projectSdk, sdk, pycharmPythonPathEnvVariable)
+      }
     }
   }
 }
-
-@Service(Service.Level.PROJECT)
-private class PySdkEnvVarConfiguratorScope(val scope: CoroutineScope)
