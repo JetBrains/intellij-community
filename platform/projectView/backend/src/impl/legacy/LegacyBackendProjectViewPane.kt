@@ -183,12 +183,15 @@ private class LegacyBackendProjectViewPane(
         tree.addTreeSelectionListener(selectionListener)
         suspendCancellableCoroutine { continuation ->
           captureSelection.store { selectionPath ->
+            LOG.debug { "Selected $selectionPath" }
             continuation.resume(selectionPath)
           }
           if (editorChoice == EditorChoice.LAST_FOCUSED_ONLY && AppMode.isMonolith()) { // in remdev, "last focused" isn't very meaningful
+            LOG.debug { "Selecting using the last focused editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
             impl.selectOpenedFileUsingLastFocusedEditor()
           }
           else {
+            LOG.debug { "Selecting using the selected editor because the editor choice = $editorChoice, is monolith = ${AppMode.isMonolith()}" }
             impl.selectOpenedFile()
           }
           continuation.invokeOnCancellation { captureSelection.store(null) }

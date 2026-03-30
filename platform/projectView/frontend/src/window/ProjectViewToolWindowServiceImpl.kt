@@ -263,8 +263,15 @@ internal class ProjectViewToolWindowServiceImpl(
   }
 
   override suspend fun selectNode(nodePath: ProjectViewNodePath) {
-    val currentPane = currentPaneFlow.value ?: return
-    if (currentPane.id != nodePath.paneId) return // TODO make it possible to change the pane if needed
+    val currentPane = currentPaneFlow.value
+    if (currentPane == null) {
+      LOG.debug { "Not selecting $nodePath because there's no current pane" }
+      return
+    }
+    if (currentPane.id != nodePath.paneId) {
+      LOG.debug { "Not selecting $nodePath because the current pane is ${currentPane.id}" }
+      return // TODO make it possible to change the pane if needed 
+    }
     (currentPane as? TreeBasedFrontendProjectViewPane)?.selectNode(nodePath)
   }
 

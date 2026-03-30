@@ -4,6 +4,7 @@ package com.intellij.platform.projectView.actions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.fileEditor.FileEditor
@@ -55,12 +56,14 @@ internal class SelectInSplitProjectViewImpl(private val project: Project, corout
   }
 
   fun selectOpenedFile(editorChoice: EditorChoice) {
+    LOG.debug { "Scheduling selection, editor choice = $editorChoice" }
     check(tasks.trySend(SelectTask(editorChoice)).isSuccess)
   }
 
   private suspend fun performTasks() {
     tasks.consumeAsFlow().collectLatest { task ->
       try {
+        LOG.debug { "Executing the selection task $task" }
         selectImpl(task)
       }
       catch (e: Exception) {
@@ -77,18 +80,28 @@ internal class SelectInSplitProjectViewImpl(private val project: Project, corout
       val fileEditors = task.fileEditors()
       for (fileEditor in fileEditors) {
         // TODO generic FileEditor support, not just text editors
-        if (fileEditor !is TextEditor || !fileEditor.isValid) continue
+        if (fileEditor !is TextEditor || !fileEditor.isValid) {
+          LOG.debug { "Skipping the editor $fileEditor, isValid = ${fileEditor.isValid}" }
+          continue
+        }
         val editor = fileEditor.editor
-        if (editor.isDisposed) continue
+        if (editor.isDisposed) {
+          LOG.debug { "Skipping the editor $editor because it's disposed" }
+          continue
+        }
         val nodePath = withTimeoutOrNull(15.seconds) {
+          LOG.debug { "Looking for the node to select (on the backend)" }
           rpc.findNodeForOpenedFile(project.projectId(), paneId, task.editorChoice)
         }
+        LOG.debug { "Found the node to select: $nodePath" }
         if (nodePath != null) {
           // The nodes should be already loaded at this moment.
           // But due to the world being completely async, they might take a few instants to actually arrive to the tree.
           // Or it might not even arrive at all, for example, if it was removed at a very unlucky moment.
           withTimeoutOrNull(5.seconds) {
+            LOG.debug { "Selecting the node $nodePath" }
             ProjectViewToolWindowService.getInstance(project).selectNode(nodePath)
+            LOG.debug { "Selected the node $nodePath" }
           }
           break
         }

@@ -63,17 +63,13 @@ internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecifi
     val projectViewFrame = ComponentUtil.getWindow(event.dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT))
     val docked = projectFrame != null && projectFrame == projectViewFrame
     if (!docked) {
-      if (SELECT_IN_LOG.isDebugEnabled) {
-        SELECT_IN_LOG.debug("Forcing use of the last focused editor because the project view is detached")
-      }
+      LOG.debug("Forcing use of the last focused editor because the project view is detached")
       return true
     }
     val wasJustActivated = projectFrame.wasJustActivatedByClick
     if (wasJustActivated) {
-      if (SELECT_IN_LOG.isDebugEnabled) {
-        SELECT_IN_LOG.debug("Forcing use of the last focused editor because the IDE frame was activated " +
-         "by pressing the Select Opened File button")
-      }
+      LOG.debug("Forcing use of the last focused editor because the IDE frame was activated " +
+                "by pressing the Select Opened File button")
       return true
     }
     return false
@@ -83,7 +79,7 @@ internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecifi
     val id = getActionId(event)
     event.presentation.text = ActionsBundle.actionText(id)
     event.presentation.description = ActionsBundle.actionDescription(id)
-    SELECT_IN_LOG.debug { "SelectFileAction#update $id" }
+    LOG.debug { "SelectFileAction#update $id" }
     when (id) {
       SELECT_CONTEXT_FILE -> {
         event.presentation.isEnabledAndVisible = getSelector(event)?.run { target.canSelect(context) } == true
@@ -92,7 +88,7 @@ internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecifi
         val view = getView(event)
         event.presentation.isEnabled = event.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR) != null
         event.presentation.isVisible = view?.isSelectOpenedFileEnabled == true
-        SELECT_IN_LOG.debug { "SelectFileAction#update isVisible=${event.presentation.isVisible}" }
+        LOG.debug { "SelectFileAction#update isVisible=${event.presentation.isVisible}" }
         event.project?.let { project ->
           if (event.presentation.isVisible && getFirstKeyboardShortcutText(id).isEmpty()) {
             val shortcut = getFirstKeyboardShortcutText("SelectIn")
@@ -167,4 +163,4 @@ private class SplitView(private val impl: SelectInSplitProjectViewImpl): View {
   }
 }
 
-private val SELECT_IN_LOG = logger<SelectInProjectViewImpl>()
+private val LOG = logger<SelectFileAction>()

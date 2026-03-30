@@ -298,8 +298,11 @@ internal abstract class TreeBasedFrontendProjectViewPane(
 
   suspend fun selectNode(nodePath: ProjectViewNodePath) {
     withContext(Dispatchers.UI) {
+      LOG.debug { "Resolving $nodePath" }
       val treePath = awaitNodePath(nodePath.nodeIds.last())
+      LOG.debug { "Resolved $nodePath => $treePath" }
       TreeUtil.selectPath(tree, treePath)
+      LOG.debug { "Selected $treePath" }
     }
   }
 
@@ -395,6 +398,8 @@ private class Node(
   }
 
   override fun getPathElementId(): String = (presentation as TreeNodePresentationImpl).mainText
+
+  override fun toString(): String = "{[${projectViewNode.id}] ${projectViewNode.presentation.mainText}}"
 }
 
 private class ProjectViewTreeExpander(tree: Tree) : DefaultTreeExpander(tree) {
