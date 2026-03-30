@@ -42,7 +42,7 @@ class MainKtsEntityProvider(
     val coroutineScope: CoroutineScope
 ) : KotlinScriptEntityProvider(project) {
     private val visitedScripts = TreeMultimap.create(COMPARATOR, COMPARATOR)
-    private val visitedScriptsTraverser = Traverser.forTree<VirtualFile> { visitedScripts.get(it) }
+    private val visitedScriptsTraverser = Traverser.forGraph<VirtualFile> { visitedScripts.get(it) }
 
     fun getImportedScripts(mainKts: VirtualFile): List<VirtualFile> = visitedScriptsTraverser.breadthFirst(mainKts) - mainKts
 
@@ -62,10 +62,11 @@ class MainKtsEntityProvider(
         if (project.workspaceModel.currentSnapshot.containsScriptEntity(scriptUrl)) return
 
         val mainKtsConfiguration = resolveMainKtsConfiguration(virtualFile, definition)
-        val scriptsToResolve = mainKtsConfiguration.importedScripts - visitedScripts.keys()
-        if (scriptsToResolve.isNotEmpty()) {
-            visitedScripts.putAll(virtualFile, scriptsToResolve)
-            KotlinScriptResolutionService.getInstance(project).process(scriptsToResolve)
+        mainKtsConfiguration.importedScripts.let { scriptsToResolve ->
+            if (scriptsToResolve.isNotEmpty()) {
+                visitedScripts.putAll(virtualFile, scriptsToResolve)
+                KotlinScriptResolutionService.getInstance(project).process(scriptsToResolve - visitedScripts.keys())
+            }
         }
 
         fun updateStorage(storage: MutableEntityStorage) {
@@ -138,14 +139,7 @@ class MainKtsEntityProvider(
         }
     }
 
-    private val ScriptCompilationConfigurationResult.importedScripts: List<VirtualFile>
-        get() {
-            val importedScripts = this.valueOrNull()?.importedScripts ?: return emptyList()
-            return importedScripts.mapNotNull { (it as? VirtualFileScriptSource)?.virtualFile }.filterNot { it.isNonScript() }
-        }
-
     companion object {
-        private val COMPARATOR = Comparator<VirtualFile> { left, right -> left.path.compareTo(right.path) }
 
         @JvmStatic
         fun getInstance(project: Project): MainKtsEntityProvider = project.service()
