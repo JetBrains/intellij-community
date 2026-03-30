@@ -11,6 +11,10 @@ import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.isNonScript
+import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
+import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
+import kotlin.script.experimental.api.valueOrNull
 
 /**
  * Base contract for providing and maintaining [KotlinScriptEntity] instances in the Workspace Model.
@@ -38,6 +42,12 @@ abstract class KotlinScriptEntityProvider(
 
     protected val VirtualFile.virtualFileUrl: VirtualFileUrl
         get() = toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
+
+    protected val ScriptCompilationConfigurationResult.importedScripts: List<VirtualFile>
+        get() {
+            val importedScripts = this.valueOrNull()?.importedScripts ?: return emptyList()
+            return importedScripts.mapNotNull { (it as? VirtualFileScriptSource)?.virtualFile }.filterNot { it.isNonScript() }
+        }
 
     /**
      * Finds a [KotlinScriptEntity] associated with the given [virtualFile] in the current snapshot.
@@ -80,5 +90,11 @@ abstract class KotlinScriptEntityProvider(
         workspaceModel.update("updating kotlin script entities [$entitySource]") {
             updater(it)
         }
+    }
+
+    protected companion object {
+
+        @JvmStatic
+        protected val COMPARATOR = Comparator<VirtualFile> { left, right -> left.path.compareTo(right.path) }
     }
 }
