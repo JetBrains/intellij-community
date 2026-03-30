@@ -31,7 +31,7 @@ internal class GitLabCiIncludeFusCollectorExplicitRemoteCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalysis().includeStats
         assertExplicitLocalNotFound(stats)
       assertExplicitRemoteFound(actualStats = stats, hasRules = false, hasEnvVar = false, hasCache = false)
       assertImplicitLocalOrRemoteNotFound(stats)
@@ -60,7 +60,7 @@ internal class GitLabCiIncludeFusCollectorExplicitRemoteCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalysis().includeStats
         assertExplicitLocalNotFound(stats)
       assertExplicitRemoteFound(actualStats = stats, hasRules = true, hasEnvVar = false, hasCache = true)
       assertImplicitLocalOrRemoteNotFound(stats)
@@ -83,7 +83,7 @@ internal class GitLabCiIncludeFusCollectorExplicitRemoteCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalysis().includeStats
         assertExplicitLocalNotFound(stats)
       assertExplicitRemoteFound(actualStats = stats, hasRules = false, hasEnvVar = true, hasCache = false)
       assertImplicitLocalOrRemoteNotFound(stats)
@@ -113,7 +113,7 @@ internal class GitLabCiIncludeFusCollectorExplicitRemoteCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalysis().includeStats
         assertExplicitLocalNotFound(stats)
       assertExplicitRemoteFound(actualStats = stats, hasRules = true, hasEnvVar = true, hasCache = true)
       assertImplicitLocalOrRemoteNotFound(stats)

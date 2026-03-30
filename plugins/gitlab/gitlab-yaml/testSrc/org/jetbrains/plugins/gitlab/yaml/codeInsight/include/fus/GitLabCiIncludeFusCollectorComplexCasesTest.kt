@@ -46,7 +46,7 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val result = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      val result = GitLabCiIncludeApplicationMetricsCollector().performAnalysis()
       assertQuality(actualResult = result, filesAnalyzed = 2, filesFailed = 0, timeoutHappened = false)
 
       val stats = result.includeStats
@@ -93,7 +93,7 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val result = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      val result = GitLabCiIncludeApplicationMetricsCollector().performAnalysis()
       assertQuality(actualResult = result, filesAnalyzed = 1, filesFailed = 0, timeoutHappened = false)
 
       val stats = result.includeStats
@@ -169,7 +169,7 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val result = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      val result = GitLabCiIncludeApplicationMetricsCollector().performAnalysis()
       assertQuality(actualResult = result, filesAnalyzed = 3, filesFailed = 0, timeoutHappened = false)
 
       val stats = result.includeStats
@@ -250,7 +250,7 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val result = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      val result = GitLabCiIncludeApplicationMetricsCollector().performAnalysis()
       assertQuality(actualResult = result, filesAnalyzed = 4, filesFailed = 0, timeoutHappened = false)
 
       val stats = result.includeStats
@@ -340,7 +340,7 @@ internal class GitLabCiIncludeFusCollectorComplexCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val result = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing()
+      val result = GitLabCiIncludeApplicationMetricsCollector().performAnalysis()
       assertQuality(actualResult = result, filesAnalyzed = 4, filesFailed = 0, timeoutHappened = false)
 
       val stats = result.includeStats

@@ -32,7 +32,7 @@ internal class GitLabCiIncludeFusCollectorLocalIncludeCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalysis().includeStats
         assertExplicitLocalFound(actualStats = stats, hasRules = false, hasEnvVar = false, hasSingleAsterisk = false, hasDoubleAsterisk = false)
       assertExplicitRemoteNotFound(stats)
       assertImplicitLocalOrRemoteNotFound(stats)
@@ -58,7 +58,7 @@ internal class GitLabCiIncludeFusCollectorLocalIncludeCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalysis().includeStats
         assertExplicitLocalFound(actualStats = stats, hasRules = true, hasEnvVar = false, hasSingleAsterisk = true, hasDoubleAsterisk = false)
       assertExplicitRemoteNotFound(stats)
       assertImplicitLocalOrRemoteNotFound(stats)
@@ -82,7 +82,7 @@ internal class GitLabCiIncludeFusCollectorLocalIncludeCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalysis().includeStats
         assertExplicitLocalFound(actualStats = stats, hasRules = false, hasEnvVar = true, hasSingleAsterisk = false, hasDoubleAsterisk = true)
       assertExplicitRemoteNotFound(stats)
       assertImplicitLocalOrRemoteNotFound(stats)
@@ -110,7 +110,7 @@ internal class GitLabCiIncludeFusCollectorLocalIncludeCasesTest {
 
     @Test
     fun test() = runBlocking {
-      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalyzing().includeStats
+      val stats = GitLabCiIncludeApplicationMetricsCollector().performAnalysis().includeStats
         assertExplicitLocalFound(actualStats = stats, hasRules = true, hasEnvVar = true, hasSingleAsterisk = true, hasDoubleAsterisk = true)
       assertExplicitRemoteNotFound(stats)
       assertImplicitLocalOrRemoteNotFound(stats)

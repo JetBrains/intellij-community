@@ -34,7 +34,7 @@ internal class GitLabCiIncludeApplicationMetricsCollector : ApplicationUsagesCol
   override fun getGroup(): EventLogGroup = GROUP
 
   override suspend fun getMetricsAsync(): Set<MetricEvent> {
-    val result = performAnalyzing()
+    val result = performAnalysis()
 
     val metricEvents = result.includeStats.toMetricEvents().toMutableSet()
 
@@ -48,14 +48,14 @@ internal class GitLabCiIncludeApplicationMetricsCollector : ApplicationUsagesCol
   }
 
   @VisibleForTesting
-  internal suspend fun performAnalyzing(): AnalyzingResult {
+  internal suspend fun performAnalysis(): AnalysisResult {
     val state = AnalyzingState()
 
     val timedOut = withTimeoutOrNull(AnalyzingLimits.TIMEOUT) {
       performAnalyzingInternal(state)
     } == null
 
-    return AnalyzingResult(
+    return AnalysisResult(
       includeStats = state.includeStats,
       filesAnalyzed = state.filesAnalyzed,
       filesFailed = state.filesFailed,
@@ -379,7 +379,7 @@ internal class IncludeStats(
 }
 
 @VisibleForTesting
-internal data class AnalyzingResult(
+internal data class AnalysisResult(
   val includeStats: IncludeStats,
   val filesAnalyzed: Int,
   val filesFailed: Int,

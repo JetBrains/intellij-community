@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 
 internal fun assertQuality(
-  actualResult: AnalyzingResult,
+  actualResult: AnalysisResult,
   filesAnalyzed: Int,
   filesFailed: Int,
   timeoutHappened: Boolean,
