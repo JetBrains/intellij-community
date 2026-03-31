@@ -5,6 +5,7 @@ package com.intellij.platform.projectView.frontend.impl.pane
 
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.projectView.NodeSortKey
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.util.treeView.DefaultTreeModelWithCachedPresentation
 import com.intellij.ide.util.treeView.PathElementIdProvider
@@ -18,6 +19,7 @@ import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.registry.Registry
@@ -48,6 +50,8 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRootModel
 import com.intellij.pom.Navigatable
+import com.intellij.ui.AutoScrollToSourceHandler
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.ui.treeStructure.Tree
@@ -58,15 +62,20 @@ import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.ui.tree.TreeUtil
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import javax.swing.JComponent
@@ -94,6 +103,7 @@ internal abstract class TreeBasedFrontendProjectViewPane(
   private inner class ContentPanel(content: JComponent) : SimpleToolWindowPanel(true), UiDataProvider {
     init {
       setContent(content)
+      ClientProperty.put(this, FileEditorManagerKeys.OPEN_IN_PREVIEW_TAB, true)
     }
 
     override fun uiDataSnapshot(sink: DataSink) {
@@ -124,6 +134,8 @@ internal abstract class TreeBasedFrontendProjectViewPane(
       }
     }
 
+  private val autoscrollToSourceHandler = MyAutoscrollToSourceHandler(project)
+
   init {
     tree.addTreeExpansionListener(object : TreeExpansionListener {
       override fun treeExpanded(event: TreeExpansionEvent) {
@@ -136,6 +148,7 @@ internal abstract class TreeBasedFrontendProjectViewPane(
     })
     EditSourceOnDoubleClickHandler.install(tree)
     EditSourceOnEnterKeyHandler.install(tree)
+    autoscrollToSourceHandler.install(tree)
   }
 
   private fun sendRequest(request: ProjectViewPaneRequest) {
@@ -143,7 +156,11 @@ internal abstract class TreeBasedFrontendProjectViewPane(
   }
 
   override suspend fun manage() {
-    awaitCancellation()
+    coroutineScope { 
+      launch(CoroutineName("autoscrollToSourceHandler")) {
+        autoscrollToSourceHandler.manage()
+      }
+    }
   }
 
   override fun getOptionSupport(): ProjectViewActionSupport = optionSupport
@@ -416,6 +433,29 @@ private class ProjectViewTreeExpander(tree: Tree) : DefaultTreeExpander(tree) {
 
   override fun collapseAll(tree: JTree, strict: Boolean, keepSelectionLevel: Int) {
     super.collapseAll(tree, false, keepSelectionLevel)
+  }
+}
+
+private class MyAutoscrollToSourceHandler(private val project: Project) : AutoScrollToSourceHandler() {
+  override fun isAutoScrollMode(): Boolean {
+    return ProjectViewOption.AUTOSCROLL_TO_SOURCE.isOn() || ProjectViewOption.OPEN_IN_PREVIEW_TAB.isOn()
+  }
+
+  override fun setAutoScrollMode(state: Boolean) {
+    ProjectViewActionSupport.getInstance(project).requestOptionValueChange(ProjectViewOption.AUTOSCROLL_TO_SOURCE, state)
+  }
+
+  private fun ProjectViewOption.isOn(): Boolean =
+    ProjectViewActionSupport.getInstance(project).getActionState()?.optionStates?.get(this)?.isSelected == true
+
+  suspend fun manage() {
+    // sync the setting from the backend, because it's used on the frontend
+    ProjectViewActionSupport.getInstance(project).getActionStateFlow().map { 
+      it?.optionStates?.get(ProjectViewOption.OPEN_IN_PREVIEW_TAB)?.isSelected == true
+    }.distinctUntilChanged()
+      .collectLatest { 
+        UISettings.getInstance().openInPreviewTabIfPossible = it
+      }
   }
 }
 
