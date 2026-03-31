@@ -854,6 +854,7 @@
 
   <extensions defaultExtensionNs="Pythonid">
     <pyRunToolProvider implementation="com.jetbrains.python.sdk.uv.run.UvRunToolProvider"/>
+    <pyRunToolProvider implementation="com.jetbrains.python.hatch.run.HatchRunToolProvider"/>
     <evoTreeElementProvider id="UvEvoProvider"
                             order="first"
                             implementation="com.jetbrains.python.uv.sdk.evolution.UvSelectSdkProvider"/>
