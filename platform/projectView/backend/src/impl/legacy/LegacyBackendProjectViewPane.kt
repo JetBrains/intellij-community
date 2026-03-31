@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.actions.FileNestingState
@@ -338,7 +339,7 @@ private class AbstractProjectViewPaneStateManager(
               LOG.trace { "Got request for pane $id: $request" }
               when (request) {
                 is ProjectViewPaneLoadChildrenRequest -> loadChildren(request.nodeId)
-                is ProjectViewPaneNavigateRequest -> navigate(request.nodeId)
+                is ProjectViewPaneNavigateRequest -> navigate(request.nodeId, request.requestFocus)
                 is ProjectViewPaneChangeOptionValueRequest -> changeOptionValue(request.option, request.newValue)
                 is ProjectViewPaneChangeSortKeyRequest -> changeSortKey(request.sortKey)
                 is ProjectViewPaneChangeFileNestingRequest -> changeFileNesting(request.isFileNestingOn, request.activeRules)
@@ -418,11 +419,15 @@ private class AbstractProjectViewPaneStateManager(
   @RequiresReadLock
   private fun canNavigateToSource(node: Any): Boolean = (TreeUtil.getUserObject(node) as? Navigatable?)?.canNavigateToSource() == true
 
-  private suspend fun navigate(id: Long) {
+  private suspend fun navigate(id: Long, requestFocus: Boolean) {
     val node = nodeById[id] ?: return
     val navigatable = TreeUtil.getUserObject(node.modelNode) as? Navigatable? ?: return
     val navigationRequest = readAction { navigatable.navigationRequest() } ?: return
-    NavigationService.getInstance(project).navigate(navigationRequest)
+    NavigationService.getInstance(project).navigate(
+      request = navigationRequest,
+      options = NavigationOptions.defaultOptions()
+        .requestFocus(requestFocus),
+    )
   }
 
   private fun loadInitialState() {
