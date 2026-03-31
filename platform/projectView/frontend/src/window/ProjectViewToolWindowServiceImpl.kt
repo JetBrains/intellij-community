@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.project.projectId
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.frontend.actions.ProjectViewActionSupportImpl
+import com.intellij.platform.projectView.frontend.actions.SplitProjectViewAutoscrollFromSource
 import com.intellij.platform.projectView.frontend.impl.pane.TreeBasedFrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneProviderEP
@@ -44,6 +45,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -59,26 +62,31 @@ import kotlin.time.Duration.Companion.seconds
 internal class ProjectViewToolWindowServiceImpl(
   val project: Project,
 ) : ProjectViewToolWindowService, PersistentStateComponent<Element> {
+  companion object {
+    fun getInstance(project: Project): ProjectViewToolWindowServiceImpl =
+      ProjectViewToolWindowService.getInstance(project) as ProjectViewToolWindowServiceImpl
+  }
   private val menuActionGroup: DefaultActionGroup by lazy { DefaultActionGroup() }
   private val stateInitJob = CompletableDeferred<Unit>()
   private lateinit var defaultSelection: ProjectViewPaneId
   private val paneSelectJob = CompletableDeferred<Unit>()
   private val persistentState = ProjectViewToolWindowServiceState()
-  private val currentPaneFlow = MutableStateFlow<FrontendProjectViewPane?>(null)
+  private val currentPaneMutableFlow = MutableStateFlow<FrontendProjectViewPane?>(null)
+  val currentPaneFlow: StateFlow<FrontendProjectViewPane?> = currentPaneMutableFlow.asStateFlow()
   private val currentPaneListener: ContentManagerListener = object : ContentManagerListener {
     override fun selectionChanged(event: ContentManagerEvent) {
       if (event.operation == ContentManagerEvent.ContentOperation.add) {
         val newPane = event.content.getUserData(PANE_KEY)
-        val oldPane = currentPaneFlow.value
-        currentPaneFlow.value = newPane
+        val oldPane = currentPaneMutableFlow.value
+        currentPaneMutableFlow.value = newPane
         currentPaneChanged(oldPane, newPane)
       }
     }
   }
-  private val optionService = ProjectViewActionSupportImpl(currentPaneFlow)
+  private val optionService = ProjectViewActionSupportImpl(currentPaneMutableFlow)
 
   override val currentPaneId: ProjectViewPaneId?
-    get() = currentPaneFlow.value?.id
+    get() = currentPaneMutableFlow.value?.id
 
   override fun getActionSupport(): ProjectViewActionSupport = optionService
 
@@ -100,26 +108,31 @@ internal class ProjectViewToolWindowServiceImpl(
           toolWindow.contentManager.removeContentManagerListener(currentPaneListener)
         }
       }
-      val rpc = ProjectViewRpc.getInstance()
-      for (provider in FrontendProjectViewPaneProviderEP.extensionList) {
-        val paneDescriptors = rpc.getPaneDescriptors(project.projectId())
-        defaultSelection = paneDescriptors.firstOrNull { it.isDefault }?.id ?: defaultSelectedPaneId()
-        for (descriptor in paneDescriptors) {
-          launch(CoroutineName("Manage PV pane ${descriptor.id} from the provider ${provider}")) {
-            try {
-              LOG.debug { "Initializing pane ${descriptor.id}" }
-              val pane = withContext(Dispatchers.UI) {
-                provider.createPane(project, descriptor)
+      launch(CoroutineName("Pane management")) {
+        val rpc = ProjectViewRpc.getInstance()
+        for (provider in FrontendProjectViewPaneProviderEP.extensionList) {
+          val paneDescriptors = rpc.getPaneDescriptors(project.projectId())
+          defaultSelection = paneDescriptors.firstOrNull { it.isDefault }?.id ?: defaultSelectedPaneId()
+          for (descriptor in paneDescriptors) {
+            launch(CoroutineName("Manage PV pane ${descriptor.id} from the provider ${provider}")) {
+              try {
+                LOG.debug { "Initializing pane ${descriptor.id}" }
+                val pane = withContext(Dispatchers.UI) {
+                  provider.createPane(project, descriptor)
+                }
+                LOG.debug { "Created pane ${descriptor.id}" }
+                managePane(toolWindow, pane)
               }
-              LOG.debug { "Created pane ${descriptor.id}" }
-              managePane(toolWindow, pane)
-            }
-            catch (e: Throwable) {
-              rethrowControlFlowException(e)
-              LOG.error("Failed to initialize pane ${descriptor.id}", e)
+              catch (e: Throwable) {
+                rethrowControlFlowException(e)
+                LOG.error("Failed to initialize pane ${descriptor.id}", e)
+              }
             }
           }
         }
+      }
+      launch(CoroutineName("Always select opened file")) {
+        SplitProjectViewAutoscrollFromSource.getInstance(project).manage()
       }
     }
   }
@@ -191,7 +204,7 @@ internal class ProjectViewToolWindowServiceImpl(
       LOG.debug { "Obtaining the RCP service to manage the pane ${pane.id}" }
       val rpc = ProjectViewRpc.getInstance()
       launch(CoroutineName("Pane ${pane.id} state updates")) {
-        currentPaneFlow.collectLatest { currentPane ->
+        currentPaneMutableFlow.collectLatest { currentPane ->
           if (currentPane == pane) {
             LOG.debug { "The pane ${pane.id} is selected, starting to collect its updates"}
             try {
@@ -263,7 +276,7 @@ internal class ProjectViewToolWindowServiceImpl(
   }
 
   override suspend fun selectNode(nodePath: ProjectViewNodePath) {
-    val currentPane = currentPaneFlow.value
+    val currentPane = currentPaneMutableFlow.value
     if (currentPane == null) {
       LOG.debug { "Not selecting $nodePath because there's no current pane" }
       return

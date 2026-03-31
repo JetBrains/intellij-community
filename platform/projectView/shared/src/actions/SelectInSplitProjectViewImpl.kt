@@ -26,7 +26,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import kotlin.collections.addAll
 import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
@@ -36,8 +35,9 @@ enum class EditorChoice {
   LAST_FOCUSED_ONLY,
 }
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-internal class SelectInSplitProjectViewImpl(private val project: Project, coroutineScope: CoroutineScope) {
+class SelectInSplitProjectViewImpl(private val project: Project, coroutineScope: CoroutineScope) {
   companion object {
     fun getInstance(project: Project): SelectInSplitProjectViewImpl = project.service()
   }

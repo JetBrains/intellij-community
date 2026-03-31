@@ -4,6 +4,7 @@ package com.intellij.platform.projectView.actions
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -13,6 +14,8 @@ interface ProjectViewActionSupport {
   }
 
   fun getActionState(): ProjectViewActionState?
+
+  fun getActionStateFlow(): Flow<ProjectViewActionState?>
 
   fun requestOptionValueChange(option: ProjectViewOption, newValue: Boolean)
 

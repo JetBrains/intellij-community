@@ -18,6 +18,7 @@ jvm_library(
   resource_strip_prefix = "resources",
   kotlinc_opts = ":custom_frontend",
   deps = [
+    "//platform/analysis-api:analysis",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
@@ -48,6 +49,7 @@ jvm_library(
   kotlinc_opts = ":custom_frontend",
   runtime_deps = [
     ":frontend",
+    "//platform/analysis-api:analysis_test_lib",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/projectView/shared:projectView_test_lib",
     "//platform/platform-api:ide_test_lib",

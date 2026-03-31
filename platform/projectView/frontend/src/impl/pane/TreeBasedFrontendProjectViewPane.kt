@@ -62,7 +62,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
@@ -73,7 +75,6 @@ import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
-import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 internal abstract class TreeBasedFrontendProjectViewPane(
@@ -351,9 +352,11 @@ internal abstract class TreeBasedFrontendProjectViewPane(
   }
   
   private inner class ActionSupport : ProjectViewActionSupport {
-    private val actionState = AtomicReference<ProjectViewActionState?>(null)
+    private val actionState = MutableStateFlow<ProjectViewActionState?>(null)
 
-    override fun getActionState(): ProjectViewActionState? = actionState.load()
+    override fun getActionState(): ProjectViewActionState? = actionState.value
+
+    override fun getActionStateFlow(): Flow<ProjectViewActionState?> = actionState.asStateFlow()
 
     override fun requestOptionValueChange(option: ProjectViewOption, newValue: Boolean) {
       sendRequest(ProjectViewPaneChangeOptionValueRequest(option, newValue))
@@ -372,7 +375,7 @@ internal abstract class TreeBasedFrontendProjectViewPane(
 
     fun updateActionState(actionState: ProjectViewActionState) {
       LOG.debug { "Received updated actions: $actionState" }
-      this.actionState.store(actionState)
+      this.actionState.value = actionState
       ProjectViewOptionMenuUpdater.getInstance(project).updateMenu()
     }
   }
