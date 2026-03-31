@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.SessionActionTarget
@@ -14,6 +15,7 @@ data class AgentChatEditorTabActionContext(
   @JvmField val path: String,
   @JvmField val tabKey: String,
   @JvmField val threadIdentity: String = "",
+  @JvmField val threadActivity: AgentThreadActivity = AgentThreadActivity.READY,
   val threadCoordinates: AgentChatThreadCoordinates? = null,
   val sessionActionTarget: SessionActionTarget? = null,
 )
@@ -70,6 +72,7 @@ fun resolveAgentChatEditorTabActionContext(event: AnActionEvent): AgentChatEdito
     path = normalizeAgentWorkbenchPath(selectedChatFile.projectPath),
     tabKey = selectedChatFile.tabKey,
     threadIdentity = selectedChatFile.threadIdentity,
+    threadActivity = selectedChatFile.threadActivity,
     threadCoordinates = threadCoordinates,
     sessionActionTarget = resolveAgentChatSessionActionTarget(
       path = normalizeAgentWorkbenchPath(selectedChatFile.projectPath),

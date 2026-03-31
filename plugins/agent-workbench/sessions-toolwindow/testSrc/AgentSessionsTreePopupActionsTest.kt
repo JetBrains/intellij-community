@@ -250,7 +250,7 @@ class AgentSessionsTreePopupActionsTest {
 
     val unsupported = AgentSessionsTreePopupRenameThreadAction(
       resolveContext = { threadContext },
-      canRenameProvider = { false },
+      canRenameThread = { false },
       renameThread = { _, _ -> },
       promptForName = { _, _ -> null },
     )
@@ -261,7 +261,7 @@ class AgentSessionsTreePopupActionsTest {
 
     val supported = AgentSessionsTreePopupRenameThreadAction(
       resolveContext = { threadContext },
-      canRenameProvider = { true },
+      canRenameThread = { true },
       renameThread = { _, _ -> },
       promptForName = { _, _ -> null },
     )
@@ -285,7 +285,7 @@ class AgentSessionsTreePopupActionsTest {
     )
     val hiddenAction = AgentSessionsTreePopupRenameThreadAction(
       resolveContext = { subAgentContext },
-      canRenameProvider = { true },
+      canRenameThread = { true },
       renameThread = { _, _ -> },
       promptForName = { _, _ -> null },
     )
@@ -314,7 +314,7 @@ class AgentSessionsTreePopupActionsTest {
 
     val action = AgentSessionsTreePopupRenameThreadAction(
       resolveContext = { context },
-      canRenameProvider = { true },
+      canRenameThread = { true },
       renameThread = { capturedTarget, requestedName ->
         renamedTarget = capturedTarget
         renamedTo = requestedName

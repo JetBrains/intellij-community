@@ -11,6 +11,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDE
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameMode
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -74,6 +76,14 @@ class CodexAgentSessionProviderDescriptorTest {
     @Test
     fun supportsRenameThread() {
         assertThat(bridge.supportsRenameThread).isTrue()
+    }
+
+    @Test
+    fun renameThreadUsesBackendModeInAllContexts() {
+        assertThat(bridge.renameThreadMode(AgentThreadRenameContext.TREE_POPUP))
+            .isEqualTo(AgentThreadRenameMode.BACKEND)
+        assertThat(bridge.renameThreadMode(AgentThreadRenameContext.EDITOR_TAB))
+            .isEqualTo(AgentThreadRenameMode.BACKEND)
     }
 
     @Test

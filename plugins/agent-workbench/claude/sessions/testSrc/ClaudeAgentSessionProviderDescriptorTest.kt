@@ -10,6 +10,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDE
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameMode
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -54,6 +56,15 @@ class ClaudeAgentSessionProviderDescriptorTest {
     assertThat(bridge.supportsNewThreadRebind).isFalse()
     assertThat(bridge.editorTabActionIds)
       .containsExactly(AgentWorkbenchActionIds.Sessions.BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB)
+  }
+
+  @Test
+  fun renameThreadUsesEditorTabDispatchModeOnly() {
+    assertThat(bridge.renameThreadMode(AgentThreadRenameContext.TREE_POPUP)).isNull()
+    assertThat(bridge.renameThreadMode(AgentThreadRenameContext.EDITOR_TAB))
+      .isEqualTo(AgentThreadRenameMode.ACTIVE_EDITOR_DISPATCH)
+    assertThat(bridge.buildRenameThreadDispatchSteps("Renamed thread").map { it.text })
+      .containsExactly("/rename Renamed thread")
   }
 
   @Test

@@ -3,7 +3,6 @@ package com.intellij.agent.workbench.sessions.actions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.SessionActionTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionRenameService
 import com.intellij.agent.workbench.sessions.service.showRenameThreadDialog
@@ -12,11 +11,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 
 internal class AgentSessionsEditorTabRenameThreadAction @JvmOverloads constructor(
-  private val canRenameProvider: (AgentSessionProvider) -> Boolean = { provider ->
-    service<AgentSessionRenameService>().canRenameProvider(provider)
+  private val canRenameThread: (AgentChatEditorTabActionContext, SessionActionTarget.Thread) -> Boolean = { context, target ->
+    service<AgentSessionRenameService>().canRenameThreadInEditorTab(context, target)
   },
-  private val renameThread: (SessionActionTarget.Thread, String) -> Unit = { target, requestedName ->
-    service<AgentSessionRenameService>().renameThread(target, requestedName)
+  private val renameThread: (AgentChatEditorTabActionContext, SessionActionTarget.Thread, String) -> Unit = { context, target, requestedName ->
+    service<AgentSessionRenameService>().renameThreadFromEditorTab(context, target, requestedName)
   },
   private val promptForName: (Project, String) -> String? = ::showRenameThreadDialog,
   resolveContext: (AnActionEvent) -> AgentChatEditorTabActionContext? = ::resolveAgentChatEditorTabActionContext,
@@ -27,17 +26,17 @@ internal class AgentSessionsEditorTabRenameThreadAction @JvmOverloads constructo
     val target = context.sessionActionTarget as? SessionActionTarget.Thread
     e.presentation.text = templatePresentation.textWithMnemonic
     e.presentation.isVisible = target != null
-    e.presentation.isEnabled = target != null && canRenameProvider(target.provider)
+    e.presentation.isEnabled = target != null && canRenameThread(context, target)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveEditorTabContext(e) ?: return
     val target = context.sessionActionTarget as? SessionActionTarget.Thread ?: return
-    if (!canRenameProvider(target.provider)) {
+    if (!canRenameThread(context, target)) {
       return
     }
 
     val requestedName = promptForName(context.project, target.title) ?: return
-    renameThread(target, requestedName)
+    renameThread(context, target, requestedName)
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentPendingSessionMetadata
@@ -15,6 +16,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSp
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameMode
 import com.intellij.agent.workbench.sessions.core.providers.buildPlanModeInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.isPlanModeCommand
 import com.intellij.agent.workbench.sessions.core.providers.stripPlanModePrefix
@@ -107,6 +110,14 @@ internal class ClaudeAgentSessionProviderDescriptor(
       request = request,
       startupPolicyWhenPlanModeEnabled = AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND,
     )
+  }
+
+  override fun renameThreadMode(context: AgentThreadRenameContext): AgentThreadRenameMode? {
+    return if (context == AgentThreadRenameContext.EDITOR_TAB) AgentThreadRenameMode.ACTIVE_EDITOR_DISPATCH else null
+  }
+
+  override fun buildRenameThreadDispatchSteps(name: String): List<AgentInitialMessageDispatchStep> {
+    return listOf(AgentInitialMessageDispatchStep(text = "/rename $name"))
   }
 
   override fun resolvePendingSessionMetadata(

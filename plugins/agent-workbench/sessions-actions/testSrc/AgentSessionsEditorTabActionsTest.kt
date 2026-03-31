@@ -396,8 +396,8 @@ class AgentSessionsEditorTabActionsTest {
     val threadContext = editorContext()
     val unsupported = AgentSessionsEditorTabRenameThreadAction(
       resolveContext = { threadContext },
-      canRenameProvider = { false },
-      renameThread = { _, _ -> },
+      canRenameThread = { _, _ -> false },
+      renameThread = { _, _, _ -> },
       promptForName = { _, _ -> null },
     )
     val unsupportedEvent = TestActionEvent.createTestEvent(unsupported)
@@ -407,8 +407,8 @@ class AgentSessionsEditorTabActionsTest {
 
     val supported = AgentSessionsEditorTabRenameThreadAction(
       resolveContext = { threadContext },
-      canRenameProvider = { true },
-      renameThread = { _, _ -> },
+      canRenameThread = { _, _ -> true },
+      renameThread = { _, _, _ -> },
       promptForName = { _, _ -> null },
     )
     val supportedEvent = TestActionEvent.createTestEvent(supported)
@@ -424,8 +424,8 @@ class AgentSessionsEditorTabActionsTest {
     )
     val subAgentAction = AgentSessionsEditorTabRenameThreadAction(
       resolveContext = { subAgentContext },
-      canRenameProvider = { true },
-      renameThread = { _, _ -> },
+      canRenameThread = { _, _ -> true },
+      renameThread = { _, _, _ -> },
       promptForName = { _, _ -> null },
     )
     val hiddenSubAgentEvent = TestActionEvent.createTestEvent(subAgentAction)
@@ -436,8 +436,8 @@ class AgentSessionsEditorTabActionsTest {
     val pendingContext = editorContext(threadIdentity = "codex:new-1", sessionId = "new-1", isPendingThread = true)
     val pendingAction = AgentSessionsEditorTabRenameThreadAction(
       resolveContext = { pendingContext },
-      canRenameProvider = { true },
-      renameThread = { _, _ -> },
+      canRenameThread = { _, _ -> true },
+      renameThread = { _, _, _ -> },
       promptForName = { _, _ -> null },
     )
     val pendingEvent = TestActionEvent.createTestEvent(pendingAction)
@@ -457,8 +457,8 @@ class AgentSessionsEditorTabActionsTest {
 
     val action = AgentSessionsEditorTabRenameThreadAction(
       resolveContext = { context },
-      canRenameProvider = { true },
-      renameThread = { target, requestedName ->
+      canRenameThread = { _, _ -> true },
+      renameThread = { _, target, requestedName ->
         renamedTarget = target
         renamedTo = requestedName
       },

@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow.actions
 
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.SessionActionTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionRenameService
 import com.intellij.agent.workbench.sessions.service.showRenameThreadDialog
@@ -13,26 +12,26 @@ import com.intellij.openapi.project.Project
 
 internal class AgentSessionsTreePopupRenameThreadAction : DumbAwareAction {
   private val resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?
-  private val canRenameProvider: (AgentSessionProvider) -> Boolean
+  private val canRenameThread: (SessionActionTarget.Thread) -> Boolean
   private val renameThread: (SessionActionTarget.Thread, String) -> Unit
   private val promptForName: (Project, String) -> String?
 
   @Suppress("unused")
   constructor() {
     resolveContext = ::resolveAgentSessionsTreePopupActionContext
-    canRenameProvider = { provider -> service<AgentSessionRenameService>().canRenameProvider(provider) }
-    renameThread = { target, requestedName -> service<AgentSessionRenameService>().renameThread(target, requestedName) }
+    canRenameThread = { target -> service<AgentSessionRenameService>().canRenameThreadInTree(target) }
+    renameThread = { target, requestedName -> service<AgentSessionRenameService>().renameThreadFromTree(target, requestedName) }
     promptForName = ::showRenameThreadDialog
   }
 
   internal constructor(
     resolveContext: (AnActionEvent) -> AgentSessionsTreePopupActionContext?,
-    canRenameProvider: (AgentSessionProvider) -> Boolean,
+    canRenameThread: (SessionActionTarget.Thread) -> Boolean,
     renameThread: (SessionActionTarget.Thread, String) -> Unit,
     promptForName: (Project, String) -> String?,
   ) {
     this.resolveContext = resolveContext
-    this.canRenameProvider = canRenameProvider
+    this.canRenameThread = canRenameThread
     this.renameThread = renameThread
     this.promptForName = promptForName
   }
@@ -41,13 +40,13 @@ internal class AgentSessionsTreePopupRenameThreadAction : DumbAwareAction {
     val context = resolveContext(e)
     val target = context?.target as? SessionActionTarget.Thread
     e.presentation.isVisible = target != null
-    e.presentation.isEnabled = target != null && canRenameProvider(target.provider)
+    e.presentation.isEnabled = target != null && canRenameThread(target)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
     val target = context.target as? SessionActionTarget.Thread ?: return
-    if (!canRenameProvider(target.provider)) {
+    if (!canRenameThread(target)) {
       return
     }
 
