@@ -4,7 +4,6 @@ package com.intellij.gradle.completion.toml.tests
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
@@ -15,6 +14,7 @@ import com.intellij.repository.search.completion.api.DependencyPartCompletionRes
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
+import com.intellij.testFramework.runInEdtAndWait
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.gradle.util.GradleVersion

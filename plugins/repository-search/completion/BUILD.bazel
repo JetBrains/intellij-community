@@ -66,6 +66,7 @@ jvm_library(
 
 jvm_library(
   name = "repository-search-completion-tests_test_lib",
+  testonly = True,
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_repository-search-completion-tests",
