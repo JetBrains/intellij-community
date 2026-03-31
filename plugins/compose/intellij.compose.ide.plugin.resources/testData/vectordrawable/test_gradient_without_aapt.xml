@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+        android:width="24dp"
+        android:height="24dp"
+        android:viewportWidth="24"
+        android:viewportHeight="24">
+  <path
+    android:pathData="M0,0 L24,0 L24,24 L0,24 z">
+    <gradient
+      android:startX="0"
+      android:startY="0"
+      android:endX="24"
+      android:endY="24"
+      android:type="linear">
+      <item android:color="#FF0000" android:offset="0"/>
+      <item android:color="#0000FF" android:offset="1"/>
+    </gradient>
+  </path>
+</vector>

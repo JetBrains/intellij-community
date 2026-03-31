@@ -15,13 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compose.ide.plugin.resources.previewDrawables
+package com.intellij.compose.ide.plugin.resources.vectorDrawable.preview
 
-import com.intellij.compose.ide.plugin.resources.COMPOSE_RESOURCES_DIR
 import com.intellij.compose.ide.plugin.resources.ResourceType
+import com.intellij.compose.ide.plugin.resources.getAllComposeResourcesDirs
+import com.intellij.compose.ide.plugin.shared.isFileInAndroidModule
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -39,23 +39,29 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 internal class ComposeResourceEditorProvider : AsyncFileEditorProvider, DumbAware {
-
   override fun accept(project: Project, file: VirtualFile): Boolean {
+    // Supports XML files
     if (!file.extension.equals("xml")) return false
-    if (file.name.startsWith("strings")) return false
 
+    // Drawable directory
     val parent = file.parent ?: return false
     if (!parent.name.startsWith(ResourceType.DRAWABLE.dirName, ignoreCase = true)) return false
 
     val composeResourcesDir = parent.parent ?: return false
-    val result = composeResourcesDir.name == COMPOSE_RESOURCES_DIR
 
-    return result
+    // It takes a few milliseconds for Gradle to get this information
+    val allDirs = project.getAllComposeResourcesDirs()
+    if (allDirs.isNotEmpty()) {
+      val composeResourcesDirPath = composeResourcesDir.toNioPath()
+      return allDirs.any { it.directoryPath == composeResourcesDirPath }
+    }
+
+    // Fallback during Gradle Sync, let Android XMLs go to the Android Previewer
+    return !isFileInAndroidModule(project, file)
   }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    thisLogger().warn("ComposeResourceEditorProvider.createEditor should not be called")
-    return TextEditorProvider.getInstance().createEditor(project, file)
+    error("ComposeResourceEditorProvider.createEditor should not be called")
   }
 
   override suspend fun createFileEditor(
@@ -64,7 +70,6 @@ internal class ComposeResourceEditorProvider : AsyncFileEditorProvider, DumbAwar
     document: Document?,
     editorCoroutineScope: CoroutineScope,
   ): FileEditor {
-
     val safeDocument = readAction {
       FileDocumentManager.getInstance().getDocument(file)
     }

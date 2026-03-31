@@ -19,6 +19,7 @@
     <module name="intellij.compose.ide.plugin.k2"/>
     <module name="intellij.compose.ide.plugin.gradleTooling.rt"/>
     <module name="intellij.compose.ide.plugin.resources"/>
+    <module name="intellij.compose.ide.plugin.resources.android"/>
   </content>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
