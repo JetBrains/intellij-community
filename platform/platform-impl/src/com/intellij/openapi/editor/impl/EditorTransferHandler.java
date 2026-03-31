@@ -30,6 +30,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseEvent;
+import java.lang.ref.WeakReference;
 
 
 final class EditorTransferHandler extends TransferHandler {
@@ -60,7 +61,7 @@ final class EditorTransferHandler extends TransferHandler {
     /* button = */ 0
   );
 
-  private JComponent exportComponent = null;
+  private WeakReference<JComponent> exportComponent = null;
   private int exportSelectionStart = -1;
   private int exportSelectionEnd = -1;
   private boolean exportCanRemove = true;
@@ -73,7 +74,8 @@ final class EditorTransferHandler extends TransferHandler {
       }
       EditorImpl editor = getEditor(jComp);
       int pos = editor.getCaretModel().getOffset();
-      if (support.getDropAction() == TransferHandler.MOVE && jComp == exportComponent && pos >= exportSelectionStart && pos < exportSelectionEnd) {
+      JComponent exportComponentRef = exportComponent == null ? null : exportComponent.get();
+      if (support.getDropAction() == TransferHandler.MOVE && jComp == exportComponentRef && pos >= exportSelectionStart && pos < exportSelectionEnd) {
         exportCanRemove = false;
       }
       return EditorImpl.handleDrop(editor, support.getTransferable(), support.getDropAction());
@@ -119,7 +121,7 @@ final class EditorTransferHandler extends TransferHandler {
     int selectionEnd = editor.getSelectionModel().getSelectionEnd();
 
     // IJPL-235895 Drag-and-drop with mouse of code on its own spot makes the code disappear
-    exportComponent = c;
+    exportComponent = new WeakReference<>(c);
     exportSelectionStart = selectionStart;
     exportSelectionEnd = selectionEnd;
     exportCanRemove = true;
