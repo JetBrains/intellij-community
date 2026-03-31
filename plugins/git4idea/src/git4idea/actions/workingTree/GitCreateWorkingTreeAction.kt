@@ -10,6 +10,7 @@ import fleet.util.safeAs
 import git4idea.GitBranch
 import git4idea.GitReference
 import git4idea.actions.branch.GitBranchActionsDataKeys
+import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
@@ -23,8 +24,8 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val singleRepository = GitWorkingTreesService.getRepoForWorkingTreesSupport(project)
-    if (singleRepository == null) {
+    val repository = getRepository(e)
+    if (repository == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -37,7 +38,7 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
     e.presentation.isEnabledAndVisible = true
     GitWorkingTreesNewBadgeUtil.addLabelNewIfNeeded(e.presentation)
     e.presentation.icon = computeIcon(e)
-    val localBranchFromContext = getBranchFromContext(e, singleRepository, explicitRefFromCtx)
+    val localBranchFromContext = getBranchFromContext(e, repository, explicitRefFromCtx)
     if (localBranchFromContext == null) {
       e.presentation.text = GitBundle.message("action.Git.CreateNewWorkingTree.text")
       e.presentation.description = GitBundle.message("action.Git.CreateNewWorkingTree.description")
@@ -61,9 +62,13 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     GitWorkingTreesNewBadgeUtil.workingTreesFeatureWasUsed()
     val project = e.project ?: return
-    val repository = GitWorkingTreesService.getRepoForWorkingTreesSupport(project) ?: return
+    val repository = getRepository(e) ?: return
     val branchFromContext = getBranchFromContext(e, repository)
     GitCreateWorkingTreeService.getInstance().collectDataAndCreateWorkingTree(repository, branchFromContext, e.place)
+  }
+
+  private fun getRepository(e: AnActionEvent): GitRepository? {
+    return e.getData(CURRENT_REPOSITORY) ?: GitWorkingTreesService.getRepoForWorkingTreesSupport(e.project)
   }
 
   private fun getBranchFromContext(

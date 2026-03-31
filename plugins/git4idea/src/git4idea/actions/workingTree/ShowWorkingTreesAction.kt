@@ -24,7 +24,7 @@ internal class ShowWorkingTreesAction : DumbAwareAction() {
   private fun shouldShow(e: AnActionEvent): Boolean {
     val project = e.project ?: return false
     if (ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) == null) return false
-    return GitWorkingTreesService.getRepoForWorkingTreesSupport(project) != null
+    return GitWorkingTreesService.getRepositoriesForWorkingTreesSupport(project).isNotEmpty()
   }
 
   override fun actionPerformed(e: AnActionEvent) {

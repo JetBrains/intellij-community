@@ -10,6 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -54,13 +55,32 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
     fun getInstance(project: Project): GitWorkingTreesService = project.getService(GitWorkingTreesService::class.java)
 
     /**
-     * So far only the `single repository` case is supported for working trees
+     * Returns Git repositories that should be displayed in the Worktrees tool window.
+     */
+    fun getRepositoriesForWorkingTreesSupport(project: Project?): List<GitRepository> {
+      if (project == null) return emptyList()
+      if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled()) return emptyList()
+      val repositoryManager = GitRepositoryManager.getInstance(project)
+      return repositoryManager.sortByDependency(repositoryManager.repositories)
+    }
+
+    /**
+     * Returns a Git repository that supports working trees for the current project.
+     * Supports single-repository projects and multi-repository projects that have a unique top-level repository
+     * (for example mono-repos or projects containing submodules).
      */
     fun getRepoForWorkingTreesSupport(project: Project?): GitRepository? {
       if (project == null) return null
-      if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled()) return null
-      val repositories = GitRepositoryManager.getInstance(project).repositories
-      return repositories.singleOrNull()
+      val repositoryManager = GitRepositoryManager.getInstance(project)
+      val repositories = getRepositoriesForWorkingTreesSupport(project)
+      if (repositories.isEmpty()) return null
+
+      if (repositories.size == 1) return repositories.first()
+
+      val topLevelRepositories = repositoryManager.sortByDependency(repositories).filter { candidate ->
+        repositories.none { other -> other != candidate && VfsUtilCore.isAncestor(other.root, candidate.root, true) }
+      }
+      return topLevelRepositories.singleOrNull()
     }
   }
 
@@ -69,12 +89,13 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
   }
 
   fun shouldWorkingTreesTabBeShown(): Boolean {
-    val repository = getRepoForWorkingTreesSupport(project) ?: return false
+    val repositories = getRepositoriesForWorkingTreesSupport(project)
+    if (repositories.isEmpty()) return false
     val value = PropertiesComponent.getInstance(project).getValue(WORKING_TREE_TAB_STATUS_PROPERTY)
     return when (value) {
       WORKING_TREE_TAB_STATUS_CLOSED_BY_USER -> false
       WORKING_TREE_TAB_STATUS_OPENED_BY_USER -> true
-      else -> repository.workingTreeHolder.getWorkingTrees().size > 1
+      else -> repositories.any { it.workingTreeHolder.getWorkingTrees().size > 1 }
     }
   }
 

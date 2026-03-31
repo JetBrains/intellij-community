@@ -82,12 +82,13 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
 
   private class WorkingTreesList(project: Project) : BorderLayoutPanel(), UiDataProvider {
     private val model: WorkingTreesListModel = WorkingTreesListModel(project)
-    private val list: JBList<GitWorkingTree> = JBList(model)
+    private val list: JBList<WorkingTreesListItem> = JBList(model)
 
     init {
-      list.cellRenderer = WorkingTreesListRenderer()
+      list.cellRenderer = WorkingTreesListRenderer(project)
       initEmptyText(list.emptyText)
       addToCenter(list)
+      ensureSelection()
 
       list.addMouseListener(object : PopupHandler() {
         override fun invokePopup(comp: Component, x: Int, y: Int) {
@@ -107,10 +108,16 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
           if (event == GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED) {
             ApplicationManager.getApplication().invokeLater {
               model.reload(project)
+              ensureSelection()
             }
           }
         }
       }
+    }
+
+    private fun ensureSelection() {
+      if (!list.isSelectionEmpty || model.size == 0) return
+      list.selectedIndex = 0
     }
 
     private fun initEmptyText(emptyText: StatusText) {
@@ -118,7 +125,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
       emptyText.withUnscaledGapAfter(20)
       emptyText.appendLine(GitBundle.message("toolwindow.working.trees.tab.empty.text.create.working.tree"),
                            SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { _ ->
-        val repository = model.repository
+        val repository = model.repositories.singleOrNull()
         if (repository != null) {
           GitCreateWorkingTreeService.getInstance().collectDataAndCreateWorkingTree(repository,
                                                                                     null,
@@ -133,14 +140,18 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
     }
 
     override fun uiDataSnapshot(sink: DataSink) {
-      sink[GitWorkingTreeTabActionsDataKeys.SELECTED_WORKING_TREES] = list.selectedValuesList
-      sink[GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY] = model.repository
+      val selectedItems = list.selectedValuesList
+      val selectedWorkingTrees = selectedItems.mapNotNull { (it as? WorkingTreeItem)?.workingTree }
+      if (selectedWorkingTrees.isNotEmpty()) {
+        sink[GitWorkingTreeTabActionsDataKeys.SELECTED_WORKING_TREES] = selectedWorkingTrees
+      }
+      sink[GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY] = selectedItems.map { it.repository }.distinct().singleOrNull()
       sink[PlatformCoreDataKeys.HELP_ID] = TOOLWINDOW_CONTENT_HELP_ID
     }
   }
 
-  private class WorkingTreesListModel(project: Project) : DefaultListModel<GitWorkingTree>() {
-    var repository: GitRepository? = null
+  private class WorkingTreesListModel(project: Project) : DefaultListModel<WorkingTreesListItem>() {
+    var repositories: List<GitRepository> = emptyList()
       private set
 
     init {
@@ -149,29 +160,43 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
 
     fun reload(project: Project) {
       clear()
-      val currentRepository = GitWorkingTreesService.getRepoForWorkingTreesSupport(project)
-      repository = currentRepository
-      val workingTrees = currentRepository?.workingTreeHolder?.getWorkingTrees()
-      if (workingTrees != null && workingTrees.size > 1) {
-        workingTrees.forEach {
-          if (it.isMain) {
-            add(0, it)
-          }
-          else {
-            addElement(it)
-          }
-        }
+      repositories = GitWorkingTreesService.getRepositoriesForWorkingTreesSupport(project)
+      repositories.forEach { repository ->
+        addElement(RepositoryItem(repository))
+        repository.workingTreeHolder.getWorkingTrees()
+          .sortedWith(compareByDescending<GitWorkingTree> { it.isMain }.thenBy { it.path.name })
+          .forEach { addElement(WorkingTreeItem(repository, it)) }
       }
     }
   }
 
-  private class WorkingTreesListRenderer : ColoredListCellRenderer<GitWorkingTree>() {
-    override fun customizeCellRenderer(list: JList<out GitWorkingTree?>, value: GitWorkingTree?, index: Int, selected: Boolean, hasFocus: Boolean) {
-      if (value == null) return
+  private class WorkingTreesListRenderer(private val project: Project) : ColoredListCellRenderer<WorkingTreesListItem>() {
+    override fun customizeCellRenderer(
+      list: JList<out WorkingTreesListItem?>,
+      value: WorkingTreesListItem?,
+      index: Int,
+      selected: Boolean,
+      hasFocus: Boolean,
+    ) {
+      when (value) {
+        is RepositoryItem -> customizeRepositoryCell(value)
+        is WorkingTreeItem -> customizeWorkingTreeCell(list, value.workingTree)
+        null -> Unit
+      }
+    }
 
+    private fun customizeRepositoryCell(value: RepositoryItem) {
+      iconTextGap = JBUI.scale(4)
+      icon = AllIcons.Nodes.Folder
+      append(getPresentableRepositoryName(value.repository), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+      append("  ")
+      append(FileUtil.getLocationRelativeToUserHome(value.repository.root.path), SimpleTextAttributes.GRAY_ATTRIBUTES)
+    }
+
+    private fun customizeWorkingTreeCell(list: JList<out WorkingTreesListItem?>, value: GitWorkingTree) {
       iconTextGap = JBUI.scale(4)
       icon = if (value.isCurrent) AllIcons.Actions.Checked else AllIcons.Empty
-
+      append("  ")
       append(value.path.name, if (value.isMain) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES)
 
       val columnGap = JBUI.scale(20)
@@ -192,18 +217,24 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
       else -> branch.name
     }
 
-    private fun getWorktreeColumnWidth(list: JList<out GitWorkingTree?>): Int = getMaxWidth(list) { it.path.name }
-    private fun getBranchColumnWidth(list: JList<out GitWorkingTree?>): Int = getMaxWidth(list) { getPresentableBranchName(it) }
+    private fun getPresentableRepositoryName(repository: GitRepository): String {
+      val basePath = project.basePath ?: return repository.root.name
+      val relativePath = FileUtil.getRelativePath(basePath, repository.root.path, '/')
+      return relativePath?.takeIf { it.isNotEmpty() && it != "." } ?: repository.root.name
+    }
 
-    private fun getMaxWidth(list: JList<out GitWorkingTree?>, toString: (GitWorkingTree) -> String): Int {
+    private fun getWorktreeColumnWidth(list: JList<out WorkingTreesListItem?>): Int = getMaxWidth(list) { it.workingTree.path.name }
+    private fun getBranchColumnWidth(list: JList<out WorkingTreesListItem?>): Int = getMaxWidth(list) { getPresentableBranchName(it.workingTree) }
+
+    private fun getMaxWidth(list: JList<out WorkingTreesListItem?>, toString: (WorkingTreeItem) -> String): Int {
       val model = list.model
       var maxWidth = 0
 
       val fontMetrics = list.getFontMetrics(list.font)
 
       for (i in 0 until model.size) {
-        val workingTree = model.getElementAt(i)
-        val line = toString(workingTree)
+        val item = model.getElementAt(i) as? WorkingTreeItem ?: continue
+        val line = toString(item)
         val lineWidth = fontMetrics.stringWidth(line)
         if (lineWidth > maxWidth) {
           maxWidth = lineWidth
@@ -213,6 +244,17 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
       return maxWidth
     }
   }
+
+  private sealed interface WorkingTreesListItem {
+    val repository: GitRepository
+  }
+
+  private data class RepositoryItem(override val repository: GitRepository) : WorkingTreesListItem
+
+  private data class WorkingTreeItem(
+    override val repository: GitRepository,
+    val workingTree: GitWorkingTree,
+  ) : WorkingTreesListItem
 }
 
 internal class GitWorkingTreesContentPreloader(val project: Project) : ChangesViewContentProvider.Preloader {
@@ -246,4 +288,3 @@ internal class GitWorkingTreesContentVisibilityPredicate : Predicate<Project> {
     return shouldWorkingTreesTabBeShown
   }
 }
-
