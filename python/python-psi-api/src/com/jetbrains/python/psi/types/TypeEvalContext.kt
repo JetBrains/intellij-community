@@ -54,7 +54,7 @@ sealed class TypeEvalContext(
   private val myProcessingContext = ThreadLocal.withInitial { ProcessingContext() }
 
   @ApiStatus.Internal
-  private val typeEngine: PyTypeEngine? = constraints.myOrigin?.let {
+  val typeEngine: PyTypeEngine? = constraints.myOrigin?.let {
     ModuleUtilCore.findModuleForFile(it)
   }?.let { module ->
     createTypeResolver(module)
