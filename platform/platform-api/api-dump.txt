@@ -484,11 +484,15 @@ c:com.intellij.ide.DefaultTreeExpander
 - p:canCollapse(javax.swing.JTree):Z
 - canExpand():Z
 - p:canExpand(javax.swing.JTree):Z
+- canExpandSelected():Z
+- p:canExpandSelected(javax.swing.JTree):Z
 - collapseAll():V
 - p:collapseAll(javax.swing.JTree,I):V
 - p:collapseAll(javax.swing.JTree,Z,I):V
 - expandAll():V
 - p:expandAll(javax.swing.JTree):V
+- expandSelected():V
+- p:expandSelected(javax.swing.JTree):V
 - p:isEnabled(javax.swing.JTree):Z
 - p:isShowing(javax.swing.JTree):Z
 - p:showSelectionCentered(javax.swing.JTree):V
@@ -744,8 +748,10 @@ a:com.intellij.ide.TextCopyProvider
 com.intellij.ide.TreeExpander
 - a:canCollapse():Z
 - a:canExpand():Z
+- canExpandSelected():Z
 - a:collapseAll():V
 - expandAll():V
+- expandSelected():V
 - isCollapseAllVisible():Z
 - isExpandAllEnabled():Z
 - isExpandAllVisible():Z

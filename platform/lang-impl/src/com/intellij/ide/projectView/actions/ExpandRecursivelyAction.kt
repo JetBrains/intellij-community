@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -16,11 +16,9 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import javax.swing.JComponent
-import javax.swing.JTree
 
 @ApiStatus.Internal
 @Experimental
@@ -28,14 +26,17 @@ class ExpandRecursivelyAction : DumbAwareAction(), CustomComponentAction, Action
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun actionPerformed(e: AnActionEvent) {
-    val c = e.dataContext.getData(CONTEXT_COMPONENT) as? JTree? ?: return
-    val selection = c.selectionPaths ?: return
-    TreeUtil.promiseExpandRecursively(c, *selection)
+    val expander = e.getData(PlatformDataKeys.TREE_EXPANDER) ?: return
+    expander.expandSelected()
   }
 
   override fun update(e: AnActionEvent) {
-    val c = e.dataContext.getData(CONTEXT_COMPONENT)
-    e.presentation.isEnabled = c is JTree && c.selectionCount > 0
+    val expander = e.getData(PlatformDataKeys.TREE_EXPANDER)
+    if (expander == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    e.presentation.isEnabled = expander.canExpandSelected()
     e.presentation.isVisible = Registry.`is`("ide.project.view.replace.expand.all.with.expand.recursively", true)
   }
 

@@ -15,8 +15,14 @@ public interface TreeExpander {
   default boolean isExpandAllEnabled() {
     return canExpand();
   }
+  
+  default void expandSelected() {
+  }
 
-
+  default boolean canExpandSelected() {
+    return false;
+  }
+  
   void collapseAll();
 
   boolean canCollapse();

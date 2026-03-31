@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
+import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JTree
+import javax.swing.tree.TreePath
 
 open class DefaultTreeExpander(private val supplier: () -> JTree?) : TreeExpander {
 
@@ -23,6 +25,20 @@ open class DefaultTreeExpander(private val supplier: () -> JTree?) : TreeExpande
     TreeUtil.promiseExpandAll(tree).onSuccess { showSelectionCentered(tree) }
   }
 
+  override fun expandSelected() {
+    expandSelected(supplier() ?: return)
+  }
+
+  protected open fun expandSelected(tree: JTree) {
+    val selection = tree.selectionPaths ?: return
+    TreeUtil.promiseExpandRecursively(tree, *selection)
+  }
+
+  override fun canExpandSelected(): Boolean {
+    return supplier()?.let { canExpandSelected(it) } == true
+  }
+
+  protected open fun canExpandSelected(tree: JTree): Boolean = tree.selectionCount > 0
 
   override fun canCollapse(): Boolean = supplier()?.let { canCollapse(it) } ?: false
 
@@ -51,3 +67,10 @@ open class DefaultTreeExpander(private val supplier: () -> JTree?) : TreeExpande
     tree.selectionPath?.let { TreeUtil.scrollToVisible(tree, it, true) }
   }
 }
+
+private val TreePath.isIncludedInExpandAll: Boolean
+  get() {
+    // Include by default, unless the node can and does tell us otherwise.
+    val node = TreeUtil.getLastUserObject(this) as? AbstractTreeNode<*> ?: return true
+    return node.isIncludedInExpandAll
+  }
