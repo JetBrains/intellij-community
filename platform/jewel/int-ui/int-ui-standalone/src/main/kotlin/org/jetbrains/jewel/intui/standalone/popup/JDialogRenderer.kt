@@ -5,7 +5,6 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocal
-import androidx.compose.runtime.CompositionLocalContext
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -31,10 +30,10 @@ import androidx.compose.ui.layout.MeasureResult
 import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.popup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
@@ -166,7 +165,6 @@ private fun JPopupImpl(
     blendingEnabled: Boolean,
     content: @Composable () -> Unit,
 ) {
-    val popupDensity = LocalDensity.current
     val component = LocalComponent.current
 
     val currentContent by rememberUpdatedState(content)
@@ -232,8 +230,8 @@ private fun JPopupImpl(
 
                 Layout(
                     content = {
-                        CompositionLocalProvider(LocalComponent provides this@apply) {
-                            ProvideValuesFromOtherContext(compositionLocalContext) { currentContent() }
+                        CompositionLocalProvider(compositionLocalContext) {
+                            CompositionLocalProvider(LocalComponent provides this@apply) { currentContent() }
                         }
                     },
                     modifier = Modifier.semantics { popup() },
@@ -252,7 +250,7 @@ private fun JPopupImpl(
                                     JBR.getRoundedCornersManager()
                                         .setRoundedCorners(
                                             dialog,
-                                            cornerSize.toPx(size.toSize(), popupDensity) / dialog.density(),
+                                            cornerSize.toPx(size.toSize(), Density(dialog.density())) / dialog.density(),
                                         )
                                 }
                             }
@@ -270,7 +268,7 @@ private fun JPopupImpl(
 
     val rectValue = popupRectangle
     LaunchedEffect(rectValue) {
-        val rectangle = rectValue?.withDensity(popupDensity.density) ?: return@LaunchedEffect
+        val rectangle = rectValue?.withDensity(dialog.density()) ?: return@LaunchedEffect
         dialog.size = rectangle.size
         dialog.location = rectangle.location.fromCurrentScreenToGlobal(window)
     }
@@ -411,16 +409,6 @@ private fun Rectangle.withDensity(density: Float): Rectangle =
         floor(width / density).toInt(),
         floor(height / density).toInt(),
     )
-
-/**
- * When inheriting from another context, we need to ensure that values already provided in the current context are not
- * overridden.
- */
-@Composable
-private fun ProvideValuesFromOtherContext(context: CompositionLocalContext, content: @Composable () -> Unit) {
-    val existingContext = currentCompositionLocalContext
-    CompositionLocalProvider(context) { CompositionLocalProvider(existingContext, content) }
-}
 
 /** Returns the screen density of the component's current monitor. */
 private fun Component.density(): Float =
