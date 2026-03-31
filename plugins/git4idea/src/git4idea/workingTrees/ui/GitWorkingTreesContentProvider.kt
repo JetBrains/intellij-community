@@ -171,6 +171,8 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
   }
 
   private class WorkingTreesListRenderer(private val project: Project) : ColoredListCellRenderer<WorkingTreesListItem>() {
+    private val workingTreeIndent = "  "
+
     override fun customizeCellRenderer(
       list: JList<out WorkingTreesListItem?>,
       value: WorkingTreesListItem?,
@@ -196,11 +198,11 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
     private fun customizeWorkingTreeCell(list: JList<out WorkingTreesListItem?>, value: GitWorkingTree) {
       iconTextGap = JBUI.scale(4)
       icon = if (value.isCurrent) AllIcons.Actions.Checked else AllIcons.Empty
-      append("  ")
+      append(workingTreeIndent)
       append(value.path.name, if (value.isMain) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES)
 
       val columnGap = JBUI.scale(20)
-      var padding = iconTextGap * 2 + icon.iconWidth + getWorktreeColumnWidth(list) + columnGap
+      var padding = iconTextGap * 2 + icon.iconWidth + getWorkingTreeIndentWidth(list) + getWorktreeColumnWidth(list) + columnGap
       appendTextPadding(padding)
 
       append(getPresentableBranchName(value), SimpleTextAttributes.GRAY_ATTRIBUTES)
@@ -223,6 +225,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
       return relativePath?.takeIf { it.isNotEmpty() && it != "." } ?: repository.root.name
     }
 
+    private fun getWorkingTreeIndentWidth(list: JList<out WorkingTreesListItem?>): Int = list.getFontMetrics(list.font).stringWidth(workingTreeIndent)
     private fun getWorktreeColumnWidth(list: JList<out WorkingTreesListItem?>): Int = getMaxWidth(list) { it.workingTree.path.name }
     private fun getBranchColumnWidth(list: JList<out WorkingTreesListItem?>): Int = getMaxWidth(list) { getPresentableBranchName(it.workingTree) }
 
