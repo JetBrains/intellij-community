@@ -200,6 +200,33 @@ class CodexRolloutSessionBackendTest {
   }
 
   @Test
+  fun preservesFullLengthThreadNameUpdatedTitle() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-thread-long-rename")
+      Files.createDirectories(projectDir)
+      val longTitle = "Long renamed thread " + "x".repeat(180) + " tail"
+      writeRollout(
+        file = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("14")
+          .resolve("rollout-thread-name-long.jsonl"),
+        lines = listOf(
+          sessionMetaLine(
+            timestamp = "2026-02-14T12:10:00.000Z",
+            id = "session-title-long",
+            cwd = projectDir,
+          ),
+          """{"timestamp":"2026-02-14T12:10:01.000Z","type":"event_msg","payload":{"type":"thread_name_updated","thread_name":"$longTitle"}}""",
+        ),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(threads).hasSize(1)
+      assertThat(threads.single().thread.title).isEqualTo(longTitle)
+    }
+  }
+
+  @Test
   fun filtersByCwdAndMarksReadyAfterCompletedTask() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-c")

@@ -116,6 +116,9 @@ interface AgentSessionProviderDescriptor {
   val supportsArchiveThread: Boolean
     get() = false
 
+  val supportsRenameThread: Boolean
+    get() = false
+
   val supportsPlanMode: Boolean
     get() = false
 
@@ -138,6 +141,8 @@ interface AgentSessionProviderDescriptor {
   suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec
 
   suspend fun archiveThread(path: String, threadId: String): Boolean = false
+
+  suspend fun renameThread(path: String, threadId: String, name: String): Boolean = false
 
   suspend fun unarchiveThread(path: String, threadId: String): Boolean = false
 

@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsCopyThreadIdFr
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabArchiveThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadPopupGroup
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadQuickAction
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabRenameThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadInToolWindowAction
 import com.intellij.agent.workbench.sessions.actions.providerIcon
@@ -388,6 +389,92 @@ class AgentSessionsEditorTabActionsTest {
 
     assertThat(event.presentation.isEnabledAndVisible).isFalse()
     assertThat(group.getChildren(event)).isEmpty()
+  }
+
+  @Test
+  fun renameThreadActionVisibleOnlyForSupportedTopLevelThreadTargets() {
+    val threadContext = editorContext()
+    val unsupported = AgentSessionsEditorTabRenameThreadAction(
+      resolveContext = { threadContext },
+      canRenameProvider = { false },
+      renameThread = { _, _ -> },
+      promptForName = { _, _ -> null },
+    )
+    val unsupportedEvent = TestActionEvent.createTestEvent(unsupported)
+    unsupported.update(unsupportedEvent)
+    assertThat(unsupportedEvent.presentation.isVisible).isTrue()
+    assertThat(unsupportedEvent.presentation.isEnabled).isFalse()
+
+    val supported = AgentSessionsEditorTabRenameThreadAction(
+      resolveContext = { threadContext },
+      canRenameProvider = { true },
+      renameThread = { _, _ -> },
+      promptForName = { _, _ -> null },
+    )
+    val supportedEvent = TestActionEvent.createTestEvent(supported)
+    supported.update(supportedEvent)
+    assertThat(supportedEvent.presentation.isVisible).isTrue()
+    assertThat(supportedEvent.presentation.isEnabled).isTrue()
+
+    val subAgentContext = editorContext(
+      threadIdentity = "codex:thread-1",
+      sessionId = "thread-1",
+      threadId = "sub-agent-1",
+      subAgentId = "sub-agent-1",
+    )
+    val subAgentAction = AgentSessionsEditorTabRenameThreadAction(
+      resolveContext = { subAgentContext },
+      canRenameProvider = { true },
+      renameThread = { _, _ -> },
+      promptForName = { _, _ -> null },
+    )
+    val hiddenSubAgentEvent = TestActionEvent.createTestEvent(subAgentAction)
+    subAgentAction.update(hiddenSubAgentEvent)
+    assertThat(hiddenSubAgentEvent.presentation.isVisible).isFalse()
+    assertThat(hiddenSubAgentEvent.presentation.isEnabled).isFalse()
+
+    val pendingContext = editorContext(threadIdentity = "codex:new-1", sessionId = "new-1", isPendingThread = true)
+    val pendingAction = AgentSessionsEditorTabRenameThreadAction(
+      resolveContext = { pendingContext },
+      canRenameProvider = { true },
+      renameThread = { _, _ -> },
+      promptForName = { _, _ -> null },
+    )
+    val pendingEvent = TestActionEvent.createTestEvent(pendingAction)
+    pendingAction.update(pendingEvent)
+    assertThat(pendingEvent.presentation.isVisible).isFalse()
+    assertThat(pendingEvent.presentation.isEnabled).isFalse()
+  }
+
+  @Test
+  fun renameThreadActionUsesThreadTargetAndPromptValue() {
+    val context = editorContext(threadTitle = "Refactor session setup")
+    val contextTarget = context.sessionActionTarget as SessionActionTarget.Thread
+    var promptedProjectName: String? = null
+    var promptedTitle: String? = null
+    var renamedTarget: SessionActionTarget.Thread? = null
+    var renamedTo: String? = null
+
+    val action = AgentSessionsEditorTabRenameThreadAction(
+      resolveContext = { context },
+      canRenameProvider = { true },
+      renameThread = { target, requestedName ->
+        renamedTarget = target
+        renamedTo = requestedName
+      },
+      promptForName = { project, currentTitle ->
+        promptedProjectName = project.name
+        promptedTitle = currentTitle
+        "Renamed thread"
+      },
+    )
+
+    action.actionPerformed(TestActionEvent.createTestEvent(action))
+
+    assertThat(promptedProjectName).isEqualTo(context.project.name)
+    assertThat(promptedTitle).isEqualTo("Refactor session setup")
+    assertThat(renamedTarget).isEqualTo(contextTarget)
+    assertThat(renamedTo).isEqualTo("Renamed thread")
   }
 
   @Test

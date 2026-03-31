@@ -72,6 +72,11 @@ class CodexAgentSessionProviderDescriptorTest {
     }
 
     @Test
+    fun supportsRenameThread() {
+        assertThat(bridge.supportsRenameThread).isTrue()
+    }
+
+    @Test
     fun createNewSessionReturnsPendingLaunchSpec() {
         runBlocking(Dispatchers.Default) {
             val standard = bridge.createNewSession(path = "/work/project", mode = AgentSessionLaunchMode.STANDARD)

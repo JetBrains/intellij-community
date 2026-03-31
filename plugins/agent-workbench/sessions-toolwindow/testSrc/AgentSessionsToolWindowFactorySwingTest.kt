@@ -8,6 +8,8 @@ import com.intellij.agent.workbench.sessions.toolwindow.ui.dispatchTreeRowOverla
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
@@ -16,6 +18,10 @@ import org.junit.jupiter.api.Test
 
 @TestApplication
 class AgentSessionsToolWindowFactorySwingTest {
+  companion object {
+    private const val SEPARATOR_MARKER = "<separator>"
+  }
+
   @Test
   fun descriptorPointsToolWindowToSwingFactoryWithoutComposeEntries() {
     val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.sessions.toolwindow.xml")) {
@@ -55,13 +61,25 @@ class AgentSessionsToolWindowFactorySwingTest {
   @Test
   fun descriptorRegistersTreePopupActions() {
     val actionManager = ActionManager.getInstance()
+    val entries = actionManager.childActionEntries("AgentWorkbenchSessions.TreePopup")
 
-    assertThat(actionManager.childActionIds("AgentWorkbenchSessions.TreePopup"))
+    assertThat(entries)
       .contains("AgentWorkbenchSessions.TreePopup.Open")
       .contains("AgentWorkbenchSessions.TreePopup.More")
       .contains("AgentWorkbenchSessions.TreePopup.NewThread")
+      .contains("AgentWorkbenchSessions.TreePopup.Rename")
       .contains("AgentWorkbenchSessions.TreePopup.Archive")
       .contains("CopyReferencePopupGroup")
+
+    val newThreadIndex = entries.requiredIndex("AgentWorkbenchSessions.TreePopup.NewThread")
+    val archiveIndex = entries.requiredIndex("AgentWorkbenchSessions.TreePopup.Archive")
+    val renameIndex = entries.requiredIndex("AgentWorkbenchSessions.TreePopup.Rename")
+    val copyReferenceIndex = entries.requiredIndex("CopyReferencePopupGroup")
+
+    assertThat(entries[newThreadIndex + 1]).isEqualTo(SEPARATOR_MARKER)
+    assertThat(archiveIndex).isLessThan(renameIndex)
+    assertThat(renameIndex).isLessThan(copyReferenceIndex)
+    assertThat(entries.subList(archiveIndex + 1, renameIndex)).doesNotContain(SEPARATOR_MARKER)
 
     assertThat(actionManager.getAction("AgentWorkbenchSessions.TreePopup.NewThread"))
       .isNotNull
@@ -103,5 +121,26 @@ class AgentSessionsToolWindowFactorySwingTest {
     val group = getAction(groupId) as? ActionGroup
     assertThat(group).withFailMessage("Action group '%s' is not registered", groupId).isNotNull
     return checkNotNull(group).getChildren(TestActionEvent.createTestEvent()).mapNotNull { getId(it) }
+  }
+
+  private fun ActionManager.childActionEntries(groupId: String): List<String> {
+    val group = getAction(groupId) as? ActionGroup
+    assertThat(group).withFailMessage("Action group '%s' is not registered", groupId).isNotNull
+    return flattenEntries(checkNotNull(group).getChildren(TestActionEvent.createTestEvent()))
+  }
+
+  private fun flattenEntries(actions: Array<AnAction>): List<String> {
+    return actions.mapNotNull { action ->
+      when (action) {
+        is Separator -> SEPARATOR_MARKER
+        else -> ActionManager.getInstance().getId(action)
+      }
+    }
+  }
+
+  private fun List<String>.requiredIndex(entry: String): Int {
+    val index = indexOf(entry)
+    assertThat(index).withFailMessage("Entry '%s' is missing from %s", entry, this).isGreaterThanOrEqualTo(0)
+    return index
   }
 }

@@ -82,6 +82,9 @@ internal class CodexAgentSessionProviderDescriptor(
   override val supportsArchiveThread: Boolean
     get() = true
 
+  override val supportsRenameThread: Boolean
+    get() = true
+
   override val supportsUnarchiveThread: Boolean
     get() = true
 
@@ -156,6 +159,11 @@ internal class CodexAgentSessionProviderDescriptor(
 
   override suspend fun archiveThread(path: String, threadId: String): Boolean {
     serviceAsync<SharedCodexAppServerService>().archiveThread(threadId)
+    return true
+  }
+
+  override suspend fun renameThread(path: String, threadId: String, name: String): Boolean {
+    serviceAsync<SharedCodexAppServerService>().setThreadName(threadId, name)
     return true
   }
 

@@ -9,7 +9,7 @@ import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import java.io.Writer
 
-private const val MAX_TITLE_LENGTH = 120
+private val THREAD_TITLE_WHITESPACE = Regex("\\s+")
 
 internal data class ThreadListResult(
   @JvmField val threads: List<CodexThread>,
@@ -342,6 +342,7 @@ private fun parseNotificationItemObject(parser: JsonParser): ParsedNotificationI
 private fun notificationKindFromMethod(method: String): CodexAppServerNotificationKind {
   return when (method) {
     "thread/started" -> CodexAppServerNotificationKind.THREAD_STARTED
+    "thread/name/updated" -> CodexAppServerNotificationKind.THREAD_NAME_UPDATED
     "thread/status/changed" -> CodexAppServerNotificationKind.THREAD_STATUS_CHANGED
     "turn/started" -> CodexAppServerNotificationKind.TURN_STARTED
     "turn/completed" -> CodexAppServerNotificationKind.TURN_COMPLETED
@@ -468,8 +469,11 @@ private fun resolveThreadUpdatedAt(payload: ThreadPayload): Long {
 }
 
 private fun resolveThreadTitle(payload: ThreadPayload, threadId: String): String {
-  val previewValue = payload.preview ?: payload.title ?: payload.name ?: payload.summary
-  return previewValue?.let(::trimTitle)?.takeIf { it.isNotBlank() } ?: "Thread ${threadId.take(8)}"
+  return normalizeThreadTitle(payload.name)
+    ?: normalizeThreadTitle(payload.title)
+    ?: normalizeThreadTitle(payload.summary)
+    ?: normalizeThreadTitle(payload.preview)
+    ?: "Thread ${threadId.take(8)}"
 }
 
 private data class ParsedTurnsActivity(
@@ -1008,12 +1012,13 @@ private fun normalizeTimestamp(value: Long): Long {
   return if (value < 100_000_000_000L) value * 1000L else value
 }
 
-private fun trimTitle(value: String): String {
-  val trimmed = value.trim()
-  if (trimmed.length <= MAX_TITLE_LENGTH) {
-    return trimmed
-  }
-  return trimmed.take(MAX_TITLE_LENGTH - 3).trimEnd() + "..."
+private fun normalizeThreadTitle(value: String?): String? {
+  return value
+    ?.replace('\n', ' ')
+    ?.replace('\r', ' ')
+    ?.replace(THREAD_TITLE_WHITESPACE, " ")
+    ?.trim()
+    ?.takeIf { it.isNotEmpty() }
 }
 
 fun normalizeRootPath(value: String): String {

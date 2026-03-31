@@ -26,8 +26,10 @@ class TestAgentSessionProviderDescriptor(
   override val editorTabActionIds: List<String> = emptyList(),
   override val supportsPendingEditorTabRebind: Boolean = false,
   override val supportsNewThreadRebind: Boolean = false,
+  override val supportsRenameThread: Boolean = false,
   override val emitsScopedRefreshSignals: Boolean = false,
   override val refreshPathAfterCreateNewSession: Boolean = false,
+  private val renameThreadHandler: suspend (String, String, String) -> Boolean = { _, _, _ -> false },
 ) : AgentSessionProviderDescriptor {
   override val displayNameKey: String
     get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.provider.claude" else "toolwindow.provider.codex"
@@ -81,5 +83,9 @@ class TestAgentSessionProviderDescriptor(
       sessionId = null,
       launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("test", "create", path, mode.name)),
     )
+  }
+
+  override suspend fun renameThread(path: String, threadId: String, name: String): Boolean {
+    return renameThreadHandler(path, threadId, name)
   }
 }

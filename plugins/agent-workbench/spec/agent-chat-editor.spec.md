@@ -95,6 +95,9 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Reopening an already-open tab with a newer thread title must update existing tab presentation.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
+- Session-driven rename refreshes (including provider rename actions resolved through Sessions refresh) must update existing tab titles and tooltips without reopening the tab.
+  [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
+
 - Pending Codex tabs must capture first user-input timestamp once (on first terminal key event) and persist it for later rebind matching.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 

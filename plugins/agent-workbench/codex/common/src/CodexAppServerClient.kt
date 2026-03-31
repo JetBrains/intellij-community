@@ -302,6 +302,18 @@ class CodexAppServerClient(
     )
   }
 
+  suspend fun setThreadName(threadId: String, name: String) {
+    requestUnit(
+      method = "thread/name/set",
+      paramsWriter = { generator ->
+        generator.writeStartObject()
+        generator.writeStringField("threadId", threadId)
+        generator.writeStringField("name", name)
+        generator.writeEndObject()
+      },
+    )
+  }
+
   suspend fun unarchiveThread(threadId: String) {
     requestUnit(
       method = "thread/unarchive",

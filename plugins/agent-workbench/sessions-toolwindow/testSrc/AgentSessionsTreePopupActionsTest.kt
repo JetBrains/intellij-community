@@ -16,6 +16,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTre
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupMoreAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupNewThreadGroup
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupOpenAction
+import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupRenameThreadAction
 import com.intellij.agent.workbench.sessions.toolwindow.actions.createAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.resolveAgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
@@ -233,6 +234,104 @@ class AgentSessionsTreePopupActionsTest {
 
     assertThat(archivedTargets).containsExactly(treeTarget)
     assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
+  }
+
+  @Test
+  fun renameActionVisibleOnlyForSupportedTopLevelThreadTargets() {
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val threadContext = popupContext(
+      nodeId = SessionTreeId.Thread(
+        projectPath = "/work/project-a",
+        provider = AgentSessionProvider.CODEX,
+        threadId = "thread-1",
+      ),
+      node = SessionTreeNode.Thread(project = project, thread = thread(id = "thread-1", provider = AgentSessionProvider.CODEX)),
+    )
+
+    val unsupported = AgentSessionsTreePopupRenameThreadAction(
+      resolveContext = { threadContext },
+      canRenameProvider = { false },
+      renameThread = { _, _ -> },
+      promptForName = { _, _ -> null },
+    )
+    val unsupportedEvent = popupEvent(unsupported, threadContext)
+    unsupported.update(unsupportedEvent)
+    assertThat(unsupportedEvent.presentation.isVisible).isTrue()
+    assertThat(unsupportedEvent.presentation.isEnabled).isFalse()
+
+    val supported = AgentSessionsTreePopupRenameThreadAction(
+      resolveContext = { threadContext },
+      canRenameProvider = { true },
+      renameThread = { _, _ -> },
+      promptForName = { _, _ -> null },
+    )
+    val supportedEvent = popupEvent(supported, threadContext)
+    supported.update(supportedEvent)
+    assertThat(supportedEvent.presentation.isVisible).isTrue()
+    assertThat(supportedEvent.presentation.isEnabled).isTrue()
+
+    val subAgentContext = popupContext(
+      nodeId = SessionTreeId.SubAgent(
+        projectPath = "/work/project-a",
+        provider = AgentSessionProvider.CODEX,
+        threadId = "thread-1",
+        subAgentId = "sub-thread-1",
+      ),
+      node = SessionTreeNode.SubAgent(
+        project = project,
+        thread = thread(id = "thread-1", provider = AgentSessionProvider.CODEX),
+        subAgent = AgentSubAgent(id = "sub-thread-1", name = "Sub thread 1"),
+      ),
+    )
+    val hiddenAction = AgentSessionsTreePopupRenameThreadAction(
+      resolveContext = { subAgentContext },
+      canRenameProvider = { true },
+      renameThread = { _, _ -> },
+      promptForName = { _, _ -> null },
+    )
+    val hiddenEvent = popupEvent(hiddenAction, subAgentContext)
+    hiddenAction.update(hiddenEvent)
+    assertThat(hiddenEvent.presentation.isVisible).isFalse()
+    assertThat(hiddenEvent.presentation.isEnabled).isFalse()
+  }
+
+  @Test
+  fun renameActionUsesTreeThreadTargetAndPromptValue() {
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val context = popupContext(
+      nodeId = SessionTreeId.Thread(
+        projectPath = "/work/project-a",
+        provider = AgentSessionProvider.CODEX,
+        threadId = "thread-1",
+      ),
+      node = SessionTreeNode.Thread(project = project, thread = thread(id = "thread-1", provider = AgentSessionProvider.CODEX)),
+    )
+    val target = context.target as com.intellij.agent.workbench.sessions.core.SessionActionTarget.Thread
+    var promptedProjectName: String? = null
+    var promptedTitle: String? = null
+    var renamedTarget: com.intellij.agent.workbench.sessions.core.SessionActionTarget.Thread? = null
+    var renamedTo: String? = null
+
+    val action = AgentSessionsTreePopupRenameThreadAction(
+      resolveContext = { context },
+      canRenameProvider = { true },
+      renameThread = { capturedTarget, requestedName ->
+        renamedTarget = capturedTarget
+        renamedTo = requestedName
+      },
+      promptForName = { currentProject, currentTitle ->
+        promptedProjectName = currentProject.name
+        promptedTitle = currentTitle
+        "Renamed thread"
+      },
+    )
+
+    action.actionPerformed(popupEvent(action, context))
+
+    assertThat(promptedProjectName).isEqualTo(context.project.name)
+    assertThat(promptedTitle).isEqualTo(target.title)
+    assertThat(renamedTarget).isEqualTo(target)
+    assertThat(renamedTo).isEqualTo("Renamed thread")
   }
 
   @Test

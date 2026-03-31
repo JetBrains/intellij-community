@@ -46,6 +46,7 @@ internal class CodexAppServerRefreshHintsProvider(
 
   private val directStatusUpdateKinds: Set<CodexAppServerNotificationKind> = setOf(
     CodexAppServerNotificationKind.THREAD_STARTED,
+    CodexAppServerNotificationKind.THREAD_NAME_UPDATED,
     CodexAppServerNotificationKind.THREAD_STATUS_CHANGED,
     CodexAppServerNotificationKind.TURN_STARTED,
     CodexAppServerNotificationKind.TURN_COMPLETED,

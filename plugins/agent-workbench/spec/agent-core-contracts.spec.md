@@ -95,10 +95,14 @@ Define the single source of truth for cross-feature behavior that must stay cons
 
 - Editor-tab popup contract for a selected Agent chat tab must expose exactly these actions with this placement:
   - `Archive Thread` appears before built-in close actions.
-  - `Select in Agent Threads` appears after `CopyPaths`.
-  - `Copy Thread ID` appears after `Select in Agent Threads`.
-  [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  - `Rename Thread` appears after built-in close actions and before `Copy Thread ID` when the selected tab targets a concrete top-level thread for a provider that supports rename.
+  - `Copy Thread ID` appears after `Rename Thread` and before `Select in Agent Threads`.
+  - `Select in Agent Threads` appears before `CopyPaths`.
+  [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
+
+- Sessions-tree popup contract for thread rows must keep the single divider between `Open`/`New Thread` actions and thread actions, place `Archive Thread` immediately before `Rename Thread`, and keep `Rename Thread` before `CopyReferencePopupGroup` without another divider.
+  [@test] ../sessions-toolwindow/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
 
 - `Archive Thread` default shortcuts must be:
   - Windows (`$default`) keymap: `Ctrl+Alt+Delete`
@@ -107,8 +111,12 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 
 - `Archive Thread` visibility/enablement must be gated by provider archive capability consistently for both tree-row and editor-tab entry points.
-  [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
+
+- `Rename Thread` visibility/enablement must be gated by provider rename capability consistently for both tree-row and editor-tab entry points, and it must remain hidden for pending tabs and sub-agent targets.
+  [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
 - Provider bridge unarchive capability is optional; unsupported providers must keep archive flow functional and must not block supported-provider unarchive restores.
   [@test] ../sessions/testSrc/AgentSessionArchiveServiceIntegrationTest.kt
