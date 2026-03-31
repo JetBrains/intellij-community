@@ -22,6 +22,7 @@ import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.platform.execution.dashboard.BackendRunDashboardManagerState;
 import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl;
@@ -63,7 +64,7 @@ import static com.intellij.platform.execution.serviceView.ServiceViewImplementat
 public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
   private final Project myProject;
   private final ContentManager myContentManager;
-  private final ContentManagerListener myServiceContentManagerListener;
+  private final ServiceContentManagerListener myServiceContentManagerListener;
   private String myToolWindowId;
   private RunDashboardComponentWrapper myContentWrapper;
   private JComponent myEmptyContent;
@@ -74,7 +75,24 @@ public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
     ContentFactory contentFactory = ContentFactory.getInstance();
     myContentManager = contentFactory.createContentManager(new PanelContentUI(), false, project);
     myServiceContentManagerListener = new ServiceContentManagerListener();
-    myContentManager.addContentManagerListener(myServiceContentManagerListener);
+
+    if (Registry.is("ide.content.manager.listeners.order.fix")) {
+      myContentManager.addContentManagerListener(myServiceContentManagerListener);
+    }
+    else {
+      myContentManager.addContentManagerListener(new ContentManagerListener() {
+        @Override
+        public void contentAdded(@NotNull ContentManagerEvent event) {
+          myContentManager.removeContentManagerListener(this);
+          // Service content manager listener must be added later in order to be notified before RunManager's CloseListener,
+          // which disposes the content and clears its user data map.
+          // Otherwise, service content manager listener couldn't get run content descriptor for the removed content.
+          myContentManager.addContentManagerListener(myServiceContentManagerListener);
+          myServiceContentManagerListener.contentAdded(event);
+        }
+      });
+    }
+
     initExtensionPointListeners();
   }
 
@@ -229,10 +247,10 @@ public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
       return;
     }
 
-    myContentManager.removeContentManagerListener(myServiceContentManagerListener);
+    myServiceContentManagerListener.trackSelection(false);
     myContentManager.setSelectedContent(content);
     updateContentToolbar(content, false);
-    myContentManager.addContentManagerListener(myServiceContentManagerListener);
+    myServiceContentManagerListener.trackSelection(true);
   }
 
   @Override
@@ -245,9 +263,9 @@ public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
       return;
     }
 
-    myContentManager.removeContentManagerListener(myServiceContentManagerListener);
+    myServiceContentManagerListener.trackSelection(false);
     myContentManager.removeFromSelection(content);
-    myContentManager.addContentManagerListener(myServiceContentManagerListener);
+    myServiceContentManagerListener.trackSelection(true);
   }
 
   @ApiStatus.Internal
@@ -320,9 +338,12 @@ public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
 
   private final class ServiceContentManagerListener implements ContentManagerListener {
     private volatile Content myPreviousSelection = null;
+    private boolean myTrackSelection = true;
 
     @Override
     public void selectionChanged(@NotNull ContentManagerEvent event) {
+      if (!myTrackSelection) return;
+
       boolean onAdd = event.getOperation() == ContentManagerEvent.ContentOperation.add;
       Content content = event.getContent();
       if (onAdd) {
@@ -405,6 +426,10 @@ public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
       if (descriptorId == null) return;
 
       runDashboardManager.detachServiceRunContentDescriptor(descriptorId);
+    }
+
+    void trackSelection(boolean value) {
+      myTrackSelection = value;
     }
   }
 }
