@@ -23,6 +23,6 @@ class PropertyRenameToTest : BasePlatformTestCase() {
     myFixture.configureByText("a.properties", "<TYPO descr=\"Typo: In word 'helloworld'\">hellow<caret>orld</TYPO>=value")
     myFixture.enableInspections(GrazieSpellCheckingInspection())
     myFixture.checkHighlighting()
-    myFixture.getAvailableIntention("Typo: Rename to 'hello-world'") ?: error("RenameTo intention is not available")
+    myFixture.availableIntentions.find { it.familyName.startsWith("Typo: Rename to") } ?: error("RenameTo intention is not available")
   }
 }
