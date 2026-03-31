@@ -309,8 +309,9 @@ internal abstract class TreeBasedFrontendProjectViewPane(
 
   private fun removeNode(node: Node) {
     nodeById.remove(node.id)
-    for (node in node.children()) {
-      removeNode(node as Node)
+    for (child in node.children()) {
+      val childNode = child as? Node ?: continue // skip cached children
+      removeNode(childNode)
     }
   }
 
