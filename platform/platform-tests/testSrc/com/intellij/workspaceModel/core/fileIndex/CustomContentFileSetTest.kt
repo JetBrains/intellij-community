@@ -11,7 +11,6 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.workspaceModel.update
@@ -44,8 +43,9 @@ class CustomContentFileSetTest {
   private val projectFileIndex
     get() = ProjectFileIndex.getInstance(projectModel.project)
 
-  @TestDisposable
-  private lateinit var disposable: Disposable
+  private val disposable: Disposable
+    get() = projectModel.disposableRule.disposable
+
   private lateinit var customContentFileSetRoot: VirtualFile
   private lateinit var module: Module
 
