@@ -32,7 +32,6 @@ import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.V
 import com.intellij.gradle.completion.getCompletionContext
 import com.intellij.gradle.completion.icon
 import com.intellij.gradle.completion.removeDummySuffix
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isCurrentGradleAtLeast
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.openapi.components.service
@@ -67,8 +66,6 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     if (parameters.isAndroidProject()) {
       return
     }
-
-    maybeIgnoreOtherCompletionContributors(result, parameters)
 
     val positionElement = parameters.position
     when {
@@ -189,16 +186,6 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
   /** @return true if starts from a letter and contains only letters, digits and underscores after it */
   private fun isValidNameInKotlin(string: String): Boolean =
     string.matches(Regex("^[a-zA-Z_][a-zA-Z0-9_]*$"))
-
-  /**
-   * In the first completion invocation and zero (autocompletion), show only cleaned Gradle completion.
-   * Otherwise, show also other results from other contributors - e.g., Kotlin completion.
-   */
-  private fun maybeIgnoreOtherCompletionContributors(result: CompletionResultSet, parameters: CompletionParameters) {
-    if (parameters.invocationCount <= 1) {
-      result.stopHere()
-    }
-  }
 
   private fun suggestDependencyCompletions(
     result: CompletionResultSet,
