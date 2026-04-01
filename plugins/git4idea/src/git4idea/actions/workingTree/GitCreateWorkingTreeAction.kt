@@ -23,7 +23,6 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val project = e.project
     val repository = getRepository(e)
     if (repository == null) {
       e.presentation.isEnabledAndVisible = false

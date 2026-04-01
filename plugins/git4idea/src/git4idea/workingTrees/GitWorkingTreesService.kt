@@ -71,13 +71,12 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
      */
     fun getRepoForWorkingTreesSupport(project: Project?): GitRepository? {
       if (project == null) return null
-      val repositoryManager = GitRepositoryManager.getInstance(project)
       val repositories = getRepositoriesForWorkingTreesSupport(project)
       if (repositories.isEmpty()) return null
 
       if (repositories.size == 1) return repositories.first()
 
-      val topLevelRepositories = repositoryManager.sortByDependency(repositories).filter { candidate ->
+      val topLevelRepositories = repositories.filter { candidate ->
         repositories.none { other -> other != candidate && VfsUtilCore.isAncestor(other.root, candidate.root, true) }
       }
       return topLevelRepositories.singleOrNull()
