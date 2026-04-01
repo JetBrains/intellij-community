@@ -6,14 +6,12 @@ import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameMode
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
 
@@ -29,12 +27,9 @@ class TestAgentSessionProviderDescriptor(
   override val editorTabActionIds: List<String> = emptyList(),
   override val supportsPendingEditorTabRebind: Boolean = false,
   override val supportsNewThreadRebind: Boolean = false,
-  override val supportsRenameThread: Boolean = false,
-  private val renameThreadModes: Map<AgentThreadRenameContext, AgentThreadRenameMode> = emptyMap(),
+  private val threadRenameHandlerOverride: AgentThreadRenameHandler? = null,
   override val emitsScopedRefreshSignals: Boolean = false,
   override val refreshPathAfterCreateNewSession: Boolean = false,
-  private val renameThreadHandler: suspend (String, String, String) -> Boolean = { _, _, _ -> false },
-  private val renameThreadDispatchStepsBuilder: (String) -> List<AgentInitialMessageDispatchStep> = { emptyList() },
 ) : AgentSessionProviderDescriptor {
   override val displayNameKey: String
     get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.provider.claude" else "toolwindow.provider.codex"
@@ -43,7 +38,8 @@ class TestAgentSessionProviderDescriptor(
     get() = if (provider == AgentSessionProvider.CLAUDE) "toolwindow.action.new.session.claude" else "toolwindow.action.new.session.codex"
 
   override val icon: Icon
-    get() = iconOverride ?: if (provider == AgentSessionProvider.CLAUDE) AgentWorkbenchCommonIcons.Claude_14x14 else AgentWorkbenchCommonIcons.Codex_14x14
+    get() = iconOverride
+            ?: if (provider == AgentSessionProvider.CLAUDE) AgentWorkbenchCommonIcons.Claude_14x14 else AgentWorkbenchCommonIcons.Codex_14x14
 
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = supportedModes
@@ -90,15 +86,6 @@ class TestAgentSessionProviderDescriptor(
     )
   }
 
-  override suspend fun renameThread(path: String, threadId: String, name: String): Boolean {
-    return renameThreadHandler(path, threadId, name)
-  }
-
-  override fun renameThreadMode(context: AgentThreadRenameContext): AgentThreadRenameMode? {
-    return renameThreadModes[context] ?: if (supportsRenameThread) AgentThreadRenameMode.BACKEND else null
-  }
-
-  override fun buildRenameThreadDispatchSteps(name: String): List<AgentInitialMessageDispatchStep> {
-    return renameThreadDispatchStepsBuilder(name)
-  }
+  override val threadRenameHandler: AgentThreadRenameHandler?
+    get() = threadRenameHandlerOverride
 }

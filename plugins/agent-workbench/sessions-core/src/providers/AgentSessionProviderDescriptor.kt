@@ -29,9 +29,16 @@ enum class AgentThreadRenameContext {
   EDITOR_TAB,
 }
 
-enum class AgentThreadRenameMode {
-  BACKEND,
-  ACTIVE_EDITOR_DISPATCH,
+sealed interface AgentThreadRenameHandler {
+  val supportedContexts: Set<AgentThreadRenameContext>
+
+  interface Backend : AgentThreadRenameHandler {
+    suspend fun execute(path: String, threadId: String, normalizedName: String): Boolean
+  }
+
+  interface ChatDispatch : AgentThreadRenameHandler {
+    fun buildDispatchPlan(normalizedName: String): AgentInitialMessageDispatchPlan?
+  }
 }
 
 data class AgentInitialMessagePlan(
@@ -126,12 +133,8 @@ interface AgentSessionProviderDescriptor {
   val supportsArchiveThread: Boolean
     get() = false
 
-  val supportsRenameThread: Boolean
-    get() = false
-
-  fun renameThreadMode(context: AgentThreadRenameContext): AgentThreadRenameMode? {
-    return if (supportsRenameThread) AgentThreadRenameMode.BACKEND else null
-  }
+  val threadRenameHandler: AgentThreadRenameHandler?
+    get() = null
 
   val supportsPlanMode: Boolean
     get() = false
@@ -155,10 +158,6 @@ interface AgentSessionProviderDescriptor {
   suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec
 
   suspend fun archiveThread(path: String, threadId: String): Boolean = false
-
-  suspend fun renameThread(path: String, threadId: String, name: String): Boolean = false
-
-  fun buildRenameThreadDispatchSteps(name: String): List<AgentInitialMessageDispatchStep> = emptyList()
 
   suspend fun unarchiveThread(path: String, threadId: String): Boolean = false
 

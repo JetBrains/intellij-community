@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
@@ -17,7 +18,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameMode
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.agent.workbench.sessions.core.providers.buildPlanModeInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.isPlanModeCommand
 import com.intellij.agent.workbench.sessions.core.providers.stripPlanModePrefix
@@ -68,6 +69,17 @@ internal class ClaudeAgentSessionProviderDescriptor(
   override val supportsPlanMode: Boolean
     get() = true
 
+  override val threadRenameHandler: AgentThreadRenameHandler = object : AgentThreadRenameHandler.ChatDispatch {
+    override val supportedContexts: Set<AgentThreadRenameContext>
+      get() = setOf(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
+
+    override fun buildDispatchPlan(normalizedName: String): AgentInitialMessageDispatchPlan {
+      return AgentInitialMessageDispatchPlan(
+        postStartDispatchSteps = listOf(AgentInitialMessageDispatchStep(text = "/rename $normalizedName")),
+      )
+    }
+  }
+
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.claude.cli"
 
@@ -110,14 +122,6 @@ internal class ClaudeAgentSessionProviderDescriptor(
       request = request,
       startupPolicyWhenPlanModeEnabled = AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND,
     )
-  }
-
-  override fun renameThreadMode(context: AgentThreadRenameContext): AgentThreadRenameMode? {
-    return if (context == AgentThreadRenameContext.EDITOR_TAB) AgentThreadRenameMode.ACTIVE_EDITOR_DISPATCH else null
-  }
-
-  override fun buildRenameThreadDispatchSteps(name: String): List<AgentInitialMessageDispatchStep> {
-    return listOf(AgentInitialMessageDispatchStep(text = "/rename $name"))
   }
 
   override fun resolvePendingSessionMetadata(

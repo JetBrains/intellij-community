@@ -12,7 +12,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDE
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameMode
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -74,16 +74,13 @@ class CodexAgentSessionProviderDescriptorTest {
     }
 
     @Test
-    fun supportsRenameThread() {
-        assertThat(bridge.supportsRenameThread).isTrue()
-    }
+    fun renameThreadHandlerUsesSharedBackendContract() {
+        val renameHandler = bridge.threadRenameHandler
 
-    @Test
-    fun renameThreadUsesBackendModeInAllContexts() {
-        assertThat(bridge.renameThreadMode(AgentThreadRenameContext.TREE_POPUP))
-            .isEqualTo(AgentThreadRenameMode.BACKEND)
-        assertThat(bridge.renameThreadMode(AgentThreadRenameContext.EDITOR_TAB))
-            .isEqualTo(AgentThreadRenameMode.BACKEND)
+        assertThat(renameHandler).isInstanceOf(AgentThreadRenameHandler.Backend::class.java)
+        renameHandler as AgentThreadRenameHandler.Backend
+        assertThat(renameHandler.supportedContexts)
+            .containsExactlyInAnyOrder(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
     }
 
     @Test

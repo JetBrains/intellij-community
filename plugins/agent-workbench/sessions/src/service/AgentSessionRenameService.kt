@@ -12,7 +12,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageD
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameMode
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.util.SingleFlightActionGate
 import com.intellij.agent.workbench.sessions.util.SingleFlightPolicy
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
@@ -47,6 +48,11 @@ class AgentSessionRenameService internal constructor(
     SessionActionTarget.Thread,
     AgentInitialMessageDispatchPlan,
   ) -> Unit,
+  private val dispatchRenameFromTree: suspend (
+    Project,
+    SessionActionTarget.Thread,
+    AgentInitialMessageDispatchPlan,
+  ) -> Unit,
   private val notifyRenameFailure: () -> Unit,
 ) {
   @Suppress("unused")
@@ -55,26 +61,36 @@ class AgentSessionRenameService internal constructor(
     refreshProviderForPath = { path, provider -> service<AgentSessionRefreshService>().refreshProviderForPath(path, provider) },
     findProviderDescriptor = AgentSessionProviders::find,
     dispatchRenameInEditorTab = ::dispatchRenameToOpenEditorTab,
+    dispatchRenameFromTree = ::dispatchRenameFromTreePopup,
     notifyRenameFailure = ::showRenameFailureNotification,
   )
 
   private val actionGate = SingleFlightActionGate()
 
   fun canRenameThreadInTree(target: SessionActionTarget.Thread): Boolean {
-    return findProviderDescriptor(target.provider)
-      ?.renameThreadMode(AgentThreadRenameContext.TREE_POPUP) == AgentThreadRenameMode.BACKEND
+    val renameHandler = findProviderDescriptor(target.provider)?.threadRenameHandler ?: return false
+    if (AgentThreadRenameContext.TREE_POPUP !in renameHandler.supportedContexts) {
+      return false
+    }
+    return renameHandler !is AgentThreadRenameHandler.ChatDispatch || target.thread != null
   }
 
   fun canRenameThreadInEditorTab(context: AgentChatEditorTabActionContext, target: SessionActionTarget.Thread): Boolean {
     if (!matchesConcreteEditorThread(context, target)) {
       return false
     }
-    return findProviderDescriptor(target.provider)
-      ?.renameThreadMode(AgentThreadRenameContext.EDITOR_TAB) != null
+    val renameHandler = findProviderDescriptor(target.provider)?.threadRenameHandler ?: return false
+    return AgentThreadRenameContext.EDITOR_TAB in renameHandler.supportedContexts
   }
 
-  fun renameThreadFromTree(target: SessionActionTarget.Thread, requestedName: String): Job? {
-    return renameThread(target = target, requestedName = requestedName, context = null, renameContext = AgentThreadRenameContext.TREE_POPUP)
+  fun renameThreadFromTree(project: Project, target: SessionActionTarget.Thread, requestedName: String): Job? {
+    return renameThread(
+      project = project,
+      target = target,
+      requestedName = requestedName,
+      context = null,
+      renameContext = AgentThreadRenameContext.TREE_POPUP,
+    )
   }
 
   fun renameThreadFromEditorTab(
@@ -85,10 +101,17 @@ class AgentSessionRenameService internal constructor(
     if (!matchesConcreteEditorThread(context, target)) {
       return null
     }
-    return renameThread(target = target, requestedName = requestedName, context = context, renameContext = AgentThreadRenameContext.EDITOR_TAB)
+    return renameThread(
+      project = null,
+      target = target,
+      requestedName = requestedName,
+      context = context,
+      renameContext = AgentThreadRenameContext.EDITOR_TAB,
+    )
   }
 
   private fun renameThread(
+    project: Project?,
     target: SessionActionTarget.Thread,
     requestedName: String,
     context: AgentChatEditorTabActionContext?,
@@ -101,10 +124,8 @@ class AgentSessionRenameService internal constructor(
     }
 
     val descriptor = findProviderDescriptor(target.provider)
-    val renameMode = descriptor?.renameThreadMode(renameContext) ?: return null
-    if (renameMode == AgentThreadRenameMode.ACTIVE_EDITOR_DISPATCH && context == null) {
-      return null
-    }
+    val renameHandler = descriptor?.threadRenameHandler
+                          ?.takeIf { renameContext in it.supportedContexts } ?: return null
 
     return actionGate.launch(
       scope = serviceScope,
@@ -114,13 +135,13 @@ class AgentSessionRenameService internal constructor(
         LOG.debug("Dropped duplicate rename thread action for ${target.provider}:${target.threadId}")
       },
     ) {
-      when (renameMode) {
-        AgentThreadRenameMode.BACKEND -> {
+      when (renameHandler) {
+        is AgentThreadRenameHandler.Backend -> {
           val renamed = try {
-            descriptor.renameThread(
+            renameHandler.execute(
               path = target.path,
               threadId = target.threadId,
-              name = normalizedRequestedName,
+              normalizedName = normalizedRequestedName,
             )
           }
           catch (t: Throwable) {
@@ -138,15 +159,38 @@ class AgentSessionRenameService internal constructor(
           refreshProviderForPath(target.path, target.provider)
         }
 
-        AgentThreadRenameMode.ACTIVE_EDITOR_DISPATCH -> {
+        is AgentThreadRenameHandler.ChatDispatch -> {
           val dispatchPlan = buildRenameDispatchPlan(
-            descriptor = descriptor,
+            handler = renameHandler,
             provider = target.provider,
             threadId = target.threadId,
             normalizedRequestedName = normalizedRequestedName,
           ) ?: return@launch
           try {
-            dispatchRenameInEditorTab(checkNotNull(context), target, dispatchPlan)
+            when (renameContext) {
+              AgentThreadRenameContext.EDITOR_TAB -> {
+                val editorContext = context ?: run {
+                  LOG.warn("Missing editor context for dispatch rename ${target.provider}:${target.threadId}")
+                  notifyRenameFailure()
+                  return@launch
+                }
+                dispatchRenameInEditorTab(editorContext, target, dispatchPlan)
+              }
+
+              AgentThreadRenameContext.TREE_POPUP -> {
+                val currentProject = project ?: run {
+                  LOG.warn("Missing project for tree rename ${target.provider}:${target.threadId}")
+                  notifyRenameFailure()
+                  return@launch
+                }
+                if (target.thread == null) {
+                  LOG.warn("Missing thread model for tree dispatch rename ${target.provider}:${target.threadId}")
+                  notifyRenameFailure()
+                  return@launch
+                }
+                dispatchRenameFromTree(currentProject, target, dispatchPlan)
+              }
+            }
           }
           catch (t: Throwable) {
             if (t is CancellationException) {
@@ -154,7 +198,10 @@ class AgentSessionRenameService internal constructor(
             }
             LOG.warn("Failed to dispatch rename for ${target.provider}:${target.threadId}", t)
             notifyRenameFailure()
+            return@launch
           }
+
+          refreshProviderForPath(target.path, target.provider)
         }
       }
     }
@@ -175,19 +222,20 @@ private fun matchesConcreteEditorThread(
 }
 
 private fun buildRenameDispatchPlan(
-  descriptor: AgentSessionProviderDescriptor,
+  handler: AgentThreadRenameHandler.ChatDispatch,
   provider: AgentSessionProvider,
   threadId: String,
   normalizedRequestedName: String,
 ): AgentInitialMessageDispatchPlan? {
-  val dispatchSteps = descriptor.buildRenameThreadDispatchSteps(normalizedRequestedName)
-    .filter { step -> step.text.isNotBlank() }
-  if (dispatchSteps.isEmpty()) {
+  val dispatchPlan = handler.buildDispatchPlan(normalizedRequestedName) ?: return null
+  val dispatchSteps = dispatchPlan.postStartDispatchSteps.filter { step -> step.text.isNotBlank() }
+  if (dispatchPlan.startupLaunchSpecOverride == null && dispatchSteps.isEmpty()) {
     return null
   }
-  return AgentInitialMessageDispatchPlan(
+  return dispatchPlan.copy(
     postStartDispatchSteps = dispatchSteps,
-    initialMessageToken = buildRenameThreadDispatchToken(provider, threadId, normalizedRequestedName),
+    initialMessageToken = dispatchPlan.initialMessageToken
+                          ?: buildRenameThreadDispatchToken(provider, threadId, normalizedRequestedName),
   )
 }
 
@@ -219,6 +267,20 @@ private suspend fun dispatchRenameToOpenEditorTab(
       initialMessageDispatchPlan = dispatchPlan,
     )
   }
+}
+
+private fun dispatchRenameFromTreePopup(
+  project: Project,
+  target: SessionActionTarget.Thread,
+  dispatchPlan: AgentInitialMessageDispatchPlan,
+) {
+  service<AgentSessionLaunchService>().openChatThread(
+    path = target.path,
+    thread = checkNotNull(target.thread),
+    entryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
+    currentProject = project,
+    initialMessageDispatchPlan = dispatchPlan,
+  )
 }
 
 fun showRenameThreadDialog(project: Project, currentTitle: String): String? {

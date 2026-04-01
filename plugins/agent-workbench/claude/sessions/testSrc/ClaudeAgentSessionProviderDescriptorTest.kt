@@ -9,9 +9,9 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
-import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameMode
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -59,11 +59,14 @@ class ClaudeAgentSessionProviderDescriptorTest {
   }
 
   @Test
-  fun renameThreadUsesEditorTabDispatchModeOnly() {
-    assertThat(bridge.renameThreadMode(AgentThreadRenameContext.TREE_POPUP)).isNull()
-    assertThat(bridge.renameThreadMode(AgentThreadRenameContext.EDITOR_TAB))
-      .isEqualTo(AgentThreadRenameMode.ACTIVE_EDITOR_DISPATCH)
-    assertThat(bridge.buildRenameThreadDispatchSteps("Renamed thread").map { it.text })
+  fun renameThreadHandlerUsesSharedDispatchContract() {
+    val renameHandler = bridge.threadRenameHandler
+
+    assertThat(renameHandler).isInstanceOf(AgentThreadRenameHandler.ChatDispatch::class.java)
+    renameHandler as AgentThreadRenameHandler.ChatDispatch
+    assertThat(renameHandler.supportedContexts)
+      .containsExactlyInAnyOrder(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
+    assertThat(checkNotNull(renameHandler.buildDispatchPlan("Renamed thread")).postStartDispatchSteps.map { it.text })
       .containsExactly("/rename Renamed thread")
   }
 
