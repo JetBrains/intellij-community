@@ -7,7 +7,6 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.map
 
 data class AgentSessionRebindCandidate(
   @JvmField val threadId: String,
@@ -26,6 +25,27 @@ enum class AgentSessionSourceUpdate {
   HINTS_CHANGED,
 }
 
+data class AgentSessionSourceUpdateEvent(
+  @JvmField val type: AgentSessionSourceUpdate,
+  @JvmField val scopedPaths: Set<String>? = null,
+  @JvmField val threadIds: Set<String>? = null,
+)
+
+fun AgentSessionSourceUpdateEvent.isUnscoped(): Boolean {
+  return scopedPaths == null && threadIds == null
+}
+
+fun AgentSessionSourceUpdateEvent.describeScope(): String {
+  val scopedPaths = scopedPaths
+  val threadIds = threadIds
+  return when {
+    scopedPaths == null && threadIds == null -> "scope=all"
+    scopedPaths != null && threadIds != null -> "scope=paths:${scopedPaths.size},threadIds:${threadIds.size}"
+    scopedPaths != null -> "scope=paths:${scopedPaths.size}"
+    else -> "scope=threadIds:${threadIds?.size ?: 0}"
+  }
+}
+
 interface AgentSessionSource {
   val provider: AgentSessionProvider
   val canReportExactThreadCount: Boolean
@@ -34,15 +54,12 @@ interface AgentSessionSource {
   val supportsUpdates: Boolean
     get() = false
 
-  val updates: Flow<Unit>
-    get() = emptyFlow()
-
   /**
    * Typed source updates used by the loading coordinator to distinguish
    * backend listing updates from auxiliary hint updates.
    */
-  val updateEvents: Flow<AgentSessionSourceUpdate>
-    get() = updates.map { AgentSessionSourceUpdate.THREADS_CHANGED }
+  val updateEvents: Flow<AgentSessionSourceUpdateEvent>
+    get() = emptyFlow()
 
   suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread>
 

@@ -5,6 +5,9 @@ import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.describeScope
+import com.intellij.agent.workbench.sessions.core.providers.isUnscoped
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CancellationException
@@ -28,12 +31,7 @@ internal class AgentSessionRefreshScheduler(
   private val scopedRefreshSignalsProvider: (AgentSessionProvider) -> Flow<Set<String>>,
   private val isRefreshGateActive: suspend () -> Boolean,
   private val executeFullRefresh: suspend (RefreshLoadScope) -> Unit,
-  private val executeProviderRefresh: suspend (
-    AgentSessionProvider,
-    Long,
-    Set<String>?,
-    AgentSessionSourceUpdate,
-  ) -> Unit,
+  private val executeProviderRefresh: suspend (AgentSessionProvider, Long, AgentSessionSourceUpdateEvent) -> Unit,
   private val onFullRefreshFailure: (Throwable) -> Unit,
 ) {
   private val refreshQueueLock = Any()
@@ -63,7 +61,13 @@ internal class AgentSessionRefreshScheduler(
   }
 
   fun refreshProviderScope(provider: AgentSessionProvider, scopedPaths: Set<String>) {
-    enqueueSourceRefresh(provider = provider, scopedPaths = scopedPaths)
+    enqueueSourceRefresh(
+      provider = provider,
+      updateEvent = AgentSessionSourceUpdateEvent(
+        type = AgentSessionSourceUpdate.THREADS_CHANGED,
+        scopedPaths = scopedPaths,
+      ),
+    )
   }
 
   private fun ensureScopedRefreshObservers() {
@@ -85,8 +89,10 @@ internal class AgentSessionRefreshScheduler(
               }
               enqueueSourceRefresh(
                 provider = provider,
-                scopedPaths = scopedPaths,
-                sourceUpdate = AgentSessionSourceUpdate.THREADS_CHANGED,
+                updateEvent = AgentSessionSourceUpdateEvent(
+                  type = AgentSessionSourceUpdate.THREADS_CHANGED,
+                  scopedPaths = scopedPaths,
+                ),
               )
             }
           }
@@ -191,8 +197,8 @@ internal class AgentSessionRefreshScheduler(
         LOG.debug { "Starting source updates observer for ${provider.value}" }
         val job = serviceScope.launch(Dispatchers.IO) {
           try {
-            source.updateEvents.collect { sourceUpdate ->
-              scheduleSourceRefresh(provider, sourceUpdate)
+            source.updateEvents.collect { updateEvent ->
+              scheduleSourceRefresh(provider, updateEvent)
             }
           }
           catch (e: Throwable) {
@@ -212,19 +218,20 @@ internal class AgentSessionRefreshScheduler(
     }
   }
 
-  private fun scheduleSourceRefresh(provider: AgentSessionProvider, sourceUpdate: AgentSessionSourceUpdate) {
+  private fun scheduleSourceRefresh(provider: AgentSessionProvider, updateEvent: AgentSessionSourceUpdateEvent) {
     synchronized(sourceRefreshJobsLock) {
       val existingJob = sourceRefreshJobs.remove(provider)
       existingJob?.job?.cancel()
-      val mergedUpdate = mergeSourceUpdateTypes(existingJob?.sourceUpdate, sourceUpdate)
+      val mergedUpdate = mergeSourceUpdateEvents(existingJob?.updateEvent, updateEvent)
       LOG.debug {
-        "Scheduled debounced source refresh for ${provider.value} (sourceUpdate=${mergedUpdate.name.lowercase()})"
+        "Scheduled debounced source refresh for ${provider.value} " +
+        "(${mergedUpdate.describeScope()}, sourceUpdate=${mergedUpdate.type.name.lowercase()})"
       }
       val job = serviceScope.launch(Dispatchers.IO) {
         delay(SOURCE_UPDATE_DEBOUNCE_MS.milliseconds)
-        enqueueSourceRefresh(provider = provider, sourceUpdate = mergedUpdate)
+        enqueueSourceRefresh(provider = provider, updateEvent = mergedUpdate)
       }
-      sourceRefreshJobs[provider] = PendingSourceRefreshJob(job = job, sourceUpdate = mergedUpdate)
+      sourceRefreshJobs[provider] = PendingSourceRefreshJob(job = job, updateEvent = mergedUpdate)
       job.invokeOnCompletion {
         synchronized(sourceRefreshJobsLock) {
           if (sourceRefreshJobs[provider]?.job === job) {
@@ -237,23 +244,16 @@ internal class AgentSessionRefreshScheduler(
 
   private fun enqueueSourceRefresh(
     provider: AgentSessionProvider,
-    scopedPaths: Set<String>? = null,
-    sourceUpdate: AgentSessionSourceUpdate = AgentSessionSourceUpdate.THREADS_CHANGED,
+    updateEvent: AgentSessionSourceUpdateEvent,
   ) {
-    val normalizedScopedPaths = scopedPaths
-      ?.asSequence()
-      ?.map(::normalizeAgentWorkbenchPath)
-      ?.filter { it.isNotBlank() }
-      ?.toCollection(LinkedHashSet())
-      ?.takeIf { it.isNotEmpty() }
+    val normalizedUpdateEvent = normalizeUpdateEvent(updateEvent)
 
     var shouldStartProcessor = false
     var queueSize = 0
     synchronized(sourceRefreshJobsLock) {
       enqueueSourceRefreshLocked(
         provider = provider,
-        scopedPaths = normalizedScopedPaths,
-        sourceUpdate = sourceUpdate,
+        updateEvent = normalizedUpdateEvent,
       )
       if (!sourceRefreshProcessorRunning) {
         sourceRefreshProcessorRunning = true
@@ -263,9 +263,9 @@ internal class AgentSessionRefreshScheduler(
     }
 
     LOG.debug {
-      val scopeDescription = normalizedScopedPaths?.let { "scopedPaths=${it.size}" } ?: "scopedPaths=all"
       "Enqueued source refresh for ${provider.value} " +
-      "($scopeDescription, sourceUpdate=${sourceUpdate.name.lowercase()}, queueSize=$queueSize, startProcessor=$shouldStartProcessor)"
+      "(${normalizedUpdateEvent.describeScope()}, sourceUpdate=${normalizedUpdateEvent.type.name.lowercase()}, " +
+      "queueSize=$queueSize, startProcessor=$shouldStartProcessor)"
     }
 
     if (shouldStartProcessor) {
@@ -277,50 +277,80 @@ internal class AgentSessionRefreshScheduler(
 
   private fun enqueueSourceRefreshLocked(
     provider: AgentSessionProvider,
-    scopedPaths: Set<String>?,
-    sourceUpdate: AgentSessionSourceUpdate,
+    updateEvent: AgentSessionSourceUpdateEvent,
   ) {
     val existingRequest = pendingSourceRefreshProviders[provider]
     if (existingRequest == null) {
       pendingSourceRefreshProviders[provider] = QueuedSourceRefreshRequest(
-        scopedPaths = scopedPaths,
-        sourceUpdate = sourceUpdate,
+        updateEvent = updateEvent,
       )
       return
     }
     pendingSourceRefreshProviders[provider] = QueuedSourceRefreshRequest(
-      scopedPaths = mergeSourceRefreshScopes(existingRequest.scopedPaths, scopedPaths),
-      sourceUpdate = mergeSourceUpdateTypes(existingRequest.sourceUpdate, sourceUpdate),
+      updateEvent = mergeSourceUpdateEvents(existingRequest.updateEvent, updateEvent),
     )
   }
 
-  private fun mergeSourceRefreshScopes(existing: Set<String>?, incoming: Set<String>?): Set<String>? {
-    if (existing == null || incoming == null) {
-      return null
-    }
-    if (incoming.isEmpty()) {
-      return existing
-    }
-    if (existing.isEmpty()) {
-      return incoming
-    }
-    val merged = LinkedHashSet<String>(existing.size + incoming.size)
-    merged.addAll(existing)
-    merged.addAll(incoming)
-    return merged
+  private fun normalizeUpdateEvent(updateEvent: AgentSessionSourceUpdateEvent): AgentSessionSourceUpdateEvent {
+    return AgentSessionSourceUpdateEvent(
+      type = updateEvent.type,
+      scopedPaths = normalizePaths(updateEvent.scopedPaths),
+      threadIds = normalizeThreadIds(updateEvent.threadIds),
+    )
   }
 
-  private fun mergeSourceUpdateTypes(
-    existing: AgentSessionSourceUpdate?,
-    incoming: AgentSessionSourceUpdate,
-  ): AgentSessionSourceUpdate {
+  private fun normalizePaths(paths: Set<String>?): Set<String>? {
+    return paths
+      ?.asSequence()
+      ?.map(::normalizeAgentWorkbenchPath)
+      ?.filter { it.isNotBlank() }
+      ?.toCollection(LinkedHashSet())
+      ?.takeIf { it.isNotEmpty() }
+  }
+
+  private fun normalizeThreadIds(threadIds: Set<String>?): Set<String>? {
+    return threadIds
+      ?.asSequence()
+      ?.map(String::trim)
+      ?.filter { it.isNotBlank() }
+      ?.toCollection(LinkedHashSet())
+      ?.takeIf { it.isNotEmpty() }
+  }
+
+  private fun mergeSourceUpdateEvents(
+    existing: AgentSessionSourceUpdateEvent?,
+    incoming: AgentSessionSourceUpdateEvent,
+  ): AgentSessionSourceUpdateEvent {
     if (existing == null) {
       return incoming
     }
-    return when {
-      existing == AgentSessionSourceUpdate.THREADS_CHANGED || incoming == AgentSessionSourceUpdate.THREADS_CHANGED -> AgentSessionSourceUpdate.THREADS_CHANGED
+
+    val mergedType = when {
+      existing.type == AgentSessionSourceUpdate.THREADS_CHANGED || incoming.type == AgentSessionSourceUpdate.THREADS_CHANGED -> AgentSessionSourceUpdate.THREADS_CHANGED
       else -> AgentSessionSourceUpdate.HINTS_CHANGED
     }
+    if (existing.isUnscoped() || incoming.isUnscoped()) {
+      return AgentSessionSourceUpdateEvent(type = mergedType)
+    }
+
+    return AgentSessionSourceUpdateEvent(
+      type = mergedType,
+      scopedPaths = mergeScopeSets(existing.scopedPaths, incoming.scopedPaths),
+      threadIds = mergeScopeSets(existing.threadIds, incoming.threadIds),
+    )
+  }
+
+  private fun <T> mergeScopeSets(existing: Set<T>?, incoming: Set<T>?): Set<T>? {
+    if (existing == null) {
+      return incoming
+    }
+    if (incoming == null) {
+      return existing
+    }
+    val merged = LinkedHashSet<T>(existing.size + incoming.size)
+    merged.addAll(existing)
+    merged.addAll(incoming)
+    return merged
   }
 
   private suspend fun processQueuedSourceRefreshes() {
@@ -342,14 +372,12 @@ internal class AgentSessionRefreshScheduler(
 
       val provider = dequeued.first
       val request = dequeued.second
-      val scopedPaths = request.scopedPaths
-      val sourceUpdate = request.sourceUpdate
+      val updateEvent = request.updateEvent
       val remainingQueueSize = dequeued.third
       val refreshId = sourceRefreshIdCounter.incrementAndGet()
       LOG.debug {
-        val scopeDescription = scopedPaths?.let { "scopedPaths=${it.size}" } ?: "scopedPaths=all"
         "Dequeued source refresh id=$refreshId provider=${provider.value} " +
-        "($scopeDescription, sourceUpdate=${sourceUpdate.name.lowercase()}, remainingQueueSize=$remainingQueueSize)"
+        "(${updateEvent.describeScope()}, sourceUpdate=${updateEvent.type.name.lowercase()}, remainingQueueSize=$remainingQueueSize)"
       }
 
       val gateActive = try {
@@ -370,8 +398,7 @@ internal class AgentSessionRefreshScheduler(
         synchronized(sourceRefreshJobsLock) {
           enqueueSourceRefreshLocked(
             provider = provider,
-            scopedPaths = scopedPaths,
-            sourceUpdate = sourceUpdate,
+            updateEvent = updateEvent,
           )
           queueSizeAfterRequeue = pendingSourceRefreshProviders.size
         }
@@ -386,8 +413,7 @@ internal class AgentSessionRefreshScheduler(
         executeProviderRefresh(
           provider,
           refreshId,
-          scopedPaths,
-          sourceUpdate,
+          updateEvent,
         )
       }
       catch (e: Throwable) {
@@ -405,10 +431,9 @@ internal class AgentSessionRefreshScheduler(
 
 private data class PendingSourceRefreshJob(
   @JvmField val job: Job,
-  @JvmField val sourceUpdate: AgentSessionSourceUpdate,
+  @JvmField val updateEvent: AgentSessionSourceUpdateEvent,
 )
 
 private data class QueuedSourceRefreshRequest(
-  @JvmField val scopedPaths: Set<String>?,
-  @JvmField val sourceUpdate: AgentSessionSourceUpdate,
+  @JvmField val updateEvent: AgentSessionSourceUpdateEvent,
 )

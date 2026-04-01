@@ -7,10 +7,13 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import java.util.concurrent.ConcurrentHashMap
 
@@ -28,7 +31,11 @@ class ClaudeSessionSource(
 
   override val supportsUpdates: Boolean get() = true
 
-  override val updates: Flow<Unit> get() = merge(backend.updates, readStateUpdates)
+  override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
+    get() = merge(
+      backend.updates.map { AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.THREADS_CHANGED) },
+      readStateUpdates.map { AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.HINTS_CHANGED) },
+    )
 
   override fun setActiveThreadId(threadId: String?) {
     activeThreadId = threadId

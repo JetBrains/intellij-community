@@ -908,6 +908,59 @@ class CodexAppServerClientTest {
   }
 
   @Test
+  fun listThreadsFallsBackWhenExplicitNameIsBlank(): Unit = runBlocking(Dispatchers.Default) {
+    val workingDir = tempDir.resolve("project-blank-name")
+    Files.createDirectories(workingDir)
+    val normalizedCwd = workingDir.toString().replace('\\', '/').trimEnd('/')
+    val configPath = workingDir.resolve("codex-config.json")
+    writeConfig(
+      path = configPath,
+      threads = listOf(
+        ThreadSpec(
+          id = "thread-title",
+          title = "Title fallback",
+          name = "",
+          cwd = normalizedCwd,
+          updatedAt = 1_700_000_600_000L,
+          archived = false,
+        ),
+        ThreadSpec(
+          id = "thread-summary",
+          summary = "Summary fallback",
+          name = "",
+          cwd = normalizedCwd,
+          updatedAt = 1_700_000_500_000L,
+          archived = false,
+        ),
+        ThreadSpec(
+          id = "thread-preview",
+          preview = "Preview fallback",
+          name = "",
+          cwd = normalizedCwd,
+          updatedAt = 1_700_000_400_000L,
+          archived = false,
+        ),
+      ),
+    )
+    val backendDir = tempDir.resolve("backend-blank-name")
+    Files.createDirectories(backendDir)
+    val client = createMockClient(
+      scope = this,
+      tempDir = backendDir,
+      configPath = configPath,
+    )
+    try {
+      val threadsById = client.listThreads(archived = false, cwdFilter = normalizedCwd).associateBy { it.id }
+      assertThat(threadsById.getValue("thread-title").title).isEqualTo("Title fallback")
+      assertThat(threadsById.getValue("thread-summary").title).isEqualTo("Summary fallback")
+      assertThat(threadsById.getValue("thread-preview").title).isEqualTo("Preview fallback")
+    }
+    finally {
+      client.shutdown()
+    }
+  }
+
+  @Test
   fun listThreadsFailsOnServerError(): Unit = runBlocking(Dispatchers.Default) {
     val configPath = tempDir.resolve("codex-config.json")
     writeConfig(

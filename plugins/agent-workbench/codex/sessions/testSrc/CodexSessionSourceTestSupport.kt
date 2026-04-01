@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutR
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.emptyFlow
 import java.nio.file.Files
@@ -97,7 +98,7 @@ internal suspend fun testRefreshCodexHints(
 
 internal fun testStaticHintsProvider(hintsByPath: Map<String, CodexRefreshHints>): CodexRefreshHintsProvider {
   return object : CodexRefreshHintsProvider {
-    override val updates = emptyFlow<Unit>()
+    override val updateEvents = emptyFlow<AgentSessionSourceUpdateEvent>()
 
     override suspend fun prefetchRefreshHints(
       paths: List<String>,
