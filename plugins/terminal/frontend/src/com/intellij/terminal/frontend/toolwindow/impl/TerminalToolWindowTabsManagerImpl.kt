@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.frontend.action.TerminalAgentsAvailabilityService
 import com.intellij.terminal.frontend.action.TerminalRenameTabAction
 import com.intellij.terminal.frontend.fus.TerminalFocusFusService
 import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
@@ -392,6 +393,8 @@ internal class TerminalToolWindowTabsManagerImpl(
         scheduleTabsRestoring(manager)
       }
 
+      TerminalAgentsAvailabilityService.getInstance(toolWindow.project).prewarm()
+
       val toolWindowActions = ActionManager.getInstance().getAction("Terminal.ToolWindowActions") as? ActionGroup
       toolWindow.setAdditionalGearActions(toolWindowActions)
       toolWindow.setTabsSplittingAllowed(true)
@@ -400,6 +403,11 @@ internal class TerminalToolWindowTabsManagerImpl(
       TerminalFocusFusService.ensureInitialized()
 
       if (toolWindow is ToolWindowEx) {
+        toolWindow.setTitleActions(listOfNotNull(
+          ActionManager.getInstance().getAction("Terminal.AiAgents.LaunchSelectedAgent"),
+          ActionManager.getInstance().getAction("Terminal.AiAgents.ChevronSelector"),
+          ActionManager.getInstance().getAction("Terminal.AiAgents.AgentSelector"),
+        ))
         toolWindow.setTabActions(ActionManager.getInstance().getAction("TerminalToolwindowActionGroup"))
         toolWindow.setTabDoubleClickActions(listOf(TerminalRenameTabAction()))
 

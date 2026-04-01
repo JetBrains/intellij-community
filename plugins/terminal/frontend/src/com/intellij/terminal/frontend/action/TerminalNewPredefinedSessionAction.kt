@@ -4,7 +4,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.AnActionHolder
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -19,8 +18,6 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.project.projectId
 import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
-import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -30,15 +27,13 @@ import org.jetbrains.plugins.terminal.shellDetection.DetectedShellInfo
 import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionApi
 import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
-import java.awt.Point
-import java.awt.event.MouseEvent
 import javax.swing.Icon
 
 internal class TerminalNewPredefinedSessionAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
-    val popupPoint = getPreferredPopupPoint(e)
+    val popupPoint = e.getPreferredPopupPoint()
     terminalProjectScope(project).launch {
       val shells = detectShells(project)
       val customActions = OpenPredefinedTerminalActionProvider.collectAll(project)
@@ -59,17 +54,6 @@ internal class TerminalNewPredefinedSessionAction : DumbAwareAction() {
         }
       }
     }
-  }
-
-  private fun getPreferredPopupPoint(e: AnActionEvent): RelativePoint? {
-    val inputEvent = e.inputEvent
-    if (inputEvent is MouseEvent) {
-      val comp = inputEvent.component
-      if (comp is AnActionHolder) {
-        return RelativePoint(comp.parent, Point(comp.x + JBUI.scale(3), comp.y + comp.height + JBUI.scale(3)))
-      }
-    }
-    return null
   }
 
   private fun createPopup(

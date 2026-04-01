@@ -16,13 +16,14 @@ import org.jetbrains.plugins.terminal.RunCommandUsingIdeUtil
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalFontSettingsService
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.agent.TerminalAgentsStateService
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 
 internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("terminalShell.settings", 6)
+  private val GROUP = EventLogGroup("terminalShell.settings", 7)
 
   private val NON_DEFAULT_OPTIONS = GROUP.registerEvent(
     "non.default.options",
@@ -62,6 +63,10 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
   private val NON_DEFAULT_COLUMN_SPACING = GROUP.registerEvent(
     "non.default.column.spacing", 
     EventFields.Float("column_spacing"),
+  )
+  private val NON_DEFAULT_SELECTED_AI_AGENT = GROUP.registerEvent(
+    "non.default.selected.ai.agent",
+    EventFields.Enum<FusTerminalAiAgent>("agent"),
   )
 
   override fun getGroup(): EventLogGroup = GROUP
@@ -135,6 +140,13 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
       DEFAULT_TERMINAL_COLUMN_SPACING,
     ) { it.floatValue }
 
+    addIfNotDefault(
+      metrics,
+      event = NON_DEFAULT_SELECTED_AI_AGENT,
+      curValue = TerminalAgentsStateService.getInstance().lastLaunchedAgentKey,
+      defaultValue = TerminalAgentsStateService.State().lastLaunchedAgentKey
+    ) { it?.toFusTerminalAiAgent() ?: FusTerminalAiAgent.NONE }
+
     return metrics
   }
 
@@ -161,6 +173,12 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
       BooleanOptions.RUN_COMMANDS_USING_IDE,
       curValue = RunCommandUsingIdeUtil.isEnabled,
       defaultValue = RunCommandUsingIdeUtil.DEFAULT_VALUE
+    )
+    addIfNotDefault(
+      metrics,
+      BooleanOptions.AI_AGENTS_BUTTON_VISIBLE,
+      curValue = TerminalAgentsStateService.getInstance().isSelectorVisible,
+      defaultValue = TerminalAgentsStateService.State().isSelectorVisible
     )
   }
 
@@ -212,6 +230,7 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
     USE_OPTION_AS_META("use_option_as_meta"),
     RUN_COMMANDS_USING_IDE("run_commands_using_ide"),
     SHOW_SEPARATORS_BETWEEN_COMMANDS("show_separators_between_commands"),
+    AI_AGENTS_BUTTON_VISIBLE("ai_agents_button_visible"),
   }
 }
 
