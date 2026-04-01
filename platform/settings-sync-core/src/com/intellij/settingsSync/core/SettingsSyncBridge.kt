@@ -315,7 +315,7 @@ class SettingsSyncBridge(
 
   private suspend fun processPendingEvents(force: Boolean = false) {
     if (pendingEvents.isEmpty()) {
-      /** LOG.debug **/ LOG.warn("Pending events is empty")
+      LOG.debug("Pending events is empty")
       return
     }
     if (force) {
