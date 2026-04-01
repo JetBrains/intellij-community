@@ -14,6 +14,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.NlsActions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,6 +115,7 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
    *
    * @return tool window ID, or {@code null} to use the default resolution logic.
    */
+  @ApiStatus.Internal
   default @Nullable String getContentToolWindowId(@NotNull ExecutionEnvironment environment) {
     return null;
   }
