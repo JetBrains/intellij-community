@@ -217,6 +217,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             val pattern = Patterns.forRegex("^(inspections\\.test)$")
             model("${idea}/inspections/enumValuesSoftDeprecateInJava", pattern = pattern)
             model("${idea}/inspections/enumValuesSoftDeprecateInKotlin", pattern = pattern)
+            model("${idea}/inspections/escapedCapturedVariable", pattern = pattern)
             model("${idea}/inspections/redundantIf", pattern = pattern)
             model("${idea}/inspections/equalsAndHashCode", pattern = pattern)
             model("${idea}/inspections/protectedInFinal", pattern = pattern)
