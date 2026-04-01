@@ -1,12 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources
 
+import com.intellij.compose.ide.plugin.resources.psi.getResourcePackageName
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import java.nio.file.Path
 
 internal const val COMPOSE_RESOURCES_DIR: String = "composeResources"
@@ -85,6 +93,46 @@ internal val Module.composeResourcesDirsByName: Map<String, ComposeResourcesDir>
   get() = getModuleNameForComposeResourcesTask()?.let { moduleName ->
     project.service<ComposeResourcesManager>().composeResourcesByModulePath[moduleName]?.directoriesBySourceSetName.orEmpty()
   } ?: emptyMap()
+
+/** Return the nameOfResClass for the given [Module] */
+private fun Module.getNameOfResClass(): String? =
+  getModuleNameForComposeResourcesTask()?.let { moduleName ->
+    project.service<ComposeResourcesManager>().composeResourcesByModulePath[moduleName]?.nameOfResClass
+  }
+
+/** Return the packageOfResClass for the given [Module] */
+private fun Module.getPackageOfResClass(): String? =
+  getModuleNameForComposeResourcesTask()?.let { moduleName ->
+    project.service<ComposeResourcesManager>().composeResourcesByModulePath[moduleName]?.packageOfResClass
+  }
+
+private fun Module.getResourcePackageName(packageOfResClass: String): String? {
+  val sourceSetName = getSourceSetNameFromComposeResourcesDir()
+  val composeResourcesDir = composeResourcesDirsByName[sourceSetName]
+                            ?: composeResourcesDirsByName["commonMain"]
+                            ?: return null
+  return composeResourcesDir.getResourcePackageName(project, packageOfResClass)
+}
+
+internal val KtDotQualifiedExpression.isComposeResClass: Boolean
+  get() {
+    val module = module ?: return false
+
+    val resDotAccessorWithoutType = receiverExpression
+    val resReference = (resDotAccessorWithoutType as? KtNameReferenceExpression)
+                       ?: (resDotAccessorWithoutType as? KtDotQualifiedExpression)?.selectorExpression as? KtNameReferenceExpression
+                       ?: return false
+
+    val nameOfResClass = module.getNameOfResClass() ?: return false
+    if (resReference.getReferencedName() != nameOfResClass) return false
+    val packageOfResClass = module.getPackageOfResClass() ?: return false
+    val resourcePackageName = module.getResourcePackageName(packageOfResClass) ?: return false
+    val expectedFqn = FqName(resourcePackageName).child(Name.identifier(nameOfResClass))
+
+    val resolvedFqn = resReference.mainReference.resolve()?.kotlinFqName
+
+    return resolvedFqn == expectedFqn
+  }
 
 internal data class ComposeResourcesDir(val moduleName: String, val sourceSetName: String, val directoryPath: Path, val isCustom: Boolean = false)
 

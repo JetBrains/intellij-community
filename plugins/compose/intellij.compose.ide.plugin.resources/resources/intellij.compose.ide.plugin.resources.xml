@@ -1,13 +1,14 @@
 <idea-plugin package="com.intellij.compose.ide.plugin.resources">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.gradle"/>
     <module name="intellij.kotlin.gradle.tooling"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.compose.ide.plugin.gradleTooling.rt"/>
     <module name="intellij.compose.ide.plugin.shared"/>
+    <module name="intellij.java.psi"/>
     <module name="kotlin.gradle.gradle-java"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint
@@ -25,6 +26,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <annotator language="XML" implementationClass="com.intellij.compose.ide.plugin.resources.highlighting.ComposeResourcesXmlAnnotator"/>
 
+
+    <codeInsight.unresolvedReferenceQuickFixProvider
+      implementation="com.intellij.compose.ide.plugin.resources.intentions.ComposeResourcesUnresolvedStringReferenceQuickFixProvider"/>
     <gotoDeclarationHandler implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesGotoDeclarationHandler"/>
     <renamePsiElementProcessor id="ComposeResources"
                                implementation="com.intellij.compose.ide.plugin.resources.rename.ComposeResourcesRenameProcessor"

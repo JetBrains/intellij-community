@@ -71,7 +71,7 @@ private fun Project.findResourcesDir(moduleName: String, name: String): VirtualF
   //TODO use .processFilesByName() to get the first matching file without collecting/resolving all them first
   FilenameIndex.getVirtualFilesByName(name, GlobalSearchScope.allScope(this)).firstOrNull { it.path.contains(moduleName) }
 
-private fun ComposeResourcesDir.getResourcePackageName(project: Project, packageOfResClass: String): String =
+internal fun ComposeResourcesDir.getResourcePackageName(project: Project, packageOfResClass: String): String =
   packageOfResClass.ifEmpty {
     val groupName = project.name.lowercase().asUnderscoredIdentifier()
     val moduleName = moduleName.lowercase().asUnderscoredIdentifier()
