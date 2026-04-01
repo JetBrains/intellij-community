@@ -1216,6 +1216,14 @@ class GitBranchWorkerTest : GitPlatformTest() {
                                              repositories: Collection<GitRepository>): DeleteRemoteBranchDecision {
       throw UnsupportedOperationException("$branchNames\n$trackingBranches\n$repositories")
     }
+
+    override fun showBranchAlreadyCheckedOutInWorktreeDialog(branchName: String, worktreePath: String): Boolean {
+      throw UnsupportedOperationException("$branchName\n$worktreePath")
+    }
+
+    override fun showBranchCheckedOutInWorktreeDeleteDialog(branchName: String, worktreePath: String): GitBranchUiHandler.DeleteWorktreeBranchDecision {
+      throw UnsupportedOperationException("$branchName\n$worktreePath")
+    }
   }
 
   private fun code(s: String): String {

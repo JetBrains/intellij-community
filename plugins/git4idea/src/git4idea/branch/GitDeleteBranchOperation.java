@@ -23,6 +23,7 @@ import git4idea.GitLocalBranch;
 import git4idea.GitNotificationIdsHolder;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.Git;
+import git4idea.commands.GitBranchCheckedOutInWorktreeDeleteDetector;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
 import git4idea.commands.GitLineHandlerListener;
@@ -103,11 +104,18 @@ public class GitDeleteBranchOperation extends GitBranchOperation {
 
       GitSimpleEventDetector notFullyMergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.BRANCH_NOT_FULLY_MERGED);
       GitBranchNotMergedToUpstreamDetector notMergedToUpstreamDetector = new GitBranchNotMergedToUpstreamDetector();
-      GitCommandResult result = myGit.branchDelete(repository, myBranchName, false, notFullyMergedDetector, notMergedToUpstreamDetector);
+      GitBranchCheckedOutInWorktreeDeleteDetector worktreeDetector = new GitBranchCheckedOutInWorktreeDeleteDetector();
+      GitCommandResult result = myGit.branchDelete(repository, myBranchName, false, notFullyMergedDetector, notMergedToUpstreamDetector, worktreeDetector);
 
       if (result.success()) {
         refresh(repository);
         markSuccessful(repository);
+      }
+      else if (worktreeDetector.isDetected()) {
+        boolean deleteSucceeded = handleWorktreeBranchDelete(repository, worktreeDetector);
+        if (!deleteSucceeded) {
+          fatalErrorHappened = true;
+        }
       }
       else if (notFullyMergedDetector.isDetected()) {
         String baseBranch = notMergedToUpstreamDetector.getBaseBranch();
@@ -135,6 +143,52 @@ public class GitDeleteBranchOperation extends GitBranchOperation {
 
     if (!fatalErrorHappened) {
       notifySuccess();
+    }
+  }
+
+  /**
+   * Handles the case when the branch is checked out in another worktree.
+   * Shows a dialog offering to remove the worktree (and optionally delete the branch).
+   */
+  private boolean handleWorktreeBranchDelete(@NotNull GitRepository repository,
+                                              @NotNull GitBranchCheckedOutInWorktreeDeleteDetector worktreeDetector) {
+    String branchName = worktreeDetector.getBranchName();
+    String worktreePath = worktreeDetector.getWorktreePath();
+
+    if (branchName == null || worktreePath == null) {
+      fatalError(getErrorTitle(), GitBundle.message("delete.branch.operation.branch.was.not.deleted.error", myBranchName));
+      return false;
+    }
+
+    GitBranchUiHandler.DeleteWorktreeBranchDecision decision =
+      myUiHandler.showBranchCheckedOutInWorktreeDeleteDialog(branchName, worktreePath);
+    if (decision == GitBranchUiHandler.DeleteWorktreeBranchDecision.CANCEL) {
+      return false;
+    }
+
+    // First, remove the worktree
+    GitCommandResult removeWorktreeResult = myGit.removeWorktree(repository, worktreePath);
+    if (!removeWorktreeResult.success()) {
+      fatalError(getErrorTitle(), removeWorktreeResult);
+      return false;
+    }
+
+    if (decision == GitBranchUiHandler.DeleteWorktreeBranchDecision.DELETE_WORKTREE_AND_BRANCH) {
+      // Delete the branch after removing the worktree
+      GitCommandResult deleteResult = myGit.branchDelete(repository, myBranchName, true);
+      if (deleteResult.success()) {
+        refresh(repository);
+        markSuccessful(repository);
+        return true;
+      }
+      else {
+        fatalError(getErrorTitle(), deleteResult);
+        return false;
+      }
+    }
+    else {
+      // DELETE_WORKTREE_ONLY: worktree removed, branch deletion is no longer needed
+      return false;
     }
   }
 
