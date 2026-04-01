@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.time.Duration.Companion.milliseconds
 
 @Service(Service.Level.APP)
 private class RangeBlinkerService(val coroutineScope: CoroutineScope)
@@ -72,6 +73,7 @@ class RangeBlinker(
   private fun doBlinkTick() {
     val project = editor.project
     if (ApplicationManager.getApplication().isDisposed || editor.isDisposed || project != null && project.isDisposed) {
+      stopBlinking()
       return
     }
 
@@ -108,8 +110,8 @@ class RangeBlinker(
       blinkingJob = scope.launch {
         doBlinkTick()
         triggerFlow
-          .debounce(400)
-          .sample(400)
+          .debounce(400.milliseconds)
+          .sample(400.milliseconds)
           .collect { doBlinkTick() }
       }
     }
