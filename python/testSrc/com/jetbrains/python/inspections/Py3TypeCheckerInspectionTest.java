@@ -4818,4 +4818,61 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                        print(a)
                    """);
   }
+
+  @TestFor(issues = "PY-88610")
+  public void testInvalidDefaultNone() {
+    doTestByText("""
+                   def f(a: str = <warning>None</warning>):
+                       print(a)
+                   """);
+  }
+
+  // PY-76850
+  public void testParamSpecComponentForwarding() {
+    doTestByText("""
+                   from typing import Callable, Concatenate, ParamSpec
+                   P = ParamSpec("P")
+                   
+                   def decorator(f: Callable[P, int]) -> Callable[P, None]:
+                       def foo(*args: P.args, **kwargs: P.kwargs) -> None:
+                           f(*args, **kwargs)  # OK
+                           f(<warning descr="Unexpected argument (from ParamSpec 'P')">*kwargs</warning>, <warning descr="Unexpected argument (from ParamSpec 'P')">**args</warning>)
+                           f(<warning descr="Unexpected argument (from ParamSpec 'P')">1</warning>, *args, **kwargs)
+                       return foo
+                   
+                   def remove(f: Callable[Concatenate[int, P], int]) -> Callable[P, None]:
+                       def foo(*args: P.args, **kwargs: P.kwargs) -> None:
+                           f(1, *args, **kwargs)  # OK
+                           f(<warning descr="Unexpected argument (from ParamSpec 'P')">*args</warning>, <warning descr="Unexpected argument (from ParamSpec 'P')">1</warning>, **kwargs)
+                           f(<warning descr="Unexpected argument (from ParamSpec 'P')">*args</warning>, **kwargs)
+                       return foo
+                   
+                   def outer(f: Callable[P, None]) -> Callable[P, None]:
+                       def foo(x: int, *args: P.args, **kwargs: P.kwargs) -> None:
+                           f(*args, **kwargs)
+                       def bar(*args: P.args, **kwargs: P.kwargs) -> None:
+                           foo(1, *args, **kwargs)  # OK
+                           foo(<warning descr="Unexpected argument (from ParamSpec 'P')">x=1</warning>, *args, **kwargs)
+                       return bar
+                   """);
+  }
+
+  // PY-76850
+  public void testParamSpecSubstitutedCallSite() {
+    doTestByText("""
+                   from typing import Callable, ParamSpec
+                   P = ParamSpec("P")
+                   
+                   def twice(f: Callable[P, int], *args: P.args, **kwargs: P.kwargs) -> int:
+                       return f(*args, **kwargs) + f(*args, **kwargs)
+                   
+                   def a_int_b_str(a: int, b: str) -> int:
+                       return 0
+                   
+                   twice(a_int_b_str, 1, "A")  # OK
+                   twice(a_int_b_str, b="A", a=1)  # OK
+                   twice(a_int_b_str, <warning descr="Expected type 'str', got 'int' instead">b=1</warning>, <warning descr="Expected type 'int', got 'str' instead">a="A"</warning>)
+                   twice(a_int_b_str, <warning descr="Expected type 'int', got 'str' instead">"A"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>)
+                   """);
+  }
 }

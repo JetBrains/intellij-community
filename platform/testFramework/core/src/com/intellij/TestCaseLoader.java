@@ -164,18 +164,12 @@ public class TestCaseLoader {
     return true;
   }
 
-  private boolean isClassTestCase(Class<?> testCaseClass, String moduleName, boolean initializing) {
+  private boolean isClassTestCase(Class<?> testCaseClass, String moduleName) {
     if (shouldAddTestCase(testCaseClass, moduleName, true) &&
         testCaseClass != myFirstTestClass &&
         testCaseClass != myLastTestClass &&
         TestFrameworkUtil.canRunTest(testCaseClass)) {
-
-      // fair bucketing initialization or warmup caches from nastradamus (if it's not fully initialized)
-      if (initializing) return true;
-
-      if (matchesCurrentBucket(testCaseClass.getName())) {
-        return true;
-      }
+      return true;
     }
 
     return false;
@@ -187,6 +181,8 @@ public class TestCaseLoader {
    * @apiNote logic for bucketing tests into different bucket configurations.
    * @see TestCaseLoader#TEST_RUNNERS_COUNT
    * @see TestCaseLoader#TEST_RUNNER_INDEX
+   *
+   * called reflectively from `com.intellij.tests.JUnit5TeamCityRunner.BucketingClassNameFilter`
    */
   public static boolean matchesCurrentBucket(@NotNull String testIdentifier) {
     if (!shouldBucketTests()) return true;
@@ -250,14 +246,14 @@ public class TestCaseLoader {
     return RUN_WITH_TEST_DISCOVERY && getAnnotationInHierarchy(c, ExcludeFromTestDiscovery.class) != null;
   }
 
-  private void loadTestCases(final String moduleName, final Collection<String> classNamesIterator, boolean initialization) {
+  private void loadTestCases(final String moduleName, final Collection<String> classNamesIterator) {
     for (String className : classNamesIterator) {
       if (!isPotentiallyTestCase(className, moduleName)) {
         continue;
       }
       try {
         Class<?> candidateClass = Class.forName(className, false, getClassLoader());
-        if (isClassTestCase(candidateClass, moduleName, initialization)) {
+        if (isClassTestCase(candidateClass, moduleName)) {
           myClassSet.add(candidateClass);
         }
       }
@@ -371,7 +367,7 @@ public class TestCaseLoader {
     return ourCommonTestClassesFilter.getValue().matches(className);
   }
 
-  // called reflectively from `com.intellij.tests.JUnit5TeamCityRunner.BucketingPostDiscoveryFilter`
+  // called reflectively from `com.intellij.tests.bazel.bucketing.BucketsPostDiscoveryFilter`
   @SuppressWarnings("unused")
   public static boolean isClassIncluded(Class<?> aClass) {
     // JUnit 5 might rediscover `@Nested` tests if they were previously filtered out by `isClassNameIncluded`,
@@ -381,10 +377,6 @@ public class TestCaseLoader {
   }
 
   public void fillTestCases(String rootPackage, List<? extends Path> classesRoots) {
-    fillTestCases(rootPackage, classesRoots, false);
-  }
-
-  private void fillTestCases(String rootPackage, List<? extends Path> classesRoots, boolean warmUpPhase) {
     if (myGetClassesCalled) {
       throw new IllegalStateException("Cannot fill more classes after 'getClasses' was already called");
     }
@@ -405,7 +397,7 @@ public class TestCaseLoader {
       }
       int count = getClassesCount();
       ClassFinder classFinder = new ClassFinder(classesRoot, rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
-      loadTestCases(moduleName, classFinder.getClasses(), warmUpPhase);
+      loadTestCases(moduleName, classFinder.getClasses());
       count = getClassesCount() - count;
       if (count > 0) {
         System.out.println("Loaded " + count + " classes from class root " + classesRoot);
@@ -419,7 +411,7 @@ public class TestCaseLoader {
     t = (System.nanoTime() - t) / 1_000_000;
     System.out.println("Loaded " + getClassesCount() + " classes in " + t + " ms");
 
-    if (!warmUpPhase && getClassesCount() == 0 && !Boolean.getBoolean("idea.tests.ignoreJUnit3EmptySuite")) {
+    if (getClassesCount() == 0 && !Boolean.getBoolean("idea.tests.ignoreJUnit3EmptySuite")) {
       // Specially formatted error message will fail the build
       // See https://www.jetbrains.com/help/teamcity/build-script-interaction-with-teamcity.html#BuildScriptInteractionwithTeamCity-ReportingMessagesForBuildLog
       System.out.println(

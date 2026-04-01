@@ -4439,6 +4439,26 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSetOfAny.kt");
         }
 
+        @TestMetadata("plusIterableAndList.kt")
+        public void testPlusIterableAndList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusIterableAndList.kt");
+        }
+
+        @TestMetadata("plusIterableOfPathAndPath.kt")
+        public void testPlusIterableOfPathAndPath() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusIterableOfPathAndPath.kt");
+        }
+
+        @TestMetadata("plusListAndIterable.kt")
+        public void testPlusListAndIterable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListAndIterable.kt");
+        }
+
+        @TestMetadata("plusListAndIterableFromElvis.kt")
+        public void testPlusListAndIterableFromElvis() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListAndIterableFromElvis.kt");
+        }
+
         @TestMetadata("plusListAndSequence.kt")
         public void testPlusListAndSequence() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListAndSequence.kt");
@@ -13729,6 +13749,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/superclass.kt");
             }
 
+            @TestMetadata("typeAlias.kt")
+            public void testTypeAlias() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/typeAlias.kt");
+            }
+
             @TestMetadata("typeParameter.kt")
             public void testTypeParameter() throws Exception {
                 runTest("testData/inspectionsLocal/convertSealedClassToSealedInterface/typeParameter.kt");
@@ -13841,6 +13866,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("superclass.kt")
             public void testSuperclass() throws Exception {
                 runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/superclass.kt");
+            }
+
+            @TestMetadata("typeAlias.kt")
+            public void testTypeAlias() throws Exception {
+                runTest("testData/inspectionsLocal/convertSealedInterfaceToSealedClass/typeAlias.kt");
             }
 
             @TestMetadata("typeParameter.kt")

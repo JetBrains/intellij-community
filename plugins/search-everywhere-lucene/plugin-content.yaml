@@ -4,6 +4,9 @@
 - name: lib/modules/intellij.searchEverywhereLucene.frontend.jar
   contentModules:
   - name: intellij.searchEverywhereLucene.frontend
+- name: lib/modules/intellij.searchEverywhereLucene.performanceTesting.jar
+  contentModules:
+  - name: intellij.searchEverywhereLucene.performanceTesting
 - name: lib/searchEverywhereLucene-plugin.jar
   modules:
   - name: intellij.searchEverywhereLucene.plugin

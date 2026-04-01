@@ -55,10 +55,6 @@ class PyCharmProjectConfigurableStartupActivity : ProjectActivity {
           ep.groupId = PythonToolsConfigurable.ID
           ep.groupWeight = 40
         }
-        "com.intellij.python.pyrefly.PyreflyConfigurable" -> {
-          ep.groupId = PythonToolsConfigurable.ID
-          ep.groupWeight = 40
-        }
         "com.jetbrains.python.black.configuration.BlackFormatterConfigurable" -> {
           ep.groupId = PythonToolsConfigurable.ID
           ep.groupWeight = 30

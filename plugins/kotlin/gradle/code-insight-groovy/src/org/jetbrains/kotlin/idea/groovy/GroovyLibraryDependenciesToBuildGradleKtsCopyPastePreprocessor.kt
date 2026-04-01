@@ -277,11 +277,8 @@ private object DependencyParser {
             return false
         }
         val singleExpressionArgument = expressionArguments.singleOrNull() as? GrLiteral ?: return false
-        if (singleExpressionArgument.firstChild.elementType == GroovyElementTypes.STRING_DQ) {
-            // if it has a double-quoted string literal, it may be Kotlin, not Groovy
-            return true
-        }
-        return false
+        // if it has a double-quoted string literal, it may be Kotlin, not Groovy
+        return singleExpressionArgument.firstChild.elementType == GroovyElementTypes.STRING_DQ
     }
 
 

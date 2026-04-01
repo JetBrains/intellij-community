@@ -11,19 +11,25 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.JavaDebuggerActionsCollector;
 import com.intellij.debugger.impl.DebuggerManagerListener;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.impl.InlayProvider;
+import com.intellij.execution.target.ResolvedPortBinding;
+import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.TargetEnvironmentExtKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -76,10 +82,52 @@ public final class JavaDebuggerConsoleFilterProvider implements ConsoleFilterPro
   }
 
   private static boolean isDebuggerAttached(String transport, String address, Project project) {
+    return isDebuggerAttached(transport, address, project, null);
+  }
+
+  private static boolean isDebuggerAttached(@NotNull String transport,
+                                            @NotNull String address,
+                                            @NotNull Project project,
+                                            @Nullable ResolvedPortBinding resolvedTargetPortBinding) {
     return DebuggerManagerEx.getInstanceEx(project).getSessions()
       .stream()
       .map(s -> s.getDebugEnvironment().getRemoteConnection())
-      .anyMatch(c -> address.equals(c.getApplicationAddress()) && "dt_shmem".equals(transport) != c.isUseSockets());
+      .anyMatch(c -> isMatchingConnection(c, transport, address, resolvedTargetPortBinding));
+  }
+
+  private static boolean isMatchingConnection(@NotNull RemoteConnection connection,
+                                              @NotNull String transport,
+                                              @NotNull String address,
+                                              @Nullable ResolvedPortBinding resolvedTargetPortBinding) {
+    if (!isMatchingTransport(connection, transport)) {
+      return false;
+    }
+    if (resolvedTargetPortBinding != null) {
+      return Objects.equals(resolvedTargetPortBinding.getLocalEndpoint().getHost(), connection.getDebuggerHostName()) &&
+             String.valueOf(resolvedTargetPortBinding.getLocalEndpoint().getPort()).equals(connection.getDebuggerAddress());
+    }
+    return address.equals(connection.getApplicationAddress());
+  }
+
+  private static boolean isMatchingTransport(@NotNull RemoteConnection connection, @NotNull String transport) {
+    return "dt_shmem".equals(transport) != connection.isUseSockets();
+  }
+
+  private static @Nullable ResolvedPortBinding resolveTargetPortBinding(@NotNull Editor editor,
+                                                                        @NotNull String transport,
+                                                                        @NotNull String address) {
+    if (!"dt_socket".equals(transport)) {
+      return null;
+    }
+    int targetPort = StringUtil.parseInt(address, -1);
+    if (targetPort < 0) {
+      return null;
+    }
+    TargetEnvironment targetEnvironment = JavaDebuggerAttachUtil.getTargetEnvironment(editor);
+    if (targetEnvironment == null) {
+      return null;
+    }
+    return TargetEnvironmentExtKt.findTargetPortBinding(targetEnvironment, targetPort);
   }
 
   private static class AttachInlayResult extends Filter.ResultItem implements InlayProvider {
@@ -114,6 +162,7 @@ public final class JavaDebuggerConsoleFilterProvider implements ConsoleFilterPro
   }
 
   private static final class AttachDebuggerInlayPresentation extends DynamicDelegatePresentation {
+    private final @NotNull Editor myEditor;
     private final @NotNull InlayPresentation myAttachPresentation;
     private final @NotNull InlayPresentation myAttachedPresentation;
     private final @NotNull String myTransport;
@@ -124,19 +173,22 @@ public final class JavaDebuggerConsoleFilterProvider implements ConsoleFilterPro
                                             @NotNull String transport,
                                             @NotNull String address,
                                             @NotNull Project project) {
-      this(createAttachPresentation(editor, transport, address, project),
+      this(editor,
+           createAttachPresentation(editor, transport, address, project),
            createAttachedPresentation(editor),
            transport,
            address,
            project);
     }
 
-    private AttachDebuggerInlayPresentation(@NotNull InlayPresentation attachPresentation,
+    private AttachDebuggerInlayPresentation(@NotNull Editor editor,
+                                            @NotNull InlayPresentation attachPresentation,
                                             @NotNull InlayPresentation attachedPresentation,
                                             @NotNull String transport,
                                             @NotNull String address,
                                             @NotNull Project project) {
-      super(isDebuggerAttached(transport, address, project) ? attachedPresentation : attachPresentation);
+      super(isDebuggerAttached(transport, address, project, resolveTargetPortBinding(editor, transport, address)) ? attachedPresentation : attachPresentation);
+      myEditor = editor;
       myAttachPresentation = attachPresentation;
       myAttachedPresentation = attachedPresentation;
       myTransport = transport;
@@ -145,7 +197,7 @@ public final class JavaDebuggerConsoleFilterProvider implements ConsoleFilterPro
     }
 
     private boolean isAttached() {
-      return getDelegate() == myAttachedPresentation;
+      return isDebuggerAttached(myTransport, myAddress, myProject, resolveTargetPortBinding(myEditor, myTransport, myAddress));
     }
 
     private void installListeners(@NotNull Inlay<?> inlay) {
@@ -174,7 +226,9 @@ public final class JavaDebuggerConsoleFilterProvider implements ConsoleFilterPro
     }
 
     private void update() {
-      InlayPresentation delegate = isDebuggerAttached(myTransport, myAddress, myProject) ? myAttachedPresentation : myAttachPresentation;
+      ResolvedPortBinding resolvedTargetPortBinding = resolveTargetPortBinding(myEditor, myTransport, myAddress);
+      InlayPresentation delegate =
+        isDebuggerAttached(myTransport, myAddress, myProject, resolvedTargetPortBinding) ? myAttachedPresentation : myAttachPresentation;
       if (getDelegate() != delegate) {
         setDelegate(delegate);
       }

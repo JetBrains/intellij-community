@@ -35,6 +35,11 @@ public class MultiFileSmartCompletionTestGenerated extends AbstractMultiFileSmar
         runTest("../testData/smartMultiFile/AnonymousObjectGenericJava/");
     }
 
+    @TestMetadata("AnonymousObjectGenericJavaSubClass")
+    public void testAnonymousObjectGenericJavaSubClass() throws Exception {
+        runTest("../testData/smartMultiFile/AnonymousObjectGenericJavaSubClass/");
+    }
+
     @TestMetadata("CallableReferenceNotImported")
     public void testCallableReferenceNotImported() throws Exception {
         runTest("../testData/smartMultiFile/CallableReferenceNotImported/");

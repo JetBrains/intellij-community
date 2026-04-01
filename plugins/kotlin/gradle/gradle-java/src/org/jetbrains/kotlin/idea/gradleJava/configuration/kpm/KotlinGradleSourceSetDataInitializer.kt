@@ -9,13 +9,12 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.PathUtilRt
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmFragment
 import org.jetbrains.kotlin.gradle.idea.kpm.name
 import org.jetbrains.kotlin.idea.base.externalSystem.find
 import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getInternalModuleName
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceDirectorySet
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalDependency
@@ -25,8 +24,6 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import java.util.Arrays
-import java.util.stream.Collectors
 
 @Order(ExternalSystemConstants.UNORDERED + 1)
 class KotlinGradleSourceSetDataInitializer : ModuleDataInitializer {
@@ -48,12 +45,11 @@ class KotlinGradleSourceSetDataInitializer : ModuleDataInitializer {
                 val existingSourceSetDataNode = sourceSetMap[fragmentModuleId]?.first
 
                 val moduleExternalName = calculateFragmentExternalModuleName(gradleModule, fragment)
-                val moduleInternalName = calculateFragmentInternalModuleName(
+                val moduleInternalName = getInternalModuleName(
                     gradleModule,
                     externalProject,
-                    fragment,
                     resolverCtx,
-                )
+                    fullName = "${fragment.coordinates.module.moduleName}.${fragment.name}")
 
                 val fragmentData = existingSourceSetDataNode?.data ?: GradleSourceSetData(
                     fragmentModuleId,
@@ -108,14 +104,14 @@ class KotlinGradleSourceSetDataInitializer : ModuleDataInitializer {
             //TODO compute it properly (if required)
             sourceSet.dependencies = emptyList<ExternalDependency>()
 
-            sourceSet.setSources(linkedMapOf(
+            sourceSet.sources = linkedMapOf(
                 fragment.computeSourceType() to DefaultExternalSourceDirectorySet().also { dirSet ->
                     dirSet.srcDirs = fragment.sourceDirs.toSet()
                 },
                 fragment.computeResourceType() to DefaultExternalSourceDirectorySet().also { dirSet ->
                     dirSet.srcDirs = fragment.resourceDirs.toSet()
                 }
-            ).toMap())
+            ).toMap()
         }
     }
 }
@@ -123,39 +119,3 @@ class KotlinGradleSourceSetDataInitializer : ModuleDataInitializer {
 //TODO should it be visible for anyone outside initializer? Maybe introduce services for naming/routing fragments?
 private fun calculateFragmentExternalModuleName(gradleModule: IdeaModule, fragment: IdeaKpmFragment): String =
     "${gradleModule.name}:${fragment.coordinates.module.moduleName}.${fragment.name}"
-
-private fun calculateFragmentInternalModuleName(
-    gradleModule: IdeaModule,
-    externalProject: ExternalProject,
-    fragment: IdeaKpmFragment,
-    resolverCtx: ProjectResolverContext,
-): String {
-    val delimiter: String
-    val moduleName = StringBuilder()
-
-    val buildSrcGroup = resolverCtx.buildSrcGroup
-    if (resolverCtx.isUseQualifiedModuleNames) {
-        delimiter = "."
-        if (StringUtil.isNotEmpty(buildSrcGroup)) {
-            moduleName.append(buildSrcGroup).append(delimiter)
-        }
-        moduleName.append(gradlePathToQualifiedName(gradleModule.project.name, externalProject.qName))
-    } else {
-        delimiter = "_"
-        if (StringUtil.isNotEmpty(buildSrcGroup)) {
-            moduleName.append(buildSrcGroup).append(delimiter)
-        }
-        moduleName.append(gradleModule.name)
-    }
-    moduleName.append(delimiter)
-    moduleName.append("${fragment.coordinates.module.moduleName}.${fragment.name}")
-    return PathUtilRt.suggestFileName(moduleName.toString(), true, false)
-}
-
-private fun gradlePathToQualifiedName(
-    rootName: String,
-    gradlePath: String
-): String = ((if (gradlePath.startsWith(":")) "$rootName." else "")
-        + Arrays.stream(gradlePath.split(":".toRegex()).toTypedArray())
-    .filter { s: String -> s.isNotEmpty() }
-    .collect(Collectors.joining(".")))

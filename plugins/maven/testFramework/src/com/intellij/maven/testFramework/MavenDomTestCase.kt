@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -134,6 +135,10 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     }
     refreshFiles(listOf(f))
     awaitConfiguration()
+    if (f.fileSystem is ArchiveFileSystem) {
+      MavenLog.LOG.warn("MavenDomTestCase configTest in ArchiveFileSystem skipped")
+      return
+    }
     fixture.configureFromExistingVirtualFile(f)
     myConfigTimestamps[f] = f.timeStamp
     MavenLog.LOG.warn("MavenDomTestCase configTest performed")

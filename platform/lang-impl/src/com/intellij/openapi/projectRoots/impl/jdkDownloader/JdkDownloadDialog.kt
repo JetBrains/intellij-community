@@ -1,17 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
-import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.SdkTypeId
-import com.intellij.openapi.ui.BrowseFolderRunnable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
@@ -20,7 +16,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
-import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.dsl.builder.AlignX
@@ -39,7 +36,6 @@ import java.nio.file.Path
 import java.util.function.Function
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
-import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 
 @Internal
@@ -142,7 +138,7 @@ private fun List<JdkVersionVendorItem>.sortedForUI() = this.sortedBy { it.item.p
 
 @VisibleForTesting
 @Internal
-fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Boolean = { true }): JdkDownloaderModel {
+fun buildJdkDownloaderModel(allItems: List<JdkItem>, eel: EelApi, itemFilter: (JdkItem) -> Boolean = { true }): JdkDownloaderModel {
   @NlsSafe
   fun JdkItem.versionGroupId() = this.presentableMajorVersionString
 
@@ -164,7 +160,7 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
         .asSequence()
         .filter { it.product !in includedProducts }
         .filter { it !in groupItems }
-        .filter { CpuArch.fromString(it.arch) == CpuArch.CURRENT || Registry.`is`("jdk.downloader.show.other.arch", false) }
+        .filter { EelPlatform.resolveArch(it.arch) == eel.platform.arch || Registry.`is`("jdk.downloader.show.other.arch", false) }
         .groupBy { it.product }
         .mapValues { (_, jdkItems) ->
           val comparator = Comparator.comparing(Function<JdkItem, String> { it.jdkVersion }, VersionComparatorUtil.COMPARATOR)
@@ -222,46 +218,19 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
   )
 }
 
-internal class JdkDownloaderMergedModel(
-  @Deprecated("Remove when eelModel is stabilized")
-  private val mainModel: JdkDownloaderModel,
-
-  @Deprecated("Remove when eelModel is stabilized")
-  private val wslModel: JdkDownloaderModel?,
-
-  private val eelModel: JdkDownloaderModel?,
-
-  val eel: EelApi?,
-  val wslDistributions: List<WSLDistribution>,
-  val projectWSLDistribution: WSLDistribution?
-) {
-  val hasEel: Boolean get() = eelModel != null
-
-  @Deprecated("Remove when eelModel is stabilized")
-  val hasWsl: Boolean get() = wslModel != null
-
-  @Deprecated("Remove when eelModel is stabilized")
-  fun selectModel(wsl: Boolean): JdkDownloaderModel = when {
-    eelModel != null -> eelModel
-    wsl && wslModel != null -> wslModel
-    else -> mainModel
-  }
-}
-
 internal class JdkDownloadDialog(
   val project: Project?,
   val parentComponent: Component?,
   val sdkType: SdkTypeId,
-  private val mergedModel: JdkDownloaderMergedModel,
+  private val eel: EelApi,
+  private val model: JdkDownloaderModel,
   okActionText: @NlsContexts.Button String = ProjectBundle.message("dialog.button.download.jdk"),
   val text: @Nls String? = null
 ) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE) {
   private lateinit var versionComboBox : ComboBox<JdkVersionItem>
   private val vendorComboBox: JdkVersionVendorCombobox = JdkVersionVendorCombobox()
 
-  private var installDirTextField: TextFieldWithBrowseButton? = null
-  private var installDirCombo: ComboBox<String>? = null
-  private lateinit var installDirComponent: JComponent
+  private lateinit var installDirTextField: TextFieldWithBrowseButton
 
   private var currentModel : JdkDownloaderModel? = null
 
@@ -287,9 +256,9 @@ internal class JdkDownloadDialog(
         .align(AlignX.FILL)
         .focused()
         .validationInfo {
-          val itemArch = CpuArch.fromString(it.item.item.arch)
+          val itemArch = EelPlatform.resolveArch(it.item.item.arch)
           when {
-            itemArch != CpuArch.CURRENT -> warning(ProjectBundle.message("dialog.jdk.arch.validation", itemArch, CpuArch.CURRENT))
+            itemArch != eel.platform.arch -> warning(ProjectBundle.message("dialog.jdk.arch.validation", itemArch, eel.platform.arch))
             it.item.item.isPreview -> warning(ProjectBundle.message("dialog.jdk.preview.validation"))
             else -> null
           }
@@ -301,7 +270,14 @@ internal class JdkDownloadDialog(
         }
     }
     row(ProjectBundle.message("dialog.row.jdk.location")) {
-      cell(setupContainer())
+      installDirTextField = textFieldWithBrowseButton(
+        project,
+        FileChooserDescriptorFactory.singleDir().withTitle(ProjectBundle.message("dialog.title.select.path.to.install.jdk"))
+      ).apply {
+        onTextChange { onTargetPathChanged(it) }
+        textField.columns = 36
+      }
+      cell(installDirTextField)
         .align(AlignX.FILL)
         .apply { archiveSizeCell = comment("") }
     }
@@ -317,70 +293,17 @@ internal class JdkDownloadDialog(
 
     setOKButtonText(okActionText)
 
-    setModel(mergedModel.projectWSLDistribution != null)
-    init()
-  }
-
-  private fun setupContainer(): JComponent {
-    if (mergedModel.hasWsl && !mergedModel.hasEel) {  // TODO File chooser for Eel
-      installDirCombo = ComboBox<String>().apply {
-        isEditable = true
-        initBrowsableEditor(
-          BrowseFolderRunnable(
-            project,
-            FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(ProjectBundle.message("dialog.title.select.path.to.install.jdk")),
-            installDirCombo,
-            TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT
-          ), disposable)
-        addActionListener { onTargetPathChanged(editor.item as String) }
-        installDirComponent = this
-      }
-      installDirTextField = null
-    }
-    else {
-      installDirTextField = textFieldWithBrowseButton(
-        project,
-        FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(ProjectBundle.message("dialog.title.select.path.to.install.jdk"))
-      ).apply {
-        onTextChange { onTargetPathChanged(it) }
-        textField.columns = 36
-        installDirComponent = this
-      }
-      installDirCombo = null
-    }
-    return installDirComponent
-  }
-
-  private fun setModel(forWsl: Boolean) {
-    val model = mergedModel.selectModel(forWsl)
-    if (currentModel === model) return
-
-    val prevSelectedVersion = versionComboBox.selectedItem as? JdkVersionItem
-    val prevSelectedJdk = (vendorComboBox.selectedItem as? JdkVersionVendorItem)?.takeIf { it.canBeSelected }
-
     currentModel = model
     versionComboBox.model = DefaultComboBoxModel(model.versionGroups.toTypedArray())
-
-    val newVersionItem = if (prevSelectedVersion != null) {
-      model.versionGroups.singleOrNull { it.jdkVersion == prevSelectedVersion.jdkVersion }
-    } else null
-
-    val newVendorItem = if (newVersionItem != null && prevSelectedJdk != null) {
-      (newVersionItem.includedItems + newVersionItem.excludedItems).singleOrNull {
-          it.canBeSelected && it.item.suggestedSdkName == prevSelectedJdk.item.suggestedSdkName
-        }
-    } else null
-
-    onVersionSelectionChange(newVersionItem ?: model.defaultVersion)
-    onVendorSelectionChange(newVendorItem ?: model.defaultVersionVendor)
+    onVersionSelectionChange(model.defaultVersion)
+    onVendorSelectionChange(model.defaultVersionVendor)
+    init()
   }
 
   private fun onTargetPathChanged(path: String) {
     @Suppress("NAME_SHADOWING")
     val path = OSAgnosticPathUtil.expandUserHome(path)
     selectedPath = path
-
-    setModel(WslPath.isWslUncPath(path))
     initValidation()
   }
 
@@ -396,27 +319,11 @@ internal class JdkDownloadDialog(
 
     vendorComboBox.selectedItem = it.selectItem
     val newVersion = it.item
-    val path = JdkInstaller.getInstance().defaultInstallDir(newVersion, mergedModel.eel, mergedModel.projectWSLDistribution).toString()
+    val path = JdkInstaller.getInstance().defaultInstallDir(newVersion, localEel).toString()
     val relativePath = FileUtil.getLocationRelativeToUserHome(path)
-    if (installDirTextField != null) {
-      installDirTextField!!.text = relativePath
-    }
-    else {
-      installDirCombo!!.model = CollectionComboBoxModel(getSuggestedInstallDirs(newVersion).toMutableList(), relativePath)
-    }
+    installDirTextField.text = relativePath
     selectedPath = path
     selectedItem = newVersion
-  }
-
-  private fun getSuggestedInstallDirs(newVersion: JdkItem): List<String> {
-    if (mergedModel.hasEel) {
-      return listOf(JdkInstaller.getInstance().defaultInstallDir(newVersion, mergedModel.eel, null).toString())
-    }
-    return (listOf(null) + mergedModel.wslDistributions).mapTo(LinkedHashSet()) {
-      JdkInstaller.getInstance().defaultInstallDir(newVersion, null, it).toString()
-    }.map {
-      FileUtil.getLocationRelativeToUserHome(it)
-    }
   }
 
   private fun onVersionSelectionChange(it: JdkVersionItem?) {
@@ -430,7 +337,7 @@ internal class JdkDownloadDialog(
     super.doValidate()?.let { return it }
 
     val (_, error) = JdkInstaller.getInstance().validateInstallDir(selectedPath)
-    return error?.let { ValidationInfo(error, installDirComponent) }
+    return error?.let { ValidationInfo(error, installDirTextField) }
   }
 
   override fun createCenterPanel() = panel

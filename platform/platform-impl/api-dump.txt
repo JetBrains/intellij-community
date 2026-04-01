@@ -823,6 +823,20 @@ f:com.intellij.openapi.editor.impl.FontInfo
 - <init>(java.awt.Font,F,Z,java.util.Set,java.awt.font.FontRenderContext):V
 com.intellij.openapi.editor.impl.HighlighterListener
 - a:highlighterChanged(I,I):V
+Fa:com.intellij.openapi.editor.impl.SoftWrapModelImpl
+- com.intellij.openapi.editor.InlayModel$SimpleAdapter
+- com.intellij.diagnostic.Dumpable
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.editor.CustomWrapModel$Listener
+- com.intellij.openapi.editor.ex.FoldingListener
+- com.intellij.openapi.editor.ex.PrioritizedDocumentListener
+- com.intellij.openapi.editor.ex.SoftWrapModelEx
+- java.beans.PropertyChangeListener
+- <init>():V
+- a:getApplianceManager():com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager
+- f:getRegisteredSoftWraps():java.util.List
+- f:getSoftWrap(I):com.intellij.openapi.editor.SoftWrap
+- a:isDirty():Z
 com.intellij.openapi.editor.impl.TextDrawingCallback
 - a:drawChars(java.awt.Graphics,C[],I,I,I,I,java.awt.Color,com.intellij.openapi.editor.impl.FontInfo):V
 f:com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentationKt
@@ -859,6 +873,8 @@ com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 - register(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent,com.intellij.openapi.Disposable):V
 f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$DefaultImpls
 - s:isApplicableAsync(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider,com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
+c:com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
+- p:getRecentPathsStorageKey():java.lang.String
 com.intellij.openapi.fileChooser.ex.FileDrop$Target
 - a:dropFiles(java.util.List):V
 - a:getDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -880,6 +896,8 @@ com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile
 - a:setMacro(java.lang.String):V
 com.intellij.openapi.fileChooser.ex.FileLookup$LookupFilter
 - a:isAccepted(com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile):Z
+f:com.intellij.openapi.fileChooser.impl.FileChooserUtil
+- sf:RECENT_FILES:java.lang.String
 a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - updateFileName(com.intellij.openapi.vfs.VirtualFile):V
 com.intellij.openapi.fileEditor.ex.FileEditorProviderManager

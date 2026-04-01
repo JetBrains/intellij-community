@@ -6,6 +6,8 @@ package com.intellij.collaboration.util
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.takeWhile
 import org.jetbrains.annotations.ApiStatus
 
 class IncrementallyComputedValue<T> private constructor(
@@ -81,4 +83,30 @@ suspend inline fun <T> Flow<List<T>>.collectIncrementallyTo(collector: FlowColle
       }
     }
   }
+}
+
+@ApiStatus.Internal
+suspend fun <T> Flow<IncrementallyComputedValue<List<T>>>.consumeIncrementally(
+  batchConsumer: (List<T>) -> Unit,
+  onError: (Exception) -> Unit,
+) {
+  var counter = 0
+  takeWhile { computedValue ->
+    val items: List<T>? = computedValue.valueOrNull
+    if (items != null && items.size > counter) {
+      batchConsumer.invoke(items.subList(counter, items.size))
+      counter = items.size
+    }
+
+    if (computedValue.isComplete) {
+      return@takeWhile false
+    }
+
+    computedValue.exceptionOrNull?.let {
+      onError(it)
+      return@takeWhile false
+    }
+
+    true
+  }.collect()
 }

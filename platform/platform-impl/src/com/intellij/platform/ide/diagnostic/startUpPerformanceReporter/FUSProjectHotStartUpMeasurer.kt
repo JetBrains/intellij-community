@@ -31,8 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.EmptyProjectMarker
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
-import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.getContextElementWithEmptyProjectElementToPass
-import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.isRemDevTestWorkaround
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.PlatformUtils
 import com.intellij.util.containers.ComparatorUtil
@@ -459,8 +458,13 @@ object FUSProjectHotStartUpMeasurer {
       }
     }
     finally {
-      channel.cancel()
-      statsIsWritten = true
+      try {
+        channel.cancel()
+        counterContext.close()
+      }
+      finally {
+        statsIsWritten = true
+      }
     }
   }
 

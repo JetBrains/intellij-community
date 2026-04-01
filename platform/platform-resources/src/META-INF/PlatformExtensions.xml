@@ -1671,6 +1671,7 @@
     <notificationGroup id="Ultimate Installed" displayType="BALLOON" bundle="messages.IdeBundle"
                        key="notification.group.advertiser.try.ultimate.installed"/>
     <notificationGroup id="code.style.cache.dump" displayType="BALLOON" hideFromSettings="true" isLogByDefault="false"/>
+    <notificationGroup id="editor.state.dump" displayType="BALLOON" hideFromSettings="true" isLogByDefault="false"/>
     <notificationGroup id="proxy.auth.failed" displayType="STICKY_BALLOON" bundle="messages.UIBundle" key="proxy.auth.notification.title"/>
 
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
@@ -2068,6 +2069,12 @@
     <registryKey key="wayland.notification.delay.after.previous.activity" defaultValue="1"
                  description="Show the notification about the native Wayland toolkit after this many minutes have passed since the previous user activity" />
     <notificationGroup id="Wayland" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.wayland" isLogByDefault="true"/>
+
+    <registryKey key="editor.custom.soft.wraps.support.enabled" defaultValue="false"
+                 description="Enables support for custom soft wraps in the editor. Only takes effect if editor.use.new.soft.wraps.impl=true." restartRequired="true"/>
+    <registryKey key="editor.use.new.soft.wraps.impl" defaultValue="true"
+                 description="Use the new custom-wrap aware soft wraps implementation (in favor of the legacy implementation)."
+                 restartRequired="true"/>
   </extensions>
 
   <applicationListeners>

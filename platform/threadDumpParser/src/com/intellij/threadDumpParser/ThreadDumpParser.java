@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.threadDumpParser;
 
 import com.intellij.diagnostic.EventCountDumper;
@@ -15,11 +15,19 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.diagnostic.CoroutineDumperKt.isCoroutineDumpHeader;
+import static com.intellij.threadDumpParser.ThreadDumpInlineMetadataKt.ID_KEY;
+import static com.intellij.threadDumpParser.ThreadDumpInlineMetadataKt.PARENT_ID_KEY;
+import static com.intellij.threadDumpParser.ThreadDumpInlineMetadataKt.TYPE_KEY;
+import static com.intellij.threadDumpParser.ThreadDumpInlineMetadataKt.parseMetadataSuffix;
+import static com.intellij.threadDumpParser.ThreadDumpInlineMetadataKt.stripMetadataSuffix;
 
 @ApiStatus.Internal
 public final class ThreadDumpParser {
@@ -40,6 +48,9 @@ public final class ThreadDumpParser {
   private static final String AT_JAVA_LANG_OBJECT_WAIT = "java.lang.Object.wait(";
   private static final String ourLockedOwnableSynchronizersHeader = "Locked ownable synchronizers";
   private static final Pattern ourLockedOwnableSynchronizersPattern = Pattern.compile("- <(0x[\\da-f]+)> \\(.*\\)");
+  private static final Set<String> ourIgnoredThreadStateParts = Set.of("virtual", "unmounted");
+  private static final Pattern ourLockedPattern = Pattern.compile("- locked (?:<(.+?)>|(\\S+))");
+  private static final Pattern ourWaitingForReleasePattern = Pattern.compile("waiting for .+ to release lock on (?:<(.+?)>|(\\S+))");
 
   private static final String[] IMPORTANT_THREAD_DUMP_WORDS = ContainerUtil.ar("tid", "nid", "wait", "parking", "prio", "os_prio", "java");
 
@@ -70,7 +81,7 @@ public final class ThreadDumpParser {
     for (JsonNode container : containers.values()) {
       for (JsonNode thread : container.path("threads").values()) {
         var name = thread.path("name").asString();
-        var threadState = new ThreadState(name, "unknown");
+        var threadState = createThreadState(name, "unknown");
 
         var rawStackTrace = new StringBuilder();
         for (JsonNode ste : thread.path("stack").values()) {
@@ -138,7 +149,7 @@ public final class ThreadDumpParser {
         threads.add(lastThreadState);
         lastThreadStack.setLength(0);
         haveNonEmptyStackTrace = false;
-        lastThreadStack.append(line).append("\n");
+        lastThreadStack.append(stripMetadataSuffix(line)).append("\n");
         expectingThreadState = true;
       }
       else {
@@ -171,26 +182,14 @@ public final class ThreadDumpParser {
     List<ThreadState> threads = result.threads;
     for(ThreadState threadState: threads) {
       inferThreadStateDetail(threadState);
+      extractJstackLockInfo(threadState);
     }
-    for(ThreadState threadState: threads) {
-      String lockId = findWaitingForLock(threadState.getStackTrace());
-      ThreadState lockOwner = findLockOwner(threads, lockId, true);
-      if (lockOwner == null) {
-        lockOwner = findLockOwner(threads, lockId, false);
-      }
-      if (lockOwner != null) {
-        if (threadState.isAwaitedBy(lockOwner)) {
-          threadState.addDeadlockedThread(lockOwner);
-          lockOwner.addDeadlockedThread(threadState);
-        }
-        lockOwner.addWaitingThread(threadState);
-      }
-    }
+    detectWaitingAndDeadlockedThreads(threads);
     sortThreads(threads);
 
     StringBuilder coroutineDump = result.coroutineDump;
     if (coroutineDump != null) {
-      ThreadState coroutineState = new ThreadState("Coroutine dump", "undefined");
+      ThreadState coroutineState = createThreadState("Coroutine dump", "undefined");
       coroutineState.setStackTrace(coroutineDump.toString(), false);
       threads.add(coroutineState);
     }
@@ -198,18 +197,17 @@ public final class ThreadDumpParser {
     return threads;
   }
 
-  private static @Nullable ThreadState findLockOwner(List<? extends ThreadState> result, @Nullable String lockId, boolean ignoreWaiting) {
-    if (lockId == null) return null;
-
-    final String marker = "- locked <" + lockId + ">";
-    for(ThreadState lockOwner : result) {
-      String trace = lockOwner.getStackTrace();
-      if (trace.contains(marker) && (!ignoreWaiting || !trace.contains(AT_JAVA_LANG_OBJECT_WAIT))) {
-        return lockOwner;
+  private static @Nullable ThreadState findLockOwner(@Nullable List<? extends ThreadState> lockOwners, List<? extends ThreadState> threadStates, String lockId, boolean ignoreWaiting) {
+    if (lockOwners != null) {
+      for(ThreadState lockOwner : lockOwners) {
+        String trace = lockOwner.getStackTrace();
+        if (!ignoreWaiting || !trace.contains(AT_JAVA_LANG_OBJECT_WAIT)) {
+          return lockOwner;
+        }
       }
     }
-    for(ThreadState lockOwner : result) {
-      if(lockOwner.getOwnableSynchronizers() != null && lockOwner.getOwnableSynchronizers().equals(lockId)){
+    for(ThreadState lockOwner : threadStates) {
+      if (lockOwner.getOwnableSynchronizers() != null && lockOwner.getOwnableSynchronizers().equals(lockId)) {
         return lockOwner;
       }
     }
@@ -219,6 +217,168 @@ public final class ThreadDumpParser {
   @Contract(mutates = "param1")
   public static void sortThreads(List<? extends ThreadState> result) {
     result.sort((o1, o2) -> getInterestLevel(o2) - getInterestLevel(o1));
+  }
+
+  /**
+   * Links threads that are waiting on monitors owned by other threads and detects deadlocks.
+   * Populates {@link ThreadState#addWaitingThread} and {@link ThreadState#addDeadlockedThread}.
+   */
+  public static void detectWaitingAndDeadlockedThreads(List<? extends ThreadState> threadStates) {
+    Map<String, List<ThreadState>> monitorToOwners = new HashMap<>();
+
+    for (ThreadState threadState : threadStates) {
+      for (String lockId : threadState.getOwnedMonitors()) {
+        monitorToOwners.computeIfAbsent(lockId, k -> new ArrayList<>()).add(threadState);
+      }
+    }
+
+    for (ThreadState threadState : threadStates) {
+      String waitedMonitor = threadState.getContendedMonitor();
+      if (waitedMonitor == null) continue;
+      var monitorOwners = monitorToOwners.get(waitedMonitor);
+
+      ThreadState lockOwner = findLockOwner(monitorOwners, threadStates, waitedMonitor, true);
+      if (lockOwner == null) {
+        lockOwner = findLockOwner(monitorOwners, threadStates, waitedMonitor, false);
+      }
+      if (lockOwner != null) {
+        if (threadState.isAwaitedBy(lockOwner)) {
+          threadState.addDeadlockedThread(lockOwner);
+          lockOwner.addDeadlockedThread(threadState);
+        }
+        lockOwner.addWaitingThread(threadState);
+      }
+    }
+  }
+
+  /**
+   * Enriches the raw stack trace of the given {@param threadStates} with information about acquired monitors.
+   * <p>
+   * Adds the following information to the stack trace for each thread:
+   * <ul>
+   *   <li>{@code "blocks <threadName>"} — for every monitor owned by this thread,
+   *   lists all threads currently waiting to acquire it.</li>
+   *   <li>{@code "waiting for <threadName> to release lock on <monitor>"} — if this thread
+   *   has a contended monitor, names the thread that currently owns it.</li>
+   *   <li>{@code "- locked <monitor>"} — inlined after the stack frame at which the monitor
+   *   was acquired. If frame depth information is not available, the lock annotations
+   *   are appended at the bottom of the stack trace.</li>
+   * </ul>
+   * <p>
+   *
+   * Note: Not needed for parsed jstack dump, this info will already be present in the trace.
+   */
+  public static void enrichStackTraceWithLockInfo(List<? extends ThreadState> threadStates) {
+    // monitorId → names of threads that are blocked/waiting on this monitor
+    Map<String, List<String>> monitorToWaitingThreadNames = new HashMap<>();
+    // monitorId → name of the thread that owns this monitor
+    Map<String, String> monitorToOwnerThreadName = new HashMap<>();
+
+    for (ThreadState threadState : threadStates) {
+      String contended = threadState.getContendedMonitor();
+      if (contended != null) {
+        monitorToWaitingThreadNames.computeIfAbsent(contended, k -> new ArrayList<>()).add(threadState.getName());
+      }
+      for (String monitor : threadState.getOwnedMonitors()) {
+        monitorToOwnerThreadName.putIfAbsent(monitor, threadState.getName());
+      }
+    }
+
+    for (ThreadState threadState : threadStates) {
+      enrichOneThreadStackTrace(threadState, monitorToWaitingThreadNames, monitorToOwnerThreadName);
+    }
+  }
+
+  private static void enrichOneThreadStackTrace(
+    ThreadState threadState,
+    Map<String, List<String>> monitorToWaitingThreads,
+    Map<String, String> monitorToOwnerThread
+  ) {
+    String contended = threadState.getContendedMonitor();
+    Set<String> allOwnedMonitors = threadState.getOwnedMonitors();
+
+    if (contended == null && allOwnedMonitors.isEmpty()) return;
+
+    String stackTrace = threadState.getStackTrace();
+    if (stackTrace == null) return;
+    var lines = stackTrace.lines().toList();
+
+    var buffer = new StringBuilder();
+    // Insert information about at which stack depth the monitor was acquired by the owning thread
+    int frameIndex = 0;
+    for (int i = 0; i < lines.size(); i++) {
+      var line = lines.get(i);
+      boolean isFrame = isStackFrame(line);
+
+      if (!isFrame) {
+        buffer.append(line).append('\n');
+        continue;
+      }
+
+      // Insert "blocks <thread>" and "waiting for <thread> to release <monitor>" lines before the first stack frame
+      if (frameIndex == 0) {
+        for (String monitor : allOwnedMonitors) {
+          List<String> waitingNames = monitorToWaitingThreads.get(monitor);
+          if (waitingNames != null) {
+            for (String name : waitingNames) {
+              buffer.append("\t blocks ").append(name).append('\n');
+            }
+          }
+        }
+        if (contended != null) {
+          String ownerName = monitorToOwnerThread.get(contended);
+          if (ownerName != null) {
+            buffer.append("\t waiting for ").append(ownerName)
+              .append(" to release lock on ").append(contended).append('\n');
+          }
+        }
+      }
+
+      buffer.append(line).append('\n');
+
+      List<String> monitors = threadState.getOwnedMonitorsAtDepth(frameIndex);
+      if (monitors != null) {
+        for (String monitor : monitors) {
+          buffer.append(lockedMonitor(monitor)).append('\n');
+        }
+      }
+
+      frameIndex++;
+    }
+
+    // Append monitors with unknown depth (-1) at the end
+    List<String> unknownDepth = threadState.getOwnedMonitorsAtDepth(-1);
+    if (unknownDepth != null) {
+      for (String monitor : unknownDepth) {
+        buffer.append(lockedMonitor(monitor)).append('\n');
+      }
+    }
+
+    threadState.setStackTrace(buffer.toString(), threadState.isEmptyStackTrace());
+  }
+
+  private static String lockedMonitor(String monitor) {
+    return "\t  - locked " + monitor;
+  }
+
+  private static boolean isStackFrame(String line) {
+    return line.trim().startsWith("at ");
+  }
+
+  private static void extractJstackLockInfo(ThreadState threadState) {
+    String trace = threadState.getStackTrace();
+    if (trace == null) return;
+
+    String waitingForLock = findWaitingForLock(trace);
+    threadState.setContendedMonitor(waitingForLock);
+
+    Matcher m = ourLockedPattern.matcher(trace);
+    while (m.find()) {
+      var monitor = m.group(1) != null ? m.group(1) : m.group(2);
+      threadState.addOwnedMonitor(monitor);
+    }
+
+    threadState.setOwnableSynchronizers(findLockedOwnableSynchronizers(threadState.getStackTrace())); // todo check ownableSynchronizers
   }
 
   private static @Nullable String findLockedOwnableSynchronizers(final String stackTrace) {
@@ -242,6 +402,10 @@ public final class ThreadDumpParser {
     m = ourParkingToWaitForLockPattern.matcher(stackTrace);
     if (m.find()) {
       return m.group(1);
+    }
+    m = ourWaitingForReleasePattern.matcher(stackTrace);
+    if (m.find()) {
+      return m.group(1) != null ? m.group(1) : m.group(2);
     }
     return null;
   }
@@ -305,32 +469,35 @@ public final class ThreadDumpParser {
       }
       threadState.setExtraState("modality level " + modality);
     }
-    threadState.setOwnableSynchronizers(findLockedOwnableSynchronizers(threadState.getStackTrace()));
   }
 
   private static @Nullable ThreadState tryParseThreadStart(String line) {
     Matcher m = ourThreadStartPattern.matcher(line);
     if (m.find()) {
-      final ThreadState state = new ThreadState(m.group(1), m.group(3));
+      final ThreadState state = createThreadState(m.group(1), m.group(3));
       if (line.contains(" daemon ")) {
         state.setDaemon(true);
       }
       if (line.contains(" virtual ")) {
         state.setVirtual(true);
       }
+      applyInlineMetadata(line, state);
       return state;
     }
 
     m = ourForcedThreadStartPattern.matcher(line);
     if (m.matches()) {
-      return new ThreadState(m.group(1), m.group(2));
+      ThreadState state = createThreadState(m.group(1), m.group(2));
+      applyInlineMetadata(line, state);
+      return state;
     }
 
     m = ourJcmdThreadStartPattern.matcher(line);
     if (m.matches()) {
-      var state = new ThreadState(m.group(1), "unknown");
+      var state = createThreadState(m.group(1), "unknown");
       var suffix = m.group(2);
       state.setVirtual(suffix.contains(" virtual"));
+      applyInlineMetadata(line, state);
       return state;
     }
 
@@ -341,11 +508,43 @@ public final class ThreadDumpParser {
 
     m = matchYourKit(line);
     if (m != null) {
-      ThreadState state = new ThreadState(m.group(1), m.group(2));
+      ThreadState state = createThreadState(m.group(1), m.group(2));
       state.setDaemon(daemon);
+      applyInlineMetadata(line, state);
       return state;
     }
     return null;
+  }
+
+  private static @NotNull ThreadState createThreadState(@NotNull String name, @NotNull String state) {
+    String normalizedState = StringUtil.join(
+      ContainerUtil.filter(StringUtil.split(state, " "), part -> !ourIgnoredThreadStateParts.contains(part) && !part.contains("=")),
+      " "
+    );
+    return new ThreadState(name, normalizedState);
+  }
+
+  private static void applyInlineMetadata(@NotNull String line, @NotNull ThreadState state) {
+    Map<String, String> metadata = parseMetadataSuffix(line);
+    if (metadata != null) {
+      Map<String, String> additionalMetadata = new HashMap<>(metadata);
+      state.setType(additionalMetadata.remove(TYPE_KEY));
+      state.setUniqueId(parseLong(additionalMetadata.remove(ID_KEY)));
+      state.setThreadContainerUniqueId(parseLong(additionalMetadata.remove(PARENT_ID_KEY)));
+      state.setMetadata(additionalMetadata);
+    }
+  }
+
+  private static @Nullable Long parseLong(@Nullable String value) {
+    if (value == null) {
+      return null;
+    }
+    try {
+      return Long.parseLong(value);
+    }
+    catch (NumberFormatException ignored) {
+      return null;
+    }
   }
 
   private static @Nullable Matcher matchYourKit(String line) {

@@ -45,12 +45,13 @@ import org.jetbrains.intellij.build.findProductModulesFile
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.runProcess
-import org.jetbrains.intellij.build.isLanguageServer
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.intellij.build.productRunner.createDevModeProductRunner
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.io.InputStream
@@ -294,7 +295,7 @@ class BuildContextImpl internal constructor(
 
   private val bundledPluginModulesForModularLoader by lazy {
     productProperties.rootModuleForModularLoader?.let { rootModule ->
-      loadRawProductModules(rootModule, productProperties.productMode).bundledPluginMainModules.map {
+      loadRawProductModules(rootModule, productProperties.productMode, this@BuildContextImpl).bundledPluginMainModules.map {
         it.name
       }
     }
@@ -311,7 +312,7 @@ class BuildContextImpl internal constructor(
     return result
   }
 
-  override fun findApplicationInfoModule(): JpsModule = findRequiredModule(productProperties.applicationInfoModule)
+  override fun findApplicationInfoModule(): JpsModule = outputProvider.findRequiredModule(productProperties.applicationInfoModule)
 
   override fun notifyArtifactBuilt(artifactPath: Path) {
     compilationContext.notifyArtifactBuilt(artifactPath)
@@ -320,11 +321,11 @@ class BuildContextImpl internal constructor(
   private val _frontendModuleFilter = suspendingLazy("frontend module filter") {
     val rootModule = productProperties.embeddedFrontendRootModule
     if (rootModule != null && options.enableEmbeddedFrontend) {
-      val productModules = loadRawProductModules(rootModule, ProductMode.FRONTEND)
+      val productModules = loadRawProductModules(rootModule, ProductMode.FRONTEND, this@BuildContextImpl)
       FrontendModuleFilterImpl.createFrontendModuleFilter(project = project, productModules = productModules, outputProvider = outputProvider)
     }
     else {
-      EmptyFrontendModuleFilter
+      productProperties.frontendModuleFilter?.invoke(this@BuildContextImpl) ?: EmptyFrontendModuleFilter
     }
   }
 
@@ -495,30 +496,19 @@ class BuildContextImpl internal constructor(
     computeAppInfoXml(appInfo = applicationInfo, context = this)
   }
 
-  override fun loadRawProductModules(rootModuleName: String, productMode: ProductMode): RawProductModules {
-    val productModulesFile = findProductModulesFile(clientMainModuleName = rootModuleName, provider = outputProvider)
-                             ?: error("Cannot find product-modules.xml file in $rootModuleName")
-    val resolver = object : ResourceFileResolver {
-      override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
-        return findFileInModuleSources(findRequiredModule(moduleId.name), relativePath)?.inputStream()
-      }
-
-      override fun toString(): String {
-        return "source file based resolver for '${paths.projectHome}' project"
-      }
-    }
-    return ProductModulesSerialization.readProductModulesAndMergeIncluded(productModulesFile.inputStream(), productModulesFile.pathString, resolver)
-  }
-
   private val devModeProductRunner = suspendingLazy("dev mode product runner") {
     createDevModeProductRunner(this@BuildContextImpl)
   }
 
   override suspend fun createProductRunner(additionalPluginModules: List<String>): IntellijProductRunner {
-    return when {
-      additionalPluginModules.isEmpty() -> devModeProductRunner.await()
-      else -> createDevModeProductRunner(additionalPluginModules = additionalPluginModules, context = this)
-    }
+    return spanBuilder("create product runner")
+      .setAttribute("additional.plugin.module.count", additionalPluginModules.size.toLong())
+      .use {
+        when {
+          additionalPluginModules.isEmpty() -> devModeProductRunner.await()
+          else -> createDevModeProductRunner(additionalPluginModules = additionalPluginModules, context = this@BuildContextImpl)
+        }
+      }
   }
 
   override suspend fun runProcess(
@@ -561,4 +551,24 @@ private fun createBuildOutputRootEvaluator(projectHome: Path, productProperties:
 
 private fun isNightly(buildNumber: String): Boolean {
   return buildNumber.count { it == '.' } <= 1
+}
+
+/**
+ * Loads raw data from product-modules.xml file located in module [rootModuleName], for a product running in [productMode].
+ * It doesn't use files from module output directories, so it works even if the modules aren't compiled yet.
+ */
+@Internal
+fun loadRawProductModules(rootModuleName: String, productMode: ProductMode, context: CompilationContext): RawProductModules {
+  val productModulesFile = findProductModulesFile(clientMainModuleName = rootModuleName, provider = context.outputProvider)
+                           ?: error("Cannot find product-modules.xml file in $rootModuleName")
+  val resolver = object : ResourceFileResolver {
+    override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
+      return context.findFileInModuleSources(context.outputProvider.findRequiredModule(moduleId.name), relativePath)?.inputStream()
+    }
+
+    override fun toString(): String {
+      return "source file based resolver for '${context.paths.projectHome}' project"
+    }
+  }
+  return ProductModulesSerialization.readProductModulesAndMergeIncluded(productModulesFile.inputStream(), productModulesFile.pathString, resolver)
 }

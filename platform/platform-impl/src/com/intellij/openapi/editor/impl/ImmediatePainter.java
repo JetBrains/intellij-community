@@ -31,6 +31,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -153,7 +154,7 @@ public final class ImmediatePainter {
 
   private void paintImmediately(final Graphics2D g, final int offset, final char c2) {
     final EditorImpl editor = myEditor;
-    final Document document = editor.getUiDocument();
+    final Document document = editor.getElfDocument();
     final LexerEditorHighlighter highlighter = (LexerEditorHighlighter)myEditor.getHighlighter();
 
     final EditorSettings settings = editor.getSettings();
@@ -324,7 +325,7 @@ public final class ImmediatePainter {
     g.setColor(color);
 
     var caretShape = new GeneralPath();
-    float radius = (float)(r.getWidth() / 2);
+    float radius = IslandsState.Companion.isEnabled() ? (float)(r.getWidth() / 2) : 0.0f;
 
     caretShape.moveTo(r.getX(), r.getY() + radius);
     caretShape.quadTo(x, y, x + radius, y);

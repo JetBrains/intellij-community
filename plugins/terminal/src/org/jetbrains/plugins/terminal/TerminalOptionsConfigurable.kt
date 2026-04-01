@@ -22,7 +22,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
-import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage
 import com.intellij.openapi.options.ex.Settings
@@ -110,7 +110,7 @@ import javax.swing.plaf.basic.BasicComboBoxEditor
 @ApiStatus.Internal
 const val TERMINAL_CONFIGURABLE_ID: String = "terminal"
 
-internal class TerminalOptionsConfigurable(private val project: Project) : BoundSearchableConfigurable(
+internal class TerminalOptionsConfigurable(private val project: Project) : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
   displayName = IdeBundle.message("configurable.TerminalOptionsConfigurable.display.name"),
   helpTopic = "reference.settings.terminal",
   _id = TERMINAL_CONFIGURABLE_ID
@@ -239,8 +239,9 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           }.bind(blockTerminalOptions::promptStyle)
 
           panel {
-            @Suppress("DEPRECATION")
-            configurables(blockTerminalConfigurables.value)
+            for (configurable in blockTerminalConfigurables.value) {
+              appendDslConfigurable(configurable)
+            }
           }
 
         }.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.NEW_TERMINAL))
@@ -437,7 +438,9 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                          .and(ComponentPredicate.fromValue(RunCommandUsingIdeUtil.isVisible)))
         }
         panel {
-          configurables(additionalConfigurables.value)
+          for (configurable in additionalConfigurables.value) {
+            appendDslConfigurable(configurable)
+          }
         }
         row(message("settings.cursor.shape.label")) {
           comboBox(
@@ -449,19 +452,14 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
     }
   }
 
-  override fun disposeUIResources() {
-    super.disposeUIResources()
-    disposeConfigurables(additionalConfigurables)
-    disposeConfigurables(blockTerminalConfigurables)
+  override fun createConfigurables(): List<UnnamedConfigurable> {
+    return additionalConfigurables.value + blockTerminalConfigurables.value
   }
 
-  private fun disposeConfigurables(lazy: ClearableLazyValue<List<UnnamedConfigurable>>) {
-    if (lazy.isCached) {
-      for (configurable in lazy.value) {
-        configurable.disposeUIResources()
-      }
-      lazy.drop()
-    }
+  override fun disposeUIResources() {
+    super.disposeUIResources()
+    additionalConfigurables.drop()
+    blockTerminalConfigurables.drop()
   }
 
   private fun createShellPathField(): TextFieldWithHistoryWithBrowseButton {
@@ -525,31 +523,6 @@ private fun Panel.applicationTitleSettings(options: TerminalOptionsProvider) {
       }
     }.bind(options::applicationTitleShowingMode)
       .enabledIf(appTitleEnabledCheckbox.selected)
-  }
-}
-
-private fun Panel.configurables(configurables: List<UnnamedConfigurable>) {
-  for (configurable in configurables) {
-    val component = configurable.createComponent() ?: continue
-    row {
-      cell(component).onApply {
-        try {
-          configurable.apply()
-        }
-        catch (e: Exception) {
-          LOG.warn("Terminal configurable $configurable threw an exception on apply", e)
-        }
-      }.onReset {
-        try {
-          configurable.reset()
-        }
-        catch (e: Exception) {
-          LOG.warn("Terminal configurable $configurable threw an exception on reset", e)
-        }
-      }.onIsModified {
-        configurable.isModified
-      }
-    }
   }
 }
 

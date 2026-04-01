@@ -206,7 +206,7 @@ public class JavaCompilerRunner implements CompilerRunner {
         final Set<String> staticImports = new HashSet<>();
         final Map<String, List<CompilerDataSink.ConstantRef>> cRefs = new HashMap<>();
 
-        for (JavacRef ref : allRefs) {
+        for (JavacRef ref : filter(allRefs, Objects::nonNull)) {
           final JavacRef.ImportProperties importProps = ref.getImportProperties();
           if (importProps != null) { // the reference comes from import list
             if (ref instanceof JavacRef.JavacClass) {

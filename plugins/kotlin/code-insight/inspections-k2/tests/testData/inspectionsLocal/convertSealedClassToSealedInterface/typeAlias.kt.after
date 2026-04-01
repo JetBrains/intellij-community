@@ -1,0 +1,6 @@
+// FIX: Convert to sealed interface
+sealed interface Result
+typealias Res = Result
+class Success : Res
+class Error : Result
+object Loading : Res

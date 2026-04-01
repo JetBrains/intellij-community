@@ -2,8 +2,7 @@
 package com.intellij.pycharm.community.ide.impl
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -11,10 +10,8 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.text.Strings
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.jetbrains.python.sdk.PySdkFromEnvironmentVariable
-import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
-import kotlinx.coroutines.CoroutineScope
+import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
@@ -30,12 +27,12 @@ internal class PySdkFromEnvironmentVariableConfigurator(private val project: Pro
     }
     LOGGER.info("Found $PySdkFromEnvironmentVariable.PYCHARM_PYTHON_PATH='${PySdkFromEnvironmentVariable.getPycharmPythonPathProperty()}' system property")
 
-    project.service<PySdkEnvVarConfiguratorScope>().scope.launch(Dispatchers.Default) {
+    runInEdt {
       checkAndSetSdk(project, pycharmPythonPathEnvVariable!!)
     }
   }
 
-  private suspend fun checkAndSetSdk(project: Project, pycharmPythonPathEnvVariable: String) = project.pythonSdkConfigurationMutex.withLock {
+  private fun checkAndSetSdk(project: Project, pycharmPythonPathEnvVariable: String) = runWithSdkConfigurationLock(project) {
     withContext(Dispatchers.EDT) {
       val sdk = PySdkFromEnvironmentVariable.findOrCreateSdkByPath(pycharmPythonPathEnvVariable) ?: return@withContext
 
@@ -47,6 +44,3 @@ internal class PySdkFromEnvironmentVariableConfigurator(private val project: Pro
     }
   }
 }
-
-@Service(Service.Level.PROJECT)
-private class PySdkEnvVarConfiguratorScope(val scope: CoroutineScope)

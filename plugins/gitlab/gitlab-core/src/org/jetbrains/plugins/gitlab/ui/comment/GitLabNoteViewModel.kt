@@ -29,6 +29,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModelImpl
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
+import org.jetbrains.plugins.gitlab.ui.GitLabViewModelWithTextCompletion
 import java.net.URL
 import java.util.Date
 
@@ -57,6 +58,7 @@ class GitLabNoteViewModelImpl(
   isMainNote: Flow<Boolean>,
   currentUser: GitLabUserDTO,
   htmlConverter: GitLabMarkdownToHtmlConverter,
+  textCompletionViewModel: GitLabViewModelWithTextCompletion,
 ) : GitLabNoteViewModel {
   private val cs = parentCs.childScope(javaClass.name)
 
@@ -68,7 +70,7 @@ class GitLabNoteViewModelImpl(
   override val serverUrl: URL = projectData.projectCoordinates.serverPath.toURL()
 
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
-    if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, projectData, note) else null
+    if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, projectData, note, textCompletionViewModel) else null
   override val reactionsVm: GitLabReactionsViewModel? =
     if (note is GitLabMergeRequestNote && note.canReact) GitLabReactionsViewModelImpl(cs, projectData, note, currentUser) else null
 

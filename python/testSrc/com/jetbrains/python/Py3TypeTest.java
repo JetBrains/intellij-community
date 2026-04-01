@@ -5595,6 +5595,18 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
+  // PY-88682
+  public void testIterateOverCollectionsNamedTuple() {
+    doTest("Instruction",
+           """
+             from collections import namedtuple
+             Instruction = namedtuple("Instruction", "direction distance")
+             def process(instructions: list[Instruction]) -> None:
+                 for instruction in instructions:
+                     expr = instruction
+             """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

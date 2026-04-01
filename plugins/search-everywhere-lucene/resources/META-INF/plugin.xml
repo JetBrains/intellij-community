@@ -1,4 +1,4 @@
-<idea-plugin allow-bundled-update="true">
+ <idea-plugin allow-bundled-update="true">
   <id>com.intellij.searchEverywhereLucene</id>
   <name>Search Everywhere Lucene</name>
   <vendor>JetBrains</vendor>
@@ -9,5 +9,6 @@
     <module name="intellij.searchEverywhereLucene.common" loading="embedded"/>
     <module name="intellij.searchEverywhereLucene.frontend"/>
     <module name="intellij.searchEverywhereLucene.backend"/>
+    <module name="intellij.searchEverywhereLucene.performanceTesting"/>
   </content>
 </idea-plugin>

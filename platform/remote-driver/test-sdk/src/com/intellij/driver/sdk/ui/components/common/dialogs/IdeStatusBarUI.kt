@@ -42,6 +42,7 @@ class IdeStatusBarUI(data: ComponentData) : UiComponent(data) {
     class WidgetStatusBarPanel(data: ComponentData) : UiComponent(data) {
       val widgets = xx(xQuery { byType("com.intellij.openapi.wm.impl.status.TextPanel") }, WidgetUI::class.java)
       val memoryUsagePanel = x("//div[@class='MemoryUsagePanelImpl']")
+      val nonCommercialUseWidget = x("//div[@accessiblename='Non-commercial use']")
 
 
       fun findWidget(finder: WidgetFinder): WidgetUI = widgets.list().firstOrNull { finder.predicate(it) }

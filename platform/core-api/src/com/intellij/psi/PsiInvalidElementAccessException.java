@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
-import java.util.Arrays;
 
 public final class PsiInvalidElementAccessException extends RuntimeException implements ExceptionWithAttachments {
   private static final Key<Object> INVALIDATION_TRACE = Key.create("INVALIDATION_TRACE");
@@ -89,7 +88,7 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
   private static Attachment @NotNull [] createAttachments(@Nullable Object invalidationTrace, @Nullable Object creationTrace) {
     Attachment invalidationAttachment = traceAsAttachment("invalidation", "diagnostics.txt", invalidationTrace);
     Attachment creationAttachment = traceAsAttachment("creation_trace.txt", "creation_diagnostics.txt", creationTrace);
-    return ContainerUtil.notNullize(Arrays.asList(invalidationAttachment, creationAttachment)).toArray(Attachment.EMPTY_ARRAY);
+    return ContainerUtil.mapNotNull(new Attachment[]{invalidationAttachment, creationAttachment}, id -> id, Attachment.EMPTY_ARRAY);
   }
 
   private static @Nullable Attachment traceAsAttachment(@NotNull String nameForThrowable, @NotNull String nameForString, @Nullable Object trace) {

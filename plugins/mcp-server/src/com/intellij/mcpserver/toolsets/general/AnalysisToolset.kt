@@ -6,6 +6,7 @@ package com.intellij.mcpserver.toolsets.general
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewManager
 import com.intellij.build.events.BuildIssueEvent
+import com.intellij.build.events.FailureResult
 import com.intellij.build.events.FileMessageEvent
 import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.MessageEvent
@@ -216,15 +217,44 @@ class AnalysisToolset : McpToolset {
                   group = event.group,
                   description = event.description ?: issue.description,
                 )
-                
+
                 logger.trace { "Collected build issue from event: $problem" }
                 problems.add(problem)
               }
             }
-            
+
             is FinishBuildEvent -> {
-              logger.trace { "Build finished: result=${event.result}" }
+              val eventResult = event.result
+              logger.trace { "Build finished: result=$eventResult" }
+              // Extract failures from FinishBuildEvent result.
+              // Some build systems (e.g., Bazel) report errors only through FailureResult
+              // without emitting individual FileMessageEvent/BuildIssueEvent.
+              if (eventResult is FailureResult) {
+                for (failure in eventResult.failures) {
+                  val message = failure.message ?: failure.description ?: "Build failure"
+                  problems.add(ProjectProblem(
+                    message = message,
+                    kind = Kind.ERROR.name,
+                    description = failure.description,
+                  ))
+                  logger.trace { "Collected failure from FinishBuildEvent: $message" }
+                }
+              }
               buildFinished.complete(Unit)
+            }
+
+            is MessageEvent -> {
+              // Catch-all for MessageEvent subtypes not handled above (custom build system messages)
+              if (event.kind == MessageEvent.Kind.ERROR || event.kind == MessageEvent.Kind.WARNING) {
+                val problem = ProjectProblem(
+                  message = event.message,
+                  kind = event.kind.name,
+                  group = event.group,
+                  description = event.description,
+                )
+                logger.trace { "Collected generic message event: $problem" }
+                problems.add(problem)
+              }
             }
           }
         }, this.asDisposable())
@@ -272,9 +302,17 @@ class AnalysisToolset : McpToolset {
     if (!buildStarted) {
       problems.add(ProjectProblem(message = "The project has limited build diagnostics functionality. Build messages cannot be collected."))
     }
+    // Fallback: buildResult reports errors but no ERROR-level problems were captured through events
+    val hasTaskErrors = buildResult?.hasErrors() == true
+    if (hasTaskErrors && problems.none { it.kind == Kind.ERROR.name }) {
+      problems.add(ProjectProblem(
+        message = "Build reported errors, but detailed error messages were not captured through build events.",
+        kind = Kind.ERROR.name,
+      ))
+    }
     return BuildProjectResult(
       timedOut = buildResult == null,
-      isSuccess = buildResult != null && !buildResult.hasErrors() && problems.none { it.kind == Kind.ERROR.name },
+      isSuccess = buildResult != null && !hasTaskErrors && problems.none { it.kind == Kind.ERROR.name },
       problems = problems
     )
   }

@@ -885,6 +885,13 @@ public class TableResultPanel extends UserDataHolderBase
   }
 
   @Override
+  public void editSelectedCellWithValue(@Nullable Object value) {
+    if (myResultView instanceof ResultViewWithCells) {
+      ((ResultViewWithCells)myResultView).editSelectedCellWithValue(value);
+    }
+  }
+
+  @Override
   public @NotNull String getUnambiguousColumnName(@NotNull ModelIndex<GridColumn> column) {
     GridColumn c = getDataModel(DATA_WITH_MUTATIONS).getColumn(column);
     return c == null ? "" : myColumnAttributes.getName(c).trim();

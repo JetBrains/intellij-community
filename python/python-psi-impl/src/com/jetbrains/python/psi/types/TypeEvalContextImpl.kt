@@ -46,7 +46,8 @@ open class TypeEvalContextImpl internal constructor(
 
   private val myProcessingContext = ThreadLocal.withInitial { ProcessingContext() }
 
-  private val typeEngine: PyTypeEngine? = constraints.myOrigin?.let {
+  @ApiStatus.Internal
+  val typeEngine: PyTypeEngine? = constraints.myOrigin?.let {
     ModuleUtilCore.findModuleForFile(it) }?.let { module ->
     PyTypeEngineProvider.createTypeResolver(module)
   }
@@ -172,7 +173,7 @@ open class TypeEvalContextImpl internal constructor(
    * If true the element's type will be calculated and stored in the long-life context bounded to the PyLibraryModificationTracker.
    */
   protected open fun canDelegateToLibraryContext(element: PyTypedElement): Boolean {
-    return Registry.Companion.`is`("python.use.separated.libraries.type.cache") && element.isLibraryElement()
+    return Registry.`is`("python.use.separated.libraries.type.cache") && element.isLibraryElement()
   }
 
   override fun getType(element: PyTypedElement): PyType? {
@@ -189,7 +190,8 @@ open class TypeEvalContextImpl internal constructor(
     return RecursionManager.doPreventingRecursion(element to this, false) {
       val type = if (typeEngine != null && typeEngine.isSupportedForResolve(element)) {
         val (result, duration) = measureTimedValue {
-          typeEngine.resolveType(element, this is LibraryTypeEvalContext)?.get()
+          val isUserInitiated = constraints.myAllowStubToAST && constraints.myAllowDataFlow
+          typeEngine.resolveType(element, this is LibraryTypeEvalContext, isUserInitiated)?.get()
         }
         PyTypeEvaluationAggregatesCollector.recordHybridTypeEngineTime(typeEngine.name, duration.inWholeMilliseconds)
         result
@@ -341,7 +343,7 @@ open class TypeEvalContextImpl internal constructor(
         myParent.setKnownTypeForInstruction(anchor, deducedType, num, type)
       }
       else {
-        myInstructionCache.put(listOf(anchor, deducedType, num), type);
+        myInstructionCache.put(listOf(anchor, deducedType, num), type)
       }
     }
 
@@ -421,7 +423,7 @@ open class TypeEvalContextImpl internal constructor(
       // Just in case, set it to a reasonable value
       // `Runtime.availableProcessors` shouldn't be called here, as that is a potentially expensive operation
       val concurrencyLevel = 4
-      if (Registry.Companion.`is`("python.typing.weak.keys.type.eval.context")) {
+      if (Registry.`is`("python.typing.weak.keys.type.eval.context")) {
         return CollectionFactory.createConcurrentWeakKeySoftValueMap(
           10,
           0.75f,
@@ -429,7 +431,7 @@ open class TypeEvalContextImpl internal constructor(
           HashingStrategy.canonical<T>()
         )
       }
-      else if (Registry.Companion.`is`("python.typing.soft.keys.type.eval.context")) {
+      else if (Registry.`is`("python.typing.soft.keys.type.eval.context")) {
         return CollectionFactory.createConcurrentSoftKeySoftValueMap(10, 0.75f, concurrencyLevel)
       }
       else {

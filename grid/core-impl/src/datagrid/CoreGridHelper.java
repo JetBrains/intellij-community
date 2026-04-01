@@ -12,7 +12,8 @@ public interface CoreGridHelper {
   @Nullable
   Language getCellLanguage(@NotNull CoreGrid<GridRow, GridColumn> grid,
                            @NotNull ModelIndex<GridRow> row,
-                           @NotNull ModelIndex<GridColumn> column);
+                           @NotNull ModelIndex<GridColumn> column,
+                           @Nullable Object value);
 
   boolean canMutateColumns(@NotNull CoreGrid<GridRow, GridColumn> grid);
 
@@ -21,7 +22,8 @@ public interface CoreGridHelper {
                                          @NotNull Project project,
                                          @NotNull CoreGrid<GridRow, GridColumn> grid,
                                          @NotNull ModelIndex<GridRow> row,
-                                         @NotNull ModelIndex<GridColumn> column);
+                                         @NotNull ModelIndex<GridColumn> column,
+                                         @Nullable Object value);
 
   default boolean isModifyColumnAcrossCollection() {
     return false;

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -54,7 +54,7 @@ internal suspend fun patchPluginXml(
   pluginDescriptorCache: ScopedCachedDescriptorContainer,
   context: BuildContext,
 ) {
-  val pluginModule = context.findRequiredModule(pluginLayout.mainModule)
+  val pluginModule = context.outputProvider.findRequiredModule(pluginLayout.mainModule)
   val descriptorContent = pluginLayout.rawPluginXmlPatcher(getUnprocessedPluginXmlContent(pluginModule, context.outputProvider).decodeToString(), context)
 
   val includeInBuiltinCustomRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&

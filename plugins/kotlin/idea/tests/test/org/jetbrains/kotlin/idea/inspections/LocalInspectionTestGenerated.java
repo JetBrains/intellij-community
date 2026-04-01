@@ -16237,6 +16237,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSetOfAny.kt");
         }
 
+        @TestMetadata("plusIterableAndList.kt")
+        public void testPlusIterableAndList() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusIterableAndList.kt");
+        }
+
+        @TestMetadata("plusIterableOfPathAndPath.kt")
+        public void testPlusIterableOfPathAndPath() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusIterableOfPathAndPath.kt");
+        }
+
+        @TestMetadata("plusListAndIterable.kt")
+        public void testPlusListAndIterable() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListAndIterable.kt");
+        }
+
+        @TestMetadata("plusListAndIterableFromElvis.kt")
+        public void testPlusListAndIterableFromElvis() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListAndIterableFromElvis.kt");
+        }
+
         @TestMetadata("plusListAndSequence.kt")
         public void testPlusListAndSequence() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListAndSequence.kt");

@@ -352,7 +352,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
     this.uniqueTestName = uniqueTestName;
 
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
-    System.out.printf("Starting benchmark test \"%s\" in mode: %s%n", uniqueTestName, iterationType);
+    LOG.info("Starting benchmark test \"%s\" in mode: %s%n".formatted(uniqueTestName, iterationType));
 
     int maxIterationsNumber;
     if (iterationType.equals(IterationMode.WARMUP)) {

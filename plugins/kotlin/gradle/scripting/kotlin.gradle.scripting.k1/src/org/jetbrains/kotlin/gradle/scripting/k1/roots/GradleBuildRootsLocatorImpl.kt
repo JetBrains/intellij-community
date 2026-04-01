@@ -287,7 +287,7 @@ class GradleScriptingSupport(val project: Project) : ScriptingSupport {
 
     override fun isConfigurationLoadingInProgress(file: KtFile): Boolean {
         with(manager) {
-            return findScriptBuildRoot(file.originalFile.virtualFile)?.nearest?.isImportingInProgress() ?: return false
+            return findScriptBuildRoot(file.originalFile.virtualFile)?.nearest?.isImportingInProgress() ?: false
         }
     }
 
@@ -304,7 +304,7 @@ class GradleScriptingSupport(val project: Project) : ScriptingSupport {
     override fun afterUpdate() {
         with(manager) {
             roots.list.forEach { root ->
-                if (root.importing.compareAndSet(GradleBuildRoot.ImportingStatus.updatingCaches, GradleBuildRoot.ImportingStatus.updated)) {
+                if (root.importing.compareAndSet(GradleBuildRoot.ImportingStatus.UPDATING_CACHES, GradleBuildRoot.ImportingStatus.UPDATED)) {
                     updateNotifications { it.startsWith(root.externalProjectPath) }
                 }
             }

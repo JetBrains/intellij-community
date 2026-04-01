@@ -210,7 +210,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
     <orderEntry type="module" module-name="intellij.libraries.snakeyaml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.snakeyaml.engine" scope="RUNTIME" />
-    <orderEntry type="library" name="netty-tcnative-boringssl" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.tcnative.boringssl" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.util.multiplatform" />
     <orderEntry type="module" module-name="intellij.platform.util.base.multiplatform" />

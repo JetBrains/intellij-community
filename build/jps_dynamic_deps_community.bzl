@@ -128,6 +128,10 @@ def _targets_repo_impl(ctx):
         starlark.library,
         sorted(starlark.iml),
     )
+
+    # jps_to_bazel_targets_json rule has no way to get JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT environment variable, forward it via targets.bzl
+    content += "\n" + "JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT = \"%s\"" % ctx.getenv("JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT") or ""
+
     ctx.file("targets.bzl", content)
     ctx.file("BUILD", 'exports_files(["targets.bzl"])')
 

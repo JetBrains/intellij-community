@@ -28,8 +28,4 @@ abstract class AbstractK2AddImportTest : AbstractImportsTest() {
         file.addImport(FqName(descriptorName))
         return null
     }
-
-    override fun registerClassImportFilterExtensions(classImportFilterVetoRegexRules: MutableList<String>) {
-        // Not supported in K2 Mode (KTIJ-37810)
-    }
 }

@@ -32,6 +32,7 @@ import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiBreakStatement;
 import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCallExpression;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassObjectAccessExpression;
 import com.intellij.psi.PsiClassType;
@@ -424,7 +425,7 @@ final class ExpressionChecker {
   }
 
   void checkInferredTypeArguments(@NotNull PsiTypeParameterListOwner listOwner,
-                                  @NotNull PsiMethodCallExpression call,
+                                  @NotNull PsiCallExpression call,
                                   @NotNull PsiSubstitutor substitutor) {
     PsiTypeParameter[] typeParameters = listOwner.getTypeParameters();
     Pair<PsiTypeParameter, PsiType> inferredTypeArgument = GenericsUtil.findTypeParameterWithBoundError(
@@ -1268,24 +1269,15 @@ final class ExpressionChecker {
 
     PsiMethod constructor = result == null ? null : result.getElement();
 
-    boolean applicable = true;
     try {
       PsiDiamondType diamondType =
         constructorCall instanceof PsiNewExpression newExpression ? PsiDiamondType.getDiamondType(newExpression) : null;
       JavaResolveResult staticFactory = diamondType != null ? diamondType.getStaticFactory() : null;
-      if (staticFactory instanceof MethodCandidateInfo info) {
-        if (info.isApplicable()) {
-          result = info;
-          if (constructor == null) {
-            constructor = info.getElement();
-          }
+      if (staticFactory instanceof MethodCandidateInfo info && info.isApplicable()) {
+        result = info;
+        if (constructor == null) {
+          constructor = info.getElement();
         }
-        else {
-          applicable = false;
-        }
-      }
-      else {
-        applicable = result != null && result.isApplicable();
       }
     }
     catch (IndexNotReadyException ignored) {
@@ -1300,24 +1292,39 @@ final class ExpressionChecker {
         constructorCall, new JavaErrorKinds.UnresolvedConstructorContext(aClass, results)));
       return;
     }
+
+    if (constructorCall instanceof PsiNewExpression newExpression) {
+      PsiReferenceParameterList typeArgumentList = newExpression.getTypeArgumentList();
+      myVisitor.myGenericsChecker.checkReferenceTypeArgumentList(constructor, typeArgumentList, result.getSubstitutor());
+    }
+
     if (classReference != null && !constructor.isDefaultConstructor() &&
         (!result.isAccessible() ||
          constructor.hasModifierProperty(PsiModifier.PROTECTED) && callingProtectedConstructorFromDerivedClass(constructorCall, aClass))) {
       myVisitor.myModifierChecker.reportAccessProblem(classReference, constructor, result);
       return;
     }
-    if (!applicable) {
-      checkIncompatibleCall(list, result);
+    if (myVisitor.hasErrorResults()) return;
+
+    if (result.isApplicable()) {
+      checkVarargParameterErasureToBeAccessible(result, constructorCall);
       if (myVisitor.hasErrorResults()) return;
+      checkIncompatibleType(constructorCall, result, constructorCall);
+    }
+    else if (result.isTypeArgumentsApplicable()) {
+      checkIncompatibleCall(list, result);
     }
     else if (constructorCall instanceof PsiNewExpression newExpression) {
+
       PsiReferenceParameterList typeArgumentList = newExpression.getTypeArgumentList();
-      myVisitor.myGenericsChecker.checkReferenceTypeArgumentList(constructor, typeArgumentList, result.getSubstitutor());
-      if (myVisitor.hasErrorResults()) return;
+      PsiSubstitutor applicabilitySubstitutor = result.getSubstitutor(false);
+      if (typeArgumentList.getTypeArguments().length == 0 && constructor.hasTypeParameters()) {
+        checkInferredTypeArguments(constructor, newExpression, applicabilitySubstitutor);
+      }
+      else {
+        myVisitor.myGenericsChecker.checkReferenceTypeArgumentList(constructor, typeArgumentList, applicabilitySubstitutor);
+      }
     }
-    checkVarargParameterErasureToBeAccessible(result, constructorCall);
-    if (myVisitor.hasErrorResults()) return;
-    checkIncompatibleType(constructorCall, result, constructorCall);
   }
 
   private static boolean callingProtectedConstructorFromDerivedClass(@NotNull PsiConstructorCall place,

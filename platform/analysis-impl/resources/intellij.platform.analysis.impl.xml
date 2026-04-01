@@ -18,6 +18,7 @@
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.devkit.runtimeModuleRepository.generator.ContentModuleDetector
@@ -17,6 +17,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
@@ -166,13 +167,13 @@ private suspend fun generateRepositoryForDistribution(
   for (entry in entries) {
     when (entry.origin) {
       is ModuleOutputEntry -> {
-        val module = context.findRequiredModule(entry.origin.owner.moduleName)
+        val module = context.outputProvider.findRequiredModule(entry.origin.owner.moduleName)
         if (isMainPath(module, entry.relativePath)) {
           moduleProductionPaths.putValue(module, entry.relativePath)
         }
       }
       is ModuleTestOutputEntry -> {
-        moduleTestPaths.putValue(context.findRequiredModule(entry.origin.moduleName), entry.relativePath)
+        moduleTestPaths.putValue(context.outputProvider.findRequiredModule(entry.origin.moduleName), entry.relativePath)
       }
       is ProjectLibraryEntry -> {
         val library = context.project.libraryCollection.findLibrary(entry.origin.data.libraryName) ?: error("Cannot find project-level library '${entry.origin.data.libraryName}'")
@@ -181,7 +182,7 @@ private suspend fun generateRepositoryForDistribution(
         }
       }
       is ModuleLibraryFileEntry -> {
-        val library = entry.origin.findLibrary(context)
+        val library = entry.origin.findLibrary(context.outputProvider)
         if (isMainPath(library, entry.relativePath)) {
           libraryPaths.putValue(library, entry.relativePath)
         }
@@ -271,8 +272,8 @@ private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
     .mapNotNull { entry -> 
       val element = when (entry.origin) {
         is ProjectLibraryEntry if isPackedIntoSingleJar(entry.origin) -> project.libraryCollection.findLibrary(entry.origin.data.libraryName)
-        is ModuleLibraryFileEntry -> entry.origin.findLibrary(context).takeIf { it.getFiles(JpsOrderRootType.COMPILED).size == 1 }
-        is ModuleOutputEntry -> context.findRequiredModule(entry.origin.owner.moduleName)
+        is ModuleLibraryFileEntry -> entry.origin.findLibrary(context.outputProvider).takeIf { it.getFiles(JpsOrderRootType.COMPILED).size == 1 }
+        is ModuleOutputEntry -> context.outputProvider.findRequiredModule(entry.origin.owner.moduleName)
         else -> null
       }
       element?.let { it to entry.relativePath }
@@ -306,8 +307,8 @@ private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
   return mainPaths
 }
 
-private fun ModuleLibraryFileEntry.findLibrary(context: BuildContext): JpsLibrary {
-  val library = context.findRequiredModule(moduleName).libraryCollection.libraries.find { getLibraryFilename(it) == libraryName }
+private fun ModuleLibraryFileEntry.findLibrary(outputProvider: ModuleOutputProvider): JpsLibrary {
+  val library = outputProvider.findRequiredModule(moduleName).libraryCollection.libraries.find { getLibraryFilename(it) == libraryName }
   require(library != null) { "Cannot find module-level library '$libraryName' in '$moduleName'" }
   return library
 }

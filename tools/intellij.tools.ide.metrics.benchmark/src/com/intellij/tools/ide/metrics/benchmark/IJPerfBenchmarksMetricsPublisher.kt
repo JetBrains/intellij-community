@@ -2,13 +2,12 @@
 package com.intellij.tools.ide.metrics.benchmark
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.intellij.codeowners.runtime.resolver.TestClassCodeOwnerResolverImpl
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.teamcity.TeamCityClient
+import com.intellij.testFramework.BenchmarkTestInfo
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.tools.ide.metrics.collector.MetricsCollector
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
@@ -112,8 +111,8 @@ internal class IJPerfBenchmarksMetricsPublisher {
         // https://youtrack.jetbrains.com/issue/AT-644/Performance-tests-do-not-check-anything#focus=Comments-27-8578186.0-0
         // https://youtrack.jetbrains.com/issue/AT-726
         if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
-          println("Collected metrics: (can be found in ${teamCityClient.artifactForPublishingDir.resolve(uniqueTestIdentifier).toUri()})")
-          println(metricsDto.metrics.joinToString(separator = System.lineSeparator()) { String.format("%-60s %6s", it.n, it.v) })
+          BenchmarkTestInfo.LOG.info("Collected metrics: (can be found in ${teamCityClient.artifactForPublishingDir.resolve(uniqueTestIdentifier).toUri()})")
+          BenchmarkTestInfo.LOG.info(metricsDto.metrics.joinToString(separator = System.lineSeparator()) { String.format("%-60s %6s", it.n, it.v) })
         }
 
         teamCityClient.publishTeamCityArtifacts(source = reportFile,

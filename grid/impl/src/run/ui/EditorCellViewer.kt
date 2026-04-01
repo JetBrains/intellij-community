@@ -174,8 +174,8 @@ class EditorCellViewer(private val project: Project,
 
   private fun updateText(value: Any?, rowIdx: ModelIndex<GridRow>, columnIdx: ModelIndex<GridColumn>) {
     setText(value ?: ReservedCellValue.NULL, rowIdx, columnIdx)
-    val language = DefaultTextRendererFactory.getLanguage(grid, rowIdx, columnIdx)
-    val fragment = GridHelper.get(grid).createCellCodeFragment(editor.document.text, project, grid, rowIdx, columnIdx)
+    val language = DefaultTextRendererFactory.getLanguage(grid, rowIdx, columnIdx, value)
+    val fragment = GridHelper.get(grid).createCellCodeFragment(editor.document.text, project, grid, rowIdx, columnIdx, value)
     updateLanguage(language, fragment)
   }
 
@@ -212,7 +212,7 @@ class EditorCellViewer(private val project: Project,
       ApplicationManager.getApplication().runWriteAction {
         val offsetBefore = offset
         val formatter = GridCellEditorFactoryProvider.get(grid)
-                          ?.getEditorFactory(grid, rowIdx, columnIdx)
+                          ?.getEditorFactory(grid, rowIdx, columnIdx, value)
                           ?.getValueFormatter(grid, rowIdx, columnIdx, value)
                         ?: DefaultValueToText(grid, columnIdx, value)
         val result = formatter.format()
@@ -234,7 +234,7 @@ class EditorCellViewer(private val project: Project,
     val row = grid.selectionModel.leadSelectionRow
     val column = grid.selectionModel.leadSelectionColumn
     if (!row.isValid(grid) || !column.isValid(grid)) return
-    val parser = valueParserCache.getValueParser(row, column)
+    val parser = valueParserCache.getValueParser(row, column, grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getValueAt(row, column))
     val document = editor.document
     PsiDocumentManager.getInstance(project).commitDocument(document)
     val file = PsiDocumentManager.getInstance(project).getPsiFile(document)
@@ -265,7 +265,7 @@ class EditorCellViewer(private val project: Project,
 }
 
 object EditorCellViewerFactory : CellViewerFactory {
-  override fun getSuitability(grid: DataGrid, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>): Suitability {
+  override fun getSuitability(grid: DataGrid, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>, value: Any?): Suitability {
     return if (row.isValid(grid) && column.isValid(grid)) Suitability.MIN_1 else Suitability.NONE
   }
 
@@ -275,10 +275,10 @@ object EditorCellViewerFactory : CellViewerFactory {
 }
 
 object ReadonlyEditorCellViewerFactory : CellViewerFactory {
-  override fun getSuitability(grid: DataGrid, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>): Suitability {
+  override fun getSuitability(grid: DataGrid, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>, value: Any?): Suitability {
     if (!row.isValid(grid) || !column.isValid(grid)) return Suitability.NONE
     if (!grid.isEditable) return Suitability.MIN_2
-    val factory = GridCellEditorFactoryProvider.get(grid)?.getEditorFactory(grid, row, column) ?: return Suitability.NONE
+    val factory = GridCellEditorFactoryProvider.get(grid)?.getEditorFactory(grid, row, column, value) ?: return Suitability.NONE
 
     val value = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getValueAt(row, column)
     val isEditable = factory.isEditableChecker.isEditable(value, grid, column)
@@ -298,12 +298,12 @@ class ValueParserCache(private val grid: DataGrid) {
   private val defaultParser = GridCellEditorFactory.ValueParser { text, _ -> text }
   private var currentParser: GridCellEditorFactory.ValueParser = defaultParser
 
-  fun getValueParser(row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>): GridCellEditorFactory.ValueParser {
+  fun getValueParser(row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>, value: Any?): GridCellEditorFactory.ValueParser {
     if (this.row != row || this.column != column) {
       this.row = row
       this.column = column
-      val factory = GridCellEditorFactoryProvider.get(grid)?.getEditorFactory(grid, row, column)
-      currentParser = factory?.getValueParser(grid, row, column) ?: defaultParser
+      val factory = GridCellEditorFactoryProvider.get(grid)?.getEditorFactory(grid, row, column, value)
+      currentParser = factory?.getValueParser(grid, row, column, value) ?: defaultParser
     }
     return currentParser
   }

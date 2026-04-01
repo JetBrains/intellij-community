@@ -89,6 +89,8 @@ public interface CoreGrid<Row, Column> extends UserDataHolder, Disposable {
 
   void editSelectedCell();
 
+  void editSelectedCellWithValue(@Nullable Object value);
+
   @NotNull
   @NlsSafe
   String getUnambiguousColumnName(@NotNull ModelIndex<Column> column);

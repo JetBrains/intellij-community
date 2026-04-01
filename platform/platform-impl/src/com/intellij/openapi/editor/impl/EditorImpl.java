@@ -46,11 +46,14 @@ import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretState;
 import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.CustomWrapModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
@@ -63,6 +66,7 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.EditorThreading;
+import com.intellij.openapi.editor.EmptyCustomWrapModel;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.IndentsModel;
 import com.intellij.openapi.editor.Inlay;
@@ -171,6 +175,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.NewUI;
 import com.intellij.ui.components.JBLayeredPane;
@@ -324,7 +329,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @ApiStatus.Internal
   public static final Key<CodeStyleSettings> CODE_STYLE_SETTINGS = Key.create("editor.code.style.settings");
   private final @NotNull DocumentEx myDocument;
-  private final @Nullable DocumentEx myUiDocument;
+  private final @Nullable DocumentEx myElfDocument;
 
   private final JPanel myPanel;
   private final @NotNull MyScrollPane myScrollPane;
@@ -409,6 +414,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final @NotNull FoldingModelImpl myFoldingModel;
   private final @NotNull ScrollingModelImpl myScrollingModel;
   private final @NotNull CaretModelImpl myCaretModel;
+  private final @NotNull CustomWrapModel myCustomWrapModel;
   private final @NotNull SoftWrapModelImpl mySoftWrapModel;
   private final @NotNull InlayModelImpl myInlayModel;
 
@@ -555,7 +561,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     assertIsDispatchThread();
     myProject = project;
     myDocument = (DocumentEx)document;
-    myUiDocument = ElfTheManager.getInstance().getElfDocument(document);
+    myElfDocument = ElfTheManager.getInstance().getElfDocument(document);
     myVirtualFile = file;
     myState = new EditorState();
     myState.refreshAll();
@@ -584,7 +590,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollingModel = new ScrollingModelImpl(this);
     myInlayModel = new InlayModelImpl(this);
     Disposer.register(myCaretModel, myInlayModel);
-    mySoftWrapModel = new SoftWrapModelImpl(this);
+    myCustomWrapModel = CustomWrapModel.isCustomWrapsSupportEnabled()
+                        ? new CustomWrapModelImpl(this)
+                        : EmptyCustomWrapModel.INSTANCE;
+    mySoftWrapModel = Registry.is("editor.use.new.soft.wraps.impl")
+                      ? new ExperimentalSoftWrapModelImpl(this)
+                      : new LegacySoftWrapModelImpl(this);
 
     myCommandProcessor = CommandProcessor.getInstance();
 
@@ -707,12 +718,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorFilteringMarkupModel.addMarkupModelListener(myCaretModel, myMarkupModelListener);
     myMarkupModel.addMarkupModelListener(myCaretModel, myMarkupModelListener);
-    getUiDocument().addDocumentListener(myFoldingModel, myCaretModel);
-    getUiDocument().addDocumentListener(myCaretModel, myCaretModel);
+    getElfDocument().addDocumentListener(myFoldingModel, myCaretModel);
+    getElfDocument().addDocumentListener(myCaretModel, myCaretModel);
 
-    getUiDocument().addDocumentListener(new EditorDocumentAdapter(), myCaretModel);
-    getUiDocument().addDocumentListener(mySoftWrapModel, myCaretModel);
-    getUiDocument().addDocumentListener(myMarkupModel, myCaretModel);
+    getElfDocument().addDocumentListener(new EditorDocumentAdapter(), myCaretModel);
+    getElfDocument().addDocumentListener(mySoftWrapModel, myCaretModel);
+    getElfDocument().addDocumentListener(myMarkupModel, myCaretModel);
+    if (myCustomWrapModel instanceof CustomWrapModelImpl customWrapModelImpl) {
+      getElfDocument().addDocumentListener(customWrapModelImpl, myCaretModel);
+    }
 
     myFoldingModel.addListener(mySoftWrapModel, myCaretModel);
 
@@ -725,7 +739,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
         if (myState.isStickySelection()) {
-          int selectionStart = Math.min(myStickySelectionStart, getUiDocument().getTextLength());
+          int selectionStart = Math.min(myStickySelectionStart, getElfDocument().getTextLength());
           mySelectionModel.setSelection(selectionStart, myCaretModel.getVisualPosition(), myCaretModel.getOffset());
         }
       }
@@ -815,6 +829,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           clearCachedCodeStyleSettings();
         }
       });
+
+    myCustomWrapModel.addListener(mySoftWrapModel, myCaretModel);
   }
 
   public void applyFocusMode() {
@@ -885,7 +901,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   boolean isInFocus() {
-    return true;
+    return myIsInFocus;
   }
 
   private void queueErrorStipeRepaintRequest(int start, int end) {
@@ -911,7 +927,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final AtomicReference<HighlighterChange> myCompositeHighlighterChange = new AtomicReference<>();
   private void onHighlighterChanged(@NotNull RangeHighlighterEx highlighter,
                                     boolean canImpactGutterSize, boolean fontStyleChanged, boolean foregroundColorChanged) {
-    DocumentEx document = getUiDocument();
+    DocumentEx document = getElfDocument();
     int textLength = document.getTextLength();
     int hstart = MathUtil.clamp(highlighter.getAffectedAreaStartOffset(), 0, textLength);
     int hend = MathUtil.clamp(highlighter.getAffectedAreaEndOffset(), hstart, textLength);
@@ -967,7 +983,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void onInlayUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
-    DocumentEx document = getUiDocument();
+    DocumentEx document = getElfDocument();
     if (document.isInBulkUpdate() || myInlayModel.isInBatchMode()) return;
     if ((changeFlags & InlayModel.ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED) != 0) updateGutterSize();
     if (document.isInEventsHandling() ||
@@ -1261,6 +1277,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public @NotNull SoftWrapModelImpl getSoftWrapModel() {
     return mySoftWrapModel;
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public @NotNull CustomWrapModel getCustomWrapModel() {
+    return myCustomWrapModel;
   }
 
   @Override
@@ -1738,7 +1760,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     assertIsDispatchThread();
     WriteIntentReadAction.run(() -> {
-      Document document = getUiDocument();
+      Document document = getElfDocument();
       Disposer.dispose(myHighlighterDisposable);
 
       myHighlighterDisposable = Disposer.newDisposable();
@@ -2032,7 +2054,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private boolean isDocumentInBulkUpdate() {
-    return getUiDocument().isInBulkUpdate();
+    return getElfDocument().isInBulkUpdate();
   }
 
   private boolean isShowing() {
@@ -2294,8 +2316,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull DocumentEx getDocument() {
-    if (EditorLockFreeTyping.isInElfScope(myUiDocument)) {
-      return myUiDocument;
+    if (EditorLockFreeTyping.isInElfScope(myElfDocument)) {
+      return myElfDocument;
     }
     return myDocument;
   }
@@ -2635,7 +2657,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private @NotNull Color getBackgroundIgnoreForced() {
     Color color = myScheme.getDefaultBackground();
-    if (getUiDocument().isWritable()) {
+    if (getElfDocument().isWritable()) {
       return color;
     }
     Color readOnlyColor = myScheme.getColor(EditorColors.READONLY_BACKGROUND_COLOR);
@@ -2677,6 +2699,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            + ", soft wraps: " + (mySoftWrapModel.isSoftWrappingEnabled() ? "on" : "off")
            + ", caret model: " + getCaretModel().dumpState()
            + ", soft wraps data: " + getSoftWrapModel().dumpState()
+           + "\ncustom wraps data: " + ((myCustomWrapModel instanceof CustomWrapModelImpl) ? ((CustomWrapModelImpl)myCustomWrapModel).dumpState() : myCustomWrapModel.toString())
            + "\n\nfolding data: " + getFoldingModel().dumpState()
            + "\ninlay model: " + getInlayModel().dumpState()
            + (myDocument instanceof DocumentImpl ? "\n\ndocument info: " + ((DocumentImpl)myDocument).dumpState() : "")
@@ -2841,21 +2864,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private int offsetToLogicalLine(int offset) {
-    int textLength = getUiDocument().getTextLength();
+    int textLength = getElfDocument().getTextLength();
     if (textLength == 0) return 0;
 
     if (offset > textLength || offset < 0) {
       throw new IndexOutOfBoundsException("Wrong offset: " + offset + " textLength: " + textLength);
     }
 
-    int lineIndex = getUiDocument().getLineNumber(offset);
-    LOG.assertTrue(lineIndex >= 0 && lineIndex < getUiDocument().getLineCount());
+    int lineIndex = getElfDocument().getLineNumber(offset);
+    LOG.assertTrue(lineIndex >= 0 && lineIndex < getElfDocument().getLineCount());
 
     return lineIndex;
   }
 
   private @NotNull VisualPosition getTargetPosition(int x, int y, boolean trimToLineWidth, @Nullable Caret targetCaret) {
-    if (getUiDocument().getLineCount() == 0) {
+    if (getElfDocument().getLineCount() == 0) {
       return new VisualPosition(0, 0);
     }
     if (x < 0) {
@@ -2876,7 +2899,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     if (trimToLineWidth && !mySettings.isVirtualSpace()) {
       LogicalPosition logicalPosition = visualToLogicalPosition(visualPosition);
-      LogicalPosition lineEndPosition = offsetToLogicalPosition(getUiDocument().getLineEndOffset(logicalPosition.line));
+      LogicalPosition lineEndPosition = offsetToLogicalPosition(getElfDocument().getLineEndOffset(logicalPosition.line));
       if (logicalPosition.column > lineEndPosition.column) {
         visualPosition = logicalToVisualPosition(lineEndPosition.leanForward(true));
       }
@@ -3072,8 +3095,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // further dragging (if any).
       if (myDragOnGutterSelectionStartLine >= 0) {
         mySelectionModel.removeSelection();
-        myCaretModel.moveToOffset(myDragOnGutterSelectionStartLine < getUiDocument().getLineCount()
-                                  ? getUiDocument().getLineStartOffset(myDragOnGutterSelectionStartLine) : getUiDocument().getTextLength());
+        myCaretModel.moveToOffset(myDragOnGutterSelectionStartLine < getElfDocument().getLineCount()
+                                  ? getElfDocument().getLineStartOffset(myDragOnGutterSelectionStartLine) : getElfDocument().getTextLength());
       }
       myDragOnGutterSelectionStartLine = -1;
     }
@@ -3328,7 +3351,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private int validateOffset(int offset) {
     if (offset < 0) return 0;
-    if (offset > getUiDocument().getTextLength()) return getUiDocument().getTextLength();
+    if (offset > getElfDocument().getTextLength()) return getElfDocument().getTextLength();
     return offset;
   }
 
@@ -4558,7 +4581,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             else {
               runUndoTransparent(() -> EditorModificationUtilEx.insertStringAtCaret(EditorImpl.this, composedString, false, false));
               composedRangeMarker =
-                getUiDocument().createRangeMarker(getCaretModel().getOffset(), getCaretModel().getOffset() + composedString.length(), true);
+                getElfDocument().createRangeMarker(getCaretModel().getOffset(), getCaretModel().getOffset() + composedString.length(), true);
             }
           }
         }
@@ -5492,7 +5515,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @ApiStatus.Internal
   public boolean shouldUseNewSelection() {
-    return !Registry.is("editor.old.full.horizontal.selection.enabled") && !isColumnMode() && !hasBidiText();
+    return !Registry.is("editor.old.full.horizontal.selection.enabled")
+           && !isColumnMode()
+           && !hasBidiText()
+           && IslandsState.Companion.isEnabled();
   }
 
   @TestOnly
@@ -5852,10 +5878,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @ApiStatus.Internal
   @Override
-  public @NotNull DocumentEx getUiDocument() {
-    if (myUiDocument != null) {
-      return myUiDocument;
+  public @NotNull DocumentEx getElfDocument() {
+    if (myElfDocument != null) {
+      return myElfDocument;
     }
     return getDocument();
+  }
+
+  @ApiStatus.Internal
+  public void assertOrDumpState(boolean condition, String message) {
+    if (!condition) {
+      throw new RuntimeExceptionWithAttachments(message, AttachmentFactory.createContext(dumpState()));
+    }
   }
 }

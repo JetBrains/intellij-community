@@ -96,7 +96,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   FoldingModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
-    myDocument = editor.getUiDocument();
+    myDocument = editor.getElfDocument();
     myRegionTree = new MyMarkerTree(myDocument);
     myFoldTree = new MyFoldRegionsTree(myRegionTree);
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(editor);
@@ -1026,11 +1026,11 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   private record SavedCaretPosition(LogicalPosition position, long docStamp) {
 
     SavedCaretPosition(@NotNull Caret caret) {
-      this(caret.getLogicalPosition(), caret.getEditor().getUiDocument().getModificationStamp());
+      this(caret.getLogicalPosition(), caret.getEditor().getElfDocument().getModificationStamp());
     }
 
     private boolean isUpToDate(@NotNull Editor editor) {
-      return docStamp == editor.getUiDocument().getModificationStamp();
+      return docStamp == editor.getElfDocument().getModificationStamp();
     }
   }
 

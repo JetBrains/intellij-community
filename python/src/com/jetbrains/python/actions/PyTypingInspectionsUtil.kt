@@ -9,6 +9,8 @@ import com.intellij.profile.codeInspection.InspectionProfileManager
  */
 object PyTypingInspectionsUtil {
 
+  private const val UNRESOLVED_REFERENCES_ID = "PyUnresolvedReferencesInspection"
+
   private val TYPING_INSPECTION_IDS = listOf(
     "PyArgumentListInspection",
     "PyAssertTypeInspection",
@@ -30,7 +32,6 @@ object PyTypingInspectionsUtil {
     "PyTypeCheckerInspection",
     "PyTypeHintsInspection",
     "PyTypedDictInspection",
-    "PyUnresolvedReferencesInspection",
   )
 
   /**

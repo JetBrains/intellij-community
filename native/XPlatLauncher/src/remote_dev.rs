@@ -71,11 +71,11 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
         self.default.get_class_path()
     }
 
-    fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
+    fn prepare_for_launch(&self, is_musl: bool) -> Result<(PathBuf, &str, Option<PathBuf>)> {
         init_env_vars(&self.default).context("Preparing environment variables")?;
-
-        preload_native_libs(&self.default.ide_home).context("Preloading native libraries")?;
-        self.default.prepare_for_launch()
+        let extra_libs = preload_native_libs(&self.default.ide_home, is_musl).context("Preloading native libraries")?;
+        let (jre_home, main_class, _) = self.default.prepare_for_launch(is_musl)?;
+        Ok((jre_home, main_class, extra_libs))
     }
 }
 
@@ -459,13 +459,13 @@ fn parse_bool_env_var_optional(var_name: &str) -> Result<Option<bool>> {
 }
 
 #[cfg(not(target_os = "linux"))]
-fn preload_native_libs(_ide_home_dir: &Path) -> Result<()> {
+fn preload_native_libs(_ide_home_dir: &Path, _: bool) -> Result<Option<PathBuf>> {
     // We don't ship self-contained libraries outside of Linux
-    Ok(())
+    Ok(None)
 }
 
 #[cfg(target_os = "linux")]
-fn preload_native_libs(ide_home_dir: &Path) -> Result<()> {
+fn preload_native_libs(ide_home_dir: &Path, is_musl: bool) -> Result<Option<PathBuf>> {
     use libloading::os::unix::Library;
     use std::collections::BTreeSet;
     use std::fs::File;
@@ -474,7 +474,8 @@ fn preload_native_libs(ide_home_dir: &Path) -> Result<()> {
 
     let use_libs = parse_bool_env_var("REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS", true)?;
     if !use_libs {
-        return Ok(())
+        debug!("Loading self-contained libraries skipped");
+        return Ok(None)
     }
 
     debug!("Loading self-contained libraries");
@@ -485,12 +486,20 @@ fn preload_native_libs(ide_home_dir: &Path) -> Result<()> {
     let self_contained_dir = &ide_home_dir.join("plugins/remote-dev-server/selfcontained/");
     if !self_contained_dir.is_dir() {
         error!("Self-contained dir not found at {self_contained_dir:?}. Only OS-provided libraries will be used.");
-        return Ok(());
+        return Ok(None);
     }
 
-    let libs_dir = &self_contained_dir.join("lib");
+    let libs_dir = self_contained_dir.join("lib");
     if !libs_dir.is_dir() {
         bail!("Self-contained dir is present at {self_contained_dir:?}, but lib dir is missing at {libs_dir:?}")
+    }
+
+    if is_musl {
+        let ld_lib_path = env::var_os("LD_LIBRARY_PATH").unwrap_or_default();
+        if env::split_paths(&ld_lib_path).all(|p| p != libs_dir) {
+          debug!("musl patch is not yet applied: LD_LIBRARY_PATH={ld_lib_path:?}");
+          return Ok(Some(libs_dir.clone()));
+        }
     }
 
     let lib_load_order_file = &self_contained_dir.join(if full_set { "lib-load-order" } else { "lib-load-order-limited" });
@@ -501,7 +510,7 @@ fn preload_native_libs(ide_home_dir: &Path) -> Result<()> {
     let mut provided_libs = BTreeSet::new();
     let filter_extensions = ["hmac".to_string()];
 
-    for f in std::fs::read_dir(libs_dir)? {
+    for f in std::fs::read_dir(&libs_dir)? {
         let entry = f?;
         let file_name = entry.file_name();
         let file_extension = entry.path().extension().map(|ext| ext.to_string_lossy().to_string());
@@ -540,8 +549,8 @@ fn preload_native_libs(ide_home_dir: &Path) -> Result<()> {
         };
 
         unsafe {
-            let lib = Library::open(lib_file.to_str(), libc::RTLD_LAZY | libc::RTLD_GLOBAL)?;
-
+            let load_name = if is_musl { Some(soname.as_ref()) } else { lib_file.to_str() };
+            let lib = Library::open(load_name, libc::RTLD_LAZY | libc::RTLD_GLOBAL)?;
             // handle intentionally lost to keep the library loaded; RTLD_NODELETE is non-POSIX
             mem::forget(lib)
         }
@@ -575,7 +584,7 @@ fn preload_native_libs(ide_home_dir: &Path) -> Result<()> {
 
     debug!("All self-contained libraries ({}) were loaded", ordered_libs_to_load.len());
 
-    Ok(())
+    Ok(None)
 }
 
 #[cfg(target_os = "linux")]

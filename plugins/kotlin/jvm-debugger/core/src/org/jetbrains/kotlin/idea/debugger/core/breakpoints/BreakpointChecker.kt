@@ -4,9 +4,14 @@ package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
 import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
-import org.jetbrains.debugger.SourceInfo
 import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinBreakpointType
 import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointType
 import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType
@@ -66,4 +71,32 @@ class BreakpointChecker {
 
         return actualBreakpointTypes
     }
+}
+
+/**
+ * Copy of deprecated [org.jetbrains.debugger.SourceInfo] to avoid dependency on
+ * deprecated "intellij.platform.scriptDebugger.ui" module.
+ *
+ * Implementation is kept as-is to minimize the chance of regressions, with obviously unused code stripped away.
+ */
+private class SourceInfo(private val file: VirtualFile, private val line: Int) : XSourcePosition {
+
+    private val column: Int = -1
+    private var offset: Int = -1
+
+    override fun getFile(): VirtualFile = file
+
+    override fun getLine(): Int = line
+
+    override fun getOffset(): Int {
+        if (offset == -1) {
+            val document = runReadAction { if (file.isValid) FileDocumentManager.getInstance().getDocument(file) else null } ?: return -1
+            offset = if (line < document.lineCount) document.getLineStartOffset(line) else -1
+        }
+        return offset
+    }
+
+    override fun createNavigatable(project: Project): OpenFileDescriptor = OpenFileDescriptor(project, file, line, column)
+
+    override fun toString(): String = file.path + ":" + line + if (column == -1) "" else ":$column"
 }

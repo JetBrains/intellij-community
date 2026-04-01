@@ -122,7 +122,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   // true if some complex internal invariants must be checked on every operation;
   private boolean ASSERT_INVARIANTS;
 
-  HighlightInfoUpdaterImpl(Project project) {
+  private HighlightInfoUpdaterImpl(Project project) {
     Disposer.register(this, () -> {
       if (FileDocumentManager.getInstance() instanceof FileDocumentManagerBase managerBase) {
         managerBase.forEachCachedDocument(document -> {
@@ -181,9 +181,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
             .toList();
         LOG.trace("psiFileEvictionListener: {" + hash + "} -> (" + (oldMap == null ? 0 : oldMap.size()) + "): " +
                   "\noldMap:" + oldMap +
-                  "\nall stored infos:(" + infos.size() + "): " + render(infos)+
-                  "\nall model  infos:(" + fromModel.size() + "): " + render(fromModel)+
-                  "\n"+Thread.currentThread()
+                  "\nall stored infos " + debugRender(infos) +
+                  "\nall model  infos " + debugRender(fromModel) +
+                  "\n" + Thread.currentThread()
                   );
       }
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
@@ -241,7 +241,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   private static void addEvictedInfos(@NotNull Project project, @NotNull List<? extends HighlightInfo> infos) {
     if (!infos.isEmpty()) {
       if (LOG.isTraceEnabled()) {
-        LOG.trace("addEvictedInfos: " + render(infos)+currentProgressInfo()+Thread.currentThread());
+        LOG.trace("addEvictedInfos: " + debugRender(infos) + currentProgressInfo() + Thread.currentThread());
       }
       Map<Document, Collection<HighlightInfo>> evictedMap = HashMap.newHashMap(infos.size());
       for (HighlightInfo info : infos) {
@@ -265,7 +265,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         }
         while (!((UserDataHolderEx)document).replace(EVICTED_PSI_ELEMENTS, storedInfos, newInfos));
         if (LOG.isTraceEnabled()) {
-          LOG.trace("addEvictedInfos("+document+"): stored " + render(List.of(newInfos)));
+          LOG.trace("addEvictedInfos(" + document + "): stored " + debugRender(Arrays.asList(newInfos)));
         }
         if (newInfos.length != (storedInfos == null ? 0 : storedInfos.length)) {
           ReadAction.run(() -> {
@@ -794,8 +794,10 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   }
 
   @NotNull
-  private Collection<HighlightInfo> getInfosFromMarkup(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
-    if (!isAssertInvariants()) return Set.of();
+  private List<HighlightInfo> getInfosFromMarkup(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
+    if (!isAssertInvariants()) {
+      return List.of();
+    }
     Project project = psiFile.getProject();
     Document hostDocument;
     //noinspection removal
@@ -822,23 +824,24 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
 
   private synchronized void assertMarkupConsistentWithData(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
     if (!isAssertInvariants()) return;
-    Collection<HighlightInfo> fromMarkup = getInfosFromMarkup(psiFile, toolIdPredicate);
+    List<HighlightInfo> fromMarkup = getInfosFromMarkup(psiFile, toolIdPredicate);
     // todo IJPL-339 process top level infos
     Set<HighlightInfo> fromData = new HashSet<>(getAllData(psiFile, toolIdPredicate));
 
     if (!new HashSet<>(fromMarkup).equals(fromData)) {
-      String fromDataStr = render(fromData);
-      String fromMarkupStr = render(fromMarkup);
       LOG.error("data inconsistent with markup. " +
-                "data(" +fromData.size()+"):\n" + fromDataStr + "\n" +
-                "---------------markup(" +fromMarkup.size()+"):\n" + fromMarkupStr+
+                "data " + debugRender(List.copyOf(fromData)) + "\n" +
+                "---------------markup " + debugRender(fromMarkup) +
                 "\n========="
       );
     }
   }
 
-  private static String render(Collection<? extends HighlightInfo> infos) {
-    return StringUtil.join(ContainerUtil.sorted(infos, BY_OFFSETS_AND_HASH_ERRORS_FIRST), "\n");
+  private static String debugRender(@NotNull List<? extends HighlightInfo> infos) {
+    List<? extends HighlightInfo> first = ContainerUtil.getFirstItems(infos, 100);
+    return "("+infos.size()+"):"
+           +StringUtil.join(ContainerUtil.sorted(first, BY_OFFSETS_AND_HASH_ERRORS_FIRST), "\n")
+           +(infos.size()>100 ? "..." : "");
   }
 
   @NotNull

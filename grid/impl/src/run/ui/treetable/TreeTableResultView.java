@@ -212,6 +212,11 @@ public class TreeTableResultView implements ResultView, ResultViewWithCells {
   }
 
   @Override
+  public void editSelectedCellWithValue(Object value) {
+
+  }
+
+  @Override
   public @Nullable TableCellEditor getCellEditor() {
     return null;
   }

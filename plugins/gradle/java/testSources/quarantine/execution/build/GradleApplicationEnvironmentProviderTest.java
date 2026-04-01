@@ -360,7 +360,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
       """;
     createProjectSubFile("nested/src/main/java/my/App.java", appClass);
     createProjectSubFile("settings.gradle", "includeBuild('nested')");
-    createProjectSubFile("nested/settings.gradle", "rootProject.name='app'");
+    createProjectSubFile("nested/settings.gradle", "rootProject.name='nested'");
     createProjectSubFile("nested/build.gradle",
                          createBuildScriptBuilder()
                            .withJavaPlugin().generate()
@@ -374,7 +374,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
         "    runConfigurations {",
         "       MyApp(Application) {",
         "           mainClass = 'my.App'",
-        "           moduleName = 'app.main'",
+        "           moduleName = 'nested.main'",
         "       }",
         "    }",
         "  }",

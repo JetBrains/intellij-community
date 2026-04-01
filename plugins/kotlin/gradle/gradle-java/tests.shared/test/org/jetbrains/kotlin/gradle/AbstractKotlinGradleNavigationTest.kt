@@ -2,16 +2,13 @@
 package org.jetbrains.kotlin.gradle
 
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -35,7 +32,7 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
 
             codeInsightFixture.configureFromExistingVirtualFile(mainFile.virtualFile)
             assertTrue("<caret> is not present") {
-                val caretOffset = runReadAction { codeInsightFixture.caretOffset }
+                val caretOffset = runReadActionBlocking { codeInsightFixture.caretOffset }
                 caretOffset != 0
             }
             codeInsightFixture.performEditorAction(actionName)
@@ -63,7 +60,7 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
 
             val textBefore = document.text
             assertTrue("<caret> is not present") {
-                val caretOffset = runReadAction { codeInsightFixture.caretOffset }
+                val caretOffset = runReadActionBlocking { codeInsightFixture.caretOffset }
                 caretOffset != 0
             }
             codeInsightFixture.performEditorAction(actionName)

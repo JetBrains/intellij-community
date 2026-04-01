@@ -169,7 +169,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
    * If true -- track {@link FilesToUpdateCollector#modificationCount()} per project, and skip looking for
    * updates if current modCount was already processed per project
    */
-  private static final boolean USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES = getBooleanProperty("FileBasedIndexImpl.USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES", false);
+  private static final boolean USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES = getBooleanProperty("FileBasedIndexImpl.USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES", true);
 
   final CoroutineScope coroutineScope;
 
@@ -1893,11 +1893,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private void forceUpdate(@Nullable Project project,
                            boolean skipUpdatingIfNoNewUpdatesAvailable,
                            @NotNull ProjectFilesCondition filter) {
-    Collection<FileIndexingRequest> allFilesToUpdate = getAllFilesToUpdate();
     runIfHaveNewUpdatesFor(
       project,
       skipUpdatingIfNoNewUpdatesAvailable && USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES,
       () -> {
+        Collection<FileIndexingRequest> allFilesToUpdate = getAllFilesToUpdate();
         if (!allFilesToUpdate.isEmpty()) {
           List<FileIndexingRequest> virtualFilesToBeUpdatedForProject = ContainerUtil.filter(allFilesToUpdate, filter::acceptsRequest);
           if (!virtualFilesToBeUpdatedForProject.isEmpty()) {

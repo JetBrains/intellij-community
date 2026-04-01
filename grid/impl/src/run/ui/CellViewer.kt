@@ -26,7 +26,7 @@ interface CellViewer : Disposable {
 }
 
 interface CellViewerFactory {
-  fun getSuitability(grid: DataGrid, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>): Suitability
+  fun getSuitability(grid: DataGrid, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>, value: Any?): Suitability
   fun createViewer(grid: DataGrid): CellViewer
 
   companion object {

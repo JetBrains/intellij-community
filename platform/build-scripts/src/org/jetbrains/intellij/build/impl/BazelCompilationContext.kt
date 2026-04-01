@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -36,15 +36,14 @@ import kotlin.io.path.pathString
 class BazelCompilationContext(
   private val delegate: CompilationContext,
   private val scope: CoroutineScope?,
+  @JvmField val outputProviderState: BazelModuleOutputProviderState = BazelModuleOutputProviderState(
+    modules = delegate.project.modules,
+    projectHome = delegate.paths.projectHome,
+    bazelOutputRoot = requireNotNull(bazelOutputRoot) { "Bazel output root is not available" },
+  ),
 ) : CompilationContext {
   override val outputProvider: ModuleOutputProvider by lazy {
-    BazelModuleOutputProvider(
-      modules = delegate.project.modules,
-      projectHome = delegate.paths.projectHome,
-      bazelOutputRoot = bazelOutputRoot!!,
-      scope = scope,
-      useTestCompilationOutput = options.useTestCompilationOutput,
-    )
+    BazelModuleOutputProvider(state = outputProviderState, scope = scope, useTestCompilationOutput = options.useTestCompilationOutput)
   }
 
   override val options: BuildOptions
@@ -111,7 +110,7 @@ class BazelCompilationContext(
   override fun notifyArtifactBuilt(artifactPath: Path): Unit = delegate.notifyArtifactBuilt(artifactPath)
 
   override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {
-    return BazelCompilationContext(delegate = delegate.createCopy(messages, options, paths), scope = scope)
+    return BazelCompilationContext(delegate = delegate.createCopy(messages, options, paths), scope = scope, outputProviderState = outputProviderState)
   }
 
   override suspend fun prepareForBuild(): Unit = delegate.prepareForBuild()
@@ -124,7 +123,8 @@ class BazelCompilationContext(
   override suspend fun withCompilationLock(block: suspend () -> Unit): Unit = delegate.withCompilationLock(block)
 }
 
-internal class BazelTargetsInfo {
+@Internal
+class BazelTargetsInfo {
   companion object {
     private val bazelTargetsJson = Json { ignoreUnknownKeys = true }
 
@@ -138,27 +138,27 @@ internal class BazelTargetsInfo {
 
   @Serializable
   data class TargetsFileModuleDescription(
-    val productionTargets: List<String>,
-    val productionJars: List<String>,
-    val testTargets: List<String>,
-    val testJars: List<String>,
-    val exports: List<String>,
-    val moduleLibraries: Map<String, LibraryDescription>,
+    @JvmField val productionTargets: List<String>,
+    @JvmField val productionJars: List<String>,
+    @JvmField val testTargets: List<String>,
+    @JvmField val testJars: List<String>,
+    @JvmField val exports: List<String>,
+    @JvmField val moduleLibraries: Map<String, LibraryDescription>,
   )
 
   @Serializable
   data class LibraryDescription(
-    val target: String,
-    val jars: List<String>,
-    val jarTargets: List<String>,
-    val sourceJars: List<String>,
+    @JvmField val target: String,
+    @JvmField val jars: List<String>,
+    @JvmField val jarTargets: List<String>,
+    @JvmField val sourceJars: List<String>,
   )
 
   @Serializable
   data class TargetsFile(
-    val modules: Map<String, TargetsFileModuleDescription>,
-    val imlTargets: List<String> = emptyList(),
-    val projectLibraries: Map<String, LibraryDescription>,
+    @JvmField val modules: Map<String, TargetsFileModuleDescription>,
+    @JvmField val imlTargets: List<String> = emptyList(),
+    @JvmField val projectLibraries: Map<String, LibraryDescription>,
   )
 }
 
@@ -195,7 +195,7 @@ internal val bazelOutputRoot: Path? by lazy {
 val CompilationContextImpl.asBazelIfNeeded: CompilationContext
   get() = toBazelIfNeeded(scope = null)
 
-internal fun CompilationContextImpl.toBazelIfNeeded(scope: CoroutineScope?): CompilationContext {
+fun CompilationContextImpl.toBazelIfNeeded(scope: CoroutineScope?): CompilationContext {
   return when {
     isRunningFromBazelOut() -> BazelCompilationContext(delegate = this, scope = scope)
     else -> this

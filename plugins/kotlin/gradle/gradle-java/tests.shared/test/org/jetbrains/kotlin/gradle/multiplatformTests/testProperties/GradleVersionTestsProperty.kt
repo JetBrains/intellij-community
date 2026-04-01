@@ -13,7 +13,7 @@ object GradleVersionTestsProperty : org.jetbrains.kotlin.gradle.multiplatformTes
         ForAlphaAgp("REQUIRED_FOR_ALPHA_AGP", "8.7")
     }
 
-    override val versionByAlias: Map<Value, String> = Value.values().map { it to it.version }.toMap()
+    override val versionByAlias: Map<Value, String> = Value.entries.associateWith { it.version }
 
     override val defaultValue: Value = Value.ForStableAgp
 }

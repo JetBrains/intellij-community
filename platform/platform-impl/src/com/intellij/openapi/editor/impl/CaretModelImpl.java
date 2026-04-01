@@ -76,7 +76,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
 
   public CaretModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
-    myDocument = editor.getUiDocument();
+    myDocument = editor.getElfDocument();
     myEditor.addPropertyChangeListener(evt -> {
       if (EditorEx.PROP_COLUMN_MODE.equals(evt.getPropertyName()) && !myEditor.isColumnMode()) {
         for (CaretImpl caret : myCarets) {

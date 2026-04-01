@@ -14,6 +14,7 @@
     <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang"/>
@@ -25,6 +26,7 @@
     <module name="intellij.platform.testFramework.common"/>
     <module name="intellij.platform.testFramework.core"/>
     <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->

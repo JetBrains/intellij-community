@@ -37,6 +37,7 @@ internal fun readLinesFromFile(path: String): List<String> {
     }
 }
 
+internal const val PLUGINS = "plugins"
 internal const val DEPENDENCIES = "dependencies"
 
 internal val BUILD_GRADLE_KTS_FILE_PATTERN = psiFile().withName(KOTLIN_DSL_SCRIPT_NAME)
@@ -45,12 +46,13 @@ internal inline fun <reified I : PsiElement> psiElement(): PsiElementPattern.Cap
     return psiElement(I::class.java)
 }
 
+internal fun insideBuildGradleKts() = psiElement().inFile(BUILD_GRADLE_KTS_FILE_PATTERN)
+
 /**
  * Matches any PSI element inside the curly brackets `{...}`, coming after the given [blockName].
  * @param blockName is `dependencies`, `plugins`, `repositories` or any other Gradle block name.
  */
-internal fun insideScriptBlockPattern(blockName: String) = psiElement()
-    .inFile(BUILD_GRADLE_KTS_FILE_PATTERN)
+internal fun insideScriptBlockPattern(blockName: String) = insideBuildGradleKts()
     .inside(scriptBlockElementPattern(blockName))
 
 internal fun PsiElement.isOnTheTopLevelOfScriptBlock(blockName: String): Boolean {

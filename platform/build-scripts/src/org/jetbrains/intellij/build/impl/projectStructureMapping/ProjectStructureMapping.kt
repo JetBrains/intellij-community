@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("IO_FILE_USAGE", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl.projectStructureMapping
@@ -22,24 +22,23 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Path
 import java.util.TreeMap
-import java.util.TreeSet
 
 internal fun getIncludedModules(entries: Sequence<DistributionFileEntry>): Sequence<String> {
   return entries.mapNotNull { (it as? ModuleOutputEntry)?.owner?.moduleName }.distinct()
 }
 
-private fun buildModuleSetHierarchy(
+private fun buildRootModuleSets(
   productModules: List<Pair<ModuleItem, List<DistributionFileEntry>>>
-): Pair<Map<String, List<Pair<ModuleItem, List<DistributionFileEntry>>>>, Map<String, List<Pair<ModuleItem, List<DistributionFileEntry>>>>> {
+): Map<String, List<Pair<ModuleItem, List<DistributionFileEntry>>>> {
   val allModuleSets = TreeMap<String, MutableList<Pair<ModuleItem, List<DistributionFileEntry>>>>()
   val nestedModuleSetNames = mutableSetOf<String>()
 
-  // Single pass: Group modules by their module sets AND identify nested sets
+  // Single pass: group modules by their module sets and identify nested sets.
   for ((moduleItem, distEntries) in productModules) {
-    val chain = moduleItem.moduleSet ?: continue // Module not in any module set
+    val chain = moduleItem.moduleSet ?: continue
 
-    // Module should be included in all sets in its chain
-    // Sets after position 0 are nested (e.g., [A, B] means B is nested)
+    // A module should be included in all sets in its chain.
+    // Sets after position 0 are nested (for example [A, B] means B is nested).
     for ((index, setName) in chain.withIndex()) {
       allModuleSets.computeIfAbsent(setName) { mutableListOf() }.add(moduleItem to distEntries)
       if (index > 0) {
@@ -48,15 +47,12 @@ private fun buildModuleSetHierarchy(
     }
   }
 
-  // Filter to only root module sets (not nested in other product module sets)
-  val rootModuleSets = allModuleSets.filterKeys { it !in nestedModuleSetNames }.toSortedMap()
-
-  return allModuleSets to rootModuleSets
+  return allModuleSets.filterKeys { it !in nestedModuleSetNames }.toSortedMap()
 }
 
 internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: ZipFileWriter, buildPaths: BuildPaths, context: BuildContext) {
   val (fileToEntry, productModules) = groupPlatformEntries(contentReport = contentReport, buildPaths = buildPaths)
-  val (allModuleSets, rootModuleSets) = buildModuleSetHierarchy(productModules)
+  val rootModuleSets = buildRootModuleSets(productModules)
 
   val platformData = buildPlatformContentReport(
     contentReport = contentReport,
@@ -68,36 +64,6 @@ internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: 
   )
   zipFileWriter.uncompressedData("platform.yaml", platformData)
   zipFileWriter.uncompressedData("product-modules.yaml", buildProductModuleContentReport(productModules, buildPaths))
-
-  // Write module set YAMLs with both direct modules and included module sets
-  for ((moduleSetName, modules) in allModuleSets) {
-    // Use Set to avoid duplicates (same module can appear in multiple JARs)
-    val entries = TreeSet<String>()
-
-    // Single pass: Add direct modules AND immediate child sets
-    for ((moduleItem, _) in modules) {
-      val chain = moduleItem.moduleSet ?: continue
-
-      // Add direct module if this is the deepest/last set in chain
-      if (chain.lastOrNull() == moduleSetName) {
-        entries.add(moduleItem.moduleName)
-      }
-
-      // Add immediate child set if exists
-      // Example: if chain is [parent, current, child, grandchild], only add 'child'
-      val currentIndex = chain.indexOf(moduleSetName)
-      if (currentIndex != -1 && currentIndex < chain.size - 1) {
-        entries.add(chain[currentIndex + 1])
-      }
-    }
-
-    val out = ByteArrayOutputStream()
-    createYamlGenerator(out).use { writer ->
-      writeStringArray(writer, entries)
-    }
-
-    zipFileWriter.uncompressedData("moduleSets/$moduleSetName.yaml", out.toByteArray())
-  }
 
   zipFileWriter.uncompressedData("bundled-plugins.yaml", buildPluginContentReport(contentReport.bundledPlugins, buildPaths))
   zipFileWriter.uncompressedData("non-bundled-plugins.yaml", buildPluginContentReport(contentReport.nonBundledPlugins, buildPaths))
@@ -549,16 +515,8 @@ private fun writeModuleDependents(writer: JsonGenerator, data: ProjectLibraryDat
   writer.writeEndObject()
 }
 
-// Helper functions for deduplication
-
 private fun createPluginKey(plugin: PluginBuildDescriptor): String {
   return plugin.layout.mainModule + (if (plugin.os == null) "" else " (os=${plugin.os})") + (if (plugin.arch == null) "" else " (arch=${plugin.arch.name})")
-}
-
-private fun writeStringArray(writer: JsonGenerator, items: Collection<String>) {
-  writer.writeStartArray()
-  items.sorted().forEach(writer::writeString)
-  writer.writeEndArray()
 }
 
 private inline fun <reified T : LibraryFileEntry> groupLibraryEntries(

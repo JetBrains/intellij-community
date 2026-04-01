@@ -85,9 +85,9 @@ class GradleBuildRootsLocatorImpl(val project: Project, val coroutineScope: Coro
 
     private fun tryLoadFromFsCache(settings: GradleProjectSettings, version: String): Imported? {
         return tryCreateImportedRoot(settings.externalProjectPath) {
-            AbstractGradleBuildRootDataSerializer.Companion.getInstance().read(it)?.let { data ->
+            AbstractGradleBuildRootDataSerializer.getInstance().read(it)?.let { data ->
                 val gradleHome = data.gradleHome
-                if (gradleHome.isNotBlank() && GradleInstallationManager.Companion.getGradleVersion(Path.of(gradleHome)) != version) return@let null
+                if (gradleHome.isNotBlank() && GradleInstallationManager.getGradleVersion(Path.of(gradleHome)) != version) return@let null
 
                 addFromSettings(data, settings)
             }

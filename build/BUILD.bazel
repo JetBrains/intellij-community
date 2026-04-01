@@ -4,7 +4,7 @@ load("//build:jps_to_bazel_targets_json.bzl", "jps_to_bazel_targets_json")
 
 load("//build:intellij_dev_community.bzl", "intellij_dev_binary_community")
 load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_TEST_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_TEST_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY", "JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT")
 
 load(":jps_library_derivation_test.bzl", "jps_library_derivation_test_suite")
 jps_library_derivation_test_suite(name = "jps_library_derivation_test")
@@ -25,6 +25,7 @@ jps_to_bazel_targets_json(
   starlark_test_targets = ALL_TEST_COMMUNITY_TARGETS,
   starlark_library_targets = ALL_LIBRARY_COMMUNITY_TARGETS,
   starlark_iml_targets = ALL_COMMUNITY_IML_TARGETS,
+  jps_to_bazel_treat_kotlin_dev_version_as_snapshot = JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT,
 )
 
 # Can't name the target 'installers' since it triggers elevation in Windows

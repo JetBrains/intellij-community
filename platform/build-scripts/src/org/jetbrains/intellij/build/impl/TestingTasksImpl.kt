@@ -8,6 +8,7 @@ import com.intellij.GroupBasedTestClassFilter
 import com.intellij.TestCaseLoader
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.idea.IJIgnore
+import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.testFramework.SkipInHeadlessEnvironment
+import com.intellij.util.bazelEnvironment.BazelRunfiles
 import com.intellij.util.io.awaitExit
 import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.CoroutineName
@@ -239,10 +241,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
   }
 
   private fun checkOptions(mainModule: String?) {
-    if (options.testGroups != System.getProperty("intellij.build.test.groups")) {
-      context.messages.warning("Test group is temporarily remapped to '${options.testGroups}', ignore 'intellij.build.test.groups' value: '${System.getProperty("intellij.build.test.groups")}'")
-    }
-
     if (options.testConfigurations != null) {
       val testConfigurationsOptionName = "intellij.build.test.configurations"
       if (options.testPatterns != null) {
@@ -757,6 +755,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         context.saveMapping(file)
         systemProperties.put("intellij.test.jars.mapping.file", file.absolutePathString())
       }
+    }
+
+    if (BazelRunfiles.isRunningFromBazel) {
+      // tests.cmd doesn't call jps-to-bazel and there may be no build/bazel-targets.json file, use it from jps_to_bazel_targets_json rule
+      systemProperties.put(ArchivedCompilationContextUtil.BAZEL_TARGETS_JSON_FILE_PROPERTY, ArchivedCompilationContextUtil.getBazelTargetsJsonPath(context.paths.projectHome).absolutePathString())  // resolve against JAVA_RUNFILES or RUNFILES_MANIFEST_FILE
     }
   }
 
@@ -1300,7 +1303,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val runtime = getRuntimeExecutablePath().toString()
 
     context.messages.info("Starting tests on runtime $runtime")
-    val builder = ProcessBuilder(runtime, "@" + argFile.absolutePath)
+    val builder = ProcessBuilder(runtime, "@" + argFile.absolutePath).apply {
+      removeBazelEnvironmentVariables(environment())  // to prevent treating the test process as BazelRunfiles#isRunningFromBazel
+    }
     builder.environment().putAll(environment)
     builder.inheritIO()
     val exitCode = builder.start().awaitExit()
@@ -1355,6 +1360,18 @@ private val ignoredPrefixes = listOf(
 private fun removeStandardJvmOptions(vmOptions: List<String>): List<String> {
   return vmOptions.filter { option -> ignoredPrefixes.none(option::startsWith) }
 }
+
+private fun removeBazelEnvironmentVariables(environment: MutableMap<String, String>) = listOf(
+  "BUILD_WORKING_DIRECTORY",
+  "BUILD_WORKSPACE_DIRECTORY",
+  "JAVA_RUNFILES",
+  "RUNFILES_DIR",
+  "RUNFILES_MANIFEST_FILE",
+  "RUNFILES_MANIFEST_ONLY",
+  "SELF_LOCATION",
+  "TEST_SRCDIR",
+  "TEST_TMPDIR",
+).forEach { environment.remove(it) }
 
 private suspend fun publishTestDiscovery(messages: BuildMessages, file: String?) {
   val serverUrl = System.getProperty("intellij.test.discovery.url")

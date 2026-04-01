@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.editor.CustomWrap;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
@@ -9,6 +10,7 @@ import com.intellij.openapi.editor.InlayProperties;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Point;
@@ -92,10 +94,20 @@ final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
   @Override
   public @NotNull VisualPosition getVisualPosition() {
     int offset = getOffset();
-    VisualPosition pos = myEditor.offsetToVisualPosition(offset);
     List<Inlay<?>> inlays = myEditor.getInlayModel().getInlineElementsInRange(offset, offset);
-    int order = inlays.indexOf(this);
-    return new VisualPosition(pos.line, pos.column + order, true);
+    List<CustomWrap> customWraps = myEditor.getCustomWrapModel().getWrapsAtOffset(offset);
+    if (customWraps.isEmpty()) {
+      VisualPosition pos = myEditor.offsetToVisualPosition(offset, false, false);
+      int order = inlays.indexOf(this);
+      return new VisualPosition(pos.line, pos.column + order, true);
+    }
+    else {
+      int firstRelatedToPrecedingIndex = ContainerUtil.indexOf(inlays, inlay -> inlay.isRelatedToPrecedingText());
+      firstRelatedToPrecedingIndex = firstRelatedToPrecedingIndex >= 0 ? firstRelatedToPrecedingIndex : inlays.size();
+      VisualPosition pos = myEditor.offsetToVisualPosition(offset, false, isRelatedToPrecedingText());
+      int order = inlays.indexOf(this);
+      return new VisualPosition(pos.line, pos.column + order - (isRelatedToPrecedingText() ? firstRelatedToPrecedingIndex : 0), true);
+    }
   }
 
   @Override

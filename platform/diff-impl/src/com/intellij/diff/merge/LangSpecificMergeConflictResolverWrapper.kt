@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -82,7 +83,7 @@ class LangSpecificMergeConflictResolverWrapper(private val project: Project?, co
     if (!isAvailable() || project == null || !hasChunksInitiallyResolved || localMergeChangeList.size != resolvedChanges.size) return
     project.scope.coroutineContext.cancelChildren()
     project.scope.launch(ModalityState.defaultModalityState().asContextElement()) {
-      val lineOffsetsList = fileList.map { LineOffsetsUtil.create(it.fileDocument) }
+      val lineOffsetsList = readAction { fileList.map { LineOffsetsUtil.create(it.fileDocument) } }
       val lineFragmentList = localMergeChangeList.map { it.fragment }
 
       calculateConflicts(lineOffsetsList, lineFragmentList, fileList)

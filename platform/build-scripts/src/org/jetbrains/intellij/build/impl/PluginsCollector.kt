@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -17,6 +17,8 @@ import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.resolveIncludes
 import org.jetbrains.intellij.build.findFileInModuleSources
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 
 suspend fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, pluginsToPublish: MutableSet<PluginLayout>, context: BuildContext) {
   val availableModulesAndPlugins = HashSet<String>(builtinModuleData.layout.size)
@@ -81,195 +83,202 @@ suspend fun collectPluginDescriptors(
   honorCompatiblePluginsToIgnore: Boolean,
   context: BuildContext,
 ): MutableMap<String, PluginDescriptor> {
-  val pluginDescriptors = LinkedHashMap<String, PluginDescriptor>()
-  val productLayout = context.productProperties.productLayout
-  val nonTrivialPlugins = HashMap<String, MutableList<PluginLayout>>(productLayout.pluginLayouts.size)
+  return spanBuilder("collect plugin descriptors")
+    .setAttribute("skip.implementation.details", skipImplementationDetails)
+    .setAttribute("skip.bundled", skipBundled)
+    .setAttribute("honor.compatible.plugins.to.ignore", honorCompatiblePluginsToIgnore)
+    .use {
+      val pluginDescriptors = LinkedHashMap<String, PluginDescriptor>()
+      val productLayout = context.productProperties.productLayout
+      val nonTrivialPlugins = HashMap<String, MutableList<PluginLayout>>(productLayout.pluginLayouts.size)
 
-  for (pluginLayout in productLayout.pluginLayouts) {
-    nonTrivialPlugins.getOrPut(pluginLayout.mainModule) { mutableListOf() }.add(pluginLayout)
-  }
-
-  val allBundledPlugins = java.util.Set.copyOf(context.getBundledPluginModules())
-
-  for (jpsModule in context.project.modules) {
-    val moduleName = jpsModule.name
-    if ((skipBundled && allBundledPlugins.contains(moduleName)) ||
-        (honorCompatiblePluginsToIgnore && productLayout.compatiblePluginsToIgnore.contains(moduleName))) {
-      continue
-    }
-
-    // when we migrate to Bazel, we will use a test marker to avoid checking the module name for "test" pattern
-    if (moduleName.contains(".tests.") && !allBundledPlugins.contains(moduleName)) {
-      continue
-    }
-
-    // not a plugin
-    if (context.productProperties.platformPrefix != "FleetBackend" && moduleName.startsWith("fleet.plugins.")) {
-      continue
-    }
-
-    val pluginXml = findFileInModuleSources(module = context.findRequiredModule(moduleName), relativePath = "META-INF/plugin.xml", onlyProductionSources = true) ?: continue
-
-    val xml = JDOMUtil.load(pluginXml)
-    check(!xml.isEmpty) {
-      "Module '$moduleName': '$pluginXml' is empty"
-    }
-
-    if (xml.getChildTextTrim("id") == "com.intellij" || hasPluginAliasThatIndicatesThatItIsAProduct(xml)) {
-      Span.current().addEvent(
-        "skip module",
-        Attributes.of(
-          AttributeKey.stringKey("name"), moduleName,
-          AttributeKey.stringKey("reason"), "product descriptor",
-          AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
-        ),
-      )
-      continue
-    }
-
-    if (skipImplementationDetails && xml.getAttributeValue("implementation-detail") == "true") {
-      Span.current().addEvent(
-        "skip module",
-        Attributes.of(
-          AttributeKey.stringKey("name"), moduleName,
-          AttributeKey.stringKey("reason"), "'implementation-detail' == 'true'",
-          AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
-        )
-      )
-      continue
-    }
-
-    // a non-product plugin cannot include VCS and other such platform modules in the content
-    if (xml.getChildren("content").any { contentElement ->
-        contentElement.getChildren("module").any {
-          val contentModuleName = it.getAttributeValue("name", "")
-          //intellij.platform.vcs.*.split modules are currently included in the CodeWithMe plugin
-          contentModuleName.startsWith("intellij.platform.vcs.") && !contentModuleName.endsWith(".split") || contentModuleName == "intellij.ide.startup.importSettings"
-        }
-      }) {
-      Span.current().addEvent(
-        "skip module",
-        Attributes.of(
-          AttributeKey.stringKey("name"), moduleName,
-          AttributeKey.stringKey("reason"), "product descriptor",
-          AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
-        ),
-      )
-      continue
-    }
-
-    val pluginLayouts = nonTrivialPlugins.get(moduleName) ?: listOf(PluginLayout.pluginAuto(listOf(moduleName)))
-    val descriptorCacheContainer = DescriptorCacheContainer()
-    resolveIncludes(
-      element = xml,
-      elementResolver = XIncludeElementResolverImpl(
-        searchPath = listOf(
-          DescriptorSearchScope(
-            modules = pluginLayouts.flatMap { it.includedModules }.mapTo(LinkedHashSet()) { it.moduleName },
-            descriptorCache = descriptorCacheContainer.forPlugin(pluginXml),
-            searchInDependencies = DescriptorSearchScope.SearchMode.PLUGIN_COLLECTOR,
-          ),
-        ),
-        context = context
-      )
-    )
-
-    val id = xml.getChildTextTrim("id") ?: xml.getChildTextTrim("name")
-    if (id.isNullOrEmpty()) {
-      Span.current().addEvent(
-        "skip module", Attributes.of(
-        AttributeKey.stringKey("name"), moduleName,
-        AttributeKey.stringKey("reason"), "does not contain <id/> element",
-        AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
-      )
-      )
-      continue
-    }
-
-    if (id == "com.intellij.modules.ultimate" && !allBundledPlugins.contains(id)) {
-      // if the 'ultimate' module is not mentioned in the list of bundled plugins,
-      // then this module does not exist in a form of plugin in this distribution and should be ignored
-      continue
-    }
-
-    // Even though Database plugin does not depend on Ultimate anymore,
-    // we do not include it in the Community IDEs
-    if (id == "com.intellij.database" && !allBundledPlugins.contains("com.intellij.modules.ultimate")) {
-      continue
-    }
-
-    val declaredModules = HashSet<String>()
-    fun addAliases(element: Element) {
-      for (moduleElement in element.getChildren("module")) {
-        val value = moduleElement.getAttributeValue("value")
-        if (value != null) {
-          declaredModules.add(value)
-        }
+      for (pluginLayout in productLayout.pluginLayouts) {
+        nonTrivialPlugins.getOrPut(pluginLayout.mainModule) { mutableListOf() }.add(pluginLayout)
       }
-    }
 
-    addAliases(xml)
-    val content = xml.getChild("content")
-    if (content != null) {
-      for (module in content.getChildren("module")) {
-        val contentModuleName = module.getAttributeValue("name")
-        if (contentModuleName != null && !contentModuleName.isEmpty()) {
-          val jpsModuleName = contentModuleName.take(contentModuleName.lastIndexOf('/').takeIf { it != -1 } ?: contentModuleName.length)
-          val fileName = contentModuleName.replace("/", ".")
-          val jpsContentModule = context.outputProvider.findModule(jpsModuleName)
-          if (jpsContentModule != null) {
-            val moduleFile = findFileInModuleSources(module = jpsContentModule, relativePath = "$fileName.xml", onlyProductionSources = true)
-            if (moduleFile != null) {
-              val moduleXml = JDOMUtil.load(moduleFile)
-              addAliases(moduleXml)
+      val allBundledPlugins = java.util.Set.copyOf(context.getBundledPluginModules())
+
+      for (jpsModule in context.project.modules) {
+        val moduleName = jpsModule.name
+        if ((skipBundled && allBundledPlugins.contains(moduleName)) ||
+            (honorCompatiblePluginsToIgnore && productLayout.compatiblePluginsToIgnore.contains(moduleName))) {
+          continue
+        }
+
+        // when we migrate to Bazel, we will use a test marker to avoid checking the module name for "test" pattern
+        if (moduleName.contains(".tests.") && !allBundledPlugins.contains(moduleName)) {
+          continue
+        }
+
+        // not a plugin
+        if (context.productProperties.platformPrefix != "FleetBackend" && moduleName.startsWith("fleet.plugins.")) {
+          continue
+        }
+
+        val outputProvider = context.outputProvider
+        val pluginXml = findFileInModuleSources(module = outputProvider.findRequiredModule(moduleName), relativePath = "META-INF/plugin.xml", onlyProductionSources = true) ?: continue
+
+        val xml = JDOMUtil.load(pluginXml)
+        check(!xml.isEmpty) {
+          "Module '$moduleName': '$pluginXml' is empty"
+        }
+
+        if (xml.getChildTextTrim("id") == "com.intellij" || hasPluginAliasThatIndicatesThatItIsAProduct(xml)) {
+          Span.current().addEvent(
+            "skip module",
+            Attributes.of(
+              AttributeKey.stringKey("name"), moduleName,
+              AttributeKey.stringKey("reason"), "product descriptor",
+              AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
+            ),
+          )
+          continue
+        }
+
+        if (skipImplementationDetails && xml.getAttributeValue("implementation-detail") == "true") {
+          Span.current().addEvent(
+            "skip module",
+            Attributes.of(
+              AttributeKey.stringKey("name"), moduleName,
+              AttributeKey.stringKey("reason"), "'implementation-detail' == 'true'",
+              AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
+            )
+          )
+          continue
+        }
+
+        // a non-product plugin cannot include VCS and other such platform modules in the content
+        if (xml.getChildren("content").any { contentElement ->
+            contentElement.getChildren("module").any {
+              val contentModuleName = it.getAttributeValue("name", "")
+              //intellij.platform.vcs.*.split modules are currently included in the CodeWithMe plugin
+              contentModuleName.startsWith("intellij.platform.vcs.") && !contentModuleName.endsWith(".split") || contentModuleName == "intellij.ide.startup.importSettings"
+            }
+          }) {
+          Span.current().addEvent(
+            "skip module",
+            Attributes.of(
+              AttributeKey.stringKey("name"), moduleName,
+              AttributeKey.stringKey("reason"), "product descriptor",
+              AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
+            ),
+          )
+          continue
+        }
+
+        val pluginLayouts = nonTrivialPlugins.get(moduleName) ?: listOf(PluginLayout.pluginAuto(listOf(moduleName)))
+        val descriptorCacheContainer = DescriptorCacheContainer()
+        resolveIncludes(
+          element = xml,
+          elementResolver = XIncludeElementResolverImpl(
+            searchPath = listOf(
+              DescriptorSearchScope(
+                modules = pluginLayouts.flatMap { it.includedModules }.mapTo(LinkedHashSet()) { it.moduleName },
+                descriptorCache = descriptorCacheContainer.forPlugin(pluginXml),
+                searchInDependencies = DescriptorSearchScope.SearchMode.PLUGIN_COLLECTOR,
+              ),
+            ),
+            context = context
+          )
+        )
+
+        val id = xml.getChildTextTrim("id") ?: xml.getChildTextTrim("name")
+        if (id.isNullOrEmpty()) {
+          Span.current().addEvent(
+            "skip module", Attributes.of(
+              AttributeKey.stringKey("name"), moduleName,
+              AttributeKey.stringKey("reason"), "does not contain <id/> element",
+              AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
+            )
+          )
+          continue
+        }
+
+        if (id == "com.intellij.modules.ultimate" && !allBundledPlugins.contains(id)) {
+          // if the 'ultimate' module is not mentioned in the list of bundled plugins,
+          // then this module does not exist in a form of plugin in this distribution and should be ignored
+          continue
+        }
+
+        // Even though Database plugin does not depend on Ultimate anymore,
+        // we do not include it in the Community IDEs
+        if (id == "com.intellij.database" && !allBundledPlugins.contains("com.intellij.modules.ultimate")) {
+          continue
+        }
+
+        val declaredModules = HashSet<String>()
+        fun addAliases(element: Element) {
+          for (moduleElement in element.getChildren("module")) {
+            val value = moduleElement.getAttributeValue("value")
+            if (value != null) {
+              declaredModules.add(value)
             }
           }
-          declaredModules.add(contentModuleName)
+        }
+
+        addAliases(xml)
+        val content = xml.getChild("content")
+        if (content != null) {
+          for (module in content.getChildren("module")) {
+            val contentModuleName = module.getAttributeValue("name")
+            if (contentModuleName != null && !contentModuleName.isEmpty()) {
+              val jpsModuleName = contentModuleName.take(contentModuleName.lastIndexOf('/').takeIf { it != -1 } ?: contentModuleName.length)
+              val fileName = contentModuleName.replace('/', '.')
+              val jpsContentModule = outputProvider.findModule(jpsModuleName)
+              if (jpsContentModule != null) {
+                val moduleFile = findFileInModuleSources(module = jpsContentModule, relativePath = "$fileName.xml", onlyProductionSources = true)
+                if (moduleFile != null) {
+                  val moduleXml = JDOMUtil.load(moduleFile)
+                  addAliases(moduleXml)
+                }
+              }
+              declaredModules.add(contentModuleName)
+            }
+          }
+        }
+
+        val requiredDependencies = HashSet<String>()
+        val optionalDependencies = ArrayList<Pair<String, String>>()
+        for (dependency in xml.getChildren("depends")) {
+          if (dependency.getAttributeValue("optional") != "true") {
+            requiredDependencies.add(dependency.textTrim)
+          }
+          else {
+            optionalDependencies.add(Pair(dependency.textTrim, dependency.getAttributeValue("config-file")))
+          }
+        }
+        val dependencies = xml.getChild("dependencies")
+        if (dependencies != null) {
+          for (plugin in dependencies.getChildren("plugin")) {
+            val pluginId = plugin.getAttributeValue("id")
+            if (pluginId != null) {
+              requiredDependencies.add(pluginId)
+            }
+          }
+          for (module in dependencies.getChildren("module")) {
+            val name = module.getAttributeValue("name")
+            if (name != null && !name.isEmpty()) {
+              requiredDependencies.add(name)
+            }
+          }
+        }
+
+        val incompatiblePlugins = HashSet<String>()
+        for (pluginId in xml.getChildren("incompatible-with")) {
+          incompatiblePlugins.add(pluginId.textTrim)
+        }
+
+        val description = xml.getChildTextTrim("description")
+        val pluginDescriptor = PluginDescriptor(
+          id, description, declaredModules, requiredDependencies, incompatiblePlugins, optionalDependencies, moduleName, pluginLayouts
+        )
+        pluginDescriptors.put(id, pluginDescriptor)
+        for (module in declaredModules) {
+          pluginDescriptors.put(module, pluginDescriptor)
         }
       }
+      pluginDescriptors
     }
-
-    val requiredDependencies = HashSet<String>()
-    val optionalDependencies = ArrayList<Pair<String, String>>()
-    for (dependency in xml.getChildren("depends")) {
-      if (dependency.getAttributeValue("optional") != "true") {
-        requiredDependencies.add(dependency.textTrim)
-      }
-      else {
-        optionalDependencies.add(Pair(dependency.textTrim, dependency.getAttributeValue("config-file")))
-      }
-    }
-    val dependencies = xml.getChild("dependencies")
-    if (dependencies != null) {
-      for (plugin in dependencies.getChildren("plugin")) {
-        val pluginId = plugin.getAttributeValue("id")
-        if (pluginId != null) {
-          requiredDependencies.add(pluginId)
-        }
-      }
-      for (module in dependencies.getChildren("module")) {
-        val name = module.getAttributeValue("name")
-        if (name != null && !name.isEmpty()) {
-          requiredDependencies.add(name)
-        }
-      }
-    }
-
-    val incompatiblePlugins = HashSet<String>()
-    for (pluginId in xml.getChildren("incompatible-with")) {
-      incompatiblePlugins.add(pluginId.textTrim)
-    }
-
-    val description = xml.getChildTextTrim("description")
-    val pluginDescriptor = PluginDescriptor(
-      id, description, declaredModules, requiredDependencies, incompatiblePlugins, optionalDependencies, moduleName, pluginLayouts
-    )
-    pluginDescriptors.put(id, pluginDescriptor)
-    for (module in declaredModules) {
-      pluginDescriptors.put(module, pluginDescriptor)
-    }
-  }
-  return pluginDescriptors
 }
 
 private fun hasPluginAliasThatIndicatesThatItIsAProduct(xml: Element): Boolean {

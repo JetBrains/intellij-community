@@ -483,6 +483,7 @@ libraries/netty/buffer
 libraries/netty/codec-compression
 libraries/netty/codec-http
 libraries/netty/handler-proxy
+libraries/netty/tcnative-boringssl
 libraries/opencsv
 libraries/opentelemetry-exporter-otlp
 libraries/opentelemetry-exporter-sender-jdk
@@ -545,6 +546,7 @@ platform/build-scripts/icons
 platform/build-scripts/product-dsl
 platform/build-scripts/product-dsl/plugin-graph
 platform/build-scripts/testFramework
+platform/build-scripts/testFramework/tests
 platform/build-scripts/testPlugins/testPluginWithMissingDependencies
 platform/build-scripts/testPlugins/testPluginWithMissingDependencies/module
 platform/build-scripts/tests
@@ -660,6 +662,7 @@ platform/jewel/markdown/extensions/gfm-tables
 platform/jewel/markdown/extensions/images
 platform/jewel/markdown/ide-laf-bridge-styling
 platform/jewel/markdown/int-ui-standalone-styling
+platform/jewel/markdown/testing
 platform/jewel/samples/showcase
 platform/jewel/samples/standalone
 platform/jewel/ui
@@ -987,7 +990,7 @@ plugins/devkit/intellij.kotlin.devkit/k1
 plugins/devkit/intellij.kotlin.devkit/k2
 plugins/devkit/jps-plugin
 plugins/devkit/runtimeModuleRepository/generator
-plugins/devkit/runtimeModuleRepository/jps
+plugins/devkit/runtimeModuleRepository/generator/tests
 plugins/eclipse
 plugins/eclipse/common-eclipse-util
 plugins/eclipse/jps-plugin
@@ -1045,7 +1048,9 @@ plugins/gradle/java/performance
 plugins/gradle/java/plugin
 plugins/gradle/java/properties
 plugins/gradle/java/toml
+plugins/gradle/java/toml/tests
 plugins/gradle/jps-plugin
+plugins/gradle/kotlin
 plugins/gradle/native
 plugins/gradle/native/tooling
 plugins/gradle/plugin
@@ -1474,6 +1479,7 @@ plugins/search-everywhere-lucene
 plugins/search-everywhere-lucene/backend
 plugins/search-everywhere-lucene/common
 plugins/search-everywhere-lucene/frontend
+plugins/search-everywhere-lucene/test-commands
 plugins/search-everywhere-ml
 plugins/search-everywhere-ml/ranking/core
 plugins/search-everywhere-ml/ranking/ext

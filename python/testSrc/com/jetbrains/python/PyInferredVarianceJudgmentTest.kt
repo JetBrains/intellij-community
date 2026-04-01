@@ -2,14 +2,12 @@
 package com.jetbrains.python
 
 import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.fixtures.fixme
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrInferredVariance
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance
 import com.jetbrains.python.psi.types.TypeEvalContext
-import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
 
 internal class PyInferredVarianceJudgmentTest : PyTestCase() {
@@ -745,26 +743,18 @@ internal class PyInferredVarianceJudgmentTest : PyTestCase() {
   }
 
   fun `test Type in string literal`() {
-    fixme<AssertionFailedError>("PY-87942: No AST in string literal of type annotation",
-                                "expected:<COVARIANT> but was:<BIVARIANT>"
-    ) {
-      doTest("T", Variance.COVARIANT, """
-        class A[T]:
-            def method(self) -> "T": pass
-        """)
-    }
+    doTest("T", Variance.COVARIANT, """
+      class A[T]:
+          def method(self) -> "T": pass
+      """)
   }
 
   fun `test Type in string literal with Callable`() {
-    fixme<AssertionFailedError>("PY-87942: No AST in string literal of type annotation",
-                                "expected:<COVARIANT> but was:<BIVARIANT>"
-    ) {
-      doTest("T", Variance.COVARIANT, """
+    doTest("T", Variance.COVARIANT, """
       from typing import Callable
       class A[T]:
           def method(self, arg: "Callable[[T], None]"): pass
       """)
-    }
   }
 
   fun `test Recursive generic classes`() {

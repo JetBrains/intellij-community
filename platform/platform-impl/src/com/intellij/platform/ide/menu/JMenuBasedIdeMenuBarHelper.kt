@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.menu
 
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -16,10 +17,6 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.job
 import java.awt.AWTEvent
-import java.awt.KeyEventPostProcessor
-import java.awt.KeyboardFocusManager
-import java.awt.Toolkit
-import java.awt.event.AWTEventListener
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -134,7 +131,7 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
 
 }
 
-internal object WinAltKeyProcessor : KeyEventPostProcessor, AWTEventListener {
+internal object WinAltKeyProcessor : IdeEventQueue.NonLockedEventDispatcher {
   private val helpers = mutableListOf<JMenuBasedIdeMenuBarHelper>()
   private var registered = false
 
@@ -147,8 +144,7 @@ internal object WinAltKeyProcessor : KeyEventPostProcessor, AWTEventListener {
   fun register(helper: JMenuBasedIdeMenuBarHelper) {
     helpers.add(helper)
     if (!registered) {
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventPostProcessor(this)
-      Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK)
+      IdeEventQueue.getInstance().addDispatcher(this, null)
       registered = true
     }
   }
@@ -156,30 +152,28 @@ internal object WinAltKeyProcessor : KeyEventPostProcessor, AWTEventListener {
   fun unregister(helper: JMenuBasedIdeMenuBarHelper) {
     helpers.remove(helper)
     if (helpers.isEmpty() && registered) {
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventPostProcessor(this)
-      Toolkit.getDefaultToolkit().removeAWTEventListener(this)
+      IdeEventQueue.getInstance().removeDispatcher(this)
       registered = false
     }
   }
 
-  override fun eventDispatched(event: AWTEvent) {
-    if (!isEnabled()) {
-      return
-    }
-
-    // Prevent focusing the menu when hold Alt + mouse click shortcuts are used
-    if (event is MouseEvent && event.id == MouseEvent.MOUSE_PRESSED && altPressed) {
-      altPressedOnly = false
-    }
-  }
-
-  override fun postProcessKeyEvent(e: KeyEvent): Boolean {
+  override fun dispatch(e: AWTEvent): Boolean {
     if (!isEnabled()) {
       return false
     }
 
+    // Prevent focusing the menu when hold Alt + mouse click shortcuts are used
+    if (e is MouseEvent && e.id == MouseEvent.MOUSE_PRESSED && altPressed) {
+      altPressedOnly = false
+      return false
+    }
+
+    if (e !is KeyEvent) {
+      return false
+    }
+
     if (e.keyCode != KeyEvent.VK_ALT) {
-      if (altPressed && e.id == KeyEvent.KEY_PRESSED) {
+      if (altPressed && (e.id == KeyEvent.KEY_PRESSED || e.id == KeyEvent.KEY_RELEASED)) {
         altPressedOnly = false
       }
       return false

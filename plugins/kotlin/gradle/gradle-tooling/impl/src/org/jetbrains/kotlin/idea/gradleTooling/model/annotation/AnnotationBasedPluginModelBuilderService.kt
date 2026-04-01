@@ -37,7 +37,7 @@ interface AnnotationBasedPluginModel : Serializable {
      */
     fun dump(): DumpedPluginModel
 
-    val isEnabled get() = annotations.isNotEmpty() || presets.isNotEmpty()
+    val isEnabled: Boolean get() = annotations.isNotEmpty() || presets.isNotEmpty()
 }
 
 abstract class AnnotationBasedPluginModelBuilderService<T : AnnotationBasedPluginModel> : AbstractKotlinGradleModelBuilder() {

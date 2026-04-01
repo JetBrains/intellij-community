@@ -3,6 +3,12 @@ package com.jetbrains.python.psi;
 
 
 import com.jetbrains.python.ast.PyAstStarArgument;
+import org.jetbrains.annotations.Nullable;
 
 public interface PyStarArgument extends PyAstStarArgument, PyExpression {
+
+  @Override
+  default @Nullable PyExpression getExpression() {
+    return (PyExpression)PyAstStarArgument.super.getExpression();
+  }
 }

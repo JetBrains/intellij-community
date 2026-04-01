@@ -25,6 +25,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -32,6 +33,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -41,6 +43,8 @@ class CodeInsightContextManagerImpl(
   private val project: Project,
   private val cs: CoroutineScope,
 ) : CodeInsightContextManager, Disposable.Default {
+  private val invalidationJob = SupervisorJob(cs.coroutineContext[Job])
+  val invalidationCs: CoroutineScope = CoroutineScope(cs.coroutineContext + invalidationJob)
 
   companion object {
     @JvmStatic
@@ -60,10 +64,15 @@ class CodeInsightContextManagerImpl(
   @Volatile
   private var invalidationProcessorJob: Job? = null
 
+  @TestOnly
+  fun isContextInvalidationComplete(): Boolean {
+    return invalidationJob.children.toList().isEmpty()
+  }
+
   private fun invalidateAllContexts() {
     // it's unnecessary here to serialize invalidation requests because they are all equal, and it's unimportant, which is called first.
     // once more granular invalidation requests are added, it's necessary to add serialization (e.g., via a flow)
-    cs.launch {
+    invalidationCs.launch {
       edtWriteAction {
         preferredContext.invalidate()
         allContexts.invalidate()
@@ -76,12 +85,12 @@ class CodeInsightContextManagerImpl(
   }
 
   init {
-    EP_NAME.addChangeListener(cs, Runnable {
-      cs.launch {
+    EP_NAME.addChangeListener(cs) {
+      invalidationCs.launch {
         subscribeToChanges()
         invalidateAllContexts()
       }
-    })
+    }
     subscribeToChanges()
     InvalidationBulkFileListener.subscribeToVfsEvents()
   }

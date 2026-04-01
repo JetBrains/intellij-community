@@ -60,6 +60,7 @@
     <orderEntry type="module" module-name="intellij.platform.uast.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.runtime.repository.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.devkit.runtimeModuleRepository.generator.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.html.tools.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.lombok" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.xmlbeans" scope="TEST" />
@@ -204,11 +205,13 @@
     <orderEntry type="module" module-name="intellij.platform.images.build.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.inspect.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.detektPlugin.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.decoratedWindow.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ideLafBridge.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.core.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.autolink.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmAlerts.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmTables.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.images.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ui.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl.tests" scope="TEST" />
@@ -240,6 +243,7 @@
     <orderEntry type="module" module-name="intellij.remoteControl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.remoteDev.util.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.repository.search.common.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.searchEverywhere.backend.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.core.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.typos.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.settingsSync.core.tests" scope="TEST" />

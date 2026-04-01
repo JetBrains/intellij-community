@@ -153,7 +153,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
     fun addKotlinPlugin(version: String?, usePlaceholderVersion: Boolean = false): MavenDomPlugin {
         val kotlinVersion = if (usePlaceholderVersion) $$"${$$KOTLIN_VERSION_PROPERTY}" else version
         val plugin = addPlugin(kotlinPluginId(kotlinVersion))
-        val addExtensions = isKotlinVersionAtLeast(version, LanguageVersion.KOTLIN_2_4)
+        val addExtensions = isKotlinVersionAtLeast(version, LanguageVersion.KOTLIN_2_3)
         if (addExtensions) plugin.extensions.setStringValue("true")
         return plugin
     }

@@ -24,10 +24,6 @@ import javax.swing.plaf.LayerUI
  * Transfers mouse move-click-wheel events to the listeners.
  */
 class EditorComponentWrapper private constructor(private val editor: EditorImpl) : JPanel(BorderLayout()) {
-
-  // JLayer here is our frame borders around notebook cells + to transfer ALL mouse events over editor, to subscriber.
-  private val layeredPane: JLayer<Component>
-
   private var editorMouseListener: MouseListener? = null
   private var editorMouseMotionListener: MouseMotionListener? = null
   private var editorMouseWheelListener: MouseWheelListener? = null
@@ -45,7 +41,9 @@ class EditorComponentWrapper private constructor(private val editor: EditorImpl)
       add(viewportWrapper, BorderLayout.CENTER)
     }
 
-    layeredPane = JLayer(editorPanel, EditorComponentWrapperLayerUI())
+    // JLayer here is our frame borders around notebook cells
+    // + to transfer ALL mouse events over editor, to subscribers.
+    val layeredPane = JLayer(editorPanel, EditorComponentWrapperLayerUI())
 
     add(layeredPane, BorderLayout.CENTER)
 

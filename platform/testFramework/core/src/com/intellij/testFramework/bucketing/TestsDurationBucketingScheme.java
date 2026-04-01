@@ -44,7 +44,7 @@ public class TestsDurationBucketingScheme implements BucketingScheme {
       if (season == null) throw new RuntimeException("Tests duration bucketing without season specified");
       // Specially formatted error message will fail the build
       // See https://www.jetbrains.com/help/teamcity/service-messages.html#Reporting+Build+Problems
-      //System.out.println("##teamcity[buildProblem description='Tests duration bucketing with season specified, but no data found for it, falling back to hashing bucketing']");
+      System.out.println("##teamcity[buildProblem description='Tests duration bucketing with season specified, but no data found for it, falling back to hashing bucketing']");
 
       myPutMissingToFirstBucket = false;
       myBucketFilters = Collections.emptyList();

@@ -14,6 +14,7 @@ import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootMap
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -173,7 +174,8 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
 
     abstract fun notificationHolder(project: Project): KotlinAutoConfigurationNotificationHolder
 
-    protected open fun doInternalConfigure(
+    @VisibleForTesting
+    open fun doInternalConfigure(
         project: Project,
         kotlinVersion: IdeKotlinVersion,
         modules: List<Module>,

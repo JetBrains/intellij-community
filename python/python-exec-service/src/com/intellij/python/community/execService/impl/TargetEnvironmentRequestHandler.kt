@@ -78,36 +78,27 @@ abstract class TargetEnvironmentRequestHandler<T : TargetEnvironmentRequest>(pri
           // This is helper. They should never be uploaded explicitly, as handlers (inheritors) take care of them.
           LocalPathToTargetResult(
             targetPath = TargetEnvironment.TargetPath.Persistent(mightBeHelperRemoteRoot),
-            removeAndShutDown = false,
+            removeAtShutdown = false,
             uploadVolumeExplicitly = false
           )
         }
         else {
-          // This path was explicitly marked as persistent by inheritor
-          val explicitlyPersistent = uploadInfo.explicitlyPersistent[localPath]
-          if (explicitlyPersistent != null) {
-            LocalPathToTargetResult(
-              targetPath = explicitlyPersistent,
-              removeAndShutDown = true,
-              uploadVolumeExplicitly = false
-            )
-          }
-          else {
-            // Just a random temp path, but we try to preserve location of workDir (most probably projDir) is set.
-            LocalPathToTargetResult(
-              targetPath = TargetEnvironment.TargetPath.Temporary(hint = workingDirToDownload?.pathString),
-              removeAndShutDown = true,
-              uploadVolumeExplicitly = true
-            )
-          }
+          // Just a random temp path, but we try to preserve location of workDir (most probably projDir) is set.
+          LocalPathToTargetResult(
+            targetPath = TargetEnvironment.TargetPath.Temporary(hint = workingDirToDownload?.pathString),
+            removeAtShutdown = true,
+            uploadVolumeExplicitly = true
+          )
         }
       }
-      localDirs.associateWith { localPath ->
+      localDirs.filterNot { localPath ->
+        request.uploadVolumes.any { it.localRootPath == localPath }
+      }.associateWith { localPath ->
         val localPathToTargetRes = localPathToTarget(localPath)
         val root = TargetEnvironment.UploadRoot(
           localRootPath = localPath,
           targetRootPath = localPathToTargetRes.targetPath,
-          removeAtShutdown = localPathToTargetRes.removeAndShutDown
+          removeAtShutdown = localPathToTargetRes.removeAtShutdown
         )
         UploadRootWithExplicitUploadInfo(root, uploadVolumeExplicitly = localPathToTargetRes.uploadVolumeExplicitly)
       }
@@ -119,10 +110,6 @@ abstract class TargetEnvironmentRequestHandler<T : TargetEnvironmentRequest>(pri
      * Each inheritor provides it so we can access the helpers.
      */
     val helpersAware: HelpersAwareTargetEnvironmentRequest,
-    /**
-     * These paths will be converted to persistent volumes (temporary otherwise)
-     */
-    val explicitlyPersistent: Map<Path, TargetEnvironment.TargetPath.Persistent> = emptyMap(),
   )
 
 
@@ -130,6 +117,6 @@ abstract class TargetEnvironmentRequestHandler<T : TargetEnvironmentRequest>(pri
 
 private data class LocalPathToTargetResult(
   val targetPath: TargetEnvironment.TargetPath,
-  val removeAndShutDown: Boolean,
+  val removeAtShutdown: Boolean,
   val uploadVolumeExplicitly: Boolean,
 )

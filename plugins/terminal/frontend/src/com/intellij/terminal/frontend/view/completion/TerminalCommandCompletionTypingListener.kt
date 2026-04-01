@@ -80,12 +80,23 @@ internal class TerminalCommandCompletionTypingListener(
     }
   }
 
+  /**
+   * Heuristically checks that typing of the given [char] happened.
+   * Actually, [beforeTypingCursorOffset] is not really reliable -
+   * the char will be typed on this offset only if model was up to date at the moment of typing.
+   * But if there were 2 typing events, and we didn't receive an update from the process between them,
+   * then both typings will be registered with the same [beforeTypingCursorOffset].
+   * So, instead of checking that char appeared at [beforeTypingCursorOffset],
+   * we check that the char before the cursor became [char].
+   */
   private fun isTypingHappened(beforeTypingCursorOffset: TerminalOffset, char: Char): Boolean {
-    val newCursorOffset = beforeTypingCursorOffset + 1
     val startOffset = beforeTypingCursorOffset.coerceIn(outputModel.startOffset, outputModel.endOffset)
-    val endOffset = newCursorOffset.coerceIn(outputModel.startOffset, outputModel.endOffset)
+    val endOffset = outputModel.cursorOffset.coerceIn(outputModel.startOffset, outputModel.endOffset)
+    if (startOffset >= endOffset) {
+      return false
+    }
     val typedText = outputModel.getText(startOffset, endOffset).toString()
-    return typedText.singleOrNull() == char && outputModel.cursorOffset >= newCursorOffset
+    return typedText.endsWith(char)
   }
 
   private fun canInvokeCompletion(char: Char): Boolean {

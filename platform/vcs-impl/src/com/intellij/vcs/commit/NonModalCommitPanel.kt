@@ -108,9 +108,13 @@ abstract class NonModalCommitPanel(
     bottomPanel.add(commitAuthorComponent)
     bottomPanel.add(commitActionsPanel)
 
-    centerPanel
+    val upperPanel = JBUI.Panels.simplePanel()
+      .andTransparent()
       .addToTop(statusComponent)
       .addToCenter(commitMessagePanel)
+
+    centerPanel
+      .addToCenter(upperPanel)
       .addToBottom(bottomPanel)
 
     mainPanel.addToCenter(centerPanel)

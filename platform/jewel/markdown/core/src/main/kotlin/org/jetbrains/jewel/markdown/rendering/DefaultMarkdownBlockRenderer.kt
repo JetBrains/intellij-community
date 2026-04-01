@@ -752,7 +752,7 @@ public open class DefaultMarkdownBlockRenderer(
         enabled: Boolean,
         onUrlClick: ((String) -> Unit)? = null,
     ) =
-        remember(block.inlineContent, styling, enabled) {
+        remember(block.inlineContent, styling, enabled, onUrlClick) {
             inlineRenderer.renderAsAnnotatedString(block.inlineContent, styling, enabled, onUrlClick)
         }
 

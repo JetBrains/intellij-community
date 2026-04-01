@@ -3441,6 +3441,162 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-76850
+  public void testParamSpecComponentsSwapped() {
+    doTestByText("""
+                   def mixed_up[**P](*args: <warning descr="'P.kwargs' can only be used to annotate '**kwargs' parameters">P.kwargs</warning>, **kwargs: <warning descr="'P.args' can only be used to annotate '*args' parameters">P.args</warning>) -> None:
+                       pass
+                   """);
+  }
+
+  // PY-76850
+  public void testParamSpecComponentOnRegularParam() {
+    doTestByText("""
+                   def misplaced[**P](x: <warning descr="ParamSpec component can only be used to annotate '*args' or '**kwargs' parameters">P.args</warning>) -> None:
+                       pass
+                   """);
+  }
+
+  // PY-76850
+  public void testParamSpecComponentSameForBoth() {
+    doTestByText("""
+                   def bad[**P](*args: P.args, **kwargs: <warning descr="'P.args' can only be used to annotate '*args' parameters">P.args</warning>) -> None:
+                       pass
+                   """);
+  }
+
+  // PY-76850
+  public void testParamSpecComponentsKwargsWithIllegalAnnotation() {
+    doTestByText("""
+                   from typing import Any
+                   def bad[**P](*args: <warning descr="'P.args' and 'P.kwargs' must both be present in the same function signature">P.args</warning>, **kwargs: Any) -> None:
+                       pass
+                   """);
+  }
+
+  // PY-76850
+  public void testParamSpecComponentNotInScope() {
+    doTestByText("""
+                   from typing import ParamSpec
+                   P = ParamSpec("P")
+                   def out_of_scope(*args: <warning descr="ParamSpec 'P' must be a type parameter of the enclosing callable or class">P</warning>.args, **kwargs: <warning descr="ParamSpec 'P' must be a type parameter of the enclosing callable or class">P</warning>.kwargs) -> None:
+                       pass
+                   """);
+  }
+
+  // PY-76850
+  public void testParamSpecComponentAsVariableAnnotation() {
+    doTestByText("""
+                   def foo[**P]() -> None:
+                       stored_args: <warning descr="ParamSpec component can only be used to annotate '*args' or '**kwargs' parameters">P.args</warning>
+                       stored_kwargs: <warning descr="ParamSpec component can only be used to annotate '*args' or '**kwargs' parameters">P.kwargs</warning>
+                   """);
+  }
+
+  // PY-76850
+  public void testParamSpecComponentUnpairedArgs() {
+    doTestByText("""
+                   def just_args[**P](*args: <warning descr="'P.args' and 'P.kwargs' must both be present in the same function signature">P.args</warning>) -> None:
+                       pass
+                   """);
+  }
+
+  // PY-76850
+  public void testParamSpecComponentUnpairedKwargs() {
+    doTestByText("""
+                   def just_kwargs[**P](**kwargs: <warning descr="'P.args' and 'P.kwargs' must both be present in the same function signature">P.kwargs</warning>) -> None:
+                       pass
+                   """);
+  }
+
+  // PY-76850
+  public void testParamSpecComponentKeywordOnlyBetween() {
+    doTestByText("""
+                   def bar[**P](*args: P.args, <warning descr="No parameters allowed between 'P.args' and 'P.kwargs'">s: str</warning>, **kwargs: P.kwargs) -> None:
+                       pass
+                   """);
+  }
+
+  // PY-76850
+  public void testParamSpecComponentInScopeViaGenericClass() {
+    doTestByText("""
+                   from typing import ParamSpec, Generic
+                   P = ParamSpec("P")
+                   class Wrapper(Generic[P]):
+                       def call(self, *args: P.args, **kwargs: P.kwargs) -> None:
+                           pass
+                   """);
+  }
+
+  // PY-76850
+  public void testParamSpecComponentInScopeViaProtocolClass() {
+    doTestByText("""
+                   from typing import ParamSpec, Protocol
+                   P = ParamSpec("P")
+                   class Proto(Protocol[P]):
+                       def __call__(self, *args: P.args, **kwargs: P.kwargs) -> None: ...
+                   """);
+  }
+
+  // PY-76850
+  public void testParamSpecComponentInScopeNewStyleGenericClass() {
+    doTestByText("""
+                   class Wrapper[**P]:
+                       def call(self, *args: P.args, **kwargs: P.kwargs) -> None:
+                           pass
+                   """);
+  }
+
+  // PY-76850
+  public void testParamSpecComponentNotInScopeInClass() {
+    doTestByText("""
+                   from typing import ParamSpec
+                   P = ParamSpec("P")
+                   class NoParamSpec:
+                       def call(self, *args: <warning descr="ParamSpec 'P' must be a type parameter of the enclosing callable or class">P</warning>.args, **kwargs: <warning descr="ParamSpec 'P' must be a type parameter of the enclosing callable or class">P</warning>.kwargs) -> None:
+                           pass
+                   """);
+  }
+
+  // PY-76850
+  public void testParamSpecComponentsValidUsage() {
+    doTestByText("""
+                   from typing import Callable, ParamSpec
+                   P = ParamSpec("P")
+
+                   def valid1[**P](*args: P.args, **kwargs: P.kwargs) -> None:
+                       pass
+
+                   def valid2[**P](s: str, *args: P.args, **kwargs: P.kwargs) -> None:
+                       pass
+
+                   def twice(f: Callable[P, int], *args: P.args, **kwargs: P.kwargs) -> int:
+                       return f(*args, **kwargs)
+                   """);
+  }
+
+  // PY-76850
+  public void testAfterParamSpecArgsKwargsParamWithoutAnnotation() {
+    doTestByText("""
+                   from typing import ParamSpec, TypeVar, Callable
+                   P = ParamSpec("P")
+                   T = TypeVar("T")
+                   
+                   def invoke(fn: Callable[P, T], *args: <warning descr="'P.args' and 'P.kwargs' must both be present in the same function signature">P.args</warning>, **kwargs) -> T:
+                       pass
+                   """);
+  }
+
+  // PY-76850
+  public void testIllegalParamSpecUsageForKwargs() {
+    doTestByText("""
+                   from typing import ParamSpec, TypeVar, Callable
+                   P = ParamSpec("P")
+                   def invoke(**kwargs: <warning descr="'P.args' and 'P.kwargs' must both be present in the same function signature"><warning descr="ParamSpec 'P' must be a type parameter of the enclosing callable or class">P</warning>.kwargs</warning>) -> None:
+                       pass
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

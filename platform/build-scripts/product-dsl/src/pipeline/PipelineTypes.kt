@@ -81,7 +81,6 @@ internal data class GenerationModel(
   @JvmField val config: ModuleSetGenerationConfig,
   @JvmField val projectRoot: Path,
   @JvmField val outputProvider: ModuleOutputProvider,
-  @JvmField val isUltimateBuild: Boolean,
 
   // ============ Caches (created during model building) ============
 

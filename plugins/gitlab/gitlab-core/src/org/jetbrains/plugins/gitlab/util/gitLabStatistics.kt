@@ -96,7 +96,7 @@ object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 32)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 33)
 
   /**
    * Server metadata was fetched
@@ -353,6 +353,8 @@ enum class GitLabApiRequestName {
   REST_GET_PROJECT_IS_FORKED,
   REST_GET_PROJECT_NAMESPACE,
   REST_GET_PROJECT_USERS,
+  REST_GET_PROJECT_SEARCH_USERS,
+  REST_GET_GROUPS,
   REST_CREATE_PROJECT,
   REST_GET_COMMIT,
   REST_GET_COMMIT_DIFF,
@@ -373,6 +375,7 @@ enum class GitLabApiRequestName {
   REST_GET_MERGE_REQUEST_COMMITS,
   REST_GET_MERGE_REQUEST_STATE_EVENTS,
   REST_GET_MERGE_REQUEST_LABEL_EVENTS,
+  REST_GET_MERGE_REQUEST_PARTICIPANTS,
   REST_GET_MERGE_REQUEST_MILESTONE_EVENTS,
   REST_GET_MERGE_REQUEST_DISCUSSIONS,
   REST_CREATE_MERGE_REQUEST_DISCUSSION_NOTE,

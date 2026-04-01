@@ -7,7 +7,6 @@ import com.intellij.unscramble.CompoundDumpItem
 import com.intellij.unscramble.dumpItems
 import com.intellij.unscramble.parseIntelliJThreadDump
 import com.intellij.unscramble.serializeIntelliJThreadDump
-import junit.framework.TestCase.assertEquals
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.test.DEBUGGER_TESTDATA_PATH_BASE
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -26,16 +25,23 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
     fun `imported coroutine dump items are restored properly`() {
         val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(loadThreadDump("importedCoroutineDumpItems.txt")))
 
-        val dumpItems = parsedThreadDump.dumpItems().filter { !it.isContainer }
-        assertEquals(2, dumpItems.size)
+        val dumpItems = parsedThreadDump.dumpItems()
+        val coroutineRoot = dumpItems.single { it.treeId == Long.MIN_VALUE }
+        assertEquals("Dumped Coroutines", coroutineRoot.name)
+        assertTrue(coroutineRoot.isContainer)
+        assertTrue(coroutineRoot.serialize().contains("Carrying virtual thread #0"))
 
-        val parentCoroutine = dumpItems.single { it.treeId == 300L }
+        val coroutineDumpItems = dumpItems.filter { !it.isContainer }
+        assertEquals(2, coroutineDumpItems.size)
+
+        val parentCoroutine = coroutineDumpItems.single { it.treeId == 300L }
         assertTrue(parentCoroutine is CoroutineDumpItem)
         assertEquals("scope:1", parentCoroutine.name)
+        assertEquals(Long.MIN_VALUE, parentCoroutine.parentTreeId)
         assertEquals(" (suspended)", parentCoroutine.stateDesc)
         assertEquals("Coroutine", parentCoroutine.iconToolTip)
 
-        val childCoroutine = dumpItems.single { it.treeId == 301L }
+        val childCoroutine = coroutineDumpItems.single { it.treeId == 301L }
         assertTrue(childCoroutine is CoroutineDumpItem)
         assertEquals("scope:2", childCoroutine.name)
         assertEquals(300L, childCoroutine.parentTreeId)
@@ -46,14 +52,16 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
     fun `imported coroutine hierarchy and dispatcher context are preserved`() {
         val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(loadThreadDump("importedCoroutineHierarchy.txt")))
 
-        val dumpItems = parsedThreadDump.dumpItems().filter { !it.isContainer }
-        val parentCoroutine = dumpItems.single { it.treeId == 300L }
-        val childCoroutine = dumpItems.single { it.treeId == 301L }
-        val otherDispatcherCoroutine = dumpItems.single { it.treeId == 302L }
+        val dumpItems = parsedThreadDump.dumpItems()
+        val coroutineDumpItems = dumpItems.filter { !it.isContainer }
+        val parentCoroutine = coroutineDumpItems.single { it.treeId == 300L }
+        val childCoroutine = coroutineDumpItems.single { it.treeId == 301L }
+        val otherDispatcherCoroutine = coroutineDumpItems.single { it.treeId == 302L }
 
         assertTrue(parentCoroutine is CoroutineDumpItem)
         assertTrue(childCoroutine is CoroutineDumpItem)
         assertTrue(otherDispatcherCoroutine is CoroutineDumpItem)
+        assertEquals(Long.MIN_VALUE, parentCoroutine.parentTreeId)
         assertEquals(300L, childCoroutine.parentTreeId)
         assertEquals(300L, otherDispatcherCoroutine.parentTreeId)
         assertEquals(childCoroutine.mergeableToken, parentCoroutine.mergeableToken)
@@ -74,7 +82,7 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     @Test
-    fun `coroutine header state is restored from serialized state without exact synthetic prefix match`() {
+    fun `coroutine header state is restored from inline metadata`() {
         val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(loadThreadDump("coroutineHeaderStateWithoutSyntheticPrefix.txt")))
 
         val dumpItem = parsedThreadDump.dumpItems().single { !it.isContainer }
@@ -85,11 +93,11 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
             "\"scope:1\" RUNNING [Dispatchers.Default]\n    at example.Parent.one(Parent.kt:1)",
             dumpItem.stackTrace,
         )
-        assertTrue(dumpItem.exportedStackTrace.startsWith("\"scope:1@300\" virtual tid=0x0 nid=NA running [Coroutine] [dispatcher=Dispatchers.Default]"))
+        assertTrue(dumpItem.serialize().startsWith("\"scope:1@300\" virtual tid=0x0 nid=NA running [\"type\":\"coroutine\",\"id\":300,\"dispatcher\":\"Dispatchers.Default\"]"))
     }
 
     @Test
-    fun `coroutine dump item exposes clean ui stacktrace and synthetic exported stacktrace`() {
+    fun `coroutine dump item exposes clean ui stacktrace and structured exported stacktrace`() {
         val coroutineInfo = CoroutineInfoData(
             name = "scope",
             id = 1L,
@@ -114,8 +122,8 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
         assertFalse(dumpItem.stackTrace.contains("virtual tid=0x0"))
         assertFalse(dumpItem.stackTrace.contains("[Coroutine]"))
         assertEquals(
-            "\"scope:1@300\" virtual tid=0x0 nid=NA suspended [Coroutine] [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}]\n",
-            dumpItem.exportedStackTrace,
+            "\"scope:1@300\" virtual tid=0x0 nid=NA suspended [\"type\":\"coroutine\",\"id\":300,\"dispatcher\":\"Dispatchers.Default\",\"job\":\"StandaloneCoroutine{Active}\"]",
+            dumpItem.serialize(),
         )
     }
 
@@ -128,8 +136,8 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
             dumpItem.stackTrace,
         )
         assertEquals(
-            "\"scope:300@300\" virtual tid=0x0 nid=NA running [Coroutine] [dispatcher=Dispatchers.Default, job=StandaloneCoroutine{Active}, runningThread=UNKNOWN_THREAD]\n",
-            dumpItem.exportedStackTrace,
+            "\"scope:300@300\" virtual tid=0x0 nid=NA running [\"type\":\"coroutine\",\"id\":300,\"dispatcher\":\"Dispatchers.Default\",\"job\":\"StandaloneCoroutine{Active}\",\"runningThread\":\"UNKNOWN_THREAD\"]",
+            dumpItem.serialize(),
         )
     }
 
@@ -139,7 +147,7 @@ class CoroutineThreadDumpTest : KotlinLightCodeInsightFixtureTestCase() {
 
         val serializedDump = serializeIntelliJThreadDump(listOf(dumpItem), listOf("Full thread dump"))
 
-        assertTrue(serializedDump.contains(dumpItem.exportedStackTrace))
+        assertTrue(serializedDump.contains(dumpItem.serialize()))
         assertFalse(serializedDump.contains(dumpItem.stackTrace))
     }
 

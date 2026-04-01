@@ -165,6 +165,10 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   
   public void testNonNlsFieldInitializer() { doTest(); }
 
+  public void testQualifiedReferences() { doTest(); }
+
+  public void testLoops() { doTest(); }
+
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("java-i18n") + "/testData/inspections";

@@ -45,6 +45,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLeftSideLine
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToRightSideLine
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
+import org.jetbrains.plugins.gitlab.ui.GitLabViewModelWithTextCompletion
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModelBase
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestStandaloneDraftNoteViewModelBase
@@ -105,6 +106,7 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
   htmlConverter: GitLabMarkdownToHtmlConverter,
+  private val textCompletionViewModel: GitLabViewModelWithTextCompletion,
 ) : GitLabMergeRequestDiscussionsViewModels {
   private val cs = parentCs.childScope("GitLab Merge Request Review Discussions", Dispatchers.Default)
 
@@ -112,7 +114,7 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
     .map { ComputedResult.fromResult(it) }
     .transformConsecutiveSuccesses {
       mapStatefulToStateful {
-        GitLabMergeRequestDiscussionViewModelBase(project, this, projectData, currentUser, it, htmlConverter)
+        GitLabMergeRequestDiscussionViewModelBase(project, this, projectData, currentUser, it, htmlConverter, textCompletionViewModel)
       }
     }
     .stateInNow(cs, ComputedResult.loading())
@@ -122,7 +124,7 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
     .transformConsecutiveSuccesses {
       mapFiltered { it.discussionId == null }
         .mapStatefulToStateful {
-          GitLabMergeRequestStandaloneDraftNoteViewModelBase(project, this, it, mergeRequest, projectData, htmlConverter)
+          GitLabMergeRequestStandaloneDraftNoteViewModelBase(project, this, it, mergeRequest, projectData, htmlConverter, textCompletionViewModel)
         }
     }
     .stateInNow(cs, ComputedResult.loading())
@@ -176,7 +178,7 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   override fun requestNewDiscussion(position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition, focus: Boolean) {
     _newDiscussions.updateAndGet { currentNewDiscussions ->
       if (!currentNewDiscussions.any { it.position.value == position.position } && mergeRequest.canAddNotes) {
-        val vm = GitLabNoteEditingViewModel.forNewDiffNote(cs, project, projectData, mergeRequest, currentUser, position).apply {
+        val vm = GitLabNoteEditingViewModel.forNewDiffNote(cs, project, projectData, mergeRequest, currentUser, position, textCompletionViewModel).apply {
           onDoneIn(cs) {
             cancelNewDiscussion(this)
           }

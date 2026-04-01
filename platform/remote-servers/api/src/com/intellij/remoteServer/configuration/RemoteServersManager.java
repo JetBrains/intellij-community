@@ -2,6 +2,7 @@
 package com.intellij.remoteServer.configuration;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.ServerType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,11 @@ public abstract class RemoteServersManager {
   public abstract <C extends ServerConfiguration> List<RemoteServer<C>> getServers(@NotNull ServerType<C> type);
 
   public abstract @Nullable <C extends ServerConfiguration> RemoteServer<C> findByName(@NotNull String name, @NotNull ServerType<C> type);
+
+  @ApiStatus.Internal
+  public abstract @Nullable <C extends ServerConfiguration> RemoteServer<C> findByName(@NotNull Project project,
+                                                                                       @NotNull String name,
+                                                                                       @NotNull ServerType<C> type);
 
   @ApiStatus.Internal
   public abstract @NotNull UUID getId(RemoteServer<?> server);

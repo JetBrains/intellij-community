@@ -23,6 +23,8 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.editorIdOrNull
+import com.intellij.openapi.editor.impl.findEditorOrNull
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
@@ -176,12 +178,13 @@ private fun createButton(
         iconSize = (factory.editor.lineHeight * .65).toInt()
     )
 
+    val noHoverBg = factory.editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLAY_DEFAULT).backgroundColor
+        ?: factory.editor.colorsScheme.defaultBackground
+
     return iconPresentation
         .inset(left = SMALL_INSET_SIZE, right = SMALL_INSET_SIZE, top = SMALL_INSET_SIZE, down = SMALL_INSET_SIZE)
         .withOnClickListener(MouseButton.Left, onClick)
         .withHover { original ->
-            val noHoverBg = factory.editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLAY_DEFAULT).backgroundColor
-                ?: factory.editor.colorsScheme.defaultBackground
             val hoverBg = noHoverBg.brighter()
             RoundWithBackgroundPresentation(original, arcWidth = 4, arcHeight = 4, color = hoverBg)
         }

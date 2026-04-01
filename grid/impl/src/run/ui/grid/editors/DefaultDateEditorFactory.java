@@ -41,21 +41,22 @@ public final class DefaultDateEditorFactory extends DefaultTemporalEditorFactory
   private static final Logger LOG = Logger.getInstance(DefaultDateEditorFactory.class);
 
   @Override
-  protected @NotNull Formatter getFormatInner(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
+  protected @NotNull Formatter getFormatInner(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
     GridColumn c = Objects.requireNonNull(grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getColumn(column));
     return FormatterCreator.get(grid).create(getDateKey(c, null, FormatsCache.get(grid)));
   }
 
   @Override
-  public int getSuitability(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
-    return GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column) == Types.DATE ? SUITABILITY_MIN : SUITABILITY_UNSUITABLE;
+  public int getSuitability(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column,
+                            @Nullable Object value) {
+    return GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column, value) == Types.DATE ? SUITABILITY_MIN : SUITABILITY_UNSUITABLE;
   }
 
   @Override
   public @NotNull ValueParser getValueParser(@NotNull DataGrid grid,
                                              @NotNull ModelIndex<GridRow> rowIdx,
-                                             @NotNull ModelIndex<GridColumn> columnIdx) {
-    ValueParser parser = super.getValueParser(grid, rowIdx, columnIdx);
+                                             @NotNull ModelIndex<GridColumn> columnIdx, @Nullable Object value) {
+    ValueParser parser = super.getValueParser(grid, rowIdx, columnIdx, value);
     return (text, document) -> {
       Object v = parser.parse(text, document);
       return v instanceof Date ? new java.sql.Date(((Date)v).getTime()) : v;
@@ -71,10 +72,11 @@ public final class DefaultDateEditorFactory extends DefaultTemporalEditorFactory
                                                                 @Nullable TextCompletionProvider provider,
                                                                 @NotNull ModelIndex<GridRow> row,
                                                                 @NotNull ModelIndex<GridColumn> column,
+                                                                @Nullable Object value,
                                                                 @NotNull ValueParser valueParser,
                                                                 @NotNull ValueFormatter valueFormatter) {
     return new FormatBasedGridCellEditor.WithBrowseButton<CalendarPane, Date>(
-      project, grid, format, nullValue, initiator, row, column, Date.class, provider, valueParser, valueFormatter, this) {
+      project, grid, format, nullValue, initiator, row, column, value, Date.class, provider, valueParser, valueFormatter, this) {
       @Override
       protected void configurePopup(@NotNull JBPopup popup, @NotNull CalendarPane component) {
         component.addActionListener(e -> {

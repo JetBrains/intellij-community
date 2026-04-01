@@ -99,13 +99,7 @@ object McpClientDetector {
   }
 
   private fun detectClaudeCode(): McpClient? {
-    val configPath = when {
-      SystemInfo.isMac -> "~/.claude.json"
-      SystemInfo.isWindows -> null
-      SystemInfo.isLinux -> "~/.claude.json"
-      else -> null
-    }
-    if (configPath == null) return null
+    val configPath = "~/.claude.json"
     val path = Paths.get(OSAgnosticPathUtil.expandUserHome(configPath))
 
     if (path.exists() && path.isRegularFile()) {

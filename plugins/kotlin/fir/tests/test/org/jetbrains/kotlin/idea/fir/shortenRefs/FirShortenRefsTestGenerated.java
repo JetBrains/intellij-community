@@ -341,6 +341,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
                 runTest("../../idea/tests/testData/shortenRefsFir/quailfiers/Enum.kt");
             }
 
+            @TestMetadata("FilteredNestedType.kt")
+            public void testFilteredNestedType() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/quailfiers/FilteredNestedType.kt");
+            }
+
             @TestMetadata("NestedTypeInSameFile.kt")
             public void testNestedTypeInSameFile() throws Exception {
                 runTest("../../idea/tests/testData/shortenRefsFir/quailfiers/NestedTypeInSameFile.kt");
@@ -606,6 +611,85 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
         @TestMetadata("visitorConflict.kt")
         public void testVisitorConflict() throws Exception {
             runTest("../../idea/tests/testData/shortenRefs/this/visitorConflict.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/shortenRefs/java")
+    public static class Java extends AbstractFirShortenRefsTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
+        }
+
+        @TestMetadata("filteredClassImport.kt")
+        public void testFilteredClassImport() throws Exception {
+            runTest("../../idea/tests/testData/shortenRefs/java/filteredClassImport.kt");
+        }
+
+        @TestMetadata("filteredClassNoImports.kt")
+        public void testFilteredClassNoImports() throws Exception {
+            runTest("../../idea/tests/testData/shortenRefs/java/filteredClassNoImports.kt");
+        }
+
+        @TestMetadata("innerClassImport.kt")
+        public void testInnerClassImport() throws Exception {
+            runTest("../../idea/tests/testData/shortenRefs/java/innerClassImport.kt");
+        }
+
+        @TestMetadata("innerClassNoImports.kt")
+        public void testInnerClassNoImports() throws Exception {
+            runTest("../../idea/tests/testData/shortenRefs/java/innerClassNoImports.kt");
+        }
+
+        @TestMetadata("innerClassOnDemandImport.kt")
+        public void testInnerClassOnDemandImport() throws Exception {
+            runTest("../../idea/tests/testData/shortenRefs/java/innerClassOnDemandImport.kt");
+        }
+
+        @TestMetadata("redundantGrandParentClassQualifier.kt")
+        public void testRedundantGrandParentClassQualifier() throws Exception {
+            runTest("../../idea/tests/testData/shortenRefs/java/redundantGrandParentClassQualifier.kt");
+        }
+
+        @TestMetadata("redundantGrandParentClassQualifierAmbiguous.kt")
+        public void testRedundantGrandParentClassQualifierAmbiguous() throws Exception {
+            runTest("../../idea/tests/testData/shortenRefs/java/redundantGrandParentClassQualifierAmbiguous.kt");
+        }
+
+        @TestMetadata("staticClassNoImports.kt")
+        public void testStaticClassNoImports() throws Exception {
+            runTest("../../idea/tests/testData/shortenRefs/java/staticClassNoImports.kt");
+        }
+
+        @TestMetadata("staticClassOnDemandImport.kt")
+        public void testStaticClassOnDemandImport() throws Exception {
+            runTest("../../idea/tests/testData/shortenRefs/java/staticClassOnDemandImport.kt");
+        }
+
+        @TestMetadata("staticFieldNoImports.kt")
+        public void testStaticFieldNoImports() throws Exception {
+            runTest("../../idea/tests/testData/shortenRefs/java/staticFieldNoImports.kt");
+        }
+
+        @TestMetadata("staticFieldOnDemandImport.kt")
+        public void testStaticFieldOnDemandImport() throws Exception {
+            runTest("../../idea/tests/testData/shortenRefs/java/staticFieldOnDemandImport.kt");
+        }
+
+        @TestMetadata("staticMethodNoImports.kt")
+        public void testStaticMethodNoImports() throws Exception {
+            runTest("../../idea/tests/testData/shortenRefs/java/staticMethodNoImports.kt");
+        }
+
+        @TestMetadata("staticMethodOnDemandImport.kt")
+        public void testStaticMethodOnDemandImport() throws Exception {
+            runTest("../../idea/tests/testData/shortenRefs/java/staticMethodOnDemandImport.kt");
         }
     }
 }

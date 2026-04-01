@@ -49,7 +49,7 @@ val Module.kotlinGradlePluginVersion: KotlinGradlePluginVersion?
         return projectDataNode.data.kotlinGradlePluginVersion
     }
 
-private class GradleKotlinCompilerVersionProvider : KotlinCompilerVersionProvider {
+internal class GradleKotlinCompilerVersionProvider : KotlinCompilerVersionProvider {
     override fun getKotlinCompilerVersion(module: Module): IdeKotlinVersion? {
         return module.kotlinGradlePluginVersion?.versionString?.let(IdeKotlinVersion::opt)
     }

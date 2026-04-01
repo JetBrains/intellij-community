@@ -10,6 +10,7 @@
     <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.diff"/>
     <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang.impl"/>
@@ -59,6 +60,9 @@
 
     <registryKey key="vcs.merge.conflict.iterative.resolution" defaultValue="false" restartRequired="false"
                  description="Enable iterative VCS conflict resolution flow"/>
+
+    <registryKey key="vcs.merge.conflict.file.suggestion" defaultValue="false" restartRequired="false"
+                 description="Automatically open the next file in the merge conflict"/>
 
     <projectService serviceInterface="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings"
                     serviceImplementation="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettingsImpl"/>

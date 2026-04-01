@@ -170,9 +170,6 @@ internal suspend fun generateAllProductXmlFiles(
 
   val allProducts = discoveredProducts + testProducts
 
-  // Detect if this is an Ultimate build by checking if community directory is a subdirectory
-  val isUltimateBuild = Files.exists(projectRoot.resolve("community"))
-
   val productResults = coroutineScope {
     allProducts.map { discovered ->
       async {
@@ -197,7 +194,6 @@ internal suspend fun generateAllProductXmlFiles(
           outputProvider = outputProvider,
           productPropertiesClass = productPropertiesClass,
           projectRoot = projectRoot,
-          isUltimateBuild = isUltimateBuild,
           strategy = strategy,
         )
       }

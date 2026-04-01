@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.contentReport
 
 import com.intellij.openapi.project.IntelliJProjectUtil
@@ -15,7 +15,7 @@ internal class ContentReportGeneratedSourcesFilter : GeneratedSourcesFilter() {
 
   override fun getNotification(file: VirtualFile, project: Project): GeneratedSourceFilterNotification {
     return GeneratedSourceFilterNotification(
-      text = "Do not modify manually, content report must be changed by IdeaUltimatePackagingTest",
+      text = "Do not modify manually, content report must be changed by AllProductsPackagingTest",
       actions = listOf(GeneratedSourceFilterHyperLinkAction(
         text = "Distribution Content Approving",
         link = "https://youtrack.jetbrains.com/articles/IDEA-A-80/Distribution-Content-Approving",

@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="commons-compress" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.lang3" />
   </component>
 </module>

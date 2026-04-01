@@ -8,18 +8,18 @@ import com.intellij.util.Processor
 import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypeAliasStatement
 import com.jetbrains.python.psi.PyTypeParameter
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.functionIgnoresVariance
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance.BIVARIANT
@@ -48,16 +48,18 @@ object PyInferredVarianceJudgment {
     return functionIgnoresVariance(parent)
   }
 
+  /** Returns the declared variance or infers the variance from the use cases of the type parameter */
   @JvmStatic
   fun getDeclaredOrInferredVariance(element: PsiElement?, context: TypeEvalContext): Variance? {
     val typeVarType = findTypeVariable(element, context) ?: return null
-    return guardedGetInferredVariance(typeVarType, true, context)
+    return guardedGetDeclaredOrInferredVariance(typeVarType, true, context)
   }
 
+  /** Returns the inferred the variance from the use cases of the type parameter */
   @JvmStatic
   fun getInferredVariance(element: PsiElement?, context: TypeEvalContext): Variance? {
     val typeVarType = findTypeVariable(element, context) ?: return null
-    return guardedGetInferredVariance(typeVarType, false, context)
+    return guardedGetDeclaredOrInferredVariance(typeVarType, false, context)
   }
 
   private fun findTypeVariable(element: PsiElement?, context: TypeEvalContext): PyTypeVarType? {
@@ -71,19 +73,19 @@ object PyInferredVarianceJudgment {
     return typeParamType as? PyTypeVarType
   }
 
-  /** Returns the variance inferred from the use of a type parameter */
+  /** Returns the declared variance or infers the variance from the use cases of the type parameter */
   @JvmStatic
   fun getDeclaredOrInferredVariance(typeVarType: PyTypeVarType, context: TypeEvalContext): Variance {
-    return guardedGetInferredVariance(typeVarType, true, context)
+    return guardedGetDeclaredOrInferredVariance(typeVarType, true, context)
   }
 
-  /** Returns the variance inferred from the use of a type parameter */
+  /** Returns the inferred the variance from the use cases of the type parameter */
   @JvmStatic
   fun getInferredVariance(typeVarType: PyTypeVarType, context: TypeEvalContext): Variance {
-    return guardedGetInferredVariance(typeVarType, false, context)
+    return guardedGetDeclaredOrInferredVariance(typeVarType, false, context)
   }
 
-  private fun guardedGetInferredVariance(typeVarType: PyTypeVarType, checkDeclaredVariance: Boolean, context: TypeEvalContext): Variance {
+  private fun guardedGetDeclaredOrInferredVariance(typeVarType: PyTypeVarType, checkDeclaredVariance: Boolean, context: TypeEvalContext): Variance {
     val scopeOwner = typeVarType.scopeOwner
     if (scopeOwner is PyFunction) return INVARIANT
     if (checkDeclaredVariance && typeVarType.variance != INFER_VARIANCE) return typeVarType.variance
@@ -178,21 +180,26 @@ object PyInferredVarianceJudgment {
 
     fun collectReferencesTo(tvId: TypeVariableId, element: PsiElement?) {
       if (element == null) return
-      val annValue = if (element is PyAnnotation) element.value else element
+
+      if (element is PyReferenceExpression) {
+        val refType = PyTypingTypeProvider.getType(element, context) ?: return
+        val typeVarType = refType.get() as? PyTypeVarType ?: return
+        if (typeVarType.name == tvId.name && typeVarType.scopeOwner == tvId.scopeOwner) {
+          val exprVariance = PyExpectedVarianceJudgment.getExpectedVariance(element, context) ?: return
+          usages.add(exprVariance)
+        }
+      }
+
+      var annValue = if (element is PyNamedParameter) element.annotation else element
+      annValue = if (annValue is PyAnnotation) annValue.value else annValue
       if (annValue is PyStringLiteralExpression) {
-        val elementGenerator = PyElementGenerator.getInstance(annValue.project)
-        val syntheticElement = elementGenerator.createExpressionFromText(LanguageLevel.forElement(annValue), annValue.stringValue)
+        val syntheticElement = PyUtil.createExpressionFromFragment(annValue.stringValue, annValue) ?: return
         return collectReferencesTo(tvId, syntheticElement)
       }
 
       val refExpressions = PsiTreeUtil.findChildrenOfType(element, PyReferenceExpression::class.java)
       for (refExpression in refExpressions) {
-        val refType = PyTypingTypeProvider.getType(refExpression, context) ?: continue
-        val typeVarType = refType.get() as? PyTypeVarType ?: continue
-        if (typeVarType.name == tvId.name && typeVarType.scopeOwner == tvId.scopeOwner) {
-          val exprVariance = PyExpectedVarianceJudgment.getExpectedVariance(refExpression, context) ?: continue
-          usages.add(exprVariance)
-        }
+        collectReferencesTo(tvId, refExpression)
       }
     }
   }
@@ -219,9 +226,9 @@ object PyInferredVarianceJudgment {
   }
 
   /**
-   * Returns true iff either
-   * - the function's name starts with an underscore (i.e., is private or protected), or
-   * - if [functionIgnoresVariance] is true
+   * Returns true iff either:
+   * - The function's name starts with an underscore (i.e., is private or protected), or
+   * - If [functionIgnoresVariance] is true
    */
   fun functionDoesNotAffectVarianceInference(callable: PyFunction): Boolean {
     if (callable.protectionLevel != ProtectionLevel.PUBLIC) return true
@@ -229,7 +236,7 @@ object PyInferredVarianceJudgment {
   }
 
   /**
-   * Returns true iff the function either
+   * Returns true iff the function either:
    * - Has no parameters, or
    * - Is `__init__` or `__new__`, or
    * - Is decorated as a class or static method.

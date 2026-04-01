@@ -359,7 +359,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
       val lineCount = editor.visibleLineCount
       var shift = 0
       if (visualLine >= lineCount - 1) {
-        val sequence = editor.uiDocument.charsSequence
+        val sequence = editor.elfDocument.charsSequence
         shift = if (sequence.isEmpty()) 0 else if (sequence.get(sequence.length - 1) == '\n') 1 else 0
       }
       return max(0, min(lineCount - shift, visualLine))
@@ -771,7 +771,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     val offset: Int
     var logicalPositionToScroll: LogicalPosition? = null
     val editorPreviewHint = editorFragmentRenderer.editorPreviewHint
-    val doc: Document = editor.uiDocument
+    val doc: Document = editor.elfDocument
     if (marker == null) {
       if (editorPreviewHint != null) {
         logicalPositionToScroll = editor.visualToLogicalPosition(VisualPosition(editorFragmentRenderer.startVisualLine, 0))
@@ -1435,7 +1435,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     if (!dimensionsAreValid) {
       recalcEditorDimensions()
     }
-    val document: Document = editor.uiDocument
+    val document: Document = editor.elfDocument
     val startLineNumber = if (end == -1) 0 else offsetToLine(start, document)
     val editorStartY = editor.visualLineToY(startLineNumber)
     val editorTargetHeight = max(0, myEditorTargetHeight)
@@ -1480,7 +1480,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     }
     val visual = editor.xyToVisualPosition(Point(0, editorY))
     val line = editor.visualToLogicalPosition(visual).line
-    val document: Document = editor.uiDocument
+    val document: Document = editor.elfDocument
     if (line < 0) {
       return 0
     }

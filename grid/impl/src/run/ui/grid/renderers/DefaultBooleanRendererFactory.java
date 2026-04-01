@@ -31,13 +31,13 @@ public class DefaultBooleanRendererFactory implements GridCellRendererFactory {
   }
 
   @Override
-  public boolean supports(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
-    return isBooleanCell(myGrid, row, column);
+  public boolean supports(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
+    return isBooleanCell(myGrid, row, column, value);
   }
 
-  private static boolean isBooleanCell(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
+  private static boolean isBooleanCell(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
     if (column.asInteger() == -1) return false; // DBE-17013
-    int type = GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column);
+    int type = GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column, value);
     GridModel<GridRow, GridColumn> model = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS);
     GridColumn c = Objects.requireNonNull(model.getColumn(column));
     return ObjectFormatterUtil.isBooleanColumn(c, type);
@@ -89,8 +89,8 @@ public class DefaultBooleanRendererFactory implements GridCellRendererFactory {
     }
 
     @Override
-    public int getSuitability(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
-      return isBooleanCell(myGrid, row, column) ? SUITABILITY_MIN : SUITABILITY_UNSUITABLE;
+    public int getSuitability(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
+      return isBooleanCell(myGrid, row, column, value) ? SUITABILITY_MIN : SUITABILITY_UNSUITABLE;
     }
   }
 
@@ -107,8 +107,8 @@ public class DefaultBooleanRendererFactory implements GridCellRendererFactory {
     }
 
     @Override
-    public int getSuitability(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
-      return isBooleanCell(myGrid, row, column) ? SUITABILITY_MIN : SUITABILITY_UNSUITABLE;
+    public int getSuitability(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
+      return isBooleanCell(myGrid, row, column, value) ? SUITABILITY_MIN : SUITABILITY_UNSUITABLE;
     }
 
     @Override

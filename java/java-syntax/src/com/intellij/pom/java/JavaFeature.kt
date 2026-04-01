@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
+import com.intellij.util.ThreadLocalKmp
+import org.jetbrains.annotations.ApiStatus
 import kotlin.jvm.JvmStatic
 
 /**
@@ -380,6 +382,8 @@ enum class JavaFeature {
     get() = if (minimumLevel.isPreview) null else this.minimumLevel
 
   companion object {
+    private val ASSUMED_FEATURES: ThreadLocalKmp<Set<JavaFeature>> = ThreadLocalKmp { emptySet() }
+
     // Values taken from jdk.internal.javac.PreviewFeature.Feature enum
     @Contract(pure = true)
     @JvmStatic
@@ -403,6 +407,59 @@ enum class JavaFeature {
         "LAZY_CONSTANTS" -> LAZY_CONSTANTS
         else -> null
       }
+    }
+
+    /**
+     * Temporarily sets the assumed Java feature for the duration of the given computation
+     * and restores the previous feature afterward.
+     *
+     * Note: The assumption is stored in a thread-local variable, so it only applies to code
+     * executing on the same thread where this function was called.
+     *
+     * @param feature the Java feature to assume during the computation
+     * @param supplier the computation to execute while the specified feature is assumed
+     * @return the result of the supplier
+     */
+    @JvmStatic
+    @ApiStatus.Experimental
+    fun <T> assumeAvailable(feature: JavaFeature, supplier: () -> T): T {
+      return assumeAvailable(listOf(feature), supplier)
+    }
+
+    /**
+     * Temporarily sets the assumed Java feature for the duration of the given computation
+     * and restores the previous feature afterward.
+     *
+     * Note: The assumption is stored in a thread-local variable, so it only applies to code
+     * executing on the same thread where this function was called.
+     *
+     * @param features the Java features to assume during the computation
+     * @param supplier the computation to execute while the specified feature is assumed
+     * @return the result of the supplier
+     */
+    @JvmStatic
+    @ApiStatus.Experimental
+    fun <T> assumeAvailable(features: Collection<JavaFeature>, supplier: () -> T): T {
+      val old = ASSUMED_FEATURES.get()
+      ASSUMED_FEATURES.set(old + features)
+      try {
+        return supplier.invoke()
+      }
+      finally {
+        ASSUMED_FEATURES.set(old)
+      }
+    }
+
+    /**
+     * Checks if the specified Java feature is assumed to be present.
+     *
+     * @param feature the Java feature to check for assumed presence.
+     * @return true if the feature is in the assumed features list, false otherwise.
+     */
+    @JvmStatic
+    @ApiStatus.Experimental
+    fun isAssumed(feature: JavaFeature): Boolean {
+      return ASSUMED_FEATURES.get().contains(feature)
     }
   }
 }

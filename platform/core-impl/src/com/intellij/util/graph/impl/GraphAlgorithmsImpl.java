@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.graph.impl;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -10,7 +10,7 @@ import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -27,9 +27,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-@ApiStatus.Internal
+@Internal
 public final class GraphAlgorithmsImpl extends GraphAlgorithms {
-
   @Override
   public @Unmodifiable @NotNull <Node> Collection<Node> findNodesWhichBelongToAnyPathBetweenTwoNodes(
     @NotNull Graph<Node> graph,

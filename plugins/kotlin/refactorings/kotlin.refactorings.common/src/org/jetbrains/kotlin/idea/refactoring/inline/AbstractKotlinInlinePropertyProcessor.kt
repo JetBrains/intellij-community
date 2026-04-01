@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.inline
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
@@ -12,6 +14,10 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.searching.usages.ReferencesSearchScopeHelper
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractCodeToInlineBuilder
@@ -114,15 +120,20 @@ abstract class AbstractKotlinInlinePropertyProcessor(declaration: KtProperty,
     }
 
     companion object {
+        @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class) //KTIJ-31892
         fun extractInitialization(property: KtProperty): Initialization {
             val definitionScope = property.parent ?: kotlin.run {
                 return createInitializationWithError(property.name!!, emptyList())
             }
 
             val writeUsages = mutableListOf<KtExpression>()
-            ReferencesSearchScopeHelper.search(property, LocalSearchScope(definitionScope)).asIterable().forEach {
-                val expression = it.element.writeOrReadWriteExpression ?: return@forEach
-                writeUsages += expression
+            allowAnalysisFromWriteAction {
+                allowAnalysisOnEdt {
+                    ReferencesSearchScopeHelper.search(property, LocalSearchScope(definitionScope)).asIterable().forEach {
+                        val expression = it.element.writeOrReadWriteExpression ?: return@forEach
+                        writeUsages += expression
+                    }
+                }
             }
 
             val initializerInDeclaration = property.initializer

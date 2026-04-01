@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.graph.impl;
 
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.InboundSemiGraph;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
@@ -14,8 +14,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-@ApiStatus.Internal
-public class ShortestPathFinder<Node> {
+@Internal
+public final class ShortestPathFinder<Node> {
   private final InboundSemiGraph<Node> myGraph;
 
   public ShortestPathFinder(Graph<Node> graph) {

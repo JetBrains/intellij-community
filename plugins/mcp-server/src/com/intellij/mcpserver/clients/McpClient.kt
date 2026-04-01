@@ -41,6 +41,7 @@ import kotlinx.serialization.json.jsonObject
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.net.URI
+import java.nio.file.AccessDeniedException
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -240,6 +241,10 @@ abstract class McpClient(
     }
     catch (_: AtomicMoveNotSupportedException) {
       Files.move(tmp, configPath, StandardCopyOption.REPLACE_EXISTING)
+    }
+    catch (_: AccessDeniedException) {
+      // on Windows, other AI agent frontends can open the config file. While they do it, we cannot move other file in place of it
+      configPath.outputStream().use { output -> json.encodeToStream(config, output) }
     }
   }
 

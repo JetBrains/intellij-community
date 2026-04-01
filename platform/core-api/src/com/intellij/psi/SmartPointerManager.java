@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows creating references to PSI elements that can survive a reparse and return the corresponding
@@ -47,7 +48,8 @@ public abstract class SmartPointerManager {
    * @param containingFile the result of {@code element.getContainingFile()}.
    * @return the smart pointer instance.
    */
-  public abstract @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile);
+  public abstract @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element,
+                                                                                                         @Nullable PsiFile containingFile);
 
   /**
    * Creates a smart pointer to the specified PSI element which doesn't hold a strong reference to the PSI

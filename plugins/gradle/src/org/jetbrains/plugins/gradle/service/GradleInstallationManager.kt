@@ -40,6 +40,7 @@ import org.jetbrains.plugins.gradle.util.resolveGradleJvmInfo
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Objects
@@ -160,7 +161,7 @@ open class GradleInstallationManager : Disposable.Default {
     }
     val path = System.getenv("PATH") ?: return null
     for (pathEntry in path.split(File.pathSeparator)) {
-      val dir = Path.of(pathEntry)
+      val dir = try { Path.of(pathEntry) } catch (_: InvalidPathException) { continue }
       if (!dir.isDirectory()) {
         continue
       }

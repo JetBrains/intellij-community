@@ -1,11 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcompletion;
 
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNullByDefault;
 
 /**
@@ -52,7 +54,24 @@ public abstract class PsiUpdateCompletionItem<T> implements ModCompletionItem {
       updater.moveCaretTo(updatedCaretPos);
       update(actionContext.withOffset(updatedCaretPos)
                .withSelection(TextRange.create(completionStart, updatedCaretPos)), insertionContext, updater);
+      addCompletionChar(updater, insertionContext);
     });
+  }
+
+  protected void addCompletionChar(ModPsiUpdater updater, InsertionContext context) {
+    if (!shouldAddCompletionChar(context)) return;
+    PsiDocumentManager.getInstance(updater.getProject()).doPostponedOperationsAndUnblockDocument(updater.getDocument());
+    int offset = updater.getCaretOffset();
+    updater.getDocument().insertString(offset, String.valueOf(context.insertionCharacter()));
+    updater.moveCaretTo(offset + 1);
+  }
+
+  protected boolean shouldAddCompletionChar(InsertionContext context) {
+    char c = context.insertionCharacter();
+    return c != Lookup.NORMAL_SELECT_CHAR &&
+           c != Lookup.COMPLETE_STATEMENT_SELECT_CHAR &&
+           c != Lookup.REPLACE_SELECT_CHAR &&
+           c != Lookup.AUTO_INSERT_SELECT_CHAR;
   }
 
   /**

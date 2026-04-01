@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.sam-with-receiver-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:sam-with-receiver-compiler-plugin-for-ide:2.4.0-dev-7586">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:sam-with-receiver-compiler-plugin-for-ide:2.4.0-dev-8205">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.4.0-dev-7586/sam-with-receiver-compiler-plugin-for-ide-2.4.0-dev-7586.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.4.0-dev-8205/sam-with-receiver-compiler-plugin-for-ide-2.4.0-dev-8205.jar">
           <sha256sum>036ea52473c438b31b731ebf15a339e1c6129dd69c76f548afab3ac8bc5558d3</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.4.0-dev-7586/sam-with-receiver-compiler-plugin-for-ide-2.4.0-dev-7586.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.4.0-dev-8205/sam-with-receiver-compiler-plugin-for-ide-2.4.0-dev-8205.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.4.0-dev-7586/sam-with-receiver-compiler-plugin-for-ide-2.4.0-dev-7586-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.4.0-dev-8205/sam-with-receiver-compiler-plugin-for-ide-2.4.0-dev-8205-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

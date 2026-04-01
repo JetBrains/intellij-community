@@ -30,7 +30,7 @@ public final class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
 
   @Override
   public @NotNull Result beforeSelectionRemoved(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    Document document = editor.getUiDocument();
+    Document document = editor.getElfDocument();
     SelectionModel selectionModel = editor.getSelectionModel();
     if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE && selectionModel.hasSelection() && isQuote(c)) {
       String selectedText = selectionModel.getSelectedText();
@@ -171,7 +171,7 @@ public final class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       if (textRange != null && textRange.getLength() >= 2 &&
           (selectionStart == textRange.getStartOffset() || textRange.getEndOffset() == selectionStart + 1)) {
         int matchingCharOffset = selectionStart == textRange.getStartOffset() ? textRange.getEndOffset() - 1 : textRange.getStartOffset();
-        Document document = editor.getUiDocument();
+        Document document = editor.getElfDocument();
         CharSequence charsSequence = document.getCharsSequence();
         if (matchingCharOffset < charsSequence.length()) {
           char matchingChar = charsSequence.charAt(matchingCharOffset);

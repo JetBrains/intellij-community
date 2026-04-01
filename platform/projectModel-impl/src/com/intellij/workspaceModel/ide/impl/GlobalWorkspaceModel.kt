@@ -53,6 +53,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Compa
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalEntityBridgeAndEventHandler
 import io.opentelemetry.api.metrics.Meter
+import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -112,6 +113,7 @@ class GlobalWorkspaceModel internal constructor(
   private val globalEntitiesFilter = { entitySource: EntitySource -> entitySource is GlobalStorageEntitySource }
 
   val entityStorage: VersionedEntityStorageImpl
+  val jpsSyncJob: Job
   val currentSnapshot: ImmutableEntityStorage
     get() = entityStorage.current
 
@@ -163,7 +165,7 @@ class GlobalWorkspaceModel internal constructor(
       .loadInitialState(eelMachine, internalEnvironmentName, mutableEntityStorage, entityStorage, loadedFromCache)
     val changes = (mutableEntityStorage as MutableEntityStorageInstrumentation).collectChanges()
     entityStorage.replace(mutableEntityStorage.toSnapshot(), changes, mutableEntityStorage.collectSymbolicEntityIdsChanges(), {}, {})
-    callback.invoke()
+    jpsSyncJob = callback.invoke()
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
@@ -322,6 +324,15 @@ class GlobalWorkspaceModel internal constructor(
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
     filteredProject = null
+  }
+
+  /**
+   * Consider using [com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal.awaitSynchronizationWithJpsModel] if you want to
+   * use project-level WSM.
+   */
+  @ApiStatus.Internal
+  suspend fun awaitSynchronizationWithJpsModel() {
+    jpsSyncJob.join()
   }
 
   /**
@@ -501,6 +512,7 @@ class GlobalWorkspaceModelRegistry {
   @TestOnly
   fun dropCaches() {
     environmentToModel.clear()
+    JpsGlobalModelSynchronizer.getInstance().dropCaches()
   }
 
 }

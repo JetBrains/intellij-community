@@ -40,12 +40,6 @@ class PluginDependenciesValidationOptions(
   val compileOnlyDependencies: List<Pair<String, String>> = compileOnlyDependenciesInCommunity,
 
   /**
-   * Set to `true` to enable reporting problems if target module is not included in distribution.
-   * This flag is temporarily added to enable this check for some tests only, it'll be removed when the check is enabled for all tests.
-   */
-  val reportProblemIfTargetModuleIsNotIncludedInDistribution: Boolean = false,
-
-  /**
    * Specifies variants of plugins enabled via a system property.
    * Such variants won't be checked, but this information will be used to determine modules which are loaded by separate classloaders in such a variant, and therefore shouldn't be
    * treated as loaded by the plugin descriptor's classloader.

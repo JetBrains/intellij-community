@@ -345,7 +345,7 @@ abstract class LineLayout {
                                                      final int startOffset,
                                                      int endOffset,
                                                      @Nullable Runnable quickEvaluationListener) {
-    assert startOffset <= endOffset;
+    view.getEditor().assertOrDumpState(startOffset <= endOffset, "startOffset must be less or equal to endOffset");
     Document document = view.getDocument();
     int lineStartOffset = document.getLineStartOffset(line);
     assert !DocumentUtil.isInsideSurrogatePair(document, lineStartOffset + startOffset);

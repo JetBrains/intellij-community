@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.transformLatest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
+import org.jetbrains.plugins.gitlab.ui.GitLabViewModelWithTextCompletion
 
 interface GitLabNoteAdminActionsViewModel {
   val busy: Flow<Boolean>
@@ -52,6 +53,7 @@ class GitLabNoteAdminActionsViewModelImpl(
   private val project: Project,
   projectData: GitLabProject,
   private val note: MutableGitLabNote,
+  textCompletionViewModel: GitLabViewModelWithTextCompletion,
 ) : GitLabNoteAdminActionsViewModel {
 
   private val cs = parentCs.childScope()
@@ -63,7 +65,7 @@ class GitLabNoteAdminActionsViewModelImpl(
     if (editing) {
       coroutineScope {
         val cs = this@coroutineScope
-        val editVm = GitLabNoteEditingViewModel.forExistingNote(cs, project, projectData, note) {
+        val editVm = GitLabNoteEditingViewModel.forExistingNote(cs, project, projectData, note, textCompletionViewModel) {
           stopEditing()
         }
         editVm.requestFocus()

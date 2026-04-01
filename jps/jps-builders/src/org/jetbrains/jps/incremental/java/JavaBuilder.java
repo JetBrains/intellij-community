@@ -112,6 +112,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.UUID;
@@ -1395,7 +1396,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       // Important: must be processed in-place and not postponed or offloaded to a different thread. The JavacFileData is internally backed up by live javac internal data structures,
       // which can be damaged if accessed later or from a different thread
       for (JavacFileReferencesRegistrar registrar : myRegistrars) {
-        registrar.registerFile(myContext, data.getFilePath(), Iterators.map(data.getRefs().entrySet(), entry -> entry), data.getDefs(), data.getCasts(), data.getImplicitToStringRefs());
+        registrar.registerFile(myContext, data.getFilePath(), Iterators.filter(Iterators.map(data.getRefs().entrySet(), entry -> entry.getKey() != null? entry : null), Objects::nonNull), data.getDefs(), data.getCasts(), data.getImplicitToStringRefs());
       }
     }
 

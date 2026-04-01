@@ -19,7 +19,7 @@ internal class ArrayListEelAbsolutePath private constructor(
   override val parent: EelPath?
     get() =
       if (parts.isEmpty()) null
-      else ArrayListEelAbsolutePath(descriptor, _root, parts.dropLast(1))
+      else ArrayListEelAbsolutePath(descriptor, _root, parts.subList(0, parts.size - 1))
 
   override fun startsWith(other: EelPath): Boolean {
     val ignoreCase = _root is Root.Windows

@@ -1,24 +1,30 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildScripts.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
-import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ExceptionUtilRt
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
+import org.jetbrains.intellij.build.SoftwareBillOfMaterials
 import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
 import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
@@ -45,7 +51,15 @@ fun createBuildOptionsForTest(
   skipDependencySetup: Boolean = false,
   testInfo: TestInfo? = null,
 ): BuildOptions {
-  val outDir = createTestBuildOutDir(productProperties)
+  return createBuildOptionsForTest(homeDir = homeDir, outDir = createTestBuildOutDir(productProperties), skipDependencySetup = skipDependencySetup, testInfo = testInfo)
+}
+
+fun createBuildOptionsForTest(
+  homeDir: Path,
+  outDir: Path,
+  skipDependencySetup: Boolean = false,
+  testInfo: TestInfo? = null,
+): BuildOptions {
   val options = BuildOptions(
     cleanOutDir = false,
     //TODO: figure out what to do on bazel
@@ -82,6 +96,40 @@ fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDepend
   if (testInfo != null && isUnderTeamCity) {
     options.buildStepListener = BuildStepTeamCityListener(testInfo)
   }
+}
+
+val packagingContentBuildStepsToSkip: PersistentSet<String> = persistentSetOf(
+  BuildOptions.MAVEN_ARTIFACTS_STEP,
+  BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP,
+  BuildOptions.BROKEN_PLUGINS_LIST_STEP,
+  BuildOptions.FUS_METADATA_BUNDLE_STEP,
+  BuildOptions.SCRAMBLING_STEP,
+  BuildOptions.PREBUILD_SHARED_INDEXES,
+  BuildOptions.SOURCES_ARCHIVE_STEP,
+  BuildOptions.VERIFY_CLASS_FILE_VERSIONS,
+  BuildOptions.ARCHIVE_PLUGINS,
+  BuildOptions.WINDOWS_EXE_INSTALLER_STEP,
+  BuildOptions.REPAIR_UTILITY_BUNDLE_STEP,
+  SoftwareBillOfMaterials.STEP_ID,
+  BuildOptions.LINUX_ARTIFACTS_STEP,
+  BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP,
+  BuildOptions.LOCALIZE_STEP,
+  BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED,
+  "JupyterFrontEndResourcesGenerator",
+)
+
+fun customizeBuildOptionsForPackagingContentTest(
+  options: BuildOptions,
+  targetOs: PersistentList<OsFamily> = OsFamily.ALL,
+  buildStepsToSkip: Collection<String> = packagingContentBuildStepsToSkip,
+) {
+  // reproducible content report
+  options.randomSeedNumber = 42
+  options.skipCustomResourceGenerators = true
+  options.targetOs = targetOs
+  options.targetArch = null
+  options.buildStepsToSkip += buildStepsToSkip
+  options.useReleaseCycleRelatedBundlingRestrictionsForContentReport = false
 }
 
 suspend inline fun createBuildContext(
@@ -225,20 +273,15 @@ internal suspend fun <T> doRunTestBuild(
         val result = build(context)
 
         val softly = SoftAssertions()
-        if (checkIntegrityOfEmbeddedFrontend) {
-          val frontendRootModule = context.productProperties.embeddedFrontendRootModule
-          if (frontendRootModule != null && context.generateRuntimeModuleRepository) {
-            RuntimeModuleRepositoryChecker.checkProductModules(productModulesModule = frontendRootModule, context = context, softly = softly)
-            if (checkThatBundledPluginInFrontendArePresent) {
-              RuntimeModuleRepositoryChecker.checkBundledPluginsArePresent(productModulesModule = frontendRootModule, context = context, isEmbeddedVariant = true, softly = softly)
+        coroutineScope {
+          if (checkIntegrityOfEmbeddedFrontend && context.generateRuntimeModuleRepository) {
+            checkEmbeddedFrontendIntegrity(checkThatBundledPluginInFrontendArePresent = checkThatBundledPluginInFrontendArePresent, softly = softly, context = context)
+              }
+          if (checkPrivatePluginModulesAreNotPublic) {
+            launch {
+              checkPrivatePluginModulesAreNotPublic(context, softly)
             }
-            RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedFrontend(frontendRootModule, context, softly)
-            checkKeymapPluginsAreBundledWithFrontend(frontendRootModule, context, softly)
           }
-        }
-
-        if (checkPrivatePluginModulesAreNotPublic) {
-          checkPrivatePluginModulesAreNotPublic(context, softly)
         }
         softly.assertAll()
 
@@ -290,16 +333,36 @@ internal suspend fun <T> doRunTestBuild(
   }
 }
 
+private fun CoroutineScope.checkEmbeddedFrontendIntegrity(
+  checkThatBundledPluginInFrontendArePresent: Boolean,
+  softly: SoftAssertions,
+  context: BuildContext,
+) {
+  val frontendRootModule = context.productProperties.embeddedFrontendRootModule ?: return
+  RuntimeModuleRepositoryChecker.checkProductModules(productModulesModule = frontendRootModule, context = context, softly = softly)
+  if (checkThatBundledPluginInFrontendArePresent) {
+    RuntimeModuleRepositoryChecker.checkBundledPluginsArePresent(productModulesModule = frontendRootModule, context = context, isEmbeddedVariant = true, softly = softly)
+  }
+  launch {
+    RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedFrontend(frontendRootModule, context, softly)
+  }
+  launch {
+    checkKeymapPluginsAreBundledWithFrontend(frontendRootModule, context, softly)
+  }
+}
+
 private fun checkKeymapPluginsAreBundledWithFrontend(
   jetBrainsClientMainModule: String,
   context: BuildContext,
   softly: SoftAssertions,
 ) {
-  val productModules = context.loadRawProductModules(jetBrainsClientMainModule, ProductMode.FRONTEND)
+  val productModules = loadRawProductModulesFromOutput(jetBrainsClientMainModule, context.outputProvider)
   val keymapPluginModulePrefix = "intellij.keymap."
   val keymapPluginsBundledWithFrontend = productModules.bundledPluginMainModules
+    .asSequence()
     .map { it.name }
     .filter { it.startsWith(keymapPluginModulePrefix) }
+    .toList()
   val keymapPluginsBundledWithMonolith = context.getBundledPluginModules().filter { it.startsWith(keymapPluginModulePrefix) }
   softly.assertThat(keymapPluginsBundledWithFrontend)
     .describedAs("Frontend variant of ${context.applicationInfo.productNameWithEdition} must bundle the same keymap plugins as the full IDE for consistency. " +

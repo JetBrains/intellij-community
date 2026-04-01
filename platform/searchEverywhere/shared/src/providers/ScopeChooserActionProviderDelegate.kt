@@ -2,17 +2,19 @@
 package com.intellij.platform.searchEverywhere.providers
 
 import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
-import com.intellij.ide.actions.searcheverywhere.FilesTabSEContributor
 import com.intellij.ide.actions.searcheverywhere.FilesTabSEContributor.Companion.unwrapFilesTabContributorIfPossible
 import com.intellij.ide.actions.searcheverywhere.ScopeChooserAction
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeIdMapper
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.project.Project
 import com.intellij.platform.scopes.SearchScopeData
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.suspendLazy
+import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
@@ -29,7 +31,7 @@ class ScopeChooserActionProviderDelegate private constructor(private val contrib
   private val scopeById: SuspendLazyProperty<SeScopeById> =
     suspendLazy {
       contributorWrapper.contributor.unwrapFilesTabContributorIfPossible()?.let { filesTabContributor ->
-        SeScopeByIdFiles(filesTabContributor)
+        SeScopeByIdFiles(filesTabContributor.project, filesTabContributor.psiContext)
       }
       ?: searchScopesInfoWithIds.getValue()?.second
       ?: SeScopeByIdMap(emptyMap(), null, null)
@@ -110,7 +112,8 @@ class ScopeChooserActionProviderDelegate private constructor(private val contrib
 
 private const val SCOPE_ID_SEPARATOR = '_'
 
-private interface SeScopeById {
+@ApiStatus.Internal
+interface SeScopeById {
   operator fun get(isEverywhere: Boolean): ScopeDescriptor?
   operator fun get(scopeId: String): ScopeDescriptor?
 }
@@ -126,19 +129,20 @@ private class SeScopeByIdMap(
   override fun get(scopeId: String): ScopeDescriptor? = scopeIdToScope[scopeId]
 }
 
-private class SeScopeByIdFiles(filesContributor: FilesTabSEContributor): SeScopeById {
+@ApiStatus.Internal
+class SeScopeByIdFiles(val project: Project, val psiContext: SmartPsiElementPointer<PsiElement?>?): SeScopeById {
   private val scopes = runReadActionBlocking {
-    AbstractGotoSEContributor.createScopes(filesContributor.project, filesContributor.psiContext).mapNotNull {
+    AbstractGotoSEContributor.createScopes(project, psiContext).mapNotNull {
       val name = it.displayName ?: return@mapNotNull null
       ScopeIdMapper.instance.getScopeSerializationId(name) to it
     }.toMap()
   }
 
-  private val projectScopeId: String = GlobalSearchScope.projectScope(filesContributor.project).displayName.let {
+  private val projectScopeId: String = GlobalSearchScope.projectScope(project).displayName.let {
     ScopeIdMapper.instance.getScopeSerializationId(it)
   }
 
-  private val everywhereScopeId: String = GlobalSearchScope.everythingScope(filesContributor.project).displayName.let {
+  private val everywhereScopeId: String = GlobalSearchScope.everythingScope(project).displayName.let {
     ScopeIdMapper.instance.getScopeSerializationId(it)
   }
 

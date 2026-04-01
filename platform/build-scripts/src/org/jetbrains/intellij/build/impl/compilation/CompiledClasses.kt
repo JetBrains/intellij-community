@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.openapi.application.ArchivedCompilationContextUtil
@@ -357,7 +357,7 @@ private suspend fun compile(
   canceledStatus: CanceledStatus = CanceledStatus.NULL
 ) {
   when {
-    moduleNames != null -> jpsCompilationRunner.buildModules(moduleNames.map(context::findRequiredModule), canceledStatus)
+    moduleNames != null -> jpsCompilationRunner.buildModules(moduleNames.map { context.outputProvider.findRequiredModule(it) }, canceledStatus)
     includingTestsInModules != null -> jpsCompilationRunner.buildProduction(canceledStatus)
     else -> {
       jpsCompilationRunner.buildAll(canceledStatus)

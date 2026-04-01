@@ -53,6 +53,13 @@ val knownMissingModuleDependencies: List<String> = listOf(
 abstract class JetBrainsProductProperties : ProductProperties() {
   init {
     scrambleMainJar = true
+    presignedNativeLibs = mapOf(
+      "pty4j" to "pty4j",
+      "jna" to "jna",
+      "native" to "native", // sqlite-native
+      "async-profiler" to "async-profiler",
+      "skiko-awt-runtime-all" to "skiko-awt-runtime-all",
+    )
     includeIntoSourcesArchiveFilter = BiPredicate(::isCommunityModule)
     sbomOptions.creator = "Organization: ${Suppliers.JETBRAINS}"
     sbomOptions.license = SoftwareBillOfMaterials.Options.DistributionLicense.JETBRAINS

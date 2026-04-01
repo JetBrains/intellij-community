@@ -34,12 +34,14 @@ import com.jetbrains.python.psi.PyEllipsisLiteralExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyForStatement;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyReferenceOwner;
 import com.jetbrains.python.psi.PyReturnStatement;
+import com.jetbrains.python.psi.PyStarArgument;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
@@ -490,8 +492,12 @@ public class PyTypeCheckerInspection extends PyInspection {
         return;
       }
 
-      final PyType expected = myTypeEvalContext.getType(node);
-      final PyType actual = tryPromotingType(defaultValue, expected);
+      // we use `PyTypingTypeProvider.getType` of the annotation directly, instead of `node.getType`,
+      //  because otherwise `PyTypingTypeProvider` will inject the type of `None`
+      final var expectedRef = PyTypingTypeProvider.getType(node.getAnnotation().getValue(), myTypeEvalContext);
+      if (expectedRef == null) return;
+      final var expected = expectedRef.get();
+      final var actual = tryPromotingType(defaultValue, expected);
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
         final String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
         final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
@@ -633,17 +639,32 @@ public class PyTypeCheckerInspection extends PyInspection {
           if (allArguments.isEmpty()) break;
 
           final var firstExpectedTypes = concatenateType.getFirstTypes();
-          final var argumentRightBound = Math.min(firstExpectedTypes.size(), allArguments.size());
+          int nonStarCount = 0;
+          for (PyExpression arg : allArguments) {
+            if (arg instanceof PyStarArgument) break;
+            nonStarCount++;
+          }
+          final var argumentRightBound = Math.min(firstExpectedTypes.size(), nonStarCount);
           final var firstArguments = allArguments.subList(0, argumentRightBound);
           matchArgumentsAndTypes(firstArguments, firstExpectedTypes, substitutions, result);
 
-          if (argumentRightBound < allArguments.size()) {
-            final var paramSpec = concatenateType.getParamSpec();
-            final var restArguments = allArguments.subList(argumentRightBound, allArguments.size());
-            if (paramSpec != null) {
-              analyzeParamSpec(paramSpec, restArguments, substitutions, result, unexpectedArgumentForParamSpecs,
-                               unfilledParameterFromParamSpecs);
+          final var paramSpec = concatenateType.getParamSpec();
+          final var restArguments = allArguments.subList(argumentRightBound, allArguments.size());
+          if (paramSpec != null) {
+            if (argumentRightBound < firstExpectedTypes.size()) {
+              // Not enough positional arguments to satisfy the Concatenate prefix, e.g., int, str in Concatenate[int, str, P]
+              PyCallableParameterListType paramSpecSubst = getParamSpecSubstitution(paramSpec, substitutions);
+              if (paramSpecSubst == null) {
+                for (PyExpression arg : restArguments) {
+                  if (arg instanceof PyStarArgument) {
+                    unexpectedArgumentForParamSpecs.add(new UnexpectedArgumentForParamSpec(arg, paramSpec));
+                    break;
+                  }
+                }
+              }
             }
+            analyzeParamSpec(paramSpec, restArguments, substitutions, result, unexpectedArgumentForParamSpecs,
+                             unfilledParameterFromParamSpecs);
           }
 
           break;
@@ -662,6 +683,16 @@ public class PyTypeCheckerInspection extends PyInspection {
 
       PyParamSpecType paramSpecType = getParamSpecTypeFromContainerParameters(keywordContainer, positionalContainer);
       if (paramSpecType != null) {
+        // Keyword arguments for positional parameters preceding *args: P.args
+        // might shadow the values in ParamSpec, causing runtime errors. Report them when P is unsubstituted.
+        PyCallableParameterListType paramSpecSubst = getParamSpecSubstitution(paramSpecType, substitutions);
+        if (paramSpecSubst == null) {
+          for (var entry : regularMappedParameters.entrySet()) {
+            if (entry.getKey() instanceof PyKeywordArgument) {
+              unexpectedArgumentForParamSpecs.add(new UnexpectedArgumentForParamSpec(entry.getKey(), paramSpecType));
+            }
+          }
+        }
         analyzeParamSpec(paramSpecType, allArguments, substitutions, result, unexpectedArgumentForParamSpecs,
                          unfilledParameterFromParamSpecs);
       }
@@ -699,8 +730,11 @@ public class PyTypeCheckerInspection extends PyInspection {
                                   @NotNull List<AnalyzeArgumentResult> result,
                                   @NotNull List<UnexpectedArgumentForParamSpec> unexpectedArgumentForParamSpecs,
                                   @NotNull List<UnfilledParameterFromParamSpec> unfilledParameterFromParamSpecs) {
-      PyCallableParameterListType paramSpecSubst = as(substitutions.getParamSpecs().get(paramSpec), PyCallableParameterListType.class);
-      if (paramSpecSubst == null) return;
+      PyCallableParameterListType paramSpecSubst = getParamSpecSubstitution(paramSpec, substitutions);
+      if (paramSpecSubst == null) {
+        analyzeUnsubstitutedParamSpec(paramSpec, arguments, unexpectedArgumentForParamSpecs);
+        return;
+      }
 
       var mapping = PyCallExpressionHelper.analyzeArguments(arguments, paramSpecSubst.getParameters(), myTypeEvalContext);
       for (var item : mapping.getMappedParameters().entrySet()) {
@@ -720,6 +754,41 @@ public class PyTypeCheckerInspection extends PyInspection {
       if (!unmappedParameters.isEmpty()) {
         unfilledParameterFromParamSpecs.add(new UnfilledParameterFromParamSpec(unmappedParameters.get(0), paramSpec));
       }
+    }
+
+    private void analyzeUnsubstitutedParamSpec(@NotNull PyParamSpecType paramSpec,
+                                                @NotNull List<PyExpression> arguments,
+                                                @NotNull List<UnexpectedArgumentForParamSpec> unexpectedArgs) {
+      for (PyExpression argument : arguments) {
+        if (argument instanceof PyStarArgument starArg) {
+          PyExpression innerExpr = starArg.getExpression();
+          if (innerExpr != null && isParamSpecContainerForwarding(innerExpr, paramSpec, !starArg.isKeyword())) {
+            continue;
+          }
+        }
+        unexpectedArgs.add(new UnexpectedArgumentForParamSpec(argument, paramSpec));
+      }
+    }
+
+    private static @Nullable PyCallableParameterListType getParamSpecSubstitution(@NotNull PyParamSpecType paramSpecType,
+                                                                                  @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
+      return as(substitutions.getParamSpecs().get(paramSpecType), PyCallableParameterListType.class);
+    }
+
+    private boolean isParamSpecContainerForwarding(@NotNull PyExpression expr,
+                                                    @NotNull PyParamSpecType paramSpec,
+                                                    boolean expectPositional) {
+      PyType type = myTypeEvalContext.getType(expr);
+      if (!(type instanceof PyParamSpecType exprParamSpec) || !exprParamSpec.equals(paramSpec)) {
+        return false;
+      }
+      if (expr instanceof PyReferenceExpression refExpr) {
+        PsiElement resolved = refExpr.getReference().resolve();
+        if (resolved instanceof PyNamedParameter param) {
+          return expectPositional ? param.isPositionalContainer() : param.isKeywordContainer();
+        }
+      }
+      return true;
     }
 
     private void matchArgumentsAndTypes(@NotNull List<PyExpression> arguments, @NotNull List<PyType> types,

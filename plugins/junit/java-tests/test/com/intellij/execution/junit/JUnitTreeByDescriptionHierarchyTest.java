@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.junit4.JUnit4TestListener;
@@ -90,7 +90,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
-  public void testClassWithMethodsWithoutSendTreeBefore() throws Exception {
+  public void testClassWithMethodsWithoutSendTreeBefore() {
     Description root = Description.createSuiteDescription("ATest");
     List<Description> tests = new ArrayList<>();
     tests.add(Description.createTestDescription("ATest", "test1"));
@@ -313,7 +313,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
              """);
   }
 
-  private static void doTest(Description root, List<Description> tests, String expectedTree, String expectedStart) throws Exception {
+  private static void doTest(Description root, List<Description> tests, String expectedTree, String expectedStart) {
     final StringBuffer buf = new StringBuffer();
     final JUnit4TestListener sender = createListener(buf);
     sender.sendTree(root);
@@ -333,7 +333,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
-  public void testSetupClassAssumptionFailure() throws Exception {
+  public void testSetupClassAssumptionFailure() {
     final Description root = Description.createSuiteDescription("root");
     final Description testA = Description.createSuiteDescription("TestA");
     root.addChild(testA);
@@ -385,7 +385,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
-  public void testSetupClassFailure() throws Exception {
+  public void testSetupClassFailure() {
     final Description root = Description.createSuiteDescription("root");
     final Description testA = Description.createSuiteDescription("TestA");
     root.addChild(testA);
@@ -479,7 +479,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
-  public void testParallelExecution() throws Exception {
+  public void testParallelExecution() {
     final Description root = Description.createSuiteDescription("root");
     Description testA = Description.createTestDescription("TestA", "test1");
     root.addChild(testA);
@@ -527,7 +527,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
-  public void testTearDownClassFailure() throws Exception {
+  public void testTearDownClassFailure() {
     final Description root = Description.createSuiteDescription("root");
     final Description testA = Description.createSuiteDescription("TestA");
     root.addChild(testA);
@@ -569,7 +569,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
-  public void testTearDownClassFailureSingleClass() throws Exception {
+  public void testTearDownClassFailureSingleClass() {
     final Description testA = Description.createSuiteDescription("TestA");
     final Description testName = Description.createTestDescription("TestA", "testName");
     testA.addChild(testName);
@@ -605,7 +605,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
-  public void testSetupClassFailureForParameterizedClass() throws Exception {
+  public void testSetupClassFailureForParameterizedClass() {
     final Description root = Description.createSuiteDescription("root");
     final Description testA = Description.createSuiteDescription("TestA");
     root.addChild(testA);
@@ -661,7 +661,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
-  public void testAssumptionFailures() throws Exception {
+  public void testAssumptionFailures() {
     Description root = Description.createSuiteDescription("root");
     for (int i = 0; i< 5; i++) {
       Description testClassDescription = Description.createSuiteDescription("Test" + i);
@@ -757,7 +757,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
-  public void testPackageWithoutDescriptionBefore() throws Exception {
+  public void testPackageWithoutDescriptionBefore() {
     final Description root = Description.createSuiteDescription("root");
     final ArrayList<Description> tests = new ArrayList<>();
     for (String className : new String[]{"a.TestA", "a.TestB"}) {
@@ -909,6 +909,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
     }
   }
 
+  @SuppressWarnings("SameParameterValue")
   private static void doTest(Description description, String expected) {
     final StringBuffer buf = new StringBuffer();
     createListener(buf).sendTree(description);
@@ -934,6 +935,82 @@ public class JUnitTreeByDescriptionHierarchyTest {
              ##teamcity[testStarted name='TestSuite$1.warning' locationHint='java:test://junit.framework.TestSuite$1/warning']
              ##teamcity[testFinished name='TestSuite$1.warning']
              ##teamcity[testSuiteFinished name='TestSuite$1']
+             """);
+  }
+
+  @Test
+  public void testFlatSuiteWithNamedInnerClassDollarInClassName() throws Exception {
+    final Description root = Description.createSuiteDescription("a.OuterTest");
+    final List<Description> tests = new ArrayList<>();
+
+    final Description test1 = Description.createTestDescription("a.OuterTest$InnerA", "testFoo");
+    root.addChild(test1);
+    tests.add(test1);
+
+    final Description test2 = Description.createTestDescription("a.OuterTest$InnerB", "testBar");
+    root.addChild(test2);
+    tests.add(test2);
+
+    doTest(root, tests,
+           """
+             ##teamcity[enteredTheMatrix]
+             ##teamcity[suiteTreeNode name='InnerA.testFoo' locationHint='java:test://a.OuterTest$InnerA/testFoo']
+             ##teamcity[suiteTreeNode name='InnerB.testBar' locationHint='java:test://a.OuterTest$InnerB/testBar']
+             ##teamcity[treeEnded]
+             """,
+           """
+             ##teamcity[rootName name = 'OuterTest' comment = 'a' location = 'java:suite://a.OuterTest']
+             ##teamcity[testSuiteStarted name='InnerA' locationHint='java:suite://a.OuterTest$InnerA']
+             ##teamcity[testStarted name='InnerA.testFoo' locationHint='java:test://a.OuterTest$InnerA/testFoo']
+             ##teamcity[testFinished name='InnerA.testFoo']
+             ##teamcity[testSuiteFinished name='InnerA']
+             ##teamcity[testSuiteStarted name='InnerB' locationHint='java:suite://a.OuterTest$InnerB']
+             ##teamcity[testStarted name='InnerB.testBar' locationHint='java:test://a.OuterTest$InnerB/testBar']
+             ##teamcity[testFinished name='InnerB.testBar']
+             ##teamcity[testSuiteFinished name='InnerB']
+             """);
+  }
+
+  @Test
+  public void testAnonymousInnerClassDollarPreserved() throws Exception {
+    final Description root = Description.createSuiteDescription("a.OuterTest");
+    final Description test = Description.createTestDescription("a.OuterTest$1", "testFoo");
+    root.addChild(test);
+
+    doTest(root, Collections.singletonList(test),
+           """
+             ##teamcity[enteredTheMatrix]
+             ##teamcity[suiteTreeNode name='OuterTest$1.testFoo' locationHint='java:test://a.OuterTest$1/testFoo']
+             ##teamcity[treeEnded]
+             """,
+           """
+             ##teamcity[rootName name = 'OuterTest' comment = 'a' location = 'java:suite://a.OuterTest']
+             ##teamcity[testSuiteStarted name='OuterTest$1' locationHint='java:suite://a.OuterTest$1']
+             ##teamcity[testStarted name='OuterTest$1.testFoo' locationHint='java:test://a.OuterTest$1/testFoo']
+             ##teamcity[testFinished name='OuterTest$1.testFoo']
+             ##teamcity[testSuiteFinished name='OuterTest$1']
+             """);
+  }
+
+  @Test
+  public void testNamedInnerClassInDisplayNameFallback() throws Exception {
+    final Description root = Description.createSuiteDescription("a.OuterTest");
+    final Description test = Description.createSuiteDescription("a.OuterTest$InnerA");
+    root.addChild(test);
+
+    doTest(root, Collections.singletonList(test),
+           """
+             ##teamcity[enteredTheMatrix]
+             ##teamcity[suiteTreeStarted name='InnerA' locationHint='java:suite://a.OuterTest$InnerA']
+             ##teamcity[suiteTreeEnded name='InnerA']
+             ##teamcity[treeEnded]
+             """,
+           """
+             ##teamcity[rootName name = 'OuterTest' comment = 'a' location = 'java:suite://a.OuterTest']
+             ##teamcity[testSuiteStarted name='InnerA' locationHint='java:suite://a.OuterTest$InnerA']
+             ##teamcity[testStarted name='InnerA' locationHint='java:test://a.OuterTest$InnerA/InnerA']
+             ##teamcity[testFinished name='InnerA']
+             ##teamcity[testSuiteFinished name='InnerA']
              """);
   }
 

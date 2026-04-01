@@ -517,10 +517,12 @@ internal class WorkspaceFileIndexDataImpl(
   override fun updateDirtyEntities() {
     val start = Nanoseconds.now()
 
+    val removedFileSets = CollectionFactory.createCustomHashingStrategySet(StoredFileSetHashingStrategy)
     ThreadingAssertions.assertWriteAccess()
     for (file in dirtyFiles) {
       val collection = fileSets.remove(file)
-      collection?.forEach { 
+      collection?.forEach {
+        removedFileSets.add(it)
         dirtyEntities.add(it.entityPointer)
       }
     }
@@ -541,10 +543,11 @@ internal class WorkspaceFileIndexDataImpl(
     resetFileCache()
     hasDirtyEntities = false
 
+    removedFileSets.addAll(removeRegistrar.removedFileSets)
     WorkspaceFileIndexDataMetrics.updateDirtyEntitiesTimeNanosec.addElapsedTime(start)
     deduplicateFileSetsAndPublishChangeEvent(
       registeredFileSets = storeRegistrar.registeredFileSets,
-      removedFileSets = removeRegistrar.removedFileSets,
+      removedFileSets = removedFileSets,
       storageAfter = storage
     )
   }

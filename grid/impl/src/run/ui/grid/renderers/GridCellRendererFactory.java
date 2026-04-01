@@ -4,9 +4,10 @@ import com.intellij.database.datagrid.GridColumn;
 import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.ModelIndex;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface GridCellRendererFactory {
-  boolean supports(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column);
+  boolean supports(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value);
 
   @NotNull
   GridCellRenderer getOrCreateRenderer(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column);

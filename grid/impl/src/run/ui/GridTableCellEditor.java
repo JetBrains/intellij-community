@@ -40,6 +40,7 @@ import java.util.EventObject;
 public class GridTableCellEditor extends AbstractTableCellEditor {
   public static final String TABLE_CELL_EDITOR_PROPERTY = "tableCellEditor";
   public static final Key<EventObject> EDITING_STARTER_CLIENT_PROPERTY_KEY = Key.create("EventThatCausedEditingToStart");
+  public static final Key<Object> CURRENT_VALUE_CLIENT_PROPERTY_KEY = Key.create("CurrentValue");
 
   private final DataGrid myGrid;
   private final ModelIndex<GridRow> myRowIdx;
@@ -73,7 +74,8 @@ public class GridTableCellEditor extends AbstractTableCellEditor {
 
     if (myEditor == null) {
       EventObject e = ComponentUtil.getClientProperty(table, EDITING_STARTER_CLIENT_PROPERTY_KEY);
-      myEditor = myEditorFactory.createEditor(myGrid, myRowIdx, myColumnIdx, value, e);
+      Object currentValue = ComponentUtil.getClientProperty(table, CURRENT_VALUE_CLIENT_PROPERTY_KEY);
+      myEditor = myEditorFactory.createEditor(myGrid, myRowIdx, myColumnIdx, currentValue == null ? value : currentValue, e);
       myEditor.setEditingListener(object -> {
         myGrid.fireValueEdited(object);
         Rectangle r = calculateSelectedRect(table);

@@ -1,13 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.fixtures.fixme
 import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyExpectedVarianceJudgment.getExpectedVariance
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance
 import com.jetbrains.python.psi.types.TypeEvalContext
-import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
 
 internal class PyExpectedVarianceJudgmentTest : PyTestCase() {
@@ -15,7 +16,16 @@ internal class PyExpectedVarianceJudgmentTest : PyTestCase() {
   private fun doTest(expression: String, expectedVariance: Variance?, @Language("Python") text: String) {
     val textIndented = text.trimIndent()
     myFixture.configureByText(PythonFileType.INSTANCE, textIndented)
-    val typeAnnotation: PyExpression = myFixture.findElementByText(expression, PyExpression::class.java)
+    var typeAnnotation: PyExpression = myFixture.findElementByText(expression, PyExpression::class.java)
+
+    if (typeAnnotation is PyStringLiteralExpression && typeAnnotation.text.contains(expression)) {
+      val syntheticElement = PyUtil.createExpressionFromFragment(typeAnnotation.stringValue, typeAnnotation)
+                             ?: throw AssertionError("Expression not found in string literal: $expression")
+      val posWithQuotes = typeAnnotation.text.indexOf(expression)
+      val pos = posWithQuotes - (typeAnnotation.text.length - typeAnnotation.stringValue.length) / 2
+      typeAnnotation = PsiTreeUtil.getParentOfType(syntheticElement.findElementAt(pos), PyExpression::class.java)
+                       ?: throw AssertionError("Expression not found in string literal: $expression")
+    }
 
     val context = TypeEvalContext.userInitiated(typeAnnotation.project, typeAnnotation.containingFile)
     val actualVariance = getExpectedVariance(typeAnnotation, context)
@@ -342,15 +352,11 @@ internal class PyExpectedVarianceJudgmentTest : PyTestCase() {
   }
 
   fun `test String literal type at function parameter`() {
-    fixme<AssertionFailedError>("PY-87942: No AST in string literal of type annotation",
-                                "expected:<COVARIANT> but was:<CONTRAVARIANT>"
-    ) {
-      doTest("T],", Variance.COVARIANT, """
-        from typing import Callable
-        class A[T]:
-            def f(self, t: "Callable[[T],None]") : ...
-        """)
-    }
+    doTest("T],", Variance.COVARIANT, """
+      from typing import Callable
+      class A[T]:
+          def f(self, t: "Callable[[T],None]") : ...
+      """)
   }
 
   fun `test Type alias use for generic class invariant`() {
@@ -392,6 +398,13 @@ internal class PyExpectedVarianceJudgmentTest : PyTestCase() {
     doTest("T):", null, """
       class A[T]:
           def __new__(self, value: T): pass
+      """)
+  }
+
+  fun `test Type argument of self type`() {
+    doTest("T]\"", null, """"
+      class K[T]:
+          def m1(self: "K[T]", x: T) -> None: ...
       """)
   }
 

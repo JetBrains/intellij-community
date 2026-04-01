@@ -94,6 +94,19 @@ fun processRequests(
     exitProcess(3)
   }
 
+  // Redirect System.out to stderr so that any accidental stdout writes from libraries don't corrupt the Bazel worker protocol stream.
+  val protocolOut = System.out
+  System.setOut(System.err)
+
+  Thread.setDefaultUncaughtExceptionHandler { thread, error ->
+    try {
+      System.err.print("Uncaught exception in thread ${thread.name}: ")
+      error.printStackTrace(System.err)
+    }
+    catch (_: Throwable) {
+    }
+  }
+
   var onClose = {}
   var exitCode: Int
   try {
@@ -114,7 +127,7 @@ fun processRequests(
 
       tracer.span("process requests") { span ->
         val executor = executorFactory(tracer, this@runBlocking)
-        WorkRequestHandler(requestExecutor = executor, out = System.out, tracer = tracer)
+        WorkRequestHandler(requestExecutor = executor, out = protocolOut, tracer = tracer)
           .processRequests(reader)
       }
       exitCode = 0
@@ -124,7 +137,16 @@ fun processRequests(
     exitCode = 2
   }
   catch (e: Throwable) {
-    e.printStackTrace(System.err)
+    try {
+      e.printStackTrace(System.err)
+    }
+    catch (_: Throwable) {
+      try {
+        System.err.println("Fatal worker error: ${e.javaClass.name}")
+      }
+      catch (_: Throwable) {
+      }
+    }
     exitCode = 1
   }
   finally {
@@ -264,7 +286,16 @@ internal class WorkRequestHandler internal constructor(
     finally {
       tracer.span("cancelRequests on shutdown") { span ->
         for (item in activeRequests.values) {
-          cancelRequestOnShutdown(item, span)
+          try {
+            cancelRequestOnShutdown(item, span)
+          }
+          catch (e: Throwable) {
+            try {
+              System.err.println("Failed to send cancel response for request ${item.request.requestId}: ${e.message}")
+            }
+            catch (_: Throwable) {
+            }
+          }
         }
         activeRequests.clear()
       }
@@ -303,54 +334,87 @@ internal class WorkRequestHandler internal constructor(
     wasCancelled: Boolean = false,
     beforeWrite: () -> Boolean,
   ) {
-    var size = 0
-    if (exitCode != 0) {
-      size += CodedOutputStream.computeInt32Size(1, exitCode)
-    }
-    if (outString != null) {
-      size += CodedOutputStream.computeStringSize(2, outString)
-    }
-    size += CodedOutputStream.computeInt32Size(3, requestId)
-    if (wasCancelled) {
-      size += CodedOutputStream.computeBoolSize(4, true)
-    }
-
-    val messageSizeWithSizePrefix = CodedOutputStream.computeUInt32SizeNoTag(size) + size
-    val buffer = ByteBufAllocator.DEFAULT.heapBuffer(messageSizeWithSizePrefix, messageSizeWithSizePrefix)
-    try {
-      val codedOutput = CodedOutputStream.newInstance(buffer.array(), buffer.arrayOffset(), messageSizeWithSizePrefix)
-      codedOutput.writeUInt32NoTag(size)
-      if (exitCode != 0) {
-        codedOutput.writeInt32(1, exitCode)
-      }
-      if (outString != null) {
-        codedOutput.writeString(2, outString)
-      }
-      codedOutput.writeInt32(3, requestId)
-      if (wasCancelled) {
-        codedOutput.writeBool(4, true)
-      }
-
-      outputWriteMutex.withLock {
+    outputWriteMutex.withLock {
+      try {
         if (!beforeWrite()) {
-          activeRequests.remove(requestId)
           return@withLock
         }
 
+        var size = 0
+        if (exitCode != 0) {
+          size += CodedOutputStream.computeInt32Size(1, exitCode)
+        }
+        if (outString != null) {
+          size += CodedOutputStream.computeStringSize(2, outString)
+        }
+        size += CodedOutputStream.computeInt32Size(3, requestId)
+        if (wasCancelled) {
+          size += CodedOutputStream.computeBoolSize(4, true)
+        }
+
+        val messageSizeWithSizePrefix = CodedOutputStream.computeUInt32SizeNoTag(size) + size
+        val buffer = ByteBufAllocator.DEFAULT.heapBuffer(messageSizeWithSizePrefix, messageSizeWithSizePrefix)
         try {
+          val codedOutput = CodedOutputStream.newInstance(buffer.array(), buffer.arrayOffset(), messageSizeWithSizePrefix)
+          codedOutput.writeUInt32NoTag(size)
+          if (exitCode != 0) {
+            codedOutput.writeInt32(1, exitCode)
+          }
+          if (outString != null) {
+            codedOutput.writeString(2, outString)
+          }
+          codedOutput.writeInt32(3, requestId)
+          if (wasCancelled) {
+            codedOutput.writeBool(4, true)
+          }
+
           runInterruptible(Dispatchers.IO) {
             out.write(buffer.array(), buffer.arrayOffset(), messageSizeWithSizePrefix)
             out.flush()
           }
         }
         finally {
-          activeRequests.remove(requestId)
+          buffer.release()
         }
       }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (_: Throwable) {
+        // Normal path failed (OOM, I/O error, etc.). Write a minimal response (without output string) using the pre-allocated emergency buffer.
+        writeMinimalResponse(requestId = requestId, exitCode = exitCode)
+      }
+      finally {
+        activeRequests.remove(requestId)
+      }
     }
-    finally {
-      buffer.release()
+
+  }
+
+  // Pre-allocated buffer for writing a minimal response when the normal path fails (e.g., OOM).
+  // Size is computed from worst case: both exitCode and requestId are negative int32
+  // (10-byte varint each due to sign extension to 64 bits, plus 1-byte tag each) + size prefix.
+  private val emergencyBuffer: ByteArray
+
+  init {
+    val maxBodySize = CodedOutputStream.computeInt32Size(1, -1) + CodedOutputStream.computeInt32Size(3, -1)
+    emergencyBuffer = ByteArray(CodedOutputStream.computeUInt32SizeNoTag(maxBodySize) + maxBodySize)
+  }
+
+  private fun writeMinimalResponse(requestId: Int, exitCode: Int) {
+    var size = CodedOutputStream.computeInt32Size(3, requestId)
+    if (exitCode != 0) {
+      size += CodedOutputStream.computeInt32Size(1, exitCode)
     }
+    val totalSize = CodedOutputStream.computeUInt32SizeNoTag(size) + size
+    val codedOutput = CodedOutputStream.newInstance(emergencyBuffer, 0, totalSize)
+    codedOutput.writeUInt32NoTag(size)
+    if (exitCode != 0) {
+      codedOutput.writeInt32(1, exitCode)
+    }
+    codedOutput.writeInt32(3, requestId)
+    out.write(emergencyBuffer, 0, totalSize)
+    out.flush()
   }
 
   internal suspend fun executeRequest(
@@ -372,7 +436,17 @@ internal class WorkRequestHandler internal constructor(
       -1
     }
     catch (e: Throwable) {
-      PrintWriter(stringWriter).use { e.printStackTrace(it) }
+      try {
+        PrintWriter(stringWriter).use { e.printStackTrace(it) }
+      }
+      catch (_: Throwable) {
+        // Stack trace formatting failed (e.g., OOM) — try a minimal message
+        try {
+          stringWriter.write(e.javaClass.name)
+        }
+        catch (_: Throwable) {
+        }
+      }
       if (e is Error) {
         errorToThrow = e
       }

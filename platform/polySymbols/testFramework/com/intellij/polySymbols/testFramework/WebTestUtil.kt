@@ -76,6 +76,10 @@ fun UsefulTestCase.enableAstLoadingFilter() {
   Registry.get("ast.loading.filter").setValue(true, testRootDisposable)
 }
 
+fun UsefulTestCase.disableAstLoadingFilter() {
+  Registry.get("ast.loading.filter").setValue(false, testRootDisposable)
+}
+
 fun UsefulTestCase.enableIdempotenceChecksOnEveryCache() {
   Registry.get("platform.random.idempotence.check.rate").setValue(1, testRootDisposable)
 }

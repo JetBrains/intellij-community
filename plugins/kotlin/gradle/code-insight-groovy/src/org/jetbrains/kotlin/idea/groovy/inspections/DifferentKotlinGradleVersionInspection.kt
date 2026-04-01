@@ -23,7 +23,7 @@ class DifferentKotlinGradleVersionInspection : BaseInspection(), PluginVersionDe
 
     override fun buildVisitor(): BaseInspectionVisitor = MyVisitor()
 
-    override fun getGroupDisplayName() = getProbableBugs()
+    override fun getGroupDisplayName(): String = getProbableBugs()
 
     override fun buildErrorString(vararg args: Any): String =
         KotlinGroovyBundle.message("error.text.different.kotlin.gradle.version", args[0], args[1])

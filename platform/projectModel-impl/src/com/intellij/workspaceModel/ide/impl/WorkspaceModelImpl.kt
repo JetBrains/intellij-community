@@ -2,11 +2,13 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
@@ -23,6 +25,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
@@ -44,9 +47,13 @@ import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
+import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
+import com.intellij.workspaceModel.ide.ProjectSynchronizerUtil
 import com.intellij.workspaceModel.ide.impl.reactive.WmReactive
 import io.opentelemetry.api.metrics.Meter
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -56,6 +63,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
+import kotlin.time.Duration.Companion.seconds
 
 private val EP_NAME: ExtensionPointName<BridgeInitializer> = ExtensionPointName("com.intellij.workspace.bridgeInitializer")
 
@@ -469,6 +477,28 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   override suspend fun <T> flowOfQuery(query: StorageQuery<T>): Flow<T> = reactive.flowOfQuery(query)
   override suspend fun <T> flowOfNewElements(query: CollectionQuery<T>): Flow<T> = reactive.flowOfNewElements(query)
   override suspend fun <T> flowOfDiff(query: CollectionQuery<T>): Flow<Diff<T>> = reactive.flowOfDiff(query)
+
+  override suspend fun awaitSynchronizationWithJpsModel() {
+    GlobalWorkspaceModel.getInstance(LocalEelMachine).awaitSynchronizationWithJpsModel()
+
+    CompletableDeferred<Unit>().also { deferred ->
+      JpsProjectLoadingManager.getInstance(project).jpsProjectLoaded { deferred.complete(Unit) }
+
+      if (!deferred.isCompleted && ApplicationManager.getApplication().isUnitTestMode) {
+        ProjectSynchronizerUtil.getInstance(project).applyJpsModelToProjectModel()
+      }
+
+      // Safety net: if the callback is never invoked (e.g. due to a platform bug), unblock waiters after a timeout.
+      coroutineScope.launch {
+        // JpsGlobalModelSynchronizerImpl has a 5-second delay and ModuleManagerComponentBridgeInitializer has a 1-second delay;
+        delay(10.seconds)
+        if (deferred.complete(Unit)) {
+          thisLogger().error("JPS project loaded callback was not called within 10 seconds, proceeding anyway. Project: ${project.name} (locationHash=${project.locationHash}).")
+        }
+      }
+    }.await()
+  }
+
 
   private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     if (project.isDisposed) {

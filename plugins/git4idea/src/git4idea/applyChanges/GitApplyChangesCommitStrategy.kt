@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.applyChanges
 
 import com.intellij.openapi.application.ApplicationManager
@@ -35,9 +35,11 @@ internal sealed class GitApplyChangesCommitStrategy(project: Project) {
 
   open fun start() = Unit
   open fun finish() = Unit
-  open fun afterChangesRefreshed() = Unit
+  open fun afterChangesRefreshed(stoppedAtCommit: VcsCommitMetadata, commitMessage: String) = Unit
 
   abstract fun doUserCommit(
+    commit: VcsCommitMetadata,
+    commitMessage: String,
     onSuccessfulCommit: (VcsCommitMetadata) -> Unit,
     onSkippedCommit: (VcsCommitMetadata) -> Unit,
     onCancelledCommit: (VcsCommitMetadata) -> Unit,
@@ -48,7 +50,7 @@ internal class ChangeListGitApplyChangesCommit(
   private val repository: GitRepository,
   private val gitApplyChangesProcess: GitApplyChangesProcess,
   private val commit: VcsCommitMetadata,
-  private  val commitMessage: @NlsSafe String,
+  private val commitMessage: @NlsSafe String,
   private val preserveCommitMetadata: Boolean,
 ) : GitApplyChangesCommitStrategy(repository.project) {
   lateinit var changeList: LocalChangeList
@@ -68,41 +70,70 @@ internal class ChangeListGitApplyChangesCommit(
     changeListManager.scheduleAutomaticEmptyChangeListDeletion(changeList, true)
   }
 
+  override fun afterChangesRefreshed(stoppedAtCommit: VcsCommitMetadata, commitMessage: String) {
+    val newName = createNameForChangeList(repository.project, commitMessage)
+    changeListManager.editName(changeList.name, newName)
+    if (preserveCommitMetadata) {
+      changeListManager.editChangeListData(newName, stoppedAtCommit.toChangeListData())
+    }
+  }
+
   override fun doUserCommit(
+    commit: VcsCommitMetadata,
+    commitMessage: String,
     onSuccessfulCommit: (VcsCommitMetadata) -> Unit,
     onSkippedCommit: (VcsCommitMetadata) -> Unit,
     onCancelledCommit: (VcsCommitMetadata) -> Unit,
-  ): Boolean = commitChangelist(repository, gitApplyChangesProcess, changeListManager, commit, commitMessage, changeListManager.defaultChangeList, vcsHelper, onSuccessfulCommit = onSuccessfulCommit, onSkippedCommit = onSkippedCommit, onCancelledCommit = onCancelledCommit)
+  ): Boolean = commitChangelist(repository,
+                                gitApplyChangesProcess,
+                                changeListManager,
+                                commit,
+                                commitMessage,
+                                changeListManager.defaultChangeList,
+                                vcsHelper,
+                                onSuccessfulCommit = onSuccessfulCommit,
+                                onSkippedCommit = onSkippedCommit,
+                                onCancelledCommit = onCancelledCommit)
 }
 
 internal class SimplifiedGitApplyChangesCommit(
   private val repository: GitRepository,
   private val gitApplyChangesProcess: GitApplyChangesProcess,
-  private val commit: VcsCommitMetadata,
-  private val commitMessage: @NlsSafe String,
   private val preserveCommitMetadata: Boolean,
 ) : GitApplyChangesCommitStrategy(repository.project) {
 
   override fun doUserCommit(
+    commit: VcsCommitMetadata,
+    commitMessage: String,
     onSuccessfulCommit: (VcsCommitMetadata) -> Unit,
     onSkippedCommit: (VcsCommitMetadata) -> Unit,
     onCancelledCommit: (VcsCommitMetadata) -> Unit,
-  ): Boolean = commitChangelist(repository, gitApplyChangesProcess, changeListManager, commit, commitMessage, changeListManager.defaultChangeList, vcsHelper, onSuccessfulCommit = onSuccessfulCommit, onSkippedCommit = onSkippedCommit, onCancelledCommit = onCancelledCommit)
+  ): Boolean = commitChangelist(repository,
+                                gitApplyChangesProcess,
+                                changeListManager,
+                                commit,
+                                commitMessage,
+                                changeListManager.defaultChangeList,
+                                vcsHelper,
+                                onSuccessfulCommit = onSuccessfulCommit,
+                                onSkippedCommit = onSkippedCommit,
+                                onCancelledCommit = onCancelledCommit)
 
-  override fun afterChangesRefreshed() {
+  override fun afterChangesRefreshed(stoppedAtCommit: VcsCommitMetadata, commitMessage: String) {
     val list = changeListManager.defaultChangeList
     if (preserveCommitMetadata && changeListManager.areChangeListsEnabled() && list.changes.isNotEmpty()) {
-      changeListManager.editChangeListData(list.name, commit.toChangeListData())
+      changeListManager.editChangeListData(list.name, stoppedAtCommit.toChangeListData())
     }
   }
 }
 
 internal class StagingAreaGitApplyChangesCommit(
   private val project: Project,
-  private val commitMessage: String,
 ) : GitApplyChangesCommitStrategy(project) {
 
   override fun doUserCommit(
+    commit: VcsCommitMetadata,
+    commitMessage: String,
     onSuccessfulCommit: (VcsCommitMetadata) -> Unit,
     onSkippedCommit: (VcsCommitMetadata) -> Unit,
     onCancelledCommit: (VcsCommitMetadata) -> Unit,
@@ -153,7 +184,8 @@ private fun commitChangelist(
   }
 }
 
-private fun VcsCommitMetadata.toChangeListData(): ChangeListData = ChangeListData(author = author, date = Date(authorTime), automatic = true)
+private fun VcsCommitMetadata.toChangeListData(): ChangeListData =
+  ChangeListData(author = author, date = Date(authorTime), automatic = true)
 
 private fun ChangeListManager.getAllChangesInLogFriendlyPresentation() = changeLists.map { "[${it.name}] ${it.changes}" }
 

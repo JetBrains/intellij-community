@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter
 
 
 internal class EditorModelImpl(private val editor: EditorImpl) : EditorModel {
-  override fun getDocument(): DocumentEx = editor.uiDocument
+  override fun getDocument(): DocumentEx = editor.elfDocument
   override fun getEditorMarkupModel(): MarkupModelEx = editor.markupModel
   override fun getDocumentMarkupModel(): MarkupModelEx = editor.filteredDocumentMarkupModel
   override fun getHighlighter(): EditorHighlighter = editor.highlighter

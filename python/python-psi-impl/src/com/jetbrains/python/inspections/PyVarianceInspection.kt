@@ -4,7 +4,6 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
@@ -23,6 +22,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.types.PyExpectedVarianceJudgment
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment
@@ -64,9 +64,8 @@ class PyVarianceInspection : PyInspection() {
       val argList = typeVarCall.argumentList ?: return
       val varianceArg = argList.arguments.firstOrNull { arg -> arg.name == "covariant" || arg.name == "contravariant" } ?: return
       // now check that at least two constraints have a subtype relation
-      for (idx1 in 0 until typeVarType.constraints.size) {
+      for ((idx1, c1) in typeVarType.constraints.withIndex()) {
         for (idx2 in idx1 + 1 until typeVarType.constraints.size) {
-          val c1 = typeVarType.constraints[idx1]
           val c2 = typeVarType.constraints[idx2]
           if (PyTypeChecker.match(c1, c2, context)) return
           if (PyTypeChecker.match(c2, c1, context)) return
@@ -120,6 +119,11 @@ class PyVarianceInspection : PyInspection() {
       node.acceptChildren(this)
     }
 
+    override fun visitPyStringLiteralExpression(node: PyStringLiteralExpression) {
+      val syntheticElement = PyUtil.createExpressionFromFragment(node.stringValue, node) ?: return
+      syntheticElement.acceptChildren(this)
+    }
+
     override fun visitPyReferenceExpression(node: PyReferenceExpression) {
       val type = PyTypingTypeProvider.getType(node, context)?.get() ?: return
       if (type !is PyTypeVarType) return
@@ -131,7 +135,7 @@ class PyVarianceInspection : PyInspection() {
   private fun onPyTypeValTypeUsedInAnnotation(holder: ProblemsHolder, node: PyReferenceExpression, context: TypeEvalContext) {
     val isInProtocol = node.parentOfType<PyClass>()?.isProtocol(context) ?: false
     val subscriptionExpression = node.parentOfType<PySubscriptionExpression>()
-    val isInProtocolHeader = subscriptionExpression?.parent is PyArgumentList && subscriptionExpression?.parent?.parent is PyClass
+    val isInProtocolHeader = subscriptionExpression?.parent is PyArgumentList && subscriptionExpression.parent?.parent is PyClass
     if (isInProtocol && isInProtocolHeader) {
       checkProtocol(holder, node, context)
     }
@@ -141,9 +145,6 @@ class PyVarianceInspection : PyInspection() {
   }
 
   private fun checkProtocol(holder: ProblemsHolder, node: PyReferenceExpression, context: TypeEvalContext) {
-    val containingClass = node.parentOfType<PyClass>() ?: return
-    if (containingClass.hasQuotedTypesInMethodOrFieldDefinitions()) return
-
     val varianceExpected = PyInferredVarianceJudgment.getInferredVariance(node, context) ?: return
     val varianceActual = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(node, context) ?: return
 
@@ -151,9 +152,10 @@ class PyVarianceInspection : PyInspection() {
     if (isInProtocolSubscriptionExpr) {
       val varianceExpected = if (varianceExpected == BIVARIANT) COVARIANT else varianceExpected
       if (varianceExpected != varianceActual) {
+        val physicalNode = PyUtil.getFragmentContext(node) ?: return
         val msg = PyPsiBundle.message("INSP.variance.checker.protocols.keep.effective.variance",
                                       varianceExpected.name.lowercase(), varianceActual.name.lowercase())
-        holder.registerProblem(node, msg)
+        holder.registerProblem(physicalNode, msg)
       }
     }
     else checkIncompatibleVariance(varianceActual, varianceExpected, holder, node)
@@ -167,29 +169,6 @@ class PyVarianceInspection : PyInspection() {
     val indexTupleExpression = parentSubscriptionExpr.indexExpression as? PyTupleExpression ?: return false
     val nodeTupleParent = node.parentOfType<PyTupleExpression>()
     return indexTupleExpression === nodeTupleParent
-  }
-
-  // FIXME: Remove when PY-87942 is fixed
-  private fun PyClass.hasQuotedTypesInMethodOrFieldDefinitions(): Boolean {
-    return methods.any { it.hasQuotedTypesInDefinition() } || classAttributes.any { it.hasQuotedTypesInDefinition() }
-  }
-
-  private fun PyFunction.hasQuotedTypesInDefinition(): Boolean {
-    if (annotation?.hasQuotedTypes() == true) return true
-    return parameterList.parameters
-      .asSequence()
-      .filterIsInstance<PyNamedParameter>()
-      .any { it.annotation?.hasQuotedTypes() == true }
-  }
-
-  private fun PyTargetExpression.hasQuotedTypesInDefinition(): Boolean {
-    return annotation?.hasQuotedTypes() == true
-  }
-
-  private fun PyAnnotation.hasQuotedTypes(): Boolean {
-    val annotationValue = value ?: return false
-    return annotationValue is PyStringLiteralExpression ||
-           PsiTreeUtil.findChildOfType(annotationValue, PyStringLiteralExpression::class.java) != null
   }
 
   private fun checkClass(holder: ProblemsHolder, node: PyReferenceExpression, context: TypeEvalContext) {
@@ -208,9 +187,10 @@ class PyVarianceInspection : PyInspection() {
   ) {
     if (isCompatibleWith(varianceInferred, varianceExpected)) return
 
+    val physicalNode = PyUtil.getFragmentContext(node) ?: return
     val msg = PyPsiBundle.message("INSP.variance.checker.incompatible",
                                   varianceExpected.name.lowercase(), varianceInferred.name.lowercase())
-    holder.registerProblem(node, msg)
+    holder.registerProblem(physicalNode, msg)
   }
 
   /**

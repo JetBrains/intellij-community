@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.MathUtil;
 import com.intellij.util.TimeoutUtil;
 
@@ -12,6 +13,7 @@ import java.lang.management.ManagementFactory;
 import java.math.BigInteger;
 
 final class CpuTimings {
+  private static final Logger LOG = Logger.getInstance(CpuTimings.class);
 
   private static final Mandelbrot MANDELBROT = new Mandelbrot(765);
 
@@ -29,7 +31,7 @@ final class CpuTimings {
         minIteration = i;
       }
       else if (i - minIteration > 100) {
-        System.out.println("CPU timing rating: " + minTime + " (calculated in " + (System.currentTimeMillis() - start) + "ms)");
+        LOG.debug("CPU timing rating: " + minTime + " (calculated in " + (System.currentTimeMillis() - start) + "ms)");
         return minTime;
       }
     }

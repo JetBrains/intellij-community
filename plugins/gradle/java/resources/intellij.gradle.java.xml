@@ -35,6 +35,9 @@
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.externallyHandledExtensions"
                     interface="org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogHandler"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.versionCatalogEntrySearcher"
+                    interface="org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogEntrySearcher"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.dslInspectionProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
@@ -200,6 +203,13 @@
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleTaskMissingDescriptionInspection"
                      isInternal="false"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidDuplicateRepositories"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.avoid.duplicate.repositories" groupKey="inspection.best.practices"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDuplicateRepositoriesInspection"/>
 
   </extensions>
 </idea-plugin>

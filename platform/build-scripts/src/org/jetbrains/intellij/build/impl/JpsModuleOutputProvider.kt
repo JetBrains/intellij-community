@@ -10,18 +10,15 @@ import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 
 internal class JpsModuleOutputProvider(private val project: JpsProject, override val useTestCompilationOutput: Boolean) : ModuleOutputProvider {
-  private val modules = project.modules
-  private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
-  private val projectLibraryToModuleMapCache by lazy { buildProjectLibraryToModuleMap(modules) }
+  private val index = ModuleOutputProviderIndex(project.modules)
 
-  override fun getAllModules(): List<JpsModule> = modules
+  override fun getAllModules(): List<JpsModule> = index.modules
 
   override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
     val outputDir = requireNotNull(JpsJavaExtensionService.getInstance().getOutputDirectoryPath(/* module = */ module, /* forTests = */ forTests)) {
@@ -36,13 +33,9 @@ internal class JpsModuleOutputProvider(private val project: JpsProject, override
     }
   }
 
-  override fun findModule(name: String): JpsModule? = nameToModule.get(name.removeSuffix("._test"))
+  override fun findModule(name: String): JpsModule? = index.findModule(name)
 
-  override fun findRequiredModule(name: String): JpsModule {
-    return requireNotNull(findModule(name)) {
-      "Cannot find required module '$name' in the project"
-    }
-  }
+  override fun findRequiredModule(name: String): JpsModule = index.findRequiredModule(name)
 
   override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
     val module = moduleLibraryModuleName?.let { findRequiredModule(it) }
@@ -74,7 +67,7 @@ internal class JpsModuleOutputProvider(private val project: JpsProject, override
 
   override suspend fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String?, processedModules: MutableSet<String>?): ByteArray? {
     return findFileInAnyModuleOutput(
-      modules = modules,
+      modules = index.modules,
       relativePath = relativePath,
       provider = this,
       moduleNamePrefix = moduleNamePrefix,
@@ -82,12 +75,7 @@ internal class JpsModuleOutputProvider(private val project: JpsProject, override
     )
   }
 
-  override fun getProjectLibraryToModuleMap(): Map<String, String> = projectLibraryToModuleMapCache
+  override fun getProjectLibraryToModuleMap(): Map<String, String> = index.getProjectLibraryToModuleMap()
 
-  override fun getModuleImlFile(module: JpsModule): Path {
-    val baseDir = requireNotNull(JpsModelSerializationDataService.getBaseDirectoryPath(module)) {
-      "Cannot find base directory for module ${module.name}"
-    }
-    return baseDir.resolve("${module.name}.iml")
-  }
+  override fun getModuleImlFile(module: JpsModule): Path = index.getModuleImlFile(module)
 }

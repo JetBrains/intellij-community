@@ -49,8 +49,12 @@ abstract class PyLspToolConfiguration<State : PyLspToolConfiguration<State>> : P
   override var pathToExecutable: String = ""
   override var sdkName: String = DEFAULT_ENVIRONMENT
 
+  fun isAnyFeatureEnabled(): Boolean = inspections || completions == true || inlayHints == true || documentation == true
+
+  @Suppress("UNCHECKED_CAST")
   final override fun getState(): State = this as State
 
+  @Suppress("UNCHECKED_CAST")
   override fun loadState(state: State): Unit = XmlSerializerUtil.copyBean(state, this as State)
 }
 

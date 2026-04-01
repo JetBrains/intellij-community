@@ -43,7 +43,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
-import com.intellij.psi.util.JvmMainMethodSearcher;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -107,17 +106,9 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
     PsiMember member = PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiMember.class);
     if (!(member instanceof PsiMethod)) return null;
     if (!(member.getContainingClass() instanceof PsiImplicitClass implicitClass)) return null;
-    boolean hasMainMethod = new JvmMainMethodSearcher() {
-      @Override
-      public boolean instanceMainMethodsEnabled(@NotNull PsiElement psiElement) {
-        return true;
-      }
-
-      @Override
-      protected boolean inheritedStaticMainEnabled(@NotNull PsiElement psiElement) {
-        return true;
-      }
-    }.hasMainMethod(implicitClass);
+    boolean hasMainMethod = JavaFeature.assumeAvailable(JavaFeature.INSTANCE_MAIN_METHOD, () -> {
+      return PsiMethodUtil.hasMainInClass(implicitClass);
+    });
     if (!hasMainMethod) return null;
     if (PsiTreeUtil.hasErrorElements(implicitClass)) {
       return null;

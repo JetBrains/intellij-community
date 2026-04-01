@@ -1,5 +1,7 @@
 package com.intellij.ide.starter.ide.installer
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.IdeArchiveExtractor
 import com.intellij.ide.starter.ide.IdeDistributionFactory
@@ -58,21 +60,36 @@ class AndroidInstaller : IdeInstaller {
       }
     }
 
-    fun createDownloadableUrl(buildNumber: String, os: OS): String {
+    fun createDownloadableUrl(version: String, os: OS): String {
       val ext = when (os) {
         OS.Windows -> "-windows.zip"
         OS.macOS -> if (CpuArch.isArm64()) "-mac_arm.dmg" else "-mac.dmg"
         OS.Linux -> "-linux.tar.gz"
         else -> error("Not supported OS")
       }
-
-      val path = when (os) {
-        OS.macOS -> "install"
-        else -> "ide-zips"
-      }
-
-      return "https://redirector.gvt1.com/edgedl/android/studio/$path/$buildNumber/android-studio-$buildNumber$ext"
+      val releases = URI.create("https://jb.gg/android-studio-releases-list.json")
+        .toURL().openStream().use { input ->
+          jacksonObjectMapper().readValue(input, AsReleasesJson::class.java)
+        }
+      val release = releases.content.item.find { it.version == version }
+                    ?: error("Android Studio version $version not found in releases list")
+      return release.download.firstOrNull { it.link.endsWith(ext) }?.link
+             ?: error("No download found for $os (suffix '$ext') in Android Studio $version")
     }
+
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private data class AsReleasesJson(val content: Content)
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private data class Content(val item: List<Item>)
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private data class Item(val version: String, val download: List<Download>)
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private data class Download(val link: String)
+
   }
 
   /**

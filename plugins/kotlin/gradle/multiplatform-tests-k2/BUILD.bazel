@@ -19,6 +19,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlin-tooling-core",
     "//plugins/kotlin/base/indices",
+    "//platform/util/jdom",
   ]
 )
 
@@ -106,6 +107,8 @@ jvm_library(
     "//platform/util:util-ui_test_lib",
     "//platform/util-ex",
     "//platform/util-ex:util-ex_test_lib",
+    "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
   ],
   runtime_deps = [":kotlin-gradle-multiplatform-tests"]
 )

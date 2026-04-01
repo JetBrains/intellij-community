@@ -167,7 +167,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
       return module != null && module.getModuleScope().contains(virtualFile);
     }
     if (HierarchyBrowserBaseEx.SCOPE_PROJECT.equals(scopeType)) {
-      if (srcElement.getContainingFile() instanceof PsiCompiledElement) return false;
+      if (srcElement.getContainingFile() instanceof PsiCompiledElement && srcElement.isPhysical()) return false;
       VirtualFile virtualFile = srcElement.getContainingFile().getVirtualFile();
       return virtualFile == null || !TestSourcesFilter.isTestSources(virtualFile, myProject);
     }

@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -39,6 +38,7 @@ import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.TabCharacterPaintMode;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapEx;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -58,6 +58,7 @@ import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.CachingPainter;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.LinePainter2D;
@@ -520,7 +521,7 @@ public final class EditorPainter implements TextDrawingCallback {
         int[] currentLogicalLine = new int[]{-1};
         paintLineFragments(visLinesIterator, y, new LineFragmentPainter() {
           @Override
-          public void paintBeforeLineStart(IterationState it, TextAttributes attributes, boolean hasSoftWrap, int columnEnd, float xEnd, int y) {
+          public void paintBeforeLineStart(IterationState it, TextAttributes attributes, SoftWrapEx softWrap, int columnEnd, float xEnd, int y) {
             if (dryRun) return;
             if (visualLine == 0) xEnd -= myView.getPrefixTextWidthInPixels();
             paintBackground(attributes, startX, y, xEnd);
@@ -532,9 +533,9 @@ public final class EditorPainter implements TextDrawingCallback {
                 selectionExtensionWidth, myLineHeight
               ));
             }
-            if (!hasSoftWrap) return;
+            if (softWrap == null) return;
             paintSelectionOnSecondSoftWrapLineIfNecessary(visualLine, columnEnd, xEnd, y, primarySelectionStart, primarySelectionEnd);
-            if (paintSoftWraps) {
+            if (paintSoftWraps && softWrap.isPaintable()) {
               int x = (int)xEnd;
               myTextDrawingTasks.add(g -> {
                 int symbolWidth = mySoftWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
@@ -635,7 +636,7 @@ public final class EditorPainter implements TextDrawingCallback {
               );
             }
             int offset = it.getEndOffset();
-            SoftWrap softWrap = mySoftWrapModel.getSoftWrap(offset);
+            SoftWrapEx softWrap = mySoftWrapModel.getSoftWrapEx(offset);
             if (softWrap == null) {
               int logicalLine = myDocument.getLineNumber(offset);
               List<Inlay<?>> inlays = myInlayModel.getAfterLineEndElementsForLogicalLine(logicalLine);
@@ -659,7 +660,7 @@ public final class EditorPainter implements TextDrawingCallback {
             }
             else {
               paintSelectionOnFirstSoftWrapLineIfNecessary(visualLine, columnStart, x, y, primarySelectionStart, primarySelectionEnd);
-              if (paintSoftWraps) {
+              if (paintSoftWraps && softWrap.isPaintable()) {
                 myTextDrawingTasks.add(g -> {
                   mySoftWrapModel.doPaint(g, SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED, (int)x, y, myLineHeight);
                 });
@@ -1602,7 +1603,7 @@ public final class EditorPainter implements TextDrawingCallback {
 
       GeneralPath caretShape = new GeneralPath();
 
-      float radius = Math.min(w / 2, CARET_DIRECTION_MARK_SIZE);
+      float radius = IslandsState.Companion.isEnabled() ? Math.min(w / 2, CARET_DIRECTION_MARK_SIZE) : 0.0f;
 
       caretShape.moveTo(x, y + radius);
 
@@ -1724,9 +1725,8 @@ public final class EditorPainter implements TextDrawingCallback {
         x = fragment.getStartX();
         if (firstFragment) {
           firstFragment = false;
-          SoftWrap softWrap = mySoftWrapModel.getSoftWrap(offset);
-          boolean hasSoftWrap = softWrap != null;
-          if (hasSoftWrap || myEditor.isRightAligned()) {
+          SoftWrapEx softWrap = mySoftWrapModel.getSoftWrapEx(offset);
+          if (softWrap != null || myEditor.isRightAligned()) {
             prevEndOffset = offset;
             it = new IterationState(myEditor, offset == 0 ? 0 : DocumentUtil.getPreviousCodePointOffset(myDocument, offset),
                                     visualLineEndOffset,
@@ -1737,7 +1737,7 @@ public final class EditorPainter implements TextDrawingCallback {
             if (x >= myClip.getMinX()) {
               TextAttributes attributes = it.getStartOffset() == offset ? it.getBeforeLineStartBackgroundAttributes() :
                                           it.getMergedAttributes();
-              painter.paintBeforeLineStart(it, attributes, hasSoftWrap, fragment.getStartVisualColumn(), x, y);
+              painter.paintBeforeLineStart(it, attributes, softWrap, fragment.getStartVisualColumn(), x, y);
             }
           }
         }
@@ -1807,7 +1807,7 @@ public final class EditorPainter implements TextDrawingCallback {
         if (it.getEndOffset() <= offset) {
           it.advance();
         }
-        painter.paintBeforeLineStart(it, it.getBeforeLineStartBackgroundAttributes(), false, maxColumn, x, y);
+        painter.paintBeforeLineStart(it, it.getBeforeLineStartBackgroundAttributes(), null, maxColumn, x, y);
       }
       if (it == null || it.getEndOffset() != visualLineEndOffset) {
         it = new IterationState(myEditor,

@@ -1,18 +1,18 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.openapi.application.ArchivedCompilationContextUtil.getBazelTargetsJsonPath
 import com.intellij.util.bazelEnvironment.BazelRunfiles
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.io.path.inputStream
-import kotlin.io.path.readLines
 
-@ApiStatus.Internal
+@Internal
 object ArchivedCompilationContextUtil {
   @JvmStatic
   val archivedCompiledClassesLocation: String? by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -33,14 +33,6 @@ object ArchivedCompilationContextUtil {
     return@lazy null
   }
 
-  private fun getArchivedCompiledClassesLocationIfIsRunningFromBazelOut(): String? {
-    val utilJar = PathManager.getJarPathForClass(PathManager::class.java)
-    val bazelOutPattern = Paths.get("bazel-out", "jvm-fastbuild").toString()
-    val index = utilJar?.indexOf(bazelOutPattern) ?: -1
-    val isRunningFromBazelOut = index != -1 && utilJar!!.endsWith(".jar")
-    return if (isRunningFromBazelOut) utilJar.take(index + bazelOutPattern.length) else null
-  }
-
   @JvmStatic
   val archivedCompiledClassesMapping: Map<String, String>? by lazy(LazyThreadSafetyMode.PUBLICATION) {
     /**
@@ -50,38 +42,11 @@ object ArchivedCompilationContextUtil {
     computeArchivedCompiledClassesMapping()
   }
 
-  private fun computeArchivedCompiledClassesMapping(): Map<String, String>? {
-    val filePath = System.getProperty("intellij.test.jars.mapping.file")
-    if (filePath.isNullOrBlank()) {
-      if (getArchivedCompiledClassesLocationIfIsRunningFromBazelOut() != null) {
-        return computeArchivedCompiledClassesMappingIfIsRunningFromBazelOut()
-      }
-      return null
-    }
-    val lines: List<String>
-    try {
-      lines = Paths.get(filePath).readLines()
-    }
-    catch (_: Exception) {
-      log("Failed to load jars mappings from $filePath")
-      return null
-    }
-    val mapping: MutableMap<String, String> = mutableMapOf()
-    for (line in lines) {
-      val split = line.split("=", limit = 2)
-      if (split.size < 2) {
-        log("Ignored jars mapping line: $line")
-        continue
-      }
-      mapping[split[0]] = split[1]
-    }
-    return mapping
-  }
-
-  private const val BAZEL_TARGETS_JSON_FILE_PROPERTY = "intellij.build.bazel.targets.json.file"
+  const val BAZEL_TARGETS_JSON_FILE_PROPERTY: String = "intellij.build.bazel.targets.json.file"
 
   fun getBazelTargetsJsonPath(projectRoot: Path): Path {
     if (BazelRunfiles.isRunningFromBazel) {
+      // relative path, resolve against JAVA_RUNFILES or RUNFILES_MANIFEST_FILE
       val location = System.getProperty(BAZEL_TARGETS_JSON_FILE_PROPERTY)
                      ?: error("Missing property $BAZEL_TARGETS_JSON_FILE_PROPERTY, it's required when running under Bazel")
       log("Running under Bazel, using targets file from Bazel dependencies: rlocationpath=$location")
@@ -92,57 +57,99 @@ object ArchivedCompilationContextUtil {
       return path
     }
     else {
-      val path = projectRoot.resolve("build").resolve("bazel-targets.json")
+      // absolute path, JAVA_RUNFILES and RUNFILES_MANIFEST_FILE are not set
+      var path = System.getProperty(BAZEL_TARGETS_JSON_FILE_PROPERTY)?.let { Paths.get(it) }
+      if (path != null) {
+        log("Standalone run not under Bazel, using targets file from Bazel dependencies: $path")
+        return path
+      }
+
+      path = projectRoot.resolve("build").resolve("bazel-targets.json")
       log("Standalone run not under Bazel, using targets file from project: $path")
       return path
     }
   }
+}
 
-  private fun computeArchivedCompiledClassesMappingIfIsRunningFromBazelOut(): Map<String, String>? {
-    val projectRoot = PathManager.getHomeDir()
+private fun getArchivedCompiledClassesLocationIfIsRunningFromBazelOut(): String? {
+  val utilJar = PathManager.getJarPathForClass(PathManager::class.java)
+  val bazelOutPattern = Paths.get("bazel-out", "jvm-fastbuild").toString()
+  val index = utilJar?.indexOf(bazelOutPattern) ?: -1
+  val isRunningFromBazelOut = index != -1 && utilJar!!.endsWith(".jar")
+  return if (isRunningFromBazelOut) utilJar.take(index + bazelOutPattern.length) else null
+}
 
-    val targetsFile: BazelTargetsInfo.TargetsFile
-    try {
-      targetsFile = BazelTargetsInfo.loadTargetsFile(getBazelTargetsJsonPath(projectRoot))
+private fun computeArchivedCompiledClassesMapping(): Map<String, String>? {
+  val filePath = System.getProperty("intellij.test.jars.mapping.file")
+  if (filePath.isNullOrBlank()) {
+    if (getArchivedCompiledClassesLocationIfIsRunningFromBazelOut() != null) {
+      return computeArchivedCompiledClassesMappingIfIsRunningFromBazelOut()
     }
-    catch (e: Exception) {
-      log("Failed to load targets info from bazel-targets.json: " + e.stackTraceToString())
-      return null
+    return null
+  }
+  val lines: List<String>
+  try {
+    lines = Files.readAllLines(Paths.get(filePath))
+  }
+  catch (_: Exception) {
+    log("Failed to load jars mappings from $filePath")
+    return null
+  }
+  val mapping = LinkedHashMap<String, String>()
+  for (line in lines) {
+    val split = line.split('=', limit = 2)
+    if (split.size < 2) {
+      log("Ignored jars mapping line: $line")
+      continue
     }
+    mapping[split[0]] = split[1]
+  }
+  return mapping
+}
 
-    val mapping: MutableMap<String, String> = mutableMapOf()
-    targetsFile.modules.forEach { (moduleName, targetsFileModuleDescription) ->
-      if (targetsFileModuleDescription.productionJars.isNotEmpty()) {
-        mapping["production/$moduleName"] = targetsFileModuleDescription.productionJars.map { projectRoot.resolve(it).toString() }.single()
-      }
-      if (targetsFileModuleDescription.testJars.isNotEmpty()) {
-        mapping["test/$moduleName"] = targetsFileModuleDescription.testJars.map { projectRoot.resolve(it).toString() }.single()
-      }
-    }
-    return mapping
+private fun computeArchivedCompiledClassesMappingIfIsRunningFromBazelOut(): Map<String, String>? {
+  val projectRoot = PathManager.getHomeDir()
+
+  val targetsFile = try {
+    BazelTargetsInfo.loadTargetsFile(getBazelTargetsJsonPath(projectRoot))
+  }
+  catch (e: Exception) {
+    log("Failed to load targets info from bazel-targets.json: " + e.stackTraceToString())
+    return null
   }
 
-  private fun log(x: String) {
-    System.err.println(x)
-  }
-
-  private object BazelTargetsInfo {
-    private val json = Json { ignoreUnknownKeys = true }
-
-    @OptIn(ExperimentalSerializationApi::class)
-    fun loadTargetsFile(file: Path): TargetsFile {
-      return file.inputStream().use { json.decodeFromStream<TargetsFile>(it) }
+  val mapping = LinkedHashMap<String, String>()
+  for ((moduleName, targetsFileModuleDescription) in targetsFile.modules) {
+    if (targetsFileModuleDescription.productionJars.isNotEmpty()) {
+      mapping["production/$moduleName"] = targetsFileModuleDescription.productionJars.map { projectRoot.resolve(it).toString() }.single()
     }
-
-    @Serializable
-    data class TargetsFileModuleDescription(
-      val productionJars: List<String>,
-      val testJars: List<String>,
-    )
-
-    @Serializable
-    data class TargetsFile(
-      val modules: Map<String, TargetsFileModuleDescription>,
-    )
+    if (targetsFileModuleDescription.testJars.isNotEmpty()) {
+      mapping["test/$moduleName"] = targetsFileModuleDescription.testJars.map { projectRoot.resolve(it).toString() }.single()
+    }
   }
+  return mapping
+}
+
+private fun log(x: String) {
+  System.err.println(x)
+}
+
+private object BazelTargetsInfo {
+  private val json = Json { ignoreUnknownKeys = true }
+
+  @OptIn(ExperimentalSerializationApi::class)
+  fun loadTargetsFile(file: Path): TargetsFile {
+    return Files.newInputStream(file).use { json.decodeFromStream<TargetsFile>(it) }
+  }
+
+  @Serializable
+  data class TargetsFileModuleDescription(
+    @JvmField val productionJars: List<String>,
+    @JvmField val testJars: List<String>,
+  )
+
+  @Serializable
+  data class TargetsFile(
+    @JvmField val modules: Map<String, TargetsFileModuleDescription>,
+  )
 }

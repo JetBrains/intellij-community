@@ -28,7 +28,7 @@ import com.intellij.openapi.editor.impl.FoldingModelInternal;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
-import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapParsingListener;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.DocumentEventUtil;
@@ -96,9 +96,9 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
   private long myDocumentStamp = Long.MIN_VALUE;
 
-  private final SoftWrapAwareDocumentParsingListenerAdapter mySoftWrapChangeListener = new SoftWrapAwareDocumentParsingListenerAdapter() {
+  private final SoftWrapParsingListener mySoftWrapParsingListener = new SoftWrapParsingListener() {
     @Override
-    public void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event) {
+    public void onRegionReparseEnd(@NotNull IncrementalCacheUpdateEvent event) {
       onSoftWrapRecalculationEnd(event);
     }
   };
@@ -114,13 +114,13 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
     myScrollingModel = view.getScrollingModel();
     myDocument.addDocumentListener(this, this);
     myFoldingModel.addListener(this, this);
-    mySoftWrapModel.getApplianceManager().addListener(mySoftWrapChangeListener);
+    mySoftWrapModel.addSoftWrapParsingListener(mySoftWrapParsingListener);
     myInlayModel.addListener(this, this);
   }
 
   @Override
   public void dispose() {
-    mySoftWrapModel.getApplianceManager().removeListener(mySoftWrapChangeListener);
+    mySoftWrapModel.removeSoftWrapParsingListener(mySoftWrapParsingListener);
     invalidateCachedBlockInlayWidth();
   }
 
@@ -563,6 +563,14 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
     if (checkDirty()) return;
     int startVisualLine = myView.offsetToVisualLine(startOffset, false);
     int endVisualLine = myView.offsetToVisualLine(endOffset, true);
+    if (startVisualLine > endVisualLine) {
+      // If startOffset = endOffset and there's a soft-wrap at this offset, startVisualLine > endVisualLine.
+      // In this case, we need to invalidate both of the visual lines.
+      int tmp = startVisualLine;
+      startVisualLine = endVisualLine;
+      endVisualLine = tmp;
+    }
+
     int lineDiff = myView.getVisibleLineCount() - myLineWidths.size();
     invalidateWidth(lineDiff == 0 && startVisualLine == endVisualLine, startVisualLine);
     if (lineDiff > 0) {

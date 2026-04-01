@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RedundantSuppression", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package org.jetbrains.intellij.build.impl
 
@@ -389,9 +389,8 @@ suspend fun collectExportedLibrariesFromLibraryModules(
     .asSequence()
     .filter { it.startsWith(LIB_MODULE_PREFIX) }
     .forEach { moduleName ->
-      val module = context.findRequiredModule(moduleName)
       // get all library dependencies from the module
-      module.dependenciesList.dependencies
+      context.outputProvider.findRequiredModule(moduleName).dependenciesList.dependencies
         .asSequence()
         .filterIsInstance<JpsLibraryDependency>()
         .filter { libDep ->
@@ -418,7 +417,7 @@ internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, 
     }
 
     for (moduleName in plugin.includedModules.asSequence().map { it.moduleName }.distinct()) {
-      val module = context.findRequiredModule(moduleName)
+      val module = context.outputProvider.findRequiredModule(moduleName)
       for (element in helper.getLibraryDependencies(module, withTests = false)) {
         val libRef = element.libraryReference
         if (libRef.parentReference is JpsModuleReference) {

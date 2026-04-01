@@ -40,7 +40,6 @@ jvm_library(
     "//platform/refactoring:refactoring_test_lib",
     "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
-    "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/tests-common:common-tests",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/base/util",

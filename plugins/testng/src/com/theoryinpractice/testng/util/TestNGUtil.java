@@ -54,23 +54,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
-import org.testng.Assert;
-import org.testng.ITestNGListener;
-import org.testng.TestNG;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterGroups;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeGroups;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Factory;
-import org.testng.annotations.ObjectFactory;
-import org.testng.annotations.Test;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -97,45 +80,63 @@ public final class TestNGUtil {
   @SuppressWarnings("StaticNonFinalField") public static boolean hasDocTagsSupport = hasDocTagsSupport();
 
   private static boolean hasDocTagsSupport() {
-    String testngJarPath = PathUtil.getJarPathForClass(Test.class);
+    String testngJarPath = getJarPathForClass(TEST_ANNOTATION_FQN);
+    if (testngJarPath == null) return false;
     String version = JarUtil.getJarAttribute(new File(testngJarPath), Attributes.Name.IMPLEMENTATION_VERSION);
     return version != null && StringUtil.compareVersionNumbers(version, "5.12") <= 0;
   }
 
   public static final String MAVEN_TEST_NG = "org.testng:testng";
-  public static final String TEST_ANNOTATION_FQN = Test.class.getName();
-  public static final String DATA_PROVIDER_ANNOTATION_FQN = DataProvider.class.getName();
+  public static final String ASSERT_FQN = "org.testng.Assert";
+  public static final String I_TESTNG_LISTENER_FQN = "org.testng.ITestNGListener";
+  public static final String TESTNG_FQN = "org.testng.TestNG";
+
+  public static final String TEST_ANNOTATION_FQN = "org.testng.annotations.Test";
+  public static final String BEFORE_CLASS_ANNOTATION_FQN = "org.testng.annotations.BeforeClass";
+  public static final String BEFORE_GROUPS_ANNOTATION_FQN = "org.testng.annotations.BeforeGroups";
+  public static final String BEFORE_METHOD_ANNOTATION_FQN = "org.testng.annotations.BeforeMethod";
+  public static final String BEFORE_SUITE_ANNOTATION_FQN = "org.testng.annotations.BeforeSuite";
+  public static final String BEFORE_TEST_ANNOTATION_FQN = "org.testng.annotations.BeforeTest";
+  public static final String AFTER_CLASS_ANNOTATION_FQN = "org.testng.annotations.AfterClass";
+  public static final String AFTER_GROUPS_ANNOTATION_FQN = "org.testng.annotations.AfterGroups";
+  public static final String AFTER_METHOD_ANNOTATION_FQN = "org.testng.annotations.AfterMethod";
+  public static final String AFTER_SUITE_ANNOTATION_FQN = "org.testng.annotations.AfterSuite";
+  public static final String AFTER_TEST_ANNOTATION_FQN = "org.testng.annotations.AfterTest";
+  public static final String DATA_PROVIDER_ANNOTATION_FQN = "org.testng.annotations.DataProvider";
+  public static final String FACTORY_ANNOTATION_FQN = "org.testng.annotations.Factory";
+  public static final String OBJECT_FACTORY_ANNOTATION_FQN = "org.testng.annotations.ObjectFactory";
+  public static final String CONFIGURATION_ANNOTATION_FQN = "org.testng.annotations.Configuration";
+
   public static final String TESTNG_PACKAGE = "org.testng";
-  public static final String FACTORY_ANNOTATION_FQN = Factory.class.getName();
   public static final String[] CONFIG_ANNOTATIONS_FQN = {
-    "org.testng.annotations.Configuration",
-    Factory.class.getName(),
-    ObjectFactory.class.getName(),
+    CONFIGURATION_ANNOTATION_FQN,
+    FACTORY_ANNOTATION_FQN,
+    OBJECT_FACTORY_ANNOTATION_FQN,
     DATA_PROVIDER_ANNOTATION_FQN,
-    BeforeClass.class.getName(),
-    BeforeGroups.class.getName(),
-    BeforeMethod.class.getName(),
-    BeforeSuite.class.getName(),
-    BeforeTest.class.getName(),
-    AfterClass.class.getName(),
-    AfterGroups.class.getName(),
-    AfterMethod.class.getName(),
-    AfterSuite.class.getName(),
-    AfterTest.class.getName()
+    BEFORE_CLASS_ANNOTATION_FQN,
+    BEFORE_GROUPS_ANNOTATION_FQN,
+    BEFORE_METHOD_ANNOTATION_FQN,
+    BEFORE_SUITE_ANNOTATION_FQN,
+    BEFORE_TEST_ANNOTATION_FQN,
+    AFTER_CLASS_ANNOTATION_FQN,
+    AFTER_GROUPS_ANNOTATION_FQN,
+    AFTER_METHOD_ANNOTATION_FQN,
+    AFTER_SUITE_ANNOTATION_FQN,
+    AFTER_TEST_ANNOTATION_FQN
   };
 
   public static final String[] CONFIG_ANNOTATIONS_FQN_NO_TEST_LEVEL = {
-    "org.testng.annotations.Configuration",
-    Factory.class.getName(),
-    ObjectFactory.class.getName(),
-    BeforeClass.class.getName(),
-    BeforeGroups.class.getName(),
-    BeforeSuite.class.getName(),
-    BeforeTest.class.getName(),
-    AfterClass.class.getName(),
-    AfterGroups.class.getName(),
-    AfterSuite.class.getName(),
-    AfterTest.class.getName()
+    CONFIGURATION_ANNOTATION_FQN,
+    FACTORY_ANNOTATION_FQN,
+    OBJECT_FACTORY_ANNOTATION_FQN,
+    BEFORE_CLASS_ANNOTATION_FQN,
+    BEFORE_GROUPS_ANNOTATION_FQN,
+    BEFORE_SUITE_ANNOTATION_FQN,
+    BEFORE_TEST_ANNOTATION_FQN,
+    AFTER_CLASS_ANNOTATION_FQN,
+    AFTER_GROUPS_ANNOTATION_FQN,
+    AFTER_SUITE_ANNOTATION_FQN,
+    AFTER_TEST_ANNOTATION_FQN
   };
 
   private static final @NonNls String[] CONFIG_JAVADOC_TAGS = {
@@ -402,7 +403,7 @@ public final class TestNGUtil {
   public static boolean checkTestNGInClasspath(PsiElement psiElement) {
     final Project project = psiElement.getProject();
     final PsiManager manager = PsiManager.getInstance(project);
-    if (JavaPsiFacade.getInstance(manager.getProject()).findClass(TestNG.class.getName(), psiElement.getResolveScope()) == null) {
+    if (JavaPsiFacade.getInstance(manager.getProject()).findClass(TESTNG_FQN, psiElement.getResolveScope()) == null) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         if (Messages.showOkCancelDialog(psiElement.getProject(),
                                         TestngBundle.message("testng.util.will.be.added.to.module.classpath"),
@@ -413,7 +414,8 @@ public final class TestNGUtil {
       }
       final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
       if (module == null) return false;
-      String url = VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(Assert.class)));
+      String testngJarPath = getJarPathForClass(ASSERT_FQN);
+      String url = VfsUtil.getUrlForLibraryRoot(new File(testngJarPath));
       ModuleRootModificationUtil.addModuleLibrary(module, url);
     }
     return true;
@@ -435,7 +437,7 @@ public final class TestNGUtil {
   public static boolean inheritsITestListener(@NotNull PsiClass psiClass) {
     final Project project = psiClass.getProject();
     final PsiClass aListenerClass = JavaPsiFacade.getInstance(project)
-      .findClass(ITestNGListener.class.getName(), GlobalSearchScope.allScope(project));
+      .findClass(I_TESTNG_LISTENER_FQN, GlobalSearchScope.allScope(project));
     return aListenerClass != null && psiClass.isInheritor(aListenerClass, true);
   }
 
@@ -548,5 +550,13 @@ public final class TestNGUtil {
     final PsiAnnotationMemberValue dataProviderMethodName = annotation.findDeclaredAttributeValue(attributeName);
     if (dataProviderMethodName == null) return null;
     return StringUtil.unquoteString(dataProviderMethodName.getText());
+  }
+
+  private static @Nullable String getJarPathForClass(@NotNull String fqn) {
+    try {
+      return PathUtil.getJarPathForClass(Class.forName(fqn));
+    } catch (ClassNotFoundException e) {
+      return null;
+    }
   }
 }

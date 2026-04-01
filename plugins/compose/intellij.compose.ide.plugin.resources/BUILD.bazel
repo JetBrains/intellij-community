@@ -48,6 +48,7 @@ jvm_library(
     "//platform/ide-core",
     "@lib//:kotlinc-kotlin-compiler-tests-provided",
     "//platform/statistics",
+    "//plugins/kotlin/gradle/gradle-java",
   ]
 )
 
@@ -119,6 +120,7 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/tests-common:common-tests",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
   ]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.resources` end

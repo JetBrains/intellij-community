@@ -29,11 +29,11 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
 
   fun testFunctionParameters() {
     myFixture.enableInspections(I18nInspection())
-    configureKt("""
+    configureKt($$"""
        class Foo {
           fun foo(s: String) {
             foo(<warning descr="Hardcoded string literal: \"text\"">"text"</warning>)
-            foo(<warning descr="Hardcoded string literal: \"templated ${"\$"}s end\"">"templated ${"\$"}s end"</warning>)
+            foo(<warning descr="Hardcoded string literal: \"templated $s end\"">"templated $s end"</warning>)
             foo(<warning descr="Hardcoded string literal: \"concatenated \"">"concatenated "</warning> + s + <warning descr="Hardcoded string literal: \" end\"">" end"</warning>)
           }
         }
@@ -144,7 +144,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
     configureKt("""
        class Foo : X() {
           @org.jetbrains.annotations.Nls var prop = "";
-       
+
           fun foo(x : X) {
             prop = <warning descr="Hardcoded string literal: \"kotlin setter\"">"kotlin setter"</warning>
             x.foo = <warning descr="Hardcoded string literal: \"java qualified setter\"">"java qualified setter"</warning>
@@ -197,13 +197,13 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
 
       @Foo("Single param")
       class X
-      
+
       @Foo(value = "Named param", value2 = "Named param2")
       class Y
-      
+
       @Foos(Foo("Nested"))
       class Z
-      
+
       @Foos(value = [Foo("Nested named")])
       class T
     """.trimIndent())
@@ -216,7 +216,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
         fun foo(a: Int = 0, 
                 @org.jetbrains.annotations.NonNls b: String, 
                 c: String) {}
-        
+
         fun test() {
           foo(b = "foo bar", c = <warning descr="Hardcoded string literal: \"violation\"">"violation"</warning>)
           foo(c = <warning descr="Hardcoded string literal: \"violation\"">"violation"</warning>, b = "foo bar")
@@ -281,7 +281,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
           fill(buffer)
           consume(buffer.toString())
         }
-        
+
         fun consume(@Nls s : String) {}
         fun fill(sb: StringBuilder) {}
     """.trimIndent())
@@ -293,7 +293,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
     configureKt("""
         fun debug(@org.jetbrains.annotations.NonNls lazyMessage: () -> String) {}
         fun debug2(@org.jetbrains.annotations.NonNls lazyMessage: java.util.function.Supplier<String>) {}
-    
+
         fun test() {
             debug { "foo" }
             debug2 { "foo" }
@@ -311,7 +311,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
 
         fun test() {
           fun Test.weighLocal(@org.jetbrains.annotations.NonNls id: String): Boolean = true
-        
+
           val test = Test().weigh("priority")
           // TODO: parameter for local function doesn't report annotations
           val test2 = Test().weighLocal(<warning descr="Hardcoded string literal: \"priority\"">"priority"</warning>)
@@ -346,9 +346,9 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
     configureKt("""
        import org.jetbrains.annotations.*
        import java.util.*
-       
+
        public fun <T> listOf(vararg elements: T): List<T> = Arrays.asList(*elements)
-       
+
        class X {
          companion object {
            @NonNls private val LIST: List<String> = listOf("Foo bar", "Boo far")
@@ -363,17 +363,17 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
     myFixture.addClass("public interface Y {@org.jetbrains.annotations.NonNls String getNonNls();}")
     configureKt("""
        import org.jetbrains.annotations.*
-       
+
        @NonNls
        fun getLastWord(@NonNls string: String): String = string
-       
+
        class X {
          @NonNls
          fun getNonNls() = "hello"
 
          @NonNls
          val prop = "hello"
-      
+
          fun test(@NonNls word: String, x: Array<X>, y: Array<Y>): Boolean {
            return word == "Hello world1" &&
                   this.getNonNls() != "Hello world2" &&
@@ -395,7 +395,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
         fun test2() {
           throw Err("foo bar")
         }
-      
+
         fun test() {
           throw UnsupportedOperationException("foo bar")
         }
@@ -409,7 +409,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
     myFixture.enableInspections(inspection)
     configureKt("""
         class Err(message:String): Throwable(message)
-      
+
         fun test() {
           throw Err(<warning descr="Hardcoded string literal: \"foo bar\"">"foo bar"</warning>)
         }
@@ -421,11 +421,11 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
     myFixture.enableInspections(inspection)
-    configureKt("""
+    configureKt($$"""
        class Foo {
           fun foo(@org.jetbrains.annotations.Nls s: String) {
             foo(<warning descr="Hardcoded string literal: \"text\"">"text"</warning>)
-            foo(<warning descr="Hardcoded string literal: \"templated ${"\$"}s end\"">"templated ${"\$"}s end"</warning>)
+            foo(<warning descr="Hardcoded string literal: \"templated $s end\"">"templated $s end"</warning>)
           }
         }
     """.trimIndent())
@@ -465,29 +465,29 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
     inspection.setIgnoreForAllButNls(true)
     inspection.setReportUnannotatedReferences(true)
     myFixture.enableInspections(inspection)
-    configureKt("""
+    configureKt($$"""
         import org.jetbrains.annotations.Nls
 
         fun showMessage(@Nls text: String) {}
-        
+
         public inline fun <T, R> T.run(block: T.() -> R): R { return block() }
         public inline fun <T, R> T.let(block: (T) -> R): R { return block(this) }
-        
+
         class Window {
           val name: String = "Name"
         }
-        
+
         @Nls
-        fun localize(name: String) = <warning descr="Hardcoded string literal: \"Hello ${'$'}name\"">"Hello ${'$'}<warning descr="Reference to non-localized string is used where localized string is expected">name</warning>"</warning>
-        
+        fun localize(name: String) = <warning descr="Hardcoded string literal: \"Hello $name\"">"Hello $<warning descr="Reference to non-localized string is used where localized string is expected">name</warning>"</warning>
+
         fun mainFunction() {
           val window = Window()
-        
-          val resultWithRun = window.run { localize("${'$'}name") }
+
+          val resultWithRun = window.run { localize("$name") }
           val resultWithoutRun = localize(window.name)
-          val resultWithLet = window.let { localize("${'$'}{it.name}") }
+          val resultWithLet = window.let { localize("${it.name}") }
           val resultWithLetNonLocalized = window.let { <warning descr="Hardcoded string literal: \"foo\"">"foo"</warning> }
-        
+
           showMessage(resultWithRun)
           showMessage(resultWithoutRun)
           showMessage(resultWithLet)
@@ -501,7 +501,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
     myFixture.enableInspections(I18nInspection())
     configureKt("""
         import org.jetbrains.annotations.NonNls
-        
+
         fun foo1(message: String = <warning descr="Hardcoded string literal: \"Hello World\"">"Hello World"</warning>) {}
         fun foo2(@NonNls message: String = "Hello World") {}
         """.trimIndent())
@@ -512,7 +512,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
     myFixture.enableInspections(I18nInspection())
     configureKt("""
       import org.jetbrains.annotations.Nls
-      
+
       class B1: A(<warning descr="Hardcoded string literal: \"Text for i18n\"">"Text for i18n"</warning>)
       class B2(a: Int): A(<warning descr="Hardcoded string literal: \"Text for i18n\"">"Text for i18n"</warning> + a)
       open class A(val text: @Nls String)
@@ -545,14 +545,14 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
     myFixture.enableInspections(inspection)
     configureKt("""
         import org.jetbrains.annotations.*
-        
+
         private const val LEFT = "Left"
         private const val RIGHT = "Right"
         private const val NONE = "NONE"
-        
+
         @Nls
         fun message(str: String): String = message(str)
-        
+
         @Nls
         fun optionName(@NonNls option: String): String = when (option) {
           LEFT -> message("combobox.tab.placement.left")
@@ -601,4 +601,151 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPlug
     myFixture.testHighlighting()
   }
 
+  fun testLocalVariable() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+
+    configureKt("""
+    package pkg
+
+    import org.jetbrains.annotations.Nls
+
+    fun test() {
+        val x = <warning descr="Hardcoded string literal: \"Hardcoded string\"">"Hardcoded string"</warning>
+        var nls1: @Nls String = x
+        nls1 = x
+    }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
+  fun testTopLevelProperty() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+
+    configureKt("""
+    package pkg
+    
+    import org.jetbrains.annotations.Nls
+
+    var x: String = "Hardcoded string"
+
+    fun test() {
+        var nls1: @Nls String = <warning descr="Reference to non-localized string is used where localized string is expected">x</warning>
+        nls1 = <warning descr="Reference to non-localized string is used where localized string is expected">x</warning>
+    }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
+  fun testFunctionParameter() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+
+    configureKt("""
+    package pkg
+
+    import org.jetbrains.annotations.Nls
+
+    fun test(x: String) {
+        var nls1: @Nls String = <warning descr="Reference to non-localized string is used where localized string is expected">x</warning>
+        nls1 = <warning descr="Reference to non-localized string is used where localized string is expected">x</warning>
+    }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
+  fun testSimpleReferenceCallArgument() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+
+    configureKt("""
+    package pkg
+
+    import org.jetbrains.annotations.Nls
+
+    val x: String = "Hardcoded string"
+
+    fun test() {
+      takeNls(<warning descr="Reference to non-localized string is used where localized string is expected">x</warning>)
+    }
+
+    fun takeNls(arg: @Nls String) {
+    }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
+  fun testQualifiedReferenceCallArgument() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+
+    configureKt("""
+    package pkg
+
+    import org.jetbrains.annotations.Nls
+
+    object Y {
+      const val X = "Constant literal"
+      val s = "Non constant literal"
+    }
+
+    fun test() {
+      takeNls(Y.<warning descr="Reference to non-localized string is used where localized string is expected">X</warning>)
+      takeNls(Y.<warning descr="Reference to non-localized string is used where localized string is expected">s</warning>)
+    }
+
+    fun takeNls(arg: @Nls String) {
+    }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
+  fun testLoops() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+
+    configureKt("""
+    package pkg
+    
+    import org.jetbrains.annotations.Nls
+    
+    fun test(strings: List<String>, nlsStrings: List<@Nls String>) {
+      for (s in strings) {
+        takeNls(s)
+      }
+      for (s: @Nls String in strings) {
+        takeNls(s)
+      }
+      strings.forEach { s: String ->
+        takeNls(<warning descr="Reference to non-localized string is used where localized string is expected">s</warning>)
+      }
+  
+      for (s in nlsStrings) {
+        takeNls(s)
+      }
+      for (s: @Nls String in nlsStrings) {
+        takeNls(s)
+      }
+      nlsStrings.forEach { s: String ->
+        takeNls(<warning descr="Reference to non-localized string is used where localized string is expected">s</warning>)
+      }
+    }
+    
+    private fun takeNls(@Nls localized: @Nls String?) {}
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
 }

@@ -25,6 +25,8 @@ public interface ResultViewWithCells {
 
   void editSelectedCell();
 
+  void editSelectedCellWithValue(Object value);
+
   @Nullable
   TableCellEditor getCellEditor();
 

@@ -41,7 +41,7 @@ public final class JavaBackwardReferenceIndexWriter extends CompilerReferenceWri
   }
 
   @Nullable
-  CompilerRef enumerateNames(JavacRef ref, Function<? super String, Integer> ownerIdReplacer) throws IOException {
+  CompilerRef enumerateNames(@Nullable JavacRef ref, Function<? super String, Integer> ownerIdReplacer) throws IOException {
     NameEnumerator nameEnumerator = myIndex.getByteSeqEum();
     if (ref instanceof JavacRef.JavacClass) {
       if (!isPrivate(ref) && !((JavacRef.JavacClass)ref).isAnonymous()) {
@@ -49,7 +49,7 @@ public final class JavaBackwardReferenceIndexWriter extends CompilerReferenceWri
       }
     }
     else {
-      if (isPrivate(ref)) {
+      if (ref == null || isPrivate(ref)) {
         return null;
       }
       String ownerName = ref.getOwnerName();

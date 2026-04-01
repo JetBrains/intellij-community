@@ -29,6 +29,7 @@ import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.unscramble.CompoundDumpItem
 import com.intellij.unscramble.DumpItem
+import com.intellij.unscramble.splitFirstLineAndBody
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import fleet.util.channels.use
@@ -177,7 +178,6 @@ private fun dumpItemDtos(allDumpItems: List<DumpItem>, maxItems: Int): ThreadDum
   val (icons, iconToIndex) = prepareIndex { it.icon }
   val (stateDescriptions, stateDescriptionToIndex) = prepareIndex { it.stateDesc }
   val (iconToolTips, iconToolTipToIndex) = prepareIndex { it.iconToolTip }
-  val (exportedStackTraces, exportedStackTraceToIndex) = prepareIndex { it.exportedStackTrace }
 
   val awaiting = hashMapOf<Int, IntArray>()
   val itemToIndex = dumpItems.withIndex().associate { it.value to it.index }
@@ -188,38 +188,23 @@ private fun dumpItemDtos(allDumpItems: List<DumpItem>, maxItems: Int): ThreadDum
     }
   }
 
-  val stackTraceToItems = dumpItems.map {
-    val stackTrace = it.stackTrace
-    val firstLineIndex = stackTrace.indexOf('\n')
-    if (firstLineIndex >= 0) {
-      val firstLine = stackTrace.take(firstLineIndex)
-      val stackTraceWithoutFirstLine = stackTrace.substring(firstLineIndex + 1)
-      StackTraceWithSeparatedFirstLine(firstLine, stackTraceWithoutFirstLine, it)
-    }
-    else {
-      StackTraceWithSeparatedFirstLine(stackTrace, "", it)
-    }
-  }.groupBy { it.stackTrace }.toList()
-
-  val stackTraces = stackTraceToItems.map { it.first }
-  val itemToStackTrace = stackTraceToItems.withIndex().flatMap { (index, indexedValue) ->
-    indexedValue.second.map { (firstLine, _, item) ->
-      item to DumpItemWithStackTraceIndex(firstLine, index)
-    }
-  }.associate { it.first to it.second }
+  val (stackTraceBodies, itemToStackTrace) = deduplicateTextBodies(dumpItems) { it.stackTrace }
+  val (exportedStackTraceBodies, itemToExportedStackTrace) = deduplicateTextBodies(dumpItems) { it.serialize() }
 
   val items = dumpItems.map {
-    val (firstLine, stackTraceIndex) = itemToStackTrace[it]!!
+    val (firstLine, stackTraceBodyIndex) = itemToStackTrace[it]!!
+    val (exportedFirstLine, exportedStackTraceBodyIndex) = itemToExportedStackTrace[it]!!
     JavaThreadDumpItemDto(name = it.name,
                           stateDescriptionIndex = stateDescriptionToIndex[it.stateDesc]!!,
                           interestLevel = it.interestLevel,
                           iconIndex = iconToIndex[it.icon]!!.toByte(),
                           attributesIndex = attributesToIndex[it.attributes]!!.toByte(),
                           isDeadLocked = it.isDeadLocked,
-                          stackTraceIndex = stackTraceIndex,
-                          exportedStackTraceIndex = exportedStackTraceToIndex[it.exportedStackTrace]!!,
+                          stackTraceBodyIndex = stackTraceBodyIndex,
+                          exportedStackTraceBodyIndex = exportedStackTraceBodyIndex,
                           iconToolTipIndex = iconToolTipToIndex[it.iconToolTip]!!.toByte(),
                           firstLine = firstLine,
+                          exportedFirstLine = exportedFirstLine,
                           isContainer = it.isContainer,
                           treeId = it.treeId,
                           parentTreeId = it.parentTreeId,
@@ -230,13 +215,44 @@ private fun dumpItemDtos(allDumpItems: List<DumpItem>, maxItems: Int): ThreadDum
   return ThreadDumpWithAwaitingDependencies(items = items,
                                             icons = icons.map { it.rpcId() },
                                             attributes = attributes.map { it.rpcId() },
-                                            stackTraces = stackTraces,
-                                            exportedStackTraces = exportedStackTraces,
+                                            stackTraceBodies = stackTraceBodies,
+                                            exportedStackTraceBodies = exportedStackTraceBodies,
                                             awaitingDependencies = awaiting,
                                             stateDescriptions = stateDescriptions,
                                             iconToolTips = iconToolTips,
                                             truncatedItemsNumber = truncatedSize)
 }
 
-private data class StackTraceWithSeparatedFirstLine(val firstLine: String, val stackTrace: String, val dumpItem: DumpItem)
-private data class DumpItemWithStackTraceIndex(val firstLine: String, val stackTraceIndex: Int)
+private fun deduplicateTextBodies(
+  dumpItems: List<DumpItem>,
+  selector: (DumpItem) -> String,
+): Pair<List<String>, Map<DumpItem, DumpItemWithTextBodyIndex>> {
+  // The first line often carries per-item ids or inline metadata, while the multiline body
+  // is commonly repeated across many items, so only the body is shared through the DTO.
+  val bodyToItems = dumpItems.map { dumpItem ->
+    val separatedText = splitFirstLineAndBody(selector(dumpItem))
+    TextWithSeparatedFirstLine(
+      firstLine = separatedText.firstLine,
+      body = separatedText.body,
+      dumpItem = dumpItem,
+    )
+  }.groupBy { it.body }.toList()
+
+  val bodies = bodyToItems.map { it.first }
+  val itemToBodyIndex = bodyToItems.withIndex().flatMap { (index, indexedValue) ->
+    indexedValue.second.map {
+      it.dumpItem to DumpItemWithTextBodyIndex(it.firstLine, index)
+    }
+  }.associate { it.first to it.second }
+  return bodies to itemToBodyIndex
+}
+
+/**
+ * Dump item text split into the visible first line and the deduplicated multiline body.
+ */
+private data class TextWithSeparatedFirstLine(val firstLine: String, val body: String, val dumpItem: DumpItem)
+
+/**
+ * Per-item reference to a shared body plus the unique first line for this dump item.
+ */
+private data class DumpItemWithTextBodyIndex(val firstLine: String, val bodyIndex: Int)

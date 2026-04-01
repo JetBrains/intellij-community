@@ -4,6 +4,7 @@ package com.intellij.unscramble;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.NoStackTraceFoldingPanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -177,11 +178,11 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
         if (threadTree.isPathSelected(path)) {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
           if (node.getUserObject() instanceof DumpItem selection && selection != currentlySelectedItem) {
-            AnalyzeStacktraceUtil.printStacktrace(consoleView, selection.getStackTrace());
+            AnalyzeStacktraceUtil.printStacktrace(consoleView, selection.getStackTrace(), ConsoleViewContentType.NORMAL_OUTPUT);
             currentlySelectedItem = selection;
           }
         } else {
-          AnalyzeStacktraceUtil.printStacktrace(consoleView, "");
+          AnalyzeStacktraceUtil.printStacktrace(consoleView, "", ConsoleViewContentType.NORMAL_OUTPUT);
           currentlySelectedItem = null;
         }
         threadTree.repaint();

@@ -28,8 +28,8 @@ import static com.intellij.database.extractors.DatabaseObjectFormatterConfig.isT
 
 public class DefaultBlobEditorFactory implements GridCellEditorFactory {
   @Override
-  public int getSuitability(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
-    return switch (GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column)) {
+  public int getSuitability(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
+    return switch (GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column, value)) {
       case Types.BINARY, Types.BLOB, Types.LONGVARBINARY, Types.VARBINARY -> SUITABILITY_MIN;
       default -> SUITABILITY_UNSUITABLE;
     };
@@ -54,7 +54,8 @@ public class DefaultBlobEditorFactory implements GridCellEditorFactory {
   @Override
   public @NotNull ValueParser getValueParser(@NotNull DataGrid grid,
                                              @NotNull ModelIndex<GridRow> rowIdx,
-                                             @NotNull ModelIndex<GridColumn> columnIdx) {
+                                             @NotNull ModelIndex<GridColumn> columnIdx,
+                                             @Nullable Object value) {
     return (text, document) -> {
       VirtualFile file = document == null ? null : FileDocumentManager.getInstance().getFile(document);
       Charset charset = file == null ? StandardCharsets.UTF_8 : file.getCharset();
@@ -70,7 +71,7 @@ public class DefaultBlobEditorFactory implements GridCellEditorFactory {
                                               @NotNull ModelIndex<GridColumn> column,
                                               @Nullable Object object,
                                               EventObject initiator) {
-    return new BlobTextCellEditor(grid, row, column, object, initiator, getIsEditableChecker(), getValueParser(grid, row, column), getValueFormatter(grid, row, column, object));
+    return new BlobTextCellEditor(grid, row, column, object, initiator, getIsEditableChecker(), getValueParser(grid, row, column, object), getValueFormatter(grid, row, column, object));
   }
 
   private static class BlobTextCellEditor extends GridTextCellEditorBase implements LoadFileAction.LoadFileActionHandler {

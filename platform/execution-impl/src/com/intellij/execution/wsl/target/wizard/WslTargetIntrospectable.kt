@@ -16,6 +16,7 @@ import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.executeInShellAndGetCommandOnlyStdout
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -23,18 +24,23 @@ import com.intellij.util.execution.ParametersListUtil
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 
-class WslTargetIntrospectable(val distribution: WSLDistribution, val console: ConsoleView) : LanguageRuntimeType.Introspectable() {
+class WslTargetIntrospectable(
+  private val distribution: WSLDistribution,
+  private val console: ConsoleView,
+) : LanguageRuntimeType.Introspectable() {
   override val targetPlatform: CompletableFuture<TargetPlatform> = CompletableFuture.completedFuture(TargetPlatform(Platform.UNIX))
 
-  override fun promiseEnvironmentVariable(varName: String): CompletableFuture<String?> =
-    CompletableFuture.supplyAsync(captureThreadContext {
+  override fun promiseEnvironmentVariable(varName: String): CompletableFuture<String?> {
+    return CompletableFuture.supplyAsync(captureThreadContext {
       distribution.getEnvironmentVariable(varName)
     })
+  }
 
-  override fun promiseExecuteScript(script: List<String>): CompletableFuture<ProcessOutput> =
-    CompletableFuture.supplyAsync(captureThreadContext {
+  override fun promiseExecuteScript(script: List<String>): CompletableFuture<ProcessOutput> {
+    return CompletableFuture.supplyAsync(captureThreadContext {
       executeCommand(script)
     })
+  }
 
   @Deprecated("Use the override with List<String> parameter type")
   override fun promiseExecuteScript(script: String): CompletableFuture<String?> =
@@ -65,19 +71,15 @@ class WslTargetIntrospectable(val distribution: WSLDistribution, val console: Co
       CapturingProcessRunner(processHandler).runProcess(10_000)
     }
 
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Command $cmd finished: " +
-                "stdout=${output.stdout}, stderr=${output.stderr}, " +
-                "timeout=${output.isTimeout}, exitCode=${output.exitCode}")
+    logger<WslTargetIntrospectable>().debug {
+      "Command $cmd finished: " +
+      "stdout=${output.stdout}, stderr=${output.stderr}, " +
+      "timeout=${output.isTimeout}, exitCode=${output.exitCode}"
     }
 
     val success = !output.isTimeout && output.exitCode == 0
     console.print(IdeBundle.message("wsl.target.introspection.step.command.finished.with.exit.code", output.exitCode) + "\n\n",
                   if (success) ConsoleViewContentType.SYSTEM_OUTPUT else ConsoleViewContentType.ERROR_OUTPUT)
     return output
-  }
-
-  companion object {
-    val LOG = logger<WslTargetIntrospectable>()
   }
 }

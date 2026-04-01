@@ -1,0 +1,7 @@
+// "'protected' visibility is effectively 'private' in a final class" "true"
+// FIX: "Make class open"
+
+open class Test {
+    protected fun foo() {
+    }
+}

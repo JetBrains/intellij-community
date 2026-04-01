@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -29,18 +29,25 @@ import icons.TestngIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import javax.swing.Icon;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.theoryinpractice.testng.util.TestNGUtil.AFTER_CLASS_ANNOTATION_FQN;
+import static com.theoryinpractice.testng.util.TestNGUtil.AFTER_METHOD_ANNOTATION_FQN;
+import static com.theoryinpractice.testng.util.TestNGUtil.BEFORE_CLASS_ANNOTATION_FQN;
+import static com.theoryinpractice.testng.util.TestNGUtil.BEFORE_GROUPS_ANNOTATION_FQN;
+import static com.theoryinpractice.testng.util.TestNGUtil.BEFORE_METHOD_ANNOTATION_FQN;
+import static com.theoryinpractice.testng.util.TestNGUtil.BEFORE_SUITE_ANNOTATION_FQN;
+import static com.theoryinpractice.testng.util.TestNGUtil.BEFORE_TEST_ANNOTATION_FQN;
+import static com.theoryinpractice.testng.util.TestNGUtil.TEST_ANNOTATION_FQN;
+
 public class TestNGFramework extends JavaTestFramework implements DumbAware {
-  private static final List<String> SECONDARY_BEFORE_ANNOTATIONS = Arrays.asList("org.testng.annotations.BeforeTest",
-                                                                                 "org.testng.annotations.BeforeClass",
-                                                                                 "org.testng.annotations.BeforeSuite",
-                                                                                 "org.testng.annotations.BeforeGroups"
+  private static final List<String> SECONDARY_BEFORE_ANNOTATIONS = Arrays.asList(BEFORE_TEST_ANNOTATION_FQN,
+                                                                                 BEFORE_CLASS_ANNOTATION_FQN,
+                                                                                 BEFORE_SUITE_ANNOTATION_FQN,
+                                                                                 BEFORE_GROUPS_ANNOTATION_FQN
   );
 
   @Override
@@ -81,7 +88,7 @@ public class TestNGFramework extends JavaTestFramework implements DumbAware {
   protected @Nullable PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       for (PsiMethod each : clazz.getMethods()) {
-        if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.BeforeMethod", 0)) return each;
+        if (AnnotationUtil.isAnnotated(each, BEFORE_METHOD_ANNOTATION_FQN, 0)) return each;
       }
       return null;
     }, null);
@@ -91,7 +98,7 @@ public class TestNGFramework extends JavaTestFramework implements DumbAware {
   protected @Nullable PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       for (PsiMethod each : clazz.getMethods()) {
-        if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.BeforeClass", 0)) return each;
+        if (AnnotationUtil.isAnnotated(each, BEFORE_CLASS_ANNOTATION_FQN, 0)) return each;
       }
       return null;
     }, null);
@@ -101,7 +108,7 @@ public class TestNGFramework extends JavaTestFramework implements DumbAware {
   protected @Nullable PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       for (PsiMethod each : clazz.getMethods()) {
-        if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.AfterMethod", 0)) return each;
+        if (AnnotationUtil.isAnnotated(each, AFTER_METHOD_ANNOTATION_FQN, 0)) return each;
       }
       return null;
     }, null);
@@ -111,7 +118,7 @@ public class TestNGFramework extends JavaTestFramework implements DumbAware {
   protected @Nullable PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       for (PsiMethod each : clazz.getMethods()) {
-        if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.AfterClass", 0)) return each;
+        if (AnnotationUtil.isAnnotated(each, AFTER_CLASS_ANNOTATION_FQN, 0)) return each;
       }
       return null;
     }, null);
@@ -140,7 +147,7 @@ public class TestNGFramework extends JavaTestFramework implements DumbAware {
                                           TestngBundle.message("testng.create.new.method.dialog.title"),
                                           Messages.getWarningIcon());
       if (exit == Messages.YES) {
-        AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(BeforeMethod.class.getName(), PsiNameValuePair.EMPTY_ARRAY, inClass.getModifierList());
+        AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(BEFORE_METHOD_ANNOTATION_FQN, PsiNameValuePair.EMPTY_ARRAY, inClass.getModifierList());
         return inClass;
       }
       else if (exit == Messages.NO) {
@@ -159,7 +166,7 @@ public class TestNGFramework extends JavaTestFramework implements DumbAware {
       if (methods.length > 0) {
         final PsiModifierList modifierList = methods[0].getModifierList();
         if (!modifierList.hasModifierProperty(PsiModifier.PRIVATE)) { //do not override private method
-          @NonNls String pattern = "@" + BeforeMethod.class.getName() + "\n";
+          @NonNls String pattern = "@" + BEFORE_METHOD_ANNOTATION_FQN + "\n";
           if (modifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
             pattern += "protected ";
           }
@@ -176,11 +183,11 @@ public class TestNGFramework extends JavaTestFramework implements DumbAware {
 
     PsiMethod testMethod = null;
     for (PsiMethod psiMethod : psiMethods) {
-      if (inClass == null && AnnotationUtil.isAnnotated(psiMethod, BeforeMethod.class.getName(), 0)) {
+      if (inClass == null && AnnotationUtil.isAnnotated(psiMethod, BEFORE_METHOD_ANNOTATION_FQN, 0)) {
         inClass = psiMethod;
       }
       if (testMethod == null &&
-          AnnotationUtil.isAnnotated(psiMethod, Test.class.getName(), 0) &&
+          AnnotationUtil.isAnnotated(psiMethod, TEST_ANNOTATION_FQN, 0) &&
           !psiMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
         testMethod = psiMethod;
       }

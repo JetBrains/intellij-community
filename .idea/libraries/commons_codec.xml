@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="commons-codec" type="repository">
-    <properties maven-id="commons-codec:commons-codec:1.18.0">
+    <properties maven-id="commons-codec:commons-codec:1.21.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.18.0/commons-codec-1.18.0.jar">
-          <sha256sum>ba005f304cef92a3dede24a38ad5ac9b8afccf0d8f75839d6c1338634cf7f6e4</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.21.0/commons-codec-1.21.0.jar">
+          <sha256sum>4da851cb6abfb98bfe9eb77c5e5fc47f5414fa28b94e21b7fd9a646705dc167f</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.18.0/commons-codec-1.18.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.21.0/commons-codec-1.21.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.18.0/commons-codec-1.18.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.21.0/commons-codec-1.21.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

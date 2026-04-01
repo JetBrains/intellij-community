@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -216,6 +217,37 @@ public class EditorImplTest extends AbstractEditorTest {
     runWriteCommand(() -> DocumentUtil.executeInBulk(document, ()-> document.replaceString(4, 5, "-")));
 
     assertEquals(new VisualPosition(1, 5), getEditor().getCaretModel().getVisualPosition());
+  }
+
+  public void testForcedSoftWrapsAreDeferredUntilBulkModeFinishes() {
+    int oldForceLimit = AdvancedSettings.getInt("editor.soft.wrap.force.limit");
+    AdvancedSettings.setInt("editor.soft.wrap.force.limit", 10);
+    try {
+      initText("short");
+      EditorImpl editor = (EditorImpl)getEditor();
+      DocumentEx document = editor.getDocument();
+      setEditorVisibleSize(10, 1);
+
+      assertFalse(editor.getSettings().isUseSoftWraps());
+      assertNull(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS));
+      assertTrue(editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()).isEmpty());
+
+      String longLine = StringUtil.repeat("1234567890", 3);
+      runWriteCommand(() -> DocumentUtil.executeInBulk(document, () -> {
+        document.setText(longLine);
+
+        assertFalse(editor.getSettings().isUseSoftWraps());
+        assertNull(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS));
+        assertTrue(editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()).isEmpty());
+      }));
+
+      assertTrue(editor.getSettings().isUseSoftWraps());
+      assertEquals(Boolean.TRUE, editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS));
+      assertFalse(editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()).isEmpty());
+    }
+    finally {
+      AdvancedSettings.setInt("editor.soft.wrap.force.limit", oldForceLimit);
+    }
   }
   
   public void testSuccessiveBulkModeOperations() {

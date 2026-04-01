@@ -12,7 +12,7 @@ private fun privateFunInM1() {
 }
 
 fun testVisibility() {
-    <error descr="[UNRESOLVED_REFERENCE] Unresolved reference: ClassInM2">ClassInM2</error>()
+    <error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'ClassInM2'.">ClassInM2</error>()
 }
 
 public open class A internal constructor() {

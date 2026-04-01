@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -14,18 +14,16 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selectedValueIs
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.event.HierarchyEvent
 
-@ApiStatus.Internal
+@Internal
 class TemplateExpandShortcutPanel(label: @NlsContexts.Label String) {
-
   val panel: DialogPanel = panel {
     row(label) {
       myExpandByCombo = comboBox(listOf(
@@ -33,14 +31,16 @@ class TemplateExpandShortcutPanel(label: @NlsContexts.Label String) {
         tab,
         enter,
         custom
-      ), textListCellRenderer<String?>("") {
+      ), textListCellRenderer("") {
         if (it == custom) {
           val shortcuts = getCurrentCustomShortcuts()
           val shortcutText = if (shortcuts.isEmpty()) "" else KeymapUtil.getShortcutsText(shortcuts)
-          if (StringUtil.isEmpty(shortcutText))
+          if (shortcutText.isEmpty()) {
             ApplicationBundle.message("custom.option")
-          else
+          }
+          else {
             ApplicationBundle.message("custom.option.with.shortcut", shortcutText)
+          }
         }
         else {
           it
@@ -51,12 +51,12 @@ class TemplateExpandShortcutPanel(label: @NlsContexts.Label String) {
         val allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myOpenKeymapLabel))
         val keymapPanel = if (allSettings == null) KeymapPanel() else allSettings.find(KeymapPanel::class.java) ?: return@link
         val selectAction = Runnable { keymapPanel.selectAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM) }
-        if (allSettings != null) {
-          allSettings.select(keymapPanel).doWhenDone(selectAction)
-        }
-        else {
+        if (allSettings == null) {
           ShowSettingsUtil.getInstance().editConfigurable(myOpenKeymapLabel, keymapPanel, selectAction)
           resizeComboToFitCustomShortcut()
+        }
+        else {
+          allSettings.select(keymapPanel).doWhenDone(selectAction)
         }
       }.visibleIf(myExpandByCombo.selectedValueIs(custom))
         .component
@@ -72,7 +72,7 @@ class TemplateExpandShortcutPanel(label: @NlsContexts.Label String) {
   private lateinit var myExpandByCombo: ComboBox<String>
   private lateinit var myOpenKeymapLabel: ActionLink
 
-  private fun getCurrentCustomShortcuts(): Array<Shortcut?> {
+  private fun getCurrentCustomShortcuts(): Array<Shortcut> {
     val allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myOpenKeymapLabel))
     val keymapPanel = allSettings?.find(KeymapPanel::class.java)
     var shortcuts = keymapPanel?.getCurrentShortcuts(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM)

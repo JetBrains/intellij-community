@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
@@ -15,6 +15,8 @@ import com.intellij.openapi.roots.ui.configuration.SdkPopup
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.localEel
+
 import java.nio.file.Path
 import javax.swing.JComponent
 
@@ -40,9 +42,7 @@ internal object RuntimeChooserCustom {
     get() = sdkType != null
 
   val jdkDownloaderExtension = object : JdkDownloaderDialogHostExtension {
-    override fun allowWsl(): Boolean = false
-    override fun getEel(): EelApi? = null
-
+    override fun getEel(): EelApi = localEel
     override fun shouldIncludeItem(sdkType: SdkTypeId, item: JdkItem): Boolean {
       return sdkType == this@RuntimeChooserCustom.sdkType && isSupportedSdkItem(item)
     }

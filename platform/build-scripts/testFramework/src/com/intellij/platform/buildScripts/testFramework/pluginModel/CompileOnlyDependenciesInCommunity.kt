@@ -10,4 +10,5 @@ val compileOnlyDependenciesInCommunity: List<Pair<String, String>> = listOf(
   "*" to "fleet.util.multiplatform", // references are replaced by expects-compiler-plugin
   "*" to "intellij.platform.compose.compilerPlugin", // dependency is needed for compose compiler plugin
   "intellij.java.rt" to "intellij.libraries.junit4", // module is used in external processes where the library from user's project is added to the classpath
+  "intellij.platform.util" to "intellij.platform.util.troveCompileOnly", //used only for compilation of deprecated FileUtil.FILE_HASHING_STRATEGY left for compatibility
 )

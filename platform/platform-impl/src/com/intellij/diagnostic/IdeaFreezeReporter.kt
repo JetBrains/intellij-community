@@ -34,7 +34,6 @@ import java.io.ObjectOutputStream
 import java.lang.management.ThreadInfo
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Comparator
 import java.util.Collections
 import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -177,21 +176,8 @@ internal class IdeaFreezeReporter : PerformanceListener {
             }
 
             val loggingEvent = createEvent(dumpTask, durationMs, attachments, reportDir, PerformanceWatcher.getInstance(), finished = true)
-            if (loggingEvent != null && (application.isEAP || application.isInternal)) {
-              if (ExceptionAutoReportUtil.isAutoReportEnabled && ExceptionAutoReportUtil.isAutoReportableException(loggingEvent)) {
-                MessagePool.getInstance().addIdeFatalMessage(loggingEvent)
-                return
-              }
-              else if (application.isEAP || application.isInternal) {
-                // plugin freezes are reported separately via com.intellij.diagnostic.FreezeNotifier
-                report(loggingEvent)
-              }
-            }
-
-            if (reportDir != null && loggingEvent != null && dumps.isNotEmpty()) {
-              for (notifier in FREEZE_NOTIFIER_EP.extensionList) {
-                notifier.notifyFreeze(loggingEvent, dumps, reportDir, durationMs)
-              }
+            service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+              processDumps(dumps, reportDir, loggingEvent, durationMs)
             }
           }
         }
@@ -200,6 +186,25 @@ internal class IdeaFreezeReporter : PerformanceListener {
     finally {
       this.dumpTask = null
       reset()
+    }
+  }
+
+  private suspend fun processDumps(dumps: ArrayList<ThreadDump>, reportDir: Path?, loggingEvent: LogMessage?, durationMs: Long) {
+    if (loggingEvent != null && (application.isEAP || application.isInternal)) {
+      if (ExceptionAutoReportUtil.isAutoReportEnabled && ExceptionAutoReportUtil.isAutoReportableException(loggingEvent)) {
+        MessagePool.getInstance().addIdeFatalMessage(loggingEvent)
+        return
+      }
+      else if (application.isEAP || application.isInternal) {
+        // plugin freezes are reported separately via com.intellij.diagnostic.FreezeNotifier
+        report(loggingEvent)
+      }
+    }
+
+    if (reportDir != null && loggingEvent != null && dumps.isNotEmpty()) {
+      for (notifier in FREEZE_NOTIFIER_EP.extensionList) {
+        notifier.notifyFreeze(loggingEvent, dumps, reportDir, durationMs)
+      }
     }
   }
 

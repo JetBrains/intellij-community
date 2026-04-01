@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -92,8 +93,13 @@ final class RefreshWorker {
     1, Runtime.getRuntime().availableProcessors()
   );
 
-  private static final Executor executor = ExecutorsKt.asExecutor(
-    Dispatchers.getIO().limitedParallelism(PARALLELISM, "RefreshWorkerDispatcher")
+  private static final Executor rawExecutor = ExecutorsKt.asExecutor(
+      Dispatchers.getIO().limitedParallelism(PARALLELISM, "RefreshWorkerDispatcher")
+  );
+
+  /** Wraps {@link #rawExecutor} to propagate IntelliJ thread context to worker threads. */
+  private static final Executor executor = command -> rawExecutor.execute(
+    AppScheduledExecutorService.capturePropagationAndCancellationContext(command)
   );
 
   private static final Object REQUESTOR = VFileEvent.REFRESH_REQUESTOR;

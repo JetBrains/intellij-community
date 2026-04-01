@@ -94,8 +94,25 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWith
           }
         }
       }
+      logIfNeeded(projectStorage, "before")
       projectStorage.replaceBySource({ it.isPythonEntity }, syncStorage)
+      logIfNeeded(projectStorage, "after replace")
       ensureNoSrcIntersectsWithOtherRoots(projectStorage)
+      logIfNeeded(projectStorage, "after no intersect")
+    }
+  }
+}
+
+private fun logIfNeeded(projectStorage: MutableEntityStorage, title: String) {
+  logger.debug {
+    buildString {
+      appendLine("WSM $title")
+      for (moduleEntity in projectStorage.entities<ModuleEntity>()) {
+        appendLine("${moduleEntity.name} (${moduleEntity.entitySource}) num of roots ${moduleEntity.contentRoots.size}")
+      }
+      for (entity in projectStorage.entitiesBySource { true }) {
+        appendLine("${entity} source ${entity.entitySource}")
+      }
     }
   }
 }
@@ -158,11 +175,11 @@ private fun renameSameModuleAndMoveSources(syncStorage: EntityStorage, projectSt
       if (ModuleAnchor(syncModuleEntity).sameAs(ModuleAnchor(projectModuleEntity))) {
         projectStorage.modifyModuleEntity(projectModuleEntity) {
           logger.debug {
-              buildString {
-                appendLine("modify module entity:")
-                appendLine("name: ${syncModuleEntity.name}")
-                appendLine("source: ${syncModuleEntity.entitySource}")
-              }
+            buildString {
+              appendLine("modify module entity:")
+              appendLine("name: ${syncModuleEntity.name}")
+              appendLine("source: ${syncModuleEntity.entitySource}")
+            }
           }
           name = syncModuleEntity.name
           entitySource = syncModuleEntity.entitySource

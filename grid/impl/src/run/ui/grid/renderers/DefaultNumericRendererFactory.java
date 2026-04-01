@@ -9,6 +9,7 @@ import com.intellij.database.extractors.ObjectFormatterUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DefaultNumericRendererFactory implements GridCellRendererFactory {
   private final DataGrid myGrid;
@@ -19,8 +20,8 @@ public class DefaultNumericRendererFactory implements GridCellRendererFactory {
   }
 
   @Override
-  public boolean supports(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
-    return ObjectFormatterUtil.isNumericCell(myGrid, row, column);
+  public boolean supports(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
+    return ObjectFormatterUtil.isNumericCell(myGrid, row, column, value);
   }
 
   @Override
@@ -51,7 +52,7 @@ public class DefaultNumericRendererFactory implements GridCellRendererFactory {
     }
 
     @Override
-    public int getSuitability(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
+    public int getSuitability(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
       return SUITABILITY_MIN + 1;
     }
   }

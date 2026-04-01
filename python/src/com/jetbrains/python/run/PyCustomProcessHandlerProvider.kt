@@ -3,9 +3,9 @@ package com.jetbrains.python.run
 
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.targetEnvironment
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.jetbrains.python.remote.PyRemotePathMapper
-import com.jetbrains.python.run.target.targetEnvironment
 import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.Charset
 

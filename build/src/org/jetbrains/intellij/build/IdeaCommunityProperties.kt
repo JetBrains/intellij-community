@@ -17,7 +17,6 @@ import java.nio.file.Path
 
 val MAVEN_ARTIFACTS_ADDITIONAL_MODULES: PersistentList<String> = persistentListOf(
   "intellij.tools.jps.build.standalone",
-  "intellij.devkit.runtimeModuleRepository.jps",
   "intellij.devkit.jps",
   "intellij.idea.community.build.tasks",
   "intellij.platform.debugger.testFramework",
@@ -118,7 +117,6 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
 
   override fun getProductContentDescriptor(): ProductModulesContentSpec = productModules {
     include(intellijCommunityBaseFragment(platformPrefix))
-    include(communityExtensionsFragment())
   }
 
   override suspend fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {
@@ -222,12 +220,4 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
   moduleSet(CommunityModuleSets.rdCommon())
 
   deprecatedInclude("intellij.idea.community.customization", "META-INF/community-customization.xml")
-}
-
-/**
- * Community extensions fragment for Ultimate builds.
- * This fragment is composable - subclasses can choose to include or exclude it.
- */
-fun communityExtensionsFragment(): ProductModulesContentSpec = productModules {
-  deprecatedInclude("intellij.platform.extended.community.impl", "META-INF/community-extensions.xml", ultimateOnly = true)
 }

@@ -233,6 +233,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
       case "action" -> tabId.set(ActionSearchEverywhereContributor.class.getSimpleName());
       case "symbol" -> tabId.set(SymbolSearchEverywhereContributor.class.getSimpleName());
       case "all" -> tabId.set(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
+      case "lucene-files" -> tabId.set("LuceneFiles");
       default -> throw new RuntimeException("Tab is not set");
     }
     LOG.info(tabId.get());

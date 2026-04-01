@@ -49,7 +49,7 @@ class GroovyCompilerConfigurable(private val project: Project) : BoundSearchable
           .align(AlignX.FILL)
           .applyToComponent {
             val descriptor = FileChooserDescriptor(true, false, false, false, false, false).withDescription(GroovyBundle.message("settings.compiler.select.path.to.groovy.compiler.configscript"))
-            addBrowseFolderListener(null, descriptor)
+            addBrowseFolderListener(project, descriptor)
           }.onReset {
             textField.text = normalizePath(config.configScript)
           }.onIsModified {

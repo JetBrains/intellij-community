@@ -108,12 +108,10 @@ internal object ModelBuildingStage {
   ): GenerationModel {
     val projectRoot = config.projectRoot
     val outputProvider = config.outputProvider
-    val isUltimateBuild = Files.exists(projectRoot.resolve("community"))
     val productPluginXmlOverrides = buildProductPluginXmlOverrides(
       products = discovery.products,
       outputProvider = outputProvider,
       projectRoot = projectRoot,
-      isUltimateBuild = isUltimateBuild,
       skipXIncludePaths = config.skipXIncludePaths,
       xIncludePrefixFilter = config.xIncludePrefixFilter,
     )
@@ -228,7 +226,6 @@ internal object ModelBuildingStage {
       builder = builder,
       graphView = baseGraphView,
       outputProvider = outputProvider,
-      isUltimateBuild = isUltimateBuild,
       descriptorCache = descriptorCache,
       includeAliasCache = includeAliasCache,
       moduleDescriptorAliasCache = moduleDescriptorAliasCache,
@@ -270,7 +267,6 @@ internal object ModelBuildingStage {
       config = config,
       projectRoot = projectRoot,
       outputProvider = outputProvider,
-      isUltimateBuild = isUltimateBuild,
       descriptorCache = descriptorCache,
       pluginContentCache = pluginContentCache,
       fileUpdater = fileUpdater,
@@ -341,7 +337,6 @@ internal object ModelBuildingStage {
     products: List<DiscoveredProduct>,
     outputProvider: ModuleOutputProvider,
     projectRoot: Path,
-    isUltimateBuild: Boolean,
     skipXIncludePaths: Set<String>,
     xIncludePrefixFilter: (String) -> String?,
   ): Map<TargetName, PluginXmlOverride> {
@@ -424,7 +419,6 @@ internal object ModelBuildingStage {
         metadataBuilder = { sb ->
           appendDefaultProductPluginMetadata(sb = sb, spec = spec)
         },
-        isUltimateBuild = isUltimateBuild,
       ).xml
       val unresolvedXIncludeInGenerated = findFirstUnresolvedXIncludePath(
         pluginXmlData = generatedPluginXml.toByteArray(),
@@ -682,7 +676,6 @@ internal object ModelBuildingStage {
     builder: PluginGraphBuilder,
     graphView: PluginGraph,
     outputProvider: ModuleOutputProvider,
-    isUltimateBuild: Boolean,
     descriptorCache: ModuleDescriptorCache,
     includeAliasCache: AsyncCache<String, Set<PluginId>>,
     moduleDescriptorAliasCache: AsyncCache<ContentModuleName, Set<PluginId>>,
@@ -719,7 +712,6 @@ internal object ModelBuildingStage {
           aliasIds.addAll(collectAliasesFromDeprecatedIncludes(
             spec,
             outputProvider,
-            isUltimateBuild,
             includeAliasCache,
             config.xIncludePrefixFilter,
             config.skipXIncludePaths,
@@ -1069,7 +1061,6 @@ internal object ModelBuildingStage {
   private suspend fun collectAliasesFromDeprecatedIncludes(
     spec: ProductModulesContentSpec,
     outputProvider: ModuleOutputProvider,
-    isUltimateBuild: Boolean,
     includeAliasCache: AsyncCache<String, Set<PluginId>>,
     prefixFilter: (String) -> String?,
     skipXIncludePaths: Set<String>,
@@ -1080,10 +1071,6 @@ internal object ModelBuildingStage {
 
     val result = LinkedHashSet<PluginId>()
     for (include in spec.deprecatedXmlIncludes) {
-      if (include.ultimateOnly && !isUltimateBuild) {
-        continue
-      }
-
       val moduleName = include.contentModuleName.value
       val cacheKey = "$moduleName:${include.resourcePath}"
       val aliases = includeAliasCache.getOrPut(cacheKey) {
@@ -1130,12 +1117,8 @@ internal object ModelBuildingStage {
   ): Set<PluginId> {
     val moduleName = include.contentModuleName.value
     val module = outputProvider.findModule(moduleName)
-      ?: if (include.ultimateOnly) {
-        error("Ultimate-only module '$moduleName' not found in Ultimate build - this is a configuration error (referenced in deprecated include for '${include.resourcePath}')")
-      }
-      else {
-        error("Module '$moduleName' not found (referenced in deprecated include for '${include.resourcePath}')")
-      }
+      ?: error("Module '$moduleName' not found (referenced in deprecated include for '${include.resourcePath}')")
+
 
     val initialData = resolveDeprecatedIncludeBytes(include, module, outputProvider)
     if (initialData == null) {

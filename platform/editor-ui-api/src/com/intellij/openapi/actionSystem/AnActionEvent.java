@@ -345,7 +345,6 @@ public class AnActionEvent implements PlaceProvider {
    *   <li>If an action is bound to the {@link com.intellij.openapi.application.Application} (via {@link Presentation#setApplicationScope}), then the scope lives as long as the application is opened.</li>
    * </ul>
    */
-  @ApiStatus.Experimental
   public final @NotNull CoroutineScope getCoroutineScope() {
     CoroutineScope scope = myPerformCoroutineScope;
     if (scope == null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.text.SemVer
@@ -191,7 +191,7 @@ internal object JewelMavenArtifacts {
 
   fun validate(context: BuildContext, mavenArtifacts: Collection<GeneratedMavenArtifacts>) {
     ALL_MODULES.asSequence()
-      .map(context::findRequiredModule)
+      .map { context.outputProvider.findRequiredModule(it) }
       .flatMap { it.modulesTree() }
       .distinct().forEach { module ->
         val artifact = mavenArtifacts.singleOrNull { (it) -> it.name == module.name }

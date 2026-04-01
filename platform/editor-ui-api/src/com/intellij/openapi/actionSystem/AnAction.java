@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.ClientProperty;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.JdkConstants;
@@ -243,12 +242,15 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   public final void registerCustomShortcutSet(@Nullable JComponent component, @Nullable Disposable parentDisposable) {
-    if (component == null) return;
-    List<AnAction> actionList = ComponentUtil.getClientProperty(component, ACTIONS_KEY);
+    if (component == null) {
+      return;
+    }
+
+    List<AnAction> actionList = ClientProperty.get(component, ACTIONS_KEY);
     if (actionList == null) {
       List<AnAction> value = new CopyOnWriteArrayList<>();
-      ComponentUtil.putClientProperty(component, ACTIONS_KEY, value);
-      actionList = Objects.requireNonNullElse(ComponentUtil.getClientProperty(component, ACTIONS_KEY), value);
+      component.putClientProperty(ACTIONS_KEY, value);
+      actionList = Objects.requireNonNullElse(ClientProperty.get(component, ACTIONS_KEY), value);
     }
     if (!actionList.contains(this)) {
       actionList.add(this);
@@ -261,7 +263,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   public final void unregisterCustomShortcutSet(@NotNull JComponent component) {
-    List<AnAction> actionList = ComponentUtil.getClientProperty(component, ACTIONS_KEY);
+    List<AnAction> actionList = ClientProperty.get(component, ACTIONS_KEY);
     if (actionList != null) {
       if (actionList.remove(this)) {
         updateCustomActionsModCount(component);

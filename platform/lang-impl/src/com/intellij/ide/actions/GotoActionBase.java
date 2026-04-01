@@ -37,6 +37,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,9 +107,14 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   public static @Nullable PsiElement getPsiContext(final AnActionEvent e) {
-    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
+    return getPsiContext(e.getDataContext());
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable PsiElement getPsiContext(final DataContext dataContext) {
+    PsiFile file = dataContext.getData(CommonDataKeys.PSI_FILE);
     if (file != null) return file;
-    Project project = e.getData(CommonDataKeys.PROJECT);
+    Project project = dataContext.getData(CommonDataKeys.PROJECT);
     return getPsiContext(project);
   }
 

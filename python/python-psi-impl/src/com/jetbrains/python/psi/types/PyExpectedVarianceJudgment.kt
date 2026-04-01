@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.types
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.findParentOfType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.parseStdDataclassParameters
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
@@ -28,6 +29,7 @@ import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyTypeAliasStatement
 import com.jetbrains.python.psi.PyTypeCommentOwner
 import com.jetbrains.python.psi.PyTypeDeclarationStatement
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.attributeDoesNotAffectVarianceInference
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.combineVariance
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.functionDoesNotAffectVarianceInference
@@ -49,7 +51,8 @@ object PyExpectedVarianceJudgment {
    */
   @JvmStatic
   fun getExpectedVariance(element: PsiElement, context: TypeEvalContext): Variance? {
-    val parent = element.parent ?: return null
+    val parent = PyUtil.getFragmentContextAwareParent(element)
+    if (parent == null) return null
 
     return when (element) {
       is PyClass,
@@ -115,6 +118,10 @@ object PyExpectedVarianceJudgment {
     context: TypeEvalContext,
   ): Variance? {
     val qualifier = subscriptionExpr.qualifier as? PyReferenceExpression ?: return null
+    val physicalElement = PyUtil.getFragmentContext(qualifier)
+    val parentNamedParameter = physicalElement?.findParentOfType<PyNamedParameter>()
+    if (parentNamedParameter?.isSelf == true) return null
+
     var qualifierType = PyTypingTypeProvider.getType(qualifier, context)?.get()
     if (qualifierType is PyClassType && qualifierType !is PyCollectionType) {
       // convert raw types to generic types

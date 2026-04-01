@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.emit
@@ -23,7 +24,6 @@ import com.jetbrains.python.sdk.add.v2.PySdkCreator
 import com.jetbrains.python.sdk.add.v2.PythonSdkPanelBuilderAndSdkCreator
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.moduleIfExists
-import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -128,16 +128,14 @@ class NewPythonProjectStep(parent: NewProjectWizardStep, val createPythonModuleS
       }
     }
 
-    runWithModalProgressBlocking(project, PyBundle.message("python.sdk.creating.python.sdk")) {
-      project.pythonSdkConfigurationMutex.withLock {
-        val (sdk, _) = pySdkCreator.getSdk(moduleOrProject).getOr {
-          errorSink.emit(it.error, project)
-          return@withLock
-        }
-        pythonSdk = sdk
-        moduleOrProject.moduleIfExists?.let { module ->
-          configurePythonSdk(project, module, sdk)
-        }
+    runWithSdkConfigurationLock(project) {
+      val (sdk, _) = pySdkCreator.getSdk(moduleOrProject).getOr {
+        errorSink.emit(it.error, project)
+        return@runWithSdkConfigurationLock
+      }
+      pythonSdk = sdk
+      moduleOrProject.moduleIfExists?.let { module ->
+        configurePythonSdk(project, module, sdk)
       }
     }
   }

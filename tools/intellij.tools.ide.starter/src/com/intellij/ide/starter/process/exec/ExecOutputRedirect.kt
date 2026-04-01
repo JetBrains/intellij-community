@@ -18,12 +18,11 @@ import kotlin.io.path.readText
  * - [ToStdOut]
  */
 sealed class ExecOutputRedirect {
+  open fun open(): Unit = Unit
 
-  open fun open() = Unit
+  open fun close(): Unit = Unit
 
-  open fun close() = Unit
-
-  open fun redirectLine(line: String) = Unit
+  open fun redirectLine(line: String): Unit = Unit
 
   abstract fun read(): String
 
@@ -41,9 +40,9 @@ sealed class ExecOutputRedirect {
       reportOnStdoutIfNecessary(line)
     }
 
-    override fun read() = ""
+    override fun read(): String = ""
 
-    override fun toString() = "ignored"
+    override fun toString(): String = "ignored"
   }
 
   data class ToFile(val outputFile: Path, private val reportDebugForAutoAttach: Boolean = true) : ExecOutputRedirect() {
@@ -103,13 +102,11 @@ sealed class ExecOutputRedirect {
       return outputFile.readText()
     }
 
-    override fun toString() = "file $outputFile"
+    override fun toString(): String = "file $outputFile"
   }
 
   data class DelegatedWithPrefix(val prefix: String, private val delegate: ExecOutputRedirect): ExecOutputRedirect()  {
-    override fun read(): String {
-      return delegate.read()
-    }
+    override fun read(): String = delegate.read()
 
     override fun open() {
       delegate.open()
@@ -132,9 +129,9 @@ sealed class ExecOutputRedirect {
       logOutput("  $prefix $line")
     }
 
-    override fun read() = ""
+    override fun read(): String = ""
 
-    override fun toString() = "stdout"
+    override fun toString(): String = "stdout"
   }
 
   data class ToStdOutAndString(val prefix: String) : ExecOutputRedirect() {
@@ -146,13 +143,12 @@ sealed class ExecOutputRedirect {
       stringBuilder.appendLine("$prefix $line")
     }
 
-    override fun read() = stringBuilder.toString()
+    override fun read(): String = stringBuilder.toString()
 
-    override fun toString() = "stdout"
+    override fun toString(): String = "stdout"
   }
 
   class ToString : ExecOutputRedirect() {
-
     private val stringBuilder = StringBuilder()
 
     override fun redirectLine(line: String) {
@@ -160,8 +156,8 @@ sealed class ExecOutputRedirect {
       stringBuilder.appendLine(line)
     }
 
-    override fun read() = stringBuilder.toString()
+    override fun read(): String = stringBuilder.toString()
 
-    override fun toString() = "string"
+    override fun toString(): String = "string"
   }
 }

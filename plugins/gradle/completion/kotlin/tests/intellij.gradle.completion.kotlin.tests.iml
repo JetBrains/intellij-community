@@ -3,7 +3,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" packagePrefix="com.intellij.gradle.kotlin.tests" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" packagePrefix="com.intellij.gradle.completion.kotlin" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />

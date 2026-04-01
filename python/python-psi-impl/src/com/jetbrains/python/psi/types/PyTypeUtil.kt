@@ -421,7 +421,7 @@ fun PyExpression.getLiteralType(context: TypeEvalContext): PyType? =
  */
 @ApiStatus.Experimental
 fun PyType?.widenTupleLiterals(): PyType? {
-  if (this !is PyTupleType) return this
+  if (this !is PyTupleType || this is PyNamedTupleType) return this
   val widenedElements = this.elementTypes.map { widenLiteralAndNumeric(it) }
   return PyTupleType(this.pyClass, widenedElements, this.isHomogeneous)
 }

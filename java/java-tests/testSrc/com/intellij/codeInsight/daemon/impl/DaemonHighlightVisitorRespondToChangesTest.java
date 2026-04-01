@@ -300,11 +300,13 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
     }
     catch (ProcessCanceledException ignored) {
     }
+    // to avoid canceled but still inflight passes to cancel the subsequent highlighting (via com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass.cancelAndRestartDaemonLater)
+    myTestDaemonCodeAnalyzer.waitForTermination();
     UIUtil.dispatchAllInvocationEvents();
     List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject());
     MyInterruptingVisitor.assertExistMy(infos);
     assertTrue(log.toString(), log.toString().startsWith("[S, C"));
-
+    LOG.trace("---------------------2");
     INTERRUPT.set(false);
     COMMENT_HIGHLIGHTED.set(false);
     myDaemonCodeAnalyzer.restart(getTestName(false));

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ide.plugins
@@ -11,7 +11,7 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.DependenciesEleme
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.ServiceElement
-import com.intellij.project.IntelliJProjectConfiguration
+import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.testFramework.junit5.NamedFailure
 import com.intellij.testFramework.junit5.groupFailures
 import com.intellij.util.io.jackson.array
@@ -21,14 +21,19 @@ import com.intellij.util.io.jackson.writeFieldName
 import com.intellij.util.io.jackson.writeStringField
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
+import org.junit.jupiter.api.DynamicContainer
+import org.junit.jupiter.api.DynamicTest
+import org.opentest4j.MultipleFailuresError
 import tools.jackson.core.JsonGenerator
 import tools.jackson.core.json.JsonFactory
 import tools.jackson.core.util.DefaultPrettyPrinter
 import java.io.StringWriter
 import java.nio.file.Path
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
+import kotlin.streams.asStream
 
 data class CorePluginDescription(
   val mainModuleName: String,
@@ -85,15 +90,10 @@ data class PluginValidationOptions(
   val externallyOverriddenServices: Set<String> = emptySet(),
 )
 
-fun validatePluginModel(projectPath: Path, validationOptions: PluginValidationOptions = PluginValidationOptions()): PluginValidationResult {
-  val project = IntelliJProjectConfiguration.loadIntelliJProject(projectPath.toString())
-  return validatePluginModel(project, projectPath, validationOptions)
-}
-
 /**
  * Runs [PluginModelValidator] on the specified [project] and returns the result.
  */
-fun validatePluginModel(
+suspend fun validatePluginModel(
   project: JpsProject, projectHomePath: Path,
   validationOptions: PluginValidationOptions = PluginValidationOptions(),
 ): PluginValidationResult {
@@ -113,6 +113,20 @@ class PluginValidationResult internal constructor(
     get() = java.util.List.copyOf(validationErrors)
 
   fun getNamedFailures(): Sequence<NamedFailure> = validationErrors.groupFailures { it.sourceModule.name }
+
+  fun toDynamicContainer(name: String): DynamicContainer? {
+    if (validationErrors.isEmpty()) {
+      return null
+    }
+    return DynamicContainer.dynamicContainer(name, validationErrors
+      .groupBy { it.sourceModule.name }
+      .asSequence()
+      .map { (moduleName, errors) ->
+        DynamicTest.dynamicTest(moduleName) { throw errors.singleOrNull() ?: MultipleFailuresError("${errors.size} failures", errors) }
+      }
+      .asStream()
+    )
+  }
 
   fun graphAsString(projectHomePath: Path): CharSequence {
     val stringWriter = StringWriter()
@@ -149,19 +163,23 @@ internal class PluginModelValidator(
 ) {
   private val pluginIdToInfo = sourceCodeBasedPluginModel.pluginIdToInfo
   private val pluginAliases = sourceCodeBasedPluginModel.pluginAliases
-  private val _errors = mutableListOf<PluginValidationError>()
+  private val _errors = CopyOnWriteArrayList<PluginValidationError>()
 
   init {
     sourceCodeBasedPluginModel.errors.forEach { reportError(it.message, it.sourceModule, it.params) }
   }
 
-  fun validate(): PluginValidationResult {
+  suspend fun validate(): PluginValidationResult {
     val descriptorFileInfos = sourceCodeBasedPluginModel.descriptorFileInfos
     val moduleNameToInfo = sourceCodeBasedPluginModel.moduleNameToInfo
     val allMainModulesOfPlugins = sourceCodeBasedPluginModel.allMainModulesOfPlugins
 
-    val contentModuleNameToFileInfo = descriptorFileInfos.filterIsInstance<ContentModuleDescriptorFileInfo>().associateBy { it.contentModuleName }
-    val sourceModuleNameToPluginFileInfo = descriptorFileInfos.filterIsInstance<PluginDescriptorFileInfo>().associateBy { it.sourceModule.name }
+    val contentModuleNameToFileInfo = descriptorFileInfos
+      .filterIsInstance<ContentModuleDescriptorFileInfo>()
+      .associateBy { it.contentModuleName }
+    val sourceModuleNameToPluginFileInfo = descriptorFileInfos
+      .filterIsInstance<PluginDescriptorFileInfo>()
+      .associateBy { it.sourceModule.name }
     for (pluginInfo in allMainModulesOfPlugins) {
       checkPluginMainDescriptor(pluginInfo.descriptor, pluginInfo.sourceModule, pluginInfo)
       checkContent(
@@ -221,7 +239,7 @@ internal class PluginModelValidator(
         )
       }
 
-      for (contentModuleInfo in pluginInfo.content) {
+      pluginInfo.content.forEachConcurrent { contentModuleInfo ->
         checkDependencies(
           dependenciesElements = contentModuleInfo.descriptor.dependencies,
           referencingModuleInfo = contentModuleInfo,
@@ -311,7 +329,10 @@ internal class PluginModelValidator(
     return serviceInterface
   }
 
-  private fun checkServicesOverrides(descriptors: Collection<DescriptorFileInfo>, containerSelector: (RawPluginDescriptor) -> ScopedElementsContainer) {
+  private fun checkServicesOverrides(
+    descriptors: Collection<DescriptorFileInfo>,
+    containerSelector: (RawPluginDescriptor) -> ScopedElementsContainer,
+  ) {
     val allOpenServices = descriptors.flatMapTo(HashSet()) {
       getOpenServices(containerSelector(it.descriptor).services, it)
     }
@@ -407,16 +428,15 @@ internal class PluginModelValidator(
     }
 
     for (child in dependenciesElements) {
-
       fun registerError(message: String, fix: String? = null) {
         reportError(
-          message,
-          referencingModuleInfo.sourceModule,
-          mapOf(
+          message = message,
+          sourceModule = referencingModuleInfo.sourceModule,
+          params = mapOf(
             "entry" to child,
             "referencingDescriptorFile" to referencingModuleInfo.descriptorFile,
           ),
-          fix
+          fix = fix
         )
       }
 
@@ -456,7 +476,8 @@ internal class PluginModelValidator(
             moduleInfo = dependency
           )
           if (referencingModuleInfo.dependencies.contains(ref)) {
-            registerError("Dependency on '$id' is already declared in ${referencingModuleInfo.descriptorFile.name}", fix = "Remove duplicating dependency on '$id'")
+            registerError("Dependency on '$id' is already declared in ${referencingModuleInfo.descriptorFile.name}",
+                          fix = "Remove duplicating dependency on '$id'")
             continue
           }
           referencingModuleInfo.dependencies.add(ref)
@@ -483,7 +504,7 @@ internal class PluginModelValidator(
           }
 
           val containingPlugins = contentModuleToContainingPlugins[moduleName]
-          if (containingPlugins == null || containingPlugins.isEmpty()) {
+          if (containingPlugins.isNullOrEmpty()) {
             registerError("""
               |Module '$moduleName' is not registered as a content module, but used as a dependency.
               |Either convert it to a content module, or use dependency on the plugin which includes it instead.
@@ -618,7 +639,8 @@ internal class PluginModelValidator(
       }
 
       if (moduleName.contains("/")) {
-        val knownViolations = validationOptions.pluginsToContentModulesWithoutDedicatedJpsModules[referencingModuleInfo.pluginId] ?: emptyList()
+        val knownViolations =
+          validationOptions.pluginsToContentModulesWithoutDedicatedJpsModules[referencingModuleInfo.pluginId] ?: emptyList()
         if (moduleName !in knownViolations) {
           reportError(
             message = """

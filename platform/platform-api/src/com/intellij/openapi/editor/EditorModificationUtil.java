@@ -101,7 +101,7 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
 
   public static @NotNull List<CaretState> calcBlockSelectionState(@NotNull Editor editor,
                                                                   @NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd) {
-    Document document = editor.getUiDocument();
+    Document document = editor.getElfDocument();
     int startLine = Math.max(Math.min(blockStart.line, document.getLineCount() - 1), 0);
     int endLine = Math.max(Math.min(blockEnd.line, document.getLineCount() - 1), 0);
     int step = endLine < startLine ? -1 : 1;

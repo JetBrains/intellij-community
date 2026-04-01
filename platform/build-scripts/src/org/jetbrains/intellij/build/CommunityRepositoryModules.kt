@@ -189,7 +189,6 @@ object CommunityRepositoryModules {
     },
     pluginAuto(listOf("intellij.devkit")) { spec ->
       spec.withModule("intellij.devkit.jps")
-      spec.withModule("intellij.devkit.runtimeModuleRepository.jps")
 
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
     },

@@ -81,11 +81,13 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.Disposer;
@@ -120,6 +122,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -128,6 +131,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ref.GCWatcher;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import kotlin.Unit;
 import org.intellij.lang.annotations.Language;
@@ -147,6 +151,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -366,6 +371,76 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     }
   }
 
+  public static class MyWaitingAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
+    private static final AtomicBoolean wait = new AtomicBoolean();
+    private static volatile CountDownLatch inside = new CountDownLatch(1);
+
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      long start = System.currentTimeMillis();
+      inside.countDown();
+      while (wait.get()) {
+        Thread.onSpinWait();
+      }
+      iDidIt();
+      LOG.debug(getClass().getSimpleName()+".annotate("+element+") = "+didIDoIt()+" ("+(System.currentTimeMillis()-start)+"ms)");
+    }
+  }
+  public void testDaemonMustRestartOnWriteAction() throws Exception {
+    @Language("JAVA")
+    String text = """
+        class AClass<caret> {
+      
+        }
+      """;
+    MyWaitingAnnotator.wait.set(true);
+    MyWaitingAnnotator.inside = new CountDownLatch(1);
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyWaitingAnnotator()}, ()-> {
+      configureByText(JavaFileType.INSTANCE, text);
+      while (!MyWaitingAnnotator.inside.await(1, TimeUnit.SECONDS)) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      MyWaitingAnnotator.wait.set(false);
+      WriteAction.run(()->{});
+      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
+    });
+  }
+
+  public void testDaemonMustRestartOnlyOnceOnTyping() throws Exception {
+    @Language("JAVA")
+    String text = """
+        class AClass<caret> {
+      
+        }
+      """;
+
+    // make sure the highlighting is running, then type something, make sure it cancels only once
+    List<String> restarts = ContainerUtil.createConcurrentList();
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyWaitingAnnotator()}, ()-> {
+      MyWaitingAnnotator.wait.set(false);
+      MyWaitingAnnotator.inside = new CountDownLatch(1);
+      configureByText(JavaFileType.INSTANCE, text);
+      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
+
+      MyWaitingAnnotator.inside = new CountDownLatch(1);
+      MyWaitingAnnotator.wait.set(true);
+      myDaemonCodeAnalyzer.restart(getTestName(false));
+      while (!MyWaitingAnnotator.inside.await(1, TimeUnit.SECONDS)) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+        @Override
+        public void daemonCancelEventOccurred(@NotNull String reason) {
+          restarts.add(ExceptionUtil.getThrowableText(new Throwable(reason)));
+        }
+      });
+      MyWaitingAnnotator.wait.set(false);
+      type('X');
+      myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
+    });
+    assertOneElement(restarts);
+  }
+
 
   public void testDaemonIgnoresConsoleActivities() throws Exception {
     @Language("JAVA")
@@ -423,7 +498,6 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
 
   @RequiresEdt
   private void checkDaemonReaction(boolean mustCancelItself, @NotNull Runnable action) throws Exception {
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
     myTestDaemonCodeAnalyzer.waitForTermination();
 
@@ -455,12 +529,14 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       }
       catch (ProcessCanceledException ignored) {
       }
-
+      assertTrue(ran.get());
       if (mustCancelItself) {
         assertNotNull(stopDaemonReason.get());
       }
       else {
-        if (stopDaemonReason.get() != null) throw stopDaemonReason.get();
+        if (stopDaemonReason.get() != null) {
+          throw stopDaemonReason.get();
+        }
       }
     }
     finally {
@@ -1149,7 +1225,12 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
   }
 
   public void testDaemonWorksForDefaultProjectSinceItIsNeededInSettingsDialogForSomeReason() {
-    assertNotNull(DaemonCodeAnalyzer.getInstance(ProjectManager.getInstance().getDefaultProject()));
+    ProjectManager projectManager = ProjectManager.getInstance();
+    assertNotNull(DaemonCodeAnalyzer.getInstance(projectManager.getDefaultProject()));
+    // dispose immediately to avoid interfering with further tests when the default project is disposed in write action
+    ((ProjectManagerImpl)projectManager).disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    assertFalse(((ProjectManagerImpl)projectManager).isDefaultProjectInitialized());
   }
 
   public void testChangeEventsAreNotAlwaysGeneric() {
@@ -1268,13 +1349,13 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
   // checks that only one instance is running
   public static class MySingletonAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     private static final AtomicBoolean wait = new AtomicBoolean();
-    private static final AtomicBoolean running = new AtomicBoolean();
+    private static final AtomicReference<ProgressIndicator> running = new AtomicReference<>();
     private static final String SWEARING = "No swearing";
 
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-      if (running.getAndSet(true)) {
-        throw new IllegalStateException("Already running");
+      if (!running.compareAndSet(null, ProgressIndicatorProvider.getGlobalProgressIndicator())) {
+        throw new IllegalStateException("Already running: "+running);
       }
       if (element instanceof PsiComment && element.getText().equals("//XXX")) {
         while (wait.get()) {
@@ -1284,7 +1365,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
         iDidIt();
       }
       LOG.debug(getClass()+".annotate("+element+") = "+didIDoIt());
-      running.set(false);
+      running.set(null);
     }
   }
 
@@ -1315,14 +1396,16 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     assertNotNull(textEditor1);
     assertNotNull(textEditor2);
     setActiveEditors(editor1, editor2);
-
+    MySingletonAnnotator.running.set(null);
+    MySingletonAnnotator.wait.set(false);
+    List<Future<?>> futures = new ArrayList<>();
     // check that 'MySingletonAnnotator' is run only once for two editors for the same document
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MySingletonAnnotator()}, ()-> {
       for (int i=0; i<10; i++) {
         MySingletonAnnotator.wait.set(true);
         type("/");
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> MySingletonAnnotator.wait.set(false), 1000, TimeUnit.MILLISECONDS);
+        futures.add(AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> MySingletonAnnotator.wait.set(false), 1000, TimeUnit.MILLISECONDS));
         myTestDaemonCodeAnalyzer.waitForDaemonToFinish(psiFile1);
 
         // revert back
@@ -1331,6 +1414,9 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
         myTestDaemonCodeAnalyzer.waitForDaemonToFinish(psiFile1);
       }
     });
+    for (Future<?> future : futures) {
+      future.cancel(false);
+    }
   }
 
   public void testHighlightingInSplittedWindowFinishesEventually() {
@@ -1550,14 +1636,13 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       }""";
     configureByText(JavaFileType.INSTANCE, text);
     HighlightInfo error = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+    RangeHighlighterEx errorHighlighter = error.getHighlighter();
     assertEquals("Incompatible types. Found: 'java.lang.String', required: 'int'", error.getDescription());
 
-    error.getHighlighter().dispose();
-
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
-
     type("23");
-    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+    HighlightInfo after = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+    assertSame(error, after);
+    assertSame(errorHighlighter, after.getHighlighter());
 
     myEditor.getCaretModel().moveToOffset(0);
     type("/* */");
@@ -1586,7 +1671,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
 
     EditorTestUtil.executeAction(myEditor, IdeActions.ACTION_EXPAND_ALL_REGIONS);
     myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile());
-    checkFoldingState("[FoldRegion -(0:37), placeholder='/.../']");
+    checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion -(27:35), placeholder='{}']");
   }
 
   public void testChangingSettingsHasImmediateEffectOnOpenedEditor() {
@@ -1732,26 +1817,36 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
 
-    PsiFile original = getPsiManager().findFile(getTempDir().createVirtualFile("X.txt", ""));
-    assertNotNull(original);
-    assertTrue(original.getViewProvider().isEventSystemEnabled());
+    PsiFile originalPsiFile = getPsiManager().findFile(getTempDir().createVirtualFile("X.txt", ""));
+    assertNotNull(originalPsiFile);
+    assertTrue(originalPsiFile.getViewProvider().isEventSystemEnabled());
 
-    PsiFile copy = (PsiFile)original.copy();
-    assertFalse(copy.getViewProvider().isEventSystemEnabled());
+    PsiFile copyPsiFile = (PsiFile)originalPsiFile.copy();
+    assertFalse(copyPsiFile.getViewProvider().isEventSystemEnabled());
 
-    Document document = copy.getViewProvider().getDocument();
-    assertNotNull(document);
+    Document documentCopy = copyPsiFile.getViewProvider().getDocument();
+    assertNotNull(documentCopy);
     String text = "class A{}";
-    document.setText(text);
-    assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
+    documentCopy.setText(text);
+    assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(documentCopy));
     assertTrue(PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments());
 
     type("String i=0;");
-    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile());
+    LOG.debug("---");
+    TestTimeOut timeOut = TestTimeOut.setTimeout(1, TimeUnit.MINUTES);
+    while (myDaemonCodeAnalyzer.isRunningOrPending()
+           || PsiDocumentManager.getInstance(myProject).isUncommited(getEditor().getDocument())
+           || !myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNullFor(getEditor().getDocument())) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      timeOut.assertNoTimeout("daemon");
+    }
+
     assertNotEmpty(DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.ERROR, getProject()));
-    assertEquals(text, document.getText());  // retain non-phys document until after highlighting
-    assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
+    assertEquals(text, documentCopy.getText());  // retain non-phys document until after highlighting
+    assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(documentCopy));
     assertTrue(PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments());
+    Reference.reachabilityFence(originalPsiFile);
+    Reference.reachabilityFence(copyPsiFile);
   }
 
   public void testPutArgumentsOnSeparateLinesIntentionMustNotRemoveErrorHighlighting() {
@@ -1986,7 +2081,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
     MarkupModel markupModel = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
     for (int i=0; i<10; i++) {
-      type(" // TS");
+      type(" // TS"+i);
       assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
       assertEmpty(getErrorsFromMarkup(markupModel));
 

@@ -35,7 +35,7 @@ public interface GridCellEditorFactory {
   int SUITABILITY_MIN = 1;
   int SUITABILITY_MAX = 10;
 
-  int getSuitability(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column);
+  int getSuitability(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value);
 
   @NotNull
   IsEditableChecker getIsEditableChecker();
@@ -43,7 +43,8 @@ public interface GridCellEditorFactory {
   @NotNull
   GridCellEditorFactory.ValueParser getValueParser(@NotNull DataGrid grid,
                                                    @NotNull ModelIndex<GridRow> rowIdx,
-                                                   @NotNull ModelIndex<GridColumn> columnIdx);
+                                                   @NotNull ModelIndex<GridColumn> columnIdx,
+                                                   @Nullable Object value);
 
   @NotNull
   GridCellEditorFactory.ValueFormatter getValueFormatter(@NotNull DataGrid grid,

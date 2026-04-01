@@ -286,7 +286,8 @@ class RecordView(
               }
             })
 
-            isEditable = isCellEditable(grid, rowIdx, columnInfo.idx)
+            val value = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getValueAt(rowIdx, columnInfo.idx)
+            isEditable = isCellEditable(grid, rowIdx, columnInfo.idx, value)
 
             if (!isEditable) {
               val reason = GridEditGuard.get(grid)?.getReasonText(grid)
@@ -344,7 +345,8 @@ class RecordView(
     fun updateConvertor(columnIdx: ModelIndex<GridColumn>) {
       val currentConvertor = textConvertors[columnIdx]
       if (currentConvertor == null || currentConvertor.rowIdx != rowIdx || currentConvertor.columnIdx != columnIdx) {
-        textConvertors[columnIdx] = Convertor(rowIdx, columnIdx)
+        val value = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getValueAt(rowIdx, columnIdx)
+        textConvertors[columnIdx] = Convertor(rowIdx, columnIdx, value)
       }
     }
     fun setTextInGrid(columnIdx: ModelIndex<GridColumn>) = textFields[columnIdx]?.let { textField ->
@@ -404,9 +406,9 @@ class RecordView(
       }
     }
 
-    inner class Convertor(val rowIdx: ModelIndex<GridRow>, val columnIdx: ModelIndex<GridColumn>) {
-      private val factory = GridCellEditorFactoryProvider.get(grid)?.getEditorFactory(grid, rowIdx, columnIdx)
-      private val valueParser = factory?.getValueParser(grid, rowIdx, columnIdx)
+    inner class Convertor(val rowIdx: ModelIndex<GridRow>, val columnIdx: ModelIndex<GridColumn>, value: Any?) {
+      private val factory = GridCellEditorFactoryProvider.get(grid)?.getEditorFactory(grid, rowIdx, columnIdx, value)
+      private val valueParser = factory?.getValueParser(grid, rowIdx, columnIdx, value)
 
       fun toText(value: Any?): String = factory?.getValueFormatter(grid, rowIdx, columnIdx, value)?.format()?.text
                                         ?: GridUtil.getText(grid, rowIdx, columnIdx)
@@ -418,11 +420,11 @@ class RecordView(
   companion object {
 
     @JvmStatic
-    private fun isCellEditable(grid: DataGrid, rowIdx: ModelIndex<GridRow>, columnIdx: ModelIndex<GridColumn>): Boolean {
+    private fun isCellEditable(grid: DataGrid, rowIdx: ModelIndex<GridRow>, columnIdx: ModelIndex<GridColumn>, value: Any?): Boolean {
       if (!grid.isEditable) {
         return false
       }
-      val factory = GridCellEditorFactoryProvider.get(grid)?.getEditorFactory(grid, rowIdx, columnIdx) ?: return false
+      val factory = GridCellEditorFactoryProvider.get(grid)?.getEditorFactory(grid, rowIdx, columnIdx, value) ?: return false
       val value = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getValueAt(rowIdx, columnIdx)
       return factory.isEditableChecker.isEditable(value, grid, columnIdx)
     }

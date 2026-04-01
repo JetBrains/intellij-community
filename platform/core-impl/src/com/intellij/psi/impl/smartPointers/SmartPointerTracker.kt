@@ -19,11 +19,16 @@ import java.util.Arrays
 
 /**
  * Tracks smart pointers for a single file.
+ *
+ * ** GC **
+ *
+ * Instances of [SmartPsiElementPointerImpl] are stored on weak references.
+ * Corresponding [SelfElementInfo] instances are stored in [MarkerCache] on hard references.
+ * Once [SmartPsiElementPointerImpl] is garbage-collected, the corresponding [SelfElementInfo] is removed from [MarkerCache].
  */
 @ApiStatus.Internal
 class SmartPointerTracker {
   private var nextAvailableIndex = 0
-
   private var size: Int = 0
   private var references = arrayOfNulls<PointerReference>(10)
   private val markerCache = MarkerCache(this)
@@ -32,6 +37,8 @@ class SmartPointerTracker {
   @JvmName("addReference")
   @Synchronized
   internal fun addReference(pointer: SmartPsiElementPointerImpl<*>) {
+    val elementInfo = pointer.elementInfo
+    require(elementInfo is SelfElementInfo)
     val reference = PointerReference(pointer, this)
     if (needsExpansion() || isTooSparse()) {
       resize()
@@ -44,7 +51,7 @@ class SmartPointerTracker {
     storePointerReference(references, nextAvailableIndex++, reference)
     size++
     mySorted = false
-    if ((pointer.elementInfo as SelfElementInfo).hasRange()) {
+    if (pointer.selfInfo.hasRange()) {
       markerCache.rangeChanged()
     }
   }
@@ -106,7 +113,7 @@ class SmartPointerTracker {
     if (size != pointers.size) throw AssertionError()
 
     pointers.sortWith { p1, p2 ->
-      MarkerCache.INFO_COMPARATOR.compare(p1.elementInfo as SelfElementInfo, p2.elementInfo as SelfElementInfo)
+      MarkerCache.INFO_COMPARATOR.compare(p1.selfInfo, p2.selfInfo)
     }
 
     for (i in pointers.indices) {
@@ -161,7 +168,7 @@ class SmartPointerTracker {
   internal fun fastenBelts(manager: SmartPointerManagerEx) {
     processQueue()
     processAlivePointers { pointer ->
-      pointer.elementInfo.fastenBelt(manager)
+      pointer.selfInfo.fastenBelt(manager)
       true
     }
   }
@@ -187,7 +194,7 @@ class SmartPointerTracker {
     if (cachedValid) {
       if (pointerRange == null) {
         // document change could be damaging, but if PSI survived after reparse, let's point to it
-        (pointer.elementInfo as SelfElementInfo).switchToAnchor(cachedElement)
+        pointer.selfInfo.switchToAnchor(cachedElement)
         return
       }
 
@@ -199,7 +206,7 @@ class SmartPointerTracker {
     }
 
     val actual = pointer.doRestoreElement()
-    if (actual == null && cachedValid && (pointer.elementInfo as SelfElementInfo).updateRangeToPsi(pointerRange!!, cachedElement)) {
+    if (actual == null && cachedValid && pointer.selfInfo.updateRangeToPsi(pointerRange!!, cachedElement)) {
       return
     }
 
@@ -220,7 +227,7 @@ class SmartPointerTracker {
 
     val infos = ArrayList<SelfElementInfo>(size)
     processAlivePointers { pointer ->
-      val info = pointer.elementInfo as SelfElementInfo
+      val info = pointer.selfInfo
       if (!info.hasRange()) return@processAlivePointers false
 
       infos.add(info)
@@ -232,6 +239,9 @@ class SmartPointerTracker {
   @TestOnly
   @Synchronized
   fun getSize(): Int = size
+
+  private val SmartPsiElementPointerImpl<*>.selfInfo: SelfElementInfo
+    get() = this.elementInfo as SelfElementInfo
 
   internal class PointerReference(
     pointer: SmartPsiElementPointerImpl<*>,

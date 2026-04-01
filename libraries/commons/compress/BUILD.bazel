@@ -14,7 +14,10 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":compress_resources"],
   exports = ["@lib//:commons-compress"],
-  runtime_deps = ["@lib//:commons-compress"]
+  runtime_deps = [
+    "@lib//:commons-compress",
+    "//libraries/commons/lang3",
+  ]
 )
 
 jvm_library(
@@ -24,7 +27,10 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   exports = ["@lib//:commons-compress"],
-  runtime_deps = [":compress"]
+  runtime_deps = [
+    ":compress",
+    "//libraries/commons/lang3:lang3_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.libraries.commons.compress` end
 

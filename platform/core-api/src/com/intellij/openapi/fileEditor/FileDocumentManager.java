@@ -101,7 +101,8 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * (due to 'Strip trailing spaces on Save' functionality). When saving, {@code \n} line separators are converted into
    * the ones used normally on the system, or the ones explicitly specified by the user. Encoding settings are honored.<p/>
    *
-   * Should be invoked on the event dispatch thread under the write intent lock.
+   * Can be invoked on any thread. Will trigger write action.
+   *
    * @param filter the filter for documents to save. If it returns `true`, the document will be saved.
    */
   @RequiresWriteLock
@@ -112,7 +113,8 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * trailing spaces on Save' functionality). When saving, {@code \n} line separators are converted into
    * the ones used normally on the system, or the ones explicitly specified by the user. Encoding settings are honored.<p/>
    *
-   * Should be invoked on the event dispatch thread under the write intent lock.
+   * Can be invoked on any thread. Will trigger write action.
+   *
    * @param document the document to save.
    */
   @RequiresWriteLock

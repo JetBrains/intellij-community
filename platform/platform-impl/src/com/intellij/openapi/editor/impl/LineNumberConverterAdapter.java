@@ -29,7 +29,7 @@ public final class LineNumberConverterAdapter implements LineNumberConverter {
 
   @Override
   public Integer getMaxLineNumber(@NotNull Editor editor) {
-    for (int i = editor.getUiDocument().getLineCount(); i > 0; i--) {
+    for (int i = editor.getElfDocument().getLineCount(); i > 0; i--) {
       int number = myFunction.applyAsInt(i - 1);
       if (number >= 0) {
         return number + 1;

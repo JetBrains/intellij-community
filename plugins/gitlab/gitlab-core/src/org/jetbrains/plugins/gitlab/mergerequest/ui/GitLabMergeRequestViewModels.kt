@@ -32,6 +32,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDis
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.LoadAllGitLabMergeRequestTimelineViewModel
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
+import org.jetbrains.plugins.gitlab.ui.GitLabViewModelWithTextCompletion
+import org.jetbrains.plugins.gitlab.ui.GitLabViewModelWithTextCompletionImpl
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 /**
@@ -49,6 +51,11 @@ internal class GitLabMergeRequestViewModels(
   private val openMergeRequestTimeline: (String, Boolean) -> Unit,
   private val openMergeRequestDiff: (String, Boolean) -> Unit,
 ) {
+
+  private val textCompletionViewModel: GitLabViewModelWithTextCompletion by lazy {
+    GitLabViewModelWithTextCompletionImpl(cs, projectData, mergeRequest, avatarIconProvider)
+  }
+
   private val htmlConverter: GitLabMarkdownToHtmlConverter =
     GitLabMarkdownToHtmlConverter(
       project,
@@ -68,13 +75,13 @@ internal class GitLabMergeRequestViewModels(
   val detailsVm: GitLabMergeRequestDetailsViewModel by lazyDetailsVm
 
   val timelineVm: GitLabMergeRequestTimelineViewModel by lazy {
-    LoadAllGitLabMergeRequestTimelineViewModel(project, cs, projectData, project.service(), currentUser, mergeRequest, htmlConverter).also {
+    LoadAllGitLabMergeRequestTimelineViewModel(project, cs, projectData, project.service(), currentUser, mergeRequest, htmlConverter, textCompletionViewModel).also {
       setupTimelineVm(it)
     }
   }
 
   private val discussionsVms: GitLabMergeRequestDiscussionsViewModels by lazy {
-    GitLabMergeRequestDiscussionsViewModelsImpl(project, cs, projectData, currentUser, mergeRequest, htmlConverter)
+    GitLabMergeRequestDiscussionsViewModelsImpl(project, cs, projectData, currentUser, mergeRequest, htmlConverter, textCompletionViewModel)
   }
 
   private val _diffVm by lazy {

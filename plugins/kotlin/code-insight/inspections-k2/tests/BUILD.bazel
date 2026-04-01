@@ -91,6 +91,10 @@ jvm_library(
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
     "//plugins/kotlin/fir/testFramework",
     "//plugins/kotlin/fir/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight-tests",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight-tests_test_lib",
+    "//plugins/kotlin/bundled-compiler-plugins-support:compilerPlugins-support-bundled",
+    "//plugins/kotlin/bundled-compiler-plugins-support:compilerPlugins-support-bundled_test_lib",
   ],
   runtime_deps = [
     ":tests",

@@ -195,6 +195,11 @@ abstract class ProductProperties {
   var contentModulesToScramble: List<String> = emptyList()
 
   /**
+   * The list of classes to check for scrambling.
+   */
+  var requiredScrambledClasses: List<String> = emptyList()
+
+  /**
    * Path to an alternative scramble script which will should be used for a product.
    */
   var alternativeScrambleStubPath: Path? = null
@@ -298,6 +303,18 @@ abstract class ProductProperties {
    * Launcher commands customizer
    */
   var launcherCommandsCustomizer: ((List<CustomCommandLaunchData>, BuildContext) -> List<CustomCommandLaunchData>)? = null
+
+  /**
+   * Custom frontend module filter
+   */
+  var frontendModuleFilter: (suspend (BuildContext) -> FrontendModuleFilter)? = null
+
+  /**
+   * Maps each native library name (as extracted by `getLibNameBySourceFile`) to its output folder name under `lib/`.
+   * Libraries listed here have their native files extracted to `lib/<folderName>/` rather than embedded in JARs.
+   * Use the same string for key and value when no renaming is needed.
+   */
+  var presignedNativeLibs: Map<String, String> = emptyMap()
 
   /**
    * Base file name (without an extension) for product archives and installers (*.exe, *.tar.gz, *.dmg).

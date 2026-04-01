@@ -18,6 +18,7 @@ import org.jetbrains.intellij.build.LinuxDistributionCustomizer
 import org.jetbrains.intellij.build.LinuxLibcImpl
 import org.jetbrains.intellij.build.NativeBinaryDownloader
 import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.add64IfNeeded
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
@@ -383,7 +384,7 @@ class LinuxDistributionBuilder(
           arch.dirName,
           launcherPath = "bin/${launcherFileName}",
           javaExecutablePath = if (withRuntime) "jbr/bin/java" else null,
-          vmOptionsFilePath = "bin/${context.productProperties.baseFileName}64.vmoptions",
+          vmOptionsFilePath = "bin/${context.add64IfNeeded(context.productProperties.baseFileName)}.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch),
           mainClass = context.ideMainClassName,
@@ -391,7 +392,7 @@ class LinuxDistributionBuilder(
           customCommands = run {
             val base = listOfNotNull(
               generateEmbeddedFrontendLaunchData(arch, OsFamily.LINUX, context) {
-                "bin/${it.productProperties.baseFileName}64.vmoptions"
+                "bin/${it.add64IfNeeded(it.productProperties.baseFileName)}.vmoptions"
               },
               generateQodanaLaunchData(context, arch, OsFamily.LINUX),
               generateStdioMcpRunnerLaunchData(context, OsFamily.LINUX)
@@ -440,7 +441,7 @@ private suspend fun addNativeLauncher(distBinDir: Path, targetPath: Path, arch: 
 }
 
 private fun generateLauncherScript(distBinDir: Path, arch: JvmArchitecture, nonCustomizableJvmArgs: List<String>, targetLibcImpl: LinuxLibcImpl, context: BuildContext) {
-  val vmOptionsPath = distBinDir.resolve("${context.productProperties.baseFileName}64.vmoptions")
+  val vmOptionsPath = distBinDir.resolve("${context.add64IfNeeded(context.productProperties.baseFileName)}.vmoptions")
 
   val defaultXmxParameter = try {
     Files.readAllLines(vmOptionsPath).firstOrNull { it.startsWith("-Xmx") }
@@ -498,7 +499,7 @@ private fun copyScript(sourceFile: Path, targetFile: Path, additionalTemplateVal
 }
 
 private fun writeLinuxVmOptions(distBinDir: Path, context: BuildContext): Path {
-  val vmOptionsPath = distBinDir.resolve("${context.productProperties.baseFileName}64.vmoptions")
+  val vmOptionsPath = distBinDir.resolve("${context.add64IfNeeded(context.productProperties.baseFileName)}.vmoptions")
   val vmOptions = generateVmOptions(
     context, listOfNotNull(
       "-Dsun.tools.attach.tmp.only=true",

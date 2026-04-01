@@ -6,6 +6,7 @@ import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderSt
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ResultHandler
@@ -116,7 +117,7 @@ fun <T : Any> buildGradleModel(
         buildActionExecutor.setJvmArguments(listOfNotNull("-Xmx512m", debuggerOptions?.toJvmArgumentString()))
 
         val state = runBlocking {
-            suspendCoroutine { continuation ->
+            suspendCancellableCoroutine { continuation ->
                 val buildActionResultHandler = object : ResultHandler<GradleModelHolderState> {
                     override fun onComplete(result: GradleModelHolderState) {
                         continuation.resume(result)

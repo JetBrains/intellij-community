@@ -6,8 +6,6 @@ import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import org.jetbrains.kotlin.AbstractDataFlowValueRenderingTest
 import org.jetbrains.kotlin.addImport.AbstractK1AddImportTest
 import org.jetbrains.kotlin.addImportAlias.AbstractK1AddImportAliasTest53
-import org.jetbrains.kotlin.asJava.classes.AbstractIdeLightClassesByFqNameTest
-import org.jetbrains.kotlin.asJava.classes.AbstractIdeLightClassesByPsiTest
 import org.jetbrains.kotlin.checkers.AbstractJavaAgainstKotlinBinariesCheckerTest
 import org.jetbrains.kotlin.checkers.AbstractJavaAgainstKotlinSourceCheckerTest
 import org.jetbrains.kotlin.checkers.AbstractJsCheckerTest
@@ -30,7 +28,6 @@ import org.jetbrains.kotlin.idea.AbstractSmartSelectionTest
 import org.jetbrains.kotlin.idea.AbstractWorkSelectionTest
 import org.jetbrains.kotlin.idea.actions.AbstractGotoTestOrCodeActionTest
 import org.jetbrains.kotlin.idea.actions.AbstractK1AddImportActionTest
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiModuleLineMarkerTest
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiPlatformHighlightingTest
@@ -110,9 +107,6 @@ import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateJavaSourc
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateToDecompiledLibraryTest
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateToLibrarySourceTest
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateToLibrarySourceTestWithJS
-import org.jetbrains.kotlin.idea.decompiler.stubBuilder.AbstractLoadJavaClsStubTest
-import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractCommonDecompiledTextTest
-import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractJvmDecompiledTextTest
 import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandlerTest
 import org.jetbrains.kotlin.idea.editor.commenter.AbstractKotlinCommenterTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
@@ -210,8 +204,6 @@ import org.jetbrains.kotlin.idea.slicer.AbstractK1SlicerNullnessGroupingTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerTreeTest
 import org.jetbrains.kotlin.idea.structureView.AbstractK1KotlinFileStructureTest
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiFileHighlightingTest
-import org.jetbrains.kotlin.idea.stubs.AbstractResolveByStubTest
-import org.jetbrains.kotlin.idea.stubs.AbstractStubBuilderTest
 import org.jetbrains.kotlin.nj2k.AbstractK1JavaToKotlinConverterMultiFileTest
 import org.jetbrains.kotlin.nj2k.AbstractK1JavaToKotlinConverterPartialTest
 import org.jetbrains.kotlin.nj2k.AbstractK1JavaToKotlinConverterSingleFileFullJDKTest
@@ -1136,17 +1128,6 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     }
 
     testGroup("idea/tests", category = UNCATEGORIZED) {
-        testClass<AbstractCommonDecompiledTextTest> {
-            model("decompiler/decompiledText", pattern = Patterns.forRegex("""^([^\.]+)$"""))
-        }
-
-        testClass<AbstractJvmDecompiledTextTest> {
-            model("decompiler/decompiledTextJvm", pattern = Patterns.forRegex("""^([^\.]+)$"""))
-        }
-
-        testClass<AbstractStubBuilderTest> {
-            model("stubs", pattern = KT_OR_KTS)
-        }
 
         testClass<AbstractMultiplatformAnalysisTest> {
             model("multiplatform", isRecursive = false, pattern = DIRECTORY, excludedDirectories = listOf("ambiguousActuals"))
@@ -1267,53 +1248,6 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         testClass<AbstractGradleConfigureProjectByChangingFileTest> {
             model("configuration/gradle", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestGradle")
             model("configuration/gsk", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestGradle")
-        }
-    }
-
-    testGroup("idea/tests", testDataPath = TestKotlinArtifacts.compilerTestData("compiler/testData")) {
-        testClass<AbstractResolveByStubTest> {
-            model(
-                "loadJava/compiledKotlin",
-                excludedDirectories = listOf(
-                    // K1 failure for K2 features, see KTIJ-33144
-                    "contextParameters",
-                    "companionBlocksAndExtensions",
-                ),
-            )
-        }
-
-        testClass<AbstractLoadJavaClsStubTest> {
-            model(
-                "loadJava/compiledKotlin",
-                testMethodName = "doTestCompiledKotlin",
-                excludedDirectories = listOf(
-                    // K1 failure for K2 feature, see KTIJ-33144
-                    "contextParameters",
-                    "companionBlocksAndExtensions",
-                ),
-            )
-        }
-
-        testClass<AbstractIdeLightClassesByFqNameTest> {
-            model(
-                "asJava/lightClasses/lightClassByFqName",
-                excludedDirectories = listOf(
-                    "withTestCompilerPluginEnabled", // relevant only for K2
-                    "k2", // relevant only for K2
-                ),
-                pattern = KT_OR_KTS_WITHOUT_DOTS,
-            )
-        }
-
-        testClass<AbstractIdeLightClassesByPsiTest> {
-            model(
-                "asJava/lightClasses/lightClassByPsi",
-                pattern = KT_OR_KTS_WITHOUT_DOTS,
-                excludedDirectories = listOf(
-                    "jvmExposeBoxed", // K2 feature
-                    "k2", // relevant only for K2
-                )
-            )
         }
     }
 

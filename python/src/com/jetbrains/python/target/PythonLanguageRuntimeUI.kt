@@ -14,7 +14,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.launchOnShow
@@ -32,7 +31,7 @@ import com.jetbrains.python.sdk.add.v2.PythonAddCustomInterpreter
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.sdk.add.v2.PythonLocalAddInterpreterModel
 import com.jetbrains.python.sdk.configurePythonSdk
-import com.jetbrains.python.sdk.pythonSdkConfigurationMutex
+import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CompletableDeferred
@@ -115,16 +114,14 @@ class PythonLanguageRuntimeUI(
   override fun createCustomTool(): Sdk? {
     val sdkManager = mainPanel.currentSdkManager
 
-    val sdk = runWithModalProgressBlocking(project, message("python.sdk.progress.setting.up.environment")) {
+    val sdk = runWithSdkConfigurationLock(project) {
       withContext(TraceContext(message("trace.context.add.remote.python.sdk.dialog", targetSupplier.get().getTargetType().displayName))) {
-        project.pythonSdkConfigurationMutex.withLock {
-          sdkManager.getOrCreateSdkWithModal(ModuleOrProject.ModuleAndProject(module)).onFailure {
-            errorSink.emit(it)
-          }.successOrNull?.also {
-            configurePythonSdk(project, module, it)
-            project.pySdkService.persistSdk(it)
-            PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(it, false)
-          }
+        sdkManager.setupSdk(ModuleOrProject.ModuleAndProject(module)).onFailure {
+          errorSink.emit(it)
+        }.successOrNull?.also {
+          configurePythonSdk(project, module, it)
+          project.pySdkService.persistSdk(it)
+          PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(it, false)
         }
       }
     }

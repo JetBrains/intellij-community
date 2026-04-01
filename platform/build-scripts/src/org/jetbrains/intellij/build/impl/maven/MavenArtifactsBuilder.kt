@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.maven
 
 import com.intellij.util.text.NameUtilCore
@@ -219,7 +219,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     val results = HashMap<JpsModule, MavenArtifactData>()
     val nonMavenizableModulesSet = HashSet<JpsModule>()
     val computationInProgressSet = HashSet<JpsModule>()
-    for (module in moduleNames.asSequence().map(context::findRequiredModule)) {
+    for (module in moduleNames.asSequence().map { context.outputProvider.findRequiredModule(it) }) {
       generateMavenArtifactData(module, results, nonMavenizableModulesSet, computationInProgressSet)
     }
     val nonMavenizableModules by lazy { moduleNames.intersect(nonMavenizableModulesSet.asSequence().map { it.name }.toSet()) }
@@ -267,7 +267,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
         if (computationInProgress.contains(depModule)) {
           /*
            It's forbidden to have compile-time circular dependencies in the IntelliJ project, but there are some cycles with runtime scope
-            (e.g. intellij.platform.ide.impl depends on (runtime scope) intellij.platform.configurationStore.impl which depends on intellij.platform.ide.impl).
+            (e.g., intellij.platform.ide.impl depends on (runtime scope) intellij.platform.configurationStore.impl which depends on intellij.platform.ide.impl).
            It's convenient to have such dependencies to allow running tests in classpath of their modules, so we can just ignore them while
            generating pom.xml files.
           */
@@ -515,7 +515,7 @@ private fun splitByCamelHumpsMergingNumbers(s: String): List<String> {
 }
 
 /**
- * the second component of module names which describes a common group rather than a specific framework
+ * the second component of module names that describes a common group rather than a specific framework
  * and therefore should be excluded from artifactId
  */
 private val COMMON_GROUP_NAMES: Set<String> = setOf("platform", "vcs", "tools", "clouds")

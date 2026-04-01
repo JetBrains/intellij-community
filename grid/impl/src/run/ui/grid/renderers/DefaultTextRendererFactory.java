@@ -72,14 +72,14 @@ public final class DefaultTextRendererFactory implements GridCellRendererFactory
   }
 
   @Override
-  public boolean supports(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
+  public boolean supports(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
     return true;
   }
 
   @Override
   public @NotNull GridCellRenderer getOrCreateRenderer(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
     Object value = myGrid.getDataModel(DATA_WITH_MUTATIONS).getValueAt(row, column);
-    String languageId = getLanguage(myGrid, row, column).getID();
+    String languageId = getLanguage(myGrid, row, column, value).getID();
     return hasInlay(value) ? myRenderersWithInlay.get(languageId) : myRenderers.get(languageId);
   }
 
@@ -89,10 +89,10 @@ public final class DefaultTextRendererFactory implements GridCellRendererFactory
     myRenderersWithInlay.forEach((lang, renderer) -> renderer.reinitSettings());
   }
 
-  public static @NotNull Language getLanguage(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> columnIdx) {
+  public static @NotNull Language getLanguage(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> columnIdx, @Nullable Object value) {
     Language language = grid.getContentLanguage(columnIdx);
     if (language != Language.ANY) return language;
-    language = GridHelper.get(grid).getCellLanguage(grid, row, columnIdx);
+    language = GridHelper.get(grid).getCellLanguage(grid, row, columnIdx, value);
     return language == null ? PlainTextLanguage.INSTANCE : language;
   }
 
@@ -180,7 +180,7 @@ public final class DefaultTextRendererFactory implements GridCellRendererFactory
     }
 
     @Override
-    public int getSuitability(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
+    public int getSuitability(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, @Nullable Object value) {
       return SUITABILITY_MIN;
     }
 

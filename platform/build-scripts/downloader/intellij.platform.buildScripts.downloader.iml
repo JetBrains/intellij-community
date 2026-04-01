@@ -25,6 +25,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.commons.compress" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.lang3" scope="RUNTIME" />
     <orderEntry type="library" name="tcServiceMessages" level="project" />
     <orderEntry type="library" name="zstd-jni" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.commons.io" />
@@ -35,6 +36,5 @@
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
-    <orderEntry type="module" module-name="intellij.libraries.ktor.io" />
   </component>
 </module>

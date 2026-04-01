@@ -6,6 +6,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.allSupertypes
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.components.isAnyType
 import org.jetbrains.kotlin.analysis.api.components.memberScope
 import org.jetbrains.kotlin.analysis.api.components.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.components.upperBoundIfFlexible
+import org.jetbrains.kotlin.analysis.api.impl.base.types.KaBaseTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -28,6 +30,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
+import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.symbol
@@ -269,7 +273,9 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
                 potentiallyUnresolvedTypeParameters.any { it.symbol !in availableTypeParameters }
             } else false
 
-            return if (hasUnresolvedArguments) UnresolvedParameter else SuccessfulSubstitution(typeArguments)
+            if (hasUnresolvedArguments) return UnresolvedParameter
+
+            return SuccessfulSubstitution(typeArguments.map { it.upperBoundIfFlexible() })
         }
 
 
@@ -297,7 +303,7 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
             val mappedTypes = reverseTypes.mapTo(mutableSetOf()) { expectedSuperTypeParameterMapping[it] }
             // Only take the result if it maps to a single output type in the end
             val singleMappedType = mappedTypes.distinctBy { it?.type }.singleOrNull()
-            singleMappedType ?: return UnresolvedParameter
+            singleMappedType?.upperBoundIfFlexible() ?: return UnresolvedParameter
         }
 
         // Based on the type arguments, we build a substitutor to map the `inheritorSymbol` to the concrete type that will be used.
@@ -501,3 +507,14 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
 
 private val KaClassLikeSymbol.expandedSymbolOrSelf: KaClassLikeSymbol
     get() = (this as? KaTypeAliasSymbol)?.expandedType?.symbol ?: this
+
+@OptIn(KaImplementationDetail::class)
+context(_: KaSession)
+private fun KaTypeProjection.upperBoundIfFlexible(): KaTypeProjection = when(this) {
+    is KaStarTypeProjection -> this
+    is KaTypeArgumentWithVariance -> KaBaseTypeArgumentWithVariance(
+        type = type.upperBoundIfFlexible(),
+        variance = variance,
+        token = this.token
+    )
+}

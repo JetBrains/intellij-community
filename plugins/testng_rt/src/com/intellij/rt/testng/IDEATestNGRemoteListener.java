@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.testng;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
@@ -387,19 +387,24 @@ public class IDEATestNGRemoteListener {
         return name;
       }
       ITestNGMethod method = myResult.getMethod();
-      ConstructorOrMethod constructorOrMethod = method.getConstructorOrMethod();
-      AccessibleObject member = null;
-      if (constructorOrMethod.getMethod() != null) {
-        member = constructorOrMethod.getMethod();
+      try {
+        ConstructorOrMethod constructorOrMethod = method.getConstructorOrMethod();
+        AccessibleObject member = null;
+        if (constructorOrMethod.getMethod() != null) {
+          member = constructorOrMethod.getMethod();
+        }
+        if (constructorOrMethod.getConstructor() != null) {
+          member = constructorOrMethod.getConstructor();
+        }
+        if (member == null) return method.getMethodName();
+        Test annotation = member.getAnnotation(Test.class);
+        if (annotation == null) return method.getMethodName();
+        String testNameFromAnnotation = annotation.testName();
+        return testNameFromAnnotation == null || testNameFromAnnotation.isEmpty() ? method.getMethodName() : testNameFromAnnotation;
       }
-      if (constructorOrMethod.getConstructor() != null) {
-        member = constructorOrMethod.getConstructor();
+      catch (NoSuchMethodError ignored) {
+        return method.getMethodName();
       }
-      if (member == null) return method.getMethodName();
-      Test annotation = member.getAnnotation(Test.class);
-      if (annotation == null) return method.getMethodName();
-      String testNameFromAnnotation = annotation.testName();
-      return testNameFromAnnotation == null || testNameFromAnnotation.isEmpty() ? method.getMethodName() : testNameFromAnnotation;
     }
 
     @Override

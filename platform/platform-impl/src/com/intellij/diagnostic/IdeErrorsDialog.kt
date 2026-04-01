@@ -824,13 +824,19 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
           }
           return
         }
-        val reportAllStarted = reportAll(true)
-        if (reportAllStarted) {
-          notifySuccessReportAll(true)
-          super@IdeErrorsDialog.doOKAction()
-        }
-        else {
-          updateControls()
+
+        service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+          val reportAllStarted = reportAll(myMessageClusters, true)
+
+          withContext(Dispatchers.EDT) {
+            if (reportAllStarted) {
+              notifySuccessReportAll(true)
+              super@IdeErrorsDialog.doOKAction()
+            }
+            else {
+              updateControls()
+            }
+          }
         }
       }
     }
@@ -884,11 +890,16 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       if (isEnabled) {
         IdeErrorDialogUsageCollector.logReportAll()
         PropertiesComponent.getInstance().setValue(LAST_OK_ACTION, ReportAction.REPORT_ALL.name)
-        val reportingStarted = reportAll()
-        if (reportingStarted) {
-          val autoReportEnabled = suggestEnablingAutoReportIfApplicable()
-          notifySuccessReportAll(autoReportEnabled)
-          super@IdeErrorsDialog.doOKAction()
+
+        service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+          val reportingStarted = reportAll(myMessageClusters)
+          if (reportingStarted) {
+            withContext(Dispatchers.EDT) {
+              val autoReportEnabled = suggestEnablingAutoReportIfApplicable()
+              notifySuccessReportAll(autoReportEnabled)
+              super@IdeErrorsDialog.doOKAction()
+            }
+          }
         }
       }
     }
@@ -899,20 +910,24 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       if (isEnabled) {
         IdeErrorDialogUsageCollector.logReportAndClearAll()
         PropertiesComponent.getInstance().setValue(LAST_OK_ACTION, ReportAction.REPORT_AND_CLEAR_ALL.name)
-        val reportingStarted = reportAll()
-        if (reportingStarted) {
-          myMessagePool.clearErrors()
-          val autoReportEnabled = suggestEnablingAutoReportIfApplicable()
-          notifySuccessReportAll(autoReportEnabled)
-          super@IdeErrorsDialog.doOKAction()
+
+        service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+          val reportingStarted = reportAll(myMessageClusters)
+          if (reportingStarted) {
+            withContext(Dispatchers.EDT) {
+              myMessagePool.clearErrors()
+              val autoReportEnabled = suggestEnablingAutoReportIfApplicable()
+              notifySuccessReportAll(autoReportEnabled)
+              super@IdeErrorsDialog.doOKAction()
+            }
+          }
         }
       }
     }
   }
 
-  private fun reportAll(onlyEligibleForAutoReport: Boolean = false): Boolean {
+  private suspend fun reportAll(messageClusters: List<ErrorMessageCluster>, onlyEligibleForAutoReport: Boolean = false): Boolean {
     var reportingStarted = true
-    val messageClusters = myMessageClusters
     for (i in messageClusters.indices) {
       val cluster = messageClusters[i]
       if (!cluster.canSubmit) {

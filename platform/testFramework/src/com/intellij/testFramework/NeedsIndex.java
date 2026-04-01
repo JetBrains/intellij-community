@@ -13,7 +13,6 @@ public interface NeedsIndex {
      * Please also provide reason the test fails when you use this annotation.
      *
      * @see com.intellij.java.codeInsight.completion.JavaCompletionTestSuite
-     * @see com.jetbrains.php.slowTests.PhpDumbCompletionTestSuite
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
@@ -26,7 +25,6 @@ public interface NeedsIndex {
      * with runtime-only indices (of JDK, php standard libraries, etc.), but work with full indices
      *
      * @see com.intellij.java.codeInsight.completion.JavaCompletionTestSuite
-     * @see com.jetbrains.php.slowTests.PhpDumbCompletionTestSuite
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
@@ -39,7 +37,6 @@ public interface NeedsIndex {
      * but works with indices of standard library only (of JDK, php standard libraries, etc.)
      *
      * @see com.intellij.java.codeInsight.completion.JavaCompletionTestSuite
-     * @see com.jetbrains.php.slowTests.PhpDumbCompletionTestSuite
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})

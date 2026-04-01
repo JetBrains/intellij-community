@@ -29,6 +29,7 @@ import com.intellij.execution.target.EelTargetEnvironmentRequest;
 import com.intellij.execution.target.HostPort;
 import com.intellij.execution.target.ResolvedPortBinding;
 import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.TargetProcessHandlers;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.target.TargetedCommandLine;
@@ -197,6 +198,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
                                                                                targetedCommandLine.getCharset(),
                                                                                targetedCommandLineBuilder.getFilesToDeleteOnTermination());
 
+    TargetProcessHandlers.setTargetEnvironment(processHandler, remoteEnvironment);
     ProcessTerminatedListener.attach(processHandler);
     if (searchForTestsTask != null) {
       searchForTestsTask.attachTaskToProcess(processHandler);

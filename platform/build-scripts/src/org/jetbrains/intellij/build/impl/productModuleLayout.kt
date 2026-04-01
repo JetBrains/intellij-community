@@ -62,7 +62,6 @@ internal suspend fun processAndGetProductPluginContentModules(
       metadataBuilder = { sb ->
         sb.append("  <id>com.intellij</id>\n")
       },
-      isUltimateBuild = context.paths.projectHome != context.paths.communityHomeDir
     )
     Span.current().addEvent("Generated ${buildResult.contentBlocks.size} content blocks with ${buildResult.contentBlocks.sumOf { it.modules.size }} total modules")
 
@@ -178,7 +177,7 @@ private suspend fun processProductModule(
 
   // Step 2: Determine jar location based on embedded status
   val relativeOutFile = if (isEmbedded && isModuleCloseSource(moduleName, context)) {
-    // Embedded modules use getProductModuleJarName which handles product vs app jar selection
+    // Embedded modules use `getProductModuleJarName` which handles product vs. app jar selection
     // based on close-source check (product.jar/product-backend.jar for close-source,
     // app.jar/app-backend.jar for open-source)
     getProductModuleJarName(moduleName, context, frontendModuleFilter)

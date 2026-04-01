@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import it.unimi.dsi.fastutil.ints.IntList
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -44,6 +44,12 @@ internal class MergeConflictIterativeDataHolder(
   }
 
   @RequiresEdt
+  fun isFileReviewed(file: VirtualFile): Boolean {
+    val mergeConflictModel = mergeConflictModels[file] ?: return false
+    return mergeConflictModel.wasReviewed
+  }
+
+  @RequiresEdt
   fun getResolvedFiles(): Set<VirtualFile> {
     return mergeConflictModels.filter { it.value.getUnresolvedChanges().isEmpty() }.keys
   }
@@ -53,11 +59,12 @@ internal class MergeConflictIterativeDataHolder(
     val removedModels = files.mapNotNull { mergeConflictModels.remove(it) }
     runWriteAction {
       removedModels.forEach { model ->
-        val affected = model.getAllChanges().map { it.index }
-        model.executeMergeCommand(DiffBundle.message("merge.dialog.reset.change.command"), null,
-                                  UndoConfirmationPolicy.DEFAULT,
-                                  true,
-                                  IntList.of(*affected.toIntArray())) {
+        val affected = model.getAllChanges().mapTo(IntArrayList()) { it.index }
+        model.executeMergeCommand(commandName = DiffBundle.message("merge.dialog.reset.change.command"),
+                                  commandGroupId = null,
+                                  undoConfirmationPolicy = UndoConfirmationPolicy.DEFAULT,
+                                  bulkUpdate = true,
+                                  affectedIndexes = affected) {
           model.resetAllChanges()
         }
       }

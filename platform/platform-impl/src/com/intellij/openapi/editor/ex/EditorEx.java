@@ -395,7 +395,7 @@ public interface EditorEx extends Editor {
 
   @ApiStatus.Internal
   @Override
-  default @NotNull DocumentEx getUiDocument() {
+  default @NotNull DocumentEx getElfDocument() {
     return getDocument();
   }
 

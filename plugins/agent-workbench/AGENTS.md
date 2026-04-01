@@ -17,12 +17,12 @@ Run commands from repository root (`/Users/develar/projects/idea-4`).
 Always pass fully-qualified test names (FQN). Simple class names do not match.
 
 - Single test class:
-  `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionCliTest'`
+  `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionCliTest`
 - Plugin-wired editor/action test:
-  `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.chat.AgentChatEditorServiceTest -Dintellij.build.test.main.module=intellij.agent.workbench.plugin.tests'`
+  `./tests.cmd --module intellij.agent.workbench.plugin.tests --test com.intellij.agent.workbench.chat.AgentChatEditorServiceTest`
 - Whole sessions package:
-  `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.*'`
+  `./tests.cmd --module intellij.agent.workbench.sessions.tests --test 'com.intellij.agent.workbench.sessions.*'`
 - Whole Agent Workbench test suite:
-  `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.plugin.AgentWorkbenchAllTestsSuite'`
+  `./tests.cmd --module intellij.agent.workbench.plugin.tests --test com.intellij.agent.workbench.plugin.AgentWorkbenchAllTestsSuite`
 
-Important: keep the `-Dintellij.build.test.patterns=...` argument quoted (single quotes) so shells like `zsh` do not expand `*` before `tests.cmd` receives it.
+Important: keep the `--test` argument quoted (single quotes) so shells like `zsh` do not expand `*` before `tests.cmd` receives it.

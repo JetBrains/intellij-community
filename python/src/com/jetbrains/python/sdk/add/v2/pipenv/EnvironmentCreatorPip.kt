@@ -5,7 +5,9 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.impl.pipenv.pipenvPath
+import com.intellij.platform.util.progress.withProgressText
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
@@ -31,11 +33,13 @@ internal class EnvironmentCreatorPip<P : PathHolder>(model: PythonMutableTargetA
     val basePythonBinaryPath = model.getOrInstallBasePython()
 
     return when (basePythonBinaryPath) {
-      is PathHolder.Eel -> setupPipEnvSdkWithProgressReport(
-        moduleBasePath = moduleBasePath,
-        basePythonBinaryPath = basePythonBinaryPath.path,
-        installPackages = false
-      )
+      is PathHolder.Eel -> withProgressText(message("python.sdk.progress.pipenv.creating")) {
+        setupPipEnvSdkWithProgressReport(
+          moduleBasePath = moduleBasePath,
+          basePythonBinaryPath = basePythonBinaryPath.path,
+          installPackages = false
+        )
+      }
       else -> PyResult.localizedError(PyBundle.message("target.is.not.supported", basePythonBinaryPath))
     }
   }

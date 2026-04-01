@@ -3,9 +3,9 @@ package com.intellij.ide.starter.sdk.go
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.runner.SetupException
 import com.intellij.ide.starter.runner.targets.TargetIdentifier
+import com.intellij.ide.starter.runner.targets.isLocal
 import com.intellij.ide.starter.utils.FileSystem
 import com.intellij.ide.starter.utils.HttpClient
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.isArm64
 import com.intellij.platform.eel.isLinux
@@ -39,7 +39,7 @@ object GoSdkDownloaderFacade {
 
   /**
    * Returns platform info for the current target (local or remote).
-   * Falls back to SystemInfo when Application is not initialized.
+   * Falls back to SystemInfo when the target is local or cannot be resolved.
    */
   fun getTargetPlatformInfo(): PlatformInfo {
     val platform = getTargetPlatform()
@@ -103,11 +103,9 @@ object GoSdkDownloaderFacade {
   }
 
   private fun getTargetPlatform(): EelPlatform? {
-    if (ApplicationManager.getApplication() == null) {
-      return null
-    }
     return try {
-      TargetIdentifier.current.eelApi.platform
+      if (TargetIdentifier.current.isLocal()) null
+      else TargetIdentifier.current.eelApi.platform
     }
     catch (_: Exception) {
       null

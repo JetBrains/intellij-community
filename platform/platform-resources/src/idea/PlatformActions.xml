@@ -1427,9 +1427,11 @@
       <group id="Internal.Editor" popup="true">
         <action id="AddInlayInternalAction" internal="true" class="com.intellij.internal.AddInlayInternalAction"/>
         <action id="AddInlayBlockInternalAction" internal="true" class="com.intellij.internal.AddInlayBlockInternalAction"/>
+        <action id="DumpEditorStateInternalAction" internal="true" class="com.intellij.internal.DumpEditorStateInternalAction"/>
         <action id="SetCaretVisualAttributesInternalAction" internal="true" class="com.intellij.internal.SetCaretVisualAttributesAction"/>
         <action id="EditorRenderingBenchmarkAction" internal="true"
                 class="com.intellij.internal.performance.EditorRenderingBenchmarkAction"/>
+        <action id="EditorAddCustomWrap" internal="true" class="com.intellij.openapi.editor.actions.AddCustomWrapAction"/>
       </group>
       <group id="Internal.UI" popup="true">
         <group id="Internal.UI.Demos" popup="true">

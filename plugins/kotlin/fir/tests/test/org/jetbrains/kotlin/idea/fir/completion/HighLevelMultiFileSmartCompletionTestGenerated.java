@@ -35,6 +35,11 @@ public class HighLevelMultiFileSmartCompletionTestGenerated extends AbstractHigh
         runTest("../../completion/testData/smartMultiFile/AnonymousObjectGenericJava/");
     }
 
+    @TestMetadata("AnonymousObjectGenericJavaSubClass")
+    public void testAnonymousObjectGenericJavaSubClass() throws Exception {
+        runTest("../../completion/testData/smartMultiFile/AnonymousObjectGenericJavaSubClass/");
+    }
+
     @TestMetadata("CallableReferenceNotImported")
     public void testCallableReferenceNotImported() throws Exception {
         runTest("../../completion/testData/smartMultiFile/CallableReferenceNotImported/");

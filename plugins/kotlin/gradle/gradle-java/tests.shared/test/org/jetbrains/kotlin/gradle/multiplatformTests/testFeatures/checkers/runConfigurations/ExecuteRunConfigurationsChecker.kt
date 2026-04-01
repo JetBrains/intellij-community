@@ -33,6 +33,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractTestChecker
@@ -189,7 +190,7 @@ object ExecuteRunConfigurationsChecker : AbstractTestChecker<ExecuteRunConfigura
     private fun <T> runBlockingWithTimeout(timeout: Duration, action: CoroutineScope.(continuation: Continuation<T>) -> Unit): T {
         return runBlocking {
             withTimeout(timeout) {
-                suspendCoroutine { continuation -> action(continuation) }
+                suspendCancellableCoroutine { continuation -> action(continuation) }
             }
         }
     }

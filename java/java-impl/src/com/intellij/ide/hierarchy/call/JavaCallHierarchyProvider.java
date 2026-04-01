@@ -16,6 +16,7 @@ import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.impl.light.LightDefaultConstructor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class JavaCallHierarchyProvider implements HierarchyProvider {
   @Override
@@ -23,6 +24,14 @@ public class JavaCallHierarchyProvider implements HierarchyProvider {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    return getElementForCallHierarchy(element);
+  }
+
+  /**
+   * @param element initial element under caret.
+   * @return the element that should be used to perform `Call Hierarchy` request.
+   */
+  public static @Nullable PsiElement getElementForCallHierarchy(@Nullable PsiElement element) {
     if (element instanceof PsiField || element instanceof PsiRecordComponent) return element;
     else if (element instanceof PsiClass aClass) {
       if (aClass.isRecord()) return element;

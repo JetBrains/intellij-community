@@ -13,9 +13,9 @@
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.platform.eel.provider.LocalWindowsEelApi"
-                        serviceImplementation="com.intellij.platform.eel.impl.local.LocalWindowsEelApiImpl"/>
+                        serviceImplementation="com.intellij.platform.eel.impl.local.LocalWindowsEelApiImpl" os="windows"/>
     <applicationService serviceInterface="com.intellij.platform.eel.provider.LocalPosixEelApi"
-                        serviceImplementation="com.intellij.platform.eel.impl.local.LocalPosixEelApiImpl"/>
+                        serviceImplementation="com.intellij.platform.eel.impl.local.LocalPosixEelApiImpl" os="unix"/>"/>
 
     <applicationService serviceInterface="com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend$InitializationService"
                         serviceImplementation="com.intellij.platform.eel.impl.fs.EelMultiRoutingFileSystemBackendInitializationService"/>

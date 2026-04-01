@@ -90,9 +90,8 @@ class ImageCellViewer(private val grid: DataGrid) : CellViewer, CheckedDisposabl
 }
 
 class ImageCellViewerFactory : CellViewerFactory {
-  override fun getSuitability(grid: DataGrid, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>): Suitability {
+  override fun getSuitability(grid: DataGrid, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>, value: Any?): Suitability {
     if (!row.isValid(grid) || !column.isValid(grid)) return Suitability.NONE
-    val value = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getValueAt(row, column)
     return if (value is ImageInfo) Suitability.MAX else Suitability.NONE
   }
 

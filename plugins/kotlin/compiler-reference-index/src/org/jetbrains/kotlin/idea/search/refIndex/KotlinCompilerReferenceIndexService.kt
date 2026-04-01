@@ -242,7 +242,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
     }
 
     @ApiStatus.Internal
-    fun isBuildActive(): Boolean = withReadLock { activeBuildCount == 0 }
+    fun isBuildActive(): Boolean = withReadLock { activeBuildCount != 0 }
 
     private fun markAsUpToDate() {
         val modules = allModules() ?: return

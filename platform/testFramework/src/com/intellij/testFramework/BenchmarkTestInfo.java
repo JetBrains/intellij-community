@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import kotlin.reflect.KFunction;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Method;
 
 public interface BenchmarkTestInfo {
+  Logger LOG = Logger.getInstance(BenchmarkTestInfo.class);
   @Contract(pure = true) // to warn about not calling .start() in the end
   BenchmarkTestInfo setup(@NotNull ThrowableRunnable<?> setup);
 

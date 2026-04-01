@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.ui.IslandsState;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,8 +34,21 @@ import java.util.Collections;
 
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting")
 public class EditorPaintingTest extends EditorPaintingTestCase {
-  private void setNewSelectionEnabled(boolean enabled) {
-    Registry.get("editor.old.full.horizontal.selection.enabled").setValue(!enabled);
+  private record SelectionState(boolean enabled, boolean islands) {}
+
+  private static SelectionState setNewSelectionEnabled(boolean enabled) {
+    var value = Registry.get("editor.old.full.horizontal.selection.enabled");
+    var islands = IslandsState.Companion.isEnabled();
+
+    var state = new SelectionState(enabled, islands);
+    value.setValue(!enabled);
+    IslandsState.Companion.setEnabled(enabled, false);
+    return state;
+  }
+
+  private static void restoreSelectionState(SelectionState state) {
+    Registry.get("editor.old.full.horizontal.selection.enabled").setValue(!state.enabled());
+    IslandsState.Companion.setEnabled(state.islands(), false);
   }
 
   public void testWholeLineHighlighterAtDocumentEnd() throws Exception {
@@ -171,36 +185,53 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   public void testBlockInlaysWithSelection() throws Exception {
-    setNewSelectionEnabled(false);
-    runTestBlockInlaysWithSelection();
+    var state = setNewSelectionEnabled(false);
+    try {
+      runTestBlockInlaysWithSelection();
+    } finally {
+      restoreSelectionState(state);
+    }
   }
 
   public void testBlockInlaysWithNewSelection() throws Exception {
-    setNewSelectionEnabled(true);
-    runTestBlockInlaysWithSelection();
+    var state = setNewSelectionEnabled(true);
+    try {
+      runTestBlockInlaysWithSelection();
+    } finally {
+      restoreSelectionState(state);
+    }
   }
 
   public void testBlockInlaysWithNewSelection2() throws Exception {
-    setNewSelectionEnabled(true);
+    var state = setNewSelectionEnabled(true);
 
-    initText("line 1\nline 2\n");
-    addBlockInlay(getEditor().getDocument().getLineStartOffset(0));
-    addBlockInlay(getEditor().getDocument().getLineStartOffset(1));
-    executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
-    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
-    checkResult();
+    try {
+      initText("line 1\nline 2\n");
+      addBlockInlay(getEditor().getDocument().getLineStartOffset(0));
+      addBlockInlay(getEditor().getDocument().getLineStartOffset(1));
+      executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
+      executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+      checkResult();
+    } finally {
+      restoreSelectionState(state);
+    }
   }
 
   public void testBlockInlaysAboveWithNewSelection() throws Exception {
-    setNewSelectionEnabled(true);
-    initText("\n\nline 1\nline 2\n");
-    addBlockInlay(getEditor().getDocument().getLineStartOffset(2), true);
-    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
-    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
-    for (int i = 0; i < 2; i++) {
-      executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
+    var state = setNewSelectionEnabled(true);
+
+    try {
+      initText("\n\nline 1\nline 2\n");
+      addBlockInlay(getEditor().getDocument().getLineStartOffset(2), true);
+      executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+      executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+      for (int i = 0; i < 2; i++) {
+        executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
+      }
+      checkResult();
+    } finally {
+      restoreSelectionState(state);
     }
-    checkResult();
   }
 
   private void runTestMarginIsShownOverSelectionInBlockInlayRange() throws Exception {
@@ -212,13 +243,21 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   public void testMarginIsShownOverSelectionInBlockInlayRange() throws Exception {
-    setNewSelectionEnabled(false);
-    runTestMarginIsShownOverSelectionInBlockInlayRange();
+    var state = setNewSelectionEnabled(false);
+    try {
+      runTestMarginIsShownOverSelectionInBlockInlayRange();
+    } finally {
+      restoreSelectionState(state);
+    }
   }
 
   public void testMarginIsShownOverSelectionInBlockInlayRangeWithNewSelection() throws Exception {
-    setNewSelectionEnabled(true);
-    runTestMarginIsShownOverSelectionInBlockInlayRange();
+    var state = setNewSelectionEnabled(true);
+    try {
+      runTestMarginIsShownOverSelectionInBlockInlayRange();
+    } finally {
+      restoreSelectionState(state);
+    }
   }
 
   public void testIndentGuideOverBlockInlayWithSoftWraps() throws Exception {
@@ -353,13 +392,21 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   public void testCustomFoldRegionInsideSelection() throws Exception {
-    setNewSelectionEnabled(false);
-    runTestCustomFoldRegionInsideSelection();
+    var state = setNewSelectionEnabled(false);
+    try {
+      runTestCustomFoldRegionInsideSelection();
+    } finally {
+      restoreSelectionState(state);
+    }
   }
 
   public void testCustomFoldRegionInsideSelectionWithNewSelection() throws Exception {
-    setNewSelectionEnabled(true);
-    runTestCustomFoldRegionInsideSelection();
+    var state = setNewSelectionEnabled(true);
+    try {
+      runTestCustomFoldRegionInsideSelection();
+    } finally {
+      restoreSelectionState(state);
+    }
   }
 
   private void addCustomLinesFolding(int startLine, int endLine) {

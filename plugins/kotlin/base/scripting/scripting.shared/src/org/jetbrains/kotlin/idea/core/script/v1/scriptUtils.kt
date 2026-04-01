@@ -45,7 +45,7 @@ fun loggingReporter(severity: ScriptDiagnostic.Severity, message: String) {
     }
 }
 
-class NewScriptFileInfo(
+class KotlinScriptInfo(
     var id: String = "",
     @NlsContexts.ListItem var title: String = "",
     var templateName: String = "Kotlin Script",
@@ -56,7 +56,7 @@ class NewScriptFileInfo(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as NewScriptFileInfo
+        other as KotlinScriptInfo
 
         return id == other.id
     }
@@ -66,10 +66,10 @@ class NewScriptFileInfo(
     }
 }
 
-val IdeScriptCompilationConfigurationKeys.kotlinScriptTemplateInfo: PropertiesCollection.Key<NewScriptFileInfo> by PropertiesCollection.key()
+val IdeScriptCompilationConfigurationKeys.kotlinScriptTemplateInfo: PropertiesCollection.Key<KotlinScriptInfo> by PropertiesCollection.key()
 
-fun ScriptCompilationConfiguration.Builder.kotlinScriptTemplateInfo(init: NewScriptFileInfo.() -> Unit) {
-    ide.kotlinScriptTemplateInfo(NewScriptFileInfo().apply(init))
+fun ScriptCompilationConfiguration.Builder.kotlinScriptTemplateInfo(init: KotlinScriptInfo.() -> Unit) {
+    ide.kotlinScriptTemplateInfo(KotlinScriptInfo().apply(init))
 }
 
 fun Project.getKtFile(virtualFile: VirtualFile?, ktFile: KtFile? = null): KtFile? {

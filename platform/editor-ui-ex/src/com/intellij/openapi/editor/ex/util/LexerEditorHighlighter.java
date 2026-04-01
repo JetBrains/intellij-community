@@ -105,7 +105,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   protected final @Nullable Document getDocument() {
     if (EditorLockFreeTyping.isEnabled() && myEditor instanceof Editor editor) {
-      return editor.getUiDocument();
+      return editor.getElfDocument();
     }
     return myEditor != null ? myEditor.getDocument() : null;
   }

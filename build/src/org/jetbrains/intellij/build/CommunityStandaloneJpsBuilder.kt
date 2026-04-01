@@ -58,6 +58,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "intellij.libraries.plexus.utils",
     "intellij.libraries.protobuf",
     "intellij.libraries.netty.buffer",
+    "intellij.libraries.netty.codec.http",
     "intellij.libraries.maven.resolver.provider",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "util.jar", reason = null) })
 
@@ -98,7 +99,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(
   layout.withModule("intellij.eclipse.jps", "eclipse-jps.jar")
   layout.withModule("intellij.eclipse.common", "eclipse-common.jar")
   layout.withModule("intellij.devkit.jps", "devkit-jps.jar")
-  layout.withModule("intellij.devkit.runtimeModuleRepository.jps", "devkit-runtimeModuleRepository-jps.jar")
   layout.withModule("intellij.java.langInjection.jps", "java-langInjection-jps.jar")
 
   layout.withModule("intellij.space.java.jps", "space-java-jps.jar")
@@ -107,7 +107,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "jna",
     "Log4J",
     "Eclipse",
-    "netty-codec-http",
     "netty-codec-protobuf",
     "slf4j-api",
     "jetbrains-annotations",

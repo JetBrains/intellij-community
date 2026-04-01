@@ -52,10 +52,17 @@ internal class SingleTaskExecutor(private val task: Reportable) {
   private val shouldContinueBackgroundProcessing = AtomicBoolean(false)
   private val modificationCount = MutableStateFlow<Long>(0)
 
+  private fun debugLog(getMessage: () -> String) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("[${Thread.currentThread().threadId()}] ${getMessage()}")
+    }
+  }
+
   private fun runWithStateHandling(runnable: Runnable) {
     try {
       do {
         try {
+          debugLog { "STARTING" }
           runState.value.let { currentStateForAssert ->
             LOG.assertTrue(currentStateForAssert == RunState.STARTING, "Old state should be STARTING, but was $currentStateForAssert")
           }
@@ -64,6 +71,7 @@ internal class SingleTaskExecutor(private val task: Reportable) {
           // shouldContinueBackgroundProcessing is normally cleared before reading next item from the queue.
           // Here we clear the flag just in case, if runnable fail to clear the flag (e.g. during cancellation)
           shouldContinueBackgroundProcessing.set(false)
+          debugLog { "RUNNING" }
           runnable.run()
         }
         finally {
@@ -71,12 +79,14 @@ internal class SingleTaskExecutor(private val task: Reportable) {
             LOG.assertTrue(currentStateForAssert == RunState.RUNNING, "Old state should be RUNNING, but was $currentStateForAssert")
           }
           runState.value = RunState.STOPPING
+          debugLog { "STOPPING" }
         }
       }
       while (shouldContinueBackgroundProcessing.get() && runState.compareAndSet(RunState.STOPPING, RunState.STARTING))
     }
     finally {
       if (runState.compareAndSet(RunState.STOPPING, RunState.STOPPED)) {
+        debugLog { "STOPPED" }
         modificationCount.update { it + 1 }
       }
     }
@@ -90,10 +100,13 @@ internal class SingleTaskExecutor(private val task: Reportable) {
    * @return true if current thread won the competition and started processing
    */
   fun tryStartProcess(processRunner: Consumer<AutoclosableProgressive>): Boolean {
+    debugLog { "tryStartProcess" }
     if (!shouldContinueBackgroundProcessing.compareAndSet(false, true)) {
+      debugLog { "another thread will continue" }
       return false // the thread that set shouldContinueBackgroundProcessing (not this thread) should compete with the background thread
     }
     if (runState.value == RunState.RUNNING) {
+      debugLog { "already running in another thread" }
       return false // there will be at least one more check of shouldContinueBackgroundProcessing in the background thread
     }
     else {
@@ -101,11 +114,14 @@ internal class SingleTaskExecutor(private val task: Reportable) {
       val thisThreadShouldProcessQueue = stoppedToStarting || runState.compareAndSet(RunState.STOPPING, RunState.STARTING)
       // whatever thread (this or background) wins the competition and sets STARTING - that thread should process the queue
       if (stoppedToStarting) {
+        debugLog { "this thread switched STOPPED > STARTING" }
         modificationCount.update { it + 1 }
       } else if (!thisThreadShouldProcessQueue) {
+        debugLog { "this thread could not acquire STARTING  state" }
         return false
       }
     }
+    debugLog { "this thread will run the task $task" }
     processRunner.accept(StateAwareTask(task))
     return true
   }

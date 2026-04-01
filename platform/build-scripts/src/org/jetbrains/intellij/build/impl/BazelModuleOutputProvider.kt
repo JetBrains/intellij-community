@@ -6,22 +6,58 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.util.bazelEnvironment.BazelLabel
 import com.intellij.util.bazelEnvironment.BazelRunfiles
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 
+@Internal
+class BazelModuleOutputProviderState(
+  modules: List<JpsModule>,
+  @JvmField val projectHome: Path,
+  @JvmField val bazelOutputRoot: Path,
+  bazelTargetsLoader: (Path) -> BazelTargetsInfo.TargetsFile = BazelTargetsInfo::loadBazelTargetsJson,
+) {
+  private val index = ModuleOutputProviderIndex(modules)
+
+  val modules: List<JpsModule>
+    get() = index.modules
+
+  val bazelTargetsMap: BazelTargetsInfo.TargetsFile by lazy {
+    bazelTargetsLoader(projectHome)
+  }
+
+  fun findModule(name: String): JpsModule? = index.findModule(name)
+
+  fun findRequiredModule(name: String): JpsModule = index.findRequiredModule(name)
+
+  fun getProjectLibraryToModuleMap(): Map<String, String> = index.getProjectLibraryToModuleMap()
+
+  fun getModuleImlFile(module: JpsModule): Path = index.getModuleImlFile(module)
+}
+
 internal class BazelModuleOutputProvider(
-  private val modules: List<JpsModule>,
-  private val projectHome: Path,
-  val bazelOutputRoot: Path,
+  private val state: BazelModuleOutputProviderState,
   scope: CoroutineScope?,
   override val useTestCompilationOutput: Boolean,
 ) : ModuleOutputProvider {
-  private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
-  private val projectLibraryToModuleMapCache by lazy { buildProjectLibraryToModuleMap(modules) }
+  constructor(
+    modules: List<JpsModule>,
+    projectHome: Path,
+    bazelOutputRoot: Path,
+    scope: CoroutineScope?,
+    useTestCompilationOutput: Boolean,
+  ) : this(
+    state = BazelModuleOutputProviderState(
+      modules = modules,
+      projectHome = projectHome,
+      bazelOutputRoot = bazelOutputRoot,
+    ),
+    scope = scope,
+    useTestCompilationOutput = useTestCompilationOutput,
+  )
 
   private val zipFilePool = ModuleOutputZipFilePool(scope)
 
@@ -35,21 +71,14 @@ internal class BazelModuleOutputProvider(
     return null
   }
 
-  private val bazelTargetsMap: BazelTargetsInfo.TargetsFile by lazy {
-    BazelTargetsInfo.loadBazelTargetsJson(projectHome)
-  }
+  override fun getAllModules(): List<JpsModule> = state.modules
 
-  override fun getAllModules(): List<JpsModule> = modules
+  override fun findModule(name: String): JpsModule? = state.findModule(name)
 
-  override fun findModule(name: String): JpsModule? = nameToModule.get(name.removeSuffix("._test"))
-
-  override fun findRequiredModule(name: String): JpsModule {
-    return requireNotNull(findModule(name)) {
-      "Cannot find required module '$name' in the project"
-    }
-  }
+  override fun findRequiredModule(name: String): JpsModule = state.findRequiredModule(name)
 
   override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
+    val bazelTargetsMap = state.bazelTargetsMap
     val librariesTable = if (moduleLibraryModuleName == null) {
       bazelTargetsMap.projectLibraries
     }
@@ -68,7 +97,7 @@ internal class BazelModuleOutputProvider(
       library.jarTargets.map { BazelRunfiles.getFileByLabel(BazelLabel.fromString(it)) }
     }
     else {
-      library.jars.map { bazelOutputRoot.resolve(it) }
+      library.jars.map { state.bazelOutputRoot.resolve(it) }
     }
 
     check(paths.isNotEmpty()) {
@@ -95,6 +124,7 @@ internal class BazelModuleOutputProvider(
   }
 
   private fun getModuleOutputRootsImpl(module: JpsModule, forTests: Boolean): List<Path> {
+    val bazelTargetsMap = state.bazelTargetsMap
     val moduleDescription = bazelTargetsMap.modules[module.name] ?: error("Cannot find module '${module.name}' in the project")
 
     if (forTests && !useTestCompilationOutput) {
@@ -112,13 +142,13 @@ internal class BazelModuleOutputProvider(
     }
     else {
       val jarsRelative = if (forTests) moduleDescription.testJars else moduleDescription.productionJars
-      jarsRelative.map { projectHome.resolve(it) }
+      jarsRelative.map { state.projectHome.resolve(it) }
     }
   }
 
   override suspend fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String?, processedModules: MutableSet<String>?): ByteArray? {
     return findFileInAnyModuleOutput(
-      modules = nameToModule.values,
+      modules = state.modules,
       relativePath = relativePath,
       provider = this,
       moduleNamePrefix = moduleNamePrefix,
@@ -126,16 +156,11 @@ internal class BazelModuleOutputProvider(
     )
   }
 
-  override fun getProjectLibraryToModuleMap(): Map<String, String> = projectLibraryToModuleMapCache
+  override fun getProjectLibraryToModuleMap(): Map<String, String> = state.getProjectLibraryToModuleMap()
 
-  override fun getModuleImlFile(module: JpsModule): Path {
-    val baseDir = requireNotNull(JpsModelSerializationDataService.getBaseDirectoryPath(module)) {
-      "Cannot find base directory for module ${module.name}"
-    }
-    return baseDir.resolve("${module.name}.iml")
-  }
+  override fun getModuleImlFile(module: JpsModule): Path = state.getModuleImlFile(module)
 
-  override fun toString(): String = "BazelModuleOutputProvider(projectHome=$projectHome, bazelOutputRoot=$bazelOutputRoot)"
+  override fun toString(): String = "BazelModuleOutputProvider(projectHome=${state.projectHome}, bazelOutputRoot=${state.bazelOutputRoot})"
 }
 
 /**

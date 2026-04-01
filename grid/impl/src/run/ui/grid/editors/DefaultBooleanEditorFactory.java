@@ -73,8 +73,9 @@ public class DefaultBooleanEditorFactory implements GridCellEditorFactory {
 
 
   @Override
-  public int getSuitability(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
-    int type = GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column);
+  public int getSuitability(@NotNull DataGrid grid, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column,
+                            @Nullable Object value) {
+    int type = GridCellEditorHelper.get(grid).guessJdbcTypeForEditing(grid, row, column, value);
     GridModel<GridRow, GridColumn> model = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS);
     GridColumn c = Objects.requireNonNull(model.getColumn(column));
     return ObjectFormatterUtil.isBooleanColumn(c, type) ?
@@ -115,7 +116,8 @@ public class DefaultBooleanEditorFactory implements GridCellEditorFactory {
   @Override
   public @NotNull ValueParser getValueParser(@NotNull DataGrid grid,
                                              @NotNull ModelIndex<GridRow> rowIdx,
-                                             @NotNull ModelIndex<GridColumn> columnIdx) {
+                                             @NotNull ModelIndex<GridColumn> columnIdx,
+                                             @Nullable Object value) {
     GridCellEditorHelper editorHelper = GridCellEditorHelper.get(grid);
     return new ValueParserWrapper(myParser, editorHelper.isNullable(grid, columnIdx),
                                     editorHelper.getDefaultNullValue(grid, columnIdx),

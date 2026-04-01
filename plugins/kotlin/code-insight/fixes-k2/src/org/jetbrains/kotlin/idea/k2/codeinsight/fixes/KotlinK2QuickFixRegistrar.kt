@@ -332,6 +332,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
         registerFactory(ImportQuickFixFactories.tooManyArgumentsFactory)
         registerFactory(ImportQuickFixFactories.noValueForParameterFactory)
+        registerFactory(ImportQuickFixFactories.notAnAnnotationClassFactory)
         registerFactory(ImportQuickFixFactories.argumentTypeMismatchFactory)
         registerFactory(ImportQuickFixFactories.namedParameterNotFoundFactory)
         registerFactory(ImportQuickFixFactories.noneApplicableFactory)

@@ -58,6 +58,8 @@ class PsiPolySymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
     hints: PsiSymbolReferenceHints,
   ): Pair<MultiMap<Int, PolySymbol>, List<PolySymbolReference>> {
     val target = hints.target
+    if (target != null && getProviders(element).none { it.canReference(target) })
+      return Pair(MultiMap.create(), emptyList())
     val cacheKeys =
       PsiPolySymbolReferenceCacheInfoProvider.getCacheKeys(element, target)
 
@@ -75,17 +77,17 @@ class PsiPolySymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
     }
   }
 
-  private fun getSymbolOffsetsAndReferencesNoCache(element: PsiExternalReferenceHost, targetSymbol: Symbol?): Pair<MultiMap<Int, PolySymbol>, List<PolySymbolReference>> {
+  private fun getSymbolOffsetsAndReferencesNoCache(
+    element: PsiExternalReferenceHost,
+    targetSymbol: Symbol?,
+  ): Pair<MultiMap<Int, PolySymbol>, List<PolySymbolReference>> {
     val publisher = application.messageBus.syncPublisher(PsiPolySymbolReferenceProviderListener.TOPIC)
     publisher.beforeProvideReferences(element, targetSymbol)
 
     try {
-      val beans = PsiPolySymbolReferenceProviders.byLanguage(element.getLanguage()).byHostClass(element.javaClass)
       val result = SmartList<PolySymbolReference>()
       val offsets = MultiMap.createSet<Int, PolySymbol>()
-      for (bean in beans) {
-        @Suppress("UNCHECKED_CAST")
-        val provider = bean.instance as PsiPolySymbolReferenceProvider<PsiExternalReferenceHost>
+      for (provider in getProviders(element)) {
         val showProblems = provider.shouldShowProblems(element)
         val offsetsFromProvider = provider.getOffsetsToReferencedSymbols(element)
         result.addAll(offsetsFromProvider.flatMap { (offset, symbol) ->
@@ -100,9 +102,19 @@ class PsiPolySymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
     }
   }
 
+  private fun getProviders(element: PsiExternalReferenceHost): Sequence<PsiPolySymbolReferenceProvider<PsiExternalReferenceHost>> =
+    @Suppress("UNCHECKED_CAST")
+    PsiPolySymbolReferenceProviders.byLanguage(element.getLanguage()).byHostClass(element.javaClass)
+      .asSequence().map { it.instance as PsiPolySymbolReferenceProvider<PsiExternalReferenceHost> }
+
 }
 
-internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: PolySymbol, showProblems: Boolean): List<PolySymbolReference> {
+internal fun getReferences(
+  element: PsiElement,
+  symbolNameOffset: Int,
+  symbol: PolySymbol,
+  showProblems: Boolean,
+): List<PolySymbolReference> {
   val problemOnlyRanges = mutableMapOf<TextRange, Boolean>()
   val result = MultiMap<TextRange, PolySymbolNameSegment>()
 
@@ -154,7 +166,8 @@ internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: P
           ?.firstOrNull()
       }.takeIf { it.size == segments.size }?.firstOrNull()
       if (showProblems && (deprecation != null || problemOnly || segments.any { it.problem != null })) {
-        NameSegmentReferenceWithProblem(element, symbol, range.shiftRight(symbolNameOffset), segments, symbolNameOffset, deprecation, problemOnly)
+        NameSegmentReferenceWithProblem(element, symbol, range.shiftRight(symbolNameOffset),
+                                        segments, symbolNameOffset, deprecation, problemOnly)
       }
       else if (!range.isEmpty && !problemOnly) {
         NameSegmentReference(element, range.shiftRight(symbolNameOffset), segments)

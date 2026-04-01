@@ -2,13 +2,12 @@
 package com.intellij.compose.ide.plugin.projectStuctureTests
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.project.IntelliJProjectConfiguration.Companion.loadIntelliJProject
+import com.intellij.project.loadIntelliJProject
 import org.jetbrains.jps.model.JpsProject
 import org.junit.Test
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.extension
-import kotlin.io.path.pathString
 import kotlin.io.path.useLines
 import kotlin.io.path.walk
 import kotlin.test.assertTrue
@@ -78,11 +77,11 @@ class ComposePluginLicenseHeaderTest {
 
   companion object {
     private val ultimateRoot: Path by lazy {
-      Path.of(PathManager.getHomePath())
+      PathManager.getHomeDir()
     }
 
     private val ultimateProject: JpsProject by lazy {
-      loadIntelliJProject(ultimateRoot.pathString)
+      loadIntelliJProject(ultimateRoot)
     }
 
     private const val COMPOSE_PLUGIN_MODULE_NAME_PREFIX: String = "intellij.compose.ide.plugin"

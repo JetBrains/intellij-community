@@ -1,8 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
-import com.intellij.execution.wsl.WslDistributionManager
-import com.intellij.execution.wsl.WslPath
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
@@ -41,13 +39,7 @@ val JDK_DOWNLOADER_EXT: DataKey<JdkDownloaderDialogHostExtension> = DataKey.crea
 
 @Internal
 interface JdkDownloaderDialogHostExtension {
-  fun allowWsl() : Boolean = true
-
-  fun getEel(): EelApi? = null
-
-  fun createMainPredicate() : JdkPredicate? = null
-
-  fun createWslPredicate() : JdkPredicate? = null
+  fun getEel(): EelApi = LocalEelDescriptor.toEelApiBlocking()
 
   fun createEelPredicate(eel: EelApi) : JdkPredicate? = null
 
@@ -126,42 +118,21 @@ class JdkDownload : SdkDownload {
     sdkFilter: Predicate<JdkItem>?,
     okActionText: @NlsContexts.Button String,
   ): Pair<JdkItem, Path>? {
-    val items = try {
+    val eelModelPair = try {
       val extension = extension ?: object : JdkDownloaderDialogHostExtension {
         override fun getEel(): EelApi = (project?.getEelDescriptor() ?: LocalEelDescriptor).toEelApiBlocking()
       }
       computeInBackground(project, ProjectBundle.message("progress.title.downloading.jdk.list")) {
-
-        val buildModel = { predicate: JdkPredicate ->
-          JdkListDownloader.getInstance()
-            .downloadForUI(predicate = predicate, progress = it)
-            .filter { extension.shouldIncludeItem(sdkTypeId, it) }
-            .takeIf { it.isNotEmpty() }
-            ?.let { buildJdkDownloaderModel(it, { sdkFilter?.test(it) != false }) }
-        }
-
-        val allowWsl = extension.allowWsl()
-        val wslDistributions = if (allowWsl) WslDistributionManager.getInstance().installedDistributions else listOf()
-        val projectWslDistribution = if (allowWsl) project?.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) } else null
-
-        val mainModel = buildModel(extension.createMainPredicate() ?: JdkPredicate.default()) ?: return@computeInBackground null
-        val wslModel = if (allowWsl && wslDistributions.isNotEmpty()) buildModel(extension.createWslPredicate() ?: JdkPredicate.forWSL()) else null
-
         val eelApi = extension.getEel()
-        val eelPair: Pair<EelApi, JdkDownloaderModel>? =
-          if (eelApi != null) {
-            buildModel(extension.createEelPredicate(eelApi) ?: JdkPredicate.forEel(eelApi))?.let { eelApi to it }
-          }
-          else null
 
-        JdkDownloaderMergedModel(
-          mainModel = mainModel,
-          wslModel = wslModel,
-          eelModel = eelPair?.second,
-          wslDistributions = wslDistributions,
-          eel = eelPair?.first,
-          projectWSLDistribution = projectWslDistribution,
-        )
+        val jdkDownloaderModel = JdkListDownloader.getInstance()
+          .downloadForUI(predicate = extension.createEelPredicate(eelApi) ?: JdkPredicate.forEel(eelApi), progress = it)
+          .filter { extension.shouldIncludeItem(sdkTypeId, it) }
+          .takeIf { it.isNotEmpty() }
+          ?.let { buildJdkDownloaderModel(it, extension.getEel(), { sdkFilter?.test(it) != false }) }
+                                 ?: return@computeInBackground null
+
+        eelApi to jdkDownloaderModel
       }
     }
     catch (e: Throwable) {
@@ -172,7 +143,7 @@ class JdkDownload : SdkDownload {
 
     if (project?.isDisposed == true) return null
 
-    if (items == null) {
+    if (eelModelPair == null) {
       Messages.showErrorDialog(project,
                                ProjectBundle.message("error.message.no.jdk.for.download"),
                                ProjectBundle.message("error.message.title.download.jdk")
@@ -180,7 +151,7 @@ class JdkDownload : SdkDownload {
       return null
     }
 
-    return JdkDownloadDialog(project, parentComponent, sdkTypeId, items, okActionText).selectJdkAndPath()
+    return JdkDownloadDialog(project, parentComponent, sdkTypeId, eelModelPair.first, eelModelPair.second, okActionText).selectJdkAndPath()
   }
 
   fun prepareDownloadTask(
@@ -224,27 +195,12 @@ internal fun selectJdkAndPath(
   okActionText: @NlsContexts.Button String,
 ): Pair<JdkItem, Path>? {
   val extension = extension ?: object : JdkDownloaderDialogHostExtension {}
-
-  val allowWsl = extension.allowWsl()
-  val wslDistributions = if (allowWsl) WslDistributionManager.getInstance().installedDistributions else listOf()
-  val projectWslDistribution = if (allowWsl) project?.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) } else null
-
-  val mainModel = buildJdkDownloaderModel(items) { extension.shouldIncludeItem(sdkTypeId, it) }
-
-  val eelModel = null // TODO What should be here?
-
-  val mergedModel = JdkDownloaderMergedModel(
-    mainModel = mainModel,
-    wslModel = null,
-    eelModel = eelModel,
-    eel = null,
-    wslDistributions = wslDistributions,
-    projectWSLDistribution = projectWslDistribution,
-  )
+  val eelApi = extension.getEel()
+  val model = buildJdkDownloaderModel(items, eelApi) { extension.shouldIncludeItem(sdkTypeId, it) }
 
   if (project?.isDisposed == true) return null
 
-  return JdkDownloadDialog(project, parentComponent, sdkTypeId, mergedModel, okActionText, text).selectJdkAndPath()
+  return JdkDownloadDialog(project, parentComponent, sdkTypeId, eelApi, model, okActionText, text).selectJdkAndPath()
 }
 
 @Internal

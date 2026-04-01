@@ -4,13 +4,14 @@ package org.jetbrains.kotlin.idea.gradleJava.run
 
 import com.intellij.execution.Location
 import com.intellij.openapi.module.Module
+import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.idea.run.forceGradleRunnerInMPP
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
 class KotlinMultiplatformJvmTestMethodGradleConfigurationProducer : AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer() {
-    override val forceGradleRunner get() = forceGradleRunnerInMPP()
-    override fun isApplicable(module: Module, platform: TargetPlatform) = platform.isJvm()
+    override val forceGradleRunner: Boolean get() = forceGradleRunnerInMPP()
+    override fun isApplicable(module: Module, platform: TargetPlatform): Boolean = platform.isJvm()
 
-    override fun getPsiMethodForLocation(contextLocation: Location<*>) = getTestMethodForJvm(contextLocation)
+    override fun getPsiMethodForLocation(contextLocation: Location<*>): PsiMethod? = getTestMethodForJvm(contextLocation)
 }

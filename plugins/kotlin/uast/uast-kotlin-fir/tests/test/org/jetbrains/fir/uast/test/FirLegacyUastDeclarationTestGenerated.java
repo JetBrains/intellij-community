@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.fir.uast.test;
 
@@ -28,6 +28,11 @@ public class FirLegacyUastDeclarationTestGenerated extends AbstractFirLegacyUast
 
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
+
+    @TestMetadata("AnnotatedBlockStringTemplateEntry.kt")
+    public void testAnnotatedBlockStringTemplateEntry() throws Exception {
+        runTest("../../uast-kotlin/tests/testData/AnnotatedBlockStringTemplateEntry.kt");
     }
 
     @TestMetadata("AnnotatedExpressions.kt")

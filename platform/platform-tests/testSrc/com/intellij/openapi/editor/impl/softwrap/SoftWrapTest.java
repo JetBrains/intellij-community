@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.EditorTestUtil;
 
 import java.util.ArrayList;
@@ -13,6 +14,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SoftWrapTest extends AbstractEditorTest {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    Registry.get("editor.use.new.soft.wraps.impl").setValue(false, getTestRootDisposable());
+  }
 
   public void testCollapsedRegionWithLongPlaceholderAtLineStart1() {
     doTestSoftWraps(10, "<fold text='veryVeryVeryLongPlaceholder'>foo</fold>");

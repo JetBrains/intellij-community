@@ -42,10 +42,12 @@ internal class ErrorMessageClustering(private val coroutineScope: CoroutineScope
     return ErrorMessageCluster(messages, pluginId, plugin, submitter)
   }
 
-  private suspend fun createPluginInfo(pluginId: PluginId?): ProblematicPluginInfo? {
+  internal suspend fun createPluginInfo(pluginId: PluginId?): ProblematicPluginInfo? {
     if (pluginId == null) return null
+
     val localPlugin = PluginManagerCore.getPlugin(pluginId)
     if (localPlugin != null) return ProblematicPluginInfoBasedOnDescriptor(localPlugin)
+
     val uiModel = UiPluginManager.getInstance().getPlugin(pluginId) ?: return null
     return ProblematicPluginInfoBasedOnModel(uiModel)
   }

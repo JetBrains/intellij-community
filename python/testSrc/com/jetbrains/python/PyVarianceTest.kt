@@ -8,7 +8,6 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.intellij.lang.annotations.Language
-import org.junit.ComparisonFailure
 
 internal class PyVarianceTest : PyTestCase() {
 
@@ -216,17 +215,13 @@ internal class PyVarianceTest : PyTestCase() {
   }
 
   fun `test Protocol declaration variance is inferred as covariant from protocol return type quoted return type`() {
-    fixme("PY-87942",
-          ComparisonFailure::class.java,
-          "'T' (This type variable is effectively covariant in this protocol, so it cannot be invariant here)") {
-      doTestByText("""
-        from typing import Protocol, TypeVar
-        T = TypeVar("T")
+    doTestByText("""
+      from typing import Protocol, TypeVar
+      T = TypeVar("T")
 
-        class ReturnsValue(Protocol[<warning descr="This type variable is effectively covariant in this protocol, so it cannot be invariant here">T</warning>]):
-            def get(self) -> "T": ...
-        """)
-    }
+      class ReturnsValue(Protocol[<warning descr="This type variable is effectively covariant in this protocol, so it cannot be invariant here">T</warning>]):
+          def get(self) -> "T": ...
+      """)
   }
 
   fun `test Protocol declaration variance is inferred as covariant from protocol return type 2`() {
@@ -264,19 +259,14 @@ internal class PyVarianceTest : PyTestCase() {
   }
 
   fun `test Protocol declaration variance is inferred for quoted complex type`() {
-    fixme("PY-87942",
-          ComparisonFailure::class.java,
-          "'T1' (This type variable is effectively invariant in this protocol, so it cannot be contravariant here)"
-    ) {
-      doTestByText("""
-        from typing import Protocol, TypeVar
+    doTestByText("""
+      from typing import Protocol, TypeVar
 
-        T1 = TypeVar("T1", contravariant=True)
+      T1 = TypeVar("T1", contravariant=True)
 
-        class P(Protocol[<warning descr="This type variable is effectively invariant in this protocol, so it cannot be contravariant here">T1</warning>]):
-            def foo(self, value: "list[T1]") -> None: ...
-        """)
-    }
+      class P(Protocol[<warning descr="This type variable is effectively invariant in this protocol, so it cannot be contravariant here">T1</warning>]):
+        def foo(self, value: <warning descr="A contravariant type variable cannot be used in this invariant position">"list[T1]"</warning>) -> None: ...
+      """)
   }
 
   fun `test Protocol declaration variance is inferred as contravariant from protocol parameter`() {
@@ -347,7 +337,7 @@ internal class PyVarianceTest : PyTestCase() {
       """)
   }
 
-  fun `test recursive Protocol variance`() {
+  fun `test Recursive protocol variance`() {
     doTestByText("""
       from typing import Protocol, TypeVar
 
@@ -359,6 +349,25 @@ internal class PyVarianceTest : PyTestCase() {
 
           @classmethod
           def method2(cls, value: T_contra) -> None: ...
+      """)
+  }
+
+  fun `test No inspection issues on type arguments of self type`() {
+    doTestByText("""
+      class K[T]:
+          def m1(self: K[T], x: T) -> None: ...
+      """)
+  }
+
+  @TestFor(issues = ["PY-88677"])
+  fun `test Show error inside quoted type annotation`() {
+    doTestByText("""
+      from typing import TypeVar, Generic, Callable
+
+      T_co = TypeVar("T_co", covariant=True)
+
+      class C(Generic[T_co]):
+              def method1(self) -> <warning descr="A covariant type variable cannot be used in this contravariant position">"Callable[[T_co], None]"</warning>: ...
       """)
   }
 }

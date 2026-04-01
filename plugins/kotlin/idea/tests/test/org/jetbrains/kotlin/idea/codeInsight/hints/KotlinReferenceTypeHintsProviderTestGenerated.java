@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.hints;
 
@@ -53,6 +53,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractK1Kot
     @TestMetadata("ConstInitializerType.kt")
     public void testConstInitializerType() throws Exception {
         runTest("testData/codeInsight/hints/types/ConstInitializerType.kt");
+    }
+
+    @TestMetadata("ConstructorLikeFunctionCall.kt")
+    public void testConstructorLikeFunctionCall() throws Exception {
+        runTest("testData/codeInsight/hints/types/ConstructorLikeFunctionCall.kt");
     }
 
     @TestMetadata("ConstructorWithExplicitTypeParametersType.kt")
