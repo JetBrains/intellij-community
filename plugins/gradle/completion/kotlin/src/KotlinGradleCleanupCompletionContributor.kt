@@ -8,8 +8,10 @@ import com.intellij.codeInsight.completion.CompletionResult
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_CONTRIBUTOR
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.util.ProcessingContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
 
 @ApiStatus.Internal
 class KotlinGradleCleanupCompletionContributor : CompletionContributor() {
@@ -32,6 +34,17 @@ private class RemainingCompletionContributorsFilterer : CompletionProvider<Compl
 
 private fun isContributorIgnored(otherResult: CompletionResult): Boolean {
     val lookupElement = otherResult.lookupElement
-    val contributorClass = lookupElement.getUserData(LOOKUP_ELEMENT_CONTRIBUTOR)?.javaClass ?: return true
-    return contributorClass.packageName != "com.intellij.gradle.completion.kotlin"
+    val contributorName = lookupElement.getUserData(LOOKUP_ELEMENT_CONTRIBUTOR)?.javaClass?.name
+    return contributorName in ignoredContributors
+            || isProducedByK2Contributor(lookupElement)
 }
+
+private fun isProducedByK2Contributor(lookupElement: LookupElement): Boolean {
+    val contributorClass = lookupElement.contributorClass ?: return false
+    return generateSequence(contributorClass) { it.superclass }
+        .any { it.name == "org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionContributor" }
+}
+
+private val ignoredContributors = setOf(
+    "com.intellij.codeInsight.completion.LegacyCompletionContributor"
+)
