@@ -61,7 +61,7 @@ internal val TRACKED_DEPENDENCY_GROUPS = listOf(
 )
 internal const val DEPENDENCY_GROUP_OTHER = "other"
 
-private val GROUP = EventLogGroup("python.toml.stats", 6)
+private val GROUP = EventLogGroup("python.toml.stats", 7)
 private val PACKAGE_NAME_FIELD = EventFields.StringValidatedByDictionary("name", "python_packages.ndjson")
 private val TOOL_ID_FIELD = EventFields.String("toolId", PyProjectSdkConfigurationExtension.toolIds.map { it.id })
 private val CHECKBOX_VALUE = EventFields.Boolean("checked")
@@ -87,6 +87,8 @@ internal val PYTHON_WORKSPACE_SETUP_NOTIFICATION_DISMISS_CLICKED =
   GROUP.registerVarargEvent("python.workspace.setup.notification.dismiss.clicked")
 internal val PYTHON_PYPROJECT_BASED_MODEL_CHANGED: VarargEventId =
   GROUP.registerVarargEvent("python.pyproject.based.model.changed", CHECKBOX_VALUE)
+internal val PYTHON_WORKSPACE_SETUP_PREVIEW_ENABLE_CLICKED =
+  GROUP.registerVarargEvent("python.workspace.setup.preview.enable.clicked")
 
 internal val PYTHON_SDK_SETUP_AUTOMATICALLY: VarargEventId =
   GROUP.registerVarargEvent("python.sdk.setup.automatically", TOOL_ID_FIELD)
@@ -196,6 +198,10 @@ object PyProjectTomlCollector {
 
   fun setupNotificationDismissClicked() {
     PYTHON_WORKSPACE_SETUP_NOTIFICATION_DISMISS_CLICKED.log()
+  }
+
+  fun previewEnableClicked() {
+    PYTHON_WORKSPACE_SETUP_PREVIEW_ENABLE_CLICKED.log()
   }
 
   fun pyProjectBasedModelModeChanged(value: Boolean) {

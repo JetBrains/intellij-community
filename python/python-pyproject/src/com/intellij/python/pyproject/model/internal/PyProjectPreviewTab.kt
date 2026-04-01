@@ -139,7 +139,7 @@ private class PyProjectPreviewContent(
       button(PyProjectTomlBundle.message("pyproject.preview.enable")) {
         settings.usePyprojectToml = true
         settings.showConfigurationNotification = false
-        PyProjectTomlCollector.setupNotificationConfigureClicked()
+        PyProjectTomlCollector.previewEnableClicked()
         FileEditorManager.getInstance(project).closeFile(virtualFile)
       }.applyToComponent { putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true) }
         .customize(UnscaledGaps(right = 16))
