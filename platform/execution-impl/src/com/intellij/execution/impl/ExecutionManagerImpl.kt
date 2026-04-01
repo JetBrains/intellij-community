@@ -1022,10 +1022,15 @@ fun RunnerAndConfigurationSettings.isOfSameType(runnerAndConfigurationSettings: 
     return this.filePathIfRunningCurrentFile == runnerAndConfigurationSettings.filePathIfRunningCurrentFile
   }
 
-  if (thisConfiguration is UserDataHolder) {
-    val originalRunProfile = DELEGATED_RUN_PROFILE_KEY[thisConfiguration] ?: return false
-    if (originalRunProfile === thatConfiguration) return true
-    if (thatConfiguration is UserDataHolder) return originalRunProfile === DELEGATED_RUN_PROFILE_KEY[thatConfiguration]
+  val thisOriginalRunProfile = if (thisConfiguration is UserDataHolder) DELEGATED_RUN_PROFILE_KEY[thisConfiguration] else null
+  val thatOriginalRunProfile = if (thatConfiguration is UserDataHolder) DELEGATED_RUN_PROFILE_KEY[thatConfiguration] else null
+
+  if (thisOriginalRunProfile != null &&
+      (thisOriginalRunProfile === thatConfiguration || thisOriginalRunProfile === thatOriginalRunProfile)) {
+    return true
+  }
+  if (thatOriginalRunProfile === thisConfiguration) {
+    return true
   }
   return false
 }

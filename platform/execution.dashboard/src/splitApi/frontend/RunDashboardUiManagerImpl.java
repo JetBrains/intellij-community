@@ -154,12 +154,15 @@ public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
     return (content, runConfiguration) -> {
       if (IdeProductMode.isFrontend() || runConfiguration == null) return false;
 
+      RunConfiguration baseConfiguration = RunDashboardManagerImpl.getBaseConfiguration(runConfiguration);
+      RunConfiguration targetConfiguration = baseConfiguration != null ? baseConfiguration : runConfiguration;
+
       RunDashboardManagerImpl runDashboardManager = RunDashboardManagerImpl.getInstance(myProject);
       var service = ContainerUtil.find(runDashboardManager.getRunConfigurations(), s -> {
         var descriptor = s.getDescriptor();
         return descriptor != null && descriptor.getAttachedContent() == content;
       });
-      return service != null && service.getConfigurationSettings().getConfiguration().equals(runConfiguration);
+      return service != null && service.getConfigurationSettings().getConfiguration().equals(targetConfiguration);
     };
   }
 

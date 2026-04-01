@@ -375,7 +375,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
   }
 
-  private static @Nullable RunConfiguration getBaseConfiguration(@NotNull RunConfiguration runConfiguration) {
+  public static @Nullable RunConfiguration getBaseConfiguration(@NotNull RunConfiguration runConfiguration) {
     RunProfile runProfile = ExecutionManagerImpl.getDelegatedRunProfile(runConfiguration);
     return runProfile instanceof RunConfiguration ? (RunConfiguration)runProfile : null;
   }
