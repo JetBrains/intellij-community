@@ -2,6 +2,7 @@
 package com.intellij.terminal.backend
 
 import com.intellij.util.EventDispatcher
+import com.jediterm.core.Color
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.TerminalDisplay
 import com.jediterm.terminal.emulator.mouse.MouseFormat
@@ -104,6 +105,10 @@ class TerminalDisplayImpl(private val settings: DefaultSettingsProvider) : Termi
   override fun getSelection(): TerminalSelection? {
     return null
   }
+
+  override fun getWindowForeground(): Color = settings.defaultForeground.toColor()
+
+  override fun getWindowBackground(): Color = settings.defaultBackground.toColor()
 
   override fun ambiguousCharsAreDoubleWidth(): Boolean {
     return settings.ambiguousCharsAreDoubleWidth()
