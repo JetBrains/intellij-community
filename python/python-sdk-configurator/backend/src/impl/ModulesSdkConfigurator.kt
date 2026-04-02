@@ -202,7 +202,7 @@ suspend fun configureSdkAutomatically(project: Project): Unit = withContext(Disp
         val sdkSuggestion = module.suggestSdk()
         when (sdkSuggestion) {
           is SuggestedSdk.SameAs -> {
-            val parentSdk = PythonSdkUtil.findPythonSdk(sdkSuggestion.parentModule) ?: continue
+            val parentSdk = sdkSuggestion.parentModule.findPythonSdk() ?: continue
             module.pythonSdk = parentSdk
           }
           is SuggestedSdk.PyProjectIndependent, null -> {
