@@ -544,6 +544,7 @@ class FileStructurePopup(
       HierarchyListener { event ->
         if ((event.getChangeFlags() and HierarchyEvent.PARENT_CHANGED.toLong()) != 0L && event.getChanged() === chkPanel) {
           val topPanel = myCheckBoxesPanel.getParent()
+          topPanel.preferredSize = null
           val prefSize = topPanel.preferredSize
           if (singleRow) {
             prefSize.height = JBUI.CurrentTheme.Popup.toolbarHeight()
@@ -636,12 +637,11 @@ class FileStructurePopup(
     checkBox.setOpaque(false)
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, checkBox)
 
-    val selected = myModel.isActionEnabled(action)
+    val selected = myModel.isActionEnabled(action) != action.isReverted
     checkBox.setSelected(selected)
-    val isRevertedStructureFilter = action.isReverted
     checkBox.addActionListener {
       val state = checkBox.isSelected
-      myModel.setActionEnabled(action, isRevertedStructureFilter != state, myAutoClicked.contains(checkBox))
+      myModel.setActionEnabled(action, state, myAutoClicked.contains(checkBox))
       cs.launch(Dispatchers.UI) {
         rebuild(false)
         if (mySpeedSearch.isPopupActive) {

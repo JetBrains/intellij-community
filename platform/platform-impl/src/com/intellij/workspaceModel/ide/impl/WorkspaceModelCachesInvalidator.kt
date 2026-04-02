@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class WorkspaceModelCachesInvalidator : CachesInvalidator() {
   override fun invalidateCaches() {
-    WorkspaceModelCacheImpl.invalidateCaches()
+    WorkspaceModelCacheImpl.invalidateCachesForAllProjects()
     GlobalWorkspaceModelCacheImpl.invalidateCaches()
   }
 }

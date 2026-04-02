@@ -43,4 +43,11 @@ public class NullPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testSingleExclamationIgnored() {
     doTest();
   }
+
+  public static class ModNullPostfixTemplateTest extends NullPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

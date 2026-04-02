@@ -82,6 +82,7 @@ jvm_library(
     "//platform/execution",
     "//platform/ide-core",
     "//platform/util:util-ui",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -145,6 +146,7 @@ jvm_library(
     "//platform/execution:execution_test_lib",
     "//platform/ide-core:ide-core_test_lib",
     "//platform/util:util-ui_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl` end
@@ -280,6 +282,8 @@ jvm_library(
     "//platform/remote-topics/shared:rpc-topics_test_lib",
     "//platform/execution",
     "//platform/execution:execution_test_lib",
+    "//fleet/rhizomedb",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ],
   runtime_deps = [
     ":debugger-impl-tests",

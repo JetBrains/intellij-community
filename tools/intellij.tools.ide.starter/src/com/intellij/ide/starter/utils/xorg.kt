@@ -5,10 +5,10 @@ import com.intellij.tools.ide.util.common.logOutput
 
 suspend fun getRunningDisplays(): List<Int> {
   logOutput("Looking for running displays")
-  val xvfbWithDisplayProcessList = getProcessList { it.name == "Xvfb" && it.arguments.singleOrNull { arg -> arg.startsWith(":") } != null }
+  val xvfbWithDisplayProcessList = getProcessList(processName = "Xvfb").filter { it.arguments.singleOrNull { arg -> arg.startsWith(":") } != null }
   val displays = xvfbWithDisplayProcessList.mapNotNull { it.arguments.single { arg -> arg.startsWith(":") }.substring(1).toIntOrNull() }
   if (displays.isEmpty()) {
-    val xvfbProcessList = getProcessList { it.name == "Xvfb" }
+    val xvfbProcessList = getProcessList(processName = "Xvfb")
     logOutput("Have not found running xvfb displays\n." +
               "Full xvfb process list was: ${xvfbProcessList.joinToString("\n") { it.description }}")
   }

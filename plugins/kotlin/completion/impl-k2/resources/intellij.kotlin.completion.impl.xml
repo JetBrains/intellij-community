@@ -1,9 +1,13 @@
 <idea-plugin visibility="public" package="org.jetbrains.kotlin.idea.completion.impl.k2">
   <dependencies>
+    <module name="intellij.java.psi"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.indexing"/>
-    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
     <module name="intellij.kotlin.searching"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="kotlin"

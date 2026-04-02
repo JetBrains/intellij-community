@@ -75,6 +75,7 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/progress/shared:ide-progress",
     "//platform/remote-topics/shared:rpc-topics",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -145,6 +146,7 @@ jvm_library(
     "//platform/platform-impl/rpc:rpc_test_lib",
     "//platform/progress/shared:ide-progress_test_lib",
     "//platform/remote-topics/shared:rpc-topics_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.impl` end

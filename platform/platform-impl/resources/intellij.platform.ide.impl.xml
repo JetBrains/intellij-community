@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.andel"/>
+    <module name="fleet.rhizomedb"/>
     <module name="fleet.util.core"/>
     <module name="intellij.libraries.aalto.xml"/>
     <module name="intellij.libraries.asm"/>

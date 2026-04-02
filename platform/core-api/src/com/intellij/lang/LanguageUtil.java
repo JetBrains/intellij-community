@@ -2,7 +2,6 @@
 package com.intellij.lang;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -177,7 +176,7 @@ public final class LanguageUtil {
       return cached;
     }
 
-    if (!ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(MetaLanguage.EP_NAME)) {
+    if (!MetaLanguage.isEPRegistered()) {
       // don't cache
       return persistentListOf();
     }
@@ -188,11 +187,11 @@ public final class LanguageUtil {
     }
     else {
       Set<MetaLanguage> result = new HashSet<>();
-      MetaLanguage.EP_NAME.forEachExtensionSafe(metaLanguage -> {
+      for (MetaLanguage metaLanguage : MetaLanguage.all()) {
         if (metaLanguage.matchesLanguage(language)) {
           result.add(metaLanguage);
         }
-      });
+      }
       toCache = result.isEmpty() ? persistentListOf() : toPersistentList(result);
     }
     language.putUserData(MATCHING_META_LANGUAGES, toCache);

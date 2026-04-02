@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.command.CommandCompletionLookupElemen
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.modcommand.ActionContext
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.util.PsiTreeUtil
@@ -29,6 +30,7 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
 
   fun testFlip() {
     // language="JAVA"
+    @Suppress("ConstantValue", "StatementWithEmptyBody")
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class AB {
         @org.intellij.lang.annotations.Language("Java") String ac = ""${'"'}
@@ -42,6 +44,7 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
     val elements = myFixture.completeBasic()
     selectItem(elements.first { element -> element.lookupString.contains("Flip", ignoreCase = true) })
     // language="JAVA"
+    @Suppress("ConstantValue", "StatementWithEmptyBody")
     myFixture.checkResult("""
         class AB {
           @org.intellij.lang.annotations.Language("Java") String ac = ""${'"'}
@@ -55,6 +58,7 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
 
   fun testFlipPreview() {
     // language="JAVA"
+    @Suppress("ConstantValue", "StatementWithEmptyBody")
     myFixture.configureByText(JavaFileType.INSTANCE, """
     class AB {
         @org.intellij.lang.annotations.Language("Java") String ac = ""${'"'}
@@ -70,8 +74,10 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
       .firstOrNull { element -> element.lookupString.contains("Flip", ignoreCase = true) }
       ?.`as`(CommandCompletionLookupElement::class.java)
     assertNotNull(lookupElement)
-    val preview = lookupElement!!.preview as? IntentionPreviewInfo.CustomDiff
+    val preview = lookupElement?.preview(ActionContext.from(myFixture.editor, myFixture.file)) as? IntentionPreviewInfo.CustomDiff
     // language="JAVA"
+
+    @Suppress("ConstantValue", "StatementWithEmptyBody")
     assertEquals("""
         class AB {
             @org.intellij.lang.annotations.Language("Java") String ac = ""${'"'}
@@ -87,6 +93,7 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
 
   fun testFlipPreviewTemporaryEnabled() {
     // language="JAVA"
+    @Suppress("ConstantValue", "StatementWithEmptyBody")
     val psiFile = myFixture.configureByText(JavaFileType.INSTANCE, """
     class AB {
         String ac = ""${'"'}
@@ -105,8 +112,9 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
       .firstOrNull { element -> element.lookupString.contains("Flip", ignoreCase = true) }
       ?.`as`(CommandCompletionLookupElement::class.java)
     assertNotNull(lookupElement)
-    val preview = lookupElement!!.preview as? IntentionPreviewInfo.CustomDiff
+    val preview = lookupElement?.preview(ActionContext.from(myFixture.editor, myFixture.file)) as? IntentionPreviewInfo.CustomDiff
     // language="JAVA"
+    @Suppress("ConstantValue", "StatementWithEmptyBody")
     assertEquals("""
         class AB {
             String ac = ""${'"'}

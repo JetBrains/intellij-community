@@ -6,9 +6,10 @@ import com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
 import com.intellij.ui.dsl.listCellRenderer.LcrTextSpeedSearchParams
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
+import java.awt.Font
 
 @ApiStatus.Internal
-class LcrTextInitParamsImpl(foreground: Color) : LcrTextInitParams(foreground) {
+class LcrTextInitParamsImpl(foreground: Color, font: Font?) : LcrTextInitParams(foreground, font) {
 
   var speedSearchField: LcrTextSpeedSearchParams? = null
 

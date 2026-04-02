@@ -8,6 +8,13 @@
     ]]></description>
   <category>Test Tools</category>
   <vendor>JetBrains</vendor>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
+  </dependencies>
+  <!-- endregion -->
   <depends>com.intellij.java</depends>
 
   <depends optional="true" config-file="testng-intellilang.xml">org.intellij.intelliLang</depends>

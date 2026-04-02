@@ -44,7 +44,6 @@ jvm_library(
     "//fleet/fastutil",
   ],
   exports = [
-    "//fleet/rhizomedb",
     "//fleet/util/core",
     "//fleet/rpc",
   ]
@@ -57,8 +56,6 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_rhizomedb.transactor",
   exports = [
-    "//fleet/rhizomedb",
-    "//fleet/rhizomedb:rhizomedb_test_lib",
     "//fleet/util/core",
     "//fleet/util/core:core_test_lib",
     "//fleet/rpc",

@@ -166,7 +166,18 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
           humpStartMatchedUpperCase = c == myPattern[p] && isUpperCase[p]
         }
 
-        matchingCase += evaluateCaseMatching(valuedStartMatch, p, humpStartMatchedUpperCase, i, afterGap, isHumpStart, c)
+        matchingCase += evaluateCaseMatching(
+          pattern = myPattern,
+          valuedStartMatch = valuedStartMatch,
+          patternIndex = p,
+          humpStartMatchedUpperCase = humpStartMatchedUpperCase,
+          nameIndex = i,
+          afterGap = afterGap,
+          isHumpStart = isHumpStart,
+          nameChar = c,
+          isLowerCase = isLowerCase,
+          isUpperCase = isUpperCase,
+        )
       }
 
       errors += (2000.0 * (1.0 * range.errorCount / range.length).pow(2)).toInt()
@@ -190,41 +201,6 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
   @Deprecated("use matchingDegree(String, Boolean, List<MatchedFragment>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments.map { MatchedFragment(it.startOffset, it.endOffset) })"))
   override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
     return matchingDegree(name, valueStartCaseMatch, fragments?.undeprecate())
-  }
-
-  private fun evaluateCaseMatching(
-    valuedStartMatch: Boolean,
-    patternIndex: Int,
-    humpStartMatchedUpperCase: Boolean,
-    nameIndex: Int,
-    afterGap: Boolean,
-    isHumpStart: Boolean,
-    nameChar: Char,
-  ): Int {
-    return when {
-      afterGap && isHumpStart && isLowerCase[patternIndex] -> {
-        -10 // disprefer when there's a hump but nothing in the pattern indicates the user meant it to be hump
-      }
-      nameChar == myPattern[patternIndex] -> {
-        when {
-          isUpperCase[patternIndex] -> 50 // strongly prefer user's uppercase matching uppercase: they made an effort to press Shift
-          nameIndex == 0 && valuedStartMatch -> 150 // the very first letter case distinguishes classes in Java etc
-          isHumpStart -> 1 // if a lowercase matches lowercase hump start, that also means something
-          else -> 0
-        }
-      }
-      isHumpStart -> {
-        // disfavor hump starts where pattern letter case doesn't match name case
-        -1
-      }
-      isLowerCase[patternIndex] && humpStartMatchedUpperCase -> {
-        // disfavor lowercase non-humps matching uppercase in the name
-        -1
-      }
-      else -> {
-        0
-      }
-    }
   }
 
   override fun match(name: String): List<MatchedFragment>? {

@@ -25,6 +25,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/kernel/shared:kernel",
     "//platform/kernel/pasta",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -44,6 +45,7 @@ jvm_library(
     "//platform/util/coroutines:coroutines_test_lib",
     "//platform/kernel/shared:kernel_test_lib",
     "//platform/kernel/pasta:pasta_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.editor.backend` end

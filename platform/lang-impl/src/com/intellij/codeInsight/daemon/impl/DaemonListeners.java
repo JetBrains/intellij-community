@@ -94,11 +94,11 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.profile.ProfileChangeAdapter;
+import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerEx;
@@ -116,10 +116,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -131,6 +133,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 
 /**
  * listen for any daemon-related activities and restart the daemon if needed
@@ -143,7 +146,8 @@ public final class DaemonListeners implements Disposable {
   volatile boolean cutOperationJustHappened;
   private List<Editor> myActiveEditors = Collections.emptyList();
   private final AtomicLong myFoldingStateChanged = new AtomicLong();
-  private final Alarm myRecomputeExcludedFlag = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+  // some expensive flags, e.g. isMarkedExcluded and isCodeFragment are computed in BGT
+  private final Alarm myRecomputeFlagsInBGT = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
   DaemonListeners(@NotNull Project project, @NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer) {
     myProject = project;
@@ -189,6 +193,8 @@ public final class DaemonListeners implements Disposable {
       }
     }, this);
 
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+    IntentionsUI intentionsUI = IntentionsUI.getInstance(project);
     eventMulticaster.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
@@ -198,10 +204,10 @@ public final class DaemonListeners implements Disposable {
         if (ComponentUtil.isShowing(editor.getContentComponent(), true) && worthBothering(editor.getDocument(), editor.getProject())) {
           ApplicationManager.getApplication().invokeLater(() -> {
             if (!myProject.isDisposed() && ComponentUtil.isShowing(editor.getContentComponent(), true)) {
-              IntentionsUI.getInstance(myProject).invalidateForEditor(editor);
+              intentionsUI.invalidateForEditor(editor);
             }
           }, ModalityState.current(), myProject.getDisposed());
-          if (!PsiDocumentManager.getInstance(myProject).hasEventSystemEnabledUncommittedDocuments()) {
+          if (!psiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
             // daemon might want to auto-import a reference if the caret is close enough
             // but do not restart a daemon too early before PSI is committed,
             // because the typing would cause canceling daemon twice otherwise: on caret movement during typing and later on PSI commit after the doc modification
@@ -255,7 +261,7 @@ public final class DaemonListeners implements Disposable {
         }
 
         // worthBothering() checks for getCachedPsiFile, so call getPsiFile
-        PsiFile psiFile = editorProject == null ? null : PsiDocumentManager.getInstance(editorProject).getPsiFile(document);
+        PsiFile psiFile = editorProject == null ? null : psiDocumentManager.getPsiFile(document);
         ErrorStripeUpdateManager errorStripeManager = ErrorStripeUpdateManager.getInstance(myProject);
         // ScratchLineMarkersTestGenerated/FileEditorManagerTest is failed for some reason, so, let's execute now if test in EDT
         if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -310,22 +316,10 @@ public final class DaemonListeners implements Disposable {
         modCount = myFoldingStateChanged.get(); // daemon will restart by its own
       }
     });
-    myPsiChangeHandler = new PsiChangeHandler(myProject, daemonCodeAnalyzer, this);
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiChangeHandler, this);
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
-      @Override
-      public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
-        // this event sent always before every PSI change, even not significant one (like after quick typing/backspacing char)
-        // mark file dirty just in case
-        PsiFile psiFile = event.getFile();
-        if (psiFile != null) {
-          Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(psiFile);
-          if (document != null && worthBothering(document, project)) {
-            myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirtyDefensively(document, event);
-          }
-        }
-      }
-    }, this);
+    Predicate<Document> isDocumentWorthBothering = document -> worthBothering(document, project);
+    myPsiChangeHandler = new PsiChangeHandler(myProject, daemonCodeAnalyzer.getFileStatusMap(), this, isDocumentWorthBothering);
+    PsiManager psiManager = PsiManager.getInstance(myProject);
+    psiManager.addPsiTreeChangeListener(myPsiChangeHandler, this);
 
     connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
@@ -361,7 +355,6 @@ public final class DaemonListeners implements Disposable {
     connection.subscribe(CommandListener.TOPIC, new MyCommandListener());
     connection.subscribe(ProfileChangeAdapter.TOPIC, new MyProfileChangeListener());
 
-    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     ApplicationManagerEx.getApplicationEx().addWriteActionListener(new WriteActionListener() {
       @Override
       public void beforeWriteActionStart(@NotNull Class<?> action) {
@@ -372,12 +365,12 @@ public final class DaemonListeners implements Disposable {
 
       @Override
       public void writeActionFinished(@NotNull Class<?> action) {
-        // otherwise we'll restart when PSI commit happens
+        // otherwise we'll restart when PSI commit happens, or changed PSI elements will be handled in PsiChangeHandler
         if (!psiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
           stopDaemon(true, "Write action finish: "+action);
         }
       }
-    }, project);
+    }, this);
 
     connection.subscribe(TodoConfiguration.PROPERTY_CHANGE, new MyTodoListener());
 
@@ -426,7 +419,7 @@ public final class DaemonListeners implements Disposable {
     connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
       @Override
       public void fileTypesChanged(@NotNull FileTypeEvent event) {
-        IntentionsUI.getInstance(project).invalidate();
+        intentionsUI.invalidate();
       }
     });
 
@@ -484,18 +477,18 @@ public final class DaemonListeners implements Disposable {
     connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-        PsiManager.getInstance(myProject).dropPsiCaches();
+        psiManager.dropPsiCaches();
         stopDaemonAndRestartAllFiles("Plugin installed");
       }
 
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        PsiManager.getInstance(myProject).dropPsiCaches();
+        psiManager.dropPsiCaches();
         myDaemonCodeAnalyzer.cancelAllUpdateProgresses(false, "plugin unload: " + pluginDescriptor);
         removeHighlightersOnPluginUnload(pluginDescriptor);
         myDaemonCodeAnalyzer.clearProgressIndicator();
         myDaemonCodeAnalyzer.cleanAllFileLevelHighlights();
-        IntentionsUI.getInstance(project).invalidate();
+        intentionsUI.invalidate();
       }
 
       @Override
@@ -508,7 +501,7 @@ public final class DaemonListeners implements Disposable {
         PsiFile psiFile = root.getContainingFile();
         if (psiFile != null) {
           // force clearing all PSI caches, including those in WholeFileInspectionFactory
-          PsiManager.getInstance(myProject).dropPsiCaches();
+          psiManager.dropPsiCaches();
           for (Editor editor : myActiveEditors) {
             if (Objects.equals(editor.getVirtualFile(), psiFile.getVirtualFile())) {
               ErrorStripeUpdateManager.getInstance(myProject).launchRepaintErrorStripePanel(editor, psiFile);
@@ -594,6 +587,7 @@ public final class DaemonListeners implements Disposable {
     if (myProject.isDisposed()) {
       return false;
     }
+
     // Used to be these lines:
 
     /*
@@ -606,6 +600,11 @@ public final class DaemonListeners implements Disposable {
     // see EA-659452 T: DirectoryIndexImpl.getInfoForFile
     // and please don't do anything PSIthic here
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    if (isMarkedCodeFragment(document)) {
+      // if the document is from the debugger evaluate window, even if it contains a light file, it needs to be highlighted
+      return true;
+    }
+
     if (virtualFile == null || virtualFile instanceof LightVirtualFile) {
       return false;
     }
@@ -613,37 +612,63 @@ public final class DaemonListeners implements Disposable {
     if (document instanceof DocumentImpl impl && !impl.isWriteThreadOnly()) {
       return false;
     }
-    boolean isExcluded = isMarkedExcluded(document);
-    return !isExcluded;
+    return !isMarkedExcluded(document);
   }
 
-  private boolean isMarkedExcluded(@NotNull Document document) {
-    Long isMarkedExcludedRootStamp = document.getUserData(EXCLUDED_ROOT_STAMP);
-    long modCount = ProjectRootManager.getInstance(myProject).getModificationCount();
-    if (isMarkedExcludedRootStamp == null || Math.abs(isMarkedExcludedRootStamp) != modCount) {
-      myRecomputeExcludedFlag.addRequest(() -> {
-        recomputeExcluded(document);
-      }, 0);
-      return false;
+  @ApiStatus.Internal
+  @VisibleForTesting
+  boolean isMarkedExcluded(@NotNull Document document) {
+    ExpensiveFlags flags = getExpensiveFlags(document);
+    return flags != null && flags.isExcluded();
+  }
+
+  @ApiStatus.Internal
+  @VisibleForTesting
+  boolean isMarkedCodeFragment(@NotNull Document document) {
+    ExpensiveFlags flags = getExpensiveFlags(document);
+    return flags != null && flags.isCodeFragment();
+  }
+
+  private ExpensiveFlags getExpensiveFlags(@NotNull Document document) {
+    ExpensiveFlags flags = document.getUserData(EXPENSIVE_FLAGS);
+    if (flags == null || !flags.isUpToDate(myProject)) {
+      if (myRecomputeFlagsInBGT.isEmpty()) {
+        myRecomputeFlagsInBGT.addRequest(() -> {
+          recomputeExpensiveFlags(document);
+        }, 0);
+      }
+      return null;
     }
-    return isMarkedExcludedRootStamp > 0;
+    return flags;
   }
 
-  private void recomputeExcluded(@NotNull Document document) {
-    ReadAction.run(() -> {
-      if (myProject.isDisposed() || myRecomputeExcludedFlag.isDisposed()) {
+  private void recomputeExpensiveFlags(@NotNull Document document) {
+    ReadAction.runBlocking(() -> {
+      if (myProject.isDisposed() || myRecomputeFlagsInBGT.isDisposed()) {
         return;
       }
-      Long isMarkedExcludedRootStamp = document.getUserData(EXCLUDED_ROOT_STAMP);
-      long modCount = ProjectRootManager.getInstance(myProject).getModificationCount();
-      if (isMarkedExcludedRootStamp == null || Math.abs(isMarkedExcludedRootStamp) != modCount) {
+      ExpensiveFlags flags = document.getUserData(EXPENSIVE_FLAGS);
+      if (flags == null || !flags.isUpToDate(myProject)) {
         VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
         boolean isExcluded = virtualFile != null &&
                              (ProjectFileIndex.getInstance(myProject).isExcluded(virtualFile) ||
                               ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile, virtualFile.getFileType()));
-        document.putUserData(EXCLUDED_ROOT_STAMP, isExcluded ? modCount : -modCount);
+        // cached to avoid getting PSI for alien project Document
+        boolean isCodeFragment = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(document) instanceof PsiCodeFragment;
+        document.putUserData(EXPENSIVE_FLAGS, new ExpensiveFlags(isExcluded, isCodeFragment, myProject));
       }
     });
+  }
+
+  private record ExpensiveFlags(boolean isExcluded, boolean isCodeFragment, long rootsTimeStamp) {
+    private ExpensiveFlags(boolean isExcluded, boolean isCodeFragment, @NotNull Project project) {
+      this(isExcluded, isCodeFragment, ProjectRootManager.getInstance(project).getModificationCount());
+    }
+
+    boolean isUpToDate(@NotNull Project project) {
+      long modCount = ProjectRootManager.getInstance(project).getModificationCount();
+      return modCount == rootsTimeStamp();
+    }
   }
 
   /**
@@ -652,11 +677,11 @@ public final class DaemonListeners implements Disposable {
    *  {@code -modCount} (from {@link com.intellij.openapi.roots.ProjectRootManager#getModificationCount}}) if it's not excluded,
    *  null if unknown
    */
-  private static final Key<Long> EXCLUDED_ROOT_STAMP = Key.create("EXCLUDED");
+  private static final Key<ExpensiveFlags> EXPENSIVE_FLAGS = Key.create("EXPENSIVE_FLAGS");
 
   @Override
   public void dispose() {
-    stopDaemonAndRestartAllFiles("Project closed");
+    myDaemonCodeAnalyzer.stopProcess(false,"Project closed");
   }
 
   /**
@@ -668,11 +693,11 @@ public final class DaemonListeners implements Disposable {
    * - files in the middle of cut-n-paste operation.
    */
   @RequiresEdt
-  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file,
+  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem psiFile,
                                               boolean isInContent,
                                               @NotNull ThreeState extensionsAllowToChangeFileSilently) {
     ThreadingAssertions.assertEventDispatchThread();
-    Project project = file.getProject();
+    Project project = psiFile.getProject();
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     if (daemonCodeAnalyzer == null) {
       return true;
@@ -681,7 +706,7 @@ public final class DaemonListeners implements Disposable {
     if (daemonCodeAnalyzer.cutOperationJustHappened()) {
       return false;
     }
-    return HighlightingSessionImpl.canChangeFileSilently(file, isInContent, extensionsAllowToChangeFileSilently);
+    return HighlightingSessionImpl.canChangeFileSilently(psiFile, isInContent, extensionsAllowToChangeFileSilently);
   }
 
   private static String CUT_ACTION_NAME;
@@ -895,6 +920,12 @@ public final class DaemonListeners implements Disposable {
   void waitForUpdateFileStatusQueue() {
     myPsiChangeHandler.waitForUpdateFileStatusQueue();
   }
+
+  void runAfterUpdateFileStatusQueue(@NotNull Runnable runnable) {
+    if (myPsiChangeHandler != null) {
+      myPsiChangeHandler.runAfterUpdateFileStatusQueue(runnable);
+    }
+  }
   @RequiresBackgroundThread
   @RequiresReadLock
   void flushUpdateFileStatusQueue() {
@@ -902,8 +933,8 @@ public final class DaemonListeners implements Disposable {
     myPsiChangeHandler.flushUpdateFileStatusQueue();
   }
   @TestOnly
-  void waitUpdateExcludeFlag(long timeout, @NotNull TimeUnit unit) throws TimeoutException {
+  void waitUpdateExpensiveFlags(long timeout, @NotNull TimeUnit unit) throws TimeoutException {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    myRecomputeExcludedFlag.waitForAllExecuted(timeout, unit);
+    myRecomputeFlagsInBGT.waitForAllExecuted(timeout, unit);
   }
 }

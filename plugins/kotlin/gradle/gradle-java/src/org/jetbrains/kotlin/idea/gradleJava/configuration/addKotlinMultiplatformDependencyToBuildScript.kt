@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.compareTo
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 
@@ -35,32 +36,39 @@ import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
  * Will return `false` if the dependency can't be added using a static accessor
  */
 internal fun KotlinBuildScriptManipulator.addKotlinMultiplatformDependencyWithConventionSourceSets(
-    module: Module, scope: DependencyScope,
+    file: KtFile,
+    module: Module,
+    scope: DependencyScope,
     libraryGroupId: String, libraryArtifactId: String, libraryVersion: String?,
-): Boolean {
+): KtBlockExpression? {
     /* Guards */
-    if (!module.isMultiPlatformModule) return false
-    val kotlinGradlePluginVersion = module.kotlinGradlePluginVersion ?: return false
-    val sourceSetName = KotlinBuildSystemFacade.getInstance().findSourceSet(module)?.name ?: return false
-    val knownSince = isStaticallyAccessibleSince(sourceSetName) ?: return false
-    if (kotlinGradlePluginVersion >= knownSince) {
-        return addKotlinMultiplatformDependencyToKnownSourceSet(
+    if (!module.isMultiPlatformModule) return null
+    val kotlinGradlePluginVersion = module.kotlinGradlePluginVersion ?: return null
+    val sourceSetName = KotlinBuildSystemFacade.getInstance().findSourceSet(module)?.name ?: return null
+    val knownSince = isStaticallyAccessibleSince(sourceSetName) ?: return null
+    return if (kotlinGradlePluginVersion >= knownSince) {
+        addKotlinMultiplatformDependencyToKnownSourceSet(
+            file,
             sourceSetName, scope,
             libraryGroupId, libraryArtifactId, libraryVersion,
         )
+    } else {
+        null
     }
-
-    return false
 }
 
 private fun KotlinBuildScriptManipulator.addKotlinMultiplatformDependencyToKnownSourceSet(
-    sourceSetName: String, scope: DependencyScope,
-    libraryGroupId: String, libraryArtifactId: String, libraryVersion: String?,
-): Boolean {
-    val kotlinBlock = scriptFile.getKotlinBlock() ?: return false
+    file: KtFile,
+    sourceSetName: String,
+    scope: DependencyScope,
+    libraryGroupId: String,
+    libraryArtifactId: String,
+    libraryVersion: String?,
+): KtBlockExpression? {
+    val kotlinBlock = file.getKotlinBlock() ?: return null
 
     val dependenciesBlock = findSourceSetDependenciesBlock(kotlinBlock, sourceSetName)
-        ?: createSourceSetDependenciesBlock(kotlinBlock, sourceSetName) ?: return false
+        ?: createSourceSetDependenciesBlock(kotlinBlock, sourceSetName) ?: return null
 
     val dependencyExpression = getCompileDependencySnippet(
         libraryGroupId, libraryArtifactId, libraryVersion, when (scope) {
@@ -72,7 +80,7 @@ private fun KotlinBuildScriptManipulator.addKotlinMultiplatformDependencyToKnown
     )
 
     dependenciesBlock.addExpressionIfMissing(dependencyExpression)
-    return true
+    return dependenciesBlock
 }
 
 private fun KotlinBuildScriptManipulator.findSourceSetDependenciesBlock(

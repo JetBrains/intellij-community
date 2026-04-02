@@ -556,7 +556,6 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - s:values():com.intellij.ui.dsl.gridLayout.GridLayoutComponentProperty[]
 *f:com.intellij.ui.dsl.listCellRenderer.LcrIconInitParams
 - com.intellij.ui.dsl.listCellRenderer.LcrInitParams
-- <init>():V
 *a:com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 - f:getAccessibleName():java.lang.String
 - f:getAlign():com.intellij.ui.dsl.listCellRenderer.LcrInitParams$Align
@@ -600,7 +599,6 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - a:setText(java.lang.String):V
 *Fa:com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
 - com.intellij.ui.dsl.listCellRenderer.LcrInitParams
-- <init>(java.awt.Color):V
 - f:getAttributes():com.intellij.ui.SimpleTextAttributes
 - f:getFont():java.awt.Font
 - f:getForeground():java.awt.Color

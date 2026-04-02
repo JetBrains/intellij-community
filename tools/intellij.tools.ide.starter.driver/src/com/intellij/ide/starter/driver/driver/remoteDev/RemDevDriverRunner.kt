@@ -11,6 +11,7 @@ import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.runner.IDECommandLine
 import com.intellij.ide.starter.runner.IDERunContext
+import com.intellij.ide.starter.utils.catchAll
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.diagnostic.Logger
@@ -59,13 +60,20 @@ class RemDevDriverRunner : DriverRunner {
         backendRun.driver::beforeCall
       })
 
-    val (frontendStartResult, frontendProcess) = IDEFrontendHandler(context.frontendIDEContext,
-                                                                    remoteDevDriverOptions.frontendOptions,
-                                                                    remoteDevDriverOptions.debugPort)
-      .runInBackground(launchName,
-                       joinLink,
-                       runTimeout,
-                       configure)
+    val (frontendStartResult, frontendProcess) = try {
+      IDEFrontendHandler(context.frontendIDEContext,
+                         remoteDevDriverOptions.frontendOptions,
+                         remoteDevDriverOptions.debugPort)
+        .runInBackground(launchName,
+                         joinLink,
+                         runTimeout,
+                         configure)
+
+    }
+    catch (t: Throwable) {
+      catchAll("Kill backend as frontend failed to start") { backendRun.forceKill() }
+      throw t
+    }
 
     return RemoteDevBackgroundRun(backendRun = backendRun,
                                   frontendProcess = frontendProcess,

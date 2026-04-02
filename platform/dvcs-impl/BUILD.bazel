@@ -50,6 +50,7 @@ jvm_library(
     "//platform/kernel/backend",
     "//jps/model-api:model",
     "//platform/lang-core",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -102,6 +103,7 @@ jvm_library(
     "//platform/kernel/backend:backend_test_lib",
     "//jps/model-api:model_test_lib",
     "//platform/lang-core:lang-core_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.dvcs.impl` end
@@ -201,6 +203,8 @@ jvm_library(
     "//jps/model-api:model_test_lib",
     "//platform/lang-core",
     "//platform/lang-core:lang-core_test_lib",
+    "//fleet/rhizomedb",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ],
   runtime_deps = [
     ":vcs-dvcs-impl-tests",

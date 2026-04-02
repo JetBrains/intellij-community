@@ -102,6 +102,41 @@ jvm_provided_library(
   lib = "//platform/refactoring"
 )
 
+jvm_provided_library(
+  name = "platform_util-ui_provided",
+  lib = "//platform/util:util-ui"
+)
+
+jvm_provided_library(
+  name = "platform_java-guiForms-rt_provided",
+  lib = "//platform/forms_rt:java-guiForms-rt"
+)
+
+jvm_provided_library(
+  name = "platform_remote-topics_rpc-topics_provided",
+  lib = "//platform/remote-topics/shared:rpc-topics"
+)
+
+jvm_provided_library(
+  name = "platform_project_project_provided",
+  lib = "//platform/project/shared:project"
+)
+
+jvm_provided_library(
+  name = "libraries_kotlinx_serialization_core_provided",
+  lib = "//libraries/kotlinx/serialization/core"
+)
+
+jvm_provided_library(
+  name = "fleet_rpc_provided",
+  lib = "//fleet/rpc"
+)
+
+jvm_provided_library(
+  name = "platform_kernel_rpc_provided",
+  lib = "//platform/kernel/rpc"
+)
+
 jvm_library(
   name = "emmet",
   module_name = "intellij.xml.emmet",
@@ -109,11 +144,10 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":emmet_resources"],
   deps = [
+    "//platform/kernel/shared:kernel",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib-provided",
-    "//platform/forms_rt:java-guiForms-rt",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-    "//platform/util:util-ui",
     ":platform_core_provided",
     ":platform_analysis-impl_provided",
     ":xml_psi_provided",
@@ -133,6 +167,13 @@ jvm_library(
     ":platform_lang_provided",
     ":platform_core-ui_provided",
     ":platform_refactoring_provided",
+    ":platform_util-ui_provided",
+    ":platform_java-guiForms-rt_provided",
+    ":platform_remote-topics_rpc-topics_provided",
+    ":platform_project_project_provided",
+    ":libraries_kotlinx_serialization_core_provided",
+    ":fleet_rpc_provided",
+    ":platform_kernel_rpc_provided",
   ]
 )
 
@@ -143,6 +184,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":emmet",
+    "//platform/kernel/shared:kernel_test_lib",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
     "//platform/analysis-impl",
@@ -182,9 +224,21 @@ jvm_library(
     "//platform/core-ui:core-ui_test_lib",
     "//platform/refactoring",
     "//platform/refactoring:refactoring_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-    "//platform/util:util-ui_test_lib",
+    "//platform/remote-topics/shared:rpc-topics",
+    "//platform/remote-topics/shared:rpc-topics_test_lib",
+    "//platform/project/shared:project",
+    "//platform/project/shared:project_test_lib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//fleet/rpc",
+    "//fleet/rpc:rpc_test_lib",
+    "//platform/kernel/rpc",
+    "//platform/kernel/rpc:rpc_test_lib",
   ]
 )
 ### auto-generated section `build intellij.xml.emmet` end

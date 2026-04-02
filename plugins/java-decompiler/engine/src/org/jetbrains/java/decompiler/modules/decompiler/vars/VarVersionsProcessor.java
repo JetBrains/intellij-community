@@ -138,108 +138,45 @@ public class VarVersionsProcessor {
         //	mapExprentMinTypes.put(paar, VarType.VARTYPE_INT);
       }
       else if (type.getType() == CodeConstants.TYPE_NULL) {
-        mapExprentMinTypes.put(paar, VarType.VARTYPE_OBJECT);
-      }
-    }
-  }
-
-  private static void simpleMerge(VarTypeProcessor typeProcessor, DirectGraph graph, StructMethod mt) {
-    Map<VarVersion, VarType> mapExprentMaxTypes = typeProcessor.getMaxExprentTypes();
-    Map<VarVersion, VarType> mapExprentMinTypes = typeProcessor.getMinExprentTypes();
-
-    Map<Integer, Set<Integer>> mapVarVersions = new HashMap<>();
-
-    for (VarVersion pair : mapExprentMinTypes.keySet()) {
-      if (pair.version >= 0) {  // don't merge constants
-        mapVarVersions.computeIfAbsent(pair.var, k -> new HashSet<>()).add(pair.version);
-      }
-    }
-
-    boolean is_method_static = mt.hasModifier(CodeConstants.ACC_STATIC);
-
-    Map<VarVersion, Integer> mapMergedVersions = new HashMap<>();
-
-    for (Entry<Integer, Set<Integer>> ent : mapVarVersions.entrySet()) {
-
-      if (ent.getValue().size() > 1) {
-        List<Integer> lstVersions = new ArrayList<>(ent.getValue());
-        Collections.sort(lstVersions);
-
-        for (int i = 0; i < lstVersions.size(); i++) {
-          VarVersion firstPair = new VarVersion(ent.getKey(), lstVersions.get(i));
-          VarType firstType = mapExprentMinTypes.get(firstPair);
-
-          if (firstPair.var == 0 && firstPair.version == 1 && !is_method_static) {
-            continue; // don't merge 'this' variable
-          }
-
-          for (int j = i + 1; j < lstVersions.size(); j++) {
-            VarVersion secondPair = new VarVersion(ent.getKey(), lstVersions.get(j));
-            VarType secondType = mapExprentMinTypes.get(secondPair);
-
-            if (firstType.equals(secondType) ||
-                firstType.equals(VarType.VARTYPE_NULL) && secondType.getType() == CodeConstants.TYPE_OBJECT ||
-                secondType.equals(VarType.VARTYPE_NULL) && firstType.getType() == CodeConstants.TYPE_OBJECT ||
-                firstType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER && secondType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
-              VarType firstMaxType = mapExprentMaxTypes.get(firstPair);
-              VarType secondMaxType = mapExprentMaxTypes.get(secondPair);
-              VarType type = firstMaxType == null ? secondMaxType :
-                             secondMaxType == null ? firstMaxType :
-                             VarType.getCommonMinType(firstMaxType, secondMaxType);
-
-              if (firstType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER && secondType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
-                type = switch (secondType.getType()) {
-                  case CodeConstants.TYPE_INT -> VarType.VARTYPE_INT;
-                  case CodeConstants.TYPE_SHORT -> firstType.getType() == CodeConstants.TYPE_INT ? null : VarType.VARTYPE_SHORT;
-                  case CodeConstants.TYPE_CHAR -> switch (firstType.getType()) {
-                    case CodeConstants.TYPE_INT, CodeConstants.TYPE_SHORT -> null;
-                    default -> VarType.VARTYPE_CHAR;
-                  };
-                  case CodeConstants.TYPE_SHORTCHAR -> switch (firstType.getType()) {
-                    case CodeConstants.TYPE_INT, CodeConstants.TYPE_SHORT, CodeConstants.TYPE_CHAR -> null;
-                    default -> VarType.VARTYPE_SHORTCHAR;
-                  };
-                  case CodeConstants.TYPE_BYTECHAR -> switch (firstType.getType()) {
-                    case CodeConstants.TYPE_INT, CodeConstants.TYPE_SHORT, CodeConstants.TYPE_CHAR, CodeConstants.TYPE_SHORTCHAR -> null;
-                    default -> VarType.VARTYPE_BYTECHAR;
-                  };
-                  case CodeConstants.TYPE_BYTE -> switch (firstType.getType()) {
-                    case CodeConstants.TYPE_INT, CodeConstants.TYPE_SHORT, CodeConstants.TYPE_CHAR, CodeConstants.TYPE_SHORTCHAR, CodeConstants.TYPE_BYTECHAR ->
-                      null;
-                    default -> VarType.VARTYPE_BYTE;
-                  };
-                  default -> type;
-                };
-                if (type == null) {
-                  continue;
+        // Instead of blindly using Object, look for a concrete type from another SSA version
+        // of the same bytecode variable. This allows merging null-initialized variables
+        // (e.g., "A a = null; a = new A(...)") without losing the concrete type.
+        // Only use a concrete type if all other versions of this slot agree on a type
+        // more specific than Object. This avoids incorrectly narrowing the type when
+        // a slot is reused for different purposes (e.g., coroutine state machines).
+        VarType replacement = null;
+        int nonNullCount = 0;
+        boolean compatible = true;
+        for (Map.Entry<VarVersion, VarType> other : mapExprentMinTypes.entrySet()) {
+          VarVersion otherPair = other.getKey();
+          if (otherPair.var == paar.var && otherPair.version != paar.version) {
+            VarType otherType = other.getValue();
+            if (otherType != null && otherType.getType() != CodeConstants.TYPE_NULL) {
+              nonNullCount++;
+              if (replacement == null) {
+                replacement = otherType;
+              }
+              else {
+                VarType common = VarType.getCommonSupertype(replacement, otherType);
+                if (common == null || VarType.VARTYPE_OBJECT.equals(common)) {
+                  compatible = false;
+                  break;
                 }
-                firstType = type;
-                mapExprentMinTypes.put(firstPair, type);
+                replacement = common;
               }
-
-              mapExprentMaxTypes.put(firstPair, type);
-              mapMergedVersions.put(secondPair, firstPair.version);
-              mapExprentMaxTypes.remove(secondPair);
-              mapExprentMinTypes.remove(secondPair);
-
-              if (firstType.equals(VarType.VARTYPE_NULL)) {
-                mapExprentMinTypes.put(firstPair, secondType);
-                firstType = secondType;
-              }
-
-              typeProcessor.getFinalVariables().put(firstPair, VarProcessor.VAR_NON_FINAL);
-
-              lstVersions.remove(j);
-              //noinspection AssignmentToForLoopParameter
-              j--;
             }
           }
         }
+        // Use the concrete type if all non-null versions of this slot agree on a type
+        // more specific than Object. Coroutine slot reuse is protected by the narrowing
+        // guard in VarDefinitionHelper.remapVar.
+        if (compatible && nonNullCount >= 1 && !VarType.VARTYPE_OBJECT.equals(replacement)) {
+          mapExprentMinTypes.put(paar, replacement);
+        }
+        else {
+          mapExprentMinTypes.put(paar, VarType.VARTYPE_OBJECT);
+        }
       }
-    }
-
-    if (!mapMergedVersions.isEmpty()) {
-      updateVersions(graph, mapMergedVersions);
     }
   }
 
@@ -251,8 +188,7 @@ public class VarVersionsProcessor {
     CounterContainer counters = DecompilerContext.getCounterContainer();
 
     final Map<VarVersion, Integer> mapVarPaar = new HashMap<>();
-    Map<Integer, VarVersion> mapOriginalVarIndices = new HashMap<>();
-    mapOriginalVarIndices.putAll(this.mapOriginalVarIndices);
+    Map<Integer, VarVersion> mapOriginalVarIndices = new HashMap<>(this.mapOriginalVarIndices);
 
     // map var-version pairs on new var indexes
     List<VarVersion> vvps = new ArrayList<>(mapExprentMinTypes.keySet());

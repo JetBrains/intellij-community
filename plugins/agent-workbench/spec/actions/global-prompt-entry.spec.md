@@ -6,6 +6,12 @@ targets:
   - ../../prompt/src/actions/AgentWorkbenchGlobalPromptAutoSelectAction.kt
   - ../../prompt/src/actions/AgentWorkbenchPromptShortcutActionPromoter.kt
   - ../../prompt/src/ui/AgentPromptDraftPersistenceDecisions.kt
+  - ../../prompt/ui/src/AgentPromptClaudeSlashCompletionProvider.kt
+  - ../../prompt/ui/src/AgentPromptEnterHandlers.kt
+  - ../../prompt/ui/src/AgentPromptPalettePopup.kt
+  - ../../prompt/ui/src/AgentPromptPaletteSessionController.kt
+  - ../../prompt/ui/src/AgentPromptPaletteSubmitController.kt
+  - ../../prompt/ui/src/AgentPromptTextField.kt
   - ../../prompt/src/ui/AgentPromptPalettePopup.kt
   - ../../prompt/src/ui/AgentPromptPaletteView.kt
   - ../../prompt/src/ui/AgentPromptPaletteModels.kt
@@ -13,6 +19,7 @@ targets:
   - ../../prompt-vcs/src/context/AgentPromptVcsCommitManualContextSource.kt
   - ../../prompt/resources/intellij.agent.workbench.prompt.xml
   - ../../prompt/resources/messages/AgentPromptBundle.properties
+  - ../../prompt/ui/resources/messages/AgentPromptBundle.properties
   - ../../prompt/core/src/AgentPromptLauncherBridge.kt
   - ../../prompt/core/src/AgentPromptPaletteExtension.kt
   - ../../sessions/src/service/AgentSessionPromptLauncherBridge.kt
@@ -20,6 +27,9 @@ targets:
   - ../../prompt/testSrc/ui/AgentPromptSubmitValidationDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptFooterHintDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptPlanModeDecisionsTest.kt
+  - ../../prompt/ui/testSrc/AgentPromptClaudeSlashCompletionProviderTest.kt
+  - ../../prompt/ui/testSrc/AgentPromptEnterHandlersTest.kt
+  - ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
   - ../../prompt/testSrc/ui/AgentPromptEnterHandlersTest.kt
   - ../../prompt/testSrc/ui/AgentPromptDraftPersistenceDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptPaletteViewStructureTest.kt
@@ -59,6 +69,13 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
 
 - Re-focusing an already visible popup must preserve its live state, including prompt text, selected tab, provider selection, and context chips.
   [@test] ../../prompt/testSrc/ui/AgentPromptPalettePopupServiceTest.kt
+
+- When the IDE loses application focus because the user switches to another app, the main global prompt popup must remain open and preserve its live state until it is explicitly dismissed.
+
+- When the same project frame becomes active again while the main global prompt popup remains visible, whether after switching to another app or after switching to another IDE project frame, the popup must request focus again.
+  [@test] ../../prompt/testSrc/ui/AgentPromptPalettePopupActivationDecisionsTest.kt
+
+- Chooser popups opened from the main global prompt remain transient and may still close on application deactivation.
 
 - When both `AgentWorkbenchPrompt.OpenGlobalPalette` and `AIAssistant.Editor.AskAiAssistantInEditor` are applicable for `Cmd+\\` / `Ctrl+\\` in an editor context, `AgentWorkbenchPrompt.OpenGlobalPalette` must be executed first.
 
@@ -108,8 +125,22 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
   - `Enter` runs submit action from the prompt editor and from the existing-task selector when it owns focus,
   - `Shift+Enter` inserts line break,
   - `Tab` submits only when tab-queue shortcut is enabled; otherwise it selects the next available prompt tab and wraps around,
-  - `Shift+Tab` selects the previous available prompt tab and wraps around.
+  - `Shift+Tab` selects the previous available prompt tab and wraps around,
+  - when a prompt-editor completion lookup is open, `Enter` must accept the selected lookup item instead of submitting,
+  - when a prompt-editor completion lookup is open, `Tab` must replace-complete the selected lookup item instead of triggering prompt tab navigation or submit behavior.
   [@test] ../../prompt/testSrc/ui/AgentPromptEnterHandlersTest.kt
+  [@test] ../../prompt/ui/testSrc/AgentPromptEnterHandlersTest.kt
+
+- Claude-only slash completion contract:
+  - slash completion is available only when the selected provider is `CLAUDE`,
+  - slash completion operates only on the current whitespace-delimited token when that token starts with `/`,
+  - ordinary non-slash tokens and path fragments such as `/path/to/file.txt` must not trigger Claude menu completion unless the token is being completed explicitly,
+  - auto-popup is allowed only when `/` is typed as the first prompt character,
+  - completion entries merge three sources: a curated built-in Claude menu-command set, `.claude/commands/*.md` command names, and `.claude/skills/*/SKILL.md` skill names discovered from the effective working project path and its ancestors,
+  - completion entries must show source-kind type labels and any available argument hint; custom command and skill argument hints come from `argument-hint` frontmatter, and built-in menu commands may provide documented optional argument hints,
+  - for duplicate slash names from the same source kind, the nearest ancestor definition wins,
+  - when the same slash name exists as both a command and a skill, both lookup items must remain visible with type labels.
+  [@test] ../../prompt/ui/testSrc/AgentPromptClaudeSlashCompletionProviderTest.kt
 
 - Tab-queue shortcut must be enabled only when target mode is `EXISTING_TASK`, selected provider is `CODEX`, and there is no next prompt tab to select.
   [@test] ../../prompt/testSrc/ui/AgentPromptFooterHintDecisionsTest.kt
@@ -127,6 +158,9 @@ Suggested prompt generation, rendering, and Codex polishing are specified separa
   [@test] ../../prompt/testSrc/ui/AgentPromptProviderSelectionDecisionsTest.kt
 
 - Submit flow must route through `AgentPromptLauncherBridge` using `AgentPromptLaunchRequest`; prompt popup must not directly call provider session sources.
+
+- When the selected provider is `CLAUDE` and the submitted prompt starts with a recognized Claude menu command, the prompt popup must submit only the raw slash command text and must omit prompt context packaging (`initialMessageRequest.contextItems` and any context summary envelope) for that launch request.
+  [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
 
 - Successful prompt launch must update the shared preferred provider used by future prompt openings and new-thread affordances.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt

@@ -29,7 +29,12 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
     buildUpstreamTool('search_text', {query: {type: 'string'}, project_path: {type: 'string'}}, ['query', 'project_path'])
   ]
   const upstreamToolsWithReadFile = [
-    buildUpstreamTool('read_file', {path: {type: 'string'}}, ['path'])
+    buildUpstreamTool('read_file', {
+      file_path: {type: 'string'},
+      mode: {type: 'string'},
+      start_line: {type: 'number'},
+      max_lines: {type: 'number'}
+    }, ['file_path'])
   ]
   const upstreamToolsWithApplyPatch = [
     buildUpstreamTool('apply_patch', {patch: {type: 'string'}}, ['patch'])
@@ -90,8 +95,8 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
       const readTool = listResponse.result.tools.find((tool) => tool.name === 'read_file')
       ok(readTool)
       const properties = readTool.inputSchema?.properties ?? {}
-      ok('path' in properties)
-      ok(!('file_path' in properties))
+      ok('file_path' in properties)
+      ok('mode' in properties)
     })
   })
 

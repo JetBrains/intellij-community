@@ -40,6 +40,11 @@
       icon="AllIcons.General.Add"
       class="com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadPopupGroup"/>
     <action
+      id="AgentWorkbenchSessions.RenameThreadFromEditorTab"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabRenameThreadAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"/>
+    </action>
+    <action
       id="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"
       class="com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabArchiveThreadAction">
       <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="CloseEditorsGroup"/>

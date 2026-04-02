@@ -6,6 +6,8 @@ import type {SearchEntry, SearchItem, ToolResultLike, UpstreamToolCaller} from '
 
 export const TRUNCATION_MARKER = '<<<...content truncated...>>>'
 const FULL_READ_MAX_LINES = 200_000
+const FULL_READ_END_LINE = 2_147_483_647
+const NUMBERED_READ_OUTPUT_REGEX = /^L(\d+): ?(.*)$/
 
 export interface ResolvedPath {
   absolute: string
@@ -264,7 +266,30 @@ export function normalizeLineEndings(text: string): string {
   return text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
 }
 
-export async function readFileText(
+export async function readFileTextExact(
+  relativePath: string,
+  callUpstreamTool: UpstreamToolCaller
+): Promise<string> {
+  try {
+    const result = await callUpstreamTool('read_file', {
+      file_path: relativePath,
+      mode: 'lines',
+      start_line: 1,
+      end_line: FULL_READ_END_LINE,
+      max_lines: FULL_READ_MAX_LINES
+    })
+    const text = extractTextFromResult(result)
+    if (typeof text === 'string') {
+      return renderRawTextFromReadOutput(text)
+    }
+  } catch {
+    // Fall back to the legacy tool below.
+  }
+
+  return readFileTextLegacy(relativePath, {truncateMode: 'NONE'}, callUpstreamTool)
+}
+
+export async function readFileTextLegacy(
   relativePath: string,
   {maxLinesCount, truncateMode}: ReadFileTextOptions = {},
   callUpstreamTool: UpstreamToolCaller
@@ -287,6 +312,42 @@ export async function readFileText(
     throw new Error('Failed to read file contents')
   }
   return text
+}
+
+export function renderRawTextFromReadOutput(text: string): string {
+  const numberedLines = parseNumberedReadOutput(text)
+  if (numberedLines.length === 0) {
+    throw new Error('Failed to read file contents')
+  }
+
+  const rawLines: string[] = []
+  for (let index = 0; index < numberedLines.length; index += 1) {
+    const {lineNumber, lineText} = numberedLines[index]
+    const expectedLineNumber = index + 1
+    if (lineNumber !== expectedLineNumber) {
+      throw new Error('Failed to read file contents')
+    }
+    rawLines.push(lineText)
+  }
+  return rawLines.join('\n')
+}
+
+function parseNumberedReadOutput(text: string): Array<{lineNumber: number; lineText: string}> {
+  const normalized = normalizeLineEndings(text)
+  if (normalized === '') {
+    return []
+  }
+
+  return normalized.split('\n').map((line) => {
+    const match = NUMBERED_READ_OUTPUT_REGEX.exec(line)
+    if (!match) {
+      throw new Error('Failed to read file contents')
+    }
+    return {
+      lineNumber: Number.parseInt(match[1], 10),
+      lineText: match[2] ?? ''
+    }
+  })
 }
 
 export function splitLines(text: string): string[] {

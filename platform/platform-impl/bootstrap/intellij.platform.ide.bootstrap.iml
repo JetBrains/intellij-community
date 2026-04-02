@@ -49,5 +49,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.welcomeScreen" />
+    <orderEntry type="module" module-name="fleet.rhizomedb" />
   </component>
 </module>

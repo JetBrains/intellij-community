@@ -3,6 +3,7 @@ package com.intellij.polySymbols
 
 import com.intellij.lang.Language
 import com.intellij.lang.MetaLanguage
+import com.intellij.lang.MetaLanguageProvider
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -11,7 +12,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PolySymbolEnabledLanguage private constructor() : MetaLanguage("PolySymbolEnabledLanguage") {
+object PolySymbolEnabledLanguage : MetaLanguage("PolySymbolEnabledLanguage") {
 
   override fun matchesLanguage(language: Language): Boolean =
     language == ANY || Companion.EP_NAME.extensionList
@@ -45,5 +46,9 @@ class PolySymbolEnabledLanguage private constructor() : MetaLanguage("PolySymbol
     ): String {
       return language
     }
+  }
+
+  internal class Provider : MetaLanguageProvider {
+    override fun getLanguage(): MetaLanguage = PolySymbolEnabledLanguage
   }
 }

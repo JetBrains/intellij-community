@@ -35,6 +35,7 @@ import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.PyParameterList
 import com.jetbrains.python.psi.PyParenthesizedExpression
+import com.jetbrains.python.psi.PyPossibleClassMember
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyReferenceOwner
@@ -80,6 +81,7 @@ import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyUnsafeUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isAny
 import com.jetbrains.python.psi.types.isNoneType
 import com.jetbrains.python.psi.types.isUnknown
 import com.jetbrains.python.pyi.PyiUtil
@@ -552,6 +554,7 @@ object PyCallExpressionHelper {
         }
       }
     }
+    // TODO (PY-88644): This does not take into account `__call__` method of the metaclass or `__new__` method of the class
     if (callee is PySubscriptionExpression) {
       val parametrizedType = Ref.deref(PyTypingTypeProvider.getType(callee, context))
       if (parametrizedType != null) {
@@ -914,7 +917,7 @@ object PyCallExpressionHelper {
     resolveContext: PyResolveContext,
   ): List<RatedResolveResult> {
     return if (type.isDefinition()) resolveConstructors(type, callSite, resolveContext)
-    else resolveDunderCall(type, callSite, resolveContext)
+    else type.resolveMember(PyNames.CALL, callSite, AccessDirection.READ, resolveContext) ?: emptyList()
   }
 
   fun getImplicitlyInvokedMethod(
@@ -922,7 +925,7 @@ object PyCallExpressionHelper {
     resolveContext: PyResolveContext,
   ): List<PyTypeMember> {
     return if (type.isDefinition()) getConstructorTypes(type, resolveContext)
-    else getDunderCallType(type, resolveContext)
+    else type.findMember(PyNames.CALL, resolveContext)
   }
 
   private fun changeToImplicitlyInvokedMethods(
@@ -950,31 +953,25 @@ object PyCallExpressionHelper {
   private fun resolveConstructors(
     type: PyClassType,
     callSite: PyCallSiteExpression?,
-    resolveContext: PyResolveContext
+    resolveContext: PyResolveContext,
   ): List<RatedResolveResult> {
     // https://typing.python.org/en/latest/spec/constructors.html#metaclass-call-method
-    val metaclassDunderCall = resolveMetaclassDunderCall(type, callSite, resolveContext)
+    val resolvedMetaClassCall = resolveMetaClassCallMethod(type, callSite, resolveContext)
     val context = resolveContext.typeEvalContext
-    val skipNewAndInitEvaluation = metaclassDunderCall.asSequence()
-      .map { it.element }
-      .filterIsInstance<PyTypedElement>()
-      .map { context.getType(it) }
-      .filterIsInstance<PyCallableType>()
-      .any { callableType: PyCallableType? ->
-        if (isReturnTypeAnnotated(callableType!!, context)) {
-          val callType = if (callSite != null) callableType.getCallType(context, callSite) else callableType.getReturnType(context)
-          val expectedType = type.toInstance()
-          callType.toStream().anyMatch {
-            it == null || it is PyNeverType || !PyTypeChecker.match(expectedType, it, context)
-          }
-        }
-        else false
-      }
-
+    val skipNewAndInitEvaluation = resolvedMetaClassCall.any { isReturnTypeIncompatibleWithClass(type, it, callSite, context) }
     if (skipNewAndInitEvaluation) {
-      return metaclassDunderCall
+      return resolvedMetaClassCall
     }
 
+    // https://typing.python.org/en/latest/spec/constructors.html#new-method
+    val resolvedNew = resolveNewMethod(type, callSite, resolveContext)
+    val skipInitEvaluation = resolvedNew.any { isReturnTypeIncompatibleWithClass(type, it, callSite, context) }
+    if (skipInitEvaluation) {
+      return resolvedNew
+    }
+
+    // The most derived `__init__` or `__new__` is returned.
+    // The signature of the returned method is later used to solve generic parameters to infer constructor call type.
     val initAndNew = type.pyClass.multiFindInitOrNew(true, context)
     return preferInitOverNew(initAndNew).map { RatedResolveResult(PyReferenceImpl.getRate(it, context), it) }
   }
@@ -1007,44 +1004,54 @@ object PyCallExpressionHelper {
     return functionGroups[PyNames.INIT] ?: functionGroups.values.flatten()
   }
 
-  private fun resolveMetaclassDunderCall(
+  private fun resolveMetaClassCallMethod(
     type: PyClassType,
-    callSite: PyCallSiteExpression?,
+    location: PyCallSiteExpression?,
     resolveContext: PyResolveContext,
   ): List<RatedResolveResult> {
-    val context = resolveContext.typeEvalContext
-
-    val metaClassType = type.getMetaClassType(context, true) ?: return emptyList()
-
+    val metaClassType = type.getMetaClassType(resolveContext.typeEvalContext, true) ?: return emptyList()
     val typeType = PyBuiltinCache.getInstance(type.pyClass).typeType
     if (metaClassType === typeType) return emptyList()
-
-    val results = resolveDunderCall(metaClassType, callSite, resolveContext)
-    if (results.isEmpty()) return emptyList()
-
-    val typeDunderCall: Set<PsiElement?> = if (typeType != null) {
-      resolveDunderCall(typeType, null, resolveContext)
-        .asSequence()
-        .map { it.element }
-        .toSet()
-    }
-    else {
-      emptySet()
-    }
-
-    return results.filter { it.element !in typeDunderCall }
+    return type.resolveMember(PyNames.CALL, location, AccessDirection.READ, resolveContext)
+      .orEmpty()
+      .filterNot { isClassMember(typeType, it.element) }
   }
 
-  private fun resolveDunderCall(
-    type: PyClassLikeType,
-    location: PyExpression?,
-    resolveContext: PyResolveContext
+  private fun resolveNewMethod(
+    type: PyClassType,
+    location: PyCallSiteExpression?,
+    resolveContext: PyResolveContext,
   ): List<RatedResolveResult> {
-    return type.resolveMember(PyNames.CALL, location, AccessDirection.READ, resolveContext) ?: emptyList()
+    val resolved = type.resolveMember(PyNames.NEW, location, AccessDirection.READ, resolveContext) ?: return emptyList()
+    val objectType = PyBuiltinCache.getInstance(type.pyClass).objectType
+    return resolved.filterNot { isClassMember(objectType, it.element) }
   }
 
-  private fun getDunderCallType(type: PyClassLikeType, resolveContext: PyResolveContext): List<PyTypeMember> {
-    return type.findMember(PyNames.CALL, resolveContext)
+  private fun isClassMember(classType: PyClassType?, element: PsiElement?): Boolean {
+    return classType != null && element is PyPossibleClassMember && element.containingClass === classType.pyClass
+  }
+
+  private fun isReturnTypeIncompatibleWithClass(
+    classType: PyClassType,
+    resolvedCallable: RatedResolveResult,
+    callSite: PyCallSiteExpression?,
+    context: TypeEvalContext,
+  ): Boolean {
+    val callable = resolvedCallable.element
+    if (callable !is PyTypedElement) return false
+
+    val callableType = context.getType(callable)
+    if (callableType !is PyCallableType) return false
+
+    if (isReturnTypeAnnotated(callableType, context)) {
+      val callType = if (callSite != null) callableType.getCallType(context, callSite)
+      else callableType.getReturnType(context)
+      val instanceType = classType.toInstance()
+      return callType.toStream().any {
+        it.isAny || it is PyNeverType || !PyTypeChecker.match(instanceType, it, context)
+      }
+    }
+    return false
   }
 
   private fun isLegacyPositionalOnly(parameter: PyCallableParameter): Boolean = !parameter.isSelf && parameter.protectionLevel == ProtectionLevel.PRIVATE

@@ -38,7 +38,7 @@ Special handling applies to the directories below. If a file you touch lives und
 
 - **Run affected tests:** `./tests.cmd --module <module> --test <FQN or wildcard>` (**FQN required; simple class names do not match; always specify the test module directly**), or `node --test <file>` for `*.test.mjs`.
   `tests.cmd` performs Bazel compilation internally, so a separate `bazel build` step is not needed when tests will be run.
-  Module-specific rules may override the runner. Skip if plugin has no tests. See [TESTING](./community/.agents/skills/testing/SKILL.md).
+  Module-specific rules may override the runner. Skip if plugin has no tests. See [TESTING](./.agents/skills/testing/SKILL.md).
 - **Bazel compilation without tests:** when only verifying compilation (no tests to run), use `bazel build <target>` for affected modules. Skip if only `.js`, `.mjs`, `.md`, `.txt`, or `.json` files are modified.
 - After modifying `*.iml`, `BUILD.bazel`, or `.idea/` files: run `./build/jpsModelToBazel.cmd`.
 

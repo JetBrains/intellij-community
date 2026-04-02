@@ -40,15 +40,17 @@ Define the manual `Files…` prompt context source: registration, project-scoped
   - no additional VCS-style availability gate is required.
 
 - Picker sourcing contract:
-  - prefer the resolved `workingProjectPath` subtree when it is under project content,
-  - otherwise fall back to all project content roots,
-  - always include visible `Scratches and Consoles` roots, such as `Scratches` and `Extensions`, alongside the project-scoped roots,
-  - open a lightweight non-modal popup with a scoped project tree that allows selecting files and folders,
+  - browse all attachable project roots by default, without a separate scope selector,
+  - always include visible `Scratches and Consoles` roots, such as `Scratches` and `Extensions`, alongside project content roots,
+  - open a lightweight non-modal popup with a project tree that allows selecting files and folders,
   - support multi-select and speed search in the tree,
-  - provide a search-by-name tab (using `GotoFileModel`) scoped to the same roots for fast filename lookup,
+  - provide a search-by-name tab scoped to the same full root set for fast filename lookup,
   - Enter confirms from whichever tab is active (project tree or search-by-name) and adds the currently chosen paths to the existing manual files selection,
   - keep current manual selection preselected when reopening the popup,
+  - when there is no existing manual files selection, preselect the first attachable local `CommonDataKeys.VIRTUAL_FILE_ARRAY` entry from the invocation data context, falling back to `CommonDataKeys.VIRTUAL_FILE`,
   - removing paths happens from the context row chips, not by deselecting inside the chooser,
+  - only attachable file and directory paths may be added to manual context,
+  - when a selected tree node does not directly resolve to an attachable path, the picker must walk up the selected tree path and resolve the nearest attachable file or directory ancestor instead,
   - avoid preloading every file and folder in the scoped roots before showing the chooser.
   [@test] ../../prompt/testSrc/context/AgentPromptProjectPathsManualContextSourceTest.kt
 

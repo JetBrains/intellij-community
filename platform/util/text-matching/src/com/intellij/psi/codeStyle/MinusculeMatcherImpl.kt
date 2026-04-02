@@ -3,7 +3,6 @@ package com.intellij.psi.codeStyle
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.FList
-import com.intellij.util.text.NameUtilCore
 import com.intellij.util.text.NameUtilCore.isWordStart
 import com.intellij.util.text.matching.AsciiUtils
 import com.intellij.util.text.matching.MatchedFragment
@@ -29,7 +28,7 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
   private val isWordSeparator: BooleanArray = BooleanArray(myPattern.size)
   private val toUpperCase: CharArray = CharArray(myPattern.size)
   private val toLowerCase: CharArray = CharArray(myPattern.size)
-private val myHardSeparators: CharArray = hardSeparators.toCharArray()
+  private val myHardSeparators: CharArray = hardSeparators.toCharArray()
 
   private val myMixedCase: Boolean
   private val myHasSeparators: Boolean
@@ -91,7 +90,15 @@ private val myHardSeparators: CharArray = hardSeparators.toCharArray()
   }
 
   override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<MatchedFragment>?): Int {
-    return NameUtil.calculateHumpedMatchingScore(myPattern, name, valueStartCaseMatch, fragments, isLowerCase, isUpperCase, myHardSeparators)
+    return calculateHumpedMatchingScore(
+      myPattern,
+      name,
+      valueStartCaseMatch,
+      fragments,
+      isLowerCase,
+      isUpperCase,
+      myHardSeparators
+    )
   }
 
   @Deprecated("use matchingDegree(String, Boolean, List<MatchedFragment>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments.map { MatchedFragment(it.startOffset, it.endOffset) })"))
@@ -482,13 +489,6 @@ private val myHardSeparators: CharArray = hardSeparators.toCharArray()
 
     private fun isWordSeparator(c: Char): Boolean {
       return c.isWhitespace() || c == '_' || c == '-' || c == ':' || c == '+' || c == '.'
-    }
-
-    private fun nextWord(name: String, start: Int): Int {
-      if (start < name.length && name[start].isDigit()) {
-        return start + 1 //treat each digit as a separate hump
-      }
-      return NameUtilCore.nextWord(name, start)
     }
 
     private fun appendRange(ranges: List<MatchedFragment>, from: Int, length: Int): List<MatchedFragment> {

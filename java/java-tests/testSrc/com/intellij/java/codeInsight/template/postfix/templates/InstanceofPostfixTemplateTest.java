@@ -40,4 +40,11 @@ public class InstanceofPostfixTemplateTest extends PostfixTemplateTestCase {
   protected String getSuffix() {
     return "instanceof";
   }
+
+  public static class ModInstanceofPostfixTemplateTest extends InstanceofPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

@@ -20,7 +20,7 @@ public class CastVarPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testAssigned() {
     doTest();
   }
-  
+
   public void testTypeAnnotations() {
     doTest();
   }
@@ -40,6 +40,13 @@ public class CastVarPostfixTemplateTest extends PostfixTemplateTestCase {
     }
     finally {
       instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE = false;
+    }
+  }
+
+  public static class ModCastVarPostfixTemplateTest extends CastVarPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
     }
   }
 }

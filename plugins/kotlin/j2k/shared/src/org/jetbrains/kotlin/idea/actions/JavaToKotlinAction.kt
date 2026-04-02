@@ -2,11 +2,9 @@
 package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.codeInsight.navigation.activateFileWithPsiElement
-import com.intellij.icons.AllIcons
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
-import com.intellij.openapi.actionSystem.ActionGroupUtil
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces.PROJECT_VIEW_POPUP
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -15,7 +13,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
@@ -42,11 +39,13 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.file.PsiDirectoryFactory
 import com.intellij.psi.util.PsiTreeUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.codeInsight.pathBeforeJavaToKotlinConversion
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -56,6 +55,7 @@ import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
@@ -66,6 +66,7 @@ import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.notExists
 import kotlin.time.measureTimedValue
 
@@ -85,6 +86,10 @@ class JavaToKotlinActionForGroup : JavaToKotlinAction() {
     }
 }
 
+@ApiStatus.Internal
+@VisibleForTesting
+var j2kJob: AtomicReference<Job>? = null
+
 open class JavaToKotlinAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = CommonDataKeys.PROJECT.getData(e.dataContext) ?: return
@@ -98,22 +103,25 @@ open class JavaToKotlinAction : AnAction() {
         val j2kConverterExtension = J2kConverterExtension.extension(j2kKind)
         if (shouldSkipConversionOfErroneousCode(javaFiles, project)) return
         if (j2kConverterExtension.doCheckBeforeConversion(project, module)) {
-            currentThreadCoroutineScope().launch {
+            val launch = currentThreadCoroutineScope().launch {
                 JavaToKotlinActionHandler.convertFiles(
                     files = javaFiles,
                     project = project,
                     module = module,
                 )
             }
+            j2kJob?.set(launch)
         } else {
             j2kConverterExtension.setUpAndConvert(project, module, javaFiles) { files, project, module ->
-                currentThreadCoroutineScope().launch {
+                val launch = currentThreadCoroutineScope().launch {
                     JavaToKotlinActionHandler.convertFiles(
                         files = files,
                         project = project,
                         module = module,
+                        askExternalCodeProcessing = !isUnitTestMode()
                     )
                 }
+                j2kJob?.set(launch)
             }
         }
     }
@@ -327,7 +335,8 @@ private fun isBuiltInActionEnabled(e: AnActionEvent): Boolean {
 
     fun isWritablePackageDirectory(file: VirtualFile): Boolean {
         val directory = file.toPsiDirectory(project) ?: return false
-        return PsiDirectoryFactory.getInstance(project).isPackage(directory) && file.isWritable
+        if (!PsiDirectoryFactory.getInstance(project).isPackage(directory) || !file.isWritable) return false
+        return file.children.any { it.isDirectory || it.extension == JavaFileType.DEFAULT_EXTENSION }
     }
 
     if (e.place != PROJECT_VIEW_POPUP && files.any(::isWritablePackageDirectory)) {

@@ -4,6 +4,7 @@
     <module name="intellij.kotlin.gradle.tooling"/>
     <module name="intellij.kotlin.projectWizard.idea"/>
     <module name="intellij.gradle.java"/>
+    <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.gradle.gradle"/>
     <module name="kotlin.code-insight.inspections.shared"/>
   </dependencies>

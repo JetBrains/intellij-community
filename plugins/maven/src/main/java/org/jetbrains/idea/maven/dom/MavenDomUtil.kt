@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.lang.properties.IProperty
@@ -40,14 +40,14 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.dom.model.MavenDomProperties
 import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XMLNS
+import org.jetbrains.idea.maven.model.MavenConstants.MAVEN_4_XMLNS_HTTPS
 import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
-import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_1_0
 import org.jetbrains.idea.maven.model.MavenCoordinate
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenResource
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -96,19 +96,20 @@ object MavenDomUtil {
     if (rootTag == null || "project" != rootTag.getName()) return false
 
     val xmlns = rootTag.getAttributeValue("xmlns")
-    if (xmlns != "http://maven.apache.org/POM/4.1.0" && xmlns != "https://maven.apache.org/POM/4.1.0") {
+    if (xmlns != MAVEN_4_XMLNS && xmlns != MAVEN_4_XMLNS_HTTPS) {
       return false
     }
 
     if (!isPomFileName(file.getName())) return false
 
-    val modelTag = rootTag.findSubTags("modelVersion").singleOrNull()
-    if (modelTag?.value?.text == MODEL_VERSION_4_1_0) return true
-    if (modelTag?.value?.text == MODEL_VERSION_4_0_0) return false
+    val modelTags = rootTag.findSubTags("modelVersion")
+    if (modelTags.size > 1) return false
+    val modelVersion = modelTags.singleOrNull()?.value?.text ?: MavenUtil.inferModelVersionFromNamespace(xmlns)
+    if (modelVersion == MODEL_VERSION_4_0_0) return false
     return MavenUtil.isMaven410(
-      rootTag?.getAttribute("xmlns")?.value,
-      rootTag?.getAttribute("xsi:schemaLocation")?.value)
-
+      rootTag.getAttribute("xmlns")?.value,
+      rootTag.getAttribute("xsi:schemaLocation")?.value
+    )
   }
 
   @JvmStatic
@@ -118,7 +119,7 @@ object MavenDomUtil {
     val rootTag = file.getRootTag()
     if (rootTag == null || "project" != rootTag.getName()) return null
 
-    return rootTag.getSubTagText("modelVersion")
+    return rootTag.getSubTagText("modelVersion") ?: MavenUtil.inferModelVersionFromNamespace(rootTag.getAttributeValue("xmlns"))
   }
 
   @JvmStatic
@@ -304,6 +305,13 @@ object MavenDomUtil {
     val psiFile = PsiManager.getInstance(project).findFile(file)
     if (psiFile == null) return null
     return getMavenDomModel<T>(psiFile, clazz)
+  }
+
+  @JvmStatic
+  inline fun <reified T : MavenDomElement?> getMavenDomModel(file: PsiFile): T? {
+    val xmlFile = file as? XmlFile ?: return null
+    val fileElement = DomManager.getDomManager(xmlFile.getProject()).getFileElement(xmlFile, T::class.java)
+    return fileElement?.getRootElement()
   }
 
   @JvmStatic
@@ -554,15 +562,7 @@ object MavenDomUtil {
 
   @JvmStatic
   fun getMavenVersion(file: VirtualFile?, project: Project): String? {
-    val directory = file?.getParent()
-    val distribution: MavenDistribution?
-    if (directory == null) {
-      distribution = MavenDistributionsCache.getInstance(project).getSettingsDistribution()
-    }
-    else {
-      distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(directory.getPath())
-    }
-    return distribution.version
+    return MavenDistributionsCache.getInstance(project).getMavenVersion(file)
   }
 
   @JvmStatic

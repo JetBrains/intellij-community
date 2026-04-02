@@ -45,4 +45,11 @@ public class ObjectsRequireNonNullPostfixTemplateTest extends PostfixTemplateTes
   protected String getSuffix() {
     return "reqnonnull";
   }
+
+  public static class ModObjectsRequireNonNullPostfixTemplateTest extends ObjectsRequireNonNullPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

@@ -120,13 +120,13 @@ internal class RuntimeModuleRepositoryChecker private constructor(
         productModules.mainModuleGroup.includedModules
           .asSequence()
           .map { it.moduleDescriptor }
-          .filter { !it.moduleId.stringId.startsWith(RuntimeModuleId.LIB_NAME_PREFIX) }
+          .filter { it.moduleId.namespace != RuntimeModuleId.LEGACY_JPS_LIBRARY_NAMESPACE }
           .flatMap { moduleDescriptor -> moduleDescriptor.resourceRootPaths.map { it to moduleDescriptor.moduleId } }
           .groupBy({ it.first }, { it.second })
       
       productModules.bundledPluginModuleGroups.forEach { group ->
         val allPluginModules = group.includedModules.map { it.moduleDescriptor } + serviceModuleMapping.getAdditionalModules(group)
-        if (group.mainModule.moduleId == RuntimeModuleId.module("intellij.performanceTesting.async") && context.applicationInfo.productCode == "IC") {
+        if (group.mainModule.moduleId == RuntimeModuleId.legacyJpsModule("intellij.performanceTesting.async") && context.applicationInfo.productCode == "IC") {
           //'intellij.performanceTesting.async' bundled with IDEA Community includes modules which are included in the core plugin for IDEA Ultimate, 
           //so it won't be loaded in IDEA Community, see IJPL-186414 
           return@forEach
@@ -170,7 +170,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     val productModules = loadProductModules(productModulesModule, context.outputProvider, repository)
 
     val allProductModules = LinkedHashMap<RuntimeModuleId, FList<String>>()
-    allProductModules[RuntimeModuleId.module("intellij.platform.bootstrap")] = FList.singleton("bootstrap")
+    allProductModules[RuntimeModuleId.legacyJpsModule("intellij.platform.bootstrap")] = FList.singleton("bootstrap")
     val mainModuleGroupPath = FList.singleton("main module group")
     productModules.mainModuleGroup.includedModules.forEach { mainModule ->
       collectDependencies(repository, mainModule.moduleDescriptor, mainModuleGroupPath, allProductModules)
@@ -194,7 +194,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     }.groupBy({ it.first }, { it.second })
     
     for (moduleId in moduleRepositoryData.allModuleIds) {
-      if (moduleId.name.startsWith(RuntimeModuleId.LIB_NAME_PREFIX)) {
+      if (moduleId.namespace == RuntimeModuleId.LEGACY_JPS_LIBRARY_NAMESPACE) {
         //additional libraries shouldn't cause problems because their resources should not be loaded unless they are requested from modules
         continue
       }

@@ -30,6 +30,7 @@ jvm_library(
     "//platform/xdebugger-impl/frontend",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -55,6 +56,7 @@ jvm_library(
     "//platform/xdebugger-impl/frontend:frontend_test_lib",
     "//platform/xdebugger-impl/shared:shared_test_lib",
     "//platform/xdebugger-impl/rpc:rpc_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.debugger.impl.frontend` end

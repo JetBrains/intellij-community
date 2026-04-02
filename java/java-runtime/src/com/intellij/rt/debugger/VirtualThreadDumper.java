@@ -160,7 +160,7 @@ public final class VirtualThreadDumper {
   private int saveContainerInfo(Object container, int parentContainerOrdinal) throws Throwable {
     assert containerNames.size() == containerParentOrdinals.size();
     int ordinal = containerNames.size();
-    containerNames.add((String)containerNameHandle.invoke(container));
+    containerNames.add(getContainerName(container));
     containerOwners.add(containerOwnerHandle.invoke(container));
     containerReferences.add(container);
     containerParentOrdinals.add(parentContainerOrdinal);
@@ -173,6 +173,11 @@ public final class VirtualThreadDumper {
       Object childContainer = children.next();
       processContainer(childContainer, ordinal);
     }
+  }
+
+  private String getContainerName(Object container) throws Throwable {
+    String name = (String)containerNameHandle.invoke(container);
+    return name != null ? name : container.toString();
   }
 
   private long getCarrierThreadId(Thread t) throws Throwable {

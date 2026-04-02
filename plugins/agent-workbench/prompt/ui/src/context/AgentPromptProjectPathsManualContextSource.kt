@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncation
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncationReason
+import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptManualContextPickerRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptManualContextSourceBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayload
@@ -15,13 +16,12 @@ import com.intellij.agent.workbench.prompt.core.string
 import com.intellij.agent.workbench.prompt.ui.AgentPromptBundle
 import com.intellij.ide.scratch.RootType
 import com.intellij.ide.scratch.ScratchFileService
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 
 private const val MAX_INCLUDED_SELECTION_PATHS = 20
@@ -85,18 +85,26 @@ internal class AgentPromptProjectPathsManualContextSource : AgentPromptManualCon
 
   override fun showPicker(request: AgentPromptManualContextPickerRequest) {
     try {
-      val scopedRoots = resolveScopedProjectRoots(request.sourceProject, request.workingProjectPath)
-      if (scopedRoots.isEmpty()) {
+      val scopedRootPaths = resolvePickerBrowseRootPaths(request.sourceProject)
+      if (scopedRootPaths.isEmpty()) {
         request.onError(AgentPromptBundle.message("manual.context.paths.error.empty"))
         return
       }
 
+      val currentSelection = extractCurrentPaths(request.currentItem)
+      val initialSelection = resolveInitialManualPathSelection(
+        selection = currentSelection,
+        scopedRootPaths = scopedRootPaths,
+      )
+
       showProjectPathsChooserPopup(
         project = request.sourceProject,
-        scopedRoots = scopedRoots,
-        initialSelection = filterManualPathSelectionToScopedRoots(
-          selection = extractCurrentPaths(request.currentItem),
-          scopedRootPaths = scopedRoots.map(VirtualFile::getPath),
+        scopedRootPaths = scopedRootPaths,
+        initialSelection = initialSelection,
+        initialTreePreselection = resolveInitialTreePreselection(
+          initialSelection = initialSelection,
+          invocationData = request.invocationData,
+          scopedRootPaths = scopedRootPaths,
         ),
         anchorComponent = request.anchorComponent,
       ) { selection ->
@@ -205,29 +213,14 @@ internal fun extractCurrentPaths(item: AgentPromptContextItem?): List<ManualPath
     .orEmpty()
 }
 
-internal fun resolveScopedContentRootPaths(
-  contentRootPaths: Collection<String>,
-  workingProjectPath: String?,
-): Set<String> {
-  if (workingProjectPath.isNullOrBlank()) {
-    return LinkedHashSet(contentRootPaths)
-  }
-  val matchesContent = contentRootPaths.any { contentRootPath ->
-    FileUtil.isAncestor(contentRootPath, workingProjectPath, false) || FileUtil.pathsEqual(contentRootPath, workingProjectPath)
-  }
-  return if (matchesContent) linkedSetOf(workingProjectPath) else LinkedHashSet(contentRootPaths)
-}
-
-internal fun resolvePickerRootPaths(
+internal fun resolvePickerBrowseRootPaths(
   contentRootPaths: Collection<String>,
   scratchRootPaths: Collection<String>,
-  workingProjectPath: String?,
-): Set<String> {
-  val scopedRootPaths = LinkedHashSet(resolveScopedContentRootPaths(contentRootPaths, workingProjectPath))
-  scratchRootPaths.forEach { scratchRootPath ->
-    scopedRootPaths.add(scratchRootPath)
-  }
-  return scopedRootPaths
+): List<String> {
+  val rootPaths = LinkedHashSet<String>()
+  rootPaths.addAll(contentRootPaths)
+  rootPaths.addAll(scratchRootPaths)
+  return rootPaths.toList()
 }
 
 internal fun filterManualPathSelectionToScopedRoots(
@@ -238,39 +231,59 @@ internal fun filterManualPathSelectionToScopedRoots(
     .filter { entry -> isUnderAnyRoot(entry.path, scopedRootPaths) }
 }
 
-private fun resolveScopedProjectRoots(
+internal fun resolveInitialManualPathSelection(
+  selection: List<ManualPathSelectionEntry>,
+  scopedRootPaths: Collection<String>,
+): List<ManualPathSelectionEntry> {
+  return filterManualPathSelectionToScopedRoots(selection, scopedRootPaths)
+}
+
+internal fun resolveInitialTreePreselection(
+  initialSelection: List<ManualPathSelectionEntry>,
+  invocationData: AgentPromptInvocationData,
+  scopedRootPaths: Collection<String>,
+): ManualPathSelectionEntry? {
+  if (initialSelection.isNotEmpty()) {
+    return null
+  }
+  return extractCurrentManualPathSelection(invocationData, scopedRootPaths)
+}
+
+internal fun extractCurrentManualPathSelection(
+  invocationData: AgentPromptInvocationData,
+  scopedRootPaths: Collection<String>,
+): ManualPathSelectionEntry? {
+  val dataContext = invocationData.dataContextOrNull() ?: return null
+  CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
+    .orEmpty()
+    .firstNotNullOfOrNull { virtualFile -> currentManualPathSelectionEntry(virtualFile, scopedRootPaths) }
+    ?.let { return it }
+
+  return CommonDataKeys.VIRTUAL_FILE.getData(dataContext)
+    ?.let { virtualFile -> currentManualPathSelectionEntry(virtualFile, scopedRootPaths) }
+}
+
+private fun currentManualPathSelectionEntry(
+  virtualFile: VirtualFile,
+  scopedRootPaths: Collection<String>,
+): ManualPathSelectionEntry? {
+  if (!virtualFile.isInLocalFileSystem || !isUnderAnyRoot(virtualFile.path, scopedRootPaths)) {
+    return null
+  }
+  return ManualPathSelectionEntry(path = virtualFile.path, isDirectory = virtualFile.isDirectory)
+}
+
+private fun resolvePickerBrowseRootPaths(
   project: Project,
-  workingProjectPath: String?,
-): List<VirtualFile> {
+): List<String> {
   return runReadActionBlocking {
     val contentRoots = ProjectRootManager.getInstance(project).contentRootsFromAllModules
       .distinctBy { it.path }
     val scratchRoots = resolveVisibleScratchRoots()
-    val availableRoots = (contentRoots + scratchRoots).distinctBy { it.path }
-    if (availableRoots.isEmpty()) {
-      return@runReadActionBlocking emptyList()
-    }
-
-    val scopedRootPaths = resolvePickerRootPaths(
+    resolvePickerBrowseRootPaths(
       contentRootPaths = contentRoots.map { it.path },
       scratchRootPaths = scratchRoots.map { it.path },
-      workingProjectPath = workingProjectPath,
     )
-    val fileIndex = ProjectFileIndex.getInstance(project)
-    val resolvedRoots = ArrayList<VirtualFile>(scopedRootPaths.size)
-    scopedRootPaths.forEach { path ->
-      val root = availableRoots.firstOrNull { candidateRoot -> FileUtil.pathsEqual(candidateRoot.path, path) }
-                 ?: LocalFileSystem.getInstance().findFileByPath(path)
-      val scopedRoot = when {
-        root == null -> null
-        root.isDirectory -> root
-        else -> root.parent
-      }
-      if (scopedRoot != null && scopedRoot.isInLocalFileSystem && isAttachableManualContextRoot(scopedRoot, fileIndex)) {
-        resolvedRoots += scopedRoot
-      }
-    }
-    resolvedRoots.ifEmpty { availableRoots.filter { root -> isAttachableManualContextRoot(root, fileIndex) } }
   }
 }
 
@@ -280,13 +293,6 @@ private fun resolveVisibleScratchRoots(): List<VirtualFile> {
     .filterNot { it.isHidden }
     .mapNotNull(scratchFileService::getVirtualFile)
     .distinctBy { it.path }
-}
-
-private fun isAttachableManualContextRoot(
-  root: VirtualFile,
-  fileIndex: ProjectFileIndex,
-): Boolean {
-  return fileIndex.isInContent(root) || RootType.forFile(root)?.isHidden == false
 }
 
 internal fun isUnderAnyRoot(path: String, rootPaths: Collection<String>): Boolean {

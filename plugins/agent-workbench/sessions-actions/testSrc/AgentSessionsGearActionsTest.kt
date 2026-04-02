@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsDedicatedFrame
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabArchiveThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadPopupGroup
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadQuickAction
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabRenameThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromEditorTabAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromToolbarAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsOpenDedicatedFrameAction
@@ -171,6 +172,9 @@ class AgentSessionsGearActionsTest {
     assertThat(actionManager.getAction("AgentWorkbenchSessions.SelectThreadInAgentThreads"))
       .isNotNull
       .isInstanceOf(AgentSessionsSelectThreadInToolWindowAction::class.java)
+    assertThat(actionManager.getAction("AgentWorkbenchSessions.RenameThreadFromEditorTab"))
+      .isNotNull
+      .isInstanceOf(AgentSessionsEditorTabRenameThreadAction::class.java)
     assertThat(actionManager.getAction("AgentWorkbenchSessions.ArchiveThreadFromEditorTab"))
       .isNotNull
       .isInstanceOf(AgentSessionsEditorTabArchiveThreadAction::class.java)
@@ -183,6 +187,7 @@ class AgentSessionsGearActionsTest {
 
     val entries = actionManager.editorTabPopupEntries()
 
+    val renameIndex = entries.requiredIndex("AgentWorkbenchSessions.RenameThreadFromEditorTab")
     val archiveIndex = entries.requiredIndex("AgentWorkbenchSessions.ArchiveThreadFromEditorTab")
     val goToSourceIndex = entries.requiredIndex("AgentWorkbenchSessions.GoToSourceProjectFromEditorTab")
     val closeEditorsGroupIndex = entries.requiredIndex("CloseEditorsGroup")
@@ -192,12 +197,13 @@ class AgentSessionsGearActionsTest {
 
     assertThat(archiveIndex).isLessThan(goToSourceIndex)
     assertThat(goToSourceIndex).isLessThan(closeEditorsGroupIndex)
-    assertThat(closeEditorsGroupIndex).isLessThan(copyThreadIdIndex)
+    assertThat(closeEditorsGroupIndex).isLessThan(renameIndex)
+    assertThat(renameIndex).isLessThan(copyThreadIdIndex)
     assertThat(copyThreadIdIndex).isLessThan(selectInThreadsIndex)
     assertThat(selectInThreadsIndex).isLessThan(copyPathsIndex)
     assertThat(entries[closeEditorsGroupIndex - 1]).isEqualTo(SEPARATOR_MARKER)
     assertThat(entries[closeEditorsGroupIndex + 1]).isEqualTo(SEPARATOR_MARKER)
-    assertThat(entries.subList(selectInThreadsIndex + 1, copyPathsIndex)).doesNotContain(SEPARATOR_MARKER)
+    assertThat(entries.subList(renameIndex + 1, copyPathsIndex)).doesNotContain(SEPARATOR_MARKER)
   }
 
   @Test

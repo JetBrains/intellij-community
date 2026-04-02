@@ -22,8 +22,8 @@ jvm_library(
   kotlinc_opts = ":custom_lambda-testFramework",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
-    "@lib//:kotlin-test",
+    "//libraries/kotlin/reflect",
+    "//libraries/kotlin/test:libraries-kotlinTest",
     "//platform/core-api:core",
     "//platform/core-impl",
     "@lib//:assert_j",
@@ -72,6 +72,8 @@ jvm_library(
   kotlinc_opts = ":custom_lambda-testFramework",
   runtime_deps = [
     ":lambda-testFramework",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",

@@ -2,15 +2,20 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.childrenOfType
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.buildArgumentString
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.replaceLanguageFeature
@@ -253,13 +258,20 @@ class KotlinBuildScriptManipulator(
         scope: DependencyScope,
         libraryDescriptor: ExternalLibraryDescriptor
     ) {
+        val codeStyleManager = CodeStyleManager.getInstance(scriptFile.project)
+
         if (targetModule != null && targetModule.isMultiPlatformModule) {
-            if (addKotlinMultiplatformDependencyWithConventionSourceSets(
-                    targetModule, scope,
-                    libraryDescriptor.libraryGroupId, libraryDescriptor.libraryArtifactId,
-                    libraryDescriptor.preferredVersion ?: libraryDescriptor.maxVersion ?: libraryDescriptor.minVersion,
-                )
-            ) return
+            val blockExpression = addKotlinMultiplatformDependencyWithConventionSourceSets(
+                scriptFile,
+                targetModule, scope,
+                libraryDescriptor.libraryGroupId, libraryDescriptor.libraryArtifactId,
+                libraryDescriptor.preferredVersion ?: libraryDescriptor.maxVersion ?: libraryDescriptor.minVersion,
+            )
+            if (blockExpression != null) {
+                val elementToReformat = blockExpression.parentOfType<KtBlockExpression>() ?: blockExpression
+                codeStyleManager.reformat(elementToReformat, true)
+                return
+            }
         }
 
         val dependencyText = getCompileDependencySnippet(
@@ -269,15 +281,58 @@ class KotlinBuildScriptManipulator(
             scope.toGradleCompileScope(targetModule)
         )
 
-        if (targetModule != null && usesNewMultiplatform()) {
+        val dependenciesBlock = if (targetModule != null && usesNewMultiplatform()) {
             val findOrCreateTargetSourceSet = scriptFile
                 .getKotlinBlock()
                 ?.getSourceSetsBlock()
                 ?.findOrCreateTargetSourceSet(targetModule.name.takeLastWhile { it != '.' })
-            val dependenciesBlock = findOrCreateTargetSourceSet?.getDependenciesBlock()
-            dependenciesBlock?.addExpressionIfMissing(dependencyText)
+            findOrCreateTargetSourceSet?.getDependenciesBlock()
         } else {
-            scriptFile.getDependenciesBlock()?.addExpressionIfMissing(dependencyText)
+            scriptFile.getDependenciesBlock()
+        }
+
+        dependenciesBlock?.let {
+            it.addExpressionIfMissing(dependencyText)
+            codeStyleManager.reformat(it.parent, true)
+        }
+    }
+
+    override fun addKotlinLibraryToModuleBuildScriptModCommand(
+        targetModule: Module?,
+        scope: DependencyScope,
+        libraryDescriptor: ExternalLibraryDescriptor
+    ): ModCommand {
+        val actionContext = ActionContext(scriptFile.project, scriptFile, 0, TextRange(0, scriptFile.textLength), null)
+        return ModCommand.psiUpdate(actionContext) {
+            val file = it.getWritable(scriptFile)
+            if (targetModule != null && targetModule.isMultiPlatformModule) {
+                addKotlinMultiplatformDependencyWithConventionSourceSets(
+                    file,
+                    targetModule,
+                    scope,
+                    libraryDescriptor.libraryGroupId, libraryDescriptor.libraryArtifactId,
+                    libraryDescriptor.preferredVersion ?: libraryDescriptor.maxVersion ?: libraryDescriptor.minVersion,
+                )?.let { return@psiUpdate }
+            }
+
+            val dependencyText = getCompileDependencySnippet(
+                libraryDescriptor.libraryGroupId,
+                libraryDescriptor.libraryArtifactId,
+                libraryDescriptor.preferredVersion ?: libraryDescriptor.maxVersion ?: libraryDescriptor.minVersion,
+                scope.toGradleCompileScope(targetModule)
+            )
+
+            val dependenciesBlock = if (targetModule != null && usesNewMultiplatform()) {
+                val findOrCreateTargetSourceSet = file
+                    .getKotlinBlock()
+                    ?.getSourceSetsBlock()
+                    ?.findOrCreateTargetSourceSet(targetModule.name.takeLastWhile { it != '.' })
+                findOrCreateTargetSourceSet?.getDependenciesBlock()
+            } else {
+                file.getDependenciesBlock()
+            }
+
+            dependenciesBlock?.addExpressionIfMissing(dependencyText)
         }
     }
 

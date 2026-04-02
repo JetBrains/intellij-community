@@ -395,6 +395,8 @@ jvm_library(
     "//plugins/kotlin/base/plugin:kotlin-base-plugin-tests_test_lib",
     "//xml/xml-parser:parser",
     "//xml/xml-parser:parser_test_lib",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
   ],
   exports = [
     "//plugins/kotlin/intellij.kotlin.base.test:base-test",

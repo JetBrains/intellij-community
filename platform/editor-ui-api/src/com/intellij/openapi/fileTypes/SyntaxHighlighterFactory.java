@@ -4,6 +4,7 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,12 +29,14 @@ public abstract class SyntaxHighlighterFactory {
 
   /**
    * Returns syntax highlighter for the given language.
-   *
+   * Requires read lock because some implementations of {@link #getSyntaxHighlighter(Project, VirtualFile)}
+   * may invoke operations that need it.
    * @param language a {@code Language} to get highlighter for
    * @param project  might be necessary to gather various project settings from
    * @param file     might be necessary to collect file specific settings
    * @return {@code SyntaxHighlighter} interface implementation for the given file type
    */
+  @RequiresReadLock(generateAssertion = false)
   public static SyntaxHighlighter getSyntaxHighlighter(@NotNull Language language, @Nullable Project project, @Nullable VirtualFile file) {
     return getLanguageFactory().forLanguage(language).getSyntaxHighlighter(project, file);
   }
@@ -42,12 +45,15 @@ public abstract class SyntaxHighlighterFactory {
    * Returns syntax highlighter for the given file type.
    * Note: it is recommended to use {@link #getSyntaxHighlighter(Language, Project, VirtualFile)} in most cases,
    * and use this method only when do not know the language you use.
-   *
+   * </p>
+   * Requires read lock because some implementations of {@link SyntaxHighlighterProvider#create(FileType, Project, VirtualFile)}
+   * may invoke operations that need it.
    * @param fileType a file type to use to select appropriate highlighter
    * @param project  might be necessary to gather various project settings from
    * @param file     might be necessary to collect file specific settings
    * @return {@code SyntaxHighlighter} interface implementation for the given file type
    */
+  @RequiresReadLock(generateAssertion = false)
   public static @Nullable SyntaxHighlighter getSyntaxHighlighter(@NotNull FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
     return SyntaxHighlighter.PROVIDER.create(fileType, project, file);
   }
@@ -58,10 +64,11 @@ public abstract class SyntaxHighlighterFactory {
    * to identify proper highlighting attributes.
    * <p/>
    * Default implementation doesn't highlight anything.
-   *
+   * Requires read lock because some implementations may invoke operations that need it.
    * @param project     might be necessary to gather various project settings from.
    * @param virtualFile might be necessary to collect file specific settings
    * @return {@code SyntaxHighlighter} interface implementation for this particular language.
    */
+  @RequiresReadLock(generateAssertion = false)
   public abstract @NotNull SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile);
 }

@@ -27,6 +27,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/core-impl",
     "//platform/util",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -48,6 +49,7 @@ jvm_library(
     "//platform/execution:execution_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//platform/util:util_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.serviceView.backend` end

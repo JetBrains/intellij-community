@@ -10,6 +10,7 @@ import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorFromXmlStr
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.pluginSystem.parser.impl.XIncludeLoader
 import com.intellij.platform.pluginSystem.parser.impl.consume
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.parser.impl.isV2ModulePath
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
@@ -63,6 +64,7 @@ class ClassPathXmlPathResolver(
         isRunningFromSourcesWithoutDevBuild && isV2ModulePath(path) && dataLoader.emptyDescriptorIfCannotResolve -> {
           log.trace("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). ")
           return PluginDescriptorBuilder.builder().apply {
+            visibility = ModuleVisibilityValue.PUBLIC
             `package` = "unresolved.$moduleId"
           }
         }
@@ -70,6 +72,7 @@ class ClassPathXmlPathResolver(
           // this check won't be needed when we are able to load optional modules directly from product-modules.xml
           log.debug { "Skip module '$path' since its descriptor cannot be found and it's optional" }
           return PluginDescriptorBuilder.builder().apply {
+            visibility = ModuleVisibilityValue.PUBLIC
             `package` = "unresolved.$moduleId"
           }
         }

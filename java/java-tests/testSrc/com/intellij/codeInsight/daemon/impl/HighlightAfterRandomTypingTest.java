@@ -2,7 +2,6 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.ProductionLightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
@@ -223,7 +222,6 @@ class X {
         String newText = StringUtil.join(infos, info->text(info), "\n");
         if (!oldText.equals(newText)) {
           List<HighlightInfo> infos1 = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
-          int size1 = infos1.size();
         }
         assertEquals(seed+"",oldText, newText);
         assertEquals(infos.toString(), oldWarningSize, infos.size());
@@ -501,7 +499,7 @@ class X {
       List<HighlightInfo> infos = doHighlightAndSort(seed);
       String after = typeAndCheck(seed, num - 1, random, infos);
     });
-    TextRange textRange = FileStatusMap.getDirtyTextRange(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
+    
     List<HighlightInfo> after = doHighlightAndSort(seed);
     String afterText = StringUtil.join(after, h -> text(h), "\n");
     if (!initInfoText.equals(afterText)) {

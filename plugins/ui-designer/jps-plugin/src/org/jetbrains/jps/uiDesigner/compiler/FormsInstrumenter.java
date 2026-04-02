@@ -16,7 +16,7 @@ import com.intellij.uiDesigner.compiler.UIDesignerException;
 import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
+import com.intellij.uiDesigner.lw.AsmClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
@@ -174,7 +174,7 @@ public final class FormsInstrumenter extends ModuleLevelBuilder implements JvmCl
       final LwRootContainer rootContainer;
       try {
         rootContainer = Utils.getRootContainer(
-          formFile.toUri().toURL(), new CompiledClassPropertiesProvider( finder.getLoader())
+          formFile.toUri().toURL(), new AsmClassPropertiesProvider(finder)
         );
       }
       catch (AlienFormFileException e) {

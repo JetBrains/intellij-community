@@ -28,7 +28,13 @@ import kotlin.reflect.jvm.javaMethod
  * @return commandline to run MCP stdio transport process
  */
 fun createStdioMcpServerCommandLine(ideServerPort: Int, projectBasePath: String?, authToken: Pair<String, String>? = null): GeneralCommandLine {
-  val launcher = Restarter.getIdeStarter()
+  // Some test runtimes do not expose an IDE launcher path; fall back to the Java entrypoint in that case.
+  val launcher = try {
+    Restarter.getIdeStarter()
+  }
+  catch (_: RuntimeException) {
+    null
+  }
   val commandLine = if (launcher != null) {
     GeneralCommandLine(launcher.pathString, "stdioMcpServer")
   }

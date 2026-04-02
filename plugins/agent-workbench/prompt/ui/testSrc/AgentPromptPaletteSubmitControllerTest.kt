@@ -3,8 +3,13 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeSummary
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
@@ -34,8 +39,8 @@ class AgentPromptPaletteSubmitControllerTest {
         project = project,
         launcherProvider = {
           object : AgentPromptLauncherBridge {
-            override fun launch(request: com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest) =
-              com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult.SUCCESS
+            override fun launch(request: AgentPromptLaunchRequest) =
+              AgentPromptLaunchResult.SUCCESS
 
             override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
           }
@@ -65,9 +70,63 @@ class AgentPromptPaletteSubmitControllerTest {
     }
   }
 
+  @Test
+  fun submitStripsContextForClaudeMenuPrompt() {
+    runInEdtAndWait {
+      val project = ProjectManager.getInstance().defaultProject
+      var capturedRequest: AgentPromptLaunchRequest? = null
+      var resolveContextSelectionCalls = 0
+      val contextItem = AgentPromptContextItem(
+        rendererId = AgentPromptContextRendererIds.PATHS,
+        title = "Project Selection",
+        body = "file: /tmp/demo.kt",
+        source = "projectView",
+      )
+      val fixture = createFixture(
+        project = project,
+        launcherProvider = {
+          object : AgentPromptLauncherBridge {
+            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+              capturedRequest = request
+              return AgentPromptLaunchResult.SUCCESS
+            }
+
+            override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
+          }
+        },
+        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.CLAUDE)) },
+        buildVisibleContextEntries = { listOf(ContextEntry(contextItem)) },
+        resolveContextSelection = { _, _ ->
+          resolveContextSelectionCalls += 1
+          AgentPromptPaletteContextSelection(listOf(contextItem), AgentPromptContextEnvelopeSummary())
+        },
+      )
+      fixture.providerSelector.refresh()
+      fixture.providerSelector.selectProvider(AgentSessionProvider.CLAUDE)
+      fixture.promptArea.text = "/mcp"
+      fixture.launchState.selectedWorkingProjectPath = "/repo"
+      fixture.existingTaskController.selectedExistingTaskId = "thread-1"
+
+      fixture.controller.submit()
+
+      assertThat(resolveContextSelectionCalls).isZero()
+      assertThat(capturedRequest).isNotNull
+      val request = checkNotNull(capturedRequest)
+      assertThat(request.provider).isEqualTo(AgentSessionProvider.CLAUDE)
+      assertThat(request.initialMessageRequest.prompt).isEqualTo("/mcp")
+      assertThat(request.initialMessageRequest.contextItems).isEmpty()
+      assertThat(request.initialMessageRequest.contextEnvelopeSummary).isNull()
+    }
+  }
+
   private fun createFixture(
     project: com.intellij.openapi.project.Project,
     launcherProvider: () -> AgentPromptLauncherBridge? = { null },
+    providersProvider: () -> List<AgentSessionProviderDescriptor> = { listOf(testProviderBridge()) },
+    buildVisibleContextEntries: () -> List<ContextEntry> = { emptyList() },
+    resolveContextSelection: (List<AgentPromptContextItem>, String?) -> AgentPromptPaletteContextSelection? = { _, _ ->
+      AgentPromptPaletteContextSelection(emptyList(), AgentPromptContextEnvelopeSummary())
+    },
   ): SubmitControllerFixture {
     val promptArea = EditorTextField()
     val providerSelector = AgentPromptProviderSelector(
@@ -80,7 +139,7 @@ class AgentPromptPaletteSubmitControllerTest {
       ),
       providerIconLabel = JBLabel(),
       providerOptionsPanel = JPanel(),
-      providersProvider = { listOf(testProviderBridge()) },
+      providersProvider = providersProvider,
       sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptPaletteSubmitControllerTest::class.java.classLoader),
     )
     val existingTaskController = AgentPromptExistingTaskController(
@@ -107,8 +166,8 @@ class AgentPromptPaletteSubmitControllerTest {
       launchState = launchState,
       currentTargetMode = { PromptTargetMode.EXISTING_TASK },
       activeExtensionTab = { null },
-      buildVisibleContextEntries = { emptyList() },
-      resolveContextSelection = { _, _ -> AgentPromptPaletteContextSelection(emptyList(), com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeSummary()) },
+      buildVisibleContextEntries = buildVisibleContextEntries,
+      resolveContextSelection = resolveContextSelection,
       onWorkingProjectPathSelected = {},
       onSubmitBlocked = {},
       onSubmitSucceeded = {},
@@ -116,10 +175,10 @@ class AgentPromptPaletteSubmitControllerTest {
     return SubmitControllerFixture(controller, promptArea, providerSelector, existingTaskController, launchState)
   }
 
-  private fun testProviderBridge(): AgentSessionProviderDescriptor {
+  private fun testProviderBridge(provider: AgentSessionProvider = AgentSessionProvider.CODEX): AgentSessionProviderDescriptor {
     return object : AgentSessionProviderDescriptor {
-      override val provider: AgentSessionProvider = AgentSessionProvider.CODEX
-      override val displayNameKey: String = "provider.codex"
+      override val provider: AgentSessionProvider = provider
+      override val displayNameKey: String = if (provider == AgentSessionProvider.CLAUDE) "provider.claude" else "provider.codex"
       override val newSessionLabelKey: String = displayNameKey
       override val sessionSource: AgentSessionSource
         get() = error("Not required for this test")

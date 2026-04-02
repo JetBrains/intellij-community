@@ -13,8 +13,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":caffeine_resources"],
-  exports = ["@lib//:caffeine"],
-  runtime_deps = ["@lib//:caffeine"]
+  exports = ["@lib//:libraries-caffeine-caffeine"],
+  runtime_deps = ["@lib//:libraries-caffeine-caffeine"]
 )
 
 jvm_library(
@@ -23,7 +23,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:caffeine"],
+  exports = ["@lib//:libraries-caffeine-caffeine"],
   runtime_deps = [":caffeine"]
 )
 ### auto-generated section `build intellij.libraries.caffeine` end

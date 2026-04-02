@@ -32,6 +32,7 @@ class JavaLexer(level: LanguageLevel) : Lexer {
     myTokenType = null
     myTokenEndOffset = startOffset
     mySymbolLength = 1
+    myStateStack.clear()
     myStateStack.push(initialState)
     myFlexLexer.reset(myBuffer, startOffset, endOffset, 0)
   }

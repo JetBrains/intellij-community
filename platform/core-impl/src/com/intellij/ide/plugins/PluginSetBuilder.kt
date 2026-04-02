@@ -282,7 +282,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       }
       ModuleVisibility.PRIVATE -> {
         if (sourceModule.pluginId == targetModule.pluginId) null
-        else "it depends on module '${targetModule.contentModuleName}' which private visibility in '${targetModule.pluginId}' plugin"
+        else "it depends on module '${targetModule.contentModuleName}' which has private visibility in '${targetModule.pluginId}' plugin"
       }
     }
     if (errorMessage == null) {
@@ -417,7 +417,7 @@ private val pluginModuleVisibilityCheck by lazy {
     "warning" -> PluginModuleVisibilityCheckOption.REPORT_WARNING
     "error" -> PluginModuleVisibilityCheckOption.REPORT_ERROR
     "disabled" -> PluginModuleVisibilityCheckOption.DISABLED
-    else -> PluginModuleVisibilityCheckOption.REPORT_WARNING
+    else -> PluginModuleVisibilityCheckOption.REPORT_ERROR
   }
 }
 

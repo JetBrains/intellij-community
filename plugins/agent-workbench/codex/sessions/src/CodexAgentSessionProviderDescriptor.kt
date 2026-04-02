@@ -18,6 +18,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSp
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.agent.workbench.sessions.core.providers.buildPlanModeInitialMessagePlan
 import com.intellij.openapi.components.serviceAsync
 import javax.swing.Icon
@@ -87,6 +89,16 @@ internal class CodexAgentSessionProviderDescriptor(
 
   override val supportsPlanMode: Boolean
     get() = true
+
+  override val threadRenameHandler: AgentThreadRenameHandler = object : AgentThreadRenameHandler.Backend {
+    override val supportedContexts: Set<AgentThreadRenameContext>
+      get() = setOf(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
+
+    override suspend fun execute(path: String, threadId: String, normalizedName: String): Boolean {
+      serviceAsync<SharedCodexAppServerService>().setThreadName(threadId, normalizedName)
+      return true
+    }
+  }
 
   override fun isCliAvailable(): Boolean = CodexCliUtils.findExecutable() != null
 

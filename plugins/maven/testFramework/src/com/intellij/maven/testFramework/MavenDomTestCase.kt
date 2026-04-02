@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -526,9 +526,9 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     }
   }
 
-  protected suspend fun assertRenameResult(value: String, expectedXml: String?) {
+  protected suspend fun assertRenameResult(value: String, expectedXml: String?, omitModelVersionTag: Boolean = false) {
     doRename(projectPom, value)
-    assertEquals(createPomXml(expectedXml), getTestPsiFile(projectPom).text)
+    assertEquals(createPomXml(expectedXml, omitModelVersionTag), getTestPsiFile(projectPom).text)
   }
 
   protected suspend fun doRename(f: VirtualFile, value: String) {

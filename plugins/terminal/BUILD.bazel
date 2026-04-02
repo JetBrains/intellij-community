@@ -70,6 +70,7 @@ jvm_library(
     "//platform/remote-topics/shared:rpc-topics",
     "//libraries/fastutil",
     "//platform/util:util-ui",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -133,6 +134,7 @@ jvm_library(
     "//platform/remote-topics/shared:rpc-topics_test_lib",
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/util:util-ui_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.terminal` end

@@ -38,6 +38,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/execution.serviceView",
     "//platform/util:util-ui",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -71,6 +72,7 @@ jvm_library(
     "//platform/util/coroutines:coroutines_test_lib",
     "//platform/execution.serviceView:execution.serviceView_test_lib",
     "//platform/util:util-ui_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.dashboard.backend` end

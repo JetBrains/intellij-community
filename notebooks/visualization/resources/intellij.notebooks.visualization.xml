@@ -1,8 +1,11 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <module name="intellij.notebooks.ui"/>
     <plugin id="org.intellij.plugins.markdown"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.markdown"/>
     <module name="intellij.notebooks.jupyter.core"/>
+    <module name="intellij.notebooks.ui"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>

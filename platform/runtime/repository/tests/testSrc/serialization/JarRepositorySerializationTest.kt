@@ -50,7 +50,7 @@ class JarRepositorySerializationTest {
   fun `two modules`() {
     check(listOf(
       create(raw("ij.platform.util.rt", "custom"), listOf("ij-util-rt.jar"), emptyList()),
-      create(raw("ij.platform.util"), RuntimeModuleVisibility.INTERNAL, emptyList(), listOf(raw("ij.platform.util.rt", "custom"))),
+      create(raw("ij.platform.util", "jetbrains"), RuntimeModuleVisibility.INTERNAL, emptyList(), listOf(raw("ij.platform.util.rt", "custom"))),
     )) {
       xml("ij.platform.util.xml", """
           <module name="ij.platform.util" namespace="jetbrains" visibility="internal">
@@ -128,13 +128,13 @@ class JarRepositorySerializationTest {
     )
     val pluginHeader = RawRuntimePluginHeader.create(
       "plugin.id",
-      raw("ij.plugin"),
+      raw("ij.plugin", "jetbrains"),
       listOf(
-        RawIncludedRuntimeModule(raw("ij.optional"), RuntimeModuleLoadingRule.OPTIONAL, null),
-        RawIncludedRuntimeModule(raw("ij.required"), RuntimeModuleLoadingRule.REQUIRED, null),
-        RawIncludedRuntimeModule(raw("ij.embedded"), RuntimeModuleLoadingRule.EMBEDDED, null),
-        RawIncludedRuntimeModule(raw("ij.on_demand"), RuntimeModuleLoadingRule.ON_DEMAND, null),
-        RawIncludedRuntimeModule(raw("ij.required.backend"), RuntimeModuleLoadingRule.OPTIONAL, raw("intellij.platform.backend")),
+        RawIncludedRuntimeModule(raw("ij.optional", "jetbrains"), RuntimeModuleLoadingRule.OPTIONAL, null),
+        RawIncludedRuntimeModule(raw("ij.required", "jetbrains"), RuntimeModuleLoadingRule.REQUIRED, null),
+        RawIncludedRuntimeModule(raw("ij.embedded", "jetbrains"), RuntimeModuleLoadingRule.EMBEDDED, null),
+        RawIncludedRuntimeModule(raw("ij.on_demand", "jetbrains"), RuntimeModuleLoadingRule.ON_DEMAND, null),
+        RawIncludedRuntimeModule(raw("ij.required.backend", "jetbrains"), RuntimeModuleLoadingRule.OPTIONAL, raw("intellij.platform.backend", "jetbrains")),
       )
     )
     check(descriptors, listOf(pluginHeader)) {

@@ -59,6 +59,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : AbstractKotlinInspection(
 
     final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
         callExpressionVisitor(fun(callExpression: KtCallExpression) {
+            if (holder.file !is KtFile) return
             if (!isEnumValuesSoftDeprecateEnabled(holder.file as KtFile)) return
             if (!isDeprecatedExpression(callExpression)) return
 

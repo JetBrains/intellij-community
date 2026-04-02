@@ -6243,6 +6243,21 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/convertLambdaToReference/backtickWithBuck.kt");
             }
 
+            @TestMetadata("caretInsideBodyExplicitSignature.kt")
+            public void testCaretInsideBodyExplicitSignature() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/caretInsideBodyExplicitSignature.kt");
+            }
+
+            @TestMetadata("caretInsideBodyWithArrow.kt")
+            public void testCaretInsideBodyWithArrow() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/caretInsideBodyWithArrow.kt");
+            }
+
+            @TestMetadata("caretInsideBodyWithoutArrow.kt")
+            public void testCaretInsideBodyWithoutArrow() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/caretInsideBodyWithoutArrow.kt");
+            }
+
             @TestMetadata("classReference.kt")
             public void testClassReference() throws Exception {
                 runTest("testData/intentions/convertLambdaToReference/classReference.kt");

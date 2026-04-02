@@ -1,7 +1,10 @@
 <idea-plugin package="com.intellij.toml.grazie">
     <dependencies>
-        <plugin id="tanvd.grazi"/>
-        <module name="intellij.toml.core"/>
+      <plugin id="tanvd.grazi"/>
+      <module name="intellij.toml.core"/>
+      <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+      <module name="intellij.grazie.core"/>
+      <!-- endregion -->
     </dependencies>
 
     <extensions defaultExtensionNs="com.intellij.grazie">

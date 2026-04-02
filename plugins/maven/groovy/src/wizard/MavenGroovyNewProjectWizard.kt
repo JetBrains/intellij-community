@@ -15,6 +15,7 @@ import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.DistributionInfo
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.BottomGap
@@ -25,8 +26,8 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.whenItemSelectedFromUi
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ValidationInfoBuilder
-import com.intellij.util.asSafely
 import com.intellij.util.download.DownloadableFileSetVersions
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -40,16 +41,14 @@ import org.jetbrains.plugins.groovy.config.wizard.logGroovySdkChanged
 import org.jetbrains.plugins.groovy.config.wizard.logGroovySdkFinished
 import org.jetbrains.plugins.groovy.config.wizard.moveUnstableVersionToTheEnd
 import org.jetbrains.plugins.groovy.config.wizard.withGroovySampleCode
-import java.awt.Component
 import javax.swing.ComboBoxModel
-import javax.swing.DefaultListCellRenderer
-import javax.swing.JList
 import javax.swing.SwingUtilities
 
 class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
-  override val name = MAVEN
 
-  override val ordinal = 100
+  override val name: @NlsContexts.Label String = MAVEN
+
+  override val ordinal: Int = 100
 
   override fun createStep(parent: GroovyNewProjectWizard.Step): NewProjectWizardStep =
     Step(parent)
@@ -66,7 +65,9 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
     private fun setupGroovySdkUI(builder: Panel) {
       builder.row(GroovyBundle.message("label.groovy.sdk")) {
-        comboBox(getInitializedModel(), fallbackAwareRenderer)
+        comboBox(getInitializedModel(), textListCellRenderer {
+          it?.getVersion() ?: GROOVY_SDK_FALLBACK_VERSION
+        })
           .columns(COLUMNS_MEDIUM)
           .bindItem(groovySdkProperty)
           .validationOnInput { validateGroovySdk(groovySdk) }
@@ -109,17 +110,6 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         return warning(GroovyBundle.message("new.project.wizard.groovy.retrieving.has.failed"))
       }
       return null
-    }
-
-    private val fallbackAwareRenderer: DefaultListCellRenderer = object : DefaultListCellRenderer() {
-      override fun getListCellRendererComponent(list: JList<*>?,
-                                                value: Any?,
-                                                index: Int,
-                                                isSelected: Boolean,
-                                                cellHasFocus: Boolean): Component {
-        val representation = value.asSafely<DistributionInfo>()?.getVersion() ?: GROOVY_SDK_FALLBACK_VERSION // NON-NLS
-        return super.getListCellRendererComponent(list, representation, index, isSelected, cellHasFocus)
-      }
     }
 
     private fun getInitializedModel(): ComboBoxModel<DistributionInfo?> {

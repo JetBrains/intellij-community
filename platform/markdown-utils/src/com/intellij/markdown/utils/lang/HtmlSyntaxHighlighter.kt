@@ -2,7 +2,9 @@
 package com.intellij.markdown.utils.lang
 
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -22,7 +24,9 @@ interface HtmlSyntaxHighlighter {
                      text: String,
                      collector: (String, IntRange, Color?) -> Unit) {
       val file = LightVirtualFile("markdown_temp", text)
-      val highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file)
+      val highlighter = ReadAction.nonBlocking<SyntaxHighlighter> {
+        SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file)
+      }.executeSynchronously()
       val colorScheme = EditorColorsManager.getInstance().globalScheme
 
       val lexer = highlighter.highlightingLexer

@@ -5,7 +5,9 @@
     <plugin id="com.intellij.modules.kotlin.k2"/>
     <module name="intellij.gradle.java"/>
     <module name="intellij.gradle.java.toml"/>
+    <module name="intellij.java.psi.impl"/>
     <module name="intellij.kotlin.gradle.codeInsight.toml"/>
+    <module name="intellij.toml.core"/>
   </dependencies>
   <!-- endregion -->
 

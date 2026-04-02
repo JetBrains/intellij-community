@@ -37,6 +37,7 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/platform-frontend:frontend",
     "//platform/util",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -69,6 +70,7 @@ jvm_library(
     "//platform/kernel/shared:kernel_test_lib",
     "//platform/platform-frontend:frontend_test_lib",
     "//platform/util:util_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.dashboard.frontend` end

@@ -8,6 +8,8 @@ load("//:rules/resource.bzl", "ResourceGroupInfo")
 
 visibility("public")
 
+USE_RULES_KOTLIN_BACKEND = False
+
 def _jvm_library(ctx):
     if ctx.attr.neverlink and ctx.attr.runtime_deps:
         fail("runtime_deps and neverlink is nonsensical.", attr = "runtime_deps")
@@ -86,26 +88,6 @@ _jvm_library_jps = rule(
     cfg = jvm_platform_transition,
 )
 
-def _jvm_transition_copy_jar_impl(ctx):
-    output = ctx.actions.declare_file(ctx.attr.out)
-    ctx.actions.symlink(
-        output = output,
-        target_file = ctx.file.src,
-    )
-    return [DefaultInfo(files = depset([output]))]
-
-_jvm_transition_copy_jar = rule(
-    implementation = _jvm_transition_copy_jar_impl,
-    attrs = {
-        "src": attr.label(mandatory = True, allow_single_file = True),
-        "out": attr.string(mandatory = True),
-    },
-    cfg = jvm_platform_transition,
-)
-
-# Config setting labels for cross-repo select() compatibility.
-#_RULES_KOTLIN_ENABLED = Label("//:rules_kotlin_enabled")
-
 def jvm_library(
         name,
         srcs = [],
@@ -123,11 +105,9 @@ def jvm_library(
         data = [],
         visibility = None,
         tags = [],
+        use_rules_kotlin_backend = USE_RULES_KOTLIN_BACKEND,
         **kwargs):
-    """Macro that creates jvm_library with configurable backend.
-
-    By default uses JPS-based implementation (rules_jvm).
-    With --@rules_jvm//:use_rules_kotlin=True, uses rules_kotlin backend.
+    """Macro that creates jvm_library using the configured backend.
 
     Args:
         name: Target name
@@ -146,75 +126,49 @@ def jvm_library(
         data: Data files
         visibility: Target visibility
         tags: Target tags
-        **kwargs: Additional arguments passed to both backends
+        **kwargs: Additional arguments passed to the selected backend
     """
 
-    jps_name = name
-    #kt_name = "_%s__kt" % name
     effective_kotlinc_opts = kotlinc_opts if kotlinc_opts != None else Label("//:default-kotlinc-opts")
 
-    # JPS implementation (always created)
-    _jvm_library_jps(
-        name = jps_name,
-        srcs = srcs,
-        deps = deps,
-        exports = exports,
-        runtime_deps = runtime_deps,
-        resources = resources,
-        neverlink = neverlink,
-        plugins = plugins,
-        module_name = module_name,
-        kotlinc_opts = effective_kotlinc_opts,
-        javac_opts = javac_opts,
-        exported_compiler_plugins = exported_compiler_plugins,
-        associates = associates,
-        data = data,
-        visibility = visibility,
-        tags = tags,
-        **kwargs
-    )
-
-    # rules_kotlin implementation
-    # resourcegroup targets now also emit resource jars (DefaultInfo), so they can be forwarded via resource_jars.
-    #kt_jvm_library(
-    #    name = kt_name,
-    #    srcs = srcs,
-    #    deps = deps,
-    #    exports = exports,
-    #    runtime_deps = runtime_deps,
-    #    resource_jars = resources,
-    #    neverlink = neverlink,
-    #    plugins = plugins,
-    #    module_name = module_name,
-    #    kotlinc_opts = effective_kotlinc_opts,
-    #    javac_opts = javac_opts,
-    #    exported_compiler_plugins = exported_compiler_plugins,
-    #    associates = associates,
-    #    data = data,
-    #    visibility = ["//visibility:private"],
-    #    tags = tags + ["manual"],
-    #    **kwargs
-    #)
-
-    # In Bazel, it's impossible to conditionally create a target, so we always create both rules_jvm and rules_kotlin versions
-    # and expose either one based on the flag
-    #native.alias(
-    #    name = name,
-    #    actual = select({
-    #        _RULES_KOTLIN_ENABLED: ":" + kt_name,
-    #        "//conditions:default": ":" + jps_name,
-    #    }),
-    #    visibility = visibility,
-    #)
-
-    # Expose jar with canonical name so that "name.jar" works as a target (it was an implicit output in rules_jvm-only world)
-    #_jvm_transition_copy_jar(
-    #    name = name + ".jar",
-    #    src = select({
-    #        _RULES_KOTLIN_ENABLED: ":" + kt_name + ".jar",
-    #        "//conditions:default": ":" + jps_name + ".jar",
-    #    }),
-    #    out = name + ".jar",
-    #    visibility = visibility,
-    #    tags = tags + ["manual"],
-    #)
+    if use_rules_kotlin_backend:
+        # resourcegroup targets also emit resource jars (DefaultInfo), so they can be forwarded via resource_jars.
+        kt_jvm_library(
+            name = name,
+            srcs = srcs,
+            deps = deps,
+            exports = exports,
+            runtime_deps = runtime_deps,
+            resource_jars = resources,
+            neverlink = neverlink,
+            plugins = plugins,
+            module_name = module_name,
+            kotlinc_opts = effective_kotlinc_opts,
+            javac_opts = javac_opts,
+            exported_compiler_plugins = exported_compiler_plugins,
+            associates = associates,
+            data = data,
+            visibility = visibility,
+            tags = tags,
+            **kwargs
+        )
+    else:
+        _jvm_library_jps(
+            name = name,
+            srcs = srcs,
+            deps = deps,
+            exports = exports,
+            runtime_deps = runtime_deps,
+            resources = resources,
+            neverlink = neverlink,
+            plugins = plugins,
+            module_name = module_name,
+            kotlinc_opts = effective_kotlinc_opts,
+            javac_opts = javac_opts,
+            exported_compiler_plugins = exported_compiler_plugins,
+            associates = associates,
+            data = data,
+            visibility = visibility,
+            tags = tags,
+            **kwargs
+        )

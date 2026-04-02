@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.maven.testFramework.MavenTestCase
@@ -8,6 +8,7 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenUtil.containsDeclaredExtension
 import org.jetbrains.idea.maven.utils.MavenUtil.getRepositoryFromSettings
 import org.jetbrains.idea.maven.utils.MavenUtil.getVFileBaseDir
+import org.jetbrains.idea.maven.utils.MavenUtil.inferModelVersionFromNamespace
 import org.jetbrains.idea.maven.utils.MavenUtil.isMaven410
 import java.io.IOException
 import java.nio.charset.StandardCharsets
@@ -221,4 +222,25 @@ class MavenUtilTest : MavenTestCase() {
         val subDir1 = createProjectSubDir("sub/dir1")
         assertEquals(subDir1, getVFileBaseDir(subDir1))
     }
+
+  fun testInferModelVersionFromNamespace() {
+    // null namespace returns null
+    assertNull(inferModelVersionFromNamespace(null))
+
+    // non-Maven namespace returns null
+    assertNull(inferModelVersionFromNamespace("http://example.com/POM/4.0.0"))
+    assertNull(inferModelVersionFromNamespace(""))
+
+    // http scheme
+    assertEquals("4.0.0", inferModelVersionFromNamespace("http://maven.apache.org/POM/4.0.0"))
+    assertEquals("4.1.0", inferModelVersionFromNamespace("http://maven.apache.org/POM/4.1.0"))
+
+    // https scheme
+    assertEquals("4.0.0", inferModelVersionFromNamespace("https://maven.apache.org/POM/4.0.0"))
+    assertEquals("4.1.0", inferModelVersionFromNamespace("https://maven.apache.org/POM/4.1.0"))
+
+    // future versions
+    assertEquals("4.2.0", inferModelVersionFromNamespace("http://maven.apache.org/POM/4.2.0"))
+    assertEquals("5.0.0", inferModelVersionFromNamespace("https://maven.apache.org/POM/5.0.0"))
+  }
 }

@@ -51,7 +51,11 @@ class ModuleBasedPluginLayoutProvider(
     mainModulesOfBundledPlugins = productModules.bundledPluginModuleGroups.mapTo(HashSet()) { it.mainModule.moduleId.name }
     additionalModulesInBundledPlugins = productModules.bundledPluginModuleGroups.associateBy(
       { it.mainModule.moduleId.name },
-      { serviceModuleMapping.getAdditionalModules(it).mapNotNull { it.moduleId.name.takeUnless { it.startsWith(RuntimeModuleId.LIB_NAME_PREFIX) } } })
+      {
+        serviceModuleMapping.getAdditionalModules(it).mapNotNull { descriptor ->
+          descriptor.moduleId.name.takeUnless { descriptor.moduleId.namespace == RuntimeModuleId.LEGACY_JPS_LIBRARY_NAMESPACE }
+        }
+      })
   }
 
   private fun JpsModule.findProductionFile(relativePath: String): Path? = JpsJavaExtensionService.getInstance().findSourceFileInProductionRoots(this, relativePath)
@@ -73,8 +77,8 @@ class ModuleBasedPluginLayoutProvider(
 
     val mainGroupModules = embeddedModulesWithDependencies
       .asSequence()
+      .filterNot { it.moduleId.namespace == RuntimeModuleId.LEGACY_JPS_LIBRARY_NAMESPACE }
       .map { it.moduleId.name }
-      .filterNot { it.startsWith(RuntimeModuleId.LIB_NAME_PREFIX) }
       .mapNotNull {
         project.findModuleByName(it)
       }

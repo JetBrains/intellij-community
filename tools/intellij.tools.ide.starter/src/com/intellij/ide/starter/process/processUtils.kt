@@ -31,10 +31,12 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTimedValue
 
-suspend fun getProcessList(): List<ProcessInfo> =
+suspend fun getProcessList(processName: String? = null): List<ProcessInfo> =
   coroutineScope {
     val processes = withContext(Dispatchers.IO) {
-      SystemInfo().operatingSystem.getProcesses({ p -> p.state != OSProcess.State.INVALID }, null, 0)
+      SystemInfo().operatingSystem.getProcesses({ p ->
+        p.state != OSProcess.State.INVALID && (processName == null || p.name == processName)
+      }, null, 0)
     }
     processes
       .map { async { it.toProcessInfo() } }

@@ -45,4 +45,9 @@ public class StreamPostfixTemplate extends StringBasedPostfixTemplate implements
   protected PsiElement getElementToRemove(PsiElement expr) {
     return expr;
   }
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
 }

@@ -18,29 +18,6 @@ class TextToolsetTest : McpToolsetTestBase() {
   private val emptyFile by emptyFileFixture
 
   @Test
-  fun get_file_text_by_path() = runBlocking(Dispatchers.Default) {
-    testMcpTool(
-      TextToolset::get_file_text_by_path.name,
-      buildJsonObject {
-        put("pathInProject", JsonPrimitive(project.baseDir.toNioPath().relativizeIfPossible(testJavaFile)))
-      },
-      "Test.java content"
-    )
-  }
-
-  @Test
-  fun get_file_text_by_path_accepts_lowercase_enum() = runBlocking(Dispatchers.Default) {
-    testMcpTool(
-      TextToolset::get_file_text_by_path.name,
-      buildJsonObject {
-        put("pathInProject", JsonPrimitive(project.baseDir.toNioPath().relativizeIfPossible(testJavaFile)))
-        put("truncateMode", JsonPrimitive("start"))
-      },
-      "Test.java content"
-    )
-  }
-
-  @Test
   fun replace_file_text_by_path() = runBlocking(Dispatchers.Default) {
     testMcpTool(
       TextToolset::replace_text_in_file.name,

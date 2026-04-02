@@ -36,6 +36,7 @@ jvm_library(
     "//platform/scopes",
     "//platform/execution",
     "//platform/lang-api:lang",
+    "//fleet/rhizomedb",
   ],
   exports = ["//platform/lang-impl"]
 )
@@ -71,6 +72,7 @@ jvm_library(
     "//platform/scopes:scopes_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.searchEverywhere` end

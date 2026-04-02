@@ -13,7 +13,6 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.URI
 import java.nio.file.*
-import java.util.Collection
 
 /*
  * This file is a copy of community/build/jvm-rules/src/kotlin/kotlin-builder/OutputVirtualFile.kt but with a custom KotlinVirtualFileProvider
@@ -145,8 +144,7 @@ internal class OutputVirtualFile(
       ))
     }
 
-    @Suppress("UNCHECKED_CAST", "PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-    (result as Collection<OutputVirtualFile>).toArray(EMPTY_ARRAY) as Array<VirtualFile>
+    return@lazy result.toTypedArray<VirtualFile>()
   }
 
   private val pathAdapter by lazy {

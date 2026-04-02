@@ -2,12 +2,15 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInspection.options.OptionControllerProvider
 import com.intellij.facet.FacetManager
 import com.intellij.facet.impl.FacetUtil
-import com.intellij.ide.IdeEventQueue
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RepositoryLibraryType
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.modules
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -15,8 +18,14 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL_ARGUMENTS
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
@@ -25,6 +34,7 @@ import org.jetbrains.kotlin.idea.base.util.findLibrary
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.configuration.KotlinDependencyProvider
 import org.jetbrains.kotlin.idea.configuration.findApplicableConfigurator
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
@@ -36,9 +46,12 @@ import org.jetbrains.kotlin.idea.test.runAll
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.atomic.AtomicReference
 
 @RunWith(JUnit38ClassRunner::class)
 class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
+    override fun runInDispatchThread(): Boolean = false
+
     fun testModuleLanguageVersion() {
         configureRuntime("mockRuntime11")
         resetProjectSettings(LanguageVersion.KOTLIN_1_0)
@@ -104,19 +117,33 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         assertEquals(KotlinPluginLayout.standaloneCompilerVersion.artifactVersion, actualVersion?.artifactVersion)
     }
 
-    fun testAddKotlinReflect() {
-        // The configurator uses a stable Kotlin version which has kotlin-reflect available on maven-central
-        val configurator = findApplicableConfigurator(project.modules.first())
-        configurator.configure(project, emptyList())
-        myFixture.configureByText(
-            "foo.kt", """class Foo(val prop: Any) {
+    fun testAddKotlinReflect() = runBlocking {
+        runInEdtAndWait {
+            // The configurator uses a stable Kotlin version which has kotlin-reflect available on maven-central
+            val configurator = findApplicableConfigurator(project.modules.first())
+            configurator.configure(project, emptyList())
+            myFixture.configureByText(
+                "foo.kt", """class Foo(val prop: Any) {
                 fun func() {}
             }
 
             fun y01() = Foo::prop.gett<caret>er
             """
-        )
+            )
+        }
+
+        val kotlinDependencyProvider =
+            (OptionControllerProvider.EP_NAME.extensionList.firstOrNull { it.name() == "KotlinDependencyProvider" } as? KotlinDependencyProvider
+                ?: error("KotlinDependencyProvider is not found"))
+        val jobReference = AtomicReference<Job>()
+        kotlinDependencyProvider.jobReference = jobReference
         myFixture.launchAction(myFixture.findSingleIntention("Add 'kotlin-reflect.jar' to the classpath"))
+        jobReference.getAndSet(null)?.join()
+
+        withContext(Dispatchers.EDT) {
+            PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+        }
+
         var i = 0
         while (JarRepositoryManager.hasRunningTasks()) {
             Thread.sleep(100)
@@ -124,9 +151,9 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
                 error("Timeout error")
             }
         }
-        IdeEventQueue.getInstance().flushQueue()
+        val libraryOrderEntries = ModuleRootManager.getInstance(module).orderEntries.filterIsInstance<LibraryOrderEntry>()
         val kotlinRuntime = module.findLibrary { LibraryJarDescriptor.REFLECT_JAR.findExistingJar(it) != null }
-        assertNotNull(kotlinRuntime)
+        assertNotNull(libraryOrderEntries.joinToString { it.libraryName ?: "" }, kotlinRuntime)
         val sources = kotlinRuntime!!.getFiles(OrderRootType.SOURCES)
         assertContainsElements(
             sources.map { it.name },

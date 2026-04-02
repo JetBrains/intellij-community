@@ -78,7 +78,11 @@ internal class EditorCellActionsToolbarController(
     editor.notebookEditor.cellAddToolbarShown.afterDistinctChange(this) {
       updateToolbarVisibility()
     }
-    updateToolbarVisibility()
+
+    //Prevent StackOverflow
+    coroutineScope.launch(Dispatchers.EDT) {
+      updateToolbarVisibility()
+    }
   }
 
   /**

@@ -690,7 +690,7 @@ private class JUnitMalformedSignatureVisitor(
     if (!declaration.isParameterizedTest()) return
     val javaPsi = declaration.javaPsi as? PsiModifierListOwner ?: return
     if (declaration is UClass && javaPsi.hasModifierProperty(PsiModifier.ABSTRACT)) return
-    val usedSourceAnnotations = MetaAnnotationUtil.findMetaAnnotations(javaPsi, SOURCE_ANNOTATIONS).toList()
+    val usedSourceAnnotations = MetaAnnotationUtil.findMetaAnnotationsInHierarchy(javaPsi, SOURCE_ANNOTATIONS).toList()
     checkConflictingSourceAnnotations(usedSourceAnnotations, declaration)
     if (declaration is UClass) checkConflictingConstructors(declaration)
     usedSourceAnnotations.forEach { annotation ->

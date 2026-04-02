@@ -41,7 +41,7 @@ public class JavaWithCastSurrounder extends JavaExpressionModCommandSurrounder {
   }
 
   @Override
-  protected void surroundExpression(@NotNull ActionContext context, @NotNull PsiExpression expr, @NotNull ModPsiUpdater updater) {
+  public void surroundExpression(@NotNull ActionContext context, @NotNull PsiExpression expr, @NotNull ModPsiUpdater updater) {
     Project project = context.project();
     PsiType[] types =
       DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> GuessManager.getInstance(project).guessTypeToCast(expr));

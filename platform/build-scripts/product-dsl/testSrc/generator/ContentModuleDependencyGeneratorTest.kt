@@ -620,8 +620,8 @@ class ContentModuleDependencyGeneratorTest {
   /**
    * Tests for globally embedded module filtering.
    *
-   * Globally embedded modules (in EMBEDDED sources across all relevant products,
-   * including bundled plugin content) are skipped when generating dependencies for content modules
+   * Globally embedded modules (in EMBEDDED product/module-set sources across all relevant products)
+   * are skipped when generating dependencies for content modules
    * that are in plugins.
    * Content modules directly in products DO include embedded module dependencies.
    */
@@ -654,7 +654,7 @@ class ContentModuleDependencyGeneratorTest {
             moduleSet("essential") {
               module(
                 "intellij.platform.core",
-                com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+                ModuleLoadingRuleValue.EMBEDDED
               )
             }
           }
@@ -793,7 +793,7 @@ class ContentModuleDependencyGeneratorTest {
             moduleSet("essential") {
               module(
                 "intellij.platform.core",
-                com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+                ModuleLoadingRuleValue.EMBEDDED
               )
             }
           }
@@ -826,7 +826,7 @@ class ContentModuleDependencyGeneratorTest {
           plugin("intellij.core.plugin") {
             content(
               "intellij.platform.core",
-              com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+              ModuleLoadingRuleValue.EMBEDDED
             )
           }
 
@@ -840,7 +840,7 @@ class ContentModuleDependencyGeneratorTest {
             moduleSet("essential") {
               module(
                 "intellij.platform.core",
-                com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+                ModuleLoadingRuleValue.EMBEDDED
               )
             }
           }
@@ -879,7 +879,7 @@ class ContentModuleDependencyGeneratorTest {
             moduleSet("essential") {
               module(
                 "intellij.platform.core",
-                com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+                ModuleLoadingRuleValue.EMBEDDED
               )
             }
             moduleSet("shared.set") {
@@ -925,7 +925,7 @@ class ContentModuleDependencyGeneratorTest {
             moduleSet("client.set") {
               module(
                 "intellij.platform.frontend.split",
-                com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+                ModuleLoadingRuleValue.EMBEDDED
               )
             }
           }
@@ -968,7 +968,7 @@ class ContentModuleDependencyGeneratorTest {
             moduleSet("client.set") {
               module(
                 "intellij.platform.frontend.split",
-                com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+                ModuleLoadingRuleValue.EMBEDDED
               )
             }
           }
@@ -986,7 +986,7 @@ class ContentModuleDependencyGeneratorTest {
     }
 
     @Test
-    fun `content module in plugin skips dependency when only CodeServer misses bundled owner`(@TempDir tempDir: Path) {
+    fun `content module in plugin keeps dependency when only bundled owner plugin provides target`(@TempDir tempDir: Path) {
       runBlocking(Dispatchers.Default) {
         val setup = pluginTestSetup(tempDir) {
           contentModule("intellij.platform.ide.impl") {
@@ -1001,7 +1001,7 @@ class ContentModuleDependencyGeneratorTest {
           plugin("intellij.platform.owner") {
             content(
               "intellij.platform.ide.impl",
-              com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+              ModuleLoadingRuleValue.EMBEDDED
             )
           }
 
@@ -1025,8 +1025,8 @@ class ContentModuleDependencyGeneratorTest {
           .single { it.contentModuleName == ContentModuleName("intellij.my.feature") }
 
         assertThat(contentResult.writtenDependencies)
-          .describedAs("CodeServer must be excluded from embedded-check scope")
-          .doesNotContain(ContentModuleName("intellij.platform.ide.impl"))
+          .describedAs("Bundled plugin content alone does not make the target globally embedded")
+          .contains(ContentModuleName("intellij.platform.ide.impl"))
       }
     }
 
@@ -1052,7 +1052,7 @@ class ContentModuleDependencyGeneratorTest {
             moduleSet("essential") {
               module(
                 "intellij.platform.core",
-                com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED
+                ModuleLoadingRuleValue.EMBEDDED
               )
             }
           }
@@ -1141,7 +1141,7 @@ class ContentModuleDependencyGeneratorTest {
               // REQUIRED loading, not EMBEDDED
               module(
                 "intellij.platform.optional",
-                com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.REQUIRED
+                ModuleLoadingRuleValue.REQUIRED
               )
             }
           }

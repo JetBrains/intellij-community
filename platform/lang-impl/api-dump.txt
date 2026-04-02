@@ -466,6 +466,11 @@ f:com.intellij.codeInsight.template.impl.ListTemplatesHandler
 - s:filterTemplatesByPrefix(java.util.Collection,com.intellij.openapi.editor.Document,I,Z,Z):java.util.Map
 f:com.intellij.codeInsight.template.impl.TemplateManagerImpl
 - s:updateTemplate(com.intellij.codeInsight.template.impl.TemplateImpl,com.intellij.modcommand.ModPsiUpdater):V
+c:com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement
+- com.intellij.codeInsight.lookup.LookupElementCustomPreviewHolder
+c:com.intellij.codeInsight.template.postfix.templates.ParenthesizedPostfixTemplate
+c:com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate
+- s:positiveOffset(I):I
 com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector
 - a:getExpressions(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document,I):java.util.List
 - a:getRenderer():com.intellij.util.Function
@@ -481,6 +486,11 @@ com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 - a:preExpand(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - readExternalTemplate(java.lang.String,java.lang.String,org.jdom.Element):com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 - writeExternalTemplate(com.intellij.codeInsight.template.postfix.templates.PostfixTemplate,org.jdom.Element):V
+a:com.intellij.codeInsight.template.postfix.templates.PostfixTemplateWithExpressionSelector
+f:com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils
+- s:computeKeyRange(com.intellij.modcommand.ActionContext,java.lang.String,java.lang.String):com.intellij.openapi.util.TextRange
+a:com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
+a:com.intellij.codeInsight.template.postfix.templates.editable.EditablePostfixTemplate
 com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor
 - com.intellij.openapi.Disposable
 - a:createTemplate(java.lang.String,java.lang.String):com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
@@ -771,6 +781,10 @@ f:com.intellij.ide.hierarchy.HierarchyBrowserScopes
 - sf:SCOPE_PROJECT:java.lang.String
 - sf:SCOPE_TEST:java.lang.String
 - <init>():V
+com.intellij.ide.hierarchy.ReferenceAwareNodeDescriptor
+- a:getEnclosingElement():com.intellij.psi.PsiElement
+- a:getPresentation():java.lang.String
+- a:getReferences():java.util.List
 com.intellij.ide.highlighter.custom.CustomHighlighterColors
 - sf:CUSTOM_INVALID_STRING_ESCAPE:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:CUSTOM_KEYWORD1_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey

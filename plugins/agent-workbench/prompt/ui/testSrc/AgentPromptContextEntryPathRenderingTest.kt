@@ -91,7 +91,7 @@ class AgentPromptContextEntryPathRenderingTest {
   }
 
   @Test
-  fun pathsChipKeepsPrefixAndShortensPath() {
+  fun pathsChipUsesShortenedPathWithoutPrefix() {
     val home = systemPath(SystemProperties.getUserHome())
     val projectBasePath = systemPath("$home/agent-workbench-project-paths")
     val selectedDirectory = systemPath("$projectBasePath/subdir")
@@ -103,7 +103,7 @@ class AgentPromptContextEntryPathRenderingTest {
       projectBasePath = projectBasePath,
     )
 
-    assertThat(entry.displayText).isEqualTo("Paths: subdir")
+    assertThat(entry.displayText).isEqualTo("subdir")
     assertThat(entry.tooltipText).isEqualTo("path: $selectedDirectory")
   }
 
@@ -123,8 +123,20 @@ class AgentPromptContextEntryPathRenderingTest {
     )
 
     assertThat(expected).contains("…")
-    assertThat(entry.displayText).isEqualTo("Paths: $expected")
+    assertThat(entry.displayText).isEqualTo(expected)
     assertThat(entry.displayText).doesNotEndWith("…")
+  }
+
+  @Test
+  fun pathsChipFallsBackToTitleWhenNoPathPreviewExists() {
+    val entry = contextEntry(
+      rendererId = AgentPromptContextRendererIds.PATHS,
+      title = "Paths",
+      body = "",
+      projectBasePath = null,
+    )
+
+    assertThat(entry.displayText).isEqualTo("Paths")
   }
 
   @Test

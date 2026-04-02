@@ -163,10 +163,12 @@
     <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesRenameActionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesGoToDeclarationOrUsagesActionCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesFormatCodeCompletionCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesMoveLineUpCommandProvider" order="last"/>
-    <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesMoveLineDownCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesMovePropertyUpCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="Properties" implementationClass="com.intellij.lang.properties.command.completion.PropertiesMovePropertyDownCommandProvider" order="last"/>
 
+    <statementUpDownMover implementation="com.intellij.lang.properties.editor.PropertiesStatementUpDownMover"/>
   </extensions>
+
   <projectListeners>
     <listener class="com.intellij.lang.properties.Native2AsciiListener" topic="com.intellij.openapi.vfs.encoding.EncodingManagerListener"/>
   </projectListeners>

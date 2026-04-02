@@ -43,4 +43,11 @@ public class WhileStatementPostfixTemplateTest extends PostfixTemplateTestCase {
   protected String getSuffix() {
     return "while";
   }
+
+  public static class ModWhileStatementPostfixTemplateTest extends WhileStatementPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

@@ -68,6 +68,7 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/execution",
     "//platform/lang-api:lang",
+    "//fleet/rhizomedb",
     "//platform/util:util-ui",
   ],
   exports = ["//platform/ui.jcef"]
@@ -137,6 +138,7 @@ jvm_library(
     "//platform/platform-impl/rpc:rpc_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
     "//platform/util:util-ui_test_lib",
   ]
 )

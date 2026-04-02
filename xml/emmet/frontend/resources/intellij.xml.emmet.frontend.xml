@@ -1,0 +1,14 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="fleet.rpc"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.xml.emmet"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.projectRemoteTopicListener
+      implementation="com.intellij.codeInsight.template.emmet.EmmetAbbreviationBalloonListener"/>
+  </extensions>
+</idea-plugin>

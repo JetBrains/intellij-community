@@ -91,7 +91,7 @@
     <projectService serviceInterface="com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory"
                     serviceImplementation="com.intellij.polySymbols.query.impl.PolySymbolQueryExecutorFactoryImpl"/>
 
-    <metaLanguage implementation="com.intellij.polySymbols.PolySymbolEnabledLanguage"/>
+    <metaLanguageProvider implementation="com.intellij.polySymbols.PolySymbolEnabledLanguage$Provider"/>
 
     <polySymbols.webTypes.filter
       name="match-prefix"

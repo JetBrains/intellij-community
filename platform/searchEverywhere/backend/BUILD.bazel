@@ -40,6 +40,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/progress/shared:ide-progress",
     "//platform/lang-api:lang",
+    "//fleet/rhizomedb",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -76,6 +77,7 @@ jvm_library(
     "//platform/ide-core:ide-core_test_lib",
     "//platform/progress/shared:ide-progress_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.searchEverywhere.backend` end

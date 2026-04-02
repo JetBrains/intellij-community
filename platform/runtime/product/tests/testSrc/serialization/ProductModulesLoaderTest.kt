@@ -5,9 +5,12 @@ import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.impl.ServiceModuleMapping
 import com.intellij.platform.runtime.repository.MalformedRepositoryException
 import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.RuntimeModuleId.DEFAULT_NAMESPACE
+import com.intellij.platform.runtime.repository.RuntimeModuleId.raw
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.createModuleDescriptor
 import com.intellij.platform.runtime.repository.createRepository
+import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor.create
 import com.intellij.platform.runtime.repository.writePluginXml
 import com.intellij.platform.runtime.repository.xml
 import com.intellij.testFramework.rules.TempDirectoryExtension
@@ -150,9 +153,9 @@ class ProductModulesLoaderTest {
     val notLoadedPlugin = productModules.notLoadedBundledPluginModules.entries.single()
     assertThat(notLoadedPlugin.key.name).isEqualTo("plugin")
     assertThat(notLoadedPlugin.value).containsExactly(
-      RuntimeModuleId.raw("plugin"),
-      RuntimeModuleId.raw("plugin.util"),
-      RuntimeModuleId.raw("unresolved.module"),
+      RuntimeModuleId.raw("plugin", RuntimeModuleId.DEFAULT_NAMESPACE),
+      RuntimeModuleId.raw("plugin.util", RuntimeModuleId.DEFAULT_NAMESPACE),
+      RuntimeModuleId.raw("unresolved.module", RuntimeModuleId.DEFAULT_NAMESPACE),
     )
   }
 
@@ -259,13 +262,16 @@ class ProductModulesLoaderTest {
   
   @Test
   fun `service module mapping`() {
+    val libraryId = RuntimeModuleId.projectLibrary("common")
     val repository = createRepository(
       tempDirectory.rootPath,
       createModuleDescriptor("root", listOf("root"), emptyList()),
       createModuleDescriptor("additional1", emptyList(), emptyList()),
-      createModuleDescriptor("lib.common", emptyList(), emptyList()),
-      createModuleDescriptor("plugin1", listOf("plugin1"), listOf("additional1", "lib.common")),
-      createModuleDescriptor("plugin2", listOf("plugin2"), listOf("lib.common")),
+      create(libraryId, emptyList(), emptyList()),
+      create(raw("plugin1", DEFAULT_NAMESPACE), listOf("plugin1"),
+             listOf(raw("additional1", DEFAULT_NAMESPACE), libraryId)),
+      create(raw("plugin2", DEFAULT_NAMESPACE), listOf("plugin2"),
+             listOf(libraryId)),
     )
     writePluginXmlWithModules(tempDirectory.rootPath.resolve("plugin1"), "plugin1")
     writePluginXmlWithModules(tempDirectory.rootPath.resolve("plugin2"), "plugin2")
@@ -277,8 +283,8 @@ class ProductModulesLoaderTest {
     val productModules = ProductModulesSerialization.loadProductModules(rootProductModulesPath.resolve(FILE_NAME), ProductMode.MONOLITH, repository)
     val (plugin1, plugin2) = productModules.bundledPluginModuleGroups
     val moduleMapping = ServiceModuleMapping.buildMapping(productModules)
-    assertEquals(listOf("additional1", "lib.common"), moduleMapping.getAdditionalModules(plugin1).map { it.moduleId.name})
-    assertEquals(listOf("lib.common"), moduleMapping.getAdditionalModules(plugin2).map { it.moduleId.name })
+    assertEquals(listOf("additional1", "common"), moduleMapping.getAdditionalModules(plugin1).map { it.moduleId.name})
+    assertEquals(listOf("common"), moduleMapping.getAdditionalModules(plugin2).map { it.moduleId.name })
   }
   
   @Test

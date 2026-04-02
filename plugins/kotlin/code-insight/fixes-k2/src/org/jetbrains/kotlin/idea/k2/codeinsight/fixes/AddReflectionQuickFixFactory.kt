@@ -19,13 +19,13 @@ internal object AddReflectionQuickFixFactory {
   private const val GROUP_ID = "org.jetbrains.kotlin"
   private const val ARTIFACT_ID = "kotlin-reflect"
 
-  val addReflectionQuickFixFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NoReflectionInClassPath ->
+  val addReflectionQuickFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoReflectionInClassPath ->
     val element = diagnostic.psi
-    val module = element.module ?: return@IntentionBased emptyList()
+    val module = element.module ?: return@ModCommandBased emptyList()
 
     val dependencyManager = KotlinBuildSystemDependencyManager.findApplicableConfigurator(module)
-      ?: return@IntentionBased emptyList()
-    if (dependencyManager.isProjectSyncPendingOrInProgress()) return@IntentionBased emptyList()
+      ?: return@ModCommandBased emptyList()
+    if (dependencyManager.isProjectSyncPendingOrInProgress()) return@ModCommandBased emptyList()
 
     val version = KotlinLibraryVersionProvider.EP_NAME.extensionList.firstNotNullOfOrNull {
       it.getVersion(module, GROUP_ID, ARTIFACT_ID)

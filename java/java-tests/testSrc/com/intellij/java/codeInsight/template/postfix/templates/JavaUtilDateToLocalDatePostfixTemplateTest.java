@@ -24,5 +24,12 @@ public class JavaUtilDateToLocalDatePostfixTemplateTest extends PostfixTemplateT
                          """);
     doTestCompletion("toLocalDate");
   }
+
+  public static class ModJavaUtilDateToLocalDatePostfixTemplateTest extends JavaUtilDateToLocalDatePostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }
 

@@ -37,6 +37,7 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/progress/shared:ide-progress",
     "//platform/project/shared:project",
+    "//fleet/rhizomedb",
   ],
   plugins = ["@lib//:compose-plugin"]
 )
@@ -74,6 +75,7 @@ jvm_library(
     "//platform/platform-impl/rpc:rpc_test_lib",
     "//platform/progress/shared:ide-progress_test_lib",
     "//platform/project/shared:project_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ],
   plugins = ["@lib//:compose-plugin"]
 )
@@ -140,6 +142,8 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/project/shared:project",
     "//platform/project/shared:project_test_lib",
+    "//fleet/rhizomedb",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ],
   runtime_deps = [
     ":ide-nonModalWelcomeScreen-tests",

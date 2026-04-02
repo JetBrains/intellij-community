@@ -19,6 +19,7 @@ import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.ui.AggregateResultsExporter;
 import com.intellij.codeInspection.ui.GlobalReportedProblemFilter;
+import com.intellij.codeInspection.ui.InspectionProblemAddedListener;
 import com.intellij.codeInspection.ui.ReportedProblemFilter;
 import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.configurationStore.JbXmlOutputter;
@@ -493,6 +494,17 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     else {
       addLocalInspectionProblem(refElement, descriptors);
     }
+
+    notifyProblemAddedListeners(descriptors);
+  }
+
+  private void notifyProblemAddedListeners(CommonProblemDescriptor @NotNull [] descriptors) {
+    if (descriptors.length == 0) {
+      return;
+    }
+    InspectionProblemAddedListener.EP_NAME.forEachExtensionSafe(listener -> {
+      listener.onProblemsAdded(myContext.getProject(), myToolWrapper, descriptors);
+    });
   }
 
   private void addLocalInspectionProblem(@NotNull RefEntity refElement, CommonProblemDescriptor @NotNull [] descriptors) {

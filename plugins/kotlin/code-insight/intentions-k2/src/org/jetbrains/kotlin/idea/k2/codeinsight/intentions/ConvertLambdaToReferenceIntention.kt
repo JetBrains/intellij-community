@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
+import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
@@ -111,6 +112,16 @@ internal class ConvertLambdaToReferenceIntention :
             else -> false
         }
     }
+
+    /**
+     * Overridden to not stop at [org.jetbrains.kotlin.psi.KtBlockExpression], making the intention available at any position
+     * inside lambda bodies.
+     * @see [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction.stopSearchAt]
+     */
+    override fun stopSearchAt(
+        element: PsiElement,
+        context: ActionContext,
+    ): Boolean = element is KtLambdaArgument
 
     @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtLambdaExpression): Context? {

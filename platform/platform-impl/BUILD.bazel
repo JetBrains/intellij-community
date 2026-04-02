@@ -163,6 +163,7 @@ jvm_library(
     "//platform/execution",
     "//libraries/rd/core",
     "//platform/forms_rt:java-guiForms-rt",
+    "//fleet/rhizomedb",
   ],
   exports = ["//platform/platform-api:ide"],
   runtime_deps = [
@@ -337,6 +338,7 @@ jvm_library(
     "//platform/execution:execution_test_lib",
     "//libraries/rd/core:core_test_lib",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.impl` end
@@ -374,6 +376,7 @@ jvm_library(
     "//platform/syntax/syntax-util:util",
     "//platform/syntax/syntax-tree:tree",
     "//platform/syntax/syntax-extensions:extensions",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -656,6 +659,7 @@ jvm_library(
     "//platform/platform-impl/concurrency:concurrency_test_lib",
     "//platform/platform-impl/recentProjects:recentProjects_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.impl.tests` end

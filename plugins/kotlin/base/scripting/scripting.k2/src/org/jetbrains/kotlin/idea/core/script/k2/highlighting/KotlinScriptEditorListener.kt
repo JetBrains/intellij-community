@@ -4,9 +4,10 @@ package org.jetbrains.kotlin.idea.core.script.k2.highlighting
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService
 
 class KotlinScriptEditorListener : FileEditorManagerListener {
     override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-        KotlinScriptResolutionService.getInstance(source.project).launchProcessing(file)
+        KotlinScriptService.getInstance(source.project).scheduleLoading(file)
     }
 }

@@ -26,7 +26,6 @@ WS_GUID: Final = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
 class WebSocketProtocol:
     transport: asyncio.Transport
-    reader: asyncio.StreamReader
     scope: _ScopeType
     app: _ASGIAppType
     log: GLogger
@@ -35,7 +34,7 @@ class WebSocketProtocol:
     close_code: int | None
     close_reason: str | None
 
-    def __init__(
-        self, transport: asyncio.Transport, reader: asyncio.StreamReader, scope: _ScopeType, app: _ASGIAppType, log: GLogger
-    ) -> None: ...
+    def __init__(self, transport: asyncio.Transport, scope: _ScopeType, app: _ASGIAppType, log: GLogger) -> None: ...
+    def feed_data(self, data: bytes) -> None: ...
+    def feed_eof(self) -> None: ...
     async def run(self) -> None: ...

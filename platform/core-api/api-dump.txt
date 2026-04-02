@@ -196,6 +196,9 @@ com.intellij.lang.LighterLazyParseableNode
 - a:getCharTable():com.intellij.util.CharTable
 - a:getContainingFile():com.intellij.psi.PsiFile
 - a:getText():java.lang.CharSequence
+a:com.intellij.lang.MetaLanguage
+com.intellij.lang.MetaLanguageProvider
+- a:getLanguage():com.intellij.lang.MetaLanguage
 com.intellij.lang.ParserDefinition
 - a:createElement(com.intellij.lang.ASTNode):com.intellij.psi.PsiElement
 - a:createFile(com.intellij.psi.FileViewProvider):com.intellij.psi.PsiFile

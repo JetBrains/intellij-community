@@ -21,6 +21,7 @@ jvm_library(
     "//platform/util",
     "//platform/kernel/shared:kernel",
     "//platform/util/coroutines",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -37,6 +38,7 @@ jvm_library(
     "//platform/util:util_test_lib",
     "//platform/kernel/shared:kernel_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.kernel.impl` end

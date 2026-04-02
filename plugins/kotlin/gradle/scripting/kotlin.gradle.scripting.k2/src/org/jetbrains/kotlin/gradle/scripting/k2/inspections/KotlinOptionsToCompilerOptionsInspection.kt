@@ -46,9 +46,7 @@ internal class KotlinOptionsToCompilerOptionsInspection : AbstractKotlinInspecti
     override fun isAvailableForFile(file: PsiFile): Boolean {
         val virtualFile = (file as? KtFile)?.alwaysVirtualFile ?: return false
         if (virtualFile.name == "settings.gradle.kts") return false
-        return virtualFile.name.endsWith(".gradle.kts")
-                && (ApplicationManager.getApplication().isUnitTestMode() // Inspection tests don't treat tested build script files properly, and thus they ignore Kotlin versions used in scripts
-                || kotlinVersionIsEqualOrHigher(major = 2, minor = 0, patch = 0, file))
+        return virtualFile.name.endsWith(".gradle.kts") && kotlinVersionIsEqualOrHigher(major = 2, minor = 0, patch = 0, file)
     }
 
     override fun buildVisitor(

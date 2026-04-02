@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
@@ -54,6 +55,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
@@ -118,6 +120,7 @@ import com.intellij.util.PairFunction;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import one.util.streamex.StreamEx;
@@ -990,5 +993,23 @@ public final class JavaCompletionUtil {
       return ((PsiInstanceOfExpression)parent).getOperand();
     }
     return null;
+  }
+
+  /**
+   * Determines if an array type is expected in the context of the given expression.
+   *
+   * @param expr the PSI expression to evaluate must not be null
+   * @return {@code true} if an array type is expected, {@code false} otherwise
+   */
+  public static boolean isArrayTypeExpected(@NotNull PsiExpression expr) {
+    return ContainerUtil.exists(ExpectedTypesProvider.getExpectedTypes(expr, true),
+                                info -> {
+                                  if (info.getType() instanceof PsiArrayType) {
+                                    PsiMethod method = info.getCalledMethod();
+                                    return method == null || !method.isVarArgs() || !(expr.getParent() instanceof PsiExpressionList) ||
+                                           MethodCallUtils.getParameterForArgument(expr) != null;
+                                  }
+                                  return false;
+                                });
   }
 }

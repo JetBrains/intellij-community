@@ -112,7 +112,7 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
     else {
       List<RuntimeModuleId> reversed = new ArrayList<>(failedDependencyPath.subList(0, failedDependencyPath.size() - 1));
       Collections.reverse(reversed);
-      message = "Cannot resolve module '" + moduleId.getPresentableName() + "': module '" + failedDependencyPath.get(failedDependencyPath.size() - 1).getStringId() + "' (" +
+      message = "Cannot resolve module '" + moduleId.getPresentableName() + "': module '" + failedDependencyPath.get(failedDependencyPath.size() - 1).getPresentableName() + "' (" +
                 reversed.stream().map(id -> " <- '" + id.getPresentableName() + "'").collect(Collectors.joining()).trim() + ") is not found";
     }
     throw new MalformedRepositoryException(message);
@@ -156,7 +156,7 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
       catch (IOException ignore) {
       }
     }
-    return getModule(RuntimeModuleId.module(bootstrapModuleName)).getModuleClasspath();
+    return getModule(RuntimeModuleId.legacyJpsModule(bootstrapModuleName)).getModuleClasspath();
   }
 
   /**

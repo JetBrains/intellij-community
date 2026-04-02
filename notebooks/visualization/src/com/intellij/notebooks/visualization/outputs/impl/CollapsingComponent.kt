@@ -6,12 +6,16 @@ import com.intellij.notebooks.visualization.r.inlays.ResizeController
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.util.ui.JBUI
 import java.awt.Cursor
 import java.awt.Dimension
+import java.awt.Font
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.lang.Integer.max
@@ -58,7 +62,7 @@ open class CollapsingComponent(
   val mainComponent: JComponent = child
 
   private val stubComponent = lazy {
-    val result = StubComponent()
+    val result = StubComponent(editor)
     add(result)
     result
   }
@@ -133,17 +137,26 @@ open class CollapsingComponent(
     }
   }
 
-  private class StubComponent : JLabel("...") {
+  private class StubComponent(private val editor: EditorImpl) : JLabel("...") {
     init {
-      isOpaque = true
       border = IdeBorderFactory.createEmptyBorder(JBUI.insets(7, 0))
       cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+
+      updateUIFromEditor()
 
       addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
           onClick(e)
         }
       })
+    }
+
+    override fun updateUI() {
+      super.updateUI()
+      @Suppress("SENSELESS_COMPARISON") // updateUI called in constructor before editor is set.
+      if (editor != null) {
+        updateUIFromEditor()
+      }
     }
 
     private fun onClick(e: MouseEvent) {
@@ -153,6 +166,12 @@ open class CollapsingComponent(
       if (ActionManager.getInstance().tryToExecute(action, e, parent, null, true).isProcessed) {
         e.consume()
       }
+    }
+
+    private fun updateUIFromEditor() {
+      val fontType = editor.colorsScheme.getAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES)?.fontType ?: Font.PLAIN
+      foreground = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT).foregroundColor
+      font = EditorUtil.fontForChar(text.first(), fontType, editor).font
     }
   }
 }

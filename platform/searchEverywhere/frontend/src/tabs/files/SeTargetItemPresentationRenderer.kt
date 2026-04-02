@@ -99,16 +99,64 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
     }
 
     weightTextIfEnabled(value)
-    val maxContainerTextWidth = resultListWidth - accumulatedContentWidth - locationTextWidthWithGap
 
-    presentation.containerText?.takeIf {
-      maxContainerTextWidth > 0
-    }?.let { containerText ->
-      val shortenContainerText = SETextShortener.getShortenContainerText(containerText, maxContainerTextWidth) { fontMetrics.stringWidth(it) }
+    // Calculate available space for containerText + locationText together
+    val containerText = presentation.containerText
+    val locationText = presentation.locationText
+    val containerTextWidth = containerText?.let { fontMetrics.stringWidth(it) } ?: 0
+    val containerGapsCount = (if (containerText != null) 1 else 0) + (if (locationText != null) 1 else 0)
+    val totalGapsWidth = containerGapsCount * defaultGapWidth
+    val availableWidth = resultListWidth - accumulatedContentWidth - totalGapsWidth
+    val totalNeededWidth = containerTextWidth + locationTextWidth
+
+    // Proportionally shorten both containerText and locationText
+    val maxContainerTextWidth: Int
+    val maxLocationTextWidth: Int
+    if (availableWidth <= 0 || totalNeededWidth == 0) {
+      maxContainerTextWidth = 0
+      maxLocationTextWidth = 0
+    }
+    else if (totalNeededWidth <= availableWidth) {
+      // Both fit fully
+      maxContainerTextWidth = containerTextWidth
+      maxLocationTextWidth = locationTextWidth
+    }
+    else {
+      // Proportionally distribute available space
+      maxLocationTextWidth =
+        if (presentation.shouldKeepLocationVisible) locationTextWidth
+        else if (locationTextWidth > 0) (availableWidth.toLong() * locationTextWidth / totalNeededWidth).toInt()
+        else 0
+      maxContainerTextWidth = availableWidth - maxLocationTextWidth
+    }
+
+    // First pass: shorten location text with its proportional budget
+    var shortenedLocationText: String? = locationText
+    var shortenedLocationTextWidth: Int = locationTextWidth
+    if (locationText != null && locationTextWidth > maxLocationTextWidth && maxLocationTextWidth > 0) {
+      val shortened = SETextShortener.getShortenContainerText(locationText, maxLocationTextWidth) { fontMetrics.stringWidth(it) }
+      val w = fontMetrics.stringWidth(shortened)
+      if (w <= maxLocationTextWidth) {
+        shortenedLocationText = shortened
+        shortenedLocationTextWidth = w
+      }
+    }
+
+    // Give leftover from location shortening to container
+    val effectiveMaxContainerTextWidth = maxContainerTextWidth + (maxLocationTextWidth - shortenedLocationTextWidth)
+
+    // Shorten container text and track how much space it actually used
+    var containerUsedWidth = 0
+    containerText?.takeIf {
+      effectiveMaxContainerTextWidth > 0
+    }?.let { ct ->
+      val shortenContainerText = SETextShortener.getShortenContainerText(ct, effectiveMaxContainerTextWidth) { fontMetrics.stringWidth(it) }
       val shortenContainerTextWidth = fontMetrics.stringWidth(shortenContainerText)
 
       // Shortening didn't work good enough.
-      if (shortenContainerTextWidth > maxContainerTextWidth) return@let
+      if (shortenContainerTextWidth > effectiveMaxContainerTextWidth) return@let
+
+      containerUsedWidth = shortenContainerTextWidth
 
       // Width for "<border><icon><gap><text><gap><containerText><gap><border>"
       accumulatedContentWidth += (shortenContainerTextWidth + defaultGapWidth)
@@ -118,9 +166,9 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
         attributes = SimpleTextAttributes.GRAYED_ATTRIBUTES
 
         if (selected) {
-          val prefixBoundary = shortenContainerText.commonPrefixWith(containerText).length - 1
-          val suffixBoundary = containerText.length - shortenContainerText.commonSuffixWith(containerText).length + 1
-          val postSuffixShiftAmount = containerText.length - shortenContainerText.length
+          val prefixBoundary = shortenContainerText.commonPrefixWith(ct).length - 1
+          val suffixBoundary = ct.length - shortenContainerText.commonSuffixWith(ct).length + 1
+          val postSuffixShiftAmount = ct.length - shortenContainerText.length
 
           speedSearch {
             ranges = presentation.containerTextMatchedRanges?.map { it.textRange() }?.filter { range ->
@@ -138,9 +186,25 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
       }
     }
 
-    presentation.locationText?.let { locationText ->
+    // Second pass: recalculate location text if container shortening freed up space
+    if (locationText != null && shortenedLocationTextWidth < locationTextWidth) {
+      val containerLeftover = effectiveMaxContainerTextWidth - containerUsedWidth
+      if (containerLeftover > 0) {
+        val newMaxLocationWidth = shortenedLocationTextWidth + containerLeftover
+        val reshortened = SETextShortener.getShortenContainerText(locationText, newMaxLocationWidth) { fontMetrics.stringWidth(it) }
+        val w = fontMetrics.stringWidth(reshortened)
+        if (w <= newMaxLocationWidth) {
+          shortenedLocationText = reshortened
+          shortenedLocationTextWidth = w
+        }
+      }
+    }
+
+    shortenedLocationText?.let {
+      val effectiveLocationWidthWithGap = shortenedLocationTextWidth + defaultGapWidth
+
       @Suppress("HardCodedStringLiteral")
-      text(locationText) {
+      text(it) {
         accessibleName = null
         align = LcrInitParams.Align.RIGHT
         foreground =
@@ -149,7 +213,7 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
       }
 
       // Width for "<border><icon><gap><text><gap><containerText><gap><location><gap><border>"
-      accumulatedContentWidth += locationTextWidthWithGap
+      accumulatedContentWidth += effectiveLocationWidthWithGap
 
       presentation.locationIcon?.let { locationIcon ->
         if ((accumulatedContentWidth + locationIcon.iconWidth) < resultListWidth) {

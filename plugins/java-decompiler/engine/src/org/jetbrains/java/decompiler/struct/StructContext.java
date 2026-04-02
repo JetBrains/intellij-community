@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct;
 
+import org.jetbrains.java.decompiler.ClassNameConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
@@ -182,6 +183,7 @@ public class StructContext {
   }
 
   public boolean instanceOf(String valclass, String refclass) {
+    if (ClassNameConstants.JAVA_LANG_OBJECT.equals(refclass)) return true;
     if (valclass.equals(refclass)) {
       return true;
     }

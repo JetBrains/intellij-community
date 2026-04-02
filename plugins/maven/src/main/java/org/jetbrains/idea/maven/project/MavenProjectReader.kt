@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.application.readAction
@@ -236,7 +236,10 @@ class MavenProjectReader(
     return result
   }
 
-  private fun Element.getModelVersion() = this.getChild("modelVersion")?.value
+  private fun Element.getModelVersion(): String? {
+    this.getChild("modelVersion")?.value?.let { return it }
+    return MavenUtil.inferModelVersionFromNamespace(this.namespaceURI)
+  }
 
   private fun collectResources(xmlResources: List<Element>): List<MavenResource> {
     val result: MutableList<MavenResource> = ArrayList()

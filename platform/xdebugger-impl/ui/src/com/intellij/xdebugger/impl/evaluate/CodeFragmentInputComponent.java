@@ -38,6 +38,8 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
       @Override
       protected void prepareEditor(EditorEx editor) {
         super.prepareEditor(editor);
+        // bring back editor background color, it was overridden in com.intellij.ui.EditorTextField.initOneLineMode
+        editor.setBackgroundColor(editor.getColorsScheme().getDefaultBackground());
         XDebugSessionProxy proxy = XDebugManagerProxy.getInstance().getCurrentSessionProxy(project);
         if (proxy != null) {
           InlineCompletion.INSTANCE.install(editor, proxy.getCoroutineScope());

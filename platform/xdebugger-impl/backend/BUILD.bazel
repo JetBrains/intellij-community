@@ -45,6 +45,7 @@ jvm_library(
     "//platform/execution-impl/backend",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
+    "//fleet/rhizomedb",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -87,6 +88,7 @@ jvm_library(
     "//platform/execution-impl/backend:backend_test_lib",
     "//platform/xdebugger-impl/shared:shared_test_lib",
     "//platform/xdebugger-impl/rpc:rpc_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.backend` end

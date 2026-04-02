@@ -140,10 +140,10 @@ class ClaudeStoreSessionBackendTest {
         ),
       )
 
-      // Stale index file (should be completely ignored after dropping index support).
+      // Index summaries should override JSONL-derived titles for matching sessions only.
       Files.writeString(
         projectDir.resolve("sessions-index.json"),
-        """{"version":1,"entries":[{"sessionId":"session-a","summary":"Index title","modified":"2026-02-16T19:22:20.000Z","projectPath":"$projectPath","isSidechain":false}],"originalPath":"$projectPath"}""",
+        """{"version":1,"entries":[{"sessionId":"session-a","summary":"Index title","modified":"2026-02-16T19:22:20.000Z","projectPath":"$projectPath","isSidechain":false},{"sessionId":"session-phantom","summary":"Phantom title","modified":"2026-02-16T19:22:20.000Z","projectPath":"$projectPath","isSidechain":false}],"originalPath":"$projectPath"}""",
       )
 
       val backend = ClaudeStoreSessionBackend(claudeHomeProvider = { tempDir.resolve(".claude") })
@@ -152,8 +152,7 @@ class ClaudeStoreSessionBackendTest {
       assertThat(threads).hasSize(2)
       val ids = threads.map { it.id }.toSet()
       assertThat(ids).containsExactlyInAnyOrder("session-a", "session-b")
-      // Verify the rich user event was parsed correctly (title from message content).
-      assertThat(threads.first { it.id == "session-a" }.title).contains("say hi")
+      assertThat(threads.first { it.id == "session-a" }.title).isEqualTo("Index title")
     }
   }
 
@@ -341,6 +340,60 @@ class ClaudeStoreSessionBackendTest {
         val threads = backend.listThreads(path = projectPath, openProject = null)
         assertThat(threads).hasSize(1)
         assertThat(threads.single().title).isEqualTo("Updated title")
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
+  fun emitsUpdatesWhenIndexFileChanges() {
+    runBlocking(Dispatchers.Default) {
+      val projectPath = "/work/project-index-updates"
+      val encodedPath = "-work-project-index-updates"
+      val projectDir = tempDir.resolve(".claude").resolve("projects").resolve(encodedPath)
+      Files.createDirectories(projectDir)
+
+      writeJsonl(
+        projectDir.resolve("session-index-updates.jsonl"),
+        listOf(claudeUserLine("2026-02-10T10:00:00.000Z", "session-index-updates", projectPath, "Initial title")),
+      )
+      val indexFile = projectDir.resolve("sessions-index.json")
+      Files.writeString(
+        indexFile,
+        """{"version":1,"entries":[{"sessionId":"session-index-updates","summary":"Initial summary","isSidechain":false}],"originalPath":"$projectPath"}""",
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = ClaudeStoreSessionBackend(
+        claudeHomeProvider = { tempDir.resolve(".claude") },
+        changeSource = { sourceUpdates },
+      )
+      val updates = Channel<Unit>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.updates.collect {
+          updates.trySend(Unit)
+        }
+      }
+
+      try {
+        val initialThreads = backend.listThreads(path = projectPath, openProject = null)
+        assertThat(initialThreads).hasSize(1)
+        assertThat(initialThreads.single().title).isEqualTo("Initial summary")
+
+        drainUpdateChannel(updates)
+        Files.writeString(
+          indexFile,
+          """{"version":1,"entries":[{"sessionId":"session-index-updates","summary":"Updated summary","isSidechain":false}],"originalPath":"$projectPath"}""",
+        )
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(indexFile)))
+
+        val updated = awaitWatcherUpdate(updates)
+        assertThat(updated).isTrue()
+        val threads = backend.listThreads(path = projectPath, openProject = null)
+        assertThat(threads).hasSize(1)
+        assertThat(threads.single().title).isEqualTo("Updated summary")
       }
       finally {
         updatesJob.cancelAndJoin()

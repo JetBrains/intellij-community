@@ -52,6 +52,10 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
     client.archiveThread(threadId)
   }
 
+  suspend fun setThreadName(threadId: String, name: String) {
+    client.setThreadName(threadId, name)
+  }
+
   suspend fun unarchiveThread(threadId: String) {
     client.unarchiveThread(threadId)
   }

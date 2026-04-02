@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,12 @@ public abstract class SurroundPostfixTemplateBase extends PostfixTemplateWithExp
                                         @Nullable PostfixTemplateProvider provider) {
     super(null, name, descr, selector, provider);
     myPsiInfo = psiInfo;
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public @NotNull PostfixModExpander createModExpander() {
+    return createModExpander(new SurroundModExpandAction(this));
   }
 
   @Override
@@ -75,4 +82,3 @@ public abstract class SurroundPostfixTemplateBase extends PostfixTemplateWithExp
 
   protected abstract @NotNull Surrounder getSurrounder();
 }
-

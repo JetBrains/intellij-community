@@ -61,6 +61,13 @@ c:com.intellij.codeInsight.intention.impl.config.LazyEditor
 - *sf:acceptRangeHighlighter(com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.openapi.editor.markup.RangeHighlighter):Z
 - *sf:getCodeInsightContext(com.intellij.openapi.editor.markup.RangeHighlighter):com.intellij.codeInsight.multiverse.CodeInsightContext
 - *sf:installCodeInsightContext(com.intellij.openapi.editor.markup.RangeHighlighter,com.intellij.openapi.project.Project,com.intellij.codeInsight.multiverse.CodeInsightContext):V
+c:com.intellij.codeInsight.template.TemplateBuilderImpl
+- com.intellij.codeInsight.template.TemplateBuilder
+- *:addVariableOccurrence(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.String):V
+- *:setEndVariableAt(I):V
+*:com.intellij.codeInspection.ui.InspectionProblemAddedListener
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:onProblemsAdded(com.intellij.openapi.project.Project,com.intellij.codeInspection.ex.InspectionToolWrapper,com.intellij.codeInspection.CommonProblemDescriptor[]):V
 c:com.intellij.openapi.module.impl.scopes.ModulesScope
 - com.intellij.psi.search.GlobalSearchScope
 - com.intellij.psi.search.ActualCodeInsightContextInfo

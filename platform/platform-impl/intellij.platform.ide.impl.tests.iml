@@ -180,6 +180,7 @@
     <orderEntry type="module" module-name="intellij.libraries.rd.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
+    <orderEntry type="module" module-name="fleet.rhizomedb" scope="RUNTIME" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.ide.impl" />
 </module>

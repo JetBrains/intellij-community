@@ -10,12 +10,7 @@ import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
-import com.intellij.mcpserver.toolsets.Constants
-import com.intellij.mcpserver.util.TruncateMode
-import com.intellij.mcpserver.util.maxTextLength
 import com.intellij.mcpserver.util.resolveInProject
-import com.intellij.mcpserver.util.truncateText
-import com.intellij.mcpserver.util.truncatedMarker
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.RangeMarker
@@ -23,39 +18,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.readText
 import kotlinx.coroutines.currentCoroutineContext
 
 class TextToolset : McpToolset {
-  @McpTool
-  @McpDescription("""
-        Retrieves the text content of a file using its path relative to project root.
-        Use this tool to read file contents when you have the file's project-relative path.
-        In the case of binary files, the tool returns an error.
-        If the file is too large, the text will be truncated with '<<<...content truncated...>>>' marker and in according to the `truncateMode` parameter.
-    """)
-  suspend fun get_file_text_by_path(
-    @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
-    pathInProject: String,
-    @McpDescription("How to truncate the text: from the start, in the middle, at the end, or don't truncate at all")
-    truncateMode: TruncateMode = TruncateMode.START,
-    @McpDescription("Max number of lines to return. Truncation will be performed depending on truncateMode.")
-    maxLinesCount: Int = 1000,
-  ): String {
-    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.reading.file", pathInProject))
-    val project = currentCoroutineContext().project
-    val resolvedPath = project.resolveInProject(pathInProject)
-
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
-               ?: mcpFail("File $resolvedPath doesn't exist or can't be opened")
-    val originalText = readAction {
-      if (file.fileType.isBinary) mcpFail("File $resolvedPath is binary")
-      file.readText()
-    }
-
-    return truncateText(originalText, maxLinesCount, maxTextLength, truncateMode, truncatedMarker)
-  }
-
   @McpTool
   @McpDescription("""
         Replaces text in a file with flexible options for find and replace operations.

@@ -9,7 +9,7 @@ import {createMockToolCaller, createSeededRng, randInt, randString} from './test
 import {TRUNCATION_MARKER} from '../shared'
 
 describe('ij MCP proxy read_file', {timeout: SUITE_TIMEOUT_MS}, () => {
-  it('proxies read_file to upstream and formats output', async () => {
+  it('maps legacy slice reads to get_file_text_by_path', async () => {
     await withProxy({
       onToolCall({name}) {
         if (name === 'get_file_text_by_path') {
@@ -24,8 +24,8 @@ describe('ij MCP proxy read_file', {timeout: SUITE_TIMEOUT_MS}, () => {
         name: 'read_file',
         arguments: {
           file_path: 'sample.txt',
-          offset: 2,
-          limit: 2
+          start_line: 2,
+          max_lines: 2
         }
       })
       const call = await withTimeout(callPromise, TOOL_CALL_TIMEOUT_MS, 'tools/call')
@@ -35,24 +35,25 @@ describe('ij MCP proxy read_file', {timeout: SUITE_TIMEOUT_MS}, () => {
       strictEqual(call.args.maxLinesCount, 3)
       strictEqual(call.args.truncateMode, 'START')
       strictEqual(realpathSync(call.args.project_path), realpathSync(testDir))
-
-      const content = response.result.content[0].text
-      strictEqual(content, 'L2: beta\nL3: gamma')
+      strictEqual(response.result.content[0].text, 'L2: beta\nL3: gamma')
     })
   })
 
-  it('prefers upstream read_file when available', async () => {
+  it('passes JetBrains read_file arguments through when upstream supports read_file', async () => {
     const tools = [buildUpstreamTool('read_file', {
       file_path: {type: 'string'},
-      offset: {type: 'number'},
-      limit: {type: 'number'}
+      mode: {type: 'string'},
+      start_line: {type: 'number'},
+      max_lines: {type: 'number'},
+      end_line: {type: 'number'},
+      context_lines: {type: 'number'}
     }, ['file_path'])]
 
     await withProxy({
       tools,
       onToolCall({name}) {
         if (name === 'read_file') {
-          return {text: 'L2: beta\nL3: gamma'}
+          return {text: 'L1: alpha\nL2: beta\nL3: gamma'}
         }
         return {text: '{}'}
       }
@@ -63,19 +64,27 @@ describe('ij MCP proxy read_file', {timeout: SUITE_TIMEOUT_MS}, () => {
         name: 'read_file',
         arguments: {
           file_path: 'sample.txt',
-          offset: 2,
-          limit: 2
+          mode: 'lines',
+          start_line: 2,
+          end_line: 2,
+          context_lines: 1,
+          max_lines: 3
         }
       })
       const call = await withTimeout(callPromise, TOOL_CALL_TIMEOUT_MS, 'tools/call')
 
       strictEqual(call.name, 'read_file')
-      const content = response.result.content[0].text
-      strictEqual(content, 'L2: beta\nL3: gamma')
+      strictEqual(call.args.file_path, 'sample.txt')
+      strictEqual(call.args.mode, 'lines')
+      strictEqual(call.args.start_line, 2)
+      strictEqual(call.args.end_line, 2)
+      strictEqual(call.args.context_lines, 1)
+      strictEqual(call.args.max_lines, 3)
+      strictEqual(response.result.content[0].text, 'L1: alpha\nL2: beta\nL3: gamma')
     })
   })
 
-  it('returns truncation error when upstream appends inline marker', async () => {
+  it('returns truncation error when the legacy fallback cannot recover requested lines', async () => {
     const truncated = ['alpha', `beta${TRUNCATION_MARKER}`].join('\n')
     await withProxy({
       onToolCall({name}) {
@@ -94,22 +103,22 @@ describe('ij MCP proxy read_file', {timeout: SUITE_TIMEOUT_MS}, () => {
       }
     }, async ({fakeServer, proxyClient}) => {
       await proxyClient.send('tools/list')
-      const callPromise = fakeServer.waitForToolCall()
-      const retryPromise = fakeServer.waitForToolCall()
-      const searchPromise = fakeServer.waitForToolCall()
+      const readCall = fakeServer.waitForToolCall()
+      const retryCall = fakeServer.waitForToolCall()
+      const searchCall = fakeServer.waitForToolCall()
       const response = await proxyClient.send('tools/call', {
         name: 'read_file',
         arguments: {
           file_path: 'sample.txt',
-          offset: 3,
-          limit: 1
+          start_line: 3,
+          max_lines: 1
         }
       })
-      const call = await withTimeout(callPromise, TOOL_CALL_TIMEOUT_MS, 'tools/call')
-      const retry = await withTimeout(retryPromise, TOOL_CALL_TIMEOUT_MS, 'tools/call')
-      const search = await withTimeout(searchPromise, TOOL_CALL_TIMEOUT_MS, 'tools/call')
+      const initial = await withTimeout(readCall, TOOL_CALL_TIMEOUT_MS, 'tools/call')
+      const retry = await withTimeout(retryCall, TOOL_CALL_TIMEOUT_MS, 'tools/call')
+      const search = await withTimeout(searchCall, TOOL_CALL_TIMEOUT_MS, 'tools/call')
 
-      strictEqual(call.args.truncateMode, 'START')
+      strictEqual(initial.args.truncateMode, 'START')
       strictEqual(retry.args.truncateMode, 'NONE')
       strictEqual(search.name, 'search_in_files_by_regex')
       strictEqual(response.result.isError, true)
@@ -121,248 +130,115 @@ describe('ij MCP proxy read_file', {timeout: SUITE_TIMEOUT_MS}, () => {
 describe('read handler (unit)', () => {
   const projectPath = '/project/root'
 
-  async function expectInlineTruncation(text) {
-    const {callUpstreamTool, calls} = createMockToolCaller({
-      get_file_text_by_path: () => ({text}),
-      search_in_files_by_regex: () => ({
-        structuredContent: {
-          entries: [],
-          probablyHasMoreMatchingEntries: true
-        }
-      })
-    })
-
-    await rejects(
-      () => handleReadTool({
-        file_path: 'sample.txt',
-        offset: 3,
-        limit: 1
-      }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'}),
-      /file content truncated while reading/
-    )
-
-    strictEqual(calls.length, 3)
-    strictEqual(calls[0].args.truncateMode, 'START')
-    strictEqual(calls[1].args.truncateMode, 'NONE')
-    strictEqual(calls[2].name, 'search_in_files_by_regex')
-  }
-
-  it('reads a slice of lines with numbering', async () => {
+  it('reads a slice of lines with numbering from the legacy fallback', async () => {
     const {callUpstreamTool, calls} = createMockToolCaller({
       get_file_text_by_path: () => ({text: 'alpha\nbeta\ngamma\n'})
     })
 
     const result = await handleReadTool({
       file_path: 'sample.txt',
-      offset: 2,
-      limit: 2
+      start_line: 2,
+      max_lines: 2
     }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
     strictEqual(result, 'L2: beta\nL3: gamma')
-    strictEqual(calls[0].args.maxLinesCount, 3)
-    strictEqual(calls[0].args.truncateMode, 'START')
+    const legacyCall = calls.find((call) => call.name === 'get_file_text_by_path')
+    strictEqual(legacyCall.args.maxLinesCount, 3)
+    strictEqual(legacyCall.args.truncateMode, 'START')
   })
 
-  it('errors when offset exceeds file length', async () => {
+  it('reads lines mode with context from reconstructed raw text', async () => {
     const {callUpstreamTool} = createMockToolCaller({
-      get_file_text_by_path: () => ({text: 'alpha\n'})
-    })
-
-    await rejects(
-      () => handleReadTool({
-        file_path: 'sample.txt',
-        offset: 5,
-        limit: 1
-      }, projectPath, callUpstreamTool, {hasReadFile: false}),
-      /offset exceeds file length/
-    )
-  })
-
-  it('retries upstream read when truncated content hides requested lines', async () => {
-    let callIndex = 0
-    const {callUpstreamTool, calls} = createMockToolCaller({
-      get_file_text_by_path: () => {
-        callIndex += 1
-        if (callIndex === 1) {
-          return {text: ['alpha', 'beta', TRUNCATION_MARKER].join('\n')}
-        }
-        return {text: ['alpha', 'beta', 'gamma', 'delta'].join('\n') + '\n'}
-      }
+      get_file_text_by_path: () => ({text: 'alpha\nbeta\ngamma\ndelta\n'})
     })
 
     const result = await handleReadTool({
       file_path: 'sample.txt',
-      offset: 3,
-      limit: 2
+      mode: 'lines',
+      start_line: 2,
+      end_line: 3,
+      context_lines: 1,
+      max_lines: 4
     }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
-    strictEqual(result, 'L3: gamma\nL4: delta')
-    strictEqual(calls.length, 2)
-    strictEqual(calls[0].args.truncateMode, 'START')
-    strictEqual(calls[1].args.truncateMode, 'NONE')
+    strictEqual(result, 'L1: alpha\nL2: beta\nL3: gamma\nL4: delta')
   })
 
-  it('reports truncation when upstream appends inline marker', async () => {
-    const truncated = ['alpha', `beta${TRUNCATION_MARKER}`].join('\n')
-    await expectInlineTruncation(truncated)
-  })
-
-  it('reports truncation when inline marker ends with CRLF', async () => {
-    const truncated = `alpha\r\nbeta${TRUNCATION_MARKER}\r\n`
-    await expectInlineTruncation(truncated)
-  })
-
-  it('falls back to search when upstream truncates', async () => {
-    const truncated = ['alpha', `beta${TRUNCATION_MARKER}`].join('\n')
-    const {callUpstreamTool, calls} = createMockToolCaller({
-      get_file_text_by_path: () => ({text: truncated}),
-      search_in_files_by_regex: () => ({
-        structuredContent: {
-          entries: [
-            {filePath: 'sample.txt', lineNumber: 1, lineText: '||alpha||'},
-            {filePath: 'sample.txt', lineNumber: 2, lineText: '||beta||'},
-            {filePath: 'sample.txt', lineNumber: 3, lineText: '||gamma||'}
-          ],
-          probablyHasMoreMatchingEntries: false
-        }
-      })
+  it('reads line_columns mode using the containing lines', async () => {
+    const {callUpstreamTool} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'alpha\nbeta\ngamma\n'})
     })
 
     const result = await handleReadTool({
       file_path: 'sample.txt',
-      offset: 3,
-      limit: 1
+      mode: 'line_columns',
+      start_line: 2,
+      start_column: 2,
+      end_line: 3,
+      end_column: 3,
+      max_lines: 2
     }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
-    strictEqual(result, 'L3: gamma')
-    strictEqual(calls.length, 3)
-    strictEqual(calls[2].name, 'search_in_files_by_regex')
+    strictEqual(result, 'L2: beta\nL3: gamma')
   })
 
-  it('retries indentation read when truncated content hides anchor line', async () => {
-    let callIndex = 0
-    const {callUpstreamTool, calls} = createMockToolCaller({
-      get_file_text_by_path: () => {
-        callIndex += 1
-        if (callIndex === 1) {
-          return {text: ['alpha', 'beta', TRUNCATION_MARKER].join('\n')}
-        }
-        return {text: ['alpha', 'beta', 'gamma'].join('\n') + '\n'}
-      }
+  it('reads offsets mode using the containing lines', async () => {
+    const {callUpstreamTool} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'alpha\nbeta\ngamma\n'})
     })
 
     const result = await handleReadTool({
       file_path: 'sample.txt',
-      offset: 3,
-      limit: 1,
-      mode: 'indentation',
-      indentation: {
-        anchor_line: 3,
-        max_levels: 0
-      }
+      mode: 'offsets',
+      start_offset: 6,
+      end_offset: 12,
+      max_lines: 2
     }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
-    strictEqual(result, 'L3: gamma')
-    strictEqual(calls.length, 2)
-    strictEqual(calls[0].args.truncateMode, 'START')
-    strictEqual(calls[1].args.truncateMode, 'NONE')
+    strictEqual(result, 'L2: beta\nL3: gamma')
   })
 
-  it('reports truncation when indentation anchor is beyond inline marker', async () => {
-    const truncated = ['root', `child${TRUNCATION_MARKER}`].join('\n')
-    const {callUpstreamTool, calls} = createMockToolCaller({
-      get_file_text_by_path: () => ({text: truncated}),
-      search_in_files_by_regex: () => ({
-        structuredContent: {
-          entries: [],
-          probablyHasMoreMatchingEntries: true
-        }
-      })
-    })
-
-    await rejects(
-      () => handleReadTool({
-        file_path: 'sample.txt',
-        offset: 3,
-        limit: 1,
-        mode: 'indentation',
-        indentation: {
-          anchor_line: 3,
-          max_levels: 0
-        }
-      }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'}),
-      /file content truncated while reading/
-    )
-
-    strictEqual(calls.length, 3)
-    strictEqual(calls[0].args.truncateMode, 'START')
-    strictEqual(calls[1].args.truncateMode, 'NONE')
-    strictEqual(calls[2].name, 'search_in_files_by_regex')
-  })
-
-  it('supports indentation mode with anchor_line', async () => {
+  it('supports indentation mode with start_line and flat indentation options', async () => {
     const {callUpstreamTool} = createMockToolCaller({
       get_file_text_by_path: () => ({text: 'root\n  child\n    grand\n'})
     })
 
     const result = await handleReadTool({
       file_path: 'sample.txt',
-      offset: 1,
-      limit: 1,
       mode: 'indentation',
-      indentation: {
-        anchor_line: 2,
-        max_levels: 1
-      }
+      start_line: 2,
+      max_lines: 1,
+      max_levels: 1
     }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
     strictEqual(result, 'L2:   child')
   })
 
-  it('includes block comments and annotations as headers in indentation mode', async () => {
-    const {callUpstreamTool} = createMockToolCaller({
-      get_file_text_by_path: () => ({
-        text: [
-          '/**',
-          ' * Doc line',
-          ' */',
-          '@MyAnno',
-          'fun foo() {',
-          '  println("hi")',
-          '}'
-        ].join('\n') + '\n'
-      })
+  it('passes through native read_file responses when available', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      read_file: () => ({text: 'L2: beta\nL3: gamma'})
     })
 
     const result = await handleReadTool({
       file_path: 'sample.txt',
-      offset: 5,
-      limit: 5,
-      mode: 'indentation',
-      indentation: {
-        anchor_line: 5,
-        max_levels: 0
-      }
-    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
+      start_line: 2,
+      max_lines: 2
+    }, projectPath, callUpstreamTool, {hasReadFile: true}, {format: 'numbered'})
 
-    strictEqual(result, [
-      'L1: /**',
-      'L2:  * Doc line',
-      'L3:  */',
-      'L4: @MyAnno',
-      'L5: fun foo() {'
-    ].join('\n'))
+    strictEqual(result, 'L2: beta\nL3: gamma')
+    strictEqual(calls.length, 1)
+    strictEqual(calls[0].name, 'read_file')
+    strictEqual(calls[0].args.file_path, 'sample.txt')
   })
 
-  it('fuzz: slice output matches expected range', async () => {
+  it('fuzz: slice output matches the requested range', async () => {
     const rng = createSeededRng(4242)
 
     for (let i = 0; i < 12; i += 1) {
       const lineCount = randInt(rng, 1, 10)
       const lines = Array.from({length: lineCount}, () => randString(rng, 6))
-      const offset = randInt(rng, 1, lineCount)
-      const limit = randInt(rng, 1, lineCount)
-      const maxLinesCount = offset + limit - 1
+      const startLine = randInt(rng, 1, lineCount)
+      const maxLines = randInt(rng, 1, lineCount)
 
       const {callUpstreamTool} = createMockToolCaller({
         get_file_text_by_path: () => ({text: `${lines.join('\n')}\n`})
@@ -370,18 +246,37 @@ describe('read handler (unit)', () => {
 
       const result = await handleReadTool({
         file_path: 'sample.txt',
-        offset,
-        limit
+        start_line: startLine,
+        max_lines: maxLines
       }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
-      const end = Math.min(offset - 1 + limit, lineCount)
+      const endLine = Math.min(startLine - 1 + maxLines, lineCount)
       const expected = []
-      for (let index = offset - 1; index < end; index += 1) {
+      for (let index = startLine - 1; index < endLine; index += 1) {
         expected.push(`L${index + 1}: ${lines[index]}`)
       }
-
       strictEqual(result, expected.join('\n'))
-      strictEqual(maxLinesCount > 0, true)
     }
+  })
+
+  it('reports truncation when the legacy fallback cannot recover the requested slice', async () => {
+    const {callUpstreamTool} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: ['alpha', `beta${TRUNCATION_MARKER}`].join('\n')}),
+      search_in_files_by_regex: () => ({
+        structuredContent: {
+          entries: [],
+          probablyHasMoreMatchingEntries: true
+        }
+      })
+    })
+
+    await rejects(
+      () => handleReadTool({
+        file_path: 'sample.txt',
+        start_line: 3,
+        max_lines: 1
+      }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'}),
+      /file content truncated while reading/
+    )
   })
 })

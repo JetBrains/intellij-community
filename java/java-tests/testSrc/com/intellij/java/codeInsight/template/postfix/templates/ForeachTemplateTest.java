@@ -54,4 +54,11 @@ public class ForeachTemplateTest extends PostfixTemplateTestCase {
     settings.GENERATE_FINAL_LOCALS = true;
     doTest();
   }
+
+  public static class ModForeachTemplateTest extends ForeachTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

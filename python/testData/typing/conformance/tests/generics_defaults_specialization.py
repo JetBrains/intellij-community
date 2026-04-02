@@ -42,7 +42,8 @@ class SubclassMe(Generic[T1, DefaultStrT]):
 class Bar(SubclassMe[int, DefaultStrT]): ...
 
 
-assert_type(Bar, type[Bar[str]])
+x1: type[Bar[str]] = Bar  # ok
+x2: type[Bar[int]] = Bar  # E
 assert_type(Bar(), Bar[str])
 assert_type(Bar[bool](), Bar[bool])
 

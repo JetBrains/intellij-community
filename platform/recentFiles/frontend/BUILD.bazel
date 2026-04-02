@@ -40,6 +40,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/platform-frontend:frontend",
     "//platform/util",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -75,6 +76,7 @@ jvm_library(
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/platform-frontend:frontend_test_lib",
     "//platform/util:util_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.recentFiles.frontend` end

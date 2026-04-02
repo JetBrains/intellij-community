@@ -8,4 +8,9 @@ public class ForAscendingPostfixTemplate extends ForIndexedPostfixTemplate {
     super("fori", "for ($type$ $index$ = 0; $index$ < $bound$; $index$++) {\n$END$\n}",
           "for (int i = 0; i < expr.length; i++)", provider);
   }
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
 }

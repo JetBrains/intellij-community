@@ -1,10 +1,10 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class OAuth1Error(Exception):
-    error: Any
+    error: Incomplete
     description: str
-    uri: Any
-    status_code: Any
+    uri: Incomplete
+    status_code: Incomplete
     def __init__(self, description=None, uri=None, status_code: int = 400, request=None) -> None: ...
     def in_uri(self, uri): ...
     @property

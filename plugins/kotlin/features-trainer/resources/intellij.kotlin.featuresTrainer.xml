@@ -1,7 +1,10 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.training">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="training"/>
     <module name="intellij.java.featuresTrainer"/>
+    <module name="intellij.java.psi"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="training">

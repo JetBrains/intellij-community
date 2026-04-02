@@ -43,4 +43,11 @@ public class NotNullPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testElseStatement() {
     doTest();
   }
+
+  public static class ModNotNullPostfixTemplateTest extends NotNullPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

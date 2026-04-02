@@ -47,4 +47,11 @@ public class TryWithResourcesPostfixTemplateTest extends PostfixTemplateTestCase
   public void testSimpleNotAutoCloseable() {
     doTest();
   }
+
+  public static class ModTryWithResourcesPostfixTemplateTest extends TryWithResourcesPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

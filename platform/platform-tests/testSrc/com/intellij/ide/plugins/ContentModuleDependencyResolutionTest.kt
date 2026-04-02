@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
-import com.intellij.platform.testFramework.plugins.PluginSpecBuilder
-import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
+import com.intellij.platform.pluginSystem.testFramework.PluginSetSpecBuilder
+import com.intellij.platform.pluginSystem.testFramework.buildPluginSet
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.dependencies
 import com.intellij.platform.testFramework.plugins.module
@@ -11,8 +11,6 @@ import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import java.nio.file.Path
-import com.intellij.platform.testFramework.plugins.plugin as buildPlugin
 
 internal class ContentModuleDependencyResolutionTest {
   init {
@@ -22,8 +20,6 @@ internal class ContentModuleDependencyResolutionTest {
   @RegisterExtension
   @JvmField
   val inMemoryFs = InMemoryFsExtension()
-
-  private val pluginDirPath get() = inMemoryFs.fs.getPath("/").resolve("plugin")
 
   @Test
   fun `reference to modules from the same plugin without namespace`() {
@@ -52,7 +48,9 @@ internal class ContentModuleDependencyResolutionTest {
     val pluginSet = buildPluginSet {
       plugin("core") {
         content(namespace = "jetbrains") {
-          module("platform") {}
+          module("platform") {
+            moduleVisibility = ModuleVisibilityValue.PUBLIC
+          }
         }
       }
       plugin("foo") {
@@ -148,19 +146,7 @@ internal class ContentModuleDependencyResolutionTest {
   }
 
   private fun buildPluginSet(builder: PluginSetSpecBuilder.() -> Unit): PluginSet {
-    builder(PluginSetSpecBuilder(pluginDirPath))
-    return PluginSetTestBuilder.fromPath(pluginDirPath).build()
-  }
-}
-
-private class PluginSetSpecBuilder(private val pluginsDirPath: Path) {
-  fun plugin(id: String? = null, body: PluginSpecBuilder.() -> Unit) {
-    val pluginSpec = if (id != null) {
-      buildPlugin(id, body)
-    }
-    else {
-      buildPlugin(body = body)
-    }
-    pluginSpec.buildDir(pluginsDirPath.resolve(pluginSpec.id!!))
+    val pluginsDirPath = inMemoryFs.fs.getPath("/").resolve("plugins")
+    return buildPluginSet(pluginsDirPath, builder)
   }
 }

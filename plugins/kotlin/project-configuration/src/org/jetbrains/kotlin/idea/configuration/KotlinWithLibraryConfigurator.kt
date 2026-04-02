@@ -6,7 +6,6 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.facet.FacetManager
 import com.intellij.jarRepository.JarRepositoryManager
-import com.intellij.jarRepository.RepositoryAddLibraryAction
 import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -20,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
-import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -29,11 +27,8 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.roots.libraries.LibraryType
-import com.intellij.psi.PsiElement
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription
-import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -55,10 +50,8 @@ import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.projectConfiguration.askUpdateRuntime
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread
-import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected constructor() : KotlinProjectConfigurator {
     protected abstract val libraryName: String
@@ -406,49 +399,6 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         }
 
         module.setLanguageAndApiVersionInKotlinFacet(languageVersion, apiVersion)
-    }
-
-    @Deprecated(
-        "Please implement/use the KotlinBuildSystemDependencyManager EP instead.",
-        replaceWith = ReplaceWith("KotlinBuildSystemDependencyManager.findApplicableConfigurator(module)?.addDependency(module, library.withScope(scope))")
-    )
-    override fun addLibraryDependency(
-        module: Module,
-        element: PsiElement,
-        library: ExternalLibraryDescriptor,
-        libraryJarDescriptor: LibraryJarDescriptor,
-        scope: DependencyScope
-    ) {
-        // prevents this side effect from being actually run from quickfix previews (e.g. in Fleet)
-        SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
-
-        val project = module.project
-
-        var foundLibrary: Library? = null
-        // TODO: in our case any PROJECT (not module) library (especially unused)
-        //  would fit but I failed to find API for traversing such libraries.
-        //  Current solution traverses only used project libraries
-        project.forEachAllUsedLibraries {
-            if (libraryJarDescriptor.findExistingJar(it) != null && it.safeAs<LibraryEx>()?.module?.equals(null) == true) {
-                foundLibrary = it
-                return@forEachAllUsedLibraries false
-            }
-            return@forEachAllUsedLibraries true
-        }
-        foundLibrary?.let {
-            ModuleRootModificationUtil.addDependency(module, it, scope, false)
-        }
-
-        val kotlinStdlibVersion = module.findLibrary { isKotlinLibrary(it, project) }
-            ?.safeAs<LibraryEx>()?.properties?.safeAs<RepositoryLibraryProperties>()?.version
-        RepositoryAddLibraryAction.addLibraryToModule(
-            RepositoryLibraryDescription.findDescription(libraryJarDescriptor.repositoryLibraryProperties),
-            module,
-            kotlinStdlibVersion ?: KotlinPluginLayout.standaloneCompilerVersion.artifactVersion,
-            scope,
-            /* downloadSources = */ true,
-            /* downloadJavaDocs = */ true
-        )
     }
 
     override val canAddModuleWideOptIn: Boolean

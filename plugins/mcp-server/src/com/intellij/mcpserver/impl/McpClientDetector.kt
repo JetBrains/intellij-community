@@ -6,6 +6,7 @@ import com.intellij.mcpserver.clients.impl.ClaudeClient
 import com.intellij.mcpserver.clients.impl.ClaudeCodeClient
 import com.intellij.mcpserver.clients.impl.CodexClient
 import com.intellij.mcpserver.clients.impl.CursorClient
+import com.intellij.mcpserver.clients.impl.JunieClient
 import com.intellij.mcpserver.clients.impl.VSCodeClient
 import com.intellij.mcpserver.clients.impl.WindsurfClient
 import com.intellij.openapi.project.Project
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.containers.addIfNotNull
 import kotlinx.serialization.ExperimentalSerializationApi
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
@@ -33,6 +35,9 @@ object McpClientDetector {
   fun detectGlobalMcpClients(): List<McpClient> {
     val globalClients = mutableListOf<McpClient>()
 
+    runCatching {
+      globalClients.addIfNotNull(detectJunie())
+    }
     runCatching {
       globalClients.addIfNotNull(detectVSCode())
     }
@@ -63,6 +68,9 @@ object McpClientDetector {
     }
     runCatching {
       projectClients.addIfNotNull(detectCursorProject(project))
+    }
+    runCatching {
+      projectClients.addIfNotNull(detectJunieProject(project))
     }
     runCatching {
       projectClients.addIfNotNull(detectClaudeCode(project))
@@ -120,6 +128,23 @@ object McpClientDetector {
 
     if (path.parent.exists() && path.parent.toFile().isDirectory()) {
       return ClaudeClient(McpClientInfo.Scope.GLOBAL, path)
+    }
+    return null
+  }
+
+  private fun detectJunie(): McpClient? {
+    val path = Paths.get(OSAgnosticPathUtil.expandUserHome("~/.junie/mcp/mcp.json"))
+    if (path.parent.exists() && Files.isDirectory(path.parent)) {
+      return JunieClient(McpClientInfo.Scope.GLOBAL, path)
+    }
+    return null
+  }
+
+  private fun detectJunieProject(project: Project): McpClient? {
+    val projectBasePath = project.basePath ?: return null
+    val configPath = Paths.get(projectBasePath, ".junie", "mcp", "mcp.json")
+    if (looksLikeMcpJson(configPath)) {
+      return JunieClient(McpClientInfo.Scope.PROJECT, configPath)
     }
     return null
   }

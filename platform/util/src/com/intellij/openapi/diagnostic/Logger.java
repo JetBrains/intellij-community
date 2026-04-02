@@ -341,7 +341,7 @@ public abstract class Logger {
    * In UsefulTestCase mode, warning messages go directly to the console.
    */
   public void warn(String message) {
-    warn(message, null);
+    warn(message, (Throwable)null);
   }
 
   /**
@@ -354,6 +354,16 @@ public abstract class Logger {
   public void warn(@NotNull Throwable t) {
     warn(t.getMessage(), t);
   }
+  /**
+   * @deprecated Don't log {@link CancellationException} because it's supposed to be rethrown.
+   * Instead, log its {@link Exception#getCause()}, and/or some message, and rethrow.
+   * (This unnecessary method is here just to highlight incorrect logging of CancellationExceptions, please don't remove yet)
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  public void warn(@NotNull CancellationException t) {
+    warn((Throwable)t);
+  }
 
   /**
    * Log a message and a stack trace at the warning level.
@@ -363,6 +373,16 @@ public abstract class Logger {
    * In UsefulTestCase mode, warning messages go directly to the console.
    */
   public abstract void warn(String message, @Nullable Throwable t);
+  /**
+   * @deprecated Don't log {@link CancellationException} because it's supposed to be rethrown.
+   * Instead, log its {@link Exception#getCause()}, and/or some message, and rethrow.
+   * (This unnecessary method is here just to highlight incorrect logging of CancellationExceptions, please don't remove yet)
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  public void warn(String message, @NotNull CancellationException t) {
+    warn(message, (Throwable)t);
+  }
 
   /**
    * Log a message at the error level.
@@ -386,7 +406,7 @@ public abstract class Logger {
   static final Function<Attachment, String> ATTACHMENT_TO_STRING = attachment -> attachment.getPath() + "\n" + attachment.getDisplayText();
 
   public void error(String message, Attachment @NotNull ... attachments) {
-    error(message, null, attachments);
+    error(message, (Throwable)null, attachments);
   }
 
   public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
@@ -395,6 +415,16 @@ public abstract class Logger {
       result[i] = ATTACHMENT_TO_STRING.apply(attachments[i]);
     }
     error(message, t, result);
+  }
+  /**
+   * @deprecated Don't log {@link CancellationException} because it's supposed to be rethrown.
+   * Instead, log its {@link Exception#getCause()}, and/or some message, and rethrow.
+   * (This unnecessary method is here just to highlight incorrect logging of CancellationExceptions, please don't remove yet)
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  public void error(String message, @Nullable CancellationException t, Attachment @NotNull ... attachments) {
+    error(message, (Throwable)t, attachments);
   }
 
   /**
@@ -427,6 +457,16 @@ public abstract class Logger {
   public void error(String message, @Nullable Throwable t) {
     error(message, t, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
+  /**
+   * @deprecated Don't log {@link CancellationException} because it's supposed to be rethrown.
+   * Instead, log its {@link Exception#getCause()}, and/or some message, and rethrow.
+   * (This unnecessary method is here just to highlight incorrect logging of CancellationExceptions, please don't remove yet)
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  public void error(String message, @Nullable CancellationException t) {
+    error(message, (Throwable)t, ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
 
   /**
    * Log a stack trace at error level.
@@ -456,6 +496,16 @@ public abstract class Logger {
    * @param message a plain string, without any placeholders
    */
   public abstract void error(String message, @Nullable Throwable t, String @NotNull ... details);
+  /**
+   * @deprecated Don't log {@link CancellationException} because it's supposed to be rethrown.
+   * Instead, log its {@link Exception#getCause()}, and/or some message, and rethrow.
+   * (This unnecessary method is here just to highlight incorrect logging of CancellationExceptions, please don't remove yet)
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  public void error(String message, @Nullable CancellationException t, String @NotNull ... details) {
+    error(message,(Throwable)t,details);
+  }
 
   /**
    * Log an error if the condition is false.

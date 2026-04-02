@@ -147,11 +147,7 @@ class PluginDependenciesValidator private constructor(
     val jpsModuleToRuntimeDescriptors = LinkedHashMap<String, MutableList<IdeaPluginDescriptorImpl>>()
     for (descriptor in pluginSet.getEnabledModules()) {
       val jarFiles = descriptor.jarFiles ?: continue
-      if (!descriptor.isLoaded) {
-        //this indicates that actually the module is not enabled, because some of its dependencies were missing in ClassLoaderConfigurator.configureContentModule, so we cannot check it 
-        continue
-      }
-      jarFiles.groupByTo(jpsModuleToRuntimeDescriptors, { 
+      jarFiles.groupByTo(jpsModuleToRuntimeDescriptors, {
         getModuleName(it) ?: error("Cannot detect module name for $it in $descriptor")  
       }, { descriptor })
     }
@@ -166,6 +162,13 @@ class PluginDependenciesValidator private constructor(
       }
 
       for (descriptor in sourceDescriptors) {
+        if (descriptor.pluginClassLoader == null) {
+          errors.add(PluginModuleConfigurationError(
+            pluginModelModuleName = descriptor.contentModuleName ?: descriptor.pluginId.idString,
+            errorMessage = "Classloader is not set for $descriptor")
+          )
+          continue
+        }
         for (pluginDependency in descriptor.dependencies) {
           if (pluginDependency.isOptional && !pluginDependency.pluginId.idString.startsWith("com.intellij.modules.")
               && pluginDependency.subDescriptor != null && pluginDependency.subDescriptor?.isLoaded == false) {

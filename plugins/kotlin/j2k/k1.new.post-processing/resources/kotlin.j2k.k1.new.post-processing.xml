@@ -5,8 +5,11 @@
   </extensions>
 
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.psi"/>
     <module name="kotlin.code-insight.inspections.shared"/>
     <module name="kotlin.code-insight.intentions.shared"/>
+    <!-- endregion -->
   </dependencies>
 
 </idea-plugin>

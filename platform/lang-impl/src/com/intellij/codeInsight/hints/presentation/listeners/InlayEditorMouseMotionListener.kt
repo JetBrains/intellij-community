@@ -6,9 +6,10 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import java.awt.Point
+import java.lang.ref.WeakReference
 
 class InlayEditorMouseMotionListener : EditorMouseMotionListener {
-  private var activeContainer: InputHandler? = null
+  private var activeContainer: WeakReference<InputHandler>? = null
 
   override fun mouseMoved(e: EditorMouseEvent) {
     if (e.isConsumed) return
@@ -20,13 +21,13 @@ class InlayEditorMouseMotionListener : EditorMouseMotionListener {
     }
     val inlay = e.inlay
     val container = inlay?.renderer
-    if (activeContainer != container) {
+    if (activeContainer?.get() != container) {
       exitMouseInActiveContainer()
       if (container == null) {
         activeContainer = null
       }
       else if (container is InputHandler) {
-        activeContainer = container
+        activeContainer = WeakReference(container)
       }
     }
     if (container !is InputHandler) return
@@ -37,6 +38,6 @@ class InlayEditorMouseMotionListener : EditorMouseMotionListener {
   }
 
   private fun exitMouseInActiveContainer() {
-    activeContainer?.mouseExited()
+    activeContainer?.get()?.mouseExited()
   }
 }

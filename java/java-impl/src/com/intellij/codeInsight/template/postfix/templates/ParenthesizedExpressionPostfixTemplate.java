@@ -25,4 +25,9 @@ public class ParenthesizedExpressionPostfixTemplate extends ParenthesizedPostfix
   public ParenthesizedExpressionPostfixTemplate() {
     super(JAVA_PSI_INFO, selectorAllExpressionsWithCurrentOffset(IS_NON_VOID));
   }
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
 }

@@ -267,7 +267,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   static final JBValue EMPTY_ANNOTATION_AREA_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.emptyAnnotationAreaWidth());
   static final JBValue GAP_AFTER_LINE_NUMBERS_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.gapAfterLineNumbersWidth());
   private static final JBValue GAP_AFTER_ICONS_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.gapAfterIconsWidth());
-  private static final JBValue INTER_LINE_SHIFT_AMOUNT = JBVG.value(3);
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
 
   private ClickInfo myLastActionableClick;
@@ -1023,7 +1022,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     int visualLineBelow = myEditor.logicalToVisualPosition(new LogicalPosition((int)activeLine, 0)).line;
     int visualLineAbove = visualLineBelow > 0 ? visualLineBelow - 1 : -1;
 
-    int targetShift = calculateInterLineShiftAmount(visualLineAbove, visualLineBelow);
+    int targetShift = EditorUtil.calculateInterLineShift(myEditor, visualLineAbove, visualLineBelow);
     if (targetShift > 0) {
       animator.startShift(visualLineAbove, visualLineBelow, targetShift);
     }
@@ -1038,43 +1037,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       animator.stopShift();
       myCurrentInterLineAnimator = null;
     }
-  }
-
-  /**
-   * Calculates the target shift amount for inter-line expansion.
-   * Returns 0 if no shift is needed (e.g., there's already enough space from block inlays).
-   *
-   * @param visualLineAbove the visual line above the gap (-1 if none)
-   * @param visualLineBelow the visual line below the gap (-1 if none)
-   * @return the shift amount in pixels, or 0 if no shift is needed
-   */
-  private int calculateInterLineShiftAmount(int visualLineAbove, int visualLineBelow) {
-    int lineHeight = myEditor.getLineHeight();
-
-    if (visualLineAbove < 0 && visualLineBelow < 0) {
-      return 0;
-    }
-
-    int extraSpace = 0;
-    if (visualLineBelow >= 0) {
-      VisualLinesIterator iterator = new VisualLinesIterator(myEditor, visualLineBelow);
-      if (!iterator.atEnd()) {
-        for (Inlay<?> inlay : iterator.getBlockInlaysAbove()) {
-          extraSpace += inlay.getHeightInPixels();
-        }
-      }
-    }
-
-    if (extraSpace >= lineHeight * 1.5) {
-      return 0;
-    }
-
-    // Calculate shift amount based on JBUI-scaled constant
-    // Ensure the shift doesn't cause overlap with adjacent lines
-    int baseShift = INTER_LINE_SHIFT_AMOUNT.get();
-
-    int maxShift = lineHeight / 4;
-    return Math.min(baseShift, maxShift);
   }
 
   /**

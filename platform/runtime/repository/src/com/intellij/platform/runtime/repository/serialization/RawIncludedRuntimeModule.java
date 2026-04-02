@@ -42,12 +42,20 @@ public final class RawIncludedRuntimeModule {
 
   public @Nullable IncludedRuntimeModule resolve(@NotNull RuntimeModuleRepository repository) {
     RuntimeModuleDescriptor descriptor;
+    RuntimeModuleId moduleId = getModuleId();
+    if (moduleId.getNamespace().equals(RuntimeModuleId.LEGACY_JPS_MODULE_NAMESPACE) &&
+        repository.resolveModule(moduleId).getResolvedModule() == null) {
+      /* we don't have syntax to specify namespace in product-modules.xml, so currently all elements from main-root-modules are supposed to
+         be from the LEGACY_JPS_MODULE_NAMESPACE.
+      */
+      moduleId = RuntimeModuleId.contentModule(moduleId.getName(), RuntimeModuleId.DEFAULT_NAMESPACE);
+    }
     if (getLoadingRule() == RuntimeModuleLoadingRule.REQUIRED || getLoadingRule() == RuntimeModuleLoadingRule.EMBEDDED) {
-      descriptor = repository.getModule(getModuleId());
+      descriptor = repository.getModule(moduleId);
     }
     else {
       //todo print something to the log if optional module is missing
-      descriptor = repository.resolveModule(getModuleId()).getResolvedModule();
+      descriptor = repository.resolveModule(moduleId).getResolvedModule();
     }
     if (descriptor != null) {
       return new IncludedRuntimeModuleImpl(descriptor, myLoadingRule);

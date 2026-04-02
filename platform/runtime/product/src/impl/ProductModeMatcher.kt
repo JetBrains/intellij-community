@@ -6,21 +6,21 @@ import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 
 class ProductModeMatcher(productMode: ProductMode) {
-  private val myIncompatibleRootModule: List<String> = ProductModeLoadingRules.getIncompatibleRootModules(productMode).map { it.stringId }
-  private val myCache: MutableMap<String, Boolean> = mutableMapOf()
+  private val myIncompatibleRootModule = ProductModeLoadingRules.getIncompatibleRootModules(productMode)
+  private val myCache: MutableMap<RuntimeModuleId, Boolean> = mutableMapOf()
   val unmatchedModules: MutableMap<RuntimeModuleId, List<RuntimeModuleId>> = mutableMapOf()
 
   fun matches(moduleDescriptor: RuntimeModuleDescriptor): Boolean {
-    val stringId = moduleDescriptor.getModuleId().getStringId()
-    val cached = myCache.get(stringId)
+    val moduleId = moduleDescriptor.getModuleId()
+    val cached = myCache.get(moduleId)
     if (cached != null) return cached
 
-    if (myIncompatibleRootModule.contains(stringId)) {
-      myCache[stringId] = false
+    if (myIncompatibleRootModule.contains(moduleId)) {
+      myCache[moduleId] = false
       return false
     }
 
-    myCache[stringId] = true //this is needed to prevent StackOverflowError in case of circular dependencies
+    myCache[moduleId] = true //this is needed to prevent StackOverflowError in case of circular dependencies
     val nonMatchedModules = moduleDescriptor.getDependencies().filterNot { matches(it) }
     if (nonMatchedModules.isEmpty()) {
       return true
@@ -28,7 +28,7 @@ class ProductModeMatcher(productMode: ProductMode) {
 
 
     unmatchedModules[moduleDescriptor.getModuleId()] = nonMatchedModules.map { it.getModuleId() }
-    myCache[stringId] = false
+    myCache[moduleId] = false
     return false
   }
 }

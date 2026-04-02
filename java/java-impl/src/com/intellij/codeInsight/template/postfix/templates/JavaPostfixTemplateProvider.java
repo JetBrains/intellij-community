@@ -45,7 +45,7 @@ import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplat
 
 public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
   private static final @NonNls String LANGUAGE_LEVEL_ATTR = "language-level";
-
+  
   private final Set<PostfixTemplate> myBuiltinTemplates = ContainerUtil.newHashSet(
     new AssertStatementPostfixTemplate(this),
     new SynchronizedStatementPostfixTemplate(this),
@@ -73,7 +73,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     new IfStatementPostfixTemplate(),
     new InstanceofExpressionPostfixTemplate(),
     new InstanceofExpressionPostfixTemplate("inst"),
-    new IntroduceFieldPostfixTemplate(),
+    new IntroduceFieldPostfixTemplate(), //doesn't support mod completion
     new IntroduceVariablePostfixTemplate(),
     new IsNullCheckPostfixTemplate(),
     new NotExpressionPostfixTemplate(),
@@ -163,6 +163,15 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     }
 
     return copyFile;
+  }
+
+  @Override
+  public void preCheckModCommand(@NotNull PsiFile copyFile, int currentOffset) {
+    Document document = copyFile.getFileDocument();
+    if (JavaCompletionContributor.semicolonNeeded(copyFile, currentOffset)) {
+      document.insertString(currentOffset, ";");
+      PsiDocumentManager.getInstance(copyFile.getProject()).commitDocument(document);
+    }
   }
 
   private static boolean isSemicolonNeeded(@NotNull PsiFile file, @NotNull Editor editor) {

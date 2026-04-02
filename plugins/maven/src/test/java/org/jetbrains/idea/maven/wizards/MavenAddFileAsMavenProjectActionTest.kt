@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.maven.testFramework.MavenTestCase
@@ -18,12 +18,13 @@ class MavenAddFileAsMavenProjectActionTest : MavenProjectWizardTestCase() {
     val pom1: Path = createPom()
     val pom2 = pom1.parent.resolve("pom2.xml")
     pom2.write(MavenTestCase.createPomXml(
-     MavenConstants.MODEL_VERSION_4_0_0,
+      MavenConstants.MODEL_VERSION_4_0_0,
       """
         <groupId>test</groupId>
         <artifactId>project2</artifactId>
         <version>1</version>
-        """.trimIndent()))
+      """.trimIndent(),
+      omitModelVersionTag = false))
 
     val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(pom2.toString())
     val event = TestActionEvent.createTestEvent {

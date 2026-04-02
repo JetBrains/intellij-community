@@ -11,6 +11,7 @@ import com.intellij.codeInsight.lookup.LookupElementCustomPreviewHolder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementInsertStopper
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.modcommand.ActionContext
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
@@ -45,8 +46,14 @@ class CommandCompletionLookupElement(
     return NEVER_AUTOCOMPLETE
   }
 
-  override val preview: IntentionPreviewInfo by lazy {
-    command.getPreview()
+  //it is created for each lookup element, so we can cache it
+  private var myPreviewInfoCache: IntentionPreviewInfo? = null
+  override fun preview(ctx: ActionContext): IntentionPreviewInfo {
+    var previewInfoCache = myPreviewInfoCache
+    if (previewInfoCache != null) return previewInfoCache
+    previewInfoCache = command.getPreview()
+    myPreviewInfoCache = previewInfoCache
+    return previewInfoCache
   }
 
   override fun shouldStopLookupInsertion(): Boolean {

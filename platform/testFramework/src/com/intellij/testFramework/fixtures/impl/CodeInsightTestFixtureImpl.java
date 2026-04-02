@@ -1899,7 +1899,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Project project = getProject();
     EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
     PsiFileImpl file = (PsiFileImpl)getHostFile();
-    FileElement hardRefToFileElement = file.calcTreeElement();//to load text
+    FileElement hardRefToFileElement = ReadAction.computeBlocking(() -> file.calcTreeElement());//to load text
 
     // to load AST for changed files before it's prohibited by "fileTreeAccessFilter"
     ensureIndexesUpToDate(project);

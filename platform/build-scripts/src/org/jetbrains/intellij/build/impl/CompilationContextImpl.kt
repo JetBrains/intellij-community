@@ -7,7 +7,9 @@ import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.BazelEnvironmentUtil.isBazelTestRun
+import com.intellij.util.io.URLUtil
 import com.jetbrains.JBR
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -26,8 +28,6 @@ import org.jetbrains.intellij.build.JpsCompilationData
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
-import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
-import org.jetbrains.intellij.build.impl.JdkUtils.readModulesFromReleaseFile
 import org.jetbrains.intellij.build.impl.compilation.checkCompilationOptions
 import org.jetbrains.intellij.build.impl.compilation.isCompilationRequired
 import org.jetbrains.intellij.build.impl.compilation.keepCompilationState
@@ -60,6 +60,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader.loadProject
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.Properties
 import java.util.stream.Stream
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeToOrNull
@@ -125,7 +126,8 @@ suspend fun createCompilationContext(
     logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
   }
 
-  val model = loadProject(projectHome = projectHome, kotlinBinaries = KotlinBinaries(COMMUNITY_ROOT), isCompilationRequired = isCompilationRequired(options))
+  val isCompilationRequired = isCompilationRequired(options)
+  val model = loadProject(projectHome = projectHome, kotlinBinaries = KotlinBinaries(COMMUNITY_ROOT), isCompilationRequired = isCompilationRequired)
 
   val buildPaths = customBuildPaths ?: computeBuildPaths(options, options.outRootDir ?: buildOutputRootEvaluator(model.project), projectHome)
 
@@ -134,19 +136,17 @@ suspend fun createCompilationContext(
   if (setupTracer) {
     JaegerJsonSpanExporterManager.setOutput(buildPaths.logDir.resolve("trace.json"))
   }
-
-  val messages = BuildMessagesImpl.create()
-  val context = CompilationContextImpl(model = model, messages = messages, paths = buildPaths, options = options)
-  /**
-   * [defineJavaSdk] may be skipped using [isCompilationRequired]
-   * after removing workaround from [JpsCompilationRunner.compileMissingArtifactsModules].
-   */
-  spanBuilder("define JDK").use {
-    defineJavaSdk(context)
-  }
   if (enableCoroutinesDump) {
     spanBuilder("enable coroutines dump").use {
       enableCoroutinesDump(it)
+    }
+  }
+
+  val messages = BuildMessagesImpl.create()
+  val context = CompilationContextImpl(model = model, messages = messages, paths = buildPaths, options = options)
+  if (isCompilationRequired) {
+    spanBuilder("define JDK").use {
+      defineJavaSdk(context)
     }
   }
 
@@ -366,7 +366,7 @@ private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinarie
 
   spanBuilder("load project").use(Dispatchers.IO) { span ->
     val mavenRepositoryPath = if (isRunningFromBazelOut()) {
-      // set this to a missing path, so the code won't access libraries download by maven
+      // set this to a missing path, so the code won't access library downloaded by maven
       getMavenRepositoryPath() + "-do-not-use-maven-repository-with-bazel"
     }
     else {
@@ -531,4 +531,27 @@ internal suspend fun resolveProjectDependencies(context: CompilationContext) {
  */
 internal fun isBazelTestRun(): Boolean {
   return Stream.of("TEST_TMPDIR", "RUNFILES_DIR", "JAVA_RUNFILES").allMatch { bazelTestEnv: String? -> System.getenv(bazelTestEnv) != null }
+}
+
+private fun defineJdk(global: JpsGlobal, jdkName: String, homeDir: Path) {
+  JpsJavaExtensionService.getInstance().addJavaSdk(global, jdkName, homeDir.normalize().invariantSeparatorsPathString)
+  Span.current().addEvent("'$jdkName' JDK set", Attributes.of(AttributeKey.stringKey("jdkHomePath"), homeDir.toString()))
+}
+
+/**
+ * Code is copied from com.intellij.openapi.projectRoots.impl.JavaSdkImpl.findClasses
+ */
+private fun readModulesFromReleaseFile(jbrBaseDir: Path): List<String> {
+  val releaseFile = jbrBaseDir.resolve("release")
+  check(Files.exists(releaseFile)) {
+    "JRE release file is missing: $releaseFile"
+  }
+
+  Files.newInputStream(releaseFile).use { stream ->
+    val p = Properties()
+    p.load(stream)
+    val jbrBaseUrl = "${URLUtil.JRT_PROTOCOL}${URLUtil.SCHEME_SEPARATOR}${jbrBaseDir.toAbsolutePath().invariantSeparatorsPathString}${URLUtil.JAR_SEPARATOR}"
+    val modules = p.getProperty("MODULES") ?: return emptyList()
+    return StringUtilRt.unquoteString(modules).splitToSequence(' ').map { jbrBaseUrl + it }.toList()
+  }
 }

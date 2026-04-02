@@ -25,6 +25,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/project/shared:project",
     "//platform/platform-impl/update-checker",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -45,6 +46,7 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//platform/project/shared:project_test_lib",
     "//platform/platform-impl/update-checker:update-checker_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.pluginManager.shared` end

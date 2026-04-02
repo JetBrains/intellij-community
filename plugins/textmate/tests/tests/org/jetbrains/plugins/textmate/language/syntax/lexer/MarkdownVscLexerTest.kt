@@ -14,6 +14,9 @@ class MarkdownVscLexerTest : TextMateLexerTestCase() {
   @Test
   fun inlineBold() = doTest("inline_bold.md", "inline_bold_after.md")
 
+  @Test
+  fun links() = doTest("links.md", "links_after.md")
+
   override val testDirRelativePath = "markdown_vsc"
   override val bundleName = TestUtil.MARKDOWN_VSC
 }

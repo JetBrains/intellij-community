@@ -62,6 +62,7 @@
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" scope="TEST" />
+    <orderEntry type="module" module-name="fleet.rhizomedb" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.vcs.impl.shared" />
 </module>

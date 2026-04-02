@@ -16,7 +16,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
-import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
@@ -52,7 +52,7 @@ abstract class AbstractScriptGotoDeclarationMultifileTest : KotlinMultiFileLight
         }
 
         runBlocking {
-            KotlinScriptResolutionService.getInstance(project).process(mainFile.virtualFile)
+            KotlinScriptService.getInstance(project).load(mainFile.virtualFile)
         }
 
         runInEdtAndWait {

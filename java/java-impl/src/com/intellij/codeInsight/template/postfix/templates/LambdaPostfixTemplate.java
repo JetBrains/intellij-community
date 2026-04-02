@@ -14,6 +14,13 @@ public class LambdaPostfixTemplate extends JavaEditablePostfixTemplate implement
           Collections.emptySet(), LanguageLevel.JDK_1_8, true, provider);
   }
 
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
+
   @Override
   public boolean isBuiltin() {
     return true;

@@ -66,6 +66,12 @@ class RawDescriptorListBuilder {
   }
 
   fun descriptor(id: String, resources: List<String>, dependencies: List<String>) {
-    descriptors.add(RawRuntimeModuleDescriptor.create(RuntimeModuleId.raw(id), resources, dependencies.map { RuntimeModuleId.raw(it) }))
+    descriptor(RuntimeModuleId.raw(id, RuntimeModuleId.DEFAULT_NAMESPACE), resources,
+               dependencies.map { RuntimeModuleId.raw(it, RuntimeModuleId.DEFAULT_NAMESPACE) })
+  }
+
+  fun descriptor(id: RuntimeModuleId, resources: List<String>, dependencies: List<RuntimeModuleId>) {
+    descriptors.add(RawRuntimeModuleDescriptor.create(id, resources,
+                                                      dependencies))
   }
 }

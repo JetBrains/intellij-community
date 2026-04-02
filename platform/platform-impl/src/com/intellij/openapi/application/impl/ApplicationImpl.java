@@ -127,6 +127,7 @@ import java.util.function.Supplier;
 import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
 import static com.intellij.openapi.application.ModalityKt.asContextElement;
 import static com.intellij.openapi.application.RuntimeFlagsKt.getReportInvokeLaterWithoutModality;
+import static com.intellij.openapi.application.impl.AppImplKt.computableFunction;
 import static com.intellij.openapi.application.impl.AppImplKt.rethrowCheckedExceptions;
 import static com.intellij.openapi.application.impl.AppImplKt.runnableUnitFunction;
 import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
@@ -1173,7 +1174,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   public <T> T runWriteAction(@NotNull Computable<T> computation) {
     incrementBackgroundWriteActionCounter();
     try {
-      return getThreadingSupport().runWriteActionBlocking(computation::compute);
+      return getThreadingSupport().runWriteActionBlocking(computableFunction(computation));
     }
     finally {
       decrementBackgroundWriteActionCounter();

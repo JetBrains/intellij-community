@@ -9,6 +9,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageT
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.annotations.TestOnly
@@ -59,6 +60,7 @@ internal class AgentChatVirtualFile internal constructor(
   var threadId: String = ""
     private set
 
+  @NlsSafe
   var threadTitle: String = resolveThreadTitle("")
     private set
 

@@ -6,8 +6,8 @@ import com.intellij.ide.actions.cache.RecoveryScope
 import com.intellij.ide.actions.cache.ReopenProjectRecoveryAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
+import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import com.intellij.util.containers.forEachLoggingErrors
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -32,7 +32,7 @@ class ExternalSystemRecoveryAction : ReopenProjectRecoveryAction() {
       it.beforeClose(recoveryScope)
     }
 
-    WorkspaceModelCacheImpl.invalidateCaches()
+    WorkspaceModelCache.getInstance(recoveryScope.project)?.invalidateCaches()
 
     val projectPath = closeProject(recoveryScope)
 

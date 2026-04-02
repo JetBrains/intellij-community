@@ -16,6 +16,8 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.frame.OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
@@ -176,7 +178,7 @@ class ScriptedSessionSource(
   override val provider: AgentSessionProvider,
   override val canReportExactThreadCount: Boolean = true,
   override val supportsUpdates: Boolean = false,
-  override val updates: Flow<Unit> = emptyFlow(),
+  override val updateEvents: Flow<AgentSessionSourceUpdateEvent> = emptyFlow(),
   private val listFromOpenProject: suspend (path: String, project: Project) -> List<AgentSessionThread> = { _, _ -> emptyList() },
   private val listFromClosedProject: suspend (path: String) -> List<AgentSessionThread> = { _ -> emptyList() },
   private val prefetch: suspend (paths: List<String>) -> Map<String, List<AgentSessionThread>> = { emptyMap() },
@@ -203,6 +205,28 @@ class ScriptedSessionSource(
   ): Map<String, AgentSessionRefreshHints> {
     return prefetchRefreshHintsProvider(paths, knownThreadIdsByPath)
   }
+}
+
+fun threadsChangedEvent(
+  scopedPaths: Set<String>? = null,
+  threadIds: Set<String>? = null,
+): AgentSessionSourceUpdateEvent {
+  return AgentSessionSourceUpdateEvent(
+    type = AgentSessionSourceUpdate.THREADS_CHANGED,
+    scopedPaths = scopedPaths,
+    threadIds = threadIds,
+  )
+}
+
+fun hintsChangedEvent(
+  scopedPaths: Set<String>? = null,
+  threadIds: Set<String>? = null,
+): AgentSessionSourceUpdateEvent {
+  return AgentSessionSourceUpdateEvent(
+    type = AgentSessionSourceUpdate.HINTS_CHANGED,
+    scopedPaths = scopedPaths,
+    threadIds = threadIds,
+  )
 }
 
 fun thread(

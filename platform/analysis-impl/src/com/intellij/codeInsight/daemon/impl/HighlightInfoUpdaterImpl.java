@@ -179,7 +179,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
             .map(h -> h.isValid() ? HighlightInfo.fromRangeHighlighter(h) : null)
             .filter(h-> h != null && h.toolId != null)
             .toList();
-        LOG.trace("psiFileEvictionListener: {" + hash + "} -> (" + (oldMap == null ? 0 : oldMap.size()) + "): " +
+        LOG.trace("psiFileEvictionListener: " + document+
+                  "{" + hash + "} -> (" + (oldMap == null ? 0 : oldMap.size()) + "): " +
                   "\noldMap:" + oldMap +
                   "\nall stored infos " + debugRender(infos) +
                   "\nall model  infos " + debugRender(fromModel) +
@@ -498,8 +499,10 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
 
     if (LOG.isTraceEnabled() && !invalidPsiRecycler.forAllInGarbageBin().isEmpty()) {
       Collection<InvalidPsi> psis = invalidPsiRecycler.forAllInGarbageBin();
+      List<InvalidPsi> sorted = ContainerUtil.sorted(ContainerUtil.getFirstItems(new ArrayList<>(psis), 100),
+                                                     (o1, o2) -> BY_OFFSETS_AND_HASH_ERRORS_FIRST.compare(o1.info(), o2.info()));
       LOG.trace("recycleInvalidPsiElements: found " + psis.size() + " invalid psi elements in " + psiFile.getName() + " for " + toolIdPredicate +
-                (psis.isEmpty() ? "" : ":\n"+ StringUtil.join(psis, "\n    ")) +
+                (psis.isEmpty() ? "" : ":\n"+ StringUtil.join(sorted, "\n    ")) +
                 " " +session.getProgressIndicator());
     }
   }
@@ -698,7 +701,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       newInfo.updateLazyFixesPsiTimeStamp(psiTimeStamp);
     }
     synchronized (this) {
-      assertMarkupConsistentWithData(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
+      //assertMarkupConsistentWithData(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
       Map<Object, ToolHighlights> data = getData(psiFile, hostDocument);
       ToolHighlights toolHighlights = data.get(toolId);
       List<? extends HighlightInfo> oldInfos = ContainerUtil.notNullize(toolHighlights == null ? null : toolHighlights.elementHighlights.get(visitedPsiElement));
@@ -739,7 +742,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       });
     }
     //assertNoDuplicates(psiFile, getInfosFromMarkup(hostDocument, project), "markup after psiElementVisited ");
-    assertMarkupConsistentWithData(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
+    //assertMarkupConsistentWithData(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
     Reference.reachabilityFence(visitedPsiElement); // ensure no psi is gced while in the middle of modifying soft-ref maps
   }
 
@@ -1133,6 +1136,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         }
       }
     });
+    assertMarkupConsistentWithData(session.getPsiFile(), toolIdPredicate);
   }
 
   /**

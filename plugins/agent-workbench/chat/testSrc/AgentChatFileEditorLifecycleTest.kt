@@ -219,6 +219,30 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
+  fun claudeMenuCommandInitialMessageUsesTypedInputInsteadOfBracketedPaste() {
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val file = testFile(
+      threadIdentity = "CLAUDE:session-1",
+      shellCommand = listOf("claude", "--resume", "session-1"),
+    ).also {
+      it.updateInitialMessageMetadata(
+        initialComposedMessage = "/mcp",
+        initialMessageToken = "token-menu",
+        initialMessageSent = false,
+      )
+    }
+    val editor = testEditor(file = file, terminalTabs = terminalTabs)
+
+    editor.selectNotify()
+    terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
+    waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
+
+    assertThat(file.initialMessageSent).isTrue()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(SentTerminalText("/mcp", shouldExecute = true, useBracketedPasteMode = false))
+  }
+
+  @Test
   fun codexPlanModeTimeoutReadinessWaitsWithoutSending() {
     val terminalTabs = FakeAgentChatTerminalTabs()
     terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
@@ -301,13 +325,7 @@ class AgentChatFileEditorLifecycleTest {
     terminalTabs.tab.emitMeaningfulOutput("ready for first /plan")
     waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
 
-    Thread.sleep(400)
-    assertThat(file.initialMessageSent).isFalse()
-    assertThat(terminalTabs.tab.sentTexts)
-      .containsExactly(SentTerminalText("/plan", shouldExecute = true))
-
-    terminalTabs.tab.emitMeaningfulOutput("ready for retry")
-    waitForCondition {
+    waitForCondition(timeoutMs = 5_000) {
       file.initialMessageDispatchStepIndex == 1 &&
       terminalTabs.tab.sentTexts.size == 2
     }
@@ -328,6 +346,100 @@ class AgentChatFileEditorLifecycleTest {
         SentTerminalText("/plan", shouldExecute = true),
         SentTerminalText("/plan", shouldExecute = true),
         SentTerminalText("Retry after busy output", shouldExecute = true),
+      )
+  }
+
+  @Test
+  fun codexPlanModeRepeatedBusyResponsesKeepRetryingPlanStepBeforePrompt() {
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
+    terminalTabs.tab.enqueuePostSendOutput(
+      "'/plan' is disabled while a task is in progress.",
+      "'/plan' is disabled while a task is in progress.",
+    )
+    val file = testFile().also {
+      it.updateInitialMessageMetadata(
+        initialMessageDispatchSteps = codexPlanDispatchSteps("Retry after repeated busy output"),
+        initialMessageDispatchStepIndex = 0,
+        initialMessageToken = "token-plan-busy-repeated",
+        initialMessageSent = false,
+      )
+    }
+    val editor = testEditor(file = file, terminalTabs = terminalTabs)
+
+    editor.selectNotify()
+    terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
+    terminalTabs.tab.emitMeaningfulOutput("ready for first /plan")
+
+    waitForCondition(timeoutMs = 6_000) {
+      file.initialMessageDispatchStepIndex == 1 &&
+      terminalTabs.tab.sentTexts.size == 3
+    }
+
+    assertThat(file.initialMessageSent).isFalse()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(
+        SentTerminalText("/plan", shouldExecute = true),
+        SentTerminalText("/plan", shouldExecute = true),
+        SentTerminalText("/plan", shouldExecute = true),
+      )
+
+    terminalTabs.tab.emitMeaningfulOutput("ready for prompt")
+    waitForCondition { terminalTabs.tab.sentTexts.size == 4 }
+
+    assertThat(file.initialMessageSent).isTrue()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(
+        SentTerminalText("/plan", shouldExecute = true),
+        SentTerminalText("/plan", shouldExecute = true),
+        SentTerminalText("/plan", shouldExecute = true),
+        SentTerminalText("Retry after repeated busy output", shouldExecute = true),
+      )
+  }
+
+  @Test
+  fun codexPlanModeDelayedBusyResponseWithinObservationWindowRetriesPlanStep() {
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
+    terminalTabs.tab.enqueueDelayedPostSendOutput(
+      delayMs = 900,
+      output = "'/plan' is disabled while a task is in progress.",
+    )
+    val file = testFile().also {
+      it.updateInitialMessageMetadata(
+        initialMessageDispatchSteps = codexPlanDispatchSteps("Retry after delayed busy output"),
+        initialMessageDispatchStepIndex = 0,
+        initialMessageToken = "token-plan-busy-delayed",
+        initialMessageSent = false,
+      )
+    }
+    val editor = testEditor(file = file, terminalTabs = terminalTabs)
+
+    editor.selectNotify()
+    terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
+    terminalTabs.tab.emitMeaningfulOutput("ready for first /plan")
+
+    waitForCondition(timeoutMs = 6_000) {
+      file.initialMessageDispatchStepIndex == 1 &&
+      terminalTabs.tab.sentTexts.size == 2
+    }
+
+    assertThat(file.initialMessageSent).isFalse()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(
+        SentTerminalText("/plan", shouldExecute = true),
+        SentTerminalText("/plan", shouldExecute = true),
+      )
+
+    terminalTabs.tab.emitMeaningfulOutput("ready for prompt")
+    waitForCondition { terminalTabs.tab.sentTexts.size == 3 }
+
+    assertThat(file.initialMessageSent).isTrue()
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(
+        SentTerminalText("/plan", shouldExecute = true),
+        SentTerminalText("/plan", shouldExecute = true),
+        SentTerminalText("Retry after delayed busy output", shouldExecute = true),
       )
   }
 
@@ -484,14 +596,18 @@ private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
   override val sessionState: StateFlow<TerminalViewSessionState> = mutableSessionState
   override val keyEventsFlow: Flow<TerminalKeyEvent> = emptyFlow()
   @Volatile var readinessResult: AgentChatTerminalInputReadiness = AgentChatTerminalInputReadiness.READY
-  private val postSendOutputQueue: ConcurrentLinkedDeque<String> = ConcurrentLinkedDeque()
+  private val postSendOutputQueue: ConcurrentLinkedDeque<PostSendOutput> = ConcurrentLinkedDeque()
   private val emittedOutputChunks: CopyOnWriteArrayList<EmittedOutputChunk> = CopyOnWriteArrayList()
   private val outputVersion: AtomicLong = AtomicLong()
 
   @JvmField val sentTexts: CopyOnWriteArrayList<SentTerminalText> = CopyOnWriteArrayList()
 
   fun enqueuePostSendOutput(vararg outputs: String) {
-    postSendOutputQueue.addAll(outputs.asList())
+    postSendOutputQueue.addAll(outputs.map { output -> PostSendOutput(text = output, delayMs = 0) })
+  }
+
+  fun enqueueDelayedPostSendOutput(delayMs: Long, output: String) {
+    postSendOutputQueue.add(PostSendOutput(text = output, delayMs = delayMs))
   }
 
   fun emitMeaningfulOutput(text: String = "ready") {
@@ -520,22 +636,47 @@ private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
     timeoutMs: Long,
     idleMs: Long,
   ): AgentChatTerminalOutputObservation {
-    if (sessionState.value == TerminalViewSessionState.Terminated) {
-      return AgentChatTerminalOutputObservation(
-        readiness = AgentChatTerminalInputReadiness.TERMINATED,
-        text = readOutputSince(checkpoint),
-      )
+    val deadline = System.currentTimeMillis() + timeoutMs
+    val pollIntervalMs = idleMs.coerceIn(10, 50)
+    while (true) {
+      if (sessionState.value == TerminalViewSessionState.Terminated) {
+        return AgentChatTerminalOutputObservation(
+          readiness = AgentChatTerminalInputReadiness.TERMINATED,
+          text = readOutputSince(checkpoint),
+        )
+      }
+      val text = readOutputSince(checkpoint)
+      if (text.isNotEmpty()) {
+        return AgentChatTerminalOutputObservation(
+          readiness = AgentChatTerminalInputReadiness.READY,
+          text = text,
+        )
+      }
+      if (System.currentTimeMillis() >= deadline) {
+        return AgentChatTerminalOutputObservation(
+          readiness = AgentChatTerminalInputReadiness.TIMEOUT,
+          text = text,
+        )
+      }
+      Thread.sleep(pollIntervalMs)
     }
-    val text = readOutputSince(checkpoint)
-    return AgentChatTerminalOutputObservation(
-      readiness = if (text.isEmpty()) AgentChatTerminalInputReadiness.TIMEOUT else AgentChatTerminalInputReadiness.READY,
-      text = text,
-    )
   }
 
-  override fun sendText(text: String, shouldExecute: Boolean) {
-    sentTexts += SentTerminalText(text, shouldExecute)
-    postSendOutputQueue.pollFirst()?.let(::emitMeaningfulOutput)
+  override fun sendText(text: String, shouldExecute: Boolean, useBracketedPasteMode: Boolean) {
+    sentTexts += SentTerminalText(text, shouldExecute, useBracketedPasteMode)
+    postSendOutputQueue.pollFirst()?.let { output ->
+      if (output.delayMs <= 0) {
+        emitMeaningfulOutput(output.text)
+      }
+      else {
+        Thread {
+          Thread.sleep(output.delayMs)
+          emitMeaningfulOutput(output.text)
+        }
+          .apply { isDaemon = true }
+          .start()
+      }
+    }
   }
 
   override suspend fun awaitInitialMessageReadiness(
@@ -569,9 +710,15 @@ private data class EmittedOutputChunk(
   @JvmField val text: String,
 )
 
+private data class PostSendOutput(
+  @JvmField val text: String,
+  @JvmField val delayMs: Long,
+)
+
 private data class SentTerminalText(
   @JvmField val text: String,
   @JvmField val shouldExecute: Boolean,
+  @JvmField val useBracketedPasteMode: Boolean = true,
 )
 
 private fun testFile(

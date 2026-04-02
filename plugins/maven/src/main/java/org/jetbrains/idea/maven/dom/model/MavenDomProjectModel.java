@@ -1,33 +1,22 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // Generated on Mon Mar 17 18:02:09 MSK 2008
 // DTD/Schema  :    http://maven.apache.org/POM/4.0.0
 
 package org.jetbrains.idea.maven.dom.model;
 
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import com.intellij.util.xml.SubTag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
 import org.jetbrains.idea.maven.dom.converters.MavenModelVersionConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenPackagingConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenUrlConverter;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 /**
  * http://maven.apache.org/POM/4.0.0:Model interface.
@@ -62,6 +51,22 @@ public interface MavenDomProjectModel extends MavenDomElement, MavenDomProjectMo
   @NotNull
   @Convert(MavenModelVersionConverter.class)
   GenericDomValue<String> getModelVersion();
+
+  /**
+   * Returns the string value of the modelVersion child if it exists.
+   * Otherwise, tries to infer the model version from the namespace.
+   */
+  default @Nullable String getEffectiveModelVersion() {
+    String value = getModelVersion().getValue();
+    if (value != null) return value;
+    // Infer from namespace
+    XmlTag rootTag = getXmlTag();
+    if (rootTag != null) {
+      String xmlns = rootTag.getAttributeValue("xmlns");
+      return MavenUtil.inferModelVersionFromNamespace(xmlns);
+    }
+    return null;
+  }
 
   /**
    * Returns the value of the groupId child.

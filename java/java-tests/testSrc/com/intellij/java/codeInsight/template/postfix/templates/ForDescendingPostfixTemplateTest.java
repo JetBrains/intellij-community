@@ -51,4 +51,11 @@ public class ForDescendingPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testBoxedLongArray() {
     doTest();
   }
+
+  public static class ModForDescendingPostfixTemplateTest extends ForDescendingPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

@@ -22,9 +22,9 @@ fun loadPluginModules(
 ): List<RawIncludedRuntimeModule> {
   try {
     val modules = ArrayList<RawIncludedRuntimeModule>()
-    val addedModules = HashSet<String>()
+    val addedModules = HashSet<RuntimeModuleId>()
     modules.add(RawIncludedRuntimeModule(mainModule.moduleId, RuntimeModuleLoadingRule.EMBEDDED, null))
-    addedModules.add(mainModule.moduleId.stringId)
+    addedModules.add(mainModule.moduleId)
     resourceFileResolver.readResourceFile(mainModule.moduleId, PLUGIN_XML_PATH).use { inputStream ->
       if (inputStream == null) {
         throw MalformedRepositoryException("$PLUGIN_XML_PATH is not found in '${mainModule.moduleId.presentableName}' module in $repository " +
@@ -33,13 +33,27 @@ fun loadPluginModules(
       val reader = XMLInputFactory.newDefaultFactory().createXMLStreamReader(inputStream)
       var level = 0
       var inContentTag = false
+      var inIdTag = false
+      var namespace: String? = null
+      var id: String? = null
       while (reader.hasNext()) {
         val event = reader.next()
-        if (event == XMLStreamConstants.START_ELEMENT) {
+        if (event == XMLStreamConstants.CHARACTERS && inIdTag) {
+          id = reader.text
+        }
+        else if (event == XMLStreamConstants.START_ELEMENT) {
           level++
           val tagName = reader.localName
-          if (level == 2 && tagName == "content") {
+          if (level == 2 && tagName == "id") {
+            inIdTag = true
+          }
+          else if (level == 2 && tagName == "content") {
             inContentTag = true
+            for (i in 0 until reader.attributeCount) {
+              if (reader.getAttributeLocalName(i) == "namespace") {
+                namespace = reader.getAttributeValue(i)
+              }
+            }
           }
           else if (level == 3 && inContentTag && tagName == "module") {
             var nameAttribute: String? = null
@@ -54,14 +68,17 @@ fun loadPluginModules(
               throw XMLStreamException("'name' attribute is not found in 'module' tag")
             }
             val moduleName = nameAttribute.substringBefore('/')
-            if (addedModules.add(moduleName)) {
+            val actualNamespace = namespace ?: id?.let { $$"$${it}_$implicit" }
+            if (actualNamespace == null) throw XMLStreamException("'id' tag and 'namespace' attribute in 'content' tag aren't specified")
+            val moduleId = RuntimeModuleId.contentModule(moduleName, actualNamespace)
+            if (addedModules.add(moduleId)) {
               val loadingRule = when (loading) {
                 "required" -> RuntimeModuleLoadingRule.REQUIRED
                 "embedded" -> RuntimeModuleLoadingRule.EMBEDDED
                 "on-demand" -> RuntimeModuleLoadingRule.ON_DEMAND
                 else -> RuntimeModuleLoadingRule.OPTIONAL
-              }    
-              modules.add(RawIncludedRuntimeModule(RuntimeModuleId.module(moduleName), loadingRule, null))
+              }
+              modules.add(RawIncludedRuntimeModule(moduleId, loadingRule, null))
             }
           }
         }

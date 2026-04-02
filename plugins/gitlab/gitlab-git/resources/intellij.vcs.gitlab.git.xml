@@ -2,7 +2,10 @@
   <resource-bundle>messages.GitLabBundle</resource-bundle>
 
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="Git4Idea"/>
+    <module name="intellij.vcs.git.shared"/>
+    <!-- endregion -->
   </dependencies>
 
   <actions>

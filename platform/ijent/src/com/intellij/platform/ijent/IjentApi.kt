@@ -5,9 +5,16 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelPosixApi
 import com.intellij.platform.eel.EelWindowsApi
+import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelSendChannel
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
+import org.jetbrains.annotations.ApiStatus
+import java.io.InputStream
+import java.io.OutputStream
+import java.util.UUID
 
 /**
  * Provides access to an IJent process running on some machine.
@@ -58,6 +65,19 @@ sealed interface IjentApi : EelApi, AutoCloseable {
 interface IjentPosixApi : IjentApi, EelPosixApi {
   override val fs: IjentFileSystemPosixApi
   override val tunnels: IjentTunnelsPosixApi
+
+  suspend fun requestHyperVTransports(vmId: UUID): Boolean  // TODO Make API look like with Unix sockets
+
+  @ApiStatus.Internal
+  suspend fun requestUnixSockets(): IjentTransportUnixSockets?
+
+  class IjentTransportUnixSockets(val grpcSocketPath: EelPath, val binarySocketPath: EelPath?)  // TODO Rename
+
+  @ApiStatus.Internal
+  fun addGrpcChannel(inputStream: InputStream, outputStream: OutputStream)  // TODO Is it possible to use EelChannel here?
+
+  @ApiStatus.Internal
+  fun addSpecialChannel(input: EelReceiveChannel, output: EelSendChannel)
 }
 
 interface IjentWindowsApi : IjentApi, EelWindowsApi {

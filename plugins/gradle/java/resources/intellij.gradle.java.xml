@@ -3,15 +3,18 @@
   <dependencies>
     <module name="intellij.gradle"/>
     <module name="intellij.gradle.toolingExtension.impl"/>
+    <module name="intellij.java.debugger.impl.shared"/>
     <module name="intellij.java"/>
     <module name="intellij.java.compiler"/>
     <module name="intellij.java.compiler.impl"/>
     <module name="intellij.java.debugger.impl"/>
-    <module name="intellij.java.debugger.impl.shared"/>
     <module name="intellij.java.execution"/>
     <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.indexing"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
     <module name="intellij.java.ui"/>
     <module name="intellij.platform.jps.build"/>
     <module name="intellij.properties.backend.psi"/>

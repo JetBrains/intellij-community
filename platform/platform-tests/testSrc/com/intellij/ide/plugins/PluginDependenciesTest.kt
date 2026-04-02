@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.plugins.appService
 import com.intellij.platform.testFramework.plugins.buildDir
@@ -607,7 +608,10 @@ internal class PluginDependenciesTest {
   fun `plugin is loaded if it has a module dependency on v2 module with slash in its name`() {
     plugin("bar") {
       content {
-        module("bar/module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.module" }
+        module("bar/module", ModuleLoadingRuleValue.REQUIRED) {
+          packagePrefix = "bar.module"
+          moduleVisibility = ModuleVisibilityValue.PUBLIC
+        }
       }
     }.buildDir(pluginDirPath.resolve("bar"))
     plugin("foo") { dependencies { module("bar/module") } }.buildDir(pluginDirPath.resolve("foo"))
@@ -675,7 +679,10 @@ internal class PluginDependenciesTest {
       content {
         module("embedded.module", ModuleLoadingRuleValue.EMBEDDED) { packagePrefix = "embedded" }
         module("required.module", ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "required" }
-        module("optional.module", ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "optional" }
+        module("optional.module", ModuleLoadingRuleValue.OPTIONAL) {
+          packagePrefix = "optional"
+          moduleVisibility = ModuleVisibilityValue.PUBLIC
+        }
       }
     }.buildDir(pluginDirPath.resolve("core"))
     plugin("foo") {
@@ -857,6 +864,7 @@ internal class PluginDependenciesTest {
     content {
       module("bar.module") {
         packagePrefix = "bar.module"
+        moduleVisibility = ModuleVisibilityValue.PUBLIC
       }
     }
   }.buildDir(pluginDirPath.resolve("bar"))

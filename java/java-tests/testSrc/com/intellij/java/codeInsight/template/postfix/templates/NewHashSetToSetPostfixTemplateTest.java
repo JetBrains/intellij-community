@@ -20,5 +20,12 @@ public class NewHashSetToSetPostfixTemplateTest extends PostfixTemplateTestCase 
   public void testSimple() {
     doTestCompletion(null);
   }
+
+  public static class ModNewHashSetToSetPostfixTemplateTest extends NewHashSetToSetPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }
 

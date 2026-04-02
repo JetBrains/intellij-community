@@ -1,6 +1,9 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="ByteCodeViewer"/>
+    <module name="intellij.java.psi"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="ByteCodeViewer">
     <classSearcher implementation="com.intellij.groovy.byteCodeViewer.GroovyScriptClassSearcher"/>

@@ -614,7 +614,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         private val LOG = Logger.getInstance(PomFile::class.java)
 
         fun forFileOrNull(xmlFile: XmlFile): PomFile? =
-            MavenDomUtil.getMavenDomProjectModel(xmlFile.project, xmlFile.virtualFile)?.let { PomFile(xmlFile, it) }
+            MavenDomUtil.getMavenDomModel<MavenDomProjectModel>(xmlFile)?.let { PomFile(xmlFile, it) }
 
         @Suppress("DeprecatedCallableAddReplaceWith")
         @Deprecated("We shouldn't use phase but additional compiler configuration in most cases")

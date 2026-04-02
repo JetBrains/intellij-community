@@ -1,4 +1,9 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.codeInsight.inspections.shared" visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.psi"/>
+  </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
 
     <codeInsight.blockingMethodChecker

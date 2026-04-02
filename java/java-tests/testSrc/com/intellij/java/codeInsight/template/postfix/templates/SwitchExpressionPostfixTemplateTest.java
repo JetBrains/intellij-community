@@ -65,4 +65,11 @@ public class SwitchExpressionPostfixTemplateTest extends PostfixTemplateTestCase
   public void testCompositeExprAssign() {
     doTest();
   }
+
+  public static class ModSwitchExpressionPostfixTemplateTest extends SwitchExpressionPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

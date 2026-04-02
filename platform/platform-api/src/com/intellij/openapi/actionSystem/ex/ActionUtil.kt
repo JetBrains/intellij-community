@@ -299,6 +299,10 @@ object ActionUtil {
         val duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime)
         ActionsCollector.getInstance().recordUpdate(action, e, duration)
       }
+      presentation.isEnabled = presentation.isEnabled && (allowed || !e.isFromContextMenu)
+      if (!allowed) {
+        presentation.putClientProperty(TOOLTIP_TEXT, IdeBundle.message("ide.action.waits.for.analysis.message", presentation.text))
+      }
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled)
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, !allowed && presentation.isVisible)
       if (presentation.isEnabled && action is RequiresPermissions) {

@@ -32,6 +32,13 @@ public class OptionalPostfixTemplate extends JavaEditablePostfixTemplate impleme
     return true;
   }
 
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
+
   @Override
   protected void addTemplateVariables(@NotNull PsiElement element, @NotNull Template template) {
     super.addTemplateVariables(element, template);

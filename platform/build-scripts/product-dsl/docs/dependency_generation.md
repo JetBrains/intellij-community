@@ -305,7 +305,7 @@ content is read only to preserve manual entries and xi:include content.
 
 Dependencies are generated from production-scope JPS edges. A dependency can be omitted from XML in two cases:
 
-1. The target module is **globally embedded** and the dependency is coming from a plugin-only content module, unless the source and target are sibling content modules of the same plugin (see [Globally Embedded Module Filtering](#globally-embedded-module-filtering)).
+1. The target module is **globally embedded** by product/module-set content, and the dependency is coming from a plugin-only content module (see [Globally Embedded Module Filtering](#globally-embedded-module-filtering)).
 2. The dependency is explicitly suppressed via `suppressions.json` (or allowlists).
 
 **Implicit dependencies** are JPS production deps missing from XML (`JPS deps - XML deps`). Validators treat these as auto-inferred JPS deps and still validate them unless they are suppressed or allowlisted.
@@ -314,14 +314,15 @@ See [errors.md](errors.md) for error handling details.
 
 ## Globally Embedded Module Filtering
 
-Dependencies to globally embedded modules are automatically skipped when generating dependencies, except for same-plugin sibling content-module deps. This reduces XML bloat without dropping structural dependencies that must stay explicit.
+Dependencies to globally embedded modules are automatically skipped when generating dependencies. This reduces XML bloat without hiding dependencies that are only implied by bundled plugin content.
 
 ### Definition
 
 A dependency target is skipped only if ALL of these conditions are true:
 1. In every product from the dependency's embedded-check scope, the target is reachable via non-plugin source(s).
 2. In every matching source in that scope, target loading mode is `EMBEDDED`.
-3. For content module descriptors, the source and target are not sibling content modules of the same owning plugin in the descriptor scope being planned.
+
+Bundled plugin content is ignored when deciding whether a target is globally embedded. Plugins affect only the embedded-check scope (which products are considered), not the embeddedness decision itself.
 
 Embedded-check scope depends on dependency origin:
 - Plugin XML dependency: products where the plugin is bundled; fallback to all discovered real products for non-bundled plugins.
@@ -345,8 +346,8 @@ If a target is embedded in every product from the embedded-check scope, it is al
 |---------------|------------------------|----------------------------------|-------|
 | `intellij.platform.core` | No | Yes | ✓ Yes |
 | `intellij.platform.frontend.split` | No | No (embedded only in JetBrainsClient while plugin is bundled in Idea + JetBrainsClient) | ✗ No |
-| `intellij.platform.core` | Yes | Yes | ✓ Yes |
-| `intellij.sh.core` from `intellij.sh.markdown` in `intellij.sh.plugin` | Yes (same plugin sibling) | Yes | ✗ No |
+| `intellij.platform.core` with both product and plugin sources | Yes | Yes | ✓ Yes |
+| `intellij.sh.core` from `intellij.sh.markdown` in `intellij.sh.plugin` | Yes (plugin-only embedded source) | No | ✗ No |
 
 ### Scope
 
@@ -356,7 +357,7 @@ This filtering applies to:
 - **DSL test plugin dependency planning**
 
 Content modules directly in products (via module sets) do NOT skip embedded deps because they're not "inside a plugin" - they're at the product level where the embedding relationship is defined.
-Same-plugin sibling content-module deps also stay explicit so generated descriptors and validation graph edges preserve the plugin's internal loading relationships.
+Plugin-only embedded sources also stay explicit because plugin content alone does not make a target globally embedded.
 
 ### Implementation
 

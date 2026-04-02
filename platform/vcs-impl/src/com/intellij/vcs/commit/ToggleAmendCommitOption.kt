@@ -18,7 +18,7 @@ class ToggleAmendCommitOption(commitPanel: CheckinProjectPanel, parent: Disposab
     toolTipText = VcsBundle.message("commit.tooltip.merge.this.commit.with.the.previous.one")
 
     addActionListener {
-      amendCommitHandler.commitToAmend = if (isSelected) CommitToAmend.Last else CommitToAmend.None
+      amendCommitHandler.commitToAmend = if (isSelected) CommitToAmend.Last.Unknown else CommitToAmend.None
       CommitSessionCollector.getInstance(project).logCommitOptionToggled(CommitOption.AMEND, isSelected)
     }
     amendCommitHandler.addAmendCommitModeListener(object : AmendCommitModeListener {

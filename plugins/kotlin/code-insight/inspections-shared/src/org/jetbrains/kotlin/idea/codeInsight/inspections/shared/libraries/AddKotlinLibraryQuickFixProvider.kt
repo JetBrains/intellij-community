@@ -66,8 +66,7 @@ open class AddKotlinLibraryQuickFixProvider(
     override fun registerFixes(ref: PsiReference, registrar: QuickFixActionRegistrar) {
         if (!libraryReferenceTester.isLibraryReference(ref)) return
         val module = ref.element.module ?: return
-        val extensionList = ref.element.project.extensionArea.getExtensionPoint(KotlinBuildSystemDependencyManager.EP_NAME).extensionList
-        val dependencyManager = extensionList.firstOrNull { it.isApplicable(module) } ?: return
+        val dependencyManager = KotlinBuildSystemDependencyManager.findApplicableConfigurator(module) ?: return
         if (dependencyManager.isProjectSyncPendingOrInProgress()) return
 
         if (libraryAvailabilityTester.isAvailable(module)) return
@@ -76,18 +75,19 @@ open class AddKotlinLibraryQuickFixProvider(
             libraryGroupId, libraryArtifactId, ref
         ) ?: return
 
-        val scope = if (ProjectFileIndex.getInstance(module.project).isInTestSourceContent(ref.element.containingFile.virtualFile)) {
-            DependencyScope.TEST
-        } else {
-            DependencyScope.COMPILE
-        }
+        val scope =
+            if (ProjectFileIndex.getInstance(module.project).isInTestSourceContent(ref.element.containingFile.virtualFile)) {
+                DependencyScope.TEST
+            } else {
+                DependencyScope.COMPILE
+            }
 
         registrar.register(
             AddKotlinLibraryQuickFix(
                 dependencyManager = dependencyManager,
                 libraryDescriptor = libraryDescriptor.withScope(scope),
                 quickFixText = quickFixText
-            )
+            ).asIntention()
         )
     }
 

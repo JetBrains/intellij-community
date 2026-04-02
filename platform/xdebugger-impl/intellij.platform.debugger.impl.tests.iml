@@ -89,6 +89,7 @@
     <orderEntry type="module" module-name="intellij.platform.rpc.topics" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="TEST" />
+    <orderEntry type="module" module-name="fleet.rhizomedb" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.debugger.impl" />
 </module>

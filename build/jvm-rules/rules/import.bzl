@@ -41,9 +41,6 @@ jvm_import = rule(
             default = [],
             providers = [[_KtCompilerPluginInfo]],
         ),
-        "_use_rules_kotlin": attr.label(
-            default = Label("//:use_rules_kotlin"),
-        ),
     },
     provides = [JavaInfo, _KtJvmInfo],
     implementation = _jvm_import,

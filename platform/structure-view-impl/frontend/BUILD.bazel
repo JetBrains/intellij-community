@@ -35,6 +35,7 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/remote-topics/frontend",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -65,6 +66,7 @@ jvm_library(
     "//platform/kernel/shared:kernel_test_lib",
     "//platform/remote-topics/shared:rpc-topics_test_lib",
     "//platform/remote-topics/frontend:frontend_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.structureView.frontend` end

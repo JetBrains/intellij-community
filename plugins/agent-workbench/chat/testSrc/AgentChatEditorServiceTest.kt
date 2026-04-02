@@ -1464,8 +1464,8 @@ private class EditorServiceFakeAgentChatTerminalTab : AgentChatTerminalTab {
     )
   }
 
-  override fun sendText(text: String, shouldExecute: Boolean) {
-    sentTexts += EditorServiceSentTerminalText(text, shouldExecute)
+  override fun sendText(text: String, shouldExecute: Boolean, useBracketedPasteMode: Boolean) {
+    sentTexts += EditorServiceSentTerminalText(text, shouldExecute, useBracketedPasteMode)
   }
 
   override suspend fun awaitInitialMessageReadiness(
@@ -1485,6 +1485,7 @@ private class EditorServiceFakeAgentChatTerminalTab : AgentChatTerminalTab {
 private data class EditorServiceSentTerminalText(
   @JvmField val text: String,
   @JvmField val shouldExecute: Boolean,
+  @JvmField val useBracketedPasteMode: Boolean = true,
 )
 
 private fun resolvedCodexResumeCommand(threadId: String): List<String> {

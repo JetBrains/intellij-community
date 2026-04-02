@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -163,7 +164,7 @@ class ClaudeSessionSourceTest {
   }
 
   @Test
-  fun updatesFlowMergesBackendAndReadState() {
+  fun updateEventsMergeBackendAndReadState() {
     val backendUpdates = MutableSharedFlow<Unit>(replay = 1)
     val backend = object : ClaudeSessionBackend {
       override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = emptyList()
@@ -174,8 +175,8 @@ class ClaudeSessionSourceTest {
     backendUpdates.tryEmit(Unit)
 
     runBlocking(Dispatchers.Default) {
-      val result = withTimeoutOrNull(2.seconds) { source.updates.first() }
-      assertThat(result).isNotNull()
+      val result = withTimeoutOrNull(2.seconds) { source.updateEvents.first() }
+      assertThat(result?.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
     }
   }
 

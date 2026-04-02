@@ -98,4 +98,11 @@
                     beanClass="com.intellij.ide.util.gotoByName.IgnoreLanguageInDefaultProvider"/>
   </extensionPoints>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+      open="true"
+      serviceImplementation="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableService"/>
+
+    <registryKey defaultValue="false" description="Enable postfix mod completion" key="postfix.template.mod.completion.enabled"/>
+  </extensions>
 </idea-plugin>

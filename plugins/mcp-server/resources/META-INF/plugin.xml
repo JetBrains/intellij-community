@@ -88,7 +88,7 @@
                  description="Enable OT tracer for MCP tool calls"
                  key="mcp.server.ot.trace"/>
     <registryKey defaultValue=""
-                 description="Filter for MCP tools, like -*,+com.intellij.mcpserver.toolsets.general.*,-*.get_file_text_by_path"
+                 description="Filter for MCP tools, like -*,+com.intellij.mcpserver.toolsets.general.*,-*.read_file"
                  key="mcp.server.tools.filter"/>
     <registryKey defaultValue="false"
                  description="Show advanced filter options UI in MCP tool filter settings"

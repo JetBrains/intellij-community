@@ -7,7 +7,9 @@ import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.ide.scratch.ScratchesNamedScope
+import com.intellij.ide.util.TreeFileChooserSupport
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -128,6 +130,75 @@ class AgentPromptProjectPathsChooserPopupTest {
     assertThat(treeSyncCalls).isZero()
     assertThat(searchSyncCalls).isEqualTo(1)
     assertThat(result).containsExactly(existing, added)
+  }
+
+  @Test
+  fun resolveTreeSelectionToRestoreUsesInitialTreePreselectionWhenManualSelectionIsEmpty() {
+    val initialTreePreselection = ManualPathSelectionEntry(path = "/repo/project/src", isDirectory = true)
+
+    val restoredSelection = resolveTreeSelectionToRestore(emptyList(), initialTreePreselection)
+
+    assertThat(restoredSelection).containsExactly(initialTreePreselection)
+  }
+
+  @Test
+  fun resolveTreeSelectionToRestorePrefersManualSelectionOverInitialTreePreselection() {
+    val existing = ManualPathSelectionEntry(path = "/repo/project/src/Main.java", isDirectory = false)
+    val initialTreePreselection = ManualPathSelectionEntry(path = "/repo/project/src", isDirectory = true)
+
+    val restoredSelection = resolveTreeSelectionToRestore(listOf(existing), initialTreePreselection)
+
+    assertThat(restoredSelection).containsExactly(existing)
+  }
+
+  @Test
+  fun resolveSelectableVirtualFileFallsBackToNearestAttachableFileAncestor() {
+    val rootNioDir = Files.createTempDirectory("agent-prompt-tree-select-file")
+    val fileNioPath = Files.writeString(rootNioDir.resolve("Sample.kt"), "class Sample")
+    val fileSystem = LocalFileSystem.getInstance()
+    val rootDir = checkNotNull(fileSystem.refreshAndFindFileByNioFile(rootNioDir))
+    val file = checkNotNull(fileSystem.refreshAndFindFileByNioFile(fileNioPath))
+    val rootPath = treePathOf(
+      node(
+        TestProjectViewNode(rootDir) { candidate -> VfsUtilCore.isAncestor(rootDir, candidate, false) || rootDir == candidate },
+        node(
+          TestProjectViewNode(file) { candidate -> file == candidate },
+          node(TestProjectViewValueNode("Sample")),
+        ),
+      ),
+    )
+    val filePath = rootPath.pathByAddingChild((rootPath.lastPathComponent as DefaultMutableTreeNode).firstChild)
+    val memberPath = filePath.pathByAddingChild((filePath.lastPathComponent as DefaultMutableTreeNode).firstChild)
+    val treeSupport = TreeFileChooserSupport(ProjectManager.getInstance().defaultProject)
+
+    val resolved = resolveSelectableVirtualFile(memberPath, treeSupport, listOf(rootDir.path))
+
+    assertThat(resolved).isEqualTo(file)
+  }
+
+  @Test
+  fun resolveSelectableVirtualFileFallsBackToNearestAttachableDirectoryAncestor() {
+    val rootNioDir = Files.createTempDirectory("agent-prompt-tree-select-dir")
+    val nestedNioDir = Files.createDirectories(rootNioDir.resolve("src/com/example"))
+    val fileSystem = LocalFileSystem.getInstance()
+    val rootDir = checkNotNull(fileSystem.refreshAndFindFileByNioFile(rootNioDir))
+    val nestedDir = checkNotNull(fileSystem.refreshAndFindFileByNioFile(nestedNioDir))
+    val rootPath = treePathOf(
+      node(
+        TestProjectViewNode(rootDir) { candidate -> VfsUtilCore.isAncestor(rootDir, candidate, false) || rootDir == candidate },
+        node(
+          TestProjectViewNode(nestedDir) { candidate -> VfsUtilCore.isAncestor(nestedDir, candidate, false) || nestedDir == candidate },
+          node(TestProjectViewValueNode("example")),
+        ),
+      ),
+    )
+    val nestedPath = rootPath.pathByAddingChild((rootPath.lastPathComponent as DefaultMutableTreeNode).firstChild)
+    val packagePath = nestedPath.pathByAddingChild((nestedPath.lastPathComponent as DefaultMutableTreeNode).firstChild)
+    val treeSupport = TreeFileChooserSupport(ProjectManager.getInstance().defaultProject)
+
+    val resolved = resolveSelectableVirtualFile(packagePath, treeSupport, listOf(rootDir.path))
+
+    assertThat(resolved).isEqualTo(nestedDir)
   }
 
   @Test

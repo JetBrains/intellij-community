@@ -7,6 +7,8 @@
     <module name="intellij.gradle.completion"/>
     <module name="intellij.gradle.java"/>
     <module name="intellij.gradle.java.toml"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.toml.core"/>
   </dependencies>
   <!-- endregion -->
 

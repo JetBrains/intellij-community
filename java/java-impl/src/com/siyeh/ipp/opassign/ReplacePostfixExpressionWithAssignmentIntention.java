@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiPostfixExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -37,7 +39,12 @@ public final class ReplacePostfixExpressionWithAssignmentIntention extends MCInt
 
   @Override
   protected @NotNull PsiElementPredicate getElementPredicate() {
-    return new ReplacePostfixExpressionWithOperatorAssignmentPredicate();
+    return e -> (e instanceof PsiPostfixExpression postfixExpression &&
+                 (postfixExpression.getOperand().getType()) instanceof PsiPrimitiveType primitiveType &&
+                 !(primitiveType.equals(PsiTypes.byteType()) ||
+                   primitiveType.equals(PsiTypes.charType()) ||
+                   primitiveType.equals(PsiTypes.shortType()))) &&
+                new ReplacePostfixExpressionWithOperatorAssignmentPredicate().satisfiedBy(postfixExpression);
   }
 
   @Override

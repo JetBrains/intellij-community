@@ -19,6 +19,7 @@
     <agent.workbench.promptContextContributor id="agentWorkbenchPromptProjectViewContext" implementation="com.intellij.agent.workbench.prompt.ui.context.AgentPromptProjectViewSelectionContextContributor" order="after agentWorkbenchPromptVcsContext, before agentWorkbenchPromptTreeSelectionContext"/>
     <agent.workbench.promptContextContributor id="agentWorkbenchPromptSelectedEditorFallbackContext" implementation="com.intellij.agent.workbench.prompt.ui.context.AgentPromptSelectedEditorFallbackContextContributor"/>
     <agent.workbench.promptContextContributor id="agentWorkbenchPromptTreeSelectionContext" implementation="com.intellij.agent.workbench.prompt.ui.context.AgentPromptTreeSelectionContextContributor" order="after agentWorkbenchPromptProjectViewContext"/>
+    <agent.workbench.promptContextContributor id="agentWorkbenchPromptListSelectionContext" implementation="com.intellij.agent.workbench.prompt.ui.context.AgentPromptListSelectionContextContributor" order="after agentWorkbenchPromptTreeSelectionContext"/>
     <actionPromoter implementation="com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchPromptShortcutActionPromoter" order="last"/>
   </extensions>
 

@@ -27,6 +27,14 @@ public interface WorkspaceModelCache {
   @TestOnly
   public fun saveCacheNow()
 
+  /**
+   * Invalidates this project's workspace model cache.
+   * The cache will be deleted on every save attempt for the lifetime of this project session,
+   * ensuring that a potentially broken cache is never written back to disk.
+   * On the next project open a fresh instance will start with an empty cache.
+   */
+  public fun invalidateCaches()
+
   public companion object {
     @JvmStatic
     public fun getInstance(project: Project): WorkspaceModelCache? = project.getService(WorkspaceModelCache::class.java)?.takeIf { it.enabled }

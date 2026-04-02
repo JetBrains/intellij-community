@@ -48,6 +48,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="module" module-name="intellij.platform.completion.common" scope="TEST" />
+    <orderEntry type="module" module-name="fleet.rhizomedb" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.completion.common" />
 </module>

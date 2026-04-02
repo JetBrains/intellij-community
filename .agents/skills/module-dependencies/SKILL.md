@@ -9,12 +9,12 @@ This document describes how to manage module dependencies when working with Inte
 
 ## Documentation
 
-- [Modularization Overview](../docs/IntelliJ-Platform/4_man/Modularization/) - Module organization principles:
-  - [Granularity of Modules](../docs/IntelliJ-Platform/4_man/Modularization/0_Granularity-of-modules.md)
-  - [Modules in Project Sources](../docs/IntelliJ-Platform/4_man/Modularization/1_Modules-in-project-sources.md)
-  - [Modules at Runtime](../docs/IntelliJ-Platform/4_man/Modularization/2_Modules-at-runtime.md)
-  - [Modules in Build Scripts](../docs/IntelliJ-Platform/4_man/Modularization/3_Modules-in-build-scripts.md)
-- [Project Structure](../docs/IntelliJ-Platform/4_man/Project-Structure/) - Naming conventions, Kotlin usage, dependencies
+- [Modularization Overview](../../../../docs/IntelliJ-Platform/4_man/Modularization/) - Module organization principles:
+  - [Granularity of Modules](../../../../docs/IntelliJ-Platform/4_man/Modularization/0_Granularity-of-modules.md)
+  - [Modules in Project Sources](../../../../docs/IntelliJ-Platform/4_man/Modularization/1_Modules-in-project-sources.md)
+  - [Modules at Runtime](../../../../docs/IntelliJ-Platform/4_man/Modularization/2_Modules-at-runtime.md)
+  - [Modules in Build Scripts](../../../../docs/IntelliJ-Platform/4_man/Modularization/3_Modules-in-build-scripts.md)
+- [Project Structure](../../../../docs/IntelliJ-Platform/4_man/Project-Structure/) - Naming conventions, Kotlin usage, dependencies
 
 ## Build System Overview
 

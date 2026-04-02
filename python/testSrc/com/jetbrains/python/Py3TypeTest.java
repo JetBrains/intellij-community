@@ -2903,6 +2903,33 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  // PY-77611
+  public void testClassDunderNewResultInPresenceOfInit1() {
+    doTest("int",
+           """
+             class C:
+                 def __new__(cls) -> int: ...
+             
+                 def __init__(self): ...
+             
+             expr = C()
+             """);
+  }
+
+  // PY-77611
+  public void testClassDunderNewResultInPresenceOfInit2() {
+    doTest("Derived", // TODO (PY-87329): Expected type `Base`
+           """
+           class Base:
+               def __new__(cls, x: int) -> Base: ...
+           
+           class Derived(Base):
+               def __init__(self, x: int): ...
+           
+           expr = Derived(1)
+           """);
+  }
+
   public void testObjectDunderNewResult() {
     doTest("Self@C",
            """
@@ -4529,6 +4556,40 @@ public class Py3TypeTest extends PyTestCase {
       
       expr = B().f()
       """);
+  }
+
+  // PY-88691
+  public void testSelfSubstitutedForClassMethod1() {
+    doTest("Derived",
+           """
+             from typing import Self
+             
+             class Base[T]:
+                 @classmethod
+                 def foo(cls) -> Self:
+                     return cls()
+             
+             class Derived(Base[int]): ...
+             
+             expr = Derived.foo()
+             """);
+  }
+
+  // PY-88691
+  public void testSelfSubstitutedForClassMethod2() {
+    doTest("Derived[int]",
+           """
+             from typing import Self
+             
+             class Base[T]:
+                 @classmethod
+                 def foo(cls) -> Self:
+                     return cls()
+             
+             class Derived[T](Base[T]): ...
+             
+             expr = Derived[int].foo()
+             """);
   }
 
   // PY-76855

@@ -63,4 +63,11 @@ public class TryPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testAfterLambda() {
     doTest();
   }
+
+  public static class ModTryPostfixTemplateTest extends TryPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

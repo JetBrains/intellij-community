@@ -38,6 +38,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/execution",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -70,6 +71,7 @@ jvm_library(
     "//platform/util/jdom:jdom_test_lib",
     "//platform/editor-ui-ex:editor-ex_test_lib",
     "//platform/execution:execution_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.bookmarks` end

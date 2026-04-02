@@ -9,6 +9,7 @@ object AgentWorkbenchActionIds {
     const val TOGGLE_DEDICATED_FRAME: String = "AgentWorkbenchSessions.ToggleDedicatedFrame"
     const val TOGGLE_CLAUDE_QUOTA_WIDGET: String = "AgentWorkbenchSessions.ToggleClaudeQuotaWidget"
     const val REFRESH: String = "AgentWorkbenchSessions.Refresh"
+    const val RENAME_THREAD_FROM_EDITOR_TAB: String = "AgentWorkbenchSessions.RenameThreadFromEditorTab"
     const val ARCHIVE_THREAD_FROM_EDITOR_TAB: String = "AgentWorkbenchSessions.ArchiveThreadFromEditorTab"
     const val GO_TO_SOURCE_PROJECT_FROM_EDITOR_TAB: String = "AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"
     const val BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB: String = "AgentWorkbenchSessions.BindPendingAgentThreadFromEditorTab"
@@ -23,6 +24,7 @@ object AgentWorkbenchActionIds {
       const val OPEN: String = "AgentWorkbenchSessions.TreePopup.Open"
       const val MORE: String = "AgentWorkbenchSessions.TreePopup.More"
       const val NEW_THREAD: String = "AgentWorkbenchSessions.TreePopup.NewThread"
+      const val RENAME: String = "AgentWorkbenchSessions.TreePopup.Rename"
       const val ARCHIVE: String = "AgentWorkbenchSessions.TreePopup.Archive"
     }
 

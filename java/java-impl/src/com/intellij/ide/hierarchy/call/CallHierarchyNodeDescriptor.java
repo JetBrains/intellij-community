@@ -6,6 +6,7 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
+import com.intellij.ide.hierarchy.ReferenceAwareNodeDescriptor;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -15,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
@@ -44,7 +46,7 @@ import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor implements Navigatable {
+public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor implements Navigatable, ReferenceAwareNodeDescriptor {
   private int myUsageCount = 1;
   private final List<PsiReference> myReferences = new ArrayList<>();
   private final boolean myNavigateToReference;
@@ -61,7 +63,8 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
   /**
    * @return PsiMethod or PsiClass or JspFile
    */
-  public PsiMember getEnclosingElement() {
+  @Override
+  public @Nullable PsiMember getEnclosingElement() {
     PsiElement element = getPsiElement();
     if (element instanceof PsiClass aClass && aClass.isRecord()) {
       return JavaPsiRecordUtil.findCanonicalConstructor(aClass);
@@ -160,11 +163,10 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     return appearance;
   }
 
-  /**
-   * Computes the representation of the element itself on in `Call Hierarchy` view.
-   * It doesn't take into account prefix like package name of the {@code enclosingElement} or usages count.
-   */
-  public static String getEnclosingElementText(@NotNull PsiMember enclosingElement) {
+  @Override
+  public @Nullable @NlsSafe String getPresentation() {
+    PsiMember enclosingElement = getEnclosingElement();
+    if (enclosingElement == null) return null;
     return getEnclosingElementAppearance(enclosingElement, null).getText();
   }
 
@@ -179,6 +181,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
   /**
    * @return all the references that are associated with the current element during the "Call Hierarchy" request.
    */
+  @Override
   public @NotNull List<PsiReference> getReferences() {
     return myReferences;
   }

@@ -115,6 +115,7 @@ public final class VariableExtractor {
   private final boolean myReplaceSelf;
   private final @NotNull FieldConflictsResolver myFieldConflictsResolver;
   private final @Nullable LogicalPosition myPosition;
+  private boolean myAllowReadAction = false;
 
   VariableExtractor(final @NotNull Project project,
                     final @NotNull PsiExpression expression,
@@ -137,7 +138,7 @@ public final class VariableExtractor {
   }
 
   @NotNull VariableExtractor.ExtractionResultPointers extractVariable() {
-    if (!IntentionPreviewUtils.isPreviewElement(myExpression)) {
+    if (!IntentionPreviewUtils.isPreviewElement(myExpression) && !myAllowReadAction) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }
     final PsiExpression newExpr = myFieldConflictsResolver.fixInitializer(myExpression);
@@ -333,6 +334,7 @@ public final class VariableExtractor {
   /**
    * Try to fix the surrounding PSI before inserting the new declaration.
    * Otherwise, the reparsed PSI may not contain the inserted declaration.
+   *
    * @param anchor anchor to insert the declaration before
    */
   private static void tryFixSurroundContext(@NotNull PsiElement anchor) {
@@ -440,9 +442,9 @@ public final class VariableExtractor {
         PsiElement statement = CommonJavaRefactoringUtil.getParentStatement(ancestorCandidate, false);
         PsiElement extractable = statement == null ? PsiTreeUtil.getParentOfType(ancestorCandidate, PsiField.class) : statement;
         if (ContainerUtil.and(allOccurrences, occurrence ->
-                                               PsiTreeUtil.isAncestor(extractable, occurrence, false) &&
-                                               (!PsiTreeUtil.isAncestor(ancestorCandidate, occurrence, false) ||
-                                                ReorderingUtils.canExtract(ancestorCandidate, occurrence) == ThreeState.NO))) {
+          PsiTreeUtil.isAncestor(extractable, occurrence, false) &&
+          (!PsiTreeUtil.isAncestor(ancestorCandidate, occurrence, false) ||
+           ReorderingUtils.canExtract(ancestorCandidate, occurrence) == ThreeState.NO))) {
           return firstOccurrence;
         }
       }
@@ -498,6 +500,24 @@ public final class VariableExtractor {
       child = child.getNextSibling();
     }
     return child;
+  }
+
+  static @Nullable PsiVariable introduceInReadAction(final @NotNull Project project,
+                                                            final @NotNull PsiExpression expr,
+                                                            final @NotNull PsiElement anchorStatement,
+                                                            final PsiExpression @NotNull [] occurrences,
+                                                            final @NotNull IntroduceVariableSettings settings) {
+    SmartPsiElementPointer<PsiVariable> pointer =
+      new VariableExtractor(project, expr, null, anchorStatement, occurrences, settings)
+        .allowReadAction()
+        .extractVariable().variablePointer();
+    PsiVariable var = pointer.getElement();
+    return var;
+  }
+
+  public VariableExtractor allowReadAction() {
+    myAllowReadAction = true;
+    return this;
   }
 
   /**

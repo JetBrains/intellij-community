@@ -5,11 +5,10 @@ import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.surroundWith.ModCommandSurrounder;
+import com.intellij.lang.surroundWith.PsiUpdateModCommandSurrounder;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
@@ -69,7 +68,7 @@ public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+  public void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PsiLocalVariable variable = findVariable(element);
     if (variable != null) {
       processVariable(context.project(), updater, variable);
@@ -281,7 +280,7 @@ public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction
     return JavaBundle.message("intention.surround.resource.with.ARM.block");
   }
 
-  public static final class Template extends ModCommandSurrounder implements SurroundDescriptor {
+  public static final class Template extends PsiUpdateModCommandSurrounder implements SurroundDescriptor {
     private final Surrounder[] mySurrounders = {this};
 
     @Override
@@ -316,11 +315,11 @@ public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction
     }
 
     @Override
-    public @NotNull ModCommand surroundElements(@NotNull ActionContext context, @NotNull PsiElement @NotNull [] elements) {
-      if (elements.length == 1) {
-        return new SurroundAutoCloseableAction().perform(context, elements[0]);
+    public void surroundElements(@NotNull ActionContext context, @NotNull PsiElement @NotNull [] elementsInCopy, @NotNull ModPsiUpdater updater) {
+      if (elementsInCopy.length == 1) {
+        SurroundAutoCloseableAction action = new SurroundAutoCloseableAction();
+        action.invoke(context, elementsInCopy[0], updater);
       }
-      return ModCommand.nop();
     }
   }
 }

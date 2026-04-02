@@ -1090,6 +1090,7 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       FileEditorManager fe = FileEditorManager.getInstance(alienProject);
       Editor alienEditor = Objects.requireNonNull(fe.openTextEditor(alienDescriptor, false));
       ((EditorImpl)alienEditor).setCaretActive();
+      myTestDaemonCodeAnalyzer.waitForTermination();
       myDaemonCodeAnalyzer.restart(getTestName(false));
       // start daemon in the main project. should check for its cancel when typing in alien
       AtomicBoolean checked = new AtomicBoolean();
@@ -1728,6 +1729,8 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       myDaemonCodeAnalyzer.restart(getTestName(false));
 
       HighlightInfo error = assertOneElement(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR));
+      assertTrue(myTestDaemonCodeAnalyzer.isMarkedCodeFragment(document));
+
       assertEquals("Operator '+' cannot be applied to 'java.lang.String'", error.getDescription());
 
       type(" ");

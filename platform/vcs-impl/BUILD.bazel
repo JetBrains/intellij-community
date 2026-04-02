@@ -88,6 +88,7 @@ jvm_library(
     "//platform/polySymbols",
     "//platform/execution",
     "//platform/eel",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -170,6 +171,7 @@ jvm_library(
     "//platform/polySymbols:polySymbols_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/eel:eel_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl` end
@@ -337,6 +339,8 @@ jvm_library(
     "//platform/eel:eel_test_lib",
     "//platform/vcs-impl/shared:vcs-impl-shared-tests",
     "//platform/vcs-impl/shared:vcs-impl-shared-tests_test_lib",
+    "//fleet/rhizomedb",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ],
   runtime_deps = [
     ":vcs-impl-tests",

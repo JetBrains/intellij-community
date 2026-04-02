@@ -53,7 +53,7 @@ class ClaudeSessionsWatcherTest {
   }
 
   @Test
-  fun classifiesIndexFileAsRefreshPing() {
+  fun classifiesIndexFileAsChangedPath() {
     withWatcher { watcher ->
       val indexPath = tempDir.resolve(".claude").resolve("projects").resolve("-work-project").resolve("sessions-index.json")
 
@@ -68,7 +68,7 @@ class ClaudeSessionsWatcherTest {
       val changeSet = watcher.eventToChangeSet(event)
 
       assertThat(changeSet).isNotNull
-      assertThat(changeSet!!.changedPaths).isEmpty()
+      assertThat(changeSet!!.changedPaths).containsExactly(indexPath.toAbsolutePath().normalize())
       assertThat(changeSet.requiresFullRescan).isFalse()
     }
   }

@@ -9,7 +9,9 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -54,6 +56,18 @@ class ClaudeAgentSessionProviderDescriptorTest {
     assertThat(bridge.supportsNewThreadRebind).isFalse()
     assertThat(bridge.editorTabActionIds)
       .containsExactly(AgentWorkbenchActionIds.Sessions.BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB)
+  }
+
+  @Test
+  fun renameThreadHandlerUsesSharedDispatchContract() {
+    val renameHandler = bridge.threadRenameHandler
+
+    assertThat(renameHandler).isInstanceOf(AgentThreadRenameHandler.ChatDispatch::class.java)
+    renameHandler as AgentThreadRenameHandler.ChatDispatch
+    assertThat(renameHandler.supportedContexts)
+      .containsExactlyInAnyOrder(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
+    assertThat(checkNotNull(renameHandler.buildDispatchPlan("Renamed thread")).postStartDispatchSteps.map { it.text })
+      .containsExactly("/rename Renamed thread")
   }
 
   @Test
@@ -187,6 +201,29 @@ class ClaudeAgentSessionProviderDescriptorTest {
     )
     assertThat(manualPlanCommand.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
     assertThat(manualPlanCommand.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
+  }
+
+  @Test
+  fun menuCommandsUsePostStartDeliveryWithoutContextEnvelope() {
+    val plan = bridge.buildInitialMessagePlan(
+      AgentPromptInitialMessageRequest(
+        prompt = "  /model sonnet  ",
+        planModeEnabled = true,
+        providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
+        contextItems = listOf(
+          AgentPromptContextItem(
+            rendererId = AgentPromptContextRendererIds.PATHS,
+            title = "Project Selection",
+            body = "file: /tmp/demo.kt",
+            source = "projectView",
+          )
+        ),
+      )
+    )
+
+    assertThat(plan.message).isEqualTo("/model sonnet")
+    assertThat(plan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.POST_START_ONLY)
+    assertThat(plan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
   }
 
   @Test

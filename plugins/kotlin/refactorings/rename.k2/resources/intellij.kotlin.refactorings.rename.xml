@@ -1,7 +1,10 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.refactoring.rename" visibility="internal">
   <dependencies>
-    <module name="intellij.kotlin.searching"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.refactorings"/>
+    <module name="intellij.kotlin.searching"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.rename.K2RenameRefactoringSupport"

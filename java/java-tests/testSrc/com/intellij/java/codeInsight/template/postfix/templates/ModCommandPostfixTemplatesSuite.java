@@ -1,0 +1,46 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.codeInsight.template.postfix.templates;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+
+@RunWith(Suite.class)
+@Suite.SuiteClasses({
+  ArgumentPostfixTemplateTest.ModArgumentPostfixTemplateTest.class,
+  AsListToListPostfixTemplateTest.ModAsListToListPostfixTemplateTest.class,
+  AssertStatementPostfixTemplateTest.ModAssertStatementPostfixTemplateTest.class,
+  CastPostfixTemplateTest.ModCastPostfixTemplateTest.class,
+  CastVarPostfixTemplateTest.ModCastVarPostfixTemplateTest.class,
+  ElseStatementPostfixTemplateTest.ModElseStatementPostfixTemplateTest.class,
+  ForAscendingPostfixTemplateTest.ModForAscendingPostfixTemplateTest.class,
+  ForDescendingPostfixTemplateTest.ModForDescendingPostfixTemplateTest.class,
+  ForeachTemplateTest.ModForeachTemplateTest.class,
+  FormatPostfixTemplateTest.ModFormatPostfixTemplateTest.class,
+  IfStatementPostfixTemplateTest.ModIfStatementPostfixTemplateTest.class,
+  InstanceofPostfixTemplateTest.ModInstanceofPostfixTemplateTest.class,
+  JavaUtilDateToLocalDatePostfixTemplateTest.ModJavaUtilDateToLocalDatePostfixTemplateTest.class,
+  LambdaPostfixTemplateTest.ModLambdaPostfixTemplateTest.class,
+  LocalDateToJavaSqlDatePostfixTemplateTest.ModLocalDateToJavaSqlDatePostfixTemplateTest.class,
+  NewArrayListToListPostfixTemplateTest.ModNewArrayListToListPostfixTemplateTest.class,
+  NewExpressionPostfixTemplateTest.ModNewExpressionPostfixTemplateTest.class,
+  NewHashSetToSetPostfixTemplateTest.ModNewHashSetToSetPostfixTemplateTest.class,
+  NotExpressionPostfixTemplateTest.ModNotExpressionPostfixTemplateTest.class,
+  NotNullPostfixTemplateTest.ModNotNullPostfixTemplateTest.class,
+  NullPostfixTemplateTest.ModNullPostfixTemplateTest.class,
+  ObjectsRequireNonNullPostfixTemplateTest.ModObjectsRequireNonNullPostfixTemplateTest.class,
+  OptionalPostfixTemplateTest.ModOptionalPostfixTemplateTest.class,
+  ParPostfixTemplateTest.ModParPostfixTemplateTest.class,
+  SoutPostfixTemplateTest.ModSoutPostfixTemplateTest.class,
+  SoutvPostfixTemplateTest.ModSoutvPostfixTemplateTest.class,
+  StreamPostfixTemplateTest.ModStreamPostfixTemplateTest.class,
+  SwitchExpressionPostfixTemplateTest.ModSwitchExpressionPostfixTemplateTest.class,
+  SwitchPostfixTemplateTest.ModSwitchPostfixTemplateTest.class,
+  SynchronizedPostfixTemplateTest.ModSynchronizedPostfixTemplateTest.class,
+  ThrowStatementPostfixTemplateTest.ModThrowStatementPostfixTemplateTest.class,
+  TryPostfixTemplateTest.ModTryPostfixTemplateTest.class,
+  TryWithResourcesPostfixTemplateTest.ModTryWithResourcesPostfixTemplateTest.class,
+  VarPostfixTemplateTest.ModVarPostfixTemplateTest.class,
+  WhileStatementPostfixTemplateTest.ModWhileStatementPostfixTemplateTest.class,
+})
+public class ModCommandPostfixTemplatesSuite {
+}

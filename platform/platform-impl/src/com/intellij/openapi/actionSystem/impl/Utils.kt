@@ -39,6 +39,7 @@ import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.UpdateSession
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAligned
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAlignedInGroup
 import com.intellij.openapi.actionSystem.util.ActionSystem
@@ -666,6 +667,7 @@ object Utils {
         else ->
           ActionMenuItem(action, context, place, uiKind, enableMnemonics, checked, useDarkIcons).apply {
             updateFromPresentation(presentation)
+            toolTipText = presentation.getClientProperty(ActionUtil.TOOLTIP_TEXT)
           }
       }
       component.add(childComponent)

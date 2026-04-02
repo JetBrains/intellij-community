@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.lookup
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.modcommand.ActionContext
 import com.intellij.openapi.extensions.ExtensionPointName
 import jdk.jfr.Experimental
 import org.jetbrains.annotations.ApiStatus
@@ -11,9 +12,8 @@ import org.jetbrains.annotations.ApiStatus
  *
  */
 @ApiStatus.Experimental
-@ApiStatus.Internal
 interface LookupElementCustomPreviewHolder {
-  val preview: IntentionPreviewInfo
+  fun preview(ctx: ActionContext): IntentionPreviewInfo
 }
 
 /**

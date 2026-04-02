@@ -3,18 +3,21 @@ package com.intellij.java.codeInsight.completion.commands
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
-import com.intellij.codeInsight.completion.command.CommandCompletionDocumentationProvider
+import com.intellij.codeInsight.completion.command.LookupElementCustomPreviewHolderDocumentationProvider
 import com.intellij.codeInsight.completion.command.CommandCompletionLookupElement
 import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.lookup.LookupElementCustomPreviewHolder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.codeInspection.numeric.RemoveLiteralUnderscoresInspection
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.modcommand.ActionContext
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
@@ -128,6 +131,36 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
         } 
       }
     """.trimIndent()
+    assertEquals(preview.modifiedText(), expected)
+  }
+
+  fun testPostfixPreview() {
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+        void foo() {
+          "string".soutv<caret>
+        } 
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    val item = elements.first { element -> element.lookupString.contains("sout", ignoreCase = true) }
+      .`as`(LookupElementCustomPreviewHolder::class.java)
+    if (item == null) {
+      fail()
+      return
+    }
+    val preview = item.preview(ActionContext.from(myFixture.editor, myFixture.file))
+    if (preview !is IntentionPreviewInfo.CustomDiff) {
+      fail()
+      return
+    }
+    val expected = """
+      class A { 
+        void foo() {
+            System.out.println("\"string\" = " + "string");
+        } 
+      }""".trimIndent()
     assertEquals(preview.modifiedText(), expected)
   }
 
@@ -257,7 +290,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
     val elements = myFixture.completeBasic()
     val item = elements.first { element -> element.lookupString.contains("copy ref", ignoreCase = true) }
-    val preview = (item.`as`(CommandCompletionLookupElement::class.java))?.preview
+    val preview = (item.`as`(CommandCompletionLookupElement::class.java))?.preview(ActionContext.from(myFixture.editor, myFixture.file))
     assertEquals("Copy reference for 'foo'.", (preview as IntentionPreviewInfo.Html).content().toString())
     selectItem(item)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
@@ -349,6 +382,39 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       }""".trimIndent())
     val elements = myFixture.completeBasic()
     assertTrue(elements.any { element -> element.lookupString.contains("Optimize im", ignoreCase = true) })
+  }
+
+  fun testOptimizeImportWithMatchedSecondWord() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      import java.util.ArrayList;
+      import java.util.List;
+      import java.util.List;
+      import java.util.List;
+      
+      public class MainClass {
+          public static void main(CharSequence args) {
+      
+              List<String> a = new ArrayList<>();
+          }
+      
+          ..im<caret>
+      }""".trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Optimize import", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    myFixture.checkResult("""
+      import java.util.ArrayList;
+      import java.util.List;
+      
+      public class MainClass {
+          public static void main(CharSequence args) {
+      
+              List<String> a = new ArrayList<>();
+          }
+      
+          
+      }""".trimIndent())
   }
 
   fun testGenerateGetter() {
@@ -739,7 +805,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertNotNull(lookupElement)
     val element = lookupElement?.`as`(CommandCompletionLookupElement::class.java)
     assertNotNull(element)
-    assertNotNull(element?.preview)
+    assertNotNull(element?.preview(ActionContext.from(myFixture.editor, myFixture.file)))
   }
 
   fun testRedCode() {
@@ -755,7 +821,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     myFixture.type(".")
     val elements = myFixture.completeBasic()
     val item = elements.first { element -> element.lookupString.contains("Convert literal to", ignoreCase = true) }
-    val documentationProvider = CommandCompletionDocumentationProvider()
+    val documentationProvider = LookupElementCustomPreviewHolderDocumentationProvider()
     val documentationTarget = documentationProvider.documentationTarget(psiFile, item, editor.caretModel.offset)
     val documentation = documentationTarget?.computeDocumentation() as? AsyncDocumentation
     assertNotNull(documentation)
@@ -1650,7 +1716,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertNotNull(lookupElement)
     val element = lookupElement.`as`(CommandCompletionLookupElement::class.java)
     assertNotNull(element)
-    assertNotNull(element?.preview)
+    assertNotNull(element?.preview(ActionContext.from(myFixture.editor, myFixture.file)))
     assertNotNull(lookup)
   }
 

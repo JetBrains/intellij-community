@@ -2,39 +2,38 @@
 
 package org.jetbrains.kotlin.idea.jvm.k1.inspections
 
-import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandAction
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
-import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
+import org.jetbrains.kotlin.idea.configuration.isProjectSyncPendingOrInProgress
 import org.jetbrains.kotlin.idea.configuration.withScope
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
-import org.jetbrains.kotlin.idea.util.createIntentionForFirstParentOfType
+import org.jetbrains.kotlin.idea.util.createIntentionForModCommand
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 
 @K1Deprecation
-class AddReflectionQuickFix(element: KtElement) : AddKotlinLibQuickFix(element, LibraryJarDescriptor.REFLECT_JAR, DependencyScope.COMPILE) {
-    override fun getText(): String = KotlinJvmBundle.message("classpath.add.reflection")
-    override fun getFamilyName(): String = text
+class AddReflectionQuickFix(element: KtElement) : AddKotlinLibQuickFix(element, DependencyScope.COMPILE) {
+    override val quickFixText: String
+        get() = KotlinJvmBundle.message("classpath.add.reflection")
 
     override fun getLibraryDescriptor(module: Module): MavenExternalLibraryDescriptor = MavenExternalLibraryDescriptor.create(
         "org.jetbrains.kotlin",
@@ -43,19 +42,18 @@ class AddReflectionQuickFix(element: KtElement) : AddKotlinLibQuickFix(element, 
     )
 
     companion object : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtElement>? =
-            diagnostic.createIntentionForFirstParentOfType(::AddReflectionQuickFix)
+        override fun createAction(diagnostic: Diagnostic): IntentionAction? =
+            diagnostic.createIntentionForModCommand(::AddReflectionQuickFix)
     }
 }
 
 @K1Deprecation
 class AddScriptRuntimeQuickFix(element: KtElement) : AddKotlinLibQuickFix(
     element,
-    LibraryJarDescriptor.SCRIPT_RUNTIME_JAR,
     DependencyScope.COMPILE
 ) {
-    override fun getText(): String = KotlinJvmBundle.message("classpath.add.script.runtime")
-    override fun getFamilyName(): String = text
+    override val quickFixText: String
+        get() = KotlinJvmBundle.message("classpath.add.script.runtime")
 
     override fun getLibraryDescriptor(module: Module): MavenExternalLibraryDescriptor = MavenExternalLibraryDescriptor.create(
         "org.jetbrains.kotlin",
@@ -65,15 +63,15 @@ class AddScriptRuntimeQuickFix(element: KtElement) : AddKotlinLibQuickFix(
 
     companion object : KotlinSingleIntentionActionFactory() {
 
-        override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtElement>? =
-            diagnostic.createIntentionForFirstParentOfType(::AddScriptRuntimeQuickFix)
+        override fun createAction(diagnostic: Diagnostic): IntentionAction? =
+            diagnostic.createIntentionForModCommand(::AddScriptRuntimeQuickFix)
     }
 }
 
 @K1Deprecation
-class AddTestLibQuickFix(element: KtElement) : AddKotlinLibQuickFix(element, LibraryJarDescriptor.TEST_JAR, DependencyScope.TEST) {
-    override fun getText(): String = KotlinJvmBundle.message("classpath.add.kotlin.test")
-    override fun getFamilyName(): String = text
+class AddTestLibQuickFix(element: KtElement) : AddKotlinLibQuickFix(element, DependencyScope.TEST) {
+    override val quickFixText: String
+        get() = KotlinJvmBundle.message("classpath.add.kotlin.test")
 
     override fun getLibraryDescriptor(module: Module): MavenExternalLibraryDescriptor = MavenExternalLibraryDescriptor.create(
         "org.jetbrains.kotlin",
@@ -115,7 +113,7 @@ class AddTestLibQuickFix(element: KtElement) : AddKotlinLibQuickFix(element, Lib
                 }
 
                 if (hasExactImport || hasKotlinTestAllUnder) {
-                    return diagnostic.createIntentionForFirstParentOfType(::AddTestLibQuickFix)
+                    return diagnostic.createIntentionForModCommand(::AddTestLibQuickFix)
                 }
 
             }
@@ -127,13 +125,24 @@ class AddTestLibQuickFix(element: KtElement) : AddKotlinLibQuickFix(element, Lib
 
 @K1Deprecation
 abstract class AddKotlinLibQuickFix(
-    element: KtElement,
-    private val libraryJarDescriptor: LibraryJarDescriptor,
+    protected val element: KtElement,
     private val scope: DependencyScope
-) : KotlinQuickFixAction<KtElement>(element) {
-    protected abstract fun getLibraryDescriptor(module: Module): MavenExternalLibraryDescriptor
+) : ModCommandAction {
+    protected abstract val quickFixText: String
 
-    override fun startInWriteAction(): Boolean = true
+    override fun getFamilyName(): @IntentionFamilyName String = quickFixText
+
+    override fun getPresentation(context: ActionContext): Presentation? {
+        val file = context.file
+        val module = file.module ?: return null
+        val dependencyManager = KotlinBuildSystemDependencyManager.findApplicableConfigurator(module) ?: return null
+        if (dependencyManager.isProjectSyncPendingOrInProgress()) return null
+        return quickFixText
+            .takeIf { dependencyManager.isApplicable(module) && !dependencyManager.isProjectSyncPendingOrInProgress() }
+            ?.let(Presentation::of)
+    }
+
+    protected abstract fun getLibraryDescriptor(module: Module): MavenExternalLibraryDescriptor
 
     class MavenExternalLibraryDescriptor private constructor(
         groupId: String,
@@ -150,20 +159,19 @@ abstract class AddKotlinLibQuickFix(
         override fun getLibraryClassesRoots(): List<String> = emptyList()
     }
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val element = element ?: return
-        val module = ProjectRootManager.getInstance(project).fileIndex.getModuleForFile(element.containingFile.virtualFile) ?: return
+    override fun perform(context: ActionContext): ModCommand {
+        val file = context.file
+        val element = file.takeIf { it.module != null } ?: return ModCommand.nop()
 
-        val configurator = KotlinBuildSystemDependencyManager.findApplicableConfigurator(module) ?: return
-        val scopeOverride = OrderEntryFix.suggestScopeByLocation(module, element)
-        configurator.addDependency(module, getLibraryDescriptor(module).withScope(scopeOverride))
+        val module =
+            ProjectRootManager.getInstance(element.project).fileIndex
+                .getModuleForFile(element.containingFile.virtualFile) ?: return ModCommand.nop()
+        val configurator =
+            KotlinBuildSystemDependencyManager.findApplicableConfigurator(module)
+                ?: return ModCommand.nop()
 
-        configurator.getBuildScriptFile(module)?.let {
-            NotificationMessageCollector.create(project)
-                .addMessage(KotlinJvmBundle.message("text.was.modified", it.path))
-                .showNotification()
-        }
+        val libraryDescriptor = getLibraryDescriptor(module).withScope(scope)
+
+        return configurator.addDependencyModCommand(file, module, libraryDescriptor)
     }
-
-    override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = null
 }

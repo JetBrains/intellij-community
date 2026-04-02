@@ -1,6 +1,9 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.highlighting">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.searching"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.calls
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor
+import com.intellij.ide.hierarchy.ReferenceAwareNodeDescriptor
 import com.intellij.ide.hierarchy.call.CallHierarchyNodeDescriptor
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.roots.ui.util.CompositeAppearance
@@ -12,7 +13,6 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.Navigatable
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.ui.LayeredIcon
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -49,9 +49,19 @@ class KotlinCallHierarchyNodeDescriptor(
     isBase: Boolean,
     navigateToReference: Boolean
 ) : HierarchyNodeDescriptor(element.project, parentDescriptor, element, isBase),
+    ReferenceAwareNodeDescriptor,
     Navigatable {
     private var usageCount = 1
-    private val references: MutableSet<PsiReference> = HashSet()
+
+    override val references: List<PsiReference> get() = addedReferences.toList()
+
+    override val enclosingElement: KtElement? get() = psiElement as? KtElement
+
+    override fun getPresentation(): @NlsSafe String? {
+        return enclosingElement?.let { analyze(it) { renderElement(it) } }
+    }
+
+    private val addedReferences: MutableSet<PsiReference> = HashSet()
     private val javaDelegate = CallHierarchyNodeDescriptor(myProject, null, element, isBase, navigateToReference)
 
     fun incrementUsageCount() {
@@ -60,7 +70,7 @@ class KotlinCallHierarchyNodeDescriptor(
     }
 
     fun addReference(reference: PsiReference) {
-        references.add(reference)
+        addedReferences.add(reference)
         javaDelegate.addReference(reference)
     }
 
@@ -81,7 +91,7 @@ class KotlinCallHierarchyNodeDescriptor(
 
         var changes = super.update()
 
-        val elementText = (psiElement as? KtElement)?.let { analyze(it) { renderElement(it) } }
+        val elementText = getPresentation()
         if (elementText == null) {
             val invalidPrefix = IdeBundle.message("node.hierarchy.invalid")
             if (!myHighlightedText.text.startsWith(invalidPrefix)) {
@@ -145,7 +155,7 @@ class KotlinCallHierarchyNodeDescriptor(
     companion object {
         context(_: KaSession)
         @NlsSafe
-        private fun renderElement(element: PsiElement?): String? {
+        private fun renderElement(element: KtElement): String? {
             when (element) {
                 is KtFile -> {
                     return element.name

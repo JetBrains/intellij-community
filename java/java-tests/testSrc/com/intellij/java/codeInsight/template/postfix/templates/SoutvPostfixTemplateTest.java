@@ -25,4 +25,11 @@ public class SoutvPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testString() {
     doTest();
   }
+
+  public static class ModSoutvPostfixTemplateTest extends SoutvPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

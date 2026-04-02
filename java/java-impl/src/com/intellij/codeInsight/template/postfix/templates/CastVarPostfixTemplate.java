@@ -60,6 +60,12 @@ public class CastVarPostfixTemplate extends StringBasedPostfixTemplate implement
            " $" + VAR_NAME + "$ = ($" + TYPE_VAR + "$)$expr$;$END$";
   }
 
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
   @Override
   public void setVariables(@NotNull Template template, @NotNull PsiElement element) {
     super.setVariables(template, element);

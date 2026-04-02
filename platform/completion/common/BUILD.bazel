@@ -27,6 +27,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/platform-impl/rpc",
     "//platform/lang-api:lang",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -48,6 +49,7 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//platform/platform-impl/rpc:rpc_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.completion.common` end
@@ -100,6 +102,8 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/json:json_test_lib",
     "@lib//:junit5",
+    "//fleet/rhizomedb",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ],
   runtime_deps = [
     ":common-tests",

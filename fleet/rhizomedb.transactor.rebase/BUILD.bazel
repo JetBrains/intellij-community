@@ -46,7 +46,6 @@ jvm_library(
   ],
   exports = [
     "//fleet/rhizomedb.transactor",
-    "//fleet/rhizomedb",
     "//fleet/util/core",
     "//fleet/rpc",
   ]
@@ -61,8 +60,6 @@ jvm_library(
   exports = [
     "//fleet/rhizomedb.transactor",
     "//fleet/rhizomedb.transactor:rhizomedb.transactor_test_lib",
-    "//fleet/rhizomedb",
-    "//fleet/rhizomedb:rhizomedb_test_lib",
     "//fleet/util/core",
     "//fleet/util/core:core_test_lib",
     "//fleet/rpc",

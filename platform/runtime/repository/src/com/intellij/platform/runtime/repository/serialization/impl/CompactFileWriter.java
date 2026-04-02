@@ -38,7 +38,7 @@ public final class CompactFileWriter {
       out.writeBoolean(hasBootstrap);
       if (hasBootstrap) {
         out.writeUTF(bootstrapModuleName);
-        Collection<String> bootstrapClasspath = CachedClasspathComputation.computeClasspath(originalModuleDescriptors, RuntimeModuleId.module(bootstrapModuleName));
+        Collection<String> bootstrapClasspath = CachedClasspathComputation.computeClasspath(originalModuleDescriptors, RuntimeModuleId.legacyJpsModule(bootstrapModuleName));
         out.writeInt(bootstrapClasspath.size());
         for (String path : bootstrapClasspath) {
           out.writeUTF(path);
@@ -46,7 +46,9 @@ public final class CompactFileWriter {
       }
       
       List<RawRuntimeModuleDescriptor> moduleDescriptors = new ArrayList<>(originalModuleDescriptors);
-      Collections.sort(moduleDescriptors, Comparator.comparing(descriptor -> descriptor.getModuleId().getStringId()));
+      Collections.sort(moduleDescriptors,
+                       Comparator.comparing((RawRuntimeModuleDescriptor descriptor) -> descriptor.getModuleId().getNamespace())
+                                 .thenComparing(descriptor -> descriptor.getModuleId().getName()));
       List<RawRuntimePluginHeader> pluginHeaders = new ArrayList<>(originalPluginHeaders);
       Collections.sort(pluginHeaders, Comparator.comparing(RawRuntimePluginHeader::getPluginId));
 
@@ -99,7 +101,7 @@ public final class CompactFileWriter {
 
       for (RuntimeModuleId moduleId : allModuleIds) {
         out.writeInt(namespaceIndexes.get(moduleId.getNamespace()));
-        out.writeUTF(moduleId.getStringId());
+        out.writeUTF(moduleId.getName());
       }
 
       for (RawRuntimeModuleDescriptor descriptor : moduleDescriptors) {

@@ -14,9 +14,11 @@ public final class RuntimeModuleId {
   @ApiStatus.Internal
   public static final String DEFAULT_NAMESPACE = "jetbrains";
   @ApiStatus.Internal
-  public static final String LIB_NAME_PREFIX = "lib.";
-  @ApiStatus.Internal
   public static final String TESTS_NAME_SUFFIX = ".tests";
+  @ApiStatus.Internal
+  public static final String LEGACY_JPS_MODULE_NAMESPACE = "$legacy_jps_module";
+  @ApiStatus.Internal
+  public static final String LEGACY_JPS_LIBRARY_NAMESPACE = "$legacy_jps_library";
   private final String myName;
   private final String myNamespace;
 
@@ -26,8 +28,10 @@ public final class RuntimeModuleId {
   }
 
   /**
-   * Returns a string representation of the ID.  
+   * @deprecated there is no standard string representation of a runtime module ID.
+   * Use {@link #getPresentableName()} for presentation purposes, in other cases use {@link #getNamespace()} and {@link #getName()}.
    */
+  @Deprecated(forRemoval = true)
   public @NotNull String getStringId() {
     return myName;
   }
@@ -48,9 +52,9 @@ public final class RuntimeModuleId {
   }
 
   /**
-   * Creates ID from a raw string representation as it's written in the runtime module repository.
-   * This method is supposed to be used to generate and transform the module repository only, other code should use other methods.
+   * @deprecated use {@link #raw(String, String)} instead.
    */
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public static @NotNull RuntimeModuleId raw(@NotNull String stringId) {
     return new RuntimeModuleId(stringId, DEFAULT_NAMESPACE);
@@ -67,9 +71,11 @@ public final class RuntimeModuleId {
 
   /**
    * Creates ID of a runtime module corresponding to the production part of module {@code moduleName} in intellij project configuration.
+   * @deprecated use either {@link #contentModule(String, String)} or {@link #legacyJpsModule(String)} instead.
    */
+  @Deprecated(forRemoval = true)
   public static @NotNull RuntimeModuleId module(@NotNull String moduleName) {
-    return new RuntimeModuleId(moduleName, DEFAULT_NAMESPACE);
+    return contentModule(moduleName, "jetbrains");
   }
 
   /**
@@ -77,6 +83,11 @@ public final class RuntimeModuleId {
    */
   public static @NotNull RuntimeModuleId contentModule(@NotNull String moduleName, @NotNull String namespace) {
     return new RuntimeModuleId(moduleName, namespace);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull RuntimeModuleId legacyJpsModule(@NotNull String moduleName) {
+    return new RuntimeModuleId(moduleName, "jps");
   }
 
   /**
@@ -90,7 +101,7 @@ public final class RuntimeModuleId {
    * Creates ID of a runtime module corresponding to the project-level library {@code libraryName} in intellij project configuration.
    */
   public static @NotNull RuntimeModuleId projectLibrary(@NotNull String libraryName) {
-    return new RuntimeModuleId(LIB_NAME_PREFIX + libraryName, DEFAULT_NAMESPACE);
+    return new RuntimeModuleId(libraryName, LEGACY_JPS_LIBRARY_NAMESPACE);
   }
 
   /**
@@ -99,7 +110,7 @@ public final class RuntimeModuleId {
    */
   @Deprecated(forRemoval = true)
   public static @NotNull RuntimeModuleId moduleLibrary(@NotNull String moduleName, @NotNull String libraryName) {
-    return new RuntimeModuleId(LIB_NAME_PREFIX + moduleName + "." + libraryName, DEFAULT_NAMESPACE);
+    return new RuntimeModuleId("lib." + moduleName + "." + libraryName, DEFAULT_NAMESPACE);
   }
 
   @Override

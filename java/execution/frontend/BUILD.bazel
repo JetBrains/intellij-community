@@ -28,6 +28,7 @@ jvm_library(
     "//platform/testRunner",
     "//platform/util:util-ui",
     "//java/java-frontback-impl:frontback-impl",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -52,6 +53,7 @@ jvm_library(
     "//platform/testRunner:testRunner_test_lib",
     "//platform/util:util-ui_test_lib",
     "//java/java-frontback-impl:frontback-impl_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.execution.impl.frontend` end

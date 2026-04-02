@@ -4,6 +4,7 @@
     <plugin id="com.jetbrains.performancePlugin"/>
     <module name="intellij.gradle"/>
     <module name="intellij.gradle.java"/>
+    <module name="intellij.maven"/>
     <module name="intellij.maven.performanceTesting"/>
   </dependencies>
   <!-- endregion -->

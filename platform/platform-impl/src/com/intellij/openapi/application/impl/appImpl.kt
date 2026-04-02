@@ -11,8 +11,10 @@ import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.readLockCompensationTimeout
 import com.intellij.openapi.application.useBackgroundWriteAction
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.platform.locking.impl.NestedLocksThreadingSupport
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.util.SlowOperations
 import com.intellij.util.ThrowableRunnable
@@ -120,9 +122,10 @@ fun setCompensationTimeout(timeout: Duration?): Duration? {
   return currentTimeout
 }
 
-internal fun runnableUnitFunction(runnable: Runnable): () -> Unit = runnable::run
+internal fun runnableUnitFunction(runnable: Runnable): () -> Unit = NestedLocksThreadingSupport.RunnableUnitFunction(runnable)
+internal fun <T> computableFunction(runnable: Computable<T>): () -> T = NestedLocksThreadingSupport.ComputableFunction(runnable)
 internal fun rethrowCheckedExceptions(f: ThrowableRunnable<*>): () -> Unit = f::run
-internal fun <T> rethrowCheckedExceptions(f: ThrowableComputable<T, *>): () -> T = f::compute
+internal fun <T> rethrowCheckedExceptions(f: ThrowableComputable<T, *>): () -> T = NestedLocksThreadingSupport.ThrowableComputableFunction(f)
 
 @TestOnly
 @ApiStatus.Experimental

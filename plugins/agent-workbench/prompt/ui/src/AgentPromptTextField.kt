@@ -3,13 +3,23 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.ui.LanguageTextField
+import com.intellij.util.textCompletion.TextCompletionProvider
+import com.intellij.util.textCompletion.TextCompletionUtil
 import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 
-internal class AgentPromptTextField(project: Project) : LanguageTextField(
-  MarkdownFileType.INSTANCE.language, project, "", false,
+internal class AgentPromptTextField(
+  project: Project,
+  completionProvider: TextCompletionProvider? = null,
+) : LanguageTextField(
+  FileTypes.PLAIN_TEXT.language,
+  project,
+  "",
+  completionProvider?.let { provider -> TextCompletionUtil.DocumentWithCompletionCreator(provider, false) } ?: SimpleDocumentCreator(),
+  false,
 ) {
   init {
     setPlaceholder(AgentPromptBundle.message("popup.prompt.placeholder"))

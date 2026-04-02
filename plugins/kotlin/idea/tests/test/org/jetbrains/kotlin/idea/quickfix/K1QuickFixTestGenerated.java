@@ -3587,6 +3587,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/changeSignature/changeFunctionLiteralParameters4.kt");
         }
 
+        @TestMetadata("changeFunctionLiteralParameters5.kt")
+        public void testChangeFunctionLiteralParameters5() throws Exception {
+            runTest("testData/quickfix/changeSignature/changeFunctionLiteralParameters5.kt");
+        }
+
+        @TestMetadata("changeFunctionLiteralParameters6.kt")
+        public void testChangeFunctionLiteralParameters6() throws Exception {
+            runTest("testData/quickfix/changeSignature/changeFunctionLiteralParameters6.kt");
+        }
+
         @TestMetadata("changeFunctionParameterWithAnonymousObject.kt")
         public void testChangeFunctionParameterWithAnonymousObject() throws Exception {
             runTest("testData/quickfix/changeSignature/changeFunctionParameterWithAnonymousObject.kt");

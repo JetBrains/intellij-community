@@ -6,25 +6,24 @@ import org.jetbrains.annotations.ApiStatus;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Generator for assigning VirtualFile.getModificationCount() values.
- * Has nothing to do with 'local time' -- it's just an atomic counter.
+ * Generator for assigning 'stamp' values in VirtualFile.getModificationStamp() and Document.getModificationStamp()
+ * Has nothing to do with 'time' -- it's just an atomic counter.
  */
 public final class LocalTimeCounter {
   //TODO RC: rename to FileModificationStampGenerator? 'local time' is misleading here.
 
   /**
-   * VirtualFile.modificationStamp is kept modulo this mask, and is compared with other stamps. Let's avoid accidental stamp inequalities
-   * by normalizing all of them.
+   * VirtualFile.modificationStamp is kept modulo this mask, and is compared with other stamps.
+   * Let's avoid accidental stamp inequalities by normalizing all of them.
    * @see com.intellij.openapi.vfs.newvfs.impl.VfsData.Segment#getModificationStamp(int)
    */
-  //TODO RC: rename to MOD_COUNTER_MASK after 1-2 releases
   @ApiStatus.Internal
-  public static final int TIME_MASK = 0x00ff_ffff;
+  public static final int MOD_COUNTER_MASK = 0x00ff_ffff;
 
   private static final AtomicInteger globalModCounter = new AtomicInteger();
 
   /** @return next value for VFS modification stamp */
   public static long currentTime() {
-    return TIME_MASK & globalModCounter.incrementAndGet();
+    return MOD_COUNTER_MASK & globalModCounter.incrementAndGet();
   }
 }

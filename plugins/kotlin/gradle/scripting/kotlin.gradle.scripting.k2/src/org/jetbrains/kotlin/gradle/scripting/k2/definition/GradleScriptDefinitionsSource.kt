@@ -22,7 +22,7 @@ class GradleScriptDefinitionsSource(val project: Project) : ScriptDefinitionsSou
                     compilationConfiguration,
                     hostConfiguration,
                     it.evaluationConfiguration?.deserialize(),
-                ).withIdeKeys(project)
+                ).withIdeKeys()
             }
         }
 }

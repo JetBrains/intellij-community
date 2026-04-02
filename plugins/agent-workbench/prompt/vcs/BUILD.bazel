@@ -95,6 +95,7 @@ jvm_library(
     "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-api:ide",
     "//platform/platform-api:ide_test_lib",
+    "//platform/ide-core",
     "//platform/platform-impl:ide-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/editor-ui-api:editor-ui_test_lib",
@@ -123,6 +124,7 @@ jvm_library(
   ],
   runtime_deps = [
     ":agent-workbench-prompt-vcs-tests",
+    "//platform/ide-core:ide-core_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
   ]
 )

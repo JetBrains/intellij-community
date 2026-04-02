@@ -18,6 +18,13 @@ public class ObjectsRequireNonNullPostfixTemplate extends JavaEditablePostfixTem
           LanguageLevel.JDK_1_7, false, provider);
   }
 
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
+
   @Override
   public boolean isBuiltin() {
     return true;

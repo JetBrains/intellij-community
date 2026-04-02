@@ -89,7 +89,7 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
       }
 
       withContext(Dispatchers.IO) {
-        if (!cachesInvalidated.get()) {
+        if (!invalidateCachesMarker.get()) {
           cacheSerializer.saveCacheToFile(storage, cacheFile)
         }
         else {
@@ -127,12 +127,12 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
     private val LOG = logger<GlobalWorkspaceModelCacheImpl>()
     internal const val DATA_DIR_NAME: String = "global-model-cache"
 
-    private val cachesInvalidated = AtomicBoolean(false)
+    private val invalidateCachesMarker = AtomicBoolean(false)
     private val invalidateCachesMarkerFile by lazy { PathManager.getSystemDir().resolve("$DATA_DIR_NAME/.invalidate") }
 
     internal fun invalidateCaches() {
       LOG.info("Invalidating global caches by creating $invalidateCachesMarkerFile")
-      invalidateCaches(cachesInvalidated, invalidateCachesMarkerFile)
+      invalidateCaches(invalidateCachesMarker, invalidateCachesMarkerFile)
     }
   }
 }

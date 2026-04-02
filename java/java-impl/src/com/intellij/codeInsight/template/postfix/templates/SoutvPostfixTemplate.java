@@ -27,6 +27,12 @@ public class SoutvPostfixTemplate extends JavaEditablePostfixTemplate implements
     return super.isApplicable(context, copyDocument, newOffset) && !JavaPostfixTemplatesUtils.isInExpressionFile(context);
   }
 
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
   @Override
   protected void addTemplateVariables(@NotNull PsiElement element, @NotNull Template template) {
     super.addTemplateVariables(element, template);

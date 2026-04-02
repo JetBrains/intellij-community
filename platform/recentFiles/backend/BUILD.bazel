@@ -37,6 +37,7 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/backend",
     "//platform/util/coroutines",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -70,6 +71,7 @@ jvm_library(
     "//platform/platform-impl/rpc:rpc_test_lib",
     "//platform/backend:backend_test_lib",
     "//platform/util/coroutines:coroutines_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.recentFiles.backend` end

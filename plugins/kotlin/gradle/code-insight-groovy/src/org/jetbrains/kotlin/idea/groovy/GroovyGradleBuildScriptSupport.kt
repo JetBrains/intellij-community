@@ -2,13 +2,17 @@
 
 package org.jetbrains.kotlin.idea.groovy
 
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.buildArgumentString
@@ -342,17 +346,49 @@ class GroovyBuildScriptManipulator(
             libraryDescriptor.preferredVersion ?: libraryDescriptor.maxVersion ?: libraryDescriptor.minVersion
         )
 
-        if (targetModule != null && usesNewMultiplatform()) {
+        val dependenciesBlock = if (targetModule != null && usesNewMultiplatform()) {
             scriptFile
                 .getKotlinBlock()
                 .getSourceSetsBlock()
                 .getBlockOrCreate(targetModule.name.takeLastWhile { it != '.' })
                 .getDependenciesBlock()
-                .addLastExpressionInBlockIfNeeded(dependencyString)
         } else {
-            scriptFile.getDependenciesBlock().apply {
-                addLastExpressionInBlockIfNeeded(dependencyString)
+            scriptFile.getDependenciesBlock()
+        }
+
+        dependenciesBlock.addLastExpressionInBlockIfNeeded(dependencyString)
+        val codeStyleManager = CodeStyleManager.getInstance(scriptFile.project)
+        codeStyleManager.reformat(dependenciesBlock.parent, true)
+    }
+
+    override fun addKotlinLibraryToModuleBuildScriptModCommand(
+        targetModule: Module?,
+        scope: DependencyScope,
+        libraryDescriptor: ExternalLibraryDescriptor
+    ): ModCommand {
+        val actionContext = ActionContext(scriptFile.project, scriptFile, 0, TextRange(0, scriptFile.textLength), null)
+        return ModCommand.psiUpdate(actionContext) {
+            val file = it.getWritable(scriptFile)
+
+            val dependencyString = String.format(
+                "%s \"%s:%s:%s\"",
+                scope.toGradleCompileScope(scriptFile.isAndroidModule()),
+                libraryDescriptor.libraryGroupId,
+                libraryDescriptor.libraryArtifactId,
+                libraryDescriptor.preferredVersion ?: libraryDescriptor.maxVersion ?: libraryDescriptor.minVersion
+            )
+
+            val dependenciesBlock = if (targetModule != null && usesNewMultiplatform()) {
+                file
+                    .getKotlinBlock()
+                    .getSourceSetsBlock()
+                    .getBlockOrCreate(targetModule.name.takeLastWhile { it != '.' })
+                    .getDependenciesBlock()
+            } else {
+                file.getDependenciesBlock()
             }
+
+            dependenciesBlock.addLastExpressionInBlockIfNeeded(dependencyString)
         }
     }
 

@@ -6,14 +6,18 @@ package com.intellij.agent.workbench.prompt.ui
 // @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
 
 import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INITIAL_TEXT_DATA_KEY
-import com.intellij.agent.workbench.prompt.core.AgentPromptContextResolverService
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
-import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteExtensionContext
+import com.intellij.agent.workbench.prompt.core.AgentPromptContextResolverService
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
+import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteExtensionContext
 import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionCandidate
 import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionRequest
 import com.intellij.agent.workbench.prompt.ui.context.dataContextOrNull
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
@@ -50,7 +54,6 @@ internal class AgentPromptPaletteSessionController(
 
   init {
     lateinit var submitControllerRef: AgentPromptPaletteSubmitController
-    lateinit var draftControllerRef: AgentPromptPaletteDraftController
 
     contextController = AgentPromptPaletteContextController(
       project = project,
@@ -90,8 +93,6 @@ internal class AgentPromptPaletteSessionController(
       setTargetMode = ::setTargetMode,
       resolveTaskKey = ::resolveTaskKey,
     )
-    draftControllerRef = draftController
-
     submitController = AgentPromptPaletteSubmitController(
       project = project,
       invocationData = invocationData,
@@ -166,6 +167,7 @@ internal class AgentPromptPaletteSessionController(
     promptArea.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         onPromptChanged()
+        autoPopupClaudeSlashCompletionIfNeeded(event)
       }
     })
   }
@@ -214,6 +216,8 @@ internal class AgentPromptPaletteSessionController(
     IdeFocusManager.getInstance(project).requestFocusInProject(promptArea, project)
   }
 
+  fun resolveWorkingProjectPath(): String? = submitController.resolveWorkingProjectPath()
+
   private fun handleTabSwitch() {
     draftController.savePromptTextForSelectedTab()
     contextController.syncActiveExtensionTab(view.tabbedPane.selectedComponent as? JPanel)
@@ -224,6 +228,45 @@ internal class AgentPromptPaletteSessionController(
     draftController.onPromptChanged()
     updateSendAvailability()
     clearStatus()
+  }
+
+  private fun autoPopupClaudeSlashCompletionIfNeeded(event: DocumentEvent) {
+    val editor = promptArea.editor ?: return
+    if (!editor.contentComponent.hasFocus()) {
+      return
+    }
+    if (LookupManager.getActiveLookup(editor) != null) {
+      return
+    }
+
+    val documentText = event.document.immutableCharSequence.toString()
+    val sourceProjectBasePath = launcherProvider()
+      ?.resolveSourceProject(invocationData)
+      ?.basePath
+    if (!shouldAutoPopupClaudeSlashCompletion(
+        selectedProvider = providerSelector.selectedProvider?.bridge?.provider,
+        workingProjectPaths = resolveClaudeSlashCompletionProjectPaths(
+          workingProjectPath = submitController.resolveWorkingProjectPath(),
+          sourceProjectBasePath = sourceProjectBasePath,
+          projectBasePath = project.basePath,
+        ),
+        text = documentText,
+        offsetAfterChange = event.offset + event.newLength,
+        insertedFragment = event.newFragment,
+      )) {
+      return
+    }
+
+    ApplicationManager.getApplication().invokeLater {
+      if (project.isDisposed || editor.isDisposed || !editor.contentComponent.hasFocus()) {
+        return@invokeLater
+      }
+      if (LookupManager.getActiveLookup(editor) != null) {
+        return@invokeLater
+      }
+
+      CodeCompletionHandlerBase(CompletionType.BASIC, false, true, true).invokeCompletion(project, editor, 1)
+    }
   }
 
   private fun refreshProviders() {

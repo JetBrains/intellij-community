@@ -107,7 +107,7 @@ private class CommitChunkPanel(
     override fun isSelected(e: AnActionEvent): Boolean = amendCommitHandler.commitToAmend is CommitToAmend.Last
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      amendCommitHandler.commitToAmend = if (state) CommitToAmend.Last else CommitToAmend.None
+      amendCommitHandler.commitToAmend = if (state) CommitToAmend.Last.Unknown else CommitToAmend.None
     }
   }.apply {
     val amendShortcut = ActionManager.getInstance().getAction("Vcs.ToggleAmendCommitMode").shortcutSet

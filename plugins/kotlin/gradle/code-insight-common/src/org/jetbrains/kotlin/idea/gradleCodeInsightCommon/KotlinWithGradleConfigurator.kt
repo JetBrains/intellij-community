@@ -519,21 +519,6 @@ abstract class KotlinWithGradleConfigurator : BaseKotlinProjectConfigurator() {
         }
     }
 
-    @Deprecated(
-        "Please implement/use the KotlinBuildSystemDependencyManager EP instead.",
-        replaceWith = ReplaceWith("KotlinBuildSystemDependencyManager.findApplicableConfigurator(module)?.addDependency(module, library.withScope(scope))")
-    )
-    override fun addLibraryDependency(
-        module: Module,
-        element: PsiElement,
-        library: ExternalLibraryDescriptor,
-        libraryJarDescriptor: LibraryJarDescriptor,
-        scope: DependencyScope
-    ) {
-        val scope = OrderEntryFix.suggestScopeByLocation(module, element)
-        addKotlinLibraryToModule(module, scope, library)
-    }
-
     override fun isAutoConfigurationEnabled(): Boolean = Registry.`is`("kotlin.configuration.gradle.autoConfig.enabled", true)
 
     companion object {

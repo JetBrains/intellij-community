@@ -33,6 +33,7 @@ jvm_library(
     "//platform/searchEverywhere/frontend",
     "//platform/scopes",
     "//platform/util:util-ui",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -61,6 +62,7 @@ jvm_library(
     "//platform/searchEverywhere/frontend:frontend_test_lib",
     "//platform/scopes:scopes_test_lib",
     "//platform/util:util-ui_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.vcs.git.frontend` end

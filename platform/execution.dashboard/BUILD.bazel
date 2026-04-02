@@ -45,6 +45,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/util/concurrency",
     "//platform/util:util-ui",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -86,6 +87,7 @@ jvm_library(
     "//platform/lang-api:lang_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/util:util-ui_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.dashboard` end

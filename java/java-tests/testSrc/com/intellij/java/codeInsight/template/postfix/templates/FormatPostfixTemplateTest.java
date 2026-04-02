@@ -39,4 +39,11 @@ public class FormatPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testExpressionNotCompleted() {
     doTest();
   }
+
+  public static class ModFormatPostfixTemplateTest extends FormatPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

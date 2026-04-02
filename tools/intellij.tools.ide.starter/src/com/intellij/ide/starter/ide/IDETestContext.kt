@@ -437,6 +437,7 @@ open class IDETestContext(
     launchName: String = "",
     expectedKill: Boolean = false,
     expectedExitCode: Int = 0,
+    analyzeProcessExit: Boolean = true,
     collectNativeThreads: Boolean = false,
     stdOut: ExecOutputRedirect? = null,
     configure: IDERunContext.() -> Unit = {},
@@ -450,6 +451,7 @@ open class IDETestContext(
         launchName = launchName,
         expectedKill = expectedKill,
         expectedExitCode = expectedExitCode,
+        analyzeProcessExit = analyzeProcessExit,
         collectNativeThreads = collectNativeThreads,
         stdOut = stdOut,
         configure = configure,
@@ -468,6 +470,7 @@ open class IDETestContext(
     launchName: String = "",
     expectedKill: Boolean = false,
     expectedExitCode: Int = 0,
+    analyzeProcessExit: Boolean = true,
     collectNativeThreads: Boolean = false,
     stdOut: ExecOutputRedirect? = null,
     configure: suspend IDERunContext.() -> Unit = {},
@@ -484,6 +487,7 @@ open class IDETestContext(
         launchName = launchName,
         expectedKill = expectedKill,
         expectedExitCode = expectedExitCode,
+        analyzeProcessExit = analyzeProcessExit,
         collectNativeThreads = collectNativeThreads,
         stdOut = stdOut
       )

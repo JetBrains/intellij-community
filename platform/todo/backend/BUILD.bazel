@@ -28,6 +28,7 @@ jvm_library(
     "//platform/indexing-impl",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/editor-ui-api:editor-ui",
+    "//fleet/rhizomedb",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -53,6 +54,7 @@ jvm_library(
     "//platform/indexing-impl:indexing-impl_test_lib",
     "//platform/editor-ui-ex:editor-ex_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.todo.backend` end

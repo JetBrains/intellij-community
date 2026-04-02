@@ -106,7 +106,7 @@ public final class ProductModulesSerialization {
                                          @NotNull Set<RuntimeModuleId> withoutModules) throws IOException, XMLStreamException {
     for (RawIncludedFromData includedFromData : rawProductModules.getIncludedFrom()) {
       RuntimeModuleId includedId = includedFromData.getFromModule();
-      InputStream inputStream = resolver.readResourceFile(includedId, "META-INF/" + includedId.getStringId() + "/product-modules.xml");
+      InputStream inputStream = resolver.readResourceFile(includedId, "META-INF/" + includedId.getName() + "/product-modules.xml");
       if (inputStream == null) {
         throw new MalformedRepositoryException("'" + includedId.getPresentableName() + "' included in " +
                                                debugName + " doesn't contain product-modules.xml");

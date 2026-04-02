@@ -1,4 +1,5 @@
 // "Create member function 'A.foo'" "true"
+// IGNORE_K1
 // KEEP_ACTIONS_LIST_ORDER
 // K2_ACTIONS_LIST: Specify all remaining arguments by name
 // K2_ACTIONS_LIST: Create member function 'A.foo'

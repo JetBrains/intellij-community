@@ -3156,9 +3156,11 @@ a:com.intellij.openapi.ui.AbstractPainter
 - com.intellij.openapi.ui.Painter
 - <init>():V
 - addListener(com.intellij.openapi.ui.Painter$Listener):V
+- executePaint(java.awt.Component,java.awt.Component,java.awt.Graphics2D):V
 - a:executePaint(java.awt.Component,java.awt.Graphics2D):V
 - p:fireNeedsRepaint(javax.swing.JComponent):V
 - needsRepaint():Z
+- f:paint(java.awt.Component,java.awt.Component,java.awt.Graphics2D):V
 - f:paint(java.awt.Component,java.awt.Graphics2D):V
 - removeListener(com.intellij.openapi.ui.Painter$Listener):V
 - setNeedsRepaint(java.lang.Object,java.lang.Object):java.lang.Object
@@ -4192,6 +4194,7 @@ com.intellij.openapi.ui.OptionAction
 com.intellij.openapi.ui.Painter
 - a:addListener(com.intellij.openapi.ui.Painter$Listener):V
 - a:needsRepaint():Z
+- paint(java.awt.Component,java.awt.Component,java.awt.Graphics2D):V
 - a:paint(java.awt.Component,java.awt.Graphics2D):V
 - a:removeListener(com.intellij.openapi.ui.Painter$Listener):V
 com.intellij.openapi.ui.Painter$Listener

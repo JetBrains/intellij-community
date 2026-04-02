@@ -56,5 +56,12 @@ public class LambdaPostfixTemplateTest extends PostfixTemplateTestCase {
     IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_6, myFixture.getTestRootDisposable());
     doTest();
   }
+
+  public static class ModLambdaPostfixTemplateTest extends LambdaPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }
 

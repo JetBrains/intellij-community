@@ -75,13 +75,12 @@ public abstract class StatementUpDownMover {
       startLine = editor.offsetToLogicalPosition(selectionModel.getSelectionStart()).line;
       LogicalPosition endPos = editor.offsetToLogicalPosition(selectionModel.getSelectionEnd());
       endLine = endPos.column == 0 ? endPos.line : endPos.line+1;
-      range = new LineRange(startLine, endLine);
     }
     else {
       startLine = editor.getCaretModel().getLogicalPosition().line;
       endLine = startLine+1;
-      range = new LineRange(startLine, endLine);
     }
+    range = new LineRange(startLine, endLine);
     return range;
   }
 

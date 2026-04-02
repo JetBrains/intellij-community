@@ -82,4 +82,11 @@ public class IfStatementPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testLesserOperatorExpression() {
     doTest();
   }
+
+  public static class ModIfStatementPostfixTemplateTest extends IfStatementPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

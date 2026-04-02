@@ -182,4 +182,32 @@ public final class PostfixTemplatesUtils {
   public static boolean readExternalTopmostAttribute(@NotNull Element template) {
     return Boolean.parseBoolean(template.getAttributeValue(TOPMOST_ATTR));
   }
+
+  /**
+   * Computes the key range for postfix template expansion based on the current action context.
+   *
+   * @param actionContext the action context containing file and selection info
+   * @param key          the matched key (prefix typed so far)
+   * @param templateKey  the full template key
+   * @return the text range corresponding to the key in the document
+   */
+  public static @NotNull TextRange computeKeyRange(@NotNull ActionContext actionContext,
+                                                    @NotNull String key,
+                                                    @NotNull String templateKey) {
+    int selectionEndOffset = actionContext.selection().getEndOffset();
+    String textBeforeCaret = actionContext.file().getFileDocument().getText().substring(0, selectionEndOffset);
+    if (textBeforeCaret.endsWith(key)) {
+      return new TextRange(selectionEndOffset - key.length() + 1, selectionEndOffset);
+    }
+    else if (textBeforeCaret.endsWith(templateKey)) {
+      return new TextRange(selectionEndOffset - templateKey.length() + 1, selectionEndOffset);
+    }
+    else if (templateKey.substring(1)
+      .startsWith(actionContext.selection().substring(actionContext.file().getFileDocument().getText()))) {
+      return new TextRange(actionContext.selection().getStartOffset(), actionContext.selection().getEndOffset());
+    }
+    else {
+      return new TextRange(selectionEndOffset, selectionEndOffset);
+    }
+  }
 }

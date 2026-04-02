@@ -16,6 +16,8 @@ import org.jetbrains.java.decompiler.IdeaDecompilerSettings
 
 @PerformanceUnitTest
 class IdeaDecompilerPerformanceTest : LightJavaCodeInsightFixtureTestCase() {
+  override fun runInDispatchThread(): Boolean = false
+
   override fun setUp() {
     super.setUp()
     myFixture.testDataPath = "${PluginPathManager.getPluginHomePath("java-decompiler")}/plugin/testData"

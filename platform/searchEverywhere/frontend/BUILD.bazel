@@ -40,6 +40,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/util:util-ui",
     "//platform/statistics",
+    "//fleet/rhizomedb",
   ],
   exports = ["//platform/searchEverywhere/shared:searchEverywhere"]
 )
@@ -79,6 +80,7 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//platform/util:util-ui_test_lib",
     "//platform/statistics:statistics_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.searchEverywhere.frontend` end

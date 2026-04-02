@@ -27,16 +27,16 @@ public final class ProductModeLoadingRules {
    */
   public static @NotNull List<RuntimeModuleId> getIncompatibleRootModules(@NotNull ProductMode mode) {
     if (mode.equals(FRONTEND)) {
-      return List.of(RuntimeModuleId.module("intellij.platform.backend"),
-                     RuntimeModuleId.module("intellij.platform.jps.build"),
-                     RuntimeModuleId.module("intellij.platform.jps.build.dependencyGraph"));
+      return List.of(RuntimeModuleId.contentModule("intellij.platform.backend", "jetbrains"),
+                     RuntimeModuleId.contentModule("intellij.platform.jps.build", "jetbrains"),
+                     RuntimeModuleId.contentModule("intellij.platform.jps.build.dependencyGraph", "jetbrains"));
     }
     else if (mode.equals(MONOLITH)) {
       //currently we use the same modules in 'backend' and 'monolith' modes, in the future we may disable some UI-only modules in 'backend' mode
-      return List.of(RuntimeModuleId.module("intellij.platform.frontend.split"));
+      return List.of(RuntimeModuleId.contentModule("intellij.platform.frontend.split", "jetbrains"));
     }
     else if (mode.equals(BACKEND)) {
-      return List.of(RuntimeModuleId.module("intellij.platform.frontend.split"));
+      return List.of(RuntimeModuleId.contentModule("intellij.platform.frontend.split", "jetbrains"));
     }
     else {
       throw new AssertionError("Unexpected value: " + mode);

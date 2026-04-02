@@ -10,6 +10,7 @@ import com.intellij.ide.TreeExpander
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.execution.dashboard.splitApi.RunDashboardConfigurationDto
 import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceRpc
@@ -25,7 +26,9 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import javax.swing.JCheckBox
@@ -85,7 +88,9 @@ class RunDashboardTypePanel(private val project: Project) : NonOpaquePanel(Borde
   init {
     RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
       RunDashboardServiceRpc.getInstance().getRunManagerUpdates(project.projectId()).collect {
-        updateTree(type)
+        withContext(Dispatchers.EDT) {
+          updateTree(type)
+        }
       }
     }
 

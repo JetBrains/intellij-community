@@ -207,8 +207,9 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
   @ApiStatus.Internal
   public static boolean isConstructorCallPlace(@NotNull PsiElement position) {
     return CachedValuesManager.getCachedValue(position, () -> {
+      PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(position, PsiNewExpression.class);
       boolean result = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position) &&
-                       !JavaClassNameInsertHandler.isArrayTypeExpected(PsiTreeUtil.getParentOfType(position, PsiNewExpression.class));
+                       !(newExpression != null && JavaCompletionUtil.isArrayTypeExpected(newExpression));
       return CachedValueProvider.Result.create(result, position);
     });
   }

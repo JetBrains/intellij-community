@@ -29,7 +29,7 @@ data class IdeInfo(
    */
   val baseIdePlatformPrefixForFrontend: String? = null,
   
-  val buildType: String = BuildType.EAP.type,
+  val buildType: String = "",
   val additionalModules: List<String> = emptyList(),
 
   /** E.g: "222.3244.1" */

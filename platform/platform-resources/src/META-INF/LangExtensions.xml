@@ -696,7 +696,7 @@
     <lookup.customizer implementation="com.intellij.codeInsight.completion.command.CommandCompletionLookupCustomizer" order="last" id="commandCompletionLookupCustomizer"/>
 
     <platform.backend.documentation.lookupElementTargetProvider
-      implementation="com.intellij.codeInsight.completion.command.CommandCompletionDocumentationProvider"/>
+      implementation="com.intellij.codeInsight.completion.command.LookupElementCustomPreviewHolderDocumentationProvider"/>
     <lookup.may.have.custom.preview.provider
       implementation="com.intellij.codeInsight.completion.command.CommandCompletionLookupMayHaveCustomPreviewProvider"/>
     <nonWriteAccessTypedHandler implementation="com.intellij.codeInsight.completion.command.CommandCompletionNonWriteAccessTypedHandler" id="commandCompletion"/>

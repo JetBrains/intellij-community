@@ -127,6 +127,7 @@ import javax.swing.Icon;
 import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -347,22 +348,29 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     int templateStart = templateElement.getTextRange().getStartOffset();
     WriteAction.run(() -> {
       TemplateBuilderImpl builder = new TemplateBuilderImpl(templateElement);
+      Set<String> seenVarNames = new HashSet<>();
       for (ModStartTemplate.TemplateField field : template.fields()) {
         switch (field) {
           case ModStartTemplate.ExpressionField(TextRange range, String varName, Expression expression) -> {
-            if (varName != null) {
-              builder.replaceElement(templateElement, range.shiftLeft(templateStart), varName, expression, true);
-            } else {
-              builder.replaceElement(templateElement, range.shiftLeft(templateStart), expression);
+            TextRange shiftedRange = range.shiftLeft(templateStart);
+            if (varName != null && !seenVarNames.add(varName)) {
+              // Second (or later) occurrence of the same variable — add as a linked reference
+              // so it mirrors edits from the primary occurrence without creating a duplicate variable.
+              builder.addVariableOccurrence(templateElement, shiftedRange, varName);
+            }
+            else if (varName != null) {
+              builder.replaceElement(templateElement, shiftedRange, varName, expression, true);
+            }
+            else {
+              builder.replaceElement(templateElement, shiftedRange, expression);
             }
           }
           case ModStartTemplate.DependantVariableField(TextRange range, String varName, String variableName, boolean alwaysStopAt) ->
             builder.replaceElement(templateElement, range.shiftLeft(templateStart), varName, variableName, alwaysStopAt);
+          // Use exact offset to preserve precise caret position (e.g., inside a loop body),
+          // rather than mapping to a PSI element whose range may be wider than the desired offset.
           case ModStartTemplate.EndField(TextRange range) -> {
-            PsiElement leaf = psiFile.findElementAt(range.getStartOffset());
-            if (leaf != null) {
-              builder.setEndVariableBefore(leaf);
-            }
+            builder.setEndVariableAt(range.getStartOffset());
           }
         }
       }

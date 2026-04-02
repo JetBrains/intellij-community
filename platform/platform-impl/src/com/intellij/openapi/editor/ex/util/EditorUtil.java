@@ -59,7 +59,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.InterLineBreakpointConfiguration;
 import com.intellij.openapi.editor.impl.InterLineBreakpointConfigurationProvider;
-import com.intellij.openapi.editor.impl.InterLineShiftAnimator;
+import com.intellij.openapi.editor.impl.InterLineBreakpointHitArea;
 import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.editor.impl.BreakpointArea;
 import com.intellij.openapi.editor.impl.ScrollingModelImpl;
@@ -963,15 +963,18 @@ public final class EditorUtil {
         return new BreakpointArea.OnLine(logicalLine);
       }
 
-      // Inter-line hit is registered if the y coordinate falls inside the empty space between the adjacent line numbers
-      int ascent = editorImpl.getAscent();
-      InterLineShiftAnimator animator = configuration.getAnimator();
-      int shift = animator == null ? 0 : animator.getShiftForVisualLine(visualLine);
+      int nextVisualLine = editor.yToVisualLine(y + lineHeight);
+      int shift = calculateInterLineShift(editorImpl, visualLine, nextVisualLine);
       // as animator expands the vertical space between the lines,
-      // we can increase the hit area as well. 2/3 is purely arbitrary here.
-      int padding = Math.max(0, lineHeight - ascent + 2 * shift / 3);
+      // we can increase the hit area as well
+      int padding = configuration.getHitArea() == InterLineBreakpointHitArea.MEDIUM
+                    ? shift
+                    : 2 * shift;
+      // make sure that top+bottom padding doesn't exceed half of the line height
+      // (i.e., inter-line hits don't take more space than on-line hits)
+      int totalPadding = Math.min(padding, lineHeight / 4);
 
-      if (y >= visualLineStartY + padding && y <= visualLineStartY + ascent) {
+      if (y >= visualLineStartY + totalPadding && y <= visualLineStartY + lineHeight - totalPadding) {
         return new BreakpointArea.OnLine(logicalLine);
       }
 
@@ -1055,7 +1058,7 @@ public final class EditorUtil {
     });
   }
 
-  public static Font getEditorFont(int size) {
+  public static @NotNull Font getEditorFont(int size) {
     return EditorThreading.compute(() -> {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       Font font = scheme.getFont(EditorFontType.PLAIN).deriveFont((float)size);
@@ -1448,6 +1451,36 @@ public final class EditorUtil {
     @NotNull Runnable scrollLambda
   ) {
     runWhenViewportReady(editor, scrollLambda, () -> CoroutineScopeKt.asDisposable(awaitingScope));
+  }
+
+  /**
+   * Calculates the target shift amount for inter-line expansion.
+   * Returns 0 if no shift is needed (e.g., there's already enough space from block inlays).
+   *
+   * @return the shift amount in pixels, or 0 if no shift is needed
+   */
+  @ApiStatus.Internal
+  public static int calculateInterLineShift(EditorImpl editor, int visualLineAbove, int visualLineBelow) {
+    int lineHeight = editor.getLineHeight();
+    if (visualLineAbove < 0 && visualLineBelow < 0) {
+      return 0;
+    }
+
+    int extraSpace = 0;
+    if (visualLineBelow >= 0) {
+      VisualLinesIterator iterator = new VisualLinesIterator(editor, visualLineBelow);
+      if (!iterator.atEnd()) {
+        for (Inlay<?> inlay : iterator.getBlockInlaysAbove()) {
+          extraSpace += inlay.getHeightInPixels();
+        }
+      }
+    }
+
+    if (extraSpace >= lineHeight * 1.5) {
+      return 0;
+    }
+
+    return (lineHeight - editor.getAscent()) / 2;
   }
 
   private static void runWhenViewportReady(

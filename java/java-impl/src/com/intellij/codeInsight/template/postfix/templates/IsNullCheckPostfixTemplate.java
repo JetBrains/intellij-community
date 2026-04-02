@@ -24,6 +24,11 @@ public class IsNullCheckPostfixTemplate extends SurroundPostfixTemplateBase impl
   }
 
   @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
+  @Override
   protected @NotNull String getTail() {
     return "== null";
   }

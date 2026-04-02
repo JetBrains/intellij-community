@@ -375,7 +375,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
   }
 
-  private static @Nullable RunConfiguration getBaseConfiguration(@NotNull RunConfiguration runConfiguration) {
+  public static @Nullable RunConfiguration getBaseConfiguration(@NotNull RunConfiguration runConfiguration) {
     RunProfile runProfile = ExecutionManagerImpl.getDelegatedRunProfile(runConfiguration);
     return runProfile instanceof RunConfiguration ? (RunConfiguration)runProfile : null;
   }
@@ -709,7 +709,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
     else {
       AdditionalRunDashboardService newService =
-        new AdditionalRunDashboardService(settings, descriptorId, service.getUuid());
+        new AdditionalRunDashboardService(settings, descriptorId, service.getScope());
       settingsServices.add(newService);
       return newService;
     }
@@ -1080,10 +1080,10 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
     AdditionalRunDashboardService(@NotNull RunnerAndConfigurationSettings settings,
                                   @NotNull RunContentDescriptorId descriptorId,
-                                  @NotNull RunDashboardServiceId id) {
+                                  @NotNull CoroutineScope scope) {
       mySettings = settings;
       myDescriptorId = descriptorId;
-      myId = id;
+      myId = storeValueGlobally(scope, this, RunDashboardServiceIdType.INSTANCE);
     }
 
     @Override

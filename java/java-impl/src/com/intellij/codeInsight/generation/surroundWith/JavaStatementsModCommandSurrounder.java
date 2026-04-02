@@ -1,9 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
-import com.intellij.lang.surroundWith.ModCommandSurrounder;
+import com.intellij.lang.surroundWith.PsiUpdateModCommandSurrounder;
 import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
@@ -26,20 +25,17 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public abstract class JavaStatementsModCommandSurrounder extends ModCommandSurrounder {
+public abstract class JavaStatementsModCommandSurrounder extends PsiUpdateModCommandSurrounder {
   @Override
   public boolean isApplicable(PsiElement @NotNull [] elements) {
     return ContainerUtil.find(elements, PsiSwitchLabelStatementBase.class::isInstance) == null;
   }
 
   @Override
-  public final @NotNull ModCommand surroundElements(@NotNull ActionContext context, @NotNull PsiElement @NotNull [] elements) {
-    PsiElement container = elements[0].getParent();
-    if (container == null) return ModCommand.nop();
-    return ModCommand.psiUpdate(context, updater -> surroundStatements(
-      context, updater.getWritable(container),
-      ContainerUtil.map2Array(elements, PsiElement.EMPTY_ARRAY, updater::getWritable),
-      updater));
+  public void surroundElements(@NotNull ActionContext context, @NotNull PsiElement @NotNull [] elementsInCopy, @NotNull ModPsiUpdater updater) {
+    PsiElement container = elementsInCopy[0].getParent();
+    if (container == null) return;
+    surroundStatements(context, container, elementsInCopy, updater);
   }
 
   protected abstract void surroundStatements(@NotNull ActionContext context,

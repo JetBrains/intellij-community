@@ -1,11 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.ClientProperty
@@ -14,9 +19,12 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBTabbedPane
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.nio.file.Files
+import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.KeyStroke
@@ -36,6 +44,40 @@ class AgentPromptEnterHandlersTest {
       }) { promptArea ->
         invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))
         assertThat(submitCalls).isEqualTo(1)
+      }
+    }
+  }
+
+  @Test
+  fun enterChoosesActiveLookupItemInsteadOfSubmitting(@TempDir tempDir: Path) {
+    runInEdtAndWait {
+      val projectPath = tempDir.resolve("project")
+      Files.createDirectories(projectPath)
+      writeCommand(projectPath, "review")
+      writeCommand(projectPath, "safe-push")
+
+      val project = ProjectManager.getInstance().defaultProject
+      val promptArea = AgentPromptTextField(
+        project,
+        AgentPromptClaudeSlashCompletionProvider(
+          selectedProvider = { AgentSessionProvider.CLAUDE },
+          resolveWorkingProjectPaths = { listOf(projectPath.toString()) },
+        ),
+      )
+      var submitCalls = 0
+      installPromptEnterHandlers(promptArea, canSubmit = { true }, onSubmit = { submitCalls++ })
+      promptArea.addNotify()
+      try {
+        openSlashLookup(promptArea, project)
+
+        invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))
+
+        assertThat(submitCalls).isZero()
+        assertThat(promptArea.text).isNotEqualTo("/")
+        assertThat(LookupManager.getActiveLookup(promptArea.editor)).isNull()
+      }
+      finally {
+        promptArea.removeNotify()
       }
     }
   }
@@ -111,6 +153,48 @@ class AgentPromptEnterHandlersTest {
         invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0))
         assertThat(submitCalls).isEqualTo(1)
         assertThat(forwardFocusCalls).isZero()
+      }
+    }
+  }
+
+  @Test
+  fun tabChoosesActiveLookupItemInsteadOfPromptTabAction(@TempDir tempDir: Path) {
+    runInEdtAndWait {
+      val projectPath = tempDir.resolve("project")
+      Files.createDirectories(projectPath)
+      writeCommand(projectPath, "review")
+      writeCommand(projectPath, "safe-push")
+
+      val project = ProjectManager.getInstance().defaultProject
+      val promptArea = AgentPromptTextField(
+        project,
+        AgentPromptClaudeSlashCompletionProvider(
+          selectedProvider = { AgentSessionProvider.CLAUDE },
+          resolveWorkingProjectPaths = { listOf(projectPath.toString()) },
+        ),
+      )
+      var submitCalls = 0
+      var forwardFocusCalls = 0
+      installPromptEnterHandlers(
+        promptArea = promptArea,
+        canSubmit = { true },
+        isTabQueueEnabled = { false },
+        onSubmit = { submitCalls++ },
+        onTabFocusTransfer = { forwardFocusCalls++ },
+      )
+      promptArea.addNotify()
+      try {
+        openSlashLookup(promptArea, project)
+
+        invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0))
+
+        assertThat(submitCalls).isZero()
+        assertThat(forwardFocusCalls).isZero()
+        assertThat(promptArea.text).isNotEqualTo("/")
+        assertThat(LookupManager.getActiveLookup(promptArea.editor)).isNull()
+      }
+      finally {
+        promptArea.removeNotify()
       }
     }
   }
@@ -288,5 +372,20 @@ class AgentPromptEnterHandlersTest {
   private fun invokeComponentKeyAction(component: JComponent, keyStroke: KeyStroke) {
     val action = checkNotNull(component.getActionForKeyStroke(keyStroke)) { "No action registered for keystroke: $keyStroke" }
     action.actionPerformed(ActionEvent(component, ActionEvent.ACTION_PERFORMED, keyStroke.toString()))
+  }
+
+  private fun openSlashLookup(promptArea: AgentPromptTextField, project: com.intellij.openapi.project.Project) {
+    promptArea.text = "/"
+    val editor = checkNotNull(promptArea.editor) { "Editor was not initialized" }
+    editor.caretModel.moveToOffset(1)
+    CodeCompletionHandlerBase(CompletionType.BASIC, true, false, true).invokeCompletion(project, editor, 1)
+    assertThat(LookupManager.getActiveLookup(editor)).isNotNull
+  }
+
+  private fun writeCommand(root: Path, name: String): Path {
+    val commandFile = root.resolve(".claude").resolve("commands").resolve("$name.md")
+    Files.createDirectories(commandFile.parent)
+    Files.writeString(commandFile, "# $name")
+    return commandFile
   }
 }

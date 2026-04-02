@@ -78,6 +78,45 @@ class ClaudeSessionsStore(
     )
   }
 
+  fun parseSessionsIndex(path: Path): Map<String, String> {
+    if (!Files.isRegularFile(path)) {
+      return emptyMap()
+    }
+
+    return try {
+      Files.newBufferedReader(path).use { reader ->
+        jsonFactory.createParser(reader).use { parser ->
+          if (parser.nextToken() != JsonToken.START_OBJECT) {
+            emptyMap()
+          }
+
+          else {
+            val summaries = LinkedHashMap<String, String>()
+            forEachJsonObjectField(parser) { fieldName ->
+              when (fieldName) {
+                "entries" -> {
+                  if (parser.currentToken == JsonToken.START_ARRAY) {
+                    parseIndexEntries(parser, summaries)
+                  }
+                  else {
+                    parser.skipChildren()
+                  }
+                }
+
+                else -> parser.skipChildren()
+              }
+              true
+            }
+            summaries
+          }
+        }
+      }
+    }
+    catch (_: Throwable) {
+      emptyMap()
+    }
+  }
+
   private fun scanJsonlTail(path: Path): JsonlTailScanState {
     return WorkbenchJsonlScanner.scanTailLines(
       path = path,
@@ -115,6 +154,48 @@ class ClaudeSessionsStore(
     }
   }
 
+}
+
+private fun parseIndexEntries(parser: JsonParser, summaries: MutableMap<String, String>) {
+  while (true) {
+    val token = parser.nextToken() ?: return
+    if (token == JsonToken.END_ARRAY) {
+      return
+    }
+    if (token != JsonToken.START_OBJECT) {
+      parser.skipChildren()
+      continue
+    }
+    parseIndexEntry(parser)?.let { entry ->
+      summaries.put(entry.sessionId, entry.summary)
+    }
+  }
+}
+
+private fun parseIndexEntry(parser: JsonParser): IndexedClaudeSummary? {
+  var sessionId: String? = null
+  var summary: String? = null
+  var isSidechain = false
+
+  forEachJsonObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "sessionId" -> sessionId = readJsonStringOrNull(parser)
+      "summary" -> summary = readJsonStringOrNull(parser)
+      "isSidechain" -> isSidechain = readBooleanOrFalse(parser)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+
+  if (isSidechain) {
+    return null
+  }
+
+  val normalizedSessionId = sessionId?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+  val normalizedSummary = sanitizeTitle(summary)
+    ?.takeUnless { it.equals("No prompt", ignoreCase = true) }
+    ?: return null
+  return IndexedClaudeSummary(sessionId = normalizedSessionId, summary = normalizedSummary)
 }
 
 private fun deriveActivity(lastEventType: String?, lastAssistantHadToolUse: Boolean?): ClaudeSessionActivity {
@@ -305,6 +386,11 @@ private data class ParsedMessageObject(
   @JvmField val role: String?,
   @JvmField val contentPreview: String?,
   @JvmField val hasToolUse: Boolean = false,
+)
+
+private data class IndexedClaudeSummary(
+  @JvmField val sessionId: String,
+  @JvmField val summary: String,
 )
 
 private interface ActivityTrackingState {

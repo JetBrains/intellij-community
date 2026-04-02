@@ -32,6 +32,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/code-style-api:codeStyle",
     "//libraries/miglayout-swing",
+    "//fleet/rhizomedb",
   ],
   exports = ["//plugins/markdown/core:markdown"]
 )
@@ -64,6 +65,7 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "//platform/code-style-api:codeStyle_test_lib",
     "//libraries/miglayout-swing:miglayout-swing_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.markdown.frontend` end

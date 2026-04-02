@@ -30,7 +30,7 @@ import kotlinx.coroutines.runInterruptible
 import java.io.Closeable
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 class LocalIDEProcess : IDEProcess {
   override suspend fun run(runContext: IDERunContext): IDEStartResult {
@@ -75,7 +75,7 @@ class LocalIDEProcess : IDEProcess {
         val span = TestTelemetryService.spanBuilder("ide process").startSpan()
         EventsBus.postAndWaitProcessing(IdeBeforeRunIdeProcessEvent(runContext = this))
         val processPresentableName = "run-ide-$contextName"
-        val executionTime = measureTime {
+        val (exitCode, executionTime) = measureTimedValue {
           ProcessExecutor(
             presentableName = processPresentableName,
             workDir = startConfig.workDir,
@@ -111,12 +111,13 @@ class LocalIDEProcess : IDEProcess {
               }
             },
             expectedExitCode = expectedExitCode,
+            analyzeProcessExit = analyzeProcessExit,
           ).startCancellable()
         }
         span.end()
         logOutput("IDE run $contextName completed in $executionTime")
 
-        return IDEStartResult(runContext = this, executionTime = executionTime, vmOptionsDiff = startConfig.vmOptionsDiff())
+        return IDEStartResult(runContext = this, executionTime = executionTime, exitCode = exitCode, vmOptionsDiff = startConfig.vmOptionsDiff())
       }
       catch (_: ExecTimeoutException) {
         if (expectedKill) {

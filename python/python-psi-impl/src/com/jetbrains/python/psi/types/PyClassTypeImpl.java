@@ -200,24 +200,6 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    if ("super".equals(getClassQName()) && isBuiltin() && location instanceof PyCallExpression) {
-      // methods of super() call are not of class super!
-      PyExpression first_arg = ((PyCallExpression)location).getArgument(0, PyExpression.class);
-      if (first_arg != null) { // the usual case: first arg is the derived class that super() is proxying for
-        PyType first_arg_type = context.getType(first_arg);
-        if (first_arg_type instanceof PyClassType) {
-          PyClass derived_class = ((PyClassType)first_arg_type).getPyClass();
-          final Iterator<PyClass> base_it = derived_class.getAncestorClasses(context).iterator();
-          if (base_it.hasNext()) {
-            return new PyClassTypeImpl(base_it.next(), true).resolveMember(name, location, direction, resolveContext);
-          }
-          else {
-            return null; // no base classes = super() cannot proxy anything meaningful from a base class
-          }
-        }
-      }
-    }
-
     final List<? extends RatedResolveResult> classMembers = resolveInner(myClass, myIsDefinition, name, location, context);
     if (!classMembers.isEmpty()) {
       return classMembers;

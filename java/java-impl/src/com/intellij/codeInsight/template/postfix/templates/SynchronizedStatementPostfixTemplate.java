@@ -30,4 +30,9 @@ public class SynchronizedStatementPostfixTemplate extends JavaEditablePostfixTem
   public boolean isBuiltin() {
     return true;
   }
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
 }

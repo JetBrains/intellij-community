@@ -1653,6 +1653,7 @@ xml/dom-openapi
 xml/dom-tests
 xml/emmet
 xml/emmet/backend
+xml/emmet/frontend
 xml/impl
 xml/langInjection
 xml/langInjection/xpath

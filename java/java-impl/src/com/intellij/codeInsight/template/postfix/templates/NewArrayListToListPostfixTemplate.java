@@ -24,4 +24,9 @@ public class NewArrayListToListPostfixTemplate extends JavaEditablePostfixTempla
   public boolean isBuiltin() {
     return true;
   }
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
 }

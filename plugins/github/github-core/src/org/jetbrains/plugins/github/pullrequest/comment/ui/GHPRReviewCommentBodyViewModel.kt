@@ -2,9 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.async.combineState
-import com.intellij.collaboration.async.combineStateIn
 import com.intellij.collaboration.async.launchNowIn
-import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.util.SingleCoroutineLauncher
@@ -32,11 +30,15 @@ import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHMarkdownToHtmlConverter
@@ -107,22 +109,23 @@ class GHPRReviewCommentBodyViewModel internal constructor(
   }
 
   // is used for a resolved comment in a collapsed mode, in other cases blocks rendering should be used
-  val bodyHtml: StateFlow<@NlsSafe String> = body.mapState { it.convertToHtml(project, server) }
+  val bodyHtml: StateFlow<@NlsSafe String> = body.map { it.convertToHtml(project, server) }
+    .flowOn(Dispatchers.Default).stateIn(cs, SharingStarted.Eagerly, "")
 
-  val blocks: StateFlow<List<GHPRCommentBodyBlock>> = combineStateIn(cs, threadData, body) { thread, body ->
-    if (thread == null) return@combineStateIn emptyList()
+  val blocks: StateFlow<List<GHPRCommentBodyBlock>> = combine(threadData, body) { thread, body ->
+    if (thread == null) return@combine emptyList()
     val markdownConverter = GHMarkdownToHtmlConverter(project)
     val suggestions = body.getSuggestions()
     if (suggestions.isEmpty()) {
       val html = markdownConverter.convertMarkdown(body, server)
-      return@combineStateIn listOf(GHPRCommentBodyBlock.HTML(html))
+      return@combine listOf(GHPRCommentBodyBlock.HTML(html))
     }
     else {
       val patchReader = PatchReader(PatchHunkUtil.createPatchFromHunk("_", thread.diffHunk))
       val hunk = patchReader.readTextPatches().firstOrNull()?.hunks?.firstOrNull() ?: run {
         LOG.warn("Empty diff hunk for thread $thread")
         val html = markdownConverter.convertMarkdown(body, server)
-        return@combineStateIn listOf(GHPRCommentBodyBlock.HTML(html))
+        return@combine listOf(GHPRCommentBodyBlock.HTML(html))
       }
       val code = hunk.lines
         .filter { it.type != PatchLine.Type.REMOVE }
@@ -153,7 +156,7 @@ class GHPRReviewCommentBodyViewModel internal constructor(
         }
       }
     }
-  }
+  }.flowOn(Dispatchers.Default).stateIn(cs, SharingStarted.Eagerly, emptyList())
 
   private val loadedDetailsState = detailsData.detailsComputationFlow
     .filter { !it.isInProgress }.map { it.getOrNull() }

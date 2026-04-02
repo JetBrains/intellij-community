@@ -25,6 +25,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
+    "@lib//:assert_j",
     "//jps/model-api:model",
     "//jps/model-api:model_test_lib",
     "@lib//:kotlin-stdlib",

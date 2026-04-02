@@ -221,8 +221,8 @@ public abstract class BazelIncBuildTest {
       validateBuildOutput(testDataRelativePath, testOutputDir);
     }
 
-    String expectedBuildLog = normalizeBuildLog(Files.readString(expectedBuildLogFile, StandardCharsets.UTF_8).replaceAll("\r\n?", "\n").trim());
-    String actualBuildLog = normalizeBuildLog(buildLog.toString().trim());
+    String expectedBuildLog = Files.readString(expectedBuildLogFile, StandardCharsets.UTF_8).replaceAll("\r\n?", "\n").trim();
+    String actualBuildLog = buildLog.toString().trim();
     if (!expectedBuildLog.equals(actualBuildLog)) {
       // only collect diagnostics on failures
       throw new ComparisonFailure(collectDiagnostics(testOutputDir), expectedBuildLog, actualBuildLog);
@@ -582,10 +582,5 @@ public abstract class BazelIncBuildTest {
 
   private static @NotNull String getFileName(Path p) {
     return p.getFileName().toString();
-  }
-
-  private static @NotNull String normalizeBuildLog(@NotNull String buildLog) {
-    // Internal wrapper target names (e.g. "_a__jps") must not affect incremental test expectations.
-    return buildLog.replaceAll("-_([A-Za-z0-9_-]+)__jps\\.kotlin_module", "-$1.kotlin_module");
   }
 }

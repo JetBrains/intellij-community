@@ -87,8 +87,9 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
         if (error == null) {
             queueSyncIfNeeded(project)
 
+            val changes = readAction { result.changedFiles.calculateChanges() }
             notificationHolder
-                .showAutoConfiguredNotification(module.name, result.changedFiles.calculateChanges())
+                .showAutoConfiguredNotification(module.name, changes)
 
             collector.showNotification()
             ConfigureKotlinNotificationManager.expireOldNotifications(project)

@@ -1,6 +1,9 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.grazie">
   <dependencies>
     <plugin id="tanvd.grazi"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.grazie.core"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.grazie">

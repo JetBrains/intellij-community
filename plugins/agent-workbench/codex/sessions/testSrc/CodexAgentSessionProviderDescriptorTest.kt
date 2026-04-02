@@ -11,6 +11,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDE
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameContext
+import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameHandler
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -69,6 +71,16 @@ class CodexAgentSessionProviderDescriptorTest {
     @Test
     fun supportsUnarchiveThread() {
         assertThat(bridge.supportsUnarchiveThread).isTrue()
+    }
+
+    @Test
+    fun renameThreadHandlerUsesSharedBackendContract() {
+        val renameHandler = bridge.threadRenameHandler
+
+        assertThat(renameHandler).isInstanceOf(AgentThreadRenameHandler.Backend::class.java)
+        renameHandler as AgentThreadRenameHandler.Backend
+        assertThat(renameHandler.supportedContexts)
+            .containsExactlyInAnyOrder(AgentThreadRenameContext.TREE_POPUP, AgentThreadRenameContext.EDITOR_TAB)
     }
 
     @Test

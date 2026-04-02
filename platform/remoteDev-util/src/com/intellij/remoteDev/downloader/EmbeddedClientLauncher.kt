@@ -1,4 +1,3 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteDev.downloader
 
 import com.intellij.execution.ShortenCommandLine
@@ -76,18 +75,18 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
      */
     @VisibleForTesting
     fun getRootFrontendModuleForIde(platformPrefix: String): RuntimeModuleId = when (platformPrefix) {
-      PlatformUtils.IDEA_PREFIX, PlatformUtils.IDEA_CE_PREFIX -> RuntimeModuleId.module("intellij.idea.frontend.split")
-      PlatformUtils.IDEA_EDU_PREFIX -> RuntimeModuleId.module("intellij.edu.remote.frontend.split")
-      PlatformUtils.PYCHARM_PREFIX, PlatformUtils.PYCHARM_CE_PREFIX -> RuntimeModuleId.module("intellij.pycharm.frontend.split")
-      PlatformUtils.RIDER_PREFIX -> RuntimeModuleId.module("intellij.rider.frontend.split")
-      PlatformUtils.GOIDE_PREFIX -> RuntimeModuleId.module("intellij.goland.frontend.split")
-      PlatformUtils.DBE_PREFIX -> RuntimeModuleId.module("intellij.datagrip.frontend.split")
-      PlatformUtils.CLION_PREFIX -> RuntimeModuleId.module("intellij.clion.ide.frontend.split")
-      PlatformUtils.PHP_PREFIX -> RuntimeModuleId.module("intellij.phpstorm.frontend.split")
-      PlatformUtils.WEB_PREFIX -> RuntimeModuleId.module("intellij.webstorm.frontend.split")
-      PlatformUtils.RUBY_PREFIX -> RuntimeModuleId.module("intellij.rubymine.frontend.split")
-      PlatformUtils.RUSTROVER_PREFIX -> RuntimeModuleId.module("intellij.rustrover.frontend.split")
-      else -> RuntimeModuleId.module("intellij.platform.frontend.split")
+      PlatformUtils.IDEA_PREFIX, PlatformUtils.IDEA_CE_PREFIX -> RuntimeModuleId.legacyJpsModule("intellij.idea.frontend.split")
+      PlatformUtils.IDEA_EDU_PREFIX -> RuntimeModuleId.legacyJpsModule("intellij.edu.remote.frontend.split")
+      PlatformUtils.PYCHARM_PREFIX, PlatformUtils.PYCHARM_CE_PREFIX -> RuntimeModuleId.legacyJpsModule("intellij.pycharm.frontend.split")
+      PlatformUtils.RIDER_PREFIX -> RuntimeModuleId.legacyJpsModule("intellij.rider.frontend.split")
+      PlatformUtils.GOIDE_PREFIX -> RuntimeModuleId.legacyJpsModule("intellij.goland.frontend.split")
+      PlatformUtils.DBE_PREFIX -> RuntimeModuleId.legacyJpsModule("intellij.datagrip.frontend.split")
+      PlatformUtils.CLION_PREFIX -> RuntimeModuleId.legacyJpsModule("intellij.clion.ide.frontend.split")
+      PlatformUtils.PHP_PREFIX -> RuntimeModuleId.legacyJpsModule("intellij.phpstorm.frontend.split")
+      PlatformUtils.WEB_PREFIX -> RuntimeModuleId.legacyJpsModule("intellij.webstorm.frontend.split")
+      PlatformUtils.RUBY_PREFIX -> RuntimeModuleId.legacyJpsModule("intellij.rubymine.frontend.split")
+      PlatformUtils.RUSTROVER_PREFIX -> RuntimeModuleId.legacyJpsModule("intellij.rustrover.frontend.split")
+      else -> RuntimeModuleId.contentModule("intellij.platform.frontend.split", "jetbrains")
     }
 
     fun isThinClientCustomCommand(customCommandData: ProductInfo.CustomCommandLaunchData): Boolean {
@@ -226,7 +225,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     }
     passProperties(javaParameters.vmParametersList)
     javaParameters.mainClass = "com.intellij.platform.runtime.loader.IntellijLoader"
-    val runtimeLoaderModule = RuntimeModuleId.module("intellij.platform.runtime.loader")
+    val runtimeLoaderModule = RuntimeModuleId.legacyJpsModule("intellij.platform.runtime.loader")
     javaParameters.classPath.addAllFiles(moduleRepository.getModule(runtimeLoaderModule).moduleClasspath.map { it.toFile() })
     addVmOptions(javaParameters.vmParametersList, moduleRepositoryPath)
     javaParameters.programParametersList.addAll(arguments)
@@ -291,7 +290,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "-Dnosplash=true",
       "-Didea.paths.customizer=com.intellij.platform.ide.impl.startup.multiProcess.FrontendProcessPathCustomizer",
       "-Dintellij.platform.runtime.repository.path=${moduleRepositoryPath.pathString}",
-      "-Dintellij.platform.root.module=${getRootFrontendModule().stringId}",
+      "-Dintellij.platform.root.module=${getRootFrontendModule().name}",
       "-Dintellij.platform.product.mode=${ProductMode.FRONTEND.id}",
       "-Dintellij.platform.full.ide.product.code=${build.productCode}",
       "-Dintellij.platform.load.app.info.from.resources=true",

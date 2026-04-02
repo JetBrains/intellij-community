@@ -64,7 +64,8 @@ describe('edit handler (unit)', () => {
     }, projectPath, callUpstreamTool)
 
     strictEqual(result, `Updated ${path.resolve(projectPath, 'sample.txt')}`)
-    strictEqual(calls[1].args.text, 'beta\nbeta\n')
+    const writeCall = calls.find((call) => call.name === 'create_new_file')
+    strictEqual(writeCall.args.text, 'beta\nbeta\n')
   })
 
   it('normalizes CRLF line endings for matching and output', async () => {
@@ -80,7 +81,8 @@ describe('edit handler (unit)', () => {
     }, projectPath, callUpstreamTool)
 
     strictEqual(result, `Updated ${path.resolve(projectPath, 'sample.txt')}`)
-    strictEqual(calls[1].args.text, 'alpha\nbeta-updated\ngamma\n')
+    const writeCall = calls.find((call) => call.name === 'create_new_file')
+    strictEqual(writeCall.args.text, 'alpha\nbeta-updated\ngamma\n')
   })
 
   it('fuzz: replaces a unique token without touching other content', async () => {
@@ -112,7 +114,8 @@ describe('edit handler (unit)', () => {
       }, projectPath, callUpstreamTool)
 
       strictEqual(result, `Updated ${path.resolve(projectPath, 'sample.txt')}`)
-      strictEqual(calls[1].args.text, expectedText)
+      const writeCall = calls.find((call) => call.name === 'create_new_file')
+      strictEqual(writeCall.args.text, expectedText)
     }
   })
 })

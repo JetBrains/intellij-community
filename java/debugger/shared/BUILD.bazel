@@ -39,6 +39,7 @@ jvm_library(
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/ui",
     "//platform/project/shared:project",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -73,6 +74,7 @@ jvm_library(
     "//platform/xdebugger-impl/shared:shared_test_lib",
     "//platform/xdebugger-impl/ui:ui_test_lib",
     "//platform/project/shared:project_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.debugger.impl.shared` end

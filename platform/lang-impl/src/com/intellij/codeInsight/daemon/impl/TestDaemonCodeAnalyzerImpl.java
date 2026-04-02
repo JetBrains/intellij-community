@@ -65,6 +65,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.AWTEvent;
 import java.awt.event.InvocationEvent;
@@ -150,7 +151,6 @@ public final class TestDaemonCodeAnalyzerImpl {
     do {
       dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
       // refresh will fire write actions interfering with highlighting
-      // heavy ops are bad, but VFS refresh is ok
     }
     while (RefreshQueueImpl.isRefreshInProgress() || DaemonCodeAnalyzerImpl.heavyProcessIsRunning());
     long deadline = System.currentTimeMillis() + timeoutMs;
@@ -167,7 +167,7 @@ public final class TestDaemonCodeAnalyzerImpl {
     // update the file status map before prohibiting its modifications
     waitForUpdateFileStatusBackgroundQueueInTests();
     try {
-      waitForUpdateExcludedFlagInTests();
+      waitUpdateExpensiveFlags();
     }
     catch (TimeoutException e) {
       throw new RuntimeException(e);
@@ -346,8 +346,11 @@ public final class TestDaemonCodeAnalyzerImpl {
     assert ApplicationManager.getApplication().isUnitTestMode();
     Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
       // wait outside EDT to avoid stealing work from FJP
-      myDaemonCodeAnalyzer.myPassExecutorService.cancelAll(true, "DaemonCodeAnalyzerImpl.waitForTermination");
+      while (!myDaemonCodeAnalyzer.myPassExecutorService.waitFor(50)) {
+        Thread.yield();
+      }
     });
+
     waitWhilePumping(future);
   }
 
@@ -376,9 +379,9 @@ public final class TestDaemonCodeAnalyzerImpl {
     myDaemonCodeAnalyzer.myListeners.waitForUpdateFileStatusQueue();
   }
 
-  public void waitForUpdateExcludedFlagInTests() throws TimeoutException {
+  public void waitUpdateExpensiveFlags() throws TimeoutException {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    myDaemonCodeAnalyzer.myListeners.waitUpdateExcludeFlag(1, TimeUnit.MINUTES);
+    myDaemonCodeAnalyzer.myListeners.waitUpdateExpensiveFlags(1, TimeUnit.MINUTES);
   }
 
   @RequiresEdt
@@ -602,5 +605,16 @@ public final class TestDaemonCodeAnalyzerImpl {
         dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
       }
     }
+  }
+
+  @VisibleForTesting
+  public boolean isMarkedExcluded(@NotNull Document document) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    return myDaemonCodeAnalyzer.myListeners.isMarkedExcluded(document);
+  }
+  @VisibleForTesting
+  public boolean isMarkedCodeFragment(@NotNull Document document) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    return myDaemonCodeAnalyzer.myListeners.isMarkedCodeFragment(document);
   }
 }

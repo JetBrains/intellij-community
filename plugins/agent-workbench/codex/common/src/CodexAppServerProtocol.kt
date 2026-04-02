@@ -9,7 +9,7 @@ import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import java.io.Writer
 
-private const val MAX_TITLE_LENGTH = 120
+private val THREAD_TITLE_WHITESPACE = Regex("\\s+")
 
 internal data class ThreadListResult(
   @JvmField val threads: List<CodexThread>,
@@ -105,9 +105,20 @@ internal class CodexAppServerProtocol {
     var nextCursor: String? = null
     forEachObjectField(parser) { fieldName ->
       when (fieldName) {
-        "data" -> if (parser.currentToken == JsonToken.START_ARRAY) parseThreadArray(parser, archived, threads, cwdFilter) else parser.skipChildren()
-        "nextCursor", "next_cursor" -> nextCursor = readStringOrNull(parser)
-        else -> parser.skipChildren()
+        "data" -> {
+          if (parser.currentToken == JsonToken.START_ARRAY) {
+            parseThreadArray(parser = parser, archived = archived, threads = threads, cwdFilter = cwdFilter)
+          }
+          else {
+            parser.skipChildren()
+          }
+        }
+        "nextCursor", "next_cursor" -> {
+          nextCursor = readStringOrNull(parser)
+        }
+        else -> {
+          parser.skipChildren()
+        }
       }
       true
     }
@@ -121,7 +132,7 @@ internal class CodexAppServerProtocol {
     }
 
     return parseThreadFromResultObject(parser)
-      ?: throw CodexAppServerException("Codex app-server returned thread/start result without thread data")
+           ?: throw CodexAppServerException("Codex app-server returned thread/start result without thread data")
   }
 
   fun parseThreadReadActivityResult(parser: JsonParser): CodexThreadActivitySnapshot? {
@@ -224,6 +235,22 @@ private data class ParsedNotificationItemObject(
   @JvmField val text: String?,
 )
 
+private inline fun <T> parseObjectOrNull(parser: JsonParser, parse: (JsonParser) -> T): T? {
+  if (parser.currentToken != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
+  }
+  return parse(parser)
+}
+
+private fun String?.trimToNull(): String? {
+  return this?.trim()?.takeIf { it.isNotEmpty() }
+}
+
+private fun readNonBlankStringOrNull(parser: JsonParser): String? {
+  return readStringOrNull(parser).trimToNull()
+}
+
 private fun parseNotificationParams(parser: JsonParser): ParsedNotificationParams {
   var threadId: String? = null
   var startedThread: CodexAppServerStartedThread? = null
@@ -233,42 +260,27 @@ private fun parseNotificationParams(parser: JsonParser): ParsedNotificationParam
   var agentMessageText: String? = null
   forEachObjectField(parser) { fieldName ->
     when (fieldName) {
-      "threadId", "thread_id" -> {
-        threadId = readStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
-      }
-      "turnId", "turn_id" -> {
-        turnId = readStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
-      }
+      "threadId", "thread_id" -> threadId = readNonBlankStringOrNull(parser)
+      "turnId", "turn_id" -> turnId = readNonBlankStringOrNull(parser)
       "thread", "data" -> {
-        if (parser.currentToken == JsonToken.START_OBJECT) {
-          val parsedThreadObject = parseNotificationThreadObject(parser)
+        val parsedThreadObject = parseObjectOrNull(parser, ::parseNotificationThreadObject)
+        if (parsedThreadObject != null) {
           threadId = parsedThreadObject.threadId ?: threadId
           startedThread = parsedThreadObject.startedThread ?: startedThread
         }
-        else {
-          parser.skipChildren()
-        }
       }
       "turn" -> {
-        if (parser.currentToken == JsonToken.START_OBJECT) {
-          val parsedTurnObject = parseNotificationTurnObject(parser)
+        val parsedTurnObject = parseObjectOrNull(parser, ::parseNotificationTurnObject)
+        if (parsedTurnObject != null) {
           turnId = parsedTurnObject.turnId ?: turnId
           turnStatus = parsedTurnObject.turnStatus ?: turnStatus
           turnErrorMessage = parsedTurnObject.turnErrorMessage ?: turnErrorMessage
         }
-        else {
-          parser.skipChildren()
-        }
       }
       "item" -> {
-        if (parser.currentToken == JsonToken.START_OBJECT) {
-          val parsedItemObject = parseNotificationItemObject(parser)
-          if (parsedItemObject.type == "agentMessage") {
-            agentMessageText = parsedItemObject.text?.takeIf { it.isNotBlank() }
-          }
-        }
-        else {
-          parser.skipChildren()
+        val parsedItemObject = parseObjectOrNull(parser, ::parseNotificationItemObject)
+        if (parsedItemObject?.type == "agentMessage") {
+          agentMessageText = parsedItemObject.text?.takeIf { it.isNotBlank() }
         }
       }
       else -> parser.skipChildren()
@@ -299,8 +311,8 @@ private fun parseNotificationTurnObject(parser: JsonParser): ParsedNotificationT
   var turnErrorMessage: String? = null
   forEachObjectField(parser) { fieldName ->
     when (fieldName) {
-      "id" -> turnId = readStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
-      "status" -> turnStatus = readStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
+      "id" -> turnId = readNonBlankStringOrNull(parser)
+      "status" -> turnStatus = readNonBlankStringOrNull(parser)
       "error" -> turnErrorMessage = parseTurnErrorMessage(parser)
       else -> parser.skipChildren()
     }
@@ -318,7 +330,7 @@ private fun parseNotificationItemObject(parser: JsonParser): ParsedNotificationI
   var text: String? = null
   forEachObjectField(parser) { fieldName ->
     when (fieldName) {
-      "type" -> type = readStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
+      "type" -> type = readNonBlankStringOrNull(parser)
       "text" -> text = readStringOrNull(parser)
       else -> parser.skipChildren()
     }
@@ -330,6 +342,7 @@ private fun parseNotificationItemObject(parser: JsonParser): ParsedNotificationI
 private fun notificationKindFromMethod(method: String): CodexAppServerNotificationKind {
   return when (method) {
     "thread/started" -> CodexAppServerNotificationKind.THREAD_STARTED
+    "thread/name/updated" -> CodexAppServerNotificationKind.THREAD_NAME_UPDATED
     "thread/status/changed" -> CodexAppServerNotificationKind.THREAD_STATUS_CHANGED
     "turn/started" -> CodexAppServerNotificationKind.TURN_STARTED
     "turn/completed" -> CodexAppServerNotificationKind.TURN_COMPLETED
@@ -390,17 +403,14 @@ private fun parseTurnFromResultObject(parser: JsonParser): CodexAppServerTurnSta
   forEachObjectField(parser) { fieldName ->
     when (fieldName) {
       "turn" -> {
-        if (parser.currentToken == JsonToken.START_OBJECT) {
-          val parsedTurn = parseNotificationTurnObject(parser)
+        val parsedTurn = parseObjectOrNull(parser, ::parseNotificationTurnObject)
+        if (parsedTurn != null) {
           turnId = parsedTurn.turnId ?: turnId
           status = parsedTurn.turnStatus ?: status
         }
-        else {
-          parser.skipChildren()
-        }
       }
-      "id" -> turnId = readStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
-      "status" -> status = readStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
+      "id" -> turnId = readNonBlankStringOrNull(parser)
+      "status" -> status = readNonBlankStringOrNull(parser)
       else -> parser.skipChildren()
     }
     true
@@ -414,7 +424,7 @@ private fun parseTurnFromResultObject(parser: JsonParser): CodexAppServerTurnSta
 
 private fun parseTurnErrorMessage(parser: JsonParser): String? {
   if (parser.currentToken == JsonToken.VALUE_STRING) {
-    return parser.text?.trim()?.takeIf { it.isNotEmpty() }
+    return parser.text.trimToNull()
   }
   if (parser.currentToken != JsonToken.START_OBJECT) {
     parser.skipChildren()
@@ -424,7 +434,7 @@ private fun parseTurnErrorMessage(parser: JsonParser): String? {
   var message: String? = null
   forEachObjectField(parser) { fieldName ->
     when (fieldName) {
-      "message" -> message = readStringOrNull(parser)?.trim()?.takeIf { it.isNotEmpty() }
+      "message" -> message = readNonBlankStringOrNull(parser)
       else -> parser.skipChildren()
     }
     true
@@ -446,22 +456,24 @@ private fun createStartedThread(payload: ThreadPayload): CodexAppServerStartedTh
 }
 
 private fun resolveThreadId(payload: ThreadPayload): String? {
-  return payload.id?.trim()?.takeIf { it.isNotEmpty() }
+  return payload.id.trimToNull()
 }
 
 private fun resolveThreadUpdatedAt(payload: ThreadPayload): Long {
-  return normalizeTimestamp(
-    payload.updatedAt
-      ?: payload.updatedAtAlt
-      ?: payload.createdAt
-      ?: payload.createdAtAlt
-      ?: 0L
+  return resolveUpdatedAt(
+    updatedAt = payload.updatedAt,
+    updatedAtAlt = payload.updatedAtAlt,
+    createdAt = payload.createdAt,
+    createdAtAlt = payload.createdAtAlt,
   )
 }
 
 private fun resolveThreadTitle(payload: ThreadPayload, threadId: String): String {
-  val previewValue = payload.preview ?: payload.title ?: payload.name ?: payload.summary
-  return previewValue?.let(::trimTitle)?.takeIf { it.isNotBlank() } ?: "Thread ${threadId.take(8)}"
+  val resolvedTitle = normalizeThreadTitle(payload.name)
+                      ?: normalizeThreadTitle(payload.title)
+                      ?: normalizeThreadTitle(payload.summary)
+                      ?: normalizeThreadTitle(payload.preview)
+  return resolvedTitle ?: "Thread ${threadId.take(8)}"
 }
 
 private data class ParsedTurnsActivity(
@@ -521,12 +533,11 @@ private fun parseThreadActivitySnapshot(parser: JsonParser): CodexThreadActivity
   }
 
   val threadId = id ?: return null
-  val resolvedUpdatedAt = normalizeTimestamp(
-    updatedAt
-      ?: updatedAtAlt
-      ?: createdAt
-      ?: createdAtAlt
-      ?: 0L
+  val resolvedUpdatedAt = resolveUpdatedAt(
+    updatedAt = updatedAt,
+    updatedAtAlt = updatedAtAlt,
+    createdAt = createdAt,
+    createdAtAlt = createdAtAlt,
   )
   val hasUnreadAssistantMessage = latestAssistantItemIndex > latestUserItemIndex
   return CodexThreadActivitySnapshot(
@@ -903,24 +914,25 @@ private fun parseThreadSpawnParentId(parser: JsonParser): String? {
   return parentThreadId
 }
 
+private inline fun <T> parseNormalizedKind(value: String?, unknown: T, parse: (String) -> T): T {
+  val normalized = normalizeToken(value)
+  return if (normalized.isEmpty()) unknown else parse(normalized)
+}
+
 private fun parseSourceKind(value: String?): CodexThreadSourceKind {
-  val normalized = value
-    ?.trim()
-    ?.takeIf { it.isNotEmpty() }
-    ?.lowercase()
-    ?: return CodexThreadSourceKind.UNKNOWN
-  return when (normalized) {
-    "cli" -> CodexThreadSourceKind.CLI
-    "vscode" -> CodexThreadSourceKind.VSCODE
-    "exec" -> CodexThreadSourceKind.EXEC
-    "appserver", "app_server", "app-server" -> CodexThreadSourceKind.APP_SERVER
-    "subagent", "sub_agent", "sub-agent" -> CodexThreadSourceKind.SUB_AGENT
-    "subagentreview", "sub_agent_review", "sub-agent-review" -> CodexThreadSourceKind.SUB_AGENT_REVIEW
-    "subagentcompact", "sub_agent_compact", "sub-agent-compact" -> CodexThreadSourceKind.SUB_AGENT_COMPACT
-    "subagentthreadspawn", "sub_agent_thread_spawn", "sub-agent-thread-spawn" -> CodexThreadSourceKind.SUB_AGENT_THREAD_SPAWN
-    "subagentother", "sub_agent_other", "sub-agent-other" -> CodexThreadSourceKind.SUB_AGENT_OTHER
-    "unknown" -> CodexThreadSourceKind.UNKNOWN
-    else -> CodexThreadSourceKind.UNKNOWN
+  return parseNormalizedKind(value, CodexThreadSourceKind.UNKNOWN) { normalized ->
+    when (normalized) {
+      "cli" -> CodexThreadSourceKind.CLI
+      "vscode" -> CodexThreadSourceKind.VSCODE
+      "exec" -> CodexThreadSourceKind.EXEC
+      "appserver" -> CodexThreadSourceKind.APP_SERVER
+      "subagent" -> CodexThreadSourceKind.SUB_AGENT
+      "subagentreview" -> CodexThreadSourceKind.SUB_AGENT_REVIEW
+      "subagentcompact" -> CodexThreadSourceKind.SUB_AGENT_COMPACT
+      "subagentthreadspawn" -> CodexThreadSourceKind.SUB_AGENT_THREAD_SPAWN
+      "subagentother" -> CodexThreadSourceKind.SUB_AGENT_OTHER
+      else -> CodexThreadSourceKind.UNKNOWN
+    }
   }
 }
 
@@ -965,26 +977,32 @@ private fun parseActiveFlags(parser: JsonParser, target: MutableSet<CodexThreadA
       parser.skipChildren()
       continue
     }
-    when (parser.text.lowercase()) {
-      "waitingonapproval", "waiting_on_approval", "waiting-on-approval" -> target.add(CodexThreadActiveFlag.WAITING_ON_APPROVAL)
-      "waitingonuserinput", "waiting_on_user_input", "waiting-on-user-input" -> target.add(CodexThreadActiveFlag.WAITING_ON_USER_INPUT)
+    when (normalizeToken(parser.text)) {
+      "waitingonapproval" -> target.add(CodexThreadActiveFlag.WAITING_ON_APPROVAL)
+      "waitingonuserinput" -> target.add(CodexThreadActiveFlag.WAITING_ON_USER_INPUT)
     }
   }
 }
 
 private fun parseStatusKind(value: String?): CodexThreadStatusKind {
-  val normalized = value
-    ?.trim()
-    ?.takeIf { it.isNotEmpty() }
-    ?.lowercase()
-    ?: return CodexThreadStatusKind.UNKNOWN
-  return when (normalized) {
-    "notloaded", "not_loaded", "not-loaded" -> CodexThreadStatusKind.NOT_LOADED
-    "idle" -> CodexThreadStatusKind.IDLE
-    "active" -> CodexThreadStatusKind.ACTIVE
-    "systemerror", "system_error", "system-error" -> CodexThreadStatusKind.SYSTEM_ERROR
-    else -> CodexThreadStatusKind.UNKNOWN
+  return parseNormalizedKind(value, CodexThreadStatusKind.UNKNOWN) { normalized ->
+    when (normalized) {
+      "notloaded" -> CodexThreadStatusKind.NOT_LOADED
+      "idle" -> CodexThreadStatusKind.IDLE
+      "active" -> CodexThreadStatusKind.ACTIVE
+      "systemerror" -> CodexThreadStatusKind.SYSTEM_ERROR
+      else -> CodexThreadStatusKind.UNKNOWN
+    }
   }
+}
+
+private fun resolveUpdatedAt(
+  updatedAt: Long?,
+  updatedAtAlt: Long?,
+  createdAt: Long?,
+  createdAtAlt: Long?,
+): Long {
+  return normalizeTimestamp(updatedAt ?: updatedAtAlt ?: createdAt ?: createdAtAlt ?: 0L)
 }
 
 private fun normalizeTimestamp(value: Long): Long {
@@ -994,12 +1012,13 @@ private fun normalizeTimestamp(value: Long): Long {
   return if (value < 100_000_000_000L) value * 1000L else value
 }
 
-private fun trimTitle(value: String): String {
-  val trimmed = value.trim()
-  if (trimmed.length <= MAX_TITLE_LENGTH) {
-    return trimmed
-  }
-  return trimmed.take(MAX_TITLE_LENGTH - 3).trimEnd() + "..."
+private fun normalizeThreadTitle(value: String?): String? {
+  return value
+    ?.replace('\n', ' ')
+    ?.replace('\r', ' ')
+    ?.replace(THREAD_TITLE_WHITESPACE, " ")
+    ?.trim()
+    ?.takeIf { it.isNotEmpty() }
 }
 
 fun normalizeRootPath(value: String): String {

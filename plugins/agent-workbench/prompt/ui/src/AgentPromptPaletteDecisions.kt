@@ -9,12 +9,13 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetry
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.NonNls
 
 internal fun resolveDefaultFooterHintMessageKey(
-    targetMode: PromptTargetMode,
-    selectedProvider: AgentSessionProviderDescriptor?,
-    hasNextPromptTab: Boolean = false,
+  targetMode: PromptTargetMode,
+  selectedProvider: AgentSessionProviderDescriptor?,
+  hasNextPromptTab: Boolean = false,
 ): @NonNls String {
   return if (isTabQueueShortcutEnabled(
       targetMode = targetMode,
@@ -29,9 +30,9 @@ internal fun resolveDefaultFooterHintMessageKey(
 }
 
 internal fun isTabQueueShortcutEnabled(
-    targetMode: PromptTargetMode,
-    selectedProvider: AgentSessionProviderDescriptor?,
-    hasNextPromptTab: Boolean = false,
+  targetMode: PromptTargetMode,
+  selectedProvider: AgentSessionProviderDescriptor?,
+  hasNextPromptTab: Boolean = false,
 ): Boolean {
   return targetMode == PromptTargetMode.EXISTING_TASK &&
          selectedProvider?.supportsPromptTabQueueShortcut == true &&
@@ -39,9 +40,9 @@ internal fun isTabQueueShortcutEnabled(
 }
 
 internal fun shouldShowExistingTaskSelectionHint(
-    targetMode: PromptTargetMode,
-    selectedExistingTaskId: String?,
-    selectedProvider: AgentSessionProviderDescriptor?,
+  targetMode: PromptTargetMode,
+  selectedExistingTaskId: String?,
+  selectedProvider: AgentSessionProviderDescriptor?,
 ): Boolean {
   return targetMode == PromptTargetMode.EXISTING_TASK &&
          selectedExistingTaskId.isNullOrBlank() &&
@@ -49,10 +50,10 @@ internal fun shouldShowExistingTaskSelectionHint(
 }
 
 internal fun resolveEffectiveProviderOptionIds(
-    selectedProvider: AgentSessionProviderDescriptor?,
-    selectedOptionIds: Set<String>,
-    targetMode: PromptTargetMode,
-    selectedThreadActivity: AgentThreadActivity?,
+  selectedProvider: AgentSessionProviderDescriptor?,
+  selectedOptionIds: Set<String>,
+  targetMode: PromptTargetMode,
+  selectedThreadActivity: AgentThreadActivity?,
 ): Set<String> {
   val bridge = selectedProvider ?: return emptySet()
   return bridge.promptOptions
@@ -71,8 +72,8 @@ internal fun resolveEffectiveProviderOptionIds(
 }
 
 internal fun resolveEffectivePlanModeEnabled(
-    selectedProvider: AgentSessionProviderDescriptor?,
-    effectiveProviderOptionIds: Set<String>,
+  selectedProvider: AgentSessionProviderDescriptor?,
+  effectiveProviderOptionIds: Set<String>,
 ): Boolean {
   return selectedProvider?.supportsPlanMode == true && AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE in effectiveProviderOptionIds
 }
@@ -112,6 +113,14 @@ internal fun shouldRetrySubmitAfterWorkingProjectPathSelection(
   requestWorkingProjectPathSelection: (() -> Boolean)? = null,
 ): Boolean {
   return validationErrorKey == "popup.error.project.path" && requestWorkingProjectPathSelection?.invoke() == true
+}
+
+internal fun shouldRefocusPromptOnFrameActivated(
+  popupProject: Project,
+  activatedProject: Project?,
+  isPopupVisible: Boolean,
+): Boolean {
+  return isPopupVisible && activatedProject === popupProject
 }
 
 internal fun reportPromptSubmitBlocked(

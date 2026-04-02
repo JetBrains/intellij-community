@@ -23,6 +23,7 @@ jvm_library(
     "//platform/xdebugger-impl/rpc",
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/pluginManager/shared",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -49,6 +50,7 @@ jvm_library(
     "//platform/xdebugger-impl/rpc:rpc_test_lib",
     "//platform/remote-topics/shared:rpc-topics_test_lib",
     "//platform/pluginManager/shared:shared_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.main` end

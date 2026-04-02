@@ -3,6 +3,7 @@ package com.intellij.lang.html;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.MetaLanguage;
+import com.intellij.lang.MetaLanguageProvider;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionPointUtil;
@@ -19,6 +20,8 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 public final class HtmlCompatibleMetaLanguage extends MetaLanguage {
+  public static final HtmlCompatibleMetaLanguage INSTANCE = new HtmlCompatibleMetaLanguage();
+
   private static final ExtensionPointName<HtmlCompatibleLanguageEP> EP_NAME =
     new ExtensionPointName<>("com.intellij.html.compatibleLanguage");
   private static final Supplier<Set<String>> LANGS = ExtensionPointUtil.dropLazyValueOnChange(
@@ -36,6 +39,13 @@ public final class HtmlCompatibleMetaLanguage extends MetaLanguage {
       language = language.getBaseLanguage();
     }
     return false;
+  }
+
+  static final class Provider implements MetaLanguageProvider {
+    @Override
+    public @NotNull MetaLanguage getLanguage() {
+      return INSTANCE;
+    }
   }
 
   @ApiStatus.Experimental

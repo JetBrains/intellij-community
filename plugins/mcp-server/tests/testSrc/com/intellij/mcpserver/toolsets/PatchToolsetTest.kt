@@ -5,7 +5,7 @@ package com.intellij.mcpserver.toolsets
 import com.intellij.mcpserver.McpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.FileToolset
 import com.intellij.mcpserver.toolsets.general.PatchToolset
-import com.intellij.mcpserver.toolsets.general.TextToolset
+import com.intellij.mcpserver.toolsets.general.ReadToolset
 import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import kotlinx.coroutines.Dispatchers
@@ -36,11 +36,11 @@ class PatchToolsetTest : McpToolsetTestBase() {
     )
 
     testMcpTool(
-      TextToolset::get_file_text_by_path.name,
+      ReadToolset::read_file.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive(pathInProject))
+        put("file_path", JsonPrimitive(pathInProject))
       },
-      "alpha\nbeta\n"
+      renderNumberedText("alpha\nbeta\n")
     )
   }
 
@@ -65,11 +65,11 @@ class PatchToolsetTest : McpToolsetTestBase() {
     )
 
     testMcpTool(
-      TextToolset::get_file_text_by_path.name,
+      ReadToolset::read_file.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive(pathInProject))
+        put("file_path", JsonPrimitive(pathInProject))
       },
-      "updated content"
+      renderNumberedText("updated content")
     )
   }
 
@@ -94,11 +94,11 @@ class PatchToolsetTest : McpToolsetTestBase() {
     )
 
     testMcpTool(
-      TextToolset::get_file_text_by_path.name,
+      ReadToolset::read_file.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive(pathInProject))
+        put("file_path", JsonPrimitive(pathInProject))
       },
-      "Test.java content"
+      renderNumberedText("Test.java content")
     )
   }
 
@@ -131,11 +131,11 @@ class PatchToolsetTest : McpToolsetTestBase() {
     )
 
     testMcpTool(
-      TextToolset::get_file_text_by_path.name,
+      ReadToolset::read_file.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive(pathInProject))
+        put("file_path", JsonPrimitive(pathInProject))
       },
-      "updated from unsaved\n"
+      renderNumberedText("updated from unsaved\n")
     )
   }
 
@@ -201,11 +201,11 @@ class PatchToolsetTest : McpToolsetTestBase() {
     )
 
     testMcpTool(
-      TextToolset::get_file_text_by_path.name,
+      ReadToolset::read_file.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive(newPath))
+        put("file_path", JsonPrimitive(newPath))
       },
-      "alpha updated\nbeta\n"
+      renderNumberedText("alpha updated\nbeta\n")
     )
 
     assertReadFails(oldPath)
@@ -244,11 +244,11 @@ class PatchToolsetTest : McpToolsetTestBase() {
     )
 
     testMcpTool(
-      TextToolset::get_file_text_by_path.name,
+      ReadToolset::read_file.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive(newPath))
+        put("file_path", JsonPrimitive(newPath))
       },
-      "alpha\nbeta\n"
+      renderNumberedText("alpha\nbeta\n")
     )
 
     assertReadFails(oldPath)
@@ -276,11 +276,11 @@ class PatchToolsetTest : McpToolsetTestBase() {
     )
 
     testMcpTool(
-      TextToolset::get_file_text_by_path.name,
+      ReadToolset::read_file.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive(pathInProject))
+        put("file_path", JsonPrimitive(pathInProject))
       },
-      "updated with strict pair"
+      renderNumberedText("updated with strict pair")
     )
   }
 
@@ -307,11 +307,11 @@ class PatchToolsetTest : McpToolsetTestBase() {
     )
 
     testMcpTool(
-      TextToolset::get_file_text_by_path.name,
+      ReadToolset::read_file.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive(pathInProject))
+        put("file_path", JsonPrimitive(pathInProject))
       },
-      "updated from git diff"
+      renderNumberedText("updated from git diff")
     )
   }
 
@@ -345,11 +345,11 @@ class PatchToolsetTest : McpToolsetTestBase() {
     )
 
     testMcpTool(
-      TextToolset::get_file_text_by_path.name,
+      ReadToolset::read_file.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive(newPath))
+        put("file_path", JsonPrimitive(newPath))
       },
-      "alpha\nbeta\n"
+      renderNumberedText("alpha\nbeta\n")
     )
 
     assertReadFails(oldPath)
@@ -374,11 +374,11 @@ class PatchToolsetTest : McpToolsetTestBase() {
     )
 
     testMcpTool(
-      TextToolset::get_file_text_by_path.name,
+      ReadToolset::read_file.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive(pathInProject))
+        put("file_path", JsonPrimitive(pathInProject))
       },
-      "ok\n"
+      renderNumberedText("ok\n")
     )
   }
 
@@ -397,13 +397,18 @@ class PatchToolsetTest : McpToolsetTestBase() {
 
   private suspend fun assertReadFails(pathInProject: String) {
     testMcpTool(
-      TextToolset::get_file_text_by_path.name,
+      ReadToolset::read_file.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive(pathInProject))
+        put("file_path", JsonPrimitive(pathInProject))
       }
     ) { actualResult ->
       assertThat(actualResult.isError).isTrue()
     }
+  }
+
+  private fun renderNumberedText(text: String): String {
+    val lines = text.replace("\r\n", "\n").replace("\r", "\n").split('\n')
+    return lines.mapIndexed { index, line -> "L${index + 1}: $line" }.joinToString("\n")
   }
 
   private fun buildPatch(vararg lines: String): String {

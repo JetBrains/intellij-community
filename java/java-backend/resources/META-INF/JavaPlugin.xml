@@ -672,6 +672,8 @@
       implementation="com.intellij.codeInsight.ExternalAnnotationsNonProjectFileWritingAccessExtension"/>
     <codeInsight.template.postfixTemplateProvider language="JAVA"
                                                   implementationClass="com.intellij.codeInsight.template.postfix.templates.JavaPostfixTemplateProvider"/>
+    <modcompletion.completionItemProvider language="JAVA"
+                                          implementationClass="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateModCompletionItemProvider"/>
     <codeInsight.folding.collapseBlockHandler language="JAVA"
                                               implementationClass="com.intellij.codeInsight.folding.impl.JavaCollapseBlockHandler"/>
     <spellchecker.support language="JAVA" implementationClass="com.intellij.spellchecker.JavaSpellcheckingStrategy"/>
@@ -1432,7 +1434,7 @@
     <java.expressionTypeNullabilityPatcher implementation="com.intellij.psi.impl.StreamNullabilityPatcher"/>
 
     <!--from JavaAnalaysisPlugin.xml for java.analysis-->
-    <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
+    <metaLanguageProvider implementation="com.intellij.uast.UastMetaLanguage$Provider"/>
     <notificationGroup id="FileSystemIssue" displayType="BALLOON" bundle="messages.JavaAnalysisBundle" key="notification.file.system.issue"/>
 
     <!--  from JavaAnalysisPlugin.xml for java.impl-->

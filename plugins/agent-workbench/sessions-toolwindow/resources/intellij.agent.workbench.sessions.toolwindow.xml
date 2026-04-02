@@ -34,6 +34,9 @@
       icon="AllIcons.General.Add"
       class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupNewThreadGroup"/>
     <action
+      id="AgentWorkbenchSessions.TreePopup.Rename"
+      class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupRenameThreadAction"/>
+    <action
       id="AgentWorkbenchSessions.TreePopup.Archive"
       class="com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupArchiveThreadAction"/>
     <group id="AgentWorkbenchSessions.TreePopup">
@@ -42,7 +45,7 @@
       <reference ref="AgentWorkbenchSessions.TreePopup.NewThread"/>
       <separator/>
       <reference ref="AgentWorkbenchSessions.TreePopup.Archive"/>
-      <separator/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.Rename"/>
       <reference ref="CopyReferencePopupGroup"/>
     </group>
   </actions>

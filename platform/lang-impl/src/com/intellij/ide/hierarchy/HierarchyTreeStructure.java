@@ -167,6 +167,8 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
       return module != null && module.getModuleScope().contains(virtualFile);
     }
     if (HierarchyBrowserBaseEx.SCOPE_PROJECT.equals(scopeType)) {
+      // Kotlin classes in sources that used from Java implemented as compiled elements, but they are not present in the code.
+      // Also, such elements are synthetic, so the check `srcElement.isPhysical` is necessary here.
       if (srcElement.getContainingFile() instanceof PsiCompiledElement && srcElement.isPhysical()) return false;
       VirtualFile virtualFile = srcElement.getContainingFile().getVirtualFile();
       return virtualFile == null || !TestSourcesFilter.isTestSources(virtualFile, myProject);

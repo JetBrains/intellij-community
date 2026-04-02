@@ -61,10 +61,10 @@ sealed interface McpToolFilter {
    * Masks without a prefix are treated as allow patterns.
    * Masks are applied in order, and the last matching mask determines the result.
    *
-   * Example: `-*,+com.intellij.mcpserver.toolsets.general.*,-*.get_file_text_by_path`
+   * Example: `-*,+com.intellij.mcpserver.toolsets.general.*,-*.read_file`
    * - First disallows all tools
    * - Then allows all tools under `com.intellij.mcpserver.toolsets.general`
-   * - Then disallows the specific tool `get_file_text_by_path` from any package
+   * - Then disallows the specific tool `read_file` from any package
    *
    * @param maskList comma-separated list of mask patterns with +/- prefixes
    */

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -140,9 +141,13 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
           text = (String)selectedItem;
         }
         else {
-          Component component = comboBox.getRenderer().getListCellRendererComponent(new JList<>(), selectedItem, 0, false, false);
+          Component component = comboBox.getRenderer().getListCellRendererComponent(
+            new JList<>(), selectedItem, comboBox.getSelectedIndex(), false, false);
           if (component instanceof JLabel) {
             text = ((JLabel)component).getText();
+          }
+          else if (component instanceof KotlinUIDslRendererComponent uiDslRendererComponent) {
+            text = uiDslRendererComponent.getCopyText();
           }
           else if (component != null) {
             String str = component.toString();

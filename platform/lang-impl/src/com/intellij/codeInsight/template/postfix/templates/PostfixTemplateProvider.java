@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFile;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,6 +86,19 @@ public interface PostfixTemplateProvider {
    */
   @NotNull
   PsiFile preCheck(@NotNull PsiFile copyFile, @NotNull Editor realEditor, int currentOffset);
+
+
+  /**
+   * Prepares a copy of the file and processes it for checking availability of a template,
+   * applying necessary modifications or validations based on the current offset.
+   * It is not called during extend call
+   *
+   * @param copyFile a copy of the original {@link PsiFile} that can be modified during the process
+   * @param currentOffset the current offset within the file at which the method should operate
+   */
+  @ApiStatus.Experimental
+  default void preCheckModCommand(@NotNull PsiFile copyFile, int currentOffset) { }
+
 
   /**
    * Returns the editor that is used to represent a template in UI and create the template from the settings provided by users.

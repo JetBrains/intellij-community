@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.runtimeModuleRepository.generator.tests
 
+import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.RuntimeModuleId.DEFAULT_NAMESPACE
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
@@ -222,9 +224,10 @@ class RuntimeModuleRepositoryGeneratorTest {
     val lib = project.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
     a.dependenciesList.addLibraryDependency(lib)
     lib.addRoot(getUrl("project/lib"), JpsOrderRootType.COMPILED)
-    buildAndCheck { 
-      descriptor("a", "lib.lib")
-      descriptor("lib.lib", listOf($$"$PROJECT_DIR$/lib"), emptyList())
+    val libId = RuntimeModuleId.projectLibrary("lib")
+    buildAndCheck {
+      descriptor(RuntimeModuleId.contentModule("a", RuntimeModuleId.DEFAULT_NAMESPACE), listOf("production/a"), listOf(libId))
+      descriptor(libId, listOf($$"$PROJECT_DIR$/lib"), emptyList())
     }
   }
 
@@ -236,9 +239,11 @@ class RuntimeModuleRepositoryGeneratorTest {
     val mavenRepoRoot = Path(JpsMavenSettings.getMavenRepositoryPath())
     val relativeLibPath = "org/jetbrains/annotations/26.0.2/annotations-26.0.2.jar"
     lib.addRoot(JpsPathUtil.getLibraryRootUrl(mavenRepoRoot.resolve(relativeLibPath)), JpsOrderRootType.COMPILED)
-    buildAndCheck { 
-      descriptor("a", "lib.lib")
-      descriptor("lib.lib", listOf($$"$MAVEN_REPOSITORY$/$$relativeLibPath"), emptyList())
+    val libId = RuntimeModuleId.projectLibrary("lib")
+    buildAndCheck {
+      descriptor(RuntimeModuleId.contentModule("a", DEFAULT_NAMESPACE), listOf("production/a"),
+                 listOf(libId))
+      descriptor(libId, listOf($$"$MAVEN_REPOSITORY$/$$relativeLibPath"), emptyList())
     }
   }
 
@@ -249,10 +254,12 @@ class RuntimeModuleRepositoryGeneratorTest {
     val dependency = a.dependenciesList.addLibraryDependency(lib)
     JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.TEST
     lib.addRoot(getUrl("project/lib"), JpsOrderRootType.COMPILED)
+    val libId = RuntimeModuleId.projectLibrary("lib")
     buildAndCheck { 
       descriptor("a")
-      testDescriptor("a.tests", "a", "lib.lib")
-      descriptor("lib.lib", listOf($$"$PROJECT_DIR$/lib"), emptyList())
+      descriptor(RuntimeModuleId.contentModule("a.tests", DEFAULT_NAMESPACE), listOf("test/a"),
+                 listOf(RuntimeModuleId.contentModule("a", DEFAULT_NAMESPACE), libId))
+      descriptor(libId, listOf($$"$PROJECT_DIR$/lib"), emptyList())
     }
   }
 

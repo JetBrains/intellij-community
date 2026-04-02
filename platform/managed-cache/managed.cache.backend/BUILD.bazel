@@ -26,6 +26,7 @@ jvm_library(
     "//platform/managed-cache/managed.cache",
     "//platform/util/concurrency",
     "//platform/core-api:core",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -46,6 +47,7 @@ jvm_library(
     "//platform/managed-cache/managed.cache:managed.cache_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.managed.cache.backend` end

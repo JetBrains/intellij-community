@@ -72,6 +72,7 @@ data class CodexThreadPage(
 
 enum class CodexAppServerNotificationKind {
   THREAD_STARTED,
+  THREAD_NAME_UPDATED,
   THREAD_STATUS_CHANGED,
   TURN_STARTED,
   TURN_COMPLETED,

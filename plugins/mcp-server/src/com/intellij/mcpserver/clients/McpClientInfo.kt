@@ -17,6 +17,7 @@ data class McpClientInfo(
     WINDSURF("Windsurf"),
     CURSOR("Cursor"),
     CLAUDE_CODE("Claude Code"),
+    JUNIE("Junie"),
     CODEX("Codex");
   }
 

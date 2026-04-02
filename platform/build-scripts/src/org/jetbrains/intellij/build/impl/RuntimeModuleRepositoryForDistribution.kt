@@ -372,5 +372,5 @@ const val MODULE_DESCRIPTORS_COMPACT_PATH: String = "$RUNTIME_REPOSITORY_MODULES
 
 private val dependenciesToSkip = mapOf(
   //may be removed when IJPL-125 is fixed
-  RuntimeModuleId.module("intellij.platform.buildScripts.downloader") to setOf(RuntimeModuleId.projectLibrary("zstd-jni")),
+  RuntimeModuleId.legacyJpsModule("intellij.platform.buildScripts.downloader") to setOf(RuntimeModuleId.projectLibrary("zstd-jni")),
 )

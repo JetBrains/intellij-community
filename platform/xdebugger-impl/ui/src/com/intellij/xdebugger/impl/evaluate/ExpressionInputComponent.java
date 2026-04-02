@@ -45,6 +45,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
         editor.getColorsScheme().setEditorFontName(font.getFontName());
         editor.getColorsScheme().setEditorFontSize(font.getSize());
         editor.getSettings().setLineCursorWidth(EditorUtil.getDefaultCaretWidth());
+        getEditorComponent().setBackground(editor.getColorsScheme().getDefaultBackground());
       }
     };
     myExpressionEditor.setExpression(expression);

@@ -26,6 +26,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/lang-impl",
     "//platform/platform-impl/update-checker",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -47,6 +48,7 @@ jvm_library(
     "//platform/util/coroutines:coroutines_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/platform-impl/update-checker:update-checker_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.pluginManager.frontend` end

@@ -14,51 +14,62 @@ function objectSchema(properties: Record<string, JsonSchemaProperty>, required?:
 }
 
 export function createReadSchema(includeIndentation: boolean): ToolInputSchema {
-  const properties = {
+  const properties: Record<string, JsonSchemaProperty> = {
     file_path: {
       type: 'string',
-      description: 'Absolute or project-relative path to the file.'
+      description: 'Path relative to the project root.'
     },
-    offset: {
-      type: 'number',
-      description: 'The line number to start reading from. Must be 1 or greater.'
+    mode: {
+      type: 'string',
+      description: "Read mode: 'slice', 'lines', 'line_columns', 'offsets', or 'indentation'."
     },
-    limit: {
+    start_line: {
       type: 'number',
-      description: 'The maximum number of lines to return.'
+      description: '1-based line number to start reading from.'
+    },
+    max_lines: {
+      type: 'number',
+      description: 'Maximum number of lines to return (slice uses as line count; all modes cap output).'
+    },
+    end_line: {
+      type: 'number',
+      description: '1-based end line for lines/line_columns mode (inclusive for lines; exclusive for line_columns).'
+    },
+    start_column: {
+      type: 'number',
+      description: '1-based start column for line_columns mode.'
+    },
+    end_column: {
+      type: 'number',
+      description: '1-based end column for range read (exclusive).'
+    },
+    start_offset: {
+      type: 'number',
+      description: '0-based start offset for offsets mode (requires end_offset).'
+    },
+    end_offset: {
+      type: 'number',
+      description: '0-based end offset for offsets mode (exclusive).'
+    },
+    context_lines: {
+      type: 'number',
+      description: 'Number of context lines to include around the range (per side).'
     }
   }
 
   if (includeIndentation) {
-    properties.mode = {
-      type: 'string',
-      description: 'Optional mode selector: "slice" for simple ranges (default) or "indentation" to expand around an anchor line.'
+    properties.max_levels = {
+      type: 'number',
+      description: 'Indentation mode: maximum indentation levels to include (0 = only anchor block).'
     }
-    properties.indentation = objectSchema(
-      {
-        anchor_line: {
-          type: 'number',
-          description: 'Anchor line to center the indentation lookup on (defaults to offset).'
-        },
-        max_levels: {
-          type: 'number',
-          description: 'How many parent indentation levels (smaller indents) to include.'
-        },
-        include_siblings: {
-          type: 'boolean',
-          description: 'When true, include additional blocks that share the anchor indentation.'
-        },
-        include_header: {
-          type: 'boolean',
-          description: 'Include doc comments or attributes directly above the selected block.'
-        },
-        max_lines: {
-          type: 'number',
-          description: 'Hard cap on the number of lines returned when using indentation mode.'
-        }
-      },
-      []
-    )
+    properties.include_siblings = {
+      type: 'boolean',
+      description: 'Indentation mode: include sibling blocks at the same indentation level.'
+    }
+    properties.include_header = {
+      type: 'boolean',
+      description: 'Indentation mode: include header comments/annotations directly above anchor.'
+    }
   }
 
   return objectSchema(properties, ['file_path'])

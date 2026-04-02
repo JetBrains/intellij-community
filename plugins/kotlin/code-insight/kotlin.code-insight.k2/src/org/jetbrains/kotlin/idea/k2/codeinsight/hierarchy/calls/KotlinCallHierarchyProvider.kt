@@ -13,9 +13,7 @@ import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinCallHierarchyProvider : HierarchyProvider {
     override fun getTarget(dataContext: DataContext): KtElement? {
-        val element = dataContext.getData(CommonDataKeys.PSI_ELEMENT)?.let { getCallHierarchyElement(it) }
-        if (element is KtFile) return null
-        return element
+        return getElementForCallHierarchy(dataContext.getData(CommonDataKeys.PSI_ELEMENT))
     }
 
     override fun createHierarchyBrowser(target: PsiElement) = KotlinCallHierarchyBrowser(target)
@@ -23,4 +21,12 @@ class KotlinCallHierarchyProvider : HierarchyProvider {
     override fun browserActivated(hierarchyBrowser: HierarchyBrowser) {
         (hierarchyBrowser as KotlinCallHierarchyBrowser).changeView(CallHierarchyBrowserBase.getCallerType())
     }
+}
+
+fun getElementForCallHierarchy(element: PsiElement?): KtElement? {
+    if (element == null) return null
+    val adjustedElement = getCallHierarchyElement(element)
+
+    if (adjustedElement is KtFile) return null
+    return adjustedElement
 }

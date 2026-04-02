@@ -3,6 +3,8 @@ package com.intellij.agent.workbench.prompt.ui
 
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
 
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.isClaudeMenuCommandPrompt
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
@@ -10,8 +12,8 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchError
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
-import com.intellij.agent.workbench.prompt.ui.context.dataContextOrNull
 import com.intellij.agent.workbench.prompt.ui.context.buildExtensionActionDataContext
+import com.intellij.agent.workbench.prompt.ui.context.dataContextOrNull
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -135,8 +137,14 @@ internal class AgentPromptPaletteSubmitController(
     val providerEntry = selectedProviderEntry ?: return
     val effectiveProjectPath = projectPath ?: return
 
-    val selectedContextItems = buildVisibleContextEntries().map(ContextEntry::item)
-    val contextSelection = resolveContextSelection(selectedContextItems, effectiveProjectPath) ?: return
+    val shouldStripContext = providerEntry.bridge.provider == AgentSessionProvider.CLAUDE && prompt.isClaudeMenuCommandPrompt()
+    val contextSelection = if (shouldStripContext) {
+      null
+    }
+    else {
+      val selectedContextItems = buildVisibleContextEntries().map(ContextEntry::item)
+      resolveContextSelection(selectedContextItems, effectiveProjectPath) ?: return
+    }
     val launcherBridge = launcher ?: return
 
     val targetThreadId = when {
@@ -167,8 +175,8 @@ internal class AgentPromptPaletteSubmitController(
       initialMessageRequest = AgentPromptInitialMessageRequest(
         prompt = prompt,
         projectPath = effectiveProjectPath,
-        contextItems = contextSelection.items,
-        contextEnvelopeSummary = contextSelection.summary,
+        contextItems = contextSelection?.items ?: emptyList(),
+        contextEnvelopeSummary = contextSelection?.summary,
         planModeEnabled = effectivePlanModeEnabled,
         providerOptionIds = effectiveProviderOptionIds,
       ),

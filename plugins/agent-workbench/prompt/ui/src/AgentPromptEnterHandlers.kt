@@ -1,9 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.EditorTextField
 import java.awt.event.ActionEvent
@@ -52,6 +56,9 @@ internal fun installPromptEnterHandlers(
 
   promptArea.addSettingsProvider { editor ->
     DumbAwareAction.create {
+      if (executeLookupActionIfActive(editor.contentComponent, editor, IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)) {
+        return@create
+      }
       canSubmit()
       onSubmit()
     }.registerCustomShortcutSet(
@@ -73,6 +80,9 @@ internal fun installPromptEnterHandlers(
     )
 
     DumbAwareAction.create {
+      if (executeLookupActionIfActive(editor.contentComponent, editor, IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE)) {
+        return@create
+      }
       if (isTabQueueEnabled()) {
         onSubmit()
       }
@@ -91,4 +101,13 @@ internal fun installPromptEnterHandlers(
       editor.contentComponent,
     )
   }
+}
+
+private fun executeLookupActionIfActive(component: JComponent, editor: com.intellij.openapi.editor.Editor, actionId: String): Boolean {
+  if (LookupManager.getActiveLookup(editor) == null) {
+    return false
+  }
+  val handler = EditorActionManager.getInstance().getActionHandler(actionId)
+  handler.execute(editor, editor.caretModel.currentCaret, DataManager.getInstance().getDataContext(component))
+  return true
 }

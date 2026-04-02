@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.preimport
 
 import com.intellij.internal.statistic.StructuredIdeActivity
@@ -511,7 +511,8 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
         mavenModel.modules.isEmpty() &&
         rootModel.getChild("modules") == null &&
         rootModel.getChild("subprojects") == null &&
-        rootModel.getChildTextTrim("modelVersion") != MavenConstants.MODEL_VERSION_4_0_0
+        (rootModel.getChildTextTrim("modelVersion")
+         ?: rootModel.namespaceURI?.let { MavenUtil.inferModelVersionFromNamespace(it) }) != MavenConstants.MODEL_VERSION_4_0_0
     ) {
       mavenModel.modules = scanChildFoldersWithPoms(file)
     }

@@ -1,0 +1,6 @@
+// IS_APPLICABLE: true
+
+fun foo(strings: List<String>) =
+    strings.map(String::hashCode)
+
+// IGNORE_K1

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.inspections
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -14,6 +14,7 @@ import com.intellij.util.xml.DomFileElement
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import org.jetbrains.idea.maven.dom.MavenDomBundle
+import org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
@@ -26,7 +27,6 @@ import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.MavenWrapper
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerManager
-import org.jetbrains.idea.maven.server.isMaven4
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -67,8 +67,7 @@ class MavenNewModelVersionInOldMavenInspection : BasicDomElementsInspection<Mave
     val projectModel = domFileElement.getRootElement()
     if (projectModel.modelVersion.stringValue == MavenConstants.MODEL_VERSION_4_0_0) return
 
-    val distribution = MavenDistributionsCache.getInstance(psiFile.project).getMavenDistribution(psiFile.virtualFile)
-    if (distribution.isMaven4()) return
+    if (isAtLeastMaven4(psiFile.virtualFile, psiFile.project)) return
 
     holder.createProblem(projectModel.modelVersion,
                          HighlightSeverity.ERROR,

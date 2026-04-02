@@ -75,7 +75,7 @@ kotlin {
     implementation(jps.org.jetbrains.intellij.deps.fastutil.intellij.deps.fastutil1191883795.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
-    api(project(":fleet.rhizomedb"))
+    implementation(project(":fleet.rhizomedb"))
     api(project(":fleet.util.core"))
     api(project(":fleet.rpc"))
     implementation(project(":fleet.reporting.api"))

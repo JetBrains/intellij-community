@@ -14,6 +14,7 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//platform/kernel/pasta",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -29,6 +30,7 @@ jvm_library(
     "//platform/util/coroutines:coroutines_test_lib",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/kernel/pasta:pasta_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.bootstrap.kernel` end

@@ -134,6 +134,7 @@
     <orderEntry type="module" module-name="intellij.vcs.git" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel.tests" scope="TEST" />
+    <orderEntry type="module" module-name="fleet.rhizomedb" scope="RUNTIME" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.vcs.git" />
 </module>

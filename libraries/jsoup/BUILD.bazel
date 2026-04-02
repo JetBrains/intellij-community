@@ -13,8 +13,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":jsoup_resources"],
-  exports = ["@lib//:jsoup"],
-  runtime_deps = ["@lib//:jsoup"]
+  exports = ["@lib//:libraries-jsoup-jsoup"],
+  runtime_deps = ["@lib//:libraries-jsoup-jsoup"]
 )
 
 jvm_library(
@@ -23,7 +23,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:jsoup"],
+  exports = ["@lib//:libraries-jsoup-jsoup"],
   runtime_deps = [":jsoup"]
 )
 ### auto-generated section `build intellij.libraries.jsoup` end

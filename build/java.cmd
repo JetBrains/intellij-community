@@ -130,7 +130,7 @@ while true; do  # Note(k15tfu): for goto
       LOCK_OWNER=$(cat "$LOCK_FILE" 2>/dev/null || true)
 
       # Hurry up, bootstrap is ready..
-      if grep -q -x "$JAVA_URL" "$JVM_TARGET_DIR/.flag" 2>/dev/null; then
+      if grep -q -x "$JVM_URL" "$JVM_TARGET_DIR/.flag" 2>/dev/null; then
         break 3  # Note(k15tfu): goto out of the outer if-else block.
       fi
     done

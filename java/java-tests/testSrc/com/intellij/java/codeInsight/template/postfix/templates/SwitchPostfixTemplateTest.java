@@ -62,4 +62,11 @@ public class SwitchPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testComposite() {
     doTest();
   }
+
+  public static class ModSwitchPostfixTemplateTest extends SwitchPostfixTemplateTest {
+    @Override
+    protected boolean useModCommandTemplates() {
+      return true;
+    }
+  }
 }

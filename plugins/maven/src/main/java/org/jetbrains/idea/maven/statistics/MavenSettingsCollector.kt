@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -45,10 +45,10 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     @Suppress("DEPRECATION")
     usages.add(LOGGING_LEVEL.metric(generalSettings.loggingLevel))
     try {
-      val mavenDistribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(
-        manager.rootProjects.firstOrNull()?.directory)
-      val mavenVersion = mavenDistribution.version?.let { Version.parseVersion(it)?.toCompactString() } ?: "unknown"
-      usages.add(MAVEN_VERSION.metric(mavenVersion))
+      val mavenVersion = MavenDistributionsCache.getInstance(project).getMavenVersion(
+        manager.rootProjects.firstOrNull()?.file)
+      val parsedMavenVersion = mavenVersion?.let { Version.parseVersion(it)?.toCompactString() } ?: "unknown"
+      usages.add(MAVEN_VERSION.metric(parsedMavenVersion))
     }
     catch (ignore: Exception) {
       // ignore invalid maven home configuration

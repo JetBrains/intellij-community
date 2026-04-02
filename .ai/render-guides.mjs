@@ -140,7 +140,7 @@ function rewriteReferenceLinks(text, sourcePath, outputPath) {
   });
 }
 
-function rewriteMarkdownLinks(text, sourcePath, outputPath) {
+export function rewriteMarkdownLinks(text, sourcePath, outputPath) {
   const withInlineLinks = rewriteInlineLinks(text, sourcePath, outputPath);
   return rewriteReferenceLinks(withInlineLinks, sourcePath, outputPath);
 }
@@ -472,16 +472,40 @@ function extractFrontmatter(content) {
 }
 
 /**
- * Writes a skill stub SKILL.md that points to the source skill file.
+ * Rewrites relative markdown links so they resolve correctly from a new location.
  */
-async function writeSkillStub(targetDir, skillDirName, frontmatter, sourcePath) {
+function rewriteRelativePaths(text, sourceDir, targetDir) {
+  const sourceParent = dirname(sourceDir);
+  return text.replace(/]\(([^)]+)\)/g, (match, linkPath) => {
+    if (/^https?:\/\//.test(linkPath) || linkPath.startsWith("/") || linkPath.startsWith("#")) {
+      return match;
+    }
+    const resolved = resolve(sourceDir, linkPath);
+    // Keep sibling skill references (links within the same parent directory) unchanged,
+    // since generated skills are also siblings of each other.
+    if (resolved.startsWith(sourceParent + sep)) {
+      return match;
+    }
+    return `](${toPosixPath(relative(targetDir, resolved))})`;
+  });
+}
+
+/**
+ * Writes a generated SKILL.md that embeds the full source content (with a generated marker).
+ */
+async function writeSkillStub(targetDir, skillDirName, sourceContent, sourcePath) {
   const skillDir = join(targetDir, skillDirName);
   await mkdir(skillDir, {recursive: true});
   const targetPath = join(skillDir, "SKILL.md");
   const relSource = toPosixPath(relative(repoRoot, sourcePath));
-  const relLink = toPosixPath(relative(skillDir, sourcePath));
-  const stub = `${frontmatter}${generatedSkillMarker}; edit ${relSource} -->\n\nThe skill instructions are in [SKILL.md](${relLink}).\n`;
-  await writeFile(targetPath, stub, "utf8");
+  const frontmatter = extractFrontmatter(sourceContent);
+  let body = frontmatter ? sourceContent.slice(frontmatter.length).replace(/^\n+/, "") : sourceContent;
+  const sourceDir = dirname(sourcePath);
+  if (sourceDir !== skillDir) {
+    body = rewriteRelativePaths(body, sourceDir, skillDir);
+  }
+  const generated = `${frontmatter ?? ""}${generatedSkillMarker}; edit ${relSource} -->\n\n${body}`;
+  await writeFile(targetPath, generated, "utf8");
 }
 
 async function isGeneratedSkillStub(skillPath) {
@@ -534,7 +558,7 @@ export async function renderSkills(options = {}) {
   // Collect Ultimate-only skills before pass 1 overwrites generated stubs in .agents/skills.
   const agentsSkills = await collectSkillSources(agentsDir);
   const ultimateOnlySkills = new Map();
-  for (const [dirName, {skillPath, frontmatter, isGenerated}] of agentsSkills) {
+  for (const [dirName, {skillPath, content, frontmatter, isGenerated}] of agentsSkills) {
 
     // Manual .agents/skills files are authoritative ultimate-only sources.
     // Name collisions with community source skills must fail fast to prevent overwrites.
@@ -552,7 +576,7 @@ export async function renderSkills(options = {}) {
     if (!frontmatter) {
       throw new Error(`Invalid ultimate skill source ${skillPath}: missing YAML frontmatter.`);
     }
-    ultimateOnlySkills.set(dirName, {frontmatter, skillPath});
+    ultimateOnlySkills.set(dirName, {content, frontmatter, skillPath});
   }
 
   for (const {skillPath, frontmatter} of communitySkills.values()) {
@@ -572,16 +596,16 @@ export async function renderSkills(options = {}) {
   await pruneGeneratedSkillDirs(communityClaudeDir, communitySkillNames);
 
   // Pass 1: Community skills → .agents/skills/, .claude/skills/, community/.claude/skills/
-  for (const [dirName, {skillPath: sourcePath, frontmatter}] of communitySkills) {
+  for (const [dirName, {skillPath: sourcePath, content}] of communitySkills) {
     for (const targetDir of communityTargets) {
-      await writeSkillStub(targetDir, dirName, frontmatter, sourcePath);
+      await writeSkillStub(targetDir, dirName, content, sourcePath);
     }
   }
 
   // Pass 2: Ultimate-only skills (in .agents/skills/, not generated)
   if (normalizedEdition === "ULTIMATE") {
-    for (const [dirName, {frontmatter, skillPath}] of ultimateOnlySkills) {
-      await writeSkillStub(claudeDir, dirName, frontmatter, skillPath);
+    for (const [dirName, {content, skillPath}] of ultimateOnlySkills) {
+      await writeSkillStub(claudeDir, dirName, content, skillPath);
     }
   }
 }

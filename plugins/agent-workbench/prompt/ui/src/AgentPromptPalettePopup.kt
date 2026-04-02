@@ -5,12 +5,14 @@ package com.intellij.agent.workbench.prompt.ui
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
 // @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
 
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextResolverService
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchers
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
+import com.intellij.ide.FrameStateListener
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -19,6 +21,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
@@ -39,13 +42,20 @@ internal class AgentPromptPalettePopup(
   private val uiStateService: AgentPromptUiSessionStateService = project.service()
   private val sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptPalettePopup::class.java.classLoader)
 
-  private val promptArea = AgentPromptTextField(project)
+  private val promptArea = AgentPromptTextField(
+    project = project,
+    completionProvider = AgentPromptClaudeSlashCompletionProvider(
+      selectedProvider = ::selectedProviderForCompletion,
+      resolveWorkingProjectPaths = ::resolveWorkingProjectPathsForCompletion,
+    ),
+  )
 
   @Suppress("RAW_SCOPE_CREATION")
   private val popupScope = CoroutineScope(SupervisorJob() + Dispatchers.UI)
 
   private var popup: JBPopup? = null
   private var popupActive: Boolean = false
+  private lateinit var providerSelector: AgentPromptProviderSelector
   private lateinit var sessionController: AgentPromptPaletteSessionController
 
   override fun show() {
@@ -57,6 +67,7 @@ internal class AgentPromptPalettePopup(
       .setProject(project)
       .setModalContext(false)
       .setCancelOnClickOutside(true)
+      .setCancelOnWindowDeactivation(false)
       .setRequestFocus(true)
       .setCancelKeyEnabled(true)
       .setResizable(true)
@@ -67,6 +78,7 @@ internal class AgentPromptPalettePopup(
 
     popup = createdPopup
     popupActive = true
+    installFrameActivationRefocusListener(createdPopup)
     createdPopup.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
         popupActive = false
@@ -96,6 +108,20 @@ internal class AgentPromptPalettePopup(
     return popup?.isVisible == true
   }
 
+  private fun installFrameActivationRefocusListener(createdPopup: JBPopup) {
+    project.messageBus.connect(createdPopup).subscribe(FrameStateListener.TOPIC, object : FrameStateListener {
+      override fun onFrameActivated(ideFrame: IdeFrame) {
+        if (shouldRefocusPromptOnFrameActivated(
+            popupProject = project,
+            activatedProject = ideFrame.project,
+            isPopupVisible = isVisible(),
+          )) {
+          requestFocus()
+        }
+      }
+    })
+  }
+
   private fun createContentPanel(): JPanel {
     lateinit var controllerRef: AgentPromptPaletteSessionController
     val suggestions = AgentPromptSuggestionsComponent { candidate -> controllerRef.applySuggestedPrompt(candidate) }
@@ -110,7 +136,7 @@ internal class AgentPromptPalettePopup(
       onExistingTaskSelected = { selected -> controllerRef.onExistingTaskSelected(selected) },
     )
     val providerOptionsPanel = checkNotNull(view.providerOptionsPanel)
-    val providerSelector = AgentPromptProviderSelector(
+    providerSelector = AgentPromptProviderSelector(
       invocationData = invocationData,
       providerIconLabel = view.providerIconLabel,
       providerOptionsPanel = providerOptionsPanel,
@@ -148,10 +174,46 @@ internal class AgentPromptPalettePopup(
     return view.rootPanel
   }
 
+  private fun selectedProviderForCompletion(): AgentSessionProvider? {
+    return if (::providerSelector.isInitialized) providerSelector.selectedProvider?.bridge?.provider else null
+  }
+
+  private fun resolveWorkingProjectPathsForCompletion(): List<String> {
+    val sourceProjectBasePath = launcherProvider()
+      ?.resolveSourceProject(invocationData)
+      ?.basePath
+    if (::sessionController.isInitialized) {
+      return resolveClaudeSlashCompletionProjectPaths(
+        workingProjectPath = sessionController.resolveWorkingProjectPath(),
+        sourceProjectBasePath = sourceProjectBasePath,
+        projectBasePath = project.basePath,
+      )
+    }
+    return resolveClaudeSlashCompletionProjectPaths(
+      workingProjectPath = launcherProvider()
+        ?.resolveWorkingProjectPath(invocationData)
+        ?.takeIf { path -> path.isNotBlank() },
+      sourceProjectBasePath = sourceProjectBasePath,
+      projectBasePath = project.basePath,
+    )
+  }
+
   private fun createProviderOptionsPanel(): JPanel {
     return JPanel(FlowLayout(FlowLayout.RIGHT, JBUI.scale(8), 0)).apply {
       isOpaque = false
       isVisible = false
     }
   }
+}
+
+internal fun resolveClaudeSlashCompletionProjectPaths(
+  workingProjectPath: String?,
+  sourceProjectBasePath: String?,
+  projectBasePath: String?,
+): List<String> {
+  return buildList {
+    workingProjectPath?.takeIf { path -> path.isNotBlank() }?.let(::add)
+    sourceProjectBasePath?.takeIf { path -> path.isNotBlank() }?.let(::add)
+    projectBasePath?.takeIf { path -> path.isNotBlank() }?.let(::add)
+  }.distinct()
 }

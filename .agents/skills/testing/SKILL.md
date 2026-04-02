@@ -173,7 +173,7 @@ For guidelines on **writing** tests (as opposed to running them), see the guidel
 
 ## Additional Resources
 
-- [Running and Testing Documentation](../docs/IntelliJ-Platform/2_Running-and-Testing)
-- [Community README](../community/README.md)
-- [Main README](../README.md)
+- [Running and Testing Documentation](../../../../docs/IntelliJ-Platform/2_Running-and-Testing)
+- [Community README](../../../../community/README.md)
+- [Main README](../../../../README.md)
 - [Driver UI testing](../driver-ui-tests/SKILL.md)

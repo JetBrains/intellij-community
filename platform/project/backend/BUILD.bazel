@@ -25,6 +25,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/analysis-api:analysis",
     "//platform/platform-impl/rpc",
+    "//fleet/rhizomedb",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -47,6 +48,7 @@ jvm_library(
     "//platform/platform-api:ide_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/platform-impl/rpc:rpc_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.project.backend` end

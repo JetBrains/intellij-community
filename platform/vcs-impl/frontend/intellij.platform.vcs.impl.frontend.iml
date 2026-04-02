@@ -57,5 +57,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.shared" />
     <orderEntry type="module" module-name="intellij.platform.vcs.core" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="module" module-name="fleet.rhizomedb" />
   </component>
 </module>

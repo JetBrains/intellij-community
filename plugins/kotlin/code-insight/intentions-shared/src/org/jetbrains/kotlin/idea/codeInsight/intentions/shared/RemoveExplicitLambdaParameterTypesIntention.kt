@@ -9,8 +9,8 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.utils.removeExplicitParameterTypes
 import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
 class RemoveExplicitLambdaParameterTypesIntention : KotlinApplicableModCommandAction<KtLambdaExpression, Unit>(
@@ -35,13 +35,6 @@ class RemoveExplicitLambdaParameterTypesIntention : KotlinApplicableModCommandAc
         elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
-        val oldParameterList = element.functionLiteral.valueParameterList!!
-
-        val parameterString = oldParameterList.parameters.asSequence().map {
-            it.destructuringDeclaration?.text ?: it.name
-        }.joinToString(", ")
-
-        val newParameterList = KtPsiFactory(element.project).createLambdaParameterList(parameterString)
-        oldParameterList.replace(newParameterList)
+        element.removeExplicitParameterTypes()
     }
 }

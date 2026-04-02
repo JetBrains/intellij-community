@@ -67,8 +67,12 @@
   </projectListeners>
 
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
     <module name="intellij.kotlin.base.analysis.platform"/>
     <module name="intellij.kotlin.searching"/>
+    <!-- endregion -->
   </dependencies>
 
 </idea-plugin>

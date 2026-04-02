@@ -107,6 +107,7 @@ jvm_library(
     "//platform/progress/shared:ide-progress",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//fleet/rhizomedb",
   ],
   exports = [
     "//platform/dvcs-api:vcs-dvcs",
@@ -239,6 +240,7 @@ jvm_library(
     "//platform/testFramework/junit5/eel:eel_test_lib",
     "//platform/vcs-impl:vcs-impl-tests",
     "//platform/vcs-impl:vcs-impl-tests_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.vcs.git` end
@@ -270,7 +272,10 @@ jvm_library(
     "//platform/dvcs-api:vcs-dvcs",
     "@lib//:cucumber-testing",
   ],
-  runtime_deps = ["//platform/lvcs-impl"]
+  runtime_deps = [
+    "//platform/lvcs-impl",
+    "//fleet/rhizomedb",
+  ]
 )
 
 jvm_library(
@@ -482,6 +487,7 @@ jvm_library(
     "//platform/platform-impl/rpc:rpc_test_lib",
     "//platform/platform-impl/recentProjects:recentProjects_test_lib",
     "//platform/platform-impl/eel:ide-impl-wsl_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.vcs.git.tests` end

@@ -7,12 +7,16 @@
     <module name="intellij.java.compiler"/>
     <module name="intellij.java.compiler.impl"/>
     <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.debugger.impl.shared"/>
     <module name="intellij.java.execution"/>
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
     <module name="intellij.java.ui"/>
     <module name="intellij.properties.backend"/>
     <module name="intellij.properties.backend.psi"/>
+    <module name="intellij.properties.psi"/>
     <module name="intellij.spellchecker"/>
   </dependencies>
   <!-- endregion -->

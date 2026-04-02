@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.ApiStatus;
 
 public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpressionSelector {
 
@@ -59,6 +60,12 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
     template.addVariable(EXPR, new TextExpression(expr.getText()), false);
     setVariables(template, expr);
     manager.startTemplate(editor, template);
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public @NotNull PostfixModExpander createModExpander() {
+    return createModExpander(new StringBasedModExpandAction(this));
   }
 
   public Template createTemplate(TemplateManager manager, String templateString) {

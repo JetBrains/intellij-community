@@ -4,6 +4,7 @@ package com.intellij.lang.jvm;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.MetaLanguage;
+import com.intellij.lang.MetaLanguageProvider;
 import com.intellij.lang.jvm.source.JvmDeclarationSearcher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -16,6 +17,8 @@ import java.util.Collection;
 import java.util.List;
 
 public final class JvmMetaLanguage extends MetaLanguage {
+  static final JvmMetaLanguage INSTANCE = new JvmMetaLanguage();
+
   private JvmMetaLanguage() {
     super("JVM");
   }
@@ -50,5 +53,12 @@ public final class JvmMetaLanguage extends MetaLanguage {
   private static @Nullable ExtensionPoint<@NotNull LanguageExtensionPoint<JvmDeclarationSearcher>> getPoint() {
     ExtensionsArea area = ApplicationManager.getApplication().getExtensionArea();
     return area.getExtensionPointIfRegistered(JvmDeclarationSearcher.EP.getName());
+  }
+
+  public static final class Provider implements MetaLanguageProvider {
+    @Override
+    public @NotNull MetaLanguage getLanguage() {
+      return INSTANCE;
+    }
   }
 }

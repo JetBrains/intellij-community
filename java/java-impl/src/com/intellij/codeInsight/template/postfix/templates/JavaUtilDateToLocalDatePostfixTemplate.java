@@ -23,4 +23,9 @@ public class JavaUtilDateToLocalDatePostfixTemplate extends JavaEditablePostfixT
   public boolean isBuiltin() {
     return true;
   }
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
 }

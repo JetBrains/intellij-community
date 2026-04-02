@@ -105,14 +105,34 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
     final PsiElement[] elements = getElements(file.getProject(), editor, file);
-    return elements != null && elements.length > 0;
+    return elements.length > 0;
   }
 
-  public static PsiElement[] getElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    if (selectionModel.hasSelection()) {
-      int startOffset = selectionModel.getSelectionStart();
-      int endOffset = selectionModel.getSelectionEnd();
+  /**
+   * @see #getElements(Project, PsiFile, TextRange)
+   */
+  public static PsiElement @NotNull [] getElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    SelectionModel model = editor.getSelectionModel();
+    if (model.hasSelection()) {
+      return getElements(project, file, new TextRange(model.getSelectionStart(), model.getSelectionEnd()));
+    }
+
+    int offset = editor.getCaretModel().getOffset();
+    return getElements(project, file, new TextRange(offset, offset));
+  }
+
+  /**
+   * Finds the elements that could be extracted into the method. This can be used as a preliminary
+   * check that extract method refactoring is available.
+   *
+   * @param range range of the text in which the elements should be searched. If the range is empty it is treated as caret position.
+   *
+   * @return the array of {@code PsiElement} that could be extracted into the method.
+   */
+  public static PsiElement @NotNull [] getElements(@NotNull Project project, @NotNull PsiFile file, @NotNull TextRange range) {
+    if (!range.isEmpty()) {
+      int startOffset = range.getStartOffset();
+      int endOffset = range.getEndOffset();
 
 
       PsiElement[] elements;
@@ -135,7 +155,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
       return elements;
     }
 
-    final List<PsiExpression> expressions = CommonJavaRefactoringUtil.collectExpressions(file, editor, editor.getCaretModel().getOffset());
+    final List<PsiExpression> expressions = CommonJavaRefactoringUtil.collectExpressions(file, file.getFileDocument(), range.getStartOffset(), false);
     return expressions.toArray(PsiElement.EMPTY_ARRAY);
   }
 

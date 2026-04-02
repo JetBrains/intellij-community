@@ -43,6 +43,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/lang-api:lang",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//fleet/rhizomedb",
   ],
   exports = ["//platform/util"]
 )
@@ -86,6 +87,7 @@ jvm_library(
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/lang-api:lang_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.structureView.impl` end

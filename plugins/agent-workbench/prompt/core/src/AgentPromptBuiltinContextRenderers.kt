@@ -109,7 +109,8 @@ class AgentPromptPathsContextRendererBridge : AgentPromptContextRendererBridge {
   override fun renderChip(input: AgentPromptChipRenderInput): AgentPromptChipRender {
     val first = extractPaths(input.item).firstOrNull().orEmpty()
     val preview = shortenPathForChip(first, input.projectBasePath)
-    return AgentPromptChipRender(text = composePathChipText(input.item.title, preview))
+    val text = if (preview.isBlank()) composePathChipText(input.item.title, preview) else composePathChipText(title = null, preview = preview)
+    return AgentPromptChipRender(text = text)
   }
 
   private fun extractPaths(item: AgentPromptContextItem): List<String> {

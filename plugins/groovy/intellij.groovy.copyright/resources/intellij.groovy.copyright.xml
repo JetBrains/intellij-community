@@ -1,8 +1,11 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <module name="intellij.java.copyright"/>
-    <plugin id="com.intellij.copyright"/>
     <plugin id="org.intellij.groovy"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="com.intellij.copyright"/>
+    <module name="intellij.java.copyright"/>
+    <module name="intellij.java.psi"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.copyright">

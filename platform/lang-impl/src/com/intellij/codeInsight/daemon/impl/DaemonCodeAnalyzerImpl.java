@@ -740,7 +740,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     cancelAllUpdateProgresses(toRestart, reason);
     boolean restart = toRestart && !myDisposed;
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Stopping process: toRestart:"+toRestart+(myDisposed? "; disposed" : "")+"; reason: '"+ reason +"'", new Throwable());
+      Map<FileEditor, DaemonProgressIndicator> progresses = Map.copyOf(myUpdateProgress);
+      LOG.debug("Stopping process: toRestart:"+toRestart+(myDisposed? "; disposed" : "")+"; reason: '"+ reason +"'"+(progresses.isEmpty()?"":"; progresses:"+progresses), new Throwable());
     }
     if (restart) {
       scheduleIfNotRunning();
@@ -825,7 +826,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     else {
       oldFuture.cancel(false); // do not have too many requests sit in the EdtExecutorService queue
     }
-    myUpdateRunnableFuture = EdtExecutorService.getScheduledExecutorInstance().schedule(myUpdateRunnable, delayNanos, TimeUnit.NANOSECONDS);
+    Runnable runnable = () -> {
+      myUpdateRunnableFuture =
+        EdtExecutorService.getScheduledExecutorInstance().schedule(myUpdateRunnable, delayNanos, TimeUnit.NANOSECONDS);
+    };
+    if (myListeners == null) {
+      runnable.run();
+    }
+    else {
+      myListeners.runAfterUpdateFileStatusQueue(runnable);
+    }
   }
 
   // return true if the progress really was canceled
@@ -1294,9 +1304,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     Editor editor = textEditor == null ? null : textEditor.getEditor();
     if (highlighter == null) {
       if (PassExecutorService.LOG.isDebugEnabled()) {
-        PassExecutorService.log(null, null, "couldn't highlight", virtualFile, "because getBackgroundHighlighter() returned null. fileEditor=",
-          fileEditor, fileEditor.getClass(),
-          textEditor == null ? "editor is null" : "editor loaded:" + textEditor.isEditorLoaded()
+        PassExecutorService.log(null, null, "couldn't highlight " + virtualFile + " because getBackgroundHighlighter() returned null. fileEditor="+
+          fileEditor+"("+ fileEditor.getClass()+")"+ (textEditor == null ? "editor is null" : "editor loaded:" + textEditor.isEditorLoaded())
         );
       }
       return null;
@@ -1497,7 +1506,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       cancelIndicator(oldProgress, true, new Throwable(), "daemon restarted for existing indicator: " + fileEditor);
     }
     if (PassExecutorService.LOG.isDebugEnabled()) {
-      PassExecutorService.log(progress, null, "createUpdateProgress(" + fileEditor + "); oldProgress=" + oldProgress);
+      PassExecutorService.log(progress, null, "createUpdateProgress(", fileEditor, "); oldProgress=" + oldProgress);
     }
     myDaemonListenerPublisher.daemonStarting(List.of(fileEditor));
     return progress;

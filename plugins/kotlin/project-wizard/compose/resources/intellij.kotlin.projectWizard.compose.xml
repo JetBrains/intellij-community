@@ -2,6 +2,9 @@
 
   <dependencies>
     <module name="intellij.kotlin.projectWizard.idea"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.syntax"/>
+    <!-- endregion -->
   </dependencies>
 
 <!--  <extensionPoints>-->

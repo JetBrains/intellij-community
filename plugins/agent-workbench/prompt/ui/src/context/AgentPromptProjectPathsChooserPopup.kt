@@ -60,21 +60,22 @@ private const val SEARCH_TAB_INDEX = 1
 
 internal fun showProjectPathsChooserPopup(
   project: Project,
-  scopedRoots: List<VirtualFile>,
+  scopedRootPaths: List<String>,
   initialSelection: List<ManualPathSelectionEntry>,
+  initialTreePreselection: ManualPathSelectionEntry?,
   anchorComponent: Component,
   onConfirmed: (List<ManualPathSelectionEntry>) -> Unit,
 ) {
   val disposable = Disposer.newDisposable("AgentPromptProjectPathsChooserPopup")
   val selectionState = ManualPathSelectionState(initialSelection)
-  val scopedRootPaths = scopedRoots.map(VirtualFile::getPath)
   val treeSupport = TreeFileChooserSupport.getInstance(project)
+  val scopedRootPathsProvider = { scopedRootPaths }
   val fileCondition = Condition<PsiFile> { psiFile ->
     val virtualFile = psiFile.virtualFile ?: return@Condition false
-    isSelectableVirtualFile(virtualFile, scopedRootPaths)
+    isSelectableVirtualFile(virtualFile, scopedRootPathsProvider())
   }
 
-  val treeStructure = createTreeStructure(project, treeSupport, scopedRootPaths, fileCondition)
+  val treeStructure = createTreeStructure(project, treeSupport, scopedRootPathsProvider, fileCondition)
   val treeModel = StructureTreeModel(treeStructure, disposable)
   treeModel.setComparator(treeSupport.getDefaultComparator())
 
@@ -92,19 +93,22 @@ internal fun showProjectPathsChooserPopup(
   }
 
   val searchDummyPanel = JPanel(BorderLayout())
-  val searchPanel = ScopedSearchByNamePanel(project, scopedRootPaths, searchDummyPanel, selectionState)
+  val searchPanel = ScopedSearchByNamePanel(project, scopedRootPathsProvider, searchDummyPanel, selectionState)
   Disposer.register(disposable, searchPanel)
 
   val tabbedPane = TabbedPaneWrapper(disposable)
   tabbedPane.addTab(IdeBundle.message("tab.chooser.project"), treeScrollPane)
   tabbedPane.addTab(IdeBundle.message("tab.chooser.search.by.name"), searchDummyPanel)
+  val popupContent = JPanel(BorderLayout()).apply {
+    add(tabbedPane.component, BorderLayout.CENTER)
+  }
 
   var restoringTreeSelection = false
   var searchPanelInitialized = false
   lateinit var confirmSelection: () -> Boolean
 
   val popup = JBPopupFactory.getInstance()
-    .createComponentPopupBuilder(tabbedPane.component, tree)
+    .createComponentPopupBuilder(popupContent, tree)
     .setMovable(true)
     .setResizable(true)
     .setRequestFocus(true)
@@ -119,8 +123,8 @@ internal fun showProjectPathsChooserPopup(
     restoreTreeSelection(
       project = project,
       tree = tree,
-      selection = selectionState.snapshot(),
-      scopedRootPaths = scopedRootPaths,
+      selection = resolveTreeSelectionToRestore(selectionState.snapshot(), initialTreePreselection),
+      scopedRootPaths = scopedRootPathsProvider(),
       popup = popup,
       beforeRestore = { restoringTreeSelection = true },
       afterRestore = { restoringTreeSelection = false },
@@ -145,7 +149,7 @@ internal fun showProjectPathsChooserPopup(
   }
 
   val syncTreeSelection = {
-    selectionState.addTreeSelection(collectTreeSelection(tree, treeSupport, scopedRootPaths))
+    selectionState.addTreeSelection(collectTreeSelection(tree, treeSupport, scopedRootPathsProvider()))
   }
 
   confirmSelection = fun(): Boolean {
@@ -191,12 +195,21 @@ internal fun showProjectPathsChooserPopup(
 
   SwingUtilities.invokeLater {
     if (project.isDisposed || popup.isDisposed) return@invokeLater
-    if (selectionState.size() > 0 && tabbedPane.selectedIndex != SEARCH_TAB_INDEX) {
+    if (resolveTreeSelectionToRestore(selectionState.snapshot(), initialTreePreselection).isNotEmpty() && tabbedPane.selectedIndex != SEARCH_TAB_INDEX) {
       restoreTreeSelectionFromState()
     }
     if (tabbedPane.selectedIndex != SEARCH_TAB_INDEX) {
       tree.requestFocusInWindow()
     }
+  }
+}
+
+internal fun resolveTreeSelectionToRestore(
+  selection: List<ManualPathSelectionEntry>,
+  initialTreePreselection: ManualPathSelectionEntry?,
+): List<ManualPathSelectionEntry> {
+  return selection.ifEmpty {
+    initialTreePreselection?.let(::listOf).orEmpty()
   }
 }
 
@@ -258,9 +271,25 @@ private fun collectTreeSelection(
   scopedRootPaths: List<String>,
 ): List<ManualPathSelectionEntry> {
   return tree.selectionPaths.orEmpty()
-    .mapNotNull(treeSupport::getVirtualFile)
+    .mapNotNull { resolveSelectableVirtualFile(it, treeSupport, scopedRootPaths) }
     .filter { isSelectableVirtualFile(it, scopedRootPaths) }
     .map { ManualPathSelectionEntry(path = it.path, isDirectory = it.isDirectory) }
+}
+
+internal fun resolveSelectableVirtualFile(
+  selectionPath: TreePath,
+  treeSupport: TreeFileChooserSupport,
+  scopedRootPaths: List<String>,
+): VirtualFile? {
+  val pathComponents = selectionPath.path
+  for (size in pathComponents.size downTo 1) {
+    val candidatePath = TreePath(pathComponents.copyOfRange(0, size))
+    val virtualFile = treeSupport.getVirtualFile(candidatePath) ?: continue
+    if (isSelectableVirtualFile(virtualFile, scopedRootPaths)) {
+      return virtualFile
+    }
+  }
+  return null
 }
 
 private fun restoreTreeSelection(
@@ -430,7 +459,7 @@ private fun applyTreeSelection(
 private fun createTreeStructure(
   project: Project,
   treeSupport: TreeFileChooserSupport,
-  scopedRootPaths: List<String>,
+  scopedRootPathsProvider: () -> List<String>,
   fileCondition: Condition<PsiFile>,
 ): ProjectAbstractTreeStructureBase {
   return object : AbstractProjectTreeStructure(project) {
@@ -445,7 +474,7 @@ private fun createTreeStructure(
     override fun isShowModules(): Boolean = false
 
     override fun getChildElements(element: Any): Array<Any> {
-      return filterScopedProjectNodes(super.getChildElements(element), scopedRootPaths, fileCondition)
+      return filterScopedProjectNodes(super.getChildElements(element), scopedRootPathsProvider(), fileCondition)
     }
 
     override fun getParentElement(element: Any): Any? {
@@ -474,10 +503,10 @@ private fun createTreeStructure(
 
 private class ScopedSearchByNamePanel(
   project: Project,
-  private val scopedRootPaths: List<String>,
+  private val scopedRootPathsProvider: () -> List<String>,
   private val dummyPanel: JPanel,
   private val selectionState: ManualPathSelectionState,
-) : ChooseByNamePanel(project, ScopedGotoFileModel(project, scopedRootPaths), "", false, null) {
+) : ChooseByNamePanel(project, ScopedGotoFileModel(project, scopedRootPathsProvider), "", false, null) {
 
   private var restoringVisibleSelection = false
 
@@ -504,7 +533,7 @@ private class ScopedSearchByNamePanel(
 
     val selectedIndices = (0 until myList.model.size)
       .filter { index ->
-        val entry = selectionEntryFor(myList.model.getElementAt(index), scopedRootPaths) ?: return@filter false
+        val entry = selectionEntryFor(myList.model.getElementAt(index), scopedRootPathsProvider()) ?: return@filter false
         selectionState.contains(entry.path)
       }
       .toIntArray()
@@ -519,7 +548,7 @@ private class ScopedSearchByNamePanel(
   }
 
   fun syncSelectionFromVisibleResults() {
-    selectionState.addSearchSelection(chosenElements.mapNotNull { element -> selectionEntryFor(element, scopedRootPaths) })
+    selectionState.addSearchSelection(chosenElements.mapNotNull { element -> selectionEntryFor(element, scopedRootPathsProvider()) })
     restoreVisibleSelectionFromState()
   }
 
@@ -544,14 +573,14 @@ private fun selectionEntryFor(element: Any?, scopedRootPaths: List<String>): Man
 
 private class ScopedGotoFileModel(
   project: Project,
-  private val scopedRootPaths: Collection<String>,
+  private val scopedRootPathsProvider: () -> Collection<String>,
 ) : GotoFileModel(project) {
   override fun acceptItem(item: NavigationItem): Boolean {
     if (item !is PsiFile) {
       return false
     }
     val virtualFile = item.virtualFile ?: return false
-    return virtualFile.isInLocalFileSystem && isUnderAnyRoot(virtualFile.path, scopedRootPaths) && super.acceptItem(item)
+    return virtualFile.isInLocalFileSystem && isUnderAnyRoot(virtualFile.path, scopedRootPathsProvider()) && super.acceptItem(item)
   }
 
   override fun loadInitialCheckBoxState(): Boolean = false

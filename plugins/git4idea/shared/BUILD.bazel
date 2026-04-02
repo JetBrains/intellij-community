@@ -38,6 +38,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "//platform/vcs-api/shared",
     "//platform/util:util-ui",
+    "//fleet/rhizomedb",
   ]
 )
 
@@ -70,6 +71,7 @@ jvm_library(
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/vcs-api/shared:shared_test_lib",
     "//platform/util:util-ui_test_lib",
+    "//fleet/rhizomedb:rhizomedb_test_lib",
   ]
 )
 ### auto-generated section `build intellij.vcs.git.shared` end

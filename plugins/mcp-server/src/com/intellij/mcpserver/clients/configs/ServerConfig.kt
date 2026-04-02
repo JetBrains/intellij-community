@@ -22,6 +22,9 @@ class VSCodeNetworkConfig(val url: String, val type: String) : ServerConfig()
 class ClaudeCodeNetworkConfig(val url: String, val type: String) : ServerConfig()
 
 @Serializable
+class JunieNetworkConfig(val url: String, val type: String) : ServerConfig()
+
+@Serializable
 class CodexStreamableHttpConfig(val url: String) : ServerConfig()
 
 @Serializable

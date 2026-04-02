@@ -50,5 +50,6 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.scopes" />
+    <orderEntry type="module" module-name="fleet.rhizomedb" />
   </component>
 </module>

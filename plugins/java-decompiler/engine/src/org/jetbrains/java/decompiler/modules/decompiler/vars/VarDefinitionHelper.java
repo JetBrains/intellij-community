@@ -776,6 +776,13 @@ public class VarDefinitionHelper {
         if (merged == null) { // Types incompatible, do not merge
           continue;
         }
+        // Reject merge if it would narrow the 'to' variable from Object to a more specific type.
+        // This indicates bytecode slot reuse (e.g., checkcast result reusing a pattern variable slot),
+        // not a genuine variable relationship.
+        VarType toType = varproc.getVarType(to);
+        if (toType != null && VarType.VARTYPE_OBJECT.equals(toType) && !VarType.VARTYPE_OBJECT.equals(merged)) {
+          continue;
+        }
 
         var.setIndex(to.var);
         var.setVersion(to.version);
@@ -822,8 +829,8 @@ public class VarDefinitionHelper {
           if (DecompilerContext.getStructContext().instanceOf(fromMax.getValue(), toMin.getValue()))
             return fromMax;
         } else {//fromMin != null
-          if (DecompilerContext.getStructContext().instanceOf(toMin.getValue(), fromMin.getValue()))
-            return toMin;
+          if (DecompilerContext.getStructContext().instanceOf(fromMin.getValue(), toMin.getValue()))
+            return fromMin;
         }
       }
       return null;

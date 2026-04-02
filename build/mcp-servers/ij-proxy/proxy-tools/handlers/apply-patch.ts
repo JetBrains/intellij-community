@@ -3,7 +3,7 @@
 import {copyFile, mkdir, rename, rm} from 'node:fs/promises'
 import path from 'node:path'
 import {isTrackedPath, runGitCommand, toGitPath} from '../git-utils'
-import {readFileText, resolvePathInProject, splitLines} from '../shared'
+import {readFileTextExact, resolvePathInProject, splitLines} from '../shared'
 import {readLinesViaSearch, SEARCH_FALLBACK_MAX_LINES} from '../search-fallback'
 import {isTruncatedText} from '../truncation'
 import type {UpstreamToolCaller} from '../types'
@@ -124,7 +124,7 @@ async function readFileTextForPatch(
   projectPath: string,
   callUpstreamTool: UpstreamToolCaller
 ): Promise<string> {
-  const original = await readFileText(relativePath, {truncateMode: 'NONE'}, callUpstreamTool)
+  const original = await readFileTextExact(relativePath, callUpstreamTool)
   if (!isTruncatedText(original)) return original
   try {
     return await readFileTextViaSearch(projectPath, relativePath, absolutePath, callUpstreamTool)

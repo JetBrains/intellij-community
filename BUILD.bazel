@@ -1,6 +1,13 @@
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "kt_javac_options")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@aspect_rules_lint//format:defs.bzl", "format_multirun")
+
+format_multirun(
+    name = "format",
+    starlark = "@buildifier_prebuilt//:buildifier",
+    visibility = ["//visibility:public"],
+)
 
 exports_files(
   glob(["**/*.iml"]),

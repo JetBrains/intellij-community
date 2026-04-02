@@ -3,7 +3,9 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
 /**
  * Removes the explicitly declared type of this declaration if it exists.
@@ -16,4 +18,16 @@ fun KtDeclaration.removeDeclarationTypeReference() {
         val last = typeReference ?: return
         deleteChildRange(first, last)
     }
+}
+
+fun KtLambdaExpression.removeExplicitParameterTypes() {
+    val oldParameterList = functionLiteral.valueParameterList ?: return
+    if (oldParameterList.parameters.none { it.typeReference != null }) return
+
+    val parameterString = oldParameterList.parameters.joinToString(", ") {
+        it.destructuringDeclaration?.text ?: it.name.orEmpty()
+    }
+
+    val newParameterList = KtPsiFactory(project).createLambdaParameterList(parameterString)
+    oldParameterList.replace(newParameterList)
 }

@@ -626,58 +626,6 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.ow2.asm/asm-analysis-9.8.jar_copy",
-  src = "@org_ow2_asm-asm-analysis-9_8_http//file",
-  out = "org.ow2.asm/asm-analysis-9.8.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.ow2.asm/asm-tree-9.8.jar_copy",
-  src = "@org_ow2_asm-asm-tree-9_8_http//file",
-  out = "org.ow2.asm/asm-tree-9.8.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.ow2.asm/asm-9.8.jar_copy",
-  src = "@org_ow2_asm-asm-9_8_http//file",
-  out = "org.ow2.asm/asm-9.8.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "asm-tools",
-  exports = [
-    ":org_ow2_asm-asm-analysis-9_8_http_import",
-    ":org_ow2_asm-asm-tree-9_8_http_import",
-    ":org_ow2_asm-asm-9_8_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org_ow2_asm-asm-analysis-9_8_http_import",
-  jar = "@org_ow2_asm-asm-analysis-9_8_http//file",
-  source_jar = "@org_ow2_asm-asm-analysis-9_8-sources_http//file"
-)
-
-jvm_import(
-  name = "org_ow2_asm-asm-tree-9_8_http_import",
-  jar = "@org_ow2_asm-asm-tree-9_8_http//file",
-  source_jar = "@org_ow2_asm-asm-tree-9_8-sources_http//file"
-)
-
-jvm_import(
-  name = "org_ow2_asm-asm-9_8_http_import",
-  jar = "@org_ow2_asm-asm-9_8_http//file",
-  source_jar = "@org_ow2_asm-asm-9_8-sources_http//file"
-)
-
-copy_file(
   name = "org.assertj/assertj-core-4.0.0-M1.jar_copy",
   src = "@org_assertj-assertj-core-4_0_0-M1_http//file",
   out = "org.assertj/assertj-core-4.0.0-M1.jar",
@@ -787,58 +735,6 @@ jvm_import(
   jar = "@net_bytebuddy-byte-buddy-1_17_7_http//file",
   source_jar = "@net_bytebuddy-byte-buddy-1_17_7-sources_http//file",
   visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.github.ben-manes.caffeine/caffeine-3.2.3.jar_copy",
-  src = "@com_github_ben-manes_caffeine-caffeine-3_2_3_http//file",
-  out = "com.github.ben-manes.caffeine/caffeine-3.2.3.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jspecify/jspecify-1.0.0.jar_copy",
-  src = "@org_jspecify-jspecify-1_0_0_http//file",
-  out = "org.jspecify/jspecify-1.0.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.google.errorprone/error_prone_annotations-2.43.0.jar_copy",
-  src = "@com_google_errorprone-error_prone_annotations-2_43_0_http//file",
-  out = "com.google.errorprone/error_prone_annotations-2.43.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "caffeine",
-  exports = [
-    ":com_github_ben-manes_caffeine-caffeine-3_2_3_http_import",
-    ":org_jspecify-jspecify-1_0_0_http_import",
-    ":com_google_errorprone-error_prone_annotations-2_43_0_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "com_github_ben-manes_caffeine-caffeine-3_2_3_http_import",
-  jar = "@com_github_ben-manes_caffeine-caffeine-3_2_3_http//file",
-  source_jar = "@com_github_ben-manes_caffeine-caffeine-3_2_3-sources_http//file"
-)
-
-jvm_import(
-  name = "org_jspecify-jspecify-1_0_0_http_import",
-  jar = "@org_jspecify-jspecify-1_0_0_http//file",
-  source_jar = "@org_jspecify-jspecify-1_0_0-sources_http//file"
-)
-
-jvm_import(
-  name = "com_google_errorprone-error_prone_annotations-2_43_0_http_import",
-  jar = "@com_google_errorprone-error_prone_annotations-2_43_0_http//file",
-  source_jar = "@com_google_errorprone-error_prone_annotations-2_43_0-sources_http//file"
 )
 
 copy_file(
@@ -6539,21 +6435,6 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.ibm.icu/icu4j-77.1.jar_copy",
-  src = "@com_ibm_icu-icu4j-77_1_http//file",
-  out = "com.ibm.icu/icu4j-77.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "icu4j",
-  jar = "@com_ibm_icu-icu4j-77_1_http//file",
-  source_jar = "@com_ibm_icu-icu4j-77_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "com.jetbrains.intellij.documentation/tips-intellij-idea-community-241.62.jar_copy",
   src = "@com_jetbrains_intellij_documentation-tips-intellij-idea-community-241_62_http//file",
   out = "com.jetbrains.intellij.documentation/tips-intellij-idea-community-241.62.jar",
@@ -8367,69 +8248,10 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.jayway.jsonpath/json-path-2.9.0.jar_copy",
-  src = "@com_jayway_jsonpath-json-path-2_9_0_http//file",
-  out = "com.jayway.jsonpath/json-path-2.9.0.jar",
+  name = "org.jspecify/jspecify-1.0.0.jar_copy",
+  src = "@org_jspecify-jspecify-1_0_0_http//file",
+  out = "org.jspecify/jspecify-1.0.0.jar",
   allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "net.minidev/json-smart-2.5.0.jar_copy",
-  src = "@net_minidev-json-smart-2_5_0_http//file",
-  out = "net.minidev/json-smart-2.5.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "net.minidev/accessors-smart-2.5.0.jar_copy",
-  src = "@net_minidev-accessors-smart-2_5_0_http//file",
-  out = "net.minidev/accessors-smart-2.5.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "jsonpath",
-  exports = [
-    ":com_jayway_jsonpath-json-path-2_9_0_http_import",
-    ":net_minidev-json-smart-2_5_0_http_import",
-    ":net_minidev-accessors-smart-2_5_0_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "com_jayway_jsonpath-json-path-2_9_0_http_import",
-  jar = "@com_jayway_jsonpath-json-path-2_9_0_http//file",
-  source_jar = "@com_jayway_jsonpath-json-path-2_9_0-sources_http//file"
-)
-
-jvm_import(
-  name = "net_minidev-json-smart-2_5_0_http_import",
-  jar = "@net_minidev-json-smart-2_5_0_http//file",
-  source_jar = "@net_minidev-json-smart-2_5_0-sources_http//file"
-)
-
-jvm_import(
-  name = "net_minidev-accessors-smart-2_5_0_http_import",
-  jar = "@net_minidev-accessors-smart-2_5_0_http//file",
-  source_jar = "@net_minidev-accessors-smart-2_5_0-sources_http//file"
-)
-
-copy_file(
-  name = "org.jsoup/jsoup-1.21.2.jar_copy",
-  src = "@org_jsoup-jsoup-1_21_2_http//file",
-  out = "org.jsoup/jsoup-1.21.2.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "jsoup",
-  jar = "@org_jsoup-jsoup-1_21_2_http//file",
-  source_jar = "@org_jsoup-jsoup-1_21_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8738,6 +8560,12 @@ jvm_import(
   name = "org_junit_platform-junit-platform-commons-6_0_0_http_import",
   jar = "@org_junit_platform-junit-platform-commons-6_0_0_http//file",
   source_jar = "@org_junit_platform-junit-platform-commons-6_0_0-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jspecify-jspecify-1_0_0_http_import",
+  jar = "@org_jspecify-jspecify-1_0_0_http//file",
+  source_jar = "@org_jspecify-jspecify-1_0_0-sources_http//file"
 )
 
 java_library(
@@ -10846,6 +10674,58 @@ jvm_import(
 )
 
 copy_file(
+  name = "org.ow2.asm/asm-analysis-9.8.jar_copy",
+  src = "@org_ow2_asm-asm-analysis-9_8_http//file",
+  out = "org.ow2.asm/asm-analysis-9.8.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.ow2.asm/asm-tree-9.8.jar_copy",
+  src = "@org_ow2_asm-asm-tree-9_8_http//file",
+  out = "org.ow2.asm/asm-tree-9.8.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.ow2.asm/asm-9.8.jar_copy",
+  src = "@org_ow2_asm-asm-9_8_http//file",
+  out = "org.ow2.asm/asm-9.8.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-asm-tools-asm-tools",
+  exports = [
+    ":org_ow2_asm-asm-analysis-9_8_http_import",
+    ":org_ow2_asm-asm-tree-9_8_http_import",
+    ":org_ow2_asm-asm-9_8_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_ow2_asm-asm-analysis-9_8_http_import",
+  jar = "@org_ow2_asm-asm-analysis-9_8_http//file",
+  source_jar = "@org_ow2_asm-asm-analysis-9_8-sources_http//file"
+)
+
+jvm_import(
+  name = "org_ow2_asm-asm-tree-9_8_http_import",
+  jar = "@org_ow2_asm-asm-tree-9_8_http//file",
+  source_jar = "@org_ow2_asm-asm-tree-9_8-sources_http//file"
+)
+
+jvm_import(
+  name = "org_ow2_asm-asm-9_8_http_import",
+  jar = "@org_ow2_asm-asm-9_8_http//file",
+  source_jar = "@org_ow2_asm-asm-9_8-sources_http//file"
+)
+
+copy_file(
   name = "dk.brics/automaton-1.12-4.jar_copy",
   src = "@dk_brics-automaton-1_12-4_http//file",
   out = "dk.brics/automaton-1.12-4.jar",
@@ -11119,6 +10999,44 @@ jvm_import(
   jar = "@org_jetbrains_intellij-blockmap-1_0_7_http//file",
   source_jar = "@org_jetbrains_intellij-blockmap-1_0_7-sources_http//file",
   visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "com.github.ben-manes.caffeine/caffeine-3.2.3.jar_copy",
+  src = "@com_github_ben-manes_caffeine-caffeine-3_2_3_http//file",
+  out = "com.github.ben-manes.caffeine/caffeine-3.2.3.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "com.google.errorprone/error_prone_annotations-2.43.0.jar_copy",
+  src = "@com_google_errorprone-error_prone_annotations-2_43_0_http//file",
+  out = "com.google.errorprone/error_prone_annotations-2.43.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-caffeine-caffeine",
+  exports = [
+    ":com_github_ben-manes_caffeine-caffeine-3_2_3_http_import",
+    ":org_jspecify-jspecify-1_0_0_http_import",
+    ":com_google_errorprone-error_prone_annotations-2_43_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com_github_ben-manes_caffeine-caffeine-3_2_3_http_import",
+  jar = "@com_github_ben-manes_caffeine-caffeine-3_2_3_http//file",
+  source_jar = "@com_github_ben-manes_caffeine-caffeine-3_2_3-sources_http//file"
+)
+
+jvm_import(
+  name = "com_google_errorprone-error_prone_annotations-2_43_0_http_import",
+  jar = "@com_google_errorprone-error_prone_annotations-2_43_0_http//file",
+  source_jar = "@com_google_errorprone-error_prone_annotations-2_43_0-sources_http//file"
 )
 
 copy_file(
@@ -12191,6 +12109,21 @@ jvm_import(
 )
 
 copy_file(
+  name = "com.ibm.icu/icu4j-77.1.jar_copy",
+  src = "@com_ibm_icu-icu4j-77_1_http//file",
+  out = "com.ibm.icu/icu4j-77.1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-icu4j-icu4j",
+  jar = "@com_ibm_icu-icu4j-77_1_http//file",
+  source_jar = "@com_ibm_icu-icu4j-77_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "org.imgscalr/imgscalr-lib-4.2.jar_copy",
   src = "@org_imgscalr-imgscalr-lib-4_2_http//file",
   out = "org.imgscalr/imgscalr-lib-4.2.jar",
@@ -12539,6 +12472,73 @@ jvm_import(
   name = "com_jcraft-jsch_agentproxy_pageant-0_0_9_http_import",
   jar = "@com_jcraft-jsch_agentproxy_pageant-0_0_9_http//file",
   source_jar = "@com_jcraft-jsch_agentproxy_pageant-0_0_9-sources_http//file"
+)
+
+copy_file(
+  name = "com.jayway.jsonpath/json-path-2.9.0.jar_copy",
+  src = "@com_jayway_jsonpath-json-path-2_9_0_http//file",
+  out = "com.jayway.jsonpath/json-path-2.9.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "net.minidev/json-smart-2.5.0.jar_copy",
+  src = "@net_minidev-json-smart-2_5_0_http//file",
+  out = "net.minidev/json-smart-2.5.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "net.minidev/accessors-smart-2.5.0.jar_copy",
+  src = "@net_minidev-accessors-smart-2_5_0_http//file",
+  out = "net.minidev/accessors-smart-2.5.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-jsonpath-jsonpath",
+  exports = [
+    ":com_jayway_jsonpath-json-path-2_9_0_http_import",
+    ":net_minidev-json-smart-2_5_0_http_import",
+    ":net_minidev-accessors-smart-2_5_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com_jayway_jsonpath-json-path-2_9_0_http_import",
+  jar = "@com_jayway_jsonpath-json-path-2_9_0_http//file",
+  source_jar = "@com_jayway_jsonpath-json-path-2_9_0-sources_http//file"
+)
+
+jvm_import(
+  name = "net_minidev-json-smart-2_5_0_http_import",
+  jar = "@net_minidev-json-smart-2_5_0_http//file",
+  source_jar = "@net_minidev-json-smart-2_5_0-sources_http//file"
+)
+
+jvm_import(
+  name = "net_minidev-accessors-smart-2_5_0_http_import",
+  jar = "@net_minidev-accessors-smart-2_5_0_http//file",
+  source_jar = "@net_minidev-accessors-smart-2_5_0-sources_http//file"
+)
+
+copy_file(
+  name = "org.jsoup/jsoup-1.21.2.jar_copy",
+  src = "@org_jsoup-jsoup-1_21_2_http//file",
+  out = "org.jsoup/jsoup-1.21.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-jsoup-jsoup",
+  jar = "@org_jsoup-jsoup-1_21_2_http//file",
+  source_jar = "@org_jsoup-jsoup-1_21_2-sources_http//file",
+  visibility = ["//visibility:public"]
 )
 
 copy_file(
@@ -13252,6 +13252,58 @@ jvm_import(
 )
 
 copy_file(
+  name = "com.google.protobuf/protobuf-java-3.25.5.jar_copy",
+  src = "@com_google_protobuf-protobuf-java-3_25_5_http//file",
+  out = "com.google.protobuf/protobuf-java-3.25.5.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-protobuf-protobuf",
+  jar = "@com_google_protobuf-protobuf-java-3_25_5_http//file",
+  source_jar = "@com_google_protobuf-protobuf-java-3_25_5-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.bidib.com.github.markusbernhardt/proxy-vole-1.1.6.jar_copy",
+  src = "@org_bidib_com_github_markusbernhardt-proxy-vole-1_1_6_http//file",
+  out = "org.bidib.com.github.markusbernhardt/proxy-vole-1.1.6.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.javadelight/delight-rhino-sandbox-0.0.17.jar_copy",
+  src = "@org_javadelight-delight-rhino-sandbox-0_0_17_http//file",
+  out = "org.javadelight/delight-rhino-sandbox-0.0.17.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-proxy-vole-proxy-vole",
+  exports = [
+    ":org_bidib_com_github_markusbernhardt-proxy-vole-1_1_6_http_import",
+    ":org_javadelight-delight-rhino-sandbox-0_0_17_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_bidib_com_github_markusbernhardt-proxy-vole-1_1_6_http_import",
+  jar = "@org_bidib_com_github_markusbernhardt-proxy-vole-1_1_6_http//file",
+  source_jar = "@org_bidib_com_github_markusbernhardt-proxy-vole-1_1_6-sources_http//file"
+)
+
+jvm_import(
+  name = "org_javadelight-delight-rhino-sandbox-0_0_17_http_import",
+  jar = "@org_javadelight-delight-rhino-sandbox-0_0_17_http//file",
+  source_jar = "@org_javadelight-delight-rhino-sandbox-0_0_17-sources_http//file"
+)
+
+copy_file(
   name = "org.jetbrains.pty4j/pty4j-0.13.12.jar_copy",
   src = "@org_jetbrains_pty4j-pty4j-0_13_12_http//file",
   out = "org.jetbrains.pty4j/pty4j-0.13.12.jar",
@@ -13643,6 +13695,36 @@ jvm_import(
 jvm_import(
   name = "xmlpull-xmlpull-1_1_3_1_http_import",
   jar = "@xmlpull-xmlpull-1_1_3_1_http//file"
+)
+
+copy_file(
+  name = "org.eclipse.xtext/org.eclipse.xtext.xbase.lib-2.40.0.jar_copy",
+  src = "@org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0_http//file",
+  out = "org.eclipse.xtext/org.eclipse.xtext.xbase.lib-2.40.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-xtext-xbase-xtext-xbase",
+  jar = "@org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0_http//file",
+  source_jar = "@org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.tukaani/xz-1.10.jar_copy",
+  src = "@org_tukaani-xz-1_10_http//file",
+  out = "org.tukaani/xz-1.10.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-xz-xz",
+  jar = "@org_tukaani-xz-1_10_http//file",
+  source_jar = "@org_tukaani-xz-1_10-sources_http//file",
+  visibility = ["//visibility:public"]
 )
 
 copy_file(
@@ -19943,58 +20025,6 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.google.protobuf/protobuf-java-3.25.5.jar_copy",
-  src = "@com_google_protobuf-protobuf-java-3_25_5_http//file",
-  out = "com.google.protobuf/protobuf-java-3.25.5.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "protobuf",
-  jar = "@com_google_protobuf-protobuf-java-3_25_5_http//file",
-  source_jar = "@com_google_protobuf-protobuf-java-3_25_5-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.bidib.com.github.markusbernhardt/proxy-vole-1.1.6.jar_copy",
-  src = "@org_bidib_com_github_markusbernhardt-proxy-vole-1_1_6_http//file",
-  out = "org.bidib.com.github.markusbernhardt/proxy-vole-1.1.6.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.javadelight/delight-rhino-sandbox-0.0.17.jar_copy",
-  src = "@org_javadelight-delight-rhino-sandbox-0_0_17_http//file",
-  out = "org.javadelight/delight-rhino-sandbox-0.0.17.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "proxy-vole",
-  exports = [
-    ":org_bidib_com_github_markusbernhardt-proxy-vole-1_1_6_http_import",
-    ":org_javadelight-delight-rhino-sandbox-0_0_17_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org_bidib_com_github_markusbernhardt-proxy-vole-1_1_6_http_import",
-  jar = "@org_bidib_com_github_markusbernhardt-proxy-vole-1_1_6_http//file",
-  source_jar = "@org_bidib_com_github_markusbernhardt-proxy-vole-1_1_6-sources_http//file"
-)
-
-jvm_import(
-  name = "org_javadelight-delight-rhino-sandbox-0_0_17_http_import",
-  jar = "@org_javadelight-delight-rhino-sandbox-0_0_17_http//file",
-  source_jar = "@org_javadelight-delight-rhino-sandbox-0_0_17-sources_http//file"
-)
-
-copy_file(
   name = "org.jetbrains.intellij.deps.completion/completion-ranking-python-with-full-line-0.2.1.jar_copy",
   src = "@org_jetbrains_intellij_deps_completion-completion-ranking-python-with-full-line-0_2_1_http//file",
   out = "org.jetbrains.intellij.deps.completion/completion-ranking-python-with-full-line-0.2.1.jar",
@@ -21068,36 +21098,6 @@ java_library(
     ":org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http_import",
     ":org_apache_logging_log4j-log4j-api-2_20_0_http_import",
   ],
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.eclipse.xtext/org.eclipse.xtext.xbase.lib-2.40.0.jar_copy",
-  src = "@org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0_http//file",
-  out = "org.eclipse.xtext/org.eclipse.xtext.xbase.lib-2.40.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "xtext-xbase",
-  jar = "@org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0_http//file",
-  source_jar = "@org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.tukaani/xz-1.10.jar_copy",
-  src = "@org_tukaani-xz-1_10_http//file",
-  out = "org.tukaani/xz-1.10.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "xz",
-  jar = "@org_tukaani-xz-1_10_http//file",
-  source_jar = "@org_tukaani-xz-1_10-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

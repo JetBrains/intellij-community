@@ -41,10 +41,22 @@ while [ $# -gt 0 ]; do
       exit 0
       ;;
     --module)
+      if [ -n "$module" ]; then
+        echo "Error: --module may only be specified once" >&2
+        echo >&2
+        show_help >&2
+        exit 1
+      fi
       module="$2"
       shift 2
       ;;
     --test)
+      if [ -n "$test_pattern" ]; then
+        echo "Error: --test may only be specified once" >&2
+        echo >&2
+        show_help >&2
+        exit 1
+      fi
       test_pattern="$2"
       shift 2
       ;;
@@ -114,12 +126,24 @@ shift
 goto :PARSE_LOOP
 
 :SET_MODULE
+if defined MODULE (
+  echo Error: --module may only be specified once 1>&2
+  echo. 1>&2
+  call :PRINT_HELP 1>&2
+  exit /b 1
+)
 set "MODULE=%~2"
 shift
 shift
 goto :PARSE_LOOP
 
 :SET_TEST
+if defined TEST_PATTERN (
+  echo Error: --test may only be specified once 1>&2
+  echo. 1>&2
+  call :PRINT_HELP 1>&2
+  exit /b 1
+)
 set "TEST_PATTERN=%~2"
 shift
 shift

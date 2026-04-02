@@ -18,19 +18,15 @@ import com.intellij.ide.actions.EditCustomVmOptionsAction;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ExtendableEditorSupport;
 import com.intellij.ui.LanguageTextField;
 import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
@@ -42,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -144,62 +139,7 @@ public final class CommonJavaFragments {
     JrePathEditor jrePathEditor = new JrePathEditor(false);
     jrePathEditor.setDefaultJreSelector(defaultJreSelector);
     ComboBox<JrePathEditor.JreComboBoxItem> comboBox = jrePathEditor.getComponent();
-    comboBox.setRenderer(new ColoredListCellRenderer<>() {
-      @Override
-      protected void customizeCellRenderer(@NotNull JList<? extends JrePathEditor.JreComboBoxItem> list,
-                                           JrePathEditor.JreComboBoxItem value,
-                                           int index,
-                                           boolean selected,
-                                           boolean hasFocus) {
-        if (value == null) {
-          return;
-        }
-
-        if (BundledJreProvider.BUNDLED.equals(value.getPresentableText())) {
-          if (index == -1) append("java "); //NON-NLS
-          append(ExecutionBundle.message("bundled.jre.name"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          return;
-        }
-
-        if (value.getPathOrName() == null && value.getVersion() == null) {
-          append(StringUtil.notNullize(value.getDescription()));
-          return;
-        }
-        if (index == -1) {
-          append("java "); //NON-NLS
-          String shortVersion = appendShortVersion(value);
-          if (value.getPathOrName() != null && !value.getPathOrName().equals(shortVersion)) {
-            append(value.getPathOrName() + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          }
-          else if (value.getDescription() != null) {
-            append(value.getDescription() + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          }
-        }
-        else {
-          if (value.getPathOrName() != null) {
-            append(value.getPathOrName() + " ");
-          }
-          else {
-            appendShortVersion(value);
-          }
-          if (value.getDescription() != null) {
-            append(value.getDescription() + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          }
-        }
-      }
-
-      private @Nullable @NlsSafe String appendShortVersion(JrePathEditor.JreComboBoxItem value) {
-        if (value.getVersion() != null) {
-          JavaSdkVersion version = JavaSdkVersion.fromVersionString(value.getVersion());
-          if (version != null) {
-            append(version.getDescription() + " ");
-            return version.getDescription();
-          }
-        }
-        return null;
-      }
-    });
-    CommonParameterFragments.setMonospaced(comboBox);
+    comboBox.setRenderer(JrePathRendererKt.createJrePathRenderer());
 
     Dimension minimumSize = setMinimumWidth(jrePathEditor, 200);
     jrePathEditor.setPreferredSize(minimumSize);

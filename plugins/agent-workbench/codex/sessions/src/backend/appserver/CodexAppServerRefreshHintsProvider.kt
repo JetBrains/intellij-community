@@ -14,18 +14,18 @@ import com.intellij.agent.workbench.codex.sessions.backend.isResponseRequired
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
 import com.intellij.agent.workbench.codex.sessions.backend.toCodexSessionActivity
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlin.time.Duration.Companion.milliseconds
@@ -42,6 +42,7 @@ internal class CodexAppServerRefreshHintsProvider(
 
   private val directStatusUpdateKinds: Set<CodexAppServerNotificationKind> = setOf(
     CodexAppServerNotificationKind.THREAD_STARTED,
+    CodexAppServerNotificationKind.THREAD_NAME_UPDATED,
     CodexAppServerNotificationKind.THREAD_STATUS_CHANGED,
     CodexAppServerNotificationKind.TURN_STARTED,
     CodexAppServerNotificationKind.TURN_COMPLETED,
@@ -52,17 +53,9 @@ internal class CodexAppServerRefreshHintsProvider(
     CodexAppServerNotificationKind.TERMINAL_INTERACTION,
   )
 
-  @OptIn(FlowPreview::class)
-  private val notificationUpdates: Flow<Unit> = merge(
-    notifications
-      .filter { notification -> notification.kind in directStatusUpdateKinds }
-      .onEach(::recordNotificationThreadHint),
-    notifications
-      .filter { notification -> notification.kind in outputBurstUpdateKinds }
-      .debounce(APP_SERVER_OUTPUT_NOTIFICATION_DEBOUNCE_MS.milliseconds),
-  ).map { }
+  private val notificationUpdates: Flow<AgentSessionSourceUpdateEvent> = createNotificationUpdates(notifications)
 
-  override val updates: Flow<Unit>
+  override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = notificationUpdates
 
   override suspend fun prefetchRefreshHints(
@@ -164,6 +157,71 @@ internal class CodexAppServerRefreshHintsProvider(
       trimStartedThreadHintsLocked(hintsForPath)
       if (hintsForPath.isEmpty()) {
         startedThreadHintsByPath.remove(normalizedPath)
+      }
+    }
+  }
+
+  private fun toHintUpdateEvent(notification: CodexAppServerNotification): AgentSessionSourceUpdateEvent {
+    val threadId = notification.threadId?.takeIf { it.isNotBlank() }
+    val startedThreadPath = notification.startedThread?.cwd?.takeIf { it.isNotBlank() }?.let(::normalizeRootPath)
+    return when {
+      startedThreadPath != null -> AgentSessionSourceUpdateEvent(
+        type = AgentSessionSourceUpdate.HINTS_CHANGED,
+        scopedPaths = setOf(startedThreadPath),
+      )
+      threadId != null -> AgentSessionSourceUpdateEvent(
+        type = AgentSessionSourceUpdate.HINTS_CHANGED,
+        threadIds = setOf(threadId),
+      )
+      else -> AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.HINTS_CHANGED)
+    }
+  }
+
+  private fun createNotificationUpdates(notifications: Flow<CodexAppServerNotification>): Flow<AgentSessionSourceUpdateEvent> = channelFlow {
+    val lock = Any()
+    val pendingThreadIds = LinkedHashSet<String>()
+    var pendingUnscopedUpdate = false
+    var flushJob: Job? = null
+
+    suspend fun flushPendingUpdate() {
+      val updateEvent = synchronized(lock) {
+        flushJob = null
+        val threadIds = if (pendingThreadIds.isEmpty()) null else LinkedHashSet(pendingThreadIds)
+        pendingThreadIds.clear()
+        val emitUnscopedUpdate = pendingUnscopedUpdate
+        pendingUnscopedUpdate = false
+        when {
+          emitUnscopedUpdate || threadIds == null -> AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.HINTS_CHANGED)
+          else -> AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.HINTS_CHANGED, threadIds = threadIds)
+        }
+      }
+      send(updateEvent)
+    }
+
+    notifications.collect { notification ->
+      when (notification.kind) {
+        in directStatusUpdateKinds -> {
+          recordNotificationThreadHint(notification)
+          send(toHintUpdateEvent(notification))
+        }
+        in outputBurstUpdateKinds -> {
+          val updateEvent = toHintUpdateEvent(notification)
+          synchronized(lock) {
+            val threadIds = updateEvent.threadIds
+            if (threadIds == null) {
+              pendingUnscopedUpdate = true
+            }
+            else {
+              pendingThreadIds.addAll(threadIds)
+            }
+            flushJob?.cancel()
+            flushJob = launch {
+              delay(APP_SERVER_OUTPUT_NOTIFICATION_DEBOUNCE_MS.milliseconds)
+              flushPendingUpdate()
+            }
+          }
+        }
+        else -> Unit
       }
     }
   }

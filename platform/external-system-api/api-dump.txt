@@ -71,6 +71,7 @@ f:com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 - f:getSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - hashCode():I
 com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectListener
+- java.util.EventListener
 - onProjectReloadFinish(com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus):V
 - onProjectReloadStart():V
 - onSettingsFilesListChange():V
