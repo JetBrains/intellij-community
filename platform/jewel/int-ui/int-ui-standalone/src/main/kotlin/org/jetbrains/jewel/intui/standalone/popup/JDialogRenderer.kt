@@ -318,7 +318,7 @@ private fun JPopupImpl(
                     }
                 }
                 is AWTKeyEvent -> {
-                    if (!dialog.isActive) return@AWTEventListener
+                    if (!dialog.isVisible) return@AWTEventListener
 
                     val composeEvent = event.toComposeKeyEvent()
 
@@ -344,9 +344,15 @@ private fun JPopupImpl(
     DisposableEffect(dialog) {
         dialog.contentPane = composePanel
 
-        dialog.isAutoRequestFocus = currentProperties.focusable
+        // JEWEL-1276 this weird code duplicates the JBPopup/AbstractPopup logic to avoid focus stealing on macOS.
+        // The actual hack is implemented in LocalPopupComponentFactory and uses the fact that macOS only sets the
+        // "key window" when a new window/popup is created. We don't want our popups to do it by default, so we
+        // start them as non-focusable, and then make them focusable a short while later.
+        dialog.focusableWindowState = false
+        dialog.isAutoRequestFocus = false
         dialog.isVisible = true
         dialog.size = composePanel.preferredSize
+        SwingUtilities.invokeLater { dialog.focusableWindowState = true }
 
         onDispose {
             dialog.isVisible = false
