@@ -126,7 +126,10 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
       }
     }
 
-    presentation.locationText?.let { locationText ->
+    presentation.locationText?.takeIf {
+      // `locationTextWidth` without gap is used intentionally
+      accumulatedContentWidth + locationTextWidth < resultListWidth
+    }?.let { locationText ->
       @Suppress("HardCodedStringLiteral")
       text(locationText) {
         accessibleName = null
