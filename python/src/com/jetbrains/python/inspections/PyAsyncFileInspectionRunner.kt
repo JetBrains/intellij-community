@@ -11,17 +11,17 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.jetbrains.python.PythonPluginDisposable
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.psi.PsiFile
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.components.ActionLink
+import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.inspections.interpreter.BusyGuardExecutor
 import com.jetbrains.python.inspections.interpreter.InterpreterFix
 import com.jetbrains.python.orLogException
@@ -66,7 +66,6 @@ class PyAsyncFileInspectionRunner(
 
   private val cache: LoadingCache<Module, Deferred<InspectionRunnerResult>> = Caffeine.newBuilder()
     .refreshAfterWrite(cacheTtl.toJavaDuration())
-    .weakKeys()
     .evictionListener<Module, Deferred<InspectionRunnerResult>> { _, value, _ -> value?.cancel() }
     .build(object : CacheLoader<Module, Deferred<InspectionRunnerResult>> {
       override fun load(key: Module): Deferred<InspectionRunnerResult> {

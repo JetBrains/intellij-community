@@ -105,13 +105,13 @@ private fun CreateSdkInfoWithTool.asDTO(moduleDir: Directory?): ModuleCreateInfo
  * Returns the configured SDK, or `null` if no SDK could be configured.
  */
 @ApiStatus.Internal
-suspend fun Module.autoConfigureSdkIfNeeded(): PyResult<Sdk>? = withSdkConfigurationLock(project) {
+suspend fun Module.autoConfigureSdkIfNeeded(): PyResult<Sdk>? {
   val module = this@autoConfigureSdkIfNeeded
 
-  when (val moduleInfo = module.getModuleInfo()) {
+  return when (val moduleInfo = module.getModuleInfo()) {
     is ModuleCreateInfo.CreateSdkInfoWrapper -> {
       when (moduleInfo.createSdkInfo) {
-        is CreateSdkInfo.ExistingEnv -> {
+        is CreateSdkInfo.ExistingEnv -> configureSdkIfNotPresent {
           moduleInfo.createSdkInfo.getSdkCreator(module).createSdk().onSuccess { sdk ->
             module.pythonSdk = sdk
             sdk.setAssociationToModule(module)
@@ -121,7 +121,7 @@ suspend fun Module.autoConfigureSdkIfNeeded(): PyResult<Sdk>? = withSdkConfigura
         is CreateSdkInfo.WillCreateEnv, is CreateSdkInfo.WillInstallTool -> null
       }
     }
-    is ModuleCreateInfo.SameAs -> {
+    is ModuleCreateInfo.SameAs -> configureSdkIfNotPresent {
       moduleInfo.parentModule.findPythonSdk()?.let { parentSdk ->
         module.pythonSdk = parentSdk
         PyResult.success(parentSdk)
@@ -129,4 +129,8 @@ suspend fun Module.autoConfigureSdkIfNeeded(): PyResult<Sdk>? = withSdkConfigura
     }
     null -> null
   }
+}
+
+private suspend fun <T> Module.configureSdkIfNotPresent(action: suspend () -> T): T? = withSdkConfigurationLock(project) {
+  if (findPythonSdk() == null) action() else null
 }
