@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 
 @ApiStatus.Internal
 @Serializable
@@ -12,6 +13,7 @@ data class TerminalStartupOptionsDto(
   val shellCommand: List<String>,
   val workingDirectory: String,
   val envVariables: Map<String, String>,
+  val processType: TerminalProcessType,
   val pid: Long?,
 )
 
@@ -21,6 +23,7 @@ fun TerminalStartupOptions.toDto(): TerminalStartupOptionsDto {
     shellCommand = shellCommand,
     workingDirectory = workingDirectory,
     envVariables = envVariables,
+    processType = processType,
     pid = pid,
   )
 }
@@ -31,6 +34,7 @@ fun TerminalStartupOptionsDto.toOptions(): TerminalStartupOptions {
     shellCommand = shellCommand,
     workingDirectory = workingDirectory,
     envVariables = envVariables,
+    processType = processType,
     pid = pid,
   )
 }

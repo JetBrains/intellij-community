@@ -12,6 +12,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -143,6 +144,7 @@ internal class TerminalAutoCompletionPopupTest : BasePlatformTestCase() {
         shellCommand = listOf("/bin/zsh", "--login", "-i"),
         workingDirectory = "fakeDir",
         envVariables = emptyMap(),
+        processType = TerminalProcessType.SHELL,
         pid = null,
       )
       val session = EchoingTerminalSession(startupOptions, fixtureScope.childScope("EchoingTerminalSession"))
