@@ -169,7 +169,7 @@ fun <Self : XBreakpoint<P>, P : XBreakpointProperties<*>, S : BreakpointState> s
 
   val isLoggingBp = xB.logExpressionObject != null && xB.suspendPolicy == SuspendPolicy.NONE
   val isConditionalBp = xB.conditionExpression != null && xB.isConditionEnabled
-  return (isLoggingBp || isConditionalBp) && !(isLoggingBp && isConditionalBp)
+  return isConditionalBp && !isLoggingBp
 }
 
 @ApiStatus.Internal
