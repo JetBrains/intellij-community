@@ -551,6 +551,7 @@
 
     <action id="Git.WorkingTrees.Remove" class="git4idea.workingTrees.ui.RemoveWorkingTreeAction"
             icon="AllIcons.General.Delete" use-shortcut-of="$Delete"/>
+    <action id="Git.WorkingTrees.Checkout" class="git4idea.workingTrees.ui.CheckoutWorkingTreeAction"/>
     <action id="Git.WorkingTrees.Open" class="git4idea.workingTrees.ui.OpenWorkingTreeAction">
       <mouse-shortcut keymap="$default" keystroke="button1 doubleClick"/>
     </action>
@@ -566,6 +567,7 @@
     </group>
 
     <group id="Git.WorkingTrees.ToolwindowGroup.Popup" popup="true">
+      <reference ref="Git.WorkingTrees.Checkout"/>
       <reference ref="Git.WorkingTrees.Open"/>
       <separator/>
       <reference ref="Git.WorkingTrees.Remove"/>

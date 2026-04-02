@@ -5,28 +5,38 @@ import com.intellij.dvcs.repo.repositoryId
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
+import git4idea.GitNotificationIdsHolder
 import git4idea.GitRemoteBranch
 import git4idea.GitWorkingTree
 import git4idea.actions.workingTree.GitWorkingTreeDialogData
 import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitCommandResult
+import git4idea.commands.GitLineHandler
+import git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector
+import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.io.path.Path
 
 @Service(Service.Level.PROJECT)
@@ -138,9 +148,102 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
     }
   }
 
+  fun checkoutWorktreeInCurrentRepository(repository: GitRepository, tree: GitWorkingTree) {
+    coroutineScope.launch {
+      checkoutWorktreeInCurrentRepositoryInternal(repository, tree)
+    }
+  }
+
+  suspend fun checkoutWorktreeInCurrentRepositoryInternal(repository: GitRepository, tree: GitWorkingTree): Boolean {
+    val branch = tree.currentBranch ?: return false
+    val branchName = branch.name
+
+    val initialResult = runCheckoutInCurrentRepository(repository, branchName, force = false)
+    if (initialResult.commandResult.success()) {
+      handleSuccessfulCheckout(repository, branchName)
+      return true
+    }
+
+    if (!initialResult.hasConflictingChanges) {
+      notifyCheckoutFailed(branchName, initialResult.commandResult)
+      return false
+    }
+
+    val confirmed = confirmForceCheckout(branchName)
+    if (!confirmed) return false
+
+    val forceResult = runCheckoutInCurrentRepository(repository, branchName, force = true)
+    if (forceResult.commandResult.success()) {
+      handleSuccessfulCheckout(repository, branchName)
+      return true
+    }
+
+    notifyCheckoutFailed(branchName, forceResult.commandResult)
+    return false
+  }
+
   fun openWorkingTreeProject(tree: GitWorkingTree) {
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.Default) {
       ProjectUtil.openOrImportAsync(Path(tree.path.path))
     }
   }
+
+  private suspend fun runCheckoutInCurrentRepository(repository: GitRepository, branchName: String, force: Boolean): CheckoutResult {
+    return withBackgroundProgress(project, GitBundle.message("progress.title.checking.out.worktree"), cancellable = true) {
+      val localChangesDetector =
+        GitLocalChangesWouldBeOverwrittenDetector(repository.root, GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT)
+      val untrackedFilesDetector = GitUntrackedFilesOverwrittenByOperationDetector(repository.root)
+
+      val handler = GitLineHandler(repository.project, repository.root, GitCommand.CHECKOUT)
+      handler.setSilent(false)
+      handler.setStdoutSuppressed(false)
+      if (force) {
+        handler.addParameters("--force")
+      }
+      handler.addParameters("--ignore-other-worktrees", branchName)
+      handler.endOptions()
+      handler.addLineListener(localChangesDetector)
+      handler.addLineListener(untrackedFilesDetector)
+
+      CheckoutResult(
+        Git.getInstance().runCommand(handler),
+        localChangesDetector.isDetected || untrackedFilesDetector.isDetected,
+      )
+    }
+  }
+
+  private suspend fun confirmForceCheckout(branchName: String): Boolean {
+    return withContext(Dispatchers.UiWithModelAccess) {
+      MessageDialogBuilder.yesNo(
+        GitBundle.message("Git.WorkingTrees.dialog.checkout.worktree.title"),
+        GitBundle.message("Git.WorkingTrees.dialog.checkout.worktree.message", branchName)
+      )
+        .yesText(GitBundle.message("Git.WorkingTrees.dialog.checkout.worktree.yes.option"))
+        .ask(project)
+    }
+  }
+
+  private fun handleSuccessfulCheckout(repository: GitRepository, branchName: String) {
+    repository.update()
+    repository.workingTreeHolder.scheduleReload()
+    VcsNotifier.getInstance(project).notifySuccess(
+      GitNotificationIdsHolder.CHECKOUT_SUCCESS,
+      "",
+      GitBundle.message("checkout.operation.checked.out", branchName)
+    )
+  }
+
+  private fun notifyCheckoutFailed(branchName: String, commandResult: GitCommandResult) {
+    VcsNotifier.getInstance(project).notifyError(
+      GitNotificationIdsHolder.BRANCH_CHECKOUT_FAILED,
+      GitBundle.message("checkout.operation.could.not.checkout.error.title", branchName),
+      commandResult.errorOutputAsHtmlString,
+      true
+    )
+  }
+
+  private class CheckoutResult(
+    val commandResult: GitCommandResult,
+    val hasConflictingChanges: Boolean,
+  )
 }
