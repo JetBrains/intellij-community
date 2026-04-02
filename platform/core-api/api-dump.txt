@@ -775,6 +775,7 @@ f:com.intellij.openapi.progress.CoroutinesKt
 - sf:coroutineToIndicator(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - sf:currentThreadCoroutineScope():kotlinx.coroutines.CoroutineScope
 - sf:runBlockingCancellable(kotlin.jvm.functions.Function2):java.lang.Object
+- sf:runBlockingMaybeCancellable(kotlin.jvm.functions.Function2):java.lang.Object
 com.intellij.openapi.progress.PerformInBackgroundOption
 - sf:ALWAYS_BACKGROUND:com.intellij.openapi.progress.PerformInBackgroundOption
 - sf:DEAF:com.intellij.openapi.progress.PerformInBackgroundOption
