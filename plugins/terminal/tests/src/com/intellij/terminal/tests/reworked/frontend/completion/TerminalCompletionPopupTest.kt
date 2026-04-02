@@ -22,6 +22,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSugge
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
@@ -410,6 +411,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
       shellCommand = listOf("/bin/zsh", "--login", "-i"),
       workingDirectory = "fakeDir",
       envVariables = emptyMap(),
+      processType = TerminalProcessType.SHELL,
       pid = null,
     )
     val session = EchoingTerminalSession(startupOptions, fixtureScope.childScope("EchoingTerminalSession"))
