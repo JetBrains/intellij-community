@@ -123,7 +123,7 @@ private fun IrBuilderWithScope.generateSerializerCall(
   else if (irType.isNullable()) {
     val nullableSerializerProperty = context.referenceProperties(nullableSerializerProperty).first().owner
     irCall(nullableSerializerProperty.getter!!).apply {
-      insertExtensionReceiver(serializer)
+      arguments[0] = serializer
     }
   }
   else {
@@ -147,7 +147,7 @@ private fun IrBuilderWithScope.findBuiltinSerializerExtensionFunctions(
 
   return serializerFunction?.let {
     irCall(serializerFunction).apply {
-      insertExtensionReceiver(irGetObject(companionOrClass.symbol))
+      arguments[0] = irGetObject(companionOrClass.symbol)
     }
   }
 }
