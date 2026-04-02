@@ -7,9 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsContexts
@@ -72,17 +70,12 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
   protected open fun isWatchedFile(virtualFile: VirtualFile?): Boolean = virtualFile?.name?.let { fileNamesPattern.matches(it) } ?: false
 
   /**
-   * This action saves the current document on fs because tools are command line tools, and they need actual files to be up to date
    * Handles errors via [errorSink]
    */
   override fun actionPerformed(e: AnActionEvent) {
     PyPackageCoroutine.launch(e.project, Dispatchers.IO) {
       val manager = runReadAction { getManager(e) } ?: return@launch
       val psiFile = runReadAction { e.getData(PSI_FILE) } ?: return@launch
-
-      edtWriteAction {
-        FileDocumentManager.getInstance().saveAllDocuments()
-      }
 
       PythonPackageManagerUI.forPackageManager(manager).executeCommand(e.presentation.text) {
         execute(e, manager).mapSuccess {

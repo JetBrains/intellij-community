@@ -4,11 +4,13 @@ package com.jetbrains.python.inspections
 import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.jetbrains.python.PythonPluginDisposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Disposer
@@ -171,6 +173,9 @@ class InterpreterFixExecutor(private val project: Project, internal val scope: C
 
   override fun execute(action: suspend () -> Unit) {
     scope.launch {
+      edtWriteAction {
+        FileDocumentManager.getInstance().saveAllDocuments()
+      }
       tryWithSdkConfigurationLock(project) { action() }.orLogException(LOG)
     }
   }

@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management.ui
 
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -167,13 +169,20 @@ class PythonPackageManagerUI private constructor(
     }
   }
 
+  /**
+   * Save documents so that CLI tools see up-to-date project files (e.g. pyproject.toml)
+   */
   @ApiStatus.Internal
   suspend fun <T> executeCommand(
     progressTitle: @Nls String,
     operation: suspend (() -> PyResult<T>),
-  ): T? = PythonPackageManagerUIHelpers.runPackagingOperationMaybeBackground(manager, sink, progressTitle) {
-
-    operation()
+  ): T? {
+    edtWriteAction {
+      FileDocumentManager.getInstance().saveAllDocuments()
+    }
+    return PythonPackageManagerUIHelpers.runPackagingOperationMaybeBackground(manager, sink, progressTitle) {
+      operation()
+    }
   }
 
   /**
