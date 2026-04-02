@@ -13,7 +13,7 @@ internal class ClassicTerminalTabCloseListener private constructor(
   project: Project,
   parentDisposable: Disposable,
 ) : TerminalTabCloseListener(content, project, parentDisposable) {
-  override fun hasChildProcesses(content: Content): Boolean {
+  override fun shouldConfirmClosing(content: Content): Boolean {
     val widget = TerminalToolWindowManager.findWidgetByContent(content) ?: return false
     return runWithModalProgressBlocking(myProject, "") {
       widget.isCommandRunning()
