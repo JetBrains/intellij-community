@@ -41,12 +41,60 @@ val Project.projectDirectory: Path
   }
 
 /**
+ * Returns all root paths that should be considered "inside" the project.
+ *
+ * This includes both the [projectDirectory] and any content roots registered with the project.
+ * Content roots are important for project types like Bazel/IJwB where [projectDirectory] points
+ * to a subdirectory (e.g., `.ijwb/`) while source files reside in the workspace root.
+ */
+private fun Project.allProjectRoots(): List<Path> {
+  val roots = mutableListOf(projectDirectory)
+  try {
+    ProjectRootManager.getInstance(this).contentRoots
+      .mapNotNull { it.toNioPathOrNull()?.normalize() }
+      .forEach { roots.add(it) }
+  }
+  catch (_: Throwable) {
+    // ProjectRootManager might not be available in all contexts
+  }
+  return roots.distinct()
+}
+
+/**
  * Resolves a relative path against the project's directory.
  *
- * When [throwWhenOutside] is true the method throws an McpExpectedException if the path is outside the project directory.
+ * When [throwWhenOutside] is true the method throws an McpExpectedException if the path is outside the project directory
+ * or any of its content roots.
+ *
+ * For project types like Bazel/IJwB where the project directory (e.g., `.ijwb/`) differs from the workspace root,
+ * this method also tries to resolve the path against each content root if the primary resolution does not find an
+ * existing file.
  */
 fun Project.resolveInProject(pathInProject: String, throwWhenOutside: Boolean = true): Path {
-  return resolveInProject(pathInProject = pathInProject, projectDirectory = projectDirectory, throwWhenOutside = throwWhenOutside)
+  val roots = allProjectRoots()
+  val filePath = projectDirectory.resolve(pathInProject).normalize()
+
+  // If the path resolves to an existing file under projectDirectory, use it directly
+  if (filePath.toFile().exists() && filePath.startsWith(projectDirectory)) {
+    return filePath
+  }
+
+  // Try resolving against content roots (needed for Bazel/IJwB projects)
+  for (root in roots) {
+    val candidate = root.resolve(pathInProject).normalize()
+    if (candidate.toFile().exists()) {
+      if (throwWhenOutside && roots.none { candidate.startsWith(it) }) {
+        mcpFail("Specified path '$candidate' points to the location outside of the project directory")
+      }
+      return candidate
+    }
+  }
+
+  // Fall back to the original resolution
+  if (throwWhenOutside && roots.none { filePath.startsWith(it) }) {
+    mcpFail("Specified path '$filePath' points to the location outside of the project directory")
+  }
+  return filePath
 }
 
 /**
