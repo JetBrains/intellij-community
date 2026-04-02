@@ -13,6 +13,7 @@ import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.UnloadedModuleDescription;
@@ -306,6 +307,7 @@ final class SearchForUsagesRunnable implements Runnable {
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES);
 
     RangeBlinker rangeBlinker = new RangeBlinker(editor, attributes, 6, null);
+    EditorUtil.disposeWithEditor(editor, rangeBlinker);
     List<Segment> segments = new ArrayList<>();
     Processor<Segment> processor = Processors.cancelableCollectProcessor(segments);
     usageInfo.processRangeMarkers(processor);

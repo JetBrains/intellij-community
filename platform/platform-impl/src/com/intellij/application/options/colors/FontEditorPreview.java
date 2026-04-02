@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -115,6 +116,7 @@ public class FontEditorPreview implements PreviewPanel{
     installTrafficLights(myEditor);
 
     myRangeBlinker = new RangeBlinker(myEditor, EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES), 4, null);
+    EditorUtil.disposeWithEditor(myEditor, myRangeBlinker);
   }
 
   protected Border getBorder() {

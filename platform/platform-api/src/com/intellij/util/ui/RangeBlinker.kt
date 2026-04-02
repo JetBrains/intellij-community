@@ -27,13 +27,17 @@ import kotlin.time.Duration.Companion.milliseconds
 @Service(Service.Level.APP)
 private class RangeBlinkerService(val coroutineScope: CoroutineScope)
 
+/**
+ * Makes it possible to blink [Segment]-s of the editor, to show a diff for instance.
+ * If [parentDisposable] is `null`, please make sure that this [Disposable] is registered.
+ */
 @Internal
 class RangeBlinker(
   private val editor: Editor,
   private val attributes: TextAttributes,
   private var timeToLive: Int,
   parentDisposable: Disposable?,
-) {
+): Disposable {
   private val lifetime = timeToLive
   private val markers = ArrayList<Segment>()
   private var show = true
@@ -45,8 +49,13 @@ class RangeBlinker(
 
   init {
     if (parentDisposable != null) {
-      Disposer.register(parentDisposable) { scope.cancel() }
+      Disposer.register(parentDisposable, this)
     }
+  }
+
+  override fun dispose() {
+    stopBlinking()
+    scope.cancel()
   }
 
   fun resetMarkers(markers: List<Segment>, resetTime: Boolean = false) {
