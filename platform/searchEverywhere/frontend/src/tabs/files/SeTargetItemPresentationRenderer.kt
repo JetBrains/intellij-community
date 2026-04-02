@@ -42,21 +42,16 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
     val defaultGapWidth = JBUI.scale(LcrRowImpl.DEFAULT_GAP)
     val bordersWidth = 2 * JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() +
                        JBUI.CurrentTheme.Popup.Selection.innerInsets().left + JBUI.CurrentTheme.Popup.Selection.innerInsets().right
+    var accumulatedContentWidth = defaultGapWidth + bordersWidth
 
-    // Width for "<border><border>"
-    var accumulatedContentWidth = bordersWidth
-
-    val iconWidth = presentation.iconOriginalWidth ?: presentation.icon?.iconWidth
-    iconWidth?.let {
-      // Width for "<border><icon><gap><border>"
-      accumulatedContentWidth += (JBUI.scale(iconWidth) + defaultGapWidth)
+    presentation.icon?.let {
+      accumulatedContentWidth += (JBUI.scale(it.iconWidth) + defaultGapWidth)
     }
 
     val fontMetrics = resultList.getFontMetrics(resultList.font)
     val presentableTextWidth = fontMetrics.stringWidth(presentation.presentableText)
     // Calculate the combined width without locationText.
     // If it is larger than the available space, we need to hide the locationIcon to avoid text overlap (IJPL-188565).
-    // Width for "<border><icon><gap><text><gap><border>"
     accumulatedContentWidth += (presentableTextWidth + defaultGapWidth)
 
     text(presentation.presentableText) {
@@ -82,24 +77,15 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
     }
 
     weightTextIfEnabled(value)
-    // Width for "<location>"
-    val locationTextWidth = presentation.locationText?.let { fontMetrics.stringWidth(it) } ?: 0
-    // Width for "<gap><location>"
-    val locationTextWidthWithGap = if (locationTextWidth > 0) locationTextWidth + defaultGapWidth else 0
-    val resultListWidth = resultList.width
-    val maxContainerTextWidth = resultListWidth - accumulatedContentWidth - locationTextWidthWithGap
+    val locationTextWidth = presentation.locationText?.let { fontMetrics.stringWidth(it) + defaultGapWidth } ?: 0
 
     presentation.containerText?.takeIf {
-      maxContainerTextWidth > 0
+      accumulatedContentWidth + locationTextWidth < resultList.width
     }?.let { containerText ->
-      val shortenContainerText = SETextShortener.getShortenContainerText(containerText, maxContainerTextWidth) { fontMetrics.stringWidth(it) }
-      val shortenContainerTextWidth = fontMetrics.stringWidth(shortenContainerText)
-
-      // Shortening didn't work good enough.
-      if (shortenContainerTextWidth > maxContainerTextWidth) return@let
-
-      // Width for "<border><icon><gap><text><gap><containerText><gap><border>"
-      accumulatedContentWidth += (shortenContainerTextWidth + defaultGapWidth)
+      val width = resultList.width
+      val maxContainerTextWidth = width - accumulatedContentWidth - locationTextWidth
+      val shortenContainerText = SETextShortener.getShortenContainerText(containerText, maxContainerTextWidth, { fontMetrics.stringWidth(it) })
+      accumulatedContentWidth += fontMetrics.stringWidth(shortenContainerText)
 
       text(shortenContainerText) {
         accessibleName = null
@@ -126,10 +112,7 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
       }
     }
 
-    presentation.locationText?.takeIf {
-      // `locationTextWidth` without gap is used intentionally
-      accumulatedContentWidth + locationTextWidth < resultListWidth
-    }?.let { locationText ->
+    presentation.locationText?.let { locationText ->
       @Suppress("HardCodedStringLiteral")
       text(locationText) {
         accessibleName = null
@@ -139,12 +122,10 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
           else NamedColorUtil.getInactiveTextColor()
       }
 
-      // Width for "<border><icon><gap><text><gap><containerText><gap><location><gap><border>"
-      accumulatedContentWidth += locationTextWidthWithGap
+      accumulatedContentWidth += locationTextWidth
 
       presentation.locationIcon?.let { locationIcon ->
-        val iconWidth = presentation.locationIconOriginalWidth ?: locationIcon.iconWidth
-        if ((accumulatedContentWidth + JBUI.scale(iconWidth)) < resultListWidth) {
+        if ((accumulatedContentWidth + JBUI.scale(locationIcon.iconWidth) + defaultGapWidth) < resultList.width) {
           icon(locationIcon)
         }
       }
