@@ -7092,17 +7092,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps/debugger-agent-1.136.jar_copy",
-  src = "@org_jetbrains_intellij_deps-debugger-agent-1_136_http//file",
-  out = "org.jetbrains.intellij.deps/debugger-agent-1.136.jar",
+  name = "org.jetbrains.intellij.deps/debugger-agent-1.163.jar_copy",
+  src = "@org_jetbrains_intellij_deps-debugger-agent-1_163_http//file",
+  out = "org.jetbrains.intellij.deps/debugger-agent-1.163.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "java-debugger-agent-holder-debugger-agent",
-  jar = "@org_jetbrains_intellij_deps-debugger-agent-1_136_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-debugger-agent-1_136-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps-debugger-agent-1_163_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-debugger-agent-1_163-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
