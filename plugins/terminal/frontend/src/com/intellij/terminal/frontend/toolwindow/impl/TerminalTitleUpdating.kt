@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.TITLE_UPDATE_DELAY
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.TitleData
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareTitle
@@ -33,8 +34,9 @@ import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandFinis
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 
 internal fun TerminalView.getTitleText(): @NlsSafe String {
-  val isCommandRunning = shellIntegrationDeferred.getNow()?.outputStatus?.value == TerminalOutputStatus.ExecutingCommand
-  return title.buildSettingsAwareTitle(isCommandRunning)
+  val isNonShellProcess = startupOptionsDeferred.getNow()?.processType == TerminalProcessType.NON_SHELL
+  val isExecutingShellCommand = shellIntegrationDeferred.getNow()?.outputStatus?.value == TerminalOutputStatus.ExecutingCommand
+  return title.buildSettingsAwareTitle(isCommandRunning = isNonShellProcess || isExecutingShellCommand)
 }
 
 @OptIn(FlowPreview::class)
